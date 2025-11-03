@@ -1,0 +1,101 @@
+name: Deploy with Kamal
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      run_setup:
+        description: 'Run kamal setup before deploy'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  deploy:
+    name: Deploy with Kamal
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for git operations
+
+      - name: Get short SHA
+        uses: benjlevesque/short-sha@599815c8ee942a9616c92bcfb4f947a3b670ab0b # v3.0
+        id: short-sha
+        with:
+          length: 7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.1'
+          bundler-cache: true
+
+      - name: Install Kamal
+        run: gem install kamal
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@d4b9b8ff72958532804b70bbe600ad43b36d5f2e # v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host key to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "StrictHostKeyChecking=no" >> ~/.ssh/config
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Set deployment timestamp
+        run: echo "DEPLOY_TIME=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_ENV
+
+      - name: Create Kamal secrets file
+        run: |
+          mkdir -p .kamal
+          cat > .kamal/secrets << EOF
+          # Docker registry credentials
+          KAMAL_REGISTRY_PASSWORD=${{ secrets.DOCKER_PASSWORD }}
+
+          # Application secrets
+          APP_VERSION=${{ steps.short-sha.outputs.sha }}
+          LAST_DEPLOY=${{ env.DEPLOY_TIME }}
+          SECRET_KEY_BASE=${{ secrets.SECRET_KEY_BASE }}
+          VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          VIMEO_ACCESS_TOKEN=${{ secrets.VIMEO_ACCESS_TOKEN }}
+          GUMROAD_ACCESS_TOKEN=${{ secrets.GUMROAD_ACCESS_TOKEN }}
+          GUMROAD_ON=${{ secrets.GUMROAD_ON }}
+          GUMROAD_PRODUCT_IDS=${{ secrets.GUMROAD_PRODUCT_IDS }}
+          WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
+          COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
+          EOF
+
+      - name: Run Kamal setup (if requested)
+        if: ${{ github.event.inputs.run_setup == 'true' }}
+        run: kamal setup
+        env:
+          KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          PROXY_HOST: ${{ secrets.DOMAIN }}
+          REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+      - name: Deploy with Kamal
+        run: kamal deploy
+        env:
+          KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          PROXY_HOST: ${{ secrets.DOMAIN }}
+          REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}

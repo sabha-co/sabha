@@ -1,0 +1,15 @@
+<% if room.one_on_one? && !room.messages.paged? && room.messages.first&.creator != Current.user %>
+  <div id="system_welcome" class="message message--formatted txt-align-center center">
+    <div class="message__body center">
+      <div class="message__body-content position-relative">
+        <div class="flex flex-column align-center gap-1">
+          <p>
+            <strong>Control your inbox</strong><br>
+            If these messages feel unwanted, you can block this user from messaging you again.
+          </p>
+          <%= render 'blocks/button', user: room.roommate_to(Current.user), compact: false %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

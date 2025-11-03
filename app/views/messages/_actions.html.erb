@@ -1,0 +1,96 @@
+<%# Be sure to check/update messages/_template.html.erb when changing this file %>
+<%# locals: (message:, current_room: nil) -%>
+
+<div class="message__actions" data-controller="soft-keyboard">
+  <% unless message.room.direct? || current_room&.thread? || message.room.thread? %>
+    <%= link_to new_rooms_thread_path(parent_message_id: message.id), class: "btn message__action-btn message__options-btn message__reply-btn", data: { turbo_frame: "_top" } do %>
+      <%= image_tag "reply.svg", size: 20, class: "colorize--black", aria: { hidden: "true" } %>
+      <span class="for-screen-reader">Reply</span>
+    <% end %>
+  <% end %>
+
+  <%= tag.details class: "position-relative",
+      data: { controller: "popup", action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside", popup_orientation_top_class: "popup-orientation-top" } do %>
+    <summary class="btn message__action-btn message__options-btn options-btn">
+      <%= image_tag "menu-dots-horizontal.svg", size: 20, class: "colorize--black", aria: { hidden: "true" } %>
+      <span class="for-screen-reader">Message options</span>
+    </summary>
+
+    <div class="popup-menu message__actions-menu border shadow" data-popup-target="menu">
+      <div class="quick-boosts">
+        <% EmojiHelper::REACTIONS.each do |character, title| %>
+          <%= form_with model: [ message, Boost.new ], data: { turbo_frame: dom_id(message, :boosting), action: "popup#close"} do |form| %>
+            <%= hidden_field_tag "boost[content]", character %>
+            <%= form.button type: "submit", title: title, class: "btn message__action-btn", data: { emoji: character } do %>
+              <figure class="margin-none boost-character"><%= character %></figure>
+              <span class="for-screen-reader"><%= title %></span>
+            <% end %>
+          <% end %>
+        <% end %>
+
+        <%= link_to new_message_boost_path(message),
+              class: "btn message__action-btn message__boost-btn",
+              data: { turbo_frame: dom_id(message, :new_boost), action: "soft-keyboard#open popup#close" } do %>
+          <%= image_tag "boost.svg", class: "colorize--black", size: 20, aria: { hidden: "true" } %>
+          <span class="for-screen-reader">New boost</span>
+        <% end %>
+      </div>
+
+      <div class="border-top margin-block-start-half pad-block-start-half">
+        <% if message.content_type.attachment? %>
+          <%= link_to rails_blob_path(message.attachment, disposition: "attachment", only_path: true), class: "btn message__action-btn full-width hide-in-ios-pwa" do %>
+            <span>Download</span>
+          <% end %>
+
+          <%= tag.button class: "btn message__action-btn full-width",
+              data: { controller: "web-share", action: "web-share#share", web_share_files_value: rails_blob_path(message.attachment, only_path: true), web_share_title_value: message.attachment.filename.to_s } do %>
+            <span>Share</span>
+          <% end %>
+        <% else %>
+          <% unless message.room.direct? || current_room&.thread? || message.room.thread? %>
+            <%= link_to new_rooms_thread_path(parent_message_id: message.id), class: "btn message__action-btn full-width", data: { turbo_frame: "_top" } do %>
+              <span>Reply</span>
+            <% end %>
+          <% end %>
+
+          <% if current_room.present? %>
+            <%= tag.button class: "btn message__action-btn full-width", data: { action: "reply#reply" } do %>
+              <span>Quote</span>
+            <% end %>
+          <% else %>
+            <%= link_to room_at_message_url(message.room, message, reply: true), class: "btn message__action-btn full-width",
+                        target: "_top" do %>
+              <span>Quote</span>
+            <% end %>
+          <% end %>
+        <% end %>
+
+        <% unless message.content_type.attachment? %>
+          <%= link_to edit_message_in_room_path(current_room, message), class: "btn message__action-btn full-width message__edit-btn",
+                      data: { turbo_frame: dom_id(message, :edit) }, aria: { hidden: true } do %>
+            <span>Edit</span>
+          <% end %>
+        <% end %>
+
+        <%= button_to room_message_path(message.room, message), method: :delete, class: "btn message__action-btn full-width message__edit-btn", aria: { hidden: true },
+                       data: { turbo_confirm: "Are you sure you want to delete this message?", turbo_frame: dom_id(message, :edit) } do %>
+          <span>Delete</span>
+        <% end %>
+
+        <%= tag.button class: "btn message__action-btn full-width", data: { controller: "copy-to-clipboard", action: "copy-to-clipboard#copy", copy_to_clipboard_success_class: "btn--success", copy_to_clipboard_content_value: room_at_message_url(message.room, message) } do %>
+          <span>Copy link</span>
+        <% end %>
+
+        <%= render "messages/actions/bookmark", message: message %>
+
+        <% if current_room.present? %>
+          <%= button_to room_message_unreads_path(current_room, message), class: "btn message__action-btn full-width" do %>
+            <span>Mark unread</span>
+          <% end %>
+        <% end %>
+
+        <%= render "messages/actions/answer", message: %>
+      </div>
+    </div>
+  <% end %>
+</div>

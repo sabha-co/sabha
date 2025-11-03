@@ -1,0 +1,5 @@
+CONFIG=./config/puma_dev.rb
+
+# Mitigate Ruby crash on macOS (see https://github.com/rails/rails/issues/38560)
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+

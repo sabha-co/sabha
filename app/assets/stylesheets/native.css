@@ -1,0 +1,11 @@
+.d-hotwire-native-none {
+  display: none !important;
+}
+
+.d-hotwire-native-block {
+  display: block !important;
+}
+
+[data-bridge-components~="button"] [data-controller~="bridge--button"] {
+  display: none !important;
+}

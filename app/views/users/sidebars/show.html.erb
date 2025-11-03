@@ -1,0 +1,140 @@
+<%= sidebar_turbo_frame_tag do %>
+  <%= turbo_stream_from :rooms %>
+  <%= turbo_stream_from Current.user, :rooms %>
+
+  <div data-controller="mentions-indicator"
+       data-action="rooms-list:unread@window->mentions-indicator#update rooms-list:read@window->mentions-indicator#update rooms-list:addBadge@window->mentions-indicator#update">
+    <div class="sidebar__container overflow-y overflow-hide-scrollbar"
+        data-controller="badge-dot maintain-scroll debounce-updates"
+        data-badge-dot-unread-class="badge"
+        data-action="rooms-list:unread@window->badge-dot#update rooms-list:read@window->badge-dot#update rooms-list:addBadge@window->badge-dot#update turbo:submit-start->turbo-frame#unpermanize turbo:before-render@document->maintain-scroll#beforeRender">
+    <turbo-frame id="direct_rooms_control" target="_top">
+      <div class="directs gap overflow-x overflow-hide-scrollbar">
+        <%= link_to new_rooms_direct_path, class: "direct direct__new", data: { turbo_frame: "_self" } do %>
+          <span class="avatar avatar--icon">
+            <%= image_tag "messages-add.svg", size: 20, aria: { hidden: "true" }, class: "colorize--black" %>
+          </span>
+
+          <span class="direct__author flex max-width min-width border-radius pad-inline-half">
+            <span class="for-screen-reader">New</span>
+            <span class="txt-small overflow-clip">Ping</span>
+          </span>
+        <% end %>
+
+        <div id="direct_rooms" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
+             data-sorted-list-attribute-type-value="number" data-sorted-list-order-value="desc"
+             data-action="rooms-list:unread@window->sorted-list#reSort"
+             >
+          <%= render partial: "users/sidebars/rooms/direct", collection: @direct_memberships, as: :membership, cached: true %>
+        </div>
+      </div>
+    </turbo-frame>
+
+    <div class="rooms position-relative flex flex-column gap overflow-y" 
+         data-controller="search-rooms"
+         data-search-rooms-target="container"
+         data-search-rooms-filter-class="display-none">
+      <div>
+        <label class="for-screen-reader" for="room-search">Find rooms</label>
+        <input type="search" id="room-search" class="input input--search" placeholder="Find Rooms..."
+               data-search-rooms-target="input"
+               data-action="input->search-rooms#filter keyup->search-rooms#filter"
+               autocomplete="off">
+      </div>
+      <div data-controller="sidebar-starred-rooms sorted-list" data-sorted-list-attribute-value="updatedAt" data-sorted-list-order-value="desc"
+           data-action="rooms-list:involved@window->sidebar-starred-rooms#toggleRooms rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
+           class="flex position-relative flex-column rooms-list overflow margin-block-end">
+        <div class="flex gap-half margin-block-end align-center">
+          <h1 class="txt-medium">My Rooms</h1>
+        </div>
+
+        <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :starred_rooms, memberships: @starred_memberships %>
+
+        <div class="margin-block"></div>
+      </div>
+
+      <div class="flex gap-half margin-block-end align-center">
+        <h1 class="txt-medium">All Rooms</h1>
+        <%= render "users/sidebars/all_rooms_actions" %>
+      </div>
+      <div data-controller="sorted-list" <%= all_rooms_sort_order %>
+           data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
+           class="flex position-relative flex-column rooms-list overflow">
+        <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @all_memberships %>
+      </div>
+
+      <%= link_to new_rooms_open_path, class: "rooms__new-btn btn room align-center gap txt-reversed", aria: { label: "New Chat Room" } do %>
+        <%= image_tag "add.svg", size: 20, aria: { hidden: "true" }, style: "view-transition-name: new-room" %>
+      <% end %>
+    </div>
+  </div>
+
+  <button id="sidebar-toggle" class="btn sidebar__toggle" data-action="click->toggle-class#toggle">
+    <%= image_tag "menu.svg", size: 20, aria: { hidden: "true" } %>
+    <span class="for-screen-reader">Open menu</span>
+  </button>
+
+  <div class="sidebar__tools d-hotwire-native-none">
+    <div class="sidebar__tool-container">
+      <%= link_to inbox_path, class: "btn sidebar__tool", data: { mentions_indicator_target: "icon" } do %>
+        <%= image_tag "mentions.svg", size: 20, aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Mentions</span>
+        <span class="sidebar__tool-label">Mentions</span>
+      <% end %>
+
+      <%= link_to threads_inbox_path, class: "btn sidebar__tool" do %>
+        <%= image_tag "threads.svg", size: 20, aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Threads</span>
+        <span class="sidebar__tool-label">Threads</span>
+      <% end %>
+
+      <%= link_to bookmarks_inbox_path, class: "btn sidebar__tool" do %>
+        <%= image_tag "bookmark.svg", size: 20, aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Bookmarks</span>
+        <span class="sidebar__tool-label">Bookmarks</span>
+      <% end %>
+
+      <%= link_to experts_path, class: "btn sidebar__tool" do %>
+        <%= image_tag "bulb.svg", size: 20, aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Experts</span>
+        <span class="sidebar__tool-label">Experts</span>
+      <% end %>
+
+      <% if Current.user&.expert? || Current.user&.administrator? %>
+        <%= link_to answers_inbox_path, class: "btn sidebar__tool" do %>
+          <%= image_tag "chat_bubble.svg", size: 20, aria: { hidden: "true" } %>
+          <span class="for-screen-reader">My Answers</span>
+          <span class="sidebar__tool-label">My Answers</span>
+        <% end %>
+      <% end %>
+
+      <%= link_to library_path, class: "btn sidebar__tool" do %>
+        <%= image_tag "library.svg", size: 20, aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Library</span>
+        <span class="sidebar__tool-label">Library</span>
+      <% end %>
+
+      <%= link_to stats_path, class: "btn sidebar__tool" do %>
+        <%= image_tag "stats.svg", size: 20, aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Stats</span>
+        <span class="sidebar__tool-label">Stats</span>
+      <% end %>
+
+      <% if Current.user&.administrator? %>
+        <%= link_to edit_account_path, class: "btn sidebar__tool" do %>
+          <%= image_tag "crown.svg", size: 20, aria: { hidden: "true" }, style: "view-transition-name: account-settings" %>
+          <span class="for-screen-reader">Admin</span>
+          <span class="sidebar__tool-label">Admin</span>
+        <% end %>
+      <% end %>
+      
+      <%= render "users/sidebars/bell" %>
+      
+      <%= link_to user_profile_path, class: "btn avatar sidebar__tool" do %>
+        <%= avatar_image_tag(Current.user, size: 40, style: "view-transition-name: avatar-#{Current.user.id}", loading: :lazy) %>
+        <span class="for-screen-reader"><%= Current.user.name %></span>
+      <% end %>
+    </div>
+  </div>
+  </div>
+<% end %>

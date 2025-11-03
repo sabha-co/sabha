@@ -1,0 +1,103 @@
+#!/usr/bin/env ruby
+require File.expand_path("../../config/environment", File.dirname(__FILE__))
+require "optparse"
+require "faker"
+
+# Sample usage: script/populate --rooms 100 --users 100 --messages 100
+
+PASSWORD_DIGEST = BCrypt::Password.create("secret123456", cost: BCrypt::Engine::MIN_COST)
+
+def create_user
+  User.insert({ name: Faker::Name.name, email_address: Faker::Internet.email, password_digest: PASSWORD_DIGEST })
+end
+
+def create_room(room_id:, creator_id:)
+  Room.insert({
+    id: room_id, type: "Rooms::Open", creator_id: creator_id,
+    name: "#{Faker::Creature::Animal.name.capitalize} #{Faker::Game.title}"
+  })
+end
+
+def create_memberships(room_id:, user_ids:)
+  Membership.insert_all(user_ids.collect { |user_id| { user_id: user_id, room_id: room_id } })
+end
+
+def create_message(message_id:, room_id:, creator_id:)
+  Message.insert({ id: message_id, room_id: room_id, creator_id: creator_id, client_message_id: SecureRandom.alphanumeric(12) })
+  ActionText::RichText.insert({ name: "body", record_type: "Message", record_id: message_id, body: "<div>#{Faker::Lorem.words(number: 10).join(" ")}</div>" })
+end
+
+
+def parse_options!
+  options = {}
+
+  parser = OptionParser.new do |opts|
+    opts.banner = "Usage: ruby script/dev/populate.rb [options]"
+
+    opts.on("--users COUNT", Integer, "Number of users") { |c| options[:user_count] = c }
+    opts.on("--rooms COUNT", Integer, "Number of rooms (default: 100)") { |c| options[:room_count] = c }
+    opts.on("--messages COUNT", Integer, "Number of messages per room (default: 100)") { |c| options[:message_count] = c }
+
+    opts.on "-h", "--help", "Prints this help" do
+      puts opts
+      exit
+    end
+  end.tap(&:parse!)
+
+  if options[:user_count].blank?
+    warn(parser.help)
+    exit(1)
+  else
+    options
+  end
+end
+
+options = parse_options!
+
+print "This will reset the database and repopulate it. Are you sure? [y/n] "
+if gets.chomp == "y"
+  puts "Resetting development DB"
+  `RAILS_ENV=development ./bin/rails db:reset`
+
+  puts "\nCreating first run (so you can login as king@example.com/secret123456)"
+  FirstRun.create! name: "King of The Hill", email_address: "king@example.com", password: "secret123456"
+
+  user_count    = options[:user_count]
+  room_count    = options[:room_count] || 100
+  message_count = options[:message_count] || 100
+
+  puts "\nCreating #{user_count} users"
+
+  user_count.times do |n|
+    create_user
+    print "."
+  end
+
+  puts "\n\nCreating #{room_count} rooms with #{message_count} messages"
+
+  user_ids = User.pluck(:id)
+
+  room_counter = message_counter = 0
+
+  room_count.times do |n|
+    room_counter += 1
+
+    create_room(room_id: room_counter, creator_id: user_ids.sample)
+    create_memberships(room_id: room_counter, user_ids: user_ids)
+    print "."
+
+    message_count.times do |n|
+      message_counter += 1
+      create_message(message_id: message_counter, room_id: room_counter, creator_id: user_ids.sample)
+
+      print "."
+    end
+  end
+
+  puts "\n\nRestarting server"
+  `./bin/rails restart`
+
+  puts "Done!"
+else
+  puts "Nevermind then!"
+end

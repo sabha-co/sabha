@@ -1,0 +1,18 @@
+<div class="mention" sgid="<%= user.attachable_sgid %>">
+  <%= tag.details class: "position-relative avatar",
+                  data: { controller: "popup",
+                          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside",
+                          popup_orientation_top_class: "popup-orientation-top" } do %>
+    <summary class="btn avatar">
+      <%= avatar_tag user, loading: :lazy %>
+    </summary>
+
+    <div class="popup-menu message__avatar-menu border shadow" data-popup-target="menu">
+      <%= turbo_frame_tag dom_id(user, :message_profile), src: mention_profile_path(user), loading: :lazy do %>
+        Loading...
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= user.name %>
+</div>

@@ -1,0 +1,40 @@
+<% @page_title = "Edit settings for #{room.name}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to_last_room_visited %>
+  </div>
+<% end %>
+
+<section class="panel txt-align-center" style="view-transition-name: edit-room-<%= room.id %>">
+  <%= yield %>
+</section>
+
+<% if Current.user.can_administer?(@room) %>
+  <section class="panel flex flex-column gap">
+    
+    <% if Current.user.administrator? && @room.open? %>
+      <%= form_with url: room_merges_path(@room.id) do |form| %>
+        <div class="flex flex-column gap">
+          <legend class="txt-large txt-align-center"><strong>Merge room</strong></legend>
+          <div class="flex flex-column gap-half">
+            <span>Move all messages from <%= @room.name %> into the selected room and delete <%= @room.name %>:</span>
+            <div class="flex gap">
+              <%= form.select :target_room_id, options_from_collection_for_select(Room.opens.without(@room).active.ordered, :id, :name),
+                              { include_blank: true }, { style: '--input-padding: 0.3em 0.3em' } %>
+              <%= form.button class: "btn btn--negative center txt-large", type: "submit", name: "merge",
+                              data: { turbo_confirm: "Are you sure you want to merge and delete #{@room.name}?" } do %>
+                <%= image_tag "arrow-right.svg", role: "presentation" %>
+                <span class="for-screen-reader">Merge</span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+      <hr class="margin-block separator full-width" style="--border-style: solid">
+    <% end %>
+    <div class="txt-align-center">
+      <%= button_to_delete_room room %>
+    </div>
+  </section>
+<% end %>

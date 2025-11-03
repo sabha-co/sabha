@@ -1,0 +1,10 @@
+<%= turbo_stream.append dom_id(@room, :messages) do %>
+  <%= render partial: "messages/message", 
+             collection: @new_messages, 
+             cached: -> message { message_cache_key(message, room_id: @room.id, is_first_unread_message: message == @unread_at_message) }, 
+             locals: { current_room: @room, first_unread_message: @unread_at_message } %>
+<% end if @new_messages.any? %>
+
+<% @updated_messages.each do |message| %>
+  <%= turbo_stream.replace dom_id(message), partial: "messages/message", locals: { message: message, current_room: @room, first_unread_message: @unread_at_message } %>
+<% end %>

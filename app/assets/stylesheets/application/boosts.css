@@ -1,0 +1,109 @@
+/* Container */
+.boosts {
+  --boost-border-color: var(--color-border-dark);
+  position: relative;
+  left: -2px;
+}
+
+/* Item */
+.boost {
+  border: 1px solid var(--boost-border-color);
+  border-radius: 4rem;
+  margin-block-start: calc(var(--block-space-half) / 2);
+  opacity: 1;
+  padding: 0.1em 0.2em 0.1em 0.1em;
+  transition: opacity 100ms ease-in-out, box-shadow 150ms ease-in-out, transform 150ms ease-in-out;
+  cursor: pointer;
+
+  .boost__action {
+    margin-block-start: 0;
+  }
+
+  .btn:not(.avatar):not(.popup-menu .btn) {
+    font-size: 0.55rem;
+  }
+
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) {
+      --boost-border-color: var(--color-border-darker);
+
+      box-shadow: 0 0 0 var(--hover-size) var(--hover-color);
+    }
+  }
+
+  &:has(.input--boost):focus-within {
+    --boost-border-color: var(--color-selected-dark);
+    --hover-color: var(--color-selected-dark);
+
+    box-shadow: 0 0 0 var(--hover-size) var(--hover-color);
+  }
+}
+
+.btn:is(.boost__action) {
+  --btn-border-color: var(--boost-border-color);
+
+  font-size: 0.66em;
+  margin-block-start: calc(var(--block-space-half) / 2);
+
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) {
+      --boost-border-color: var(--color-border-darker)
+    }
+  }
+}
+
+.btn:is(.boost__delete) {
+  display: none;
+
+  .expanded & {
+    display: flex;
+  }
+}
+
+.boost__avatar {
+  --avatar-size: 2.2ch;
+
+  inline-size: auto;
+}
+
+.boost__form {
+  transition: none;
+
+  &.expanded {
+    animation: boost 0.2s both;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .boost__form-label:focus {
+    outline: none;
+  }
+
+  .input--boost {
+    --hover-size: 0;
+    --input-background: transparent;
+    --input-border-size: 0;
+    --input-padding: 0;
+    --outline-size: 0;
+
+    box-shadow: none;
+    display: inherit;
+    max-inline-size: 16ch;
+    min-inline-size: 2em;
+    outline: 0;
+  }
+}
+
+/* Variants */
+.boost--deleting {
+  animation: scale-fade-out 0.2s both;
+}
+
+/* Reactions */
+.quick-boosts {
+  display: grid;
+  grid-template-columns: repeat(4, 2em);
+}
+
+.boost-character {
+  font-size: 1.3rem;
+}

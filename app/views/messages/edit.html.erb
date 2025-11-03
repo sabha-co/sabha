@@ -1,0 +1,50 @@
+<turbo-frame id="<%= dom_id(@message, :edit) %>">
+  <div class="message__body position-relative" data-controller="scroll-into-view">
+    <div class="message__body-content message__body-content--editing gap">
+      <% if @message.content_type.attachment? %>
+        <%= message_attachment_presentation(@message) %>
+
+        <div class="message__edit-btns flex align-center justify-space-between gap full-width pad-block-start-half">
+          <%= button_tag class: "btn btn--negative center margin-block-end", type: "submit",
+                form: dom_id(@message, :delete_form), data: { turbo_confirm: "Are you sure you want to delete this message?" } do %>
+            <%= image_tag "trash.svg", aria: { hidden: "true" } %>
+            <span class="for-screen-reader">Delete message</span>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="composer--edit composer--rich-text">
+          <%= form_with model: @message, url: message_in_room_path(@room, @message), id: dom_id(@message, :form), data: {
+                controller: "form", action: "trix-file-accept->form#preventAttachment keydown.esc->form#cancel keydown.ctrl+enter->form#submit:prevent keydown.meta+enter->form#submit:prevent" } do |form| %>
+            <div class="full-width input input--actor min-width fill-white">
+              <%= form.rich_text_area :body,
+                    rows: 1,
+                    class: "input",
+                    aria: { multiline: "true", label: "Edit message" },
+                    autofocus: true,
+                    data: {
+                      controller: "rich-autocomplete",
+                      action: rich_text_data_actions,
+                      rich_autocomplete_url_value: autocompletable_users_path(room_id: @room&.id) } %>
+            </div>
+
+            <%= link_to "Close editor and discard changes", message_in_room_path(@room, @message), data: { form_target: "cancel" }, hidden: true %>
+
+            <div class="message__edit-btns flex align-center justify-space-between gap full-width pad-block-start-half">
+              <%= button_tag type: "submit", class: "btn btn--reversed" do %>
+                <%= image_tag "check.svg", aria: { hidden: "true" } %>
+                <span class="for-screen-reader">Save changes</span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="message__actions flex flex-wrap">
+      <%= link_to message_in_room_path(@room, @message), class: "message__action-btn message__edit-close-btn txt-small btn btn--borderless" do %>
+        <%= image_tag "remove.svg", class: "colorize--black", aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Close editor and discard changes</span>
+      <% end %>
+    </div>
+  </div>
+</turbo-frame>

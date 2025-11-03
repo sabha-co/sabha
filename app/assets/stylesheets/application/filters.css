@@ -1,0 +1,7 @@
+.filter--active li {
+  display: none;
+
+  &.selected {
+    display: flex;
+  }
+}

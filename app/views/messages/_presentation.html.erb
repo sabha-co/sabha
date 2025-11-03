@@ -1,0 +1,6 @@
+<%# locals: (message:) -%>
+<% cache [message, "presentation"] do %>
+  <div id="<%= dom_id(message, :presentation) %>" data-reply-target="body" data-messages-target="body" data-mentioned-users="<%= message.mentionee_ids.join(' ') %>">
+    <%= message_presentation(message) %>
+  </div>
+<% end %>

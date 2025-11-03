@@ -1,0 +1,36 @@
+<% @page_title = "Custom styles" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to edit_account_path %>
+  </div>
+<% end %>
+
+<section class="panel panel--wide txt-align-center flex flex-column position-relative" style="view-transition-name: custom-styles">
+  <%= form_with model: @account, url: account_custom_styles_url, class: "flex flex-column gap",
+      data: { controller: "form", action: "keydown.ctrl+enter->form#submit keydown.meta+enter->form#submit" } do |form| %>
+    <div class="panel__button">
+      <%= translation_button(:custom_styles) %>
+    </div>
+
+    <div class="pad-inline-double margin-inline">
+      <h1 class="margin-none">Custom CSS</h1>
+      <p class="flex flex-wrap align-center justify-center gap margin-none-block-start" style="--column-gap: 0.5ch; --row-gap: 0">
+        <span>Add custom CSS styles.</span>
+        <%= image_tag "alert.svg", class: "flex-inline colorize--black", size: 16, aria: { hidden: "true" } %>
+        <span>Use Caution: you could break things.</span>
+      </p>
+    </div>
+
+    <label class="flex align-start gap flex-item-grow">
+      <%= form.text_area :custom_styles, class: "input input--code txt--small", placeholder: "Add CSS styles…",
+            autocomplete: "off", spellcheck: "false", autocorrect: "off", autocapitalize: "off",
+            rows: 16, required: false %>
+    </label>
+
+    <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+      <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+      <span class="for-screen-reader">Save changes</span>
+    <% end %>
+  <% end %>
+</section>

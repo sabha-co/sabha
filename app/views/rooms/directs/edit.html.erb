@@ -1,0 +1,28 @@
+<% @page_title = "Edit settings for #{room_display_name(@room)}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to_last_room_visited %>
+  </div>
+<% end %>
+
+<div class="panel txt-align-center">
+  <section class="directs--edit margin-block-end">
+    <% users = @room.users.many? ? @room.users.without(Current.user) : @room.users %>
+    <% users.each do | user | %>
+      <div class="member flex flex-column gap fill-shade pad border-radius">
+        <figure class="avatar center" style="--avatar-border-radius: 10ch; --avatar-size: 10ch;" >
+          <%= avatar_link_tag user, loading: :lazy %>
+        </figure>
+
+        <strong><%= user.name %></strong>
+      </div>
+    <% end %>
+  </section>
+
+  <%= button_to rooms_direct_url(@room), method: :delete, class: "btn btn--negative center", aria: { label: "Delete Ping" },
+      data: { turbo_confirm: "Are you sure you want to delete this ping and all messages in it? This can’t be undone." } do %>
+    <%= image_tag "trash.svg", aria: { hidden: "true" } %>
+    Ping
+  <% end %>
+</div>

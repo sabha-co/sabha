@@ -1,0 +1,27 @@
+pets:
+  name: All Pets
+  type: Rooms::Open
+  creator: :david
+
+hq:
+  name: HQ
+  type: Rooms::Open
+  creator: :david
+
+watercooler:
+  name: All Talk
+  type: Rooms::Closed
+  creator: :david
+
+designers:
+  name: Designers
+  type: Rooms::Closed
+  creator: :david
+
+david_and_jason:
+  type: Rooms::Direct
+  creator: :david
+
+david_and_kevin:
+  type: Rooms::Direct
+  creator: :david

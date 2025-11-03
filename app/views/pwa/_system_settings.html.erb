@@ -1,0 +1,62 @@
+<details class="notifications-help hide-in-browser" data-notifications-target="details">
+  <summary class="btn">
+    <%= image_tag "external/gear.svg", aria: { hidden: "true" }, size: 20 %>
+    <strong>Check your <%= platform.operating_system %> settings</strong>
+    <%= image_tag "disclosure.svg", aria: { hidden: "true" }, size: 10, class: "disclosure" %>
+  </summary>
+
+  <% case
+    when platform.firefox? && platform.android? %>
+      <ol>
+        <li>Tap the <em><%= image_tag "menu-dots-vertical.svg", alt: "More options", size: 16 %></em> menu button.</li>
+        <li>Tap <em>Settings</em>.</li>
+        <li>Tap <em>Notifications</em>.</li>
+        <li>Tap <em><%= image_tag "external/switch.svg", alt: "the toggle button", size: 22 %></em> to <em>Allow <%= platform.browser.capitalize %> notifications</em>.</li>
+      </ol>
+    <% when platform.edge? && platform.desktop? %>
+      <ol>
+        <li>Click <em>Start</em>, then <em>Settings</em>.</li>
+        <li>Go to <em>System &gt; Notification</em>.</li>
+        <li>Click <em><%= image_tag "external/switch.svg", alt: "the toggle button", size: 22 %></em> <em>ON</em> for Campfire.</li>
+      </ol>
+    <% when (platform.firefox? || platform.chrome?) && platform.desktop? %>
+      <ol>
+        <% if platform.windows? %>
+          <li>Click <em>Start</em>, then <em>Settings</em>.</li>
+          <li>Go to <em>System &gt; Notification</em>.</li>
+          <li>Click <em><%= image_tag "external/switch.svg", alt: "the toggle button", size: 22 %></em> <em>ON</em> for Campfire.</li>
+        <% else %>
+          <li>Click <em aria-label="the Apple menu"></em> in the top left.</li>
+          <li>Click <em>System Settings…</em>.</li>
+          <li>Click <em>Notifications</em>.</li>
+          <li>Click <em>Campfire</em>.</li>
+          <li>Click <em><%= image_tag "external/switch.svg", alt: "the allow notifications switch", size: 22 %></em> to <em>Allow notifications</em>.</li>
+        <% end %>
+      </ol>
+    <% when platform.safari? && platform.desktop? %>
+      <ol>
+        <li>Click <em aria-label="the Apple menu"></em> in the top left.</li>
+        <li>Click <em>System Settings…</em>.</li>
+        <li>Click <em>Notifications</em>.</li>
+        <li>Click <em>Campfire</em>.</li>
+        <li>Click <em><%= image_tag "external/switch.svg", alt: "the allow notifications switch", size: 22 %></em> to <em>Allow notifications</em>.</li>
+      </ol>
+    <% when (platform.safari? || platform.chrome?) && platform.ios? %>
+      <ol>
+        <li>Open the <em><%= image_tag "external/gear.svg", aria: { hidden: "true" }, size: 20 %></em> Settings app.</li>
+        <li>Scroll to and tap <em>Campfire</em>.</li>
+        <li>Tap <em>Notifications</em>.</li>
+        <li>Tap <em><%= image_tag "external/switch.svg", alt: "the allow notifications switch button", size: 22 %></em> to <em>Allow Notifications</em>.</li>
+      </ol>
+    <% when platform.chrome? && platform.android? %>
+      <ol>
+        <li>Open the <em><%= image_tag "external/gear.svg", aria: { hidden: "true" }, size: 20 %></em> Settings app.</li>
+        <li>Tap <em>Notifications</em>.</li>
+        <li>Tap <em>App notifications</em>.</li>
+        <li>Scroll to <em>Campfire</em>.</li>
+        <li>Tap <em><%= image_tag "external/switch.svg", alt: "the switch", size: 22 %></em> to <em>Allow Notifications</em>.</li>
+      </ol>
+    <% else %>
+      <p>Ensure notifications are allowed for <%= platform.browser.capitalize %> in your system settings.</p>
+  <% end %>
+</details>

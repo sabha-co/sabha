@@ -1,0 +1,20 @@
+<% @page_title ||= "Inbox" %>
+<% @body_class = "sidebar inbox" %>
+
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+
+<div id="message-area" class="message-area">
+  <div class="message-area--empty min-width center">
+    <figure class="center pad">
+      <%= image_tag "messages-outlined.svg", aria: { hidden: "true" }, class: "colorize--black translucent" %>
+    </figure>
+  </div>
+
+  <%= yield :messages %>
+  <%= turbo_stream_from :inbox %>
+  <%= turbo_stream_from Current.user, :inbox %>
+</div>
+
+<% content_for :footer do %>
+  <div class="margin-block-start">&nbsp;</div>
+<% end %>

@@ -1,0 +1,3 @@
+<%= turbo_frame_tag room, dom_prefix((:sidebar if from_sidebar), :involvement) do %>
+  <%= button_to_change_involvement room, involvement, from_sidebar: %>
+<% end %>

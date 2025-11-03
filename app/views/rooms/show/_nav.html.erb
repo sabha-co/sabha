@@ -1,0 +1,37 @@
+<% content_for :nav do %>
+  <%= account_logo_tag if Current.account.logo.attached? %>
+
+  <%= tag.span class: "btn btn--reversed btn--faux room--current" do %>
+    <h1 class="room__contents txt-medium overflow-ellipsis">
+      <% if room.direct? %>
+        <span class="for-screen-reader">Ping with</span>
+      <% end %>
+
+      <% if room.thread? %>
+        🧵 <%= room_display_name(room.parent_message.room) %>
+      <% else %>
+        <%= room_display_name(room) %>
+      <% end %>
+    </h1>
+  <% end %>
+
+  <% if room.thread? %>
+    <%= link_back_to room_at_message_path(room.parent_message.room, room.parent_message) %>
+  <% else %>
+    <%= link_to_edit_room(room) %>
+  <% end %>
+
+  <% unless hotwire_native_app? %>
+    <div class="flex gap-half align-center">
+      <% unless room.direct? || room.thread? %>
+        <%= turbo_frame_tag dom_id(room, :involvement) do %>
+          <%= button_to_change_involvement(room, @membership.involvement) %>
+        <% end %>
+      <% end %>
+      
+      <% if room.one_on_one? %>
+        <%= render 'blocks/button', user: room.roommate_to(Current.user), compact: true %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

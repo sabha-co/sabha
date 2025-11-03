@@ -1,0 +1,40 @@
+<% url = session_transfer_url(user.transfer_id) %>
+
+<fieldset>
+  <legend class="gap">
+    <%= image_tag "laptop.svg", aria: { hidden: "true" }, size: 36, class: "colorize--black" %>
+    <%= image_tag "transfer.svg", aria: { hidden: "true" }, size: 36, class: "colorize--black" %>
+    <%= image_tag "mobile-phone.svg", aria: { hidden: "true" }, size: 36, class: "colorize--black" %>
+  </legend>
+
+
+  <div class="flex flex-column gap">
+    <% if Current.user != user %>
+      <div class="flex align-center gap justify-center">
+        <%= image_tag "crown.svg", size: 16, aria: { hidden: "true" }, class: "flex-item-no-shrink colorize--black" %>
+        <label for="session_transfer_url">Share to get them back into their account</label>
+      </div>
+    <% else %>
+      <label for="session_transfer_url" class="for-screen-reader">Use this link to login automatically on another device</label>
+    <% end %>
+
+    <input type="text" class="input" value="<%= url %>" id="session_transfer_url" readonly>
+
+    <div class="flex align-center center gap">
+      <%= link_to_zoom_qr_code(url) do %>
+        <span class="for-screen-reader">Show auto-login QR code</span>
+        <%= image_tag "qr-code.svg", aria: { hidden: "true" }, size: 20, class: "colorize--black" %>
+      <% end %>
+
+      <%= button_to_copy_to_clipboard(url) do %>
+        <span class="for-screen-reader">Copy auto-login link</span>
+        <%= image_tag "copy-paste.svg", aria: { hidden: "true" }, size: 20, class: "flex-item-no-shrink colorize--black" %>
+      <% end %>
+
+      <%= web_share_session_button(url, "Your sign-in link", "This is your own private sign-in URL, DO NOT SHARE IT. Use it to sign-in on another device or if you get locked out.") do %>
+        <span class="for-screen-reader">Share auto-login link</span>
+        <%= image_tag "share.svg", aria: { hidden: "true" }, size: 20, class: "flex-item-no-shrink colorize--black" %>
+      <% end %>
+    </div>
+  </div>
+</fieldset>

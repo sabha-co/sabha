@@ -1,0 +1,14 @@
+bender:
+  user: bender
+  receives: mentions
+  url: http://example.com/bender
+
+mentions:
+  user: betty
+  receives: mentions
+  url: http://example.com/bender
+
+everything:
+  user: nsa
+  receives: everything
+  url: http://example.com/nsa

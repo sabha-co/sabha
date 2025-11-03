@@ -1,0 +1,16 @@
+Hi <%= @user.name %>,
+
+You have <%= pluralize(@total_messages_count, "unread mention") %>:
+
+<% @messages.each do |message| %>
+<%= message.creator.name %> on <%= formatted_time message.created_at %> in <%= room_display_name(message.room) %> => <%= room_at_message_url(message.room, message) %> 
+<%= message.plain_text_body %>
+
+<% end %>
+
+<% if @more_mentions_count > 0 %>
+See all other <%= @more_mentions_count %> mentions here: <%= inbox_url %>
+<% end %>
+--
+To opt out of these emails, click here:
+<%= mailkick_unsubscribe_url(@user, "notifications") %>
