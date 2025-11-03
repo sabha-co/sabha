@@ -18,7 +18,9 @@ FROM --platform=$TARGETPLATFORM base as build
 
 # Install packages need to build gems and Node.js for Tailwind
 RUN apt-get update -qq && \
-    apt-get install -y build-essential git pkg-config nodejs npm
+    apt-get install -y build-essential git pkg-config curl && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
