@@ -1,0 +1,26 @@
+<%= turbo_frame_tag dom_id(@message, :new_boost) do %>
+  <div class="boost flex-inline postion--relative max-width fill-white" style="--column-gap: var(--inline-space-half)">
+    <%= form_with model: [ @message, Boost.new ], class: "boost__form flex align-center gap expanded",
+          data: { controller: "form scroll-into-view", turbo_frame: dom_id(@message, :boosting), action: "keydown.esc->form#cancel" } do |form| %>
+      <label class="boost__form-label flex gap" style="--column-gap: 0.7ch;" role="button" tabindex="0" aria-label="Add a boost">
+        <figure class="avatar boost__avatar flex-item-no-shrink">
+          <%= avatar_tag Current.user, loading: :lazy %>
+          <span class="for-screen-reader"><%= Current.user.name %></span>
+        </figure>
+
+        <%= form.text_field :content, id: nil, autofocus: true, autocomplete: "off", autocorrect: "off", maxlength: 16,
+              required: true, pattern: /\S+.*/, data: { boost_form_target: "input" }, class: "input input--boost txt-small" %>
+      </label>
+
+      <%= form.button class: "btn btn--reversed", type: "submit" do %>
+        <%= image_tag "check.svg", aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Submit</span>
+      <% end %>
+
+      <%= link_to message_boosts_path(@message), data: { turbo_frame: dom_id(@message, :boosts), form_target: "cancel" }, class: "btn btn--negative" do %>
+        <%= image_tag "minus.svg", aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Cancel</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

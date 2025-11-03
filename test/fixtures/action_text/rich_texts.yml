@@ -1,0 +1,64 @@
+first:
+  record: first (Message)
+  name: body
+  body: First post!
+
+second:
+  record: second (Message)
+  name: body
+  body: Seconded.
+
+third:
+  record: third (Message)
+  name: body
+  body: Third time's a charm.
+
+fourth:
+  record: fourth (Message)
+  name: body
+  body: You know what the fellow said – in Italy, for thirty years under the Borgias, they had warfare, terror, murder and bloodshed, but they produced Michelangelo, Leonardo da Vinci and the Renaissance. In Switzerland, they had brotherly love, they had five hundred years of democracy and peace – and what did that produce? The cuckoo clock.
+
+fifth:
+  record: fifth (Message)
+  name: body
+  body: Champagne, if you are seeking the truth, is better than a lie detector.
+
+sixth:
+  record: sixth (Message)
+  name: body
+  body: The sense of unhappiness is so much easier to convey than that of happiness. In misery we seem aware of our own existence, even though it may be in the form of a monstrous egotism—this pain of mine is individual, this nerve that winces belongs to me and to no other. But happiness annihilates us—we lose our identity.
+
+seventh:
+  record: seventh (Message)
+  name: body
+  body: A story has no beginning or end—arbitrarily one chooses that moment of experience from which to look back or from which to look ahead.
+
+eighth:
+  record: eighth (Message)
+  name: body
+  body: Hate is a lack of imagination.
+
+ninth:
+  record: ninth (Message)
+  name: body
+  body: And innocence is a kind of insanity
+
+tenth:
+  record: tenth (Message)
+  name: body
+  body: I don't care a damn about men who are loyal to the people who pay them, to organizations...I don't think even my country means all that much. There are many countries in our blood, aren't there, but only one person. Would the world be in the mess it is if we were loyal to love and not to countries?
+
+eleventh:
+  record: eleventh (Message)
+  name: body
+  body: People who like quotes love meaningless generalizations
+
+twelfth:
+  record: twelfth (Message)
+  name: body
+  body: Pain is easy to write. In pain we're all happily individual. But what can one write about happiness?
+
+thirteenth:
+  record: thirteenth (Message)
+  name: body
+  body: When we are not sure, we are alive.

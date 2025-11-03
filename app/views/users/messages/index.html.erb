@@ -1,0 +1,102 @@
+<% @page_title = "Messages by #{@user.name}" %>
+<% @body_class = "sidebar searches" %>
+
+<% content_for :nav do %>
+  <div class="searches__query flex align-center gap pad-block-start-half">
+    <%= tag.div class: "btn btn--reversed btn--faux align-center gap txt-nowrap" do %>
+      <%= avatar_image_tag(@user, size: 20, class: "avatar", loading: :lazy) %>
+      <%= @user.name %>    
+    <% end %>
+    <%= tag.div class: "btn btn--reversed btn--faux align-center gap txt-nowrap" do %>
+      <% if @query %>
+        <span class="overflow-ellipsis">“<%= @query %>”</span>
+      <% else %>
+        <span class="overflow-ellipsis">All messages</span>
+      <% end %>
+      <span class="flex-item-no-shrink"><%= @message_count %></span>
+    <% end %>
+  </div>
+
+  <div class="searches__recents align-center gap pad-block-half overflow-y overflow-hide-scrollbar">
+    <%= link_to user_messages_path(@user), class: "align-center gap room btn txt-nowrap" do %>
+      <span class="overflow-ellipsis">All messages by <%= @user.name %></span>
+    <% end %>
+    
+    <% @recent_searches.each do |search| %>
+      <%= link_to user_messages_path(@user, q: search.query), class: "align-center gap room btn txt-nowrap" do %>
+        <span class="overflow-ellipsis">“<%= search.query %>”</span>
+      <% end %>
+    <% end %>
+
+    <% if @recent_searches.any? %>
+      <%= button_to clear_user_searches_url(@user), method: :delete, class: "btn searches__btn",
+              data: { turbo_confirm: "Are you sure you want to clear your recent searches for #{@user.name}?" } do %>
+        <%= image_tag "broom.svg", aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Clear recent searches</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<% content_for :sidebar do %>
+  <div class="rooms position-relative flex flex-column gap overflow-y overflow-hide-scrollbar">
+    <%= link_to user_messages_path(@user), class: "align-center gap room btn txt-nowrap" do %>
+      <span class="overflow-ellipsis">All messages by <%= @user.name %></span>
+    <% end %>
+    
+    <% @recent_searches.each do |search| %>
+      <%= link_to user_messages_path(@user, q: search.query), class: "align-center gap room btn txt-nowrap" do %>
+        <span class="overflow-ellipsis">“<%= search.query %>”</span>
+      <% end %>
+    <% end %>
+
+    <% if @recent_searches.any? %>
+      <%= button_to clear_user_searches_url(@user), method: :delete, class: "btn searches__btn",
+              data: { turbo_confirm: "Are you sure you want to clear your recent searches for #{@user.name}?" } do %>
+        <%= image_tag "broom.svg", aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Clear recent searches</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<div id="message-area" class="message-area">
+  <div class="message-area--empty min-width center">
+    <figure class="center pad">
+      <%= image_tag "search.svg", aria: { hidden: "true" }, class: "colorize--black translucent" %>
+    </figure>
+  </div>
+
+  <%= search_results_tag("search-results", page_user_messages_url(@user, q: @query)) do %>
+    <%= render partial: "messages/message", collection: @messages, cached: -> message { message_cache_key(message, room_id: "search_#{Current.user.id}") } %>
+  <% end %>
+</div>
+
+<% content_for :footer do %>
+  <div class="composer flex align-end gap">
+    <%= link_to room_path(@return_to_room),
+            class: "btn flex-item-no-shrink margin-block-end d-hotwire-native-none", style: "view-transition-name: input-switcher; --btn-border-radius: 0.5em" do %>
+      <%= image_tag "arrow-left.svg", aria: { hidden: "true" } %>
+      <span class="for-screen-reader">Exit search </span>
+    <% end %>
+
+    <%= form_with url: user_searches_path(@user), class: "margin-block flex-item-grow contain flex align-center gap",
+          data: { controller: "form", action: "keydown.esc->form#cancel" } do |form| %>
+      <div class="composer__input flex align-center flex-item-grow gap full-width input input--actor min-width">
+        <%= image_tag "search.svg", size: 20, aria: { hidden: "true" }, class: "composer__input-hint colorize--black", style: "view-transition-name: input-btn;" %>
+
+        <%= form.text_field :q, value: params[:q], class: "searches__input input flex-item-grow", role: "searchbox", aria: { label: "search" }, autofocus: true, required: true %>
+
+        <%= link_to user_messages_path(@user), data: { form_target: "cancel" }, role: "button", class: "searches__reset" do %>
+          <%= image_tag "remove.svg", aria: { hidden: "true" }, size: 14, class: "colorize--black" %>
+          <span class="for-screen-reader">Clear search field</span>
+        <% end %>
+
+        <%= form.button type: "submit", class: "btn btn--reversed flex-item-no-shrink txt-small", style: "--btn-border-radius: 0.5em" do %>
+          <%= image_tag "arrow-up.svg", aria: { hidden: "true" } %>
+          <span class="for-screen-reader">Search</span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

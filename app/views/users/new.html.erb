@@ -1,0 +1,72 @@
+<% @page_title = "Sign up" %>
+<% @body_class = "signup" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-end">
+    <%= link_to new_session_path, class: "btn flex-item-justify-end" do %>
+      <%= image_tag "login-keys.svg", aria: { hidden: "true" } %>
+      <span class="for-screen-reader">Sign in</span>
+    <% end %>
+  </div>
+<% end %>
+
+<%= form_with model: @user, url: join_path(params[:join_code]), class: "center" do |form| %>
+  <section class="nametag u-relative">
+    <div class="flex justify-center align-center pad-block">
+      <%= image_tag "lanyard.svg", class: "nametag__lanyard", aria: { hidden: "true" } %>
+    </div>
+
+    <div class="nametag__inner flex flex-column gap">
+      <fieldset class="flex flex-column center-block">
+        <legend class="txt-align-center flex gap">
+          <%= account_logo_tag %>
+          <strong class="txt-large"><%= Current.account.name %></strong>
+        </legend>
+
+        <label class="align-center center avatar__form gap" data-controller="upload-preview">
+          <div class="btn input--file">
+            <%= image_tag "camera.svg", aria: { hidden: "true" } %>
+            <%= form.file_field :avatar, class: "input", accept: "image/*",
+                  data: { upload_preview_target: "input", action: "upload-preview#previewImage" } %>
+            <span class="for-screen-reader">Upload avatar</span>
+          </div>
+
+          <div class="btn avatar input--file txt-xx-large">
+            <%= image_tag @user.avatar.attached? ? @user.avatar : "default-avatar.svg", aria: { hidden: "true" }, data: { upload_preview_target: "image" } %>
+            <span class="for-screen-reader">Avatar</span>
+          </div>
+        </label>
+      </fieldset>
+
+      <% if flash[:alert] %>
+        <div class="flex align-center gap margin-block pad-inline fill-negative border-radius">
+          <p class="pad-inline-start txt-medium txt-negative"><%= flash[:alert] %></p>
+        </div>
+      <% end %>
+      
+      <div class="flex align-center gap">
+        <%= translation_button(:user_name) %>
+        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+          <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Name", autofocus: true, required: true,
+                data: { "1p-ignore": true } %>
+          <%= image_tag "person.svg", aria: { hidden: "true" }, size: 24, class: "colorize--black" %>
+        </label>
+      </div>
+
+      <div class="flex align-center gap">
+        <%= translation_button(:email_address) %>
+        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+          <%= form.email_field :email_address, class: "input", autocomplete: "username", placeholder: "Email address", required: true %>
+          <%= image_tag "email.svg", aria: { hidden: "true" }, size: 24, class: "colorize--black" %>
+        </label>
+      </div>
+
+      <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+        <%= image_tag "check.svg", aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Save</span>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
+<%= render "accounts/help_contact" %>

@@ -1,0 +1,6 @@
+<%= turbo_frame_tag :notifications do %>
+  <%= button_to email_subscription_path, method: :put, role: "checkbox", class: "btn #{"btn--reversed" if Current.user.subscribed?("notifications")}" do %>
+    <%= image_tag(Current.user.subscribed?("notifications") ? "check.svg" : "minus.svg", aria: { hidden: "true" }, size: 12) %>
+    <%= tag.span("Toggle notifications", class: "for-screen-reader", id: :notifications) %>
+  <% end %>
+<% end %>

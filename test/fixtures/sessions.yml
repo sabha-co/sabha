@@ -1,0 +1,5 @@
+david_safari:
+  user: david
+  token: AxJs94fteQ5Autv2VrKsH68c
+  user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) HEY/1.0.4 Chrome/83.0.4103.100 Electron/9.0.3 Safari/537.36"
+  last_active_at: <%= 2.hours.ago %>

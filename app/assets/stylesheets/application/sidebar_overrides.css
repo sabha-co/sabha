@@ -1,0 +1,13 @@
+/* Override for sidebar tool labels to make them not bold */
+.sidebar__tools .sidebar__tool-container .sidebar__tool .sidebar__tool-label {
+  font-weight: 400 !important;
+  letter-spacing: -0.04em !important;
+  top: 36px !important;
+  bottom: auto !important;
+  transform: translateX(-50%) !important;
+}
+
+/* Move the profile button 10px further down */
+.sidebar__tool.avatar {
+  bottom: calc(var(--block-space) - 10px) !important;
+} 

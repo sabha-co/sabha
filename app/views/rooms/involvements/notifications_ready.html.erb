@@ -1,0 +1,9 @@
+<% if @room.present? %>
+  <%= turbo_frame_tag dom_id(@room, :notifications) do %>
+    <%# When notifications are ready, we don't show anything %>
+  <% end %>
+<% else %>
+  <%= turbo_frame_tag "global_notifications" do %>
+    <%# When notifications are ready, we don't show anything %>
+  <% end %>
+<% end %>

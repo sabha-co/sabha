@@ -1,0 +1,13 @@
+<% @page_title = "No rooms yet" %>
+<% @body_class = "sidebar" %>
+
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+
+<div id="message-area" class="message-area">
+  <div class="message-area--empty min-width center">
+    <figure class="center pad">
+      <%= image_tag "messages-empty.svg", aria: { hidden: "true" }, class: "colorize--black translucent" %>
+      <span class="for-screen-reader"><%= Current.user.name %></span>
+    </figure>
+  </div>
+</div>

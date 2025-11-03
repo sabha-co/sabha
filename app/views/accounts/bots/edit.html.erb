@@ -1,0 +1,29 @@
+<% @page_title = "Edit bot" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to account_bots_path %>
+  </div>
+<% end %>
+
+<section class="panel" style="view-transition-name: chat-bot-<%= @bot.id %>">
+  <%= form_with model: @bot, url: account_bot_path(@bot), class: "flex flex-column gap" do |form| %>
+    <%= render "accounts/bots/form", form: form, bot: @bot %>
+  <% end %>
+
+  <hr class="separator full-width margin-block-double">
+
+  <div class="flex align-center gap justify-space-between">
+    <%= button_to account_bot_path(@bot), method: :delete, class: "btn txt--small btn--negative", aria: { label: "Delete this chat bot" },
+          data: { turbo_confirm: "Are you sure you want to permanently remove this bot from the account? This can’t be undone." } do %>
+      <%= image_tag "trash.svg", aria: { hidden: "true" }, size: 20 %>
+      <%= image_tag "bot.svg", aria: { hidden: "true" }, size: 20 %>
+    <% end %>
+
+    <%= button_to account_bot_key_path(@bot), method: :put, class: "btn full-width txt--small btn--negative", aria: { label: "Generate a new key" },
+          data: { turbo_confirm: "Are you sure you want to change the bot key? All usage of this bot must be updated." } do %>
+      <%= image_tag "refresh.svg", aria: { hidden: "true" }, size: 20 %>
+      <%= image_tag "key.svg", aria: { hidden: "true" }, size: 20 %>
+    <% end %>
+  </div>
+</section>

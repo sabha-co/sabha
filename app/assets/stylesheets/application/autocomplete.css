@@ -1,0 +1,188 @@
+.autocomplete__list {
+  background-color: var(--color-bg);
+  border-radius: 0.8em;
+  border: 1px solid var(--color-border);
+  max-block-size: 10em;
+  max-inline-size: 30ch;
+  min-inline-size: 15ch;
+  overflow-y: auto;
+  position: absolute;
+  z-index: 3;
+}
+
+.autocomplete__item {
+  --avatar-size: 2.5ch;
+}
+
+.btn:is(.autocomplete__btn) {
+  --btn-border-radius: 0;
+  --outline-size: 0 !important;
+
+  font-weight: normal !important;
+  gap: var(--inline-space-half);
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--color-text);
+    box-shadow: none !important;
+    color: var(--color-text-reversed);
+  }
+
+  .avatar:not(img) {
+    margin-inline-start: -0.5em;
+  }
+}
+
+[data-trix-content-type~="application/vnd.campfire.mention"] {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  position: relative;
+
+  .attachment__toolbar {
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    z-index: 2;
+  }
+}
+
+.mention {
+  --avatar-size: 1.1em;
+  --avatar-border-radius: var(--avatar-size);
+
+  align-items: center;
+  color: inherit;
+  display: inline-flex;
+  font-weight: 600;
+  line-height: var(--avatar-size);
+  margin: 0;
+  padding-inline-start: calc(
+    var(--avatar-size) + var(--inline-space) / 3
+  ) !important;
+  position: relative;
+
+  .avatar {
+    aspect-ratio: 1;
+    block-size: auto;
+    border-radius: var(--avatar-border-radius);
+    inline-size: var(--avatar-size);
+    inset-block: 0;
+    inset-inline: 0.1ch 0.3ch;
+    letter-spacing: -0.1em;
+    margin: 0;
+    overflow: clip;
+    position: absolute;
+  }
+
+  details.avatar {
+    overflow: visible;
+    letter-spacing: normal;
+
+    .avatar {
+      inset-inline: 0;
+      position: relative;
+      margin: auto;
+    }
+
+    .btn {
+      padding: var(--btn-padding, 0.5em 1.1em);
+    }
+  }
+
+  figcaption {
+    display: none;
+  }
+}
+
+.mention--everyone {
+  padding-inline-start: 0 !important;
+}
+
+blockquote .attachment--preview {
+  --avatar-size: 2.5ch;
+  --avatar-border-radius: 2em;
+
+  color: inherit;
+  display: inline-flex;
+  margin: 0;
+  padding-inline-start: 2.75ch !important;
+  position: relative;
+  z-index: 2;
+
+  img {
+    aspect-ratio: 1;
+    block-size: auto;
+    border-radius: var(--avatar-border-radius);
+    inline-size: var(--avatar-size);
+    inset-block-start: -1em;
+    inset-inline-start: 0;
+    margin: 0;
+    overflow: clip;
+    position: absolute;
+  }
+
+  figcaption {
+    display: none;
+  }
+}
+
+suggestion-select {
+  .autocompletable__unselect {
+    display: none;
+  }
+}
+
+suggestion-option {
+  color: var(--color-text-reversed);
+
+  &[selected]:not(.flashing-off) {
+    background: var(--color-text);
+
+    .autocomplete__btn {
+      background: var(--color-text);
+      color: var(--color-text-reversed);
+    }
+  }
+}
+
+.autocomplete__container {
+  --input-padding: 0.3em 0;
+
+  @media (min-width: 120ch) {
+    /* In Library overlay, --sidebar-width is 0; avoid collapsing width */
+    body.library-collapsed & {
+      max-inline-size: 100% !important;
+      inline-size: 100%;
+    }
+    /* Default pages keep previous calculation */
+    body:not(.library-collapsed) & {
+      max-inline-size: calc(
+        var(--sidebar-width) - (var(--btn-size) * 2) - (var(--column-gap) * 2) -
+          (var(--sidebar-inline-space) * 2)
+      );
+    }
+  }
+}
+
+.autocomplete__input {
+  --input-padding: 0.3em !important;
+
+  flex: 1;
+  gap: var(--input-padding);
+}
+
+.autocomplete__pill {
+  --avatar-size: var(--inline-space-double);
+
+  align-items: center;
+  background-color: var(--color-message-bg);
+  border-radius: var(--btn-border-radius, 2em);
+  color: currentColor;
+  display: inline-flex;
+  font-family: inherit;
+  gap: var(--input-padding);
+  justify-content: center;
+  line-height: inherit;
+  padding: var(--input-padding) calc(var(--input-padding) * 2);
+  text-align: start;
+}

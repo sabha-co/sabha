@@ -1,0 +1,94 @@
+<% @page_title = "Monthly Stats" %>
+<% @body_class = "sidebar stats-page" %>
+
+<% content_for :head do %>
+  <%= stylesheet_link_tag "application/stats" %>
+<% end %>
+
+<% content_for :nav do %>
+  <%= account_logo_tag if Current.account.logo.attached? %>
+  <%= tag.span class: "btn btn--reversed btn--faux room--current" do %>
+    <h1 class="room__contents txt-medium overflow-ellipsis">Monthly Stats</h1>
+  <% end %>
+  <%= link_to stats_path, class: "btn" do %>
+    <%= image_tag("arrow-left.svg", aria: { hidden: "true" }, size: 20) %>
+    <span>Back to Stats</span>
+  <% end %>
+  <%= link_to stats_monthly_path, class: "btn d-hotwire-native-none" do %>
+    <%= image_tag("refresh.svg", aria: { hidden: "true" }, size: 20) %>
+    <span class="for-screen-reader">Refresh stats</span>
+  <% end %>
+<% end %>
+
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+
+<section class="full-width">
+  <% 
+    # Group months by year
+    months_by_year = @months.group_by do |month|
+      year, _ = month.split('-')
+      year
+    end
+    
+    # Sort years in descending order
+    sorted_years = months_by_year.keys.sort.reverse
+  %>
+  
+  <% sorted_years.each do |year| %>
+    <h2 class="section-heading"><%= year %></h2>
+    <div class="stats-grid margin-block" style="margin-bottom: 2rem;">
+      <% 
+        # Sort months within year in descending order (December to January)
+        months_in_year = months_by_year[year].sort.reverse
+      %>
+      <% months_in_year.each do |month| %>
+        <% year, month_num = month.split('-') %>
+        <% month_name = Date.new(year.to_i, month_num.to_i, 1).strftime("%B %Y") %>
+        <div class="card grid-card">
+          <div class="card-header">
+            <h2 class="txt-h3 margin-none"><%= month_name %></h2>
+          </div>
+          <div class="card-body compact">
+            <div class="overflow-x-auto">
+              <table class="table full-width">
+                <tbody>
+                  <% if @monthly_stats[month].present? %>
+                    <% @monthly_stats[month].each_with_index do |user, index| %>
+                      <% is_current = user.id == Current.user&.id %>
+                      <tr class="<%= 'current-user' if is_current %>">
+                        <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
+                        <td>
+                          <div class="flex gap-inline align-center">
+                            <%= link_to user_path(user, from: "/stats/monthly"), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                              <% if user.avatar.attached? %>
+                                <div class="avatar avatar-xs">
+                                  <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
+                                </div>
+                              <% else %>
+                                <div class="avatar avatar-xs">
+                                  <%= user.name.first.upcase %>
+                                </div>
+                              <% end %>
+                              <span class="txt-truncate"><%= user.name %></span>
+                            <% end %>
+                          </div>
+                        </td>
+                        <td class="txt-right">
+                          <%= number_with_delimiter(user.message_count) %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  <% else %>
+                    <tr>
+                      <td colspan="3" class="txt-center">No messages yet</td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section> 

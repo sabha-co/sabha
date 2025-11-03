@@ -1,0 +1,162 @@
+/* Composer */
+.composer {
+  flex: none;
+  padding: var(--block-space-half) calc(var(--inline-space) + 1vw);
+}
+
+.composer__input-hint,
+.composer__context-btn {
+  .composer:has(.composer__input:focus-within) & {
+    @media (max-width: 120ch) {
+      display: none;
+    }
+  }
+}
+
+/* Attachments */
+.composer__attachment-btn {
+  --hover-filter: brightness(0.85);
+  margin-inline-end: -0.5em;
+
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) {
+      filter: var(--hover-filter);
+      box-shadow: none;
+    }
+  }
+}
+
+/* Pending attachments */
+.composer__filelist {
+  --row-gap: var(--block-space-half);
+
+  &:not(:empty) {
+    padding-block-end: var(--block-space-half);
+  }
+}
+
+.composer__file {
+  --aspect-ratio: 5/4;
+  --btn-border-radius: 1em;
+  --thumbnail-size: 15ch;
+
+  aspect-ratio: var(--aspect-ratio);
+  inline-size: var(--thumbnail-size);
+}
+
+:is(img, span):is(.composer__file-thumbnail) {
+  aspect-ratio: var(--aspect-ratio);
+  block-size: auto;
+  border-radius: var(--btn-border-radius);
+  border: 1px solid var(--color-border-darker);
+  inline-size: var(--thumbnail-size);
+  object-fit: cover;
+}
+
+.composer__file-thumbnail--common {
+  background: url(common-file-text.svg) no-repeat center;
+  background-size: 55%;
+}
+
+.composer__file-caption {
+  --icon-size: 1.3em;
+
+  &::after {
+    content: "";
+    block-size: var(--icon-size);
+    inline-size: var(--icon-size);
+    background: url("remove-circle.svg") no-repeat center;
+    margin-inline: 0.5em -0.5em;
+    flex-shrink: 0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &::after {
+      filter: invert(100%);
+    }
+  }
+}
+
+/* Rich text */
+.composer__rich-text-btn {
+  --hover-filter: brightness(0.85);
+
+  display: inline-flex;
+  margin-inline-start: -0.5em;
+
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) {
+      filter: var(--hover-filter);
+      box-shadow: none;
+    }
+  }
+
+  img {
+    inline-size: 1.7em;
+  }
+}
+
+/* Rich text editor styling for all devices */
+.composer--rich-text {
+  trix-toolbar {
+    display: block;
+  }
+
+  trix-editor.input {
+    margin-block-start: var(--block-space-half);
+  }
+}
+
+.composer--edit trix-toolbar {
+  border-block-end: 1px solid var(--color-border);
+  margin-inline: -0.8em;
+  padding-inline: 0.3em;
+  padding-block-end: 0.5em;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  inset-block-start: var(--indicator-position, 0.15rem);
+  inset-inline-start: var(--block-space);
+  opacity: var(--indicator-opacity, 0);
+  position: absolute;
+  transition: inset-block-start 300ms ease,
+              opacity 300ms ease;
+
+  .sidebar & {
+    @media (min-width: 120ch) {
+      margin-inline-start: 2vw;
+    }
+  }
+
+  &.typing-indicator--active {
+    --indicator-position: 0.15rem;
+    --indicator-opacity: 1;
+  }
+}
+
+.typing-indicator__author {
+  line-height: 1;
+  padding-inline-start: 1.5em;
+
+  &.spinner {
+    display: none;
+
+    .typing-indicator--active & {
+      display: block;
+    }
+  }
+}
+
+.composer__input {
+  .composer__rich-text-btn,
+  label:has(input[type="file"]) {
+    cursor: pointer;
+  }
+}
+
+@media (min-width: 120ch) and (any-hover: hover) and (pointer: fine) {
+  .composer__rich-text-btn {
+    display: inline-flex;
+  }
+}

@@ -1,0 +1,284 @@
+:root {
+  --font-family: -apple-system, BlinkMacSystemFont, Aptos, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --hover-color: var(--color-border-darker);
+  --hover-size: 0.15em;
+  --hover-filter: brightness(1);
+}
+
+html, body {
+  -webkit-text-size-adjust: none;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  line-height: 1.4;
+  overflow: initial;
+  text-size-adjust: none;
+}
+
+/* Links */
+:where(a:not([class]):not(:has(img))) {
+  color: var(--link-color, var(--color-link));
+
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) {
+      --hover-filter: brightness(1.3);
+
+      filter: var(--hover-filter);
+    }
+  }
+}
+
+:where(button, input, textarea, summary, .input, .btn) {
+  --outline-size: min(0.2em, 2px);
+
+  appearance: none;
+  border: none;
+  background-color: transparent;
+  font: inherit;
+  line-height: inherit;
+  text-decoration: none;
+  touch-action: manipulation;
+  transition: box-shadow 150ms ease, outline-offset 150ms ease, background-color 150ms ease, opacity 150ms ease, filter 150ms ease;
+
+  /* Hover */
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) {
+      filter: var(--hover-filter);
+      box-shadow: 0 0 0 var(--hover-size) var(--hover-color);
+    }
+  }
+
+  /* Keyboard navigation */
+  &:where(:not(:active)):focus-visible {
+    outline-width: var(--outline-size);
+    outline-color: var(--outline-color, var(--color-link));
+    outline-offset: var(--outline-offset, calc(var(--outline-size) * 2));
+  }
+
+  /* Pressing */
+  &:focus:not(:focus-visible) {
+    --outline-offset: 0;
+  }
+
+  /* Disabled */
+  &:where([disabled]):not(:hover):not(:active) {
+    cursor: not-allowed;
+    filter: brightness(0.75);
+  }
+}
+
+/* Turbo */
+turbo-frame,
+turbo-cable-stream-source {
+  display: contents;
+}
+
+/* For settings */
+fieldset {
+  border: 2px solid var(--fieldset-border-color, var(--color-border));
+  border-block-end: 0;
+  border-inline: 0;
+  display: flex;
+  flex-direction: column;
+  max-inline-size: 50ch;
+  padding: var(--block-space) 0;
+
+  &.border {
+    border-color: var(--color-border-darker);
+    border-style: solid;
+    border-width: 1px;
+  }
+}
+
+legend {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.membership-item:has(.btn.invisible) {
+  opacity: 0.5;
+}
+
+/* Dialogs */
+.dialog {
+  --width: 50ch;
+
+  background-color: var(--color-bg);
+  margin-inline: var(--inline-space);
+  inline-size: var(--width);
+  max-inline-size: calc(100dvw - var(--inline-space) * 2);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  &::backdrop {
+    background-image: linear-gradient(
+      45deg,
+      #fff500,
+      #ff9f00,
+      #f00,
+      #ec0061
+    );
+    opacity: 0.75;
+  }
+}
+
+.dialog__close {
+  position: absolute;
+  inset: calc(var(--block-space) * 1.5) var(--inline-space) auto auto;
+}
+
+.btn--plain {
+  --btn-background: transparent;
+  --btn-border-color: transparent;
+  --btn-border-size: 0;
+  --btn-padding: 0.25em 0.75em;
+  color: var(--color-text);
+  text-decoration: underline;
+
+  @media (any-hover: hover) {
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+/* Misc */
+menu {
+  outline: 0;
+}
+
+code {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-dark);
+  padding: 0.2em 0.4em;
+  border-radius: 0.3em;
+  font-weight: 500;
+}
+
+pre {
+  background-color: var(--color-bg);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monaco, monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.version-badge {
+  border: 1px solid var(--color-border-darker);
+  border-radius: 0.3em;
+  color: var(--color-border-darker);
+  padding: 0.1em var(--inline-space-half);
+}
+
+/* PWA install */
+.pwa__instructions {
+  @media (display-mode: standalone) {
+    display: none;
+  }
+}
+
+.pwa__installer {
+  display: none;
+
+  .pwa--can-install & {
+    display: block;
+  }
+}
+
+/* Notification settings */
+.notifications-help {
+  padding: var(--block-space) var(--inline-space);
+  background-color: var(--color-border);
+  border-radius: 0.5em;
+  border: 1px solid var(--color-border-dark);
+  margin-block-end: var(--block-space-half);
+
+  summary {
+    --column-gap: var(--inline-space-half);
+    --btn-background: transparent;
+    --btn-border-radius: 0.5em;
+    --btn-border-color: transparent;
+
+    display: flex;
+    justify-content: start;
+    padding: var(--block-space) var(--inline-space);
+    margin: calc(var(--block-space) * -1) calc(var(--inline-space) * -1);
+  }
+
+  .disclosure {
+    margin-inline-start: auto;
+    transition: transform 150ms ease;
+
+    .notifications-help[open] & {
+      transform: rotate(90deg);
+    }
+  }
+
+  img {
+    display: inline;
+    vertical-align: text-top;
+
+    @media (prefers-color-scheme: dark) {
+      filter: invert(100);
+    }
+  }
+
+  li {
+    margin-block: var(--block-space-half);
+  }
+
+  em {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border-darker);
+    padding: 0.2em 0.4em;
+    border-radius: 0.3em;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 0.9em;
+  }
+}
+
+/* Language translations */
+.lanuage-list-menu {
+  --max-width: 40ch;
+
+  background-color: var(--color-border);
+  border: 1px solid var(--color-border-dark);
+  border-radius: 0.5em;
+  inset: auto;
+  inline-size: max-content;
+  margin-inline: var(--inline-space);
+  max-inline-size: 40ch;
+  overflow: clip;
+  position: absolute;
+  z-index: 3;
+
+  @media (max-width: 120ch) {
+    max-inline-size: calc(var(--max-width) - var(--inline-space));
+  }
+}
+
+.language-list {
+  display: grid;
+  gap: var(--block-space-half) var(--inline-space);
+  grid-template-rows: min-content;
+  grid-template-columns: min-content 1fr;
+  justify-content: start;
+  margin: 0;
+  padding: var(--block-space) var(--inline-space-double);
+  text-align: start;
+}
+
+/* Nicer scrollbars on Chrome 29+. This is intended for Windows machines, but */
+/* there's not a way to target Windows using CSS, so Chrome on Mac will have */
+/* slightly thinner scrollbars than normal. #C1C1C1 is the default color on Macs. */
+@media screen and (-webkit-min-device-pixel-ratio:0) and (min-resolution:.001dpcm) {
+  * {
+    scrollbar-color: #C1C1C1 transparent;
+    scrollbar-width: thin;
+  }
+}

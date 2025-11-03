@@ -1,0 +1,14 @@
+<% indent = [local_assigns[:indent].to_i, 3].min %>
+<li class="flex align-center gap margin-none min-width membership-item" style="padding-left: calc(var(--block-space) * <%= indent %>)">
+  <%= link_to room_path(membership.room), class: "overflow-ellipsis fill-shade txt-primary txt-undecorated" do %>
+    <%= room_display_name(membership.room) %>
+  <% end %>
+
+  <hr class="separator" aria-hidden="true">
+
+  <span class="txt-small">
+    <%= turbo_frame_tag dom_id(membership.room, :involvement) do %>
+      <%= button_to_change_involvement(membership.room, membership.involvement) %>
+    <% end %>
+  </span>
+</li>

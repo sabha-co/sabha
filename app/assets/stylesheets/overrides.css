@@ -1,0 +1,203 @@
+body {
+  font-size: 0.95rem;
+}
+
+.txt-medium {
+  font-size: 0.95rem;
+}
+
+.quick-boosts {
+  font-size: 1rem;
+}
+
+.message__day-separator {
+  font-weight: 700;
+}
+
+.room {
+  font-weight: 400;
+  font-size: 90%;
+  margin-inline-end: inherit;
+}
+
+.rooms__new-btn {
+  margin-inline-end: auto !important;
+}
+
+.avatar > img {
+  box-shadow:
+    rgb(255, 255, 255) 0px 0px 0px 0px,
+    rgb(0, 0, 0) 0px 0px 0px 1px,
+    rgba(0, 0, 0, 0) 0px 0px 0px 0px;
+}
+
+.avatar--icon img {
+  box-shadow:
+    rgb(255, 255, 255) 0px 0px 0px 0px,
+    rgb(0, 0, 0) 0px 0px 0px 0px,
+    rgba(0, 0, 0, 0) 0px 0px 0px 0px;
+}
+
+.account-logo > img {
+  box-shadow:
+    rgb(255, 255, 255) 0px 0px 0px 0px,
+    rgb(0, 0, 0) 0px 0px 0px 0px,
+    rgba(0, 0, 0, 0) 0px 0px 0px 0px !important;
+}
+
+#nav:has(.room--current) .account-logo {
+  display: none;
+}
+
+@media (min-width: 100ch) {
+  #nav:has(.room--current) .account-logo {
+    display: block;
+  }
+}
+
+/* Library: match small-screen nav padding to the rest of the app */
+@media (max-width: 120ch) {
+  body.library-collapsed #nav {
+    padding-block: var(--block-space-half);
+
+    /* replicate subtle top fade used with sidebar pages */
+    &::before {
+      background: linear-gradient(
+        180deg,
+        oklch(var(--lch-white)) 20%,
+        oklch(var(--lch-white) / 0) 100%
+      );
+      content: "";
+      inset: 0;
+      position: absolute;
+      z-index: -1;
+    }
+  }
+}
+
+body.library-collapsed #nav {
+  background-color: oklch(var(--lch-white));
+}
+
+@media (prefers-color-scheme: dark) {
+  body.library-collapsed #nav {
+    background-color: oklch(var(--lch-white) / 0);
+    background-color: #000;
+  }
+}
+
+@media (min-width: 120ch) {
+  body.library-collapsed #nav:has(.btn--faux)::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -5vw;
+    right: 0;
+    background-color: oklch(var(--lch-white));
+    z-index: -1;
+  }
+}
+
+@media (min-width: 120ch) and (prefers-color-scheme: dark) {
+  body.library-collapsed #nav:has(.btn--faux)::before {
+    background-color: #000;
+  }
+}
+
+@media (max-width: 100ch) {
+  .account-has-logo .room--current .room__contents {
+    --num-buttons: 2;
+  }
+}
+
+.message__meta .message__actions .message__options-btn {
+  --btn-padding: 0 0.5em;
+  aspect-ratio: unset;
+  block-size: auto;
+  border-radius: 0.3em;
+}
+
+@media (min-width: 100ch) {
+  .message__meta .message__actions {
+    inset-block-start: inherit;
+    inset-inline-start: inherit;
+    position: inherit;
+    transform: inherit;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .message__options-btn {
+    opacity: 0.5;
+    transition: opacity 0ms ease-in-out;
+    transition-delay: 0ms;
+  }
+
+  .message:hover .message__options-btn {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .message__options-btn {
+    opacity: 0.5;
+  }
+
+  .message__options-btn[open] {
+    opacity: 1;
+  }
+}
+
+.message__body {
+  max-inline-size: 100%;
+}
+
+.message--me {
+  grid-auto-columns: var(--inline-space-double) 1fr min-content;
+}
+
+.message--me .message__body,
+.message--me .message__meta,
+.message--me .message__heading {
+  justify-self: start;
+}
+
+.message--me .message__meta,
+.message--me .message__heading {
+  flex-direction: row;
+  justify-content: start;
+}
+
+.message--me .message__meta {
+  padding-inline: 0;
+}
+
+.message--me .message__avatar {
+  margin-inline: inherit;
+}
+
+.message--me .message__actions {
+  justify-content: end;
+}
+
+@media (min-width: 100ch) {
+  .message--me .message__actions {
+    inset-inline-end: auto;
+    inset-inline-start: auto;
+  }
+}
+
+.message--emoji:not(:has(.composer--edit)).message--me .message__body-content {
+  padding: var(--content-padding-block) 0 var(--content-padding-block)
+    var(--content-padding-inline);
+  text-align: left;
+}
+
+.message__actions-menu {
+  --btn-size: 2.1em;
+}
+
+.message__actions-menu .quick-boosts {
+  --btn-size: 2.65em;
+}

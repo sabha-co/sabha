@@ -1,0 +1,18 @@
+default: &default
+  adapter: redis
+  url: redis://localhost:6379
+
+development:
+  <<: *default
+  channel_prefix: campfire_development
+
+test:
+  adapter: test
+
+performance:
+  <<: *default
+  channel_prefix: campfire_performance
+
+production:
+  <<: *default
+  channel_prefix: campfire_production

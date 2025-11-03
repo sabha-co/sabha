@@ -1,0 +1,99 @@
+<section class="txt-align-center" style="min-width: 300px; width: 300px; max-width: 300px;">
+  <div class="flex flex-column gap">
+    <div class="avatar txt-xx-large center relative" style="background: white">
+      <%= avatar_image_tag(user, class: "avatar", alt: "Profile avatar") %>
+    </div>
+
+    <% if user.bot? %>
+      <div class="pad-double--inline push--inline push--block-start">
+        <h1 class="txt-large txt-tight-lines margin-block-end">
+          <%= user.name %>
+        </h1>
+        
+        <% if user.active? %>
+          <%= button_to_direct_room_with user %>
+        <% else %>
+          <div class="txt-normal"><%= user.name %> is no longer on this account</div>
+        <% end %>
+      </div>
+    <% else %>
+      <% if user.active? %>
+        <div class="flex flex-column gap" style="--row-gap: calc(var(--block-space) / 3);">
+          <h1 class="txt-large txt-tight-lines margin-none">
+            <%= link_to user_path(user), title: user.title, style: "color: var(--color-txt)", data: { turbo_frame: "_top" } do %>
+              <%= user.name %>
+            <% end %>
+          </h1>
+          <div class="txt-normal break-word"><%= auto_link user.bio %></div>
+          <div class="txt-small txt-subtle">Joined <%= user.joined_at.strftime("%b %d, %Y") %></div>
+          <div class="flex gap justify-center margin-block-start" style="--column-gap: calc(var(--block-space) / 3)">
+            <%= link_to with_protocol(user.twitter_url), target: "_blank" do %>
+              <%= image_tag "social/twitter.svg", size: 20 %>
+            <% end if user.twitter_url.present? %>
+            <%= link_to with_protocol(user.linkedin_url), target: "_blank" do %>
+              <%= image_tag "social/linkedin.svg", size: 20 %>
+            <% end if user.linkedin_url.present? %>
+          </div>
+          <% if user.personal_url.present? %>
+            <div class="break-word">
+              <%= link_to friendly_domain(user.personal_url), with_protocol(user.personal_url),
+                          target: "_blank", class: "txt-small txt-medium", style: "color: var(--color-txt)" %>
+            </div>
+          <% end %>
+
+          <div class="margin-block-start">
+            <% rank = user.message_rank %>
+            <div class="txt-small">
+              <% if rank == 1 %>
+                🥇 <%= pluralize(number_with_delimiter(user.total_message_count), 'message') %> posted (Rank #<%= number_with_delimiter(rank) %>)
+              <% elsif rank == 2 %>
+                🥈 <%= pluralize(number_with_delimiter(user.total_message_count), 'message') %> posted (Rank #<%= number_with_delimiter(rank) %>)
+              <% elsif rank == 3 %>
+                🥉 <%= pluralize(number_with_delimiter(user.total_message_count), 'message') %> posted (Rank #<%= number_with_delimiter(rank) %>)
+              <% else %>
+                <%= pluralize(number_with_delimiter(user.total_message_count), 'message') %> posted (Rank #<%= number_with_delimiter(rank) %>)
+              <% end %>
+            </div>
+          </div>
+
+          <%= button_to rooms_directs_path(user_ids: [ user.id ]), class: "btn btn--reversed full-width txt-medium", data: { turbo_frame: "_top" } do %>
+            <%= image_tag "messages.svg", aria: { hidden: "true", label: "Ping #{user.name}" } %>
+          <% end %>
+          
+          <div class="txt-align-center">
+            <div class="txt-subdued">
+              <span style="font-size: var(--font-size-small);">
+                <%= link_to "All messages from #{user.name}...", user_messages_path(user), data: { turbo_frame: "_top" } %>
+              </span>
+            </div>
+          </div>
+          
+        </div>
+      <% else %>
+        <div>
+          <h1 class="txt-large margin-none"><%= user.name %></h1>
+          <div class="txt-normal"><%= user.name %> is no longer on this account</div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</section>
+
+<style>
+  /* Target only profile popups with more specific selectors */
+  .message__avatar-menu,
+  div[data-popup-target="menu"]:has(.avatar.txt-xx-large) {
+    width: 320px !important;
+    min-width: 320px !important;
+    max-width: 320px !important;
+    padding: 1rem !important;
+  }
+  
+  /* Target only the inner content of profile popups */
+  .message__avatar-menu .txt-align-center[style*="width: 300px"],
+  div[data-popup-target="menu"]:has(.avatar.txt-xx-large) .txt-align-center[style*="width: 300px"] {
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
+  }
+</style>

@@ -1,0 +1,3 @@
+<%= render layout: "rooms/layouts/new" do %>
+  <%= render "rooms/opens/form", room: @room, users: @users, type_change_path: new_rooms_closed_path %>
+<% end %>

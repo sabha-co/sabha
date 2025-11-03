@@ -1,0 +1,173 @@
+<% @page_title = "#{@room.name} Stats" %>
+<% @body_class = "stats-page" %>
+
+<% content_for :head do %>
+  <%= stylesheet_link_tag "application/stats" %>
+<% end %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start flex gap">
+    <%= link_to room_path(@room), class: "btn" do %>
+      <%= image_tag("arrow-left.svg", aria: { hidden: "true" }, size: 20) %>
+      <span class="for-screen-reader">Back to Room</span>
+    <% end %>
+    
+    <% if @room.direct? || @room.creator == Current.user || Current.user.administrator? %>
+      <%= link_to @room.open? ? edit_rooms_open_path(@room) : (@room.closed? ? edit_rooms_closed_path(@room) : (@room.direct? ? edit_rooms_direct_path(@room) : (@room.thread? ? edit_rooms_thread_path(@room) : nil))), class: "btn" do %>
+        <%= image_tag("pencil.svg", aria: { hidden: "true" }, size: 20) %>
+        <span>Edit Room</span>
+      <% end %>
+    <% end %>
+    
+    <%= link_to room_stats_path(@room), class: "btn d-hotwire-native-none" do %>
+      <%= image_tag("refresh.svg", aria: { hidden: "true" }, size: 20) %>
+      <span class="for-screen-reader">Refresh stats</span>
+    <% end %>
+  </div>
+<% end %>
+
+<section class="full-width" style="margin-top: 2rem;">
+  <div class="stats-grid margin-block">
+    <!-- Room Info Card -->
+    <div class="card grid-card">
+      <div class="card-header">
+        <h2 class="txt-h3 margin-none">Room Info</h2>
+      </div>
+      <div class="card-body compact">
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <% if @room_stats[:name].present? %>
+              <tr>
+                <td>Room name</td>
+                <td class="txt-right"><%= @room_stats[:name] %></td>
+              </tr>
+              <% end %>
+              <tr>
+                <td>Created</td>
+                <td class="txt-right"><%= @room_stats[:created_at].strftime("%Y-%m-%d") %></td>
+              </tr>
+              <tr>
+                <td>Created by</td>
+                <td class="txt-right">
+                  <%= link_to user_path(@room_stats[:creator], from: room_stats_path(@room)), class: "flex align-center hover-target justify-end", style: "text-decoration: none; gap: 4px;" do %>
+                    <% if @room_stats[:creator].avatar.attached? %>
+                      <div class="avatar avatar-xs">
+                        <%= image_tag @room_stats[:creator].avatar, alt: @room_stats[:creator].name, loading: "lazy" %>
+                      </div>
+                    <% else %>
+                      <div class="avatar avatar-xs">
+                        <%= @room_stats[:creator].name.first.upcase %>
+                      </div>
+                    <% end %>
+                    <span><%= @room_stats[:creator].name %></span>
+                  <% end %>
+                </td>
+              </tr>
+              <% if @room_stats[:last_message_at].present? %>
+              <tr>
+                <td>Last update</td>
+                <td class="txt-right"><%= time_ago_in_words(@room_stats[:last_message_at]) %> ago</td>
+              </tr>
+              <% end %>
+              <tr>
+                <td>Access</td>
+                <td class="txt-right"><%= number_with_delimiter(@room_stats[:access_count]) %> <%= @room_stats[:access_count] == 1 ? 'member' : 'members' %></td>
+              </tr>
+              <% unless @room.direct? %>
+              <tr>
+                <td>Visibility</td>
+                <td class="txt-right"><%= number_with_delimiter(@room_stats[:visibility_count]) %> <%= @room_stats[:visibility_count] == 1 ? 'member' : 'members' %></td>
+              </tr>
+              <tr>
+                <td>Starred</td>
+                <td class="txt-right"><%= number_with_delimiter(@room_stats[:starred_count]) %> <%= @room_stats[:starred_count] == 1 ? 'member' : 'members' %></td>
+              </tr>
+              <% end %>
+              <tr>
+                <td>Messages</td>
+                <td class="txt-right"><%= number_with_delimiter(@room_stats[:messages_count]) %></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Top Talkers Card -->
+    <div class="card grid-card">
+      <div class="card-header">
+        <h2 class="txt-h3 margin-none">Top Talkers</h2>
+      </div>
+      <div class="card-body compact">
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <% if @top_talkers.any? %>
+                <% @top_talkers.each_with_index do |user, index| %>
+                  <% is_current = user.id == Current.user&.id %>
+                  <tr class="<%= 'current-user' if is_current %>">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
+                    <td>
+                      <div class="flex gap-inline align-center">
+                        <%= link_to user_path(user, from: room_stats_path(@room)), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(user.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+                
+                <% if Current.user && @current_user_stats && @current_user_stats.message_count.to_i > 0 %>
+                  <tr>
+                    <td colspan="3" class="txt-center txt-small txt-faded" style="padding: 0.25rem;">
+                      <div style="border-top: 1px dashed var(--color-border-darker); margin: 0.25rem 0;"></div>
+                    </td>
+                  </tr>
+                  <tr class="current-user">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= @current_user_rank %></td>
+                    <td>
+                      <div class="flex gap-inline align-center">
+                        <%= link_to user_path(Current.user, from: room_stats_path(@room)), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if Current.user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag Current.user.avatar, alt: Current.user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= Current.user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= Current.user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(@current_user_stats.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
+                <tr>
+                  <td colspan="3" class="txt-center">No messages yet</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section> 

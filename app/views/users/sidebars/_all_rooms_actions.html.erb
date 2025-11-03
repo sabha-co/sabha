@@ -1,0 +1,32 @@
+<%= tag.details class: "position-relative", data: {
+  controller: "popup", popup_orientation_top_class: "",
+  action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
+} do %>
+  <summary class="btn action-btn options-btn">
+    <%= image_tag "menu-dots-horizontal.svg", size: 18, class: "colorize--black", aria: { hidden: "true" } %>
+    <span class="for-screen-reader">Room options</span>
+  </summary>
+
+  <div class="popup-menu actions-menu border shadow" data-popup-target="menu">
+    <%= link_to mentions_inbox_path, class: "btn action-btn full-width", style: "view-transition-name: new-room" do %>
+      <span>Mentions</span>
+    <% end %>
+
+    <%= link_to notifications_inbox_path, class: "btn action-btn full-width", style: "view-transition-name: new-room" do %>
+      <span>Notifications</span>
+    <% end %>
+
+    <%= link_to messages_inbox_path, class: "btn action-btn full-width", style: "view-transition-name: new-room" do %>
+      <span>All messages</span>
+    <% end %>
+
+    <%= link_to bookmarks_inbox_path, class: "btn action-btn full-width", style: "view-transition-name: new-room" do %>
+      <span>Bookmarks</span>
+    <% end %>
+
+    <%= button_to clear_inbox_path(stay: true), class: "btn action-btn full-width",
+                  data: { turbo_confirm: "Are you sure you want to mark everything as seen?", action: "click->popup#close" } do %>
+      <span>Mark all as seen</span>
+    <% end %>
+  </div>
+<% end %>

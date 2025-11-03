@@ -1,0 +1,39 @@
+<% @page_title = @room.thread? ? "🧵 #{room_display_name(@room.parent_message.room)}" : room_display_name(@room) %>
+<% @body_class = "sidebar" %>
+<% content_for :head do %>
+  <%= turbo_exempts_page_from_preview %>
+  <meta name="current-room-id" content="<%= @room.id %>">
+<% end %>
+
+<%= render "rooms/show/nav", room: @room %>
+
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+
+<%= message_area_tag(@room) do %>
+  <%= render "messages/template" %>
+
+  <%= messages_tag(@room) do %>
+    <%= render "rooms/show/invitation", room: @room %>
+    <%= render "rooms/show/block_notice", room: @room %>
+    <% @messages.each do |message| %>
+      <% if message == @room.parent_message %>
+        <% cache message_cache_key(message, room_id: @room.id, is_parent: true) do %>
+          <%= render "messages/parent_message", message: message, thread: @room %>
+        <% end %>
+      <% else %>
+        <%= render partial: "messages/message", locals: { message: message, current_room: @room, first_unread_message: @first_unread_message }, cached: message_cache_key(message, room_id: @room.id, is_first_unread_message: message == @first_unread_message) %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= turbo_stream_from @membership %>
+  <%= turbo_stream_from @room, :messages %>
+  <%= turbo_stream_from Current.user, @room, :messages %>
+  <%= button_to_jump_to_newest_message %>
+<% end %>
+
+<% if Current.user.blocked_in?(@room) %>
+  <%= render "rooms/show/composer_not_allowed", room: @room %>
+<% else %>
+  <%= render "rooms/show/composer", room: @room %>
+<% end %>
