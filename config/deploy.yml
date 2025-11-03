@@ -12,10 +12,7 @@ proxy:
   app_port: 3000
 
 registry:
-  username: <%= ENV.fetch("REGISTRY_USERNAME") %>
-
-  password:
-    - KAMAL_REGISTRY_PASSWORD
+  server: localhost:5000
 
 builder:
   arch: amd64
@@ -41,6 +38,17 @@ env:
     - GUMROAD_PRODUCT_IDS
     - WEBHOOK_SECRET
     - COOKIE_DOMAIN
+    - APP_NAME
+    - APP_SHORT_NAME
+    - APP_DESCRIPTION
+    - APP_HOST
+    - SUPPORT_EMAIL
+    - MAILER_FROM_NAME
+    - MAILER_FROM_EMAIL
+    - THEME_COLOR
+    - BACKGROUND_COLOR
+    - ANALYTICS_DOMAIN
+    - CSP_FRAME_ANCESTORS
 
 volumes:
   - "/disk/campfire/:/rails/storage/"
