@@ -2,7 +2,6 @@ class InboxesController < ApplicationController
   before_action :set_message_pagination_anchors, only: %i[ mentions notifications messages ]
   before_action :set_bookmark_pagination_anchors, only: %i[ bookmarks ]
   before_action :set_sidebar_memberships
-  before_action :ensure_is_expert, only: %i[ answers ]
 
   def show
     clear_last_loaded_message_timestamps
@@ -18,11 +17,6 @@ class InboxesController < ApplicationController
 
   def threads
     @messages = find_threads
-  end
-
-  def answers
-    @messages = find_answers
-    @answer_count = Current.user.reachable_messages.where(answered_by: Current.user).count
   end
 
   def notifications
@@ -79,20 +73,16 @@ class InboxesController < ApplicationController
       Bookmark.populate_for(bookmarks.map(&:message))
     end
 
-    def find_answers
-      Bookmark.populate_for paginate(Current.user.reachable_messages.where(answered_by: Current.user).with_threads.with_creator)
-    end
-
     def find_threads
       # Find parent messages of threads where:
       # 1. User has visible membership in the thread, OR
       # 2. User has everything involvement in the parent room
-      thread_memberships = Current.user.memberships.active.visible.joins(:room).where(rooms: { type: 'Rooms::Thread' })
-      parent_room_memberships = Current.user.memberships.active.involved_in_everything.joins(:room).where.not(rooms: { type: 'Rooms::Thread' })
+      thread_memberships = Current.user.memberships.active.visible.joins(:room).where(rooms: { type: "Rooms::Thread" })
+      parent_room_memberships = Current.user.memberships.active.involved_in_everything.joins(:room).where.not(rooms: { type: "Rooms::Thread" })
 
       thread_ids_from_memberships = thread_memberships.pluck(:room_id)
       parent_room_ids = parent_room_memberships.pluck(:room_id)
-      thread_ids_from_parent_rooms = Room.where(type: 'Rooms::Thread')
+      thread_ids_from_parent_rooms = Room.where(type: "Rooms::Thread")
                                           .joins(:parent_message)
                                           .where(messages: { room_id: parent_room_ids })
                                           .pluck(:id)
@@ -110,8 +100,8 @@ class InboxesController < ApplicationController
 
       base_query = Message.active
                           .joins(:room)
-                          .where.not(rooms: { type: 'Rooms::Thread' })
-                          .where(id: Room.active.where(id: all_thread_ids, type: 'Rooms::Thread')
+                          .where.not(rooms: { type: "Rooms::Thread" })
+                          .where(id: Room.active.where(id: all_thread_ids, type: "Rooms::Thread")
                                       .where("messages_count > 0")
                                       .pluck(:parent_message_id))
                           .with_threads
@@ -157,9 +147,5 @@ class InboxesController < ApplicationController
 
       time = Time.iso8601(time)
       time > 1.hour.ago ? time : Time.current
-    end
-
-    def ensure_is_expert
-      head :forbidden unless Current.user.expert? || Current.user.administrator?
     end
 end

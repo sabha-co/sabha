@@ -68,22 +68,21 @@ module Message::Broadcasts
   end
 
   def broadcast_to_inbox_threads
-
     return unless room.thread? && room.parent_message
-    
+
     parent_message = room.parent_message
     thread = room
-    
+
     thread.reload
-    
+
     thread_user_ids = thread.memberships.active.visible.pluck(:user_id)
     parent_room_user_ids = parent_message.room.memberships.active.involved_in_everything.pluck(:user_id)
     all_user_ids = (thread_user_ids + parent_room_user_ids).uniq
-    
+
     all_user_ids.each do |user_id|
       next if user_id == creator_id
       user = User.find(user_id)
-      
+
       if thread.messages_count == 1
         broadcast_append_to user, :inbox_threads,
                            target: "inbox",

@@ -1,5 +1,5 @@
 class Message < ApplicationRecord
-  include Attachment, Broadcasts, Mentionee, Pagination, Searchable, Deactivatable, Answerable
+  include Attachment, Broadcasts, Mentionee, Pagination, Searchable, Deactivatable
 
   belongs_to :room, counter_cache: true
   belongs_to :creator, class_name: "User", default: -> { Current.user }
@@ -99,7 +99,7 @@ class Message < ApplicationRecord
         room,
         :messages,
         target: "#{ActionView::RecordIdentifier.dom_id(room, :replies_separator)}_count",
-        html: ActionController::Base.helpers.pluralize(room.messages_count, 'reply', 'replies')
+        html: ActionController::Base.helpers.pluralize(room.messages_count, "reply", "replies")
       )
     end
   end

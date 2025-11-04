@@ -79,22 +79,6 @@ CREATE INDEX "index_searches_on_user_id" ON "searches" ("user_id");
 CREATE INDEX "index_searches_on_creator_id" ON "searches" ("creator_id");
 CREATE TABLE IF NOT EXISTS "webhook_events" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "source" varchar, "event_type" varchar, "payload" text, "processed_at" datetime(6), "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL);
 CREATE INDEX "index_memberships_on_room_user_involvement" ON "memberships" ("room_id", "user_id", "involvement");
-CREATE TABLE IF NOT EXISTS "messages" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "room_id" integer NOT NULL, "creator_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "client_message_id" varchar NOT NULL, "active" boolean DEFAULT 1, "answered_at" datetime(6) DEFAULT NULL, "answered_by_id" integer DEFAULT NULL, "mentions_everyone" boolean DEFAULT 0 NOT NULL, CONSTRAINT "fk_rails_761a2f12b3"
-FOREIGN KEY ("creator_id")
-  REFERENCES "users" ("id")
-, CONSTRAINT "fk_rails_a8db0fb63a"
-FOREIGN KEY ("room_id")
-  REFERENCES "rooms" ("id")
-, CONSTRAINT "fk_rails_f7397f9762"
-FOREIGN KEY ("answered_by_id")
-  REFERENCES "users" ("id")
-);
-CREATE INDEX "index_messages_on_creator_id" ON "messages" ("creator_id");
-CREATE INDEX "index_messages_on_room_id" ON "messages" ("room_id");
-CREATE INDEX "index_messages_on_created_at" ON "messages" ("created_at");
-CREATE INDEX "index_messages_on_room_id_and_created_at" ON "messages" ("room_id", "created_at");
-CREATE INDEX "index_messages_on_answered_at" ON "messages" ("answered_at");
-CREATE INDEX "index_messages_on_answered_by_id" ON "messages" ("answered_by_id");
 CREATE TABLE IF NOT EXISTS "mailkick_subscriptions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "subscriber_type" varchar, "subscriber_id" integer, "list" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL);
 CREATE UNIQUE INDEX "index_mailkick_subscriptions_on_subscriber_and_list" ON "mailkick_subscriptions" ("subscriber_type", "subscriber_id", "list");
 CREATE TABLE IF NOT EXISTS "mentions" ("user_id" integer NOT NULL, "message_id" integer NOT NULL, CONSTRAINT "fk_rails_df6f108928"
@@ -149,7 +133,6 @@ FOREIGN KEY ("user_id")
   REFERENCES "users" ("id")
 );
 CREATE UNIQUE INDEX "index_library_watch_histories_on_session_and_user" ON "library_watch_histories" ("library_session_id", "user_id");
-CREATE INDEX "index_messages_on_room_id_and_mentions_everyone" ON "messages" ("room_id", "mentions_everyone") WHERE mentions_everyone = true;
 CREATE INDEX "index_library_sessions_on_featured" ON "library_sessions" ("featured");
 CREATE INDEX "index_library_sessions_on_featured_position" ON "library_sessions" ("featured_position");
 CREATE TABLE IF NOT EXISTS "live_events" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "title" varchar NOT NULL, "url" varchar NOT NULL, "target_time" datetime(6) NOT NULL, "duration_hours" integer DEFAULT 2 NOT NULL, "show_early_hours" integer DEFAULT 24 NOT NULL, "active" boolean DEFAULT 1 NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL);
@@ -161,7 +144,20 @@ CREATE TABLE IF NOT EXISTS "users" ("id" integer PRIMARY KEY AUTOINCREMENT NOT N
 CREATE UNIQUE INDEX "index_users_on_bot_token" ON "users" ("bot_token");
 CREATE UNIQUE INDEX "index_users_on_email_address" ON "users" ("email_address");
 CREATE UNIQUE INDEX "index_users_on_order_id" ON "users" ("order_id") WHERE order_id IS NOT NULL;
+CREATE TABLE IF NOT EXISTS "messages" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "room_id" integer NOT NULL, "creator_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "client_message_id" varchar NOT NULL, "active" boolean DEFAULT 1, "mentions_everyone" boolean DEFAULT 0 NOT NULL, CONSTRAINT "fk_rails_761a2f12b3"
+FOREIGN KEY ("creator_id")
+  REFERENCES "users" ("id")
+, CONSTRAINT "fk_rails_a8db0fb63a"
+FOREIGN KEY ("room_id")
+  REFERENCES "rooms" ("id")
+);
+CREATE INDEX "index_messages_on_creator_id" ON "messages" ("creator_id");
+CREATE INDEX "index_messages_on_room_id" ON "messages" ("room_id");
+CREATE INDEX "index_messages_on_created_at" ON "messages" ("created_at");
+CREATE INDEX "index_messages_on_room_id_and_created_at" ON "messages" ("room_id", "created_at");
+CREATE INDEX "index_messages_on_room_id_and_mentions_everyone" ON "messages" ("room_id", "mentions_everyone") WHERE mentions_everyone = true;
 INSERT INTO "schema_migrations" (version) VALUES
+('20251104210006'),
 ('20251104154122'),
 ('20251104025618'),
 ('20251103164219'),

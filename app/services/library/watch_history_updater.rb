@@ -41,4 +41,3 @@ module Library
     end
   end
 end
-

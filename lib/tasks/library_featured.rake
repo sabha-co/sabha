@@ -1,7 +1,7 @@
 namespace :library do
   desc "Set featured videos for the hero carousel (idempotent)"
   task set_featured_hero: :environment do
-    ids = [53, 1, 2, 3, 17, 4, 7, 16, 21, 5]
+    ids = [ 53, 1, 2, 3, 17, 4, 7, 16, 21, 5 ]
 
     puts "Resetting all featured statuses and positions..."
 
@@ -27,5 +27,3 @@ namespace :library do
     end
   end
 end
-
-

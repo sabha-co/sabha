@@ -94,20 +94,6 @@
         <span class="sidebar__tool-label">Bookmarks</span>
       <% end %>
 
-      <%= link_to experts_path, class: "btn sidebar__tool" do %>
-        <%= image_tag "bulb.svg", size: 20, aria: { hidden: "true" } %>
-        <span class="for-screen-reader">Experts</span>
-        <span class="sidebar__tool-label">Experts</span>
-      <% end %>
-
-      <% if Current.user&.expert? || Current.user&.administrator? %>
-        <%= link_to answers_inbox_path, class: "btn sidebar__tool" do %>
-          <%= image_tag "chat_bubble.svg", size: 20, aria: { hidden: "true" } %>
-          <span class="for-screen-reader">My Answers</span>
-          <span class="sidebar__tool-label">My Answers</span>
-        <% end %>
-      <% end %>
-
       <%= link_to library_path, class: "btn sidebar__tool" do %>
         <%= image_tag "library.svg", size: 20, aria: { hidden: "true" } %>
         <span class="for-screen-reader">Library</span>

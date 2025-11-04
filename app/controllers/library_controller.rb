@@ -47,7 +47,7 @@ class LibraryController < AuthenticatedController
         assets: {
           downloadIcon: view_context.asset_path("download.svg"),
           backIcon: view_context.asset_path("arrow-left.svg"),
-          searchIcon: view_context.asset_path("search.svg"),
+          searchIcon: view_context.asset_path("search.svg")
         },
         featuredHeroImages: featured_hero_images,
         initialThumbnails: initial_thumbnails,
@@ -56,7 +56,7 @@ class LibraryController < AuthenticatedController
           pageTitle: @page_title,
           bodyClass: view_context.body_classes,
           nav: nav_markup,
-          sidebar: sidebar_markup,
+          sidebar: sidebar_markup
         },
       ),
       view_data: { nav: nav_markup, sidebar: sidebar_markup, body_class: view_context.body_classes }
@@ -84,14 +84,14 @@ class LibraryController < AuthenticatedController
         session: payload,
         assets: {
           downloadIcon: view_context.asset_path("download.svg"),
-          backIcon: view_context.asset_path("arrow-left.svg"),
+          backIcon: view_context.asset_path("arrow-left.svg")
         },
         layout: {
           pageTitle: @page_title,
           bodyClass: view_context.body_classes,
           nav: nav_markup,
-          sidebar: sidebar_markup,
-        },
+          sidebar: sidebar_markup
+        }
       },
       view_data: { nav: nav_markup, sidebar: sidebar_markup, body_class: view_context.body_classes }
   end

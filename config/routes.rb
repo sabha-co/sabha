@@ -47,7 +47,7 @@ Rails.application.routes.draw do
   get "verify_email/:token", to: "email_verifications#show", as: :verify_email
   post "resend_verification", to: "email_verifications#resend", as: :resend_verification
 
-  resources :password_resets, only: [:new, :create, :edit, :update], param: :token
+  resources :password_resets, only: [ :new, :create, :edit, :update ], param: :token
 
   resource :account do
     scope module: "accounts" do
@@ -151,7 +151,6 @@ Rails.application.routes.draw do
           delete "", to: "bookmarks#destroy"
         end
       end
-      resource :answer, only: %i[ create destroy ]
     end
   end
   scope module: "messages" do
@@ -165,7 +164,6 @@ Rails.application.routes.draw do
       get :notifications
       get :messages
       get :bookmarks
-      get :answers
       post :clear
     end
     scope path: "/paged", as: :paged do
@@ -174,7 +172,6 @@ Rails.application.routes.draw do
       resources :notifications, only: %i[ index ], controller: "inboxes/notifications"
       resources :messages, only: %i[ index ], controller: "inboxes/messages"
       resources :bookmarks, only: %i[ index ], controller: "inboxes/bookmarks"
-      resources :answers, only: %i[ index ], controller: "inboxes/answers"
     end
   end
 
@@ -209,8 +206,6 @@ Rails.application.routes.draw do
     resource :watch_history, only: [ :create, :update ], controller: "library/watch_histories"
   end
 
-  get "experts" => "experts#show"
-
   get "up" => "rails/health#show", as: :rails_health_check
 
   # Stats routes
@@ -223,4 +218,3 @@ Rails.application.routes.draw do
   get "stats/all", to: "stats#all"
   get "stats/rooms", to: "stats#rooms"
 end
-

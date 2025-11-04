@@ -31,19 +31,19 @@ class MessageTest < ActiveSupport::TestCase
     room = rooms(:pets)
     user = users(:david)
     membership = room.memberships.find_by(user: user)
-    
+
     # Create two messages
     message1 = room.messages.create!(creator: users(:jason), body: "First message", client_message_id: "msg1")
     message2 = room.messages.create!(creator: users(:jason), body: "Second message", client_message_id: "msg2")
-    
+
     # Mark membership as unread at message1
     membership.update!(unread_at: message1.created_at)
     assert membership.unread?
     assert_equal message1.created_at, membership.unread_at
-    
+
     # Deactivate message1
     message1.deactivate
-    
+
     # Should update unread_at to message2 since it's the next unread message
     membership.reload
     assert membership.unread?
@@ -54,17 +54,17 @@ class MessageTest < ActiveSupport::TestCase
     room = rooms(:pets)
     user = users(:david)
     membership = room.memberships.find_by(user: user)
-    
+
     # Create one message
     message = room.messages.create!(creator: users(:jason), body: "Only message", client_message_id: "msg1")
-    
+
     # Mark membership as unread at this message
     membership.update!(unread_at: message.created_at)
     assert membership.unread?
-    
+
     # Deactivate the message
     message.deactivate
-    
+
     # Should mark membership as read since no unread messages remain
     membership.reload
     assert membership.read?

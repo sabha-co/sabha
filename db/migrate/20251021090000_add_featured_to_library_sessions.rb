@@ -9,5 +9,3 @@ class AddFeaturedToLibrarySessions < ActiveRecord::Migration[7.2]
     add_index :library_sessions, :featured_position
   end
 end
-
-

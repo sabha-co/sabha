@@ -3,7 +3,7 @@ class Rooms::ThreadsController < RoomsController
 
   def new
     # Check if thread already exists for this message (there can only be one)
-    existing_thread = @parent_message.threads.active.find_by(type: 'Rooms::Thread')
+    existing_thread = @parent_message.threads.active.find_by(type: "Rooms::Thread")
 
     if existing_thread
       redirect_to room_url(existing_thread)

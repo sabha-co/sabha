@@ -4,7 +4,7 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
   setup do
     host! "once.campfire.test"
     sign_in :david
-    
+
     # Ensure rooms have last_active_at set for sidebar rendering
     Room.where(last_active_at: nil).update_all(last_active_at: Time.current)
   end
@@ -29,4 +29,3 @@ class LibraryControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 end
-

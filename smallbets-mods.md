@@ -177,7 +177,7 @@ The sidebar now separates rooms into "My Rooms" and "All Rooms" sections for bet
 
 
 ## Experts directory
-A dedicated page showing resident experts who can help members. Each expert has their areas of expertise listed (like SEO, Ruby, AI Apps). Members can easily find and @mention the right expert for their question. Experts can also mark messages as "answered" and track all their support work in a dedicated inbox.
+**[REMOVED]** A dedicated page showing resident experts who can help members. Each expert has their areas of expertise listed (like SEO, Ruby, AI Apps). Members can easily find and @mention the right expert for their question. Experts can also mark messages as "answered" and track all their support work in a dedicated inbox.
 
 
 ## Video library
