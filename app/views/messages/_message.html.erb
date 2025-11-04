@@ -40,7 +40,6 @@
                   <%= link_to room_display_name(message.room, for_user: nil), room_at_message_path(message.room, message), target: "_top", data: { reply_target: "link" } %>
                 <% end %>
               </span>
-              <%= render "messages/answered_by", message: %>
             </h3>
             <%= render "messages/actions", message:, current_room: %>
           </div>

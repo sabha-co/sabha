@@ -11,6 +11,6 @@ class ApplicationController < ActionController::Base
   end
 
   def inertia_request?
-    request.headers['X-Inertia'].present?
+    request.headers["X-Inertia"].present?
   end
 end

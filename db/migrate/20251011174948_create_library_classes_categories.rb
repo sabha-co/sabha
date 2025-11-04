@@ -5,6 +5,6 @@ class CreateLibraryClassesCategories < ActiveRecord::Migration[7.2]
       t.references :library_category, null: false, foreign_key: true
     end
 
-    add_index :library_classes_categories, [:library_class_id, :library_category_id], unique: true, name: 'index_library_classes_categories_on_class_and_category'
+    add_index :library_classes_categories, [ :library_class_id, :library_category_id ], unique: true, name: 'index_library_classes_categories_on_class_and_category'
   end
 end

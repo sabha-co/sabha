@@ -3,4 +3,3 @@ class InboxMentionsChannel < ApplicationCable::Channel
     stream_for current_user, :inbox_mentions
   end
 end
-

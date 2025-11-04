@@ -310,18 +310,6 @@
     white-space: nowrap;
   }
 
-  .message__answered {
-    color: var(--color-border-darkest); 
-
-    &::before {
-      content: "✓";
-    }
-     
-    &.message__answered-by-me {
-      color: var(--color-positive);
-    } 
-  }
-
   .message__original-room, .message__room {
     a {
       color: inherit;

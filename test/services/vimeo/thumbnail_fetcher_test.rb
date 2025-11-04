@@ -17,7 +17,7 @@ module Vimeo
     end
 
     test "fetch caches thumbnail response" do
-      stub_vimeo_video("123", build_payload([size(320), size(1280)]))
+      stub_vimeo_video("123", build_payload([ size(320), size(1280) ]))
 
       payload = ThumbnailFetcher.fetch("123")
 
@@ -33,8 +33,8 @@ module Vimeo
     end
 
     test "fetch_many hydrates multiple ids" do
-      stub_vimeo_video("1", build_payload([size(640)]))
-      stub_vimeo_video("2", build_payload([size(800)]))
+      stub_vimeo_video("1", build_payload([ size(640) ]))
+      stub_vimeo_video("2", build_payload([ size(800) ]))
 
       result = ThumbnailFetcher.fetch_many(%w[1 2])
 
@@ -67,7 +67,7 @@ module Vimeo
         }
         Rails.cache.write(ThumbnailFetcher.cache_key("123"), stale)
 
-        assert_enqueued_with(job: Vimeo::FetchThumbnailJob, args: ["123"]) do
+        assert_enqueued_with(job: Vimeo::FetchThumbnailJob, args: [ "123" ]) do
           value = ThumbnailFetcher.read_cached("123")
           assert_equal "https://example.com/640.jpg", value["src"]
         end
@@ -115,4 +115,3 @@ module Vimeo
     end
   end
 end
-

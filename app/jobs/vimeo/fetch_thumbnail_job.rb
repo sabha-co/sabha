@@ -11,5 +11,3 @@ module Vimeo
     end
   end
 end
-
-

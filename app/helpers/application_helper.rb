@@ -81,7 +81,7 @@ module ApplicationHelper
               safe_join([
                 tag.p(class: "library__download-loading", role: "status", aria: { live: "polite" }, data: { video_download_target: "loading" }) do
                   safe_join([
-                    tag.span("", class: "spinner", aria: { hidden: true }),
+                    tag.span("", class: "spinner", aria: { hidden: true })
                   ])
                 end,
                 tag.p("Unable to load download options right now.", class: "library__download-error", hidden: true, data: { video_download_target: "error" }),

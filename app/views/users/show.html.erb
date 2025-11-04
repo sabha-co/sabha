@@ -114,7 +114,7 @@
               <div class="flex align-center gap">
                 <%= translation_button(:role) %>
   
-                <%= form.select :role, %w[ member expert administrator ].map {|role| [role.titleize, role]} %>
+                <%= form.select :role, %w[ member administrator ].map {|role| [role.titleize, role]} %>
               </div>
               <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
                 <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>

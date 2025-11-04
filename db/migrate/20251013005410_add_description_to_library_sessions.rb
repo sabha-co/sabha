@@ -18,5 +18,3 @@ class AddDescriptionToLibrarySessions < ActiveRecord::Migration[7.2]
     raise ActiveRecord::IrreversibleMigration, "description may pre-exist; not removing"
   end
 end
-
-

@@ -24,7 +24,6 @@
               <span class="message__room-in">in</span>
               <%= link_to room_display_name(message.room, for_user: nil), room_at_message_path(message.room, message), target: "_top", class: "message__room-link", data: { reply_target: "link" } %>
             </span>
-            <%= render "messages/answered_by", message: %>
           </h3>
           <% unless message.active? %>
             <%# Hide actions menu for deleted messages %>

@@ -3,4 +3,3 @@ class InboxThreadsChannel < ApplicationCable::Channel
     stream_for current_user, :inbox_threads
   end
 end
-

@@ -13,4 +13,3 @@ class LibraryWatchHistory < ApplicationRecord
     update!(completed: true, last_watched_at: Time.current)
   end
 end
-

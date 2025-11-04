@@ -83,7 +83,7 @@ class MessagesController < ApplicationController
         first_thread_message = @room.messages.ordered.first
         messages_array = messages.to_a
         if messages_array.first&.id == first_thread_message&.id
-          [@room.parent_message] + messages_array
+          [ @room.parent_message ] + messages_array
         else
           messages_array
         end

@@ -38,7 +38,7 @@ module Api
         previous_adapter = ActiveJob::Base.queue_adapter
         ActiveJob::Base.queue_adapter = :test
         begin
-          assert_enqueued_with(job: Vimeo::FetchThumbnailJob, args: ["999"]) do
+          assert_enqueued_with(job: Vimeo::FetchThumbnailJob, args: [ "999" ]) do
             get api_videos_thumbnails_url(ids: "999"), headers: { "Accept" => "application/json" }
             assert_response :success
             body = response.parsed_body
@@ -85,4 +85,3 @@ module Api
     end
   end
 end
-
