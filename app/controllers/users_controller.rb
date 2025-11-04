@@ -5,29 +5,45 @@ class UsersController < ApplicationController
 
   before_action :set_user, only: :show
   before_action :verify_join_code, only: %i[ new create ]
-  before_action :start_otp_if_user_exists, only: :create
+  before_action :start_otp_if_user_exists, only: :create, if: -> { ENV["AUTH_METHOD"] == "otp" }
 
   def new
     @user = User.new
   end
 
   def create
-    @user = User.from_gumroad_sale(user_params)
+    # If Gumroad is enabled, use that flow
+    if ENV["GUMROAD_ON"] == "true"
+      @user = User.from_gumroad_sale(user_params)
 
-    if @user.nil?
-      redirect_to account_join_code_url, alert: "We couldn't find a sale for that email. Please try a different email or contact #{BrandingConfig.support_email}."
-      return
+      if @user.nil?
+        redirect_to account_join_code_url, alert: "We couldn't find a sale for that email. Please try a different email or contact #{BrandingConfig.support_email}."
+        return
+      end
+
+      deliver_webhooks_to_bots(@user, :created) if @user.previously_new_record?
+    else
+      # Simple password-based creation (like Once-Campfire)
+      @user = User.create!(user_params)
     end
 
-    deliver_webhooks_to_bots(@user, :created) if @user.previously_new_record?
-
-    if @user.previously_new_record? || @user.imported_from_gumroad_and_unclaimed?
+    # Always require email verification for new users
+    if @user.person? && !@user.verified?
+      if ENV["AUTH_METHOD"] == "otp"
+        # For OTP: Send verification code
+        start_otp_for @user
+        redirect_to new_auth_tokens_validations_path, notice: "Please check your email for a verification code."
+      else
+        # For password: Send verification email with link
+        @user.send_verification_email
+        redirect_to root_url, notice: "Please check your email to verify your account."
+      end
+    else
       start_new_session_for @user
       redirect_to root_url
-    else
-      start_otp_for @user
-      redirect_to new_auth_tokens_validations_path
     end
+  rescue ActiveRecord::RecordNotUnique
+    redirect_to new_session_url(email_address: user_params[:email_address])
   end
 
   def show
@@ -60,7 +76,7 @@ class UsersController < ApplicationController
     end
 
     def user_params
-      permitted_params = params.require(:user).permit(:name, :avatar, :email_address)
+      permitted_params = params.require(:user).permit(:name, :avatar, :email_address, :password)
       permitted_params[:email_address]&.downcase!
       permitted_params
     end

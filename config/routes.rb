@@ -44,6 +44,11 @@ Rails.application.routes.draw do
   end
   get "auth_tokens/validate/:token", to: "auth_tokens/validations#create", as: :sign_in_with_token
 
+  get "verify_email/:token", to: "email_verifications#show", as: :verify_email
+  post "resend_verification", to: "email_verifications#resend", as: :resend_verification
+
+  resources :password_resets, only: [:new, :create, :edit, :update], param: :token
+
   resource :account do
     scope module: "accounts" do
       resources :users

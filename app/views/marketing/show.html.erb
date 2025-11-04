@@ -1,11 +1,14 @@
-<% join_url = join_now_path %>
+<% open_registration = ENV["OPEN_REGISTRATION"] == "true" %>
+<% join_url = join_now_path if open_registration %>
 <div class="min-h-screen bg-white">
 
   <!-- Header Section -->
   <header class="py-6">
     <div class="container" style="display: flex; justify-content: flex-end; gap: 1rem;">
       <a href="/chat" class="btn btn-outline text-sm py-2 px-6">Sign In</a>
-      <a href="<%= join_url %>" class="btn btn-primary text-sm py-2 px-6">Join Now</a>
+      <% if open_registration %>
+        <a href="<%= join_url %>" class="btn btn-primary text-sm py-2 px-6">Join Now</a>
+      <% end %>
     </div>
   </header>
 
@@ -18,9 +21,11 @@
       <p class="hero-subtitle">
         A community for creators and entrepreneurs making small bets
       </p>
-      <div class="hero-cta">
-        <a href="<%= join_url %>" class="btn btn-primary btn-large">Get Started</a>
-      </div>
+      <% if open_registration %>
+        <div class="hero-cta">
+          <a href="<%= join_url %>" class="btn btn-primary btn-large">Get Started</a>
+        </div>
+      <% end %>
     </div>
   </section>
 

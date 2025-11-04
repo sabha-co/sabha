@@ -1,0 +1,39 @@
+<% @page_title = "Reset Password" %>
+
+<section class="txt-align-center">
+  <div class="panel <%= "shake" if flash[:alert] %>">
+    <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
+
+    <%= form_with url: password_resets_path, class: "flex flex-column gap" do |form| %>
+      <fieldset class="flex flex-column gap center-block upad">
+        <legend class="txt-large txt-align-center"><strong>Reset Your Password</strong></legend>
+
+        <% if flash[:notice] %>
+          <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
+        <% end %>
+
+        <% if flash[:alert] %>
+          <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
+        <% end %>
+
+        <p class="txt-medium">Enter your email address and we'll send you instructions to reset your password.</p>
+
+        <div class="flex align-center gap">
+          <%= translation_button(:email_address) %>
+          <label class="flex align-center gap input input--actor txt-large">
+            <%= form.email_field :email_address, required: true, class: "input", autofocus: true, autocomplete: "email", placeholder: "Enter your email address" %>
+            <%= image_tag "email.svg", role: "presentation", size: 24, class: "colorize--black" %>
+          </label>
+        </div>
+
+        <%= form.submit "Send Reset Instructions", class: "btn btn-primary w-100" %>
+
+        <div class="txt-medium txt-align-center">
+          <%= link_to "Back to Sign In", new_session_path, class: "txt-white" %>
+        </div>
+      </fieldset>
+    <% end %>
+  </div>
+
+  <%= render "accounts/help_contact" %>
+</section>
