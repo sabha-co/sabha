@@ -18,6 +18,34 @@ then
   exit
 fi
 
+announce "Checking for mise"
+if ! command -v mise >/dev/null 2>&1; then
+  announce "mise not found, attempting to install"
+
+  if command -v brew >/dev/null 2>&1; then
+    brew install mise
+  elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --noconfirm --needed mise
+  elif command -v apt-get >/dev/null 2>&1; then
+    echo "mise installation via apt not automated yet."
+    echo "Please install mise manually: https://mise.jdx.dev/installing-mise.html"
+    exit 1
+  else
+    echo "Couldn't install mise - no supported package manager found"
+    echo "Install mise using your package manager or via:"
+    echo "https://mise.jdx.dev/installing-mise.html"
+    exit 1
+  fi
+
+  if ! command -v mise >/dev/null 2>&1; then
+    echo "mise installation failed"
+    exit 1
+  fi
+fi
+
+announce "Installing mise tools"
+mise install
+
 announce "Installing dependencies"
 bundle install
 
