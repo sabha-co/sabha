@@ -2,6 +2,9 @@ service: campfire
 
 image: smallbets/campfire
 
+deploy_timeout: 120
+drain_timeout: 60
+
 servers:
   web:
     - <%= ENV.fetch("SERVER_IP") %>
@@ -10,6 +13,10 @@ proxy:
   ssl: true
   host: <%= ENV.fetch("PROXY_HOST") %>
   app_port: 3000
+  healthcheck:
+    path: /up
+    interval: 10
+    timeout: 10
 
 registry:
   server: localhost:5000
@@ -19,7 +26,6 @@ builder:
 
 env:
   clear:
-    DISABLE_SSL: "true"
     RAILS_ENV: "production"
 
   secret:
