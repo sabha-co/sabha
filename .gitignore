@@ -14,6 +14,7 @@ bun.lock
 
 # Ignore RVM-based gemset selection
 .ruby-gemset
+.bundle/
 .env
 dump.rdb
 
