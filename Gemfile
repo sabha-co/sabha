@@ -35,6 +35,7 @@ gem "sentry-rails"
 
 # Other
 gem "bcrypt"
+gem "msgpack", ">= 1.7.0"
 gem "web-push"
 gem "rqrcode"
 gem "rails_autolink"
