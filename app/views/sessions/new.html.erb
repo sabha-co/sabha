@@ -8,34 +8,80 @@
     <div class="flex flex-column gap">
       <fieldset class="flex flex-column gap center-block upad">
         <legend class="txt-large txt-align-center"><strong>New to <%= BrandingConfig.app_name %>?</strong></legend>
-        <div class="txt-medium">You can find your invite in your membership email receipt. If you need help finding it, contact <%= BrandingConfig.support_email %>.</div>
+        <div class="txt-medium">Use your invite link to create an account. If you need an invite, contact <%= BrandingConfig.support_email %>.</div>
       </fieldset>
   
-      <%= form_with url: auth_tokens_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? }, html: { autocomplete: "off" } do |form| %>
-        <fieldset class="flex flex-column gap center-block upad">
-          <legend class="txt-large txt-align-center"><strong>Member Login</strong></legend>
-  
-          <% if flash[:alert] %>
-            <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
-          <% end %>
-          
-          <div class="flex align-center gap">
-            <%= translation_button(:email_address) %>
-            <label class="flex align-center gap input input--actor txt-large">
-              <%= form.email_field :email_address, required: true, class: "input", autofocus: true, autocomplete: "email", placeholder: "Enter your email address", value: params[:email_address] %>
-              <%= image_tag "email.svg", role: "presentation", size: 24, class: "colorize--black" %>
-            </label>
-          </div>
+      <% if ENV["AUTH_METHOD"] == "otp" %>
+        <%= form_with url: auth_tokens_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? }, html: { autocomplete: "off" } do |form| %>
+          <fieldset class="flex flex-column gap center-block upad">
+            <legend class="txt-large txt-align-center"><strong>Member Login</strong></legend>
 
-          <% if hotwire_native_app? %>
-            <%= form.submit "Sign in", class: "btn btn-primary w-100", data: { controller: "bridge--button", bridge_title: "Submit" } %>
-          <% else %>
-            <%= form.button class: "btn btn--reversed center txt-large", type: "submit", name: "log_in" do %>
-              <%= image_tag "arrow-right.svg", role: "presentation" %>
-              <span class="for-screen-reader">Go</span>
+            <% if flash[:alert] %>
+              <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
             <% end %>
-          <% end %>
-        </fieldset>
+
+            <div class="flex align-center gap">
+              <%= translation_button(:email_address) %>
+              <label class="flex align-center gap input input--actor txt-large">
+                <%= form.email_field :email_address, required: true, class: "input", autofocus: true, autocomplete: "email", placeholder: "Enter your email address", value: params[:email_address] %>
+                <%= image_tag "email.svg", role: "presentation", size: 24, class: "colorize--black" %>
+              </label>
+            </div>
+
+            <% if hotwire_native_app? %>
+              <%= form.submit "Sign in", class: "btn btn-primary w-100", data: { controller: "bridge--button", bridge_title: "Submit" } %>
+            <% else %>
+              <%= form.button class: "btn btn--reversed center txt-large", type: "submit", name: "log_in" do %>
+                <%= image_tag "arrow-right.svg", role: "presentation" %>
+                <span class="for-screen-reader">Go</span>
+              <% end %>
+            <% end %>
+          </fieldset>
+        <% end %>
+      <% else %>
+        <%= form_with url: session_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? }, html: { autocomplete: "off" } do |form| %>
+          <fieldset class="flex flex-column gap center-block upad">
+            <legend class="txt-large txt-align-center"><strong>Member Login</strong></legend>
+
+            <% if flash[:notice] %>
+              <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
+            <% end %>
+
+            <% if flash[:alert] %>
+              <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
+            <% end %>
+
+            <div class="flex align-center gap">
+              <%= translation_button(:email_address) %>
+              <label class="flex align-center gap input input--actor txt-large">
+                <%= form.email_field :email_address, required: true, class: "input", autofocus: true, autocomplete: "email", placeholder: "Enter your email address", value: params[:email_address] %>
+                <%= image_tag "email.svg", role: "presentation", size: 24, class: "colorize--black" %>
+              </label>
+            </div>
+
+            <div class="flex align-center gap">
+              <%= translation_button(:password) %>
+              <label class="flex align-center gap input input--actor txt-large">
+                <%= form.password_field :password, required: true, class: "input",
+                    autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %>
+                <%= image_tag "password.svg", role: "presentation", size: 24, class: "colorize--black" %>
+              </label>
+            </div>
+
+            <div class="txt-medium txt-align-center">
+              <%= link_to "Forgot your password?", new_password_reset_path, class: "txt-white" %>
+            </div>
+
+            <% if hotwire_native_app? %>
+              <%= form.submit "Sign in", class: "btn btn-primary w-100", data: { controller: "bridge--button", bridge_title: "Submit" } %>
+            <% else %>
+              <%= form.button class: "btn btn--reversed center txt-large", type: "submit", name: "log_in" do %>
+                <%= image_tag "arrow-right.svg", role: "presentation" %>
+                <span class="for-screen-reader">Go</span>
+              <% end %>
+            <% end %>
+          </fieldset>
+        <% end %>
       <% end %>
     </div>
   </div>

@@ -51,6 +51,10 @@ Rails.application.configure do
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true
 
+  # Configure Action Mailer for test environment
+  config.action_mailer.delivery_method = :test
+  config.action_mailer.default_url_options = { host: "www.example.com" }
+
   # Load test helpers
   config.autoload_paths += %w[ test/test_helpers ]
 end

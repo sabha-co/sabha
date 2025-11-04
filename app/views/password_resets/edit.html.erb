@@ -1,0 +1,45 @@
+<% @page_title = "Set New Password" %>
+
+<section class="txt-align-center">
+  <div class="panel <%= "shake" if flash[:alert] %>">
+    <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
+
+    <%= form_with url: password_reset_path(params[:token]), method: :patch, class: "flex flex-column gap" do |form| %>
+      <fieldset class="flex flex-column gap center-block upad">
+        <legend class="txt-large txt-align-center"><strong>Set New Password</strong></legend>
+
+        <% if flash[:notice] %>
+          <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
+        <% end %>
+
+        <% if flash[:alert] %>
+          <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
+        <% end %>
+
+        <div class="flex align-center gap">
+          <%= translation_button(:password) %>
+          <label class="flex align-center gap input input--actor txt-large">
+            <%= form.password_field :password, required: true, class: "input", autofocus: true,
+                autocomplete: "new-password", placeholder: "New password", minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
+            <%= image_tag "password.svg", role: "presentation", size: 24, class: "colorize--black" %>
+          </label>
+        </div>
+
+        <div class="flex align-center gap">
+          <%= translation_button(:password_confirmation) %>
+          <label class="flex align-center gap input input--actor txt-large">
+            <%= form.password_field :password_confirmation, required: true, class: "input",
+                autocomplete: "new-password", placeholder: "Confirm new password", minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
+            <%= image_tag "password.svg", role: "presentation", size: 24, class: "colorize--black" %>
+          </label>
+        </div>
+
+        <p class="txt-small">Password must be at least <%= User::MINIMUM_PASSWORD_LENGTH %> characters long.</p>
+
+        <%= form.submit "Reset Password", class: "btn btn-primary w-100" %>
+      </fieldset>
+    <% end %>
+  </div>
+
+  <%= render "accounts/help_contact" %>
+</section>

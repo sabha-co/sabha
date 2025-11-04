@@ -11,7 +11,11 @@ class MarketingController < ApplicationController
   end
 
   def join
-    redirect_to join_path(Current.account.join_code)
+    if ENV["OPEN_REGISTRATION"] == "true"
+      redirect_to join_path(Current.account.join_code)
+    else
+      head :not_found
+    end
   end
 
   def stats

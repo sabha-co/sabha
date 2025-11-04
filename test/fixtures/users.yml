@@ -5,24 +5,28 @@ david:
   email_address: david@37signals.com
   password_digest: <%= password_digest %>
   role: administrator
+  verified_at: <%= 1.day.ago %>
 
 jason:
   name: Jason
   email_address: jason@37signals.com
   password_digest: <%= password_digest %>
   role: administrator
+  verified_at: <%= 1.day.ago %>
 
 jz:
   name: JZ
   email_address: jz@37signals.com
   password_digest: <%= password_digest %>
   bio: Designer
+  verified_at: <%= 1.day.ago %>
 
 kevin:
   name: Kevin
   email_address: kevin@37signals.com
   password_digest: <%= password_digest %>
   bio: Programmer
+  verified_at: <%= 1.day.ago %>
 
 bender:
   name: Bender Bot

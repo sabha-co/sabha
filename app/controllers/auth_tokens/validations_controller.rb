@@ -12,6 +12,10 @@ class AuthTokens::ValidationsController < ApplicationController
     if auth_token
       auth_token.use!
       session.delete(:otp_email_address)
+
+      # Verify email if not already verified (for new signups via OTP)
+      auth_token.user.verify_email! unless auth_token.user.verified?
+
       start_new_session_for(auth_token.user)
       redirect_to post_authenticating_url
     else

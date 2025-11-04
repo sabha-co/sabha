@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   DEFAULT_NAME = "Small Better"
+  MINIMUM_PASSWORD_LENGTH = 8
 
   has_subscriptions
   after_create_commit :subscribe_to_emails
@@ -44,8 +45,13 @@ class User < ApplicationRecord
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }
   scope :non_suspended, -> { where(suspended_at: nil) }
   scope :unclaimed_gumroad_imports, -> { where.not(order_id: nil).where(last_authenticated_at: nil) }
+  scope :verified, -> { where.not(verified_at: nil) }
+  scope :unverified, -> { where(verified_at: nil) }
 
   has_secure_password validations: false
+
+  generates_token_for :email_verification, expires_in: 24.hours
+  generates_token_for :password_reset, expires_in: 1.hour
 
   before_validation :set_default_name
   before_validation :normalize_social_urls
@@ -293,5 +299,23 @@ class User < ApplicationRecord
 
       handle = url.strip
       "https://www.linkedin.com/in/#{handle}"
+    end
+
+  public
+
+    def verified?
+      verified_at.present?
+    end
+
+    def verify_email!
+      update!(verified_at: Time.current)
+    end
+
+    def send_verification_email
+      UserMailer.email_verification(self).deliver_later
+    end
+
+    def send_password_reset_email
+      UserMailer.password_reset(self).deliver_later
     end
 end

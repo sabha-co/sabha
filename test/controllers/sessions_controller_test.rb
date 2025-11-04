@@ -30,7 +30,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   test "create with valid credentials" do
     post session_url, params: { email_address: "david@37signals.com", password: "secret123456" }
 
-    assert_redirected_to chat_url
+    assert_redirected_to root_url
     assert parsed_cookies.signed[:session_token]
   end
 
@@ -39,6 +39,18 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unauthorized
     assert_nil parsed_cookies.signed[:session_token]
+  end
+
+  test "create with unverified email shows password reset option" do
+    user = users(:david)
+    user.update!(verified_at: nil)
+
+    post session_url, params: { email_address: user.email_address, password: "secret123456" }
+
+    assert_response :unauthorized
+    assert_nil parsed_cookies.signed[:session_token]
+    assert_match /verify your email/, response.body
+    assert_match /Forgot your password/, response.body
   end
 
   test "destroy" do

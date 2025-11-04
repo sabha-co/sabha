@@ -8,11 +8,16 @@ class SessionsController < ApplicationController
   end
 
   def create
-    user = User.active.find_by(email_address: params[:email_address])
-
-    if user&.authenticate(params[:password])
-      start_new_session_for(user)
-      redirect_to chat_url
+    if user = User.active.non_suspended.authenticate_by(email_address: params[:email_address],
+                                                         password: params[:password])
+      # Check if email verification is required
+      if ENV["AUTH_METHOD"] == "password" && !user.verified?
+        flash.now[:alert] = "Please verify your email address. Check your inbox for the verification link, or use 'Forgot your password?' to resend."
+        render :new, status: :unauthorized
+      else
+        start_new_session_for user
+        redirect_to post_authenticating_url
+      end
     else
       render_rejection :unauthorized
     end

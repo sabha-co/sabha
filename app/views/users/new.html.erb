@@ -61,6 +61,17 @@
         </label>
       </div>
 
+      <% if ENV["AUTH_METHOD"] != "otp" %>
+        <div class="flex align-center gap">
+          <%= translation_button(:password) %>
+          <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+            <%= form.password_field :password, class: "input", autocomplete: "new-password",
+                placeholder: "Password", required: true, minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
+            <%= image_tag "password.svg", aria: { hidden: "true" }, size: 24, class: "colorize--black" %>
+          </label>
+        </div>
+      <% end %>
+
       <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
         <%= image_tag "check.svg", aria: { hidden: "true" } %>
         <span class="for-screen-reader">Save</span>
