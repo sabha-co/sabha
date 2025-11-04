@@ -12,7 +12,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with password auth requires email verification" do
-    ENV["AUTH_METHOD"] = "password"
+    Current.account.update!(auth_method: "password")
 
     assert_emails 1 do
       post join_url(@join_code), params: {
@@ -33,7 +33,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with OTP auth requires email verification" do
-    ENV["AUTH_METHOD"] = "otp"
+    Current.account.update!(auth_method: "otp")
 
     assert_emails 1 do
       post join_url(@join_code), params: {
@@ -53,7 +53,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "OTP validation verifies email for new users" do
-    ENV["AUTH_METHOD"] = "otp"
+    Current.account.update!(auth_method: "otp")
 
     # Sign up new user
     post join_url(@join_code), params: {
@@ -78,7 +78,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with blank password is rejected" do
-    ENV["AUTH_METHOD"] = "password"
+    Current.account.update!(auth_method: "password")
 
     assert_no_difference -> { User.count } do
       post join_url(@join_code), params: {
@@ -95,7 +95,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with short password is rejected" do
-    ENV["AUTH_METHOD"] = "password"
+    Current.account.update!(auth_method: "password")
 
     assert_no_difference -> { User.count } do
       post join_url(@join_code), params: {
@@ -112,7 +112,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with valid password succeeds" do
-    ENV["AUTH_METHOD"] = "password"
+    Current.account.update!(auth_method: "password")
 
     assert_difference -> { User.count }, 1 do
       post join_url(@join_code), params: {

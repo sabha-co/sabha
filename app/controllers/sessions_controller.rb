@@ -11,7 +11,7 @@ class SessionsController < ApplicationController
     if user = User.active.non_suspended.authenticate_by(email_address: params[:email_address],
                                                          password: params[:password])
       # Check if email verification is required
-      if ENV["AUTH_METHOD"] == "password" && !user.verified?
+      if Current.account.auth_method_value == "password" && !user.verified?
         flash.now[:alert] = "Please verify your email address. Check your inbox for the verification link, or use 'Forgot your password?' to resend."
         render :new, status: :unauthorized
       else

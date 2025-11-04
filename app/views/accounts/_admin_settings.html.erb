@@ -1,0 +1,34 @@
+<div class="margin-block pad fill-shade border-radius txt-align-center">
+  <div class="flex flex-column gap align-center">
+
+    <%= form_with model: @account, data: { controller: "form" }, class: "flex flex-column gap align-center" do |form| %>
+      <!-- Authentication Method -->
+      <div class="flex flex-column gap align-center" style="--row-gap: 0.5em">
+        <strong>Authentication Method</strong>
+        <div class="flex flex-column gap-half">
+          <label class="flex align-center gap-half">
+            <%= form.radio_button :auth_method, "password", data: { action: "change->form#submit" } %>
+            <span>Password (email + password)</span>
+          </label>
+          <label class="flex align-center gap-half">
+            <%= form.radio_button :auth_method, "otp", data: { action: "change->form#submit" } %>
+            <span>OTP (passwordless, email code)</span>
+          </label>
+        </div>
+        <span class="txt-small txt-subtle">Choose how users authenticate. Changes affect new sign-ins.</span>
+      </div>
+
+      <hr class="separator full-width">
+
+      <!-- Open Registration -->
+      <div class="flex flex-column gap align-center" style="--row-gap: 0.5em">
+        <strong>Registration Access</strong>
+        <label class="flex align-center gap-half">
+          <%= form.check_box :open_registration, data: { action: "change->form#submit" } %>
+          <span>Allow open registration</span>
+        </label>
+        <span class="txt-small txt-subtle">When disabled, users need an invite link with join code.</span>
+      </div>
+    <% end %>
+  </div>
+</div>

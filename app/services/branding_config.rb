@@ -53,7 +53,7 @@ class BrandingConfig
       ENV.fetch("CSP_FRAME_ANCESTORS", default).split(",").map(&:strip)
     end
 
-    # PWA theme colors
+    # PWA theme colors (from environment variables)
     def theme_color
       ENV.fetch("THEME_COLOR", "#1d4ed8")
     end

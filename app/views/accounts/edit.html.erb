@@ -69,13 +69,17 @@
     <h1 class="flex-item-grow txt-x-large"><%= @account.name %></h1>
   <% end %>
 
+  <% if Current.user.administrator? %>
+    <%= render "accounts/admin_settings" %>
+  <% end %>
+
   <div class="margin-block pad-inline pad-block-start fill-shade border-radius">
     <% if Current.user.administrator? %>
       <%= render "accounts/invite" %>
-  
+
       <hr class="margin-block separator full-width" style="--border-style: solid">
     <% end %>
-    
+
     <menu class="flex flex-column gap margin-none pad">
       <div><strong>Online: <%= online_users_count %></strong></div>
       <turbo-frame id="account_users">

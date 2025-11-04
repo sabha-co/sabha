@@ -61,7 +61,7 @@
         </label>
       </div>
 
-      <% if ENV["AUTH_METHOD"] != "otp" %>
+      <% if Current.account.auth_method_value != "otp" %>
         <div class="flex align-center gap">
           <%= translation_button(:password) %>
           <label class="flex align-center gap flex-item-grow txt-large input input--actor">

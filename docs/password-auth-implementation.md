@@ -4,6 +4,8 @@
 **Date:** 2025-11-04
 **Status:** ✅ Completed (with Email Verification, Password Reset & Security Audit)
 
+> **⚠️ NOTE (2025-11-04):** `AUTH_METHOD` and `OPEN_REGISTRATION` are now managed through the **Admin Settings UI** (`/account/edit`) instead of environment variables. The settings are stored in the `accounts` table. `THEME_COLOR` and `BACKGROUND_COLOR` remain as environment variables (PWA-specific settings). This documentation reflects the original ENV-based implementation.
+
 ---
 
 ## Overview

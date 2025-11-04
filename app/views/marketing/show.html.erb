@@ -1,4 +1,4 @@
-<% open_registration = ENV["OPEN_REGISTRATION"] == "true" %>
+<% open_registration = Current.account.open_registration_value %>
 <% join_url = join_now_path if open_registration %>
 <div class="min-h-screen bg-white">
 

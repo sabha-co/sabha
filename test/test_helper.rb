@@ -30,7 +30,6 @@ class ActiveSupport::TestCase
     end
 
     # Set ENV vars for tests
-    ENV["AUTH_METHOD"] = "password"
     ENV["COOKIE_DOMAIN"] = "example.com"  # Match test domain
 
     WebMock.disable_net_connect!

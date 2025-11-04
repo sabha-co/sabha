@@ -226,7 +226,7 @@ test/
 - `MentionTestHelper` - Create mentions in messages
 - `TurboTestHelper` - Test Turbo Stream broadcasts
 - WebMock enabled for HTTP stubbing in tests
-- Authentication in tests uses password method: `ENV["AUTH_METHOD"] = "password"`
+- Authentication in tests: Set `Current.account.update!(auth_method: "password")` or `"otp"` as needed
 
 ## Common Development Tasks
 
@@ -256,10 +256,13 @@ test/
 4. Broadcast from model/controller: `ActionCable.server.broadcast "channel_name", data`
 
 ### Customizing Branding
-1. Update environment variables in `.env` (development) or `.kamal/secrets` (production)
-2. Branding accessed via `BrandingConfig` service object throughout app
+1. **Admin Settings UI** (`/account/edit` - administrators only):
+   - Authentication method (password/OTP) - stored in `accounts.auth_method`
+   - Open registration toggle - stored in `accounts.open_registration`
+2. **Environment Variables** (`.env` or `.kamal/secrets`):
+   - APP_NAME, SUPPORT_EMAIL, THEME_COLOR, BACKGROUND_COLOR, etc. (see `BrandingConfig`)
 3. Visual assets replaced in `app/assets/images/logos/` and `app/assets/images/icons/`
-4. No code changes required - all configured via env vars
+4. Branding accessed via `BrandingConfig` service object throughout app
 
 ## Database Schema Notes
 

@@ -11,7 +11,7 @@
         <div class="txt-medium">Use your invite link to create an account. If you need an invite, contact <%= BrandingConfig.support_email %>.</div>
       </fieldset>
   
-      <% if ENV["AUTH_METHOD"] == "otp" %>
+      <% if Current.account.auth_method_value == "otp" %>
         <%= form_with url: auth_tokens_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? }, html: { autocomplete: "off" } do |form| %>
           <fieldset class="flex flex-column gap center-block upad">
             <legend class="txt-large txt-align-center"><strong>Member Login</strong></legend>

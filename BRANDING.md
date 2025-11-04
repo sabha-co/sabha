@@ -59,24 +59,28 @@ MAILER_FROM_EMAIL="noreply@yourdomain.com"
 
 ### Visual Branding
 
-Control the colors used in your PWA (Progressive Web App):
+Configure PWA theme colors via environment variables:
 
 ```bash
-# Primary theme color (hex code)
+# Theme color for mobile browser address bar and PWA
 THEME_COLOR="#1d4ed8"
 
-# Background color (hex code)
+# Background color for PWA splash screen
 BACKGROUND_COLOR="#ffffff"
 ```
 
 **Where these appear:**
-- `THEME_COLOR`: Mobile browser address bar, PWA theme
-- `BACKGROUND_COLOR`: PWA splash screen background
+- Theme Color: Mobile browser address bar, PWA theme
+- Background Color: PWA splash screen background
+
+**Note:** These colors are for Progressive Web App (PWA) functionality only—they control the mobile browser chrome and splash screens, not the actual app UI styling.
 
 **Color recommendations:**
-- Use your brand's primary color for `THEME_COLOR`
-- Use white (#ffffff) or your brand's background color for `BACKGROUND_COLOR`
+- Use your brand's primary color for Theme Color
+- Use white (#ffffff) or your brand's background color for Background Color
 - Ensure good contrast between the two
+
+**Default values:** Theme Color: `#1d4ed8` (blue), Background Color: `#ffffff` (white)
 
 ### Analytics (Optional)
 

@@ -5,7 +5,7 @@ class UsersController < ApplicationController
 
   before_action :set_user, only: :show
   before_action :verify_join_code, only: %i[ new create ]
-  before_action :start_otp_if_user_exists, only: :create, if: -> { ENV["AUTH_METHOD"] == "otp" }
+  before_action :start_otp_if_user_exists, only: :create, if: -> { Current.account.auth_method_value == "otp" }
 
   def new
     @user = User.new
@@ -13,7 +13,7 @@ class UsersController < ApplicationController
 
   def create
     # Validate password for password-based authentication
-    if ENV["AUTH_METHOD"] == "password"
+    if Current.account.auth_method_value == "password"
       return unless validate_password_params
     end
 
@@ -34,7 +34,7 @@ class UsersController < ApplicationController
 
     # Always require email verification for new users
     if @user.person? && !@user.verified?
-      if ENV["AUTH_METHOD"] == "otp"
+      if Current.account.auth_method_value == "otp"
         # For OTP: Send verification code
         start_otp_for @user
         redirect_to new_auth_tokens_validations_path, notice: "Please check your email for a verification code."
