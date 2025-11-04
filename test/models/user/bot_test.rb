@@ -31,6 +31,33 @@ class User::BotTest < ActiveSupport::TestCase
     assert User.authenticate_bot(bot.bot_key)
   end
 
+  test "authenticate fails with malformed bot key missing token" do
+    bot = User.create_bot!(name: "Bender")
+    malformed_key = "#{bot.id}-"
+    assert_nil User.authenticate_bot(malformed_key)
+  end
+
+  test "authenticate fails with empty token" do
+    bot = User.create_bot!(name: "Bender")
+    malformed_key = "#{bot.id}-"
+    assert_nil User.authenticate_bot(malformed_key)
+  end
+
+  test "authenticate does not impersonate regular users" do
+    regular_user = users(:david)
+    assert_not regular_user.bot?
+
+    # Try to authenticate as regular user using their ID with nil token
+    malformed_key = "#{regular_user.id}-"
+    assert_nil User.authenticate_bot(malformed_key), "Should not authenticate regular user via bot authentication"
+  end
+
+  test "authenticate fails with incorrect token" do
+    bot = User.create_bot!(name: "Bender")
+    wrong_key = "#{bot.id}-wrongtoken"
+    assert_nil User.authenticate_bot(wrong_key)
+  end
+
   test "deliver message by webhook" do
     WebMock.stub_request(:post, webhooks(:mentions).url).to_return(status: 200)
 
