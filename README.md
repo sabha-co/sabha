@@ -2,7 +2,7 @@
 
 A community-driven fork of [Small Bets](https://github.com/antiwork/smallbets) that makes it easy to run your own branded community. All branding (app name, logos, colors, emails) is configurable through environment variables—no code changes required.
 
-Based on [Once Campfire](https://github.com/basecamp/once-campfire/), a Ruby on Rails chat application built by [37signals](https://once.com/campfire), with additional features from Small Bets. See [campfire-mods.md](campfire-mods.md) for a list of modifications.
+Based on [Once Campfire](https://github.com/basecamp/once-campfire/), a Ruby on Rails chat application built by [37signals](https://once.com/campfire), with additional features from Small Bets. See [smallbets-mods.md](smallbets-mods.md) for a list of modifications.
 
 <img width="1297" height="867" src="https://github.com/user-attachments/assets/a615c6df-1952-49af-872a-793743e6ad6e" />
 

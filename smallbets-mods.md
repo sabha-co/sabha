@@ -159,3 +159,35 @@ Some API examples here.
 - https://github.com/antiwork/smallbets/commit/59c528b10f7bffc5342d167c4e22b5564fb4f8ee
 - https://github.com/antiwork/smallbets/commit/62f159807b410956a03f1817a1417992434910d8
 
+
+## Enhanced inbox system
+Beyond the mentions tab, we added several other specialized inbox views accessible from the sidebar. Members get dedicated tabs for threads they're participating in, notifications from important rooms, bookmarked messages, and all messages. Experts also get an "Answers" tab to track questions they've resolved.
+
+
+## @everyone mention
+Members can type @everyone in any message to notify all members in that room, similar to Discord's @everyone or Slack's @channel.
+
+
+## Room search
+A search input at the top of the room list lets members quickly filter and find rooms by typing. Results update in real-time as you type.
+
+
+## My Rooms section
+The sidebar now separates rooms into "My Rooms" and "All Rooms" sections for better organization when communities have many rooms.
+
+
+## Experts directory
+A dedicated page showing resident experts who can help members. Each expert has their areas of expertise listed (like SEO, Ruby, AI Apps). Members can easily find and @mention the right expert for their question. Experts can also mark messages as "answered" and track all their support work in a dedicated inbox.
+
+
+## Video library
+Full video content library built with React for a modern experience. Members can browse courses organized by categories, resume where they left off with progress tracking, and download videos. Integrates seamlessly with Vimeo for hosting.
+
+
+## Live events banner
+A countdown banner appears at the top of rooms promoting upcoming live events like webinars or AMAs. Shows "Starts in X hours" with a link to join, then "Live now!" during the event, and disappears when it ends.
+
+
+## Marketing page
+A public landing page for visitors who aren't signed in yet. Different layout from the chat interface, useful for promoting your community before people join.
+

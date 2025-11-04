@@ -389,7 +389,7 @@ BACKGROUND_COLOR="#0f172a"  # Dark blue
 ## Need Help?
 
 - Check the [main README](README.md) for deployment help
-- Review [campfire-mods.md](campfire-mods.md) for customization examples
+- Review [smallbets-mods.md](smallbets-mods.md) for customization examples
 - Original Small Bets repo: [antiwork/smallbets](https://github.com/antiwork/smallbets)
 - Open an issue on GitHub if you encounter problems
 
