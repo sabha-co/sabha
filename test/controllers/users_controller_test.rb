@@ -76,4 +76,57 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert parsed_cookies.signed[:session_token].present?
     assert_redirected_to root_url
   end
+
+  test "create with blank password is rejected" do
+    ENV["AUTH_METHOD"] = "password"
+
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: {
+        user: {
+          name: "Hacker",
+          email_address: "hacker@example.com",
+          password: ""
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_match /Password can't be blank/, flash[:alert]
+  end
+
+  test "create with short password is rejected" do
+    ENV["AUTH_METHOD"] = "password"
+
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: {
+        user: {
+          name: "Hacker",
+          email_address: "hacker@example.com",
+          password: "short"
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+    assert_match /Password is too short/, flash[:alert]
+  end
+
+  test "create with valid password succeeds" do
+    ENV["AUTH_METHOD"] = "password"
+
+    assert_difference -> { User.count }, 1 do
+      post join_url(@join_code), params: {
+        user: {
+          name: "Valid User",
+          email_address: "valid@example.com",
+          password: "valid_password_123"
+        }
+      }
+    end
+
+    assert_redirected_to root_url
+    user = User.find_by(email_address: "valid@example.com")
+    assert user.present?
+    assert user.authenticate("valid_password_123")
+  end
 end

@@ -12,6 +12,11 @@ class UsersController < ApplicationController
   end
 
   def create
+    # Validate password for password-based authentication
+    if ENV["AUTH_METHOD"] == "password"
+      return unless validate_password_params
+    end
+
     # If Gumroad is enabled, use that flow
     if ENV["GUMROAD_ON"] == "true"
       @user = User.from_gumroad_sale(user_params)
@@ -73,6 +78,22 @@ class UsersController < ApplicationController
 
       auth_token = user.auth_tokens.create!(expires_at: 15.minutes.from_now)
       auth_token.deliver_later
+    end
+
+    def validate_password_params
+      @user = User.new
+
+      if user_params[:password].blank?
+        flash.now[:alert] = "Password can't be blank"
+        render :new, status: :unprocessable_entity
+        return false
+      elsif user_params[:password].length < User::MINIMUM_PASSWORD_LENGTH
+        flash.now[:alert] = "Password is too short (minimum is #{User::MINIMUM_PASSWORD_LENGTH} characters)"
+        render :new, status: :unprocessable_entity
+        return false
+      end
+
+      true
     end
 
     def user_params
