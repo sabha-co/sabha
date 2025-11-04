@@ -42,6 +42,95 @@
   }
 }
 
+input[type="checkbox"]:not(.switch__input),
+input[type="radio"] {
+  --outline-size: min(0.2em, 2px);
+
+  background-color: var(--color-bg);
+  block-size: var(--control-size, 1.075em);
+  border: 1.5px solid var(--color-border-darker);
+  border-radius: 0.35em;
+  cursor: pointer;
+  display: grid;
+  inline-size: var(--control-size, 1.075em);
+  margin: 0;
+  place-items: center;
+  position: relative;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+input[type="checkbox"]:not(.switch__input)::after,
+input[type="radio"]::after {
+  content: "";
+  display: block;
+  transition: transform 150ms ease;
+}
+
+input[type="checkbox"]:not(.switch__input) {
+  border-radius: 0.35em;
+}
+
+input[type="checkbox"]:not(.switch__input)::after {
+  block-size: 0.55em;
+  border-inline-end: 0.18em solid var(--color-bg);
+  border-block-end: 0.18em solid var(--color-bg);
+  inline-size: 0.3em;
+  transform: rotate(45deg) scale(0);
+  transform-origin: center;
+}
+
+input[type="checkbox"]:not(.switch__input):checked {
+  background-color: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-bg);
+}
+
+input[type="checkbox"]:not(.switch__input):checked::after {
+  transform: rotate(45deg) scale(1);
+}
+
+input[type="checkbox"]:not(.switch__input):focus-visible,
+input[type="radio"]:focus-visible {
+  outline-offset: 0.15em;
+}
+
+input[type="radio"] {
+  border-radius: 50%;
+}
+
+input[type="radio"]::after {
+  background-color: currentColor;
+  block-size: 45%;
+  border-radius: 50%;
+  inline-size: 45%;
+  transform: scale(0);
+}
+
+input[type="radio"]:checked {
+  background-color: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-bg);
+}
+
+input[type="radio"]:checked::after {
+  transform: scale(1);
+}
+
+input[type="checkbox"]:not(.switch__input):disabled,
+input[type="radio"]:disabled {
+  background-color: var(--color-border);
+  border-color: var(--color-border-dark);
+  color: var(--color-border-darker);
+  cursor: not-allowed;
+  filter: none;
+}
+
+input[type="checkbox"]:not(.switch__input):disabled::after,
+input[type="radio"]:disabled::after {
+  border-color: var(--color-border-darker);
+  background-color: var(--color-border-darker);
+}
+
 .input--transparent {
   --input-border-color: currentColor;
   --input-color: currentColor;
