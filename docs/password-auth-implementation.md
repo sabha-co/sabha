@@ -8,7 +8,7 @@
 
 ## Overview
 
-Port password-based authentication from Once-Campfire to Smallbets-CE while maintaining OTP and Gumroad as optional features controlled by environment variables.
+Port password-based authentication from Once-Campfire to Campfire-CE while maintaining OTP and Gumroad as optional features controlled by environment variables.
 
 **Additional Features Implemented:**
 - Email verification system to ensure valid email addresses
@@ -211,7 +211,7 @@ end
 
 **Key changes:**
 - Use `authenticate_by` (single method, timing-attack safe)
-- Add `non_suspended` check (Smallbets-CE specific)
+- Add `non_suspended` check (Campfire-CE specific)
 - Redirect to `post_authenticating_url` (not `chat_url`)
 
 **Source:** Once-Campfire `app/controllers/sessions_controller.rb:11-16`
@@ -322,14 +322,14 @@ validates :password, length: { minimum: 8 }, if: -> { password.present? }
 - Default: Password authentication (like Once-Campfire)
 - No action needed
 
-### For Existing Smallbets-CE Installations
+### For Existing Campfire-CE Installations
 - Users without passwords: Cannot sign in initially
 - Options:
   1. Admin resets passwords manually
   2. Add "forgot password" flow (future enhancement)
   3. Keep OTP available (`AUTH_METHOD=otp`)
 
-### For Campfire Users Migrating to Smallbets-CE
+### For Campfire Users Migrating to Campfire-CE
 - Direct port - everything works the same
 - Optional: Enable Gumroad if monetizing
 

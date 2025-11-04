@@ -1,11 +1,11 @@
-# Centralized branding configuration for Smallbets Community Edition
+# Centralized branding configuration for Campfire-CE
 # All branding elements should be configured through environment variables
 # This allows anyone to run their own branded community without code changes
 class BrandingConfig
   class << self
     # Application name used throughout the app
     def app_name
-      ENV.fetch("APP_NAME", "Smallbets Community Edition")
+      ENV.fetch("APP_NAME", "Campfire Community Edition")
     end
 
     # Short name for mobile/PWA
@@ -64,7 +64,7 @@ class BrandingConfig
 
     # Default app description
     def app_description
-      ENV.fetch("APP_DESCRIPTION", "A community chat platform powered by Smallbets Community Edition")
+      ENV.fetch("APP_DESCRIPTION", "A community chat platform powered by Campfire-CE")
     end
   end
 end

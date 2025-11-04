@@ -1,14 +1,14 @@
-# Smallbets Community Edition
+# Campfire-CE (Community Edition)
 
-This is a community fork of [Small Bets](https://github.com/antiwork/smallbets) that makes it easy to run your own branded community. All branding (app name, logos, colors, emails) is configurable through environment variables—no code changes required.
+A community-driven fork of [Small Bets](https://github.com/antiwork/smallbets) that makes it easy to run your own branded community. All branding (app name, logos, colors, emails) is configurable through environment variables—no code changes required.
 
-Small Bets is based on [Campfire](https://github.com/basecamp/once-campfire/), a Ruby on Rails chat application built by [37signals](https://once.com/campfire). See [campfire-mods.md](campfire-mods.md) for a list of modifications.
+Based on [Once Campfire](https://github.com/basecamp/once-campfire/), a Ruby on Rails chat application built by [37signals](https://once.com/campfire), with additional features from Small Bets. See [campfire-mods.md](campfire-mods.md) for a list of modifications.
 
 <img width="1297" height="867" src="https://github.com/user-attachments/assets/a615c6df-1952-49af-872a-793743e6ad6e" />
 
-If you would like to help us improve Small Bets, we pay bounties for pull requests that [resolve our issues](https://github.com/antiwork/smallbets/issues). If you find a bug or have a feature request, we would appreciate it if you [post an issue](https://github.com/antiwork/smallbets/issues/new). Thank you!
+This project combines the simplicity of Campfire with optional payment gating, passwordless authentication, and community features. Perfect for running paid memberships, course communities, or private group chats.
 
-And if you're not part of the [Small Bets](https://smallbets.com) community yet, we would love to welcome you onboard!
+If you find a bug or have a feature request, please [post an issue](https://github.com/ashwin47/campfire-ce/issues/new). Contributions welcome!
 
 ## Running in development
 
@@ -62,7 +62,7 @@ Tailwind in this app is used in two places:
 
 ## Running in production
 
-Small Bets uses [Kamal](https://kamal-deploy.org/docs/installation/) for deployment. A modern tool that provides zero-downtime deployments with Docker.
+Campfire-CE uses [Kamal](https://kamal-deploy.org/docs/installation/) for deployment. A modern tool that provides zero-downtime deployments with Docker.
 
 ### Prerequisites
 
@@ -147,12 +147,12 @@ If you prefer not to use Kamal, you can deploy manually with Docker:
 
 ```bash
 # Build and run
-docker build -t smallbets/campfire .
+docker build -t campfire-ce .
 docker run -p 3000:3000 \
   -e RAILS_ENV=production \
   -e SECRET_KEY_BASE=your-secret-key \
   -v /path/to/storage:/rails/storage \
-  smallbets/campfire
+  campfire-ce
 ```
 
 ### Environment Variables Reference

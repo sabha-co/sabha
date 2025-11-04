@@ -1,4 +1,5 @@
 {
+  "name": "campfire-ce",
   "private": true,
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.13",

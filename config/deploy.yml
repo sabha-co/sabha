@@ -1,6 +1,6 @@
 service: campfire
 
-image: smallbets/campfire
+image: campfire-ce
 
 deploy_timeout: 120
 drain_timeout: 60

@@ -2,5 +2,5 @@
 cd /rails
 export filename=campfire-db-$(date +%Y-%m-%d-%H-%M).tar
 tar -cvf $filename /rails/storage/db/
-aws s3 cp $filename s3://smallbets/backups/campfire/$filename
+aws s3 cp $filename s3://campfire-ce/backups/$filename
 rm $filename

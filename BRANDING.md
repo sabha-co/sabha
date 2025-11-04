@@ -1,6 +1,6 @@
 # Branding Customization Guide
 
-This guide explains how to fully customize Smallbets Community Edition to match your brand identity. All branding can be configured through environment variables and asset files—no code changes required!
+This guide explains how to fully customize Campfire-CE to match your brand identity. All branding can be configured through environment variables and asset files—no code changes required!
 
 ## Table of Contents
 
@@ -181,7 +181,7 @@ body {
 
 ### Logo Upload
 
-Smallbets Community Edition supports custom logo uploads through the admin panel:
+Campfire-CE supports custom logo uploads through the admin panel:
 
 1. Go to `/accounts/edit` as administrator
 2. Upload your logo in the "Account Logo" section
@@ -391,4 +391,4 @@ BACKGROUND_COLOR="#0f172a"  # Dark blue
 
 ---
 
-**Remember:** The beauty of Smallbets Community Edition is that everything is customizable. Make it yours! 🎨
+**Remember:** The beauty of Campfire-CE is that everything is customizable. Make it yours! 🎨

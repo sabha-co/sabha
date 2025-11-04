@@ -1,4 +1,4 @@
-# Authentication Flow Comparison: Once-Campfire vs Smallbets-CE
+# Authentication Flow Comparison: Once-Campfire vs Campfire-CE
 
 **Document Version:** 1.0
 **Date:** 2025-11-04
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-| Aspect | **Once-Campfire** | **Smallbets-CE** |
+| Aspect | **Once-Campfire** | **Campfire-CE** |
 |--------|------------------|------------------|
 | **Primary Auth Method** | Password-based | Passwordless OTP (One-Time Password) |
 | **Sign-up Gate** | Join code only | Join code + Gumroad payment verification |
@@ -28,7 +28,7 @@
 4. [User Model Differences](#4-user-model-differences)
 5. [Authentication Mechanisms](#5-authentication-mechanisms)
 6. [Security Features](#6-security-features)
-7. [Gumroad Integration](#7-gumroad-integration-smallbets-ce-only)
+7. [Gumroad Integration](#7-gumroad-integration-campfire-ce-only)
 8. [Access Control](#8-access-control)
 9. [Critical Code Differences](#9-critical-code-differences)
 10. [Migration Path](#10-migration-path)
@@ -48,7 +48,7 @@ Both systems use the exact same first-run setup:
 ```ruby
 # Both: app/models/first_run.rb (identical code)
 class FirstRun
-  ACCOUNT_NAME = "Campfire"  # or customized in Smallbets-CE
+  ACCOUNT_NAME = "Campfire"  # or customized in Campfire-CE
   FIRST_ROOM_NAME = "All Talk"
 
   def self.create!(user_params)
@@ -118,7 +118,7 @@ Redirect to chat
 
 ---
 
-#### Smallbets-CE: Gumroad-Gated Join
+#### Campfire-CE: Gumroad-Gated Join
 
 **URL:** `/join/{join_code}`
 
@@ -130,7 +130,7 @@ Redirect to chat
 
 **Process:**
 ```ruby
-# smallbets-ce/app/controllers/users_controller.rb:14-31
+# campfire-ce/app/controllers/users_controller.rb:14-31
 def create
   @user = User.from_gumroad_sale(user_params)  # ← Gumroad verification
 
@@ -153,7 +153,7 @@ end
 
 **Gumroad Verification Logic:**
 ```ruby
-# smallbets-ce/app/models/user.rb:78-89
+# campfire-ce/app/models/user.rb:78-89
 def self.from_gumroad_sale(params)
   return new(params) unless ENV["GUMROAD_ON"] == "true"
 
@@ -191,7 +191,7 @@ Purchase found?
 ```
 
 **Key Differences:**
-| Feature | Once-Campfire | Smallbets-CE |
+| Feature | Once-Campfire | Campfire-CE |
 |---------|--------------|-------------|
 | Password required | ✅ Yes | ❌ No |
 | Payment check | ❌ No | ✅ Gumroad API |
@@ -245,7 +245,7 @@ Invalid? → Show error, render form again
 
 ---
 
-### Smallbets-CE: Passwordless OTP
+### Campfire-CE: Passwordless OTP
 
 **Routes:**
 - `POST /auth_tokens` (request OTP)
@@ -258,7 +258,7 @@ Invalid? → Show error, render form again
 
 **Code:**
 ```ruby
-# smallbets-ce/app/controllers/auth_tokens_controller.rb:8-14
+# campfire-ce/app/controllers/auth_tokens_controller.rb:8-14
 def create
   user = User.active.non_suspended.find_by("LOWER(email_address) = ?",
                                            params[:email_address].downcase)
@@ -276,7 +276,7 @@ end
 
 **Code:**
 ```ruby
-# smallbets-ce/app/controllers/auth_tokens/validations_controller.rb:9-20
+# campfire-ce/app/controllers/auth_tokens/validations_controller.rb:9-20
 def create
   auth_token = AuthToken.lookup(
     token: params[:token],
@@ -293,7 +293,7 @@ end
 
 **AuthToken Model:**
 ```ruby
-# smallbets-ce/app/models/auth_token.rb
+# campfire-ce/app/models/auth_token.rb
 class AuthToken < ApplicationRecord
   has_secure_token  # Random token for magic links
 
@@ -477,7 +477,7 @@ def authenticated_as(session)
 end
 ```
 
-**Smallbets-CE:**
+**Campfire-CE:**
 ```ruby
 # Checks for suspension (Gumroad refunds)
 def authenticated_as(session)
@@ -493,12 +493,12 @@ end
 
 ### Database Schema Comparison
 
-| Field | Once-Campfire | Smallbets-CE | Purpose |
+| Field | Once-Campfire | Campfire-CE | Purpose |
 |-------|--------------|-------------|---------|
 | `id` | ✅ | ✅ | Primary key |
 | `name` | ✅ | ✅ | Display name |
 | `email_address` | ✅ | ✅ | Unique identifier |
-| `password_digest` | ✅ | ✅ | BCrypt hash (rarely used in smallbets-ce) |
+| `password_digest` | ✅ | ✅ | BCrypt hash (rarely used in campfire-ce) |
 | `role` | ✅ | ✅ | User role enum |
 | `active` | ✅ | ✅ | Account activation status |
 | `bot_token` | ✅ | ✅ | API authentication |
@@ -516,7 +516,7 @@ end
 enum :role, %i[ member administrator bot ]
 ```
 
-**Smallbets-CE:**
+**Campfire-CE:**
 ```ruby
 enum :role, %i[ member administrator bot expert ]
 #                                         ↑ New role for featured experts
@@ -531,7 +531,7 @@ user.active == true  # Can sign in
 user.active == false # Deactivated (cannot sign in)
 ```
 
-**Smallbets-CE:**
+**Campfire-CE:**
 ```ruby
 # Four effective states
 1. Active + never authenticated      # Imported from Gumroad webhook, account unclaimed
@@ -540,10 +540,10 @@ user.active == false # Deactivated (cannot sign in)
 4. Active + suspended                # Gumroad refund (suspended_at present)
 ```
 
-### Smallbets-CE Additional Methods
+### Campfire-CE Additional Methods
 
 ```ruby
-# app/models/user.rb (smallbets-ce only)
+# app/models/user.rb (campfire-ce only)
 
 def suspended?
   suspended_at.present?
@@ -595,7 +595,7 @@ New users automatically join all open rooms on account creation.
 
 ### Available Methods Comparison
 
-| Method | Once-Campfire | Smallbets-CE | Primary Use |
+| Method | Once-Campfire | Campfire-CE | Primary Use |
 |--------|--------------|-------------|-------------|
 | **Password** | ✅ Primary | ⚠️ Admin/legacy only | User sign-in |
 | **OTP (6-digit code)** | ❌ | ✅ Primary | User sign-in |
@@ -616,7 +616,7 @@ def require_authentication
 end
 ```
 
-**Smallbets-CE:**
+**Campfire-CE:**
 ```ruby
 # app/controllers/concerns/authentication.rb
 def require_authentication
@@ -685,12 +685,12 @@ end
 
 ### Comparison Matrix
 
-| Security Feature | Once-Campfire | Smallbets-CE | Notes |
+| Security Feature | Once-Campfire | Campfire-CE | Notes |
 |-----------------|--------------|-------------|-------|
-| **Password Hashing** | ✅ BCrypt | ✅ BCrypt | Rarely used in smallbets-ce |
+| **Password Hashing** | ✅ BCrypt | ✅ BCrypt | Rarely used in campfire-ce |
 | **Rate Limiting: Password** | ✅ 10/3min | ✅ 10/3min | Same implementation |
-| **Rate Limiting: OTP Request** | N/A | ✅ 10/1min | Smallbets-CE only |
-| **Rate Limiting: OTP Validation** | N/A | ✅ 10/1min | Smallbets-CE only |
+| **Rate Limiting: OTP Request** | N/A | ✅ 10/1min | Campfire-CE only |
+| **Rate Limiting: OTP Validation** | N/A | ✅ 10/1min | Campfire-CE only |
 | **Session Token Security** | ✅ Secure random | ✅ Secure random | `has_secure_token` |
 | **Signed Cookies** | ✅ | ✅ | Tamper-proof |
 | **HttpOnly Cookies** | ✅ | ✅ | XSS protection |
@@ -740,7 +740,7 @@ end
 - ⚠️ No email verification
 - ⚠️ No 2FA option
 
-**Smallbets-CE:**
+**Campfire-CE:**
 - ⚠️ 6-digit OTP (100K combinations, but rate limited)
 - ⚠️ Permanent sessions (no auto-timeout)
 - ⚠️ No 2FA option
@@ -751,16 +751,16 @@ end
 
 **Once-Campfire:** Password is primary auth method, must be strong and secure.
 
-**Smallbets-CE:** Password field exists but rarely used:
+**Campfire-CE:** Password field exists but rarely used:
 - First-run admin setup only
 - Legacy sign-in for admins who set password during first-run
 - Most users never have a password (OTP only)
 
 ---
 
-## 7. Gumroad Integration (Smallbets-CE Only)
+## 7. Gumroad Integration (Campfire-CE Only)
 
-**STATUS: 🔴 UNIQUE TO SMALLBETS-CE**
+**STATUS: 🔴 UNIQUE TO CAMPFIRE-CE**
 
 ### Architecture Overview
 
@@ -927,7 +927,7 @@ end
 
 **Suspension Logic:**
 ```ruby
-# app/models/user.rb (smallbets-ce only)
+# app/models/user.rb (campfire-ce only)
 def suspended?
   suspended_at.present?
 end
@@ -949,7 +949,7 @@ end
 
 ### User Creation Scenarios
 
-**Smallbets-CE has 3 ways users are created:**
+**Campfire-CE has 3 ways users are created:**
 
 #### Scenario 1: Direct Sign-up (Traditional)
 ```
@@ -1084,7 +1084,7 @@ end
 enum :role, %i[ member administrator bot ]
 ```
 
-**Smallbets-CE:**
+**Campfire-CE:**
 ```ruby
 enum :role, %i[ member administrator bot expert ]
 ```
@@ -1121,7 +1121,7 @@ end
 | Use bot API | ❌ | ❌ | ✅ | ❌ |
 | Featured on marketing page | ❌ | ❌ | ❌ | ✅* |
 
-*Smallbets-CE only
+*Campfire-CE only
 
 ### Room Access
 
@@ -1200,9 +1200,9 @@ private
   end
 ```
 
-**Smallbets-CE (25 lines):**
+**Campfire-CE (25 lines):**
 ```ruby
-# smallbets-ce/app/controllers/users_controller.rb:14-38
+# campfire-ce/app/controllers/users_controller.rb:14-38
 def create
   @user = User.from_gumroad_sale(user_params)
 
@@ -1260,9 +1260,9 @@ def create
 end
 ```
 
-**Smallbets-CE:**
+**Campfire-CE:**
 ```ruby
-# smallbets-ce/app/controllers/sessions_controller.rb:10-18
+# campfire-ce/app/controllers/sessions_controller.rb:10-18
 # Same code but rarely used (admin legacy only)
 # Most users use AuthTokensController instead
 def create
@@ -1276,9 +1276,9 @@ def create
 end
 ```
 
-**Smallbets-CE: Primary Auth (OTP):**
+**Campfire-CE: Primary Auth (OTP):**
 ```ruby
-# smallbets-ce/app/controllers/auth_tokens_controller.rb
+# campfire-ce/app/controllers/auth_tokens_controller.rb
 class AuthTokensController < ApplicationController
   allow_unauthenticated_access
   rate_limit to: 10, within: 1.minute, only: :create
@@ -1293,7 +1293,7 @@ class AuthTokensController < ApplicationController
   end
 end
 
-# smallbets-ce/app/controllers/auth_tokens/validations_controller.rb
+# campfire-ce/app/controllers/auth_tokens/validations_controller.rb
 class AuthTokens::ValidationsController < ApplicationController
   allow_unauthenticated_access
   rate_limit to: 10, within: 1.minute, only: :create
@@ -1321,7 +1321,7 @@ end
 User.create!(name: "John", email_address: "john@example.com", password: "secret")
 ```
 
-**Smallbets-CE:**
+**Campfire-CE:**
 ```ruby
 # app/models/user.rb:78-89
 def self.from_gumroad_sale(params)
@@ -1360,7 +1360,7 @@ def request_authentication
 end
 ```
 
-**Smallbets-CE:**
+**Campfire-CE:**
 ```ruby
 # app/controllers/concerns/authentication.rb:50-53
 # Identical code but different destination
@@ -1372,7 +1372,7 @@ end
 
 The route is the same, but the view is different:
 - **Once-Campfire:** `sessions/new.html.erb` shows email + password fields
-- **Smallbets-CE:** `sessions/new.html.erb` shows email only (redirects to OTP)
+- **Campfire-CE:** `sessions/new.html.erb` shows email only (redirects to OTP)
 
 ---
 
@@ -1395,7 +1395,7 @@ def authenticated_as(session)
 end
 ```
 
-**Smallbets-CE:**
+**Campfire-CE:**
 ```ruby
 # app/controllers/concerns/authentication.rb:63-86
 def authenticated_as(session)
@@ -1441,7 +1441,7 @@ Both codebases share:
 - Simple user creation (no payment gate)
 - Two-state user model (active/inactive)
 
-**Unique to Smallbets-CE:**
+**Unique to Campfire-CE:**
 - OTP authentication system (`AuthToken` model + controllers)
 - Magic link alternative
 - Gumroad integration (API client + webhooks)
@@ -1453,7 +1453,7 @@ Both codebases share:
 
 ### Porting Features
 
-#### From Once-Campfire → Smallbets-CE
+#### From Once-Campfire → Campfire-CE
 
 **Missing Features:**
 - Simple password auth (replaced by OTP)
@@ -1468,7 +1468,7 @@ Both codebases share:
 
 ---
 
-#### From Smallbets-CE → Once-Campfire
+#### From Campfire-CE → Once-Campfire
 
 **Missing Features:**
 - OTP authentication system
@@ -1503,7 +1503,7 @@ Both codebases share:
    - No payment logic
    - Easier to understand and maintain
 
-2. **Keep Smallbets-CE as downstream fork**
+2. **Keep Campfire-CE as downstream fork**
    - Periodically merge changes from Once-Campfire
    - Add Gumroad + OTP features on top
    - Maintain compatibility with core architecture
@@ -1516,8 +1516,8 @@ Both codebases share:
    - UI/UX improvements
 
 4. **Fork-specific updates:**
-   - Gumroad API changes (Smallbets-CE only)
-   - OTP improvements (Smallbets-CE only)
+   - Gumroad API changes (Campfire-CE only)
+   - OTP improvements (Campfire-CE only)
    - Password auth improvements (Once-Campfire only)
 
 ---
@@ -1544,7 +1544,7 @@ Both codebases share:
 
 ---
 
-### Use Smallbets-CE When:
+### Use Campfire-CE When:
 
 ✅ Paid membership community
 ✅ Course/product with chat component
@@ -1566,7 +1566,7 @@ Both codebases share:
 
 ### Decision Matrix
 
-| Priority | Choose Once-Campfire | Choose Smallbets-CE |
+| Priority | Choose Once-Campfire | Choose Campfire-CE |
 |----------|---------------------|-------------------|
 | **Simplicity** | ✅ | ❌ |
 | **No Payment** | ✅ | ⚠️ (can disable) |
@@ -1584,7 +1584,7 @@ Both codebases share:
 
 ### Hybrid Approach
 
-**Make Smallbets-CE work like Once-Campfire:**
+**Make Campfire-CE work like Once-Campfire:**
 
 Set environment variable:
 ```bash
@@ -1616,7 +1616,7 @@ This disables Gumroad verification, making sign-up work like Once-Campfire.
 
 #### Different
 
-| File | Once-Campfire | Smallbets-CE | Difference |
+| File | Once-Campfire | Campfire-CE | Difference |
 |------|--------------|-------------|-----------|
 | `users_controller.rb` | Password sign-up | Gumroad sign-up | Major |
 | `sessions_controller.rb` | Primary password auth | Legacy password auth | Usage |
@@ -1640,7 +1640,7 @@ This disables Gumroad verification, making sign-up work like Once-Campfire.
 
 #### Different
 
-| File | Once-Campfire | Smallbets-CE | Difference |
+| File | Once-Campfire | Campfire-CE | Difference |
 |------|--------------|-------------|-----------|
 | `user.rb` | Simpler | More fields + methods | Moderate |
 | `auth_token.rb` | ❌ Missing | ✅ Present | New |
@@ -1655,7 +1655,7 @@ This disables Gumroad verification, making sign-up work like Once-Campfire.
 
 | File | Status | Notes |
 |------|--------|-------|
-| `authentication.rb` | 🟡 Nearly identical | Suspension check added in smallbets-ce |
+| `authentication.rb` | 🟡 Nearly identical | Suspension check added in campfire-ce |
 | `authentication/session_lookup.rb` | 🟢 Identical | Cookie lookup |
 | `authorization.rb` | 🟢 Identical | Admin checks |
 | `user/bot.rb` | 🟢 Identical | Bot authentication |
@@ -1664,7 +1664,7 @@ This disables Gumroad verification, making sign-up work like Once-Campfire.
 
 #### Different
 
-| File | Once-Campfire | Smallbets-CE | Difference |
+| File | Once-Campfire | Campfire-CE | Difference |
 |------|--------------|-------------|-----------|
 | `user/role.rb` | 3 roles | 4 roles (expert added) | Minor |
 
@@ -1682,7 +1682,7 @@ db/migrate/
   20240209110503_alter_users_add_bot_token.rb
 ```
 
-#### Smallbets-CE Additional
+#### Campfire-CE Additional
 
 ```
 db/migrate/
@@ -1699,7 +1699,7 @@ db/migrate/
 
 #### Authentication Views
 
-| File | Once-Campfire | Smallbets-CE | Purpose |
+| File | Once-Campfire | Campfire-CE | Purpose |
 |------|--------------|-------------|---------|
 | `first_runs/show.html.erb` | ✅ | ✅ | Initial setup form |
 | `sessions/new.html.erb` | Password form | Email form (OTP) | Sign-in |
@@ -1707,10 +1707,10 @@ db/migrate/
 | `auth_tokens/validations/new.html.erb` | ❌ | ✅ | OTP code entry |
 | `sessions/transfers/show.html.erb` | ✅ | ✅ | QR code display |
 
-#### Marketing Views (Smallbets-CE Only)
+#### Marketing Views (Campfire-CE Only)
 
 ```
-smallbets-ce/app/views/marketing/
+campfire-ce/app/views/marketing/
   show.html.erb          - Landing page
   _community_popup.html.erb
 ```
@@ -1719,7 +1719,7 @@ smallbets-ce/app/views/marketing/
 
 ### Mailers
 
-| File | Once-Campfire | Smallbets-CE | Purpose |
+| File | Once-Campfire | Campfire-CE | Purpose |
 |------|--------------|-------------|---------|
 | `auth_token_mailer.rb` | ❌ | ✅ | OTP email delivery |
 
@@ -1727,7 +1727,7 @@ smallbets-ce/app/views/marketing/
 
 ### Jobs
 
-| File | Once-Campfire | Smallbets-CE | Purpose |
+| File | Once-Campfire | Campfire-CE | Purpose |
 |------|--------------|-------------|---------|
 | `gumroad/import_user_job.rb` | ❌ | ✅ | Process sale webhooks |
 
@@ -1753,7 +1753,7 @@ resource :account do
 end
 ```
 
-#### Smallbets-CE Additional
+#### Campfire-CE Additional
 
 ```ruby
 # OTP authentication
@@ -1795,7 +1795,7 @@ SENTRY_DSN=your_sentry_dsn         # Error tracking
 COOKIE_DOMAIN=.example.com         # Multi-subdomain cookies
 ```
 
-### Smallbets-CE Additional
+### Campfire-CE Additional
 
 ```bash
 # Gumroad Integration
@@ -1816,17 +1816,17 @@ ANALYTICS_DOMAIN=your-app.com      # Plausible.io tracking
 
 ## Conclusion
 
-**Once-Campfire** and **Smallbets-CE** share a strong architectural foundation but diverge significantly in authentication and payment handling:
+**Once-Campfire** and **Campfire-CE** share a strong architectural foundation but diverge significantly in authentication and payment handling:
 
 - **Once-Campfire:** Simple, password-based, free access
-- **Smallbets-CE:** Passwordless OTP, payment-gated, refund-aware
+- **Campfire-CE:** Passwordless OTP, payment-gated, refund-aware
 
 Both are production-ready systems with different use cases. Choose based on your business model and security preferences.
 
 For most self-hosted scenarios, **Once-Campfire** provides simplicity.
-For paid communities, **Smallbets-CE** provides necessary payment integration.
+For paid communities, **Campfire-CE** provides necessary payment integration.
 
-The ~70% shared codebase means updates to core functionality can flow from Once-Campfire → Smallbets-CE, maintaining compatibility while adding business-specific features.
+The ~70% shared codebase means updates to core functionality can flow from Once-Campfire → Campfire-CE, maintaining compatibility while adding business-specific features.
 
 ---
 

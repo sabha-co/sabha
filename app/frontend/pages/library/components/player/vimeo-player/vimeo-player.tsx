@@ -51,7 +51,7 @@ export const VimeoPlayer = forwardRef<VimeoPlayerHandle, VimeoPlayerProps>(
     const instanceIdRef = useRef<string>(
       `vp_${Math.random().toString(36).slice(2)}`,
     )
-    const PREVIEW_EVENT = "smallbets:preview-start"
+    const PREVIEW_EVENT = "campfire-ce:preview-start"
 
     function isDataSaverEnabled(): boolean {
       try {
