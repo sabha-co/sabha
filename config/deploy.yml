@@ -2,9 +2,6 @@ service: campfire
 
 image: campfire-ce
 
-deploy_timeout: 120
-drain_timeout: 60
-
 servers:
   web:
     - <%= ENV.fetch("SERVER_IP") %>
@@ -13,10 +10,6 @@ proxy:
   ssl: true
   host: <%= ENV.fetch("PROXY_HOST") %>
   app_port: 3000
-  healthcheck:
-    path: /up
-    interval: 10
-    timeout: 10
 
 registry:
   server: localhost:5000
