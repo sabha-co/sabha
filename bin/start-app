@@ -2,5 +2,4 @@
 
 rm -f tmp/pids/server.pid
 ./bin/rails db:prepare
-./bin/rails library:populate_categories
 ./bin/rails server
