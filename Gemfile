@@ -8,10 +8,10 @@ gem "rails", "~> 8.0.0"
 
 # Drivers
 gem "sqlite3", ">= 2.8"
-gem "redis", ">= 5.0"
+gem "redis", ">= 5.4"
 
 # Deployment
-gem "puma", "~> 6.4"
+gem "puma", "~> 7.1"
 
 # Jobs
 gem "resque", "~> 2.7.0"

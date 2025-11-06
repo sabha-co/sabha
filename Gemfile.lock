@@ -243,7 +243,7 @@ GEM
       date
       stringio
     public_suffix (6.0.2)
-    puma (6.6.1)
+    puma (7.1.0)
       nio4r (~> 2.0)
     raabro (1.4.0)
     racc (1.8.1)
@@ -468,11 +468,11 @@ DEPENDENCIES
   net-http-persistent
   platform_agent
   propshaft
-  puma (~> 6.4)
+  puma (~> 7.1)
   rack-mini-profiler (~> 4.0)
   rails (~> 8.0.0)
   rails_autolink
-  redis (>= 5.0)
+  redis (>= 5.4)
   resend
   resque (~> 2.7.0)
   resque-pool (~> 0.7.1)
