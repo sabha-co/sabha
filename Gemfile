@@ -64,6 +64,7 @@ end
 gem "dotenv", groups: [ :development, :test ]
 gem "letter_opener", group: :development
 gem "stringex"
+gem "ostruct" # Required by stringex, no longer in default gems as of Ruby 3.5.0
 
 gem "resend"
 

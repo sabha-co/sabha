@@ -224,6 +224,7 @@ GEM
     nokogiri (1.18.10-x86_64-linux-gnu)
       racc (~> 1.4)
     openssl (3.3.2)
+    ostruct (0.6.3)
     parallel (1.27.0)
     parser (3.3.10.0)
       ast (~> 2.4.1)
@@ -466,6 +467,7 @@ DEPENDENCIES
   mocha
   msgpack (>= 1.7.0)
   net-http-persistent
+  ostruct
   platform_agent
   propshaft
   puma (~> 7.1)
