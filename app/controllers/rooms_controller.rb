@@ -51,6 +51,7 @@ class RoomsController < ApplicationController
     end
 
     def set_membership
+      return unless @room
       @membership = Membership.find_by(room_id: @room.id, user_id: Current.user.id)
     end
 
