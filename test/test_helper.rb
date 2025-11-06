@@ -17,7 +17,7 @@ class ActiveSupport::TestCase
   # FIXME: Why isn't this included in ActiveSupport::TestCase by default?
   include ActiveJob::TestHelper
 
-  parallelize(workers: :number_of_processors)
+  # parallelize(workers: :number_of_processors)
 
   # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
   fixtures :all
