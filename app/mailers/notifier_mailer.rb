@@ -12,8 +12,8 @@ class NotifierMailer < ApplicationMailer
     @total_messages_count = messages.count
     messages_to_include_count = if @total_messages_count > MAX_MENTIONS_COUNT
                                   [ @total_messages_count - MIN_MENTIONS_TO_WRAP, MAX_MENTIONS_COUNT ].min
-                                else
-                                  @total_messages_count
+    else
+      @total_messages_count
     end
     @messages = messages.first(messages_to_include_count)
     @more_mentions_count = [ @total_messages_count - messages_to_include_count, 0 ].max
