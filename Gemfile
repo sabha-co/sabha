@@ -4,17 +4,17 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 git_source(:bc)     { |repo| "https://github.com/basecamp/#{repo}" }
 
 # Rails
-gem "rails", "~> 7.2.0"
+gem "rails", "~> 8.0.0"
 
 # Drivers
-gem "sqlite3", "~> 1.4"
-gem "redis", "~> 4.0"
+gem "sqlite3", ">= 2.1"
+gem "redis", ">= 5.0"
 
 # Deployment
 gem "puma", "~> 6.4"
 
 # Jobs
-gem "resque", "~> 2.6.0"
+gem "resque", "~> 2.7.0"
 gem "resque-pool", "~> 0.7.1"
 gem "resque-scheduler", "~> 4.11.0"
 

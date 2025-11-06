@@ -7,6 +7,6 @@ task "resque:pool:setup" do
 
   Resque::Pool.after_prefork do |job|
     ActiveRecord::Base.establish_connection
-    Resque.redis.client.reconnect
+    Resque.redis.redis.reconnect
   end
 end

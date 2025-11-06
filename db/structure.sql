@@ -3,8 +3,6 @@ CREATE TABLE IF NOT EXISTS "ar_internal_metadata" ("key" varchar NOT NULL PRIMAR
 CREATE TABLE IF NOT EXISTS "accounts" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "join_code" varchar NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "custom_styles" text, "active" boolean DEFAULT 1, "auth_method" varchar DEFAULT 'password', "open_registration" boolean DEFAULT 0);
 CREATE TABLE IF NOT EXISTS "action_text_rich_texts" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "body" text, "record_type" varchar NOT NULL, "record_id" bigint NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL);
 CREATE UNIQUE INDEX "index_action_text_rich_texts_uniqueness" ON "action_text_rich_texts" ("record_type", "record_id", "name");
-CREATE TABLE IF NOT EXISTS "active_storage_blobs" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "key" varchar NOT NULL, "filename" varchar NOT NULL, "content_type" varchar, "metadata" text, "service_name" varchar NOT NULL, "byte_size" bigint NOT NULL, "checksum" varchar, "created_at" datetime(6) NOT NULL);
-CREATE UNIQUE INDEX "index_active_storage_blobs_on_key" ON "active_storage_blobs" ("key");
 CREATE TABLE IF NOT EXISTS "memberships" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "room_id" integer NOT NULL, "user_id" integer NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "unread_at" datetime(6), "involvement" varchar DEFAULT 'mentions', "connections" integer DEFAULT 0 NOT NULL, "connected_at" datetime(6), "active" boolean DEFAULT 1, "notified_until" datetime(6));
 CREATE INDEX "index_memberships_on_room_id_and_created_at" ON "memberships" ("room_id", "created_at");
 CREATE UNIQUE INDEX "index_memberships_on_room_id_and_user_id" ON "memberships" ("room_id", "user_id");
@@ -156,7 +154,12 @@ CREATE INDEX "index_messages_on_room_id" ON "messages" ("room_id");
 CREATE INDEX "index_messages_on_created_at" ON "messages" ("created_at");
 CREATE INDEX "index_messages_on_room_id_and_created_at" ON "messages" ("room_id", "created_at");
 CREATE INDEX "index_messages_on_room_id_and_mentions_everyone" ON "messages" ("room_id", "mentions_everyone") WHERE mentions_everyone = true;
+CREATE TABLE IF NOT EXISTS "active_storage_blobs" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "key" varchar NOT NULL, "filename" varchar NOT NULL, "content_type" varchar, "metadata" text, "service_name" varchar NOT NULL, "byte_size" bigint NOT NULL, "checksum" varchar, "created_at" datetime(6) NOT NULL);
+CREATE UNIQUE INDEX "index_active_storage_blobs_on_key" ON "active_storage_blobs" ("key") /*application='Campfire'*/;
 INSERT INTO "schema_migrations" (version) VALUES
+('20251106020802'),
+('20251106020801'),
+('20251106020800'),
 ('20251104210006'),
 ('20251104154122'),
 ('20251104025618'),
