@@ -3,6 +3,7 @@ class Rooms::InvolvementsController < ApplicationController
 
   helper_method :from_sidebar
 
+  before_action :ensure_can_administer, only: %i[ update ]
   before_action :set_involvement, only: %i[show notifications_ready]
 
   def show ; end

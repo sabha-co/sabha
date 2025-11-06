@@ -15,8 +15,14 @@ class Opengraph::Metadata
 
   private
     def sanitize_fields
-      self.title = sanitize(strip_tags(title))
-      self.description = sanitize(strip_tags(description))
+      self.title = strip_tags(remove_script_tags(title))
+      self.description = strip_tags(remove_script_tags(description))
+    end
+
+    def remove_script_tags(text)
+      return text if text.blank?
+      # Remove script tags and their content
+      text.gsub(/<script[^>]*>.*?<\/script>/mi, "")
     end
 
     def ensure_valid_image_url

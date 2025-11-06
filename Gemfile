@@ -4,17 +4,17 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 git_source(:bc)     { |repo| "https://github.com/basecamp/#{repo}" }
 
 # Rails
-gem "rails", "~> 7.2.0"
+gem "rails", "~> 8.0.0"
 
 # Drivers
-gem "sqlite3", "~> 1.4"
-gem "redis", "~> 4.0"
+gem "sqlite3", ">= 2.8"
+gem "redis", ">= 5.4"
 
 # Deployment
-gem "puma", "~> 6.4"
+gem "puma", "~> 7.1"
 
 # Jobs
-gem "resque", "~> 2.6.0"
+gem "resque", "~> 2.7.0"
 gem "resque-pool", "~> 0.7.1"
 gem "resque-scheduler", "~> 4.11.0"
 
@@ -64,6 +64,7 @@ end
 gem "dotenv", groups: [ :development, :test ]
 gem "letter_opener", group: :development
 gem "stringex"
+gem "ostruct" # Required by stringex, no longer in default gems as of Ruby 3.5.0
 
 gem "resend"
 

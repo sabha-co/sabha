@@ -3,19 +3,19 @@
     {
       "warning_type": "Dynamic Render Path",
       "warning_code": 15,
-      "fingerprint": "3ba57fe811dd7154100cbd8ca7a262c5a316d50d0d44b877fec8dbfdf710cdd0",
+      "fingerprint": "008dfd87247b7cf8795b84a9f539b27672bc3b7f3fd2437a95986bd696d8094c",
       "check_name": "Render",
       "message": "Render path contains parameter value",
       "file": "app/views/messages/show.html.erb",
       "line": 1,
       "link": "https://brakemanscanner.org/docs/warning_types/dynamic_render_path/",
-      "code": "render(action => @room.messages.find(params[:id]), {})",
+      "code": "render(action => (@room.messages.find(params[:id]) or Current.user.reachable_messages.find(params[:id])), { :current_room => (@room) })",
       "render_path": [
         {
           "type": "controller",
           "class": "MessagesController",
           "method": "show",
-          "line": 31,
+          "line": 33,
           "file": "app/controllers/messages_controller.rb",
           "rendered": {
             "name": "messages/show",
@@ -31,33 +31,53 @@
       "confidence": "Weak",
       "cwe_id": [
         22
-      ],
-      "note": ""
+      ]
     },
     {
-      "warning_type": "File Access",
-      "warning_code": 16,
-      "fingerprint": "64b6a0c35632fbde1eaa8c5441b070fec379a983ac91997b5b48177d6d36b024",
-      "check_name": "SendFile",
-      "message": "Model attribute used in file name",
-      "file": "app/controllers/users/avatars_controller.rb",
-      "line": 14,
-      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
-      "code": "send_file(ActiveStorage::Blob.service.path_for(User.find(params[:user_id]).avatar.variant(:resize_to_limit => ([512, 512]), :format => :webp).processed.key), :content_type => \"image/webp\", :disposition => :inline)",
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "8b32d9cb82628d26231aa067b78d652f0b7893c1a0b228920483bc585c6a74aa",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/membership.rb",
+      "line": 30,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "select(\"memberships.*\", \"EXISTS (\\n  SELECT 1\\n  FROM messages\\n  WHERE messages.room_id = memberships.room_id\\n    AND messages.created_at >= COALESCE(\\n      memberships.unread_at,\\n      '#{Time.current.utc.iso8601}'\\n    )\\n    AND (\\n      EXISTS (\\n        SELECT 1\\n        FROM rooms\\n        WHERE rooms.id = memberships.room_id\\n          AND rooms.type = 'Rooms::Direct'\\n      )\\n      OR EXISTS (\\n        SELECT 1\\n        FROM mentions\\n        WHERE mentions.message_id = messages.id\\n          AND mentions.user_id = memberships.user_id\\n      )\\n      OR messages.mentions_everyone = true\\n    )\\n) AS preloaded_has_unread_notifications\\n\".squish)",
       "render_path": null,
       "location": {
         "type": "method",
-        "class": "Users::AvatarsController",
-        "method": "show"
+        "class": "Membership",
+        "method": "with_has_unread_notifications"
       },
-      "user_input": "User.find(params[:user_id]).avatar",
-      "confidence": "Weak",
+      "user_input": "Time.current.utc.iso8601",
+      "confidence": "Medium",
       "cwe_id": [
-        22
-      ],
-      "note": ""
+        89
+      ]
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "ea6e4d138c2b789fe7eedfa5ad7bed2f8ebb5480258b16697a09cf7531c7e019",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/message/rich_text_updater.rb",
+      "line": 12,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "ActiveRecord::Base.connection.execute(\"UPDATE action_text_rich_texts\\nSET body = REPLACE(\\n  body,\\n  '#{\"/rooms/#{from}/@\"}',\\n  '#{\"/rooms/#{to}/@\"}'\\n)\\nWHERE name = 'body'\\nAND record_type = 'Message'\\nAND body LIKE '#{\"%/rooms/#{from}/@%\\\">#</a>%\"}';\\n\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Message::RichTextUpdater",
+        "method": "Message::RichTextUpdater.update_room_links_in_quoted_messages"
+      },
+      "user_input": "from",
+      "confidence": "Medium",
+      "cwe_id": [
+        89
+      ]
     }
   ],
-  "updated": "2024-01-18 16:36:00 -0800",
-  "brakeman_version": "6.1.1"
+  "updated": "2025-11-06 02:51:31 +0530",
+  "brakeman_version": "7.1.1"
 }

@@ -1,4 +1,5 @@
 require "test_helper"
+require_relative "test_helpers/system_test_helper"
 
 WebMock.disable!
 

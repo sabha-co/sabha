@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1
 
 # Make sure it matches the Ruby version in .ruby-version and Gemfile
-ARG RUBY_VERSION=3.3.1
+ARG RUBY_VERSION=3.4.5
 FROM ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -18,7 +18,7 @@ FROM base AS build
 
 # Install packages need to build gems and Node.js for Tailwind
 RUN apt-get update -qq && \
-    apt-get install -y build-essential git pkg-config curl && \
+    apt-get install -y build-essential git pkg-config curl libyaml-dev libssl-dev && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs
 
@@ -43,18 +43,33 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 FROM base
 
 # Configure environment defaults
-ENV HTTP_IDLE_TIMEOUT=60
-ENV HTTP_READ_TIMEOUT=300
-ENV HTTP_WRITE_TIMEOUT=300
+ENV HTTP_IDLE_TIMEOUT=60 \
+    HTTP_READ_TIMEOUT=300 \
+    HTTP_WRITE_TIMEOUT=300
 
 # Install packages needed to run the application
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y libsqlite3-0 libvips curl ffmpeg redis git sqlite3 awscli cron nano dialog && \
+    apt-get install --no-install-recommends -y \
+    libsqlite3-0 libvips curl ffmpeg redis git sqlite3 awscli cron nano dialog \
+    libjemalloc2 libyaml-0-2 && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
+# Enable jemalloc for memory optimization (20-40% reduction)
+# Create architecture-agnostic symlink for jemalloc (works on both x86_64 and aarch64)
+RUN ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so
+ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so
+
+# Create app user with UID 1000
+RUN groupadd --system --gid 1000 rails && \
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
+
 # Copy built artifacts: gems, application
-COPY --from=build /usr/local/bundle /usr/local/bundle
-COPY --from=build /rails /rails
+COPY --from=build --chown=1000:1000 /usr/local/bundle /usr/local/bundle
+COPY --from=build --chown=1000:1000 /rails /rails
+
+# Copy cron scripts (before switching to rails user)
+COPY script/admin/full-backup /etc/cron.daily/
+COPY script/admin/db-backup /etc/cron.hourly/
 
 # Set version and revision
 ARG APP_VERSION
@@ -62,11 +77,11 @@ ENV APP_VERSION=$APP_VERSION
 ARG GIT_REVISION
 ENV GIT_REVISION=$GIT_REVISION
 
+# Switch to rails user
+USER 1000:1000
+
 # Expose app ports
 EXPOSE 3000
-
-COPY script/admin/full-backup /etc/cron.daily/
-COPY script/admin/db-backup /etc/cron.hourly/
 
 # Add health check to verify the application is running
 HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \

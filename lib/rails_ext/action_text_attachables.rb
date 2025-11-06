@@ -13,12 +13,18 @@ ActiveSupport.on_load(:action_text_content) do
         def attachable_from_possibly_expired_sgid(sgid)
           if message = sgid&.split("--")&.first
             encoded_message = JSON.parse Base64.strict_decode64(message)
-            decoded_gid = Marshal.load Base64.urlsafe_decode64(encoded_message.dig("_rails", "message"))
+
+            decoded_gid = if data = encoded_message.dig("_rails", "data")
+              data
+            else
+              nil
+            end
+
             model = GlobalID.find(decoded_gid)
 
             model.model_name.to_s.in?(ATTACHABLES_PERMITTED_WITH_INVALID_SIGNATURES) ? model : nil
           end
-        rescue ActiveRecord::RecordNotFound
+        rescue ActiveRecord::RecordNotFound, JSON::ParserError, ArgumentError
           nil
         end
     end

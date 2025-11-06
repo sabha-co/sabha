@@ -6,13 +6,17 @@ require "minitest/unit"
 require "mocha/minitest"
 require "webmock/minitest"
 
+# Require test helpers
+require_relative "test_helpers/session_test_helper"
+require_relative "test_helpers/mention_test_helper"
+require_relative "test_helpers/turbo_test_helper"
+
 WebMock.enable!
 
 class ActiveSupport::TestCase
   # FIXME: Why isn't this included in ActiveSupport::TestCase by default?
-  include ActiveJob::TestHelper, Turbo::Broadcastable::TestHelper
+  include ActiveJob::TestHelper
 
-  # FIXME: sqlite3 isn't correctly creating the additional databases per core
   # parallelize(workers: :number_of_processors)
 
   # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
