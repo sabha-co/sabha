@@ -1,0 +1,39 @@
+.options-btn {
+    opacity: 0.5;
+
+    @media (hover: hover) and (pointer: fine) {
+        opacity: 0.5;
+        transition: opacity 150ms ease-in-out;
+        transition-delay: 150ms;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+        opacity: 0.5;
+
+        & [open] {
+            opacity: 1;
+        }
+    }
+}
+
+.action-btn {
+    --btn-background: transparent;
+    --btn-border-color: transparent;
+    --outline-offset: 0;
+    --width: 25%;
+
+    flex-basis: var(--width);
+
+    @media (hover: hover) and (pointer: fine) {
+        &:where(:not(:active):hover) {
+            --btn-background: var(--color-border-dark);
+            --hover-size: 0;
+        
+            opacity: 1;
+        }
+    }
+    
+    &:where(:not(:active)):focus-visible {
+        opacity: 1;
+    }
+}

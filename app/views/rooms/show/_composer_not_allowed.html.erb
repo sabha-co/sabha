@@ -1,0 +1,15 @@
+<% content_for :footer do %>
+  <div class="composer flex align-end gap position-relative">
+    <turbo-frame id="composer-frame">
+      <span class="composer__input input input--actor shake margin-block-end txt-negative txt-align-center" style="--input-border-color: var(--color-negative)">
+          <span>
+            <% if Current.user.blocked?(room.roommate_to(Current.user)) %>
+              You blocked this user and now you cannot message each other
+            <% else %>
+              You cannot message this user
+            <% end %>
+          </span>
+      </span>
+    </turbo-frame>    
+  </div>
+<% end %>

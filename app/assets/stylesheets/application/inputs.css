@@ -1,0 +1,220 @@
+/* PHASE 2 MIGRATION STATUS: Complex classes with nested selectors and CSS custom properties */
+/* NOTE: .input--code has been migrated to Tailwind in application.css */
+/* These base classes need to remain in CSS for complex pseudo-classes, nested selectors, and CSS variables */
+/* Switch classes (.switch, .switch__input, .switch__btn) remain in CSS due to complex pseudo-elements */
+/* Text inputs */
+.input {
+  accent-color: var(--input-accent-color, var(--color-text));
+  background-color: var(--input-background, transparent);
+  border-radius: var(--input-border-radius, 0.5em);
+  border: var(--input-border-size, 1px) solid
+    var(--input-border-color, var(--color-border-darker));
+  color: var(--input-color, var(--color-text));
+  font-size: max(16px, 1em);
+  inline-size: 100%;
+  padding: var(--input-padding, 0.5em 0.8em);
+  resize: none;
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--color-border-darker);
+    filter: brightness(1);
+  }
+
+  &[type="search"] {
+    &::-webkit-search-decoration,
+    &::-webkit-search-results-button,
+    &::-webkit-search-results-decoration {
+      display: none;
+    }
+  }
+
+  &:autofill,
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--color-text);
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-selected) inset;
+  }
+
+  &:where(:not(:active)):focus {
+    --input-border-color: var(--color-selected-dark);
+    --hover-color: var(--color-selected-dark);
+    --outline-size: 0;
+
+    filter: var(--hover-filter);
+    box-shadow: 0 0 0 var(--hover-size) var(--hover-color);
+  }
+}
+
+.input--transparent {
+  --input-border-color: currentColor;
+  --input-color: currentColor;
+  --input-background: transparent;
+}
+
+.input--invisible {
+  background-color: transparent;
+  block-size: 5px;
+  border: none;
+  inline-size: 5px;
+  opacity: 0.1;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.input--actor {
+  transition:
+    box-shadow 150ms ease,
+    outline-offset 150ms ease;
+
+  &:focus-within {
+    --input-border-color: var(--color-selected-dark);
+    --hover-color: var(--color-selected-dark);
+    --outline-size: 0;
+
+    filter: var(--hover-filter);
+    box-shadow: 0 0 0 var(--hover-size) var(--hover-color);
+  }
+
+  .input {
+    --input-padding: 0;
+    --input-border-radius: 0;
+    --input-background: transparent;
+    --input-border-size: 0;
+    --hover-size: 0;
+    --outline-size: 0;
+    --outline-color: transparent;
+
+    outline: 0;
+  }
+
+  &:has(
+    .input:is(
+      :autofill,
+      :-webkit-autofill,
+      :-webkit-autofill:hover,
+      :-webkit-autofill:focus
+    )
+  ) {
+    -webkit-text-fill-color: var(--color-text);
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-selected) inset;
+  }
+
+  .btn:not(.avatar) {
+    margin-block: -0.4em;
+
+    &:last-child {
+      margin-inline-end: -0.7em;
+    }
+  }
+
+  .btn--reversed img {
+    inline-size: 1em;
+  }
+}
+
+.input--file {
+  input[type="file"] {
+    --hover-size: 0;
+
+    block-size: 100%;
+    border: 0;
+    border-radius: 50%;
+    inline-size: 100%;
+    overflow: clip;
+    padding: 0;
+
+    &::file-selector-button {
+      appearance: none;
+      cursor: pointer;
+      opacity: 0;
+    }
+  }
+
+  &:not(.avatar) {
+    img {
+      inline-size: 1.6em;
+    }
+  }
+}
+
+/* .input--code migrated to Tailwind in application.css */
+
+/* Switches */
+.switch {
+  block-size: 1.75em;
+  display: inline-flex;
+  inline-size: 3em;
+  position: relative;
+  border-radius: 2em;
+
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) .switch__btn {
+      filter: brightness(0.7);
+      box-shadow: none;
+    }
+  }
+
+  &:focus-within .switch__btn {
+    --shadow-size: min(0.2em, 2px);
+
+    box-shadow:
+      0 0 0 var(--shadow-size) var(--color-bg),
+      0 0 0 calc(var(--shadow-size) * 2) var(--color-link);
+  }
+}
+
+.switch__input {
+  block-size: 0;
+  inline-size: 0;
+  opacity: 0.1;
+}
+
+.switch__btn {
+  background-color: var(--color-border-darker);
+  border-radius: 2em;
+  cursor: pointer;
+  inset: 0;
+  position: absolute;
+  transition: 150ms ease;
+
+  &::before {
+    background-color: var(--color-text-reversed);
+    block-size: 1.35em;
+    border-radius: 50%;
+    content: "";
+    inline-size: 1.35em;
+    inset-block-end: 0.2em;
+    inset-inline-start: 0.2em;
+    position: absolute;
+    transition: 150ms ease;
+  }
+
+  .switch__input:disabled + & {
+    background-color: var(--color-border-darker) !important;
+    cursor: not-allowed;
+  }
+
+  .switch__input:checked + & {
+    background-color: var(--color-text);
+
+    &::before {
+      transform: translateX(1.2em);
+    }
+  }
+}
+
+select {
+  accent-color: var(--input-accent-color, var(--color-text));
+  background-color: var(--input-background, transparent);
+  border-radius: var(--input-border-radius, 0.5em);
+  border: var(--input-border-size, 1px) solid
+    var(--input-border-color, var(--color-border-darker));
+  color: var(--input-color, var(--color-text));
+  font-size: max(16px, 1em);
+  inline-size: 100%;
+  padding: var(--input-padding, 0.5em 0.8em);
+}

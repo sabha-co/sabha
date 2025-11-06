@@ -1,0 +1,56 @@
+:root {
+  /* Named color values */
+  --lch-black: 0% 0 0;
+  --lch-white: 100% 0 0;
+  --lch-gray: 96% 0.005 96;
+  --lch-gray-dark: 92% 0.005 96;
+  --lch-gray-darker: 75% 0.005 96;
+  --lch-gray-darkest: 65% 0.005 96;
+  --lch-almost-black: 35% 0.005 96;
+  --lch-blue: 54% 0.23 255;
+  --lch-blue-light: 95% 0.03 255;
+  --lch-blue-dark: 80% 0.08 255;
+  --lch-orange: 70% 0.2 44;
+  --lch-red: 51% 0.2 31;
+  --lch-red-light: 98% 0.08 22;
+  --lch-green: 65.59% 0.234 142.49;
+  --lch-purple: 45% 0.32 282;
+  --lch-always-black: 0% 0 0;
+
+  /* Abstractions */
+  --color-negative: oklch(var(--lch-red));
+  --color-positive: oklch(var(--lch-green));
+  --color-bg: oklch(var(--lch-white));
+  --color-bg-negative: oklch(var(--lch-red-light));
+  --color-message-bg: oklch(var(--lch-gray));
+  --color-text: oklch(var(--lch-black));
+  --color-text-lighter: oklch(var(--lch-almost-black));
+  --color-text-reversed: oklch(var(--lch-white));
+  --color-link: oklch(var(--lch-blue));
+  --color-border: oklch(var(--lch-gray));
+  --color-border-dark: oklch(var(--lch-gray-dark));
+  --color-border-darker: oklch(var(--lch-gray-darker));
+  --color-border-darkest: oklch(var(--lch-gray-darkest));
+  --color-selected: oklch(var(--lch-blue-light));
+  --color-selected-dark: oklch(var(--lch-blue-dark));
+  --color-alert: oklch(var(--lch-orange));
+  --color-contrast: oklch(var(--lch-purple));
+
+  /* Redefine named color values for dark mode */
+  @media (prefers-color-scheme: dark) {
+    --lch-black: 100% 0 0;
+    --lch-white: 0% 0 0;
+    --lch-gray: 25.2% 0 0;
+    --lch-gray-dark: 30.12% 0 0;
+    --lch-gray-darker: 44.95% 0 0;
+    --lch-gray-darkest: 64.95% 0 0;
+    --lch-almost-black: 85% 0 0;
+    --lch-blue: 72.25% 0.16 248;
+    --lch-blue-light: 28.11% 0.053 248;
+    --lch-blue-dark: 42.25% 0.07 248;
+    --lch-red: 73.8% 0.184 29.18;
+    --lch-red-light: 28% 0.05 20;
+    --lch-green: 75% 0.21 141.89;
+    --lch-purple: 70% 0.32 282;
+  }
+}

@@ -1,0 +1,136 @@
+/*
+  Github light/dark theme based on work by @Hirse
+  https://github.com/highlightjs/highlight.js/blob/main/src/styles/github.css
+*/
+
+
+:root {
+  /* Named color values */
+  --keyword: oklch(58.79% 0.193 20.47);
+  --entity: oklch(50.15% 0.188 294.99);
+  --constant: oklch(49.49% 0.18 257.6);
+  --string: oklch(31.08% 0.101 255.87);
+  --variable: oklch(64.82% 0.18 45.87);
+  --comment: oklch(55.14% 0.019 250.98);
+  --entity-tag: oklch(54.64% 0.144 147.32);
+  --markup-heading: oklch(49.49% 0.18 257.6);
+  --markup-list: oklch(48.46% 0.093 90.48);
+  --markup-inserted: oklch(54.64% 0.144 147.32);
+  --markup-deleted: oklch(49.59% 0.183 24.19);
+
+  /* Redefine named color values for dark mode */
+  @media (prefers-color-scheme: dark) {
+    --keyword: oklch(73.45% 0.16260514269909043 25.78369140372489);
+    --entity: oklch(80.05% 0.127 305.86);
+    --constant: oklch(78.57% 0.115 246.66);
+    --string: oklch(78.57% 0.115 246.66);
+    --variable: oklch(79.91% 0.141 60.1);
+    --comment: oklch(66.25% 0.018 250.92);
+    --entity-tag: oklch(84.16% 0.164 145.75);
+    --markup-heading: oklch(56.86% 0.202 259.67);
+    --markup-list: oklch(85.74% 0.133 89.95);
+    --markup-inserted: oklch(90.72% 0.112 146.34);
+    --markup-deleted: oklch(92.23% 0.03967766015913856 27.493308249746637);
+  }
+}
+
+.hljs {
+  color: var(--color-txt);
+  background: var(--color-bg);
+}
+
+.hljs-doctag,
+.hljs-keyword,
+.hljs-meta .hljs-keyword,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable.language_ {
+  color: var(--keyword);
+}
+
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  color: var(--entity);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-literal,
+.hljs-meta,
+.hljs-number,
+.hljs-operator,
+.hljs-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  color: var(--constant);
+}
+
+.hljs-regexp,
+.hljs-string,
+.hljs-meta .hljs-string {
+  color: var(--string);
+}
+
+.hljs-built_in,
+.hljs-symbol {
+  color: var(--variable);
+}
+
+.hljs-comment,
+.hljs-code,
+.hljs-formula {
+  color: var(--comment);
+}
+
+.hljs-name,
+.hljs-quote,
+.hljs-selector-tag,
+.hljs-selector-pseudo {
+  color: var(--entity-tag);
+}
+
+.hljs-subst {
+  color: var(--storage-modifier-import);
+}
+
+.hljs-section {
+  color: var(--markup-heading);
+  font-weight: bold;
+}
+
+.hljs-bullet {
+  color: var(--markup-list);
+}
+
+.hljs-emphasis {
+  color: var(--markup-italic);
+  font-style: italic;
+}
+
+.hljs-strong {
+  color: var(--markup-bold);
+  font-weight: bold;
+}
+
+.hljs-addition {
+  color: var(--markup-inserted);
+  background-color: var(--color-border);
+}
+
+.hljs-deletion {
+  color: var(--markup-deleted);
+  background-color: var(--color-border);
+}
+
+.hljs-char.escape_,
+.hljs-link,
+.hljs-params,
+.hljs-property,
+.hljs-punctuation,
+.hljs-tag {
+  /* purposely ignored */
+}

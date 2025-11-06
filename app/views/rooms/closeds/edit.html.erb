@@ -1,0 +1,4 @@
+<%= render layout: "rooms/layouts/edit", locals: { room: @room } do %>
+  <%= render "rooms/closeds/form", 
+        room: @room, selected_users: @selected_users, unselected_users: @unselected_users, type_change_path: edit_rooms_open_path(@room) %>
+<% end %>

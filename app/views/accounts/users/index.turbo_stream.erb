@@ -1,0 +1,5 @@
+<%= turbo_stream.replace :next_page_container, partial: "accounts/users/user", collection: @page.records, as: :user %>
+
+<% unless @page.last? %>
+  <%= turbo_stream.append :account_users, partial: "accounts/users/next_page_container", locals: { page: @page.next_param } %>
+<% end %>

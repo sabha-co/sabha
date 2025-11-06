@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+require File.expand_path("../../config/environment", File.dirname(__FILE__))
+
+class Backup
+  class << self
+    def create
+      dest = SQLite3::Database.new(backup_filename)
+      backup = SQLite3::Backup.new(dest, "main", Room.connection.raw_connection, "main")
+
+      backup.step(-1)
+      backup.finish
+      dest.close
+    end
+
+    private
+      def backup_filename
+        Rails.root.join("storage", "backups").tap(&:mkpath).join(primary_database_filename)
+      end
+
+      def primary_database_filename
+        path = Rails.application.config.database_configuration[Rails.env]["primary"]["database"]
+        File.basename(path)
+      end
+  end
+end
+
+Backup.create

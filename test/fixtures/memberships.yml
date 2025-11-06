@@ -1,0 +1,81 @@
+david_designers:
+  room: designers
+  user: david
+
+jason_designers:
+  room: designers
+  user: jason
+  involvement: everything
+
+jz_designers:
+  room: designers
+  user: jz
+  involvement: everything
+
+kevin_designers:
+  room: designers
+  user: kevin
+
+david_pets:
+  room: pets
+  user: david
+  involvement: everything
+
+jason_pets:
+  room: pets
+  user: jason
+  involvement: everything
+
+david_watercooler:
+  room: watercooler
+  user: david
+  involvement: everything
+
+jason_watercooler:
+  room: watercooler
+  user: jason
+  involvement: everything
+
+bender_watercooler:
+  room: watercooler
+  user: bender
+
+david_hq:
+  room: hq
+  user: david
+  involvement: everything
+
+jason_hq:
+  room: hq
+  user: jason
+  involvement: everything
+
+jz_hq:
+  room: hq
+  user: jz
+  involvement: everything
+
+kevin_hq:
+  room: hq
+  user: kevin
+  involvement: everything
+
+david_david_and_jason:
+  room: david_and_jason
+  user: david
+  involvement: everything
+
+jason_david_and_jason:
+  room: david_and_jason
+  user: jason
+  involvement: everything
+
+david_david_and_kevin:
+  room: david_and_kevin
+  user: david
+  involvement: everything
+
+kevin_david_and_kevin:
+  room: david_and_kevin
+  user: kevin
+  involvement: everything

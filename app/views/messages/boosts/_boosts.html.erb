@@ -1,0 +1,10 @@
+<%# locals: (message:) -%>
+<%= turbo_frame_tag message, :boosting do %>
+  <div class="boosts flex flex-wrap align-center gap full-width" style="--column-gap: 0.4ch; --row-gap: 0">
+    <div class="flex-inline flex-wrap gap message__boosts" id="<%= dom_id(message, :boosts) %>">
+      <%= render partial: "messages/boosts/boost", collection: message.boosts, cached: -> boost { [ boost, boost.booster ] } %>
+    </div>
+
+    <%= render "messages/boosts/add_boost", message: message %>
+  </div>
+<% end %>

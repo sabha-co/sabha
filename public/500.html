@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Something went wrong (500)</title>
+    <meta charset="UTF-8">
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        --lch-black: 0% 0 0;
+        --lch-gray: 75% 0.005 96;
+        --lch-white: 100% 0 0;
+
+        --color-border: oklch(var(--lch-gray));
+        --color-bg: oklch(var(--lch-white));
+        --color-text: oklch(var(--lch-black));
+
+        --btn-size: 2.65em;
+
+        background-color: var(--color-bg);
+        block-size: 100dvh;
+        color: var(--color-text);
+        display: grid;
+        margin: 0;
+        padding: 0;
+        place-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+        @media (prefers-color-scheme: dark) {
+          --lch-black: 100% 0 0;
+          --lch-gray: 44.95% 0 0;
+          --lch-white: 0% 0 0;
+        }
+      }
+
+      svg {
+        fill: var(--color-text);
+
+        @media (prefers-color-scheme: dark) {
+          fill: var(--color-text);
+        }
+      }
+
+      .error {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 2em;
+        justify-content: start;
+        margin-block-end: 15dvh;
+      }
+
+      .error__img {
+        aspect-ratio: 1;
+        background-color: var(--color-text);
+        block-size: auto;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        inline-size: 30dvh;
+
+        svg {
+          fill: var(--color-bg);
+          grid-area: 1/1;
+          max-inline-size: 66%;
+
+          @media (prefers-color-scheme: dark) {
+            fill: var(--color-bg);
+          }
+        }
+      }
+
+      .buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 1em;
+        justify-content: center;
+      }
+
+      .btn {
+        align-items: center;
+        aspect-ratio: 1;
+        background-color: var(--color-bg);
+        block-size: var(--btn-size);
+        border-radius: 50%;
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+        cursor: pointer;
+        display: grid;
+        font-weight: 600;
+        font-size: 1.4rem;
+        gap: 0.5em;
+        inline-size: var(--btn-size);
+        justify-content: center;
+        padding: 0;
+        place-items: center;
+        text-align: center;
+
+        svg {
+          -webkit-touch-callout: none;
+          grid-area: 1/1;
+          inline-size: 1.3em;
+          max-inline-size: unset;
+          user-select: none;
+        }
+      }
+
+      .for-screen-reader {
+        clip-path: inset(50%);
+        height: 1px;
+        width: 1px;
+        overflow: hidden;
+        position: absolute;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="error">
+      <div class="error__img">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-label="Server error">
+          <title>server-warning</title>
+          <path
+            d="M2.5,6h17A2.5,2.5,0,0,0,22,3.5v-1A2.5,2.5,0,0,0,19.5,0H2.5A2.5,2.5,0,0,0,0,2.5v1A2.5,2.5,0,0,0,2.5,6ZM3.635,3A1.115,1.115,0,1,1,4.749,4.114,1.114,1.114,0,0,1,3.635,3ZM7.5,3A1.115,1.115,0,1,1,8.614,4.114,1.115,1.115,0,0,1,7.5,3Z" />
+          <path
+            d="M14.892,11.574a2.952,2.952,0,0,1,3.339-1.486,3.061,3.061,0,0,1,1.934,1.59l.26.495a.5.5,0,0,0,.765.154A2.468,2.468,0,0,0,22,10.5v-1A2.5,2.5,0,0,0,19.5,7H2.5A2.5,2.5,0,0,0,0,9.5v1A2.5,2.5,0,0,0,2.5,13H13.842a.5.5,0,0,0,.442-.268ZM9.729,10A1.115,1.115,0,1,1,8.614,8.885,1.115,1.115,0,0,1,9.729,10ZM5.864,10A1.115,1.115,0,1,1,4.749,8.885,1.115,1.115,0,0,1,5.864,10Z" />
+          <path
+            d="M2.5,20h7.67a.5.5,0,0,0,.442-.268l2.624-5A.5.5,0,0,0,12.792,14H2.5A2.5,2.5,0,0,0,0,16.5v1A2.5,2.5,0,0,0,2.5,20Zm1.136-3a1.115,1.115,0,1,1,1.114,1.115A1.114,1.114,0,0,1,3.635,17ZM7.5,17a1.115,1.115,0,1,1,1.115,1.115A1.115,1.115,0,0,1,7.5,17Z" />
+          <path
+            d="M11.165,21.905a1.429,1.429,0,0,0,.048,1.408A1.453,1.453,0,0,0,12.446,24H22.558a1.455,1.455,0,0,0,1.232-.687,1.429,1.429,0,0,0,.048-1.408l-5.055-9.634a1.45,1.45,0,0,0-2.562,0ZM17.5,14.75a.75.75,0,0,1,.75.75v3a.75.75,0,0,1-1.5,0v-3A.75.75,0,0,1,17.5,14.75Zm1,6.5a1,1,0,1,1-1-1A1,1,0,0,1,18.5,21.25Z" />
+        </svg>
+      </div>
+      <a href="/" class="btn" autofocus="true">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="m21.864 9.5h-11.607a.25.25 0 0 1 -.174-.43l3.864-3.721a2.609 2.609 0 0 0 -.075-3.682 2.612 2.612 0 0 0 -3.68-.077l-9.792 9.699a1 1 0 0 0 -.008 1.411l9.625 9.724a2.66 2.66 0 0 0 3.755-3.757l-3.729-3.733a.25.25 0 0 1 .177-.427h11.673c1.556 0 2-1.675 2-2.51a2.28 2.28 0 0 0 -2.029-2.497z" />
+        </svg>
+        <span class="for-screen-reader">Go back</span>
+      </a>
+    </div>
+  </body>
+</html>

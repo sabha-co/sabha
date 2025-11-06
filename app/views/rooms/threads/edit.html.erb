@@ -1,0 +1,3 @@
+<%= render layout: "rooms/layouts/edit", locals: { room: @room } do %>
+  <%= render "rooms/threads/form", room: @room, users: @users %>
+<% end %>

@@ -1,0 +1,18 @@
+<% if @room == Room.original && !@room.messages.paged? %>
+  <div id="system_welcome" class="message message--formatted txt-align-center center">
+    <div class="message__body center">
+      <div class="message__body-content position-relative">
+        <%= account_logo_tag style: "center margin-block-end txt-large" %>
+        <div class="flex align-center gap">
+          <div class="system-welcome--translation">
+            <%= translation_button(:invite_message) %>
+          </div>
+          <p>
+            <strong>Welcome to Campfire</strong><br>
+            Don't be a stranger—say hello and introduce yourself.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>

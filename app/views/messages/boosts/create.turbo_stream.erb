@@ -1,0 +1,3 @@
+<%= turbo_stream.replace dom_id(@source_boost), @source_boost if @source_boost.present? %>
+<%= turbo_stream.append dom_id(@message, :boosts), @boost %>
+<%= turbo_stream.replace dom_id(@message, :new_boost), partial: "messages/boosts/add_boost", locals: { message: @message } %>

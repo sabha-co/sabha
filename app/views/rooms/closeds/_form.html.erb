@@ -1,0 +1,40 @@
+<%= render layout: "rooms/layouts/form", locals: { room: room } do %>
+  <%= user_filter_menu_tag do %>
+    <% if Current.user.can_administer?(room) %>
+      <li class="flex align-center gap margin-none">
+        <figure class="avatar flex-item-no-shrink" style="--avatar-border-radius: 0; --avatar-size: 4ch;">
+          <%= image_tag "everyone.svg", aria: { hidden: "true" }, class: "colorize--black", style: "background-color: transparent; box-shadow-none" %>
+          <span class="for-screen-reader">Everyone</span>
+        </figure>
+
+        <div class="min-width">
+          <div class="overflow-ellipsis fill-shade"><strong>Everyone</strong></div>
+        </div>
+
+        <hr class="separator" aria-hidden="true">
+
+        <%= link_to type_change_path, class: "btn--faux flex-inline", tabindex: "-1", data: { turbo_action: "replace" } do %>
+          <label for="room_type" class="switch">
+            <input type="checkbox" id="room_type" class="switch__input">
+            <span class="switch__btn round"></span>
+            <span class="for-screen-reader">Give everyone access to this room</span>
+          </label>
+        <% end %>
+      </li>
+
+      <hr class="separator full-width" style="--border-style: solid">
+    <% end %>
+
+    <%= user_filter_search_tag if selected_users.count +  unselected_users.count > 20 %>
+
+    <div data-filter-target="list" contents>
+      <%= render partial: "rooms/closeds/user", collection: selected_users, locals: { room: room, selected: true } %>
+
+      <% if selected_users.any? && unselected_users.any? %>
+        <hr class="separator full-width" style="--border-style: solid">
+      <% end %>
+
+      <%= render partial: "rooms/closeds/user", collection: unselected_users, locals: { room: room, selected: false } %>
+    </div>
+  <% end %>
+<% end %>

@@ -1,0 +1,190 @@
+#!/usr/bin/env ruby
+require "bundler/inline"
+
+gemfile do
+  source "https://rubygems.org"
+  gem "base64"
+  gem "bcrypt_pbkdf"
+  gem "ed25519"
+  gem "sshkit"
+end
+
+require "optparse"
+require "net/http"
+require "uri"
+
+class Load
+  include SSHKit::DSL
+
+  attr_reader :users, :setup, :host, :port, :ssh_user
+  attr_reader :campfire_image
+
+  def initialize(users: 1000, setup: true, host: "localhost", port: nil, ssh_user: "ubuntu")
+    @users = users
+    @setup = setup
+    @host = host
+    @ssh_user = ssh_user
+    @port = port || (remote? ? 80 : 3000)
+    @campfire_image = "localhost/campfire:latest"
+  end
+
+  def setup?
+    @setup
+  end
+
+  def run
+    configure_sshkit
+    run_setup if setup?
+    start_app
+    run_test
+    output_results
+    cleanup
+  end
+
+  def remote?
+    ![ "localhost", "127.0.0.1" ].include?(host)
+  end
+
+  def ssh_host
+    remote? ? host : :local
+  end
+
+  def k6_dir
+    remote? ? "$PWD" : "$PWD/test/performance"
+  end
+
+  private
+    def configure_sshkit
+      SSHKit::Backend::Netssh.configure do |ssh|
+        ssh.connection_timeout = 30
+        ssh.ssh_options = { user: ssh_user }
+      end
+    end
+
+    def run_setup
+      puts "Running setup..."
+      load = self
+      os, arch = host_os_and_arch
+
+      on(:local) do
+        execute :docker, :build, "-t", load.campfire_image, "--platform", arch, "."
+        if load.remote?
+          execute :docker, :save, "-o", "tmp/campfire-image.tar", load.campfire_image
+        end
+      end
+
+      if remote?
+        on(ssh_host) do
+          unless execute(:docker, "-v", raise_on_non_zero_exit: false)
+            execute :curl, "-fsSL", "https://get.docker.com", "|", :sh
+          end
+          upload! "tmp/campfire-image.tar", "campfire-image.tar"
+          upload! "test/performance/chatter.js", "chatter.js"
+          upload! "test/performance/cookies.txt", "cookies.txt"
+          execute :docker, :load, "-i", "campfire-image.tar"
+        end
+      end
+    end
+
+    def host_os_and_arch
+      os = arch = nil
+      on(ssh_host) do
+        os = capture("uname -s").strip
+        arch = capture("uname -m").strip == "x86_64" ? "linux/amd64" : "linux/arm64"
+      end
+      [os, arch]
+    end
+
+    def start_app
+      puts "Starting app on #{host}..."
+      load = self
+
+      on(ssh_host) do
+        execute :docker, :rm, "-f", :campfire_load, raise_on_non_zero_exit: false
+        execute :docker, :run, "-d", "--rm", "--name", :campfire_load, "-p", "#{load.port}:80", "-e", "SECRET_KEY_BASE=dummy", "-e RAILS_ENV=performance", load.campfire_image
+      end
+
+      wait_for_app_to_start
+    end
+
+    def wait_for_app_to_start
+      timeout_at = Time.now + 60
+      uri = URI("http://#{host}:#{port}")
+      loop do
+        sleep 1
+        puts "Waiting for app to start..."
+        raise "App not started after 60 seconds" if Time.now > timeout_at
+        break if Net::HTTP.get_response(uri).code.to_i < 400
+        sleep 1
+      rescue Errno::ECONNREFUSED, Errno::ECONNRESET, EOFError
+      end
+    end
+
+    def run_test
+      puts "Running load test..."
+      load = self
+
+      on(ssh_host) do |host|
+        execute :docker, :rm, "-f", :k6, raise_on_non_zero_exit: false
+        execute :docker, :run, "--name", :k6, "-u \"$(id -u):$(id -g)\"", "-e HOST=#{load.host}", "-e PORT=#{load.port}", "-e USERS=#{load.users}", "-v", "#{load.k6_dir}:/src", "grafana/k6", :run, "/src/chatter.js"
+        if host.local?
+          execute :docker, :logs, :k6, "2>", "tmp/k6.log"
+        else
+          execute :docker, :logs, :k6, "2>", "k6.log"
+          download! "k6.log", "tmp/k6.log"
+        end
+      end
+    end
+
+    def output_results
+      puts "Outputting results..."
+      on(:local) do
+        puts "Connections/s"
+        puts "-------------"
+        puts capture(:cat, "tmp/k6.log", "|", "grep 'Subscription confirmed' | awk '{print $1}' | sort| uniq -c | sed '1d; $d' | awk '{sum += $1; count += 1; max = (max > $1) ? max : $1} END {print \"Average:\",sum/count/6,\"Max:\",max/6}'")
+        puts
+        puts "Messages/s"
+        puts "--------------"
+        puts capture(:cat, "tmp/k6.log", "|", "grep 'Message received' | awk '{print $1}' | sort | uniq -c | sed '1d; $d' | awk '{sum += $1; count += 1; max = (max > $1) ? max : $1} END {print \"Average:\",sum/count,\"Max:\",max}'")
+      end
+    end
+
+    def cleanup
+      on(ssh_host) do |host|
+        execute :docker, :rm, "-f", :campfire_load, :k6
+      end
+    end
+end
+
+options = {}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options]"
+
+  opts.on("-u", "--users USERS", "User count") do |value|
+    options[:users] = value&.to_i
+  end
+
+  opts.on("-S", "--skip-setup", "Skip setup") do
+    options[:setup] = false
+  end
+
+  opts.on("-h", "--host host", "Host to run the app on") do |host|
+    options[:host] = host
+  end
+
+  opts.on("--ssh-user ssh_user", "User to ssh to remote hosts") do |ssh_user|
+    options[:ssh_user] = ssh_user
+  end
+
+  opts.on("-p", "--port PORT", "Application port ") do |port|
+    options[:port] = port
+  end
+
+  opts.on("--help", "Prints this message") do
+    puts opts
+    exit 0
+  end
+end.parse!
+
+Load.new(**options).run

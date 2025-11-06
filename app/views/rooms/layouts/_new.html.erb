@@ -1,0 +1,11 @@
+<% @page_title = "New chat room" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back %>
+  </div>
+<% end %>
+
+<section class="panel txt-align-center" style="view-transition-name: <%= local_assigns[:view_transition_name] || "new-room" %>">
+  <%= yield %>
+</section>

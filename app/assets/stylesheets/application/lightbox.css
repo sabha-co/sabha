@@ -1,0 +1,46 @@
+.lightbox {
+  background-color: oklch(var(--lch-white) / 0.66);
+  block-size: 100dvh;
+  border: 0;
+  inline-size: 100dvw;
+  inset: 0;
+  margin: auto;
+  max-height: unset;
+  max-width: unset;
+  overflow: hidden;
+  padding: var(--block-space) var(--inline-space);
+
+  &[open] {
+    display: grid;
+    place-items: center;
+  }
+
+  &::backdrop {
+    -webkit-backdrop-filter: blur(66px);
+    backdrop-filter: blur(66px);
+  }
+}
+
+.lightbox__btn {
+  align-self: start;
+  grid-area: 1/1;
+  justify-self: end;
+}
+
+.lightbox__btn--download {
+  align-self: end;
+  grid-area: 1/1;
+  justify-self: end;
+}
+
+.lightbox__btn--share {
+  align-self: start;
+  grid-area: 1/1;
+  justify-self: start;
+}
+
+.lightbox__image {
+  grid-area: 1/1;
+  max-inline-size: calc(100dvw - (var(--inline-space) * 2));
+  max-block-size: calc(100dvh - (var(--block-space) * 2));
+}

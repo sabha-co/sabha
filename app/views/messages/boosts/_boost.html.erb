@@ -1,0 +1,30 @@
+<%# locals: (boost:) -%>
+<% cache [ boost, boost.booster ] do %>
+  <div id="<%= dom_id(boost) %>"
+      class="boost boost-item flex-inline postion--relative max-width align-center fill-white gap"
+      data-controller="boost-delete boost-repeat" data-action="click->boost-repeat#perform click->boost-delete#reveal" 
+      data-boost-delete-perform-class="boost--deleting" data-boost-delete-reveal-class="expanded" 
+      data-boost-delete-booster-id-value="<%=boost.booster.id %>" data-boost-repeat-booster-id-param="<%=boost.booster.id %>">
+    
+    <figure class="avatar boost__avatar flex-item-no-shrink" data-stop-propagation="true">
+      <%= render 'users/popup', user: boost.booster %>
+    </figure>
+
+    <%= tag.span boost.content, role: "button", 
+                 class: [ "txt-small", { "txt-medium": boost.content.all_emoji? } ],
+                 data: { action: "keydown.enter->boost-delete#reveal:prevent", boost_delete_target: "content" } %>
+
+    <%= form_with model: [ boost.message, Boost.new ], html: { hidden: true }, 
+                  data: { turbo_frame: dom_id(boost.message, :boosting), boost_repeat_target: "form"}  do %>
+      <%= hidden_field_tag "source_boost_id", boost.id %>
+      <%= hidden_field_tag "boost[content]", boost.content %>
+    <% end %>
+    
+    <%= button_to message_boost_path(boost.message, boost), method: :delete, data: { action: "boost-delete#perform", boost_delete_target: "button", stop_propagation: true },
+          class: "btn btn--negative flex-item-justify-end boost__delete" do %>
+      <%= image_tag "minus.svg", size: 20, aria: { hidden: "true" } %>
+      <span class="for-screen-reader">Delete this boost</span>
+    <% end %>
+  </div>
+  <span id="delete_boost_accessible_label" class="for-screen-reader">Press enter to delete this boost</span>
+<% end %>

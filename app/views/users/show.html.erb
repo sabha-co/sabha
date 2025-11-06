@@ -1,0 +1,138 @@
+<% @page_title = @user.name %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back %>
+  </div>
+
+  <div class="flex align-center gap flex-item-justify-end">
+    <% if Current.user == @user %>
+      <%= link_to user_profile_path, class: "btn" do %>
+        <%= image_tag "pencil.svg", aria: { hidden: "true" } %>
+        <span class="for-screen-reader">Edit my profile</span>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<section class="panel txt-align-center">
+  <div class="flex flex-column gap">
+    <div class="avatar txt-xx-large center" style="background: white">
+      <%= avatar_image_tag(@user, class: "avatar", alt: "Profile avatar") %>
+    </div>
+
+    <% if @user.bot? %>
+      <div class="pad-double--inline push--inline push--block-start">
+        <% if @user.active? %>
+          <%= button_to_direct_room_with @user%>
+        <% else %>
+          <div><%= @user.name %> is no longer on this account</div>
+        <% end %>
+      </div>
+    <% else %>
+      <% if @user.active? %>
+        <div class="flex flex-column gap" style="--row-gap: calc(var(--block-space) / 3)">
+          <h1 class="txt-x-large txt-tight-lines margin-none"><%= @user.name %></h1>
+          <% if Current.user.can_administer? %>
+            <div><%= mail_to @user.email_address %></div>
+          <% end %>
+          <div class="break-word"><%= auto_link @user.bio %></div>
+          <div>Joined <%= @user.joined_at.strftime("%b %d, %Y") %></div>
+          <div class="flex gap justify-center margin-block-start" style="--column-gap: calc(var(--block-space) / 3)">
+            <%= link_to with_protocol(@user.twitter_url), target: "_blank" do %>
+              <%= image_tag "social/twitter.svg", size: 20 %>
+            <% end if @user.twitter_url.present? %>
+            <%= link_to with_protocol(@user.linkedin_url), target: "_blank" do %>
+              <%= image_tag "social/linkedin.svg", size: 20 %>
+            <% end if @user.linkedin_url.present? %>
+          </div>  
+          <% if @user.personal_url.present? %>
+            <div>
+              <%= link_to friendly_domain(@user.personal_url), with_protocol(@user.personal_url), 
+                          target: "_blank", class: "txt-medium", style: "color: var(--lch-black)" %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="pad-inline-double margin-inline">
+          <%= button_to rooms_directs_path(user_ids: [ @user.id ]), class: "btn btn--reversed full-width txt-large" do %>
+            <%= image_tag "messages.svg", aria: { hidden: "true", label: "Ping #{@user.name}" } %>
+          <% end %>
+        </div>
+
+        <div class="pad-inline-double margin-inline margin-block-start">
+          <div>
+            <% rank = @user.message_rank %>
+            <% if rank == 1 %>
+              🥇 <%= pluralize(number_with_delimiter(@user.total_message_count), 'message') %> posted (Rank #<%= number_with_delimiter(rank) %>)
+            <% elsif rank == 2 %>
+              🥈 <%= pluralize(number_with_delimiter(@user.total_message_count), 'message') %> posted (Rank #<%= number_with_delimiter(rank) %>)
+            <% elsif rank == 3 %>
+              🥉 <%= pluralize(number_with_delimiter(@user.total_message_count), 'message') %> posted (Rank #<%= number_with_delimiter(rank) %>)
+            <% else %>
+              <%= pluralize(number_with_delimiter(@user.total_message_count), 'message') %> posted (Rank #<%= number_with_delimiter(rank) %>)
+            <% end %>
+          </div>
+        </div>
+
+        <% if @recent_messages.any? %>
+          <div class="pad-inline-double margin-inline margin-block-start" style="text-align: left !important;">
+            <h2 class="txt-large txt-tight-lines margin-none margin-block-end txt-align-left" style="margin-bottom: 0.8rem;">Recent Messages</h2>
+            <div class="flex flex-column gap" style="align-items: flex-start; --row-gap: calc(var(--block-space) / 4);">
+              <% @recent_messages.each do |message| %>
+                <div class="txt-align-left" style="width: 100%; text-align: left !important; padding-top: 0.3rem; padding-bottom: 0.3rem;">
+                  <div class="txt-small txt-subdued">
+                    <%= link_to message.room.name, room_at_message_path(message.room, message) %>
+                    · <%= time_ago_in_words(message.created_at) %> ago
+                  </div>
+                  <div class="break-word"><%= truncate(message.body.to_plain_text, length: 100) %></div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="pad-inline-double margin-inline margin-block-start" style="text-align: left !important;">
+          <div class="txt-align-left" style="width: 100%; text-align: left !important; padding-top: 0.3rem; padding-bottom: 0.3rem;">
+            <div class="txt-subdued">
+              <span style="font-size: var(--font-size-medium);">
+                <%= link_to "All messages from #{@user.name}...", user_messages_path(@user) %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <% if Current.user.can_administer? && !@user.bot? %>
+          <hr class="margin-block-start borderless">
+          
+          <fieldset>
+            <legend class="gap">
+              <%= image_tag "pencil.svg", aria: { hidden: "true" }, size: 36, class: "colorize--black" %>
+            </legend>
+
+            <%= form_with model: [:account, @user], data: { controller: "form" }, class: "flex flex-column gap" do |form| %>
+              <div class="flex align-center gap">
+                <%= translation_button(:role) %>
+  
+                <%= form.select :role, %w[ member expert administrator ].map {|role| [role.titleize, role]} %>
+              </div>
+              <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+                <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+                <span class="for-screen-reader">Save changes</span>
+              <% end %>
+            <% end %>
+          </fieldset>
+
+          <hr class="margin-block-start borderless">
+
+          <%= render "users/profiles/transfer", user: @user %>
+        <% end %>
+      <% else %>
+        <div>
+          <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
+          <div><%= @user.name %> is no longer on this account</div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</section>

@@ -1,0 +1,15 @@
+<% if user %>
+  <% if Current.user.blocked?(user) %>
+    <%= button_to user_blocks_path(user), class: "btn", method: :delete, title: "Unblock this user",
+                  data: { controller: "busy-on-submit", turbo_confirm: "Are you sure you want to unblock #{user.name}?" } do
+      image_tag("unblock.svg", aria: { hidden: "true" }) +
+        (compact ? "" : "Unblock user")
+    end %>
+  <% else %>
+    <%= button_to user_blocks_path(user), class: "btn", method: :post, title: "Block this user",
+                  data: { controller: "busy-on-submit", turbo_confirm: "Are you sure you want to block #{user.name} from messaging you?" } do
+      image_tag("block.svg", aria: { hidden: "true" }) +
+        (compact ? "" : "Block user")
+    end %>
+  <% end %>
+<% end %>

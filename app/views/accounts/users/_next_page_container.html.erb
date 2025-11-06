@@ -1,0 +1,4 @@
+<%= turbo_frame_tag :next_page_container, loading: :lazy,
+      src: account_users_path(page: page, format: :turbo_stream), class: "flex center" do %>
+  <div class="spinner center"></div>
+<% end %>

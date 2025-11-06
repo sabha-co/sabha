@@ -1,0 +1,229 @@
+/* Stats pages shared styles */
+
+.stats-page {
+  #nav {
+    border-inline: 1px solid var(--color-border-darker);
+    backdrop-filter: blur(12px);
+  }
+
+  #main-content {
+    /* Ensure content isn't scrolled down */
+    justify-content: start;
+  
+    .full-width {
+      width: 100%;
+      padding: 5rem 1rem 1rem;
+    }
+    
+    .section-heading {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0.5rem 0 0.5rem 0; /* Reduced top margin to 0.5rem */
+      padding-bottom: 0.5rem;
+      clear: both; /* Ensures the heading doesn't get overlapped */
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    
+    .grid-card {
+      width: 100%;
+    }
+    
+    .card {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border-darker);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-header {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--color-border-darker);
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    .card-header.hover-darker:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-header-link {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+    
+    .card-header-link .txt-h3 {
+      text-decoration: underline;
+    }
+    
+    .card-header-link:hover .card-header {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-body {
+      padding: 1rem;
+    }
+    
+    .card-body.compact {
+      padding: 0.5rem;
+    }
+    
+    .margin-block {
+      margin-block: 1rem;
+    }
+    
+    .margin-bottom {
+      margin-bottom: 1rem;
+    }
+    
+    .margin-top {
+      margin-top: 1.5rem;
+    }
+    
+    .current-user {
+      background-color: rgb(255 200 0 / 15%);
+    }
+    
+    .d-flex {
+      display: flex;
+    }
+    
+    .justify-content-between {
+      justify-content: space-between;
+    }
+    
+    .align-items-center {
+      align-items: center;
+    }
+    
+    .txt-h3 {
+      font-size: 1rem;
+      font-weight: 500;
+      margin: 0;
+      color: var(--color-text);
+    }
+    
+    .txt-h4 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 0 1rem 0;
+      color: var(--color-text);
+    }
+    
+    /* Table styles */
+    .table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    
+    .table th,
+    .table td {
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--color-border-darker);
+    }
+    
+    .compact .table th,
+    .compact .table td {
+      padding: 0.25rem 0.5rem;
+    }
+    
+    .compact-table .table th,
+    .compact-table .table td {
+      padding: 0.25rem 0.5rem;
+    }
+    
+    .table th {
+      text-align: left;
+      font-weight: normal;
+    }
+    
+    .txt-right {
+      text-align: right;
+    }
+    
+    .txt-center {
+      text-align: center;
+    }
+    
+    .txt-small {
+      font-size: 0.85rem;
+    }
+    
+    .txt-faded {
+      color: var(--color-text-faded);
+    }
+    
+    .table-container {
+      padding: 0.25rem 0;
+    }
+    
+    .compact-rows th,
+    .compact-rows td {
+      padding: 0.25rem 0.5rem;
+    }
+    
+    .txt-truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .flex-grow {
+      flex: 1;
+    }
+    
+    .flex-wrap {
+      flex-wrap: wrap;
+    }
+    
+    .avatar-xs {
+      width: 18px;
+      height: 18px;
+      font-size: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      overflow: hidden;
+      background: var(--color-border-darker);
+      border: 1px solid var(--color-border-darker);
+    }
+    
+    .avatar-xs img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .overflow-x-auto {
+      overflow-x: auto;
+    }
+    
+    .gap {
+      gap: 0.5rem;
+    }
+    
+    .gap-inline {
+      gap: 0.25rem;
+    }
+    
+    /* Stats page link styles */
+    .full-width a {
+      color: var(--lch-black);
+      text-decoration: none;
+    }
+    
+    .full-width a:visited {
+      color: var(--lch-black);
+    }
+    
+    .full-width a:hover {
+      text-decoration: underline;
+    }
+  }
+}

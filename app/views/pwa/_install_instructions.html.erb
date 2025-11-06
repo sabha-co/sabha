@@ -1,0 +1,48 @@
+<% unless platform.chrome? || (platform.firefox? && !platform.android?) || hotwire_native_app? %>
+  <details class="notifications-help pwa__instructions hide-in-pwa" data-controller="pwa-install" data-pwa-install-prompting-class="pwa--can-install" data-notifications-target="details">
+    <summary class="btn">
+      <%= image_tag "external/install.svg", aria: { hidden: "true" }, size: 20 %>
+      <strong>Install Campfire as a web app.</strong>
+      <%= image_tag "disclosure.svg", aria: { hidden: "true" }, size: 10, class: "disclosure" %>
+    </summary>
+
+    <% case
+      when platform.edge? %>
+        <ol>
+          <li>Click <em><%= image_tag "install-edge.svg", alt: "the app available - install Campfire chat button", size: 16 %></em>in the address bar.</li>
+          <li>Click <em>Install</em>.</li>
+        </ol>
+      <% when platform.chrome? && platform.android? %>
+        <ol>
+          <li>Tap the <em><%= image_tag "menu-dots-vertical.svg", alt: "More options", size: 16 %></em> menu button.</li>
+          <li>Tap <em>Install app</em> in the menu.</li>
+        </ol>
+      <% when platform.firefox? && platform.android? %>
+        <ol>
+          <li>Tap the <em><%= image_tag "menu-dots-vertical.svg", alt: "More options", size: 16 %></em> menu button.</li>
+          <li>Tap <em>Install</em> in the menu.</li>
+        </ol>
+      <% when platform.safari? && platform.desktop? %>
+        <ol>
+          <li>Click <em>File</em> in the top left.</li>
+          <li>Click <em>Add to Dock…</em>.</li>
+        </ol>
+      <% when (platform.safari? || platform.chrome?) && platform.ios? %>
+        <p>To receive push notifications in <%= platform.browser.capitalize %> for <%= platform.operating_system %>, you must install Campfire as a web app.</p>
+        <ol>
+          <li>Tap <em><%= image_tag "external/share.svg", alt: "the share button", size: 20 %></em></li>
+          <li>Tap <em>Add to Home Screen</em>.</li>
+        </ol>
+      <% else %>
+        <p>Some platforms require you to install Campfire as a web app to receive push notifications.</p>
+    <% end %>
+
+    <div class="margin-block-start txt-align-center pwa__installer">
+      <hr class="separator margin-block">
+      <button class="btn btn--reversed center" data-action="pwa-install#promptInstall">
+        <%= image_tag "external/install.svg", aria: { hidden: "true" } %>
+        Install now
+      </button>
+    </div>
+  </details>
+<% end %>

@@ -1,0 +1,20 @@
+<%# locals: (user:) -%>
+<% cache [user, "popup", user.updated_at] do %>
+  <%= tag.details class: "position-relative avatar",
+                  data: { controller: "popup", 
+                          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside", 
+                          popup_orientation_top_class: "popup-orientation-top" } do %>
+    <summary class="btn avatar">
+      <%= avatar_tag user, loading: :lazy %>
+    </summary>
+
+    <div class="popup-menu message__avatar-menu border shadow" data-popup-target="menu">
+      <%= turbo_frame_tag dom_id(user, :message_profile), 
+                          data: { turbo_frame_src: mention_profile_path(user) } do %>
+        <div class="txt-align-center pad">
+          <div class="spinner"></div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

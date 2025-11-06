@@ -1,0 +1,24 @@
+<li class="flex align-center gap margin-none" data-value="<%= user.name.downcase %>">
+  <figure class="avatar flex-item-no-shrink" style="--avatar-size: 4ch;">
+    <%= avatar_link_tag user, loading: :lazy %>
+  </figure>
+
+  <div class="min-width">
+    <div class="overflow-ellipsis fill-shade"><strong><%= user.name %></strong></div>
+  </div>
+
+  <hr class="separator" aria-hidden="true">
+
+  <% if Current.user.can_administer?(room) %>
+    <% if user == Current.user && room.new_record? %>
+      <%= hidden_field_tag "user_ids[]", user.id, id: nil %>
+      <%= image_tag "check.svg", size: 20, class: "colorize--black flex-item-no-shrink", aria: { hidden: "true" } %>
+    <% else %>
+      <label class="switch flex-item-no-shrink">
+        <%= check_box_tag "user_ids[]", user.id, selected, class: "switch__input", id: nil %>
+        <span class="switch__btn round"></span>
+        <span class="for-screen-reader">Give <%= user.name %> access to this room</span>
+      </label>
+    <% end %>
+  <% end %>
+</li>

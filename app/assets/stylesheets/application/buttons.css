@@ -1,0 +1,290 @@
+/* PHASE 2 MIGRATION STATUS: Complex classes with nested selectors, CSS custom properties, and pseudo-classes */
+/* NOTE: Base button classes remain in CSS due to complexity (nested selectors, pseudo-classes, CSS variables) */
+/* Button modifier classes (.btn--reversed, .btn--negative, etc.) primarily set CSS variables */
+/* These work together with the base .btn class which handles the complex styling */
+:root {
+  --btn-size: 2.65em;
+  /* Define a slightly smaller size for the navbar action buttons */
+  --navbar-btn-size: 2.4em;
+}
+
+.btn {
+  align-items: center;
+  background-color: var(--btn-background, var(--color-text-reversed));
+  border-radius: var(--btn-border-radius, 2em);
+  border: var(--btn-border-size, 1px) solid var(--btn-border-color, var(--color-border-darker));
+  color: var(--btn-color, var(--color-text));
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 600;
+  gap: 0.5em;
+  justify-content: center;
+  padding: var(--btn-padding, 0.5em 1.1em);
+  pointer-events: auto;
+  text-align: center;
+
+  img {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  /* Default icon styles */
+  &:where(:has(img):not(.avatar)) {
+    text-align: start;
+
+    img {
+      inline-size: 1.3em;
+      max-inline-size: unset;
+    }
+
+    img:not([class]) {
+      filter: invert(0);
+
+      @media (prefers-color-scheme: dark) {
+        filter: invert(100%);
+      }
+    }
+  }
+
+  /* Circle buttons */
+  &:where(:has(.for-screen-reader):has(img, figure)) {
+    --btn-border-radius: 50%;
+    --btn-padding: 0;
+
+    aspect-ratio: 1;
+    block-size: var(--btn-size);
+    display: grid;
+    inline-size: var(--btn-size);
+    place-items: center;
+
+    > * {
+      grid-area: 1/1;
+    }
+  }
+
+  &:where(.avatar) {
+    --btn-border-radius: var(--avatar-border-radius);
+    --btn-padding: 0;
+    --btn-border-size: 0;
+    --hover-size: 0;
+
+    justify-content: unset;
+
+    img {
+      inline-size: 100%;
+    }
+
+    @media (any-hover: hover) {
+      &:where(:not(:active):hover) {
+        filter: brightness(0.7);
+      }
+    }
+  }
+
+  &:where(summary) {
+    list-style: none;
+
+    &::marker,
+    &::-webkit-details-marker { display: none; }
+  }
+
+  img {
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  &:has(input:checked) {
+    --btn-background: var(--color-text);
+    --btn-color: var(--color-text-reversed);
+
+    img {
+      filter: invert(100%);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      img {
+        filter: invert(0);
+      }
+    }
+  }
+
+  [disabled] &[type=submit],
+  &[type=submit]:disabled {
+    cursor: not-allowed;
+    filter: grayscale(100%) contrast(0.5);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+/* Default state: buttons have borders */
+.btn.everything,
+.btn.mentions,
+.btn.invisible {
+  border: var(--btn-border-size, 1px) solid var(--btn-border-color, var(--color-border-darker));
+}
+
+/* Remove borders only for involvement buttons in the sidebar */
+[data-type="list_node"] .btn.everything,
+[data-type="list_node"] .btn.mentions,
+[data-type="list_node"] .btn.invisible {
+  border: 0;
+}
+
+/* Variants */
+.btn--reversed {
+  --btn-background: var(--color-text);
+  --btn-color: var(--color-text-reversed);
+}
+
+.btn--negative {
+  --btn-background: var(--color-negative);
+  --btn-color: var(--color-text-reversed);
+}
+
+.btn--reversed,
+.btn--negative {
+  --btn-border-color: transparent;
+  --hover-size: 0;
+  --hover-filter: brightness(0.7);
+
+  img:not(.avatar) {
+    filter: invert(100%);
+
+    @media (prefers-color-scheme: dark) {
+      filter: invert(0%);
+    }
+  }
+}
+
+.btn--success {
+  animation: success 1s ease-out;
+
+  img {
+    animation: zoom-fade 300ms ease-out;
+  }
+}
+
+.btn--faux {
+  --hover-filter: none;
+
+  box-shadow: none;
+  cursor: initial;
+  outline: 0;
+}
+
+.btn--borderless {
+  --btn-border-color: transparent;
+}
+
+.btn--plain {
+  --btn-background: transparent;
+  --btn-border-color: transparent;
+  --btn-padding: 0;
+}
+
+.btn--pulsing {
+  animation: pulsing-outline 2s infinite both;
+  outline: 0 solid var(--color-alert);
+}
+
+button {
+  @media (any-hover: hover) {
+    cursor: pointer;
+  }
+}
+
+[aria-busy] .btn:disabled, .busy {
+  position: relative;
+
+  > * {
+    visibility: hidden;
+  }
+
+  &::after {
+     --mask: no-repeat radial-gradient(#000 68%,#0000 71%);
+     --size: 1.25em;
+  
+     -webkit-mask: var(--mask), var(--mask), var(--mask);
+     -webkit-mask-size: 28% 45%;
+     animation: submitting 1s infinite linear;
+     aspect-ratio: 8/5;
+     background: currentColor;
+     content: "";
+     inline-size: var(--size);
+     inset: 50% var(--busy-inset, 50%);
+     margin-block: calc((var(--size) / 3) * -1);
+     margin-inline: calc((var(--size) / 2) * -1);
+     position: absolute;
+   }
+}
+
+/* Make the notification warning button visible by default for testing */
+.notification-warning {
+  display: inline-flex;
+}
+
+/* Style the notification warning button with black color instead of orange */
+.notification-warning .btn[data-notifications-target="bell"] {
+  color: var(--color-text, #000);
+  /* Make button size consistent with edit-room button */
+  height: var(--navbar-btn-size);
+  width: var(--navbar-btn-size);
+  padding: 0;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.notification-warning .btn[data-notifications-target="bell"] img {
+  filter: none; /* Remove the orange filter */
+  width: 18px;
+  height: 18px;
+}
+
+/* Make involvement buttons in the navbar consistent with edit-room button */
+.flex.gap-half.align-center .btn.everything,
+.flex.gap-half.align-center .btn.mentions,
+.flex.gap-half.align-center .btn.invisible {
+  height: var(--navbar-btn-size);
+  width: var(--navbar-btn-size);
+  padding: 0;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.flex.gap-half.align-center .btn.everything img,
+.flex.gap-half.align-center .btn.mentions img,
+.flex.gap-half.align-center .btn.invisible img {
+  width: 18px;
+  height: 18px;
+}
+
+/* Ensure edit-room button uses the same size */
+a.btn[data-room-id] {
+  height: var(--navbar-btn-size);
+  padding: 0 0.8em;
+  display: inline-flex;
+  align-items: center;
+}
+
+a.btn[data-room-id] img {
+  width: 18px;
+  height: 18px;
+}
+
+/* Hide text in navbar involvement buttons to match other circular buttons */
+.flex.gap-half.align-center .btn.everything .for-screen-reader,
+.flex.gap-half.align-center .btn.mentions .for-screen-reader,
+.flex.gap-half.align-center .btn.invisible .for-screen-reader {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,40 @@
+<% password_digest = BCrypt::Password.create("secret123456") %>
+
+david:
+  name: David
+  email_address: david@37signals.com
+  password_digest: <%= password_digest %>
+  role: administrator
+
+jason:
+  name: Jason
+  email_address: jason@37signals.com
+  password_digest: <%= password_digest %>
+  role: administrator
+
+jz:
+  name: JZ
+  email_address: jz@37signals.com
+  password_digest: <%= password_digest %>
+  bio: Designer
+
+kevin:
+  name: Kevin
+  email_address: kevin@37signals.com
+  password_digest: <%= password_digest %>
+  bio: Programmer
+
+bender:
+  name: Bender Bot
+  bot_token: <%= User.generate_bot_token %>
+  role: bot
+
+betty:
+  name: Betty Bot
+  bot_token: <%= User.generate_bot_token %>
+  role: bot
+
+nsa:
+  name: NSA Bot
+  bot_token: <%= User.generate_bot_token %>
+  role: bot

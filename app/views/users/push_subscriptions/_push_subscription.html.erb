@@ -1,0 +1,22 @@
+<li class="flex flex-column margin-none membership-item">
+  <span class="overflow-ellipsis txt-primary txt-undecorated">
+    <% agent = UserAgent.parse(push_subscription.user_agent) %>
+    <strong><%= agent.browser %> <%= agent.version %> on <%= agent.platform %></strong><br>
+  </span>
+
+  <span class="flex align-start gap txt-small">
+    <span><%= push_subscription.endpoint %></span>
+
+    <span class="flex align-center gap">
+      <%= button_to user_push_subscription_test_notifications_path(push_subscription), class: "btn btn--reversed" do %>
+        <%= image_tag "notification-bell-everything.svg", aria: { hidden: "true" }, size: 20 %>
+        <span class="for-screen-reader">Send test notification</span>
+      <% end %>
+
+      <%= button_to user_push_subscription_path(push_subscription), method: :delete, class: "btn btn--negative" do %>
+        <%= image_tag "minus.svg", aria: { hidden: "true" }, size: 20 %>
+        <span class="for-screen-reader">Delete subscription</span>
+      <% end %>
+    </span>
+  </span>
+</li>

@@ -1,0 +1,727 @@
+<% @page_title = "Message Stats" %>
+<% @body_class = "sidebar stats-page" %>
+
+<% content_for :head do %>
+  <%= stylesheet_link_tag "application/stats" %>
+<% end %>
+
+<% content_for :nav do %>
+  <%= account_logo_tag if Current.account.logo.attached? %>
+  <%= tag.span class: "btn btn--reversed btn--faux room--current" do %>
+    <h1 class="room__contents txt-medium overflow-ellipsis">Message Stats</h1>
+  <% end %>
+  <%= link_back %>
+  <%= link_to stats_path, class: "btn d-hotwire-native-none" do %>
+    <%= image_tag("refresh.svg", aria: { hidden: "true" }, size: 20) %>
+    <span class="for-screen-reader">Refresh stats</span>
+  <% end %>
+<% end %>
+
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+
+<section class="full-width">
+  <!-- Top Talkers Section -->
+  <h2 class="section-heading">Top Talkers</h2>
+  <div class="stats-grid margin-block">
+    <!-- Today's top talkers -->
+    <div class="card grid-card">
+      <%= link_to stats_daily_path, class: "card-header-link" do %>
+        <div class="card-header">
+          <div class="txt-h3 margin-none d-flex justify-content-between align-items-center">
+            Today
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+        </div>
+      <% end %>
+      <div class="card-body compact">
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <% if @top_posters_today.any? %>
+                <% @top_posters_today.each_with_index do |user, index| %>
+                  <% is_current = user.id == Current.user&.id %>
+                  <tr class="<%= 'current-user' if is_current %>">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
+                    <td>
+                      <div class="flex gap-inline items-center">
+                        <%= link_to user_path(user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(user.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if Current.user && @current_user_today_stats && @current_user_today_stats.message_count.to_i > 0 %>
+                  <tr>
+                    <td colspan="3" class="txt-center txt-small txt-faded" style="padding: 0.25rem;">
+                      <div style="border-top: 1px dashed var(--color-border-darker); margin: 0.25rem 0;"></div>
+                    </td>
+                  </tr>
+                  <tr class="current-user">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= @current_user_today_rank %></td>
+                    <td>
+                      <div class="flex gap-inline items-center">
+                        <%= link_to user_path(Current.user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if Current.user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag Current.user.avatar, alt: Current.user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= Current.user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= Current.user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(@current_user_today_stats.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
+                <tr>
+                  <td colspan="3" class="txt-center">No messages yet</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- This month's top talkers -->
+    <div class="card grid-card">
+      <%= link_to stats_monthly_path, class: "card-header-link" do %>
+        <div class="card-header">
+          <div class="txt-h3 margin-none d-flex justify-content-between align-items-center">
+            This Month
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+        </div>
+      <% end %>
+      <div class="card-body compact">
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <% if @top_posters_month.any? %>
+                <% @top_posters_month.each_with_index do |user, index| %>
+                  <% is_current = user.id == Current.user&.id %>
+                  <tr class="<%= 'current-user' if is_current %>">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
+                    <td>
+                      <div class="flex gap-inline items-center">
+                        <%= link_to user_path(user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(user.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if Current.user && @current_user_month_stats && @current_user_month_stats.message_count.to_i > 0 %>
+                  <tr>
+                    <td colspan="3" class="txt-center txt-small txt-faded" style="padding: 0.25rem;">
+                      <div style="border-top: 1px dashed var(--color-border-darker); margin: 0.25rem 0;"></div>
+                    </td>
+                  </tr>
+                  <tr class="current-user">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= @current_user_month_rank %></td>
+                    <td>
+                      <div class="flex gap-inline items-center">
+                        <%= link_to user_path(Current.user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if Current.user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag Current.user.avatar, alt: Current.user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= Current.user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= Current.user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(@current_user_month_stats.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
+                <tr>
+                  <td colspan="3" class="txt-center">No messages yet</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- This year's top talkers -->
+    <div class="card grid-card">
+      <%= link_to stats_yearly_path, class: "card-header-link" do %>
+        <div class="card-header">
+          <div class="txt-h3 margin-none d-flex justify-content-between align-items-center">
+            This Year
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+        </div>
+      <% end %>
+      <div class="card-body compact">
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <% if @top_posters_year.any? %>
+                <% @top_posters_year.each_with_index do |user, index| %>
+                  <% is_current = user.id == Current.user&.id %>
+                  <tr class="<%= 'current-user' if is_current %>">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
+                    <td>
+                      <div class="flex gap-inline items-center">
+                        <%= link_to user_path(user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(user.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if Current.user && @current_user_year_stats && @current_user_year_stats.message_count.to_i > 0 %>
+                  <tr>
+                    <td colspan="3" class="txt-center txt-small txt-faded" style="padding: 0.25rem;">
+                      <div style="border-top: 1px dashed var(--color-border-darker); margin: 0.25rem 0;"></div>
+                    </td>
+                  </tr>
+                  <tr class="current-user">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= @current_user_year_rank %></td>
+                    <td>
+                      <div class="flex gap-inline items-center">
+                        <%= link_to user_path(Current.user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if Current.user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag Current.user.avatar, alt: Current.user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= Current.user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= Current.user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(@current_user_year_stats.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
+                <tr>
+                  <td colspan="3" class="txt-center">No messages yet</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- All time top talkers -->
+    <div class="card grid-card">
+      <%= link_to stats_all_path, class: "card-header-link" do %>
+        <div class="card-header">
+          <div class="txt-h3 margin-none d-flex justify-content-between align-items-center">
+            All Time
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+        </div>
+      <% end %>
+      <div class="card-body compact">
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <% if @top_posters_all_time.any? %>
+                <% @top_posters_all_time.each_with_index do |user, index| %>
+                  <% is_current = user.id == Current.user&.id %>
+                  <tr class="<%= 'current-user' if is_current %>">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
+                    <td>
+                      <div class="flex gap-inline items-center">
+                        <%= link_to user_path(user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(user.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if Current.user && @current_user_all_time_stats && @current_user_all_time_stats.message_count.to_i > 0 %>
+                  <tr>
+                    <td colspan="3" class="txt-center txt-small txt-faded" style="padding: 0.25rem;">
+                      <div style="border-top: 1px dashed var(--color-border-darker); margin: 0.25rem 0;"></div>
+                    </td>
+                  </tr>
+                  <tr class="current-user">
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= @current_user_all_time_rank %></td>
+                    <td>
+                      <div class="flex gap-inline items-center">
+                        <%= link_to user_path(Current.user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
+                          <% if Current.user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag Current.user.avatar, alt: Current.user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= Current.user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate"><%= Current.user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(@current_user_all_time_stats.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
+                <tr>
+                  <td colspan="3" class="txt-center">No messages yet</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other Stats Section -->
+  <h2 class="section-heading" style="margin-top: 2rem;">Stats</h2>
+  <div class="stats-grid margin-block">
+    <!-- Stats summary -->
+    <div class="card grid-card">
+      <div class="card-header">
+        <h2 class="txt-h3 margin-none">Info</h2>
+      </div>
+      <div class="card-body compact">
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <tr>
+                <td>Members</td>
+                <td class="txt-right"><%= number_with_delimiter(@total_users) %></td>
+              </tr>
+              <tr>
+                <td>Online</td>
+                <td class="txt-right"><%= number_with_delimiter(@online_users) %></td>
+              </tr>
+              <tr>
+                <td>Posters</td>
+                <td class="txt-right"><%= number_with_delimiter(@total_posters) %></td>
+              </tr>
+              <tr>
+                <td>Messages</td>
+                <td class="txt-right"><%= number_with_delimiter(@total_messages) %></td>
+              </tr>
+              <tr>
+                <td>Threads</td>
+                <td class="txt-right"><%= number_with_delimiter(@total_threads) %></td>
+              </tr>
+              <tr>
+                <td>Boosts</td>
+                <td class="txt-right"><%= number_with_delimiter(@total_boosts) %></td>
+              </tr>
+              <tr>
+                <td>Database</td>
+                <td class="txt-right"><%= number_to_human_size(@database_size) %></td>
+              </tr>
+              <% if ENV["APP_VERSION"].present? %>
+              <tr>
+                <td>Version</td>
+                <td class="txt-right">
+                  <%= link_to "https://github.com/antiwork/smallbets/commit/#{ENV["APP_VERSION"]}", target: "_blank", style: "text-decoration: none; display: inline-flex; align-items: center; justify-content: flex-end; width: 100%;" do %>
+                    <span><%= ENV["APP_VERSION"] %></span>
+                  <% end %>
+                </td>
+              </tr>
+              <% end %>
+              <% if ENV["LAST_DEPLOY"].present? %>
+              <tr>
+                <td>Last Deploy</td>
+                <td class="txt-right">
+                  <% deploy_time = Time.parse(ENV["LAST_DEPLOY"]) rescue nil %>
+                  <% if deploy_time.present? %>
+                    <%= time_ago_in_words(deploy_time) %> ago
+                  <% else %>
+                    <span class="txt-faded">Unknown</span>
+                  <% end %>
+                </td>
+              </tr>
+              <% end %>
+              <% if @cpu_util && @cpu_cores %>
+              <tr>
+                <td>CPU</td>
+                <td class="txt-right"><%= number_to_percentage(@cpu_util, precision: 1) %> of <%= @cpu_cores %> CPUs</td>
+              </tr>
+              <% end %>
+              <% if @free_memory_percent && @total_memory_gb %>
+              <tr>
+                <td>Memory</td>
+                <td class="txt-right"><%= number_to_percentage(@memory_util_percent, precision: 0) %> of <%= @total_memory_gb.to_i %>GB</td>
+              </tr>
+              <% end %>
+              <% if @free_disk_percent && @total_disk_gb %>
+              <tr>
+                <td>Disk</td>
+                <td class="txt-right"><%= number_to_percentage(@disk_util_percent, precision: 0) %> of <%= @total_disk_gb.to_i %>GB</td>
+              </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Rooms -->
+    <div class="card grid-card">
+      <%= link_to stats_rooms_path, class: "card-header-link" do %>
+        <div class="card-header">
+          <div class="txt-h3 margin-none d-flex justify-content-between align-items-center">
+            Top Rooms
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+        </div>
+      <% end %>
+      <div class="card-body compact">
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <% if @top_rooms.any? %>
+                <% @top_rooms.each_with_index do |room, index| %>
+                  <tr>
+                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
+                    <td>
+                      <%= link_to room_path(room), style: "text-decoration: none;" do %>
+                        <span class="txt-truncate"><%= room.name %></span>
+                      <% end %>
+                    </td>
+                    <td class="txt-right">
+                      <%= number_with_delimiter(room.message_count) %>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
+                <tr>
+                  <td colspan="3" class="txt-center">No rooms yet</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Newest members -->
+    <div class="card grid-card">
+      <div class="card-header">
+        <h2 class="txt-h3 margin-none">Newest Members</h2>
+      </div>
+      <div class="card-body compact">
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <% @newest_members.each_with_index do |user, index| %>
+                <% is_current = user.id == Current.user&.id %>
+                <tr class="<%= 'current-user' if is_current %>">
+                  <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
+                  <td style="max-width: 0; width: 100%;">
+                    <div class="flex gap-inline align-center">
+                      <%= link_to user_path(user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0; width: 100%;" do %>
+                        <% if user.avatar.attached? %>
+                          <div class="avatar avatar-xs">
+                            <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
+                          </div>
+                        <% else %>
+                          <div class="avatar avatar-xs">
+                            <%= user.name.first.upcase %>
+                          </div>
+                        <% end %>
+                        <span class="txt-truncate" style="width: 100%;"><%= user.name %></span>
+                      <% end %>
+                    </div>
+                  </td>
+                  <td class="txt-right" style="width: 90px; white-space: nowrap;">
+                    <%= user.joined_at.strftime("%Y-%m-%d") %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily stats table with graph -->
+    <div class="card grid-card">
+      <div class="card-header">
+        <h2 class="txt-h3 margin-none">Messages</h2>
+      </div>
+      <div class="card-body compact">
+        <!-- Table data -->
+        <div class="overflow-x-auto">
+          <table class="table full-width">
+            <tbody>
+              <% @daily_stats.each do |stat| %>
+                <tr>
+                  <td><%= stat.date %></td>
+                  <td class="txt-right"><%= number_with_delimiter(stat.count) %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Graph visualization -->
+        <div class="margin-top">
+          <div style="height: 300px;">
+            <%
+              # Use all-time stats
+              max_count = @all_time_stats.map(&:count).max
+              total_days = @all_time_stats.length
+              
+              # Fixed dimensions
+              graph_height = 240
+              left_margin = 8
+              right_margin = 2
+              bottom_margin = 25
+              
+              # Calculate bar width and spacing
+              available_width = 100 - left_margin - right_margin
+              min_bar_width = 0.15
+              bar_spacing = 0.05
+              bar_width = [(available_width - (total_days * bar_spacing)) / total_days, min_bar_width].max
+              
+              # Show fewer labels for readability
+              label_interval = (total_days / 6.0).ceil
+            %>
+
+            <svg width="100%" height="100%" style="background: var(--color-bg); border-radius: 4px;">
+              <% 
+                # Calculate y-axis ticks at 100 message intervals
+                y_ticks = (0..max_count).step(100).to_a
+                
+                # Only add max if it's significantly different from the last tick
+                last_tick = y_ticks.last
+                if (max_count - last_tick) > 50
+                  y_ticks << max_count
+                end
+                
+                # Remove any ticks that are too close together
+                y_ticks = y_ticks.each_with_index.reject do |tick, i|
+                  next_tick = y_ticks[i + 1]
+                  next_tick && (next_tick - tick) < 50
+                end.map(&:first)
+              %>
+
+              <!-- Horizontal grid lines -->
+              <% y_ticks.each do |tick| %>
+                <% y_pos = (graph_height - bottom_margin) - (tick.to_f / max_count * (graph_height - bottom_margin - 10)) %>
+                <line 
+                  x1="<%= left_margin %>%" 
+                  x2="<%= 100 - right_margin %>%" 
+                  y1="<%= y_pos %>" 
+                  y2="<%= y_pos %>" 
+                  stroke="var(--color-border-darker)" 
+                  stroke-width="1"
+                  stroke-opacity="0.25"
+                  stroke-dasharray="4,4"
+                />
+              <% end %>
+
+              <% y_ticks.each do |tick| %>
+                <% y_pos = (graph_height - bottom_margin) - (tick.to_f / max_count * (graph_height - bottom_margin - 10)) %>
+                
+                <!-- Tick mark -->
+                <line 
+                  x1="<%= left_margin - 0.5 %>%" 
+                  x2="<%= left_margin %>%" 
+                  y1="<%= y_pos %>" 
+                  y2="<%= y_pos %>" 
+                  stroke="var(--color-border-darker)" 
+                  stroke-width="1"
+                />
+                
+                <!-- Label -->
+                <text 
+                  x="<%= left_margin - 1 %>%" 
+                  y="<%= y_pos + 4 %>" 
+                  text-anchor="end"
+                  style="font-size: 10px; fill: var(--color-text);"
+                >
+                  <%= number_with_delimiter(tick) %>
+                </text>
+              <% end %>
+
+              <!-- Y-axis -->
+              <line 
+                x1="<%= left_margin %>%" 
+                y1="10" 
+                x2="<%= left_margin %>%" 
+                y2="<%= graph_height - bottom_margin %>" 
+                stroke="var(--color-border-darker)" 
+                stroke-width="1"
+              />
+
+              <!-- Bars -->
+              <% @all_time_stats.each_with_index do |stat, index| %>
+                <% 
+                  bar_height = (stat.count.to_f / max_count * (graph_height - bottom_margin - 10)).round
+                  x_pos = left_margin + (index * (bar_width + bar_spacing))
+                %>
+                
+                <rect 
+                  x="<%= x_pos %>%" 
+                  y="<%= graph_height - bottom_margin - bar_height %>" 
+                  width="<%= bar_width %>%"
+                  height="<%= bar_height %>"
+                  fill="var(--color-border-darker)"
+                />
+
+                <!-- X-axis labels -->
+                <% if index % label_interval == 0 && stat.date.present? %>
+                  <text 
+                    x="<%= x_pos %>%" 
+                    y="<%= graph_height - 5 %>" 
+                    text-anchor="start"
+                    style="font-size: 10px; fill: var(--color-text);"
+                    transform="rotate(-45, <%= x_pos %>%, <%= graph_height - 5 %>)"
+                  >
+                    <%= stat.date.split('-')[1..2].join('/') %>
+                  </text>
+                <% end %>
+              <% end %>
+
+              <!-- X-axis line -->
+              <line 
+                x1="<%= left_margin %>%" 
+                y1="<%= graph_height - bottom_margin %>" 
+                x2="<%= 100 - right_margin %>%" 
+                y2="<%= graph_height - bottom_margin %>" 
+                stroke="var(--color-border-darker)" 
+                stroke-width="1"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if Current.user.administrator? %>
+    <h2 class="section-heading" style="margin-top: 2rem;">Admin Only Area</h2>
+    <div class="stats-grid margin-block">
+      <!-- Most blocked members -->
+      <div class="card grid-card">
+        <div class="card-header">
+          <h2 class="txt-h3 margin-none">Most blocked members</h2>
+        </div>
+        <div class="card-body compact">
+          <div class="overflow-x-auto">
+            <table class="table full-width">
+              <tbody>
+              <% if @blocked_members.any? %>
+                <% @blocked_members.each do |user| %>
+                  <tr>
+                    <td style="max-width: 0; width: 100%;">
+                      <div class="flex gap-inline items-center">
+                        <%= link_to user_path(user, from: "/stats"), class: "flex items-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0; width: 100%;" do %>
+                          <% if user.avatar.attached? %>
+                            <div class="avatar avatar-xs">
+                              <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
+                            </div>
+                          <% else %>
+                            <div class="avatar avatar-xs">
+                              <%= user.name.first.upcase %>
+                            </div>
+                          <% end %>
+                          <span class="txt-truncate" style="width: 100%;"><%= user.name %></span>
+                        <% end %>
+                      </div>
+                    </td>
+                    <td class="txt-right" style="width: 90px; white-space: nowrap;">
+                      Blocked by <%= user.blocks_received.count %>
+                    </td>
+                  </tr>
+                <% end %>
+              <% else %>
+                <tr>
+                  <td style="max-width: 0; width: 100%;">-</td>
+                </tr>
+              <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</section> 
