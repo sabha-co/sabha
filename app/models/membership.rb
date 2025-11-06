@@ -52,7 +52,7 @@ class Membership < ApplicationRecord
   after_update_commit { user.reset_remote_connections if deactivated? }
   after_destroy_commit { user.reset_remote_connections }
 
-  enum involvement: %w[ invisible nothing mentions everything ].index_by(&:itself), _prefix: :involved_in
+  enum :involvement, %w[ invisible nothing mentions everything ].index_by(&:itself), prefix: :involved_in
 
   after_update :broadcast_involvement, if: :saved_change_to_involvement?
 

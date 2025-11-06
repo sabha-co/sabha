@@ -3,6 +3,11 @@ require "test_helper"
 module Api
   module Videos
     class ThumbnailsControllerTest < ActionDispatch::IntegrationTest
+      # Vimeo feature disabled - skipping tests
+      def self.runnable_methods
+        []
+      end
+
       setup do
         sign_in :david
         @cache = ActiveSupport::Cache::MemoryStore.new

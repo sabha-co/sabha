@@ -30,7 +30,8 @@ class ActiveSupport::TestCase
     end
 
     # Set ENV vars for tests
-    ENV["COOKIE_DOMAIN"] = "example.com"  # Match test domain
+    # Don't set COOKIE_DOMAIN in tests to allow cookies to work across different test hosts
+    ENV["COOKIE_DOMAIN"] = nil
 
     WebMock.disable_net_connect!
   end

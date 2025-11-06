@@ -2,26 +2,32 @@ pets:
   name: All Pets
   type: Rooms::Open
   creator: :david
+  last_active_at: <%= 1.day.ago %>
 
 hq:
   name: HQ
   type: Rooms::Open
   creator: :david
+  last_active_at: <%= 2.days.ago %>
 
 watercooler:
   name: All Talk
   type: Rooms::Closed
   creator: :david
+  last_active_at: <%= 3.hours.ago %>
 
 designers:
   name: Designers
   type: Rooms::Closed
   creator: :david
+  last_active_at: <%= 1.hour.ago %>
 
 david_and_jason:
   type: Rooms::Direct
   creator: :david
+  last_active_at: <%= 30.minutes.ago %>
 
 david_and_kevin:
   type: Rooms::Direct
   creator: :david
+  last_active_at: <%= 15.minutes.ago %>

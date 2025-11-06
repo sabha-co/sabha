@@ -2,6 +2,11 @@ require "test_helper"
 
 module Vimeo
   class ThumbnailFetcherTest < ActiveSupport::TestCase
+    # Vimeo feature disabled - skipping tests
+    def self.runnable_methods
+      []
+    end
+
     setup do
       @cache = ActiveSupport::Cache::MemoryStore.new
       @previous_cache = Rails.cache

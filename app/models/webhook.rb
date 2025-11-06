@@ -6,7 +6,7 @@ class Webhook < ApplicationRecord
 
   belongs_to :user
 
-  enum receives: %w[ mentions everything ].index_by(&:itself), _prefix: :receives
+  enum :receives, %w[ mentions everything ].index_by(&:itself), prefix: :receives
 
   scope :receiving_mentions, -> { where(receives: :mentions) }
   scope :receiving_everything, -> { where(receives: :everything) }

@@ -5,7 +5,7 @@
         data: {
           sorted_list_target: "item",
           sorted_list_priority: membership.unread? ? 0 : 1,
-          updated_at: (membership.unread_at || membership.room.updated_at).iso8601 
+          updated_at: (membership.unread_at || membership.room.updated_at)&.iso8601
         } do %>
     <% if members.many? %>
       <div class="avatar__group">

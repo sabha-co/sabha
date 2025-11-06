@@ -22,7 +22,7 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy" do
     assert_turbo_stream_broadcasts :rooms, count: 1 do
-      assert_difference -> { Room.count }, -1 do
+      assert_difference -> { Room.active.count }, -1 do
         delete room_url(rooms(:designers))
       end
     end
@@ -31,14 +31,14 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
   test "destroy only allowed for creators or those who can administer" do
     sign_in :jz
 
-    assert_no_difference -> { Room.count } do
+    assert_no_difference -> { Room.active.count } do
       delete room_url(rooms(:designers))
       assert_response :forbidden
     end
 
     rooms(:designers).update! creator: users(:jz)
 
-    assert_difference -> { Room.count }, -1 do
+    assert_difference -> { Room.active.count }, -1 do
       delete room_url(rooms(:designers))
     end
   end

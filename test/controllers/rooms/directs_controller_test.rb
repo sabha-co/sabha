@@ -24,7 +24,7 @@ class Rooms::DirectsControllerTest < ActionDispatch::IntegrationTest
   test "destroy only allowed for all room users" do
     sign_in :kevin
 
-    assert_difference -> { Room.count }, -1 do
+    assert_difference -> { Room.active.count }, -1 do
       delete rooms_direct_url(rooms(:david_and_kevin))
       assert_redirected_to root_url
     end
