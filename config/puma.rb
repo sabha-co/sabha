@@ -51,7 +51,7 @@ if ENV["RAILS_ENV"] == "production"
   # Code to run before forking workers. This resets ActionCable connections
   # to ensure clean state when deploying new versions.
   before_fork do
-    require File.expand_path("config/environment", __dir__)
+    require File.expand_path("environment", __dir__)
     Membership.disconnect_all
   end
 end
