@@ -10,14 +10,21 @@
 
 .flash__inner {
   animation: appear-then-fade 3s 300ms both;
-  aspect-ratio: 1;
   background-color: var(--flash-background, var(--color-positive));
-  border-radius: 50%;
-  display: grid;
-  padding: var(--block-space);
-  place-items: center;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  max-width: 32rem;
 
   img {
-    grid-area: 1/1;
+    flex-shrink: 0;
+  }
+
+  span {
+    color: white;
+    font-weight: 500;
+    font-size: 0.9375rem;
   }
 }
