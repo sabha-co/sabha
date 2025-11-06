@@ -1,8 +1,9 @@
 name: Deploy with Kamal
 
 on:
-  push:
-    branches: [master]
+  # Automatic deployment disabled
+  # push:
+  #   branches: [master]
   workflow_dispatch:
     inputs:
       environment:
