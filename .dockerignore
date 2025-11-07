@@ -1,3 +1,68 @@
+# Git files
+.git
+.gitignore
+.github
+
+# Logs and temporary files
 log/
 storage/
 tmp/
+
+# Development and test files
+test/
+spec/
+.rspec
+coverage/
+
+# Documentation
+*.md
+CHANGELOG*
+LICENSE*
+*.txt
+
+# IDE and editor files
+.idea/
+.vscode/
+*.sublime-*
+.DS_Store
+
+# Environment files
+.env
+.env.*
+.envrc
+
+# Ruby/Bundler
+.bundle/
+vendor/bundle/
+.ruby-version
+.ruby-gemset
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.node_repl_history
+
+# Build artifacts
+app/assets/builds/
+public/assets/
+public/vite*
+public/packs*
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# Deployment
+.kamal/
+deploy.sh
+Caddyfile
+
+# Misc
+*.swp
+*.swo
+*~
+.cache/
