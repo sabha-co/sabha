@@ -289,3 +289,4 @@ test/
 - **Stats Page** - Community leaderboards and analytics
 - **Soft Deletion** - Messages marked inactive but preserved
 - **Enhanced Bot API** - Webhooks and DM initiation for bots
+- use docker/caddy based deployment as default.

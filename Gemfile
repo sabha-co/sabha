@@ -1,7 +1,6 @@
 source "https://rubygems.org"
 
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
-git_source(:bc)     { |repo| "https://github.com/basecamp/#{repo}" }
 
 # Rails
 gem "rails", "~> 8.0.0"

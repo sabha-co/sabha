@@ -2,7 +2,7 @@
 
 # Make sure it matches the Ruby version in .ruby-version and Gemfile
 ARG RUBY_VERSION=3.4.5
-FROM ruby:$RUBY_VERSION-slim AS base
+FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
 WORKDIR /rails
@@ -11,53 +11,59 @@ WORKDIR /rails
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
+    BUNDLE_WITHOUT="development:test" \
+    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages need to build gems and Node.js for Tailwind
+# Install packages needed to build gems and Node.js for Tailwind
 RUN apt-get update -qq && \
-    apt-get install -y build-essential git pkg-config curl libyaml-dev libssl-dev && \
+    apt-get install --no-install-recommends -y \
+    build-essential git pkg-config curl libyaml-dev libssl-dev ca-certificates && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs
+    apt-get install --no-install-recommends -y nodejs && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    gem install thruster
+    bundle clean --force && \
+    gem install thruster && \
+    gem cleanup
 
+# Copy application code
 COPY . .
 
 # Install Node dependencies and build Tailwind CSS
-RUN npm install && \
-    npx @tailwindcss/cli -i app/assets/stylesheets/application.tailwind.css -o app/assets/builds/tailwind.css
+RUN npm ci && \
+    npm cache clean --force && \
+    npx @tailwindcss/cli -i app/assets/stylesheets/application.tailwind.css -o app/assets/builds/tailwind.css --minify
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN mkdir -p /rails/storage/logs
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# Precompile assets
+RUN mkdir -p /rails/storage/logs && \
+    SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+
+# Clean up build artifacts
+RUN rm -rf node_modules tmp/cache .git
 
 
 # Final stage for app image
 FROM base
 
+# Install runtime packages
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    curl libsqlite3-0 libvips libjemalloc2 libyaml-0-2 ca-certificates \
+    ffmpeg redis-server git sqlite3 awscli cron && \
+    ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
 # Configure environment defaults
 ENV HTTP_IDLE_TIMEOUT=60 \
     HTTP_READ_TIMEOUT=300 \
     HTTP_WRITE_TIMEOUT=300
-
-# Install packages needed to run the application
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y \
-    libsqlite3-0 libvips curl ffmpeg redis git sqlite3 awscli cron nano dialog \
-    libjemalloc2 libyaml-0-2 && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
-
-# Enable jemalloc for memory optimization (20-40% reduction)
-# Create architecture-agnostic symlink for jemalloc (works on both x86_64 and aarch64)
-RUN ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so
-ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so
 
 # Create app user with UID 1000
 RUN groupadd --system --gid 1000 rails && \
@@ -77,15 +83,22 @@ ENV APP_VERSION=$APP_VERSION
 ARG GIT_REVISION
 ENV GIT_REVISION=$GIT_REVISION
 
+# Image metadata
+ARG OCI_DESCRIPTION
+LABEL org.opencontainers.image.description="${OCI_DESCRIPTION}"
+ARG OCI_SOURCE
+LABEL org.opencontainers.image.source="${OCI_SOURCE}"
+LABEL org.opencontainers.image.licenses="MIT"
+
 # Switch to rails user
 USER 1000:1000
 
 # Expose app ports
 EXPOSE 3000
 
-# Add health check to verify the application is running
+# Health check
 HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:3000/up || exit 1
 
-# Start the server by default, this can be overwritten at runtime
+# Start the server
 CMD ["sh", "-c", "service cron start && bin/configure && bin/boot"]
