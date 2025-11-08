@@ -1,8 +1,8 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    branches: [master]
+  release:
+    types: [published]
   workflow_dispatch:
 
 env:
@@ -21,12 +21,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      - name: Get short SHA
-        uses: benjlevesque/short-sha@599815c8ee942a9616c92bcfb4f947a3b670ab0b # v3.0
-        id: short-sha
-        with:
-          length: 7
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -43,9 +37,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix={{branch}}-,format=short
-            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -55,7 +50,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            APP_VERSION=${{ steps.short-sha.outputs.sha }}
+            APP_VERSION=${{ github.ref_name }}
             GIT_REVISION=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
