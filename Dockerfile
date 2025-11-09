@@ -65,15 +65,11 @@ ENV HTTP_IDLE_TIMEOUT=60 \
     HTTP_READ_TIMEOUT=300 \
     HTTP_WRITE_TIMEOUT=300
 
-# Create app user with UID 1000
-RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
-
 # Copy built artifacts: gems, application
-COPY --from=build --chown=1000:1000 /usr/local/bundle /usr/local/bundle
-COPY --from=build --chown=1000:1000 /rails /rails
+COPY --from=build /usr/local/bundle /usr/local/bundle
+COPY --from=build /rails /rails
 
-# Copy cron scripts (before switching to rails user)
+# Copy cron scripts
 COPY script/admin/full-backup /etc/cron.daily/
 COPY script/admin/db-backup /etc/cron.hourly/
 
@@ -89,9 +85,6 @@ LABEL org.opencontainers.image.description="${OCI_DESCRIPTION}"
 ARG OCI_SOURCE
 LABEL org.opencontainers.image.source="${OCI_SOURCE}"
 LABEL org.opencontainers.image.licenses="MIT"
-
-# Switch to rails user
-USER 1000:1000
 
 # Expose app ports
 EXPOSE 3000

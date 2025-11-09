@@ -1,6 +1,6 @@
 service: campfire
 
-image: campfire-ce
+image: superforumio/campfire-ce
 
 servers:
   web:
@@ -12,7 +12,10 @@ proxy:
   app_port: 3000
 
 registry:
-  server: localhost:5000
+  server: ghcr.io
+  username: superforumio
+  password:
+    - KAMAL_REGISTRY_PASSWORD
 
 builder:
   arch: amd64
