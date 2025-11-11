@@ -176,18 +176,23 @@ docker run -p 3000:3000 \
 ✅ = Required for production deployment
 ⚠️ = Optional
 
-### Database Backups with Litestream
+### Database Backups
 
-**Automatic backups are available when deployed via docker-compose** (e.g., through [campfire_cloud](https://github.com/yourusername/campfire_cloud)):
+**IMPORTANT:** Campfire-CE does not include automatic database backups out of the box. You must implement your own backup strategy.
 
-- ✅ **Continuous replication** - Database changes replicated every 10 seconds to Cloudflare R2/S3
-- ✅ **Point-in-time recovery** - Restore to any point within 30 days
-- ✅ **Zero configuration** - Works out-of-the-box with docker-compose deployments
-- ✅ **Sidecar pattern** - Litestream runs in a separate container
+**Recommended Options:**
 
-See [LITESTREAM.md](LITESTREAM.md) for complete documentation.
+1. **Litestream** (SQLite streaming replication) - See [LITESTREAM.md](LITESTREAM.md) for setup instructions
+   - Continuous replication to S3/R2
+   - Point-in-time recovery
+   - Requires manual configuration (not included by default)
 
-**Note for Kamal Deployments:**
-- Litestream is NOT included with Kamal deployments
-- You'll need to set up your own backup strategy (see [DEPLOYMENT.md](DEPLOYMENT.md#database-backups))
-- Consider using `tar` snapshots or traditional database backup tools
+2. **Volume Snapshots** - Use your cloud provider's snapshot feature (DigitalOcean, AWS, etc.)
+
+3. **Periodic Backups** - Schedule cron jobs or scripts to backup the SQLite database:
+   ```bash
+   # Example: Daily backup at 2 AM
+   0 2 * * * tar -czf /backups/campfire-$(date +\%Y\%m\%d).tar.gz /disk/campfire/db/production.sqlite3
+   ```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md#database-backups) for detailed backup strategies.

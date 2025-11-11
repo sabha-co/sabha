@@ -57,14 +57,14 @@ This guide covers production deployment strategies for Campfire-CE. Choose the a
 
 ## Option 1: Docker Compose (Recommended for Single Server)
 
-> **Automatic Backups:** When deployed via [campfire_cloud](https://github.com/yourusername/campfire_cloud), Litestream automatically replicates your database to Cloudflare R2 every 10 seconds. See [LITESTREAM.md](LITESTREAM.md) for details.
+> **Database Backups:** Campfire-CE does not include automatic database backups by default. You'll need to implement your own backup strategy. See [Database Backups](#database-backups) section and [LITESTREAM.md](LITESTREAM.md) for options.
 
 ### Architecture
 
 ```
 [Internet] → [Caddy (SSL/Proxy)] → [App Container] → [SQLite on Volume]
-                                  ↓                         ↓
-                            [Redis Container]      [Litestream (Backups)]
+                                  ↓
+                            [Redis Container]
 ```
 
 ### Prerequisites
@@ -386,7 +386,7 @@ Add these secrets to your GitHub repository:
 
 ## Option 2: Kamal (For Multi-Server or Zero-Downtime)
 
-> **Note on Database Backups:** Kamal deployments do NOT include automatic Litestream backups. You'll need to set up your own backup solution (see [Database Backups](#database-backups) section below). For automatic out-of-the-box backups, use docker-compose deployment via [campfire_cloud](https://github.com/yourusername/campfire_cloud).
+> **Note on Database Backups:** Campfire-CE does not include automatic database backups by default, regardless of deployment method. You'll need to set up your own backup solution (see [Database Backups](#database-backups) section below).
 
 ### Prerequisites
 

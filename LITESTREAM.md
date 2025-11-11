@@ -1,34 +1,102 @@
 # Litestream Database Backup Guide
 
-This guide covers Litestream integration for Campfire-CE when deployed via **docker-compose** (e.g., through [campfire_cloud](https://github.com/yourusername/campfire_cloud)).
+> **IMPORTANT:** This guide describes how to set up Litestream for SQLite database backups. **Litestream is NOT currently included or configured in this repository.** This document serves as a reference for implementing your own backup solution.
 
-## Overview
+## Current State
 
-When deploying Campfire-CE via docker-compose, Litestream runs as a **sidecar container** that continuously replicates your SQLite database to S3-compatible storage:
+Campfire-CE **does not** ship with Litestream integration. Users must implement their own database backup strategy. This guide provides instructions for adding Litestream if you choose to use it.
 
-- **Automatic setup** - Works out-of-the-box with docker-compose deployments
-- **Continuous replication** - Changes replicated every 10 seconds
-- **Point-in-time recovery** - Restore to any point within the retention window
-- **Minimal overhead** - Runs in a separate container with low resource usage
-- **Automatic snapshots** - Daily snapshots for faster restoration
-- **30-day retention** - Keeps backups for 30 days by default
+## What is Litestream?
 
-## Deployment Methods
+Litestream is a standalone streaming replication tool for SQLite databases that:
+- Continuously replicates changes to S3-compatible storage
+- Provides point-in-time recovery
+- Runs as a separate process alongside your application
+- Works with any S3-compatible storage (AWS S3, Cloudflare R2, etc.)
 
-Campfire-CE supports two deployment methods:
+## Why This Guide Exists
 
-| Method | Backup Solution | Status |
-|--------|----------------|---------|
-| **Docker Compose** | ✅ Litestream sidecar (automatic) | Recommended |
-| **Kamal** (standalone) | ⚠️ Manual backup setup required | Self-managed |
+This guide helps users who want to add Litestream backups to their Campfire-CE deployment. It covers:
+- How to configure Litestream for Campfire-CE's SQLite database
+- Environment variables needed
+- Deployment patterns (docker-compose sidecar or standalone)
+- Restoration procedures
 
-**This guide covers the docker-compose approach only.**
+## Implementation Options
 
-## Setup
+### Option 1: Docker Compose Sidecar (Recommended)
 
-You can use either **AWS S3** or **Cloudflare R2** for backups. R2 is recommended for its zero egress fees and lower costs.
+Add a Litestream sidecar container to your `docker-compose.production.yml`:
 
-### Option A: Cloudflare R2 (Recommended)
+```yaml
+services:
+  web:
+    # ... existing web service config ...
+    depends_on:
+      - litestream
+
+  litestream:
+    image: litestream/litestream:latest
+    container_name: campfire-litestream
+    restart: unless-stopped
+    volumes:
+      - /disk/campfire:/data  # Same volume as web service
+      - ./config/litestream.yml:/etc/litestream.yml:ro
+    environment:
+      LITESTREAM_REPLICA_BUCKET: ${LITESTREAM_REPLICA_BUCKET}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-auto}
+      LITESTREAM_REPLICA_ENDPOINT: ${LITESTREAM_REPLICA_ENDPOINT:-}
+    entrypoint: ["/usr/local/bin/litestream"]
+    command: ["replicate"]
+
+  # ... other services (caddy, etc.) ...
+```
+
+### Option 2: Procfile Process
+
+Add Litestream as a process in your `Procfile`:
+
+```
+web: bin/start-app
+redis: redis-server config/redis.conf
+workers: FORK_PER_JOB=false INTERVAL=0.1 bundle exec resque-pool
+scheduler: bundle exec resque-scheduler
+litestream: litestream replicate
+```
+
+This requires installing Litestream in your Docker image.
+
+### Option 3: Standalone Litestream Service
+
+Run Litestream on the same host but as a separate systemd service or cron job.
+
+## Configuration
+
+### Step 1: Create Litestream Configuration
+
+Create `config/litestream.yml`:
+
+```yaml
+dbs:
+  - path: /data/db/production.sqlite3  # Adjust path based on your volume mount
+    replicas:
+      - type: s3
+        bucket: $LITESTREAM_REPLICA_BUCKET
+        path: campfire-db
+        region: $AWS_DEFAULT_REGION
+        endpoint: $LITESTREAM_REPLICA_ENDPOINT  # Optional, for R2
+        sync-interval: 10s        # Replicate every 10 seconds
+        retention: 168h           # Keep backups for 7 days
+        snapshot-interval: 24h    # Daily snapshots
+```
+
+### Step 2: Configure Storage Backend
+
+Choose either **Cloudflare R2** (recommended) or **AWS S3**.
+
+#### Option A: Cloudflare R2 (Recommended)
 
 **Why R2?**
 - Zero egress fees (unlike S3)
@@ -36,161 +104,123 @@ You can use either **AWS S3** or **Cloudflare R2** for backups. R2 is recommende
 - S3-compatible API
 - First 10GB free
 
-#### 1. Create R2 Bucket
+**Setup:**
 
-1. Go to https://dash.cloudflare.com/
-2. Click "R2" in the left sidebar
-3. Click "Create bucket"
-4. Bucket name: `campfire-backups` (or your preferred name)
-5. Location: Automatic
-6. Click "Create bucket"
-
-#### 2. Generate R2 API Token
-
-1. In R2 dashboard, click "Manage R2 API Tokens"
-2. Click "Create API token"
-3. Token name: `Campfire Backups`
-4. Permissions: **Object Read & Write**
-5. Bucket scope: Apply to `campfire-backups` only
-6. Click "Create API Token"
-7. **Copy these values** (shown only once):
-   - Access Key ID
-   - Secret Access Key
-
-#### 3. Get Your Cloudflare Account ID
-
-Your Account ID is visible in the R2 dashboard URL or sidebar (format: `abc123...`)
-
-#### 4. Configure Environment Variables
-
-Add to your `.env` file or `.kamal/secrets`:
+1. Create R2 bucket at https://dash.cloudflare.com/ (e.g., `campfire-backups`)
+2. Generate API token with "Object Read & Write" permissions
+3. Get your Cloudflare Account ID from the R2 dashboard
+4. Add to your `.env` file:
 
 ```bash
-# Use your R2 credentials (same can be used for file storage)
+# AWS/S3 credentials (used for file storage AND Litestream)
 AWS_ACCESS_KEY_ID=your-r2-access-key-id
 AWS_SECRET_ACCESS_KEY=your-r2-secret-access-key
 AWS_DEFAULT_REGION=auto
 
-# Litestream backup configuration
+# Litestream configuration
 LITESTREAM_REPLICA_BUCKET=campfire-backups
 LITESTREAM_REPLICA_ENDPOINT=https://YOUR-ACCOUNT-ID.r2.cloudflarestorage.com
 ```
 
-**Important:** Replace `YOUR-ACCOUNT-ID` with your actual Cloudflare Account ID.
+#### Option B: AWS S3
 
-### Option B: AWS S3
-
-#### 1. Create S3 Bucket
-
-Create an S3 bucket for your database backups:
-- Use a dedicated bucket: `campfire-backups`
-- Or use your existing bucket with a dedicated path
-
-#### 2. Set Environment Variables
-
-Add to your `.env` file or `.kamal/secrets`:
+1. Create S3 bucket (e.g., `campfire-backups`)
+2. Add to your `.env` file:
 
 ```bash
-# S3 configuration
-LITESTREAM_REPLICA_BUCKET=your-backup-bucket-name
+LITESTREAM_REPLICA_BUCKET=campfire-backups
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_DEFAULT_REGION=us-east-1
 ```
 
-No additional configuration needed - the default `config/litestream.yml` works with S3.
+### Step 3: Verify SQLite WAL Mode
 
-### 3. Deploy
-
-Litestream runs automatically as part of the Procfile when you deploy:
-
-```bash
-kamal deploy
-```
-
-## Configuration
-
-### Main Configuration
-
-The Litestream configuration is in `config/litestream.yml`:
+Litestream requires SQLite to use WAL (Write-Ahead Logging) mode. Check your `config/database.yml`:
 
 ```yaml
-dbs:
-  - path: storage/db/production.sqlite3
-    replicas:
-      - type: s3
-        bucket: $LITESTREAM_REPLICA_BUCKET
-        path: campfire-db
-        region: $LITESTREAM_REPLICA_REGION
-        sync-interval: 10s        # Replicate every 10 seconds
-        retention: 168h           # Keep backups for 7 days
-        snapshot-interval: 24h    # Daily snapshots
+production:
+  adapter: sqlite3
+  database: storage/db/production.sqlite3
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000
+  # Ensure these are set:
+  flags:
+    - SQLITE_OPEN_READWRITE
+    - SQLITE_OPEN_CREATE
+  # WAL mode is typically set via initializer or pragma
 ```
 
-### Rails Integration
+You may need to enable WAL mode explicitly in an initializer or via SQL:
 
-The Rails initializer (`config/initializers/litestream.rb`) maps your existing AWS credentials to Litestream ENV variables.
+```ruby
+# config/initializers/sqlite3.rb
+ActiveSupport.on_load(:active_record_sqlite3adapter) do
+  ActiveRecord::Base.connection.execute("PRAGMA journal_mode=WAL")
+end
+```
 
 ## Monitoring
 
 ### Check Replication Status
 
-View the Litestream process logs:
+If using docker-compose:
+
+```bash
+docker compose logs litestream -f
+```
+
+If using Kamal with Procfile:
 
 ```bash
 kamal app logs -f | grep litestream
 ```
 
-### List Databases
+### Manual Commands
+
+Access the Litestream container/process and run:
 
 ```bash
-kamal app exec 'bin/rails litestream:databases'
-```
+# List databases being replicated
+litestream databases
 
-### View Snapshots
+# View snapshots
+litestream snapshots <database-path>
 
-```bash
-kamal app exec 'bin/rails litestream:snapshots'
-```
-
-### View WAL Files
-
-```bash
-kamal app exec 'bin/rails litestream:wal'
+# View WAL files
+litestream wal <database-path>
 ```
 
 ## Restoration
 
 ### Full Database Restore
 
-If you need to restore your database from a backup:
-
-1. **Stop the application**:
-   ```bash
-   kamal app stop
-   ```
-
+1. **Stop the application** to prevent database writes during restore
 2. **Backup current database** (if it exists):
    ```bash
-   kamal app exec 'cp storage/db/production.sqlite3 storage/db/production.sqlite3.backup'
+   cp storage/db/production.sqlite3 storage/db/production.sqlite3.backup
    ```
-
 3. **Restore from Litestream**:
    ```bash
-   kamal app exec 'bin/rails litestream:restore -- -database=storage/db/production.sqlite3'
+   litestream restore -o storage/db/production.sqlite3 <replica-url>
    ```
 
-4. **Restart the application**:
+   Example with R2:
    ```bash
-   kamal app start
+   litestream restore -o storage/db/production.sqlite3 \
+     s3://campfire-backups/campfire-db
    ```
+
+4. **Restart the application**
 
 ### Point-in-Time Restore
 
-To restore to a specific point in time:
+Restore to a specific timestamp:
 
 ```bash
-kamal app exec 'bin/rails litestream:restore -- -database=storage/db/production.sqlite3 -timestamp=2024-01-15T12:00:00Z'
+litestream restore -o storage/db/production.sqlite3 \
+  -timestamp 2024-01-15T12:00:00Z \
+  s3://campfire-backups/campfire-db
 ```
 
 ### Restore to Specific Generation
@@ -198,74 +228,22 @@ kamal app exec 'bin/rails litestream:restore -- -database=storage/db/production.
 List available generations:
 
 ```bash
-kamal app exec 'bin/rails litestream:generations -- -database=storage/db/production.sqlite3'
+litestream generations s3://campfire-backups/campfire-db
 ```
 
 Restore specific generation:
 
 ```bash
-kamal app exec 'bin/rails litestream:restore -- -database=storage/db/production.sqlite3 -generation=<generation-id>'
+litestream restore -o storage/db/production.sqlite3 \
+  -generation <generation-id> \
+  s3://campfire-backups/campfire-db
 ```
-
-## Local Development
-
-For local testing with Litestream:
-
-1. **Set environment variables** in `.env`:
-   ```bash
-   LITESTREAM_REPLICA_BUCKET=your-test-bucket
-   ```
-
-2. **Run Litestream manually**:
-   ```bash
-   bin/rails litestream:replicate
-   ```
-
-3. **Or run with Procfile**:
-   ```bash
-   bin/boot
-   ```
-
-## Troubleshooting
-
-### Verify Configuration
-
-Check that environment variables are properly set:
-
-```bash
-bin/rails litestream:env
-```
-
-### Check S3 Permissions
-
-Ensure your AWS credentials have these permissions for the bucket:
-
-- `s3:GetObject`
-- `s3:PutObject`
-- `s3:DeleteObject`
-- `s3:ListBucket`
-
-### Database Lock Issues
-
-If you see "database is locked" errors:
-
-1. Check that only one Litestream process is running
-2. Verify SQLite is configured with proper timeout (set in `config/database.yml`)
-3. Ensure WAL mode is enabled (Litestream requires WAL mode)
-
-### Replication Lag
-
-If replication is falling behind:
-
-1. Check disk I/O performance
-2. Verify network connectivity to S3
-3. Review `sync-interval` setting in `config/litestream.yml`
 
 ## Cost Optimization
 
 ### Storage Cost Comparison
 
-**Cloudflare R2 (Recommended):**
+**Cloudflare R2:**
 - Storage: $0.015/GB/month
 - Egress: FREE
 - First 10 GB: FREE
@@ -274,50 +252,56 @@ If replication is falling behind:
 
 **AWS S3:**
 - Storage: $0.023/GB/month
-- Egress: $0.09/GB (expensive!)
+- Egress: $0.09/GB (expensive for restores!)
 - No free tier for storage
-- Example: 500MB database = **$0.01/month storage + egress fees**
+- Example: 500MB database = **$0.01/month + egress fees**
 - Example: 20GB database = **$0.46/month + egress fees**
 
-**Typical storage usage for a Campfire database:**
-- Base snapshot: ~10-100 MB (depends on your data)
-- Daily growth: ~1-10 MB/day in WAL files
-- Total monthly: ~100-500 MB
-
-**Why R2 wins:**
-- Zero egress fees (S3 charges every time you download/restore)
-- Lower storage costs
-- First 10GB free
-- Restoring a backup from S3 can cost $1.80 for a 20GB database!
+**Restoring from S3 can cost $1.80 in egress fees for a 20GB database!**
 
 ### Retention Policy
 
-Adjust retention in `config/litestream.yml` to balance cost and recovery needs:
+Adjust retention in `config/litestream.yml`:
 
 ```yaml
-retention: 168h  # 7 days (default)
+retention: 168h  # 7 days (balanced)
 retention: 72h   # 3 days (lower cost)
 retention: 720h  # 30 days (higher cost, more recovery options)
 ```
 
-### Storage Class
+## Troubleshooting
 
-For long-term archival, consider using S3 Glacier or Intelligent-Tiering. Update `config/litestream.yml`:
+### Verify Environment Variables
 
-```yaml
-replicas:
-  - type: s3
-    # ... other config ...
-    # Add storage class
-    force-path-style: true
-    # Note: Storage class must be set at bucket level or via S3 lifecycle policies
-```
+Ensure all required variables are set in your deployment environment.
+
+### Check S3 Permissions
+
+Your credentials need these permissions:
+- `s3:GetObject`
+- `s3:PutObject`
+- `s3:DeleteObject`
+- `s3:ListBucket`
+
+### Database Lock Issues
+
+If you see "database is locked" errors:
+1. Verify only one Litestream process is running
+2. Check SQLite timeout setting in `config/database.yml`
+3. Ensure WAL mode is enabled
+
+### Replication Lag
+
+If replication falls behind:
+1. Check disk I/O performance
+2. Verify network connectivity to S3
+3. Review `sync-interval` setting
 
 ## Advanced Usage
 
 ### Multiple Replicas
 
-You can configure multiple replicas for redundancy:
+Configure redundant backups to multiple regions:
 
 ```yaml
 dbs:
@@ -336,7 +320,7 @@ dbs:
 
 ### Custom Backup Schedule
 
-Modify snapshot frequency in `config/litestream.yml`:
+Modify snapshot frequency:
 
 ```yaml
 snapshot-interval: 1h   # Hourly snapshots
@@ -344,9 +328,31 @@ snapshot-interval: 12h  # Twice daily
 snapshot-interval: 168h # Weekly
 ```
 
+## Alternative: Manual SQLite Backups
+
+If you prefer not to use Litestream, consider these alternatives:
+
+### 1. Periodic Tar Backups
+
+```bash
+# In crontab (daily at 2 AM)
+0 2 * * * tar -czf /backups/campfire-$(date +\%Y\%m\%d).tar.gz /disk/campfire/db/production.sqlite3
+```
+
+### 2. SQLite `.backup` Command
+
+```bash
+sqlite3 storage/db/production.sqlite3 ".backup '/backups/backup.db'"
+```
+
+### 3. Volume Snapshots
+
+If using cloud VMs, schedule regular volume snapshots through your provider (DigitalOcean, AWS, etc.).
+
 ## References
 
 - [Litestream Documentation](https://litestream.io/)
-- [litestream-ruby GitHub](https://github.com/fractaledmind/litestream-ruby)
+- [Litestream Docker Setup](https://litestream.io/guides/docker/)
 - [Litestream Configuration Reference](https://litestream.io/reference/config/)
 - [Disaster Recovery Guide](https://litestream.io/guides/disaster-recovery/)
+- [Cloudflare R2 Documentation](https://developers.cloudflare.com/r2/)
