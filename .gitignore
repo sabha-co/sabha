@@ -19,6 +19,9 @@ bun.lock
 .env
 dump.rdb
 
+# Ignore master key for decrypting credentials (if used)
+/config/master.key
+
 # Ignore local GitHub Actions files
 .github/.env
 

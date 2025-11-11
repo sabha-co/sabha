@@ -14,7 +14,7 @@ If you find a bug or have a feature request, please [post an issue](https://gith
 
 ### Prerequisites
 
-- Ruby 3.3.1 (check with `ruby --version`)
+- Ruby 3.4.5 (check with `ruby --version`)
 - Redis server
 - SQLite3
 - Node.js with npm (or bun) for Tailwind CSS builds
@@ -157,21 +157,37 @@ docker run -p 3000:3000 \
 
 ### Environment Variables Reference
 
-| Variable                | Purpose                   | Required |
-| ----------------------- | ------------------------- | -------- |
-| `SECRET_KEY_BASE`       | Rails encryption key      | ✅       |
-| `RESEND_API_KEY`        | Email delivery via Resend | ✅       |
-| `AWS_ACCESS_KEY_ID`     | File storage on AWS       | ✅       |
-| `AWS_SECRET_ACCESS_KEY` | File storage on AWS       | ✅       |
-| `AWS_DEFAULT_REGION`    | AWS region (us-east-1)    | ✅       |
-| `VAPID_PUBLIC_KEY`      | Web push notifications    | ✅       |
-| `VAPID_PRIVATE_KEY`     | Web push notifications    | ✅       |
-| `WEBHOOK_SECRET`        | Webhook security          | ✅       |
-| `COOKIE_DOMAIN`         | Session cookies domain    | ✅       |
-| `VIMEO_ACCESS_TOKEN`    | Video downloads           | ⚠️       |
-| `GUMROAD_ACCESS_TOKEN`  | Payment processing        | ⚠️       |
-| `GUMROAD_ON`            | Enable Gumroad features   | ⚠️       |
-| `GUMROAD_PRODUCT_IDS`   | Gumroad product IDs       | ⚠️       |
+| Variable                       | Purpose                     | Required |
+| ------------------------------ | --------------------------- | -------- |
+| `SECRET_KEY_BASE`              | Rails encryption key        | ✅       |
+| `RESEND_API_KEY`               | Email delivery via Resend   | ✅       |
+| `AWS_ACCESS_KEY_ID`            | File storage on AWS         | ✅       |
+| `AWS_SECRET_ACCESS_KEY`        | File storage on AWS         | ✅       |
+| `AWS_DEFAULT_REGION`           | AWS region (us-east-1)      | ✅       |
+| `VAPID_PUBLIC_KEY`             | Web push notifications      | ✅       |
+| `VAPID_PRIVATE_KEY`            | Web push notifications      | ✅       |
+| `WEBHOOK_SECRET`               | Webhook security            | ✅       |
+| `COOKIE_DOMAIN`                | Session cookies domain      | ✅       |
+| `VIMEO_ACCESS_TOKEN`           | Video downloads             | ⚠️       |
+| `GUMROAD_ACCESS_TOKEN`         | Payment processing          | ⚠️       |
+| `GUMROAD_ON`                   | Enable Gumroad features     | ⚠️       |
+| `GUMROAD_PRODUCT_IDS`          | Gumroad product IDs         | ⚠️       |
 
-✅ = Required for production deployment  
+✅ = Required for production deployment
 ⚠️ = Optional
+
+### Database Backups with Litestream
+
+**Automatic backups are available when deployed via docker-compose** (e.g., through [campfire_cloud](https://github.com/yourusername/campfire_cloud)):
+
+- ✅ **Continuous replication** - Database changes replicated every 10 seconds to Cloudflare R2/S3
+- ✅ **Point-in-time recovery** - Restore to any point within 30 days
+- ✅ **Zero configuration** - Works out-of-the-box with docker-compose deployments
+- ✅ **Sidecar pattern** - Litestream runs in a separate container
+
+See [LITESTREAM.md](LITESTREAM.md) for complete documentation.
+
+**Note for Kamal Deployments:**
+- Litestream is NOT included with Kamal deployments
+- You'll need to set up your own backup strategy (see [DEPLOYMENT.md](DEPLOYMENT.md#database-backups))
+- Consider using `tar` snapshots or traditional database backup tools
