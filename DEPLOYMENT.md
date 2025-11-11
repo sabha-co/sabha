@@ -57,6 +57,8 @@ This guide covers production deployment strategies for Campfire-CE. Choose the a
 
 ## Option 1: Docker Compose (Recommended for Single Server)
 
+> **Database Backups:** Campfire-CE does not include automatic database backups by default. You'll need to implement your own backup strategy. See [Database Backups](#database-backups) section and [LITESTREAM.md](LITESTREAM.md) for options.
+
 ### Architecture
 
 ```
@@ -383,6 +385,8 @@ Add these secrets to your GitHub repository:
 ---
 
 ## Option 2: Kamal (For Multi-Server or Zero-Downtime)
+
+> **Note on Database Backups:** Campfire-CE does not include automatic database backups by default, regardless of deployment method. You'll need to set up your own backup solution (see [Database Backups](#database-backups) section below).
 
 ### Prerequisites
 

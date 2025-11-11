@@ -14,7 +14,7 @@ If you find a bug or have a feature request, please [post an issue](https://gith
 
 ### Prerequisites
 
-- Ruby 3.3.1 (check with `ruby --version`)
+- Ruby 3.4.5 (check with `ruby --version`)
 - Redis server
 - SQLite3
 - Node.js with npm (or bun) for Tailwind CSS builds
@@ -157,21 +157,42 @@ docker run -p 3000:3000 \
 
 ### Environment Variables Reference
 
-| Variable                | Purpose                   | Required |
-| ----------------------- | ------------------------- | -------- |
-| `SECRET_KEY_BASE`       | Rails encryption key      | ✅       |
-| `RESEND_API_KEY`        | Email delivery via Resend | ✅       |
-| `AWS_ACCESS_KEY_ID`     | File storage on AWS       | ✅       |
-| `AWS_SECRET_ACCESS_KEY` | File storage on AWS       | ✅       |
-| `AWS_DEFAULT_REGION`    | AWS region (us-east-1)    | ✅       |
-| `VAPID_PUBLIC_KEY`      | Web push notifications    | ✅       |
-| `VAPID_PRIVATE_KEY`     | Web push notifications    | ✅       |
-| `WEBHOOK_SECRET`        | Webhook security          | ✅       |
-| `COOKIE_DOMAIN`         | Session cookies domain    | ✅       |
-| `VIMEO_ACCESS_TOKEN`    | Video downloads           | ⚠️       |
-| `GUMROAD_ACCESS_TOKEN`  | Payment processing        | ⚠️       |
-| `GUMROAD_ON`            | Enable Gumroad features   | ⚠️       |
-| `GUMROAD_PRODUCT_IDS`   | Gumroad product IDs       | ⚠️       |
+| Variable                       | Purpose                     | Required |
+| ------------------------------ | --------------------------- | -------- |
+| `SECRET_KEY_BASE`              | Rails encryption key        | ✅       |
+| `RESEND_API_KEY`               | Email delivery via Resend   | ✅       |
+| `AWS_ACCESS_KEY_ID`            | File storage on AWS         | ✅       |
+| `AWS_SECRET_ACCESS_KEY`        | File storage on AWS         | ✅       |
+| `AWS_DEFAULT_REGION`           | AWS region (us-east-1)      | ✅       |
+| `VAPID_PUBLIC_KEY`             | Web push notifications      | ✅       |
+| `VAPID_PRIVATE_KEY`            | Web push notifications      | ✅       |
+| `WEBHOOK_SECRET`               | Webhook security            | ✅       |
+| `COOKIE_DOMAIN`                | Session cookies domain      | ✅       |
+| `VIMEO_ACCESS_TOKEN`           | Video downloads             | ⚠️       |
+| `GUMROAD_ACCESS_TOKEN`         | Payment processing          | ⚠️       |
+| `GUMROAD_ON`                   | Enable Gumroad features     | ⚠️       |
+| `GUMROAD_PRODUCT_IDS`          | Gumroad product IDs         | ⚠️       |
 
-✅ = Required for production deployment  
+✅ = Required for production deployment
 ⚠️ = Optional
+
+### Database Backups
+
+**IMPORTANT:** Campfire-CE does not include automatic database backups out of the box. You must implement your own backup strategy.
+
+**Recommended Options:**
+
+1. **Litestream** (SQLite streaming replication) - See [LITESTREAM.md](LITESTREAM.md) for setup instructions
+   - Continuous replication to S3/R2
+   - Point-in-time recovery
+   - Requires manual configuration (not included by default)
+
+2. **Volume Snapshots** - Use your cloud provider's snapshot feature (DigitalOcean, AWS, etc.)
+
+3. **Periodic Backups** - Schedule cron jobs or scripts to backup the SQLite database:
+   ```bash
+   # Example: Daily backup at 2 AM
+   0 2 * * * tar -czf /backups/campfire-$(date +\%Y\%m\%d).tar.gz /disk/campfire/db/production.sqlite3
+   ```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md#database-backups) for detailed backup strategies.
