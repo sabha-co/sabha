@@ -9,41 +9,40 @@ WORKDIR /rails
 
 # Set production environment
 ENV RAILS_ENV="production" \
-    BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development:test" \
-    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
+  BUNDLE_DEPLOYMENT="1" \
+  BUNDLE_PATH="/usr/local/bundle" \
+  BUNDLE_WITHOUT="development:test" \
+  LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems and Node.js for Tailwind
+# Install packages need to build gems and Node.js for Vite
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y \
-    build-essential git pkg-config curl libyaml-dev libssl-dev ca-certificates && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install --no-install-recommends -y nodejs && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+  apt-get install --no-install-recommends -y \
+  build-essential git pkg-config curl libyaml-dev libssl-dev ca-certificates && \
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+  apt-get install --no-install-recommends -y nodejs && \
+  rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
 RUN bundle install && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    bundle clean --force && \
-    gem install thruster && \
-    gem cleanup
+  rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
+  bundle clean --force && \
+  gem install thruster && \
+  gem cleanup
 
 # Copy application code
 COPY . .
 
-# Install Node dependencies and build Tailwind CSS
-RUN npm ci && \
-    npm cache clean --force && \
-    npx @tailwindcss/cli -i app/assets/stylesheets/application.tailwind.css -o app/assets/builds/tailwind.css --minify
+# Install Node dependencies and build assets with Vite
+RUN npm install && \
+  npm run build
 
 # Precompile assets
 RUN mkdir -p /rails/storage/logs && \
-    SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+  SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 # Clean up build artifacts
 RUN rm -rf node_modules tmp/cache .git
@@ -54,16 +53,16 @@ FROM base
 
 # Install runtime packages
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y \
-    curl libsqlite3-0 libvips libjemalloc2 libyaml-0-2 ca-certificates \
-    ffmpeg redis-server git sqlite3 awscli cron && \
-    ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+  apt-get install --no-install-recommends -y \
+  curl libsqlite3-0 libvips libjemalloc2 libyaml-0-2 ca-certificates \
+  ffmpeg redis-server git sqlite3 awscli cron && \
+  ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
+  rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Configure environment defaults
 ENV HTTP_IDLE_TIMEOUT=60 \
-    HTTP_READ_TIMEOUT=300 \
-    HTTP_WRITE_TIMEOUT=300
+  HTTP_READ_TIMEOUT=300 \
+  HTTP_WRITE_TIMEOUT=300
 
 # Copy built artifacts: gems, application
 COPY --from=build /usr/local/bundle /usr/local/bundle

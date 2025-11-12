@@ -2,7 +2,6 @@
   "name": "campfire-ce",
   "private": true,
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.13",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.0",
     "tailwindcss": "^4.1.14",
@@ -31,6 +30,7 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
+    "build": "vite build",
     "check": "tsc -p tsconfig.app.json"
   }
 }
