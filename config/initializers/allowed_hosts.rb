@@ -21,28 +21,23 @@
 #   => Allows: all hosts
 
 Rails.application.configure do
+  # In development/test, allow localhost by default
+  if Rails.env.development? || Rails.env.test?
+    config.hosts << "localhost"
+    config.hosts << "127.0.0.1"
+  end
+
   # Get the primary APP_HOST
   app_host = ENV["APP_HOST"]
 
-  # Start with an empty allowed hosts list
-  allowed_hosts = []
-
   # Add APP_HOST if present
-  allowed_hosts << app_host if app_host.present?
+  config.hosts << app_host if app_host.present?
 
   # Allow additional hosts from ALLOWED_HOSTS environment variable (comma-separated)
   if ENV["ALLOWED_HOSTS"].present?
     additional_hosts = ENV["ALLOWED_HOSTS"].split(",").map(&:strip).reject(&:blank?)
-    allowed_hosts.concat(additional_hosts)
+    additional_hosts.each { |host| config.hosts << host }
   end
-
-  # Remove duplicates and sort for consistency
-  allowed_hosts.uniq!
-
-  # Set config.hosts to allow the configured domains
-  # Empty array means allow all hosts (Rails default when config.hosts is not set)
-  # Non-empty array means only allow specified hosts
-  config.hosts = allowed_hosts.presence || []
 
   # Log the allowed hosts for debugging in non-production environments
   unless Rails.env.production?
