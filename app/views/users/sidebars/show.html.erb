@@ -108,7 +108,7 @@
 
       <% if Current.user&.administrator? %>
         <%= link_to edit_account_path, class: "btn sidebar__tool" do %>
-          <%= image_tag "crown.svg", size: 20, aria: { hidden: "true" }, style: "view-transition-name: account-settings" %>
+          <%= image_tag "crown.svg", size: 20, aria: { hidden: "true" }, class: "colorize--black", style: "view-transition-name: account-settings" %>
           <span class="for-screen-reader">Admin</span>
           <span class="sidebar__tool-label">Admin</span>
         <% end %>
