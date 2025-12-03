@@ -174,14 +174,9 @@ docker run -p 3000:3000 \
 
 **Recommended Options:**
 
-1. **Litestream** (SQLite streaming replication) - See [LITESTREAM.md](LITESTREAM.md) for setup instructions
-   - Continuous replication to S3/R2
-   - Point-in-time recovery
-   - Requires manual configuration (not included by default)
+1. **Volume Snapshots** - Use your cloud provider's snapshot feature (DigitalOcean, AWS, etc.)
 
-2. **Volume Snapshots** - Use your cloud provider's snapshot feature (DigitalOcean, AWS, etc.)
-
-3. **Periodic Backups** - Schedule cron jobs or scripts to backup the SQLite database:
+2. **Periodic Backups** - Schedule cron jobs or scripts to backup the SQLite database:
    ```bash
    # Example: Daily backup at 2 AM
    0 2 * * * tar -czf /backups/campfire-$(date +\%Y\%m\%d).tar.gz /disk/campfire/db/production.sqlite3
