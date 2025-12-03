@@ -16,13 +16,18 @@ ActiveSupport.on_load(:action_text_content) do
 
             decoded_gid = if data = encoded_message.dig("_rails", "data")
               data
+            elsif data = encoded_message.dig("_rails", "message")
+              # Rails 7 used an older format of GID that serialized the payload using Marshall
+              # Since we intentionally skip signature verification, we can't safely unmarshal the data
+              # To work around this, we manually extract the GID from the marshaled data
+              Base64.urlsafe_decode64(data).match(%r{(gid://campfire/[^/]+/\d+)})&.to_s
             else
               nil
             end
 
-            model = GlobalID.find(decoded_gid)
-
-            model.model_name.to_s.in?(ATTACHABLES_PERMITTED_WITH_INVALID_SIGNATURES) ? model : nil
+            if model = GlobalID.find(decoded_gid)
+              model.model_name.to_s.in?(ATTACHABLES_PERMITTED_WITH_INVALID_SIGNATURES) ? model : nil
+            end
           end
         rescue ActiveRecord::RecordNotFound, JSON::ParserError, ArgumentError
           nil
