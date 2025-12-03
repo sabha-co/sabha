@@ -23,10 +23,14 @@
       <!-- Open Registration -->
       <div class="flex flex-column gap align-center" style="--row-gap: 0.5em">
         <strong>Registration Access</strong>
-        <label class="flex align-center gap-half">
-          <%= form.check_box :open_registration, data: { action: "change->form#submit" } %>
+        <div class="flex align-center gap">
+          <label class="switch">
+            <%= form.check_box :open_registration, class: "switch__input", data: { action: "change->form#submit" } %>
+            <span class="switch__btn"></span>
+            <span class="for-screen-reader">Allow open registration</span>
+          </label>
           <span>Allow open registration</span>
-        </label>
+        </div>
         <span class="txt-small txt-subtle">When disabled, users need an invite link with join code.</span>
       </div>
     <% end %>
