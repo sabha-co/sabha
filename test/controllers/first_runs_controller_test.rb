@@ -2,23 +2,9 @@ require "test_helper"
 
 class FirstRunsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    # Disable FK checks to clean up all data
-    ActiveRecord::Base.connection.execute("PRAGMA foreign_keys = OFF")
-    Membership.delete_all
-    Mention.delete_all
-    Boost.delete_all
-    Bookmark.delete_all
-    Message.delete_all
-    Room.delete_all
-    Session.delete_all
-    AuthToken.delete_all
-    Push::Subscription.delete_all
-    Webhook.delete_all
-    Search.delete_all
-    Block.delete_all
-    User.delete_all
-    Account.delete_all
-    ActiveRecord::Base.connection.execute("PRAGMA foreign_keys = ON")
+    Account.destroy_all
+    User.destroy_all
+    Room.destroy_all
   end
 
   test "new is permitted when no other users exit" do

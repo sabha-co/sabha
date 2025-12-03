@@ -18,7 +18,10 @@ class User < ApplicationRecord
   has_many :reachable_messages, through: :rooms, source: :messages
   has_many :messages, -> { active }, foreign_key: :creator_id, class_name: "Message"
 
-  has_many :mentions
+  has_many :mentions, dependent: :delete_all
+
+  # Use before_destroy to clean up ALL records (including inactive) to satisfy FK constraints
+  before_destroy :destroy_all_associated_records
 
   def mentioning_messages
     Message.active
@@ -32,6 +35,7 @@ class User < ApplicationRecord
 
   has_many :boosts, -> { active }, foreign_key: :booster_id, class_name: "Boost"
   has_many :searches, dependent: :delete_all
+  has_many :library_watch_histories, dependent: :delete_all
 
   has_many :sessions, dependent: :destroy
   has_many :auth_tokens, dependent: :destroy
@@ -260,6 +264,29 @@ class User < ApplicationRecord
 
     def close_remote_connections(reconnect: false)
       ActionCable.server.remote_connections.where(current_user: self).disconnect reconnect: reconnect
+    end
+
+    # Clean up ALL associated records (including inactive ones) to satisfy FK constraints
+    # This uses unscoped deletes to bypass the active scope on associations
+    def destroy_all_associated_records
+      # Delete messages first (they have FKs to boosts, bookmarks, mentions)
+      Message.unscoped.where(creator_id: id).find_each(&:destroy)
+
+      # Then delete other records with FKs to users
+      Membership.unscoped.where(user_id: id).delete_all
+      Bookmark.unscoped.where(user_id: id).delete_all
+      Boost.unscoped.where(booster_id: id).delete_all
+      Mention.where(user_id: id).delete_all
+      Search.where(user_id: id).delete_all
+      Search.where(creator_id: id).delete_all
+      LibraryWatchHistory.where(user_id: id).delete_all
+      Session.where(user_id: id).delete_all
+      AuthToken.where(user_id: id).delete_all
+      Ban.where(user_id: id).delete_all
+      Block.where(blocker_id: id).delete_all
+      Block.where(blocked_id: id).delete_all
+      Push::Subscription.where(user_id: id).delete_all
+      Webhook.where(user_id: id).delete_all
     end
 
     def set_default_name

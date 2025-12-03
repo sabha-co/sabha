@@ -188,6 +188,51 @@ class MessageTest < ActiveSupport::TestCase
     assert_includes mentioning_messages, message
   end
 
+  test "destroying a parent message destroys its thread rooms" do
+    room = rooms(:pets)
+
+    # Create a message that will be the parent of a thread
+    parent_message = room.messages.create!(body: "Parent message", creator: users(:jason), client_message_id: "parent123")
+
+    # Create a thread from that message
+    thread = Rooms::Thread.create!(parent_message: parent_message, creator: users(:jason))
+    thread.memberships.grant_to(users(:jason))
+    thread_message = thread.messages.create!(body: "Thread reply", creator: users(:jason), client_message_id: "thread123")
+
+    thread_id = thread.id
+    thread_message_id = thread_message.id
+
+    # Destroy the parent message
+    parent_message.destroy
+
+    # Thread room and its messages should be destroyed
+    assert_not Rooms::Thread.exists?(thread_id), "Thread room should be destroyed when parent message is destroyed"
+    assert_not Message.exists?(thread_message_id), "Thread messages should be destroyed when thread is destroyed"
+  end
+
+  test "destroying a message removes inactive boosts and bookmarks" do
+    room = rooms(:pets)
+    message = room.messages.create!(body: "Test message", creator: users(:jason), client_message_id: "test_inactive")
+
+    # Create a boost and deactivate it
+    boost = Boost.create!(message: message, booster: users(:david), content: "🔥")
+    boost.deactivate!
+
+    # Create a bookmark and deactivate it
+    bookmark = Bookmark.create!(message: message, user: users(:david))
+    bookmark.deactivate!
+
+    boost_id = boost.id
+    bookmark_id = bookmark.id
+
+    # Destroy the message
+    message.destroy
+
+    # Inactive boosts and bookmarks should also be destroyed
+    assert_not Boost.exists?(boost_id), "Inactive boost should be destroyed when message is destroyed"
+    assert_not Bookmark.exists?(bookmark_id), "Inactive bookmark should be destroyed when message is destroyed"
+  end
+
   private
     def create_new_message_in(room)
       room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "123")

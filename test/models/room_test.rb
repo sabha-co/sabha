@@ -34,4 +34,51 @@ class RoomTest < ActiveSupport::TestCase
     room = Rooms::Closed.create_for({ name: "Hello!", creator: users(:david) }, users: [ users(:kevin), users(:david) ])
     assert room.memberships.all? { |m| m.involved_in_mentions? }
   end
+
+  test "destroying a room removes thread rooms created from its messages" do
+    room = Rooms::Open.create!(name: "Test Room", creator: users(:david))
+    room.memberships.grant_to(users(:david))
+
+    # Create a message in the room
+    message = room.messages.create!(body: "Parent message", creator: users(:david))
+
+    # Create a thread from that message
+    thread = Rooms::Thread.create!(parent_message: message, creator: users(:david))
+    thread.memberships.grant_to(users(:david))
+    thread.messages.create!(body: "Thread reply", creator: users(:david))
+
+    thread_id = thread.id
+    message_id = message.id
+
+    # Destroy the room
+    room.destroy
+
+    # Thread room should be destroyed
+    assert_not Rooms::Thread.exists?(thread_id), "Thread room should be destroyed when parent room is destroyed"
+    # Parent message should be destroyed
+    assert_not Message.exists?(message_id), "Message should be destroyed when room is destroyed"
+  end
+
+  test "destroying a room removes inactive memberships and messages" do
+    room = Rooms::Open.create!(name: "Test Room", creator: users(:david))
+    room.memberships.grant_to(users(:david))
+
+    # Create a message and then deactivate it
+    message = room.messages.create!(body: "Test message", creator: users(:david))
+    message.deactivate!
+
+    # Deactivate the membership
+    membership = Membership.find_by(room: room, user: users(:david))
+    membership.deactivate!
+
+    message_id = message.id
+    membership_id = membership.id
+
+    # Destroy the room
+    room.destroy
+
+    # Inactive records should also be destroyed
+    assert_not Message.exists?(message_id), "Inactive message should be destroyed"
+    assert_not Membership.exists?(membership_id), "Inactive membership should be destroyed"
+  end
 end

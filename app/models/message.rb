@@ -7,7 +7,10 @@ class Message < ApplicationRecord
   has_many :boosts, -> { active.order(:created_at) }, class_name: "Boost"
   has_many :bookmarks, -> { active }, class_name: "Bookmark"
 
-  has_many :threads, -> { active }, class_name: "Rooms::Thread", foreign_key: :parent_message_id
+  has_many :threads, class_name: "Rooms::Thread", foreign_key: :parent_message_id, dependent: :destroy
+
+  # Clean up ALL associated records (including inactive) before destroying
+  before_destroy :destroy_all_associated_records
 
   has_rich_text :body
 
@@ -156,6 +159,13 @@ class Message < ApplicationRecord
   end
 
   private
+
+  def destroy_all_associated_records
+    # Delete ALL boosts and bookmarks (including inactive ones) to satisfy FK constraints
+    # Mentions are handled by the Mentionee concern's `dependent: :destroy`
+    Boost.unscoped.where(message_id: id).delete_all
+    Bookmark.unscoped.where(message_id: id).delete_all
+  end
 
   def clear_unread_timestamps_if_deactivated
     if saved_change_to_attribute?(:active) && !active?

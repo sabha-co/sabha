@@ -10,7 +10,7 @@ class Rooms::StatsController < ApplicationController
       visibility_count: @room.visible_memberships.joins(:user).merge(User.active).count,
       starred_count: @room.memberships.where(involvement: "everything").joins(:user).merge(User.active).count,
       messages_count: all_messages_count_for_room(@room),
-      last_message_at: @room.messages.where(active: true).order(created_at: :desc).first&.created_at
+      last_message_at: @room.messages.order(created_at: :desc).first&.created_at
     }
 
     # Get top 10 talkers for this room (all time)
