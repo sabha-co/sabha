@@ -5,7 +5,10 @@ class User < ApplicationRecord
   has_subscriptions
   after_create_commit :subscribe_to_emails
 
-  include Avatar, Bot, Mentionable, Role, Transferable, Deactivatable, Preferences
+  include Avatar, Bannable, Bot, Mentionable, Role, Transferable, Preferences
+
+  # User status enum (replaces active boolean + suspended_at)
+  enum :status, %i[active deactivated banned], default: :active
 
   has_many :memberships, -> { active }, class_name: "Membership"
   has_many :rooms, -> { active }, through: :memberships, source: :room
@@ -32,6 +35,7 @@ class User < ApplicationRecord
 
   has_many :sessions, dependent: :destroy
   has_many :auth_tokens, dependent: :destroy
+  has_many :bans, dependent: :destroy
 
   has_many :blocks_given, class_name: "Block", foreign_key: :blocker_id, dependent: :destroy
   has_many :blocked_users, through: :blocks_given, source: :blocked
@@ -43,7 +47,6 @@ class User < ApplicationRecord
   normalizes :email_address, with: ->(email_address) { email_address.downcase }
 
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }
-  scope :non_suspended, -> { where(suspended_at: nil) }
   scope :unclaimed_gumroad_imports, -> { where.not(order_id: nil).where(last_authenticated_at: nil) }
   scope :verified, -> { where.not(verified_at: nil) }
   scope :unverified, -> { where(verified_at: nil) }
@@ -61,7 +64,7 @@ class User < ApplicationRecord
   # Clear the all_time_ranks cache when users are created, deleted, or their status changes
   after_create_commit -> { StatsService.clear_all_time_ranks_cache }
   after_destroy_commit -> { StatsService.clear_all_time_ranks_cache }
-  after_update_commit -> { StatsService.clear_all_time_ranks_cache if saved_change_to_attribute?(:active) || saved_change_to_attribute?(:suspended_at) }
+  after_update_commit -> { StatsService.clear_all_time_ranks_cache if saved_change_to_attribute?(:status) }
 
   scope :ordered, -> { order("LOWER(name)") }
   scope :recent_posters_first, ->(room_id = nil) do
@@ -114,7 +117,7 @@ class User < ApplicationRecord
     transaction do
       memberships.without_direct_rooms.update!(active: true)
 
-      update! active: true, email_address: reactivated_email_address
+      update! status: :active, email_address: reactivated_email_address
 
       reset_remote_connections
     end
@@ -129,7 +132,7 @@ class User < ApplicationRecord
       searches.delete_all
       sessions.delete_all
 
-      update! active: false, email_address: deactived_email_address
+      update! status: :deactivated, email_address: deactived_email_address
     end
   end
 
@@ -153,17 +156,6 @@ class User < ApplicationRecord
     membership_started_at || created_at
   end
 
-  def suspended?
-    suspended_at.present?
-  end
-
-  def suspend!
-    update!(suspended_at: Time.current) unless suspended?
-  end
-
-  def ensure_can_sign_in!
-    update!(suspended_at: nil)
-  end
 
   def total_message_count
     Message.active
@@ -222,7 +214,7 @@ class User < ApplicationRecord
 
   private
     def self.find_and_initialize_unclaimed_gumroad_import(attributes)
-      unclaimed_gumroad_import = User.active.non_suspended.unclaimed_gumroad_imports.find_by(email_address: attributes[:email_address])
+      unclaimed_gumroad_import = User.active.unclaimed_gumroad_imports.find_by(email_address: attributes[:email_address])
 
       unclaimed_gumroad_import&.update!(attributes)
       unclaimed_gumroad_import
@@ -239,8 +231,6 @@ class User < ApplicationRecord
         user.order_id = sale["order_id"]
         # but keep the old join date (`membership_started_at`) if present.
         user.membership_started_at = user.membership_started_at || sale["created_at"]
-        # We have found a successful gumroad sale, so make sure the user is not suspended for a full refund of a previous sale.
-        user.suspended_at = nil
         user.save!
       end
 

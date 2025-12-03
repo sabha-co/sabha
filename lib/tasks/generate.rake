@@ -101,10 +101,11 @@ namespace :generate do
     Room.delete_all
     Session.delete_all
     AuthToken.delete_all
+    Ban.delete_all
     User.delete_all
 
     # Ensure we have an account
-    Account.first_or_create!
+    Account.first_or_create!(name: "Campfire")
   end
 
   def create_users(password)

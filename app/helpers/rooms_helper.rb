@@ -7,7 +7,7 @@ module RoomsHelper
   end
 
   def link_to_edit_room(room)
-    member_count = room.memberships.visible.joins(:user).where(users: { suspended_at: nil, active: true }).count
+    member_count = room.memberships.visible.joins(:user).merge(User.active).count
 
     link_to \
       room_stats_path(room),

@@ -65,7 +65,7 @@ class UsersController < ApplicationController
     end
 
     def start_otp_if_user_exists
-      user = User.active.non_suspended.find_by(email_address: user_params[:email_address])
+      user = User.active.find_by(email_address: user_params[:email_address])
 
       if user&.ever_authenticated?
         start_otp_for user

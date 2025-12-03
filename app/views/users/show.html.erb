@@ -16,7 +16,7 @@
 <% end %>
 
 <section class="panel txt-align-center">
-  <div class="flex flex-column gap">
+  <div class="flex flex-column gap <%= "banned" if @user.banned? %>">
     <div class="avatar txt-xx-large center" style="background: white">
       <%= avatar_image_tag(@user, class: "avatar", alt: "Profile avatar") %>
     </div>
@@ -104,7 +104,7 @@
 
         <% if Current.user.can_administer? && !@user.bot? %>
           <hr class="margin-block-start borderless">
-          
+
           <fieldset>
             <legend class="gap">
               <%= image_tag "pencil.svg", aria: { hidden: "true" }, size: 36, class: "colorize--black" %>
@@ -113,7 +113,7 @@
             <%= form_with model: [:account, @user], data: { controller: "form" }, class: "flex flex-column gap" do |form| %>
               <div class="flex align-center gap">
                 <%= translation_button(:role) %>
-  
+
                 <%= form.select :role, %w[ member administrator ].map {|role| [role.titleize, role]} %>
               </div>
               <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
@@ -127,6 +127,22 @@
 
           <%= render "users/profiles/transfer", user: @user %>
         <% end %>
+
+        <% if Current.user.can_administer? && Current.user != @user && !@user.bot? %>
+          <div class="margin-block-start">
+            <%= render "users/ban_button", user: @user %>
+          </div>
+        <% end %>
+      <% elsif @user.banned? %>
+        <div>
+          <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
+          <div><%= @user.name %> has been banned</div>
+          <% if Current.user.can_administer? && Current.user != @user %>
+            <div class="margin-block-start">
+              <%= render "users/ban_button", user: @user %>
+            </div>
+          <% end %>
+        </div>
       <% else %>
         <div>
           <h1 class="txt-x-large margin-none"><%= @user.name %></h1>

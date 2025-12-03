@@ -72,7 +72,7 @@ module Authentication
     end
 
     def authenticated_as(session)
-      return if session.user.suspended?
+      return if session.user.banned?
 
       Current.user = session.user
       set_authenticated_by(:session)

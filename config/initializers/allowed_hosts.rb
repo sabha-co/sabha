@@ -21,10 +21,12 @@
 #   => Allows: all hosts
 
 Rails.application.configure do
-  # In development/test, allow localhost by default
+  # In development/test, allow localhost and common test hosts
   if Rails.env.development? || Rails.env.test?
     config.hosts << "localhost"
     config.hosts << "127.0.0.1"
+    config.hosts << "www.example.com"  # Default Rails test host
+    config.hosts << "once.campfire.test"  # Custom test host
   end
 
   # Get the primary APP_HOST

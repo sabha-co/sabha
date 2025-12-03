@@ -1,6 +1,6 @@
 class UnreadMentionsNotifierJob < ApplicationJob
   def perform
-    User.active.non_suspended.subscribed("notifications").find_each do |user|
+    User.active.subscribed("notifications").find_each do |user|
       begin
         unread_messages = user.memberships.visible.unread.includes(:room, unread_notifications: :creator)
                               .flat_map { |m| m.unread_notifications.since(m.notified_until || m.room.created_at).since(7.days.ago) }

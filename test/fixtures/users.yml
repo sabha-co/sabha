@@ -6,6 +6,7 @@ david:
   password_digest: <%= password_digest %>
   role: administrator
   verified_at: <%= 1.day.ago %>
+  status: active
 
 jason:
   name: Jason
@@ -13,6 +14,7 @@ jason:
   password_digest: <%= password_digest %>
   role: administrator
   verified_at: <%= 1.day.ago %>
+  status: active
 
 jz:
   name: JZ
@@ -20,6 +22,7 @@ jz:
   password_digest: <%= password_digest %>
   bio: Designer
   verified_at: <%= 1.day.ago %>
+  status: active
 
 kevin:
   name: Kevin
@@ -27,6 +30,7 @@ kevin:
   password_digest: <%= password_digest %>
   bio: Programmer
   verified_at: <%= 1.day.ago %>
+  status: active
 
 bender:
   name: Bender Bot

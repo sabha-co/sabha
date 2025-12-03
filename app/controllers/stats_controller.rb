@@ -317,7 +317,7 @@ class StatsController < ApplicationController
 
     # Get total count for context
     @total_users_with_messages = users_with_messages.length
-    @total_active_users = User.where(active: true, suspended_at: nil).count
+    @total_active_users = User.active.count
 
     render "stats/all"
   end
@@ -350,7 +350,7 @@ class StatsController < ApplicationController
                        .joins("LEFT JOIN rooms threads ON messages.room_id = threads.id AND threads.type = 'Rooms::Thread'")
                        .joins("LEFT JOIN messages parent_messages ON threads.parent_message_id = parent_messages.id")
                        .where("messages.room_id = :room_id OR parent_messages.room_id = :room_id", room_id: room.id)
-                       .where("users.active = true AND users.suspended_at IS NULL")
+                       .where(users: { status: :active })
                        .group("users.id, users.name")
                        .order("message_count DESC")
                        .first
