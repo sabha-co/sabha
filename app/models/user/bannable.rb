@@ -21,8 +21,12 @@ module User::Bannable
   end
 
   def remove_banned_content
-    messages.each do |message|
-      message.deactivate
+    # Batch update for deactivation
+    messages.active.update_all(active: false)
+
+    # Broadcast removals (still needs iteration for Turbo Streams,
+    # but could batch or use bulk broadcast)
+    messages.includes(:room).find_each do |message|
       message.broadcast_remove
     end
   end
