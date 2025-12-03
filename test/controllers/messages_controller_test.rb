@@ -33,7 +33,7 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index returns no_content when there are no messages" do
-    @room.messages.destroy_all
+    @room.messages.update_all(active: false)
 
     get room_messages_url(@room)
 
@@ -66,7 +66,8 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
   test "update updates a message belonging to the user" do
     message = @room.messages.where(creator: users(:david)).first
 
-    Turbo::StreamsChannel.expects(:broadcast_replace_to).once
+    # Called twice: once for room stream, once for :inbox
+    Turbo::StreamsChannel.expects(:broadcast_replace_to).twice
     put room_message_url(@room, message), params: { message: { body: "Updated body" } }
 
     assert_redirected_to room_message_url(@room, message)
@@ -76,32 +77,39 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
   test "admin updates a message belonging to another user" do
     message = @room.messages.where(creator: users(:jason)).first
 
-    Turbo::StreamsChannel.expects(:broadcast_replace_to).once
+    # Called twice: once for room stream, once for :inbox
+    Turbo::StreamsChannel.expects(:broadcast_replace_to).twice
     put room_message_url(@room, message), params: { message: { body: "Updated body" } }
 
     assert_redirected_to room_message_url(@room, message)
     assert_equal "Updated body", message.reload.plain_text_body
   end
 
-  test "destroy destroys a message belonging to the user" do
+  test "destroy soft-deletes a message belonging to the user" do
     message = @room.messages.where(creator: users(:david)).first
 
-    assert_difference -> { Message.count }, -1 do
-      Turbo::StreamsChannel.expects(:broadcast_remove_to).once
+    # Soft deletion - count stays same but active count decreases
+    assert_difference -> { Message.active.count }, -1 do
+      # Called twice: once for room stream, once for :inbox
+      Turbo::StreamsChannel.expects(:broadcast_remove_to).twice
       delete room_message_url(@room, message, format: :turbo_stream)
       assert_response :success
     end
+    assert_not message.reload.active?
   end
 
-  test "admin destroy destroys a message belonging to another user" do
+  test "admin destroy soft-deletes a message belonging to another user" do
     assert users(:david).administrator?
     message = @room.messages.where(creator: users(:jason)).first
 
-    assert_difference -> { Message.count }, -1 do
-      Turbo::StreamsChannel.expects(:broadcast_remove_to).once
+    # Soft deletion - count stays same but active count decreases
+    assert_difference -> { Message.active.count }, -1 do
+      # Called twice: once for room stream, once for :inbox
+      Turbo::StreamsChannel.expects(:broadcast_remove_to).twice
       delete room_message_url(@room, message, format: :turbo_stream)
       assert_response :success
     end
+    assert_not message.reload.active?
   end
 
   test "ensure non-admin can't update a message belonging to another user" do
@@ -147,6 +155,6 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     end
 
     def assert_copy_link_button(url)
-      assert_select ".btn[title='Copy link'][data-copy-to-clipboard-content-value='#{url}']"
+      assert_select ".btn[data-copy-to-clipboard-content-value='#{url}']", text: /Copy link/
     end
 end

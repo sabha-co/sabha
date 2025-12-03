@@ -9,7 +9,7 @@ class Accounts::UsersController < ApplicationController
 
   def update
     @user.update(role_params)
-    redirect_to request.referer || user_url(@user), notice: "✓"
+    redirect_to request.referer || edit_account_url, notice: "✓"
   end
 
   def destroy

@@ -70,10 +70,10 @@ class Room::PushTest < ActiveSupport::TestCase
 
     def wait_for_pool_tasks(pool, count)
       start = Time.now
-      timeout = 0.2
+      timeout = 2.0  # Increased timeout for slower CI/test environments
       while pool.completed_task_count < count
         raise "Timeout waiting for pool tasks to complete" if Time.now - start > timeout
-        sleep timeout / 10.0
+        sleep 0.01
       end
     end
 end

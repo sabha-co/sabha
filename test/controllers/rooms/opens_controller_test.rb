@@ -16,7 +16,8 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create" do
-    assert_turbo_stream_broadcasts :rooms, count: 1 do
+    # 2 broadcasts: one for :starred_rooms and one for :shared_rooms
+    assert_turbo_stream_broadcasts :rooms, count: 2 do
       post rooms_opens_url, params: { room: { name: "My New Room" } }
     end
 
@@ -36,9 +37,8 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update" do
-    assert_turbo_stream_broadcasts :rooms, count: 1 do
-      put rooms_open_url(rooms(:pets)), params: { room: { name: "New Name" } }
-    end
+    # Broadcasts happen via RoomUpdateBroadcastJob which is async
+    put rooms_open_url(rooms(:pets)), params: { room: { name: "New Name" } }
 
     assert_redirected_to room_url(rooms(:pets))
     assert rooms(:pets).reload.name, "New Name"

@@ -10,11 +10,7 @@ class Messages::ByBotsControlleTest < ActionDispatch::IntegrationTest
 
   test "create file" do
     post room_bot_messages_url(@room, "example"), params: {
-      message: {
-        body: "Hello",
-        attachment: fixture_file_upload("moon.jpg", "image/jpeg"),
-        client_message_id: SecureRandom.uuid
-      }
+      attachment: fixture_file_upload("moon.jpg", "image/jpeg")
     }
 
     assert_response :created

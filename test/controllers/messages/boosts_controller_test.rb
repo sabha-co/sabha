@@ -10,7 +10,7 @@ class Messages::BoostsControllerTest < ActionDispatch::IntegrationTest
     assert_turbo_stream_broadcasts [ @message.room, :messages ], count: 1 do
       assert_difference -> { @message.boosts.count }, 1 do
         post message_boosts_url(@message, format: :turbo_stream), params: { boost: { content: "Morning!" } }
-        assert_redirected_to message_boosts_url(@message)
+        assert_response :success
       end
     end
   end
