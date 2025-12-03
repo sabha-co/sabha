@@ -76,10 +76,6 @@ FOREIGN KEY ("creator_id")
 );
 CREATE INDEX "index_searches_on_user_id" ON "searches" ("user_id");
 CREATE INDEX "index_searches_on_creator_id" ON "searches" ("creator_id");
-CREATE TABLE IF NOT EXISTS "users" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "role" integer DEFAULT 0 NOT NULL, "email_address" varchar, "password_digest" varchar, "active" boolean DEFAULT 1, "bio" text, "avatar_url" varchar, "twitter_username" varchar, "linkedin_username" varchar, "personal_url" varchar, "membership_started_at" datetime(6), "bot_token" varchar, "ascii_name" varchar, "twitter_url" varchar, "linkedin_url" varchar, "order_id" bigint, "suspended_at" datetime(6), "preferences" text DEFAULT '{}', "last_authenticated_at" datetime(6), "verified_at" datetime(6));
-CREATE UNIQUE INDEX "index_users_on_bot_token" ON "users" ("bot_token");
-CREATE UNIQUE INDEX "index_users_on_email_address" ON "users" ("email_address");
-CREATE UNIQUE INDEX "index_users_on_order_id" ON "users" ("order_id") WHERE order_id IS NOT NULL;
 CREATE TABLE IF NOT EXISTS "webhook_events" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "source" varchar, "event_type" varchar, "payload" text, "processed_at" datetime(6), "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL);
 CREATE INDEX "index_memberships_on_room_user_involvement" ON "memberships" ("room_id", "user_id", "involvement");
 CREATE TABLE IF NOT EXISTS "mailkick_subscriptions" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "subscriber_type" varchar, "subscriber_id" integer, "list" varchar, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL);
@@ -156,7 +152,19 @@ CREATE INDEX "index_messages_on_room_id_and_created_at" ON "messages" ("room_id"
 CREATE INDEX "index_messages_on_room_id_and_mentions_everyone" ON "messages" ("room_id", "mentions_everyone") WHERE mentions_everyone = true;
 CREATE TABLE IF NOT EXISTS "active_storage_blobs" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "key" varchar NOT NULL, "filename" varchar NOT NULL, "content_type" varchar, "metadata" text, "service_name" varchar NOT NULL, "byte_size" bigint NOT NULL, "checksum" varchar, "created_at" datetime(6) NOT NULL);
 CREATE UNIQUE INDEX "index_active_storage_blobs_on_key" ON "active_storage_blobs" ("key") /*application='Campfire'*/;
+CREATE TABLE IF NOT EXISTS "bans" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "user_id" integer NOT NULL, "ip_address" varchar NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, CONSTRAINT "fk_rails_070022cd76"
+FOREIGN KEY ("user_id")
+  REFERENCES "users" ("id")
+);
+CREATE INDEX "index_bans_on_user_id" ON "bans" ("user_id") /*application='Campfire'*/;
+CREATE INDEX "index_bans_on_ip_address" ON "bans" ("ip_address") /*application='Campfire'*/;
+CREATE TABLE IF NOT EXISTS "users" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "created_at" datetime(6) NOT NULL, "updated_at" datetime(6) NOT NULL, "role" integer DEFAULT 0 NOT NULL, "email_address" varchar, "password_digest" varchar, "bio" text, "avatar_url" varchar, "twitter_username" varchar, "linkedin_username" varchar, "personal_url" varchar, "membership_started_at" datetime(6), "bot_token" varchar, "ascii_name" varchar, "twitter_url" varchar, "linkedin_url" varchar, "order_id" bigint, "preferences" text DEFAULT '{}', "last_authenticated_at" datetime(6), "verified_at" datetime(6), "status" integer DEFAULT 0 NOT NULL);
+CREATE UNIQUE INDEX "index_users_on_bot_token" ON "users" ("bot_token") /*application='Campfire'*/;
+CREATE UNIQUE INDEX "index_users_on_email_address" ON "users" ("email_address") /*application='Campfire'*/;
+CREATE UNIQUE INDEX "index_users_on_order_id" ON "users" ("order_id") WHERE order_id IS NOT NULL /*application='Campfire'*/;
 INSERT INTO "schema_migrations" (version) VALUES
+('20251203104015'),
+('20251203104014'),
 ('20251106020802'),
 ('20251106020801'),
 ('20251106020800'),

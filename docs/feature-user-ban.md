@@ -1,9 +1,11 @@
 # Plan: Implement User Ban Feature (from basecamp/once-campfire#111)
 
+## Status: ✅ COMPLETED
+
 ## Overview
 Add a complete user ban system that allows administrators to ban users, which:
 - Logs them out immediately
-- Deletes all their messages
+- Soft-deletes all their messages (marks as inactive, preserving data)
 - Blocks their IP addresses from posting
 - Provides UI to ban/unban users
 
@@ -122,21 +124,22 @@ end
 1. **`Ban` model** - Stores banned IP addresses per user
 2. **`User::Bannable` concern** - `ban`/`unban` methods
 3. **`BlockBannedRequests` concern** - Blocks POST/PUT/DELETE from banned IPs
-4. **`RemoveBannedContentJob`** - Deletes all messages asynchronously
+4. **`RemoveBannedContentJob`** - Soft-deletes all messages asynchronously
 5. **Admin UI** - Ban/unban buttons on user profile
 
 ---
 
 ## Key Differences
 
-| Aspect | campfire-ce | once-campfire |
+| Aspect | campfire-ce (after implementation) | once-campfire |
 |--------|-------------|---------------|
-| User state storage | 2 columns (`active`, `suspended_at`) | 1 column (`status` enum) |
-| Suspended state | `suspended_at` timestamp | N/A (no suspend, only ban) |
-| Ban feature | None | Full (IP block, content deletion) |
-| Deactivation | `active: false` | `status: :deactivated` |
-| Query pattern | `active.non_suspended` | `active` |
+| User state storage | 1 column (`status` enum) | 1 column (`status` enum) |
+| Suspended state | N/A (replaced by ban) | N/A (no suspend, only ban) |
+| Ban feature | Full (IP block, content soft-deletion) | Full (IP block, content hard-deletion) |
+| Deactivation | `status: :deactivated` | `status: :deactivated` |
+| Query pattern | `active` | `active` |
 | Membership deletion | Soft-delete (`active: false`) | Hard-delete (`delete_all`) |
+| Message deletion on ban | **Soft-delete** (`deactivate`) | Hard-delete (`destroy`) |
 | User reactivation | Supported (memberships restored) | Not supported (memberships gone) |
 
 ---
@@ -153,10 +156,11 @@ end
 
 **Recommendation: Option A** - Migrate fully to match upstream for long-term maintainability.
 
-**Important**: Keep campfire-ce's soft-delete pattern for memberships (don't change to hard-delete) because:
+**Important**: Keep campfire-ce's soft-delete pattern for memberships AND messages because:
 1. Allows user reactivation with memberships restored
 2. Preserves room history even for deactivated users
-3. Different design philosophy that serves our use case
+3. Banned user messages can be recovered if user is unbanned
+4. Different design philosophy that serves our use case
 
 ---
 
@@ -220,7 +224,7 @@ end
 ### Phase 4: Background Jobs
 
 12. **Create `RemoveBannedContentJob`** (`app/jobs/remove_banned_content_job.rb`)
-    - Deletes all messages for banned user
+    - **Soft-deletes** all messages for banned user (calls `message.deactivate`)
     - Broadcasts removal for real-time UI updates
 
 ### Phase 5: Views & Assets
@@ -327,3 +331,42 @@ end
 ## Rollback Strategy
 - Keep migration reversible
 - Can revert to `active`/`suspended_at` if needed
+
+---
+
+## Implementation Summary (Completed)
+
+### Differences from once-campfire
+
+| Component | campfire-ce | once-campfire |
+|-----------|-------------|---------------|
+| `User::Bannable#remove_banned_content` | `message.deactivate` (soft-delete) | `message.destroy` (hard-delete) |
+| `User::Bannable#create_bans_from_sessions` | `bans.create()` (graceful, skips invalid IPs) | `bans.create!()` (strict, raises on failure) |
+| `Ban` model validation | Validates IP presence explicitly | Relies on DB constraint |
+| Ban button view | Uses `user` local variable consistently | Mixes `user` and `@user` (bug) |
+| Ban model tests | Comprehensive (7 tests) | None |
+
+### Files Created
+- `app/models/ban.rb`
+- `app/models/user/bannable.rb`
+- `app/controllers/users/bans_controller.rb`
+- `app/controllers/concerns/block_banned_requests.rb`
+- `app/jobs/remove_banned_content_job.rb`
+- `app/views/users/_ban_button.html.erb`
+- `app/assets/images/cancel.svg`
+- `db/migrate/20251203104014_create_bans.rb`
+- `db/migrate/20251203104015_change_active_to_status_on_users.rb`
+- `test/models/ban_test.rb`
+- `test/controllers/users/bans_controller_test.rb`
+- `test/controllers/concerns/block_banned_requests_test.rb`
+- `test/fixtures/bans.yml`
+
+### Files Modified
+- `app/models/user.rb` - Added status enum, Bannable concern
+- `app/controllers/application_controller.rb` - Include BlockBannedRequests
+- `app/views/users/show.html.erb` - Added ban button, banned status display
+- `config/routes.rb` - Added `resource :ban`
+- `lib/tasks/generate.rake` - Added `Ban.delete_all` to cleanup
+- `test/fixtures/users.yml` - Added `status: active`
+- `test/fixtures/accounts.yml` - Added `auth_method: password`, `active: true`
+- `config/initializers/allowed_hosts.rb` - Added test hosts

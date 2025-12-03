@@ -1,5 +1,5 @@
 class ApplicationController < ActionController::Base
-  include AllowBrowser, RackMiniProfilerAuthorization, Authentication, Authorization, SetCurrentRequest, SetPlatform, TrackedRoomVisit, VersionHeaders, FragmentCache, Sidebar
+  include AllowBrowser, RackMiniProfilerAuthorization, Authentication, Authorization, BlockBannedRequests, SetCurrentRequest, SetPlatform, TrackedRoomVisit, VersionHeaders, FragmentCache, Sidebar
   include Turbo::Streams::Broadcasts, Turbo::Streams::StreamName
 
   before_action :load_current_live_event

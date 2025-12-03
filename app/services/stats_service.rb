@@ -12,7 +12,7 @@ class StatsService
         .joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                 INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
         .where("strftime('%Y-%m-%d', messages.created_at) = ?", today)
-        .where("users.active = true AND users.suspended_at IS NULL")
+        .where(users: { status: :active })
         .group("users.id, users.name, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
@@ -35,7 +35,7 @@ class StatsService
     User.select("users.id, users.name, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
         .joins(messages: :room)
         .where("rooms.type != ? AND messages.active = true", "Rooms::Direct")
-        .where("users.active = true AND users.suspended_at IS NULL")
+        .where(users: { status: :active })
         .group("users.id, users.name, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
@@ -48,7 +48,7 @@ class StatsService
     User.select("users.*, COALESCE(COUNT(CASE WHEN messages.id IS NOT NULL AND messages.active = true AND rooms.type != 'Rooms::Direct' THEN messages.id END), 0) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
         .joins("LEFT JOIN messages ON messages.creator_id = users.id")
         .joins("LEFT JOIN rooms ON messages.room_id = rooms.id")
-        .where("users.active = true AND users.suspended_at IS NULL")
+        .where(users: { status: :active })
         .group("users.id")
         .order("message_count DESC, joined_at ASC, users.id ASC")
   end
@@ -124,7 +124,7 @@ class StatsService
     return nil unless stats
 
     # Get total number of active users for proper ranking context
-    total_active_users = User.where(active: true, suspended_at: nil).count
+    total_active_users = User.active.count
 
     case period
     when :today
@@ -135,7 +135,7 @@ class StatsService
       users_with_more_messages = User.joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                                           INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                                     .where("messages.created_at >= ? AND messages.created_at <= ?", today_start, today_end)
-                                    .where("users.active = true AND users.suspended_at IS NULL")
+                                    .where(users: { status: :active })
                                     .group("users.id")
                                     .having("COUNT(messages.id) > ?", stats.message_count.to_i)
                                     .count.size
@@ -147,7 +147,7 @@ class StatsService
       users_with_more_messages = User.joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                                           INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                                     .where("messages.created_at >= ? AND messages.created_at <= ?", month_start, month_end)
-                                    .where("users.active = true AND users.suspended_at IS NULL")
+                                    .where(users: { status: :active })
                                     .group("users.id")
                                     .having("COUNT(messages.id) > ?", stats.message_count.to_i)
                                     .count.size
@@ -159,7 +159,7 @@ class StatsService
       users_with_more_messages = User.joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                                           INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                                     .where("messages.created_at >= ? AND messages.created_at <= ?", year_start, year_end)
-                                    .where("users.active = true AND users.suspended_at IS NULL")
+                                    .where(users: { status: :active })
                                     .group("users.id")
                                     .having("COUNT(messages.id) > ?", stats.message_count.to_i)
                                     .count.size
@@ -167,7 +167,7 @@ class StatsService
       # Count users with more messages
       users_with_more_messages = User.joins(messages: :room)
                                     .where("rooms.type != ? AND messages.active = true", "Rooms::Direct")
-                                    .where("users.active = true AND users.suspended_at IS NULL")
+                                    .where(users: { status: :active })
                                     .group("users.id")
                                     .having("COUNT(messages.id) > ?", stats.message_count.to_i)
                                     .count.size
@@ -183,7 +183,7 @@ class StatsService
         users_with_same_messages_earlier_join = User.joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                                                         INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                                                   .where("messages.created_at >= ? AND messages.created_at <= ?", today_start, today_end)
-                                                  .where("users.active = true AND users.suspended_at IS NULL")
+                                                  .where(users: { status: :active })
                                                   .group("users.id")
                                                   .having("COUNT(messages.id) = ?", stats.message_count.to_i)
                                                   .where("COALESCE(users.membership_started_at, users.created_at) < ?",
@@ -196,7 +196,7 @@ class StatsService
         users_with_same_messages_earlier_join = User.joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                                                         INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                                                   .where("messages.created_at >= ? AND messages.created_at <= ?", time_start, time_end)
-                                                  .where("users.active = true AND users.suspended_at IS NULL")
+                                                  .where(users: { status: :active })
                                                   .group("users.id")
                                                   .having("COUNT(messages.id) = ?", stats.message_count.to_i)
                                                   .where("COALESCE(users.membership_started_at, users.created_at) < ?",
@@ -209,7 +209,7 @@ class StatsService
         users_with_same_messages_earlier_join = User.joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                                                         INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                                                   .where("messages.created_at >= ? AND messages.created_at <= ?", year_start, year_end)
-                                                  .where("users.active = true AND users.suspended_at IS NULL")
+                                                  .where(users: { status: :active })
                                                   .group("users.id")
                                                   .having("COUNT(messages.id) = ?", stats.message_count.to_i)
                                                   .where("COALESCE(users.membership_started_at, users.created_at) < ?",
@@ -218,7 +218,7 @@ class StatsService
       else # all_time
         users_with_same_messages_earlier_join = User.joins(messages: :room)
                                                   .where("rooms.type != ? AND messages.active = true", "Rooms::Direct")
-                                                  .where("users.active = true AND users.suspended_at IS NULL")
+                                                  .where(users: { status: :active })
                                                   .group("users.id")
                                                   .having("COUNT(messages.id) = ?", stats.message_count.to_i)
                                                   .where("COALESCE(users.membership_started_at, users.created_at) < ?",
@@ -227,9 +227,9 @@ class StatsService
       end
     else
       # For users with 0 messages, count users with earlier join date
-      users_with_same_messages_earlier_join = User.where("COALESCE(membership_started_at, created_at) < ?",
+      users_with_same_messages_earlier_join = User.active
+                                              .where("COALESCE(membership_started_at, created_at) < ?",
                                                       user.membership_started_at || user.created_at)
-                                              .where("active = true AND suspended_at IS NULL")
                                               .count
     end
 
@@ -269,7 +269,7 @@ class StatsService
         .joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                 INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
         .where("strftime('%Y-%m-%d', messages.created_at) = ?", day_formatted)
-        .where("users.active = true AND users.suspended_at IS NULL")
+        .where(users: { status: :active })
         .group("users.id, users.name, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
@@ -286,7 +286,7 @@ class StatsService
         .joins(messages: :room)
         .where("rooms.type != ? AND messages.created_at >= ? AND messages.created_at <= ? AND messages.active = true",
               "Rooms::Direct", month_start, month_end)
-        .where("users.active = true AND users.suspended_at IS NULL")
+        .where(users: { status: :active })
         .group("users.id, users.name, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
@@ -302,7 +302,7 @@ class StatsService
         .joins(messages: :room)
         .where("rooms.type != ? AND messages.created_at >= ? AND messages.created_at <= ? AND messages.active = true",
               "Rooms::Direct", year_start, year_end)
-        .where("users.active = true AND users.suspended_at IS NULL")
+        .where(users: { status: :active })
         .group("users.id, users.name, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
@@ -311,15 +311,13 @@ class StatsService
   # Get newest members
   def self.newest_members(limit = 10)
     User.select("users.*, COALESCE(users.membership_started_at, users.created_at) as joined_at")
-        .where(active: true)
-        .where(suspended_at: nil)
+        .active
         .order("joined_at DESC")
         .limit(limit)
   end
 
   def self.blocked_members(limit = 10)
     User.active
-        .non_suspended
         .joins(:blocks_received)
         .group("users.id")
         .select("users.*, COUNT(blocks.id) AS blocks_count")
@@ -330,7 +328,7 @@ class StatsService
   # Get total counts for the stats page
   def self.total_counts
     {
-      total_users: User.where(active: true, suspended_at: nil).count,
+      total_users: User.active.count,
       total_messages: Message.count,
       total_threads: Room.active
                          .where(type: "Rooms::Thread")
@@ -382,7 +380,7 @@ class StatsService
         FROM users
         LEFT JOIN messages ON messages.creator_id = users.id
         LEFT JOIN rooms ON messages.room_id = rooms.id
-        WHERE users.active = true AND users.suspended_at IS NULL
+        WHERE users.status = 0
         GROUP BY users.id, users.membership_started_at, users.created_at
       )
       SELECT#{' '}

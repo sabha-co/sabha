@@ -6,9 +6,9 @@ class Rooms::StatsController < ApplicationController
       name: @room.name,
       created_at: @room.created_at,
       creator: @room.creator,
-      access_count: @room.memberships.joins(:user).where(users: { suspended_at: nil, active: true }).count,
-      visibility_count: @room.visible_memberships.joins(:user).where(users: { suspended_at: nil, active: true }).count,
-      starred_count: @room.memberships.where(involvement: "everything").joins(:user).where(users: { suspended_at: nil, active: true }).count,
+      access_count: @room.memberships.joins(:user).merge(User.active).count,
+      visibility_count: @room.visible_memberships.joins(:user).merge(User.active).count,
+      starred_count: @room.memberships.where(involvement: "everything").joins(:user).merge(User.active).count,
       messages_count: all_messages_count_for_room(@room),
       last_message_at: @room.messages.where(active: true).order(created_at: :desc).first&.created_at
     }
@@ -26,7 +26,7 @@ class Rooms::StatsController < ApplicationController
 
         if @current_user_stats && @current_user_stats.message_count.to_i > 0
           @current_user_rank = calculate_user_rank_in_room(Current.user.id, @room)
-          @total_users_in_room = @room.memberships.joins(:user).where(users: { suspended_at: nil, active: true }).count
+          @total_users_in_room = @room.memberships.joins(:user).merge(User.active).count
         end
       end
     end
@@ -52,7 +52,7 @@ class Rooms::StatsController < ApplicationController
           .joins("LEFT JOIN rooms threads ON messages.room_id = threads.id AND threads.type = 'Rooms::Thread'")
           .joins("LEFT JOIN messages parent_messages ON threads.parent_message_id = parent_messages.id")
           .where("messages.room_id = :room_id OR parent_messages.room_id = :room_id", room_id: room.id)
-          .where("users.active = true AND users.suspended_at IS NULL")
+          .where(users: { status: :active })
           .group("users.id, users.name, users.membership_started_at, users.created_at")
           .order("message_count DESC, joined_at ASC, users.id ASC")
           .limit(limit)
@@ -83,7 +83,7 @@ class Rooms::StatsController < ApplicationController
                                      .joins("LEFT JOIN rooms threads ON messages.room_id = threads.id AND threads.type = 'Rooms::Thread'")
                                      .joins("LEFT JOIN messages parent_messages ON threads.parent_message_id = parent_messages.id")
                                      .where("messages.room_id = :room_id OR parent_messages.room_id = :room_id", room_id: room.id)
-                                     .where("users.active = true AND users.suspended_at IS NULL")
+                                     .where(users: { status: :active })
                                      .group("users.id")
                                      .having("COUNT(DISTINCT messages.id) > ?", stats.message_count.to_i)
                                      .count.size
@@ -94,7 +94,7 @@ class Rooms::StatsController < ApplicationController
                                                     .joins("LEFT JOIN rooms threads ON messages.room_id = threads.id AND threads.type = 'Rooms::Thread'")
                                                     .joins("LEFT JOIN messages parent_messages ON threads.parent_message_id = parent_messages.id")
                                                     .where("messages.room_id = :room_id OR parent_messages.room_id = :room_id", room_id: room.id)
-                                                    .where("users.active = true AND users.suspended_at IS NULL")
+                                                    .where(users: { status: :active })
                                                     .group("users.id")
                                                     .having("COUNT(DISTINCT messages.id) = ?", stats.message_count.to_i)
                                                     .where("COALESCE(users.membership_started_at, users.created_at) < ?",
@@ -102,9 +102,9 @@ class Rooms::StatsController < ApplicationController
                                                     .count.size
       else
         # For users with 0 messages, count users with earlier join date
-        users_with_same_messages_earlier_join = User.where("COALESCE(membership_started_at, created_at) < ?",
+        users_with_same_messages_earlier_join = User.active
+                                                    .where("COALESCE(membership_started_at, created_at) < ?",
                                                            user.membership_started_at || user.created_at)
-                                                    .where("active = true AND users.suspended_at IS NULL")
                                                     .count
       end
 

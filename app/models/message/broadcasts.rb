@@ -67,6 +67,10 @@ module Message::Broadcasts
     end
   end
 
+  def broadcast_remove
+    broadcast_remove_to room, :messages
+  end
+
   def broadcast_to_inbox_threads
     return unless room.thread? && room.parent_message
 

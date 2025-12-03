@@ -20,7 +20,7 @@ class MarketingController < ApplicationController
   end
 
   def stats
-    member_count = User.active.non_suspended.count
+    member_count = User.active.count
     online_count = online_users_count
     render json: {
       member_count: member_count,

@@ -7,7 +7,7 @@ class Gumroad::ProcessRefundJob < ApplicationJob
     raise "Expected order ID to be present. Event ID #{event.id}" unless order_id.present?
 
     ActiveRecord::Base.transaction do
-      User.find_by(order_id:)&.suspend! if fully_refunded
+      User.find_by(order_id:)&.ban if fully_refunded
       event.update!(processed_at: Time.current)
     end
   end

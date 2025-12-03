@@ -22,7 +22,9 @@ class Gumroad::ImportUserJob < ApplicationJob
         User.create!(email_address: email, name:, order_id:, membership_started_at:)
       rescue ActiveRecord::RecordNotUnique
         if (user = User.find_by(email_address: email))
-          user.update!(order_id:, membership_started_at: user.membership_started_at || membership_started_at, suspended_at: nil)
+          user.update!(order_id:, membership_started_at: user.membership_started_at || membership_started_at)
+          # Unban user if they had a valid purchase
+          user.unban if user.banned?
         end
       end
       event.update!(processed_at: Time.current)

@@ -12,13 +12,18 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "deactivating a user deletes push subscriptions, searches, memberships for non-direct rooms, and changes their email address" do
-    assert_difference -> { Membership.count }, -users(:david).memberships.without_direct_rooms.count do
-    assert_difference -> { Push::Subscription.count }, -users(:david).push_subscriptions.count do
-    assert_difference -> { Search.count }, -users(:david).searches.count do
+  test "deactivating a user deletes push subscriptions, searches, deactivates memberships for non-direct rooms, and changes their email address" do
+    user = users(:david)
+    membership_count_before = user.memberships.without_direct_rooms.count
+
+    assert_no_difference -> { Membership.count } do  # Memberships are soft-deleted (active: false), not removed
+    assert_difference -> { Membership.active.count }, -membership_count_before do  # But active count decreases
+    assert_difference -> { Push::Subscription.count }, -user.push_subscriptions.count do
+    assert_difference -> { Search.count }, -user.searches.count do
       SecureRandom.stubs(:uuid).returns("2e7de450-cf04-4fa8-9b02-ff5ab2d733e7")
-      users(:david).deactivate
-      assert_equal "david-deactivated-2e7de450-cf04-4fa8-9b02-ff5ab2d733e7@37signals.com", users(:david).reload.email_address
+      user.deactivate
+      assert_equal "david-deactivated-2e7de450-cf04-4fa8-9b02-ff5ab2d733e7@37signals.com", user.reload.email_address
+    end
     end
     end
     end
