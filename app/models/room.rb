@@ -37,6 +37,9 @@ class Room < ApplicationRecord
 
   belongs_to :creator, class_name: "User", default: -> { Current.user }
 
+  # Use before_destroy to clean up ALL records (including inactive) to satisfy FK constraints
+  before_destroy :destroy_all_associated_records
+
   before_validation -> { self.last_active_at = Time.current }, on: :create
 
   before_save :set_sortable_name
@@ -195,5 +198,19 @@ class Room < ApplicationRecord
       [ :starred_rooms, :shared_rooms ].each do |list_name|
         broadcast_append_to :rooms, target: list_name, partial: "users/sidebars/rooms/shared", locals: { list_name:, room: self }, attributes: { maintain_scroll: true }
       end
+    end
+
+    # Clean up ALL associated records (including inactive ones) to satisfy FK constraints
+    def destroy_all_associated_records
+      # First, destroy any thread rooms that were created from messages in this room
+      # (threads have parent_message_id pointing to messages in this room)
+      message_ids = Message.unscoped.where(room_id: id).pluck(:id)
+      Rooms::Thread.unscoped.where(parent_message_id: message_ids).find_each(&:destroy)
+
+      # Then delete messages (they have FKs to boosts, bookmarks, mentions)
+      Message.unscoped.where(room_id: id).find_each(&:destroy)
+
+      # Finally delete memberships
+      Membership.unscoped.where(room_id: id).delete_all
     end
 end
