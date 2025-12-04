@@ -1,8 +1,8 @@
 <div class="margin-block pad fill-shade border-radius txt-align-center">
   <div class="flex flex-column gap align-center">
 
+    <!-- Authentication Method -->
     <%= form_with model: @account, data: { controller: "form" }, class: "flex flex-column gap align-center" do |form| %>
-      <!-- Authentication Method -->
       <div class="flex flex-column gap align-center" style="--row-gap: 0.5em">
         <strong>Authentication Method</strong>
         <div class="flex flex-column gap-half">
@@ -15,24 +15,53 @@
             <span>OTP (passwordless, email code)</span>
           </label>
         </div>
-        <span class="txt-small txt-subtle">Choose how users authenticate. Changes affect new sign-ins.</span>
       </div>
+    <% end %>
 
-      <hr class="separator full-width">
+    <hr class="separator full-width">
 
-      <!-- Open Registration -->
-      <div class="flex flex-column gap align-center" style="--row-gap: 0.5em">
-        <strong>Registration Access</strong>
-        <div class="flex align-center gap">
+    <!-- Permissions -->
+    <div class="flex flex-column gap align-center" style="--row-gap: 0.5em">
+      <strong>Permissions</strong>
+      <div class="flex flex-column gap">
+        <%= form_with model: @account, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
           <label class="switch">
             <%= form.check_box :open_registration, class: "switch__input", data: { action: "change->form#submit" } %>
             <span class="switch__btn"></span>
-            <span class="for-screen-reader">Allow open registration</span>
           </label>
           <span>Allow open registration</span>
-        </div>
-        <span class="txt-small txt-subtle">When disabled, users need an invite link with join code.</span>
+        <% end %>
+
+        <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
+          <%= form.fields_for :settings, @account.settings do |settings_form| %>
+            <%= settings_form.hidden_field :restrict_room_creation_to_administrators,
+                value: !Current.account.settings.restrict_room_creation_to_administrators? %>
+          <% end %>
+          <label class="switch">
+            <input type="checkbox"
+                  class="switch__input"
+                  <%= "checked" if Current.account.settings.restrict_room_creation_to_administrators? %>
+                  data-action="change->form#submit">
+            <span class="switch__btn"></span>
+          </label>
+          <span>Only admins can create rooms</span>
+        <% end %>
+
+        <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
+          <%= form.fields_for :settings, @account.settings do |settings_form| %>
+            <%= settings_form.hidden_field :restrict_direct_messages_to_administrators,
+                value: !Current.account.settings.restrict_direct_messages_to_administrators? %>
+          <% end %>
+          <label class="switch">
+            <input type="checkbox"
+                  class="switch__input"
+                  <%= "checked" if Current.account.settings.restrict_direct_messages_to_administrators? %>
+                  data-action="change->form#submit">
+            <span class="switch__btn"></span>
+          </label>
+          <span>Only admins can start DMs</span>
+        <% end %>
       </div>
-    <% end %>
+    </div>
   </div>
 </div>

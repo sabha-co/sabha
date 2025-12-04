@@ -17,7 +17,7 @@ class AccountsController < ApplicationController
     end
 
     def account_params
-      params.require(:account).permit(:name, :logo, :auth_method, :open_registration)
+      params.require(:account).permit(:name, :logo, :auth_method, :open_registration, settings: {})
     end
 
     def account_users
