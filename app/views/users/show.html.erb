@@ -54,11 +54,13 @@
           <% end %>
         </div>
 
-        <div class="pad-inline-double margin-inline">
-          <%= button_to rooms_directs_path(user_ids: [ @user.id ]), class: "btn btn--reversed full-width txt-large" do %>
-            <%= image_tag "messages.svg", aria: { hidden: "true", label: "Ping #{@user.name}" } %>
-          <% end %>
-        </div>
+        <% if Current.user.administrator? || !Current.account.settings.restrict_direct_messages_to_administrators? %>
+          <div class="pad-inline-double margin-inline">
+            <%= button_to rooms_directs_path(user_ids: [ @user.id ]), class: "btn btn--reversed full-width txt-large" do %>
+              <%= image_tag "messages.svg", aria: { hidden: "true", label: "Ping #{@user.name}" } %>
+            <% end %>
+          </div>
+        <% end %>
 
         <div class="pad-inline-double margin-inline margin-block-start">
           <div>

@@ -38,4 +38,42 @@ class AccountTest < ActiveSupport::TestCase
     assert_equal "password", account.auth_method
     assert_equal false, account.open_registration
   end
+
+  test "settings restrict_room_creation_to_administrators defaults to false" do
+    assert_not @account.settings.restrict_room_creation_to_administrators?
+  end
+
+  test "settings restrict_room_creation_to_administrators can be toggled" do
+    @account.settings.restrict_room_creation_to_administrators = true
+    assert @account.settings.restrict_room_creation_to_administrators?
+    assert_equal true, @account[:settings]["restrict_room_creation_to_administrators"]
+
+    @account.update!(settings: { "restrict_room_creation_to_administrators" => "true" })
+    assert @account.reload.settings.restrict_room_creation_to_administrators?
+
+    @account.settings.restrict_room_creation_to_administrators = false
+    assert_not @account.settings.restrict_room_creation_to_administrators?
+    assert_equal false, @account[:settings]["restrict_room_creation_to_administrators"]
+
+    @account.update!(settings: { "restrict_room_creation_to_administrators" => "false" })
+    assert_not @account.reload.settings.restrict_room_creation_to_administrators?
+  end
+
+  test "settings restrict_direct_messages_to_administrators defaults to false" do
+    assert_not @account.settings.restrict_direct_messages_to_administrators?
+  end
+
+  test "settings restrict_direct_messages_to_administrators can be toggled" do
+    @account.settings.restrict_direct_messages_to_administrators = true
+    assert @account.settings.restrict_direct_messages_to_administrators?
+
+    @account.update!(settings: { "restrict_direct_messages_to_administrators" => "true" })
+    assert @account.reload.settings.restrict_direct_messages_to_administrators?
+
+    @account.settings.restrict_direct_messages_to_administrators = false
+    assert_not @account.settings.restrict_direct_messages_to_administrators?
+
+    @account.update!(settings: { "restrict_direct_messages_to_administrators" => "false" })
+    assert_not @account.reload.settings.restrict_direct_messages_to_administrators?
+  end
 end

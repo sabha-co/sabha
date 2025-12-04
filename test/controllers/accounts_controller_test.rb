@@ -24,6 +24,33 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert users(:kevin).member?
 
     put account_url, params: { account: { name: "Different" } }
-    assert_response :forbidden
+    assert_redirected_to root_path
+  end
+
+  test "non-admins cannot access edit" do
+    sign_in :kevin
+    assert users(:kevin).member?
+
+    get edit_account_url
+    assert_redirected_to root_path
+  end
+
+  test "updating one setting does not overwrite other settings" do
+    # First, enable room creation restriction
+    accounts(:signal).settings.restrict_room_creation_to_administrators = true
+    accounts(:signal).save!
+
+    assert accounts(:signal).reload.settings.restrict_room_creation_to_administrators?
+    assert_not accounts(:signal).settings.restrict_direct_messages_to_administrators?
+
+    # Now enable DM restriction - this should NOT reset room creation restriction
+    put account_url, params: { account: { settings: { restrict_direct_messages_to_administrators: true } } }
+
+    assert_redirected_to edit_account_url
+    accounts(:signal).reload
+
+    # Both settings should be enabled
+    assert accounts(:signal).settings.restrict_room_creation_to_administrators?, "Room creation restriction was overwritten"
+    assert accounts(:signal).settings.restrict_direct_messages_to_administrators?, "DM restriction was not saved"
   end
 end
