@@ -48,4 +48,30 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     put rooms_open_url(rooms(:designers)), params: { room: { name: "Doesn't matter" } }
     assert_equal rooms(:designers).memberships.count, User.count
   end
+
+  test "non-admin cannot create room when restricted to administrators" do
+    accounts(:signal).settings.restrict_room_creation_to_administrators = true
+    accounts(:signal).save!
+
+    sign_in :jz  # non-admin user
+
+    get new_rooms_open_url
+    assert_response :forbidden
+
+    post rooms_opens_url, params: { room: { name: "My New Room" } }
+    assert_response :forbidden
+  end
+
+  test "admin can create room when restricted to administrators" do
+    accounts(:signal).settings.restrict_room_creation_to_administrators = true
+    accounts(:signal).save!
+
+    sign_in :david  # admin user
+
+    get new_rooms_open_url
+    assert_response :success
+
+    post rooms_opens_url, params: { room: { name: "Admin Room" } }
+    assert_redirected_to room_url(Room.last)
+  end
 end

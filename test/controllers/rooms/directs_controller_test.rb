@@ -29,4 +29,30 @@ class Rooms::DirectsControllerTest < ActionDispatch::IntegrationTest
       assert_redirected_to root_url
     end
   end
+
+  test "non-admin cannot create DM when restricted to administrators" do
+    accounts(:signal).settings.restrict_direct_messages_to_administrators = true
+    accounts(:signal).save!
+
+    sign_in :jz  # non-admin user
+
+    get new_rooms_direct_url
+    assert_response :forbidden
+
+    post rooms_directs_url, params: { user_ids: [ users(:david).id ] }
+    assert_response :forbidden
+  end
+
+  test "admin can create DM when restricted to administrators" do
+    accounts(:signal).settings.restrict_direct_messages_to_administrators = true
+    accounts(:signal).save!
+
+    sign_in :david  # admin user
+
+    get new_rooms_direct_url
+    assert_response :success
+
+    post rooms_directs_url, params: { user_ids: [ users(:jz).id ] }
+    assert_redirected_to room_url(Room.last)
+  end
 end

@@ -102,6 +102,12 @@ class RoomsController < ApplicationController
       params.require(:room).permit(*permitted)
     end
 
+    def ensure_permission_to_create_rooms
+      if Current.account.settings.restrict_room_creation_to_administrators? && !Current.user.administrator?
+        head :forbidden
+      end
+    end
+
     def broadcast_remove_room
       for_each_sidebar_section do |list_name|
         broadcast_remove_to :rooms, target: [ @room, helpers.dom_prefix(list_name, :list_node) ]

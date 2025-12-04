@@ -1,4 +1,6 @@
 class Rooms::DirectsController < RoomsController
+  before_action :ensure_permission_to_create_direct_messages, only: %i[ new create ]
+
   def new
     @room = Rooms::Direct.new
   end
@@ -35,5 +37,11 @@ class Rooms::DirectsController < RoomsController
     # All users in a direct room can administer it
     def ensure_can_administer
       true
+    end
+
+    def ensure_permission_to_create_direct_messages
+      if Current.account.settings.restrict_direct_messages_to_administrators? && !Current.user.administrator?
+        head :forbidden
+      end
     end
 end
