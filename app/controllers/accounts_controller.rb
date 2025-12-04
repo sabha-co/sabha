@@ -7,7 +7,7 @@ class AccountsController < ApplicationController
   end
 
   def update
-    @account.update!(account_params)
+    @account.update!(merged_account_params)
     redirect_to edit_account_url, notice: "✓"
   end
 
@@ -18,6 +18,15 @@ class AccountsController < ApplicationController
 
     def account_params
       params.require(:account).permit(:name, :logo, :auth_method, :open_registration, settings: {})
+    end
+
+    def merged_account_params
+      permitted = account_params
+      if permitted[:settings].present?
+        existing_settings = @account.read_attribute(:settings) || {}
+        permitted[:settings] = existing_settings.merge(permitted[:settings])
+      end
+      permitted
     end
 
     def account_users
