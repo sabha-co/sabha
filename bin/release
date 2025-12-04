@@ -38,9 +38,9 @@ def bump(version, type)
 end
 
 # Get version from arg or prompt
-VERSION = ARGV[0]
+version = ARGV[0]
 
-if VERSION.nil?
+if version.nil?
   latest = get_latest_version
 
   if latest
@@ -58,14 +58,14 @@ if VERSION.nil?
 
     case choice
     when "1", "patch"
-      VERSION = bump(latest, :patch)
+      version = bump(latest, :patch)
     when "2", "minor"
-      VERSION = bump(latest, :minor)
+      version = bump(latest, :minor)
     when "3", "major"
-      VERSION = bump(latest, :major)
+      version = bump(latest, :major)
     when "4", "custom"
       print "Enter version (e.g., 1.2.3): "
-      VERSION = $stdin.gets.strip
+      version = $stdin.gets.strip
     when "q", "quit", "exit"
       puts "Release cancelled."
       exit 0
@@ -75,12 +75,12 @@ if VERSION.nil?
   else
     puts "\e[1;33mNo existing releases found.\e[0m"
     print "Enter initial version (e.g., 1.0.0): "
-    VERSION = $stdin.gets.strip
+    version = $stdin.gets.strip
   end
 end
 
-abort "Version cannot be empty" if VERSION.nil? || VERSION.strip.empty?
-VERSION = VERSION.sub(/^v/, "") # Remove v prefix if provided
+abort "Version cannot be empty" if version.nil? || version.strip.empty?
+version = version.sub(/^v/, "") # Remove v prefix if provided
 
 current_branch = `git rev-parse --abbrev-ref HEAD`.strip
 if current_branch != "main"
@@ -93,12 +93,12 @@ unless `git status --porcelain`.strip.empty?
   abort "Release aborted." unless $stdin.gets.strip.downcase.chars.first == "y"
 end
 
-puts "\n\e[1;36mCreating GitHub release v#{VERSION}...\e[0m"
+puts "\n\e[1;36mCreating GitHub release v#{version}...\e[0m"
 
-unless system "gh", "release", "create", "v#{VERSION}", "--title", "v#{VERSION}", "--generate-notes"
+unless system "gh", "release", "create", "v#{version}", "--title", "v#{version}", "--generate-notes"
   abort "Failed to create release; check that the version doesn't already exist"
 end
 
-puts "\n\e[1;32m✓ Release v#{VERSION} created!\e[0m"
+puts "\n\e[1;32m✓ Release v#{version} created!\e[0m"
 puts "\e[0;36mGitHub Actions will now build and push the Docker image.\e[0m"
 puts "  → https://github.com/superforumio/campfire-ce/actions"
