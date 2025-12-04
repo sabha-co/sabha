@@ -20,75 +20,83 @@
   <% end %>
 <% end %>
 
-<section class="panel txt-align-center flex flex-column gap" style="view-transition-name: account-settings">
-  <% if Current.user.can_administer? %>
-    <div class="align-center center avatar__form gap" data-controller="upload-preview">
-      <%= form_with model: @account, method: :patch, class: "txt--medium", data: { controller: "form" } do |form| %>
-        <label class="btn input--file">
-          <%= image_tag "camera.svg", aria: { hidden: "true" }, size: 20 %>
-          <%= form.file_field :logo, class: "input", accept: "image/*",
-                data: { action: "upload-preview#previewImage change->form#submit" } %>
-          <span class="for-screen-reader">Upload logo</span>
-        </label>
-      <% end %>
-
-      <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
-        <label class="btn avatar input--file account-logo txt-xx-large">
-          <%= image_tag fresh_account_logo_path, role: "presentation", size: 48, data: { upload_preview_target: "image" } %>
-          <%= form.file_field :logo, class: "input", accept: "image/*",
-                data: { action: "upload-preview#previewImage change->form#submit" } %>
-          <span class="for-screen-reader">Upload logo</span>
-        </label>
-      <% end %>
-
-      <% if @account.logo.attached? %>
-        <%= button_to fresh_account_logo_path, method: :delete, class: "btn btn--negative txt-small avatar__delete-btn" do %>
-          <%= image_tag "minus.svg", aria: { hidden: "true" }, size: 20 %>
-          <span class="for-screen-reader">Delete logo</span>
+<div class="settings-layout">
+  <%# Left column: Settings %>
+  <section class="panel txt-align-center flex flex-column gap" style="view-transition-name: account-settings">
+    <% if Current.user.can_administer? %>
+      <div class="align-center center avatar__form gap" data-controller="upload-preview">
+        <%= form_with model: @account, method: :patch, class: "txt--medium", data: { controller: "form" } do |form| %>
+          <label class="btn input--file">
+            <%= image_tag "camera.svg", aria: { hidden: "true" }, size: 20 %>
+            <%= form.file_field :logo, class: "input", accept: "image/*",
+                  data: { action: "upload-preview#previewImage change->form#submit" } %>
+            <span class="for-screen-reader">Upload logo</span>
+          </label>
         <% end %>
-      <% end %>
-    </div>
 
-    <%= form_with model: @account, data: { controller: "form" }, class: "flex flex-column gap" do |form| %>
-      <div class="flex align-center gap">
-        <%= translation_button(:account_name) %>
+        <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
+          <label class="btn avatar input--file account-logo txt-xx-large">
+            <%= image_tag fresh_account_logo_path, role: "presentation", size: 48, data: { upload_preview_target: "image" } %>
+            <%= form.file_field :logo, class: "input", accept: "image/*",
+                  data: { action: "upload-preview#previewImage change->form#submit" } %>
+            <span class="for-screen-reader">Upload logo</span>
+          </label>
+        <% end %>
 
-        <label class="flex align-center gap flex-item-grow">
-          <%= form.text_field :name, class: "input txt-large", autocomplete: "off", placeholder: "Name this account", autofocus: true,
-                data: { action: "keydown.enter->form#submit" } %>
-        </label>
-
-        <%= form.button class: "btn btn--reversed center", type: "submit" do %>
-          <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
-          <span class="for-screen-reader">Save changes</span>
+        <% if @account.logo.attached? %>
+          <%= button_to fresh_account_logo_path, method: :delete, class: "btn btn--negative txt-small avatar__delete-btn" do %>
+            <%= image_tag "minus.svg", aria: { hidden: "true" }, size: 20 %>
+            <span class="for-screen-reader">Delete logo</span>
+          <% end %>
         <% end %>
       </div>
+
+      <%= form_with model: @account, data: { controller: "form" }, class: "flex flex-column gap" do |form| %>
+        <div class="flex align-center gap">
+          <%= translation_button(:account_name) %>
+
+          <label class="flex align-center gap flex-item-grow">
+            <%= form.text_field :name, class: "input txt-large", autocomplete: "off", placeholder: "Name this account", autofocus: true,
+                  data: { action: "keydown.enter->form#submit" } %>
+          </label>
+
+          <%= form.button class: "btn btn--reversed center", type: "submit" do %>
+            <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+            <span class="for-screen-reader">Save changes</span>
+          <% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <%= account_logo_tag style: "txt-xx-large center" %>
+      <h1 class="flex-item-grow txt-x-large"><%= @account.name %></h1>
     <% end %>
-  <% else %>
-    <%= account_logo_tag style: "txt-xx-large center" %>
-    <h1 class="flex-item-grow txt-x-large"><%= @account.name %></h1>
-  <% end %>
 
-  <% if Current.user.administrator? %>
-    <%= render "accounts/admin_settings" %>
-  <% end %>
-
-  <div class="margin-block pad-inline pad-block-start fill-shade border-radius">
     <% if Current.user.administrator? %>
-      <%= render "accounts/invite" %>
-
-      <hr class="margin-block separator full-width" style="--border-style: solid">
+      <%= render "accounts/admin_settings" %>
     <% end %>
 
-    <menu class="flex flex-column gap margin-none pad">
-      <div><strong>Online: <%= online_users_count %></strong></div>
+  </section>
+
+  <%# Right column: Members %>
+  <section class="panel panel--members flex flex-column gap">
+    <% if Current.user.administrator? %>
+      <div class="pad-inline pad-block fill-shade border-radius txt-align-center">
+        <%= render "accounts/invite" %>
+      </div>
+    <% end %>
+
+    <div class="txt-align-center">
+      <strong>Online: <%= online_users_count %></strong>
+    </div>
+
+    <menu class="flex flex-column gap margin-none pad members-list">
       <turbo-frame id="account_users">
         <%= render partial: "accounts/users/user", collection: @page.records, as: :user %>
         <%= render "accounts/users/next_page_container", page: @page.next_param unless @page.last? %>
       </turbo-frame>
     </menu>
-  </div>
-</section>
+  </section>
+</div>
 
 <% content_for :footer do %>
   <div class="txt-align-center center margin-block-double txt-subtle">Campfire&trade; version <%= version_badge %></div>

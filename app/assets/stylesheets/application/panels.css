@@ -40,6 +40,29 @@
   --panel-width: 80ch;
 }
 
+.settings-layout {
+  display: grid;
+  gap: var(--block-space);
+  margin: calc(var(--navbar-height) - var(--block-space)) auto var(--block-space);
+  max-inline-size: 100ch;
+  padding: var(--block-space);
+
+  @media (min-width: 120ch) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+
+.settings-layout .panel {
+  --panel-width: 100%;
+  margin: 0;
+}
+
+.settings-layout .panel--members .members-list {
+  max-block-size: calc(100dvh - 20rem);
+  overflow-y: auto;
+}
+
 .panel__button {
   inset-block-start: var(--block-space);
   inset-inline-start: var(--block-space);
