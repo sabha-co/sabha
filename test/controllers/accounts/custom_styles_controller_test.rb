@@ -24,6 +24,6 @@ class Accounts::CustomStylesControllerTest < ActionDispatch::IntegrationTest
     assert users(:kevin).member?
 
     put account_custom_styles_url, params: { account: { custom_styles: ":root { --color-text: red; }" } }
-    assert_response :forbidden
+    assert_redirected_to root_path
   end
 end

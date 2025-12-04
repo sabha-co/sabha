@@ -15,6 +15,6 @@ class Accounts::JoinCodesControllerTest < ActionDispatch::IntegrationTest
   test "only administrators can create new join codes" do
     sign_in :jz
     post account_join_code_url
-    assert_response :forbidden
+    assert_redirected_to root_path
   end
 end

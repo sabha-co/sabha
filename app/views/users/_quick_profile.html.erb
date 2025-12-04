@@ -56,8 +56,10 @@
             </div>
           </div>
 
-          <%= button_to rooms_directs_path(user_ids: [ user.id ]), class: "btn btn--reversed full-width txt-medium", data: { turbo_frame: "_top" } do %>
-            <%= image_tag "messages.svg", aria: { hidden: "true", label: "Ping #{user.name}" } %>
+          <% if Current.user.administrator? || !Current.account.settings.restrict_direct_messages_to_administrators? %>
+            <%= button_to rooms_directs_path(user_ids: [ user.id ]), class: "btn btn--reversed full-width txt-medium", data: { turbo_frame: "_top" } do %>
+              <%= image_tag "messages.svg", aria: { hidden: "true", label: "Ping #{user.name}" } %>
+            <% end %>
           <% end %>
           
           <div class="txt-align-center">
