@@ -116,6 +116,9 @@ unless system "gh", "release", "create", "v#{version}", "--title", "v#{version}"
   abort "Failed to create release; check that the version doesn't already exist"
 end
 
+# Fetch the newly created tag locally
+system "git", "fetch", "--tags"
+
 puts "\n\e[1;32m✓ Release v#{version} created!\e[0m"
 puts "\e[0;36mGitHub Actions will now build and push the Docker image.\e[0m"
 puts "  → https://github.com/superforumio/campfire-ce/actions"
