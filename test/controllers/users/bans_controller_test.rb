@@ -56,7 +56,7 @@ class Users::BansControllerTest < ActionDispatch::IntegrationTest
 
     post user_ban_url(users(:jason))
 
-    assert_response :forbidden
+    assert_redirected_to root_path
   end
 
   test "destroy removes ban records and sets user to active" do
@@ -83,6 +83,6 @@ class Users::BansControllerTest < ActionDispatch::IntegrationTest
 
     delete user_ban_url(user)
 
-    assert_response :forbidden
+    assert_redirected_to root_path
   end
 end

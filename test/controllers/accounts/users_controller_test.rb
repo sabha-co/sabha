@@ -27,9 +27,9 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     sign_in :kevin
 
     put account_user_url(users(:david)), params: { user: { role: "administrator" } }
-    assert_response :forbidden
+    assert_redirected_to root_path
 
     delete account_user_url(users(:david))
-    assert_response :forbidden
+    assert_redirected_to root_path
   end
 end

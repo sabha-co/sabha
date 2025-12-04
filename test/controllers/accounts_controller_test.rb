@@ -24,6 +24,14 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert users(:kevin).member?
 
     put account_url, params: { account: { name: "Different" } }
-    assert_response :forbidden
+    assert_redirected_to root_path
+  end
+
+  test "non-admins cannot access edit" do
+    sign_in :kevin
+    assert users(:kevin).member?
+
+    get edit_account_url
+    assert_redirected_to root_path
   end
 end
