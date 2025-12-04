@@ -93,6 +93,23 @@ unless `git status --porcelain`.strip.empty?
   abort "Release aborted." unless $stdin.gets.strip.downcase.chars.first == "y"
 end
 
+# Check for unpushed commits
+unpushed = `git log @{u}.. --oneline 2>/dev/null`.strip
+unless unpushed.empty?
+  puts "\e[1;33mWarning: You have unpushed commits:\e[0m"
+  unpushed.lines.each { |line| puts "  #{line}" }
+  print "\e[1;33mPush now? [Y/n] \e[0m"
+  response = $stdin.gets.strip.downcase
+  if response.empty? || response.chars.first == "y"
+    unless system "git", "push"
+      abort "Failed to push. Please push manually and try again."
+    end
+  else
+    print "\e[1;33mRelease with unpushed commits? [y/N] \e[0m"
+    abort "Release aborted." unless $stdin.gets.strip.downcase.chars.first == "y"
+  end
+end
+
 puts "\n\e[1;36mCreating GitHub release v#{version}...\e[0m"
 
 unless system "gh", "release", "create", "v#{version}", "--title", "v#{version}", "--generate-notes"
