@@ -258,7 +258,7 @@ test/
 ### Customizing Branding
 1. **Admin Settings UI** (`/account/edit` - administrators only):
    - Authentication method (password/OTP) - stored in `accounts.auth_method`
-   - Open registration toggle - stored in `accounts.open_registration`
+   - Permission toggles - stored in `accounts.settings` JSON column via `has_json`
 2. **Environment Variables** (`.env` or `.kamal/secrets`):
    - APP_NAME, SUPPORT_EMAIL, THEME_COLOR, BACKGROUND_COLOR, etc. (see `BrandingConfig`)
 3. Visual assets replaced in `app/assets/images/logos/` and `app/assets/images/icons/`

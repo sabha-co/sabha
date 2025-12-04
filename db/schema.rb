@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2025_12_04_190113) do
+ActiveRecord::Schema[8.2].define(version: 2025_12_04_202935) do
   create_table "accounts", force: :cascade do |t|
     t.boolean "active", default: true
     t.string "auth_method", default: "password"
@@ -18,7 +18,6 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_04_190113) do
     t.text "custom_styles"
     t.string "join_code", null: false
     t.string "name", null: false
-    t.boolean "open_registration", default: false
     t.json "settings"
     t.datetime "updated_at", null: false
   end

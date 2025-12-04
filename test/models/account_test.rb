@@ -21,22 +21,9 @@ class AccountTest < ActiveSupport::TestCase
     assert_includes @account.errors[:auth_method], "must be 'password' or 'otp'"
   end
 
-  test "open_registration defaults to false" do
-    @account.update!(open_registration: nil)
-    assert_equal false, @account.open_registration_value
-  end
-
-  test "open_registration_value returns database value" do
-    @account.update!(open_registration: true)
-    assert_equal true, @account.open_registration_value
-  end
-
-  test "new account has default values from migration" do
+  test "new account has default auth_method" do
     account = Account.new(name: "New Account", join_code: "NEW-CODE")
-
-    # Check that defaults are set from migration
     assert_equal "password", account.auth_method
-    assert_equal false, account.open_registration
   end
 
   test "settings restrict_room_creation_to_administrators defaults to false" do
