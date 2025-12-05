@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2025_12_05_000001) do
+ActiveRecord::Schema[8.2].define(version: 2025_12_05_182543) do
   create_table "accounts", force: :cascade do |t|
     t.boolean "active", default: true
     t.string "auth_method", default: "password"
@@ -171,19 +171,6 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_05_000001) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["library_session_id", "user_id"], name: "index_library_watch_histories_on_session_and_user", unique: true
-  end
-
-  create_table "live_events", force: :cascade do |t|
-    t.boolean "active", default: true, null: false
-    t.datetime "created_at", null: false
-    t.integer "duration_hours", default: 2, null: false
-    t.integer "show_early_hours", default: 24, null: false
-    t.datetime "target_time", null: false
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
-    t.string "url", null: false
-    t.index ["active"], name: "index_live_events_on_active"
-    t.index ["target_time"], name: "index_live_events_on_target_time"
   end
 
   create_table "mailkick_subscriptions", force: :cascade do |t|
