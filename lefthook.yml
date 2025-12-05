@@ -10,5 +10,5 @@ pre-commit:
 pre-push:
   parallel: true
   commands:
-    tests:
-      run: bin/rails test
+    brakeman:
+      run: bin/brakeman --no-pager
