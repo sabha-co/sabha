@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2025_12_05_182543) do
+ActiveRecord::Schema[8.2].define(version: 2025_12_05_000001) do
   create_table "accounts", force: :cascade do |t|
     t.boolean "active", default: true
     t.string "auth_method", default: "password"
@@ -111,66 +111,6 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_05_182543) do
     t.index ["booster_id"], name: "index_boosts_on_booster_id"
     t.index ["message_id", "active", "created_at"], name: "index_boosts_on_message_active_created"
     t.index ["message_id"], name: "index_boosts_on_message_id"
-  end
-
-  create_table "library_categories", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.string "slug", null: false
-    t.datetime "updated_at", null: false
-    t.index ["slug"], name: "index_library_categories_on_slug", unique: true
-  end
-
-  create_table "library_classes", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "creator", null: false
-    t.integer "position", default: 0, null: false
-    t.string "slug", null: false
-    t.string "title", null: false
-    t.datetime "updated_at", null: false
-    t.index ["position"], name: "index_library_classes_on_position"
-    t.index ["slug"], name: "index_library_classes_on_slug", unique: true
-  end
-
-  create_table "library_classes_categories", id: false, force: :cascade do |t|
-    t.integer "library_category_id", null: false
-    t.integer "library_class_id", null: false
-    t.index ["library_category_id"], name: "index_library_classes_categories_on_library_category_id"
-    t.index ["library_class_id", "library_category_id"], name: "index_library_classes_categories_on_class_and_category", unique: true
-    t.index ["library_class_id"], name: "index_library_classes_categories_on_library_class_id"
-  end
-
-  create_table "library_sessions", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.text "description", null: false
-    t.boolean "featured", default: false, null: false
-    t.integer "featured_position", default: 0, null: false
-    t.datetime "last_watched_at"
-    t.integer "library_class_id", null: false
-    t.decimal "padding", precision: 5, scale: 2, default: "56.25", null: false
-    t.integer "played_seconds", default: 0, null: false
-    t.integer "position", default: 0, null: false
-    t.string "quality"
-    t.datetime "updated_at", null: false
-    t.string "vimeo_hash"
-    t.string "vimeo_id", null: false
-    t.index ["featured"], name: "index_library_sessions_on_featured"
-    t.index ["featured_position"], name: "index_library_sessions_on_featured_position"
-    t.index ["library_class_id"], name: "index_library_sessions_on_library_class_id"
-    t.index ["position"], name: "index_library_sessions_on_position"
-    t.index ["vimeo_id"], name: "index_library_sessions_on_vimeo_id"
-  end
-
-  create_table "library_watch_histories", force: :cascade do |t|
-    t.boolean "completed", default: false, null: false
-    t.datetime "created_at", null: false
-    t.integer "duration_seconds"
-    t.datetime "last_watched_at"
-    t.integer "library_session_id", null: false
-    t.integer "played_seconds", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index ["library_session_id", "user_id"], name: "index_library_watch_histories_on_session_and_user", unique: true
   end
 
   create_table "mailkick_subscriptions", force: :cascade do |t|
@@ -329,11 +269,6 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_05_182543) do
   add_foreign_key "bookmarks", "messages"
   add_foreign_key "bookmarks", "users"
   add_foreign_key "boosts", "messages"
-  add_foreign_key "library_classes_categories", "library_categories"
-  add_foreign_key "library_classes_categories", "library_classes"
-  add_foreign_key "library_sessions", "library_classes"
-  add_foreign_key "library_watch_histories", "library_sessions"
-  add_foreign_key "library_watch_histories", "users"
   add_foreign_key "mentions", "messages"
   add_foreign_key "mentions", "users"
   add_foreign_key "messages", "rooms"

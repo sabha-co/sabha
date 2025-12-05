@@ -1,5 +1,5 @@
 // Keep the permanent #sidebar in sync with the current page's :sidebar content
-// Works with Turbo navigation and direct loads without interfering with Inertia pages
+// Works with Turbo navigation and direct loads
 
 function getSidebarElements() {
   const sidebar = document.getElementById("sidebar")
@@ -11,26 +11,13 @@ function getSlotFromBody(bodyEl) {
   return bodyEl ? bodyEl.querySelector("#sidebar-slot") : null
 }
 
-function isInertiaPage() {
-  // Inertia mounts into #app with data-page. If present, Library handles DOM itself.
-  const app = document.getElementById("app")
-  return !!(app && app.dataset.page)
-}
-
 function isSidebarAllowedOnPage() {
-  const body = document.body
-  return (
-    body.classList.contains("sidebar") ||
-    body.classList.contains("library-collapsed")
-  )
+  return document.body.classList.contains("sidebar")
 }
 
 function isSidebarAllowedOnBody(bodyEl) {
   if (!bodyEl) return false
-  return (
-    bodyEl.classList.contains("sidebar") ||
-    bodyEl.classList.contains("library-collapsed")
-  )
+  return bodyEl.classList.contains("sidebar")
 }
 
 function syncSidebarFromSlot() {
@@ -43,9 +30,6 @@ function syncSidebarFromSlot() {
     sidebar.classList.remove("open")
     return
   }
-
-  // Do not interfere with Inertia pages; Library manages the sidebar itself
-  if (isInertiaPage()) return
 
   // If we already have the standard sidebar turbo-frame mounted, keep it
   // This preserves Turbo-permanent behavior and avoids re-rendering

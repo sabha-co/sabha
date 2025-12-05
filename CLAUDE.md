@@ -4,13 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-Campfire-CE is a hybrid Ruby on Rails chat application combining:
+Campfire-CE is a Ruby on Rails chat application combining:
 - **Traditional Rails views + Hotwire/Turbo** for the core chat interface (real-time messaging)
-- **Inertia.js + React + TypeScript** for the video library feature (SPA)
 - **ActionCable (WebSockets)** for real-time updates across all chat features
-- **Vite** as the modern frontend build tool
-
-This hybrid approach allows server-rendered chat rooms with real-time updates while providing a modern SPA experience for video content.
+- **Vite** for modern frontend asset processing (Tailwind CSS v4)
+- **Importmap** for JavaScript module loading (Stimulus controllers)
 
 ## Core Domain Models
 
@@ -41,12 +39,6 @@ This hybrid approach allows server-rendered chat rooms with real-time updates wh
 - `Webhook` & `WebhookEvent` - Handles Gumroad sale/refund webhooks
 - `Purchaser` - Tracks user purchases
 - Controlled by `ENV["GUMROAD_ON"]` - can run as free community if disabled
-
-### Library/Video Content
-- `LibrarySession` - Video content sessions
-- `LibraryClass` - Courses/classes
-- `LibraryCategory` - Content organization
-- `LibraryWatchHistory` - User progress tracking
 
 ## Key Architectural Patterns
 
@@ -83,13 +75,10 @@ bin/rails server  # Start development server (port 3000)
 # Vite runs automatically via vite_rails with autoBuild: true
 ```
 
-### Tailwind CSS (Dual Setup)
+### Tailwind CSS
 ```bash
-# For Rails views (asset pipeline) - only needed if editing app/assets/stylesheets/**
-bin/tailwind-build --watch
-
-# For Inertia/React pages (app/frontend/**)
-# Automatically processed by Vite - no separate command needed
+# Tailwind is processed by Vite from app/frontend/entrypoints/application.css
+# Automatically rebuilt during development - no separate command needed
 ```
 
 ### Testing
@@ -124,26 +113,14 @@ kamal envify          # Show environment variables being used
 ```
 app/frontend/
 ├── entrypoints/
-│   ├── inertia.ts          # Inertia.js bootstrapper (loads on turbo:load)
 │   ├── application.js      # Stimulus controllers for Rails views
-│   └── application.css     # Tailwind v4 for Inertia pages
-├── pages/library/          # Inertia.js React pages (TSX)
-│   ├── index.tsx           # Library catalog
-│   ├── watch.tsx           # Video player
-│   └── components/         # Page-specific React components
-├── components/ui/          # Reusable shadcn/ui style components
-└── lib/                    # Frontend utilities (cn, formatters)
+│   └── application.css     # Tailwind v4 styles
+└── controllers/            # Stimulus controllers
 ```
-
-### React/Inertia Pages
-- Pages auto-resolve via glob: `../pages/**/*.tsx`
-- Navigation between Rails and Inertia seamless via Turbo integration
-- Version synced with `ViteRuby.digest` to force client reloads on asset changes
-- Inertia unmounts on `turbo:before-cache` to prevent component conflicts
 
 ### Rails Views
 - Main layout: `app/views/layouts/application.html.erb`
-- Includes both Vite tags and importmap for hybrid setup
+- Uses Vite for CSS and importmap for JavaScript
 - Partials organized by feature: `messages/`, `rooms/`, `inboxes/`, `users/sidebars/`
 
 ## Real-time Features (ActionCable)
@@ -168,7 +145,6 @@ Uses Resque (Redis-backed) for background processing:
 - `Room::PushMessageJob` - Web push notifications for new messages
 - `UnreadMentionsNotifierJob` - Daily email digest of unread mentions/DMs
 - `Gumroad::ImportUserJob` - Process Gumroad purchase webhooks
-- `Vimeo::WarmThumbnailsJob` - Preload video thumbnails
 
 Scheduled jobs via rufus-scheduler (see `config/initializers/rufus_scheduler.rb`)
 
@@ -191,10 +167,8 @@ Required for production:
 Optional features:
 - `GUMROAD_ON=true` - Enable payment gating
 - `GUMROAD_ACCESS_TOKEN` - Gumroad API access
-- `VIMEO_ACCESS_TOKEN` - Video downloads from Vimeo
 
 ### Key Initializers
-- `inertia_rails.rb` - Inertia.js configuration (version syncing, encryption)
 - `content_security_policy.rb` - CSP frame ancestors (iframe embedding)
 - `resend.rb` - Custom ActionMailer delivery via Resend API
 - `web_push.rb` - VAPID-based web push notification setup
@@ -205,7 +179,6 @@ Optional features:
 - Top-level room slug routing via `RoomSlugConstraint`
 - Conditional root routes (authenticated → `welcome#show`, unauthenticated → `marketing#show`)
 - Nested resources: `/rooms/:room_id/messages/:id`
-- Inertia routes: `GET /library` and `GET /library/:id`
 - Webhook endpoints: `POST /webhooks/gumroad/users/:webhook_secret`
 
 ## Testing Guidelines
@@ -242,12 +215,6 @@ test/
 2. Preload in `config/initializers/preload_room_subclasses.rb`
 3. Add routing constraints if needed
 4. Update `RoomsController#show` for type-specific rendering
-
-### Modifying Inertia.js Pages
-1. Edit TSX files in `app/frontend/pages/library/`
-2. TypeScript interfaces in `types.ts`
-3. Controller renders via `render inertia: "library/index", props: { ... }`
-4. Vite HMR updates automatically in development
 
 ### Adding ActionCable Channel
 1. Generate: `bin/rails generate channel FeatureName`

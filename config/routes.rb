@@ -24,12 +24,6 @@ Rails.application.routes.draw do
   get "/api/stats", to: "marketing#stats", defaults: { format: :json }
   get "/chat", to: "welcome#show"
 
-  namespace :api, defaults: { format: :json }, module: :api do
-    namespace :videos do
-      resources :thumbnails, only: :index
-    end
-  end
-
   resource :first_run
 
   resource :session do
@@ -198,14 +192,6 @@ Rails.application.routes.draw do
 
   get "webmanifest"    => "pwa#manifest"
   get "service-worker" => "pwa#service_worker"
-
-  get "library" => "library#index", as: :library
-  get "library/download/:id" => "library#download", as: :library_download
-  get "library/downloads/:id" => "library#downloads", as: :library_downloads
-  get "library/:id" => "library#show", as: :library_watch
-  resources :library_sessions, only: [] do
-    resource :watch_history, only: [ :create, :update ], controller: "library/watch_histories"
-  end
 
   get "up" => "rails/health#show", as: :rails_health_check
 
