@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
-require "rack-mini-profiler"
+if Rails.env.development?
+  require "rack-mini-profiler"
 
-Rack::MiniProfilerRails.initialize!(Rails.application)
+  Rack::MiniProfilerRails.initialize!(Rails.application)
 
-Rack::MiniProfiler.config.start_hidden = true
+  # Start hidden by default (press Alt+P to toggle)
+  Rack::MiniProfiler.config.start_hidden = false
 
-Rack::MiniProfiler.config.authorization_mode = :allow_authorized
+  # Allow all users in development
+  Rack::MiniProfiler.config.authorization_mode = :allow_all
+end
