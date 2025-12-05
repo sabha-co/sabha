@@ -87,7 +87,6 @@ Campfire-CE uses [Kamal](https://kamal-deploy.org/docs/installation/) for deploy
    # Application secrets (generate with: rails secret)
    SECRET_KEY_BASE=your-rails-secret-key
    RESEND_API_KEY=your-resend-api-key
-   VIMEO_ACCESS_TOKEN=your-vimeo-api-key
    AWS_ACCESS_KEY_ID=your-aws-access-key
    AWS_SECRET_ACCESS_KEY=your-aws-secret-key
    AWS_DEFAULT_REGION=us-east-1
@@ -160,7 +159,6 @@ docker run -p 3000:3000 \
 | `VAPID_PRIVATE_KEY`            | Web push notifications      | ✅       |
 | `WEBHOOK_SECRET`               | Webhook security            | ✅       |
 | `COOKIE_DOMAIN`                | Session cookies domain      | ✅       |
-| `VIMEO_ACCESS_TOKEN`           | Video downloads             | ⚠️       |
 | `GUMROAD_ACCESS_TOKEN`         | Payment processing          | ⚠️       |
 | `GUMROAD_ON`                   | Enable Gumroad features     | ⚠️       |
 | `GUMROAD_PRODUCT_IDS`          | Gumroad product IDs         | ⚠️       |

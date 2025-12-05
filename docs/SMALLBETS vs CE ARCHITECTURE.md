@@ -32,7 +32,7 @@ This document outlines the architectural differences between Campfire-CE and the
 
 | Feature | Description | Reason |
 |---------|-------------|--------|
-| **Video Library** | Netflix-style video browsing with Vimeo integration | Small Bets-specific, requires Vimeo account |
+| **Video Library** | React/Inertia.js-based video browsing | Small Bets-specific, removed to simplify to pure Rails |
 | **Live Events** | Countdown banners for scheduled events | No admin UI, untested |
 | **Experts Directory** | Expert users with special privileges | Small Bets-specific |
 | **Feed System** | Automated feed cards | Small Bets-specific |

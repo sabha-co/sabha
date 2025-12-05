@@ -42,7 +42,7 @@ export function trimChildren(count, container, top) {
 }
 
 export async function keepScroll(container, top, fn) {
-  pauseInertiaScroll(container)
+  pauseScroll(container)
 
   const scrollTop = container.scrollTop
   const scrollHeight = container.scrollHeight
@@ -56,7 +56,7 @@ export async function keepScroll(container, top, fn) {
   }
 }
 
-function pauseInertiaScroll(container) {
+function pauseScroll(container) {
   container.style.overflow = "hidden"
 
   requestAnimationFrame(() => {
