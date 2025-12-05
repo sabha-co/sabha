@@ -1,0 +1,14 @@
+pre-commit:
+  parallel: true
+  commands:
+    rubocop:
+      glob: "*.{rb,rake}"
+      exclude: "db/schema.rb"
+      run: bundle exec rubocop -A {staged_files}
+      stage_fixed: true
+
+pre-push:
+  parallel: true
+  commands:
+    tests:
+      run: bin/rails test
