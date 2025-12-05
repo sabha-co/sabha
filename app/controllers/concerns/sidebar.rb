@@ -18,18 +18,14 @@ module Sidebar
     if @direct_memberships.any?
       room_ids = @direct_memberships.map { |m| m.room.id }
 
-      # Load all users for these rooms in one query, with avatars preloaded
-      room_users = User.active
-        .joins(:memberships)
-        .where(memberships: { room_id: room_ids, active: true })
-        .includes(avatar_attachment: { blob: :variant_records })
-        .select("users.*, memberships.room_id as membership_room_id")
+      # Load all memberships for these rooms in one query, with users and avatars preloaded
+      memberships_for_rooms = Membership.where(room_id: room_ids, active: true)
+        .includes(user: { avatar_attachment: { blob: :variant_records } })
 
       # Group by room_id and exclude current user
-      room_users.each do |user|
-        room_id = user.membership_room_id.to_i
-        @direct_room_members[room_id] ||= []
-        @direct_room_members[room_id] << user unless user.id == Current.user.id
+      memberships_for_rooms.group_by(&:room_id).each do |room_id, memberships|
+        users = memberships.map(&:user).reject { |u| u.id == Current.user.id }
+        @direct_room_members[room_id] = users
       end
 
       # Ensure each room has at least the current user if no other members
