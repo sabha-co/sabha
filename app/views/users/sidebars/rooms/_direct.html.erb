@@ -1,5 +1,5 @@
 <% cache membership do %>
-  <% members = membership.room.users.without(membership.user).presence || [ membership.user ] %>
+  <% members = @direct_room_members&.dig(membership.room.id).presence || membership.room.users.without(membership.user).presence || [ membership.user ] %>
 
   <%= link_to_room membership.room, class: [ "direct", "unread": membership.unread? ], id: dom_id(membership.room, :list),
         data: {
