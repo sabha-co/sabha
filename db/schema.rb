@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2025_12_04_202935) do
+ActiveRecord::Schema[8.2].define(version: 2025_12_05_000001) do
   create_table "accounts", force: :cascade do |t|
     t.boolean "active", default: true
     t.string "auth_method", default: "password"
@@ -97,6 +97,7 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_04_202935) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["message_id"], name: "index_bookmarks_on_message_id"
+    t.index ["user_id", "message_id", "active"], name: "index_bookmarks_on_user_message_active"
     t.index ["user_id"], name: "index_bookmarks_on_user_id"
   end
 
@@ -108,6 +109,7 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_04_202935) do
     t.integer "message_id", null: false
     t.datetime "updated_at", null: false
     t.index ["booster_id"], name: "index_boosts_on_booster_id"
+    t.index ["message_id", "active", "created_at"], name: "index_boosts_on_message_active_created"
     t.index ["message_id"], name: "index_boosts_on_message_id"
   end
 
@@ -228,6 +230,7 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_04_202935) do
     t.boolean "mentions_everyone", default: false, null: false
     t.integer "room_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["active", "room_id", "created_at"], name: "index_messages_on_active_room_created"
     t.index ["created_at"], name: "index_messages_on_created_at"
     t.index ["creator_id"], name: "index_messages_on_creator_id"
     t.index ["room_id", "created_at"], name: "index_messages_on_room_id_and_created_at"

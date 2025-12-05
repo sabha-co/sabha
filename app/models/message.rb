@@ -38,7 +38,20 @@ class Message < ApplicationRecord
 
   scope :ordered, -> { order(:created_at) }
   scope :with_creator, -> { includes(:creator).merge(User.with_attached_avatar) }
-  scope :with_threads, -> { includes(threads: { visible_memberships: :user }) }
+  scope :with_threads, -> {
+    includes(threads: {
+      messages: { creator: :avatar_attachment },
+      visible_memberships: { user: :avatar_attachment }
+    })
+  }
+  scope :for_display, -> {
+    with_rich_text_body_and_embeds
+      .includes(:creator, :mentions)
+      .merge(User.with_attached_avatar)
+      .includes(attachment_attachment: { blob: :variant_records })
+      .includes(boosts: { booster: :avatar_attachment })
+      .with_threads
+  }
   scope :created_by, ->(user) { where(creator_id: user.id) }
   scope :without_created_by, ->(user) { where.not(creator_id: user.id) }
   scope :between, ->(from, to) { where(created_at: from..to) }

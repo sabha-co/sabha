@@ -81,11 +81,18 @@ module Message::Broadcasts
 
     thread_user_ids = thread.memberships.active.visible.pluck(:user_id)
     parent_room_user_ids = parent_message.room.memberships.active.involved_in_everything.pluck(:user_id)
-    all_user_ids = (thread_user_ids + parent_room_user_ids).uniq
+    all_user_ids = (thread_user_ids + parent_room_user_ids).uniq - [ creator_id ]
+
+    # Batch load all users at once to avoid N+1 queries
+    users_by_id = User.where(id: all_user_ids).index_by(&:id)
+
+    # Preload parent_message with threads and their messages/creators for the partial
+    parent_message_with_threads = Message.includes(threads: { messages: { creator: :avatar_attachment } })
+                                         .find(parent_message.id)
 
     all_user_ids.each do |user_id|
-      next if user_id == creator_id
-      user = User.find(user_id)
+      user = users_by_id[user_id]
+      next unless user
 
       if thread.messages_count == 1
         broadcast_append_to user, :inbox_threads,
@@ -100,7 +107,7 @@ module Message::Broadcasts
         broadcast_replace_to user, :inbox_threads,
                             target: ActionView::RecordIdentifier.dom_id(parent_message, :threads),
                             partial: "messages/threads",
-                            locals: { message: parent_message.reload }
+                            locals: { message: parent_message_with_threads }
       end
     end
   end
