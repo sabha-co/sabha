@@ -18,8 +18,6 @@
     <%= tag.link rel: "manifest", href: webmanifest_path(format: :json) %>
     <%= tag.link rel: "icon", href: fresh_account_logo_path, type: "image/png" %>
     <%= tag.link rel: "apple-touch-icon", href: fresh_account_logo_path %>
-    <%= tag.link rel: "preconnect", href: "https://i.vimeocdn.com", crossorigin: "anonymous" %>
-    <%= tag.link rel: "preconnect", href: "https://player.vimeo.com", crossorigin: "anonymous" %>
 
     <%= stylesheet_link_tag *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
     <% if hotwire_native_app? %>
@@ -31,27 +29,13 @@
     <%= javascript_importmap_tags %>
 
     <%= yield :head %>
-    
-    <%= vite_react_refresh_tag %>
+
     <%= vite_client_tag %>
-    <%= vite_typescript_tag "inertia" %>
-    <%= inertia_ssr_head %>
     <%= vite_javascript_tag 'application' %>
-    <!--
-      If using a TypeScript entrypoint file:
-        vite_typescript_tag 'application'
-
-      If using a .jsx or .tsx entrypoint, add the extension:
-        vite_javascript_tag 'application.jsx'
-
-      Visit the guide for more information: https://vite-ruby.netlify.app/guide/rails
-    -->
-
   </head>
 
   <body class="<%= body_classes %>" data-controller="local-time lightbox page-title">
-    <% skip_target = controller_name == "library" && action_name == "index" ? "#continue-watching" : "#main-content" %>
-    <a href="<%= skip_target %>" class="skip-navigation btn" data-turbo="false">Skip to main content</a>
+    <a href="#main-content" class="skip-navigation btn" data-turbo="false">Skip to main content</a>
     <a href="#sidebar-toggle" class="skip-navigation btn" data-turbo="false">Skip to menu</a>
 
     <nav id="nav">

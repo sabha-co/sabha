@@ -55,7 +55,7 @@ class Room < ApplicationRecord
   scope :ordered, -> { order(:sortable_name) }
 
   RESERVED_SLUGS = %w[
-    join api chat rooms users messages library experts stats up service-worker webmanifest account session auth_tokens webhooks configurations inbox searches qr_code assets rails
+    join api chat rooms users messages stats up service-worker webmanifest account session auth_tokens webhooks configurations inbox searches qr_code assets rails
   ]
 
   validates :slug,

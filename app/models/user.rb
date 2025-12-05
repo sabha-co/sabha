@@ -35,7 +35,6 @@ class User < ApplicationRecord
 
   has_many :boosts, -> { active }, foreign_key: :booster_id, class_name: "Boost"
   has_many :searches, dependent: :delete_all
-  has_many :library_watch_histories, dependent: :delete_all
 
   has_many :sessions, dependent: :destroy
   has_many :auth_tokens, dependent: :destroy
@@ -279,7 +278,6 @@ class User < ApplicationRecord
       Mention.where(user_id: id).delete_all
       Search.where(user_id: id).delete_all
       Search.where(creator_id: id).delete_all
-      LibraryWatchHistory.where(user_id: id).delete_all
       Session.where(user_id: id).delete_all
       AuthToken.where(user_id: id).delete_all
       Ban.where(user_id: id).delete_all
