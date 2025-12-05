@@ -181,11 +181,11 @@ The sidebar now separates rooms into "My Rooms" and "All Rooms" sections for bet
 
 
 ## Video library
-Full video content library built with React for a modern experience. Members can browse courses organized by categories, resume where they left off with progress tracking, and download videos. Integrates seamlessly with Vimeo for hosting.
+**[REMOVED]** Full video content library built with React for a modern experience. Members can browse courses organized by categories, resume where they left off with progress tracking, and download videos. Integrates seamlessly with Vimeo for hosting.
 
 
 ## Live events banner
-A countdown banner appears at the top of rooms promoting upcoming live events like webinars or AMAs. Shows "Starts in X hours" with a link to join, then "Live now!" during the event, and disappears when it ends.
+**[REMOVED]** A countdown banner appears at the top of rooms promoting upcoming live events like webinars or AMAs. Shows "Starts in X hours" with a link to join, then "Live now!" during the event, and disappears when it ends.
 
 
 ## Marketing page
