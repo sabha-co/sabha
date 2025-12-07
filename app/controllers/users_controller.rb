@@ -43,7 +43,7 @@ class UsersController < ApplicationController
       else
         # For password: Send verification email with link
         @user.send_verification_email
-        redirect_to root_url, notice: "Please check your email to verify your account."
+        redirect_to new_session_url(email_address: @user.email_address), notice: "Please check your email to verify your account."
       end
     else
       start_new_session_for @user

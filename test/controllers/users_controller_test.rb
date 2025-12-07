@@ -24,7 +24,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to root_url
+    assert_redirected_to new_session_url(email_address: "newuser@example.com")
     assert_match /check your email to verify/, flash[:notice]
 
     user = User.find_by(email_address: "newuser@example.com")
@@ -111,7 +111,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_match /Password is too short/, flash[:alert]
   end
 
-  test "create with valid password succeeds" do
+  test "create with valid password redirects to sign-in for email verification" do
     Current.account.update!(auth_method: "password")
 
     assert_difference -> { User.count }, 1 do
@@ -124,10 +124,11 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to root_url
+    assert_redirected_to new_session_url(email_address: "valid@example.com")
     user = User.find_by(email_address: "valid@example.com")
     assert user.present?
     assert user.authenticate("valid_password_123")
+    assert_not user.verified?
   end
 
   test "create with invalid email returns 422" do
