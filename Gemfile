@@ -7,7 +7,7 @@ gem "rails", github: "rails/rails", branch: "main"
 
 # Drivers
 gem "sqlite3", ">= 2.8"
-gem "redis", "~> 5.4.0"  # Pin to 5.4.0 to avoid 5.4.1 bug (redis-rb issue #1321)
+gem "redis", "5.4.0"  # Pin to exactly 5.4.0 to avoid 5.4.1 bug (redis-rb issue #1321)
 
 # Deployment
 gem "puma", "~> 7.1"

@@ -311,9 +311,9 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
-    redis (5.4.1)
+    redis (5.4.0)
       redis-client (>= 0.22.0)
-    redis-client (0.26.1)
+    redis-client (0.26.2)
       connection_pool
     redis-namespace (1.11.0)
       redis (>= 4)
@@ -481,7 +481,7 @@ DEPENDENCIES
   rack-mini-profiler (~> 4.0)
   rails!
   rails_autolink
-  redis (~> 5.4.0)
+  redis (= 5.4.0)
   resend
   resque (~> 2.7.0)
   resque-pool (~> 0.7.1)
