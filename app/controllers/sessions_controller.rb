@@ -2,7 +2,7 @@ class SessionsController < ApplicationController
   include EmailValidation
 
   allow_unauthenticated_access only: %i[ new create ]
-  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { render_rejection :too_many_requests }
+  rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_url, alert: "Too many sign in attempts. Please try again later." }
 
   before_action :ensure_user_exists, only: :new
   before_action :validate_email_param, only: :create
@@ -15,14 +15,15 @@ class SessionsController < ApplicationController
                                           password: params[:password])
       # Check if email verification is required
       if Current.account.auth_method_value == "password" && !user.verified?
-        flash.now[:alert] = "Please verify your email address. Check your inbox for the verification link, or use 'Forgot your password?' to resend."
-        render :new, status: :unauthorized
+        redirect_to new_session_url(email_address: params[:email_address]),
+          alert: "Please verify your email address. Check your inbox for the verification link, or use 'Forgot your password?' to resend."
       else
         start_new_session_for user
         redirect_to post_authenticating_url
       end
     else
-      render_rejection :unauthorized
+      redirect_to new_session_url(email_address: params[:email_address]),
+        alert: "Invalid email or password."
     end
   end
 
@@ -39,11 +40,6 @@ class SessionsController < ApplicationController
 
     def validate_email_param
       render_invalid_email unless valid_email?(params[:email_address])
-    end
-
-    def render_rejection(status)
-      flash.now[:alert] = "Too many requests or unauthorized."
-      render :new, status: status
     end
 
     def remove_push_subscription
