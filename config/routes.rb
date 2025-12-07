@@ -20,7 +20,6 @@ Rails.application.routes.draw do
     root to: "marketing#show", as: :unauthenticated_root
   end
 
-  get "/join", to: "marketing#join", as: :join_now
   get "/api/stats", to: "marketing#stats", defaults: { format: :json }
   get "/chat", to: "welcome#show"
 

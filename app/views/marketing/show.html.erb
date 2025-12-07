@@ -3,7 +3,7 @@
   <!-- Header Section -->
   <header class="py-6">
     <div class="container" style="display: flex; justify-content: flex-end; gap: 1rem;">
-      <a href="/chat" class="btn btn-outline text-sm py-2 px-6">Sign In</a>
+      <a href="<%= new_session_path %>" class="btn btn-outline text-sm py-2 px-6">Sign In</a>
     </div>
   </header>
 
@@ -14,7 +14,7 @@
         <%= BrandingConfig.app_name %>
       </h1>
       <p class="hero-subtitle">
-        A community for creators and entrepreneurs making small bets
+        <%= BrandingConfig.app_description %>
       </p>
     </div>
   </section>

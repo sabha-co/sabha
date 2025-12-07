@@ -5,15 +5,10 @@ class MarketingController < ApplicationController
   layout "marketing"
 
   before_action :ensure_account_exists
-  before_action :restore_authentication, :redirect_signed_in_user_to_chat, except: [ :join, :stats ]
+  before_action :restore_authentication, :redirect_signed_in_user_to_chat, except: [ :stats ]
 
   def show
     # Simplified marketing page - no dynamic data needed
-  end
-
-  def join
-    # Registration requires an invite link - this endpoint no longer exposes the join code
-    head :not_found
   end
 
   def stats

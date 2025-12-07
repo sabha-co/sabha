@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  DEFAULT_NAME = "Small Better"
+  DEFAULT_NAME = "New Member"
   MINIMUM_PASSWORD_LENGTH = 8
 
   has_subscriptions
