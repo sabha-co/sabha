@@ -47,6 +47,7 @@ class User < ApplicationRecord
   has_many :blocked_by_users, through: :blocks_received, source: :blocker
 
   validates_presence_of :email_address, if: :person?
+  validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }, if: -> { email_address.present? }
   normalizes :email_address, with: ->(email_address) { email_address.downcase }
 
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }

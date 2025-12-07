@@ -35,6 +35,22 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  test "email validation rejects invalid format" do
+    user = User.new(name: "Test", email_address: "not-an-email", password: "secret123456")
+    assert_not user.valid?
+    assert_includes user.errors[:email_address], "is invalid"
+  end
+
+  test "email validation accepts valid format" do
+    user = User.new(name: "Test", email_address: "valid@example.com", password: "secret123456")
+    assert user.valid?
+  end
+
+  test "email validation accepts emails with plus signs" do
+    user = User.new(name: "Test", email_address: "valid+tag@example.com", password: "secret123456")
+    assert user.valid?
+  end
+
   private
     def create_new_user
       User.create!(name: "User", email_address: "user@example.com", password: "secret123456")

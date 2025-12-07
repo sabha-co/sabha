@@ -129,4 +129,45 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert user.present?
     assert user.authenticate("valid_password_123")
   end
+
+  test "create with invalid email returns 422" do
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: {
+        user: {
+          name: "Hacker",
+          email_address: "not-an-email",
+          password: "secure_password_123"
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+  end
+
+  test "create with blank email returns 422" do
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: {
+        user: {
+          name: "Hacker",
+          email_address: "",
+          password: "secure_password_123"
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+  end
+
+  test "create with nil email returns 422" do
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: {
+        user: {
+          name: "Hacker",
+          password: "secure_password_123"
+        }
+      }
+    end
+
+    assert_response :unprocessable_entity
+  end
 end

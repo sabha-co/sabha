@@ -72,4 +72,19 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
     assert_not cookies[:session_token].present?
   end
+
+  test "create with invalid email returns 422" do
+    post session_url, params: { email_address: "not-an-email", password: "secret123456" }
+    assert_response :unprocessable_entity
+  end
+
+  test "create with blank email returns 422" do
+    post session_url, params: { email_address: "", password: "secret123456" }
+    assert_response :unprocessable_entity
+  end
+
+  test "create with nil email returns 422" do
+    post session_url, params: { password: "secret123456" }
+    assert_response :unprocessable_entity
+  end
 end

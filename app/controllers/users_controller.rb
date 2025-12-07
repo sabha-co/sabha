@@ -1,10 +1,12 @@
 class UsersController < ApplicationController
   include NotifyBots
+  include EmailValidation
 
   require_unauthenticated_access only: %i[ new create ]
 
   before_action :set_user, only: :show
   before_action :verify_join_code, only: %i[ new create ]
+  before_action :validate_email_param, only: :create
   before_action :start_otp_if_user_exists, only: :create, if: -> { Current.account.auth_method_value == "otp" }
 
   def new
@@ -100,5 +102,9 @@ class UsersController < ApplicationController
       permitted_params = params.require(:user).permit(:name, :avatar, :email_address, :password)
       permitted_params[:email_address]&.downcase!
       permitted_params
+    end
+
+    def validate_email_param
+      render_invalid_email unless valid_email?(params.dig(:user, :email_address))
     end
 end

@@ -1,8 +1,11 @@
 class SessionsController < ApplicationController
+  include EmailValidation
+
   allow_unauthenticated_access only: %i[ new create ]
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { render_rejection :too_many_requests }
 
   before_action :ensure_user_exists, only: :new
+  before_action :validate_email_param, only: :create
 
   def new
   end
@@ -32,6 +35,10 @@ class SessionsController < ApplicationController
   private
     def ensure_user_exists
       redirect_to first_run_url if User.none?
+    end
+
+    def validate_email_param
+      render_invalid_email unless valid_email?(params[:email_address])
     end
 
     def render_rejection(status)
