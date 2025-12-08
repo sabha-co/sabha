@@ -36,6 +36,14 @@
     @media (prefers-color-scheme: dark) {
       filter: invert(100%);
     }
+
+    :root[data-theme="light"] & {
+      filter: invert(0%);
+    }
+
+    :root[data-theme="dark"] & {
+      filter: invert(100%);
+    }
   }
 }
 
