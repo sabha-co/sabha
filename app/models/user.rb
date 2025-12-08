@@ -70,7 +70,7 @@ class User < ApplicationRecord
   after_destroy_commit -> { StatsService.clear_all_time_ranks_cache }
   after_update_commit -> { StatsService.clear_all_time_ranks_cache if saved_change_to_attribute?(:status) }
 
-  scope :ordered, -> { order("LOWER(name)") }
+  scope :ordered, -> { order(arel_table[:role].eq(roles[:administrator]).desc, arel_table[:name].lower) }
   scope :recent_posters_first, ->(room_id = nil) do
     messages_table = Message.active.arel_table
     users_table = active.arel_table
