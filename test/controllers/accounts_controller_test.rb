@@ -53,4 +53,21 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert accounts(:signal).settings.restrict_room_creation_to_administrators?, "Room creation restriction was overwritten"
     assert accounts(:signal).settings.restrict_direct_messages_to_administrators?, "DM restriction was not saved"
   end
+
+  test "edit page shows administrators before members with divider" do
+    get edit_account_url
+    assert_response :ok
+
+    # Check that divider exists when there are both admins and members
+    assert_select "hr.separator.full-width"
+
+    # Verify the response body has admin before the divider and member after
+    body = response.body
+    divider_pos = body.index("separator full-width")
+    admin_pos = body.index(users(:david).name)
+    member_pos = body.index(users(:kevin).name)
+
+    assert admin_pos < divider_pos, "Administrator should appear before the divider"
+    assert divider_pos < member_pos, "Member should appear after the divider"
+  end
 end

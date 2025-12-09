@@ -3,7 +3,9 @@ class AccountsController < ApplicationController
   before_action :set_account
 
   def edit
-    set_page_and_extract_portion_from account_users.includes(avatar_attachment: :blob).ordered, per_page: 500
+    users = account_users.includes(avatar_attachment: :blob).ordered
+    @administrators, @members = users.partition(&:administrator?)
+    set_page_and_extract_portion_from users, per_page: 500
   end
 
   def update

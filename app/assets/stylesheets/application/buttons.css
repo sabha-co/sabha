@@ -288,3 +288,11 @@ a.btn[data-room-id] img {
   white-space: nowrap;
   border: 0;
 }
+
+/* Disabled checkbox button styling */
+.btn:has(input[type=checkbox][disabled]) {
+  cursor: not-allowed;
+  filter: grayscale(100%) contrast(0.5);
+  opacity: 0.5;
+  pointer-events: none;
+}
