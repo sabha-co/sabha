@@ -6,19 +6,27 @@ class AutoBootstrapTest < ActiveSupport::TestCase
     User.destroy_all
     Room.destroy_all
 
-    # Clear env vars that may be set from .env file
-    ENV.delete("AUTO_BOOTSTRAP")
-    ENV.delete("ADMIN_EMAIL")
-    ENV.delete("ADMIN_PASSWORD")
-    ENV.delete("ADMIN_NAME")
+    # Capture original env values before tests modify them
+    @original_env = {
+      "AUTO_BOOTSTRAP" => ENV["AUTO_BOOTSTRAP"],
+      "ADMIN_EMAIL" => ENV["ADMIN_EMAIL"],
+      "ADMIN_PASSWORD" => ENV["ADMIN_PASSWORD"],
+      "ADMIN_NAME" => ENV["ADMIN_NAME"]
+    }
+
+    # Clear env vars for clean test state
+    @original_env.keys.each { |key| ENV.delete(key) }
   end
 
   teardown do
-    # Clean up env vars
-    ENV.delete("AUTO_BOOTSTRAP")
-    ENV.delete("ADMIN_EMAIL")
-    ENV.delete("ADMIN_PASSWORD")
-    ENV.delete("ADMIN_NAME")
+    # Restore original env values
+    @original_env.each do |key, value|
+      if value.nil?
+        ENV.delete(key)
+      else
+        ENV[key] = value
+      end
+    end
   end
 
   test "enabled? returns true when all required env vars are set" do
