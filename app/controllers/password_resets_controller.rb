@@ -1,4 +1,6 @@
 class PasswordResetsController < ApplicationController
+  include PasswordValidation
+
   allow_unauthenticated_access
   rate_limit to: 3, within: 1.minute, only: :create, with: -> { redirect_to new_password_reset_path, alert: "Too many requests. Please wait before trying again." }
 
@@ -34,25 +36,18 @@ class PasswordResetsController < ApplicationController
       return
     end
 
-    # Validate password manually since has_secure_password validations are disabled
-    if params[:password].blank?
-      flash.now[:alert] = "Password can't be blank"
-      render :edit, status: :unprocessable_entity
-    elsif params[:password].length < User::MINIMUM_PASSWORD_LENGTH
-      flash.now[:alert] = "Password is too short (minimum is #{User::MINIMUM_PASSWORD_LENGTH} characters)"
-      render :edit, status: :unprocessable_entity
-    elsif params[:password] != params[:password_confirmation]
-      flash.now[:alert] = "Password confirmation doesn't match Password"
-      render :edit, status: :unprocessable_entity
-    elsif @user.update(password: params[:password], password_confirmation: params[:password_confirmation])
+    if (error = validate_password_params)
+      return render_password_error(error)
+    end
+
+    if @user.update(password: params[:password], password_confirmation: params[:password_confirmation])
       # Verify email if not already verified
       @user.verify_email! unless @user.verified?
 
       start_new_session_for @user
       redirect_to root_path, notice: "Your password has been reset successfully!"
     else
-      flash.now[:alert] = @user.errors.full_messages.to_sentence
-      render :edit, status: :unprocessable_entity
+      render_password_error(@user.errors.full_messages.to_sentence)
     end
   end
 end

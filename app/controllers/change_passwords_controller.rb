@@ -1,4 +1,6 @@
 class ChangePasswordsController < ApplicationController
+  include PasswordValidation
+
   # Skip the force password change check for this controller (would cause redirect loop)
   skip_before_action :require_password_change
 
@@ -17,24 +19,18 @@ class ChangePasswordsController < ApplicationController
       return
     end
 
-    if params[:password].blank?
-      flash.now[:alert] = "Password can't be blank"
-      render :show, status: :unprocessable_entity
-    elsif params[:password].length < User::MINIMUM_PASSWORD_LENGTH
-      flash.now[:alert] = "Password is too short (minimum is #{User::MINIMUM_PASSWORD_LENGTH} characters)"
-      render :show, status: :unprocessable_entity
-    elsif params[:password] != params[:password_confirmation]
-      flash.now[:alert] = "Password confirmation doesn't match password"
-      render :show, status: :unprocessable_entity
-    elsif params[:password] == ENV["ADMIN_PASSWORD"]
-      # Prevent user from keeping the temporary password
-      flash.now[:alert] = "Please choose a different password than the temporary one"
-      render :show, status: :unprocessable_entity
-    elsif @user.update(password: params[:password], must_change_password: false)
+    if (error = validate_password_params)
+      return render_password_error(error, template: :show)
+    end
+
+    if params[:password] == ENV["ADMIN_PASSWORD"]
+      return render_password_error("Please choose a different password than the temporary one", template: :show)
+    end
+
+    if @user.update(password: params[:password], must_change_password: false)
       redirect_to root_path, notice: "Password changed successfully!"
     else
-      flash.now[:alert] = @user.errors.full_messages.to_sentence
-      render :show, status: :unprocessable_entity
+      render_password_error(@user.errors.full_messages.to_sentence, template: :show)
     end
   end
 end
