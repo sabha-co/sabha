@@ -203,6 +203,14 @@
           filter: invert(100%);
         }
       }
+
+      :root[data-theme="light"] & img {
+        filter: invert(0);
+      }
+
+      :root[data-theme="dark"] & img {
+        filter: invert(100%);
+      }
     }
   }
 }
