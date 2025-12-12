@@ -43,6 +43,14 @@
       @media (prefers-color-scheme: dark) {
         filter: invert(100%);
       }
+
+      :root[data-theme="light"] & {
+        filter: invert(0);
+      }
+
+      :root[data-theme="dark"] & {
+        filter: invert(100%);
+      }
     }
   }
 
@@ -93,7 +101,8 @@
     -webkit-touch-callout: none;
   }
 
-  &:has(input:checked) {
+  &:has(input:checked),
+  &[aria-selected="true"] {
     --btn-background: var(--color-text);
     --btn-color: var(--color-text-reversed);
 
@@ -105,6 +114,14 @@
       img {
         filter: invert(0);
       }
+    }
+
+    :root[data-theme="light"] & img {
+      filter: invert(100%);
+    }
+
+    :root[data-theme="dark"] & img {
+      filter: invert(0);
     }
   }
 
@@ -152,6 +169,14 @@
     filter: invert(100%);
 
     @media (prefers-color-scheme: dark) {
+      filter: invert(0%);
+    }
+
+    :root[data-theme="light"] & {
+      filter: invert(100%);
+    }
+
+    :root[data-theme="dark"] & {
       filter: invert(0%);
     }
   }

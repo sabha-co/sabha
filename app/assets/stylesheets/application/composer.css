@@ -75,6 +75,14 @@
       filter: invert(100%);
     }
   }
+
+  :root[data-theme="light"] &::after {
+    filter: invert(0%);
+  }
+
+  :root[data-theme="dark"] &::after {
+    filter: invert(100%);
+  }
 }
 
 /* Rich text */

@@ -207,6 +207,122 @@
   }
 }
 
+/* Explicit light theme override (when user selects light) */
+:root[data-theme="light"] {
+  --lch-black: 0% 0 0;
+  --lch-white: 100% 0 0;
+  --lch-gray: 96% 0.005 96;
+  --lch-gray-dark: 92% 0.005 96;
+  --lch-gray-darker: 75% 0.005 96;
+  --lch-gray-darkest: 65% 0.005 96;
+  --lch-almost-black: 35% 0.005 96;
+  --lch-blue: 54% 0.23 255;
+  --lch-blue-light: 95% 0.03 255;
+  --lch-blue-dark: 80% 0.08 255;
+  --lch-red: 51% 0.2 31;
+  --lch-red-light: 98% 0.08 22;
+  --lch-green: 65.59% 0.234 142.49;
+  --lch-purple: 45% 0.32 282;
+  --control-border: #b1adae;
+
+  /* Light mode Tailwind utilities */
+  --background: oklch(100% 0 0);
+  --foreground: oklch(14.5% 0 0);
+  --primary: oklch(20.5% 0 0);
+  --primary-foreground: oklch(98.5% 0 0);
+  --secondary: oklch(97% 0 0);
+  --secondary-foreground: oklch(20.5% 0 0);
+  --accent: oklch(97% 0 0);
+  --accent-foreground: oklch(20.5% 0 0);
+  --muted: oklch(97% 0 0);
+  --muted-foreground: oklch(55.6% 0 0);
+  --destructive: oklch(57.7% 0.245 27.325);
+  --input: oklch(92.2% 0 0);
+  --ring: oklch(70.8% 0 0);
+  --border: var(--color-border);
+
+  /* Light mode code syntax colors */
+  --color-keyword: oklch(58.79% 0.193 20.47);
+  --color-entity: oklch(50.15% 0.188 294.99);
+  --color-constant: oklch(49.49% 0.18 257.6);
+  --color-string: oklch(31.08% 0.101 255.87);
+  --color-variable: oklch(64.82% 0.18 45.87);
+  --color-comment: oklch(55.14% 0.019 250.98);
+  --color-entity-tag: oklch(54.64% 0.144 147.32);
+  --color-markup-heading: oklch(49.49% 0.18 257.6);
+  --color-markup-list: oklch(48.46% 0.093 90.48);
+  --color-markup-inserted: oklch(54.64% 0.144 147.32);
+  --color-markup-deleted: oklch(49.59% 0.183 24.19);
+
+  /* Light mode shadow */
+  --shadow-base:
+    0 0 0 1px oklch(var(--lch-always-black) / 0.02),
+    0 0.2em 1.6em -0.8em oklch(var(--lch-always-black) / 0.2),
+    0 0.4em 2.4em -1em oklch(var(--lch-always-black) / 0.3),
+    0 0.4em 0.8em -1.2em oklch(var(--lch-always-black) / 0.4),
+    0 0.8em 1.2em -1.6em oklch(var(--lch-always-black) / 0.5),
+    0 1.2em 1.6em -2em oklch(var(--lch-always-black) / 0.6);
+}
+
+/* Explicit dark theme override (when user selects dark) */
+:root[data-theme="dark"] {
+  --lch-black: 100% 0 0;
+  --lch-white: 0% 0 0;
+  --lch-gray: 25.2% 0 0;
+  --lch-gray-dark: 30.12% 0 0;
+  --lch-gray-darker: 44.95% 0 0;
+  --lch-gray-darkest: 64.95% 0 0;
+  --lch-almost-black: 85% 0 0;
+  --lch-blue: 72.25% 0.16 248;
+  --lch-blue-light: 28.11% 0.053 248;
+  --lch-blue-dark: 42.25% 0.07 248;
+  --lch-red: 73.8% 0.184 29.18;
+  --lch-red-light: 28% 0.05 20;
+  --lch-green: 75% 0.21 141.89;
+  --lch-purple: 70% 0.32 282;
+  --control-border: #555;
+
+  /* Dark mode Tailwind utilities */
+  --background: oklch(0% 0 0);
+  --foreground: oklch(98.5% 0 0);
+  --primary: oklch(92.2% 0 0);
+  --primary-foreground: oklch(20.5% 0 0);
+  --secondary: oklch(26.9% 0 0);
+  --secondary-foreground: oklch(98.5% 0 0);
+  --accent: oklch(26.9% 0 0);
+  --accent-foreground: oklch(98.5% 0 0);
+  --muted: oklch(26.9% 0 0);
+  --muted-foreground: oklch(70.8% 0 0);
+  --destructive: oklch(70.4% 0.191 22.216);
+  --input: oklch(100% 0 0 / 15%);
+  --ring: oklch(55.6% 0 0);
+  --border: oklch(1 0 0 / 10%);
+
+  /* Dark mode code syntax colors */
+  --color-keyword: oklch(73.45% 0.16260514269909043 25.78369140372489);
+  --color-entity: oklch(80.05% 0.127 305.86);
+  --color-constant: oklch(78.57% 0.115 246.66);
+  --color-string: oklch(78.57% 0.115 246.66);
+  --color-variable: oklch(79.91% 0.141 60.1);
+  --color-comment: oklch(66.25% 0.018 250.92);
+  --color-entity-tag: oklch(84.16% 0.164 145.75);
+  --color-markup-heading: oklch(56.86% 0.202 259.67);
+  --color-markup-list: oklch(85.74% 0.133 89.95);
+  --color-markup-inserted: oklch(90.72% 0.112 146.34);
+  --color-markup-deleted: oklch(
+    92.23% 0.03967766015913856 27.493308249746637
+  );
+
+  /* Dark mode shadow */
+  --shadow-base:
+    0 0 0 1px oklch(var(--lch-always-black) / 0.42),
+    0 0.2em 1.6em -0.8em oklch(var(--lch-always-black) / 0.6),
+    0 0.4em 2.4em -1em oklch(var(--lch-always-black) / 0.7),
+    0 0.4em 0.8em -1.2em oklch(var(--lch-always-black) / 0.8),
+    0 0.8em 1.2em -1.6em oklch(var(--lch-always-black) / 0.9),
+    0 1.2em 1.6em -2em oklch(var(--lch-always-black) / 1);
+}
+
 main#main-content:focus {
   outline: none;
 }

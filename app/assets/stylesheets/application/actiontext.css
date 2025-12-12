@@ -101,6 +101,14 @@ trix-editor {
     }
   }
 
+  :root[data-theme="light"] &::before {
+    filter: invert(0);
+  }
+
+  :root[data-theme="dark"] &::before {
+    filter: invert(100);
+  }
+
   &.trix-active {
     background-color: var(--color-text) !important;
 
@@ -112,6 +120,14 @@ trix-editor {
       &::before {
         filter: invert(0);
       }
+    }
+
+    :root[data-theme="light"] &::before {
+      filter: invert(100);
+    }
+
+    :root[data-theme="dark"] &::before {
+      filter: invert(0);
     }
   }
 

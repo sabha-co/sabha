@@ -4,12 +4,28 @@
   @media (prefers-color-scheme: dark) {
     filter: invert(0%);
   }
+
+  :root[data-theme="light"] & {
+    filter: invert(100%);
+  }
+
+  :root[data-theme="dark"] & {
+    filter: invert(0%);
+  }
 }
 
 .colorize--black {
   filter: invert(0%);
 
   @media (prefers-color-scheme: dark) {
+    filter: invert(100%);
+  }
+
+  :root[data-theme="light"] & {
+    filter: invert(0%);
+  }
+
+  :root[data-theme="dark"] & {
     filter: invert(100%);
   }
 }
