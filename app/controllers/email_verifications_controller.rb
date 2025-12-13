@@ -12,7 +12,7 @@ class EmailVerificationsController < ApplicationController
     else
       @user.verify_email!
       start_new_session_for @user
-      redirect_to root_url, notice: "Email verified successfully! Welcome to #{BrandingConfig.app_name}."
+      redirect_to root_url, notice: "Email verified successfully! Welcome to #{Branding.app_name}."
     end
   end
 

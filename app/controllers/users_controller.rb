@@ -24,7 +24,7 @@ class UsersController < ApplicationController
       @user = User.from_gumroad_sale(user_params)
 
       if @user.nil?
-        redirect_to account_join_code_url, alert: "We couldn't find a sale for that email. Please try a different email or contact #{BrandingConfig.support_email}."
+        redirect_to account_join_code_url, alert: "We couldn't find a sale for that email. Please try a different email or contact #{Branding.support_email}."
         return
       end
 

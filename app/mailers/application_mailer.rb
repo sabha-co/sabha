@@ -1,5 +1,5 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: -> { BrandingConfig.mailer_from }
+  default from: -> { Branding.mailer_from }
   layout "mailer"
 
   helper_method :formatted_time

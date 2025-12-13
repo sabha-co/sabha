@@ -1,5 +1,5 @@
 class FirstRun
-  ACCOUNT_NAME = BrandingConfig.app_name
+  ACCOUNT_NAME = Branding.app_name
   FIRST_ROOM_NAME = "All Talk"
   LOCK_FILE = "tmp/auto_bootstrap.lock"
 

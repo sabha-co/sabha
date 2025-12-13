@@ -2,7 +2,7 @@ module ApplicationHelper
   include RoomsHelper
 
   def page_title_tag
-    tag.title @page_title || BrandingConfig.app_name
+    tag.title @page_title || Branding.app_name
   end
 
   def current_user_meta_tags

@@ -1,5 +1,5 @@
 {
-  "name": "<%= Current.account&.name || BrandingConfig.app_name %>",
+  "name": "<%= Current.account&.name || Branding.app_name %>",
   "icons": [
     {
       "src": "<%= fresh_account_logo_path(size: :small) %>",
@@ -21,20 +21,20 @@
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": "<%= BrandingConfig.app_description %>",
+  "description": "<%= Branding.app_description %>",
   "categories": ["social", "business", "productivity"],
-  "theme_color": "<%= BrandingConfig.theme_color %>",
-  "background_color": "<%= BrandingConfig.background_color %>",
+  "theme_color": "<%= Branding.theme_color %>",
+  "background_color": "<%= Branding.background_color %>",
   "shortcuts": [
     {
       "name": "New chat room",
-      "description": "Open <%= BrandingConfig.app_name %> and start a new chat room",
+      "description": "Open <%= Branding.app_name %> and start a new chat room",
       "url": "rooms/opens/new",
       "icons": [{ "src": "<%= image_url("add.svg") %>", "sizes": "any" }]
     },
     {
       "name": "My profile",
-      "description": "Open <%= BrandingConfig.app_name %> and view your profile",
+      "description": "Open <%= Branding.app_name %> and view your profile",
       "url": "/users/me/profile",
       "icons": [{ "src": "<%= image_url("person.svg") %>", "sizes": "any" }]
     }
@@ -44,7 +44,7 @@
       "src": "<%= image_url("screenshots/android-chat.png") %>",
       "sizes": "1080x2400",
       "form_factor": "narrow",
-      "label": "<%= BrandingConfig.app_name %> is an installable, self-hosted group chat system."
+      "label": "<%= Branding.app_name %> is an installable, self-hosted group chat system."
     },
     {
       "src": "<%= image_url("screenshots/android-sidebar.png") %>",

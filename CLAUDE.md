@@ -227,9 +227,9 @@ test/
    - Authentication method (password/OTP) - stored in `accounts.auth_method`
    - Permission toggles - stored in `accounts.settings` JSON column via `has_json`
 2. **Environment Variables** (`.env` or `.kamal/secrets`):
-   - APP_NAME, SUPPORT_EMAIL, THEME_COLOR, BACKGROUND_COLOR, etc. (see `BrandingConfig`)
+   - APP_NAME, SUPPORT_EMAIL, THEME_COLOR, BACKGROUND_COLOR, etc. (see `config/initializers/branding.rb`)
 3. Visual assets replaced in `app/assets/images/logos/` and `app/assets/images/icons/`
-4. Branding accessed via `BrandingConfig` service object throughout app
+4. Branding accessed via `Branding` module throughout app (delegates to `Rails.configuration.x.branding`)
 
 ## Database Schema Notes
 

@@ -7,8 +7,8 @@
 
     <div class="flex flex-column gap">
       <fieldset class="flex flex-column gap center-block upad">
-        <legend class="txt-large txt-align-center"><strong>New to <%= BrandingConfig.app_name %>?</strong></legend>
-        <div class="txt-medium">Use your invite link to create an account. If you need an invite, contact <%= BrandingConfig.support_email %>.</div>
+        <legend class="txt-large txt-align-center"><strong>New to <%= Branding.app_name %>?</strong></legend>
+        <div class="txt-medium">Use your invite link to create an account. If you need an invite, contact <%= Branding.support_email %>.</div>
       </fieldset>
   
       <% if Current.account.auth_method_value == "otp" %>

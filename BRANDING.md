@@ -191,23 +191,22 @@ Campfire-CE supports custom logo uploads through the admin panel:
 2. Upload your logo in the "Account Logo" section
 3. The logo will automatically replace default branding
 
-### Modifying the BrandingConfig Service
+### Extending Branding Configuration
 
-For developers who want to add more branding options:
-
-Edit `app/services/branding_config.rb`:
+For developers who want to add more branding options, edit `config/initializers/branding.rb`:
 
 ```ruby
-class BrandingConfig
-  class << self
-    # Add your custom branding methods here
-    def custom_footer_text
-      ENV.fetch("CUSTOM_FOOTER_TEXT", "© 2024 Your Community")
-    end
+Rails.application.configure do
+  # Add your custom branding values
+  config.x.branding.custom_footer_text = ENV.fetch("CUSTOM_FOOTER_TEXT", "© 2024 Your Community")
+  config.x.branding.twitter_handle = ENV.fetch("TWITTER_HANDLE", "@yourcommunity")
+end
 
-    def twitter_handle
-      ENV.fetch("TWITTER_HANDLE", "@yourcommunity")
-    end
+# Add delegations to the Branding module
+module Branding
+  class << self
+    delegate :custom_footer_text, :twitter_handle, to: :config
+    # ... existing delegations
   end
 end
 ```
@@ -215,8 +214,8 @@ end
 Then use throughout your views:
 
 ```erb
-<%= BrandingConfig.custom_footer_text %>
-<%= link_to "@#{BrandingConfig.twitter_handle}", "https://twitter.com/#{BrandingConfig.twitter_handle}" %>
+<%= Branding.custom_footer_text %>
+<%= link_to "@#{Branding.twitter_handle}", "https://twitter.com/#{Branding.twitter_handle}" %>
 ```
 
 ### Translations & Internationalization
@@ -324,7 +323,7 @@ docker-compose restart
 
 1. Check that `MAILER_FROM_NAME` and `MAILER_FROM_EMAIL` are set
 2. Restart your application
-3. Check `app/mailers/application_mailer.rb` is using `BrandingConfig`
+3. Check `app/mailers/application_mailer.rb` is using `Branding`
 4. For some email providers, you may need to verify the sender domain
 
 ### CSS Not Applying

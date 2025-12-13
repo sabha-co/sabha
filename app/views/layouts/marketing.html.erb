@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title><%= BrandingConfig.app_name %></title>
+    <title><%= Branding.app_name %></title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, interactive-widget=resizes-content">
     <meta name="view-transition" content="same-origin">
@@ -31,8 +31,8 @@
         <%= yield %>
     </main>
 
-    <% if BrandingConfig.analytics_domain.present? %>
-    <script defer event-account="member" data-domain="<%= BrandingConfig.analytics_domain %>" src="https://plausible.io/js/script.tagged-events.revenue.pageview-props.js"></script>
+    <% if Branding.analytics_domain.present? %>
+    <script defer event-account="member" data-domain="<%= Branding.analytics_domain %>" src="https://plausible.io/js/script.tagged-events.revenue.pageview-props.js"></script>
     <% end %>
 </body>
 </html>
