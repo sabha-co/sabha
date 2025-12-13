@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2025_12_09_204007) do
+ActiveRecord::Schema[8.2].define(version: 2025_12_13_022825) do
   create_table "accounts", force: :cascade do |t|
     t.boolean "active", default: true
     t.string "auth_method", default: "password"
@@ -19,7 +19,9 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_09_204007) do
     t.string "join_code", null: false
     t.string "name", null: false
     t.json "settings"
+    t.integer "singleton_guard", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.index ["singleton_guard"], name: "index_accounts_on_singleton_guard", unique: true
   end
 
   create_table "action_text_rich_texts", force: :cascade do |t|
