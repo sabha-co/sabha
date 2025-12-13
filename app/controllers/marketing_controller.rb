@@ -24,8 +24,8 @@ class MarketingController < ApplicationController
 
   def ensure_account_exists
     # Try auto-bootstrap first if configured
-    if AutoBootstrap.should_run?
-      AutoBootstrap.run!
+    if FirstRun.should_auto_bootstrap?
+      FirstRun.auto_bootstrap!
       redirect_to new_session_path, notice: "Your admin account has been created. Please sign in."
       return
     end
