@@ -1,7 +1,7 @@
 # Authentication Flow Comparison: Once-Campfire vs Campfire-CE
 
-**Document Version:** 1.0
-**Date:** 2025-11-04
+**Document Version:** 1.1
+**Date:** 2025-12-12
 **Author:** System Analysis
 
 ---
@@ -10,13 +10,15 @@
 
 | Aspect | **Once-Campfire** | **Campfire-CE** |
 |--------|------------------|------------------|
-| **Primary Auth Method** | Password-based | Passwordless OTP (One-Time Password) |
-| **Sign-up Gate** | Join code only | Join code + Gumroad payment verification |
-| **Initial Setup** | First-run admin creation | First-run admin creation |
+| **Primary Auth Method** | Password-based | Configurable: Password or OTP |
+| **Sign-up Gate** | Join code only | Join code + optional Gumroad verification |
+| **Initial Setup** | Manual first-run only | Manual first-run OR AutoBootstrap |
+| **Headless Deployment** | ❌ Not supported | ✅ AutoBootstrap via env vars |
+| **Force Password Change** | ❌ Not supported | ✅ For auto-bootstrapped admins |
 | **New User Flow** | Direct registration with password | Email verification → Gumroad check → Auto-login |
-| **Sign-in Methods** | 1. Password<br>2. Session transfer | 1. OTP (6-digit code)<br>2. Magic link<br>3. Session transfer<br>4. Password (admin only) |
-| **Payment Integration** | None | Gumroad API + webhooks |
-| **User States** | Active/Inactive | Active/Inactive/Suspended (refunds) |
+| **Sign-in Methods** | 1. Password<br>2. Session transfer | 1. Password<br>2. OTP (6-digit code)<br>3. Magic link<br>4. Session transfer |
+| **Payment Integration** | None | Optional Gumroad API + webhooks |
+| **User States** | Active/Inactive | Active/Inactive/Suspended/MustChangePassword |
 
 ---
 
@@ -30,10 +32,11 @@
 6. [Security Features](#6-security-features)
 7. [Gumroad Integration](#7-gumroad-integration-campfire-ce-only)
 8. [Access Control](#8-access-control)
-9. [Critical Code Differences](#9-critical-code-differences)
-10. [Migration Path](#10-migration-path)
-11. [Recommendations](#11-recommendations)
-12. [File Reference](#12-file-reference)
+9. [AutoBootstrap & Campfire Cloud Integration](#9-autobootstrap--campfire-cloud-integration)
+10. [Critical Code Differences](#10-critical-code-differences)
+11. [Migration Path](#11-migration-path)
+12. [Recommendations](#12-recommendations)
+13. [File Reference](#13-file-reference)
 
 ---
 
@@ -41,9 +44,9 @@
 
 ### A. Initial Setup (First Run)
 
-**STATUS: 🟢 IDENTICAL**
+**STATUS: 🟡 SIMILAR WITH EXTENSIONS**
 
-Both systems use the exact same first-run setup:
+Both systems support the same manual first-run setup, but Campfire-CE adds **AutoBootstrap** for headless deployments:
 
 ```ruby
 # Both: app/models/first_run.rb (identical code)
@@ -72,6 +75,98 @@ end
 - Controller: `app/controllers/first_runs_controller.rb`
 - View: `app/views/first_runs/show.html.erb`
 - Route: `GET/POST /first_run`
+
+#### Campfire-CE: AutoBootstrap (Headless Setup)
+
+**STATUS: 🔴 UNIQUE TO CAMPFIRE-CE**
+
+Campfire-CE supports automatic admin creation via environment variables, enabling headless deployments (e.g., Campfire Cloud):
+
+```ruby
+# campfire-ce/app/services/auto_bootstrap.rb
+class AutoBootstrap
+  def self.enabled?
+    ENV["AUTO_BOOTSTRAP"] == "true" &&
+      ENV["ADMIN_EMAIL"].present? &&
+      ENV["ADMIN_PASSWORD"].present?
+  end
+
+  def self.should_run?
+    enabled? && Account.none?
+  end
+
+  def self.run!
+    return false unless should_run?
+
+    ActiveRecord::Base.transaction do
+      return false if Account.any?  # Double-check for race conditions
+
+      admin = FirstRun.create!(
+        name: ENV.fetch("ADMIN_NAME", "Administrator"),
+        email_address: ENV["ADMIN_EMAIL"],
+        password: ENV["ADMIN_PASSWORD"]
+      )
+
+      # Force password change on first login
+      admin.update!(must_change_password: true, verified_at: Time.current)
+    end
+  end
+end
+```
+
+**Environment Variables:**
+```bash
+AUTO_BOOTSTRAP=true              # Enable auto-bootstrap
+ADMIN_EMAIL=admin@example.com    # Admin email address
+ADMIN_PASSWORD=temp-pass-1234    # Temporary password (must be changed)
+ADMIN_NAME="Administrator"       # Optional display name
+```
+
+**Integration Point:**
+```ruby
+# app/controllers/marketing_controller.rb
+def ensure_account_exists
+  if AutoBootstrap.should_run?
+    AutoBootstrap.run!
+    redirect_to new_session_path, notice: "Your admin account has been created."
+    return
+  end
+  redirect_to first_run_path unless Account.any?
+end
+```
+
+**Flow:**
+```
+First visitor hits marketing page
+  ↓
+AutoBootstrap.should_run? checks:
+  - AUTO_BOOTSTRAP=true?
+  - ADMIN_EMAIL present?
+  - ADMIN_PASSWORD present?
+  - No Account exists?
+  ↓
+If all true → AutoBootstrap.run!
+  ↓
+Creates Account + Room + Admin (via FirstRun.create!)
+  ↓
+Sets must_change_password=true, verified_at=now
+  ↓
+Redirects to sign-in page
+  ↓
+Admin signs in with temp password
+  ↓
+ForcePasswordChange redirects to /change_password
+  ↓
+Admin sets new password
+  ↓
+Access granted to application
+```
+
+**Security Features:**
+- Temporary password must be changed on first login
+- Cannot reuse the temporary password as the new password
+- Email pre-verified (no verification email needed)
+- Race condition protection via transaction + double-check
 
 ---
 
@@ -1179,7 +1274,193 @@ private
 
 ---
 
-## 9. Critical Code Differences
+## 9. AutoBootstrap & Campfire Cloud Integration
+
+**STATUS: 🔴 UNIQUE TO CAMPFIRE-CE**
+
+This section documents the headless deployment features added to support Campfire Cloud managed deployments.
+
+### A. AutoBootstrap Service
+
+**Purpose:** Enable automatic first-run setup without manual web form interaction.
+
+**Use Case:** Campfire Cloud generates deployment credentials and passes them to Campfire-CE via environment variables, allowing fully automated server provisioning.
+
+**Files:**
+- Service: `app/services/auto_bootstrap.rb`
+- Migration: `db/migrate/20251209204007_add_must_change_password_to_users.rb`
+
+**Environment Variables:**
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AUTO_BOOTSTRAP` | Yes | Must be `"true"` to enable |
+| `ADMIN_EMAIL` | Yes | Email address for admin account |
+| `ADMIN_PASSWORD` | Yes | Temporary password (will be forced to change) |
+| `ADMIN_NAME` | No | Display name (defaults to "Administrator") |
+
+### B. Force Password Change
+
+**Purpose:** Ensure auto-bootstrapped admins change their temporary password before accessing the application.
+
+**Implementation:**
+
+```ruby
+# app/controllers/concerns/force_password_change.rb
+module ForcePasswordChange
+  extend ActiveSupport::Concern
+
+  included do
+    before_action :require_password_change
+  end
+
+  private
+
+  def require_password_change
+    return unless Current.user&.must_change_password?
+    return if password_change_allowed_path?
+
+    redirect_to change_password_path, alert: "You must change your password before continuing."
+  end
+
+  def password_change_allowed_path?
+    return true if request.path == change_password_path
+    return true if request.path == session_path && request.delete?
+    return true if request.path.start_with?("/assets", "/rails/active_storage")
+    false
+  end
+end
+```
+
+**Controller:**
+```ruby
+# app/controllers/change_passwords_controller.rb
+class ChangePasswordsController < ApplicationController
+  skip_before_action :require_password_change  # Prevent redirect loop
+
+  def show
+    @user = Current.user
+    redirect_to root_path unless @user&.must_change_password?
+  end
+
+  def update
+    # Validates:
+    # - Password not blank
+    # - Password meets minimum length
+    # - Password confirmation matches
+    # - Password differs from temporary ADMIN_PASSWORD
+    # Then clears must_change_password flag
+  end
+end
+```
+
+**User Model Addition:**
+```ruby
+# app/models/user.rb
+def must_change_password?
+  must_change_password == true
+end
+```
+
+**Database Schema:**
+```sql
+ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT FALSE NOT NULL;
+```
+
+### C. Campfire Cloud Integration
+
+**How Campfire Cloud Uses AutoBootstrap:**
+
+Campfire Cloud's `DockerComposeGenerator` automatically sets up credentials:
+
+```ruby
+# campfire_cloud/app/services/docker_compose_generator.rb
+def generate_env_file
+  env_vars = parse_environment_variables
+
+  # Auto-bootstrap admin configuration
+  if env_vars["AUTO_BOOTSTRAP"].blank? && @server.account.owner.present?
+    env_vars["AUTO_BOOTSTRAP"] = "true"
+    env_vars["ADMIN_EMAIL"] = @server.account.owner.email_address
+    env_vars["ADMIN_NAME"] = email_prefix.titleize
+    env_vars["ADMIN_PASSWORD"] = generate_temporary_password  # e.g., "happy-tiger-4821"
+
+    # Persist to database for display to user
+    @server.update(environment_variables: env_vars.to_json)
+  end
+
+  env_vars.map { |key, value| "#{key}=#{value}" }.join("\n")
+end
+
+def generate_temporary_password
+  adjectives = %w[happy bright calm clever cool eager fast gentle kind quick smart swift warm wild bold brave]
+  nouns = %w[tiger eagle falcon hawk lion maple oak river stream wolf bear cedar pine cloud storm]
+  "#{adjectives.sample}-#{nouns.sample}-#{rand(1000..9999)}"
+end
+```
+
+**Deployment Flow:**
+```
+1. User creates server in Campfire Cloud
+   ↓
+2. DockerComposeGenerator sets AUTO_BOOTSTRAP env vars
+   ↓
+3. Credentials persisted in Cloud DB (encrypted)
+   ↓
+4. Server deployed with .env file containing credentials
+   ↓
+5. First visit triggers AutoBootstrap.run!
+   ↓
+6. Admin account created with must_change_password=true
+   ↓
+7. Cloud UI shows temporary password to user (24-hour window)
+   ↓
+8. User signs in and is forced to change password
+   ↓
+9. Password changed, full access granted
+```
+
+**Credential Display in Cloud:**
+```ruby
+# campfire_cloud/app/models/server.rb
+def admin_email
+  parsed_environment_variables["ADMIN_EMAIL"]
+end
+
+def admin_temporary_password
+  parsed_environment_variables["ADMIN_PASSWORD"]
+end
+
+def show_credentials?
+  status == "active" &&
+    created_at > 24.hours.ago &&
+    admin_temporary_password.present?
+end
+```
+
+### D. Security Considerations
+
+| Feature | Implementation |
+|---------|----------------|
+| **Password Storage** | Temporary password in Cloud DB is encrypted at rest |
+| **Credential Expiry** | Cloud only shows credentials for 24 hours after deployment |
+| **Force Change** | User cannot access app until password is changed |
+| **Reuse Prevention** | Cannot set new password to same as temporary password |
+| **Race Conditions** | Transaction + double-check prevents duplicate account creation |
+| **Email Verification** | Pre-verified (verified_at set) since Cloud manages email |
+
+### E. Comparison with Once-Campfire
+
+| Feature | Once-Campfire | Campfire-CE |
+|---------|--------------|-------------|
+| Manual first-run | ✅ | ✅ |
+| Headless setup | ❌ | ✅ AutoBootstrap |
+| Force password change | ❌ | ✅ |
+| Pre-verified email | ❌ | ✅ (auto-bootstrap only) |
+| PaaS integration | ❌ | ✅ Campfire Cloud |
+
+---
+
+## 10. Critical Code Differences
 
 ### A. UsersController#create
 
@@ -1418,7 +1699,7 @@ end
 
 ---
 
-## 10. Migration Path
+## 11. Migration Path
 
 ### Shared Core Architecture (~70%)
 
@@ -1522,7 +1803,7 @@ Both codebases share:
 
 ---
 
-## 11. Recommendations
+## 12. Recommendations
 
 ### Use Once-Campfire When:
 
@@ -1601,7 +1882,7 @@ This disables Gumroad verification, making sign-up work like Once-Campfire.
 
 ---
 
-## 12. File Reference
+## 13. File Reference
 
 ### Controllers
 
@@ -1624,6 +1905,7 @@ This disables Gumroad verification, making sign-up work like Once-Campfire.
 | `auth_tokens_controller.rb` | ❌ Missing | ✅ Present | New |
 | `auth_tokens/validations_controller.rb` | ❌ Missing | ✅ Present | New |
 | `webhooks/gumroad/*` | ❌ Missing | ✅ Present | New |
+| `change_passwords_controller.rb` | ❌ Missing | ✅ Present | New (AutoBootstrap) |
 
 ---
 
@@ -1649,6 +1931,14 @@ This disables Gumroad verification, making sign-up work like Once-Campfire.
 
 ---
 
+### Services
+
+| File | Once-Campfire | Campfire-CE | Difference |
+|------|--------------|-------------|-----------|
+| `auto_bootstrap.rb` | ❌ Missing | ✅ Present | New (Headless setup) |
+
+---
+
 ### Concerns
 
 #### Shared (Identical or Nearly Identical)
@@ -1667,6 +1957,7 @@ This disables Gumroad verification, making sign-up work like Once-Campfire.
 | File | Once-Campfire | Campfire-CE | Difference |
 |------|--------------|-------------|-----------|
 | `user/role.rb` | 3 roles | 4 roles (expert added) | Minor |
+| `force_password_change.rb` | ❌ Missing | ✅ Present | New (AutoBootstrap) |
 
 ---
 
@@ -1691,6 +1982,7 @@ db/migrate/
   20241123162248_add_order_id_to_users.rb
   20241124151653_add_suspended_at_to_users.rb
   20241226114337_add_last_authenticated_at_to_users.rb
+  20251209204007_add_must_change_password_to_users.rb
 ```
 
 ---
@@ -1706,6 +1998,7 @@ db/migrate/
 | `users/new.html.erb` | Password + email | Email only | Sign-up |
 | `auth_tokens/validations/new.html.erb` | ❌ | ✅ | OTP code entry |
 | `sessions/transfers/show.html.erb` | ✅ | ✅ | QR code display |
+| `change_passwords/show.html.erb` | ❌ | ✅ | Force password change form |
 
 #### Marketing Views (Campfire-CE Only)
 
@@ -1810,21 +2103,30 @@ SUPPORT_EMAIL=support@example.com  # Help contact
 
 # Analytics (optional)
 ANALYTICS_DOMAIN=your-app.com      # Plausible.io tracking
+
+# AutoBootstrap (Campfire Cloud Integration)
+AUTO_BOOTSTRAP=true                # Enable headless setup
+ADMIN_EMAIL=admin@example.com      # Admin account email
+ADMIN_PASSWORD=temp-pass-1234      # Temporary password (must change on first login)
+ADMIN_NAME=Administrator           # Optional display name
 ```
 
 ---
 
 ## Conclusion
 
-**Once-Campfire** and **Campfire-CE** share a strong architectural foundation but diverge significantly in authentication and payment handling:
+**Once-Campfire** and **Campfire-CE** share a strong architectural foundation but diverge significantly in authentication, payment handling, and deployment options:
 
-- **Once-Campfire:** Simple, password-based, free access
-- **Campfire-CE:** Passwordless OTP, payment-gated, refund-aware
+- **Once-Campfire:** Simple, password-based, free access, manual setup only
+- **Campfire-CE:** Configurable auth (password or OTP), optional payment gating, AutoBootstrap for headless deployments
 
-Both are production-ready systems with different use cases. Choose based on your business model and security preferences.
+Both are production-ready systems with different use cases. Choose based on your business model and deployment preferences.
 
-For most self-hosted scenarios, **Once-Campfire** provides simplicity.
-For paid communities, **Campfire-CE** provides necessary payment integration.
+**For self-hosted scenarios:** Once-Campfire provides simplicity with password-based auth.
+
+**For paid communities:** Campfire-CE provides Gumroad payment integration and suspension handling.
+
+**For managed PaaS (Campfire Cloud):** Campfire-CE's AutoBootstrap feature enables fully automated provisioning with temporary credentials and forced password change on first login.
 
 The ~70% shared codebase means updates to core functionality can flow from Once-Campfire → Campfire-CE, maintaining compatibility while adding business-specific features.
 
