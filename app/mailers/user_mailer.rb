@@ -1,6 +1,4 @@
 class UserMailer < ApplicationMailer
-  default from: -> { Branding.mailer_from }
-
   def email_verification(user)
     @user = user
     @verification_url = verify_email_url(token: user.generate_token_for(:email_verification))
