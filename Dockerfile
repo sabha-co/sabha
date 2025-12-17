@@ -11,8 +11,7 @@ WORKDIR /rails
 ENV RAILS_ENV="production" \
   BUNDLE_DEPLOYMENT="1" \
   BUNDLE_PATH="/usr/local/bundle" \
-  BUNDLE_WITHOUT="development:test" \
-  LD_PRELOAD="/usr/local/lib/libjemalloc.so"
+  BUNDLE_WITHOUT="development:test"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
@@ -60,7 +59,8 @@ RUN apt-get update -qq && \
   rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Configure environment defaults
-ENV HTTP_IDLE_TIMEOUT=60 \
+ENV LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
+  HTTP_IDLE_TIMEOUT=60 \
   HTTP_READ_TIMEOUT=300 \
   HTTP_WRITE_TIMEOUT=300
 
