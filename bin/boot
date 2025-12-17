@@ -1,5 +1,10 @@
 #!/usr/bin/env ruby
 
+# Minimal process manager for running multiple services in a single container.
+# Reads Procfile and spawns all defined processes (web, redis, workers).
+# Handles graceful shutdown by forwarding signals to child processes.
+# Similar to Foreman/Overmind but simpler.
+
 require "json"
 require "yaml"
 

@@ -15,7 +15,6 @@ gem "puma", "~> 7.1"
 # Jobs
 gem "resque", "~> 2.7.0"
 gem "resque-pool", "~> 0.7.1"
-gem "resque-scheduler", "~> 4.11.0"
 
 # Assets
 gem "propshaft"

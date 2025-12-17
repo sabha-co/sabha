@@ -1,5 +1,9 @@
 #!/bin/bash -e
 
+# NOTE: AWS backup configuration is disabled by default.
+# Campfire Cloud (https://campfirecloud.com) handles backups via CreateFilesBackupJob.
+# Uncomment below if you need AWS credentials for S3 storage or self-hosted backups.
+
 # create log directory
 mkdir -p /rails/storage/logs
 

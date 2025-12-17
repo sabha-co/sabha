@@ -55,7 +55,7 @@ FROM base
 RUN apt-get update -qq && \
   apt-get install --no-install-recommends -y \
   curl libsqlite3-0 libvips libjemalloc2 libyaml-0-2 ca-certificates \
-  ffmpeg redis-server git sqlite3 awscli cron && \
+  ffmpeg redis-server git sqlite3 && \
   ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
   rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
@@ -67,10 +67,6 @@ ENV HTTP_IDLE_TIMEOUT=60 \
 # Copy built artifacts: gems, application
 COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /rails /rails
-
-# Copy cron scripts
-COPY script/admin/full-backup /etc/cron.daily/
-COPY script/admin/db-backup /etc/cron.hourly/
 
 # Set version and revision
 ARG APP_VERSION
@@ -93,4 +89,4 @@ HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:3000/up || exit 1
 
 # Start the server
-CMD ["sh", "-c", "service cron start && bin/configure && bin/boot"]
+CMD ["sh", "-c", "bin/configure && bin/boot"]
