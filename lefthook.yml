@@ -11,4 +11,4 @@ pre-push:
   parallel: true
   commands:
     brakeman:
-      run: bin/brakeman --no-pager
+      run: bin/brakeman -q --no-pager
