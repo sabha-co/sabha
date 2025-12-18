@@ -24,7 +24,7 @@ class UsersController < ApplicationController
       @user = User.from_gumroad_sale(user_params)
 
       if @user.nil?
-        redirect_to account_join_code_url, alert: "We couldn't find a sale for that email. Please try a different email or contact #{Branding.support_email}."
+        redirect_to account_join_code_url, alert: "We couldn't find a sale for that email. Please try a different email or contact #{Branding.support_email}.", status: :see_other
         return
       end
 
@@ -39,18 +39,18 @@ class UsersController < ApplicationController
       if Current.account.auth_method_value == "otp"
         # For OTP: Send verification code
         start_otp_for @user
-        redirect_to new_auth_tokens_validations_path, notice: "Please check your email for a verification code."
+        redirect_to new_auth_tokens_validations_path, notice: "Please check your email for a verification code.", status: :see_other
       else
         # For password: Send verification email with link
         @user.send_verification_email
-        redirect_to new_session_url(email_address: @user.email_address), notice: "Please check your email to verify your account."
+        redirect_to new_session_url(email_address: @user.email_address), notice: "Please check your email to verify your account.", status: :see_other
       end
     else
       start_new_session_for @user
       redirect_to root_url
     end
   rescue ActiveRecord::RecordNotUnique
-    redirect_to new_session_url(email_address: user_params[:email_address])
+    redirect_to new_session_url(email_address: user_params[:email_address]), notice: "An account with this email already exists. Please sign in.", status: :see_other
   end
 
   def show
