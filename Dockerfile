@@ -68,6 +68,10 @@ ENV LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
 COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /rails /rails
 
+# Create non-root user for running the application
+RUN groupadd -r campfire && useradd -r -g campfire -d /rails -s /bin/bash campfire && \
+  chown -R campfire:campfire /rails
+
 # Set version and revision
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
@@ -87,6 +91,9 @@ EXPOSE 3000
 # Health check
 HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:3000/up || exit 1
+
+# Switch to non-root user
+USER campfire
 
 # Start the server
 CMD ["sh", "-c", "bin/configure && bin/boot"]
