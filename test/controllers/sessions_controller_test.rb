@@ -87,4 +87,16 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     post session_url, params: { password: "secret123456" }
     assert_response :unprocessable_entity
   end
+
+  test "password login blocked when OTP auth enabled" do
+    original = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "otp"
+
+    post session_url, params: { email_address: "david@37signals.com", password: "secret123456" }
+
+    assert_redirected_to new_session_url
+    assert_match /not enabled/, flash[:alert]
+  ensure
+    original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
 end

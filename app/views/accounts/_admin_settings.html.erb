@@ -1,25 +1,6 @@
 <div class="margin-block pad fill-shade border-radius txt-align-center">
   <div class="flex flex-column gap align-center">
 
-    <!-- Authentication Method -->
-    <%= form_with model: @account, data: { controller: "form" }, class: "flex flex-column gap align-center" do |form| %>
-      <div class="flex flex-column gap align-center" style="--row-gap: 0.5em">
-        <strong>Authentication Method</strong>
-        <div class="flex flex-column gap-half">
-          <label class="flex align-center gap-half">
-            <%= form.radio_button :auth_method, "password", data: { action: "change->form#submit" } %>
-            <span>Password (email + password)</span>
-          </label>
-          <label class="flex align-center gap-half">
-            <%= form.radio_button :auth_method, "otp", data: { action: "change->form#submit" } %>
-            <span>OTP (passwordless, email code)</span>
-          </label>
-        </div>
-      </div>
-    <% end %>
-
-    <hr class="separator full-width">
-
     <!-- Permissions -->
     <div class="flex flex-column gap align-center" style="--row-gap: 0.5em">
       <strong>Permissions</strong>

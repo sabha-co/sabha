@@ -10,10 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2025_12_13_022825) do
+ActiveRecord::Schema[8.2].define(version: 2025_12_20_190132) do
   create_table "accounts", force: :cascade do |t|
     t.boolean "active", default: true
-    t.string "auth_method", default: "password"
     t.datetime "created_at", null: false
     t.text "custom_styles"
     t.string "join_code", null: false
@@ -228,7 +227,6 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_13_022825) do
     t.string "linkedin_url"
     t.string "linkedin_username"
     t.datetime "membership_started_at"
-    t.boolean "must_change_password", default: false, null: false
     t.string "name", null: false
     t.bigint "order_id"
     t.string "password_digest"

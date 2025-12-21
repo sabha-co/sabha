@@ -1,6 +1,19 @@
 require "test_helper"
 
 class AuthTokensControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    @original_auth_method = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "otp"
+  end
+
+  teardown do
+    if @original_auth_method.nil?
+      ENV.delete("AUTH_METHOD")
+    else
+      ENV["AUTH_METHOD"] = @original_auth_method
+    end
+  end
+
   test "create with valid email sends OTP" do
     user = users(:david)
 
@@ -31,5 +44,14 @@ class AuthTokensControllerTest < ActionDispatch::IntegrationTest
   test "create with nil email returns 422" do
     post auth_tokens_url, params: {}
     assert_response :unprocessable_entity
+  end
+
+  test "OTP request blocked when password auth enabled" do
+    ENV["AUTH_METHOD"] = "password"
+
+    post auth_tokens_url, params: { email_address: users(:david).email_address }
+
+    assert_redirected_to new_session_url
+    assert_match /not enabled/, flash[:alert]
   end
 end

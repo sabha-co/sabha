@@ -5,6 +5,7 @@ class AuthTokensController < ApplicationController
 
   rate_limit to: 10, within: 1.minute, with: -> { render_rejection :too_many_requests }
 
+  before_action :require_otp_auth
   before_action :validate_email_param
   before_action :set_user
 
@@ -18,6 +19,12 @@ class AuthTokensController < ApplicationController
   end
 
   private
+
+  def require_otp_auth
+    if Current.account.auth_method_value != "otp"
+      redirect_to new_session_url, alert: "OTP login is not enabled."
+    end
+  end
 
   def validate_email_param
     render_invalid_email unless valid_email?(params[:email_address])

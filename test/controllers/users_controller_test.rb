@@ -3,6 +3,15 @@ require "test_helper"
 class UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @join_code = Current.account.join_code
+    @original_auth_method = ENV["AUTH_METHOD"]
+  end
+
+  teardown do
+    if @original_auth_method.nil?
+      ENV.delete("AUTH_METHOD")
+    else
+      ENV["AUTH_METHOD"] = @original_auth_method
+    end
   end
 
   test "show" do
@@ -12,7 +21,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with password auth requires email verification" do
-    Current.account.update!(auth_method: "password")
+    ENV["AUTH_METHOD"] = "password"
 
     assert_emails 1 do
       post join_url(@join_code), params: {
@@ -33,7 +42,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with OTP auth requires email verification" do
-    Current.account.update!(auth_method: "otp")
+    ENV["AUTH_METHOD"] = "otp"
 
     assert_emails 1 do
       post join_url(@join_code), params: {
@@ -53,7 +62,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "OTP validation verifies email for new users" do
-    Current.account.update!(auth_method: "otp")
+    ENV["AUTH_METHOD"] = "otp"
 
     # Sign up new user
     post join_url(@join_code), params: {
@@ -78,7 +87,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with blank password is rejected" do
-    Current.account.update!(auth_method: "password")
+    ENV["AUTH_METHOD"] = "password"
 
     assert_no_difference -> { User.count } do
       post join_url(@join_code), params: {
@@ -95,7 +104,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with short password is rejected" do
-    Current.account.update!(auth_method: "password")
+    ENV["AUTH_METHOD"] = "password"
 
     assert_no_difference -> { User.count } do
       post join_url(@join_code), params: {
@@ -112,7 +121,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create with valid password redirects to sign-in for email verification" do
-    Current.account.update!(auth_method: "password")
+    ENV["AUTH_METHOD"] = "password"
 
     assert_difference -> { User.count }, 1 do
       post join_url(@join_code), params: {

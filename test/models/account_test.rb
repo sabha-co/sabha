@@ -5,25 +5,42 @@ class AccountTest < ActiveSupport::TestCase
     @account = accounts(:signal)
   end
 
-  test "auth_method defaults to password" do
-    @account.update!(auth_method: nil)
-    assert_equal "password", @account.auth_method_value
+  test "auth_method_value defaults to password when ENV not set" do
+    original_env = ENV["AUTH_METHOD"]
+    begin
+      ENV.delete("AUTH_METHOD")
+      assert_equal "password", @account.auth_method_value
+    ensure
+      ENV["AUTH_METHOD"] = original_env if original_env
+    end
   end
 
-  test "auth_method_value returns database value" do
-    @account.update!(auth_method: "otp")
-    assert_equal "otp", @account.auth_method_value
+  test "auth_method_value returns ENV value when set" do
+    original_env = ENV["AUTH_METHOD"]
+    begin
+      ENV["AUTH_METHOD"] = "otp"
+      assert_equal "otp", @account.auth_method_value
+    ensure
+      if original_env.nil?
+        ENV.delete("AUTH_METHOD")
+      else
+        ENV["AUTH_METHOD"] = original_env
+      end
+    end
   end
 
-  test "validates auth_method inclusion" do
-    @account.auth_method = "invalid"
-    assert_not @account.valid?
-    assert_includes @account.errors[:auth_method], "must be 'password' or 'otp'"
-  end
-
-  test "new account has default auth_method" do
-    account = Account.new(name: "New Account", join_code: "NEW-CODE")
-    assert_equal "password", account.auth_method
+  test "auth_method_value falls back to password for invalid ENV value" do
+    original_env = ENV["AUTH_METHOD"]
+    begin
+      ENV["AUTH_METHOD"] = "invalid"
+      assert_equal "password", @account.auth_method_value
+    ensure
+      if original_env.nil?
+        ENV.delete("AUTH_METHOD")
+      else
+        ENV["AUTH_METHOD"] = original_env
+      end
+    end
   end
 
   test "settings restrict_room_creation_to_administrators defaults to false" do

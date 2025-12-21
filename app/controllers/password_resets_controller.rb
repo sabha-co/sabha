@@ -4,6 +4,8 @@ class PasswordResetsController < ApplicationController
   allow_unauthenticated_access
   rate_limit to: 3, within: 1.minute, only: :create, with: -> { redirect_to new_password_reset_path, alert: "Too many requests. Please wait before trying again." }
 
+  before_action :require_password_auth
+
   def new
   end
 
@@ -48,6 +50,14 @@ class PasswordResetsController < ApplicationController
       redirect_to root_path, notice: "Your password has been reset successfully!"
     else
       render_password_error(@user.errors.full_messages.to_sentence)
+    end
+  end
+
+  private
+
+  def require_password_auth
+    if Current.account.auth_method_value != "password"
+      redirect_to new_session_url, alert: "Password reset is not available."
     end
   end
 end

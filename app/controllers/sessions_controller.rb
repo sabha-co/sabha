@@ -5,6 +5,7 @@ class SessionsController < ApplicationController
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_url, alert: "Too many sign in attempts. Please try again later." }
 
   before_action :ensure_user_exists, only: :new
+  before_action :require_password_auth, only: :create
   before_action :validate_email_param, only: :create
 
   def new
@@ -36,6 +37,12 @@ class SessionsController < ApplicationController
   private
     def ensure_user_exists
       redirect_to first_run_url if User.none?
+    end
+
+    def require_password_auth
+      if Current.account.auth_method_value != "password"
+        redirect_to new_session_url, alert: "Password login is not enabled."
+      end
     end
 
     def validate_email_param

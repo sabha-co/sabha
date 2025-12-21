@@ -23,10 +23,10 @@ class MarketingController < ApplicationController
   private
 
   def ensure_account_exists
-    # Try auto-bootstrap first if configured
+    # Try auto-bootstrap first if configured (Campfire Cloud only)
     if FirstRun.should_auto_bootstrap?
       FirstRun.auto_bootstrap!
-      redirect_to new_session_path, notice: "Your admin account has been created. Please sign in."
+      redirect_to new_session_path, notice: "Your admin account has been created. Check your email for the login link."
       return
     end
 

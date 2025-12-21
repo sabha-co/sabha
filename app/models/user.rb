@@ -334,8 +334,4 @@ class User < ApplicationRecord
     def send_password_reset_email
       UserMailer.password_reset(self).deliver_later
     end
-
-    def must_change_password?
-      must_change_password == true
-    end
 end

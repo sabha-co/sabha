@@ -19,7 +19,7 @@ class AccountsController < ApplicationController
     end
 
     def account_params
-      params.require(:account).permit(:name, :logo, :auth_method, settings: {})
+      params.require(:account).permit(:name, :logo, settings: {})
     end
 
     def merged_account_params
