@@ -21,7 +21,7 @@ class AuthTokens::ValidationsController < ApplicationController
       auth_token.user.verify_email! unless auth_token.user.verified?
 
       start_new_session_for(auth_token.user)
-      redirect_to post_authenticating_url
+      redirect_to post_authenticating_url, notice: "Welcome back to #{Branding.app_name}!"
     else
       redirect_to new_auth_tokens_validations_path, alert: "Invalid or expired token. Please try again."
     end
