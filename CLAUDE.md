@@ -235,7 +235,7 @@ test/
 
 - **SQLite3** in production (optimized for single-server deployments)
 - Schema format: SQL (required for FTS5 full-text search extensions)
-- Migrations in `db/migrate/` with schema in `db/schema.sql`
+- Migrations in `db/migrate/` with schema in `db/schema.rb`
 - Full-text search on messages via `messages_fts` virtual table
 
 ## Deployment Architecture

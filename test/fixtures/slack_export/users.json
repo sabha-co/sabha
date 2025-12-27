@@ -1,0 +1,83 @@
+[
+  {
+    "id": "U07Q4MHCP",
+    "team_id": "T07Q4MHC7",
+    "name": "lindy",
+    "deleted": false,
+    "color": "9f69e7",
+    "real_name": "Lindy Smith",
+    "tz": "America/New_York",
+    "profile": {
+      "first_name": "Lindy",
+      "last_name": "Smith",
+      "real_name": "Lindy Smith",
+      "email": "lindy@example.com",
+      "title": "Software Engineer"
+    },
+    "is_admin": true,
+    "is_owner": true,
+    "is_primary_owner": true,
+    "is_restricted": false,
+    "is_ultra_restricted": false,
+    "is_bot": false
+  },
+  {
+    "id": "U24CG47QU",
+    "team_id": "T07Q4MHC7",
+    "name": "alice",
+    "deleted": false,
+    "color": "4bbe2e",
+    "real_name": "Alice Johnson",
+    "tz": "America/Los_Angeles",
+    "profile": {
+      "first_name": "Alice",
+      "last_name": "Johnson",
+      "real_name": "Alice Johnson",
+      "email": "alice@example.com",
+      "title": "Product Manager"
+    },
+    "is_admin": false,
+    "is_owner": false,
+    "is_primary_owner": false,
+    "is_restricted": false,
+    "is_ultra_restricted": false,
+    "is_bot": false
+  },
+  {
+    "id": "U15FUR1QS",
+    "team_id": "T07Q4MHC7",
+    "name": "bob",
+    "deleted": false,
+    "color": "5b89d5",
+    "real_name": "Bob Wilson",
+    "tz": "Europe/London",
+    "profile": {
+      "first_name": "Bob",
+      "last_name": "Wilson",
+      "real_name": "Bob Wilson",
+      "email": "bob@example.com"
+    },
+    "is_admin": false,
+    "is_owner": false,
+    "is_primary_owner": false,
+    "is_restricted": false,
+    "is_ultra_restricted": false,
+    "is_bot": false
+  },
+  {
+    "id": "UDELETED1",
+    "team_id": "T07Q4MHC7",
+    "name": "deleted_user",
+    "deleted": true,
+    "real_name": "Deleted User",
+    "is_bot": false
+  },
+  {
+    "id": "USLACKBOT",
+    "team_id": "T07Q4MHC7",
+    "name": "slackbot",
+    "deleted": false,
+    "real_name": "Slackbot",
+    "is_bot": true
+  }
+]

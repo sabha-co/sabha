@@ -1,0 +1,80 @@
+[
+  {
+    "type": "message",
+    "user": "U07Q4MHCP",
+    "text": "Good morning everyone!",
+    "ts": "1705312800.000001"
+  },
+  {
+    "type": "message",
+    "user": "U24CG47QU",
+    "text": "Hey <@U07Q4MHCP>, how's it going?",
+    "ts": "1705312860.000002"
+  },
+  {
+    "type": "message",
+    "user": "U15FUR1QS",
+    "text": "Check out this link: <https://example.com|Example Site>",
+    "ts": "1705312920.000003"
+  },
+  {
+    "type": "message",
+    "user": "U07Q4MHCP",
+    "text": "Great work team! <!channel> please review this.",
+    "ts": "1705312980.000004",
+    "reactions": [
+      {
+        "name": "thumbsup",
+        "users": ["U24CG47QU", "U15FUR1QS"],
+        "count": 2
+      },
+      {
+        "name": "heart",
+        "users": ["U24CG47QU"],
+        "count": 1
+      }
+    ]
+  },
+  {
+    "user": "U07Q4MHCP",
+    "text": "<@U07Q4MHCP|lindy> has left the channel",
+    "type": "message",
+    "subtype": "channel_leave",
+    "ts": "1705313040.000005"
+  },
+  {
+    "user": "U24CG47QU",
+    "text": "<@U24CG47QU|alice> has joined the channel",
+    "type": "message",
+    "subtype": "channel_join",
+    "ts": "1705313100.000006"
+  },
+  {
+    "type": "message",
+    "user": "U07Q4MHCP",
+    "text": "This is a thread starter",
+    "ts": "1705313200.000007"
+  },
+  {
+    "type": "message",
+    "user": "U24CG47QU",
+    "text": "This is a reply to the thread",
+    "ts": "1705313260.000008",
+    "thread_ts": "1705313200.000007"
+  },
+  {
+    "type": "message",
+    "user": "U15FUR1QS",
+    "text": "Another reply in the thread",
+    "ts": "1705313320.000009",
+    "thread_ts": "1705313200.000007"
+  },
+  {
+    "type": "message",
+    "subtype": "channel_purpose",
+    "user": "U07Q4MHCP",
+    "text": "<@U07Q4MHCP|lindy> set the channel purpose: Team announcements",
+    "purpose": "Team announcements",
+    "ts": "1705313380.000010"
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "C07Q4SBL3",
+    "name": "general",
+    "created": "1437124885",
+    "creator": "U07Q4MHCP",
+    "is_archived": false,
+    "is_general": true,
+    "members": [
+      "U07Q4MHCP",
+      "U24CG47QU",
+      "U15FUR1QS"
+    ],
+    "topic": {
+      "value": "Company-wide announcements",
+      "creator": "U07Q4MHCP",
+      "last_set": "1437124885"
+    },
+    "purpose": {
+      "value": "This channel is for team-wide communication and announcements.",
+      "creator": "U07Q4MHCP",
+      "last_set": "1437124885"
+    }
+  },
+  {
+    "id": "C07Q4MBTL",
+    "name": "random",
+    "created": "1437124885",
+    "creator": "U07Q4MHCP",
+    "is_archived": false,
+    "is_general": false,
+    "members": [
+      "U07Q4MHCP",
+      "U24CG47QU"
+    ],
+    "topic": {
+      "value": "Non-work banter",
+      "creator": "",
+      "last_set": "0"
+    },
+    "purpose": {
+      "value": "A place for non-work-related conversation.",
+      "creator": "",
+      "last_set": "0"
+    }
+  }
+]

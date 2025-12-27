@@ -44,6 +44,7 @@ gem "kredis"
 gem "platform_agent"
 gem "thruster"
 gem "faraday"
+gem "rubyzip", require: "zip"
 
 group :development, :test do
   gem "debug"

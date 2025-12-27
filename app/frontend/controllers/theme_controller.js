@@ -28,13 +28,27 @@ export default class extends Controller {
 
   applyTheme() {
     const theme = localStorage.getItem("theme")
+    const currentTheme = document.documentElement.getAttribute("data-theme") || "auto"
+    const newTheme = theme || "auto"
+    const hasChanged = currentTheme !== newTheme
 
-    if (theme === "light") {
-      document.documentElement.setAttribute("data-theme", "light")
-    } else if (theme === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark")
+    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+    const animate = hasChanged && !prefersReducedMotion
+
+    const apply = () => {
+      if (theme === "light") {
+        document.documentElement.setAttribute("data-theme", "light")
+      } else if (theme === "dark") {
+        document.documentElement.setAttribute("data-theme", "dark")
+      } else {
+        document.documentElement.removeAttribute("data-theme")
+      }
+    }
+
+    if (animate && document.startViewTransition) {
+      document.startViewTransition(apply)
     } else {
-      document.documentElement.removeAttribute("data-theme")
+      apply()
     }
   }
 

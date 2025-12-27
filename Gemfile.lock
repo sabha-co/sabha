@@ -110,7 +110,7 @@ GEM
     base64 (0.3.0)
     bcrypt (3.1.20)
     bigdecimal (3.3.1)
-    brakeman (7.1.1)
+    brakeman (7.1.2)
       racc
     builder (3.3.0)
     capybara (3.40.0)
@@ -482,6 +482,7 @@ DEPENDENCIES
   resque-pool (~> 0.7.1)
   rqrcode
   rubocop-rails-omakase
+  rubyzip
   rufus-scheduler
   selenium-webdriver
   sentry-rails
