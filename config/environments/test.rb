@@ -23,6 +23,10 @@ Rails.application.configure do
   config.action_controller.perform_caching = false
   config.cache_store = :null_store
 
+  # Use memory store for rate limiting so it actually works in tests
+  # (null_store silently disables rate limiting)
+  config.action_controller.cache_store = :memory_store
+
   # Raise exceptions instead of rendering exception templates.
   config.action_dispatch.show_exceptions = :none
 

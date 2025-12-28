@@ -26,6 +26,7 @@ class ActiveSupport::TestCase
 
   setup do
     ActionCable.server.pubsub.clear
+    ActionController::Base.send(:cache_store).clear  # Clear rate limit store
 
     Rails.configuration.tap do |config|
       config.x.web_push_pool.shutdown

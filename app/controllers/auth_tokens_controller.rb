@@ -3,7 +3,7 @@ class AuthTokensController < ApplicationController
 
   allow_unauthenticated_access
 
-  rate_limit to: 10, within: 1.minute, with: -> { render_rejection :too_many_requests }
+  rate_limit to: 10, within: 1.minute, with: -> { head :too_many_requests }
 
   before_action :require_otp_auth
   before_action :validate_email_param

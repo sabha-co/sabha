@@ -74,4 +74,28 @@ class AuthTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
 
     assert @user.reload.verified?
   end
+
+  test "rate limits OTP validation attempts" do
+    post auth_tokens_url, params: { email_address: @user.email_address }
+
+    11.times do
+      post auth_tokens_validations_url, params: { code: "000000" }
+    end
+
+    assert_response :too_many_requests
+  end
+
+  test "rate limit resets after window expires" do
+    post auth_tokens_url, params: { email_address: @user.email_address }
+
+    10.times do
+      post auth_tokens_validations_url, params: { code: "000000" }
+    end
+    assert_redirected_to new_auth_tokens_validations_path
+
+    travel 2.minutes
+
+    post auth_tokens_validations_url, params: { code: "000000" }
+    assert_redirected_to new_auth_tokens_validations_path
+  end
 end

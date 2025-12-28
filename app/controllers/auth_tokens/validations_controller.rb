@@ -1,7 +1,7 @@
 class AuthTokens::ValidationsController < ApplicationController
   allow_unauthenticated_access
 
-  rate_limit to: 10, within: 1.minute, with: -> { render_rejection :too_many_requests }
+  rate_limit to: 10, within: 1.minute, with: -> { head :too_many_requests }
 
   # Token-based login (magic link) is always allowed for Cloud bootstrap
   # Code-based OTP is only allowed when AUTH_METHOD=otp

@@ -126,4 +126,26 @@ class PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_match /too short/, response.body.downcase
   end
+
+  test "rate limits password reset requests" do
+    4.times do
+      post password_resets_url, params: { email_address: "someone@example.com" }
+    end
+
+    assert_redirected_to new_password_reset_path
+    assert_match /Too many requests/, flash[:alert]
+  end
+
+  test "rate limit resets after window expires" do
+    3.times do
+      post password_resets_url, params: { email_address: "someone@example.com" }
+    end
+    assert_redirected_to new_session_url
+
+    travel 2.minutes
+
+    post password_resets_url, params: { email_address: "someone@example.com" }
+    assert_redirected_to new_session_url
+    refute_match /Too many/, flash[:alert].to_s
+  end
 end

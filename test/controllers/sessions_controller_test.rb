@@ -99,4 +99,26 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   ensure
     original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
   end
+
+  test "rate limits login attempts" do
+    11.times do
+      post session_url, params: { email_address: "david@37signals.com", password: "wrong" }
+    end
+
+    assert_redirected_to new_session_url
+    assert_match /Too many sign in attempts/, flash[:alert]
+  end
+
+  test "rate limit resets after window expires" do
+    10.times do
+      post session_url, params: { email_address: "david@37signals.com", password: "wrong" }
+    end
+    refute_match /Too many/, flash[:alert].to_s
+
+    travel 4.minutes
+
+    post session_url, params: { email_address: "david@37signals.com", password: "wrong" }
+    assert_response :redirect
+    refute_match /Too many/, flash[:alert].to_s
+  end
 end

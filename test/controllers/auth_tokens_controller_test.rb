@@ -54,4 +54,24 @@ class AuthTokensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_url
     assert_match /not enabled/, flash[:alert]
   end
+
+  test "rate limits OTP requests" do
+    11.times do
+      post auth_tokens_url, params: { email_address: users(:david).email_address }
+    end
+
+    assert_response :too_many_requests
+  end
+
+  test "rate limit resets after window expires" do
+    10.times do
+      post auth_tokens_url, params: { email_address: users(:david).email_address }
+    end
+    assert_redirected_to new_auth_tokens_validations_url
+
+    travel 2.minutes
+
+    post auth_tokens_url, params: { email_address: users(:david).email_address }
+    assert_redirected_to new_auth_tokens_validations_url
+  end
 end
