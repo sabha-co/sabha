@@ -1,7 +1,7 @@
 # syntax = docker/dockerfile:1
 
 # Make sure it matches the Ruby version in .ruby-version and Gemfile
-ARG RUBY_VERSION=3.4.5
+ARG RUBY_VERSION=4.0.1
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -22,7 +22,7 @@ ARG PNPM_VERSION=10.28.0
 RUN apt-get update -qq && \
   apt-get install --no-install-recommends -y \
   build-essential git pkg-config curl libyaml-dev libssl-dev ca-certificates && \
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt-get install --no-install-recommends -y nodejs && \
   npm install -g pnpm@$PNPM_VERSION && \
   rm -rf /var/lib/apt/lists /var/cache/apt/archives

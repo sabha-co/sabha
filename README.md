@@ -14,7 +14,7 @@ If you find a bug or have a feature request, please [post an issue](https://gith
 
 ### Prerequisites
 
-- Ruby 3.4.5 (check with `ruby --version`)
+- Ruby 4.0.1 (check with `ruby --version`)
 - Redis server
 - SQLite3
 - Node.js with pnpm for Tailwind CSS builds

@@ -112,7 +112,7 @@ Small Bets has minimal environment configuration with hardcoded branding.
 ### Campfire-CE Optimizations
 - Jemalloc memory allocator (`LD_PRELOAD="/usr/local/lib/libjemalloc.so"`)
 - Explicit build cleanup (`rm -rf node_modules tmp/cache .git`)
-- Node.js 22.x via NodeSource
+- Node.js 24.x LTS via NodeSource
 - OCI image metadata labels
 - Smaller final image size
 
