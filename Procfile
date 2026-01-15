@@ -1,3 +1,3 @@
 web: bin/start-app
 redis: redis-server config/redis.conf
-workers: FORK_PER_JOB=false INTERVAL=0.1 bundle exec resque-pool
+workers: bundle exec rake solid_queue:start

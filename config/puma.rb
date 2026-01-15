@@ -36,7 +36,7 @@ port ENV.fetch("PORT", 3000)
 # Workers do not work on JRuby or Windows (both of which do not support processes).
 #
 # In production, we calculate workers as ~66% of CPU cores for optimal performance
-# while leaving headroom for other processes (Redis, Resque workers, etc.).
+# while leaving headroom for other processes (Redis, Solid Queue workers, etc.).
 if ENV["RAILS_ENV"] == "production"
   require "concurrent-ruby"
 
@@ -60,7 +60,10 @@ end
 plugin :tmp_restart
 
 # Run the Solid Queue supervisor inside of Puma for single-server deployments
+# When SOLID_QUEUE_IN_PUMA is set, jobs run as threads inside Puma (async mode)
+# instead of requiring a separate workers process
 plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
+solid_queue_mode :async if ENV["SOLID_QUEUE_IN_PUMA"]
 
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.

@@ -13,8 +13,7 @@ gem "redis", "5.4.0"  # Pin to exactly 5.4.0 to avoid 5.4.1 bug (redis-rb issue 
 gem "puma", "~> 7.1"
 
 # Jobs
-gem "resque", "~> 2.7.0"
-gem "resque-pool", "~> 0.7.1"
+gem "solid_queue"
 
 # Assets
 gem "propshaft"
@@ -69,7 +68,6 @@ gem "resend"
 
 gem "heapy", group: :development
 
-gem "rufus-scheduler"
 gem "mailkick"
 
 gem "rack-mini-profiler", "~> 4.0", require: false

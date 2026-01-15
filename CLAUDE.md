@@ -71,9 +71,20 @@ bin/setup  # Installs gems, pnpm packages, prepares DB, builds Tailwind once
 
 ### Running Locally
 ```bash
-bin/rails server  # Start development server (port 3000)
-# Vite runs automatically via vite_rails with autoBuild: true
+bin/dev                            # Start dev server (jobs run inline)
+bin/rails server                   # Same as bin/dev
+SOLID_QUEUE_IN_PUMA=true bin/dev   # Dev server with async job processing
+bin/boot                           # Full stack: web + redis + workers (production-like)
 ```
+
+**Jobs behavior by startup method:**
+| Command | Jobs | Use case |
+|---------|------|----------|
+| `bin/dev` | Run inline (immediate) | Normal development |
+| `SOLID_QUEUE_IN_PUMA=true bin/dev` | Async in Puma threads | Test async behavior |
+| `bin/boot` | Separate worker process | Test production setup |
+
+Vite runs automatically via vite_rails with autoBuild: true.
 
 ### Tailwind CSS
 ```bash
@@ -144,12 +155,29 @@ self.current_user = User.find_by(id: request.session[:user_id])
 
 ## Background Jobs
 
-Uses Resque (Redis-backed) for background processing:
+Uses Solid Queue (SQLite-backed) for background processing:
 - `Room::PushMessageJob` - Web push notifications for new messages
 - `UnreadMentionsNotifierJob` - Daily email digest of unread mentions/DMs
 - `Gumroad::ImportUserJob` - Process Gumroad purchase webhooks
 
-Scheduled jobs via rufus-scheduler (see `config/initializers/rufus_scheduler.rb`)
+### Running Jobs
+- **Fork mode (default)**: Jobs run in separate worker processes via `bin/jobs` or Procfile
+- **Async mode**: Set `SOLID_QUEUE_IN_PUMA=true` to run jobs as threads inside Puma (single-process deployment)
+
+### Production Startup (`bin/boot`)
+```
+bin/boot → reads Procfile → spawns 3 processes:
+├── web: bin/start-app (db:prepare + Puma)
+├── redis: redis-server
+└── workers: rake solid_queue:start
+```
+
+With `SOLID_QUEUE_IN_PUMA=true`, workers process is not needed - Puma runs jobs internally.
+
+### Configuration
+- `config/queue.yml` - Worker/dispatcher configuration (threads, polling interval)
+- `config/recurring.yml` - Scheduled/recurring jobs (runs at 9am/6pm PT for email digests)
+- Queue database: Separate SQLite database (`storage/db/*_queue.sqlite3`)
 
 ## Important Configuration
 
@@ -168,6 +196,8 @@ Required for production:
 - `WEBHOOK_SECRET` - Webhook security token
 
 Optional features:
+- `SOLID_QUEUE_IN_PUMA=true` - Run background jobs inside Puma (async mode)
+- `JOB_CONCURRENCY` - Number of Solid Queue worker processes (fork mode)
 - `GUMROAD_ON=true` - Enable payment gating
 - `GUMROAD_ACCESS_TOKEN` - Gumroad API access
 
@@ -246,7 +276,7 @@ test/
 - **Kamal** orchestrates Docker-based zero-downtime deployments
 - Single container runs Rails app + Thruster HTTP/2 proxy
 - SQLite database persisted in mounted volume `/disk/campfire/`
-- Redis container for ActionCable and Resque
+- Redis container for ActionCable pub/sub
 - Automated SSL via Kamal proxy with health checks at `/up`
 - GitHub Actions auto-deploys on push to `master` (see `.github/workflows/deploy_with_kamal.yml`)
 

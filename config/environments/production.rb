@@ -50,7 +50,8 @@ Rails.application.configure do
   # Use Redis for the shared cache store to match the existing production setup.
   config.cache_store = :redis_cache_store
 
-  config.active_job.queue_adapter = :resque
+  config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.connects_to = { database: { writing: :queue } }
 
   # Configure Resend as the email delivery method for production.
   config.action_mailer.delivery_method = :resend
