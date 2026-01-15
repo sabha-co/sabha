@@ -48,8 +48,12 @@ module Authentication
     end
 
     def request_authentication
-      session[:return_to_after_authenticating] = request.url
+      session[:return_to_after_authenticating] = request.url unless turbo_frame_request?
       redirect_to new_session_url
+    end
+
+    def turbo_frame_request?
+      request.headers["Turbo-Frame"].present?
     end
 
     def redirect_signed_in_user_to_root
