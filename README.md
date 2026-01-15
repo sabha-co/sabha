@@ -17,7 +17,7 @@ If you find a bug or have a feature request, please [post an issue](https://gith
 - Ruby 3.4.5 (check with `ruby --version`)
 - Redis server
 - SQLite3
-- Node.js with npm (or bun) for Tailwind CSS builds
+- Node.js with pnpm for Tailwind CSS builds
 
 ### Customizing Branding
 
@@ -47,8 +47,8 @@ bin/dev
 
 This starts both the Rails server and Vite dev server using Foreman (via Procfile.dev).
 
-The `bin/setup` script installs Ruby gems and Node packages (via `npm install`), prepares the database, and configures the application.
-If you skip `bin/setup`, install frontend dependencies manually with `npm install`.
+The `bin/setup` script installs Ruby gems and Node packages (via `pnpm install`), prepares the database, and configures the application.
+If you skip `bin/setup`, install frontend dependencies manually with `pnpm install`.
 
 All CSS is managed through Vite. Tailwind processes styles from `app/frontend/entrypoints/application.css`, which is automatically rebuilt during development.
 

@@ -50,13 +50,14 @@ announce "Installing dependencies"
 bundle install
 
 announce "Installing Node.js dependencies"
-if command -v npm >/dev/null 2>&1; then
-  npm install
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm install
 elif command -v bun >/dev/null 2>&1; then
   bun install
 else
-  echo "Warning: Neither npm nor bun found. You'll need to install Node.js dependencies manually."
-  echo "Run 'npm install' or 'bun install' after installing a Node.js package manager."
+  echo "Warning: pnpm not found. You'll need to install Node.js dependencies manually."
+  echo "Install pnpm: npm install -g pnpm"
+  echo "Then run: pnpm install"
 fi
 
 announce "Preparing database"

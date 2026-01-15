@@ -11,17 +11,20 @@ WORKDIR /rails
 ENV RAILS_ENV="production" \
   BUNDLE_DEPLOYMENT="1" \
   BUNDLE_PATH="/usr/local/bundle" \
-  BUNDLE_WITHOUT="development:test"
+  BUNDLE_WITHOUT="development:test" \
+  RUBY_YJIT_ENABLE="1"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
 # Install packages need to build gems and Node.js for Vite
+ARG PNPM_VERSION=10.28.0
 RUN apt-get update -qq && \
   apt-get install --no-install-recommends -y \
   build-essential git pkg-config curl libyaml-dev libssl-dev ca-certificates && \
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
   apt-get install --no-install-recommends -y nodejs && \
+  npm install -g pnpm@$PNPM_VERSION && \
   rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
@@ -32,12 +35,15 @@ RUN bundle install && \
   gem install thruster && \
   gem cleanup
 
+# Install Node dependencies (before copying app for better caching)
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
 # Copy application code
 COPY . .
 
-# Install Node dependencies and build assets with Vite
-RUN npm install && \
-  npm run build
+# Build assets with Vite
+RUN pnpm build
 
 # Precompile assets
 RUN mkdir -p /rails/storage/logs && \

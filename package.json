@@ -1,6 +1,10 @@
 {
   "name": "campfire-ce",
   "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "devDependencies": {
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.0",

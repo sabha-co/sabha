@@ -66,7 +66,7 @@ broadcast_replace_to room, :unread_count, target: "unread-#{room.id}"
 
 ### Setup
 ```bash
-bin/setup  # Installs gems, npm packages, prepares DB, builds Tailwind once
+bin/setup  # Installs gems, pnpm packages, prepares DB, builds Tailwind once
 ```
 
 ### Running Locally
@@ -109,18 +109,21 @@ kamal envify          # Show environment variables being used
 
 ## Frontend Architecture
 
+### Build Tools
+- **Vite** - Used ONLY for Tailwind CSS v4 (requires build step). Not used for JavaScript bundling.
+- **Importmap** - Handles all JavaScript/Stimulus controllers. No bundling, direct ESM imports.
+
 ### Directory Structure
 ```
 app/frontend/
 ├── entrypoints/
-│   ├── application.js      # Stimulus controllers for Rails views
-│   └── application.css     # Tailwind v4 styles
-└── controllers/            # Stimulus controllers
+│   ├── application.js      # Just imports CSS, no app logic
+│   └── application.css     # Tailwind v4 styles + theme
+└── controllers/            # Stimulus controllers (loaded via importmap, not Vite)
 ```
 
 ### Rails Views
 - Main layout: `app/views/layouts/application.html.erb`
-- Uses Vite for CSS and importmap for JavaScript
 - Partials organized by feature: `messages/`, `rooms/`, `inboxes/`, `users/sidebars/`
 
 ## Real-time Features (ActionCable)

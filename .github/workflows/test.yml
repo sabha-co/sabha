@@ -6,6 +6,10 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -23,14 +27,25 @@ jobs:
           ruby-version: 3.4.5
           bundler-cache: true
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install Node dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Vite build
+        uses: actions/cache@v4
+        with:
+          path: public/vite
+          key: vite-${{ runner.os }}-${{ hashFiles('app/frontend/**', 'package.json', 'pnpm-lock.yaml', 'vite.config.mts') }}
 
       - name: Set up database
         run: bin/rails db:prepare
