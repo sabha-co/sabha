@@ -75,17 +75,18 @@ module Authentication
       authenticated_as session
     end
 
+    def terminate_current_session
+      Current.session&.destroy!
+      reset_session
+      cookies.delete(:session_token, domain: ENV["COOKIE_DOMAIN"])
+    end
+
     def authenticated_as(session)
       return if session.user.banned?
 
-      Current.user = session.user
+      Current.session = session
       set_authenticated_by(:session)
-      cookies.signed.permanent[:session_token] = { value: session.token,
-                                                   httponly: true,
-                                                   same_site: :lax,
-                                                   secure: Rails.env.production?,
-                                                   domain: ENV["COOKIE_DOMAIN"]
-      }
+      set_authentication_cookie(session)
       request.session[:user_id] = session.user.id
     end
 
@@ -101,8 +102,17 @@ module Authentication
       false
     end
 
-    def reset_authentication
-      request.session.delete(:user_id)
+    def set_authentication_cookie(session)
+      cookies.signed.permanent[:session_token] = {
+        value: session.token,
+        httponly: true,
+        same_site: :lax,
+        secure: Rails.env.production?,
+        domain: ENV["COOKIE_DOMAIN"]
+      }
+    end
+
+    def remove_authentication_cookie
       cookies.delete(:session_token, domain: ENV["COOKIE_DOMAIN"])
     end
 
