@@ -273,11 +273,11 @@ test/
 
 ## Deployment Architecture
 
-- **Kamal** orchestrates Docker-based zero-downtime deployments
-- Single container runs Rails app + Thruster HTTP/2 proxy
+- **Kamal/Docker self-hosting**: Thruster provides HTTP/2, automatic TLS (Let's Encrypt), caching, and compression
+- **campfire_cloud**: Caddy handles TLS/HTTP2, set `SKIP_THRUSTER=true` to run Puma directly
 - SQLite database persisted in mounted volume `/disk/campfire/`
 - Redis container for ActionCable pub/sub
-- Automated SSL via Kamal proxy with health checks at `/up`
+- Automated SSL via Thruster (self-host) or Caddy (campfire_cloud) with health checks at `/up`
 - GitHub Actions auto-deploys on push to `master` (see `.github/workflows/deploy_with_kamal.yml`)
 
 ## Special Features (from Small Bets fork)
