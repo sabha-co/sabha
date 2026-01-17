@@ -457,7 +457,7 @@ DEPENDENCIES
   rack-mini-profiler (~> 4.0)
   rails!
   rails_autolink
-  redis (= 5.4.0)
+  redis (~> 5.4)
   resend
   rqrcode
   rubocop-rails-omakase
