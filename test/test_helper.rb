@@ -40,7 +40,8 @@ class ActiveSupport::TestCase
     # Don't set COOKIE_DOMAIN in tests to allow cookies to work across different test hosts
     ENV["COOKIE_DOMAIN"] = nil
 
-    WebMock.disable_net_connect!
+    # Allow localhost:8080 for AnyCable HTTP broadcasts (background threads may persist across tests)
+    WebMock.disable_net_connect!(allow: "localhost:8080")
   end
 
   teardown do

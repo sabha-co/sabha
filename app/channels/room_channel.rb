@@ -8,7 +8,11 @@ class RoomChannel < ApplicationCable::Channel
   end
 
   private
+    def room
+      @room ||= find_room
+    end
+
     def find_room
-      current_user.rooms.find_by(id: params[:room_id])
+      current_user&.rooms&.find_by(id: params[:room_id])
     end
 end

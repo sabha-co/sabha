@@ -1,0 +1,31 @@
+default: &default
+  # Mount HTTP RPC endpoint in Rails (no separate gRPC process needed)
+  http_rpc_mount_path: "/_anycable"
+
+  # Use HTTP for broadcasting to AnyCable-Go
+  broadcast_adapter: http
+  http_broadcast_url: "http://localhost:8080/_broadcast"
+
+development:
+  <<: *default
+  websocket_url: "ws://localhost:8080/cable"
+  secret: "development-secret-change-in-production"
+
+test:
+  <<: *default
+  secret: "test-secret"
+
+performance:
+  <<: *default
+  http_broadcast_url: "http://anycable:8080/_broadcast"
+  secret: "test-secret"
+
+production:
+  <<: *default
+  # WebSocket URL for clients (same domain, /cable path)
+  websocket_url: <%= ENV.fetch("ANYCABLE_WEBSOCKET_URL", "wss://#{ENV['APP_HOST']}/cable") %>
+  # Broadcast URL - container name varies by deployment:
+  # - Kamal: campfire-anycable
+  # - campfire_cloud/Docker Compose: anycable
+  http_broadcast_url: <%= ENV.fetch("ANYCABLE_BROADCAST_URL", "http://campfire-anycable:8080/_broadcast") %>
+  secret: <%= ENV["ANYCABLE_SECRET"] %>

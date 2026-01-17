@@ -1,0 +1,308 @@
+#!/usr/bin/env ruby
+#
+# Load testing script for Campfire WebSocket performance
+#
+# Usage:
+#   bin/load-anycable [options]
+#
+# Examples:
+#   # Test Action Cable on remote server (500 users)
+#   bin/load-anycable -h server.example.com --ssh-user root -u 500
+#
+#   # Test AnyCable on remote server (500 users)
+#   bin/load-anycable -h server.example.com --ssh-user root -u 500 --anycable
+#
+#   # Test AnyCable with 1000 users, skip setup (reuse existing containers)
+#   bin/load-anycable -h server.example.com --ssh-user root -u 1000 -S --anycable
+#
+# Options:
+#   -u, --users USERS      Number of concurrent users (default: 1000)
+#   -h, --host HOST        Server to run on (default: localhost)
+#   -p, --port PORT        Application port (default: 80 remote, 3000 local)
+#   -i, --image IMAGE      Docker image to use
+#   -a, --anycable         Use AnyCable mode (runs anycable-go container)
+#   -S, --skip-setup       Skip Docker setup (pull images, upload files)
+#   --ssh-user USER        SSH user for remote hosts (default: ubuntu)
+#
+# Test Behavior:
+#   The test runs for ~70 seconds and simulates realistic chat room usage:
+#
+#   1. Socket Connections (60 seconds)
+#      - Creates N concurrent WebSocket connections
+#      - Ramps up at ~N/3 connections/second
+#      - Each connection subscribes to 6 channels:
+#        - PresenceChannel (who's online in the room)
+#        - UnreadRoomsChannel (unread message counts)
+#        - HeartbeatChannel (keep-alive pings)
+#        - 3x Turbo::StreamsChannel (room list, messages, user rooms)
+#
+#   2. Message Broadcasting (starts at 30s)
+#      - One user sends 100 messages to Room 1
+#      - All connected clients receive the broadcasts
+#
+#   Results show subscriptions/second and messages/second throughput.
+#
+require "bundler/inline"
+
+gemfile do
+  source "https://rubygems.org"
+  gem "base64"
+  gem "bcrypt_pbkdf"
+  gem "ed25519"
+  gem "sshkit"
+end
+
+require "optparse"
+require "net/http"
+require "uri"
+
+class Load
+  include SSHKit::DSL
+
+  attr_reader :users, :setup, :host, :port, :ssh_user
+  attr_reader :campfire_image, :anycable
+
+  def initialize(users: 1000, setup: true, host: "localhost", port: nil, ssh_user: "ubuntu", image: nil, anycable: false)
+    @users = users
+    @setup = setup
+    @host = host
+    @ssh_user = ssh_user
+    @anycable = anycable
+    @port = port || (remote? ? 80 : 3000)
+    @campfire_image = image || (anycable ? "ghcr.io/superforumio/campfire-ce:anycable" : "ghcr.io/superforumio/campfire-ce:latest")
+  end
+
+  def anycable?
+    @anycable
+  end
+
+  def setup?
+    @setup
+  end
+
+  def run
+    configure_sshkit
+    run_setup if setup?
+    start_app
+    run_test
+    output_results
+    cleanup
+  end
+
+  def remote?
+    ![ "localhost", "127.0.0.1" ].include?(host)
+  end
+
+  def ssh_host
+    remote? ? host : :local
+  end
+
+  def k6_dir
+    remote? ? "/tmp/campfire-load" : "$PWD/test/performance"
+  end
+
+  def caddyfile_content
+    if anycable?
+      <<~CADDY
+        :80 {
+            handle /cable {
+                reverse_proxy anycable:8080
+            }
+            handle {
+                reverse_proxy web:3000
+            }
+        }
+      CADDY
+    else
+      <<~CADDY
+        :80 {
+            reverse_proxy web:3000
+        }
+      CADDY
+    end
+  end
+
+  private
+    def configure_sshkit
+      SSHKit::Backend::Netssh.configure do |ssh|
+        ssh.connection_timeout = 30
+        ssh.ssh_options = { user: ssh_user }
+      end
+    end
+
+    def run_setup
+      puts "Running setup..."
+      load = self
+
+      # Write Caddyfile locally first
+      File.write("tmp/Caddyfile", caddyfile_content)
+
+      on(ssh_host) do |host|
+        unless execute(:docker, "-v", raise_on_non_zero_exit: false)
+          execute :curl, "-fsSL", "https://get.docker.com", "|", :sh
+        end
+        execute :docker, :pull, load.campfire_image
+        execute :docker, :pull, "anycable/anycable-go:1.6" if load.anycable?
+        execute :docker, :pull, "caddy:2-alpine"
+        execute :mkdir, "-p", "/tmp/campfire-load"
+        if host.local?
+          execute :cp, "test/performance/chatter.js", "/tmp/campfire-load/chatter.js"
+          execute :cp, "test/performance/cookies.txt", "/tmp/campfire-load/cookies.txt"
+          execute :cp, "tmp/Caddyfile", "/tmp/campfire-load/Caddyfile"
+        else
+          upload! "test/performance/chatter.js", "/tmp/campfire-load/chatter.js"
+          upload! "test/performance/cookies.txt", "/tmp/campfire-load/cookies.txt"
+          upload! "tmp/Caddyfile", "/tmp/campfire-load/Caddyfile"
+        end
+        execute :chmod, "-R", "755", "/tmp/campfire-load"
+      end
+    end
+
+    def start_app
+      puts "Starting app on #{host}#{anycable? ? ' (AnyCable mode)' : ''}..."
+      load = self
+
+      on(ssh_host) do
+        execute :docker, :rm, "-f", :campfire_load, :campfire_anycable, :campfire_caddy, raise_on_non_zero_exit: false
+        execute :docker, :network, :rm, :campfire_net, raise_on_non_zero_exit: false
+
+        # Create network for container communication
+        execute :docker, :network, :create, :campfire_net
+
+        # Start Rails app
+        execute :docker, :run, "-d", "--rm",
+          "--name", :campfire_load,
+          "--network", :campfire_net,
+          "--network-alias", :web,
+          "-e", "SECRET_KEY_BASE=dummy",
+          "-e", "RAILS_ENV=performance",
+          "-e", "CABLE_ADAPTER=#{load.anycable? ? 'any_cable' : 'redis'}",
+          "-e", "ANYCABLE_SECRET=test-secret",
+          load.campfire_image
+
+        if load.anycable?
+          # Start anycable-go
+          execute :docker, :run, "-d", "--rm",
+            "--name", :campfire_anycable,
+            "--network", :campfire_net,
+            "--network-alias", :anycable,
+            "-e", "ANYCABLE_HOST=0.0.0.0",
+            "-e", "ANYCABLE_PORT=8080",
+            "-e", "ANYCABLE_RPC_HOST=http://web:3000/_anycable",
+            "-e", "ANYCABLE_BROADCAST_ADAPTER=http",
+            "-e", "ANYCABLE_HTTP_BROADCAST_PORT=8080",
+            "-e", "ANYCABLE_SECRET=test-secret",
+            "-e", "ANYCABLE_LOG_LEVEL=info",
+            "anycable/anycable-go:1.6"
+        end
+
+        # Start Caddy (exposed to host)
+        execute :docker, :run, "-d", "--rm",
+          "--name", :campfire_caddy,
+          "--network", :campfire_net,
+          "-p", "#{load.port}:80",
+          "-v", "/tmp/campfire-load/Caddyfile:/etc/caddy/Caddyfile:ro",
+          "caddy:2-alpine"
+      end
+
+      wait_for_app_to_start
+    end
+
+    def wait_for_app_to_start
+      timeout_at = Time.now + 120
+      uri = URI("http://#{host}:#{port}/up")
+      loop do
+        sleep 2
+        puts "Waiting for app to start..."
+        raise "App not started after 120 seconds" if Time.now > timeout_at
+        break if Net::HTTP.get_response(uri).code.to_i < 400
+      rescue Errno::ECONNREFUSED, Errno::ECONNRESET, EOFError
+      end
+      puts "App started!"
+    end
+
+    def run_test
+      puts "Running load test..."
+      load = self
+
+      on(ssh_host) do |host|
+        execute :docker, :rm, "-f", :k6, raise_on_non_zero_exit: false
+        # Use host network so k6 can reach Caddy on localhost:80
+        # Use 127.0.0.1 to avoid chatter.js transforming "localhost" to "host.docker.internal"
+        k6_host = host.local? ? "host.docker.internal" : "127.0.0.1"
+        execute :docker, :run, "--name", :k6, "--network", :host,
+          "-e", "HOST=#{k6_host}",
+          "-e", "PORT=#{load.port}",
+          "-e", "USERS=#{load.users}",
+          "-v", "#{load.k6_dir}:/src",
+          "grafana/k6", :run, "/src/chatter.js"
+        if host.local?
+          execute :docker, :logs, :k6, "2>", "tmp/k6.log"
+        else
+          execute :docker, :logs, :k6, "2>", "k6.log"
+          download! "k6.log", "tmp/k6.log"
+        end
+      end
+    end
+
+    def output_results
+      puts "Outputting results..."
+      on(:local) do
+        puts "Connections/s"
+        puts "-------------"
+        puts capture(:cat, "tmp/k6.log", "|", "grep 'Subscription confirmed' | awk '{print $1}' | sort| uniq -c | sed '1d; $d' | awk '{sum += $1; count += 1; max = (max > $1) ? max : $1} END {print \"Average:\",sum/count/6,\"Max:\",max/6}'")
+        puts
+        puts "Messages/s"
+        puts "--------------"
+        puts capture(:cat, "tmp/k6.log", "|", "grep 'Message received' | awk '{print $1}' | sort | uniq -c | sed '1d; $d' | awk '{sum += $1; count += 1; max = (max > $1) ? max : $1} END {print \"Average:\",sum/count,\"Max:\",max}'")
+      end
+    end
+
+    def cleanup
+      on(ssh_host) do |host|
+        execute :docker, :rm, "-f", :campfire_load, :campfire_anycable, :campfire_caddy, :k6, raise_on_non_zero_exit: false
+        execute :docker, :network, :rm, :campfire_net, raise_on_non_zero_exit: false
+      end
+    end
+end
+
+options = {}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options]"
+
+  opts.on("-u", "--users USERS", "User count") do |value|
+    options[:users] = value&.to_i
+  end
+
+  opts.on("-S", "--skip-setup", "Skip setup") do
+    options[:setup] = false
+  end
+
+  opts.on("-h", "--host host", "Host to run the app on") do |host|
+    options[:host] = host
+  end
+
+  opts.on("--ssh-user ssh_user", "User to ssh to remote hosts") do |ssh_user|
+    options[:ssh_user] = ssh_user
+  end
+
+  opts.on("-p", "--port PORT", "Application port") do |port|
+    options[:port] = port
+  end
+
+  opts.on("-i", "--image IMAGE", "Docker image to use") do |image|
+    options[:image] = image
+  end
+
+  opts.on("-a", "--anycable", "Run with AnyCable (uses anycable-go container)") do
+    options[:anycable] = true
+  end
+
+  opts.on("--help", "Prints this message") do
+    puts opts
+    exit 0
+  end
+end.parse!
+
+Load.new(**options).run

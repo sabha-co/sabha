@@ -10,6 +10,10 @@ Campfire-CE is a Ruby on Rails chat application combining:
 - **Vite** for modern frontend asset processing (Tailwind CSS v4)
 - **Importmap** for JavaScript module loading (Stimulus controllers)
 
+**Deployment:**
+- **Self-hosting:** Deploy via Kamal (see `config/deploy.yml`) or Docker Compose
+- **Campfire Cloud:** Managed hosting via [campfire_cloud](../campfire_cloud) platform, which provisions servers and deploys this application using Docker Compose with AnyCable for WebSockets
+
 ## Core Domain Models
 
 ### Room System (Single Table Inheritance)

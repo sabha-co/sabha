@@ -1,3 +1,3 @@
-
 vite: bin/vite dev
 web: PORT=3000 bin/rails s
+anycable: anycable-go --port=8080 --http_broadcast_port=8080 --rpc_host=http://localhost:3000/_anycable --broadcast_adapter=http --secret=${ANYCABLE_SECRET:-development-secret-change-in-production} --log_level=error

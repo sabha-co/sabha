@@ -22,6 +22,10 @@ class ProcessMonitor
   private
     def process_list(procfile)
       config = YAML.load_file(procfile)
+
+      # Skip workers process when SOLID_QUEUE_IN_PUMA is set (runs in Puma threads instead)
+      config.delete("workers") if ENV["SOLID_QUEUE_IN_PUMA"]
+
       config.map { |name, cmd| MonitoredProcess.new(name, cmd) }
     end
 

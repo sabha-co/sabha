@@ -4,7 +4,11 @@ image: superforumio/campfire-ce
 
 servers:
   web:
-    - <%= ENV.fetch("SERVER_IP") %>
+    hosts:
+      - <%= ENV.fetch("SERVER_IP") %>
+    options:
+      # Network alias for anycable-go to reach Rails RPC endpoint
+      network-alias: campfire-web
 
 proxy:
   ssl: true
@@ -50,9 +54,40 @@ env:
     - BACKGROUND_COLOR
     - ANALYTICS_DOMAIN
     - CSP_FRAME_ANCESTORS
+    - ANYCABLE_ENABLED
+    - ANYCABLE_SECRET
 
 volumes:
   - "/disk/campfire/:/rails/storage/"
+
+# AnyCable WebSocket server (enabled by default)
+# Routes /cable path to AnyCable on the same domain
+#
+# To disable AnyCable and use standard ActionCable:
+# 1. Set ANYCABLE_ENABLED=false in your secrets
+# 2. Comment out the 'anycable' accessory below
+# 3. Redeploy: kamal deploy
+accessories:
+  anycable:
+    image: anycable/anycable-go:1.6
+    host: <%= ENV.fetch("SERVER_IP") %>
+    proxy:
+      host: <%= ENV.fetch("PROXY_HOST") %>
+      app_port: 8080
+      path_prefix: /cable
+      healthcheck:
+        path: /health
+    env:
+      clear:
+        ANYCABLE_HOST: "0.0.0.0"
+        ANYCABLE_PORT: "8080"
+        ANYCABLE_PATH: "/"
+        ANYCABLE_RPC_HOST: "http://campfire-web:3000/_anycable"
+        ANYCABLE_BROADCAST_ADAPTER: "http"
+        ANYCABLE_HTTP_BROADCAST_PORT: "8080"
+        ANYCABLE_LOG_LEVEL: "info"
+      secret:
+        - ANYCABLE_SECRET
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"

@@ -1,10 +1,10 @@
 class TypingNotificationsChannel < RoomChannel
   def start(data)
-    broadcast_to @room, action: :start, user: current_user_attributes
+    broadcast_to room, action: :start, user: current_user_attributes if room
   end
 
   def stop(data)
-    broadcast_to @room, action: :stop, user: current_user_attributes
+    broadcast_to room, action: :stop, user: current_user_attributes if room
   end
 
   private

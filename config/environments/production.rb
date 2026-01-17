@@ -70,12 +70,14 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # WebSocket URL (used by action_cable_meta_tag)
+  # Both AnyCable and ActionCable use the same /cable path on the main domain
+  config.action_cable.url = ENV.fetch("ANYCABLE_WEBSOCKET_URL", "wss://#{ENV.fetch('APP_HOST', 'localhost')}/cable")
+
+  # Skip host authorization for health checks and internal RPC endpoints.
+  # Health checks use Docker container IDs as hostnames.
+  # AnyCable RPC uses Docker network aliases (campfire-web).
+  config.host_authorization = {
+    exclude: ->(request) { request.path == "/up" || request.path.start_with?("/_anycable") }
+  }
 end

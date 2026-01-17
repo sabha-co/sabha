@@ -48,4 +48,22 @@ class PresenceChannelTest < ActionCable::Channel::TestCase
       unsubscribe
     end
   end
+
+  test "absent handles nil @room gracefully (AnyCable HTTP RPC scenario)" do
+    # In AnyCable HTTP RPC mode, @room isn't preserved between calls.
+    # Simulate this by creating a fresh channel instance and calling absent directly.
+    membership = users(:david).memberships.first
+
+    # First subscribe to set up the membership as connected
+    subscribe room_id: membership.room_id
+    assert membership.reload.connected?
+
+    # Simulate AnyCable's stateless RPC by clearing @room
+    subscription.instance_variable_set(:@room, nil)
+
+    # This should not raise an error
+    assert_nothing_raised do
+      subscription.absent
+    end
+  end
 end

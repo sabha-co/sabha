@@ -4,6 +4,7 @@ Rails.application.configure do
   config.assume_ssl = false
   config.force_ssl  = false
   config.action_cable.disable_request_forgery_protection = true
+  config.action_cable.url = nil # Let client determine WebSocket URL
 
   config.after_initialize do
     if defined?(Rails::Server) && User.none?
