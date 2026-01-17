@@ -63,7 +63,7 @@ plugin :tmp_restart
 # When SOLID_QUEUE_IN_PUMA is set, jobs run as threads inside Puma (async mode)
 # instead of requiring a separate workers process
 plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
-solid_queue_mode :async if ENV["SOLID_QUEUE_IN_PUMA"]
+solid_queue_mode :async if ENV["SOLID_QUEUE_IN_PUMA_WITH_ASYNC"]
 
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
