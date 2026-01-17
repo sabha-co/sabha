@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libvips-dev ffmpeg
@@ -42,7 +42,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Cache Vite build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: public/vite
           key: vite-${{ runner.os }}-${{ hashFiles('app/frontend/**', 'package.json', 'pnpm-lock.yaml', 'vite.config.mts') }}
