@@ -60,8 +60,8 @@ end
 plugin :tmp_restart
 
 # Run the Solid Queue supervisor inside of Puma for single-server deployments
-# When SOLID_QUEUE_IN_PUMA is set, jobs run as threads inside Puma (async mode)
-# instead of requiring a separate workers process
+# When SOLID_QUEUE_IN_PUMA is set, Puma manages the Solid Queue supervisor process
+# This avoids needing a separate workers process in bin/boot
 plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
 solid_queue_mode :async if ENV["SOLID_QUEUE_IN_PUMA_WITH_ASYNC"]
 
