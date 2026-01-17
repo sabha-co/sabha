@@ -7,6 +7,11 @@
 # create log directory
 mkdir -p /rails/storage/logs
 
+# Prepare databases (creates tables if needed, runs pending migrations)
+# This must run BEFORE bin/boot starts parallel processes (web, workers, redis)
+# to ensure Solid Queue tables exist before workers try to access them.
+./bin/rails db:prepare
+
 # create config directories
 mkdir -p ~/.aws
 mkdir -p /rails/storage/aws

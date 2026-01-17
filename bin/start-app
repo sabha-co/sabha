@@ -1,6 +1,11 @@
 #!/bin/bash -e
 
 rm -f tmp/pids/server.pid
+
+# Prepare databases (creates tables if needed, runs pending migrations)
+# This runs here for Procfile-based deployments (Heroku, Railway, etc.)
+# For Docker deployments, it also runs in bin/configure to ensure tables exist
+# before workers start. Running twice is safe - db:prepare is idempotent.
 ./bin/rails db:prepare
 
 if [ -n "$SKIP_THRUSTER" ]; then
