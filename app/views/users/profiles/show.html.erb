@@ -153,6 +153,18 @@
     </menu>
   </div>
 
+  <% if Current.account.settings.allow_users_to_create_invite_links? %>
+    <hr class="margin-block-start borderless">
+
+    <fieldset>
+      <legend class="gap">
+        <%= image_tag "person-add.svg", aria: { hidden: "true" }, size: 36, class: "colorize--black" %>
+      </legend>
+
+      <%= render "users/profiles/invite_link" %>
+    </fieldset>
+  <% end %>
+
   <%= render "users/profiles/transfer", user: @user %>
 
   <%= render "users/profiles/theme" %>

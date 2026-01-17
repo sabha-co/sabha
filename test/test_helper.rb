@@ -24,6 +24,9 @@ class ActiveSupport::TestCase
   include SessionTestHelper, MentionTestHelper, TurboTestHelper
 
   setup do
+    # Default to password auth in tests (sign_in helper uses password)
+    ENV["AUTH_METHOD"] = "password"
+
     ActionCable.server.pubsub.clear
     ActionController::Base.send(:cache_store).clear  # Clear rate limit store
 

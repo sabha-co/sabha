@@ -2,15 +2,22 @@ module Account::Joinable
   extend ActiveSupport::Concern
 
   included do
-    before_create { self.join_code = generate_join_code }
+    has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
+
+    after_create :create_global_join_code
+  end
+
+  # Returns the global (admin) join code for backward compatibility
+  def join_code
+    join_codes.global.first
   end
 
   def reset_join_code
-    update! join_code: generate_join_code
+    join_code.regenerate_code
   end
 
   private
-    def generate_join_code
-      SecureRandom.alphanumeric(12).scan(/.{4}/).join("-")
+    def create_global_join_code
+      join_codes.create!
     end
 end

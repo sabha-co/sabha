@@ -83,6 +83,7 @@ Rails.application.routes.draw do
       scope defaults: { user_id: "me" } do
         resource :sidebar, only: :show
         resource :profile
+        resource :invite_link, only: :create
         resources :push_subscriptions do
           scope module: "push_subscriptions" do
             resources :test_notifications, only: :create

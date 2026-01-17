@@ -1,0 +1,40 @@
+<%= turbo_frame_tag "invite_link" do %>
+  <% invite_link = Current.user.active_invite_link %>
+  <% if invite_link %>
+    <% url = join_url(invite_link.code) %>
+    <div class="flex flex-column gap">
+      <div class="txt-medium txt-align-center">Share this link to invite friends</div>
+
+      <label for="invite_link_url" class="for-screen-reader">Your personal invite link</label>
+      <input type="text" class="input" value="<%= url %>" id="invite_link_url" readonly>
+
+      <div class="flex align-center center gap">
+        <%= button_to_copy_to_clipboard(url) do %>
+          <span class="for-screen-reader">Copy invite link</span>
+          <%= image_tag "copy-paste.svg", aria: { hidden: "true" }, size: 20, class: "colorize--black" %>
+        <% end %>
+
+        <%= web_share_session_button(url, "Join me in #{Current.account.name}", "Use this link to join me in #{Current.account.name}!") do %>
+          <span class="for-screen-reader">Share invite link</span>
+          <%= image_tag "share.svg", aria: { hidden: "true" }, size: 20, class: "colorize--black" %>
+        <% end %>
+
+        <%= button_to user_invite_link_path, method: :post, class: "btn", title: "Generate new link" do %>
+          <span class="for-screen-reader">Generate new invite link</span>
+          <%= image_tag "refresh.svg", aria: { hidden: "true" }, size: 20, class: "colorize--black" %>
+        <% end %>
+      </div>
+
+      <div class="txt-small txt-de-emph txt-align-center">
+        Expires in <%= distance_of_time_in_words_to_now(invite_link.expires_at) %>
+      </div>
+    </div>
+  <% else %>
+    <div class="flex flex-column gap txt-align-center">
+      <div class="txt-medium">Invite friends to <%= Current.account.name %></div>
+      <%= button_to user_invite_link_path, method: :post, class: "btn txt-small center" do %>
+        Create Invite Link
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

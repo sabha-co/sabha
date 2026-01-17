@@ -10,12 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2025_12_20_190132) do
+ActiveRecord::Schema[8.2].define(version: 2026_01_16_170115) do
+  create_table "account_join_codes", force: :cascade do |t|
+    t.integer "account_id", null: false
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.datetime "updated_at", null: false
+    t.integer "usage_count", default: 0, null: false
+    t.integer "usage_limit"
+    t.integer "user_id"
+    t.index ["account_id"], name: "index_account_join_codes_on_account_id"
+    t.index ["code"], name: "index_account_join_codes_on_code", unique: true
+    t.index ["user_id"], name: "index_account_join_codes_on_user_id"
+  end
+
   create_table "accounts", force: :cascade do |t|
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.text "custom_styles"
-    t.string "join_code", null: false
     t.string "name", null: false
     t.json "settings"
     t.integer "singleton_guard", default: 0, null: false
@@ -261,6 +274,8 @@ ActiveRecord::Schema[8.2].define(version: 2025_12_20_190132) do
     t.index ["user_id"], name: "index_webhooks_on_user_id"
   end
 
+  add_foreign_key "account_join_codes", "accounts"
+  add_foreign_key "account_join_codes", "users"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "auth_tokens", "users"

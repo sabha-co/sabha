@@ -18,24 +18,27 @@
 
     <div class="nametag__inner flex flex-column gap">
       <fieldset class="flex flex-column center-block">
-        <legend class="txt-align-center flex gap">
+        <legend class="txt-align-center flex gap align-center justify-center">
           <%= account_logo_tag %>
           <strong class="txt-large"><%= Current.account.name %></strong>
         </legend>
 
-        <label class="align-center center avatar__form gap" data-controller="upload-preview">
-          <div class="btn input--file">
-            <%= image_tag "camera.svg", aria: { hidden: "true" } %>
-            <%= form.file_field :avatar, class: "input", accept: "image/*",
-                  data: { upload_preview_target: "input", action: "upload-preview#previewImage" } %>
-            <span class="for-screen-reader">Upload avatar</span>
-          </div>
+        <div class="txt-align-center txt-medium margin-block-start-half">
+          <% if @join_code.personal? %>
+            <strong><%= @join_code.user.name %></strong> invited you to join
+          <% else %>
+            You've been invited to join
+          <% end %>
+        </div>
 
-          <div class="btn avatar input--file txt-xx-large">
-            <%= image_tag @user.avatar.attached? ? @user.avatar : "default-avatar.svg", aria: { hidden: "true" }, data: { upload_preview_target: "image" } %>
-            <span class="for-screen-reader">Avatar</span>
-          </div>
-        </label>
+        <div class="flex justify-center gap txt-medium">
+          <span class="flex align-center gap-half">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3ba55c"></span>
+            <%= User.active.where(last_authenticated_at: 24.hours.ago..).count %> Online
+          </span>
+          <span>&middot;</span>
+          <span><%= User.active.count %> Members</span>
+        </div>
       </fieldset>
 
       <% if flash[:alert] %>
@@ -74,8 +77,12 @@
 
       <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
         <%= image_tag "check.svg", aria: { hidden: "true" } %>
-        <span class="for-screen-reader">Save</span>
+        <span class="for-screen-reader">Join</span>
       <% end %>
+
+      <div class="txt-medium txt-align-center">
+        Already have an account? <%= link_to "Sign in", new_session_path %>
+      </div>
     </div>
   </section>
 <% end %>

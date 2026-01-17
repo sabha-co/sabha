@@ -34,6 +34,21 @@
           </label>
           <span>Only admins can start DMs</span>
         <% end %>
+
+        <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
+          <%= form.fields_for :settings, @account.settings do |settings_form| %>
+            <%= settings_form.hidden_field :allow_users_to_create_invite_links,
+                value: !Current.account.settings.allow_users_to_create_invite_links? %>
+          <% end %>
+          <label class="switch">
+            <input type="checkbox"
+                  class="switch__input"
+                  <%= "checked" if Current.account.settings.allow_users_to_create_invite_links? %>
+                  data-action="change->form#submit">
+            <span class="switch__btn"></span>
+          </label>
+          <span>Allow users to create invite links</span>
+        <% end %>
       </div>
     </div>
   </div>

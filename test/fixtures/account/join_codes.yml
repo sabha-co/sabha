@@ -1,0 +1,19 @@
+signal:
+  account_id: <%= ActiveRecord::FixtureSet.identify(:signal) %>
+  code: CRMu-l8Ge-KB9B
+  usage_count: 0
+  usage_limit:
+  user_id:
+  expires_at:
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+signal_personal:
+  account_id: <%= ActiveRecord::FixtureSet.identify(:signal) %>
+  user_id: <%= ActiveRecord::FixtureSet.identify(:david) %>
+  code: PERS-ONAL-CODE
+  usage_count: 0
+  usage_limit:
+  expires_at: <%= 7.days.from_now %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

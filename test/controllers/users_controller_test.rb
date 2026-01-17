@@ -2,7 +2,7 @@ require "test_helper"
 
 class UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @join_code = Current.account.join_code
+    @join_code = Current.account.join_code.code
     @original_auth_method = ENV["AUTH_METHOD"]
   end
 
@@ -138,6 +138,21 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert user.present?
     assert user.authenticate("valid_password_123")
     assert_not user.verified?
+  end
+
+  test "create increments join code usage count" do
+    ENV["AUTH_METHOD"] = "password"
+    join_code = Current.account.join_code
+
+    assert_difference -> { join_code.reload.usage_count }, 1 do
+      post join_url(@join_code), params: {
+        user: {
+          name: "New User",
+          email_address: "newuser123@example.com",
+          password: "valid_password_123"
+        }
+      }
+    end
   end
 
   test "create with invalid email returns 422" do

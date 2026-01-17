@@ -1,7 +1,10 @@
 <fieldset data-controller="theme">
-  <legend class="txt-small txt-muted">Appearance</legend>
+  <legend class="gap">
+    <%= image_tag "art.svg", aria: { hidden: "true" }, size: 36, class: "colorize--black" %>
+  </legend>
 
-  <div class="flex flex-col sm:flex-row gap">
+  <div class="flex flex-column gap">
+    <div class="flex flex-col sm:flex-row gap">
     <button type="button" class="btn flex-item-grow" data-action="theme#setLight" data-theme-target="lightButton" aria-selected="false">
       <svg xmlns="http://www.w3.org/2000/svg" style="width: 1.3em; height: 1.3em;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="5"/>
@@ -32,5 +35,6 @@
       </svg>
       Auto
     </button>
+    </div>
   </div>
 </fieldset>

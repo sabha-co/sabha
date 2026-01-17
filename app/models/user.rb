@@ -19,6 +19,16 @@ class User < ApplicationRecord
   has_many :messages, -> { active }, foreign_key: :creator_id, class_name: "Message"
 
   has_many :mentions, dependent: :delete_all
+  has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
+
+  def active_invite_link
+    join_codes.active.first
+  end
+
+  def regenerate_invite_link
+    join_codes.destroy_all
+    join_codes.create!
+  end
 
   # Use before_destroy to clean up ALL records (including inactive) to satisfy FK constraints
   before_destroy :destroy_all_associated_records
