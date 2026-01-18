@@ -13,8 +13,15 @@ export PORT="${PORT:-3000}"
 export RUBY_DEBUG_OPEN="true"
 export RUBY_DEBUG_LAZY="true"
 
-if command -v overmind > /dev/null 2>&1; then
-  exec overmind start -f Procfile.dev "$@"
+# Use AnyCable Procfile if enabled, otherwise standard Procfile
+if [ "$ANYCABLE_ENABLED" = "true" ]; then
+  PROCFILE="Procfile.dev.anycable"
 else
-  exec foreman start -f Procfile.dev "$@"
+  PROCFILE="Procfile.dev"
+fi
+
+if command -v overmind > /dev/null 2>&1; then
+  exec overmind start -f "$PROCFILE" "$@"
+else
+  exec foreman start -f "$PROCFILE" "$@"
 fi

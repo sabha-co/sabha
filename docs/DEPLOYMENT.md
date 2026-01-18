@@ -13,7 +13,7 @@ Deploy Campfire-CE on your own VPS. You get full control, own your data, and pay
 
 ### Requirements
 
-- A VPS with 1GB+ RAM (DigitalOcean, Hetzner, Linode, etc.)
+- A VPS with 2GB+ RAM (DigitalOcean, Hetzner, Linode, etc.)
 - A domain name pointing to your server
 - Basic command-line familiarity
 

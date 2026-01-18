@@ -3,8 +3,8 @@ default: &default
   url: redis://localhost:6379
 
 development:
-  adapter: <%= ENV["ANYCABLE_ENABLED"] == "false" ? "redis" : "any_cable" %>
-  <% if ENV["ANYCABLE_ENABLED"] == "false" %>
+  adapter: <%= ENV["ANYCABLE_ENABLED"] == "true" ? "any_cable" : "redis" %>
+  <% if ENV["ANYCABLE_ENABLED"] != "true" %>
   url: redis://localhost:6379
   channel_prefix: campfire_development
   <% end %>
