@@ -107,12 +107,12 @@ GEM
       railties
     addressable (2.8.8)
       public_suffix (>= 2.0.2, < 8.0)
-    anycable-core (1.6.1)
+    anycable-core (1.6.2)
       anyway_config (~> 2.2)
       base64 (>= 0.2)
       google-protobuf (~> 4)
       stringio (~> 3)
-    anycable-rails-core (1.6.0)
+    anycable-rails-core (1.6.1)
       actioncable (>= 7.0, < 9.0)
       anycable-core (~> 1.6.0)
       globalid
@@ -122,6 +122,8 @@ GEM
     base64 (0.3.0)
     bcrypt (3.1.21)
     bigdecimal (4.0.1)
+    bootsnap (1.21.1)
+      msgpack (~> 1.2)
     brakeman (7.1.2)
       racc
     builder (3.3.0)
@@ -358,7 +360,7 @@ GEM
       rubocop (>= 1.72)
       rubocop-performance (>= 1.24)
       rubocop-rails (>= 2.30)
-    ruby-next-core (1.1.2)
+    ruby-next-core (1.2.0)
     ruby-progressbar (1.13.0)
     ruby-vips (2.3.0)
       ffi (~> 1.12)
@@ -400,7 +402,7 @@ GEM
     thruster (0.1.17-x86_64-linux)
     timeout (0.6.0)
     tsort (0.2.0)
-    turbo-rails (2.0.20)
+    turbo-rails (2.0.21)
       actionpack (>= 7.1.0)
       railties (>= 7.1.0)
     tzinfo (2.0.6)
@@ -446,6 +448,7 @@ PLATFORMS
 DEPENDENCIES
   anycable-rails-core (~> 1.5)
   bcrypt
+  bootsnap
   brakeman
   capybara
   debug

@@ -35,12 +35,18 @@ RUN bundle install && \
   gem install thruster && \
   gem cleanup
 
+# Precompile bootsnap code for faster boot times
+RUN bundle exec bootsnap precompile --gemfile
+
 # Install Node dependencies (before copying app for better caching)
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # Copy application code
 COPY . .
+
+# Precompile bootsnap code for faster boot times
+RUN bundle exec bootsnap precompile app/ lib/
 
 # Build assets with Vite
 RUN pnpm build
