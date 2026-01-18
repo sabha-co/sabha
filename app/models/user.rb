@@ -296,6 +296,7 @@ class User < ApplicationRecord
       Block.where(blocked_id: id).delete_all
       Push::Subscription.where(user_id: id).delete_all
       Webhook.where(user_id: id).delete_all
+      Mailkick::Subscription.where(subscriber: self).delete_all
     end
 
     def set_default_name

@@ -51,6 +51,14 @@ class UserTest < ActiveSupport::TestCase
     assert user.valid?
   end
 
+  test "destroying a user removes their email subscriptions" do
+    user = create_new_user
+
+    assert_difference -> { Mailkick::Subscription.count }, -1 do
+      user.destroy
+    end
+  end
+
   private
     def create_new_user
       User.create!(name: "User", email_address: "user@example.com", password: "secret123456")
