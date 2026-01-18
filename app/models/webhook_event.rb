@@ -4,8 +4,7 @@ class WebhookEvent < ApplicationRecord
   after_create :trim_old_events
 
   private
-
-  def trim_old_events
-    WebhookEvent.where(created_at: ..3.months.ago).delete_all
-  end
+    def trim_old_events
+      WebhookEvent.where(created_at: ..3.months.ago).delete_all
+    end
 end

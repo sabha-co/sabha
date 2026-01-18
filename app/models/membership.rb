@@ -56,7 +56,6 @@ class Membership < ApplicationRecord
 
   after_update :broadcast_involvement, if: :saved_change_to_involvement?
 
-
   scope :with_ordered_room, -> { includes(:room).joins(:room).order("rooms.sortable_name") }
   scope :with_room_by_activity, -> { includes(:room).joins(:room).order("rooms.messages_count DESC") }
   scope :with_room_by_last_active_newest_first, -> { includes(:room).joins(:room).order("rooms.last_active_at DESC") }
@@ -122,17 +121,16 @@ class Membership < ApplicationRecord
   end
 
   private
+    def broadcast_read
+      ActionCable.server.broadcast "user_#{user_id}_reads", { room_id: room_id }
+    end
 
-  def broadcast_read
-    ActionCable.server.broadcast "user_#{user_id}_reads", { room_id: room_id }
-  end
+    def broadcast_unread_by_user
+      ActionCable.server.broadcast "user_#{user_id}_unreads", { roomId: room.id, roomSize: room.messages_count, roomUpdatedAt: room.last_active_at.iso8601, forceUnread: true }
+      ActionCable.server.broadcast "user_#{user_id}_notifications", { roomId: room.id } if has_unread_notifications?
+    end
 
-  def broadcast_unread_by_user
-    ActionCable.server.broadcast "user_#{user_id}_unreads", { roomId: room.id, roomSize: room.messages_count, roomUpdatedAt: room.last_active_at.iso8601, forceUnread: true }
-    ActionCable.server.broadcast "user_#{user_id}_notifications", { roomId: room.id } if has_unread_notifications?
-  end
-
-  def broadcast_involvement
-    ActionCable.server.broadcast "user_#{user_id}_involvements", { roomId: room_id, involvement: involvement }
-  end
+    def broadcast_involvement
+      ActionCable.server.broadcast "user_#{user_id}_involvements", { roomId: room_id, involvement: involvement }
+    end
 end

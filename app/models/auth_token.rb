@@ -3,8 +3,7 @@ class AuthToken < ApplicationRecord
 
   has_secure_token :token
 
-  validates_presence_of :code
-  validates_presence_of :expires_at
+  validates :code, :expires_at, presence: true
 
   before_validation :generate_code
 
@@ -32,8 +31,7 @@ class AuthToken < ApplicationRecord
   end
 
   private
-
-  def generate_code
-    self.code = format("%06d", rand(100_000..999_999))
-  end
+    def generate_code
+      self.code = format("%06d", rand(100_000..999_999))
+    end
 end

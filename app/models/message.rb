@@ -92,96 +92,90 @@ class Message < ApplicationRecord
   end
 
   private
+    def involve_mentionees_in_room(unread:)
+      # Skip auto-involvement for @everyone to avoid creating thousands of membership updates
+      # Users already in the room will be notified via the updated queries
+      return if mentions_everyone?
 
-  def involve_mentionees_in_room(unread:)
-    # Skip auto-involvement for @everyone to avoid creating thousands of membership updates
-    # Users already in the room will be notified via the updated queries
-    return if mentions_everyone?
-
-    mentionees.each { |user| room.involve_user(user, unread: unread) }
-  end
-
-  def involve_creator_in_thread
-    # When someone posts in a thread, ensure they have visible membership
-    if room.thread?
-      room.involve_user(creator, unread: false)
+      mentionees.each { |user| room.involve_user(user, unread: unread) }
     end
-  end
 
-  def update_thread_reply_count
-    # When a message is created in a thread, update the reply count separator
-    if room.thread?
-      broadcast_update_to(
-        room,
-        :messages,
-        target: "#{ActionView::RecordIdentifier.dom_id(room, :replies_separator)}_count",
-        html: ActionController::Base.helpers.pluralize(room.messages_count, "reply", "replies")
-      )
+    def involve_creator_in_thread
+      # When someone posts in a thread, ensure they have visible membership
+      room.involve_user(creator, unread: false) if room.thread?
     end
-  end
 
-  def update_parent_message_threads
-    # When a message is created in a thread, update the parent message's threads display
-    if room.thread? && room.parent_message
-      broadcast_replace_to(
-        room.parent_message.room,
-        :messages,
-        target: ActionView::RecordIdentifier.dom_id(room.parent_message, :threads),
-        partial: "messages/threads",
-        locals: { message: room.parent_message }
-      )
-    end
-  end
-
-  def broadcast_parent_message_to_threads
-    # When a parent message is deleted/updated, broadcast to all threads
-    if saved_change_to_attribute?(:active) && threads.any?
-      threads.each do |thread|
-        broadcast_replace_to(
-          thread,
+    def update_thread_reply_count
+      # When a message is created in a thread, update the reply count separator
+      if room.thread?
+        broadcast_update_to(
+          room,
           :messages,
-          target: ActionView::RecordIdentifier.dom_id(self),
-          partial: "messages/parent_message",
-          locals: { message: self, thread: thread }
+          target: "#{ActionView::RecordIdentifier.dom_id(room, :replies_separator)}_count",
+          html: ActionController::Base.helpers.pluralize(room.messages_count, "reply", "replies")
         )
       end
     end
-  end
 
-  def touch_room_activity
-    room.touch(:last_active_at)
-  end
-
-  private
-
-  def ensure_can_message_recipient
-    errors.add(:base, "Messaging this user isn't allowed") if creator.blocked_in?(room)
-  end
-
-  def ensure_everyone_mention_allowed
-    return unless body.body
-
-    has_everyone_mention = body.body.attachables.any? { |a| a.is_a?(Everyone) }
-    return unless has_everyone_mention
-
-    if !room.is_a?(Rooms::Open)
-      errors.add(:base, "@everyone is only allowed in open rooms")
-    elsif !creator&.administrator?
-      errors.add(:base, "Only admins can mention @everyone")
+    def update_parent_message_threads
+      # When a message is created in a thread, update the parent message's threads display
+      if room.thread? && room.parent_message
+        broadcast_replace_to(
+          room.parent_message.room,
+          :messages,
+          target: ActionView::RecordIdentifier.dom_id(room.parent_message, :threads),
+          partial: "messages/threads",
+          locals: { message: room.parent_message }
+        )
+      end
     end
-  end
 
-  private
+    def broadcast_parent_message_to_threads
+      # When a parent message is deleted/updated, broadcast to all threads
+      if saved_change_to_attribute?(:active) && threads.any?
+        threads.each do |thread|
+          broadcast_replace_to(
+            thread,
+            :messages,
+            target: ActionView::RecordIdentifier.dom_id(self),
+            partial: "messages/parent_message",
+            locals: { message: self, thread: thread }
+          )
+        end
+      end
+    end
 
-  def destroy_all_associated_records
-    # Delete ALL boosts and bookmarks (including inactive ones) to satisfy FK constraints
-    # Mentions are handled by the Mentionee concern's `dependent: :destroy`
-    Boost.unscoped.where(message_id: id).delete_all
-    Bookmark.unscoped.where(message_id: id).delete_all
-  end
+    def touch_room_activity
+      room.touch(:last_active_at)
+    end
 
-  def clear_unread_timestamps_if_deactivated
-    if saved_change_to_attribute?(:active) && !active?
+    def ensure_can_message_recipient
+      errors.add(:base, "Messaging this user isn't allowed") if creator.blocked_in?(room)
+    end
+
+    def ensure_everyone_mention_allowed
+      return unless body.body
+
+      has_everyone_mention = body.body.attachables.any? { |a| a.is_a?(Everyone) }
+      return unless has_everyone_mention
+
+      if !room.is_a?(Rooms::Open)
+        errors.add(:base, "@everyone is only allowed in open rooms")
+      elsif !creator&.administrator?
+        errors.add(:base, "Only admins can mention @everyone")
+      end
+    end
+
+    def destroy_all_associated_records
+      # Delete ALL boosts and bookmarks (including inactive ones) to satisfy FK constraints
+      # Mentions are handled by the Mentionee concern's `dependent: :destroy`
+      Boost.unscoped.where(message_id: id).delete_all
+      Bookmark.unscoped.where(message_id: id).delete_all
+    end
+
+    def clear_unread_timestamps_if_deactivated
+      return unless saved_change_to_attribute?(:active) && !active?
+
       # Find memberships where unread_at points to this deleted message
       room.memberships.where(unread_at: created_at).find_each do |membership|
         # Find the next unread message after this one, or mark as read
@@ -196,5 +190,4 @@ class Message < ApplicationRecord
         end
       end
     end
-  end
 end

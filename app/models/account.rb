@@ -16,12 +16,11 @@ class Account < ApplicationRecord
   end
 
   private
+    def invite_links_disabled?
+      saved_change_to_settings? && !settings.allow_users_to_create_invite_links?
+    end
 
-  def invite_links_disabled?
-    saved_change_to_settings? && !settings.allow_users_to_create_invite_links?
-  end
-
-  def invalidate_personal_invite_links
-    join_codes.personal.destroy_all
-  end
+    def invalidate_personal_invite_links
+      join_codes.personal.destroy_all
+    end
 end

@@ -6,8 +6,7 @@ class Block < ApplicationRecord
   validate :unable_to_block_self
 
   private
-
-  def unable_to_block_self
-    errors.add(:blocked_id, "can't be the same as blocker") if blocker_id == blocked_id
-  end
+    def unable_to_block_self
+      errors.add(:blocked_id, "can't be the same as blocker") if blocker_id == blocked_id
+    end
 end

@@ -56,7 +56,7 @@ class User < ApplicationRecord
   has_many :blocks_received, class_name: "Block", foreign_key: :blocked_id, dependent: :destroy
   has_many :blocked_by_users, through: :blocks_received, source: :blocker
 
-  validates_presence_of :email_address, if: :person?
+  validates :email_address, presence: true, if: :person?
   validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }, if: -> { email_address.present? }
   normalizes :email_address, with: ->(email_address) { email_address.downcase }
 
@@ -170,7 +170,6 @@ class User < ApplicationRecord
     membership_started_at || created_at
   end
 
-
   def total_message_count
     Message.active
            .joins(:room)
@@ -226,37 +225,55 @@ class User < ApplicationRecord
     blocks_given.where(blocked: other_user).destroy_all
   end
 
+  def verified?
+    verified_at.present?
+  end
+
+  def verify_email!
+    update!(verified_at: Time.current)
+  end
+
+  def send_verification_email
+    UserMailer.email_verification(self).deliver_later
+  end
+
+  def send_password_reset_email
+    UserMailer.password_reset(self).deliver_later
+  end
+
+  def self.find_and_initialize_unclaimed_gumroad_import(attributes)
+    unclaimed_gumroad_import = User.active.unclaimed_gumroad_imports.find_by(email_address: attributes[:email_address])
+    unclaimed_gumroad_import&.update!(attributes)
+    unclaimed_gumroad_import
+  end
+  private_class_method :find_and_initialize_unclaimed_gumroad_import
+
+  def self.find_or_create_user_from_gumroad(attributes)
+    sale = GumroadAPI.successful_membership_sale(email: attributes[:email_address])
+    User.create!(attributes.merge(membership_started_at: sale["created_at"], order_id: sale["order_id"])) if sale
+  rescue ActiveRecord::RecordNotUnique
+    user = User.active.find_by(email_address: attributes[:email_address])
+
+    if user.present?
+      # Link the latest successful sale to user,
+      user.order_id = sale["order_id"]
+      # but keep the old join date (`membership_started_at`) if present.
+      user.membership_started_at = user.membership_started_at || sale["created_at"]
+      user.save!
+    end
+
+    user
+  end
+  private_class_method :find_or_create_user_from_gumroad
+
+  def self.find_or_create_user_locally(attributes)
+    User.create!(attributes)
+  rescue ActiveRecord::RecordNotUnique
+    User.active.find_by(email_address: attributes[:email_address])
+  end
+  private_class_method :find_or_create_user_locally
+
   private
-    def self.find_and_initialize_unclaimed_gumroad_import(attributes)
-      unclaimed_gumroad_import = User.active.unclaimed_gumroad_imports.find_by(email_address: attributes[:email_address])
-
-      unclaimed_gumroad_import&.update!(attributes)
-      unclaimed_gumroad_import
-    end
-
-    def self.find_or_create_user_from_gumroad(attributes)
-      sale = GumroadAPI.successful_membership_sale(email: attributes[:email_address])
-      User.create!(attributes.merge(membership_started_at: sale["created_at"], order_id: sale["order_id"])) if sale
-    rescue ActiveRecord::RecordNotUnique
-      user = User.active.find_by(email_address: attributes[:email_address])
-
-      if user.present?
-        # Link the latest successful sale to user,
-        user.order_id = sale["order_id"]
-        # but keep the old join date (`membership_started_at`) if present.
-        user.membership_started_at = user.membership_started_at || sale["created_at"]
-        user.save!
-      end
-
-      user
-    end
-
-    def self.find_or_create_user_locally(attributes)
-      User.create!(attributes)
-    rescue ActiveRecord::RecordNotUnique
-      User.active.find_by(email_address: attributes[:email_address])
-    end
-
     def grant_membership_to_open_rooms
       Membership.insert_all(Rooms::Open.active.pluck(:id).collect { |room_id| { room_id: room_id, user_id: id } })
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open" }).find_each do |thread|
@@ -326,23 +343,5 @@ class User < ApplicationRecord
 
       handle = url.strip
       "https://www.linkedin.com/in/#{handle}"
-    end
-
-  public
-
-    def verified?
-      verified_at.present?
-    end
-
-    def verify_email!
-      update!(verified_at: Time.current)
-    end
-
-    def send_verification_email
-      UserMailer.email_verification(self).deliver_later
-    end
-
-    def send_password_reset_email
-      UserMailer.password_reset(self).deliver_later
     end
 end

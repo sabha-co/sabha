@@ -52,23 +52,22 @@ class Account::JoinCode < ApplicationRecord
   end
 
   private
-
-  def generate_code
-    self.code = generate_new_code
-  end
-
-  def generate_new_code
-    loop do
-      candidate = SecureRandom.base58(CODE_LENGTH).scan(/.{4}/).join("-")
-      break candidate unless self.class.exists?(code: candidate)
+    def generate_code
+      self.code = generate_new_code
     end
-  end
 
-  def set_default_expiration
-    self.expires_at ||= DEFAULT_EXPIRATION.from_now
-  end
+    def generate_new_code
+      loop do
+        candidate = SecureRandom.base58(CODE_LENGTH).scan(/.{4}/).join("-")
+        break candidate unless self.class.exists?(code: candidate)
+      end
+    end
 
-  def set_account_from_current
-    self.account = Current.account
-  end
+    def set_default_expiration
+      self.expires_at ||= DEFAULT_EXPIRATION.from_now
+    end
+
+    def set_account_from_current
+      self.account = Current.account
+    end
 end
