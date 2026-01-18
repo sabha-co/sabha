@@ -56,8 +56,6 @@ gem "kredis"
 gem "platform_agent"
 gem "faraday"
 gem "rubyzip", require: "zip"
-gem "stringex"
-gem "ostruct" # Required by stringex, no longer in default gems as of Ruby 3.5.0
 
 group :development, :test do
   gem "debug"

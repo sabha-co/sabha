@@ -51,6 +51,11 @@ class UserTest < ActiveSupport::TestCase
     assert user.valid?
   end
 
+  test "transliterates name to ascii for search" do
+    user = User.create!(name: "José García", email_address: "jose@example.com", password: "secret123456")
+    assert_equal "Jose Garcia", user.ascii_name
+  end
+
   test "destroying a user removes their email subscriptions" do
     user = create_new_user
 

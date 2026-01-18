@@ -304,7 +304,7 @@ class User < ApplicationRecord
     end
 
     def transliterate_name
-      self.ascii_name = name.to_s.to_ascii
+      self.ascii_name = ActiveSupport::Inflector.transliterate(name.to_s)
     end
 
     def normalize_social_urls
