@@ -6,7 +6,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 gem "rails", github: "rails/rails", branch: "main"
 
 # Drivers
-gem "sqlite3", ">= 2.8"
+gem "sqlite3", ">= 2.9"
 gem "redis", "~> 5.4"
 
 # Deployment
@@ -45,7 +45,7 @@ gem "stackprof", "~> 0.2"
 
 # Other
 gem "bcrypt"
-gem "msgpack", ">= 1.7.0"
+gem "msgpack", ">= 1.8.0"
 gem "web-push"
 gem "rqrcode"
 gem "rails_autolink"
@@ -69,7 +69,6 @@ end
 
 group :development do
   gem "letter_opener"
-  gem "heapy"
   gem "lefthook", "~> 2.0"
 end
 
