@@ -35,29 +35,7 @@
               <tbody>
                 <% if @yearly_stats[year].present? %>
                   <% @yearly_stats[year].each_with_index do |user, index| %>
-                    <% is_current = user.id == Current.user&.id %>
-                    <tr class="<%= 'current-user' if is_current %>">
-                      <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
-                      <td>
-                        <div class="flex gap-inline align-center">
-                          <%= link_to user_path(user, from: "/stats/yearly"), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
-                            <% if user.avatar.attached? %>
-                              <div class="avatar avatar-xs">
-                                <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
-                              </div>
-                            <% else %>
-                              <div class="avatar avatar-xs">
-                                <%= user.name.first.upcase %>
-                              </div>
-                            <% end %>
-                            <span class="txt-truncate"><%= user.name %></span>
-                          <% end %>
-                        </div>
-                      </td>
-                      <td class="txt-right">
-                        <%= number_with_delimiter(user.message_count) %>
-                      </td>
-                    </tr>
+                    <%= render "stats/user_row", user: user, rank: index + 1, count: user.message_count, from_path: "/stats/yearly" %>
                   <% end %>
                 <% else %>
                   <tr>
@@ -71,4 +49,4 @@
       </div>
     <% end %>
   </div>
-</section> 
+</section>

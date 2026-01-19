@@ -33,35 +33,33 @@
           <table class="table full-width">
             <thead>
               <tr>
-                <th style="width: 20px;"></th>
+                <th class="col-rank"></th>
                 <th></th>
                 <th class="txt-left">Creator</th>
                 <th class="txt-left">Top Talker</th>
-                <th class="txt-right" style="width: 80px;">Messages</th>
+                <th class="txt-right col-count">Messages</th>
               </tr>
             </thead>
             <tbody>
               <% if @rooms.any? %>
                 <% @rooms.each_with_index do |room, index| %>
                   <tr>
-                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
+                    <td class="txt-right txt-small txt-faded col-rank"><%= index + 1 %></td>
                     <td>
-                      <%= link_to room_path(room), style: "text-decoration: none;" do %>
+                      <%= link_to room_path(room) do %>
                         <span class="txt-truncate"><%= room.name %></span>
                       <% end %>
                     </td>
                     <td>
                       <% if room.creator %>
-                        <%= link_to user_path(room.creator, from: "/stats/rooms"), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
-                          <% if room.creator.avatar.attached? %>
-                            <div class="avatar avatar-xs">
+                        <%= link_to user_path(room.creator, from: "/stats/rooms"), class: "user-row" do %>
+                          <div class="avatar-xs">
+                            <% if room.creator.avatar.attached? %>
                               <%= image_tag room.creator.avatar, alt: room.creator.name, loading: "lazy" %>
-                            </div>
-                          <% else %>
-                            <div class="avatar avatar-xs">
+                            <% else %>
                               <%= room.creator.name.first.upcase %>
-                            </div>
-                          <% end %>
+                            <% end %>
+                          </div>
                           <span class="txt-truncate"><%= room.creator.name %></span>
                         <% end %>
                       <% else %>
@@ -70,23 +68,21 @@
                     </td>
                     <td>
                       <% if top_talker = @top_talkers[room.id] %>
-                        <%= link_to user_path(top_talker, from: "/stats/rooms"), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
-                          <% if top_talker.avatar.attached? %>
-                            <div class="avatar avatar-xs">
+                        <%= link_to user_path(top_talker, from: "/stats/rooms"), class: "user-row" do %>
+                          <div class="avatar-xs">
+                            <% if top_talker.avatar.attached? %>
                               <%= image_tag top_talker.avatar, alt: top_talker.name, loading: "lazy" %>
-                            </div>
-                          <% else %>
-                            <div class="avatar avatar-xs">
+                            <% else %>
                               <%= top_talker.name.first.upcase %>
-                            </div>
-                          <% end %>
+                            <% end %>
+                          </div>
                           <span class="txt-truncate"><%= top_talker.name %></span>
                         <% end %>
                       <% else %>
                         <span class="txt-faded">None</span>
                       <% end %>
                     </td>
-                    <td class="txt-right" style="width: 80px;">
+                    <td class="txt-right col-count">
                       <%= number_with_delimiter(room.message_count) %>
                     </td>
                   </tr>

@@ -11,14 +11,14 @@
       <%= image_tag("arrow-left.svg", aria: { hidden: "true" }, size: 20) %>
       <span class="for-screen-reader">Back to Room</span>
     <% end %>
-    
+
     <% if @room.direct? || @room.creator == Current.user || Current.user.administrator? %>
       <%= link_to @room.open? ? edit_rooms_open_path(@room) : (@room.closed? ? edit_rooms_closed_path(@room) : (@room.direct? ? edit_rooms_direct_path(@room) : (@room.thread? ? edit_rooms_thread_path(@room) : nil))), class: "btn" do %>
         <%= image_tag("pencil.svg", aria: { hidden: "true" }, size: 20) %>
         <span>Edit Room</span>
       <% end %>
     <% end %>
-    
+
     <%= link_to room_stats_path(@room), class: "btn d-hotwire-native-none" do %>
       <%= image_tag("refresh.svg", aria: { hidden: "true" }, size: 20) %>
       <span class="for-screen-reader">Refresh stats</span>
@@ -26,7 +26,7 @@
   </div>
 <% end %>
 
-<section class="full-width" style="margin-top: 2rem;">
+<section class="full-width margin-top-lg">
   <div class="stats-grid margin-block">
     <!-- Room Info Card -->
     <div class="card grid-card">
@@ -50,16 +50,14 @@
               <tr>
                 <td>Created by</td>
                 <td class="txt-right">
-                  <%= link_to user_path(@room_stats[:creator], from: room_stats_path(@room)), class: "flex align-center hover-target justify-end", style: "text-decoration: none; gap: 4px;" do %>
-                    <% if @room_stats[:creator].avatar.attached? %>
-                      <div class="avatar avatar-xs">
+                  <%= link_to user_path(@room_stats[:creator], from: room_stats_path(@room)), class: "user-row user-row--end" do %>
+                    <div class="avatar-xs">
+                      <% if @room_stats[:creator].avatar.attached? %>
                         <%= image_tag @room_stats[:creator].avatar, alt: @room_stats[:creator].name, loading: "lazy" %>
-                      </div>
-                    <% else %>
-                      <div class="avatar avatar-xs">
+                      <% else %>
                         <%= @room_stats[:creator].name.first.upcase %>
-                      </div>
-                    <% end %>
+                      <% end %>
+                    </div>
                     <span><%= @room_stats[:creator].name %></span>
                   <% end %>
                 </td>
@@ -93,7 +91,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Top Talkers Card -->
     <div class="card grid-card">
       <div class="card-header">
@@ -105,59 +103,13 @@
             <tbody>
               <% if @top_talkers.any? %>
                 <% @top_talkers.each_with_index do |user, index| %>
-                  <% is_current = user.id == Current.user&.id %>
-                  <tr class="<%= 'current-user' if is_current %>">
-                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
-                    <td>
-                      <div class="flex gap-inline align-center">
-                        <%= link_to user_path(user, from: room_stats_path(@room)), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
-                          <% if user.avatar.attached? %>
-                            <div class="avatar avatar-xs">
-                              <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
-                            </div>
-                          <% else %>
-                            <div class="avatar avatar-xs">
-                              <%= user.name.first.upcase %>
-                            </div>
-                          <% end %>
-                          <span class="txt-truncate"><%= user.name %></span>
-                        <% end %>
-                      </div>
-                    </td>
-                    <td class="txt-right">
-                      <%= number_with_delimiter(user.message_count) %>
-                    </td>
-                  </tr>
+                  <%= render "stats/user_row", user: user, rank: index + 1, count: user.message_count, from_path: room_stats_path(@room) %>
                 <% end %>
-                
+
                 <% if Current.user && @current_user_stats && @current_user_stats.message_count.to_i > 0 %>
-                  <tr>
-                    <td colspan="3" class="txt-center txt-small txt-faded" style="padding: 0.25rem;">
-                      <div style="border-top: 1px dashed var(--color-border-darker); margin: 0.25rem 0;"></div>
-                    </td>
-                  </tr>
-                  <tr class="current-user">
-                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= @current_user_rank %></td>
-                    <td>
-                      <div class="flex gap-inline align-center">
-                        <%= link_to user_path(Current.user, from: room_stats_path(@room)), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
-                          <% if Current.user.avatar.attached? %>
-                            <div class="avatar avatar-xs">
-                              <%= image_tag Current.user.avatar, alt: Current.user.name, loading: "lazy" %>
-                            </div>
-                          <% else %>
-                            <div class="avatar avatar-xs">
-                              <%= Current.user.name.first.upcase %>
-                            </div>
-                          <% end %>
-                          <span class="txt-truncate"><%= Current.user.name %></span>
-                        <% end %>
-                      </div>
-                    </td>
-                    <td class="txt-right">
-                      <%= number_with_delimiter(@current_user_stats.message_count) %>
-                    </td>
-                  </tr>
+                  <% unless @top_talkers.any? { |u| u.id == Current.user.id } %>
+                    <%= render "stats/user_row", user: Current.user, rank: @current_user_rank, count: @current_user_stats.message_count, from_path: room_stats_path(@room), show_separator: true %>
+                  <% end %>
                 <% end %>
               <% else %>
                 <tr>
@@ -170,4 +122,4 @@
       </div>
     </div>
   </div>
-</section> 
+</section>

@@ -3,42 +3,6 @@
 
 <% content_for :head do %>
   <%= stylesheet_link_tag "application/stats" %>
-  <style>
-    #loading-indicator {
-      display: none;
-      text-align: center;
-      padding: 0.5rem;
-      margin: 1rem 0;
-      position: relative;
-      z-index: 10;
-      clear: both;
-    }
-    
-    .loading-spinner {
-      display: inline-block;
-      width: 2rem;
-      height: 2rem;
-      border: 0.25rem solid rgba(0, 0, 0, 0.1);
-      border-radius: 50%;
-      border-top-color: #3498db;
-      animation: spin 1s ease-in-out infinite;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    #error-message {
-      display: none;
-      text-align: center;
-      padding: 1rem;
-      margin: 1rem 0;
-      background-color: #fff3f3;
-      border: 1px solid #ffcaca;
-      border-radius: 0.5rem;
-      color: #d63031;
-    }
-  </style>
 <% end %>
 
 <% content_for :nav do %>
@@ -62,11 +26,11 @@
   <% if @initial_month.present? %>
     <%= render partial: 'stats/month_data', locals: { month: @initial_month, days: @days, daily_stats: @daily_stats } %>
   <% end %>
-  
+
   <div id="loading-indicator">
     <div class="loading-spinner"></div>
   </div>
-  
+
   <div id="error-message">
     <p>Failed to load data. <a href="#" id="retry-button">Retry</a></p>
   </div>
@@ -81,65 +45,65 @@
     let currentIndex = 1;
     let isLoading = false;
     const viewport = document.getElementById('main-content');
-    
+
     // Initialize the scroll pagination
     function initScrollPagination() {
       // Prevent multiple initializations
       if (paginationInitialized) return;
-      
+
       paginationInitialized = true;
-      
+
       // Store the months we need to load
       months = <%= raw @all_months.to_json %>;
       currentIndex = 1; // Start from the second month (index 1) since the first one is already loaded
       isLoading = false;
       let scrollTimeout = null;
-      
+
       // Function to check if we need to load more content
       function checkScroll() {
         if (isLoading) return;
-        
+
         // If we've reached the end of the data, just stop checking
         if (currentIndex >= months.length) return;
-        
+
         // Clear any existing timeout to debounce the scroll event
         if (scrollTimeout) {
           clearTimeout(scrollTimeout);
         }
-        
+
         // Set a new timeout
         scrollTimeout = setTimeout(() => {
           const scrollPosition = viewport.scrollTop + viewport.clientHeight;
           const containerHeight = viewport.scrollHeight;
-          
+
           // Calculate how far we are from the bottom as a percentage
           const scrollPercentage = (scrollPosition / containerHeight) * 100;
-          
+
           // Load more content if we're near the bottom (within 150px or 90% scrolled)
           if (scrollPosition >= containerHeight - 150 || scrollPercentage > 90) {
             loadNextMonth();
           }
         }, 150);
       }
-      
+
       // Save reference to the checkScroll function for cleanup
       scrollCheckFunction = checkScroll;
-      
+
       // Function to load the next month
       function loadNextMonth() {
         if (isLoading || currentIndex >= months.length) return;
-        
+
         isLoading = true;
         const loadingIndicator = document.getElementById('loading-indicator');
         loadingIndicator.style.display = 'block';
-        
+
         const monthToLoad = months[currentIndex];
-        
+
         // Create a placeholder for the month
         const placeholder = document.createElement('div');
         placeholder.id = `month-${monthToLoad}`;
         document.getElementById('stats-container').insertBefore(placeholder, loadingIndicator);
-        
+
         // Load the month data using fetch
         fetch(`<%= stats_month_data_path %>?month=${monthToLoad}`)
           .then(response => response.text())
@@ -148,18 +112,18 @@
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
             placeholder.outerHTML = tempDiv.innerHTML;
-            
+
             // Update state and hide loading indicator
             currentIndex++;
             loadingIndicator.style.display = 'none';
             isLoading = false;
-            
+
             // Check if we need to load more (in case the content is too short)
             setTimeout(() => {
               const newScrollPosition = viewport.scrollTop + viewport.clientHeight;
               const newContainerHeight = viewport.scrollHeight;
               const newScrollPercentage = (newScrollPosition / newContainerHeight) * 100;
-              
+
               if (newScrollPosition >= newContainerHeight - 150 || newScrollPercentage > 90) {
                 checkScroll();
               }
@@ -170,11 +134,11 @@
             placeholder.remove();
             loadingIndicator.style.display = 'none';
             isLoading = false;
-            
+
             // Show error message
             const errorMessage = document.getElementById('error-message');
             errorMessage.style.display = 'block';
-            
+
             // Set up retry button
             const retryButton = document.getElementById('retry-button');
             retryButton.onclick = function(e) {
@@ -184,10 +148,10 @@
             };
           });
       }
-      
+
       // Listen for scroll events
       viewport.addEventListener('scroll', checkScroll);
-      
+
       // Initial check - only if the page is very short
       setTimeout(() => {
         const containerHeight = viewport.scrollHeight;
@@ -197,13 +161,13 @@
         }
       }, 1000);
     }
-    
+
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', initScrollPagination);
-    
+
     // Also initialize when Turbo navigates to this page
     document.addEventListener('turbo:load', initScrollPagination);
-    
+
     // Clean up when navigating away
     document.addEventListener('turbo:before-visit', function() {
       if (paginationInitialized && scrollCheckFunction) {

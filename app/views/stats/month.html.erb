@@ -23,21 +23,21 @@
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <section class="full-width">
-  <% 
+  <%
     # Group months by year
     months_by_year = @months.group_by do |month|
       year, _ = month.split('-')
       year
     end
-    
+
     # Sort years in descending order
     sorted_years = months_by_year.keys.sort.reverse
   %>
-  
+
   <% sorted_years.each do |year| %>
     <h2 class="section-heading"><%= year %></h2>
     <div class="stats-grid margin-block" style="margin-bottom: 2rem;">
-      <% 
+      <%
         # Sort months within year in descending order (December to January)
         months_in_year = months_by_year[year].sort.reverse
       %>
@@ -54,29 +54,7 @@
                 <tbody>
                   <% if @monthly_stats[month].present? %>
                     <% @monthly_stats[month].each_with_index do |user, index| %>
-                      <% is_current = user.id == Current.user&.id %>
-                      <tr class="<%= 'current-user' if is_current %>">
-                        <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= index + 1 %></td>
-                        <td>
-                          <div class="flex gap-inline align-center">
-                            <%= link_to user_path(user, from: "/stats/monthly"), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
-                              <% if user.avatar.attached? %>
-                                <div class="avatar avatar-xs">
-                                  <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
-                                </div>
-                              <% else %>
-                                <div class="avatar avatar-xs">
-                                  <%= user.name.first.upcase %>
-                                </div>
-                              <% end %>
-                              <span class="txt-truncate"><%= user.name %></span>
-                            <% end %>
-                          </div>
-                        </td>
-                        <td class="txt-right">
-                          <%= number_with_delimiter(user.message_count) %>
-                        </td>
-                      </tr>
+                      <%= render "stats/user_row", user: user, rank: index + 1, count: user.message_count, from_path: "/stats/monthly" %>
                     <% end %>
                   <% else %>
                     <tr>
@@ -91,4 +69,4 @@
       <% end %>
     </div>
   <% end %>
-</section> 
+</section>

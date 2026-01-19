@@ -34,29 +34,7 @@
             <tbody>
               <% if @all_time_stats.present? %>
                 <% @all_time_stats.each do |user| %>
-                  <% is_current = user.id == Current.user&.id %>
-                  <tr class="<%= 'current-user' if is_current %>">
-                    <td class="txt-right txt-small txt-faded" style="width: 20px;"><%= @precomputed_ranks[user.id] %></td>
-                    <td>
-                      <div class="flex gap-inline align-center">
-                        <%= link_to user_path(user, from: "/stats/all"), class: "flex align-center hover-target", style: "text-decoration: none; gap: 4px; min-width: 0;" do %>
-                          <% if user.avatar.attached? %>
-                            <div class="avatar avatar-xs">
-                              <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
-                            </div>
-                          <% else %>
-                            <div class="avatar avatar-xs">
-                              <%= user.name.first.upcase %>
-                            </div>
-                          <% end %>
-                          <span class="txt-truncate"><%= user.name %></span>
-                        <% end %>
-                      </div>
-                    </td>
-                    <td class="txt-right">
-                      <%= number_with_delimiter(user.total_message_count) %>
-                    </td>
-                  </tr>
+                  <%= render "stats/user_row", user: user, rank: @precomputed_ranks[user.id], count: user.total_message_count, from_path: "/stats/all" %>
                 <% end %>
               <% else %>
                 <tr>
@@ -69,4 +47,4 @@
       </div>
     </div>
   </div>
-</section> 
+</section>
