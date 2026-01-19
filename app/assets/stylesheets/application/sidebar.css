@@ -533,6 +533,7 @@
   --hover-filter: none;
   --num-buttons: 1;
 
+  cursor: pointer;
   min-block-size: var(--btn-size);
 
   .room__contents {
