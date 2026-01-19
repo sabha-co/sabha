@@ -73,6 +73,16 @@ module RoomsHelper
     room.display_name(for_user: for_user)
   end
 
+  def edit_room_path(room)
+    case room
+    when Rooms::Direct then edit_rooms_direct_path(room)
+    when Rooms::Open   then edit_rooms_open_path(room)
+    when Rooms::Closed then edit_rooms_closed_path(room)
+    when Rooms::Thread then edit_rooms_thread_path(room)
+    else raise ArgumentError, "Unknown room type: #{room.class}"
+    end
+  end
+
   private
     def composer_data_options(room)
       {

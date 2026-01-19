@@ -74,4 +74,64 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     post rooms_opens_url, params: { room: { name: "Admin Room" } }
     assert_redirected_to room_url(Room.last)
   end
+
+  # Destroy permission tests
+
+  test "admin can destroy any room" do
+    sign_in :david
+
+    assert_difference -> { Room.active.count }, -1 do
+      delete rooms_open_url(rooms(:pets))
+    end
+
+    assert_redirected_to root_url
+  end
+
+  test "creator can destroy their own room" do
+    # Create a room as non-admin
+    sign_in :kevin
+    post rooms_opens_url, params: { room: { name: "Kevin's Room" } }
+    room = Room.last
+
+    assert_difference -> { Room.active.count }, -1 do
+      delete rooms_open_url(room)
+    end
+
+    assert_redirected_to root_url
+  end
+
+  test "non-admin non-creator cannot destroy room" do
+    sign_in :kevin
+
+    assert_no_difference -> { Room.active.count } do
+      delete rooms_open_url(rooms(:hq))
+    end
+
+    assert_response :forbidden
+  end
+
+  test "non-member cannot access room" do
+    # Create a closed room without kevin
+    sign_in :david
+    post rooms_closeds_url, params: { room: { name: "Private Room" }, user_ids: [ users(:david).id ] }
+    room = Room.last
+
+    sign_in :kevin
+
+    get room_url(room)
+    assert_redirected_to root_url
+  end
+
+  # Creator update permission tests
+
+  test "creator can update their own open room" do
+    sign_in :kevin
+    post rooms_opens_url, params: { room: { name: "Kevin's Room" } }
+    room = Room.last
+
+    put rooms_open_url(room), params: { room: { name: "Kevin's Updated Room" } }
+
+    assert_redirected_to room_url(room)
+    assert_equal "Kevin's Updated Room", room.reload.name
+  end
 end

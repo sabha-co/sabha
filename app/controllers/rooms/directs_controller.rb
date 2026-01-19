@@ -1,4 +1,8 @@
 class Rooms::DirectsController < RoomsController
+  skip_before_action :set_room, only: %i[ edit destroy ]
+  skip_before_action :ensure_can_administer, only: %i[ destroy ]
+
+  before_action :set_direct_room, only: %i[ edit destroy ]
   before_action :ensure_permission_to_create_direct_messages, only: %i[ new create ]
 
   def new
@@ -10,13 +14,22 @@ class Rooms::DirectsController < RoomsController
     redirect_to room_url(@room)
   end
 
-  def edit
+  def edit ; end
+
+  def destroy
+    deactivate_room
+    redirect_to root_url
   end
 
   private
+
+    def set_direct_room
+      @room = Current.user.rooms.find_by(id: params[:id], type: Rooms::Direct.sti_name)
+      redirect_to root_url, alert: "Conversation not found" unless @room
+    end
+
     def create_room
       @room = Rooms::Direct.find_or_create_for(selected_users)
-
       broadcast_create_room(@room)
     end
 
@@ -30,18 +43,14 @@ class Rooms::DirectsController < RoomsController
 
     def broadcast_create_room(room)
       room.memberships.each do |membership|
-        membership.broadcast_prepend_to membership.user, :rooms, target: :direct_rooms, partial: "users/sidebars/rooms/direct"
+        membership.broadcast_prepend_to membership.user, :rooms,
+          target: :direct_rooms,
+          partial: "users/sidebars/rooms/direct"
       end
-    end
-
-    # All users in a direct room can administer it
-    def ensure_can_administer
-      true
     end
 
     def ensure_permission_to_create_direct_messages
-      if Current.account.settings.restrict_direct_messages_to_administrators? && !Current.user.administrator?
-        head :forbidden
-      end
+      return unless Current.account.settings.restrict_direct_messages_to_administrators?
+      head :forbidden unless Current.user.administrator?
     end
 end

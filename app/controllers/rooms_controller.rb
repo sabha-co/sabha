@@ -43,11 +43,9 @@ class RoomsController < ApplicationController
         room = Current.user.rooms.includes(parent_message: { creator: :avatar_attachment }).find_by(slug: identifier)
       end
 
-      if room
-        @room = room
-      else
-        redirect_to root_url, alert: "Room not found or inaccessible"
-      end
+      return @room = room if room
+
+      redirect_to root_url, alert: "Room not found or inaccessible"
     end
 
     def set_membership
@@ -60,7 +58,7 @@ class RoomsController < ApplicationController
     end
 
     def ensure_can_administer
-      head :forbidden unless Current.user.can_administer?(@room)
+      head :forbidden unless @room && Current.user.can_administer?(@room)
     end
 
     def find_messages

@@ -92,4 +92,51 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
     post rooms_closeds_url, params: { room: { name: "Admin Room" }, user_ids: [ users(:david).id ] }
     assert_redirected_to room_url(Room.last)
   end
+
+  # Destroy permission tests
+
+  test "admin can destroy any closed room" do
+    sign_in :david
+
+    assert_difference -> { Room.active.count }, -1 do
+      delete rooms_closed_url(rooms(:designers))
+    end
+
+    assert_redirected_to root_url
+  end
+
+  test "creator can destroy their own closed room" do
+    sign_in :kevin
+    post rooms_closeds_url, params: { room: { name: "Kevin's Private Room" }, user_ids: [ users(:kevin).id, users(:jz).id ] }
+    room = Room.last
+
+    assert_difference -> { Room.active.count }, -1 do
+      delete rooms_closed_url(room)
+    end
+
+    assert_redirected_to root_url
+  end
+
+  test "non-admin non-creator cannot destroy closed room" do
+    sign_in :jz
+
+    assert_no_difference -> { Room.active.count } do
+      delete rooms_closed_url(rooms(:designers))
+    end
+
+    assert_response :forbidden
+  end
+
+  # Creator update permission tests
+
+  test "creator can update their own closed room" do
+    sign_in :kevin
+    post rooms_closeds_url, params: { room: { name: "Kevin's Room" }, user_ids: [ users(:kevin).id ] }
+    room = Room.last
+
+    put rooms_closed_url(room), params: { room: { name: "Kevin's Updated Room" }, user_ids: [ users(:kevin).id ] }
+
+    assert_redirected_to room_url(room)
+    assert_equal "Kevin's Updated Room", room.reload.name
+  end
 end
