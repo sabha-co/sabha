@@ -402,6 +402,13 @@
   }
 }
 
+.sidebar__separator {
+  border: none;
+  border-top: 1px solid var(--color-border-darker);
+  margin-inline: var(--sidebar-inline-space);
+  margin-block: 0;
+}
+
 /* Rooms */
 .rooms {
   --column-gap: 0.5em;
@@ -417,7 +424,7 @@
   }
 
   .rooms-list {
-    row-gap: 0;
+    row-gap: 0.5em;
     padding-bottom: var(--block-space);
   }
 }
@@ -444,12 +451,36 @@
   margin-bottom: calc(var(--block-space) * 2);
 }
 
+.room-row {
+  width: 100%;
+
+  .btn.everything,
+  .btn.mentions,
+  .btn.invisible {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    flex-shrink: 0;
+  }
+}
+
 .room {
+  background-color: var(--color-text-reversed);
   color: var(--color-text);
   font-weight: normal;
   justify-content: start;
-  margin-inline-end: auto;
   max-inline-size: 100%;
+
+  &.unread {
+    --btn-border-color: var(--color-text);
+    --hover-color: var(--color-text);
+
+    font-weight: 600;
+
+    &:not(:hover) {
+      box-shadow: 0 0 0 1px var(--color-text);
+    }
+  }
 
   .searches-list & {
     border-radius: 0.5em;
@@ -461,13 +492,7 @@
 
   @media (any-hover: hover) {
     &:hover {
-      background: linear-gradient(
-        to right,
-        rgba(255, 255, 0, 0.05) 0%,
-        rgba(255, 255, 0, 0.1) 10%,
-        rgba(255, 255, 0, 0) 80%
-      );
-      border-radius: 0.5em;
+      background-color: var(--color-border);
     }
   }
 

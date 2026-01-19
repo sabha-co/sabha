@@ -71,8 +71,16 @@ class Membership < ApplicationRecord
     end
   }
   scope :shared, -> { joins(:room).where(rooms: { type: %w[Rooms::Open Rooms::Closed] }) }
+  scope :direct_rooms, -> { joins(:room).where(rooms: { type: "Rooms::Direct" }) }
   scope :without_direct_rooms, -> { joins(:room).where.not(rooms: { type: "Rooms::Direct" }) }
   scope :without_thread_rooms, -> { joins(:room).where.not(rooms: { type: "Rooms::Thread" }) }
+  scope :active_rooms, -> { joins(:room).where(rooms: { active: true }) }
+  scope :with_messages, -> { joins(:room).where("rooms.messages_count > 0") }
+  # Memberships that have unread messages OR whose room was updated recently.
+  # Used to filter direct messages in the sidebar to only show recent conversations.
+  scope :recently_active_or_unread, ->(since: 7.days.ago) {
+    joins(:room).where("memberships.unread_at IS NOT NULL OR rooms.updated_at > ?", since)
+  }
 
   scope :notifications_on, -> { where(involvement: :everything) }
   scope :visible, -> { where.not(involvement: :invisible) }

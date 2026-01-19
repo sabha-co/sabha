@@ -1,12 +1,9 @@
 module Rooms::InvolvementsHelper
   def button_to_change_involvement(room, involvement, from_sidebar: false)
-    confirm_message = (from_sidebar && involvement == "everything") ? "Are you sure you want to remove this room from your list?" : nil
-
     button_to room_involvement_path(room, involvement: next_involvement_for(room, involvement: involvement, from_sidebar:), from_sidebar:),
       method: :put,
       role: "checkbox", aria: { checked: true, labelledby: dom_id(room, :involvement_label) }, tabindex: 0,
-      class: "btn #{involvement}",
-      data: { turbo_confirm: confirm_message } do
+      class: "btn #{involvement}" do
         image_tag("notification-bell-#{involvement}.svg", aria: { hidden: "true" }, size: 20) +
         tag.span(HUMANIZE_INVOLVEMENT[involvement], class: "for-screen-reader", id: dom_id(room, :involvement_label))
     end

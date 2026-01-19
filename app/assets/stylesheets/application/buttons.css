@@ -134,6 +134,15 @@
   }
 }
 
+.btn--small {
+  --btn-size: 1.75em;
+  --btn-padding: 0.25em 0.5em;
+
+  img {
+    inline-size: 1em;
+  }
+}
+
 /* Default state: buttons have borders */
 .btn.everything,
 .btn.mentions,
