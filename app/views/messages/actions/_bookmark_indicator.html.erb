@@ -1,0 +1,6 @@
+<%# locals: (message:) -%>
+<span id="<%= dom_id(message, :bookmark_indicator) %>">
+  <% if message.bookmarked_by_current_user? %>
+    <%= image_tag "bookmark-filled.svg", size: 14, class: "colorize--black opacity-50", title: "Bookmarked" %>
+  <% end %>
+</span>
