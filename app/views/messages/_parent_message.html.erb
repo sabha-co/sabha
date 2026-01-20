@@ -15,9 +15,9 @@
       <div class="message__body-content">
         <div class="message__meta">
           <h3 class="message__heading">
-            <span class="message__author" title="<%= message.creator.title %>">
+            <%= link_to user_path(message.creator), class: "message__author txt-undecorated", title: message.creator.title, data: { turbo_frame: "_top" } do %>
               <strong data-reply-target="author"><%= message.creator.name %></strong>
-            </span>
+            <% end %>
             <%= link_to message_timestamp(message, class: "message__timestamp"), room_at_message_path(message.room, message), target: "_top",
                   class: "message__permalink" %>
             <%= render "messages/actions/bookmark_indicator", message: %>
