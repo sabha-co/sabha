@@ -46,3 +46,14 @@ nsa:
   name: NSA Bot
   bot_token: <%= User.generate_bot_token %>
   role: bot
+
+rachel:
+  name: Rachel Green
+  email_address: rachel@example.com
+  password_digest: <%= password_digest %>
+  bio: Fashion buyer at Bloomingdale's
+  twitter_url: https://x.com/rachelgreen
+  linkedin_url: https://linkedin.com/in/rachelgreen
+  personal_url: https://rachelgreen.com
+  verified_at: <%= 1.day.ago %>
+  status: active

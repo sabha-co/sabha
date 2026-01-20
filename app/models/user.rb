@@ -237,6 +237,13 @@ class User < ApplicationRecord
     !blocked?(other_user) && !blocked_by?(other_user)
   end
 
+  def can_direct_message?(other_user)
+    return false unless other_user.active?
+    return false unless can_ping?(other_user)
+
+    administrator? || !Current.account.settings.restrict_direct_messages_to_administrators?
+  end
+
   def blocked?(other_user)
     blocked_users.exists?(other_user&.id)
   end
