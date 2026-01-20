@@ -41,6 +41,30 @@ class User < ApplicationRecord
       .distinct
   end
 
+  # Marks inbox as read up to the timestamps when messages were last loaded.
+  # Uses stale detection: if timestamp is > 1 hour old, uses current time instead
+  # (user likely left the page open without interacting).
+  #
+  # For mentions: only marks as read if the room had no non-mention messages in the window
+  # (avoids accidentally marking unread messages as read when user only viewed mentions)
+  def mark_inbox_as_read(messages_loaded_at:, notifications_loaded_at:, mentions_loaded_at:)
+    messages_until = freshness_checked_time(messages_loaded_at)
+    notifications_until = freshness_checked_time(notifications_loaded_at)
+    mentions_until = freshness_checked_time(mentions_loaded_at)
+
+    # Mark all visible rooms as read up to when messages were loaded
+    memberships.unread.each { |m| m.read_until(messages_until) }
+
+    # Mark notification rooms as read up to when notifications were loaded
+    memberships.notifications_on.unread.each { |m| m.read_until(notifications_until) }
+
+    # Mark mention-only rooms as read, but only if there were no non-mention messages
+    memberships.unread.each do |m|
+      non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, mentions_until)
+      m.read_until(mentions_until) if non_mentions.none?
+    end
+  end
+
   has_many :push_subscriptions, class_name: "Push::Subscription", dependent: :delete_all
 
   has_many :boosts, -> { active }, foreign_key: :booster_id, class_name: "Boost"
@@ -343,5 +367,14 @@ class User < ApplicationRecord
 
       handle = url.strip
       "https://www.linkedin.com/in/#{handle}"
+    end
+
+    # Returns Time.current if the timestamp is missing or stale (> 1 hour old).
+    # Stale timestamps indicate the user left the inbox page open without interacting.
+    def freshness_checked_time(iso8601_time)
+      return Time.current unless iso8601_time.present?
+
+      time = Time.iso8601(iso8601_time)
+      time > 1.hour.ago ? time : Time.current
     end
 end

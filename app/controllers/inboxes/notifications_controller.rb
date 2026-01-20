@@ -4,7 +4,7 @@ class Inboxes::NotificationsController < InboxesController
   layout false
 
   def index
-    @messages = find_notifications
+    @messages = find_messages_with(Inbox::MessagesQuery, involvement: :notifications_on)
 
     render "inboxes/messages/index"
   end

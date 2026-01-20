@@ -21,7 +21,7 @@ class Users::MessagesController < ApplicationController
     end
 
     def set_messages
-      @messages = Bookmark.populate_for(find_paged_messages)
+      @messages = Bookmark.with_bookmark_status(find_paged_messages)
     end
 
     def find_paged_messages

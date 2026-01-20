@@ -44,12 +44,21 @@ module Message::Mentionee
       if mentions_everyone_in_body?
         update_column(:mentions_everyone, true)
       else
-        # Create mention records for each mentioned user
-        users_to_mention = mentioned_users
-        users_to_mention.each do |user|
-          mentions.find_or_create_by(user: user)
-        end
+        sync_mentions_with(mentioned_users)
       end
+    end
+
+    def sync_mentions_with(users)
+      return if users.empty?
+
+      existing_user_ids = mentions.pluck(:user_id).to_set
+      new_users = users.reject { |user| existing_user_ids.include?(user.id) }
+
+      return if new_users.empty?
+
+      Mention.insert_all(
+        new_users.map { |user| { message_id: id, user_id: user.id } }
+      )
     end
 
     def mentions_everyone_in_body?

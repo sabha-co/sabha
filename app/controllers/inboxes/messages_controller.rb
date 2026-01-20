@@ -4,7 +4,7 @@ class Inboxes::MessagesController < InboxesController
   layout false
 
   def index
-    @messages = find_messages
+    @messages = find_messages_with(Inbox::MessagesQuery)
 
     render "inboxes/messages/index"
   end

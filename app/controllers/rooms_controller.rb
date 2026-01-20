@@ -17,7 +17,7 @@ class RoomsController < ApplicationController
       return redirect_to(target)
     end
 
-    @messages = Bookmark.populate_for(find_messages)
+    @messages = Bookmark.with_bookmark_status(find_messages)
   end
 
   def destroy

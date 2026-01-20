@@ -4,7 +4,7 @@ class Inboxes::MentionsController < InboxesController
   layout false
 
   def index
-    @messages = find_mentions
+    @messages = find_messages_with(Inbox::MentionsQuery)
 
     render "inboxes/messages/index"
   end

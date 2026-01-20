@@ -6,16 +6,15 @@ class Bookmark < ApplicationRecord
 
   scope :ordered, -> { order(:created_at) }
 
-  def self.populate_for(messages)
+  def self.with_bookmark_status(messages, user: Current.user)
     return messages if messages.empty?
 
-    message_ids = messages.pluck(:id) if messages.is_a?(ActiveRecord::Relation)
-    message_ids ||= messages.map(&:id)
+    message_ids = messages.is_a?(ActiveRecord::Relation) ? messages.pluck(:id) : messages.map(&:id)
 
-    bookmarked_ids = Bookmark.active
-                             .where(user_id: Current.user.id, message_id: message_ids)
-                             .pluck(:message_id)
-                             .to_set
+    bookmarked_ids = active
+                       .where(user: user, message_id: message_ids)
+                       .pluck(:message_id)
+                       .to_set
 
     messages.each { |message| message.bookmarked = bookmarked_ids.include?(message.id) }
   end

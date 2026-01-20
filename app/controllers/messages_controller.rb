@@ -9,7 +9,7 @@ class MessagesController < ApplicationController
   layout false, only: :index
 
   def index
-    @messages = Bookmark.populate_for(find_paged_messages)
+    @messages = Bookmark.with_bookmark_status(find_paged_messages)
 
     head :no_content if @messages.blank?
   end

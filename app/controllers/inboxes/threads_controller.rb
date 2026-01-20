@@ -4,7 +4,7 @@ class Inboxes::ThreadsController < InboxesController
   layout false
 
   def index
-    @messages = find_threads
+    @messages = find_messages_with(Inbox::ThreadsQuery)
 
     render "inboxes/messages/index"
   end

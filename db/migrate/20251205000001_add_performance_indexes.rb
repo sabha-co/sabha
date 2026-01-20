@@ -1,6 +1,6 @@
 class AddPerformanceIndexes < ActiveRecord::Migration[8.2]
   def change
-    # For bookmarks lookup (used in Bookmark.populate_for)
+    # For bookmarks lookup (used in Bookmark.with_bookmark_status)
     add_index :bookmarks, [ :user_id, :message_id, :active ],
               name: "index_bookmarks_on_user_message_active"
 

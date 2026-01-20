@@ -10,23 +10,23 @@ class InboxesController < ApplicationController
   end
 
   def mentions
-    @messages = find_mentions
+    @messages = find_messages_with(Inbox::MentionsQuery)
 
     track_last_loaded_message :inbox_last_loaded_mention_created_at
   end
 
   def threads
-    @messages = find_threads
+    @messages = find_messages_with(Inbox::ThreadsQuery)
   end
 
   def notifications
-    @messages = find_notifications
+    @messages = find_messages_with(Inbox::MessagesQuery, involvement: :notifications_on)
 
     track_last_loaded_message :inbox_last_loaded_notification_created_at
   end
 
   def messages
-    @messages = find_messages
+    @messages = find_messages_with(Inbox::MessagesQuery)
 
     track_last_loaded_message :inbox_last_loaded_message_created_at
   end
@@ -36,79 +36,27 @@ class InboxesController < ApplicationController
   end
 
   def clear
-    Current.user.memberships.unread.each { |m| m.read_until(now_if_stale(session[:inbox_last_loaded_message_created_at])) }
-    Current.user.memberships.notifications_on.unread.each { |m| m.read_until(now_if_stale(session[:inbox_last_loaded_notification_created_at])) }
-
-    mentions_loaded_until = now_if_stale(session[:inbox_last_loaded_mention_created_at])
-    Current.user.memberships.unread.each do |m|
-      non_mentions = m.room.messages.without_user_mentions(Current.user).between(m.unread_at, mentions_loaded_until)
-
-      m.read_until(mentions_loaded_until) if non_mentions.none?
-    end
+    Current.user.mark_inbox_as_read(
+      messages_loaded_at: session[:inbox_last_loaded_message_created_at],
+      notifications_loaded_at: session[:inbox_last_loaded_notification_created_at],
+      mentions_loaded_at: session[:inbox_last_loaded_mention_created_at]
+    )
 
     redirect_back(fallback_location: mentions_inbox_path) unless params[:stay]
   end
 
   private
-    def find_mentions
-      Bookmark.populate_for paginate(Current.user.mentioning_messages.without_created_by(Current.user).with_threads.with_creator)
+
+    # Unified method for fetching paginated messages from any query object
+    def find_messages_with(query_class, **options)
+      query = query_class.new(Current.user, **options)
+      Bookmark.with_bookmark_status paginate(query.call)
     end
 
-    def find_notifications
-      Bookmark.populate_for paginate(Current.user.reachable_messages
-                                            .without_created_by(Current.user)
-                                            .with_threads.with_creator
-                                            .merge(Membership.active.notifications_on))
-    end
-
-    def find_messages
-      Bookmark.populate_for paginate(Current.user.reachable_messages
-                                            .without_created_by(Current.user)
-                                            .with_threads.with_creator
-                                            .merge(Membership.active.visible))
-    end
-
+    # Bookmarks require special handling: pagination is on bookmarks, but we return messages
     def find_bookmarked_messages
-      bookmarks = paginate Current.user.bookmarks.includes(:message).merge(Message.with_threads.with_creator).where(message: { active: true })
-      Bookmark.populate_for(bookmarks.map(&:message))
-    end
-
-    def find_threads
-      # Find parent messages of threads where:
-      # 1. User has visible membership in the thread, OR
-      # 2. User has everything involvement in the parent room
-      thread_memberships = Current.user.memberships.active.visible.joins(:room).where(rooms: { type: "Rooms::Thread" })
-      parent_room_memberships = Current.user.memberships.active.involved_in_everything.joins(:room).where.not(rooms: { type: "Rooms::Thread" })
-
-      thread_ids_from_memberships = thread_memberships.pluck(:room_id)
-      parent_room_ids = parent_room_memberships.pluck(:room_id)
-      thread_ids_from_parent_rooms = Room.where(type: "Rooms::Thread")
-                                          .joins(:parent_message)
-                                          .where(messages: { room_id: parent_room_ids })
-                                          .pluck(:id)
-
-      all_thread_ids = (thread_ids_from_memberships + thread_ids_from_parent_rooms).uniq
-
-      # Use a subquery to get messages ordered by their thread's last_active_at
-      thread_order_sql = <<~SQL
-        (SELECT threads.last_active_at
-         FROM rooms threads
-         WHERE threads.parent_message_id = messages.id
-         AND threads.type = 'Rooms::Thread'
-         LIMIT 1)
-      SQL
-
-      base_query = Message.active
-                          .joins(:room)
-                          .where.not(rooms: { type: "Rooms::Thread" })
-                          .where(id: Room.active.where(id: all_thread_ids, type: "Rooms::Thread")
-                                      .where("messages_count > 0")
-                                      .pluck(:parent_message_id))
-                          .with_threads
-                          .with_creator
-                          .order(Arel.sql(thread_order_sql))
-
-      Bookmark.populate_for paginate(base_query)
+      bookmarks = paginate Inbox::BookmarksQuery.new(Current.user).call
+      Bookmark.with_bookmark_status(bookmarks.map(&:message))
     end
 
     def paginate(records)
@@ -140,12 +88,5 @@ class InboxesController < ApplicationController
       session.delete :inbox_last_loaded_mention_created_at
       session.delete :inbox_last_loaded_notification_created_at
       session.delete :inbox_last_loaded_message_created_at
-    end
-
-    def now_if_stale(time)
-      return Time.current unless time.present?
-
-      time = Time.iso8601(time)
-      time > 1.hour.ago ? time : Time.current
     end
 end
