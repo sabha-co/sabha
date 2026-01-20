@@ -31,6 +31,7 @@
 .txt-normal { font-weight: 400; font-style: normal; }
 .txt-medium { font-weight: 500; }
 .txt-nowrap { white-space: nowrap; }
+.txt-label { text-transform: uppercase; letter-spacing: 0.02em; }
 
 .inline { display: inline }
 .block { display: block }
@@ -76,6 +77,10 @@
 .min-content { inline-size: min-content; }
 .max-inline-size { max-inline-size: 100%; }
 .constrain-height { max-block-size: var(--max-height, 50vh); }
+
+/* Avatar sizes */
+.avatar--small { --avatar-size: 48px; }
+.avatar--large { --avatar-size: 120px; }
 
 .break-word { word-break: break-word; }
 

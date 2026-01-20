@@ -1,195 +1,57 @@
-/* Quick Profile Component */
+/* Quick Profile - Minimal styles for popup sizing and social links */
+
 .quick-profile {
   width: 280px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
 
-/* Header: Avatar + Name/Bio side by side */
-.quick-profile__header {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.quick-profile__avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--avatar-border-radius);
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.quick-profile__avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.quick-profile__header-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.quick-profile__name {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  line-height: 1.3;
-  margin: 0;
-  color: var(--color-text);
-}
-
-.quick-profile__name-link {
-  color: inherit;
-  text-decoration: none;
-}
-
-.quick-profile__name-link:hover {
-  color: var(--color-link);
-}
-
-.quick-profile__bio {
-  font-size: 0.8125rem;
-  line-height: 1.35;
-  color: var(--color-text-lighter);
-  margin: 0;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.quick-profile__badge {
-  display: inline-block;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--color-text-lighter);
-  background: var(--color-border);
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  width: fit-content;
-}
-
-.quick-profile__status {
-  font-size: 0.75rem;
-  color: var(--color-border-darkest);
-}
-
-/* Meta: Joined + Social links inline */
-.quick-profile__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.quick-profile__joined {
-  font-size: 0.6875rem;
-  color: var(--color-border-darkest);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-weight: 500;
-}
-
-.quick-profile__links {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.quick-profile__social-link {
+/* Social link base styles (full profile page) */
+.social-link {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--control-padding);
+  border-radius: var(--control-radius);
+  background-color: var(--control-bg);
+  border: 1px solid var(--control-border);
+}
+
+.social-link img {
+  width: 20px;
+  height: 20px;
+  filter: var(--icon-filter);
+}
+
+.social-link:hover {
+  background-color: var(--control-bg-hover);
+}
+
+/* Social link compact styles (quick profile popup) */
+.quick-profile .social-link {
   width: 24px;
   height: 24px;
-  border-radius: 4px;
-  color: var(--color-border-darkest);
-  transition: background-color 120ms ease, color 120ms ease;
+  padding: 0;
+  background: transparent;
+  border: none;
+  opacity: 0.5;
+  transition: opacity 120ms ease, background-color 120ms ease;
 }
 
-.quick-profile__social-link:hover {
-  background: var(--color-border);
-  color: var(--color-text);
+.quick-profile .social-link img {
+  width: 16px;
+  height: 16px;
+  filter: none;
 }
 
-.quick-profile__social-link img {
-  opacity: 0.6;
-  transition: opacity 120ms ease;
-}
-
-.quick-profile__social-link:hover img {
+.quick-profile .social-link:hover {
   opacity: 1;
+  background: var(--color-border);
 }
 
-/* Stats: Two columns */
-.quick-profile__stats {
-  display: flex;
-  gap: 1rem;
-}
-
-.quick-profile__stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.0625rem;
-}
-
-.quick-profile__stat-value {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.quick-profile__stat-label {
-  font-size: 0.6875rem;
-  color: var(--color-border-darkest);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-/* Actions: Ping button + All messages link */
-.quick-profile__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.quick-profile__ping-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.8125rem;
-}
-
-.quick-profile__ping-btn img {
-  opacity: 0.8;
-}
-
-.quick-profile__messages-link {
-  font-size: 0.75rem;
-  color: var(--color-border-darkest);
-  text-decoration: none;
-  margin-left: auto;
-}
-
-.quick-profile__messages-link:hover {
-  color: var(--color-link);
-}
-
-/* Popup container override */
+/* Popup menu sizing */
 .message__avatar-menu:has(.quick-profile),
 div[data-popup-target="menu"]:has(.quick-profile) {
   width: auto;
   min-width: 0;
   max-width: none;
-  padding: 0.75rem;
+  padding: var(--block-space) var(--inline-space);
 }

@@ -1,0 +1,4 @@
+<%# locals: (user:) -%>
+<%= social_link_tag url: user.twitter_url, icon: "social/twitter.svg", title: "Twitter" %>
+<%= social_link_tag url: user.linkedin_url, icon: "social/linkedin.svg", title: "LinkedIn" %>
+<%= social_link_tag url: user.personal_url, icon: "link.svg", title: friendly_domain(user.personal_url) %>

@@ -1,0 +1,17 @@
+<%# locals: (user:, message_count:, rank:, show_joined: false, large: false) -%>
+<% text_class = large ? "txt-large" : "txt-medium" %>
+
+<div class="flex flex-column">
+  <strong class="<%= text_class %>"><%= rank_medal(rank) %><%= number_with_delimiter(message_count) %></strong>
+  <span class="txt-x-small txt-muted txt-label"><%= "message".pluralize(message_count) %></span>
+</div>
+<div class="flex flex-column">
+  <strong class="<%= text_class %>">#<%= number_with_delimiter(rank) %></strong>
+  <span class="txt-x-small txt-muted txt-label">rank</span>
+</div>
+<% if show_joined %>
+  <div class="flex flex-column">
+    <strong class="<%= text_class %>"><%= user.joined_at.strftime("%b %Y") %></strong>
+    <span class="txt-x-small txt-muted txt-label">joined</span>
+  </div>
+<% end %>

@@ -329,19 +329,19 @@ main#main-content:focus {
 
 /* Text utilities */
 .txt-x-small {
-  @apply text-[var(--font-size-x-small)];
+  @apply text-[length:var(--font-size-x-small)];
 }
 
 .txt-small {
-  @apply text-[var(--font-size-small)];
+  @apply text-[length:var(--font-size-small)];
 }
 
 .txt-medium {
-  @apply text-[var(--font-size-medium)];
+  @apply text-[length:var(--font-size-medium)];
 }
 
 .txt-large {
-  @apply text-[var(--font-size-large)];
+  @apply text-[length:var(--font-size-large)];
 }
 
 .txt-primary {

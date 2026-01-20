@@ -11,11 +11,12 @@ module UsersHelper
     RANK_MEDALS[rank]
   end
 
-  def social_links_for(user)
-    links = []
-    links << { url: user.twitter_url, icon: "social/twitter.svg", title: "Twitter" } if user.twitter_url.present?
-    links << { url: user.linkedin_url, icon: "social/linkedin.svg", title: "LinkedIn" } if user.linkedin_url.present?
-    links << { url: user.personal_url, icon: "link.svg", title: friendly_domain(user.personal_url) } if user.personal_url.present?
-    links
+  def social_link_tag(url:, icon:, title:)
+    return if url.blank?
+
+    link_to with_protocol(url), target: "_blank", class: "social-link", title: title do
+      image_tag(icon, aria: { hidden: true }) +
+      content_tag(:span, title, class: "for-screen-reader")
+    end
   end
 end

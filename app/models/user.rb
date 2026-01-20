@@ -155,6 +155,10 @@ class User < ApplicationRecord
     [ name, bio ].compact_blank.join(" – ")
   end
 
+  def has_social_links?
+    twitter_url.present? || linkedin_url.present? || personal_url.present?
+  end
+
   def reactivate
     transaction do
       memberships.without_direct_rooms.update!(active: true)
@@ -238,10 +242,9 @@ class User < ApplicationRecord
   end
 
   def can_direct_message?(other_user)
-    return false unless other_user.active?
-    return false unless can_ping?(other_user)
-
-    administrator? || !Current.account.settings.restrict_direct_messages_to_administrators?
+    other_user&.active? &&
+      can_ping?(other_user) &&
+      (administrator? || dm_allowed_for_members?)
   end
 
   def blocked?(other_user)
@@ -309,6 +312,10 @@ class User < ApplicationRecord
   private_class_method :find_or_create_user_locally
 
   private
+    def dm_allowed_for_members?
+      !Current.account.settings.restrict_direct_messages_to_administrators?
+    end
+
     def grant_membership_to_open_rooms
       Membership.insert_all(Rooms::Open.active.pluck(:id).collect { |room_id| { room_id: room_id, user_id: id } })
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open" }).find_each do |thread|

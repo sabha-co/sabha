@@ -1,82 +1,76 @@
 <%# locals: (user:) -%>
-<section class="quick-profile">
+<div class="quick-profile flex flex-column gap">
   <% if user.bot? %>
-    <div class="quick-profile__header">
-      <div class="quick-profile__avatar">
-        <%= avatar_image_tag(user, class: "avatar", alt: "") %>
+    <div class="flex align-start gap">
+      <div class="avatar avatar--small">
+        <%= avatar_image_tag(user, alt: "") %>
       </div>
-      <div class="quick-profile__header-info">
-        <h1 class="quick-profile__name"><%= user.name %></h1>
+      <div class="flex flex-column gap-half">
+        <strong class="txt-medium"><%= user.name %></strong>
         <% if user.active? %>
-          <span class="quick-profile__badge">Bot</span>
+          <span class="txt-x-small txt-muted txt-label">Bot</span>
         <% else %>
-          <span class="quick-profile__status">No longer active</span>
+          <span class="txt-small txt-muted">No longer active</span>
         <% end %>
       </div>
     </div>
     <% if user.active? %>
-      <div class="quick-profile__actions">
-        <%= button_to_direct_room_with user %>
-      </div>
+      <%= button_to_direct_room_with user %>
     <% end %>
+
   <% elsif user.active? %>
-    <div class="quick-profile__header">
-      <div class="quick-profile__avatar">
-        <%= avatar_image_tag(user, class: "avatar", alt: "") %>
-      </div>
-      <div class="quick-profile__header-info">
-        <h1 class="quick-profile__name">
-          <%= link_to user.name, user_path(user), title: user.title, class: "quick-profile__name-link", data: { turbo_frame: "_top" } %>
-        </h1>
+    <div class="flex align-start gap">
+      <%= link_to user_path(user), data: { turbo_frame: "_top" } do %>
+        <div class="avatar avatar--small">
+          <%= avatar_image_tag(user, alt: "") %>
+        </div>
+      <% end %>
+      <div class="flex flex-column gap-half" style="min-width: 0;">
+        <strong class="txt-medium">
+          <%= link_to user.name, user_path(user), title: user.title, class: "txt-undecorated txt-primary", data: { turbo_frame: "_top" } %>
+        </strong>
         <% if user.bio.present? %>
-          <p class="quick-profile__bio"><%= auto_link truncate(user.bio, length: 80) %></p>
+          <p class="txt-small txt-lighter margin-none" style="line-height: 1.35;"><%= auto_link truncate(user.bio, length: 80) %></p>
         <% end %>
       </div>
     </div>
 
-    <div class="quick-profile__meta">
-      <span class="quick-profile__joined">Joined <%= user.joined_at.strftime("%b %Y") %></span>
-      <% if (links = social_links_for(user)).any? %>
-        <span class="quick-profile__links">
-          <% links.each do |link| %>
-            <%= link_to with_protocol(link[:url]), target: "_blank", class: "quick-profile__social-link", title: link[:title] do %>
-              <%= image_tag link[:icon], size: 16 %>
-            <% end %>
-          <% end %>
-        </span>
-      <% end %>
-    </div>
-
-    <div class="quick-profile__stats">
-      <% rank = user.message_rank %>
-      <div class="quick-profile__stat">
-        <span class="quick-profile__stat-value"><%= rank_medal(rank) %><%= number_with_delimiter(user.total_message_count) %></span>
-        <span class="quick-profile__stat-label"><%= "message".pluralize(user.total_message_count) %></span>
+    <% message_count = user.total_message_count %>
+    <% rank = user.message_rank %>
+    <div class="flex flex-column gap-half">
+      <div class="flex align-center justify-space-between pad-block-half border-top border-bottom">
+        <span class="txt-x-small txt-muted txt-label">Joined <%= user.joined_at.strftime("%b %Y") %></span>
+        <% if user.has_social_links? %>
+          <span class="flex align-center gap-half">
+            <%= render "users/social_links", user: user %>
+          </span>
+        <% end %>
       </div>
-      <div class="quick-profile__stat">
-        <span class="quick-profile__stat-value">#<%= number_with_delimiter(rank) %></span>
-        <span class="quick-profile__stat-label">rank</span>
+
+      <div class="flex gap">
+        <%= render "users/user_stats", user: user, message_count: message_count, rank: rank %>
       </div>
     </div>
 
-    <div class="quick-profile__actions">
+    <div class="flex align-center gap">
       <% if Current.user.can_direct_message?(user) %>
-        <%= button_to rooms_directs_path(user_ids: [user.id]), class: "btn btn--reversed quick-profile__ping-btn", data: { turbo_frame: "_top" } do %>
+        <%= link_to rooms_directs_path(user_ids: [user.id]), class: "btn btn--reversed txt-small", data: { turbo_frame: "_top", turbo_method: :post } do %>
           <%= image_tag "messages.svg", size: 16, aria: { hidden: true } %>
           <span>Ping</span>
         <% end %>
       <% end %>
-      <%= link_to "All messages", user_messages_path(user), class: "quick-profile__messages-link", data: { turbo_frame: "_top" } %>
+      <%= link_to "All messages", user_messages_path(user), class: "txt-x-small txt-muted txt-undecorated flex-item-justify-end", data: { turbo_frame: "_top" } %>
     </div>
+
   <% else %>
-    <div class="quick-profile__header">
-      <div class="quick-profile__avatar">
-        <%= avatar_image_tag(user, class: "avatar", alt: "") %>
+    <div class="flex align-start gap">
+      <div class="avatar avatar--small">
+        <%= avatar_image_tag(user, alt: "") %>
       </div>
-      <div class="quick-profile__header-info">
-        <h1 class="quick-profile__name"><%= user.name %></h1>
-        <span class="quick-profile__status">No longer active</span>
+      <div class="flex flex-column gap-half">
+        <strong class="txt-medium"><%= user.name %></strong>
+        <span class="txt-small txt-muted">No longer active</span>
       </div>
     </div>
   <% end %>
-</section>
+</div>
