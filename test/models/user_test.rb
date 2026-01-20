@@ -64,6 +64,72 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  # Blocking tests
+
+  test "block! creates a block record" do
+    assert_difference -> { Block.count }, 1 do
+      users(:david).block!(users(:jason))
+    end
+
+    assert users(:david).blocked?(users(:jason))
+  end
+
+  test "block! is idempotent" do
+    users(:david).block!(users(:jason))
+
+    assert_no_difference -> { Block.count } do
+      users(:david).block!(users(:jason))
+    end
+  end
+
+  test "unblock! removes the block record" do
+    users(:david).block!(users(:jason))
+
+    assert_difference -> { Block.count }, -1 do
+      users(:david).unblock!(users(:jason))
+    end
+
+    assert_not users(:david).blocked?(users(:jason))
+  end
+
+  test "blocked? returns true when user is blocked" do
+    users(:david).block!(users(:jason))
+
+    assert users(:david).blocked?(users(:jason))
+    assert_not users(:jason).blocked?(users(:david))
+  end
+
+  test "blocked_by? returns true when blocked by other user" do
+    users(:david).block!(users(:jason))
+
+    assert users(:jason).blocked_by?(users(:david))
+    assert_not users(:david).blocked_by?(users(:jason))
+  end
+
+  test "can_ping? returns false when either user blocked the other" do
+    assert users(:david).can_ping?(users(:jason))
+    assert users(:jason).can_ping?(users(:david))
+
+    users(:david).block!(users(:jason))
+
+    assert_not users(:david).can_ping?(users(:jason))
+    assert_not users(:jason).can_ping?(users(:david))
+  end
+
+  test "blocked_in? returns true in one-on-one room when blocked" do
+    room = Rooms::Direct.find_or_create_for([ users(:david), users(:jason) ])
+    users(:david).block!(users(:jason))
+
+    assert users(:david).blocked_in?(room)
+    assert users(:jason).blocked_in?(room)
+  end
+
+  test "blocked_in? returns false for non-direct rooms" do
+    users(:david).block!(users(:jason))
+
+    assert_not users(:david).blocked_in?(rooms(:hq))
+  end
+
   private
     def create_new_user
       User.create!(name: "User", email_address: "user@example.com", password: "secret123456")

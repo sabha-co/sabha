@@ -87,4 +87,35 @@ class MembershipTest < ActiveSupport::TestCase
 
     @membership.destroy
   end
+
+  # Read/Unread tests
+
+  test "mark_unread_at sets unread_at to message created_at" do
+    message = @membership.room.messages.create!(creator: users(:jason), body: "Test")
+    @membership.update!(unread_at: nil)
+
+    @membership.mark_unread_at(message)
+
+    assert_equal message.created_at, @membership.unread_at
+    assert @membership.unread?
+  end
+
+  test "read clears unread_at" do
+    @membership.update!(unread_at: 1.hour.ago)
+
+    @membership.read
+
+    assert_nil @membership.unread_at
+    assert @membership.read?
+  end
+
+  test "read? and unread? are opposites" do
+    @membership.update!(unread_at: nil)
+    assert @membership.read?
+    assert_not @membership.unread?
+
+    @membership.update!(unread_at: 1.hour.ago)
+    assert_not @membership.read?
+    assert @membership.unread?
+  end
 end

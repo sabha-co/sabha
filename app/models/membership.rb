@@ -96,7 +96,7 @@ class Membership < ApplicationRecord
 
   def mark_unread_at(message)
     update!(unread_at: message.created_at)
-    broadcast_unread_by_user
+    broadcast_unread
   end
 
   def read
@@ -130,15 +130,32 @@ class Membership < ApplicationRecord
 
   private
     def broadcast_read
-      ActionCable.server.broadcast "user_#{user_id}_reads", { room_id: room_id }
+      ActionCable.server.broadcast user_channel(:reads), { room_id: room_id }
     end
 
-    def broadcast_unread_by_user
-      ActionCable.server.broadcast "user_#{user_id}_unreads", { roomId: room.id, roomSize: room.messages_count, roomUpdatedAt: room.last_active_at.iso8601, forceUnread: true }
-      ActionCable.server.broadcast "user_#{user_id}_notifications", { roomId: room.id } if has_unread_notifications?
+    def broadcast_unread
+      ActionCable.server.broadcast user_channel(:unreads), unread_payload
+      ActionCable.server.broadcast user_channel(:notifications), notification_payload if has_unread_notifications?
     end
 
     def broadcast_involvement
-      ActionCable.server.broadcast "user_#{user_id}_involvements", { roomId: room_id, involvement: involvement }
+      ActionCable.server.broadcast user_channel(:involvements), { roomId: room_id, involvement: involvement }
+    end
+
+    def user_channel(type)
+      "user_#{user_id}_#{type}"
+    end
+
+    def unread_payload
+      {
+        roomId: room.id,
+        roomSize: room.messages_count,
+        roomUpdatedAt: room.last_active_at.iso8601,
+        forceUnread: true
+      }
+    end
+
+    def notification_payload
+      { roomId: room.id }
     end
 end

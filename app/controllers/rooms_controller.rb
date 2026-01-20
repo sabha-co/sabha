@@ -63,30 +63,33 @@ class RoomsController < ApplicationController
 
     def find_messages
       messages = @room.messages.for_display
-      @first_unread_message = messages.ordered.since(@membership.unread_at).first if @membership.unread?
+      @first_unread_message = first_unread_from(messages)
 
-      if show_first_message = messages.find_by(id: params[:message_id]) || @first_unread_message
-        result = messages.page_around(show_first_message)
-      else
-        result = messages.last_page
-      end
+      anchor = target_message(messages) || @first_unread_message
+      result = anchor ? messages.page_around(anchor) : messages.last_page
 
-      # If this is a thread, prepend the parent message when appropriate
-      if @room.thread? && @room.parent_message.present?
-        if result.empty?
-          # Empty thread - show just the parent message
-          result = [ @room.parent_message ]
-        elsif result.any?
-          # Thread has messages - prepend parent if we're showing the first message
-          first_thread_message = @room.messages.ordered.first
-          messages_array = result.to_a
-          if first_thread_message && messages_array.first.id == first_thread_message.id
-            result = [ @room.parent_message ] + messages_array
-          end
-        end
-      end
+      with_thread_parent(result)
+    end
 
-      result
+    def first_unread_from(messages)
+      return unless @membership.unread?
+      messages.ordered.since(@membership.unread_at).first
+    end
+
+    def target_message(messages)
+      messages.find_by(id: params[:message_id])
+    end
+
+    def with_thread_parent(messages)
+      return messages unless @room.thread? && @room.parent_message
+      return [ @room.parent_message ] if messages.empty?
+
+      showing_beginning_of_thread?(messages) ? [ @room.parent_message, *messages ] : messages
+    end
+
+    def showing_beginning_of_thread?(messages)
+      first_in_thread = @room.messages.ordered.first
+      first_in_thread && messages.first&.id == first_in_thread.id
     end
 
     def room_params

@@ -126,6 +126,10 @@ class Room < ApplicationRecord
     "mentions"
   end
 
+  def active_member_count
+    memberships.visible.joins(:user).merge(User.active).count
+  end
+
   def reactivate
     transaction do
       memberships.rewhere(active: false).update(active: true)

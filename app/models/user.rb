@@ -119,8 +119,12 @@ class User < ApplicationRecord
       .order(messages_table[:created_at].maximum.desc)
   end
   scope :by_first_name, ->(first_name) { where("CASE WHEN instr(name, ' ') > 0 THEN substr(name, 1, instr(name, ' ')-1) ELSE name END = ?", first_name.to_s.strip) }
-  scope :filtered_by, ->(query) { where("name like ? or ascii_name like ? or twitter_username like ? or linkedin_username like ?",
-                                        "%#{query}%", "%#{query}%", "%#{query}%", "%#{query}%") if query.present? }
+  scope :filtered_by, ->(query) {
+    return all unless query.present?
+
+    pattern = "%#{sanitize_sql_like(query)}%"
+    where("name LIKE :q OR ascii_name LIKE :q OR twitter_username LIKE :q OR linkedin_username LIKE :q", q: pattern)
+  }
 
   def self.from_gumroad_sale(attributes)
     return nil unless attributes[:email_address].present?

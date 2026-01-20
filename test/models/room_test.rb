@@ -81,4 +81,37 @@ class RoomTest < ActiveSupport::TestCase
     assert_not Message.exists?(message_id), "Inactive message should be destroyed"
     assert_not Membership.exists?(membership_id), "Inactive membership should be destroyed"
   end
+
+  test "active_member_count returns count of active visible members" do
+    room = rooms(:watercooler)
+    initial_count = room.active_member_count
+
+    # Add a new active user
+    new_user = User.create!(name: "New User", email_address: "new@example.com", password: "secret123456")
+    room.memberships.grant_to(new_user)
+
+    assert_equal initial_count + 1, room.active_member_count
+  end
+
+  test "active_member_count excludes invisible memberships" do
+    room = rooms(:watercooler)
+    initial_count = room.active_member_count
+
+    # Make a membership invisible
+    membership = room.memberships.first
+    membership.update!(involvement: :invisible)
+
+    assert_equal initial_count - 1, room.active_member_count
+  end
+
+  test "active_member_count excludes inactive users" do
+    room = rooms(:watercooler)
+    initial_count = room.active_member_count
+
+    # Deactivate a user
+    user = room.users.first
+    user.update!(status: :deactivated)
+
+    assert_equal initial_count - 1, room.active_member_count
+  end
 end

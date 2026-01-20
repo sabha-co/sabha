@@ -10,8 +10,11 @@ class Messages::BoostsController < ApplicationController
   end
 
   def create
-    @source_boost = Boost.active.find_by(id: params[:source_boost_id])
-    @boost = @message.boosts.create!(boost_params)
+    @boost = @message.boosts.find_by(boost_params.merge(booster: Current.user))
+    return head :ok if @boost
+
+    @boost = @message.boosts.create(boost_params)
+    return head :ok unless @boost.persisted?
 
     broadcast_create
     deliver_webhooks_to_bots(@boost, :created)

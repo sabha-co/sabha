@@ -4,6 +4,8 @@ class Boost < ApplicationRecord
   belongs_to :message, touch: true
   belongs_to :booster, class_name: "User", default: -> { Current.user }
 
+  validates :content, uniqueness: { scope: [ :message_id, :booster_id ], conditions: -> { active } }
+
   scope :ordered, -> { order(:created_at) }
 
   after_update_commit -> do

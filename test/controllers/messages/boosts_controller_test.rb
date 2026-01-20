@@ -23,4 +23,13 @@ class Messages::BoostsControllerTest < ActionDispatch::IntegrationTest
       end
     end
   end
+
+  test "duplicate boost with same content is silently ignored" do
+    @message.boosts.create!(content: "Hello!", booster: users(:david))
+
+    assert_no_difference -> { @message.boosts.count } do
+      post message_boosts_url(@message, format: :turbo_stream), params: { boost: { content: "Hello!" } }
+      assert_response :success
+    end
+  end
 end

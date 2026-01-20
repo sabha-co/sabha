@@ -37,4 +37,17 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
       get autocompletable_users_url(room_id: rooms(:watercooler).id, format: :json), params: { query: "da" }
     end
   end
+
+  test "exact first name matches appear before partial matches" do
+    davidson = User.create!(name: "Davidson Smith", email_address: "davidson@example.com", password: "secret123456", verified_at: 1.day.ago)
+
+    get autocompletable_users_url(format: :json), params: { query: "David" }
+
+    assert_response :success
+    names = response.parsed_body.map { |u| u["name"] }
+
+    assert_includes names, "David"
+    assert_includes names, "Davidson Smith"
+    assert names.index("David") < names.index("Davidson Smith"), "Exact first name match 'David' should appear before partial match 'Davidson Smith'"
+  end
 end
