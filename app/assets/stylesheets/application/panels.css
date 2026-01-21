@@ -47,9 +47,9 @@
   max-inline-size: 100ch;
   padding: var(--block-space);
 
-  @media (min-width: 120ch) {
+  @media (min-width: 960px) {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: stretch;
+    align-items: start;
   }
 }
 

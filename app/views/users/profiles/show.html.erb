@@ -111,7 +111,7 @@
       <div class="flex align-start gap">
         <%= translation_button(:bio) %>
 
-        <label class="flex align--center gap flex-item--grow input input--actor">
+        <label class="flex align-center gap flex-item-grow input input--actor">
           <%= form.text_area :bio, class: "input txt-medium", placeholder: "A few words about yourself…", maxlength: 200,
                              rows: 3, required: false %>
           <%= icon_tag "bio" %>
@@ -126,7 +126,7 @@
 
   <fieldset style="padding-bottom: 0;">
     <legend class="gap">
-      <%= icon_tag "notification-bell-everything", style: "--icon-size: 2.25rem" %>
+      <%= icon_tag "bell", style: "--icon-size: 2.25rem" %>
     </legend>
   </fieldset>
 
@@ -141,20 +141,6 @@
           <%= render "users/email_subscriptions/email_subscription" %>
         </span>
       </li>
-    </menu>
-  </div>
-
-  <hr class="margin-block-start borderless">
-
-  <fieldset style="padding-bottom: 0;">
-    <legend class="gap">
-      <%= icon_tag "star", style: "--icon-size: 2.25rem" %>
-    </legend>
-  </fieldset>
-
-  <div class="margin-block pad-inline pad-block fill-shade border-radius" style="margin-top: 0;">
-    <menu class="flex flex-column gap-half margin-none pad">
-      <%= render partial: "users/profiles/membership", collection: @shared_memberships %>
     </menu>
   </div>
 
