@@ -10,7 +10,7 @@ class Messages::BoostsController < ApplicationController
   end
 
   def create
-    @boost = @message.boosts.find_by(boost_params.merge(booster: Current.user))
+    @boost = @message.boosts.active.find_by(boost_params.merge(booster: Current.user))
     return head :ok if @boost
 
     @boost = @message.boosts.create(boost_params)

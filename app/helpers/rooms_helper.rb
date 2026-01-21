@@ -7,14 +7,15 @@ module RoomsHelper
   end
 
   def link_to_edit_room(room)
+    count = room.active_member_count
     link_to \
       room_stats_path(room),
       class: "btn",
       style: "view-transition-name: edit-room-#{room.id}",
       data: { room_id: room.id } do
         image_tag("person.svg", aria: { hidden: "true" }) +
-        tag.span(number_with_delimiter(room.active_member_count), class: "hide-on-mobile") +
-        tag.span(round_for_mobile(room.active_member_count), class: "hide-on-desktop")
+        tag.span(number_with_delimiter(count), class: "hide-on-mobile") +
+        tag.span(round_for_mobile(count), class: "hide-on-desktop")
     end
   end
 
