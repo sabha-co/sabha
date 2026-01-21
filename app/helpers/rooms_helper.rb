@@ -9,7 +9,7 @@ module RoomsHelper
   def link_to_edit_room(room)
     count = room.active_member_count
     link_to \
-      room_stats_path(room),
+      edit_room_path(room),
       class: "btn",
       style: "view-transition-name: edit-room-#{room.id}",
       data: { room_id: room.id } do

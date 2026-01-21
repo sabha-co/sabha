@@ -8,12 +8,12 @@ class StatsService
     today = Time.now.utc.strftime("%Y-%m-%d")
 
     # Use the same direct query approach as in top_posters_for_day
-    User.select("users.id, users.name, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
+    User.select("users.id, users.name, users.avatar_url, users.updated_at, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
         .joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                 INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
         .where("strftime('%Y-%m-%d', messages.created_at) = ?", today)
         .where(users: { status: :active })
-        .group("users.id, users.name, users.membership_started_at, users.created_at")
+        .group("users.id, users.name, users.avatar_url, users.updated_at, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
   end
@@ -32,11 +32,11 @@ class StatsService
 
   # Get top posters for all time
   def self.top_posters_all_time(limit = 10)
-    User.select("users.id, users.name, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
+    User.select("users.id, users.name, users.avatar_url, users.updated_at, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
         .joins(messages: :room)
         .where("rooms.type != ? AND messages.active = true", "Rooms::Direct")
         .where(users: { status: :active })
-        .group("users.id, users.name, users.membership_started_at, users.created_at")
+        .group("users.id, users.name, users.avatar_url, users.updated_at, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
   end
@@ -63,7 +63,7 @@ class StatsService
       today_start = Time.now.utc.beginning_of_day
       today_end = today_start.end_of_day
 
-      stats = User.select("users.id, users.name, COUNT(messages.id) AS message_count")
+      stats = User.select("users.id, users.name, users.avatar_url, users.updated_at, COUNT(messages.id) AS message_count")
                  .joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                         INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                  .where("messages.created_at >= ? AND messages.created_at <= ?", today_start, today_end)
@@ -75,7 +75,7 @@ class StatsService
       month_start = Time.new(Time.now.utc.year, Time.now.utc.month, 1, 0, 0, 0, "+00:00").beginning_of_month
       month_end = month_start.end_of_month
 
-      stats = User.select("users.id, users.name, COUNT(messages.id) AS message_count")
+      stats = User.select("users.id, users.name, users.avatar_url, users.updated_at, COUNT(messages.id) AS message_count")
                  .joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                         INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                  .where("messages.created_at >= ? AND messages.created_at <= ?", month_start, month_end)
@@ -86,7 +86,7 @@ class StatsService
       year_start = Time.now.utc.beginning_of_year
       year_end = year_start.end_of_year
 
-      stats = User.select("users.id, users.name, COUNT(messages.id) AS message_count")
+      stats = User.select("users.id, users.name, users.avatar_url, users.updated_at, COUNT(messages.id) AS message_count")
                  .joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                         INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                  .where("messages.created_at >= ? AND messages.created_at <= ?", year_start, year_end)
@@ -94,7 +94,7 @@ class StatsService
                  .group("users.id")
                  .first
     else # all_time
-      stats = User.select("users.id, users.name, COALESCE(COUNT(messages.id), 0) AS message_count")
+      stats = User.select("users.id, users.name, users.avatar_url, users.updated_at, COALESCE(COUNT(messages.id), 0) AS message_count")
                  .joins("LEFT JOIN messages ON messages.creator_id = users.id AND messages.active = true
                         LEFT JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
                  .where("users.id = ?", user_id)
@@ -104,7 +104,7 @@ class StatsService
 
     # If no stats found, create a default object with 0 messages
     if stats.nil?
-      stats = User.select("users.id, users.name, 0 AS message_count")
+      stats = User.select("users.id, users.name, users.avatar_url, users.updated_at, 0 AS message_count")
                  .where("users.id = ?", user_id)
                  .first
     end
@@ -265,12 +265,12 @@ class StatsService
     # Use a more direct query with explicit date formatting to match SQLite's format
     day_formatted = day_start.strftime("%Y-%m-%d")
 
-    User.select("users.id, users.name, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
+    User.select("users.id, users.name, users.avatar_url, users.updated_at, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
         .joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true
                 INNER JOIN rooms ON messages.room_id = rooms.id AND rooms.type != 'Rooms::Direct'")
         .where("strftime('%Y-%m-%d', messages.created_at) = ?", day_formatted)
         .where(users: { status: :active })
-        .group("users.id, users.name, users.membership_started_at, users.created_at")
+        .group("users.id, users.name, users.avatar_url, users.updated_at, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
   end
@@ -282,12 +282,12 @@ class StatsService
     month_start = Time.new(year.to_i, month_num.to_i, 1, 0, 0, 0, "+00:00").beginning_of_month
     month_end = month_start.end_of_month
 
-    User.select("users.id, users.name, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
+    User.select("users.id, users.name, users.avatar_url, users.updated_at, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
         .joins(messages: :room)
         .where("rooms.type != ? AND messages.created_at >= ? AND messages.created_at <= ? AND messages.active = true",
               "Rooms::Direct", month_start, month_end)
         .where(users: { status: :active })
-        .group("users.id, users.name, users.membership_started_at, users.created_at")
+        .group("users.id, users.name, users.avatar_url, users.updated_at, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
   end
@@ -298,12 +298,12 @@ class StatsService
     year_start = Time.new(year.to_i, 1, 1, 0, 0, 0, "+00:00").beginning_of_year
     year_end = year_start.end_of_year
 
-    User.select("users.id, users.name, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
+    User.select("users.id, users.name, users.avatar_url, users.updated_at, COUNT(messages.id) AS message_count, COALESCE(users.membership_started_at, users.created_at) as joined_at")
         .joins(messages: :room)
         .where("rooms.type != ? AND messages.created_at >= ? AND messages.created_at <= ? AND messages.active = true",
               "Rooms::Direct", year_start, year_end)
         .where(users: { status: :active })
-        .group("users.id, users.name, users.membership_started_at, users.created_at")
+        .group("users.id, users.name, users.avatar_url, users.updated_at, users.membership_started_at, users.created_at")
         .order("message_count DESC, joined_at ASC, users.id ASC")
         .limit(limit)
   end

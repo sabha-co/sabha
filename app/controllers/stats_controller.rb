@@ -345,13 +345,13 @@ class StatsController < ApplicationController
     # For each room, find the top talker
     @top_talkers = {}
     @rooms.each do |room|
-      top_talker = User.select("users.id, users.name, COUNT(DISTINCT messages.id) AS message_count")
+      top_talker = User.select("users.id, users.name, users.avatar_url, users.updated_at, COUNT(DISTINCT messages.id) AS message_count")
                        .joins("INNER JOIN messages ON messages.creator_id = users.id AND messages.active = true")
                        .joins("LEFT JOIN rooms threads ON messages.room_id = threads.id AND threads.type = 'Rooms::Thread'")
                        .joins("LEFT JOIN messages parent_messages ON threads.parent_message_id = parent_messages.id")
                        .where("messages.room_id = :room_id OR parent_messages.room_id = :room_id", room_id: room.id)
                        .where(users: { status: :active })
-                       .group("users.id, users.name")
+                       .group("users.id, users.name, users.avatar_url, users.updated_at")
                        .order("message_count DESC")
                        .first
 
