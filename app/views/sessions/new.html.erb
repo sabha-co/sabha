@@ -1,19 +1,19 @@
 <% @page_title = "Sign in" %>
+<% turbo_page_requires_reload %>
 
 <section class="txt-align-center">
   <div class="panel <%= "shake" if flash[:alert] %>">
     <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
 
     <div class="flex flex-column gap">
-      <fieldset class="flex flex-column gap center-block upad">
-        <legend class="txt-large txt-align-center"><strong>New to <%= Branding.app_name %>?</strong></legend>
-        <div class="txt-medium">Use your invite link to create an account.</div>
-      </fieldset>
-  
       <% if Current.account.auth_method_value == "otp" %>
         <%= form_with url: auth_tokens_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? }, html: { autocomplete: "off" } do |form| %>
           <fieldset class="flex flex-column gap center-block upad">
-            <legend class="txt-large txt-align-center"><strong>Member Login</strong></legend>
+            <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.app_name %></strong></legend>
+
+            <% if flash[:notice] %>
+              <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
+            <% end %>
 
             <% if flash[:alert] %>
               <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
@@ -27,20 +27,15 @@
               </label>
             </div>
 
-            <% if hotwire_native_app? %>
-              <%= form.submit "Sign in", class: "btn btn-primary w-100", data: { controller: "bridge--button", bridge_title: "Submit" } %>
-            <% else %>
-              <%= form.button class: "btn btn--reversed center txt-large", type: "submit", name: "log_in" do %>
-                <%= image_tag "arrow-right.svg", role: "presentation" %>
-                <span class="for-screen-reader">Go</span>
-              <% end %>
+            <%= form.button class: "btn btn--reversed center txt-large", type: "submit", name: "log_in", data: hotwire_native_app? ? { controller: "bridge--button", bridge_title: "Submit" } : {} do %>
+              Sign in with email
             <% end %>
           </fieldset>
         <% end %>
       <% else %>
         <%= form_with url: session_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? }, html: { autocomplete: "off" } do |form| %>
           <fieldset class="flex flex-column gap center-block upad">
-            <legend class="txt-large txt-align-center"><strong>Member Login</strong></legend>
+            <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.app_name %></strong></legend>
 
             <% if flash[:notice] %>
               <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
@@ -67,23 +62,22 @@
               </label>
             </div>
 
+            <%= form.button class: "btn btn--reversed center txt-large", type: "submit", name: "log_in", data: hotwire_native_app? ? { controller: "bridge--button", bridge_title: "Submit" } : {} do %>
+              Sign in
+            <% end %>
+
             <div class="txt-medium txt-align-center">
               <%= link_to "Forgot your password?", new_password_reset_path, class: "txt-white" %>
             </div>
-
-            <% if hotwire_native_app? %>
-              <%= form.submit "Sign in", class: "btn btn-primary w-100", data: { controller: "bridge--button", bridge_title: "Submit" } %>
-            <% else %>
-              <%= form.button class: "btn btn--reversed center txt-large", type: "submit", name: "log_in" do %>
-                <%= image_tag "arrow-right.svg", role: "presentation" %>
-                <span class="for-screen-reader">Go</span>
-              <% end %>
-            <% end %>
           </fieldset>
         <% end %>
       <% end %>
+
+      <fieldset class="flex flex-column gap center-block upad" style="margin-block-start: var(--spacing-block);">
+        <legend class="txt-medium txt-align-center">New to <%= Branding.app_name %>?</legend>
+        <div class="txt-small" style="opacity: 0.7;">Use your invite link to create an account.</div>
+      </fieldset>
     </div>
   </div>
 
-  <%= render "accounts/help_contact" %>
 </section>

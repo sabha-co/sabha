@@ -56,7 +56,7 @@ class FirstRun
   end
 
   # Perform auto-bootstrap: create admin account with one-time login token.
-  # Called from MarketingController when first visitor hits the site.
+  # Called from SessionsController when first visitor hits the sign-in page.
   # Returns the admin user if successful, false if already bootstrapped.
   def self.auto_bootstrap!
     return false unless should_auto_bootstrap?

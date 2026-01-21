@@ -6,7 +6,7 @@
 
     <%= form_with url: password_reset_path(params[:token]), method: :patch, class: "flex flex-column gap" do |form| %>
       <fieldset class="flex flex-column gap center-block upad">
-        <legend class="txt-large txt-align-center"><strong>Set New Password</strong></legend>
+        <legend class="txt-large txt-align-center"><strong>Set new password</strong></legend>
 
         <% if flash[:notice] %>
           <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
@@ -34,12 +34,12 @@
           </label>
         </div>
 
-        <p class="txt-small">Password must be at least <%= User::MINIMUM_PASSWORD_LENGTH %> characters long.</p>
+        <p class="txt-small" style="opacity: 0.7;">Password must be at least <%= User::MINIMUM_PASSWORD_LENGTH %> characters long.</p>
 
-        <%= form.submit "Reset Password", class: "btn btn-primary w-100" %>
+        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+          Reset password
+        <% end %>
       </fieldset>
     <% end %>
   </div>
-
-  <%= render "accounts/help_contact" %>
 </section>

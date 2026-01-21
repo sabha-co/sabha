@@ -36,7 +36,12 @@ class SessionsController < ApplicationController
 
   private
     def ensure_user_exists
-      redirect_to first_run_url if User.none?
+      if FirstRun.should_auto_bootstrap?
+        FirstRun.auto_bootstrap!
+        redirect_to new_session_url, notice: "Your admin account has been created. Check your email for the login link."
+      elsif User.none?
+        redirect_to first_run_url
+      end
     end
 
     def require_password_auth

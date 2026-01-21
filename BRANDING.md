@@ -234,7 +234,7 @@ The app includes built-in translation support. To customize text:
 2. Restart your Rails server: `bin/rails restart`
 3. Visit `http://localhost:3000`
 4. Test these pages:
-   - `/` - Home/marketing page
+   - `/` - Home (redirects to sign-in if unauthenticated)
    - `/sign_in` - Sign in page
    - `/accounts/edit` - Settings (as admin)
    - Check email templates by triggering sign-in codes

@@ -52,12 +52,18 @@ Campfire-CE is a Ruby on Rails chat application combining:
 - `Searchable` - Full-text search with SQLite FTS5
 - `Connectable` - Tracks WebSocket connection state for memberships
 - `Avatar` - User avatar management
+- `User::DicebearAvatar` - Auto-generated avatars via DiceBear API for users without photos
 
 ### Current Context
 ```ruby
 Current.user      # Thread-safe request context
 Current.session   # Available throughout application
 ```
+
+### Query Objects
+Complex queries are extracted into query objects in `app/models/`:
+- `Inbox::MentionsQuery`, `Inbox::ThreadsQuery`, `Inbox::BookmarksQuery`, `Inbox::MessagesQuery` - Inbox filtering
+- `SidebarMemberships` - Sidebar room list queries
 
 ### Turbo Streams for Real-time Updates
 Messages, room updates, and notifications broadcast via:
@@ -93,7 +99,7 @@ bin/rails test                          # Run all tests
 bin/rails test test/models/user_test.rb # Single test file
 bin/rails test:system                   # Browser-based system tests
 ```
-Test framework: Minitest with mocha (mocking), webmock (HTTP stubbing), capybara/selenium (system tests)
+Test framework: Minitest with mocha (mocking), webmock (HTTP stubbing), capybara/cuprite (system tests)
 
 ### Database
 ```bash
@@ -189,6 +195,9 @@ Optional features:
 - `SOLID_QUEUE_IN_PUMA=true` - Run jobs inside Puma instead of separate workers
 - `GUMROAD_ON=true` - Enable payment gating
 - `GUMROAD_ACCESS_TOKEN` - Gumroad API access
+- `DICEBEAR_ENABLED=true` - Enable auto-generated avatars for users without photos
+- `DICEBEAR_HOST` - DiceBear API host (default: api.dicebear.com, must be HTTPS in production)
+- `DICEBEAR_STYLE` - Avatar style (default: thumbs)
 
 ### Key Initializers
 - `content_security_policy.rb` - CSP frame ancestors (iframe embedding)
@@ -196,10 +205,11 @@ Optional features:
 - `web_push.rb` - VAPID-based web push notification setup
 - `sqlite3.rb` - SQLite production optimizations (busy timeout, journal mode)
 - `gumroad.rb` - Payment integration configuration
+- `dicebear.rb` - DiceBear avatar generation configuration
 
 ### Routes Structure
 - Top-level room slug routing via `RoomSlugConstraint`
-- Conditional root routes (authenticated → `welcome#show`, unauthenticated → `marketing#show`)
+- Conditional root routes (authenticated → `welcome#show`, unauthenticated → redirect to sign-in)
 - Nested resources: `/rooms/:room_id/messages/:id`
 - Webhook endpoints: `POST /webhooks/gumroad/users/:webhook_secret`
 

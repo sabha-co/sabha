@@ -4,38 +4,39 @@
 <section class="txt-align-center">
   <div class="panel <%= "shake" if flash[:alert] %>">
     <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
-  
+
     <%= form_with url: auth_tokens_validations_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? } do |form| %>
       <fieldset class="flex flex-column gap center-block upad">
-        <legend class="txt-large txt-align-center"><strong>Enter One Time Code</strong></legend>
+        <legend class="txt-large txt-align-center"><strong>Enter one-time code</strong></legend>
+
+        <% if flash[:notice] %>
+          <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
+        <% end %>
 
         <% if flash[:alert] %>
           <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
         <% end %>
-        
-        <div class="txt-medium">
+
+        <p class="txt-medium">
           We sent an email to <%= session[:otp_email_address] %> with a code you can use to sign in below.
-          If you did not receive the email, you can <%= link_to "try again", new_session_url %>.</div>
-        
+        </p>
+
         <div class="flex align-center gap">
           <%= translation_button(:one_time_code) %>
           <label class="flex align-center gap input input--actor txt-large">
-            <%= form.text_field :code, required: true, class: "input", inputmode: 'numeric', autofocus: true, placeholder: "Enter code" %>
+            <%= form.text_field :code, required: true, class: "input", inputmode: "numeric", autofocus: true, placeholder: "Enter code" %>
             <%= image_tag "password.svg", role: "presentation", size: 24, class: "colorize--black" %>
           </label>
         </div>
 
-        <% if hotwire_native_app? %>
-          <%= form.submit "Go", class: "btn btn-primary w-100", data: { controller: "bridge--button", bridge_title: "Submit" } %>
-        <% else %>
-          <%= form.button class: "btn btn--reversed center txt-large", type: "submit", name: "log_in" do %>
-            <%= image_tag "arrow-right.svg", role: "presentation" %>
-            <span class="for-screen-reader">Go</span>
-          <% end %>
+        <%= form.button class: "btn btn--reversed center txt-large", type: "submit", data: hotwire_native_app? ? { controller: "bridge--button", bridge_title: "Submit" } : {} do %>
+          Verify code
         <% end %>
+
+        <div class="txt-medium txt-align-center">
+          Didn't receive it? <%= link_to "Try again", new_session_url, class: "txt-white" %>
+        </div>
       </fieldset>
     <% end %>
   </div>
-
-  <%= render "accounts/help_contact" %>
 </section>

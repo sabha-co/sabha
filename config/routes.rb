@@ -17,10 +17,8 @@ Rails.application.routes.draw do
   end
 
   constraints(lambda { |req| req.session[:user_id].blank? }) do
-    root to: "marketing#show", as: :unauthenticated_root
+    root to: redirect("/session/new"), as: :unauthenticated_root
   end
-
-  get "/api/stats", to: "marketing#stats", defaults: { format: :json }
   get "/chat", to: "welcome#show"
 
   resource :first_run
