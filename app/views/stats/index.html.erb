@@ -312,11 +312,7 @@
                   <td class="col-full">
                     <%= link_to user_path(user, from: "/stats"), class: "user-row user-row--full" do %>
                       <div class="avatar-xs">
-                        <% if user.avatar.attached? %>
-                          <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
-                        <% else %>
-                          <%= user.name.first.upcase %>
-                        <% end %>
+                        <%= image_tag user_image_path(user), alt: user.name, loading: "lazy" %>
                       </div>
                       <span class="txt-truncate"><%= user.name %></span>
                     <% end %>
@@ -378,11 +374,7 @@
                     <td class="col-full">
                       <%= link_to user_path(user, from: "/stats"), class: "user-row user-row--full" do %>
                         <div class="avatar-xs">
-                          <% if user.avatar.attached? %>
-                            <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
-                          <% else %>
-                            <%= user.name.first.upcase %>
-                          <% end %>
+                          <%= image_tag user_image_path(user), alt: user.name, loading: "lazy" %>
                         </div>
                         <span class="txt-truncate"><%= user.name %></span>
                       <% end %>

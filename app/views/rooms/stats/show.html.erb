@@ -52,11 +52,7 @@
                 <td class="txt-right">
                   <%= link_to user_path(@room_stats[:creator], from: room_stats_path(@room)), class: "user-row user-row--end" do %>
                     <div class="avatar-xs">
-                      <% if @room_stats[:creator].avatar.attached? %>
-                        <%= image_tag @room_stats[:creator].avatar, alt: @room_stats[:creator].name, loading: "lazy" %>
-                      <% else %>
-                        <%= @room_stats[:creator].name.first.upcase %>
-                      <% end %>
+                      <%= image_tag user_image_path(@room_stats[:creator]), alt: @room_stats[:creator].name, loading: "lazy" %>
                     </div>
                     <span><%= @room_stats[:creator].name %></span>
                   <% end %>

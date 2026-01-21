@@ -28,11 +28,7 @@
   <td>
     <%= link_to user_path(user, from: from_path), class: "user-row" do %>
       <div class="avatar-xs">
-        <% if user.avatar.attached? %>
-          <%= image_tag user.avatar, alt: user.name, loading: "lazy" %>
-        <% else %>
-          <%= user.name.first.upcase %>
-        <% end %>
+        <%= image_tag user_image_path(user), alt: user.name, loading: "lazy" %>
       </div>
       <span class="txt-truncate"><%= user.name %></span>
     <% end %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_01_16_170115) do
+ActiveRecord::Schema[8.2].define(version: 2026_01_20_173346) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -231,6 +231,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_16_170115) do
 
   create_table "users", force: :cascade do |t|
     t.string "ascii_name"
+    t.integer "avatar_seed"
     t.string "avatar_url"
     t.text "bio"
     t.string "bot_token"

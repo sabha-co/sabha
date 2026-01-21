@@ -54,11 +54,7 @@
                       <% if room.creator %>
                         <%= link_to user_path(room.creator, from: "/stats/rooms"), class: "user-row" do %>
                           <div class="avatar-xs">
-                            <% if room.creator.avatar.attached? %>
-                              <%= image_tag room.creator.avatar, alt: room.creator.name, loading: "lazy" %>
-                            <% else %>
-                              <%= room.creator.name.first.upcase %>
-                            <% end %>
+                            <%= image_tag user_image_path(room.creator), alt: room.creator.name, loading: "lazy" %>
                           </div>
                           <span class="txt-truncate"><%= room.creator.name %></span>
                         <% end %>
@@ -70,11 +66,7 @@
                       <% if top_talker = @top_talkers[room.id] %>
                         <%= link_to user_path(top_talker, from: "/stats/rooms"), class: "user-row" do %>
                           <div class="avatar-xs">
-                            <% if top_talker.avatar.attached? %>
-                              <%= image_tag top_talker.avatar, alt: top_talker.name, loading: "lazy" %>
-                            <% else %>
-                              <%= top_talker.name.first.upcase %>
-                            <% end %>
+                            <%= image_tag user_image_path(top_talker), alt: top_talker.name, loading: "lazy" %>
                           </div>
                           <span class="txt-truncate"><%= top_talker.name %></span>
                         <% end %>

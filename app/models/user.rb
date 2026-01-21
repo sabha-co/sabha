@@ -5,7 +5,7 @@ class User < ApplicationRecord
   has_subscriptions
   after_create_commit :subscribe_to_emails
 
-  include Avatar, Bannable, Bot, Mentionable, Role, Transferable, Preferences
+  include Avatar, Bannable, Bot, DicebearAvatar, Mentionable, Role, Transferable, Preferences
 
   # User status enum (replaces active boolean + suspended_at)
   enum :status, %i[active deactivated banned], default: :active

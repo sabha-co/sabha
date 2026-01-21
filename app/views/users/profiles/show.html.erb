@@ -40,9 +40,14 @@
     <% end %>
 
     <% if @user.avatar.attached? %>
-      <% button_to user_avatar_path(@user), method: :delete, class: "btn btn--negative txt-small avatar__delete-btn" do %>
+      <%= button_to user_avatar_path(@user), method: :delete, class: "btn btn--negative txt-small avatar__delete-btn" do %>
         <%= image_tag "minus.svg", role: "presentation", size: 20 %>
         <span class="for-screen-reader">Delete avatar</span>
+      <% end %>
+    <% elsif Dicebear.enabled? %>
+      <%= button_to shuffle_avatar_user_profile_path, method: :post, class: "btn txt-small" do %>
+        <%= image_tag "refresh.svg", role: "presentation", size: 20 %>
+        <span class="for-screen-reader">Shuffle avatar</span>
       <% end %>
     <% end %>
   </div>

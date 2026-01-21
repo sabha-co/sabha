@@ -10,6 +10,11 @@ class Users::ProfilesController < ApplicationController
     redirect_to after_update_url, notice: update_notice
   end
 
+  def shuffle_avatar
+    @user.shuffle_avatar_seed!
+    redirect_to user_profile_url
+  end
+
   private
     def set_user
       @user = Current.user
