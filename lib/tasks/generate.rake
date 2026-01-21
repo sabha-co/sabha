@@ -205,6 +205,34 @@ namespace :generate do
       dm = Rooms::Direct.create_for({}, users: pair)
       rooms["dm_#{pair.map(&:id).join('_')}"] = dm
     end
+
+    # Multi-user DM (group conversation)
+    group_dm_users = users.sample(4)
+    Current.user = group_dm_users.first
+    group_dm = Rooms::Direct.create_for({}, users: group_dm_users)
+    rooms["group_dm"] = group_dm
+
+    # Add messages to group DM
+    base_time = rand(3..7).days.ago
+    group_dm_messages = [
+      "Hey everyone! Thought we should have a group chat 👋",
+      "Great idea! This will be easier than individual messages",
+      "Agreed! So what's everyone working on?",
+      "Building a new feature for #{Faker::App.name}",
+      "Nice! I'm debugging some #{Faker::Hacker.noun} issues",
+      "Let's sync up later this week?"
+    ]
+    group_dm_messages.each_with_index do |body, i|
+      user = group_dm_users[i % group_dm_users.length]
+      Message.create!(
+        room: group_dm,
+        creator: user,
+        body: body,
+        created_at: base_time + (i * rand(5..30)).minutes,
+        client_message_id: SecureRandom.uuid
+      )
+    end
+
     Current.user = nil
 
     rooms
