@@ -5,7 +5,7 @@ class UnreadRoomsTest < ApplicationSystemTestCase
     sign_in "jz@37signals.com"
   end
 
-  test "sending messages between two users" do
+  test "room shows as unread when another user sends messages" do
     designers_room = rooms(:designers)
     hq_room = rooms(:hq)
 

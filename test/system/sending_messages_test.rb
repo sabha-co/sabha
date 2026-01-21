@@ -34,7 +34,7 @@ class SendingMessagesTest < ApplicationSystemTestCase
 
     within_message messages(:third) do
       reveal_message_actions
-      find(".message__edit-btn").click
+      click_on "Edit"
       fill_in_rich_text_area "message_body", with: "Redacted!"
       click_on "Save changes"
     end
@@ -56,10 +56,8 @@ class SendingMessagesTest < ApplicationSystemTestCase
 
     within_message messages(:third) do
       reveal_message_actions
-      find(".message__edit-btn").click
-
       accept_confirm do
-        click_on "Delete message"
+        click_on "Delete"
       end
     end
 

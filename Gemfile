@@ -73,7 +73,7 @@ end
 
 group :test do
   gem "capybara"
+  gem "cuprite"
   gem "mocha"
-  gem "selenium-webdriver"
   gem "webmock", require: false
 end
