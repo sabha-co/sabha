@@ -17,7 +17,7 @@
       <h1 class="margin-none">Custom CSS</h1>
       <p class="flex flex-wrap align-center justify-center gap margin-none-block-start" style="--column-gap: 0.5ch; --row-gap: 0">
         <span>Add custom CSS styles.</span>
-        <%= image_tag "alert.svg", class: "flex-inline colorize--black", size: 16, aria: { hidden: "true" } %>
+        <%= icon_tag "alert", class: "flex-inline" %>
         <span>Use Caution: you could break things.</span>
       </p>
     </div>
@@ -29,7 +29,7 @@
     </label>
 
     <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-      <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+      <%= icon_tag "check" %>
       <span class="for-screen-reader">Save changes</span>
     <% end %>
   <% end %>

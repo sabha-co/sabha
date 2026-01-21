@@ -88,7 +88,7 @@ export default class extends Controller {
 
   #showNotificationBell() {
     // Show the bell and the alert icon
-    this.bellTarget.querySelectorAll("img").forEach(img => img.toggleAttribute("hidden"))
+    this.bellTarget.querySelectorAll(".icon").forEach(icon => icon.toggleAttribute("hidden"))
     
     // Add the pulsing effect if it's the first run
     if (!this.#hasSeenFirstRun) {

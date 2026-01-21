@@ -54,12 +54,12 @@
 
     <div class="flex align-center gap">
       <%= link_to user_path(user), class: "btn txt-small", data: { turbo_frame: "_top" } do %>
-        <%= image_tag "person.svg", size: 16, aria: { hidden: true } %>
+        <%= icon_tag "person" %>
         <span>View profile</span>
       <% end %>
       <% if Current.user.can_direct_message?(user) %>
         <%= link_to rooms_directs_path(user_ids: [user.id]), class: "btn btn--reversed txt-small", data: { turbo_frame: "_top", turbo_method: :post } do %>
-          <%= image_tag "messages.svg", size: 16, aria: { hidden: true } %>
+          <%= icon_tag "messages" %>
           <span>Ping</span>
         <% end %>
       <% end %>

@@ -29,7 +29,7 @@
   }
 
   /* Default icon styles */
-  &:where(:has(img):not(.avatar)) {
+  &:where(:has(img, .icon):not(.avatar)) {
     text-align: start;
 
     img {
@@ -55,7 +55,7 @@
   }
 
   /* Circle buttons */
-  &:where(:has(.for-screen-reader):has(img, figure)) {
+  &:where(:has(.for-screen-reader):has(img, figure, .icon)) {
     --btn-border-radius: 50%;
     --btn-padding: 0;
 

@@ -3,7 +3,7 @@
     <%= form_with model: @room, class: "flex gap flex-item-grow", data: {
           controller: "form", action: "keydown.esc->form#cancel" } do |form| %>
       <%= link_to user_sidebar_path, class: "btn flex-item-no-shrink d-hotwire-native-none", data: { turbo_frame: "user_sidebar", form_target: "cancel" } do %>
-        <%= image_tag "arrow-left.svg", aria: { hidden: "true" } %>
+        <%= icon_tag "arrow-left" %>
         <span class="for-screen-reader">Cancel changes</span>
       <% end %>
 
@@ -21,7 +21,7 @@
       </section>
 
       <%= button_tag class: "btn btn--reversed flex-item-no-shrink", type: "submit" do %>
-        <%= image_tag "check.svg", aria: { hidden: "true" } %>
+        <%= icon_tag "check" %>
         <span class="for-screen-reader">Start Ping</span>
       <% end %>
     <% end %>

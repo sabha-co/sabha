@@ -8,7 +8,7 @@
           controller: "busy-on-submit",
           turbo_confirm: blocked ? "Are you sure you want to unblock #{user.name}?" : "Are you sure you want to block #{user.name} from messaging you?"
         } do %>
-    <%= image_tag(blocked ? "unblock.svg" : "block.svg", aria: { hidden: "true" }) %>
+    <%= icon_tag(blocked ? "unblock" : "block") %>
     <%= compact ? "" : (blocked ? "Unblock user" : "Block user") %>
   <% end %>
 <% end %>

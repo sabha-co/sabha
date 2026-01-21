@@ -8,12 +8,12 @@
   <% if Current.user.administrator? %>
     <div class="flex align-center gap flex-item-justify-end">
       <%= link_to account_bots_path, class: "btn", style: "view-transition-name: chat-bots" do %>
-        <%= image_tag "bot.svg", aria: { hidden: "true" }, size: 20 %>
+        <%= icon_tag "bot" %>
         <span class="for-screen-reader">Set up chat bots</span>
       <% end %>
 
       <%= link_to edit_account_custom_styles_path, class: "btn", style: "view-transition-name: custom-styles" do %>
-        <%= image_tag "art.svg", size: 20, aria: { hidden: "true" } %>
+        <%= icon_tag "art" %>
         <span class="for-screen-reader">Custom styles</span>
       <% end %>
     </div>
@@ -27,7 +27,7 @@
       <div class="align-center center avatar__form gap" data-controller="upload-preview">
         <%= form_with model: @account, method: :patch, class: "txt--medium", data: { controller: "form" } do |form| %>
           <label class="btn input--file">
-            <%= image_tag "camera.svg", aria: { hidden: "true" }, size: 20 %>
+            <%= icon_tag "camera" %>
             <%= form.file_field :logo, class: "input", accept: "image/*",
                   data: { action: "upload-preview#previewImage change->form#submit" } %>
             <span class="for-screen-reader">Upload logo</span>
@@ -45,7 +45,7 @@
 
         <% if @account.logo.attached? %>
           <%= button_to fresh_account_logo_path, method: :delete, class: "btn btn--negative txt-small avatar__delete-btn" do %>
-            <%= image_tag "minus.svg", aria: { hidden: "true" }, size: 20 %>
+            <%= icon_tag "minus" %>
             <span class="for-screen-reader">Delete logo</span>
           <% end %>
         <% end %>
@@ -61,7 +61,7 @@
           </label>
 
           <%= form.button class: "btn btn--reversed center", type: "submit" do %>
-            <%= image_tag "check.svg", aria: { hidden: "true" }, size: 20 %>
+            <%= icon_tag "check" %>
             <span class="for-screen-reader">Save changes</span>
           <% end %>
         </div>

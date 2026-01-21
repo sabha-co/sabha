@@ -2,7 +2,7 @@
   <div class="composer flex align-end gap position-relative"
       data-controller="typing-notifications" data-typing-notifications-active-class="typing-indicator--active">
     <%= link_to searches_path, class: "btn flex-item-no-shrink margin-block-end composer__context-btn", style: "view-transition-name: input-switcher" do %>
-      <%= image_tag "search.svg", size: 20, aria: { hidden: "true" } %>
+      <%= icon_tag "search" %>
       <span class="for-screen-reader">Search</span>
     <% end %>
 
@@ -14,7 +14,7 @@
 
             <div class="flex composer__input input input--actor fill-white min-width" style="--input-border-radius: 1.3rem">
               <div class="flex align-end gap full-width">
-                <%= image_tag "messages-outlined.svg", size: 22, aria: { hidden: "true" }, class: "composer__input-hint colorize--black", style: "view-transition-name: input-btn;" %>
+                <%= icon_tag "messages-outlined", class: "composer__input-hint", style: "view-transition-name: input-btn;" %>
 
                 <div class="flex flex-column flex-item-grow min-width gap">
                   <%= form.rich_text_area :body,
@@ -31,19 +31,19 @@
                 </div>
 
                 <label class="btn btn--borderless txt-small flex-item-no-shrink composer__attachment-btn input--file">
-                  <%= image_tag "attachment.svg", size: 22, class: "colorize--black", aria: { hidden: "true" } %>
+                  <%= icon_tag "attachment" %>
                   <input type="file" data-action="composer#filePicked" multiple />
                   <span class="for-screen-reader">Attach a file</span>
                 </label>
 
                 <button class="btn btn--borderless txt-small flex-item-no-shrink composer__rich-text-btn" type="button" data-action="composer#toggleToolbar">
-                  <%= image_tag "text-options.svg", size: 20, class: "colorize--black", aria: { hidden: "true" } %>
+                  <%= icon_tag "text-options" %>
                   <span class="for-screen-reader">Rich text</span>
                 </button>
 
                 <%= form.button name: "send", type: "submit", data: { action: "composer#submit" },
                       class: "btn btn--reversed flex-item-no-shrink txt-small" do %>
-                  <%= image_tag "arrow-up.svg", size: 20, aria: { hidden: "true" } %>
+                  <%= icon_tag "arrow-up" %>
                   <span class="for-screen-reader">Send Message</span>
                 <% end %>
               </div>

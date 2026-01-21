@@ -11,11 +11,11 @@
     <h1 class="room__contents txt-medium overflow-ellipsis">Rooms Stats</h1>
   <% end %>
   <%= link_to stats_path, class: "btn" do %>
-    <%= image_tag("arrow-left.svg", aria: { hidden: "true" }, size: 20) %>
+    <%= icon_tag "arrow-left" %>
     <span>Back to Stats</span>
   <% end %>
   <%= link_to stats_rooms_path, class: "btn d-hotwire-native-none" do %>
-    <%= image_tag("refresh.svg", aria: { hidden: "true" }, size: 20) %>
+    <%= icon_tag "refresh" %>
     <span class="for-screen-reader">Refresh stats</span>
   <% end %>
 <% end %>

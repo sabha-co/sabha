@@ -19,7 +19,8 @@
       grid-area: 1/1;
     }
 
-    .message-area--empty > figure img {
+    .message-area--empty > figure img,
+    .message-area--empty > figure .icon {
       inline-size: 30dvw;
     }
   }

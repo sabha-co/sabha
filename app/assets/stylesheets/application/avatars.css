@@ -24,7 +24,7 @@
   }
 
   .banned &:after {
-    background: url(cancel.svg) no-repeat center center;
+    background: url(../cancel.svg) no-repeat center center;
     block-size: auto;
     content: "";
     filter: invert(0%);

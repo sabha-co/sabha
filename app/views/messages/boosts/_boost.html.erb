@@ -22,7 +22,7 @@
     
     <%= button_to message_boost_path(boost.message, boost), method: :delete, data: { action: "boost-delete#perform", boost_delete_target: "button", stop_propagation: true },
           class: "btn btn--negative flex-item-justify-end boost__delete" do %>
-      <%= image_tag "minus.svg", size: 20, aria: { hidden: "true" } %>
+      <%= icon_tag "minus" %>
       <span class="for-screen-reader">Delete this boost</span>
     <% end %>
   </div>

@@ -13,12 +13,12 @@
       </label>
 
       <%= form.button class: "btn btn--reversed", type: "submit" do %>
-        <%= image_tag "check.svg", aria: { hidden: "true" } %>
+        <%= icon_tag "check" %>
         <span class="for-screen-reader">Submit</span>
       <% end %>
 
       <%= link_to message_boosts_path(@message), data: { turbo_frame: dom_id(@message, :boosts), form_target: "cancel" }, class: "btn btn--negative" do %>
-        <%= image_tag "minus.svg", aria: { hidden: "true" } %>
+        <%= icon_tag "minus" %>
         <span class="for-screen-reader">Cancel</span>
       <% end %>
     <% end %>

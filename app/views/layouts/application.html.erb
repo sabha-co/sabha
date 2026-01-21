@@ -49,9 +49,9 @@
       <div class="flash" data-controller="element-removal" data-action="animationend->element-removal#remove">
         <div class="flash__inner" style="<%= "--flash-background: var(--color-negative)" if flash[:alert] %>">
           <% if flash[:alert] %>
-            <%= image_tag "alert.svg", aria: { hidden: true }, size: 24, class: "colorize--white" %>
+            <%= icon_tag "alert" %>
           <% else %>
-            <%= image_tag "check.svg", aria: { hidden: true }, size: 24, class: "colorize--white" %>
+            <%= icon_tag "check" %>
           <% end %>
           <span><%= notice %></span>
         </div>

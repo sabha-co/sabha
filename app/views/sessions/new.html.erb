@@ -23,7 +23,7 @@
               <%= translation_button(:email_address) %>
               <label class="flex align-center gap input input--actor txt-large">
                 <%= form.email_field :email_address, required: true, class: "input", autofocus: true, autocomplete: "email", placeholder: "Enter your email address", value: params[:email_address] %>
-                <%= image_tag "email.svg", role: "presentation", size: 24, class: "colorize--black" %>
+                <%= icon_tag "email" %>
               </label>
             </div>
 
@@ -49,7 +49,7 @@
               <%= translation_button(:email_address) %>
               <label class="flex align-center gap input input--actor txt-large">
                 <%= form.email_field :email_address, required: true, class: "input", autofocus: true, autocomplete: "email", placeholder: "Enter your email address", value: params[:email_address] %>
-                <%= image_tag "email.svg", role: "presentation", size: 24, class: "colorize--black" %>
+                <%= icon_tag "email" %>
               </label>
             </div>
 
@@ -58,7 +58,7 @@
               <label class="flex align-center gap input input--actor txt-large">
                 <%= form.password_field :password, required: true, class: "input",
                     autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72 %>
-                <%= image_tag "password.svg", role: "presentation", size: 24, class: "colorize--black" %>
+                <%= icon_tag "password" %>
               </label>
             </div>
 

@@ -4,7 +4,7 @@
 <div class="message__actions" data-controller="soft-keyboard">
   <% unless message.room.direct? || current_room&.thread? || message.room.thread? %>
     <%= link_to new_rooms_thread_path(parent_message_id: message.id), class: "btn message__action-btn message__options-btn message__reply-btn", data: { turbo_frame: "_top" } do %>
-      <%= image_tag "reply.svg", size: 20, class: "colorize--black", aria: { hidden: "true" } %>
+      <%= icon_tag "reply" %>
       <span class="for-screen-reader">Reply</span>
     <% end %>
   <% end %>
@@ -12,7 +12,7 @@
   <%= tag.details class: "position-relative",
       data: { controller: "popup", action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside", popup_orientation_top_class: "popup-orientation-top" } do %>
     <summary class="btn message__action-btn message__options-btn options-btn">
-      <%= image_tag "menu-dots-horizontal.svg", size: 20, class: "colorize--black", aria: { hidden: "true" } %>
+      <%= icon_tag "menu-dots-horizontal" %>
       <span class="for-screen-reader">Message options</span>
     </summary>
 
@@ -31,7 +31,7 @@
         <%= link_to new_message_boost_path(message),
               class: "btn message__action-btn message__boost-btn",
               data: { turbo_frame: dom_id(message, :new_boost), action: "soft-keyboard#open popup#close" } do %>
-          <%= image_tag "boost.svg", class: "colorize--black", size: 20, aria: { hidden: "true" } %>
+          <%= icon_tag "boost" %>
           <span class="for-screen-reader">New boost</span>
         <% end %>
       </div>

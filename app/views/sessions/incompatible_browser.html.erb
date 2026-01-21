@@ -16,7 +16,7 @@
       <% next unless version %>
 
       <div class="browser flex flex-column">
-        <%= image_tag "browsers/#{browser}.svg", aria: { hidden: "true" }, class: "center" %>
+        <%= icon_tag "browser-#{browser}", class: "center" %>
         <div class="flex flex-column align-center margin-block-start-half">
           <strong><%= browser.capitalize %></strong>
           <span> <%= version %>+</span>

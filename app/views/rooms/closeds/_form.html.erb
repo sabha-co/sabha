@@ -3,7 +3,7 @@
     <% if Current.user.can_administer?(room) %>
       <li class="flex align-center gap margin-none">
         <figure class="avatar flex-item-no-shrink" style="--avatar-border-radius: 0; --avatar-size: 4ch;">
-          <%= image_tag "everyone.svg", aria: { hidden: "true" }, class: "colorize--black", style: "background-color: transparent; box-shadow-none" %>
+          <%= icon_tag "everyone" %>
           <span class="for-screen-reader">Everyone</span>
         </figure>
 

@@ -7,7 +7,7 @@
         <div class="message__edit-btns flex align-center justify-space-between gap full-width pad-block-start-half">
           <%= button_tag class: "btn btn--negative center margin-block-end", type: "submit",
                 form: dom_id(@message, :delete_form), data: { turbo_confirm: "Are you sure you want to delete this message?" } do %>
-            <%= image_tag "trash.svg", aria: { hidden: "true" } %>
+            <%= icon_tag "trash" %>
             <span class="for-screen-reader">Delete message</span>
           <% end %>
         </div>
@@ -31,7 +31,7 @@
 
             <div class="message__edit-btns flex align-center justify-space-between gap full-width pad-block-start-half">
               <%= button_tag type: "submit", class: "btn btn--reversed" do %>
-                <%= image_tag "check.svg", aria: { hidden: "true" } %>
+                <%= icon_tag "check" %>
                 <span class="for-screen-reader">Save changes</span>
               <% end %>
             </div>
@@ -42,7 +42,7 @@
 
     <div class="message__actions flex flex-wrap">
       <%= link_to message_in_room_path(@room, @message), class: "message__action-btn message__edit-close-btn txt-small btn btn--borderless" do %>
-        <%= image_tag "remove.svg", class: "colorize--black", aria: { hidden: "true" } %>
+        <%= icon_tag "close" %>
         <span class="for-screen-reader">Close editor and discard changes</span>
       <% end %>
     </div>

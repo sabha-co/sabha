@@ -22,6 +22,10 @@ module ApplicationHelper
     end
   end
 
+  def icon_tag(name, **options)
+    tag.span class: class_names("icon icon--#{name}", options.delete(:class)), "aria-hidden": true, **options
+  end
+
   def body_classes
     [ @body_class, admin_body_class, account_logo_body_class ].compact.join(" ")
   end
@@ -43,8 +47,7 @@ module ApplicationHelper
 
   def link_back_to(destination)
     link_to destination, class: "btn d-hotwire-native-none" do
-      image_tag("arrow-left.svg", aria: { hidden: "true" }, size: 20) +
-      tag.span("Go Back", class: "for-screen-reader")
+      icon_tag("arrow-left") + tag.span("Go Back", class: "for-screen-reader")
     end
   end
 

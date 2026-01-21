@@ -8,7 +8,7 @@
   <div class="flex align-center gap flex-item-justify-end">
     <% if Current.user == @user %>
       <%= link_to user_profile_path, class: "btn" do %>
-        <%= image_tag "pencil.svg", aria: { hidden: "true" } %>
+        <%= icon_tag "pencil" %>
         <span class="for-screen-reader">Edit my profile</span>
       <% end %>
     <% end %>
@@ -72,7 +72,7 @@
     <% if Current.user.can_direct_message?(@user) %>
       <div class="flex justify-center">
         <%= link_to rooms_directs_path(user_ids: [@user.id]), class: "btn btn--reversed", data: { turbo_frame: "_top", turbo_method: :post } do %>
-          <%= image_tag "messages.svg", size: 18, aria: { hidden: true } %>
+          <%= icon_tag "messages" %>
           <span>Ping <%= @user.name.split.first %></span>
         <% end %>
       </div>
@@ -83,7 +83,7 @@
 
       <fieldset class="margin-none-block-end">
         <legend class="gap">
-          <%= image_tag "messages.svg", aria: { hidden: "true" }, size: 36, class: "colorize--black" %>
+          <%= icon_tag "messages", style: "--icon-size: 2.25rem" %>
         </legend>
       </fieldset>
 
@@ -112,7 +112,7 @@
 
       <fieldset class="margin-none-block-end">
         <legend class="gap">
-          <%= image_tag "settings.svg", aria: { hidden: "true" }, size: 36, class: "colorize--black" %>
+          <%= icon_tag "gear", style: "--icon-size: 2.25rem" %>
         </legend>
       </fieldset>
 

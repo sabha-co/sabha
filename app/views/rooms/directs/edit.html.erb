@@ -22,7 +22,7 @@
 
   <%= button_to rooms_direct_url(@room), method: :delete, class: "btn btn--negative center", aria: { label: "Delete Ping" },
       data: { turbo_confirm: "Are you sure you want to delete this ping and all messages in it? This can’t be undone." } do %>
-    <%= image_tag "trash.svg", aria: { hidden: "true" } %>
+    <%= icon_tag "trash" %>
     Ping
   <% end %>
 </div>

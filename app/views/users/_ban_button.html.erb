@@ -3,14 +3,14 @@
     <%= button_to user_ban_path(user), method: :post,
           class: "btn",
           data: { turbo_confirm: "Are you sure you want to ban this user? This will log them out, delete their messages, and block their IP addresses." } do %>
-      <%= image_tag "cancel.svg", aria: { hidden: "true" } %>
+      <%= icon_tag "cancel" %>
       <span>Ban <%= user.name %></span>
     <% end %>
   <% else %>
     <%= button_to user_ban_path(user), method: :delete,
           class: "btn btn--negative",
           data: { turbo_confirm: "Are you sure you want to remove the ban on this user?" } do %>
-      <%= image_tag "cancel.svg", aria: { hidden: "true" } %>
+      <%= icon_tag "cancel" %>
       <span>Remove ban</span>
     <% end %>
   <% end %>

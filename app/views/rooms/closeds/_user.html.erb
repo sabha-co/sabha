@@ -12,7 +12,7 @@
   <% if Current.user.can_administer?(room) %>
     <% if user == Current.user && room.new_record? %>
       <%= hidden_field_tag "user_ids[]", user.id, id: nil %>
-      <%= image_tag "check.svg", size: 20, class: "colorize--black flex-item-no-shrink", aria: { hidden: "true" } %>
+      <%= icon_tag "check", class: "flex-item-no-shrink" %>
     <% else %>
       <label class="switch flex-item-no-shrink">
         <%= check_box_tag "user_ids[]", user.id, selected, class: "switch__input", id: nil %>

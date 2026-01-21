@@ -8,19 +8,19 @@
 <% content_for :nav do %>
   <div class="flex-item-justify-start flex gap">
     <%= link_to room_path(@room), class: "btn" do %>
-      <%= image_tag("arrow-left.svg", aria: { hidden: "true" }, size: 20) %>
+      <%= icon_tag "arrow-left" %>
       <span class="for-screen-reader">Back to Room</span>
     <% end %>
 
     <% if @room.direct? || @room.creator == Current.user || Current.user.administrator? %>
       <%= link_to @room.open? ? edit_rooms_open_path(@room) : (@room.closed? ? edit_rooms_closed_path(@room) : (@room.direct? ? edit_rooms_direct_path(@room) : (@room.thread? ? edit_rooms_thread_path(@room) : nil))), class: "btn" do %>
-        <%= image_tag("pencil.svg", aria: { hidden: "true" }, size: 20) %>
+        <%= icon_tag "pencil" %>
         <span>Edit Room</span>
       <% end %>
     <% end %>
 
     <%= link_to room_stats_path(@room), class: "btn d-hotwire-native-none" do %>
-      <%= image_tag("refresh.svg", aria: { hidden: "true" }, size: 20) %>
+      <%= icon_tag "refresh" %>
       <span class="for-screen-reader">Refresh stats</span>
     <% end %>
   </div>

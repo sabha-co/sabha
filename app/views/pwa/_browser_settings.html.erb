@@ -1,9 +1,9 @@
 <% unless (platform.safari? || platform.chrome?) && platform.ios? %>
   <details class="notifications-help" data-notifications-target="details">
     <summary class="btn">
-      <%= image_tag "external/web.svg", aria: { hidden: "true" }, size: 20 %>
+      <%= icon_tag "external-web" %>
       <strong>Check your <%= platform.browser.capitalize %> settings</strong>
-      <%= image_tag "disclosure.svg", aria: { hidden: "true" }, size: 10, class: "disclosure" %>
+      <%= icon_tag "disclosure", class: "disclosure" %>
     </summary>
 
     <% case

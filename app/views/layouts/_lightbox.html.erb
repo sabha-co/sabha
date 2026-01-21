@@ -3,13 +3,13 @@
 
   <form method="dialog" class="lightbox__btn">
     <button class="btn">
-      <%= image_tag "remove.svg", aria: { hidden: "true" } %>
+      <%= icon_tag "close" %>
       <span class="for-screen-reader">Close image viewer</span>
     </button>
   </form>
 
   <a href="" class="lightbox__btn--download btn hide-in-ios-pwa" data-lightbox-target="download">
-    <%= image_tag "download.svg", aria: { hidden: "true" } %>
+    <%= icon_tag "download" %>
     <span class="for-screen-reader">Download file</span>
   </a>
 
@@ -18,7 +18,7 @@
       data-action="web-share#share"
       data-web-share-files-value=""
       data-lightbox-target="share">
-    <%= image_tag "share.svg", aria: { hidden: "true" } %>
+    <%= icon_tag "share" %>
     <span class="for-screen-reader">Share file</span>
   </button>
 </dialog>

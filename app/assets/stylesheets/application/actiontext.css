@@ -10,9 +10,6 @@ trix-toolbar {
     top: auto !important;
   }
 
-  .trix-button--icon {
-    height: auto !important;
-  }
 
   .trix-dialog {
     background-color: var(--color-bg) !important;
@@ -138,7 +135,7 @@ trix-editor {
     &::before {
       filter: invert(100);
       background-size: 70%;
-      background-image: url("minus.svg");
+      background-image: url("../minus.svg");
     }
   }
 }

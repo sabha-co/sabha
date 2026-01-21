@@ -1,7 +1,7 @@
 <% if owner = User.administrator.first %>
   <div class="txt-align-center margin-block-double full-width">
     <%= link_to "mailto:\"#{Branding.app_name} Support\" <#{Branding.support_email}>", class: "btn center", title: "Email #{Branding.app_name} Support" do %>
-      <%= image_tag "lifebuoy.svg", aria: { hidden: "true" } %>
+      <%= icon_tag "lifebuoy" %>
       <span><%= Branding.support_email %></span>
     <% end %>
 

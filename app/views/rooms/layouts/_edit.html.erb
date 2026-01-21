@@ -24,7 +24,7 @@
                               { include_blank: true }, { style: '--input-padding: 0.3em 0.3em' } %>
               <%= form.button class: "btn btn--negative center txt-large", type: "submit", name: "merge",
                               data: { turbo_confirm: "Are you sure you want to merge and delete #{@room.name}?" } do %>
-                <%= image_tag "arrow-right.svg", role: "presentation" %>
+                <%= icon_tag "arrow-right" %>
                 <span class="for-screen-reader">Merge</span>
               <% end %>
             </div>

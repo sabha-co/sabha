@@ -5,7 +5,7 @@
 
   <% curl_text_line = %[curl -H "Content-Type: application/json" #{rooms_bot_directs_url(bot.bot_key)} -d '{ "user_ids": [ "#{Current.user.id}" ] }'] %>
   <div class="flex align-center gap">
-    <%= image_tag "add.svg", role: "presentation", size: 24, class: "colorize--black" %>
+    <%= icon_tag "add" %>
 
     <div class="flex-item-grow">
       <input type="text" class="input full-width fill-white" value="<%= curl_text_line %>" aria-label="curl command for creating a ping" readonly>
@@ -13,7 +13,7 @@
 
     <div class="txt-small">
       <%= button_to_copy_to_clipboard(curl_text_line) do %>
-        <%= image_tag "copy-paste.svg", role: "presenation", size: 20 %>
+        <%= icon_tag "copy-paste" %>
         <span class="for-screen-reader">Copy command for creating a ping</span>
       <% end %>
     </div>

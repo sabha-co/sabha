@@ -13,7 +13,7 @@
         <% if Current.user.administrator? || !Current.account.settings.restrict_direct_messages_to_administrators? %>
           <%= link_to new_rooms_direct_path, class: "direct direct__new", data: { turbo_frame: "_self" } do %>
             <span class="avatar avatar--icon">
-              <%= image_tag "messages-add.svg", size: 20, aria: { hidden: "true" }, class: "colorize--black" %>
+              <%= icon_tag "messages-add" %>
             </span>
 
             <span class="direct__author flex max-width min-width border-radius pad-inline-half">
@@ -51,7 +51,7 @@
           <%= render "users/sidebars/all_rooms_actions" %>
           <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
             <%= link_to new_rooms_open_path, class: "btn btn--small", aria: { label: "New Room" } do %>
-              <%= image_tag "add.svg", size: 16, aria: { hidden: "true" }, style: "view-transition-name: new-room" %>
+              <%= icon_tag "add", style: "view-transition-name: new-room" %>
               <span class="for-screen-reader">New Room</span>
             <% end %>
           <% end %>
@@ -66,39 +66,39 @@
   </div>
 
   <button id="sidebar-toggle" class="btn sidebar__toggle" data-action="click->toggle-class#toggle">
-    <%= image_tag "menu.svg", size: 20, aria: { hidden: "true" } %>
+    <%= icon_tag "menu" %>
     <span class="for-screen-reader">Open menu</span>
   </button>
 
   <div class="sidebar__tools d-hotwire-native-none">
     <div class="sidebar__tool-container">
       <%= link_to inbox_path, class: "btn sidebar__tool", data: { mentions_indicator_target: "icon" } do %>
-        <%= image_tag "mentions.svg", size: 20, aria: { hidden: "true" } %>
+        <%= icon_tag "mentions" %>
         <span class="for-screen-reader">Mentions</span>
         <span class="sidebar__tool-label">Mentions</span>
       <% end %>
 
       <%= link_to threads_inbox_path, class: "btn sidebar__tool" do %>
-        <%= image_tag "threads.svg", size: 20, aria: { hidden: "true" } %>
+        <%= icon_tag "threads" %>
         <span class="for-screen-reader">Threads</span>
         <span class="sidebar__tool-label">Threads</span>
       <% end %>
 
       <%= link_to bookmarks_inbox_path, class: "btn sidebar__tool" do %>
-        <%= image_tag "bookmark.svg", size: 20, aria: { hidden: "true" } %>
+        <%= icon_tag "bookmark" %>
         <span class="for-screen-reader">Bookmarks</span>
         <span class="sidebar__tool-label">Bookmarks</span>
       <% end %>
 
       <%= link_to stats_path, class: "btn sidebar__tool" do %>
-        <%= image_tag "stats.svg", size: 20, aria: { hidden: "true" } %>
+        <%= icon_tag "stats" %>
         <span class="for-screen-reader">Stats</span>
         <span class="sidebar__tool-label">Stats</span>
       <% end %>
 
       <% if Current.user&.administrator? %>
         <%= link_to edit_account_path, class: "btn sidebar__tool" do %>
-          <%= image_tag "crown.svg", size: 20, aria: { hidden: "true" }, class: "colorize--black", style: "view-transition-name: account-settings" %>
+          <%= icon_tag "crown", style: "view-transition-name: account-settings" %>
           <span class="for-screen-reader">Admin</span>
           <span class="sidebar__tool-label">Admin</span>
         <% end %>

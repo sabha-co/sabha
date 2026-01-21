@@ -9,12 +9,12 @@
 
     <span class="flex align-center gap">
       <%= button_to user_push_subscription_test_notifications_path(push_subscription), class: "btn btn--reversed" do %>
-        <%= image_tag "notification-bell-everything.svg", aria: { hidden: "true" }, size: 20 %>
+        <%= icon_tag "notification-bell-everything" %>
         <span class="for-screen-reader">Send test notification</span>
       <% end %>
 
       <%= button_to user_push_subscription_path(push_subscription), method: :delete, class: "btn btn--negative" do %>
-        <%= image_tag "minus.svg", aria: { hidden: "true" }, size: 20 %>
+        <%= icon_tag "minus" %>
         <span class="for-screen-reader">Delete subscription</span>
       <% end %>
     </span>
