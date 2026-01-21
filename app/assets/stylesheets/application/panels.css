@@ -63,6 +63,55 @@
   overflow-y: auto;
 }
 
+.role-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--block-space);
+
+  &:not(:has([id^="user_"])) {
+    display: none;
+  }
+}
+
+.banned strong {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Member management responsive styles */
+.panel--members {
+  --panel-width: 60ch;
+}
+
+.panel--members .member-row {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .panel--members .member-row .separator {
+    display: none;
+  }
+
+  .panel--members .member-row {
+    gap: 0.5rem;
+  }
+
+  .panel--members .member-controls {
+    flex-basis: 100%;
+    justify-content: flex-end;
+    padding-inline-start: calc(3.75ch + 0.5rem);
+  }
+
+  .panel--members .members-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .panel--members .members-header input[type="search"] {
+    width: 100%;
+  }
+}
+
 .panel__button {
   inset-block-start: var(--block-space);
   inset-inline-start: var(--block-space);

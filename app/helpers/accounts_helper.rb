@@ -8,4 +8,9 @@ module AccountsHelper
   def online_users_count
     Membership.connected.select(:user_id).distinct.count
   end
+
+  def badge_options
+    badges = @badges || Badge.ordered
+    [ [ "No badge", "" ] ] + badges.map { |b| [ b.name, b.id ] }
+  end
 end

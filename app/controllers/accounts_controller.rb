@@ -3,9 +3,7 @@ class AccountsController < ApplicationController
   before_action :set_account
 
   def edit
-    users = account_users.includes(avatar_attachment: :blob).ordered
-    @administrators, @members = users.partition(&:administrator?)
-    set_page_and_extract_portion_from users, per_page: 500
+    # Users are now managed on a separate page at /account/users
   end
 
   def update

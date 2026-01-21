@@ -1,40 +1,55 @@
-<li class="flex align-center gap margin-none <%= "banned" if user.banned? %>">
-  <figure class="avatar flex-item-no-shrink" style="--avatar-size: 3.75ch;">
-    <%= avatar_link_tag user, loading: :lazy %>
-  </figure>
+<%# locals: (user:) %>
+<%= turbo_frame_tag dom_id(user), class: "member-row flex align-center gap #{"banned" if user.banned?}" do %>
+  <div class="flex-item-no-shrink" style="--avatar-size: 3.75ch;">
+    <%= render "users/popup", user: user %>
+  </div>
 
-  <div class="min-width">
-    <div class="overflow-ellipsis"><strong><%= user.name %></strong></div>
+  <div class="min-width flex-item-grow">
+    <div class="overflow-ellipsis">
+      <%= link_to user_path(user), class: "txt-undecorated", data: { turbo_frame: "_top" } do %>
+        <strong><%= user.name %></strong>
+      <% end %>
+      <% if user.badge %>
+        <span class="txt-x-small txt-muted"><%= user.badge.name %></span>
+      <% end %>
+    </div>
   </div>
 
   <hr class="separator" aria-hidden="true">
 
-  <% if Current.user.can_administer? && user.active? %>
-    <% unless user.bot? %>
-      <%= form_with model: user, url: account_user_path(user), data: { controller: "form" }, method: :patch do | form | %>
-        <label class="btn txt-small flex-item-no-shrink" for="<%= dom_id(user, :role) %>">
-          <span class="for-screen-reader">Role: <%= user.administrator? ? "Administrator" : "Member" %></span>
-          <%= icon_tag "crown" %>
-          <%= form.check_box :role, { data: { action: "form#submit" }, hidden: true, id: dom_id(user, :role), disabled: user == Current.user }, "administrator", "member" %>
-        </label>
+  <div class="member-controls flex align-center gap">
+    <% if user.manageable_by?(Current.user) %>
+      <%= render "accounts/users/role_toggle", user: user, role: :administrator, icon: "crown" %>
+      <%= render "accounts/users/role_toggle", user: user, role: :moderator, icon: "shield" %>
+
+      <%= form_with model: user, url: account_user_path(user), data: { turbo: false, controller: "form" }, method: :patch, class: "flex-item-no-shrink" do |form| %>
+        <%= form.select :badge_id,
+              options_for_select(badge_options, user.badge&.id),
+              {},
+              class: "input txt-small",
+              style: "width: 10ch;",
+              data: { action: "form#submit" } %>
       <% end %>
     <% end %>
-  <% end %>
 
-  <% unless user == Current.user %>
-    <% if Current.user.can_administer? && user.active? %>
+    <% if user.unbannable_by?(Current.user) %>
+      <%= button_to user_ban_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--success", data: {
+            turbo_confirm: "Unban #{user.name}? They will be able to access the chat again." } do %>
+        Unban
+      <% end %>
+    <% elsif user.removable_by?(Current.user) %>
       <%= button_to account_user_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--negative", data: {
-            turbo_confirm: "Are you sure you want to permanently remove this person from the account? This can't be undone."} do %>
+            turbo_confirm: "Are you sure you want to remove this person from the account? They will no longer be able to access the chat."} do %>
         <%= icon_tag "minus" %>
         <span class="for-screen-reader">Delete <%= user.name %></span>
       <% end %>
     <% end %>
-  <% end %>
 
-  <% if user == Current.user %>
-    <%= link_to user_profile_path, class: "btn txt-small flex-item-no-shrink", target: "_top" do %>
-      <%= icon_tag "pencil" %>
-      <span class="for-screen-reader">My settings</span>
+    <% if user == Current.user %>
+      <%= link_to user_profile_path, class: "btn txt-small flex-item-no-shrink", target: "_top" do %>
+        <%= icon_tag "pencil" %>
+        <span class="for-screen-reader">My settings</span>
+      <% end %>
     <% end %>
-  <% end %>
-</li>
+  </div>
+<% end %>

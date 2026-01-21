@@ -128,6 +128,7 @@ img.icon {
 .icon--search { --svg: url("../search.svg"); }
 .icon--settings { --svg: url("../settings.svg"); }
 .icon--share { --svg: url("../share.svg"); }
+.icon--shield { --svg: url("../shield.svg"); }
 .icon--sliders { --svg: url("../sliders.svg"); }
 .icon--star { --svg: url("../star.svg"); }
 .icon--stats { --svg: url("../stats.svg"); }

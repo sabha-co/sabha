@@ -43,6 +43,7 @@ Rails.application.routes.draw do
   resource :account do
     scope module: "accounts" do
       resources :users
+      resources :badges, only: [ :create, :update, :destroy ]
 
       resources :bots do
         scope module: "bots" do

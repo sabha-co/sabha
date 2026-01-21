@@ -26,9 +26,12 @@
         </div>
       <% end %>
       <div class="flex flex-column gap-half" style="min-width: 0;">
-        <strong class="txt-medium">
-          <%= link_to user.name, user_path(user), title: user.title, class: "txt-undecorated txt-primary", data: { turbo_frame: "_top" } %>
-        </strong>
+        <div class="flex align-center gap-half">
+          <strong class="txt-medium">
+            <%= link_to user.name, user_path(user), title: user.title, class: "txt-undecorated txt-primary", data: { turbo_frame: "_top" } %>
+          </strong>
+          <%= render "users/role_badge", user: user %>
+        </div>
         <% if user.bio.present? %>
           <p class="txt-small txt-lighter margin-none" style="line-height: 1.35;"><%= auto_link truncate(user.bio, length: 80) %></p>
         <% end %>

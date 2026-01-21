@@ -130,6 +130,42 @@ class UserTest < ActiveSupport::TestCase
     assert_not users(:david).blocked_in?(rooms(:hq))
   end
 
+  # Role tests
+
+  test "can_moderate? returns true for moderators and administrators" do
+    users(:kevin).update!(role: :member)
+    assert_not users(:kevin).can_moderate?
+
+    users(:kevin).update!(role: :moderator)
+    assert users(:kevin).can_moderate?
+
+    users(:kevin).update!(role: :administrator)
+    assert users(:kevin).can_moderate?
+  end
+
+  test "can_delete_message? allows moderators to delete any message" do
+    moderator = users(:kevin)
+    moderator.update!(role: :moderator)
+    message = messages(:first)
+
+    assert moderator.can_delete_message?(message)
+  end
+
+  test "can_delete_message? allows creator to delete own message" do
+    message = messages(:first)
+    creator = message.creator
+
+    assert creator.can_delete_message?(message)
+  end
+
+  test "can_delete_message? denies members deleting others messages" do
+    member = users(:kevin)
+    member.update!(role: :member)
+    message = messages(:first)
+
+    assert_not member.can_delete_message?(message)
+  end
+
   private
     def create_new_user
       User.create!(name: "User", email_address: "user@example.com", password: "secret123456")

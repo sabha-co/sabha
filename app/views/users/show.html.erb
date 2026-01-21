@@ -46,7 +46,20 @@
     </div>
 
     <div class="flex flex-column align-center gap-half txt-align-center">
-      <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
+      <div class="flex align-center gap-half">
+        <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
+        <% if @user.administrator? %>
+          <span class="txt-small txt-muted" title="Administrator"><%= icon_tag "crown" %></span>
+        <% elsif @user.moderator? %>
+          <span class="txt-small txt-muted" title="Moderator"><%= icon_tag "shield" %></span>
+        <% end %>
+      </div>
+      <% if @user.badge %>
+        <% badge = @user.badge %>
+        <span class="txt-small" <%= "style=color:#{badge.color}" if badge.color.present? %>>
+          <%= badge.name %>
+        </span>
+      <% end %>
       <% if @user.bio.present? %>
         <p class="txt-medium margin-none txt-tight-lines"><%= auto_link @user.bio %></p>
       <% end %>

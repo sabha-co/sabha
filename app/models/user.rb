@@ -74,6 +74,8 @@ class User < ApplicationRecord
   has_many :auth_tokens, dependent: :destroy
   has_many :bans, dependent: :destroy
 
+  belongs_to :badge, optional: true
+
   has_many :blocks_given, class_name: "Block", foreign_key: :blocker_id, dependent: :destroy
   has_many :blocked_users, through: :blocks_given, source: :blocked
 
@@ -104,7 +106,7 @@ class User < ApplicationRecord
   after_destroy_commit -> { StatsService.clear_all_time_ranks_cache }
   after_update_commit -> { StatsService.clear_all_time_ranks_cache if saved_change_to_attribute?(:status) }
 
-  scope :ordered, -> { order(arel_table[:role].eq(roles[:administrator]).desc, arel_table[:name].lower) }
+  scope :ordered, -> { order(arel_table[:role].desc, arel_table[:name].lower) }
   scope :recent_posters_first, ->(room_id = nil) do
     messages_table = Message.active.arel_table
     users_table = active.arel_table

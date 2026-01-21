@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_01_20_173346) do
+ActiveRecord::Schema[8.2].define(version: 2026_01_21_112600) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -83,6 +83,15 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_20_173346) do
     t.datetime "used_at"
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_auth_tokens_on_user_id"
+  end
+
+  create_table "badges", force: :cascade do |t|
+    t.string "color"
+    t.datetime "created_at", null: false
+    t.string "icon"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_badges_on_name"
   end
 
   create_table "bans", force: :cascade do |t|
@@ -233,6 +242,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_20_173346) do
     t.string "ascii_name"
     t.integer "avatar_seed"
     t.string "avatar_url"
+    t.integer "badge_id"
     t.text "bio"
     t.string "bot_token"
     t.datetime "created_at", null: false
@@ -252,6 +262,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_20_173346) do
     t.string "twitter_username"
     t.datetime "updated_at", null: false
     t.datetime "verified_at"
+    t.index ["badge_id"], name: "index_users_on_badge_id"
     t.index ["bot_token"], name: "index_users_on_bot_token", unique: true
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["order_id"], name: "index_users_on_order_id", unique: true, where: "order_id IS NOT NULL"
@@ -294,6 +305,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_20_173346) do
   add_foreign_key "searches", "users"
   add_foreign_key "searches", "users", column: "creator_id"
   add_foreign_key "sessions", "users"
+  add_foreign_key "users", "badges"
   add_foreign_key "webhooks", "users"
 
   # Virtual tables defined in this database.

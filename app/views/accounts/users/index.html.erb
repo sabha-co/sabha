@@ -1,0 +1,103 @@
+<% @page_title = "Members" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_to edit_account_path, class: "btn" do %>
+      <%= icon_tag "arrow-left" %>
+      <span class="for-screen-reader">Back to settings</span>
+    <% end %>
+  </div>
+
+  <div class="flex-item-justify-end">
+    <%= link_to root_path, class: "btn" do %>
+      <%= icon_tag "home" %>
+      <span class="for-screen-reader">Home</span>
+    <% end %>
+  </div>
+<% end %>
+
+<section class="panel panel--members flex flex-column gap">
+  <%# Badge Management %>
+  <div class="flex flex-column gap">
+    <h2 class="txt-large margin-none"><strong>Badges</strong></h2>
+
+    <menu id="badges_list" class="flex flex-column gap-half margin-none pad-none">
+      <% if @badges.any? %>
+        <%= render partial: "accounts/users/badge", collection: @badges %>
+      <% else %>
+        <li class="txt-small txt-muted">Badges are labels you can assign to members to highlight their role or title.</li>
+      <% end %>
+    </menu>
+
+    <%= form_with url: account_badges_path, method: :post, class: "flex align-center gap", data: { turbo: false } do |form| %>
+      <%= form.text_field :name, name: "badge[name]", class: "input txt-small flex-item-grow", placeholder: "New badge name", required: true,
+            maxlength: 10, style: "min-width: 0;" %>
+      <%= form.color_field :color, name: "badge[color]", class: "input txt-small", style: "width: 3ch; padding: 0.25rem;" %>
+      <%= form.button class: "btn btn--reversed txt-small", type: "submit" do %>
+        <%= icon_tag "add" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <hr class="separator full-width" style="--border-style: solid">
+
+  <div class="members-header flex align-center justify-between gap margin-block-end">
+    <h2 class="txt-large margin-none"><strong>Members</strong></h2>
+    <%= form_with url: account_users_path, method: :get, data: { turbo_frame: "account_users", controller: "form" } do |f| %>
+      <%= f.search_field :query,
+            value: params[:query],
+            class: "input txt-small",
+            placeholder: "Search member",
+            data: { action: "input->form#debouncedSubmit" } %>
+    <% end %>
+  </div>
+
+  <div class="flex flex-column gap members-list">
+    <turbo-frame id="account_users">
+      <% if @searching %>
+        <% if @users.any? %>
+          <p class="txt-small txt-muted margin-block-half"><%= pluralize(@users.size, "result") %></p>
+          <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+        <% else %>
+          <p class="txt-small txt-muted">No members found</p>
+        <% end %>
+      <% elsif @filtering_banned %>
+        <div class="flex align-center justify-between margin-block-half">
+          <p class="txt-small txt-muted margin-none role-section__heading">Banned</p>
+          <%= link_to account_users_path, class: "btn txt-small btn--reversed" do %>
+            Hide
+          <% end %>
+        </div>
+        <% if @users.any? %>
+          <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+        <% else %>
+          <p class="txt-small txt-muted">No banned members</p>
+        <% end %>
+      <% else %>
+        <div id="administrators_section" class="role-section">
+          <div class="flex align-center justify-between margin-block-half">
+            <p class="txt-small txt-muted margin-none role-section__heading">Administrators</p>
+            <span class="txt-small txt-muted"><%= pluralize(online_users_count, "member") %> online</span>
+          </div>
+          <%= render partial: "accounts/users/user", collection: @administrators, as: :user %>
+        </div>
+
+        <div id="moderators_section" class="role-section">
+          <p class="txt-small txt-muted margin-block-half role-section__heading">Moderators</p>
+          <%= render partial: "accounts/users/user", collection: @moderators, as: :user %>
+        </div>
+
+        <div id="members_section" class="role-section">
+          <p class="txt-small txt-muted margin-block-half role-section__heading">Members</p>
+          <%= render partial: "accounts/users/user", collection: @members, as: :user %>
+          <%= render "accounts/users/next_page_container", page: @page.next_param unless @page.last? %>
+        </div>
+
+        <div class="flex align-center justify-between margin-block-half">
+          <p class="txt-small txt-muted margin-none role-section__heading">Banned</p>
+          <%= link_to "View", account_users_path(status: "banned"), class: "btn txt-small" %>
+        </div>
+      <% end %>
+    </turbo-frame>
+  </div>
+</section>

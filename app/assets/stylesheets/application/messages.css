@@ -562,6 +562,10 @@ img.message__attachment {
   padding: var(--inline-space-half);
   position: absolute;
 
+  [open] > & {
+    display: block;
+  }
+
   &::before {
      aspect-ratio: 2;
      background: var(--border-color);

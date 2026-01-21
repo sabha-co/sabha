@@ -37,11 +37,11 @@ class Message < ApplicationRecord
   after_update_commit -> { StatsService.clear_all_time_ranks_cache if saved_change_to_attribute?(:active) }
 
   scope :ordered, -> { order(:created_at) }
-  scope :with_creator, -> { includes(creator: { avatar_attachment: { blob: :variant_records } }) }
+  scope :with_creator, -> { includes(creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ]) }
   scope :with_threads, -> {
     includes(threads: {
-      messages: { creator: { avatar_attachment: { blob: :variant_records } } },
-      visible_memberships: { user: { avatar_attachment: { blob: :variant_records } } }
+      messages: { creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ] },
+      visible_memberships: { user: [ :badge, { avatar_attachment: { blob: :variant_records } } ] }
     })
   }
   scope :for_display, -> {

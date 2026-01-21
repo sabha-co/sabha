@@ -7,6 +7,7 @@ david:
   role: administrator
   verified_at: <%= 1.day.ago %>
   status: active
+  badge: founder
 
 jason:
   name: Jason

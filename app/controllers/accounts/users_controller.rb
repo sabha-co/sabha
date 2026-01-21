@@ -1,21 +1,34 @@
 class Accounts::UsersController < ApplicationController
   include NotifyBots
 
-  before_action :ensure_can_administer, :set_user, only: %i[ update destroy ]
+  before_action :ensure_can_administer
+  before_action :set_user, only: %i[update destroy]
 
   def index
-    set_page_and_extract_portion_from User.active.ordered.without_bots, per_page: 500
+    @badges = Badge.ordered.includes(:users).to_a
+
+    if searching?
+      search_users
+    elsif filtering_banned?
+      load_banned_users
+    else
+      load_members_by_role
+    end
   end
 
   def update
-    @user.update(role_params)
-    redirect_to request.referer || edit_account_url, notice: "✓"
+    @user.update(user_params)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to account_users_url }
+    end
   end
 
   def destroy
     @user.deactivate
     deliver_webhooks_to_bots(@user, :deleted)
-    redirect_to edit_account_url
+    redirect_to account_users_url
   end
 
   private
@@ -23,7 +36,42 @@ class Accounts::UsersController < ApplicationController
       @user = User.active.find(params[:user_id] || params[:id])
     end
 
-    def role_params
-      { role: params.require(:user)[:role].presence_in(%w[ member administrator ]) || "member" }
+    def user_params
+      params.require(:user).permit(:role, :badge_id).tap do |permitted|
+        permitted.delete(:role) unless permitted[:role].in?(%w[member moderator administrator])
+      end
+    end
+
+    def searching?
+      params[:query].present?
+    end
+
+    def filtering_banned?
+      params[:status] == "banned"
+    end
+
+    def users_scope
+      User.without_bots.includes(:badge, avatar_attachment: :blob).ordered
+    end
+
+    def search_users
+      @searching = true
+      query = params[:query].to_s.strip
+      @users = users_scope.active.where("name LIKE ?", "%#{User.sanitize_sql_like(query)}%").limit(50)
+    end
+
+    def load_banned_users
+      @filtering_banned = true
+      @users = users_scope.banned
+    end
+
+    def load_members_by_role
+      scope = users_scope.active
+      @administrators = scope.where(role: :administrator).to_a
+      @moderators = scope.where(role: :moderator).to_a
+
+      members = scope.where(role: :member)
+      set_page_and_extract_portion_from members, per_page: 25
+      @members = @page.records
     end
 end

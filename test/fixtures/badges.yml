@@ -1,0 +1,11 @@
+founder:
+  name: Founder
+  color: "#FFD700"
+
+staff:
+  name: Staff
+  color: "#4A90D9"
+
+vip:
+  name: VIP
+  color: "#9B59B6"

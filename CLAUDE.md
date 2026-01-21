@@ -270,6 +270,14 @@ test/
 - Migrations in `db/migrate/` with schema in `db/schema.rb`
 - Full-text search on messages via `messages_fts` virtual table
 
+### Migrations During Feature Development
+When a feature is under development and the table structure needs to be rethought, do NOT create new migrations to modify the schema. Instead:
+1. Rollback the existing migration(s) for that feature
+2. Delete the old migration file(s)
+3. Create a fresh migration with the correct structure
+
+This keeps the migration history clean and avoids unnecessary migration churn for features that haven't been deployed yet.
+
 ## Deployment Architecture
 
 - **Kamal/Docker self-hosting**: Thruster provides HTTP/2, automatic TLS (Let's Encrypt), caching, and compression
