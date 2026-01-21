@@ -42,7 +42,7 @@
   <hr class="separator full-width" style="--border-style: solid">
 
   <div class="members-header flex align-center justify-between gap margin-block-end">
-    <h2 class="txt-large margin-none"><strong>Members</strong></h2>
+    <h2 class="txt-large margin-none"><strong>Members (<%= @total_members %>)</strong></h2>
     <%= form_with url: account_users_path, method: :get, data: { turbo_frame: "account_users", controller: "form" } do |f| %>
       <%= f.search_field :query,
             value: params[:query],
@@ -93,10 +93,12 @@
           <%= render "accounts/users/next_page_container", page: @page.next_param unless @page.last? %>
         </div>
 
-        <div class="flex align-center justify-between margin-block-half">
-          <p class="txt-small txt-muted margin-none role-section__heading">Banned</p>
-          <%= link_to "View", account_users_path(status: "banned"), class: "btn txt-small" %>
-        </div>
+        <% if @banned_count > 0 %>
+          <div class="flex align-center justify-between margin-block-half">
+            <p class="txt-small txt-muted margin-none role-section__heading">Banned</p>
+            <%= link_to "View", account_users_path(status: "banned"), class: "btn txt-small" %>
+          </div>
+        <% end %>
       <% end %>
     </turbo-frame>
   </div>

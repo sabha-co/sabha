@@ -6,6 +6,7 @@ class Accounts::UsersController < ApplicationController
 
   def index
     @badges = Badge.ordered.includes(:users).to_a
+    @total_members = User.without_bots.active.count
 
     if searching?
       search_users
@@ -73,5 +74,7 @@ class Accounts::UsersController < ApplicationController
       members = scope.where(role: :member)
       set_page_and_extract_portion_from members, per_page: 25
       @members = @page.records
+
+      @banned_count = User.without_bots.banned.count
     end
 end
