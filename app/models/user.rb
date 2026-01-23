@@ -101,11 +101,6 @@ class User < ApplicationRecord
   before_save :transliterate_name, if: :name_changed?
   after_create_commit :grant_membership_to_open_rooms
 
-  # Clear the all_time_ranks cache when users are created, deleted, or their status changes
-  after_create_commit -> { StatsService.clear_all_time_ranks_cache }
-  after_destroy_commit -> { StatsService.clear_all_time_ranks_cache }
-  after_update_commit -> { StatsService.clear_all_time_ranks_cache if saved_change_to_attribute?(:status) }
-
   scope :ordered, -> { order(arel_table[:role].desc, arel_table[:name].lower) }
   scope :recent_posters_first, ->(room_id = nil) do
     messages_table = Message.active.arel_table
@@ -212,9 +207,23 @@ class User < ApplicationRecord
            .count
   end
 
-  def message_rank
-    # Use the centralized ranking method from StatsService
-    StatsService.calculate_all_time_rank(id)
+  def recalculate_streak!(excluding_message: nil)
+    # Skip if user already posted today (excluding the message that triggered this callback)
+    return if posted_on?(Date.current, excluding: excluding_message)
+
+    new_streak = posted_on?(Date.yesterday) ? current_streak + 1 : 1
+    update_column(:current_streak, new_streak)
+  end
+
+  def posted_on?(date, excluding: nil)
+    scope = messages.joins(:room)
+                    .joins("LEFT JOIN messages AS parent_messages ON rooms.parent_message_id = parent_messages.id")
+                    .joins("LEFT JOIN rooms AS parent_rooms ON parent_messages.room_id = parent_rooms.id")
+                    .where.not(rooms: { type: "Rooms::Direct" })
+                    .where("parent_rooms.type IS NULL OR parent_rooms.type != ?", "Rooms::Direct")
+                    .where("DATE(messages.created_at) = ?", date)
+    scope = scope.where.not(id: excluding.id) if excluding
+    scope.exists?
   end
 
   def subscribed_to_emails?

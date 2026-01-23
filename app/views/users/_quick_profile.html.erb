@@ -38,8 +38,6 @@
       </div>
     </div>
 
-    <% message_count = user.total_message_count %>
-    <% rank = user.message_rank %>
     <div class="flex flex-column gap-half">
       <div class="flex align-center justify-space-between pad-block-half border-top border-bottom">
         <span class="txt-x-small txt-muted txt-label">Joined <%= user.joined_at.strftime("%b %Y") %></span>
@@ -51,7 +49,7 @@
       </div>
 
       <div class="flex gap">
-        <%= render "users/user_stats", user: user, message_count: message_count, rank: rank %>
+        <%= render "users/user_stats", user: user, message_count: user.total_message_count, streak: user.current_streak %>
       </div>
     </div>
 

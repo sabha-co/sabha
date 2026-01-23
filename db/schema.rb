@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_01_21_112600) do
+ActiveRecord::Schema[8.2].define(version: 2026_01_23_034516) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -246,6 +246,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_21_112600) do
     t.text "bio"
     t.string "bot_token"
     t.datetime "created_at", null: false
+    t.integer "current_streak", default: 0, null: false
     t.string "email_address"
     t.datetime "last_authenticated_at"
     t.string "linkedin_url"

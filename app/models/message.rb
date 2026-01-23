@@ -29,12 +29,8 @@ class Message < ApplicationRecord
   after_create_commit -> { involve_creator_in_thread }
   after_create_commit -> { update_thread_reply_count }
   after_create_commit -> { update_parent_message_threads }
+  after_create_commit -> { creator.recalculate_streak!(excluding_message: self) unless room.direct? || room.parent_room&.direct? }
   after_update_commit -> { involve_mentionees_in_room(unread: false) }
-
-  # Clear the all_time_ranks cache when messages are created or deleted
-  after_create_commit -> { StatsService.clear_all_time_ranks_cache }
-  after_destroy_commit -> { StatsService.clear_all_time_ranks_cache }
-  after_update_commit -> { StatsService.clear_all_time_ranks_cache if saved_change_to_attribute?(:active) }
 
   scope :ordered, -> { order(:created_at) }
   scope :with_creator, -> { includes(creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ]) }

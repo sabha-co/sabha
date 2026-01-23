@@ -196,14 +196,4 @@ Rails.application.routes.draw do
   get "service-worker" => "pwa#service_worker"
 
   get "up" => "rails/health#show", as: :rails_health_check
-
-  # Stats routes
-  get "/stats", to: "stats#index"
-  get "stats/daily/month_data", to: "stats#month_data", as: "stats_month_data"
-  get "stats/daily/:month", to: "stats#today", as: "stats_daily_month"
-  get "stats/daily", to: "stats#today"
-  get "stats/monthly", to: "stats#month"
-  get "stats/yearly", to: "stats#year"
-  get "stats/all", to: "stats#all"
-  get "stats/rooms", to: "stats#rooms"
 end

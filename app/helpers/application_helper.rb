@@ -51,24 +51,6 @@ module ApplicationHelper
     end
   end
 
-  # User statistics helpers
-  def user_stats_for_period(user_id, period = :all_time)
-    StatsService.user_stats_for_period(user_id, period)
-  end
-
-  def user_rank_for_period(user_id, period = :all_time)
-    StatsService.calculate_user_rank(user_id, period)
-  end
-
-  def format_user_stats(stats, rank, total_users)
-    return "No messages" if stats.nil? || stats.message_count.to_i == 0
-
-    message_count = number_with_delimiter(stats.message_count)
-    rank_text = rank ? "#{rank.ordinalize} of #{number_with_delimiter(total_users)}" : ""
-
-    "#{message_count} messages #{rank_text}".strip
-  end
-
   private
     def admin_body_class
       "admin" if Current.user&.can_administer?

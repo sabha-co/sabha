@@ -93,14 +93,6 @@
       <% end %>
 
       <% if Current.user&.administrator? %>
-        <%= link_to stats_path, class: "btn sidebar__tool" do %>
-          <%= icon_tag "stats" %>
-          <span class="for-screen-reader">Stats</span>
-          <span class="sidebar__tool-label">Stats</span>
-        <% end %>
-      <% end %>
-
-      <% if Current.user&.administrator? %>
         <%= link_to edit_account_path, class: "btn sidebar__tool" do %>
           <%= icon_tag "crown", style: "view-transition-name: account-settings" %>
           <span class="for-screen-reader">Admin</span>

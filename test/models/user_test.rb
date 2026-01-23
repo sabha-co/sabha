@@ -166,8 +166,123 @@ class UserTest < ActiveSupport::TestCase
     assert_not member.can_delete_message?(message)
   end
 
+  # Streak tests
+
+  test "current_streak starts at zero for new users" do
+    user = create_new_user
+    assert_equal 0, user.current_streak
+  end
+
+  test "posting a message in open room sets streak to 1" do
+    user = users(:rachel) # rachel has no fixture messages
+    user.update_column(:current_streak, 0)
+
+    create_message(user: user, room: rooms(:hq))
+
+    assert_equal 1, user.reload.current_streak
+  end
+
+  test "posting multiple messages on same day does not increment streak" do
+    user = users(:rachel)
+    user.update_column(:current_streak, 0)
+
+    create_message(user: user, room: rooms(:hq))
+    assert_equal 1, user.reload.current_streak
+
+    create_message(user: user, room: rooms(:hq))
+    assert_equal 1, user.reload.current_streak
+
+    create_message(user: user, room: rooms(:pets))
+    assert_equal 1, user.reload.current_streak
+  end
+
+  test "posting in direct room does not affect streak" do
+    user = users(:rachel)
+    user.update_column(:current_streak, 0)
+
+    dm = Rooms::Direct.create!(creator: user)
+    create_message(user: user, room: dm)
+
+    assert_equal 0, user.reload.current_streak
+  end
+
+  test "posting in thread of direct room does not affect streak" do
+    user = users(:rachel)
+    user.update_column(:current_streak, 0)
+
+    dm = Rooms::Direct.create!(creator: user)
+    dm_message = create_message(user: user, room: dm)
+    thread = Rooms::Thread.create!(parent_message: dm_message, creator: user)
+
+    create_message(user: user, room: thread)
+
+    assert_equal 0, user.reload.current_streak
+  end
+
+  test "streak increments when posting on consecutive days" do
+    user = users(:rachel)
+
+    # Post yesterday
+    travel_to 1.day.ago do
+      create_message(user: user, room: rooms(:hq))
+    end
+    assert_equal 1, user.reload.current_streak
+
+    # Post today - should increment
+    travel_to Time.current do
+      create_message(user: user, room: rooms(:hq))
+    end
+
+    assert_equal 2, user.reload.current_streak
+  end
+
+  test "streak resets to 1 when gap in posting" do
+    user = users(:rachel)
+
+    # Post 3 days ago
+    travel_to 3.days.ago do
+      create_message(user: user, room: rooms(:hq))
+    end
+    assert_equal 1, user.reload.current_streak
+
+    # Post today (skipping yesterday) - should reset to 1
+    create_message(user: user, room: rooms(:hq))
+
+    assert_equal 1, user.reload.current_streak
+  end
+
+  test "posted_on? returns true when user posted on date" do
+    user = users(:rachel)
+    create_message(user: user, room: rooms(:hq))
+
+    assert user.posted_on?(Date.current)
+  end
+
+  test "posted_on? returns false when user did not post on date" do
+    user = users(:rachel)
+
+    assert_not user.posted_on?(Date.current)
+  end
+
+  test "posted_on? excludes direct messages" do
+    user = users(:rachel)
+    dm = Rooms::Direct.create!(creator: user)
+    create_message(user: user, room: dm)
+
+    assert_not user.posted_on?(Date.current)
+  end
+
   private
     def create_new_user
       User.create!(name: "User", email_address: "user@example.com", password: "secret123456")
+    end
+
+    def create_message(user:, room:, body: "Test message")
+      Message.create!(
+        room: room,
+        creator: user,
+        body: body,
+        client_message_id: SecureRandom.uuid
+      )
     end
 end

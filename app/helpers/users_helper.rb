@@ -1,14 +1,18 @@
 module UsersHelper
-  RANK_MEDALS = { 1 => "🥇", 2 => "🥈", 3 => "🥉" }.freeze
-
   def button_to_direct_room_with(user)
     button_to rooms_directs_path(user_ids: [ user.id ]), class: "btn btn--primary full-width txt--large" do
       image_tag("messages.svg")
     end
   end
 
-  def rank_medal(rank)
-    RANK_MEDALS[rank]
+  def streak_icon(streak)
+    case streak
+    when 0..1 then "💤"
+    when 2..6 then "✨"
+    when 7..13 then "⚡"
+    when 14..29 then "💪"
+    else "🔥"
+    end
   end
 
   def social_link_tag(url:, icon:, title:)

@@ -1,13 +1,13 @@
-<%# locals: (user:, message_count:, rank:, show_joined: false, large: false) -%>
+<%# locals: (user:, message_count:, streak:, show_joined: false, large: false) -%>
 <% text_class = large ? "txt-large" : "txt-medium" %>
 
 <div class="flex flex-column">
-  <strong class="<%= text_class %>"><%= rank_medal(rank) %><%= number_with_delimiter(message_count) %></strong>
+  <strong class="<%= text_class %>"><%= number_with_delimiter(message_count) %></strong>
   <span class="txt-x-small txt-muted txt-label"><%= "message".pluralize(message_count) %></span>
 </div>
 <div class="flex flex-column">
-  <strong class="<%= text_class %>">#<%= number_with_delimiter(rank) %></strong>
-  <span class="txt-x-small txt-muted txt-label">rank</span>
+  <strong class="<%= text_class %>"><%= streak_icon(streak) %><%= number_with_delimiter(streak) if streak > 0 %></strong>
+  <span class="txt-x-small txt-muted txt-label">day streak</span>
 </div>
 <% if show_joined %>
   <div class="flex flex-column">
