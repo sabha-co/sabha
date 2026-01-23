@@ -62,6 +62,8 @@
            class="flex position-relative flex-col rooms-list overflow">
         <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @shared_memberships %>
       </div>
+
+      <%= turbo_frame_tag :hidden_rooms %>
     </div>
   </div>
 

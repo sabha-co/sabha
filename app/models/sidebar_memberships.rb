@@ -44,6 +44,18 @@ class SidebarMemberships
       .includes(:room)
   end
 
+  # Hidden room memberships (rooms with invisible involvement).
+  # Shown in a collapsible "Hidden Rooms" section so users can find and unhide them.
+  #
+  def hidden
+    user.memberships
+      .where(involvement: :invisible)
+      .without_thread_rooms
+      .without_direct_rooms
+      .active_rooms
+      .includes(:room)
+  end
+
   # Preloads users for each direct room to display avatars without N+1 queries.
   # Returns a hash of room_id => [users], excluding the current user.
   # Falls back to showing current user if they're the only member.

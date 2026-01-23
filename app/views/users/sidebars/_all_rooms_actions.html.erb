@@ -24,6 +24,11 @@
       <span>Bookmarks</span>
     <% end %>
 
+    <%= link_to hidden_rooms_user_sidebar_path, class: "btn action-btn full-width",
+            data: { turbo_frame: :hidden_rooms, action: "click->popup#close" } do %>
+      <span>Hidden rooms</span>
+    <% end %>
+
     <%= button_to clear_inbox_path(stay: true), class: "btn action-btn full-width",
                   data: { turbo_confirm: "Are you sure you want to mark everything as seen?", action: "click->popup#close" } do %>
       <span>Mark all as seen</span>

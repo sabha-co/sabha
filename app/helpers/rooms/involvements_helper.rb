@@ -1,6 +1,6 @@
 module Rooms::InvolvementsHelper
   def button_to_change_involvement(room, involvement, from_sidebar: false)
-    button_to room_involvement_path(room, involvement: next_involvement_for(room, involvement: involvement, from_sidebar:), from_sidebar:),
+    button_to room_involvement_path(room, involvement: next_involvement_for(room, involvement:), from_sidebar:),
       method: :put,
       role: "checkbox", aria: { checked: true, labelledby: dom_id(room, :involvement_label) }, tabindex: 0,
       class: "btn #{involvement}" do
@@ -13,20 +13,15 @@ module Rooms::InvolvementsHelper
     HUMANIZE_INVOLVEMENT = {
       "mentions" => "Room in All Rooms",
       "everything" => "Room in My Rooms",
+      "nothing" => "Notifications muted",
       "invisible" => "Room hidden from sidebar"
     }
 
-    SHARED_INVOLVEMENT_ORDER = %w[ mentions everything invisible ]
-    SHARED_SIDEBAR_INVOLVEMENT_ORDER = %w[ mentions everything ]
+    SHARED_INVOLVEMENT_ORDER = %w[ mentions everything nothing ]
     DIRECT_INVOLVEMENT_ORDER = %w[ everything nothing ]
 
-    def next_involvement_for(room, involvement:, from_sidebar: false)
-      if room.direct?
-        DIRECT_INVOLVEMENT_ORDER[DIRECT_INVOLVEMENT_ORDER.index(involvement) + 1] || DIRECT_INVOLVEMENT_ORDER.first
-      elsif from_sidebar
-        SHARED_SIDEBAR_INVOLVEMENT_ORDER[(SHARED_SIDEBAR_INVOLVEMENT_ORDER.index(involvement) || 0) + 1] || SHARED_SIDEBAR_INVOLVEMENT_ORDER.first
-      else
-        SHARED_INVOLVEMENT_ORDER[SHARED_INVOLVEMENT_ORDER.index(involvement) + 1] || SHARED_INVOLVEMENT_ORDER.first
-      end
+    def next_involvement_for(room, involvement:)
+      order = room.direct? ? DIRECT_INVOLVEMENT_ORDER : SHARED_INVOLVEMENT_ORDER
+      order[(order.index(involvement) || 0) + 1] || order.first
     end
 end

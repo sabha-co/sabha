@@ -1,0 +1,13 @@
+<% room = membership.room %>
+<div id="<%= dom_id(room, :hidden_room) %>" class="room-row flex align-center gap-half">
+  <%= link_to_room room, class: "room btn txt-nowrap flex-item-grow" do %>
+    <span class="overflow-ellipsis"><%= room_display_name(room) %></span>
+  <% end %>
+  <%= button_to room_involvement_path(room, involvement: "mentions"),
+        method: :put,
+        class: "btn btn--small",
+        title: "Unhide room" do %>
+    <%= icon_tag "eye", size: 16 %>
+    <span class="for-screen-reader">Unhide</span>
+  <% end %>
+</div>

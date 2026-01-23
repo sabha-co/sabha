@@ -456,6 +456,7 @@
 
   .btn.everything,
   .btn.mentions,
+  .btn.nothing,
   .btn.invisible {
     border: 0;
     padding: 0;

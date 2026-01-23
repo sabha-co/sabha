@@ -11,8 +11,8 @@ class Rooms::InvolvementsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update involvement sends turbo update when going invisible" do
-    # When going invisible: 2 broadcasts for sidebar sections + 2 for removal = 4
-    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 4 do
+    # When going invisible: 2 broadcasts for sidebar sections + 2 for removal + 1 for hidden_rooms append = 5
+    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 5 do
     assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "everything", to: "invisible" do
       put room_involvement_url(rooms(:watercooler)), params: { involvement: "invisible" }
       assert_redirected_to room_involvement_url(rooms(:watercooler))
@@ -24,8 +24,8 @@ class Rooms::InvolvementsControllerTest < ActionDispatch::IntegrationTest
     # First make it invisible
     memberships(:david_watercooler).update!(involvement: "invisible")
 
-    # When returning to visible: 2 broadcasts for sidebar sections + 2 for append = 4
-    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 4 do
+    # When returning to visible: 2 broadcasts for sidebar sections + 2 for append + 1 for hidden_rooms removal = 5
+    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 5 do
     assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "invisible", to: "everything" do
       put room_involvement_url(rooms(:watercooler)), params: { involvement: "everything" }
       assert_redirected_to room_involvement_url(rooms(:watercooler))

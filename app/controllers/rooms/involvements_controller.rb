@@ -11,7 +11,11 @@ class Rooms::InvolvementsController < ApplicationController
     @membership.update! involvement: params[:involvement]
 
     broadcast_involvement_changes
-    redirect_to room_involvement_url(@room, from_sidebar:)
+
+    respond_to do |format|
+      format.turbo_stream { head :ok }
+      format.html { redirect_to params[:return_to] || room_involvement_url(@room, from_sidebar:) }
+    end
   end
 
   def notifications_ready ; end
@@ -50,10 +54,15 @@ class Rooms::InvolvementsController < ApplicationController
     def add_or_remove_rooms_in_sidebar
       case
       when @membership.involved_in_invisible?
+        # Room is now hidden - remove from visible sections, add to hidden section
         for_each_sidebar_section do |list_name|
           broadcast_remove_to @membership.user, :rooms, target: [ @room, helpers.dom_prefix(list_name, :list_node) ]
         end
+        broadcast_append_to @membership.user, :rooms, target: :hidden_rooms,
+                            partial: "users/sidebars/rooms/hidden", locals: { membership: @membership }
       when @membership.involvement_previously_was.inquiry.invisible?
+        # Room is now visible - remove from hidden section, add to visible sections
+        broadcast_remove_to @membership.user, :rooms, target: [ @room, :hidden_room ]
         for_each_sidebar_section do |list_name|
           broadcast_append_to @membership.user, :rooms, target: list_name,
                               partial: "users/sidebars/rooms/shared", locals: { list_name:, membership: @membership },

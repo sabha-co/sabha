@@ -80,7 +80,9 @@ Rails.application.routes.draw do
       end
 
       scope defaults: { user_id: "me" } do
-        resource :sidebar, only: :show
+        resource :sidebar, only: :show do
+          get :hidden_rooms, on: :member
+        end
         resource :profile do
           post :shuffle_avatar, on: :member
         end

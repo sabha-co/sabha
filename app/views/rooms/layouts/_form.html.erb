@@ -42,3 +42,7 @@
 
   <%= submit_room_button_tag if Current.user.can_administer?(room) %>
 <% end %>
+
+<% if room.persisted? %>
+  <%= render "rooms/layouts/involvement_settings", room: room %>
+<% end %>
