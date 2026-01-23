@@ -36,13 +36,32 @@
     <hr class="margin-block borderless">
   <% end %>
 
+  <% if local_assigns[:type_change_path] && Current.user.can_administer?(room) %>
+    <div class="flex align-center gap pad-inline margin-block">
+      <figure class="avatar flex-item-no-shrink" style="--avatar-border-radius: 0; --avatar-size: 4ch;">
+        <%= icon_tag "everyone" %>
+        <span class="for-screen-reader">Everyone</span>
+      </figure>
+
+      <div class="min-width">
+        <div class="overflow-ellipsis"><strong>Everyone</strong></div>
+      </div>
+
+      <hr class="separator" aria-hidden="true">
+
+      <%= link_to type_change_path, class: "btn--faux flex-inline", tabindex: "-1", data: { turbo_action: "replace" } do %>
+        <label for="room_type" class="switch">
+          <input type="checkbox" id="room_type" class="switch__input" <%= "checked" if local_assigns[:everyone_checked] %>>
+          <span class="switch__btn round"></span>
+          <span class="for-screen-reader"><%= local_assigns[:everyone_checked] ? "Give only some access to this room" : "Give everyone access to this room" %></span>
+        </label>
+      <% end %>
+    </div>
+  <% end %>
+
   <section class="room-access margin-block pad-inline fill-shade border-radius">
     <%= yield form %>
   </section>
 
   <%= submit_room_button_tag if Current.user.can_administer?(room) %>
-<% end %>
-
-<% if room.persisted? %>
-  <%= render "rooms/layouts/involvement_settings", room: room %>
 <% end %>

@@ -1,40 +1,38 @@
-<%= render layout: "rooms/layouts/form", locals: { room: room } do %>
-  <%= user_filter_menu_tag do %>
-    <% if Current.user.can_administer?(room) %>
-      <li class="flex align-center gap margin-none">
-        <figure class="avatar flex-item-no-shrink" style="--avatar-border-radius: 0; --avatar-size: 4ch;">
-          <%= icon_tag "everyone" %>
-          <span class="for-screen-reader">Everyone</span>
-        </figure>
+<%= render layout: "rooms/layouts/form", locals: { room: room, type_change_path: type_change_path } do %>
+  <menu class="flex flex-column gap margin-none pad overflow-y constrain-height"
+        data-controller="user-search"
+        data-user-search-url-value="<%= users_rooms_closeds_path %>">
 
-        <div class="min-width">
-          <div class="overflow-ellipsis fill-shade"><strong>Everyone</strong></div>
-        </div>
+    <%# Selected users header and list %>
+    <p data-user-search-target="selectedHeader" class="txt-small txt-deemphasize margin-none" style="<%= selected_users.empty? ? 'display:none' : '' %>">Selected members</p>
 
-        <hr class="separator" aria-hidden="true">
-
-        <%= link_to type_change_path, class: "btn--faux flex-inline", tabindex: "-1", data: { turbo_action: "replace" } do %>
-          <label for="room_type" class="switch">
-            <input type="checkbox" id="room_type" class="switch__input">
-            <span class="switch__btn round"></span>
-            <span class="for-screen-reader">Give everyone access to this room</span>
-          </label>
-        <% end %>
-      </li>
-
-      <hr class="separator full-width" style="--border-style: solid">
-    <% end %>
-
-    <%= user_filter_search_tag if selected_users.count +  unselected_users.count > 20 %>
-
-    <div data-filter-target="list" contents>
+    <div data-user-search-target="selected" class="flex flex-column gap">
       <%= render partial: "rooms/closeds/user", collection: selected_users, locals: { room: room, selected: true } %>
-
-      <% if selected_users.any? && unselected_users.any? %>
-        <hr class="separator full-width" style="--border-style: solid">
-      <% end %>
-
-      <%= render partial: "rooms/closeds/user", collection: unselected_users, locals: { room: room, selected: false } %>
     </div>
-  <% end %>
+
+    <div data-user-search-target="selectedSeparator" style="<%= selected_users.empty? ? 'display:none' : '' %>">
+      <hr class="separator full-width" style="--border-style: solid">
+    </div>
+
+    <%# Search input %>
+    <input type="search"
+           id="user-search"
+           autocorrect="off"
+           autocomplete="off"
+           data-1p-ignore="true"
+           class="input input--transparent full-width"
+           placeholder="Search members to add..."
+           data-user-search-target="input"
+           data-action="input->user-search#search">
+
+    <%# Search results %>
+    <div data-user-search-target="results" class="flex flex-column gap"></div>
+
+    <%# Top members (shown by default) %>
+    <% if unselected_users.any? %>
+      <div class="flex flex-column gap">
+        <%= render partial: "rooms/closeds/user", collection: unselected_users, locals: { room: room, selected: false } %>
+      </div>
+    <% end %>
+  </menu>
 <% end %>

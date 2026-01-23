@@ -10,6 +10,8 @@
   <%= yield %>
 </section>
 
+<%= render "rooms/layouts/involvement_settings", room: room %>
+
 <% if Current.user.can_administer?(@room) %>
   <section class="panel flex flex-column gap">
     

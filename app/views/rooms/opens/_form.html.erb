@@ -1,26 +1,7 @@
-<%= render layout: "rooms/layouts/form", locals: { room: room } do %>
+<%= render layout: "rooms/layouts/form", locals: { room: room, type_change_path: type_change_path, everyone_checked: true } do %>
   <menu class="flex flex-column gap margin-none pad overflow-y constrain-height">
-    <li class="flex align-center gap margin-none">
-      <figure class="avatar flex-item-no-shrink" style="--avatar-border-radius: 0; --avatar-size: 4ch;">
-        <%= icon_tag "everyone" %>
-        <span class="for-screen-reader">Everyone</span>
-      </figure>
-
-      <div class="min-width">
-        <div class="overflow-ellipsis fill-shade"><strong>Everyone</strong></div>
-      </div>
-
-      <hr class="separator" aria-hidden="true">
-
-      <% if Current.user.can_administer?(room) %>
-        <%= link_to type_change_path, class: "btn--faux flex-inline", tabindex: "-1", data: { turbo_action: "replace" } do %>
-          <label for="room_type" class="switch">
-            <input type="checkbox" id="room_type" class="switch__input" checked="checked">
-            <span class="switch__btn round"></span>
-            <span class="for-screen-reader">Give only some access to this room</span>
-          </label>
-        <% end %>
-      <% end %>
+    <li class="txt-deemphasize txt-align-center margin-none">
+      This room is open to everyone
     </li>
   </menu>
 <% end %>

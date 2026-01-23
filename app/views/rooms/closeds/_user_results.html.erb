@@ -1,0 +1,6 @@
+<% users.each do |user| %>
+  <%= render partial: "rooms/closeds/user", locals: { user: user, room: room, selected: selected_user_ids.include?(user.id) } %>
+<% end %>
+<% if users.empty? %>
+  <li class="txt-medium txt-deemphasize txt-align-center pad">No members found</li>
+<% end %>

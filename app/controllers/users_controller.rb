@@ -12,6 +12,7 @@ class UsersController < ApplicationController
 
   def new
     @user = User.new
+    set_member_counts
   end
 
   def create
@@ -109,10 +110,12 @@ class UsersController < ApplicationController
 
       if user_params[:password].blank?
         flash.now[:alert] = "Password can't be blank"
+        set_member_counts
         render :new, status: :unprocessable_entity
         return false
       elsif user_params[:password].length < User::MINIMUM_PASSWORD_LENGTH
         flash.now[:alert] = "Password is too short (minimum is #{User::MINIMUM_PASSWORD_LENGTH} characters)"
+        set_member_counts
         render :new, status: :unprocessable_entity
         return false
       end
@@ -128,5 +131,14 @@ class UsersController < ApplicationController
 
     def validate_email_param
       render_invalid_email unless valid_email?(params.dig(:user, :email_address))
+    end
+
+    def set_member_counts
+      @online_user_count = Rails.cache.fetch("users/online_count", expires_in: 5.minutes) do
+        User.active.where(last_authenticated_at: 24.hours.ago..).count
+      end
+      @member_count = Rails.cache.fetch("users/member_count", expires_in: 5.minutes) do
+        User.active.count
+      end
     end
 end

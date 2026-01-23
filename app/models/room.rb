@@ -162,7 +162,8 @@ class Room < ApplicationRecord
 
   def display_name(for_user: nil)
     if direct?
-      users.without(for_user).pluck(:name).to_sentence.presence || for_user&.name
+      # Use Ruby select/map instead of pluck to leverage preloaded users
+      users.reject { |u| u == for_user }.map(&:name).to_sentence.presence || for_user&.name
     elsif thread?
       "🧵 #{parent_message&.room&.name}"
     else

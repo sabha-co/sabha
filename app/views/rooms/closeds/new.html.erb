@@ -1,3 +1,3 @@
 <%= render layout: "rooms/layouts/new" do %>
-  <%= render "rooms/closeds/form", room: @room, selected_users: [], unselected_users: @users, type_change_path: new_rooms_open_path %>
+  <%= render "rooms/closeds/form", room: @room, selected_users: @selected_users, unselected_users: @unselected_users, total_user_count: @total_user_count, type_change_path: new_rooms_open_path %>
 <% end %>

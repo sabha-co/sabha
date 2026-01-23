@@ -133,7 +133,9 @@ Rails.application.routes.draw do
 
   namespace :rooms do
     resources :opens
-    resources :closeds
+    resources :closeds do
+      get :users, on: :collection
+    end
     resources :directs
     resources :threads, only: %i[ new edit update destroy ]
 

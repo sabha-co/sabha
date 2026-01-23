@@ -6,6 +6,7 @@ class Rooms::ClosedsController < RoomsController
   before_action :ensure_permission_to_create_rooms, only: %i[ new create ]
 
   DEFAULT_ROOM_NAME = "New room"
+  USER_SEARCH_LIMIT = 50
 
   def show
     redirect_to room_url(@room)
@@ -13,7 +14,17 @@ class Rooms::ClosedsController < RoomsController
 
   def new
     @room  = Rooms::Closed.new(name: DEFAULT_ROOM_NAME)
-    @users = User.active.includes(avatar_attachment: :blob).ordered
+    @selected_users = [ Current.user ]
+    @unselected_users = User.active.where.not(id: Current.user.id).includes(avatar_attachment: :blob).ordered.limit(10)
+    @total_user_count = User.active.count
+  end
+
+  def users
+    @room = Rooms::Closed.new
+    @selected_user_ids = Array(params[:selected_ids]).map(&:to_i)
+    @users = search_users(params[:query], exclude_ids: @selected_user_ids)
+
+    render partial: "rooms/closeds/user_results", locals: { users: @users, room: @room, selected_user_ids: @selected_user_ids }
   end
 
   def create
@@ -24,8 +35,10 @@ class Rooms::ClosedsController < RoomsController
   end
 
   def edit
-    selected_user_ids = @room.users.pluck(:id)
-    @selected_users, @unselected_users = User.active.includes(avatar_attachment: :blob).ordered.partition { |user| selected_user_ids.include?(user.id) }
+    @selected_users = @room.users.active.includes(avatar_attachment: :blob).ordered
+    selected_ids = @selected_users.pluck(:id)
+    @unselected_users = User.active.where.not(id: selected_ids).includes(avatar_attachment: :blob).ordered.limit(10)
+    @total_user_count = User.active.count
   end
 
   def update
@@ -37,6 +50,14 @@ class Rooms::ClosedsController < RoomsController
   end
 
   private
+    def search_users(query, exclude_ids: [])
+      return [] if query.blank?
+
+      scope = User.active.filtered_by(query)
+      scope = scope.where.not(id: exclude_ids) if exclude_ids.present?
+      scope.includes(avatar_attachment: :blob).ordered.limit(USER_SEARCH_LIMIT)
+    end
+
     # Allows us to edit an open room and turn it into a closed one on saving.
     def force_room_type
       @room = @room.becomes!(Rooms::Closed)

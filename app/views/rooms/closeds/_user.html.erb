@@ -15,7 +15,7 @@
       <%= icon_tag "check", class: "flex-item-no-shrink" %>
     <% else %>
       <label class="switch flex-item-no-shrink">
-        <%= check_box_tag "user_ids[]", user.id, selected, class: "switch__input", id: nil %>
+        <%= check_box_tag "user_ids[]", user.id, selected, class: "switch__input", id: nil, data: { action: "change->user-search#toggle" } %>
         <span class="switch__btn round"></span>
         <span class="for-screen-reader">Give <%= user.name %> access to this room</span>
       </label>

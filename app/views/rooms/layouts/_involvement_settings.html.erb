@@ -4,42 +4,38 @@
 <% is_muted = membership.involved_in_nothing? %>
 <% is_hidden = membership.involved_in_invisible? %>
 
-<div class="involvement-settings margin-block">
+<section class="panel">
   <% unless room.thread? %>
-    <div class="pad-inline pad-block-half fill-shade border-radius margin-block-end-half">
-      <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form" }, class: "flex align-center gap pad" do %>
-        <% if room.direct? %>
-          <%= hidden_field_tag :involvement, is_muted ? "everything" : "nothing" %>
-        <% else %>
-          <%= hidden_field_tag :involvement, is_muted ? "mentions" : "nothing" %>
-        <% end %>
-        <span>Mute notifications</span>
-        <hr class="separator" aria-hidden="true">
-        <label class="switch">
-          <input type="checkbox"
-                 class="switch__input"
-                 <%= "checked" if is_muted %>
-                 data-action="change->form#submit">
-          <span class="switch__btn round"></span>
-        </label>
+    <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form" }, class: "flex align-center gap pad-block" do %>
+      <% if room.direct? %>
+        <%= hidden_field_tag :involvement, is_muted ? "everything" : "nothing" %>
+      <% else %>
+        <%= hidden_field_tag :involvement, is_muted ? "mentions" : "nothing" %>
       <% end %>
-    </div>
+      <span>Mute notifications</span>
+      <hr class="separator" aria-hidden="true">
+      <label class="switch">
+        <input type="checkbox"
+               class="switch__input"
+               <%= "checked" if is_muted %>
+               data-action="change->form#submit">
+        <span class="switch__btn round"></span>
+      </label>
+    <% end %>
   <% end %>
 
   <% unless room.direct? || room.thread? %>
-    <div class="pad-inline pad-block-half fill-shade border-radius">
-      <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form" }, class: "flex align-center gap pad" do %>
-        <%= hidden_field_tag :involvement, is_hidden ? "mentions" : "invisible" %>
-        <span>Hide from sidebar</span>
-        <hr class="separator" aria-hidden="true">
-        <label class="switch">
-          <input type="checkbox"
-                 class="switch__input"
-                 <%= "checked" if is_hidden %>
-                 data-action="change->form#submit">
-          <span class="switch__btn round"></span>
-        </label>
-      <% end %>
-    </div>
+    <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form" }, class: "flex align-center gap pad-block" do %>
+      <%= hidden_field_tag :involvement, is_hidden ? "mentions" : "invisible" %>
+      <span>Hide from sidebar</span>
+      <hr class="separator" aria-hidden="true">
+      <label class="switch">
+        <input type="checkbox"
+               class="switch__input"
+               <%= "checked" if is_hidden %>
+               data-action="change->form#submit">
+        <span class="switch__btn round"></span>
+      </label>
+    <% end %>
   <% end %>
-</div>
+</section>
