@@ -6,8 +6,17 @@ class Users::ProfilesController < ApplicationController
   end
 
   def update
-    @user.update user_params
-    redirect_to after_update_url, notice: update_notice
+    if email_change_requested?
+      handle_email_change
+    else
+      @user.update user_params.except(:email_address)
+      redirect_to after_update_url, notice: update_notice
+    end
+  end
+
+  def cancel_email_change
+    @user.cancel_email_change!
+    redirect_to user_profile_url, notice: "Email change cancelled."
   end
 
   def shuffle_avatar
@@ -22,6 +31,22 @@ class Users::ProfilesController < ApplicationController
 
     def user_params
       params.require(:user).permit(:name, :avatar, :email_address, :password, :bio, :twitter_url, :linkedin_url, :personal_url).compact
+    end
+
+    def email_change_requested?
+      new_email = user_params[:email_address]
+      new_email.present? && new_email.downcase != @user.email_address
+    end
+
+    def handle_email_change
+      new_email = user_params[:email_address]
+      @user.update user_params.except(:email_address)
+
+      if @user.update_email(new_email)
+        redirect_to user_profile_url, notice: "A verification email has been sent to #{@user.unconfirmed_email}. Please check your inbox to confirm the change."
+      else
+        redirect_to user_profile_url, alert: @user.errors.full_messages.to_sentence
+      end
     end
 
     def after_update_url

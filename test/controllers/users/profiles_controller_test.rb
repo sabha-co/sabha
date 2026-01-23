@@ -3,11 +3,67 @@ require "test_helper"
 class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
   setup do
     sign_in :david
+    @user = users(:david)
   end
 
   test "show" do
     get user_profile_url
 
     assert_response :success
+  end
+
+  test "email change sends verification email" do
+    assert_enqueued_emails 1 do
+      patch user_profile_url, params: {
+        user: { email_address: "newemail@example.com" }
+      }
+    end
+
+    assert_redirected_to user_profile_url
+    assert_match "verification email has been sent", flash[:notice]
+    assert_equal "newemail@example.com", @user.reload.unconfirmed_email
+    assert_equal "david@37signals.com", @user.email_address # Original email unchanged
+  end
+
+  test "cancel email change" do
+    @user.update!(unconfirmed_email: "pending@example.com")
+
+    delete cancel_email_change_user_profile_url
+
+    assert_redirected_to user_profile_url
+    assert_equal "Email change cancelled.", flash[:notice]
+    assert_nil @user.reload.unconfirmed_email
+  end
+
+  test "show displays pending email change" do
+    @user.update!(unconfirmed_email: "pending@example.com")
+
+    get user_profile_url
+
+    assert_response :success
+    assert_select "strong", "pending@example.com"
+  end
+
+  test "email with different case does not trigger change flow" do
+    # david@37signals.com -> David@37signals.com should not trigger email change
+    assert_no_enqueued_emails do
+      patch user_profile_url, params: {
+        user: { email_address: "David@37signals.com", name: "David Updated" }
+      }
+    end
+
+    assert_redirected_to user_profile_url
+    assert_nil @user.reload.unconfirmed_email
+    assert_equal "David Updated", @user.name
+  end
+
+  test "invalid email format shows error instead of 500" do
+    patch user_profile_url, params: {
+      user: { email_address: "not-an-email" }
+    }
+
+    assert_redirected_to user_profile_url
+    assert_match "invalid", flash[:alert].downcase
+    assert_nil @user.reload.unconfirmed_email
   end
 end

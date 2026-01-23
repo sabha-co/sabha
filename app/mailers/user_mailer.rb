@@ -12,4 +12,18 @@ class UserMailer < ApplicationMailer
 
     mail(to: user.email_address, subject: "Reset your password for #{Branding.app_name}")
   end
+
+  def email_reconfirmation(user)
+    @user = user
+    @confirmation_url = confirm_email_change_url(token: user.generate_token_for(:email_change))
+
+    mail(to: user.unconfirmed_email, subject: "Confirm your new email address for #{Branding.app_name}")
+  end
+
+  def email_changed(user, old_email)
+    @user = user
+    @old_email = old_email
+
+    mail(to: [ old_email, user.email_address ].compact.uniq, subject: "Your email address has been changed for #{Branding.app_name}")
+  end
 end

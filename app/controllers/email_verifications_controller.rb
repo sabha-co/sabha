@@ -16,6 +16,19 @@ class EmailVerificationsController < ApplicationController
     end
   end
 
+  def confirm_email_change
+    @user = User.find_by_token_for(:email_change, params[:token])
+
+    if @user.nil?
+      redirect_to root_url, alert: "Invalid or expired email change link."
+    elsif @user.unconfirmed_email.blank?
+      redirect_to root_url, notice: "Email change already confirmed or cancelled."
+    else
+      @user.confirm_email_change!
+      redirect_to root_url, notice: "Your email has been successfully updated to #{@user.email_address}."
+    end
+  end
+
   def resend
     @user = User.find_by(email_address: params[:email_address])
 

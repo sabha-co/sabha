@@ -37,6 +37,7 @@ Rails.application.routes.draw do
 
   get "verify_email/:token", to: "email_verifications#show", as: :verify_email
   post "resend_verification", to: "email_verifications#resend", as: :resend_verification
+  get "confirm_email_change/:token", to: "email_verifications#confirm_email_change", as: :confirm_email_change
 
   resources :password_resets, only: [ :new, :create, :edit, :update ], param: :token
 
@@ -87,6 +88,7 @@ Rails.application.routes.draw do
         end
         resource :profile do
           post :shuffle_avatar, on: :member
+          delete :cancel_email_change, on: :member
         end
         resource :invite_link, only: :create
         resources :push_subscriptions do

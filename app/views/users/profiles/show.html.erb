@@ -81,6 +81,16 @@
         </label>
       </div>
 
+      <% if @user.pending_email_change? %>
+        <div class="flex align-center gap">
+          <div class="btn" style="visibility: hidden;"></div>
+          <p class="txt-small txt-faded margin-none">
+            Pending: <strong><%= @user.unconfirmed_email %></strong> ·
+            <%= link_to "Cancel", cancel_email_change_user_profile_path, data: { turbo_method: :delete } %>
+          </p>
+        </div>
+      <% end %>
+
       <div class="flex align-center gap">
         <%= translation_button(:twitter) %>
 

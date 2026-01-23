@@ -84,7 +84,9 @@ class User < ApplicationRecord
 
   validates :email_address, presence: true, if: :person?
   validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }, if: -> { email_address.present? }
+  validates :unconfirmed_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   normalizes :email_address, with: ->(email_address) { email_address.downcase }
+  normalizes :unconfirmed_email, with: ->(email) { email&.downcase }
 
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }
   scope :verified, -> { where.not(verified_at: nil) }
@@ -93,7 +95,10 @@ class User < ApplicationRecord
   has_secure_password validations: false
 
   generates_token_for :email_verification, expires_in: 24.hours
+  generates_token_for :email_change, expires_in: 24.hours
   generates_token_for :password_reset, expires_in: 1.hour
+
+  after_update :send_email_change_notification, if: :saved_change_to_email_address?
 
   before_validation :set_default_name
   before_validation :normalize_social_urls
@@ -276,7 +281,46 @@ class User < ApplicationRecord
     UserMailer.password_reset(self).deliver_later
   end
 
+  # Email change flow
+  def update_email(new_email)
+    return true if new_email.blank? || new_email.downcase == email_address
+
+    if update(unconfirmed_email: new_email)
+      send_email_reconfirmation
+      true
+    else
+      false
+    end
+  end
+
+  def send_email_reconfirmation
+    return if bot?
+    UserMailer.email_reconfirmation(self).deliver_later
+  end
+
+  def confirm_email_change!
+    return unless unconfirmed_email.present?
+
+    update!(email_address: unconfirmed_email, unconfirmed_email: nil)
+  end
+
+  def cancel_email_change!
+    return unless unconfirmed_email.present?
+
+    update!(unconfirmed_email: nil)
+  end
+
+  def pending_email_change?
+    unconfirmed_email.present?
+  end
+
   private
+    def send_email_change_notification
+      return if bot?
+      old_email = email_address_before_last_save
+      UserMailer.email_changed(self, old_email).deliver_later if old_email.present?
+    end
+
     def dm_allowed_for_members?
       !Current.account.settings.restrict_direct_messages_to_administrators?
     end

@@ -3,6 +3,7 @@ module TranslationsHelper
     email_address:  { "🇺🇸": "Your email address", "🇪🇸": "Tu correo electrónico", "🇫🇷": "Votre adresse courriel", "🇮🇳": "आपका ईमेल पता", "🇩🇪": "Ihre E-Mail-Adresse", "🇧🇷": "Seu endereço de e-mail" },
     password: { "🇺🇸": "Enter your password", "🇪🇸": "Introduce tu contraseña", "🇫🇷": "Saisissez votre mot de passe", "🇮🇳": "अपना पासवर्ड दर्ज करें", "🇩🇪": "Geben Sie Ihr Passwort ein", "🇧🇷": "Digite sua senha" },
     password_confirmation: { "🇺🇸": "Confirm your password", "🇪🇸": "Confirma tu contraseña", "🇫🇷": "Confirmez votre mot de passe", "🇮🇳": "अपने पासवर्ड की पुष्टि करें", "🇩🇪": "Bestätigen Sie Ihr Passwort", "🇧🇷": "Confirme sua senha" },
+    current_password: { "🇺🇸": "Current password", "🇪🇸": "Contraseña actual", "🇫🇷": "Mot de passe actuel", "🇮🇳": "वर्तमान पासवर्ड", "🇩🇪": "Aktuelles Passwort", "🇧🇷": "Senha atual" },
     one_time_code: { "🇺🇸": "Enter your one-time code", "🇪🇸": "Introduce tu código de una sola vez", "🇫🇷": "Saisissez votre code à usage unique", "🇮🇳": "अपना वन-टाइम कोड दर्ज करें", "🇩🇪": "Geben Sie Ihren Einmalkode ein", "🇧🇷": "Digite seu código único" },
     update_password: { "🇺🇸": "Change password", "🇪🇸": "Cambiar contraseña", "🇫🇷": "Changer le mot de passe", "🇮🇳": "पासवर्ड बदलें", "🇩🇪": "Passwort ändern", "🇧🇷": "Alterar senha" },
     user_name: { "🇺🇸": "Your name", "🇪🇸": "Tu nombre", "🇫🇷": "Votre nom", "🇮🇳": "आपका नाम", "🇩🇪": "Ihren Name", "🇧🇷": "Seu nome" },

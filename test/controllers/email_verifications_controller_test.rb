@@ -85,4 +85,41 @@ class EmailVerificationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_url
     refute_match /Too many/, flash[:alert].to_s
   end
+
+  # Email change confirmation tests
+
+  test "confirm_email_change updates email with valid token" do
+    user = users(:david)
+    user.update!(unconfirmed_email: "newemail@example.com")
+    token = user.generate_token_for(:email_change)
+
+    assert_emails 1 do
+      get confirm_email_change_url(token)
+    end
+
+    assert_redirected_to root_url
+    assert_match /successfully updated/, flash[:notice]
+    user.reload
+    assert_equal "newemail@example.com", user.email_address
+    assert_nil user.unconfirmed_email
+  end
+
+  test "confirm_email_change rejects invalid token" do
+    get confirm_email_change_url("invalid_token")
+
+    assert_redirected_to root_url
+    assert_match /Invalid or expired/, flash[:alert]
+  end
+
+  test "confirm_email_change handles already confirmed email change" do
+    user = users(:david)
+    # Generate token first, then clear unconfirmed_email
+    token = user.generate_token_for(:email_change)
+    user.update!(unconfirmed_email: nil)
+
+    get confirm_email_change_url(token)
+
+    assert_redirected_to root_url
+    assert_match /already confirmed or cancelled/, flash[:notice]
+  end
 end

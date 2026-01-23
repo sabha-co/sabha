@@ -79,6 +79,94 @@ class UserTest < ActiveSupport::TestCase
     assert user.valid?
   end
 
+  # Email change tests
+
+  test "update_email sets unconfirmed_email" do
+    user = users(:david)
+    assert user.update_email("newemail@example.com")
+
+    assert_equal "newemail@example.com", user.unconfirmed_email
+    assert_equal "david@37signals.com", user.email_address
+  end
+
+  test "update_email normalizes email to lowercase" do
+    user = users(:david)
+    user.update_email("NewEmail@Example.COM")
+
+    assert_equal "newemail@example.com", user.unconfirmed_email
+  end
+
+  test "update_email returns true when email is same" do
+    user = users(:david)
+    assert user.update_email("david@37signals.com")
+
+    assert_nil user.unconfirmed_email
+  end
+
+  test "update_email returns true when email is blank" do
+    user = users(:david)
+    assert user.update_email("")
+
+    assert_nil user.unconfirmed_email
+  end
+
+  test "update_email returns false for invalid email format" do
+    user = users(:david)
+    assert_not user.update_email("not-an-email")
+
+    assert_nil user.reload.unconfirmed_email
+    assert_includes user.errors[:unconfirmed_email], "is invalid"
+  end
+
+  test "confirm_email_change! moves unconfirmed_email to email_address" do
+    user = users(:david)
+    user.update!(unconfirmed_email: "newemail@example.com")
+
+    user.confirm_email_change!
+
+    assert_equal "newemail@example.com", user.email_address
+    assert_nil user.unconfirmed_email
+  end
+
+  test "confirm_email_change! does nothing when no pending change" do
+    user = users(:david)
+    original_email = user.email_address
+
+    user.confirm_email_change!
+
+    assert_equal original_email, user.email_address
+  end
+
+  test "cancel_email_change! clears unconfirmed_email" do
+    user = users(:david)
+    user.update!(unconfirmed_email: "newemail@example.com")
+
+    user.cancel_email_change!
+
+    assert_nil user.unconfirmed_email
+  end
+
+  test "pending_email_change? returns true when unconfirmed_email present" do
+    user = users(:david)
+    user.update!(unconfirmed_email: "newemail@example.com")
+
+    assert user.pending_email_change?
+  end
+
+  test "pending_email_change? returns false when no unconfirmed_email" do
+    user = users(:david)
+
+    assert_not user.pending_email_change?
+  end
+
+  test "unconfirmed_email validation rejects invalid format" do
+    user = users(:david)
+    user.unconfirmed_email = "not-an-email"
+
+    assert_not user.valid?
+    assert_includes user.errors[:unconfirmed_email], "is invalid"
+  end
+
   test "transliterates name to ascii for search" do
     user = User.create!(name: "José García", email_address: "jose@example.com", password: "secret123456")
     assert_equal "Jose Garcia", user.ascii_name

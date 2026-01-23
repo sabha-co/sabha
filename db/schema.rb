@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_01_23_063039) do
+ActiveRecord::Schema[8.2].define(version: 2026_01_23_103434) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -259,6 +259,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_23_063039) do
     t.integer "status", default: 0, null: false
     t.string "twitter_url"
     t.string "twitter_username"
+    t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
     t.datetime "verified_at"
     t.index ["badge_id"], name: "index_users_on_badge_id"

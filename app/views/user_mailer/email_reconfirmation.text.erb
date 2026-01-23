@@ -1,0 +1,11 @@
+Hi <%= @user.name %>,
+
+You requested to change your email address on <%= Branding.app_name %>.
+
+Please confirm your new email address by clicking the link below:
+
+<%= @confirmation_url %>
+
+This link will expire in 24 hours.
+
+If you did not request this change, you can safely ignore this email. Your email address will not be changed until you click the confirmation link.
