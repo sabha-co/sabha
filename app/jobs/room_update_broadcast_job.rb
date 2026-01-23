@@ -10,6 +10,7 @@ class RoomUpdateBroadcastJob < ApplicationJob
 
   def perform(room)
     return unless room.active?
+    return unless room.sidebar_room?
 
     # Throttle updates to once every 5 seconds per room to avoid a thundering herd problem.
     lock_key = "room_update_broadcast_job_lock:#{room.id}"

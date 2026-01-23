@@ -122,6 +122,10 @@ class Room < ApplicationRecord
     is_a?(Rooms::Thread)
   end
 
+  def sidebar_room?
+    open? || closed?
+  end
+
   def default_involvement(user: nil)
     "mentions"
   end
@@ -200,6 +204,8 @@ class Room < ApplicationRecord
     end
 
     def broadcast_reactivation
+      return unless sidebar_room?
+
       [ :starred_rooms, :shared_rooms ].each do |list_name|
         broadcast_append_to :rooms, target: list_name, partial: "users/sidebars/rooms/shared", locals: { list_name:, room: self }, attributes: { maintain_scroll: true }
       end
