@@ -98,4 +98,20 @@ class AuthTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     post auth_tokens_validations_url, params: { code: "000000" }
     assert_redirected_to new_auth_tokens_validations_path
   end
+
+  test "deactivated user cannot authenticate via magic link" do
+    auth_token = @user.auth_tokens.create!(expires_at: 24.hours.from_now)
+    token_value = auth_token.token
+
+    # Deactivate user (this deletes auth_tokens, but we'll verify auth would fail anyway)
+    @user.deactivate
+
+    # Recreate a token directly in DB to simulate edge case
+    auth_token = AuthToken.create!(user: @user, expires_at: 24.hours.from_now)
+
+    get sign_in_with_token_url(token: auth_token.token)
+
+    # Should redirect but NOT create session (authenticated_as returns early for deactivated)
+    assert_nil parsed_cookies.signed[:session_token], "Deactivated user should not be authenticated"
+  end
 end

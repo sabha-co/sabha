@@ -141,25 +141,28 @@ class User < ApplicationRecord
 
   def reactivate
     transaction do
-      memberships.without_direct_rooms.update!(active: true)
-
-      update! status: :active, email_address: reactivated_email_address
-
+      # rewhere replaces the default `-> { active }` scope on the association,
+      # allowing us to find deactivated memberships
+      memberships.rewhere(active: false).without_direct_rooms.update!(active: true)
+      update! status: :active
       reset_remote_connections
     end
   end
 
   def deactivate
     transaction do
-      close_remote_connections
-
-      memberships.without_direct_rooms.update!(active: false)
-      push_subscriptions.delete_all
+      revoke_access
       searches.delete_all
-      sessions.delete_all
-
-      update! status: :deactivated, email_address: deactived_email_address
+      update! status: :deactivated
     end
+  end
+
+  def revoke_access
+    close_remote_connections
+    memberships.without_direct_rooms.update!(active: false)
+    push_subscriptions.delete_all
+    sessions.delete_all
+    auth_tokens.delete_all
   end
 
   def reset_remote_connections
@@ -285,20 +288,16 @@ class User < ApplicationRecord
       end
     end
 
-    def reactivated_email_address
-      email_address&.gsub(/-deactivated-.+@/, "@")
-    end
-
-    def deactived_email_address
-      email_address&.gsub(/@/, "-deactivated-#{SecureRandom.uuid}@")
-    end
-
     def close_remote_connections(reconnect: false)
       ActionCable.server.remote_connections.where(current_user: self).disconnect reconnect: reconnect
     end
 
-    # Clean up ALL associated records (including inactive ones) to satisfy FK constraints
-    # This uses unscoped deletes to bypass the active scope on associations
+    # Clean up ALL associated records (including inactive ones) to satisfy FK constraints.
+    #
+    # Why this exists instead of `dependent: :destroy`:
+    # Most associations have `-> { active }` scopes for soft deletion, so Rails'
+    # `dependent: :destroy` only finds active records. We need to delete inactive
+    # records too, hence the explicit unscoped queries.
     def destroy_all_associated_records
       # Delete messages first (they have FKs to boosts, bookmarks, mentions)
       Message.unscoped.where(creator_id: id).find_each(&:destroy)

@@ -83,6 +83,7 @@ module Authentication
 
     def authenticated_as(session)
       return if session.user.banned?
+      return if session.user.deactivated?
 
       Current.session = session
       set_authenticated_by(:session)

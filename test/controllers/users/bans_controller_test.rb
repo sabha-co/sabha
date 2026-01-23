@@ -36,6 +36,43 @@ class Users::BansControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "create deactivates non-DM memberships" do
+    user = users(:kevin)
+    user.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")
+    room = Rooms::Open.create!(name: "Test Room", creator: users(:david))
+    room.memberships.grant_to(user)
+
+    assert user.memberships.without_direct_rooms.active.any?
+
+    post user_ban_url(user)
+
+    assert_empty user.memberships.without_direct_rooms.active
+  end
+
+  test "create deletes auth tokens" do
+    user = users(:kevin)
+    user.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")
+    user.auth_tokens.create!(code: "123456", expires_at: 1.hour.from_now)
+
+    assert user.auth_tokens.any?
+
+    post user_ban_url(user)
+
+    assert_empty user.reload.auth_tokens
+  end
+
+  test "create deletes push subscriptions" do
+    user = users(:kevin)
+    user.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")
+    user.push_subscriptions.create!(endpoint: "https://example.com", p256dh_key: "key", auth_key: "auth")
+
+    assert user.push_subscriptions.any?
+
+    post user_ban_url(user)
+
+    assert_empty user.reload.push_subscriptions
+  end
+
   test "RemoveBannedContentJob soft-deletes messages" do
     user = users(:kevin)
     user.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")

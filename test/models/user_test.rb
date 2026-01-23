@@ -12,7 +12,7 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "deactivating a user deletes push subscriptions, searches, deactivates memberships for non-direct rooms, and changes their email address" do
+  test "deactivating a user deletes push subscriptions, searches, and deactivates memberships for non-direct rooms" do
     user = users(:david)
     membership_count_before = user.memberships.without_direct_rooms.count
 
@@ -20,9 +20,8 @@ class UserTest < ActiveSupport::TestCase
     assert_difference -> { Membership.active.count }, -membership_count_before do  # But active count decreases
     assert_difference -> { Push::Subscription.count }, -user.push_subscriptions.count do
     assert_difference -> { Search.count }, -user.searches.count do
-      SecureRandom.stubs(:uuid).returns("2e7de450-cf04-4fa8-9b02-ff5ab2d733e7")
       user.deactivate
-      assert_equal "david-deactivated-2e7de450-cf04-4fa8-9b02-ff5ab2d733e7@37signals.com", user.reload.email_address
+      assert user.reload.deactivated?
     end
     end
     end
@@ -33,6 +32,35 @@ class UserTest < ActiveSupport::TestCase
     assert_changes -> { users(:david).sessions.count }, from: 1, to: 0 do
       users(:david).deactivate
     end
+  end
+
+  test "deactivating a user deletes their auth tokens" do
+    user = users(:david)
+    user.auth_tokens.create!(expires_at: 1.hour.from_now)
+
+    assert_changes -> { user.auth_tokens.count }, from: 1, to: 0 do
+      user.deactivate
+    end
+  end
+
+  test "reactivating a user restores their memberships" do
+    user = users(:david)
+    initial_count = Membership.where(user_id: user.id, active: true).without_direct_rooms.count
+
+    assert initial_count > 0, "Precondition: user should have memberships"
+
+    user.deactivate
+    user.reload
+
+    assert_equal 0, Membership.where(user_id: user.id, active: true).without_direct_rooms.count
+    inactive_count = Membership.where(user_id: user.id, active: false).without_direct_rooms.count
+    assert inactive_count > 0, "Memberships should be deactivated"
+
+    user.reactivate
+    user.reload
+
+    restored_count = Membership.where(user_id: user.id, active: true).without_direct_rooms.count
+    assert_equal initial_count, restored_count, "Memberships should be restored after reactivation"
   end
 
   test "email validation rejects invalid format" do

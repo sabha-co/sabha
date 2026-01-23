@@ -42,7 +42,9 @@ Rails.application.routes.draw do
 
   resource :account do
     scope module: "accounts" do
-      resources :users
+      resources :users do
+        patch :reactivate, on: :member
+      end
       resources :badges, only: [ :create, :update, :destroy ]
 
       resources :bots do

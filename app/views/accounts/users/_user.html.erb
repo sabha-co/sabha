@@ -32,16 +32,21 @@
       <% end %>
     <% end %>
 
-    <% if user.unbannable_by?(Current.user) %>
+    <% if user.reactivatable_by?(Current.user) %>
+      <%= button_to reactivate_account_user_path(user), method: :patch, class: "btn txt-small flex-item-no-shrink btn--success", data: {
+            turbo_confirm: "Reactivate #{user.name}? They will be able to log in again." } do %>
+        Reactivate
+      <% end %>
+    <% elsif user.unbannable_by?(Current.user) %>
       <%= button_to user_ban_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--success", data: {
             turbo_confirm: "Unban #{user.name}? They will be able to access the chat again." } do %>
         Unban
       <% end %>
     <% elsif user.removable_by?(Current.user) %>
       <%= button_to account_user_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--negative", data: {
-            turbo_confirm: "Are you sure you want to remove this person from the account? They will no longer be able to access the chat."} do %>
+            turbo_confirm: "Deactivate #{user.name}? They will no longer be able to log in, but their messages will remain visible. To remove their messages, use Ban instead from their profile page."} do %>
         <%= icon_tag "minus" %>
-        <span class="for-screen-reader">Delete <%= user.name %></span>
+        <span class="for-screen-reader">Deactivate <%= user.name %></span>
       <% end %>
     <% end %>
 

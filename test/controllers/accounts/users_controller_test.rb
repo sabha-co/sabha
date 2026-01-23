@@ -122,4 +122,62 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     delete account_user_url(users(:jz))
     assert_redirected_to root_path
   end
+
+  test "index shows deactivated users when filtering by status" do
+    user = users(:kevin)
+    user.deactivate
+
+    get account_users_url(status: "deactivated")
+
+    assert_response :success
+    assert_select "turbo-frame#user_#{user.id}"
+  end
+
+  test "reactivate restores deactivated user" do
+    user = users(:kevin)
+    user.deactivate
+
+    assert user.reload.deactivated?
+
+    patch reactivate_account_user_url(user)
+
+    assert_redirected_to account_users_url
+    assert user.reload.active?
+  end
+
+  test "non-admins cannot reactivate users" do
+    sign_in :kevin
+
+    user = users(:jz)
+    user.deactivate
+
+    patch reactivate_account_user_url(user)
+
+    assert_redirected_to root_path
+    assert user.reload.deactivated?
+  end
+
+  test "reactivate does not work on banned users" do
+    user = users(:kevin)
+    user.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")
+    user.ban
+
+    assert user.reload.banned?
+
+    patch reactivate_account_user_url(user)
+
+    assert_redirected_to account_users_url
+    assert user.reload.banned?, "Banned user should not be reactivated via reactivate action"
+  end
+
+  test "reactivate does not work on active users" do
+    user = users(:kevin)
+
+    assert user.active?
+
+    patch reactivate_account_user_url(user)
+
+    assert_redirected_to account_users_url
+    assert user.reload.active?
+  end
 end

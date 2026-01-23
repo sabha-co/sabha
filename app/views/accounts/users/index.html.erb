@@ -61,12 +61,20 @@
         <% else %>
           <p class="txt-small txt-muted">No members found</p>
         <% end %>
+      <% elsif @filtering_deactivated %>
+        <div class="flex align-center justify-between margin-block-half">
+          <p class="txt-small txt-muted margin-none role-section__heading">Deactivated</p>
+          <%= link_to "Back to all users", account_users_path, class: "btn txt-small" %>
+        </div>
+        <% if @users.any? %>
+          <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+        <% else %>
+          <p class="txt-small txt-muted">No deactivated members</p>
+        <% end %>
       <% elsif @filtering_banned %>
         <div class="flex align-center justify-between margin-block-half">
           <p class="txt-small txt-muted margin-none role-section__heading">Banned</p>
-          <%= link_to account_users_path, class: "btn txt-small btn--reversed" do %>
-            Hide
-          <% end %>
+          <%= link_to "Back to all users", account_users_path, class: "btn txt-small" %>
         </div>
         <% if @users.any? %>
           <%= render partial: "accounts/users/user", collection: @users, as: :user %>
@@ -92,6 +100,13 @@
           <%= render partial: "accounts/users/user", collection: @members, as: :user %>
           <%= render "accounts/users/next_page_container", page: @page.next_param unless @page.last? %>
         </div>
+
+        <% if @deactivated_count > 0 %>
+          <div class="flex align-center justify-between margin-block-half">
+            <p class="txt-small txt-muted margin-none role-section__heading">Deactivated</p>
+            <%= link_to "View", account_users_path(status: "deactivated"), class: "btn txt-small" %>
+          </div>
+        <% end %>
 
         <% if @banned_count > 0 %>
           <div class="flex align-center justify-between margin-block-half">

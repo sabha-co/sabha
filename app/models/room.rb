@@ -136,10 +136,11 @@ class Room < ApplicationRecord
 
   def reactivate
     transaction do
-      memberships.rewhere(active: false).update(active: true)
-      messages.rewhere(active: false).update(active: true)
-      threads.rewhere(active: false).update(active: true)
-
+      reactivate_threads
+      # rewhere replaces the default `-> { active }` scope on the association,
+      # allowing us to find deactivated memberships
+      memberships.rewhere(active: false).update_all(active: true)
+      Message.unscoped.where(room_id: id, active: false).update_all(active: true)
       activate!
     end
   end
@@ -147,19 +148,28 @@ class Room < ApplicationRecord
   def merge_into!(target_room)
     transaction do
       memberships.update(active: false)
-      messages.update(room_id: target_room.id)
+      # Use unscoped to move ALL messages (including inactive/soft-deleted ones)
+      Message.unscoped.where(room_id: id).update_all(room_id: target_room.id)
       Message::RichTextUpdater.update_room_links_in_quoted_messages(from: id, to: target_room.id)
-
+      update!(slug: nil) if slug.present?
       deactivate!
     end
+
+    # Reset counter caches outside transaction. The `messages.update(room_id:)`
+    # above bypasses AR callbacks, so counter_cache isn't updated automatically.
+    Room.reset_counters(id, :messages)
+    Room.reset_counters(target_room.id, :messages)
   end
 
+  # Deactivates the room and all associated data. Called when an admin deletes
+  # a room from the UI. Also deactivates any threads spawned from messages in
+  # this room - those threads become inaccessible until the room is reactivated.
   def deactivate
     transaction do
+      deactivate_threads
       memberships.update_all(active: false)
-      messages.update_all(active: false)
-      threads.update_all(active: false)
-
+      Message.unscoped.where(room_id: id).update_all(active: false)
+      update!(slug: nil) if slug.present?
       deactivate!
     end
   end
@@ -211,7 +221,22 @@ class Room < ApplicationRecord
       end
     end
 
-    # Clean up ALL associated records (including inactive ones) to satisfy FK constraints
+    def deactivate_threads
+      message_ids = Message.unscoped.where(room_id: id).pluck(:id)
+      Rooms::Thread.where(parent_message_id: message_ids).find_each(&:deactivate)
+    end
+
+    def reactivate_threads
+      message_ids = Message.unscoped.where(room_id: id).pluck(:id)
+      Rooms::Thread.unscoped.where(parent_message_id: message_ids, active: false).find_each(&:reactivate)
+    end
+
+    # Clean up ALL associated records (including inactive ones) to satisfy FK constraints.
+    #
+    # Why this exists instead of `dependent: :destroy`:
+    # The `messages` association has `-> { active }` scope for soft deletion, so Rails'
+    # `dependent: :destroy` only finds active records. We need to delete inactive
+    # records too, hence the explicit unscoped queries.
     def destroy_all_associated_records
       # First, destroy any thread rooms that were created from messages in this room
       # (threads have parent_message_id pointing to messages in this room)

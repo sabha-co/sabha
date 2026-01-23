@@ -2,7 +2,7 @@ class Accounts::UsersController < ApplicationController
   include NotifyBots
 
   before_action :ensure_can_administer
-  before_action :set_user, only: %i[update destroy]
+  before_action :set_user, only: %i[update destroy reactivate]
 
   def index
     @badges = Badge.ordered.includes(:users).to_a
@@ -12,6 +12,8 @@ class Accounts::UsersController < ApplicationController
       search_users
     elsif filtering_banned?
       load_banned_users
+    elsif filtering_deactivated?
+      load_deactivated_users
     else
       load_members_by_role
     end
@@ -32,9 +34,16 @@ class Accounts::UsersController < ApplicationController
     redirect_to account_users_url
   end
 
+  def reactivate
+    if @user.reactivatable_by?(Current.user)
+      @user.reactivate
+    end
+    redirect_to account_users_url
+  end
+
   private
     def set_user
-      @user = User.active.find(params[:user_id] || params[:id])
+      @user = User.find(params[:user_id] || params[:id])
     end
 
     def user_params
@@ -49,6 +58,10 @@ class Accounts::UsersController < ApplicationController
 
     def filtering_banned?
       params[:status] == "banned"
+    end
+
+    def filtering_deactivated?
+      params[:status] == "deactivated"
     end
 
     def users_scope
@@ -66,6 +79,11 @@ class Accounts::UsersController < ApplicationController
       @users = users_scope.banned
     end
 
+    def load_deactivated_users
+      @filtering_deactivated = true
+      @users = users_scope.deactivated
+    end
+
     def load_members_by_role
       scope = users_scope.active
       @administrators = scope.where(role: :administrator).to_a
@@ -75,6 +93,7 @@ class Accounts::UsersController < ApplicationController
       set_page_and_extract_portion_from members, per_page: 25
       @members = @page.records
 
+      @deactivated_count = User.without_bots.deactivated.count
       @banned_count = User.without_bots.banned.count
     end
 end

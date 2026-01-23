@@ -21,14 +21,14 @@ module User::Bannable
   end
 
   def remove_banned_content
-    # Batch update for deactivation
-    messages.active.update_all(active: false)
+    # Query messages before deactivating (association is scoped to active)
+    messages_to_remove = messages.includes(:room).to_a
 
-    # Broadcast removals (still needs iteration for Turbo Streams,
-    # but could batch or use bulk broadcast)
-    messages.includes(:room).find_each do |message|
-      message.broadcast_remove
-    end
+    # Batch update for deactivation
+    Message.where(id: messages_to_remove.map(&:id)).update_all(active: false)
+
+    # Broadcast removals
+    messages_to_remove.each(&:broadcast_remove)
   end
 
   private
@@ -39,8 +39,7 @@ module User::Bannable
     end
 
     def apply_ban
-      close_remote_connections
-      sessions.delete_all
+      revoke_access
       remove_banned_content_later
     end
 end

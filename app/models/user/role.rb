@@ -36,4 +36,8 @@ module User::Role
   def unbannable_by?(admin)
     admin.can_administer? && banned?
   end
+
+  def reactivatable_by?(admin)
+    admin.can_administer? && deactivated?
+  end
 end

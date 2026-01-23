@@ -32,14 +32,17 @@ class RoomReactivationTest < ActiveSupport::TestCase
     assert_not message2.reload.active?
   end
 
-  test "deactivate does not deactivate thread rooms" do
+  test "deactivate also deactivates thread rooms" do
     message = @room.messages.create!(body: "Parent message", creator: users(:david))
     thread = Rooms::Thread.create!(parent_message: message, creator: users(:david))
+    thread.memberships.grant_to(users(:david))
+    thread_message = thread.messages.create!(body: "Thread message", creator: users(:david))
 
     @room.deactivate
 
-    # Threads remain active - they become inaccessible via inactive parent message
-    assert thread.reload.active?
+    assert_not thread.reload.active?
+    assert_not thread_message.reload.active?
+    assert_equal 0, thread.memberships.active.count
   end
 
   test "reactivate sets room to active" do
@@ -70,16 +73,21 @@ class RoomReactivationTest < ActiveSupport::TestCase
     assert message2.reload.active?
   end
 
-  test "thread rooms remain accessible after reactivate" do
+  test "reactivate also reactivates thread rooms" do
     message = @room.messages.create!(body: "Parent message", creator: users(:david))
     thread = Rooms::Thread.create!(parent_message: message, creator: users(:david))
+    thread.memberships.grant_to(users(:david))
+    thread_message = thread.messages.create!(body: "Thread message", creator: users(:david))
 
     @room.deactivate
+    assert_not thread.reload.active?
+
     @room.reactivate
 
-    # Thread stays active throughout, accessible again via reactivated parent message
     assert thread.reload.active?
+    assert thread_message.reload.active?
     assert message.reload.active?
+    assert thread.memberships.active.count > 0
   end
 
   test "deactivate and reactivate preserve membership involvement" do
@@ -121,5 +129,64 @@ class RoomReactivationTest < ActiveSupport::TestCase
     @room.merge_into!(target_room)
 
     assert_equal 0, @room.memberships.active.count
+  end
+
+  test "deactivate clears room slug" do
+    @room.update!(slug: "test-slug")
+
+    @room.deactivate
+
+    assert_nil @room.reload.slug
+  end
+
+  test "deactivate allows slug reuse after deactivation" do
+    @room.update!(slug: "reusable-slug")
+
+    @room.deactivate
+
+    new_room = Rooms::Open.create!(name: "New Room", slug: "reusable-slug", creator: users(:david))
+    assert_equal "reusable-slug", new_room.slug
+  end
+
+  test "merge_into clears source room slug" do
+    @room.update!(slug: "merge-slug")
+    target_room = Rooms::Open.create!(name: "Target Room", creator: users(:david))
+
+    @room.merge_into!(target_room)
+
+    assert_nil @room.reload.slug
+  end
+
+  test "merge_into moves inactive messages to target room" do
+    target_room = Rooms::Open.create!(name: "Target Room", creator: users(:david))
+    target_room.memberships.grant_to(users(:david))
+
+    active_message = @room.messages.create!(body: "Active message", creator: users(:david))
+    inactive_message = @room.messages.create!(body: "Inactive message", creator: users(:david))
+    inactive_message.deactivate!
+
+    @room.merge_into!(target_room)
+
+    assert_equal target_room.id, active_message.reload.room_id
+    assert_equal target_room.id, inactive_message.reload.room_id
+  end
+
+  test "merge_into updates counter caches" do
+    target_room = Rooms::Open.create!(name: "Target Room", creator: users(:david))
+    target_room.memberships.grant_to(users(:david))
+
+    3.times { @room.messages.create!(body: "Test", creator: users(:david)) }
+    2.times { target_room.messages.create!(body: "Test", creator: users(:david)) }
+
+    initial_source_count = @room.reload.messages_count
+    initial_target_count = target_room.reload.messages_count
+
+    assert_equal 3, initial_source_count
+    assert_equal 2, initial_target_count
+
+    @room.merge_into!(target_room)
+
+    assert_equal 0, @room.reload.messages_count
+    assert_equal 5, target_room.reload.messages_count
   end
 end
