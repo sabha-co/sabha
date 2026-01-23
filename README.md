@@ -172,4 +172,17 @@ docker run -p 3000:3000 \
    0 2 * * * tar -czf /backups/campfire-$(date +\%Y\%m\%d).tar.gz /disk/campfire/db/production.sqlite3
    ```
 
-See [DEPLOYMENT.md](DEPLOYMENT.md#database-backups) for detailed backup strategies.
+See [DEPLOYMENT.md](docs/DEPLOYMENT.md#database-backups) for detailed backup strategies.
+
+
+## Credits
+
+Based on [Once Campfire](https://github.com/basecamp/once-campfire/) by 37signals. Includes modifications from [Small Bets](https://github.com/antiwork/smallbets). See [campfire-ce-changelog.md](campfire-ce-changelog.md) for details.
+
+## Contributing
+
+Open an [issue](https://github.com/superforumio/campfire-ce/issues/new) for bugs or feature requests.
+
+## License
+
+Campfire-CE is available under the MIT license. See LICENSE for details.
