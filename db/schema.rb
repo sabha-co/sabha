@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_01_23_034516) do
+ActiveRecord::Schema[8.2].define(version: 2026_01_23_063039) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -251,9 +251,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_23_034516) do
     t.datetime "last_authenticated_at"
     t.string "linkedin_url"
     t.string "linkedin_username"
-    t.datetime "membership_started_at"
     t.string "name", null: false
-    t.bigint "order_id"
     t.string "password_digest"
     t.string "personal_url"
     t.text "preferences", default: "{}"
@@ -266,7 +264,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_23_034516) do
     t.index ["badge_id"], name: "index_users_on_badge_id"
     t.index ["bot_token"], name: "index_users_on_bot_token", unique: true
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
-    t.index ["order_id"], name: "index_users_on_order_id", unique: true, where: "order_id IS NOT NULL"
   end
 
   create_table "webhook_events", force: :cascade do |t|

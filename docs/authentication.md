@@ -481,18 +481,6 @@ AUTH_METHOD=otp
 - One-time login link for initial setup
 - OTP for subsequent logins
 
-### Paid Community (with Gumroad)
-
-```bash
-GUMROAD_ON=true
-GUMROAD_ACCESS_TOKEN=...
-GUMROAD_PRODUCT_IDS=...
-AUTH_METHOD=password
-```
-
-- Payment verification at sign-up
-- Works with either auth method
-
 ---
 
 ## File Reference

@@ -6,7 +6,7 @@ Based on [Once Campfire](https://github.com/basecamp/once-campfire/), a Ruby on 
 
 <img width="1297" height="867" src="https://github.com/user-attachments/assets/a615c6df-1952-49af-872a-793743e6ad6e" />
 
-This project combines the simplicity of Campfire with optional payment gating, passwordless authentication, and community features. Perfect for running paid memberships, course communities, or private group chats.
+This project combines the simplicity of Campfire with passwordless authentication and community features. Perfect for running course communities or private group chats.
 
 If you find a bug or have a feature request, please [post an issue](https://github.com/ashwin47/campfire-ce/issues/new). Contributions welcome!
 
@@ -94,9 +94,6 @@ Campfire-CE uses [Kamal](https://kamal-deploy.org/docs/installation/) for deploy
    VAPID_PRIVATE_KEY=your-vapid-private-key
    WEBHOOK_SECRET=your-webhook-secret
    COOKIE_DOMAIN=your-domain.com
-
-   # Optional features
-   GUMROAD_ON=false
    ```
 
 3. **Initial deployment:**
@@ -126,7 +123,6 @@ This repository includes GitHub Actions for automatic deployment:
    - `VAPID_PUBLIC_KEY` & `VAPID_PRIVATE_KEY` - Push notifications
    - `WEBHOOK_SECRET` - Webhook security
    - `COOKIE_DOMAIN` - Your domain for cookies
-   - Optional: `GUMROAD_ACCESS_TOKEN`, `GUMROAD_ON`, `GUMROAD_PRODUCT_IDS`
 
 2. **Deploy automatically:**
    - Push to `master` branch for automatic deployment
@@ -159,12 +155,8 @@ docker run -p 3000:3000 \
 | `VAPID_PRIVATE_KEY`            | Web push notifications      | ✅       |
 | `WEBHOOK_SECRET`               | Webhook security            | ✅       |
 | `COOKIE_DOMAIN`                | Session cookies domain      | ✅       |
-| `GUMROAD_ACCESS_TOKEN`         | Payment processing          | ⚠️       |
-| `GUMROAD_ON`                   | Enable Gumroad features     | ⚠️       |
-| `GUMROAD_PRODUCT_IDS`          | Gumroad product IDs         | ⚠️       |
 
 ✅ = Required for production deployment
-⚠️ = Optional
 
 ### Database Backups
 

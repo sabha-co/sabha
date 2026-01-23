@@ -127,7 +127,7 @@ Members can block users from sending them direct messages. Admins can monitor wh
 
 
 ## Stats page
-General stats and various activity leaderboards.
+**[REMOVED]** General stats and various activity leaderboards.
 
 <img width="450" src="https://github.com/user-attachments/assets/6b66acf9-d14d-409c-97b3-c9c976a6c9da" />
 <img width="450" src="https://github.com/user-attachments/assets/0ad6e510-416d-4ab4-8fb6-e2dc60c53539" />
@@ -189,5 +189,5 @@ The sidebar now separates rooms into "My Rooms" and "All Rooms" sections for bet
 
 
 ## Marketing page
-A public landing page for visitors who aren't signed in yet. Different layout from the chat interface, useful for promoting your community before people join.
+**[REMOVED]** A public landing page for visitors who aren't signed in yet. Different layout from the chat interface, useful for promoting your community before people join.
 

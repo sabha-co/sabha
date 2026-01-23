@@ -76,9 +76,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
-          GUMROAD_ACCESS_TOKEN=${{ secrets.GUMROAD_ACCESS_TOKEN }}
-          GUMROAD_ON=${{ secrets.GUMROAD_ON }}
-          GUMROAD_PRODUCT_IDS=${{ secrets.GUMROAD_PRODUCT_IDS }}
           WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
           COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
           EOF

@@ -87,7 +87,6 @@ class User < ApplicationRecord
   normalizes :email_address, with: ->(email_address) { email_address.downcase }
 
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }
-  scope :unclaimed_gumroad_imports, -> { where.not(order_id: nil).where(last_authenticated_at: nil) }
   scope :verified, -> { where.not(verified_at: nil) }
   scope :unverified, -> { where(verified_at: nil) }
 
@@ -123,22 +122,6 @@ class User < ApplicationRecord
     where("name LIKE :q OR ascii_name LIKE :q OR twitter_username LIKE :q OR linkedin_username LIKE :q", q: pattern)
   }
 
-  def self.from_gumroad_sale(attributes)
-    return nil unless attributes[:email_address].present?
-
-    unclaimed_gumroad_import = find_and_initialize_unclaimed_gumroad_import(attributes)
-    return unclaimed_gumroad_import if unclaimed_gumroad_import.present?
-
-    if ENV["GUMROAD_ON"] == "true"
-      find_or_create_user_from_gumroad(attributes)
-    else
-      find_or_create_user_locally(attributes)
-    end
-  end
-
-  def imported_from_gumroad_and_unclaimed?
-    order_id.present? && last_authenticated_at.nil?
-  end
 
   def ever_authenticated?
     last_authenticated_at.present?
@@ -196,7 +179,7 @@ class User < ApplicationRecord
   end
 
   def joined_at
-    membership_started_at || created_at
+    created_at
   end
 
   def total_message_count
@@ -289,38 +272,6 @@ class User < ApplicationRecord
   def send_password_reset_email
     UserMailer.password_reset(self).deliver_later
   end
-
-  def self.find_and_initialize_unclaimed_gumroad_import(attributes)
-    unclaimed_gumroad_import = User.active.unclaimed_gumroad_imports.find_by(email_address: attributes[:email_address])
-    unclaimed_gumroad_import&.update!(attributes)
-    unclaimed_gumroad_import
-  end
-  private_class_method :find_and_initialize_unclaimed_gumroad_import
-
-  def self.find_or_create_user_from_gumroad(attributes)
-    sale = GumroadAPI.successful_membership_sale(email: attributes[:email_address])
-    User.create!(attributes.merge(membership_started_at: sale["created_at"], order_id: sale["order_id"])) if sale
-  rescue ActiveRecord::RecordNotUnique
-    user = User.active.find_by(email_address: attributes[:email_address])
-
-    if user.present?
-      # Link the latest successful sale to user,
-      user.order_id = sale["order_id"]
-      # but keep the old join date (`membership_started_at`) if present.
-      user.membership_started_at = user.membership_started_at || sale["created_at"]
-      user.save!
-    end
-
-    user
-  end
-  private_class_method :find_or_create_user_from_gumroad
-
-  def self.find_or_create_user_locally(attributes)
-    User.create!(attributes)
-  rescue ActiveRecord::RecordNotUnique
-    User.active.find_by(email_address: attributes[:email_address])
-  end
-  private_class_method :find_or_create_user_locally
 
   private
     def dm_allowed_for_members?

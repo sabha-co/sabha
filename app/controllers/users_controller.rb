@@ -21,32 +21,13 @@ class UsersController < ApplicationController
       return unless validate_password_params
     end
 
-    # If Gumroad is enabled, use that flow
-    if ENV["GUMROAD_ON"] == "true"
-      @user = User.from_gumroad_sale(user_params)
-
-      if @user.nil?
-        redirect_to account_join_code_url, alert: "We couldn't find a sale for that email. Please try a different email or contact #{Branding.support_email}.", status: :see_other
-        return
-      end
-
-      if @user.previously_new_record?
-        unless redeem_join_code
-          @user.destroy
-          redirect_to account_join_code_url, alert: "This invite link is no longer valid. Please request a new one.", status: :see_other
-          return
-        end
-        deliver_webhooks_to_bots(@user, :created)
-      end
-    else
-      # Simple password-based creation (like Once-Campfire)
-      @user = User.create!(user_params)
-      unless redeem_join_code
-        @user.destroy
-        redirect_to account_join_code_url, alert: "This invite link is no longer valid. Please request a new one.", status: :see_other
-        return
-      end
+    @user = User.create!(user_params)
+    unless redeem_join_code
+      @user.destroy
+      redirect_to account_join_code_url, alert: "This invite link is no longer valid. Please request a new one.", status: :see_other
+      return
     end
+    deliver_webhooks_to_bots(@user, :created)
 
     # Always require email verification for new users
     if @user.person? && !@user.verified?

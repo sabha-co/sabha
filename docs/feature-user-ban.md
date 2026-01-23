@@ -64,10 +64,6 @@ def reactivate
 end
 ```
 
-### Gumroad Integration
-- `Gumroad::ProcessRefundJob` calls `user.suspend!` on full refund
-- `Gumroad::ImportUserJob` sets `suspended_at: nil` on valid purchase
-
 ---
 
 ## once-campfire Implementation (PR #111)
@@ -258,8 +254,6 @@ end
     - `Authentication` concern - check `banned?` instead of `suspended?`
     - `SessionsController` - update user lookup
     - `MarketingController` - update member count
-    - `Gumroad::ImportUserJob` - use status enum
-    - `Gumroad::ProcessRefundJob` - use `banned!` instead of `suspend!`
     - Any other files using `non_suspended`, `suspended_at`, etc.
 
 ### Phase 8: Tests
@@ -309,8 +303,6 @@ end
 - `app/controllers/rooms/stats_controller.rb`
 - `app/services/stats_service.rb`
 - `app/helpers/rooms_helper.rb`
-- `app/jobs/gumroad/import_user_job.rb`
-- `app/jobs/gumroad/process_refund_job.rb`
 - `app/jobs/unread_mentions_notifier_job.rb`
 - `app/views/users/show.html.erb`
 - `app/views/accounts/users/_user.html.erb`
@@ -325,7 +317,6 @@ end
 
 ## Risk Assessment
 - **High**: Migration from `active`/`suspended_at` to `status` enum affects many queries (~40+ references)
-- **Medium**: Gumroad integration uses `suspended_at` for refund handling (needs update to use `banned!`)
 - **Low**: IP banning could affect users behind shared IPs (NAT)
 
 ## Rollback Strategy

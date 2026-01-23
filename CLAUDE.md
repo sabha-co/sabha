@@ -38,12 +38,6 @@ Campfire-CE is a Ruby on Rails chat application combining:
 - `Session` - Tracks browser, IP, platform for multi-device support
 - Email verification required for new users (`verified_at` timestamp)
 
-### Payment System (Optional Gumroad Integration)
-- `GumroadAPI` - Wrapper around Gumroad REST API for paid memberships
-- `Webhook` & `WebhookEvent` - Handles Gumroad sale/refund webhooks
-- `Purchaser` - Tracks user purchases
-- Controlled by `ENV["GUMROAD_ON"]` - can run as free community if disabled
-
 ## Key Architectural Patterns
 
 ### Concerns for Shared Behavior
@@ -159,7 +153,6 @@ self.current_user = User.find_by(id: request.session[:user_id])
 Uses Solid Queue (SQLite-backed) for background processing:
 - `Room::PushMessageJob` - Web push notifications for new messages
 - `UnreadMentionsNotifierJob` - Daily email digest of unread mentions/DMs
-- `Gumroad::ImportUserJob` - Process Gumroad purchase webhooks
 
 ### Production Startup (`bin/boot`)
 ```
@@ -193,8 +186,6 @@ Required for production:
 Optional features:
 - `JOB_CONCURRENCY` - Number of Solid Queue worker processes
 - `SOLID_QUEUE_IN_PUMA=true` - Run jobs inside Puma instead of separate workers
-- `GUMROAD_ON=true` - Enable payment gating
-- `GUMROAD_ACCESS_TOKEN` - Gumroad API access
 - `DICEBEAR_ENABLED=true` - Enable auto-generated avatars for users without photos
 - `DICEBEAR_HOST` - DiceBear API host (default: api.dicebear.com, must be HTTPS in production)
 - `DICEBEAR_STYLE` - Avatar style (default: thumbs)
@@ -204,14 +195,12 @@ Optional features:
 - `resend.rb` - Custom ActionMailer delivery via Resend API
 - `web_push.rb` - VAPID-based web push notification setup
 - `sqlite3.rb` - SQLite production optimizations (busy timeout, journal mode)
-- `gumroad.rb` - Payment integration configuration
 - `dicebear.rb` - DiceBear avatar generation configuration
 
 ### Routes Structure
 - Top-level room slug routing via `RoomSlugConstraint`
 - Conditional root routes (authenticated → `welcome#show`, unauthenticated → redirect to sign-in)
 - Nested resources: `/rooms/:room_id/messages/:id`
-- Webhook endpoints: `POST /webhooks/gumroad/users/:webhook_secret`
 
 ## Testing Guidelines
 
