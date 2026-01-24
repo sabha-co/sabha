@@ -32,7 +32,7 @@
 #      - Ramps up at ~N/3 connections/second
 #      - Each connection subscribes to 6 channels:
 #        - PresenceChannel (who's online in the room)
-#        - UnreadRoomsChannel (unread message counts)
+#        - UserUnreadRoomsChannel (user-scoped unread notifications)
 #        - HeartbeatChannel (keep-alive pings)
 #        - 3x Turbo::StreamsChannel (room list, messages, user rooms)
 #

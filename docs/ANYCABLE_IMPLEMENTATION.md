@@ -22,7 +22,7 @@ Load tests conducted on a 1 vCPU / 2GB DigitalOcean droplet with 500 concurrent 
 
 - **Server**: DigitalOcean 1 vCPU / 2GB RAM (ubuntu-s-1vcpu-2gb)
 - **Users**: 500 concurrent WebSocket connections
-- **Channels per user**: 6 (PresenceChannel, UnreadRoomsChannel, HeartbeatChannel, 3x Turbo::StreamsChannel)
+- **Channels per user**: 6 (PresenceChannel, UserUnreadRoomsChannel, HeartbeatChannel, 3x Turbo::StreamsChannel)
 - **Test duration**: 60 seconds
 - **Tool**: k6 with custom chatter.js script
 

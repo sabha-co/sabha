@@ -131,7 +131,13 @@ class Room < ApplicationRecord
   end
 
   def active_member_count
-    memberships.visible.joins(:user).merge(User.active).count
+    Rails.cache.fetch("room:#{id}:active_member_count", expires_in: 5.minutes) do
+      memberships.visible.joins(:user).merge(User.active).count
+    end
+  end
+
+  def invalidate_member_count_cache
+    Rails.cache.delete("room:#{id}:active_member_count")
   end
 
   def reactivate
@@ -202,7 +208,28 @@ class Room < ApplicationRecord
     end
 
     def unread_memberships(message)
-      memberships.visible.disconnected.read.where.not(user: message.creator).update_all(unread_at: message.created_at, updated_at: Time.current)
+      # Mark read users as unread
+      memberships.visible.disconnected.read.where.not(user: message.creator)
+        .update_all(unread_at: message.created_at, updated_at: Time.current)
+
+      # Broadcast to ALL disconnected users (not just newly unread)
+      # Already-unread users need updated roomSize/roomUpdatedAt for sidebar ordering
+      broadcast_unread_to_disconnected_users(message)
+    end
+
+    def broadcast_unread_to_disconnected_users(message)
+      user_ids = memberships.visible.disconnected.where.not(user: message.creator).pluck(:user_id)
+      return if user_ids.empty?
+
+      payload = {
+        roomId: id,
+        roomSize: messages_count,
+        roomUpdatedAt: last_active_at.iso8601,
+        forceUnread: true
+      }
+      user_ids.each do |user_id|
+        ActionCable.server.broadcast "user_#{user_id}_unreads", payload
+      end
     end
 
     def push_later(message)

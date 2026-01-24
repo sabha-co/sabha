@@ -7,7 +7,7 @@ class Inbox::MentionsQuery
   def call
     user.mentioning_messages
         .without_created_by(user)
-        .with_threads
+        .with_thread_summary
         .with_creator
   end
 

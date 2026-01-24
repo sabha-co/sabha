@@ -3,10 +3,11 @@ class PresenceChannel < RoomChannel
   on_unsubscribe :absent,  unless: :subscription_rejected?
 
   def present
-    return unless membership
+    m = membership
+    return unless m
 
-    membership.present
-    broadcast_read_room
+    m.present
+    ActionCable.server.broadcast "user_#{current_user.id}_reads", { room_id: m.room_id }
   end
 
   def absent
@@ -20,9 +21,5 @@ class PresenceChannel < RoomChannel
   private
     def membership
       room&.memberships&.find_by(user: current_user)
-    end
-
-    def broadcast_read_room
-      ActionCable.server.broadcast "user_#{current_user.id}_reads", { room_id: membership.room_id }
     end
 end

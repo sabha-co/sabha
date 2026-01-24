@@ -51,6 +51,7 @@ class Membership < ApplicationRecord
 
   after_update_commit { user.reset_remote_connections if deactivated? }
   after_destroy_commit { user.reset_remote_connections }
+  after_commit :invalidate_room_member_count_cache
 
   enum :involvement, %w[ invisible nothing mentions everything ].index_by(&:itself), prefix: :involved_in
 
@@ -129,6 +130,15 @@ class Membership < ApplicationRecord
   end
 
   private
+    def invalidate_room_member_count_cache
+      room&.invalidate_member_count_cache
+
+      # Also invalidate the previous room's cache if room_id changed
+      if saved_change_to_room_id? && room_id_before_last_save
+        Room.find_by(id: room_id_before_last_save)&.invalidate_member_count_cache
+      end
+    end
+
     def broadcast_read
       ActionCable.server.broadcast user_channel(:reads), { room_id: room_id }
     end

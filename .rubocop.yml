@@ -1,2 +1,7 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+
+AllCops:
+  Exclude:
+    - db/schema.rb
+    - db/queue_schema.rb

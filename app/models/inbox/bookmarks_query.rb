@@ -7,8 +7,8 @@ class Inbox::BookmarksQuery
   def call
     user.bookmarks
         .joins(:message)
-        .includes(message: [ :creator, :threads ])
-        .merge(Message.active.with_threads.with_creator)
+        .includes(message: [ :threads, :mentions, { creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ] } ])
+        .merge(Message.active)
   end
 
   private

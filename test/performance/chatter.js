@@ -60,7 +60,7 @@ export function sockets() {
     socket.on('open', function open() {
       // Subscribe to an ActionCable channel
       socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"PresenceChannel", "room_id":1}' }));
-      socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"UnreadRoomsChannel"}' }));
+      socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"UserUnreadRoomsChannel"}' }));
       socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"HeartbeatChannel"}' }));
       turboSignedStreamNames.forEach((signedStreamName) => {
         socket.send(JSON.stringify({ command: 'subscribe', identifier: `{"channel":"Turbo::StreamsChannel", "signed_stream_name":"${signedStreamName}"}` }));

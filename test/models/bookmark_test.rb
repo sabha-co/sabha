@@ -45,100 +45,88 @@ class BookmarkTest < ActiveSupport::TestCase
   end
 
   # ===================
-  # with_bookmark_status tests
+  # with_bookmark_status_for scope tests (LEFT JOIN approach)
   # ===================
 
-  test "with_bookmark_status sets bookmarked flag on bookmarked messages" do
+  test "with_bookmark_status_for sets is_bookmarked via LEFT JOIN" do
     message1 = messages(:first)
     message2 = messages(:second)
 
     Bookmark.create!(user: @david, message: message1)
     # message2 is not bookmarked
 
-    Current.user = @david
-    messages = [ message1, message2 ]
-    Bookmark.with_bookmark_status(messages)
+    messages = Message.where(id: [ message1.id, message2.id ]).with_bookmark_status_for(@david)
 
-    assert message1.bookmarked?, "Bookmarked message should have bookmarked=true"
-    assert_not message2.bookmarked?, "Non-bookmarked message should have bookmarked=false"
+    bookmarked_message = messages.find { |m| m.id == message1.id }
+    unbookmarked_message = messages.find { |m| m.id == message2.id }
+
+    assert bookmarked_message.bookmarked_by_current_user?, "Bookmarked message should return true"
+    assert_not unbookmarked_message.bookmarked_by_current_user?, "Non-bookmarked message should return false"
   end
 
-  test "with_bookmark_status handles empty messages array" do
-    Current.user = @david
-    result = Bookmark.with_bookmark_status([])
-    assert_equal [], result
-  end
-
-  test "with_bookmark_status returns messages unchanged" do
+  test "with_bookmark_status_for correctly casts SQLite 0/1 to boolean" do
     message = messages(:first)
-    Bookmark.create!(user: @david, message: message)
+    # No bookmark exists
 
-    Current.user = @david
-    messages = [ message ]
-    result = Bookmark.with_bookmark_status(messages)
+    messages = Message.where(id: message.id).with_bookmark_status_for(@david)
+    loaded_message = messages.first
 
-    assert_equal messages, result
+    # SQLite returns 0 for false, which is truthy in Ruby without proper casting
+    assert_not loaded_message.bookmarked_by_current_user?, "Unbookmarked message should return false, not truthy 0"
   end
 
-  test "with_bookmark_status only considers active bookmarks" do
+  test "with_bookmark_status_for only considers active bookmarks" do
     message = messages(:first)
     bookmark = Bookmark.create!(user: @david, message: message)
     bookmark.deactivate!
 
-    Current.user = @david
-    messages = [ message ]
-    Bookmark.with_bookmark_status(messages)
-
-    assert_not message.bookmarked?, "Message with inactive bookmark should have bookmarked=false"
+    messages = Message.where(id: message.id).with_bookmark_status_for(@david)
+    assert_not messages.first.bookmarked_by_current_user?, "Message with inactive bookmark should return false"
   end
 
-  test "with_bookmark_status only considers current user bookmarks" do
+  test "with_bookmark_status_for only considers specified user bookmarks" do
     message = messages(:first)
     Bookmark.create!(user: @jason, message: message)
 
-    Current.user = @david
-    messages = [ message ]
-    Bookmark.with_bookmark_status(messages)
-
-    assert_not message.bookmarked?, "Message bookmarked by another user should have bookmarked=false"
+    messages = Message.where(id: message.id).with_bookmark_status_for(@david)
+    assert_not messages.first.bookmarked_by_current_user?, "Message bookmarked by another user should return false"
   end
 
-  test "with_bookmark_status works with ActiveRecord::Relation" do
+  test "with_bookmark_status_for handles multiple messages" do
+    room = rooms(:designers)
+    messages_list = 3.times.map do |i|
+      room.messages.create!(body: "Test #{i}", creator: @jason, client_message_id: "scope_test_#{i}")
+    end
+
+    Bookmark.create!(user: @david, message: messages_list[0])
+    Bookmark.create!(user: @david, message: messages_list[2])
+
+    loaded = Message.where(id: messages_list.map(&:id)).with_bookmark_status_for(@david).index_by(&:id)
+
+    assert loaded[messages_list[0].id].bookmarked_by_current_user?
+    assert_not loaded[messages_list[1].id].bookmarked_by_current_user?
+    assert loaded[messages_list[2].id].bookmarked_by_current_user?
+  end
+
+  # ===================
+  # bookmarked_by_current_user? fallback tests
+  # ===================
+
+  test "bookmarked_by_current_user? falls back to query when scope not used" do
     message = messages(:first)
     Bookmark.create!(user: @david, message: message)
 
     Current.user = @david
-    relation = Message.where(id: message.id)
-    Bookmark.with_bookmark_status(relation)
-
-    # Reload to check from relation
-    loaded_message = relation.first
-    assert loaded_message.bookmarked?
+    # Load without scope - should fall back to exists? query
+    loaded_message = Message.find(message.id)
+    assert loaded_message.bookmarked_by_current_user?
   end
 
-  test "with_bookmark_status handles multiple messages efficiently" do
-    # Create several messages and bookmark some
-    room = rooms(:designers)
-    messages_list = 5.times.map do |i|
-      room.messages.create!(
-        body: "Test message #{i}",
-        creator: @jason,
-        client_message_id: "populate_test_#{i}"
-      )
-    end
-
-    # Bookmark first and third messages
-    Bookmark.create!(user: @david, message: messages_list[0])
-    Bookmark.create!(user: @david, message: messages_list[2])
-
-    Current.user = @david
-    Bookmark.with_bookmark_status(messages_list)
-
-    assert messages_list[0].bookmarked?
-    assert_not messages_list[1].bookmarked?
-    assert messages_list[2].bookmarked?
-    assert_not messages_list[3].bookmarked?
-    assert_not messages_list[4].bookmarked?
+  test "bookmarked_by_current_user? uses manual bookmarked setter" do
+    message = messages(:first)
+    # No bookmark exists, but we set it manually (used by bookmarks inbox)
+    message.bookmarked = true
+    assert message.bookmarked_by_current_user?
   end
 
   # ===================

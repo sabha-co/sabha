@@ -906,7 +906,7 @@ class Inbox::MentionsQuery
   def call
     user.mentioning_messages
         .without_created_by(user)
-        .with_threads
+        .with_thread_summary
         .with_creator
   end
 
@@ -967,7 +967,7 @@ class Inbox::ThreadsQuery
            .joins(:room)
            .where.not(rooms: { type: "Rooms::Thread" })
            .where(id: accessible_thread_parent_ids)
-           .with_threads
+           .with_thread_summary
            .with_creator
            .order(thread_activity_order)
   end
@@ -1076,8 +1076,8 @@ class Inbox::BookmarksQuery
   def call
     user.bookmarks
         .joins(:message)
-        .includes(message: [ :creator, :threads ])
-        .merge(Message.active.with_threads.with_creator)
+        .includes(message: [ :threads, :mentions, { creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ] } ])
+        .merge(Message.active)
   end
 
   private
@@ -1100,7 +1100,7 @@ app/channels/
 ├── room_channel.rb       # Message streaming per room
 ├── presence_channel.rb   # Online user tracking
 ├── room_list_channel.rb  # Sidebar updates
-├── unread_rooms_channel.rb
+├── user_unread_rooms_channel.rb  # User-scoped unread notifications
 ├── typing_notifications_channel.rb
 ├── inbox_mentions_channel.rb
 ├── inbox_threads_channel.rb

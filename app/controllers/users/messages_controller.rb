@@ -21,17 +21,18 @@ class Users::MessagesController < ApplicationController
     end
 
     def set_messages
-      @messages = Bookmark.with_bookmark_status(find_paged_messages)
+      @messages = find_paged_messages
     end
 
     def find_paged_messages
+      base = messages.with_creator.with_bookmark_status_for(Current.user)
       case
       when params[:before].present?
-        messages.with_creator.page_before(messages.find(params[:before]))
+        base.page_before(messages.find(params[:before]))
       when params[:after].present?
-        messages.with_creator.page_after(messages.find(params[:after]))
+        base.page_after(messages.find(params[:after]))
       else
-        messages.with_creator.last_page
+        base.last_page
       end
     end
 

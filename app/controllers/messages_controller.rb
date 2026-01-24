@@ -9,7 +9,7 @@ class MessagesController < ApplicationController
   layout false, only: :index
 
   def index
-    @messages = Bookmark.with_bookmark_status(find_paged_messages)
+    @messages = find_paged_messages
 
     head :no_content if @messages.blank?
   end
@@ -69,16 +69,18 @@ class MessagesController < ApplicationController
 
 
     def find_paged_messages
+      base = @room.messages.with_thread_summary.with_creator.with_bookmark_status_for(Current.user)
       messages = case
       when params[:before].present?
-        @room.messages.with_threads.with_creator.page_before(@room.messages.find(params[:before]))
+        base.page_before(@room.messages.find(params[:before]))
       when params[:after].present?
-        @room.messages.with_threads.with_creator.page_after(@room.messages.find(params[:after]))
+        base.page_after(@room.messages.find(params[:after]))
       else
-        @room.messages.with_threads.with_creator.last_page
+        base.last_page
       end
 
       # If this is a thread and we've loaded the very first message, prepend the parent message
+      # Parent message bookmark status uses fallback query (single record, acceptable)
       if @room.thread? && messages.any? && @room.parent_message.present?
         first_thread_message = @room.messages.ordered.first
         messages_array = messages.to_a

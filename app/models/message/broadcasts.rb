@@ -1,7 +1,7 @@
 module Message::Broadcasts
   def broadcast_create
     broadcast_append_to room, :messages, target: [ room, :messages ], partial: "messages/message", locals: { current_room: room }
-    ActionCable.server.broadcast("unread_rooms", { roomId: room.id, roomSize: room.messages_count, roomUpdatedAt: created_at.iso8601 })
+    # User-scoped broadcasts are handled via Membership#broadcast_unread when memberships are marked unread
 
     broadcast_notifications
     broadcast_to_inbox_mentions
@@ -13,17 +13,41 @@ module Message::Broadcasts
   end
 
   def broadcast_notifications(ignore_if_older_message: false)
-    memberships = if mentions_everyone?
+    user_ids = notification_recipient_ids(ignore_if_older_message)
+    return if user_ids.empty?
+
+    payload = { roomId: room.id }
+
+    # Use AnyCable batching for efficient Redis pipelining when available
+    if defined?(AnyCable) && AnyCable.broadcast_adapter.respond_to?(:batching)
+      AnyCable.broadcast_adapter.batching do
+        user_ids.each do |user_id|
+          AnyCable.broadcast("user_#{user_id}_notifications", payload)
+        end
+      end
+    else
+      user_ids.each do |user_id|
+        ActionCable.server.broadcast "user_#{user_id}_notifications", payload
+      end
+    end
+  end
+
+  def notification_recipient_ids(ignore_if_older_message)
+    # Early return if no one to notify (non-@everyone with no mentionees)
+    return [] if !mentions_everyone? && mentionee_ids.blank?
+
+    scope = if mentions_everyone?
       room.memberships
     else
       room.memberships.where(user_id: mentionee_ids)
     end
 
-    memberships.each do |membership|
-      next if ignore_if_older_message && (membership.read? || membership.unread_at > created_at)
-
-      ActionCable.server.broadcast "user_#{membership.user_id}_notifications", { roomId: room.id }
+    if ignore_if_older_message
+      # Filter in SQL: exclude users who have read or whose unread_at is after this message
+      scope = scope.where("unread_at IS NOT NULL AND unread_at <= ?", created_at)
     end
+
+    scope.pluck(:user_id)
   end
 
   def broadcast_reactivation
@@ -74,41 +98,11 @@ module Message::Broadcasts
   def broadcast_to_inbox_threads
     return unless room.thread? && room.parent_message
 
-    parent_message = room.parent_message
-    thread = room
-
-    thread.reload
-
-    thread_user_ids = thread.memberships.active.visible.pluck(:user_id)
-    parent_room_user_ids = parent_message.room.memberships.active.involved_in_everything.pluck(:user_id)
-    all_user_ids = (thread_user_ids + parent_room_user_ids).uniq - [ creator_id ]
-
-    # Batch load all users at once to avoid N+1 queries
-    users_by_id = User.where(id: all_user_ids).index_by(&:id)
-
-    # Preload parent_message with threads and their messages/creators for the partial
-    parent_message_with_threads = Message.includes(threads: { messages: { creator: :avatar_attachment } })
-                                         .find(parent_message.id)
-
-    all_user_ids.each do |user_id|
-      user = users_by_id[user_id]
-      next unless user
-
-      if thread.messages_count == 1
-        broadcast_append_to user, :inbox_threads,
-                           target: "inbox",
-                           partial: "messages/message",
-                           locals: {
-                             message: parent_message,
-                             timestamp_style: :long_datetime,
-                             show_date_separator: true
-                           }
-      else
-        broadcast_replace_to user, :inbox_threads,
-                            target: ActionView::RecordIdentifier.dom_id(parent_message, :threads),
-                            partial: "messages/threads",
-                            locals: { message: parent_message_with_threads }
-      end
-    end
+    BroadcastInboxThreadsJob.perform_later(
+      thread_id: room.id,
+      parent_message_id: room.parent_message_id,
+      message_id: id,
+      creator_id: creator_id
+    )
   end
 end

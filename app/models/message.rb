@@ -34,35 +34,44 @@ class Message < ApplicationRecord
 
   scope :ordered, -> { order(:created_at) }
   scope :with_creator, -> { includes(creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ]) }
-  scope :with_threads, -> {
-    includes(threads: {
-      messages: { creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ] },
-      visible_memberships: { user: [ :badge, { avatar_attachment: { blob: :variant_records } } ] }
-    })
-  }
+  # Lightweight thread loading - fetches threads but NOT their messages
+  # The partial uses Rooms::Thread#participant_creators for efficient participant fetching
+  scope :with_thread_summary, -> { includes(:threads) }
   scope :for_display, -> {
     with_rich_text_body_and_embeds
       .includes(:mentions)
       .with_creator
       .includes(attachment_attachment: { blob: :variant_records })
       .includes(boosts: { booster: { avatar_attachment: { blob: :variant_records } } })
-      .with_threads
+      .with_thread_summary
   }
   scope :created_by, ->(user) { where(creator_id: user.id) }
   scope :without_created_by, ->(user) { where.not(creator_id: user.id) }
   scope :between, ->(from, to) { where(created_at: from..to) }
   scope :since, ->(time) { where(created_at: time..) }
+  scope :with_bookmark_status_for, ->(user) {
+    joins(sanitize_sql_array([ <<~SQL.squish, user.id ])).select("messages.*, (bookmarks.id IS NOT NULL) AS is_bookmarked")
+      LEFT JOIN bookmarks
+        ON bookmarks.message_id = messages.id
+        AND bookmarks.user_id = ?
+        AND bookmarks.active = 1
+    SQL
+  }
 
-  attr_accessor :bookmarked
-  alias_method :bookmarked?, :bookmarked
+  # Used by bookmarks inbox where all messages are known to be bookmarked
+  attr_writer :bookmarked
 
   validate :ensure_can_message_recipient, on: :create
   validate :ensure_everyone_mention_allowed, on: :create
 
   def bookmarked_by_current_user?
-    return bookmarked? unless bookmarked.nil?
-
-    bookmarks.find_by(user_id: Current.user&.id).present?
+    # Scope path: with_bookmark_status_for LEFT JOIN sets is_bookmarked
+    # Use ActiveRecord::Type::Boolean to handle SQLite's 0/1/"0"/"1" values
+    return ActiveRecord::Type::Boolean.new.cast(is_bookmarked) if has_attribute?(:is_bookmarked)
+    # Manual path: bookmarks inbox sets @bookmarked = true
+    return @bookmarked if instance_variable_defined?(:@bookmarked)
+    # Fallback: single message query (e.g., thread parent)
+    bookmarks.exists?(user_id: Current.user&.id)
   end
 
   def plain_text_body

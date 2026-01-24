@@ -60,6 +60,7 @@ gem "rubyzip", require: "zip"
 
 group :development, :test do
   gem "debug"
+  gem "benchmark"
   gem "rubocop-rails-omakase", require: false
   gem "faker", require: false
   gem "brakeman", require: false

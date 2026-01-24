@@ -76,8 +76,31 @@
       "cwe_id": [
         89
       ]
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "95277d8a7cc8bbb4c8b4602e3484ac715dd326cb5f461f9711095bc0b5daa6a4",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/inbox/threads_query.rb",
+      "line": 11,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Message.active.joins(:room).where.not(:rooms => ({ :type => \"Rooms::Thread\" })).where(\"messages.id IN (#{accessible_thread_parent_ids_sql})\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Inbox::ThreadsQuery",
+        "method": "call"
+      },
+      "user_input": "accessible_thread_parent_ids_sql",
+      "confidence": "Medium",
+      "cwe_id": [
+        89
+      ],
+      "note": "Safe: accessible_thread_parent_ids_sql uses sanitize_sql_array with parameterized user.id"
     }
   ],
-  "updated": "2025-11-06 02:51:31 +0530",
+  "updated": "2026-01-24 12:50:00 +0530",
   "brakeman_version": "7.1.1"
 }

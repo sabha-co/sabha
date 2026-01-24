@@ -57,9 +57,23 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "creating a message broadcasts unread room" do
-    assert_broadcasts "unread_rooms", 1 do
-      post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: 999 } }
+  test "creating a message broadcasts unread to user channels" do
+    # Ensure other members are disconnected and have read status (unread_at is nil) so they receive broadcasts
+    other_member = @room.memberships.visible.where.not(user: users(:david)).first
+    other_member.update!(unread_at: nil, connected_at: nil)
+
+    assert_broadcasts "user_#{other_member.user_id}_unreads", 1 do
+      post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
+    end
+  end
+
+  test "creating a message never broadcasts to global unread_rooms channel" do
+    # CRIT-3: Regression test to ensure thundering herd fix stays in place
+    other_member = @room.memberships.visible.where.not(user: users(:david)).first
+    other_member.update!(unread_at: nil, connected_at: nil)
+
+    assert_no_broadcasts "unread_rooms" do
+      post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
     end
   end
 

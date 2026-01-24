@@ -17,7 +17,7 @@ class RoomsController < ApplicationController
       return redirect_to(target)
     end
 
-    @messages = Bookmark.with_bookmark_status(find_messages)
+    @messages = find_messages
   end
 
   def destroy
@@ -62,7 +62,7 @@ class RoomsController < ApplicationController
     end
 
     def find_messages
-      messages = @room.messages.for_display
+      messages = @room.messages.for_display.with_bookmark_status_for(Current.user)
       @first_unread_message = first_unread_from(messages)
 
       anchor = target_message(messages) || @first_unread_message
@@ -82,8 +82,9 @@ class RoomsController < ApplicationController
 
     def with_thread_parent(messages)
       return messages unless @room.thread? && @room.parent_message
-      return [ @room.parent_message ] if messages.empty?
 
+      # Parent message bookmark status uses fallback query (single record, acceptable)
+      return [ @room.parent_message ] if messages.empty?
       showing_beginning_of_thread?(messages) ? [ @room.parent_message, *messages ] : messages
     end
 

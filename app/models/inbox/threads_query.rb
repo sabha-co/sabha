@@ -8,8 +8,8 @@ class Inbox::ThreadsQuery
     Message.active
            .joins(:room)
            .where.not(rooms: { type: "Rooms::Thread" })
-           .where(id: accessible_thread_parent_ids)
-           .with_threads
+           .where("messages.id IN (#{accessible_thread_parent_ids_sql})")
+           .with_thread_summary
            .with_creator
            .order(thread_activity_order)
   end
@@ -18,37 +18,35 @@ class Inbox::ThreadsQuery
 
   attr_reader :user
 
-  def accessible_thread_parent_ids
-    Room.active
-        .where(id: all_accessible_thread_ids, type: "Rooms::Thread")
-        .where("messages_count > 0")
-        .pluck(:parent_message_id)
-  end
-
-  # Combines explicit thread memberships with implicit access via parent room "everything" involvement
-  def all_accessible_thread_ids
-    thread_ids_from_memberships | thread_ids_from_parent_rooms
-  end
-
-  def thread_ids_from_memberships
-    user.memberships.active.visible
-        .joins(:room)
-        .where(rooms: { type: "Rooms::Thread" })
-        .pluck(:room_id)
-  end
-
-  def thread_ids_from_parent_rooms
-    Room.where(type: "Rooms::Thread")
-        .joins(:parent_message)
-        .where(messages: { room_id: parent_room_ids_with_everything_involvement })
-        .pluck(:id)
-  end
-
-  def parent_room_ids_with_everything_involvement
-    user.memberships.active.involved_in_everything
-        .joins(:room)
-        .where.not(rooms: { type: "Rooms::Thread" })
-        .pluck(:room_id)
+  # Single SQL subquery that finds all accessible thread parent_message_ids.
+  # A thread is accessible if either:
+  # 1. User has a direct membership in the thread (visible, not invisible)
+  # 2. User has "everything" involvement in the parent room (implicit thread access)
+  def accessible_thread_parent_ids_sql
+    ActiveRecord::Base.sanitize_sql_array([ <<~SQL.squish, user.id, user.id ])
+      SELECT DISTINCT threads.parent_message_id
+      FROM rooms threads
+      WHERE threads.active = 1
+        AND threads.type = 'Rooms::Thread'
+        AND threads.messages_count > 0
+        AND (
+          EXISTS (
+            SELECT 1 FROM memberships
+            WHERE memberships.room_id = threads.id
+              AND memberships.user_id = ?
+              AND memberships.active = 1
+              AND memberships.involvement != 'invisible'
+          )
+          OR EXISTS (
+            SELECT 1 FROM messages
+            INNER JOIN memberships ON memberships.room_id = messages.room_id
+            WHERE messages.id = threads.parent_message_id
+              AND memberships.user_id = ?
+              AND memberships.active = 1
+              AND memberships.involvement = 'everything'
+          )
+        )
+    SQL
   end
 
   def thread_activity_order

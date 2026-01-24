@@ -138,7 +138,7 @@ app/frontend/
 - `RoomChannel` - Message broadcasts to room subscribers
 - `PresenceChannel` - Online user tracking
 - `RoomListChannel` - Sidebar room list updates
-- `UnreadRoomsChannel` - Unread count broadcasts
+- `UserUnreadRoomsChannel` - User-scoped unread notifications
 - `TypingNotificationsChannel` - "User is typing..." indicators
 - `InboxMentionsChannel` & `InboxThreadsChannel` - Inbox real-time updates
 
