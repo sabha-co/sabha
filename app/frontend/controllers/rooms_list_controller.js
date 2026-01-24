@@ -36,6 +36,9 @@ export default class extends Controller {
 
       this.roomListChannel?.unsubscribe()
       this.roomListChannel = null
+
+      this.involvementsChannel?.unsubscribe()
+      this.involvementsChannel = null
     })
   }
 
