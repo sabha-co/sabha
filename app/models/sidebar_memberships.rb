@@ -14,7 +14,7 @@ class SidebarMemberships
   # Direct message memberships shown in the horizontal scroll area.
   # Only includes DMs that are:
   # - Visible (not set to invisible involvement)
-  # - In active rooms with at least one message
+  # - In active rooms
   # - Recently active (unread OR room updated in last 7 days)
   #
   # Sorted by most recent activity first.
@@ -24,7 +24,6 @@ class SidebarMemberships
       .visible
       .direct_rooms
       .active_rooms
-      .with_messages
       .recently_active_or_unread
       .with_has_unread_notifications
       .includes(:room)

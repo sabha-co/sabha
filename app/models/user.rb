@@ -246,7 +246,7 @@ class User < ApplicationRecord
   def can_direct_message?(other_user)
     other_user&.active? &&
       can_ping?(other_user) &&
-      (administrator? || dm_allowed_for_members?)
+      (staff? || dm_allowed_for_members?)
   end
 
   def blocked?(other_user)

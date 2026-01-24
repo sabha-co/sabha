@@ -7,7 +7,7 @@
 
     <div class="flex flex-column gap">
       <% if Current.account.auth_method_value == "otp" %>
-        <%= form_with url: auth_tokens_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? }, html: { autocomplete: "off" } do |form| %>
+        <%= form_with url: auth_tokens_url, class: "flex flex-column gap", data: { controller: "form", turbo: hotwire_native_app?, action: "keydown.enter->form#submit" }, html: { autocomplete: "off" } do |form| %>
           <fieldset class="flex flex-column gap center-block upad">
             <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.app_name %></strong></legend>
 
@@ -33,7 +33,7 @@
           </fieldset>
         <% end %>
       <% else %>
-        <%= form_with url: session_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? }, html: { autocomplete: "off" } do |form| %>
+        <%= form_with url: session_url, class: "flex flex-column gap", data: { controller: "form", turbo: hotwire_native_app?, action: "keydown.enter->form#submit" }, html: { autocomplete: "off" } do |form| %>
           <fieldset class="flex flex-column gap center-block upad">
             <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.app_name %></strong></legend>
 
@@ -73,9 +73,9 @@
         <% end %>
       <% end %>
 
-      <fieldset class="flex flex-column gap center-block upad" style="margin-block-start: var(--spacing-block);">
+      <fieldset class="flex flex-column gap center-block upad">
         <legend class="txt-medium txt-align-center">New to <%= Branding.app_name %>?</legend>
-        <div class="txt-small" style="opacity: 0.7;">Use your invite link to create an account.</div>
+        <div class="txt-small" style="opacity: 0.7;">You need an invite link to create an account.</div>
       </fieldset>
     </div>
   </div>

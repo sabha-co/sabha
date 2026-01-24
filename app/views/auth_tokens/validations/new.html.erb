@@ -5,7 +5,7 @@
   <div class="panel <%= "shake" if flash[:alert] %>">
     <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
 
-    <%= form_with url: auth_tokens_validations_url, class: "flex flex-column gap", data: { turbo: hotwire_native_app? } do |form| %>
+    <%= form_with url: auth_tokens_validations_url, class: "flex flex-column gap", data: { controller: "form", turbo: hotwire_native_app?, action: "keydown.enter->form#submit" } do |form| %>
       <fieldset class="flex flex-column gap center-block upad">
         <legend class="txt-large txt-align-center"><strong>Enter one-time code</strong></legend>
 

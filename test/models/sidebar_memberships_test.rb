@@ -10,9 +10,14 @@ class SidebarMembershipsTest < ActiveSupport::TestCase
 
   # --- direct ---
 
-  test "direct returns empty when no direct rooms have messages" do
-    # Fixtures have no messages by default
-    assert_empty @sidebar.direct
+  test "direct returns direct rooms even without messages" do
+    # DMs should show as long as they're recently active (within 7 days)
+    room = rooms(:david_and_jason)
+    room.update!(updated_at: 1.day.ago)
+
+    direct = @sidebar.direct
+
+    assert_includes direct.map(&:room), room
   end
 
   test "direct returns direct rooms with messages that are recently active" do

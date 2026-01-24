@@ -80,7 +80,8 @@
       </div>
     </div>
 
-    <% if Current.user.can_direct_message?(@user) %>
+    <% can_dm = Current.user.can_direct_message?(@user) %>
+    <% if can_dm %>
       <div class="flex justify-center">
         <%= link_to rooms_directs_path(user_ids: [@user.id]), class: "btn btn--reversed", data: { turbo_frame: "_top", turbo_method: :post } do %>
           <%= icon_tag "messages" %>
@@ -90,8 +91,9 @@
     <% end %>
 
     <% if @recent_messages.any? %>
-      <hr class="margin-block-start borderless">
-
+      <% if can_dm %>
+        <hr class="margin-block-start borderless">
+      <% end %>
       <fieldset class="margin-none-block-end">
         <legend class="gap">
           <%= icon_tag "messages", style: "--icon-size: 2.25rem" %>

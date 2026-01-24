@@ -10,6 +10,10 @@ module User::Role
   end
 
   def can_moderate?
+    staff?
+  end
+
+  def staff?
     moderator? || administrator?
   end
 
