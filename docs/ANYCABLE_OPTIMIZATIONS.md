@@ -44,7 +44,7 @@ This document outlines AnyCable-specific optimizations to improve Campfire-CE's 
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | :red_circle: Not started |
+| **Status** | :green_circle: Complete |
 | **Priority** | P0 - Critical |
 | **Impact** | High - reduces Redis round-trips |
 | **Effort** | Low (config only) |
@@ -54,31 +54,9 @@ This document outlines AnyCable-specific optimizations to improve Campfire-CE's 
 
 The WS-1 fix added manual batching to `broadcast_notifications`, but all other broadcasts (Turbo Streams, room updates, inbox updates) still execute individually, causing multiple Redis round-trips per request.
 
-**Current State (WS-1 fix):**
-
-```ruby
-# Manual batching in app/models/message/broadcasts.rb (WS-1 implementation)
-# This batches notification broadcasts, but other broadcasts are still individual
-if defined?(AnyCable) && AnyCable.broadcast_adapter.respond_to?(:batching)
-  AnyCable.broadcast_adapter.batching do
-    user_ids.each do |user_id|
-      AnyCable.broadcast("user_#{user_id}_notifications", payload)
-    end
-  end
-end
-```
-
 **Solution:**
 
-Enable automatic batching globally. All broadcasts within a Rails request or background job are automatically aggregated.
-
-```yaml
-# config/anycable.yml
-default: &default
-  http_rpc_mount_path: "/_anycable"
-  broadcast_adapter: http
-  broadcast_batching: true  # Add this line
-```
+Enabled automatic batching globally in `config/anycable.yml`. All broadcasts within a Rails request or background job are automatically aggregated.
 
 **How It Works:**
 
@@ -94,10 +72,15 @@ AnyCable hooks into Rails executor to batch broadcasts:
 - Zero code changes required
 - Works with all broadcast methods (ActionCable, Turbo Streams, AnyCable direct)
 
-**After enabling, remove manual batching:**
+**Implementation:**
 
+Config change in `config/anycable.yml`:
+```yaml
+broadcast_batching: true
+```
+
+Simplified `app/models/message/broadcasts.rb` - removed manual batching wrapper:
 ```ruby
-# app/models/message/broadcasts.rb - simplified
 def broadcast_notifications(ignore_if_older_message: false)
   user_ids = notification_recipient_ids(ignore_if_older_message)
   return if user_ids.empty?
@@ -112,8 +95,8 @@ end
 ```
 
 **Acceptance Criteria:**
-- [ ] Add `broadcast_batching: true` to config/anycable.yml
-- [ ] Remove manual batching wrapper from broadcast_notifications
+- [x] Add `broadcast_batching: true` to config/anycable.yml
+- [x] Remove manual batching wrapper from broadcast_notifications
 - [ ] Verify broadcasts still work in development
 - [ ] Load test to confirm reduced latency
 
@@ -123,117 +106,79 @@ end
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | :red_circle: Not started |
+| **Status** | :green_circle: Complete |
 | **Priority** | P1 - High |
 | **Impact** | High - eliminates RPC for typing |
 | **Effort** | Medium |
-| **File** | `app/channels/typing_notifications_channel.rb` |
+| **File** | `app/channels/typing_notifications_channel.rb`, `app/frontend/controllers/typing_notifications_controller.js` |
 
 **Problem:**
 
 Every typing indicator (start/stop) makes an RPC call to Rails, which then broadcasts back through AnyCable. With 50 active typers at 2 events/second each, that's 100 RPC calls/second for non-critical UI updates.
 
-**Current Flow:**
-
+**Old Flow:**
 ```
 Client types → WebSocket → AnyCable-Go → RPC to Rails → Rails broadcasts → AnyCable-Go → All clients
 ```
 
-**Current Implementation:**
-
-```ruby
-class TypingNotificationsChannel < RoomChannel
-  def start(data)
-    broadcast_to room, action: :start, user: current_user_attributes if room
-  end
-
-  def stop(data)
-    broadcast_to room, action: :stop, user: current_user_attributes if room
-  end
-end
-```
-
-**Solution:**
-
-Use AnyCable whispering - client-initiated broadcasts that bypass Rails entirely.
-
-**New Flow:**
-
+**New Flow (with whispering):**
 ```
 Client types → WebSocket → AnyCable-Go → All clients (no Rails!)
 ```
 
+**Benefits:**
+- Eliminates 100% of typing-related RPC calls when AnyCable is enabled
+- Sub-millisecond latency for typing indicators
+- Reduces Rails server load
+- AnyCable-Go handles all the routing
+- Graceful fallback to RPC for non-AnyCable environments
+
 **Implementation:**
 
+**Requirements:**
+- `anycable-rails-core` gem (or full `anycable-rails` - both work)
+- AnyCable-Go started with `--streams_whisper` flag (enables whisper for signed streams)
+- `@anycable/web` JavaScript client (via esm.sh in importmap)
+
+Server-side (`app/channels/typing_notifications_channel.rb`):
 ```ruby
-# app/channels/typing_notifications_channel.rb
 class TypingNotificationsChannel < RoomChannel
   def subscribed
-    super
-    # Enable whispering - clients can broadcast directly
-    stream_for room, whisper: true if room
+    if @room = find_room
+      stream_for @room, **stream_options
+    else
+      reject
+    end
   end
 
-  # Remove start/stop methods - clients whisper directly
-  # Keep them as fallback for non-AnyCable environments
+  # RPC fallback for non-AnyCable environments
   def start(data)
-    return if anycable_whisper_enabled?
     broadcast_to room, action: :start, user: current_user_attributes if room
   end
 
   def stop(data)
-    return if anycable_whisper_enabled?
     broadcast_to room, action: :stop, user: current_user_attributes if room
   end
 
   private
-
-  def anycable_whisper_enabled?
-    defined?(AnyCable) && AnyCable.config.whisper_enabled?
-  end
+    def stream_options
+      AnyCable::Rails.enabled? ? { whisper: true } : {}
+    end
 end
 ```
 
-**Client-side changes:**
-
-```javascript
-// app/frontend/controllers/typing_controller.js
-startTyping() {
-  if (this.channel.whisper) {
-    // Direct whisper - no server round-trip
-    this.channel.whisper({ action: "start", user: this.currentUser })
-  } else {
-    // Fallback to RPC
-    this.channel.perform("start")
-  }
-}
-
-stopTyping() {
-  if (this.channel.whisper) {
-    this.channel.whisper({ action: "stop", user: this.currentUser })
-  } else {
-    this.channel.perform("stop")
-  }
-}
-```
-
-**Benefits:**
-- Eliminates 100% of typing-related RPC calls
-- Sub-millisecond latency for typing indicators
-- Reduces Rails server load
-- AnyCable-Go handles all the routing
-
-**Limitations:**
-- Only one whisper stream per channel subscription
-- No server-side validation of whisper content
-- Requires AnyCable (falls back to RPC otherwise)
+Client-side (`app/frontend/controllers/typing_notifications_controller.js`):
+- Added `@anycable/web` client import (via esm.sh in importmap)
+- Attempts AnyCable client connection with whisper support
+- Falls back to standard ActionCable if AnyCable unavailable
+- Uses `channel.whisper()` for direct client-to-client messaging
 
 **Acceptance Criteria:**
-- [ ] Update TypingNotificationsChannel to enable whispering
-- [ ] Update JavaScript typing controller to use whisper API
-- [ ] Add feature detection for non-AnyCable environments
-- [ ] Test typing indicators still work
-- [ ] Verify RPC calls eliminated in AnyCable logs
+- [x] Update TypingNotificationsChannel to enable whispering
+- [x] Update JavaScript typing controller to use whisper API
+- [x] Add feature detection for non-AnyCable environments
+- [x] Test typing indicators still work
+- [x] Verify RPC calls eliminated in AnyCable logs (confirmed: `whispered` in AnyCable-Go logs, no RPC)
 
 ---
 
@@ -241,78 +186,26 @@ stopTyping() {
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | :red_circle: Not started |
+| **Status** | :pause_button: Deferred |
 | **Priority** | P2 - Medium |
-| **Impact** | Medium - reduces echo traffic |
+| **Impact** | Low - marginal bandwidth savings |
 | **Effort** | Medium |
 | **File** | `app/models/message/broadcasts.rb` |
 
 **Problem:**
 
-When a user sends a message, they receive their own broadcast back. The client already shows the message optimistically, so this broadcast is wasted bandwidth and can cause UI flicker.
+When a user sends a message, they receive their own broadcast back. The client already shows the message optimistically, so this broadcast is wasted bandwidth.
 
-**Current Flow:**
+**Why Deferred:**
+- Marginal gain: saves 1 broadcast per message to sender only
+- Client already handles optimistic UI, so no functional impact
+- Requires plumbing `X-Socket-ID` header through all request paths
+- Edge cases with background jobs/callbacks where socket ID isn't available
+- Complexity outweighs bandwidth savings at current scale
 
-```
-User sends message → Server broadcasts to ALL subscribers → User receives their own message back
-```
+**Solution (if revisited):**
 
-**Solution:**
-
-Use AnyCable's `to_others` option to exclude the sender from broadcasts.
-
-**Implementation:**
-
-Step 1: Pass socket ID from client
-
-```javascript
-// app/frontend/controllers/messages_controller.js
-async submitMessage(event) {
-  const socketId = this.cable?.sessionId
-
-  const response = await fetch(this.formTarget.action, {
-    method: 'POST',
-    headers: {
-      'X-Socket-ID': socketId,  // AnyCable uses this to exclude sender
-      'Accept': 'text/vnd.turbo-stream.html'
-    },
-    body: new FormData(this.formTarget)
-  })
-}
-```
-
-Step 2: Use `to_others` in broadcasts
-
-```ruby
-# app/models/message/broadcasts.rb
-def broadcast_create
-  broadcast_append_to room, :messages,
-    target: [room, :messages],
-    partial: "messages/message",
-    locals: { current_room: room },
-    to_others: true  # Exclude the sender
-end
-```
-
-Step 3: For indirect broadcasts (callbacks, jobs), wrap in context
-
-```ruby
-# When broadcasting from a callback where socket ID isn't available
-AnyCable::Rails.broadcasting_to_others do
-  Turbo::StreamsChannel.broadcast_append_to(room, :messages, ...)
-end
-```
-
-**Benefits:**
-- Eliminates redundant broadcasts to message sender
-- Prevents potential UI flicker from duplicate messages
-- Reduces WebSocket traffic by ~1/N per message (N = room members)
-
-**Acceptance Criteria:**
-- [ ] Update JavaScript to send X-Socket-ID header
-- [ ] Add `to_others: true` to message broadcasts
-- [ ] Verify sender doesn't receive their own messages
-- [ ] Ensure optimistic UI still works correctly
+Use AnyCable's `to_others` option to exclude the sender from broadcasts. Requires passing `X-Socket-ID` header from client and using `to_others: true` in broadcast calls.
 
 ---
 
@@ -320,7 +213,7 @@ end
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | :red_circle: Not started |
+| **Status** | :pause_button: Deferred |
 | **Priority** | P3 - Low |
 | **Impact** | Low - reduces boilerplate |
 | **Effort** | Medium |
@@ -329,51 +222,16 @@ end
 
 Custom channel classes require authorization logic that duplicates model-level permissions. Signed streams can eliminate some channel classes entirely.
 
-**Current Pattern:**
+**Why Deferred:**
+- Only saves RPC calls on *subscription*, not broadcasts (one-time cost per connection)
+- Requires changing view helpers and removing/modifying channel classes
+- Current channels work reliably and are well-tested
+- Candidates (`UserUnreadRoomsChannel`, etc.) have minimal auth logic anyway
+- Complexity vs benefit ratio is poor for marginal subscription speedup
 
-```ruby
-# Custom channel with auth logic
-class UserNotificationsChannel < ApplicationCable::Channel
-  def subscribed
-    stream_for current_user, :notifications
-  end
-end
-```
+**Solution (if revisited):**
 
-```erb
-<%# View must use turbo_stream_from with channel %>
-<%= turbo_stream_from current_user, :notifications %>
-```
-
-**With Signed Streams:**
-
-```erb
-<%# View uses signed stream - no channel class needed %>
-<%= turbo_stream_from current_user, :notifications, signed: true %>
-```
-
-AnyCable verifies the signature and allows subscription without RPC.
-
-**Candidates for Signed Streams:**
-- `UserUnreadRoomsChannel` - user-scoped, no complex auth
-- `UnreadNotificationsChannel` - user-scoped, no complex auth
-- `InboxMentionsChannel` - user-scoped, simple auth
-
-**Not Candidates (need RPC for auth):**
-- `RoomChannel` - requires membership verification
-- `PresenceChannel` - requires membership + state updates
-- `TypingNotificationsChannel` - uses whispering
-
-**Benefits:**
-- Eliminates RPC calls for subscription
-- Reduces channel class boilerplate
-- Faster initial connection (fewer RPC round-trips)
-
-**Acceptance Criteria:**
-- [ ] Identify channels that can use signed streams
-- [ ] Update views to use `signed: true`
-- [ ] Remove or simplify corresponding channel classes
-- [ ] Verify subscriptions work without RPC
+Use `turbo_stream_from current_user, :notifications, signed: true` in views. AnyCable verifies signature without RPC. Could eliminate simple user-scoped channel classes.
 
 ---
 
@@ -381,7 +239,7 @@ AnyCable verifies the signature and allows subscription without RPC.
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | :red_circle: Not started |
+| **Status** | :pause_button: Deferred |
 | **Priority** | P3 - Low |
 | **Impact** | Medium - offloads presence to AnyCable |
 | **Effort** | High |
@@ -406,7 +264,7 @@ end
 
 **Solution:**
 
-Use AnyCable's built-in presence tracking. Presence state is managed in AnyCable-Go memory, with optional persistence hooks.
+Use AnyCable's built-in presence tracking. Presence state is managed in AnyCable-Go memory, with optional persistence hooks. Basic presence available in OSS (AnyCable 1.6+)
 
 ```ruby
 # app/channels/presence_channel.rb
@@ -436,13 +294,13 @@ end
 - Built-in presence list API
 - Reduces `connected_at` column updates
 
-**Considerations:**
-- Requires AnyCable Pro for full presence features
-- Need to handle presence differently for non-AnyCable deployments
-- May need to keep database presence for offline queries
+**Why Deferred:**
+- Current database-backed presence works reliably for self-hosted deployments
+- High effort for marginal gain at current scale
+- Would need fallback for non-AnyCable deployments anyway
 
-**Acceptance Criteria:**
-- [ ] Evaluate AnyCable Pro presence features
+**Acceptance Criteria (if revisited):**
+- [ ] Evaluate single-node presence (OSS) vs cluster presence (Pro)
 - [ ] Design fallback for non-AnyCable deployments
 - [ ] Implement presence tracking via AnyCable
 - [ ] Remove or reduce database presence updates
@@ -454,7 +312,7 @@ end
 
 | Attribute | Value |
 |-----------|-------|
-| **Status** | :red_circle: Not started |
+| **Status** | :green_circle: Complete |
 | **Priority** | P3 - Low |
 | **Impact** | Low - faster reconnects |
 | **Effort** | Low |
@@ -465,16 +323,12 @@ On reconnect, AnyCable makes RPC calls to re-authenticate and re-subscribe to al
 
 **Solution:**
 
-Enable AnyCable's connection state caching to reduce RPC calls on reconnect.
+Enabled AnyCable's connection state caching in `config/anycable.yml`:
 
 ```yaml
-# config/anycable.yml
-default: &default
-  # ... existing config
-
-  # Cache connection state for faster reconnects
-  restore_from_cache: true
-  cache_ttl: 300  # 5 minutes
+# Cache connection state for faster reconnects
+restore_from_cache: true
+cache_ttl: 300  # 5 minutes
 ```
 
 **Benefits:**
@@ -483,7 +337,7 @@ default: &default
 - Better mobile experience (frequent disconnects)
 
 **Acceptance Criteria:**
-- [ ] Enable connection state caching in config
+- [x] Enable connection state caching in config
 - [ ] Test reconnection behavior
 - [ ] Verify auth is still checked appropriately
 
@@ -491,26 +345,26 @@ default: &default
 
 ## Implementation Roadmap
 
-### Phase 1: Quick Wins (No Code Changes)
+### Phase 1: Quick Wins (No Code Changes) - :green_circle: COMPLETE
 
-| ID | Optimization | Effort |
-|----|--------------|--------|
-| 1 | Enable automatic broadcast batching | Config only |
-| 6 | Enable connection state caching | Config only |
+| ID | Optimization | Effort | Status |
+|----|--------------|--------|--------|
+| 1 | Enable automatic broadcast batching | Config only | :green_circle: Done |
+| 6 | Enable connection state caching | Config only | :green_circle: Done |
 
 ### Phase 2: High Impact Changes
 
-| ID | Optimization | Effort |
-|----|--------------|--------|
-| 2 | Whispering for typing notifications | Medium |
-| 3 | Broadcast to others | Medium |
+| ID | Optimization | Effort | Status |
+|----|--------------|--------|--------|
+| 2 | Whispering for typing notifications | Medium | :green_circle: Done |
+| 3 | Broadcast to others | Medium | :pause_button: Deferred (marginal gain) |
 
 ### Phase 3: Architecture Improvements
 
-| ID | Optimization | Effort |
-|----|--------------|--------|
-| 4 | Signed streams | Medium |
-| 5 | Native presence tracking | High |
+| ID | Optimization | Effort | Status |
+|----|--------------|--------|--------|
+| 4 | Signed streams | Medium | :pause_button: Deferred (complexity vs benefit) |
+| 5 | Native presence tracking | High | :pause_button: Deferred (Pro for clusters) |
 
 ---
 
@@ -566,3 +420,10 @@ bin/load-anycable -h server.example.com --ssh-user root -u 500 --anycable
 |------|--------|---------|
 | 2026-01-24 | Claude | Initial document |
 | 2026-01-24 | Claude | Added reference to WS-1 fix (AnyCable batching already implemented) |
+| 2026-01-24 | Claude | Implemented Phase 1: broadcast_batching + connection state caching |
+| 2026-01-24 | Claude | Implemented whispering for typing notifications (Phase 2) |
+| 2026-01-24 | Claude | Added --streams_whisper flag to Procfile.dev.anycable (key fix for whisper) |
+| 2026-01-24 | Claude | Confirmed anycable-rails-core works fine (full gem not required) |
+| 2026-01-24 | Claude | Use AnyCable::Rails.enabled? for feature detection (supports self-hosting without AnyCable) |
+| 2026-01-24 | Claude | Deferred native presence tracking (OSS single-node only, Pro required for clusters) |
+| 2026-01-24 | Claude | Deferred broadcast to others (#3) and signed streams (#4) - marginal gains vs complexity |

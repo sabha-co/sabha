@@ -15,6 +15,10 @@ module ApplicationHelper
     end
   end
 
+  def anycable_whisper_enabled?
+    AnyCable::Rails.enabled?
+  end
+
   def custom_styles_tag
     if custom_styles = Current.account&.custom_styles
       # Inline custom styles should not force a full Turbo reload across navigations

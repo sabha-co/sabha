@@ -18,17 +18,9 @@ module Message::Broadcasts
 
     payload = { roomId: room.id }
 
-    # Use AnyCable batching for efficient Redis pipelining when available
-    if defined?(AnyCable) && AnyCable.broadcast_adapter.respond_to?(:batching)
-      AnyCable.broadcast_adapter.batching do
-        user_ids.each do |user_id|
-          AnyCable.broadcast("user_#{user_id}_notifications", payload)
-        end
-      end
-    else
-      user_ids.each do |user_id|
-        ActionCable.server.broadcast "user_#{user_id}_notifications", payload
-      end
+    # Auto-batching enabled in config/anycable.yml handles aggregation
+    user_ids.each do |user_id|
+      ActionCable.server.broadcast "user_#{user_id}_notifications", payload
     end
   end
 
