@@ -8,11 +8,13 @@ set -euo pipefail
 #   bin/demo-reset         # Restore from snapshot with container restart (run hourly via cron)
 #
 # Setup:
-#   1. SSH into the demo server
-#   2. docker exec -it campfire-web bin/demo-reset init
-#   3. Add cron: 0 * * * * cd /opt/campfire && /opt/campfire/demo-reset.sh >> /var/log/demo-reset.log 2>&1
+#   1. Generate demo data locally (requires faker gem): bin/rails generate:demo:max
+#   2. Upload the database: scp storage/db/development.sqlite3 user@server:/tmp/demo.sqlite3
+#   3. On server, copy to volume as snapshot and production DB
+#   4. Add cron: 0 * * * * /opt/campfire/demo-reset.sh >> /var/log/demo-reset.log 2>&1
 #
-# Note: For hourly cron, use the host script (demo-reset.sh) not this one,
+# Note: Demo servers don't have litestream (backups disabled via DEMO_MODE=true).
+#       For hourly cron, use the host script (demo-reset-host.sh) not this one,
 #       since we need to stop/start containers from outside.
 
 DB_PATH="/rails/storage/db/production.sqlite3"
