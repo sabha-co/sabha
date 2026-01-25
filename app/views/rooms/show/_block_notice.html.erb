@@ -1,4 +1,4 @@
-<% if room.one_on_one? && !room.messages.paged? && room.messages.first&.creator != Current.user %>
+<% if room.one_on_one? && room.creator != Current.user && !room.messages.paged? %>
   <div id="system_welcome" class="message message--formatted txt-align-center center">
     <div class="message__body center">
       <div class="message__body-content position-relative">

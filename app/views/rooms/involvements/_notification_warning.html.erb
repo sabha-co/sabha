@@ -3,14 +3,14 @@
     data-controller="notifications" data-notifications-subscriptions-url-value="<%= user_push_subscriptions_path %>" data-notifications-attention-class="btn--pulsing">
   <button class="btn btn--pulsing" data-action="click->notifications#attemptToSubscribe" data-notifications-target="bell">
     <%= icon_tag "notification-bell-alert" %>
-    <span class="for-screen-reader">Enable browser notifications for this <%= room.direct? ? "Ping" : "room" %></span>
+    <span class="for-screen-reader">Enable browser notifications for this <%= room.direct? ? "direct message" : "room" %></span>
   </button>
 
   <dialog data-notifications-target="notAllowedNotice" class="dialog pad center center-block border-radius border shadow" style="--inline-space: var(--block-space)">
     <div class="flex flex-column txt-align-center">
       <span class="btn btn--faux center txt-x-large">
         <%= icon_tag "notification-bell-alert", style: "--icon-size: 48px" %>
-        <span class="for-screen-reader">Notifications alert</span>
+        <span class="for-screen-reader">Notification warning</span>
       </span>
 
       <section>

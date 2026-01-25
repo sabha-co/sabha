@@ -4,7 +4,7 @@
   <%= link_to edit_room_path(room), class: "btn btn--reversed btn--faux room--current" do %>
     <h1 class="room__contents txt-medium overflow-ellipsis">
       <% if room.direct? %>
-        <span class="for-screen-reader">Ping with</span>
+        <span class="for-screen-reader">Direct message with</span>
       <% end %>
 
       <% if room.thread? %>

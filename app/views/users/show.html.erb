@@ -85,7 +85,7 @@
       <div class="flex justify-center">
         <%= link_to rooms_directs_path(user_ids: [@user.id]), class: "btn btn--reversed", data: { turbo_frame: "_top", turbo_method: :post } do %>
           <%= icon_tag "messages" %>
-          <span>Ping <%= @user.name.split.first %></span>
+          <span>Message <%= @user.name.split.first %></span>
         <% end %>
       </div>
     <% end %>

@@ -1,6 +1,6 @@
 <fieldset class="gap max-width pad border border-radius">
   <legend class="min-width txt-align-start pad-inline">
-    <strong class="overflow-ellipsis">Ping</strong>
+    <strong class="overflow-ellipsis">Direct message</strong>
   </legend>
 
   <% curl_text_line = %[curl -H "Content-Type: application/json" #{rooms_bot_directs_url(bot.bot_key)} -d '{ "user_ids": [ "#{Current.user.id}" ] }'] %>
@@ -8,13 +8,13 @@
     <%= icon_tag "add" %>
 
     <div class="flex-item-grow">
-      <input type="text" class="input full-width fill-white" value="<%= curl_text_line %>" aria-label="curl command for creating a ping" readonly>
+      <input type="text" class="input full-width fill-white" value="<%= curl_text_line %>" aria-label="curl command for creating a direct message" readonly>
     </div>
 
     <div class="txt-small">
       <%= button_to_copy_to_clipboard(curl_text_line) do %>
         <%= icon_tag "copy-paste" %>
-        <span class="for-screen-reader">Copy command for creating a ping</span>
+        <span class="for-screen-reader">Copy command for creating a direct message</span>
       <% end %>
     </div>
   </div>
