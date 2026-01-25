@@ -77,6 +77,16 @@
         <legend class="txt-medium txt-align-center">New to <%= Branding.app_name %>?</legend>
         <div class="txt-small" style="opacity: 0.7;">You need an invite link to create an account.</div>
       </fieldset>
+
+      <% if DemoMode.enabled? %>
+        <div class="flex flex-column gap center-block txt-align-center" style="background: var(--color-warning, #f59e0b); color: var(--color-warning-contrast, #000); border-radius: 0.5rem; padding: 1rem;">
+          <div class="txt-medium"><strong>Demo Credentials</strong></div>
+          <div class="txt-small" style="font-family: monospace;">
+            <div><strong>Email:</strong> <%= DemoMode.credentials[:email] %></div>
+            <div><strong>Password:</strong> <%= DemoMode.credentials[:password] %></div>
+          </div>
+        </div>
+      <% end %>
     </div>
   </div>
 

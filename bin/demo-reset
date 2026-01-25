@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Demo server reset script for campfire_cloud deployments
+#
+# Usage:
+#   bin/demo-reset init    # Generate demo data and create snapshot (run once after deploy)
+#   bin/demo-reset         # Restore from snapshot with container restart (run hourly via cron)
+#
+# Setup:
+#   1. SSH into the demo server
+#   2. docker exec -it campfire-web bin/demo-reset init
+#   3. Add cron: 0 * * * * cd /opt/campfire && /opt/campfire/demo-reset.sh >> /var/log/demo-reset.log 2>&1
+#
+# Note: For hourly cron, use the host script (demo-reset.sh) not this one,
+#       since we need to stop/start containers from outside.
+
+DB_PATH="/rails/storage/db/production.sqlite3"
+SNAPSHOT_PATH="/rails/storage/db/demo_snapshot.sqlite3"
+
+case "${1:-restore}" in
+  init)
+    echo "$(date): Generating demo data..."
+    bin/rails generate:demo:max
+
+    echo "$(date): Creating snapshot..."
+    cp "$DB_PATH" "$SNAPSHOT_PATH"
+
+    # Also copy WAL files if they exist
+    [ -f "${DB_PATH}-wal" ] && cp "${DB_PATH}-wal" "${SNAPSHOT_PATH}-wal" || true
+    [ -f "${DB_PATH}-shm" ] && cp "${DB_PATH}-shm" "${SNAPSHOT_PATH}-shm" || true
+
+    echo "$(date): Snapshot created at $SNAPSHOT_PATH"
+    echo ""
+    echo "Next: Create /opt/campfire/demo-reset.sh on the host with:"
+    echo '  #!/bin/bash'
+    echo '  cd /opt/campfire'
+    echo '  docker compose stop web'
+    echo '  docker compose run --rm -v campfire_data:/rails/storage web cp /rails/storage/db/demo_snapshot.sqlite3 /rails/storage/db/production.sqlite3'
+    echo '  docker compose start web'
+    ;;
+
+  restore)
+    # This runs inside the container - mainly for testing
+    if [ ! -f "$SNAPSHOT_PATH" ]; then
+      echo "$(date): ERROR - Snapshot not found at $SNAPSHOT_PATH"
+      echo "Run 'bin/demo-reset init' first to create the snapshot."
+      exit 1
+    fi
+
+    echo "$(date): Restoring from snapshot..."
+    cp "$SNAPSHOT_PATH" "$DB_PATH"
+    [ -f "${SNAPSHOT_PATH}-wal" ] && cp "${SNAPSHOT_PATH}-wal" "${DB_PATH}-wal" || true
+    [ -f "${SNAPSHOT_PATH}-shm" ] && cp "${SNAPSHOT_PATH}-shm" "${DB_PATH}-shm" || true
+
+    echo "$(date): Demo reset complete!"
+    ;;
+
+  *)
+    echo "Usage: bin/demo-reset [init|restore]"
+    echo "  init    - Generate demo data and create snapshot"
+    echo "  restore - Restore database from snapshot"
+    exit 1
+    ;;
+esac

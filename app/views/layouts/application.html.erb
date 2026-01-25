@@ -39,6 +39,10 @@
   </head>
 
   <body class="<%= body_classes %>" data-controller="local-time lightbox page-title theme">
+    <% if DemoMode.enabled? %>
+      <%= render "shared/demo_banner" %>
+    <% end %>
+
     <a href="#main-content" class="skip-navigation btn" data-turbo="false">Skip to main content</a>
     <a href="#sidebar-toggle" class="skip-navigation btn" data-turbo="false">Skip to menu</a>
 
