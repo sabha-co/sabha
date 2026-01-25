@@ -17,11 +17,12 @@ echo "$(date): Starting demo reset..."
 echo "$(date): Stopping web container..."
 docker compose stop web
 
-# Copy snapshot over production database and remove WAL files
+# Copy snapshot over production database, fix ownership, and remove WAL files
 echo "$(date): Restoring database from snapshot..."
 docker run --rm -v campfire_campfire_data:/rails/storage alpine sh -c "
   rm -f /rails/storage/db/production.sqlite3-wal /rails/storage/db/production.sqlite3-shm
   cp /rails/storage/db/demo_snapshot.sqlite3 /rails/storage/db/production.sqlite3
+  chown 999:999 /rails/storage/db/production.sqlite3
 "
 
 # Start the web container
