@@ -13,7 +13,8 @@ export default class Selection {
 
   disconnect() {
     this.#observer.disconnect()
-    this.#render()
+    for (const element of this.#elements) element.remove()
+    this.#elements = []
   }
 
   add(value, label, options = {}) {
