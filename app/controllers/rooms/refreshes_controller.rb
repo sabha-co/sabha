@@ -5,8 +5,13 @@ class Rooms::RefreshesController < ApplicationController
   before_action :set_unread_at_message
 
   def show
-    @new_messages = @room.messages.for_display.with_bookmark_status_for(Current.user).page_created_since(@last_updated_at)
-    @updated_messages = @room.messages.for_display.with_bookmark_status_for(Current.user).without(@new_messages).page_updated_since(@last_updated_at)
+    respond_to do |format|
+      format.turbo_stream do
+        @new_messages = @room.messages.for_display.with_bookmark_status_for(Current.user).page_created_since(@last_updated_at)
+        @updated_messages = @room.messages.for_display.with_bookmark_status_for(Current.user).without(@new_messages).page_updated_since(@last_updated_at)
+      end
+      format.html { redirect_to @room }
+    end
   end
 
   private
