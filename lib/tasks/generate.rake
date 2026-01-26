@@ -110,6 +110,23 @@ namespace :generate do
       "This is helpful"
     ].freeze
 
+    # Generate a random public IP address, excluding private and reserved ranges
+    def random_public_ip
+      loop do
+        first = rand(1..223)
+        # Skip private and reserved ranges
+        next if first == 10                           # 10.0.0.0/8
+        next if first == 127                          # 127.0.0.0/8
+        next if first == 169                          # 169.254.0.0/16 (link-local)
+
+        second = rand(0..255)
+        next if first == 172 && (16..31).include?(second)  # 172.16.0.0/12
+        next if first == 192 && second == 168              # 192.168.0.0/16
+
+        return "#{first}.#{second}.#{rand(0..255)}.#{rand(1..254)}"
+      end
+    end
+
     def clean_database
       # Order matters due to foreign keys
       Boost.delete_all
@@ -302,9 +319,9 @@ namespace :generate do
         end
       end
 
-      # Random DMs between other users
-      60.times do |i|
-        participants = other_users.sample(rand(2..4))
+      # Random DMs between other users (1-on-1)
+      50.times do |i|
+        participants = other_users.sample(2)
         Current.user = participants.first
         begin
           dm = Rooms::Direct.create_for({}, users: participants)
@@ -312,10 +329,43 @@ namespace :generate do
         rescue ActiveRecord::RecordInvalid
           nil
         end
-        print "." if (i % 30).zero?
+        print "." if (i % 25).zero?
       end
+
+      # Group DMs (3-5 participants)
+      print " groups: "
+      group_dm_count = 0
+
+      # Group DMs including special users
+      special_users.each do |special|
+        group_members = [ special ] + other_users.sample(rand(2..4))
+        Current.user = special
+        begin
+          dm = Rooms::Direct.create_for({}, users: group_members)
+          rooms[:direct] << dm
+          add_dm_messages(dm, group_members)
+          group_dm_count += 1
+        rescue ActiveRecord::RecordInvalid
+          nil
+        end
+      end
+
+      # Additional random group DMs
+      12.times do
+        participants = other_users.sample(rand(3..5))
+        Current.user = participants.first
+        begin
+          dm = Rooms::Direct.create_for({}, users: participants)
+          rooms[:direct] << dm
+          add_dm_messages(dm, participants)
+          group_dm_count += 1
+        rescue ActiveRecord::RecordInvalid
+          nil
+        end
+      end
+
       Current.user = nil
-      puts " done! (#{rooms[:direct].count} DMs)"
+      puts "done! (#{rooms[:direct].count} DMs, #{group_dm_count} group)"
 
       rooms
     end
@@ -605,7 +655,7 @@ namespace :generate do
           created = now - rand(1..30).days
           session_records << {
             user_id: user.id,
-            ip_address: "#{rand(1..223)}.#{rand(0..255)}.#{rand(0..255)}.#{rand(1..254)}",
+            ip_address: random_public_ip,
             user_agent: "Mozilla/5.0 Demo Browser",
             token: SecureRandom.urlsafe_base64(32),
             created_at: created,
