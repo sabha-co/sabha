@@ -647,7 +647,7 @@
     inset: var(--btn-size) auto auto 50%;
     transform: translateX(-50%);
     transform-origin: top left;
-    z-index: 3;
+    z-index: 100;
   }
 
   .actions-menu .action-btn {

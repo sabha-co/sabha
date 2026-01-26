@@ -22,7 +22,7 @@
 #    - No manual setup form is needed
 #
 class FirstRun
-  FIRST_ROOM_NAME = "All Talk"
+  FIRST_ROOM_NAME = "General"
   LOCK_FILE = "tmp/auto_bootstrap.lock"
 
   def self.account_name

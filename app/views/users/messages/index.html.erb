@@ -62,9 +62,25 @@
 
 <div id="message-area" class="message-area">
   <div class="message-area--empty min-width center">
-    <figure class="center pad">
-      <%= icon_tag "search", class: "translucent" %>
-    </figure>
+    <div class="center pad" style="max-width: 28rem; margin: 0 auto;">
+      <figure class="center" style="margin-bottom: 1.5rem; text-align: center;">
+        <%= icon_tag "search", class: "translucent", style: "--icon-size: 6rem; opacity: 0.3;" %>
+      </figure>
+
+      <div class="center" style="text-align: center;">
+        <% if @query.present? %>
+          <h2 class="txt-large" style="margin-bottom: 0.5rem; font-weight: 600;">No messages found</h2>
+          <p class="txt-muted" style="line-height: 1.5;">
+            <%= @user.name %> hasn't posted any messages matching "<%= @query %>".
+          </p>
+        <% else %>
+          <h2 class="txt-large" style="margin-bottom: 0.5rem; font-weight: 600;">No messages yet</h2>
+          <p class="txt-muted" style="line-height: 1.5;">
+            <%= @user.name %> hasn't posted any messages yet.
+          </p>
+        <% end %>
+      </div>
+    </div>
   </div>
 
   <%= search_results_tag("search-results", page_user_messages_url(@user, q: @query)) do %>

@@ -6,7 +6,11 @@ class RoomsController < ApplicationController
   before_action :remember_last_room_visited, only: %i[ show ]
 
   def index
-    redirect_to room_url(Current.user.rooms.last)
+    if (room = Current.user.rooms.last)
+      redirect_to room_url(room)
+    else
+      redirect_to root_url
+    end
   end
 
   def show

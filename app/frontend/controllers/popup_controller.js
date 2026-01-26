@@ -12,7 +12,7 @@ export default class extends Controller {
 
   toggle() {
     this.#orient()
-    
+
     // Load turbo frame only when popup opens
     if (this.element.open) {
       const frame = this.menuTarget.querySelector('turbo-frame[data-turbo-frame-src]')

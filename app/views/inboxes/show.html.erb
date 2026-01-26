@@ -3,11 +3,47 @@
 
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
+<%
+  empty_state = case @page_title
+  when "Mentions"
+    {
+      icon: "mentions",
+      headline: "No mentions yet",
+      description: "When someone mentions you with @#{Current.user.name.split.first}, it'll appear here."
+    }
+  when "Threads"
+    {
+      icon: "threads",
+      headline: "No threads yet",
+      description: "Replies to messages you've participated in will appear here."
+    }
+  when "Bookmarks"
+    {
+      icon: "bookmark",
+      headline: "No bookmarks yet",
+      description: "Save messages for later by clicking the bookmark icon on any message."
+    }
+  else
+    {
+      icon: "messages-outlined",
+      headline: "All caught up",
+      description: "You don't have any notifications right now."
+    }
+  end
+%>
+
 <div id="message-area" class="message-area">
   <div class="message-area--empty min-width center">
-    <figure class="center pad">
-      <%= icon_tag "messages-outlined", class: "translucent" %>
-    </figure>
+    <div class="center pad" style="max-width: 28rem; margin: 0 auto;">
+      <figure class="center" style="margin-bottom: 1.5rem; text-align: center;">
+        <%= icon_tag empty_state[:icon], class: "translucent", style: "--icon-size: 6rem; opacity: 0.3;" %>
+      </figure>
+
+      <div class="center" style="text-align: center;">
+        <h2 class="txt-large" style="margin-bottom: 0.5rem; font-weight: 600;"><%= empty_state[:headline] %></h2>
+        <p class="txt-muted" style="line-height: 1.5;"><%= empty_state[:description] %></p>
+      </div>
+    </div>
   </div>
 
   <%= yield :messages %>
