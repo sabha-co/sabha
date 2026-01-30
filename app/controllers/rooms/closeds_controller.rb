@@ -15,8 +15,8 @@ class Rooms::ClosedsController < RoomsController
   def new
     @room  = Rooms::Closed.new(name: DEFAULT_ROOM_NAME)
     @selected_users = [ Current.user ]
-    @unselected_users = User.active.where.not(id: Current.user.id).includes(avatar_attachment: :blob).ordered.limit(10)
-    @total_user_count = User.active.count
+    @unselected_users = User.active.verified.where.not(id: Current.user.id).includes(avatar_attachment: :blob).ordered.limit(10)
+    @total_user_count = User.active.verified.count
   end
 
   def users
@@ -37,8 +37,8 @@ class Rooms::ClosedsController < RoomsController
   def edit
     @selected_users = @room.users.active.includes(avatar_attachment: :blob).ordered
     selected_ids = @selected_users.pluck(:id)
-    @unselected_users = User.active.where.not(id: selected_ids).includes(avatar_attachment: :blob).ordered.limit(10)
-    @total_user_count = User.active.count
+    @unselected_users = User.active.verified.where.not(id: selected_ids).includes(avatar_attachment: :blob).ordered.limit(10)
+    @total_user_count = User.active.verified.count
   end
 
   def update
@@ -53,7 +53,7 @@ class Rooms::ClosedsController < RoomsController
     def search_users(query, exclude_ids: [])
       return [] if query.blank?
 
-      scope = User.active.filtered_by(query)
+      scope = User.active.verified.filtered_by(query)
       scope = scope.where.not(id: exclude_ids) if exclude_ids.present?
       scope.includes(avatar_attachment: :blob).ordered.limit(USER_SEARCH_LIMIT)
     end

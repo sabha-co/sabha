@@ -6,7 +6,7 @@ class Accounts::UsersController < ApplicationController
 
   def index
     @badges = Badge.ordered.includes(:users).to_a
-    @total_members = User.without_bots.active.count
+    @total_members = User.without_bots.active.verified.count
 
     if searching?
       search_users

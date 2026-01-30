@@ -116,10 +116,10 @@ class UsersController < ApplicationController
 
     def set_member_counts
       @online_user_count = Rails.cache.fetch("users/online_count", expires_in: 5.minutes) do
-        User.active.where(last_authenticated_at: 24.hours.ago..).count
+        User.active.verified.where(last_authenticated_at: 24.hours.ago..).count
       end
       @member_count = Rails.cache.fetch("users/member_count", expires_in: 5.minutes) do
-        User.active.count
+        User.active.verified.count
       end
     end
 end
