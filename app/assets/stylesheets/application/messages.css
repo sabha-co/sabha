@@ -376,6 +376,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex-shrink: 1;
+  min-inline-size: 0;
+}
+
+.message__heading > .txt-x-small {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .message__permalink {
@@ -385,6 +392,7 @@
   opacity: 0.5;
   text-decoration: none;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .message__body {
