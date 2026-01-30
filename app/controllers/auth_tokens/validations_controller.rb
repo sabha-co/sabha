@@ -13,7 +13,7 @@ class AuthTokens::ValidationsController < ApplicationController
   def create
     auth_token = AuthToken.lookup(email_address: session[:otp_email_address], token: params[:token], code: params[:code])
 
-    if auth_token
+    if auth_token && auth_token.user.active?
       auth_token.use!
       session.delete(:otp_email_address)
 

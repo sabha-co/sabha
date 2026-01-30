@@ -3,6 +3,7 @@ class UsersController < ApplicationController
   include EmailValidation
 
   require_unauthenticated_access only: %i[ new create ]
+  rate_limit to: 10, within: 1.hour, only: :create, with: -> { redirect_to new_session_url, alert: "Too many signup attempts. Please try again later." }
 
   before_action :set_user, only: :show
   before_action :set_join_code, only: %i[ new create ]
