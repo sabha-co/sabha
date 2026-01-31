@@ -36,11 +36,16 @@ class InboxesController < ApplicationController
   end
 
   def clear
-    Current.user.mark_inbox_as_read(
-      messages_loaded_at: session[:inbox_last_loaded_message_created_at],
-      notifications_loaded_at: session[:inbox_last_loaded_notification_created_at],
-      mentions_loaded_at: session[:inbox_last_loaded_mention_created_at]
-    )
+    case params[:scope]
+    when "mentions"
+      Current.user.mark_mentions_as_read(session[:inbox_last_loaded_mention_created_at])
+    else
+      Current.user.mark_inbox_as_read(
+        messages_loaded_at: session[:inbox_last_loaded_message_created_at],
+        notifications_loaded_at: session[:inbox_last_loaded_notification_created_at],
+        mentions_loaded_at: session[:inbox_last_loaded_mention_created_at]
+      )
+    end
 
     redirect_back(fallback_location: mentions_inbox_path) unless params[:stay]
   end

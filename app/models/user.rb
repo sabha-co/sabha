@@ -41,6 +41,20 @@ class User < ApplicationRecord
       .distinct
   end
 
+  # Marks only rooms with unread mentions as read.
+  # Only marks as read if there were no non-mention messages in the window
+  # (avoids accidentally marking unread messages as read when user only viewed mentions)
+  def mark_mentions_as_read(loaded_at)
+    mentions_until = freshness_checked_time(loaded_at)
+
+    memberships.unread.with_has_unread_notifications.each do |m|
+      next unless m.has_unread_notifications?
+
+      non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, mentions_until)
+      m.read_until(mentions_until) if non_mentions.none?
+    end
+  end
+
   # Marks inbox as read up to the timestamps when messages were last loaded.
   # Uses stale detection: if timestamp is > 1 hour old, uses current time instead
   # (user likely left the page open without interacting).

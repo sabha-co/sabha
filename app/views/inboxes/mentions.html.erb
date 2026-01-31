@@ -1,5 +1,9 @@
 <% @page_title = "Mentions" %>
-<%= render "inboxes/nav", title: "Mentions" %>
+<%= render layout: "inboxes/nav", locals: { title: "Mentions" } do %>
+  <%= button_to clear_inbox_path(scope: "mentions"), class: "btn", title: "Mark mentions as read" do %>
+    <%= icon_tag "check" %>
+  <% end %>
+<% end %>
 
 <% content_for :messages do %>
   <%= search_results_tag("inbox", paged_inbox_mentions_url, highlight_mentions: true) do %>
