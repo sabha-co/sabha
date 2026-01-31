@@ -1,18 +1,18 @@
 class InboxesController < ApplicationController
-  before_action :set_message_pagination_anchors, only: %i[ mentions notifications messages ]
+  before_action :set_message_pagination_anchors, only: %i[ activity notifications messages ]
   before_action :set_bookmark_pagination_anchors, only: %i[ bookmarks ]
   before_action :set_sidebar_memberships
 
   def show
     clear_last_loaded_message_timestamps
 
-    redirect_to mentions_inbox_path
+    redirect_to activity_inbox_path
   end
 
-  def mentions
-    @messages = find_messages_with(Inbox::MentionsQuery)
+  def activity
+    @messages = find_messages_with(Inbox::ActivityQuery)
 
-    track_last_loaded_message :inbox_last_loaded_mention_created_at
+    track_last_loaded_message :inbox_last_loaded_activity_created_at
   end
 
   def threads
@@ -37,17 +37,17 @@ class InboxesController < ApplicationController
 
   def clear
     case params[:scope]
-    when "mentions"
-      Current.user.mark_mentions_as_read(session[:inbox_last_loaded_mention_created_at])
+    when "activity"
+      Current.user.mark_activity_as_read(session[:inbox_last_loaded_activity_created_at])
     else
       Current.user.mark_inbox_as_read(
         messages_loaded_at: session[:inbox_last_loaded_message_created_at],
         notifications_loaded_at: session[:inbox_last_loaded_notification_created_at],
-        mentions_loaded_at: session[:inbox_last_loaded_mention_created_at]
+        activity_loaded_at: session[:inbox_last_loaded_activity_created_at]
       )
     end
 
-    redirect_back(fallback_location: mentions_inbox_path) unless params[:stay]
+    redirect_back(fallback_location: activity_inbox_path) unless params[:stay]
   end
 
   private
@@ -91,7 +91,7 @@ class InboxesController < ApplicationController
     end
 
     def clear_last_loaded_message_timestamps
-      session.delete :inbox_last_loaded_mention_created_at
+      session.delete :inbox_last_loaded_activity_created_at
       session.delete :inbox_last_loaded_notification_created_at
       session.delete :inbox_last_loaded_message_created_at
     end

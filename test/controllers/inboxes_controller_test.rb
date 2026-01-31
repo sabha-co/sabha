@@ -12,31 +12,31 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # Show action tests
   # ===================
 
-  test "show redirects to mentions" do
+  test "show redirects to activity" do
     get inbox_url
-    assert_redirected_to mentions_inbox_path
+    assert_redirected_to activity_inbox_path
   end
 
   test "show clears last loaded message timestamps" do
-    # Set some session values first by visiting mentions
-    get mentions_inbox_url
+    # Set some session values first by visiting activity
+    get activity_inbox_url
     assert_response :success
 
     # Now visit show - should clear timestamps and redirect
     get inbox_url
-    assert_redirected_to mentions_inbox_path
+    assert_redirected_to activity_inbox_path
   end
 
   # ===================
-  # Mentions tests
+  # Activity tests
   # ===================
 
-  test "mentions returns success" do
-    get mentions_inbox_url
+  test "activity returns success" do
+    get activity_inbox_url
     assert_response :success
   end
 
-  test "mentions shows messages mentioning current user" do
+  test "activity shows messages mentioning current user" do
     room = rooms(:pets)
 
     # Create a message that mentions david
@@ -46,13 +46,13 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "mention_test_1"
     )
 
-    get mentions_inbox_url
+    get activity_inbox_url
     assert_response :success
     # The mention is rendered as HTML, check for the unique marker text
     assert_match "unique marker 12345", response.body
   end
 
-  test "mentions excludes messages created by current user" do
+  test "activity excludes messages created by current user" do
     room = rooms(:pets)
 
     # Create a message where david mentions himself
@@ -62,13 +62,13 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "self_mention_test"
     )
 
-    get mentions_inbox_url
+    get activity_inbox_url
     assert_response :success
     # Self-created messages should not appear
     assert_no_match "self mention", response.body
   end
 
-  test "mentions includes direct messages from other users" do
+  test "activity includes direct messages from other users" do
     dm_room = rooms(:david_and_jason)
     dm_message = dm_room.messages.create!(
       body: "Hey David direct message!",
@@ -76,7 +76,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "dm_test_1"
     )
 
-    get mentions_inbox_url
+    get activity_inbox_url
     assert_response :success
     assert_match "Hey David direct message!", response.body
   end
@@ -99,7 +99,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     room.reload
     assert room.users.include?(kevin), "Kevin should now be a member of pets after being mentioned"
 
-    get mentions_inbox_url
+    get activity_inbox_url
     assert_response :success
     # Kevin CAN see the mention because he was auto-added to the room
     assert_match "you can see this because mentioning adds you", response.body
@@ -260,12 +260,12 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     membership = room.memberships.find_by(user: @david)
     membership.update!(unread_at: 1.hour.ago)
 
-    # First visit mentions to set the session timestamp
-    get mentions_inbox_url
+    # First visit activity to set the session timestamp
+    get activity_inbox_url
 
     # Then clear
     post clear_inbox_url
-    assert_redirected_to mentions_inbox_path
+    assert_redirected_to activity_inbox_path
 
     membership.reload
     assert membership.read?, "Membership should be marked as read"
@@ -276,12 +276,12 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     membership = room.memberships.find_by(user: @david)
     membership.update!(unread_at: 1.hour.ago)
 
-    get mentions_inbox_url
+    get activity_inbox_url
     post clear_inbox_url, params: { stay: true }
     assert_response :success
   end
 
-  test "clear with scope mentions only clears rooms with mentions" do
+  test "clear with scope activity only clears rooms with activity" do
     # Room with mention
     room_with_mention = rooms(:pets)
     room_with_mention.messages.create!(
@@ -297,11 +297,11 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     membership_without_mention = room_without_mention.memberships.find_by(user: @david)
     membership_without_mention.update!(unread_at: 1.hour.ago)
 
-    # Visit mentions page to set session timestamp
-    get mentions_inbox_url
+    # Visit activity page to set session timestamp
+    get activity_inbox_url
 
-    # Clear only mentions
-    post clear_inbox_url, params: { scope: "mentions" }
+    # Clear only activity
+    post clear_inbox_url, params: { scope: "activity" }
 
     membership_with_mention.reload
     membership_without_mention.reload
@@ -314,7 +314,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # Pagination tests
   # ===================
 
-  test "mentions supports before pagination" do
+  test "activity supports before pagination" do
     room = rooms(:pets)
 
     messages = 3.times.map do |i|
@@ -325,11 +325,11 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       )
     end
 
-    get mentions_inbox_url, params: { before: messages.last.id }
+    get activity_inbox_url, params: { before: messages.last.id }
     assert_response :success
   end
 
-  test "mentions supports after pagination" do
+  test "activity supports after pagination" do
     room = rooms(:pets)
 
     messages = 3.times.map do |i|
@@ -340,7 +340,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       )
     end
 
-    get mentions_inbox_url, params: { after: messages.first.id }
+    get activity_inbox_url, params: { after: messages.first.id }
     assert_response :success
   end
 end

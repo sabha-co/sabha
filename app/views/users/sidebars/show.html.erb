@@ -2,8 +2,8 @@
   <%= turbo_stream_from :rooms %>
   <%= turbo_stream_from Current.user, :rooms %>
 
-  <div data-controller="mentions-indicator"
-       data-action="rooms-list:unread@window->mentions-indicator#update rooms-list:read@window->mentions-indicator#update rooms-list:addBadge@window->mentions-indicator#update">
+  <div data-controller="activity-indicator"
+       data-action="rooms-list:unread@window->activity-indicator#update rooms-list:read@window->activity-indicator#update rooms-list:addBadge@window->activity-indicator#update">
     <div class="sidebar__container overflow-y overflow-hide-scrollbar"
         data-controller="badge-dot maintain-scroll debounce-updates"
         data-badge-dot-unread-class="badge"
@@ -80,10 +80,10 @@
 
   <div class="sidebar__tools d-hotwire-native-none">
     <div class="sidebar__tool-container">
-      <%= link_to inbox_path, class: "btn sidebar__tool", data: { mentions_indicator_target: "icon" } do %>
+      <%= link_to inbox_path, class: "btn sidebar__tool", data: { activity_indicator_target: "icon" } do %>
         <%= icon_tag "mentions" %>
-        <span class="for-screen-reader">Mentions</span>
-        <span class="sidebar__tool-label">Mentions</span>
+        <span class="for-screen-reader">Activity</span>
+        <span class="sidebar__tool-label">Activity</span>
       <% end %>
 
       <%= link_to threads_inbox_path, class: "btn sidebar__tool" do %>

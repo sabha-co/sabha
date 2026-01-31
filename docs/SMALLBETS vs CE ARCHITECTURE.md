@@ -121,7 +121,7 @@ Small Bets has minimal environment configuration with hardcoded branding.
 
 Both codebases include these Small Bets modifications:
 
-- Mentions tab and @everyone mentions
+- Activity tab and @everyone mentions
 - Bookmarks
 - Boosts/Reboosts
 - Block users

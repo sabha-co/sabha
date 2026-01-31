@@ -54,7 +54,7 @@ Current.session   # Available throughout application
 
 ### Query Objects
 Complex queries are extracted into query objects in `app/models/`:
-- `Inbox::MentionsQuery`, `Inbox::ThreadsQuery`, `Inbox::BookmarksQuery`, `Inbox::MessagesQuery` - Inbox filtering
+- `Inbox::ActivityQuery`, `Inbox::ThreadsQuery`, `Inbox::BookmarksQuery`, `Inbox::MessagesQuery` - Inbox filtering
 - `SidebarMemberships` - Sidebar room list queries
 
 ### Turbo Streams for Real-time Updates
@@ -138,7 +138,7 @@ app/frontend/
 - `RoomListChannel` - Sidebar room list updates
 - `UserUnreadRoomsChannel` - User-scoped unread notifications
 - `TypingNotificationsChannel` - "User is typing..." indicators
-- `InboxMentionsChannel` & `InboxThreadsChannel` - Inbox real-time updates
+- `InboxActivityChannel` & `InboxThreadsChannel` - Inbox real-time updates
 
 ### Connection
 Authentication via cookie-based session in `ApplicationCable::Connection`:
@@ -275,7 +275,7 @@ This keeps the migration history clean and avoids unnecessary migration churn fo
 
 ## Special Features (from Small Bets fork)
 
-- **Mentions Tab** - Dedicated inbox for all @mentions
+- **Activity Tab** - Dedicated inbox for @mentions and DMs
 - **Email Notifications** - Daily digest of unread mentions/DMs
 - **Bookmarks** - Save messages for later
 - **Reboost** - One-click message resharing

@@ -5,7 +5,7 @@ import MessagePaginator from "models/message_paginator"
 export default class extends Controller {
   static targets = [ "messages" ]
   static classes = [ "firstOfDay", "me", "threaded", "mentioned", "formatted", "loadingUp", "loadingDown" ]
-  static values = { pageUrl: String }
+  static values = { pageUrl: String, threadMessages: { type: Boolean, default: true } }
 
   #paginator
   #formatter
@@ -31,6 +31,6 @@ export default class extends Controller {
   }
 
   messageTargetConnected(target) {
-    this.#formatter.format(target, ThreadStyle.thread)
+    this.#formatter.format(target, this.threadMessagesValue ? ThreadStyle.thread : ThreadStyle.none)
   }
 }

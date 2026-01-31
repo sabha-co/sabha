@@ -77,7 +77,7 @@
     margin: 0;
   }
 
-  &.has-unread-mentions::after {
+  &.has-unread-activity::after {
     --size: 1em;
 
     aspect-ratio: 1;

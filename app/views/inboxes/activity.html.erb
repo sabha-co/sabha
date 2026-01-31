@@ -1,0 +1,15 @@
+<% @page_title = "Activity" %>
+<%= render layout: "inboxes/nav", locals: { title: "Activity" } do %>
+  <%= button_to clear_inbox_path(scope: "activity"), class: "btn", title: "Mark activity as read" do %>
+    <%= icon_tag "check" %>
+  <% end %>
+<% end %>
+
+<% content_for :messages do %>
+  <%= search_results_tag("inbox", paged_inbox_activity_index_url, highlight_mentions: true, thread_messages: false) do %>
+    <%= render collection: @messages, partial: '/messages/message', cached: -> message { message_cache_key(message, room_id: "inbox_activity_#{Current.user.id}", show_room_name: true) }, locals: { timestamp_style: :long_datetime, show_date_separator: false } %>
+  <% end %>
+  <%= turbo_stream_from Current.user, :inbox_activity %>
+<% end %>
+
+<%= render template: 'inboxes/show' %>

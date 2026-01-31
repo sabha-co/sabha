@@ -175,9 +175,9 @@ Each room has an involvement level that controls notifications and where it appe
 
 The inbox helps you track important messages across all rooms. Access it from the `...` menu in the "All Rooms" header or the bottom toolbar.
 
-### Mentions
+### Activity
 
-**What it shows:** Messages where you were specifically called out.
+**What it shows:** Messages where you were specifically called out, plus Direct Messages.
 
 **You appear here when:**
 - Someone types `@yourname` in a message
@@ -188,9 +188,9 @@ The inbox helps you track important messages across all rooms. Access it from th
 **Key behaviors:**
 - Messages from rooms you're not in will auto-add you to that room
 - Self-mentions don't appear (you won't see your own @mentions)
-- Real-time updates as new mentions arrive
+- Real-time updates as new activity arrives
 
-**Unread indicator:** A badge appears on the Mentions icon when you have unread mentions **or unread Direct Messages**.
+**Unread indicator:** A badge appears on the Activity icon when you have unread @mentions **or unread Direct Messages**.
 
 ---
 
@@ -323,7 +323,7 @@ All room and inbox views update instantly via WebSocket connections:
 ├─────────────────────────────┤
 │  ▶ Hidden Rooms (2)         │  ← Collapsed, click to expand
 └─────────────────────────────┘
-│  [Mentions] [Threads] [Bookmarks] [Profile] │  ← Bottom toolbar
+│  [Activity] [Threads] [Bookmarks] [Profile] │  ← Bottom toolbar
 └─────────────────────────────────────────────┘
 ```
 
@@ -395,7 +395,7 @@ Campfire-CE uses location-focused labels ("My Rooms"/"All Rooms") vs notificatio
 
 | Feature | Once Campfire | Campfire-CE |
 |---------|---------------|-------------|
-| Mentions tab | ❌ | ✅ Added |
+| Activity tab | ❌ | ✅ Added |
 | Notifications tab | ❌ | ✅ Added |
 | All Messages tab | ❌ | ✅ Added |
 | Threads tab | ❌ | ✅ Added |
@@ -403,8 +403,8 @@ Campfire-CE uses location-focused labels ("My Rooms"/"All Rooms") vs notificatio
 | Email digest | ❌ | ✅ Added (twice daily) |
 | Mark all as seen | ❌ | ✅ Added |
 
-**Inbox system:** Campfire-CE adds a complete inbox system with dedicated pages for mentions, notifications, all messages, threads, and bookmarks. Each has:
-- Dedicated query objects (`Inbox::MentionsQuery`, `Inbox::MessagesQuery`, etc.)
+**Inbox system:** Campfire-CE adds a complete inbox system with dedicated pages for activity, notifications, all messages, threads, and bookmarks. Each has:
+- Dedicated query objects (`Inbox::ActivityQuery`, `Inbox::MessagesQuery`, etc.)
 - Real-time ActionCable channels
 - Cursor-based pagination
 
@@ -443,7 +443,7 @@ Campfire-CE extracts complex queries into dedicated objects:
 
 ```
 app/models/inbox/
-├── mentions_query.rb    # User's mentioning messages
+├── activity_query.rb    # User's activity (mentions + DMs)
 ├── threads_query.rb     # User's thread involvement
 ├── bookmarks_query.rb   # User's bookmarked messages
 └── messages_query.rb    # General message queries
@@ -825,23 +825,23 @@ end
 
 ```
 app/controllers/
-├── inboxes_controller.rb        # Base inbox with mentions, notifications, messages, threads, bookmarks, clear actions
+├── inboxes_controller.rb        # Base inbox with activity, notifications, messages, threads, bookmarks, clear actions
 └── inboxes/
-    ├── mentions_controller.rb   # Dedicated mentions (alternative entry point)
+    ├── activity_controller.rb   # Dedicated activity (alternative entry point)
     ├── notifications_controller.rb  # Messages from "everything" involvement rooms
     ├── messages_controller.rb   # All messages across all rooms
     ├── threads_controller.rb    # Thread inbox
     └── bookmarks_controller.rb  # Bookmarks inbox
 
 app/models/inbox/
-├── mentions_query.rb    # @mention queries
+├── activity_query.rb    # Activity queries (mentions + DMs)
 ├── threads_query.rb     # Thread involvement queries
 ├── bookmarks_query.rb   # Bookmark queries
 └── messages_query.rb    # Shared message queries (used by notifications + all messages)
 
 app/views/inboxes/
 ├── show.html.erb        # Main inbox redirect
-├── mentions.html.erb    # Mentions page
+├── activity.html.erb    # Activity page
 ├── notifications.html.erb   # Notifications page
 ├── messages.html.erb    # All messages page
 ├── threads.html.erb     # Threads page
@@ -850,9 +850,9 @@ app/views/inboxes/
 
 ---
 
-### Mentions Architecture
+### Activity & Mentions Architecture
 
-**Data model:**
+**Data model (Mention records):**
 
 **File:** `app/models/mention.rb`
 ```ruby
@@ -898,11 +898,11 @@ module Message::Mentionee
 end
 ```
 
-**Query object:**
+**Query object (Activity inbox):**
 
-**File:** `app/models/inbox/mentions_query.rb`
+**File:** `app/models/inbox/activity_query.rb`
 ```ruby
-class Inbox::MentionsQuery
+class Inbox::ActivityQuery
   def initialize(user)
     @user = user
   end
@@ -922,11 +922,11 @@ end
 
 **ActionCable channel:**
 
-**File:** `app/channels/inbox_mentions_channel.rb`
+**File:** `app/channels/inbox_activity_channel.rb`
 ```ruby
-class InboxMentionsChannel < ApplicationCable::Channel
+class InboxActivityChannel < ApplicationCable::Channel
   def subscribed
-    stream_for current_user, :inbox_mentions  # Uses stream_for, not stream_from
+    stream_for current_user, :inbox_activity  # Uses stream_for, not stream_from
   end
 end
 ```
@@ -935,18 +935,18 @@ end
 
 **File:** `app/models/message/broadcasts.rb`
 ```ruby
-def broadcast_to_inbox_mentions
+def broadcast_to_inbox_activity
   return if mentionee_ids.blank?
   return if mentions_everyone?
 
   mentionees.each do |user|
     next if user.id == creator_id  # Skip self-mentions
 
-    broadcast_remove_to user, :inbox_mentions,
+    broadcast_remove_to user, :inbox_activity,
                        target: ActionView::RecordIdentifier.dom_id(self)
 
-    broadcast_append_to user, :inbox_mentions,
-                        target: "inbox",  # Note: targets "inbox", not "inbox_mentions"
+    broadcast_append_to user, :inbox_activity,
+                        target: "inbox",  # Note: targets "inbox", not "inbox_activity"
                         partial: "messages/message",
                         locals: { message: self, timestamp_style: :long_datetime }
   end
@@ -1106,7 +1106,7 @@ app/channels/
 ├── room_list_channel.rb  # Sidebar updates
 ├── user_unread_rooms_channel.rb  # User-scoped unread notifications
 ├── typing_notifications_channel.rb
-├── inbox_mentions_channel.rb
+├── inbox_activity_channel.rb
 ├── inbox_threads_channel.rb
 └── inbox_bookmarks_channel.rb
 ```
@@ -1241,7 +1241,7 @@ app/
 │   │   ├── mentionee.rb           # Mention extraction
 │   │   └── broadcasts.rb          # Real-time updates
 │   ├── inbox/
-│   │   ├── mentions_query.rb
+│   │   ├── activity_query.rb
 │   │   ├── threads_query.rb
 │   │   └── bookmarks_query.rb
 │   └── sidebar_memberships.rb
@@ -1258,7 +1258,7 @@ app/
 │   │   └── merges_controller.rb
 │   ├── inboxes_controller.rb
 │   ├── inboxes/
-│   │   ├── mentions_controller.rb
+│   │   ├── activity_controller.rb
 │   │   ├── threads_controller.rb
 │   │   ├── bookmarks_controller.rb
 │   │   ├── messages_controller.rb
@@ -1271,7 +1271,7 @@ app/
 │       └── involvements_helper.rb  # Cycling logic
 ├── channels/
 │   ├── room_channel.rb
-│   ├── inbox_mentions_channel.rb
+│   ├── inbox_activity_channel.rb
 │   ├── inbox_threads_channel.rb
 │   └── inbox_bookmarks_channel.rb
 └── views/
@@ -1286,7 +1286,7 @@ app/
     │       ├── _edit.html.erb          # Shared edit layout with involvement controls
     │       └── _form.html.erb
     ├── inboxes/
-    │   ├── mentions.html.erb
+    │   ├── activity.html.erb
     │   ├── threads.html.erb
     │   └── bookmarks.html.erb
     └── users/
@@ -1310,11 +1310,11 @@ app/
    → sync_mentions (creates Mention records)
    → involve_mentionees_in_room (adds users to room)
    → broadcast_to_room (Turbo Stream append)
-   → broadcast_to_inbox_mentions (per-user append)
+   → broadcast_to_inbox_activity (per-user append)
 
 4. ActionCable delivers to:
    → RoomChannel subscribers (room view)
-   → InboxMentionsChannel subscribers (mentions inbox)
+   → InboxActivityChannel subscribers (activity inbox)
 ```
 
 #### Changing Room Involvement

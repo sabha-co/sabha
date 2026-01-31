@@ -5,11 +5,11 @@
 
 <%
   empty_state = case @page_title
-  when "Mentions"
+  when "Activity"
     {
       icon: "mentions",
-      headline: "No mentions yet",
-      description: "When someone mentions you with @#{Current.user.name.split.first}, it'll appear here."
+      headline: "No activity yet",
+      description: "When someone mentions you with @#{Current.user.name.split.first} or sends you a DM, it'll appear here."
     }
   when "Threads"
     {

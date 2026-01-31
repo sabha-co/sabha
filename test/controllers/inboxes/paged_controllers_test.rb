@@ -8,15 +8,15 @@ class Inboxes::PagedControllersTest < ActionDispatch::IntegrationTest
   end
 
   # ===================
-  # Paged Mentions
+  # Paged Activity
   # ===================
 
-  test "paged mentions returns success" do
-    get paged_inbox_mentions_url
+  test "paged activity returns success" do
+    get paged_inbox_activity_index_url
     assert_response :success
   end
 
-  test "paged mentions returns messages mentioning user" do
+  test "paged activity returns messages mentioning user" do
     room = rooms(:pets)
     room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)} paged mention marker</div>",
@@ -24,12 +24,12 @@ class Inboxes::PagedControllersTest < ActionDispatch::IntegrationTest
       client_message_id: "paged_mention_1"
     )
 
-    get paged_inbox_mentions_url
+    get paged_inbox_activity_index_url
     assert_response :success
     assert_match "paged mention marker", response.body
   end
 
-  test "paged mentions supports pagination" do
+  test "paged activity supports pagination" do
     room = rooms(:pets)
     message = room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
@@ -37,7 +37,7 @@ class Inboxes::PagedControllersTest < ActionDispatch::IntegrationTest
       client_message_id: "paged_mention_paginate"
     )
 
-    get paged_inbox_mentions_url, params: { before: message.id }
+    get paged_inbox_activity_index_url, params: { before: message.id }
     assert_response :success
   end
 

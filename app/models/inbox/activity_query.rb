@@ -1,5 +1,5 @@
 # Fetches messages where the user was @mentioned, mentioned via @everyone, or received as a direct message.
-class Inbox::MentionsQuery
+class Inbox::ActivityQuery
   def initialize(user)
     @user = user
   end

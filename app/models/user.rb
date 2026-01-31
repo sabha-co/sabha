@@ -41,17 +41,23 @@ class User < ApplicationRecord
       .distinct
   end
 
-  # Marks only rooms with unread mentions as read.
-  # Only marks as read if there were no non-mention messages in the window
-  # (avoids accidentally marking unread messages as read when user only viewed mentions)
-  def mark_mentions_as_read(loaded_at)
-    mentions_until = freshness_checked_time(loaded_at)
+  # Marks only rooms with unread activity (mentions + DMs) as read.
+  # For DMs: always marks as read (all DM messages are "activity")
+  # For other rooms: only marks as read if there were no non-mention messages in the window
+  # (avoids accidentally marking unread messages as read when user only viewed activity)
+  def mark_activity_as_read(loaded_at)
+    activity_until = freshness_checked_time(loaded_at)
 
     memberships.unread.with_has_unread_notifications.each do |m|
       next unless m.has_unread_notifications?
 
-      non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, mentions_until)
-      m.read_until(mentions_until) if non_mentions.none?
+      # DMs are always "activity" - no need to check for non-mentions
+      if m.room.is_a?(Rooms::Direct)
+        m.read_until(activity_until)
+      else
+        non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, activity_until)
+        m.read_until(activity_until) if non_mentions.none?
+      end
     end
   end
 
@@ -59,12 +65,13 @@ class User < ApplicationRecord
   # Uses stale detection: if timestamp is > 1 hour old, uses current time instead
   # (user likely left the page open without interacting).
   #
-  # For mentions: only marks as read if the room had no non-mention messages in the window
-  # (avoids accidentally marking unread messages as read when user only viewed mentions)
-  def mark_inbox_as_read(messages_loaded_at:, notifications_loaded_at:, mentions_loaded_at:)
+  # For activity: DMs are always marked as read. For other rooms, only marks as read
+  # if the room had no non-mention messages in the window (avoids accidentally marking
+  # unread messages as read when user only viewed activity)
+  def mark_inbox_as_read(messages_loaded_at:, notifications_loaded_at:, activity_loaded_at:)
     messages_until = freshness_checked_time(messages_loaded_at)
     notifications_until = freshness_checked_time(notifications_loaded_at)
-    mentions_until = freshness_checked_time(mentions_loaded_at)
+    activity_until = freshness_checked_time(activity_loaded_at)
 
     # Mark all visible rooms as read up to when messages were loaded
     memberships.unread.each { |m| m.read_until(messages_until) }
@@ -72,10 +79,14 @@ class User < ApplicationRecord
     # Mark notification rooms as read up to when notifications were loaded
     memberships.notifications_on.unread.each { |m| m.read_until(notifications_until) }
 
-    # Mark mention-only rooms as read, but only if there were no non-mention messages
+    # Mark activity rooms as read: DMs always, others only if no non-mention messages
     memberships.unread.each do |m|
-      non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, mentions_until)
-      m.read_until(mentions_until) if non_mentions.none?
+      if m.room.is_a?(Rooms::Direct)
+        m.read_until(activity_until)
+      else
+        non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, activity_until)
+        m.read_until(activity_until) if non_mentions.none?
+      end
     end
   end
 

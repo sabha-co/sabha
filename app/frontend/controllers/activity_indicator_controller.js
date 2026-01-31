@@ -39,9 +39,9 @@ export default class extends Controller {
     const hasUnreadDirects = this.element.querySelectorAll('.direct.unread').length > 0
 
     if (hasUnreadMentions || hasUnreadDirects) {
-      this.iconTarget.classList.add('has-unread-mentions')
+      this.iconTarget.classList.add('has-unread-activity')
     } else {
-      this.iconTarget.classList.remove('has-unread-mentions')
+      this.iconTarget.classList.remove('has-unread-activity')
     }
   }
 }
