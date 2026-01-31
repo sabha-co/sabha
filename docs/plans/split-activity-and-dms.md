@@ -8,11 +8,15 @@ Separate the current Activity inbox into two distinct views:
 
 DMs will remain visible in the top sidebar row (horizontal scroll) AND be accessible via a new DMs inbox button.
 
-## Files to Modify
+## Implementation Status: ✅ Complete
+
+All planned features have been implemented. This document now reflects the actual implementation.
+
+## Files Modified/Created
 
 ### 1. Models
 
-**`app/models/inbox/activity_query.rb`** - Exclude DMs
+**`app/models/inbox/activity_query.rb`** - Excludes DMs
 ```ruby
 def call
   user.mentioning_messages
@@ -38,7 +42,10 @@ class Inbox::DirectMessagesQuery
         .joins(:room)
         .merge(Room.active)
         .with_has_unread_notifications
-        .includes(room: { memberships: { user: { avatar_attachment: { blob: :variant_records } } } })
+        .includes(room: [
+          { memberships: { user: { avatar_attachment: { blob: :variant_records } } } },
+          { last_message: [ :rich_text_body, { creator: { avatar_attachment: { blob: :variant_records } } } ] }
+        ])
         .order("rooms.last_active_at DESC")
   end
 
@@ -47,8 +54,32 @@ class Inbox::DirectMessagesQuery
 end
 ```
 
-**`app/models/user.rb`** - Update `mark_activity_as_read` to only handle mentions (remove DM logic we just added)
+**`app/models/rooms/direct.rb`** - Added batch member loading
 ```ruby
+# Returns users in this DM room excluding the given user, with avatars eager loaded
+def members_for_display(excluding:)
+  memberships.active
+    .includes(user: { avatar_attachment: { blob: :variant_records } })
+    .map(&:user)
+    .reject { |u| u.id == excluding.id }
+end
+
+# Batch load members for multiple rooms, returning { room_id => [users] }
+def self.members_for_display_by_room(room_ids, excluding:)
+  return {} if room_ids.empty?
+
+  Membership.active
+    .where(room_id: room_ids)
+    .includes(user: { avatar_attachment: { blob: :variant_records } })
+    .group_by(&:room_id)
+    .transform_values { |ms| ms.map(&:user).reject { |u| u.id == excluding.id } }
+end
+```
+
+**`app/models/user.rb`** - Updated mark as read methods
+```ruby
+# Marks only rooms with unread activity (@mentions) as read.
+# DMs are handled separately by mark_direct_messages_as_read.
 def mark_activity_as_read(loaded_at)
   activity_until = freshness_checked_time(loaded_at)
 
@@ -60,13 +91,13 @@ def mark_activity_as_read(loaded_at)
     m.read_until(activity_until) if non_mentions.none?
   end
 end
-```
 
-Add new method:
-```ruby
-def mark_direct_messages_as_read
+# Marks all direct message rooms as read up to the loaded timestamp.
+def mark_direct_messages_as_read(loaded_at)
+  dms_until = freshness_checked_time(loaded_at)
+
   memberships.unread.direct_rooms.each do |m|
-    m.read_until(Time.current)
+    m.read_until(dms_until)
   end
 end
 ```
@@ -93,38 +124,25 @@ end
 
 ### 3. Controllers
 
-**`app/controllers/inboxes_controller.rb`** - Add `direct_messages` action
+**`app/controllers/inboxes_controller.rb`** - Added `direct_messages` action
 ```ruby
 def direct_messages
+  session[:inbox_last_loaded_dms_created_at] = Time.current.iso8601
   @memberships = Inbox::DirectMessagesQuery.new(Current.user).call
-  @direct_room_members = preload_direct_room_members(@memberships)
+  @direct_room_members = Rooms::Direct.members_for_display_by_room(
+    @memberships.map(&:room_id),
+    excluding: Current.user
+  )
 end
 
 def clear
   case params[:scope]
   when "activity"
     Current.user.mark_activity_as_read(session[:inbox_last_loaded_activity_created_at])
-  when "direct_messages"  # NEW
-    Current.user.mark_direct_messages_as_read
+  when "direct_messages"
+    Current.user.mark_direct_messages_as_read(session[:inbox_last_loaded_dms_created_at])
   else
     # ... existing logic
-  end
-  # ...
-end
-
-private
-
-def preload_direct_room_members(memberships)
-  return {} if memberships.empty?
-
-  room_ids = memberships.map(&:room_id)
-  all_memberships = Membership.active
-    .where(room_id: room_ids)
-    .includes(user: { avatar_attachment: { blob: :variant_records } })
-    .group_by(&:room_id)
-
-  all_memberships.transform_values do |ms|
-    ms.map(&:user).reject { |u| u.id == Current.user.id }
   end
 end
 ```
@@ -136,7 +154,10 @@ class Inboxes::DirectMessagesController < InboxesController
 
   def index
     @memberships = Inbox::DirectMessagesQuery.new(Current.user).call
-    @direct_room_members = preload_direct_room_members(@memberships)
+    @direct_room_members = Rooms::Direct.members_for_display_by_room(
+      @memberships.map(&:room_id),
+      excluding: Current.user
+    )
 
     render "inboxes/direct_messages/index"
   end
@@ -168,52 +189,13 @@ end
 ```
 
 **`app/views/inboxes/direct_messages/_conversation.html.erb`** - NEW FILE
-```erb
-<% members = direct_room_members[membership.room_id] || [] %>
-<%= link_to room_path(membership.room),
-            class: ["dm-conversation", "unread": membership.unread?],
-            id: dom_id(membership.room, :dm_inbox) do %>
-  <div class="dm-conversation__avatars">
-    <% if members.many? %>
-      <%= avatar_group_tag(members.first(3), size: 40) %>
-    <% elsif members.one? %>
-      <%= avatar_image_tag(members.first, size: 40) %>
-    <% else %>
-      <%= avatar_image_tag(Current.user, size: 40) %>
-    <% end %>
-  </div>
-
-  <div class="dm-conversation__details">
-    <div class="dm-conversation__names">
-      <%= members.any? ? members.map(&:name).to_sentence : "Note to self" %>
-    </div>
-    <div class="dm-conversation__preview txt-muted">
-      <% if (last_message = membership.room.messages.last) %>
-        <%= truncate(last_message.plain_text_body, length: 50) %>
-      <% end %>
-    </div>
-  </div>
-
-  <div class="dm-conversation__meta">
-    <span class="dm-conversation__time txt-small txt-muted">
-      <%= time_ago_in_words(membership.room.last_active_at) %>
-    </span>
-    <% if membership.unread? %>
-      <span class="dm-conversation__badge"></span>
-    <% end %>
-  </div>
-<% end %>
-```
+- Shows avatar (single or group), names, timestamp
+- Includes message preview with sender name and truncated text
+- Unread indicator badge
 
 **`app/views/inboxes/direct_messages/index.html.erb`** - NEW FILE (for paged/turbo)
-```erb
-<%= render partial: "inboxes/direct_messages/conversation",
-           collection: @memberships,
-           as: :membership,
-           locals: { direct_room_members: @direct_room_members } %>
-```
 
-**`app/views/inboxes/show.html.erb`** - Update empty state
+**`app/views/inboxes/show.html.erb`** - Updated empty state for DMs
 ```ruby
 when "DMs"
   {
@@ -223,53 +205,45 @@ when "DMs"
   }
 ```
 
-**`app/views/users/sidebars/show.html.erb`** - Add DMs button after Activity
+**`app/views/users/sidebars/show.html.erb`** - Added DMs button after Activity
 ```erb
-<%= link_to inbox_path, class: "btn sidebar__tool", data: { activity_indicator_target: "icon" } do %>
+<%= link_to inbox_path, class: "btn sidebar__tool", data: { unread_indicator_target: "activity" } do %>
   <%= icon_tag "mentions" %>
   <span class="for-screen-reader">Activity</span>
   <span class="sidebar__tool-label">Activity</span>
 <% end %>
 
-<%= link_to direct_messages_inbox_path, class: "btn sidebar__tool", data: { dms_indicator_target: "icon" } do %>
+<%= link_to direct_messages_inbox_path, class: "btn sidebar__tool", data: { unread_indicator_target: "dms" } do %>
   <%= icon_tag "messages" %>
   <span class="for-screen-reader">DMs</span>
   <span class="sidebar__tool-label">DMs</span>
 <% end %>
 ```
 
-Also wrap with separate indicator controller:
-```erb
-<div data-controller="activity-indicator dms-indicator" ...>
-```
-
 ### 5. JavaScript
 
-**`app/frontend/controllers/activity_indicator_controller.js`** - Only check mentions
-```javascript
-updateIndicator() {
-  // Only check for rooms with mentions badge (not DMs)
-  const hasUnreadMentions = this.element.querySelectorAll('.room.badge').length > 0
+**`app/frontend/controllers/unread_indicator_controller.js`** - NEW FILE (unified controller)
 
-  if (hasUnreadMentions) {
-    this.iconTarget.classList.add('has-unread-activity')
-  } else {
-    this.iconTarget.classList.remove('has-unread-activity')
-  }
-}
-```
+Instead of separate controllers for Activity and DMs indicators, a single generic controller handles both via configuration:
 
-**`app/frontend/controllers/dms_indicator_controller.js`** - NEW FILE
 ```javascript
 import { Controller } from "@hotwired/stimulus"
 
+// Generic unread indicator controller that toggles classes on named targets
+// based on whether elements matching their selectors exist in the sidebar.
+//
+// Usage:
+//   data-controller="unread-indicator"
+//   data-unread-indicator-indicators-value='[{"selector":".room.badge","class":"has-unread-activity","target":"activity"},{"selector":".direct.unread","class":"has-unread-dms","target":"dms"}]'
+//   data-unread-indicator-target="activity" (on the activity link)
+//   data-unread-indicator-target="dms" (on the dms link)
 export default class extends Controller {
-  static targets = [ "icon" ]
+  static targets = ["activity", "dms"]
+  static values = { indicators: Array }
 
   connect() {
-    this.updateIndicator()
-    this.observer = new MutationObserver(() => this.updateIndicator())
-
+    this.updateIndicators()
+    this.observer = new MutationObserver(() => this.updateIndicators())
     const sidebarContainer = this.element.querySelector('.sidebar__container')
     if (sidebarContainer) {
       this.observer.observe(sidebarContainer, {
@@ -286,73 +260,33 @@ export default class extends Controller {
   }
 
   update() {
-    this.updateIndicator()
+    this.updateIndicators()
   }
 
-  updateIndicator() {
-    const hasUnreadDirects = this.element.querySelectorAll('.direct.unread').length > 0
-
-    if (hasUnreadDirects) {
-      this.iconTarget.classList.add('has-unread-dms')
-    } else {
-      this.iconTarget.classList.remove('has-unread-dms')
-    }
+  updateIndicators() {
+    this.indicatorsValue.forEach(indicator => {
+      const target = this[`${indicator.target}Target`]
+      if (!target) return
+      const hasUnread = this.element.querySelectorAll(indicator.selector).length > 0
+      target.classList.toggle(indicator.class, hasUnread)
+    })
   }
 }
 ```
+
+**`app/frontend/controllers/activity_indicator_controller.js`** - DELETED (replaced by unified controller)
 
 ### 6. CSS
 
-**`app/assets/stylesheets/application/sidebar.css`** - Add DMs indicator style
-```css
-&.has-unread-dms::after {
-  /* Same styling as has-unread-activity */
-}
-```
+**`app/assets/stylesheets/application/sidebar.css`** - Added styles for:
+- `.has-unread-dms::after` indicator (same styling as `.has-unread-activity`)
+- `.dm-list` container
+- `.dm-conversation` card with hover/unread states
+- `.dm-conversation__avatar`, `__content`, `__header`, `__names`, `__time`, `__preview`, `__sender`, `__badge`
 
-**`app/assets/stylesheets/application/inbox.css`** or similar - Add DM conversation list styles
-```css
-.dm-conversation {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-}
+### 7. Channels
 
-.dm-conversation.unread {
-  background: var(--color-surface-hover);
-}
-
-.dm-conversation__details {
-  flex: 1;
-  min-width: 0;
-}
-
-.dm-conversation__names {
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dm-conversation__preview {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dm-conversation__badge {
-  width: 8px;
-  height: 8px;
-  background: var(--color-negative);
-  border-radius: 50%;
-}
-```
-
-### 7. Channels (Optional)
-
-**`app/channels/inbox_direct_messages_channel.rb`** - NEW FILE (if real-time updates needed)
+**`app/channels/inbox_direct_messages_channel.rb`** - NEW FILE
 ```ruby
 class InboxDirectMessagesChannel < ApplicationCable::Channel
   def subscribed
@@ -361,41 +295,40 @@ class InboxDirectMessagesChannel < ApplicationCable::Channel
 end
 ```
 
-### 8. Tests
+### 8. Jobs
 
-**`test/controllers/inboxes_controller_test.rb`**
-- Add tests for `direct_messages` action
-- Update `activity` tests to verify DMs are excluded
-- Add test for `clear` with `scope: "direct_messages"`
+**`app/jobs/broadcast_inbox_direct_messages_job.rb`** - NEW FILE (for real-time updates)
+
+### 9. Tests
+
+**`test/controllers/inboxes_controller_test.rb`** - Updated with:
+- Tests for `direct_messages` action
+- Tests verifying DMs are excluded from activity
+- Tests for `clear` with `scope: "direct_messages"`
 
 **`test/models/inbox/direct_messages_query_test.rb`** - NEW FILE
 
-## Execution Order
+## Key Implementation Decisions
 
-1. Create `Inbox::DirectMessagesQuery`
-2. Update `Inbox::ActivityQuery` to exclude DMs
-3. Update `User#mark_activity_as_read` (remove DM handling)
-4. Add `User#mark_direct_messages_as_read`
-5. Add routes
-6. Add controller action and new controller
-7. Create views (main + partial + paged)
-8. Update sidebar to add DMs button
-9. Split indicator controllers
-10. Add CSS styles
-11. Update/add tests
+| Decision | Rationale |
+|----------|-----------|
+| Unified `unread_indicator_controller.js` | More flexible and DRY than separate controllers. Supports any number of indicator types via configuration. |
+| `Rooms::Direct.members_for_display_by_room` | Class method for batch loading members avoids N+1 queries and encapsulates domain logic in the model. |
+| Message preview in conversation partial | Users requested preview text. Query updated to eager load `last_message` with creator to avoid N+1. |
+| CSS in `sidebar.css` | DM inbox styles relate to sidebar/tool navigation. Keeps related styles together. |
 
-## Verification
+## Verification Checklist
 
-1. Run `bin/rails test` - all tests pass
-2. Manual testing:
-   - Visit `/inbox/activity` - should show only @mentions (no DMs)
-   - Visit `/inbox/direct_messages` - should show DM conversation list
-   - Activity icon badge appears only for unread @mentions
-   - DMs icon badge appears only for unread DMs
-   - Mark as read on Activity clears mentions only
-   - Mark as read on DMs clears all DM unreads
-   - DMs still appear in top sidebar horizontal scroll
-   - Clicking a DM in the inbox navigates to the room
+- [x] `bin/rails test` - all tests pass
+- [x] Visit `/inbox/activity` - shows only @mentions (no DMs)
+- [x] Visit `/inbox/direct_messages` - shows DM conversation list
+- [x] Activity icon badge appears only for unread @mentions
+- [x] DMs icon badge appears only for unread DMs
+- [x] Mark as read on Activity clears mentions only
+- [x] Mark as read on DMs clears all DM unreads
+- [x] DMs still appear in top sidebar horizontal scroll
+- [x] Clicking a DM in the inbox navigates to the room
+- [x] Message preview shows in DM list
 
 ## Future Work (Deferred)
 

@@ -1,4 +1,5 @@
-# Fetches messages where the user was @mentioned, mentioned via @everyone, or received as a direct message.
+# Fetches messages where the user was @mentioned or mentioned via @everyone.
+# DMs are excluded - they have their own inbox view.
 class Inbox::ActivityQuery
   def initialize(user)
     @user = user
@@ -7,6 +8,7 @@ class Inbox::ActivityQuery
   def call
     user.mentioning_messages
         .without_created_by(user)
+        .where.not(rooms: { type: "Rooms::Direct" })
         .with_thread_summary
         .with_creator
   end

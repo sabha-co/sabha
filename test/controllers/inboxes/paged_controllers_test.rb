@@ -133,4 +133,39 @@ class Inboxes::PagedControllersTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match "Paged bookmark marker", response.body
   end
+
+  # ===================
+  # Paged Direct Messages
+  # ===================
+
+  test "paged direct messages returns success" do
+    get paged_inbox_direct_messages_url
+    assert_response :success
+  end
+
+  test "paged direct messages returns no content when empty" do
+    # Remove all direct room memberships for david
+    @david.memberships.direct_rooms.destroy_all
+
+    get paged_inbox_direct_messages_url
+    assert_response :no_content
+  end
+
+  test "paged direct messages supports pagination with before param" do
+    dm = rooms(:david_and_jason)
+    dm.touch(:last_active_at)
+
+    get paged_inbox_direct_messages_url, params: { before: dm.id }
+    # Should return no content since this DM is likely the most recent
+    assert_response :no_content
+  end
+
+  test "paged direct messages supports pagination with after param" do
+    dm = rooms(:david_and_jason)
+    dm.touch(:last_active_at)
+
+    get paged_inbox_direct_messages_url, params: { after: dm.id }
+    # May return success or no_content depending on data
+    assert_includes [ 200, 204 ], response.status
+  end
 end

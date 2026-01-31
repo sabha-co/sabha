@@ -68,17 +68,17 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "self mention", response.body
   end
 
-  test "activity includes direct messages from other users" do
+  test "activity excludes direct messages" do
     dm_room = rooms(:david_and_jason)
     dm_message = dm_room.messages.create!(
-      body: "Hey David direct message!",
+      body: "Hey David direct message excluded!",
       creator: @jason,
       client_message_id: "dm_test_1"
     )
 
     get activity_inbox_url
     assert_response :success
-    assert_match "Hey David direct message!", response.body
+    assert_no_match "Hey David direct message excluded!", response.body
   end
 
   test "mentioning a non-member adds them to the room so they can see the mention" do
@@ -103,6 +103,41 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     # Kevin CAN see the mention because he was auto-added to the room
     assert_match "you can see this because mentioning adds you", response.body
+  end
+
+  # ===================
+  # Direct Messages tests
+  # ===================
+
+  test "direct_messages returns success" do
+    get direct_messages_inbox_url
+    assert_response :success
+  end
+
+  test "direct_messages shows DM rooms for current user" do
+    dm_room = rooms(:david_and_jason)
+
+    get direct_messages_inbox_url
+    assert_response :success
+    assert_select ".dm-conversation"
+  end
+
+  test "direct_messages excludes inactive DM rooms" do
+    dm_room = rooms(:david_and_jason)
+    dm_room.update!(active: false)
+
+    get direct_messages_inbox_url
+    assert_response :success
+    # The deactivated room should not be present
+    assert_select "#dm_inbox_room_#{dm_room.id}", count: 0
+  end
+
+  test "direct_messages shows member names" do
+    dm_room = rooms(:david_and_jason)
+
+    get direct_messages_inbox_url
+    assert_response :success
+    assert_match @jason.name, response.body
   end
 
   # ===================
@@ -308,6 +343,34 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
 
     assert membership_with_mention.read?, "Room with mention should be marked as read"
     assert membership_without_mention.unread?, "Room without mention should remain unread"
+  end
+
+  test "clear with scope direct_messages only clears DM rooms" do
+    # DM room
+    dm_room = rooms(:david_and_jason)
+    dm_membership = dm_room.memberships.find_by(user: @david)
+    dm_membership.update!(unread_at: 1.hour.ago)
+
+    # Regular room with mention
+    room_with_mention = rooms(:pets)
+    room_with_mention.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason
+    )
+    membership_with_mention = room_with_mention.memberships.find_by(user: @david)
+    membership_with_mention.update!(unread_at: 1.hour.ago)
+
+    # Visit direct_messages page to set session timestamp
+    get direct_messages_inbox_url
+
+    # Clear only direct_messages
+    post clear_inbox_url, params: { scope: "direct_messages" }
+
+    dm_membership.reload
+    membership_with_mention.reload
+
+    assert dm_membership.read?, "DM room should be marked as read"
+    assert membership_with_mention.unread?, "Room with mention should remain unread"
   end
 
   # ===================

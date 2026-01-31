@@ -19,14 +19,16 @@ export default class MessagePaginator {
   #scrollTracker
   #classes
   #upToDate = true
+  #idAttribute
 
-  constructor(container, url, messageFormatter, allContentViewedCallback, classes) {
+  constructor(container, url, messageFormatter, allContentViewedCallback, classes, options = {}) {
     this.#container = container
     this.#url = url
     this.#messageFormatter = messageFormatter
     this.#allContentViewedCallback = allContentViewedCallback
     this.#scrollTracker = new ScrollTracker(container, { lastChildRevealed: this.#messageBecameVisible.bind(this) })
     this.#classes = classes
+    this.#idAttribute = options.idAttribute || "messageId"
   }
 
 
@@ -66,20 +68,20 @@ export default class MessagePaginator {
   // Internal
 
   #messageBecameVisible(element) {
-    const messageId = element.dataset.messageId
-    const firstMessage = element === this.#container.firstElementChild
-    const lastMessage = element === this.#container.lastElementChild
+    const itemId = element.dataset[this.#idAttribute]
+    const firstItem = element === this.#container.firstElementChild
+    const lastItem = element === this.#container.lastElementChild
 
-    if (messageId) {
-      if (firstMessage) {
+    if (itemId) {
+      if (firstItem) {
         element.classList.add(this.#classes.loadingUp)
-        this.#addPage({ before: messageId }, true)
+        this.#addPage({ before: itemId }, true)
       }
-      if (lastMessage && !this.upToDate) {
+      if (lastItem && !this.upToDate) {
         element.classList.add(this.#classes.loadingDown)
-        this.#addPage({ after: messageId }, false)
+        this.#addPage({ after: itemId }, false)
       }
-      if (lastMessage && this.upToDate) {
+      if (lastItem && this.upToDate) {
         this.#allContentViewedCallback?.()
       }
     }

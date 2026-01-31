@@ -1,0 +1,23 @@
+<% @page_title = "Direct Messages" %>
+<%= render layout: "inboxes/nav", locals: { title: tag.span("Direct Messages", class: "hide-on-mobile") + tag.span("DMs", class: "hide-on-desktop") } do %>
+  <%= button_to clear_inbox_path(scope: "direct_messages"), class: "btn", title: "Mark all DMs as read" do %>
+    <%= icon_tag "check" %>
+  <% end %>
+<% end %>
+
+<% content_for :messages do %>
+  <div id="inbox"
+       class="dm-list"
+       data-controller="dm-list"
+       data-dm-list-target="conversations"
+       data-dm-list-loading-class="dm-conversation--loading"
+       data-dm-list-page-url-value="<%= paged_inbox_direct_messages_url %>">
+    <%= render partial: "inboxes/direct_messages/conversation",
+               collection: @memberships,
+               as: :membership,
+               locals: { direct_room_members: @direct_room_members } %>
+  </div>
+  <%= turbo_stream_from Current.user, :inbox_direct_messages %>
+<% end %>
+
+<%= render template: 'inboxes/show' %>

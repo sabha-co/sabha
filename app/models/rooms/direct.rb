@@ -27,6 +27,26 @@ class Rooms::Direct < Room
     users.without(for_user).first if one_on_one?
   end
 
+  # Returns users in this DM room excluding the given user, with avatars eager loaded
+  def members_for_display(excluding:)
+    memberships.active
+      .includes(user: { avatar_attachment: { blob: :variant_records } })
+      .map(&:user)
+      .reject { |u| u.id == excluding.id }
+  end
+
+  # Batch load members for multiple rooms, returning { room_id => [users] }
+  # Excludes the given user from each room's member list
+  def self.members_for_display_by_room(room_ids, excluding:)
+    return {} if room_ids.empty?
+
+    Membership.active
+      .where(room_id: room_ids)
+      .includes(user: { avatar_attachment: { blob: :variant_records } })
+      .group_by(&:room_id)
+      .transform_values { |ms| ms.map(&:user).reject { |u| u.id == excluding.id } }
+  end
+
   def compute_members_hash
     self.class.members_hash_for(users)
   end

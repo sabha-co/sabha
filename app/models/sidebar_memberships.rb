@@ -17,7 +17,7 @@ class SidebarMemberships
   # - In active rooms
   # - Recently active (unread OR room updated in last 7 days)
   #
-  # Sorted by most recent activity first.
+  # Sorted by most recent activity first, limited to 10.
   #
   def direct
     user.memberships
@@ -28,6 +28,7 @@ class SidebarMemberships
       .with_has_unread_notifications
       .includes(:room)
       .with_room_by_last_active_newest_first
+      .limit(10)
   end
 
   # Shared room memberships (Open/Closed rooms) shown in My Rooms and All Rooms.

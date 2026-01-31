@@ -177,20 +177,41 @@ The inbox helps you track important messages across all rooms. Access it from th
 
 ### Activity
 
-**What it shows:** Messages where you were specifically called out, plus Direct Messages.
+**What it shows:** Messages where you were @mentioned (excludes Direct Messages - see DMs below).
 
 **You appear here when:**
 - Someone types `@yourname` in a message
 - An admin uses `@everyone` in an Open room
-- Someone replies to your message (cite/quote)
-- You receive any Direct Message
 
 **Key behaviors:**
 - Messages from rooms you're not in will auto-add you to that room
 - Self-mentions don't appear (you won't see your own @mentions)
 - Real-time updates as new activity arrives
+- DMs are excluded - they have their own dedicated inbox
 
-**Unread indicator:** A badge appears on the Activity icon when you have unread @mentions **or unread Direct Messages**.
+**Unread indicator:** A badge appears on the Activity icon when you have unread @mentions.
+
+---
+
+### DMs
+
+**What it shows:** All your Direct Message conversations, ordered by most recent activity.
+
+**What's displayed:**
+- Conversation participants (avatars and names)
+- Last message preview with sender name
+- Time since last activity
+- Unread indicator for conversations with new messages
+
+**Key behaviors:**
+- Clicking a conversation opens that DM room
+- "Note to self" rooms appear here too
+- Real-time updates when new messages arrive (including your own sends)
+- DMs also appear in the sidebar's horizontal scroll area
+
+**Unread indicator:** A badge appears on the DMs icon when you have unread Direct Messages.
+
+**Mark as read:** Click the checkmark button to mark all DM conversations as read.
 
 ---
 
@@ -323,7 +344,7 @@ All room and inbox views update instantly via WebSocket connections:
 ├─────────────────────────────┤
 │  ▶ Hidden Rooms (2)         │  ← Collapsed, click to expand
 └─────────────────────────────┘
-│  [Activity] [Threads] [Bookmarks] [Profile] │  ← Bottom toolbar
+│  [Activity] [DMs] [Threads] [Bookmarks] [Profile] │  ← Bottom toolbar
 └─────────────────────────────────────────────┘
 ```
 
@@ -443,9 +464,10 @@ Campfire-CE extracts complex queries into dedicated objects:
 
 ```
 app/models/inbox/
-├── activity_query.rb    # User's activity (mentions + DMs)
-├── threads_query.rb     # User's thread involvement
-├── bookmarks_query.rb   # User's bookmarked messages
+├── activity_query.rb         # User's @mentions (excludes DMs)
+├── direct_messages_query.rb  # User's DM conversations
+├── threads_query.rb          # User's thread involvement
+├── bookmarks_query.rb        # User's bookmarked messages
 └── messages_query.rb    # General message queries
 
 app/models/
@@ -825,27 +847,33 @@ end
 
 ```
 app/controllers/
-├── inboxes_controller.rb        # Base inbox with activity, notifications, messages, threads, bookmarks, clear actions
+├── inboxes_controller.rb        # Base inbox with activity, direct_messages, notifications, messages, threads, bookmarks, clear actions
 └── inboxes/
-    ├── activity_controller.rb   # Dedicated activity (alternative entry point)
+    ├── activity_controller.rb       # Paged activity (mentions only)
+    ├── direct_messages_controller.rb # Paged DM conversations
     ├── notifications_controller.rb  # Messages from "everything" involvement rooms
-    ├── messages_controller.rb   # All messages across all rooms
-    ├── threads_controller.rb    # Thread inbox
-    └── bookmarks_controller.rb  # Bookmarks inbox
+    ├── messages_controller.rb       # All messages across all rooms
+    ├── threads_controller.rb        # Thread inbox
+    └── bookmarks_controller.rb      # Bookmarks inbox
 
 app/models/inbox/
-├── activity_query.rb    # Activity queries (mentions + DMs)
-├── threads_query.rb     # Thread involvement queries
-├── bookmarks_query.rb   # Bookmark queries
-└── messages_query.rb    # Shared message queries (used by notifications + all messages)
+├── activity_query.rb         # @mentions only (excludes DMs)
+├── direct_messages_query.rb  # DM room memberships with last message
+├── threads_query.rb          # Thread involvement queries
+├── bookmarks_query.rb        # Bookmark queries
+└── messages_query.rb         # Shared message queries (used by notifications + all messages)
 
 app/views/inboxes/
-├── show.html.erb        # Main inbox redirect
-├── activity.html.erb    # Activity page
-├── notifications.html.erb   # Notifications page
-├── messages.html.erb    # All messages page
-├── threads.html.erb     # Threads page
-└── bookmarks.html.erb   # Bookmarks page
+├── show.html.erb             # Main inbox redirect
+├── activity.html.erb         # Activity page (@mentions)
+├── direct_messages.html.erb  # DMs page (conversations list)
+├── direct_messages/
+│   ├── _conversation.html.erb  # Single DM row partial
+│   └── index.html.erb          # Paged partial
+├── notifications.html.erb    # Notifications page
+├── messages.html.erb         # All messages page
+├── threads.html.erb          # Threads page
+└── bookmarks.html.erb        # Bookmarks page
 ```
 
 ---
@@ -898,7 +926,7 @@ module Message::Mentionee
 end
 ```
 
-**Query object (Activity inbox):**
+**Query object (Activity inbox - @mentions only, excludes DMs):**
 
 **File:** `app/models/inbox/activity_query.rb`
 ```ruby
@@ -910,12 +938,42 @@ class Inbox::ActivityQuery
   def call
     user.mentioning_messages
         .without_created_by(user)
+        .joins(:room)
+        .where.not(rooms: { type: "Rooms::Direct" })  # Exclude DMs
         .with_thread_summary
         .with_creator
   end
 
   private
 
+  attr_reader :user
+end
+```
+
+**Query object (DMs inbox):**
+
+**File:** `app/models/inbox/direct_messages_query.rb`
+```ruby
+class Inbox::DirectMessagesQuery
+  def initialize(user)
+    @user = user
+  end
+
+  def call
+    user.memberships
+        .visible
+        .direct_rooms
+        .joins(:room)
+        .merge(Room.active)
+        .with_has_unread_notifications
+        .includes(room: [
+          { memberships: { user: { avatar_attachment: { blob: :variant_records } } } },
+          { last_message: [ :rich_text_body, { creator: { avatar_attachment: { blob: :variant_records } } } ] }
+        ])
+        .order("rooms.last_active_at DESC")
+  end
+
+  private
   attr_reader :user
 end
 ```
@@ -1107,6 +1165,7 @@ app/channels/
 ├── user_unread_rooms_channel.rb  # User-scoped unread notifications
 ├── typing_notifications_channel.rb
 ├── inbox_activity_channel.rb
+├── inbox_direct_messages_channel.rb
 ├── inbox_threads_channel.rb
 └── inbox_bookmarks_channel.rb
 ```
@@ -1242,6 +1301,7 @@ app/
 │   │   └── broadcasts.rb          # Real-time updates
 │   ├── inbox/
 │   │   ├── activity_query.rb
+│   │   ├── direct_messages_query.rb
 │   │   ├── threads_query.rb
 │   │   └── bookmarks_query.rb
 │   └── sidebar_memberships.rb
@@ -1259,6 +1319,7 @@ app/
 │   ├── inboxes_controller.rb
 │   ├── inboxes/
 │   │   ├── activity_controller.rb
+│   │   ├── direct_messages_controller.rb
 │   │   ├── threads_controller.rb
 │   │   ├── bookmarks_controller.rb
 │   │   ├── messages_controller.rb
@@ -1272,6 +1333,7 @@ app/
 ├── channels/
 │   ├── room_channel.rb
 │   ├── inbox_activity_channel.rb
+│   ├── inbox_direct_messages_channel.rb
 │   ├── inbox_threads_channel.rb
 │   └── inbox_bookmarks_channel.rb
 └── views/
@@ -1287,6 +1349,10 @@ app/
     │       └── _form.html.erb
     ├── inboxes/
     │   ├── activity.html.erb
+    │   ├── direct_messages.html.erb
+    │   ├── direct_messages/
+    │   │   ├── _conversation.html.erb
+    │   │   └── index.html.erb
     │   ├── threads.html.erb
     │   └── bookmarks.html.erb
     └── users/

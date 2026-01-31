@@ -1,10 +1,13 @@
 # Plan: Rename "Mentions" to "Activity" (Slack-style)
 
+> **⚠️ Superseded:** This plan has been superseded by [split-activity-and-dms.md](split-activity-and-dms.md).
+> Activity no longer includes DMs - they now have their own separate inbox view.
+
 ## Summary
 
 Rename the "Mentions" inbox tab to "Activity" to better reflect its contents (DMs + @mentions + @everyone), aligning with Slack's terminology. Also fix the bug where DMs can't be cleared from the mark-as-read button.
 
-## Status: Completed
+## Status: Completed (then superseded)
 
 ## Bug Fix Detail
 

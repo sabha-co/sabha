@@ -2,8 +2,9 @@
   <%= turbo_stream_from :rooms %>
   <%= turbo_stream_from Current.user, :rooms %>
 
-  <div data-controller="activity-indicator"
-       data-action="rooms-list:unread@window->activity-indicator#update rooms-list:read@window->activity-indicator#update rooms-list:addBadge@window->activity-indicator#update">
+  <div data-controller="unread-indicator"
+       data-unread-indicator-indicators-value='[{"selector":".room.badge","class":"has-unread-activity","target":"activity"},{"selector":".direct.unread","class":"has-unread-dms","target":"dms"}]'
+       data-action="rooms-list:unread@window->unread-indicator#update rooms-list:read@window->unread-indicator#update rooms-list:addBadge@window->unread-indicator#update">
     <div class="sidebar__container overflow-y overflow-hide-scrollbar"
         data-controller="badge-dot maintain-scroll debounce-updates"
         data-badge-dot-unread-class="badge"
@@ -80,10 +81,16 @@
 
   <div class="sidebar__tools d-hotwire-native-none">
     <div class="sidebar__tool-container">
-      <%= link_to inbox_path, class: "btn sidebar__tool", data: { activity_indicator_target: "icon" } do %>
+      <%= link_to inbox_path, class: "btn sidebar__tool", data: { unread_indicator_target: "activity" } do %>
         <%= icon_tag "mentions" %>
         <span class="for-screen-reader">Activity</span>
         <span class="sidebar__tool-label">Activity</span>
+      <% end %>
+
+      <%= link_to direct_messages_inbox_path, class: "btn sidebar__tool", data: { unread_indicator_target: "dms" } do %>
+        <%= icon_tag "messages" %>
+        <span class="for-screen-reader">DMs</span>
+        <span class="sidebar__tool-label">DMs</span>
       <% end %>
 
       <%= link_to threads_inbox_path, class: "btn sidebar__tool" do %>

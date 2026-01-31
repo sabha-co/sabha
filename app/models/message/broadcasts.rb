@@ -6,6 +6,7 @@ module Message::Broadcasts
     broadcast_notifications
     broadcast_to_inbox_activity
     broadcast_to_inbox_threads
+    broadcast_to_inbox_direct_messages
   end
 
   def broadcast_update
@@ -96,6 +97,12 @@ module Message::Broadcasts
       message_id: id,
       creator_id: creator_id
     )
+  end
+
+  def broadcast_to_inbox_direct_messages
+    return unless room.direct?
+
+    BroadcastInboxDirectMessagesJob.perform_later(room_id: room.id)
   end
 
   def broadcast_mentionee_sidebar_updates

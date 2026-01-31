@@ -1,7 +1,8 @@
 class InboxesController < ApplicationController
   before_action :set_message_pagination_anchors, only: %i[ activity notifications messages ]
   before_action :set_bookmark_pagination_anchors, only: %i[ bookmarks ]
-  before_action :set_sidebar_memberships
+  before_action :set_sidebar_memberships, except: :direct_messages
+  before_action :set_sidebar_memberships_for_dms, only: :direct_messages
 
   def show
     clear_last_loaded_message_timestamps
@@ -13,6 +14,11 @@ class InboxesController < ApplicationController
     @messages = find_messages_with(Inbox::ActivityQuery)
 
     track_last_loaded_message :inbox_last_loaded_activity_created_at
+  end
+
+  def direct_messages
+    session[:inbox_last_loaded_dms_created_at] = Time.current.iso8601
+    # @memberships and @direct_room_members already set by set_sidebar_memberships_for_dms
   end
 
   def threads
@@ -39,6 +45,8 @@ class InboxesController < ApplicationController
     case params[:scope]
     when "activity"
       Current.user.mark_activity_as_read(session[:inbox_last_loaded_activity_created_at])
+    when "direct_messages"
+      Current.user.mark_direct_messages_as_read(session[:inbox_last_loaded_dms_created_at])
     else
       Current.user.mark_inbox_as_read(
         messages_loaded_at: session[:inbox_last_loaded_message_created_at],
@@ -94,5 +102,22 @@ class InboxesController < ApplicationController
       session.delete :inbox_last_loaded_activity_created_at
       session.delete :inbox_last_loaded_notification_created_at
       session.delete :inbox_last_loaded_message_created_at
+    end
+
+    # Sidebar setup for DMs inbox - loads first page for inbox content
+    # and the recent/unread list for sidebar.
+    def set_sidebar_memberships_for_dms
+      sidebar = SidebarMemberships.new(Current.user)
+
+      # Load first page of DMs for inbox content
+      @memberships = Inbox::DirectMessagesQuery.new(Current.user).call.last_page
+      @direct_memberships = sidebar.direct
+
+      # Load members for both inbox and sidebar lists
+      room_ids = (@memberships.map(&:room_id) + @direct_memberships.map(&:room_id)).uniq
+      @direct_room_members = Rooms::Direct.members_for_display_by_room(room_ids, excluding: Current.user)
+
+      # Shared rooms still loaded normally
+      @shared_memberships = sidebar.shared
     end
 end

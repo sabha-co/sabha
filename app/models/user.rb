@@ -41,23 +41,28 @@ class User < ApplicationRecord
       .distinct
   end
 
-  # Marks only rooms with unread activity (mentions + DMs) as read.
-  # For DMs: always marks as read (all DM messages are "activity")
-  # For other rooms: only marks as read if there were no non-mention messages in the window
+  # Marks only rooms with unread activity (@mentions) as read.
+  # DMs are handled separately by mark_direct_messages_as_read.
+  # Only marks as read if there were no non-mention messages in the window
   # (avoids accidentally marking unread messages as read when user only viewed activity)
   def mark_activity_as_read(loaded_at)
     activity_until = freshness_checked_time(loaded_at)
 
     memberships.unread.with_has_unread_notifications.each do |m|
       next unless m.has_unread_notifications?
+      next if m.room.is_a?(Rooms::Direct)  # Skip DMs - handled separately
 
-      # DMs are always "activity" - no need to check for non-mentions
-      if m.room.is_a?(Rooms::Direct)
-        m.read_until(activity_until)
-      else
-        non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, activity_until)
-        m.read_until(activity_until) if non_mentions.none?
-      end
+      non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, activity_until)
+      m.read_until(activity_until) if non_mentions.none?
+    end
+  end
+
+  # Marks all direct message rooms as read up to the loaded timestamp.
+  def mark_direct_messages_as_read(loaded_at)
+    dms_until = freshness_checked_time(loaded_at)
+
+    memberships.unread.direct_rooms.each do |m|
+      m.read_until(dms_until)
     end
   end
 
