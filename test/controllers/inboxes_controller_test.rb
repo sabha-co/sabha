@@ -281,6 +281,35 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "clear with scope mentions only clears rooms with mentions" do
+    # Room with mention
+    room_with_mention = rooms(:pets)
+    room_with_mention.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason
+    )
+    membership_with_mention = room_with_mention.memberships.find_by(user: @david)
+    membership_with_mention.update!(unread_at: 1.hour.ago)
+
+    # Room without mention (just a regular unread message)
+    room_without_mention = rooms(:watercooler)
+    room_without_mention.messages.create!(body: "Regular message", creator: @jason)
+    membership_without_mention = room_without_mention.memberships.find_by(user: @david)
+    membership_without_mention.update!(unread_at: 1.hour.ago)
+
+    # Visit mentions page to set session timestamp
+    get mentions_inbox_url
+
+    # Clear only mentions
+    post clear_inbox_url, params: { scope: "mentions" }
+
+    membership_with_mention.reload
+    membership_without_mention.reload
+
+    assert membership_with_mention.read?, "Room with mention should be marked as read"
+    assert membership_without_mention.unread?, "Room without mention should remain unread"
+  end
+
   # ===================
   # Pagination tests
   # ===================
