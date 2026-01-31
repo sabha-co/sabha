@@ -1,0 +1,27 @@
+#!/bin/bash
+# Automated browser login for agent-browser
+# Usage: bin/browser-login [email] [password]
+
+EMAIL="${1:-admin@campfirecloud.com}"
+PASSWORD="${2:-password}"
+BASE_URL="${3:-http://localhost:3000}"
+
+echo "Logging in as $EMAIL..."
+
+# Close any existing session and open login page
+agent-browser close 2>/dev/null
+agent-browser open "$BASE_URL/session/new" 2>&1
+
+# Wait for page load
+sleep 1
+
+# Fill credentials and submit
+agent-browser fill @e4 "$EMAIL"
+agent-browser fill @e5 "$PASSWORD"
+agent-browser click @e6
+
+# Wait for redirect
+sleep 1
+
+echo "✓ Logged in"
+agent-browser get url
