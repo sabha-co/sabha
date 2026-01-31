@@ -187,7 +187,7 @@ This allows retrying failed imports or re-importing to pick up any missed data.
 | Invalid ZIP format | Validation fails with error message |
 | Missing users.json/channels.json | Validation fails |
 | Malformed JSON | Skip entry, log warning, continue |
-| Duplicate slugs | Auto-increment suffix (general-1, general-2) |
+| Duplicate room names | Reuse existing room (case-insensitive match) |
 
 All imports are wrapped in a database transaction - if any step fails, all changes are rolled back.
 

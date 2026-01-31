@@ -43,8 +43,6 @@ class Room < ApplicationRecord
   before_validation -> { self.last_active_at = Time.current }, on: :create
 
   before_save :set_sortable_name
-  before_validation :normalize_slug
-
   after_save_commit :broadcast_updates, if: :saved_change_to_sortable_name?
 
   scope :opens,           -> { where(type: "Rooms::Open") }
@@ -53,17 +51,6 @@ class Room < ApplicationRecord
   scope :without_directs, -> { where.not(type: "Rooms::Direct") }
 
   scope :ordered, -> { order(:sortable_name) }
-
-  RESERVED_SLUGS = %w[
-    join api chat rooms users messages stats up service-worker webmanifest account session auth_tokens webhooks configurations inbox searches qr_code assets rails
-  ]
-
-  validates :slug,
-            allow_nil: true,
-            uniqueness: { case_sensitive: false },
-            length: { maximum: 80 },
-            format: { with: /\A[a-z0-9](?:[a-z0-9\-]*[a-z0-9])\z/, message: "use lowercase letters, numbers, and hyphens; no leading/trailing hyphen" }
-  validate :slug_not_reserved
 
   after_update_commit -> do
     if saved_change_to_attribute?(:active) && active?
@@ -157,7 +144,6 @@ class Room < ApplicationRecord
       # Use unscoped to move ALL messages (including inactive/soft-deleted ones)
       Message.unscoped.where(room_id: id).update_all(room_id: target_room.id)
       Message::RichTextUpdater.update_room_links_in_quoted_messages(from: id, to: target_room.id)
-      update!(slug: nil) if slug.present?
       deactivate!
     end
 
@@ -175,7 +161,6 @@ class Room < ApplicationRecord
       deactivate_threads
       memberships.update_all(active: false)
       Message.unscoped.where(room_id: id).update_all(active: false)
-      update!(slug: nil) if slug.present?
       deactivate!
     end
   end
@@ -194,17 +179,6 @@ class Room < ApplicationRecord
   private
     def set_sortable_name
       self.sortable_name = name.to_s.gsub(/[[:^ascii:]\p{So}]/, "").strip.downcase
-    end
-
-    def normalize_slug
-      return if slug.nil?
-      self.slug = slug.to_s.strip.downcase.gsub(/\s+/, "-")
-      self.slug = nil if self.slug.blank?
-    end
-
-    def slug_not_reserved
-      return if slug.blank?
-      errors.add(:slug, "is reserved") if RESERVED_SLUGS.include?(slug)
     end
 
     def unread_memberships(message)

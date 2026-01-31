@@ -131,32 +131,6 @@ class RoomReactivationTest < ActiveSupport::TestCase
     assert_equal 0, @room.memberships.active.count
   end
 
-  test "deactivate clears room slug" do
-    @room.update!(slug: "test-slug")
-
-    @room.deactivate
-
-    assert_nil @room.reload.slug
-  end
-
-  test "deactivate allows slug reuse after deactivation" do
-    @room.update!(slug: "reusable-slug")
-
-    @room.deactivate
-
-    new_room = Rooms::Open.create!(name: "New Room", slug: "reusable-slug", creator: users(:david))
-    assert_equal "reusable-slug", new_room.slug
-  end
-
-  test "merge_into clears source room slug" do
-    @room.update!(slug: "merge-slug")
-    target_room = Rooms::Open.create!(name: "Target Room", creator: users(:david))
-
-    @room.merge_into!(target_room)
-
-    assert_nil @room.reload.slug
-  end
-
   test "merge_into moves inactive messages to target room" do
     target_room = Rooms::Open.create!(name: "Target Room", creator: users(:david))
     target_room.memberships.grant_to(users(:david))

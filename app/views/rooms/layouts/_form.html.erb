@@ -18,24 +18,6 @@
 
   <hr class="margin-block borderless">
 
-  <% if Current.user.administrator? %>
-    <div class="pad-inline">
-      <label class="flex flex-column gap-half txt-large" for="room_slug">
-        <span>Custom URL slug (optional)</span>
-        <%= text_field_tag "room[slug]", room.slug, id: "room_slug", class: "input full-width",
-              placeholder: "e.g. founders-lounge",
-              pattern: "[a-z0-9](?:[a-z0-9-]*[a-z0-9])",
-              maxlength: 80,
-              inputmode: "lowercase",
-              spellcheck: false,
-              data: { action: "keydown.enter->form#submit:prevent" } %>
-        <small class="txt-secondary">Accessible at /<%= room.slug.presence || "your-slug" %>. Only letters, numbers, and hyphens; no leading/trailing hyphen.</small>
-      </label>
-    </div>
-
-    <hr class="margin-block borderless">
-  <% end %>
-
   <% if local_assigns[:type_change_path] && Current.user.can_administer?(room) %>
     <div class="flex align-center gap pad-inline margin-block">
       <figure class="avatar flex-item-no-shrink" style="--avatar-border-radius: 0; --avatar-size: 4ch;">

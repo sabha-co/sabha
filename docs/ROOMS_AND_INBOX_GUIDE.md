@@ -488,7 +488,6 @@ rooms table:
 ├── id
 ├── type          # "Rooms::Open", "Rooms::Closed", "Rooms::Direct", "Rooms::Thread"
 ├── name
-├── slug          # URL-friendly identifier (optional)
 ├── creator_id    # User who created the room
 ├── parent_message_id  # For threads only
 ├── messages_count     # Counter cache
@@ -565,7 +564,7 @@ end
 
 **Controller:** `app/controllers/rooms/opens_controller.rb`
 - `new` / `create` - Room creation with broadcast to all users
-- `edit` / `update` - Name/slug changes
+- `edit` / `update` - Name changes
 - `destroy` - Soft deletion
 
 **Views:**

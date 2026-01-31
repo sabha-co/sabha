@@ -191,3 +191,7 @@ The sidebar now separates rooms into "My Rooms" and "All Rooms" sections for bet
 ## Marketing page
 **[REMOVED]** A public landing page for visitors who aren't signed in yet. Different layout from the chat interface, useful for promoting your community before people join.
 
+
+## Room URL slugs
+**[REMOVED]** Administrators could assign custom URL slugs to rooms, enabling clean URLs like `/founders-lounge` instead of `/rooms/123`. Rooms with slugs would automatically redirect from their numeric ID URL to the slug URL. Reserved slugs (like `api`, `rooms`, `inbox`) were protected. The slug column remains in the database but the routing and UI have been removed.
+

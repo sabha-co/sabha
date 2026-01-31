@@ -58,11 +58,11 @@ class SlackImporterTest < ActiveSupport::TestCase
 
     assert_equal 2, stats[:rooms]
 
-    general = Rooms::Open.find_by(slug: "general")
+    general = Rooms::Open.find_by(name: "General")
     assert general.present?
     assert_equal "General", general.name
 
-    random = Rooms::Open.find_by(slug: "random")
+    random = Rooms::Open.find_by(name: "Random")
     assert random.present?
     assert_equal "Random", random.name
   end
@@ -71,8 +71,8 @@ class SlackImporterTest < ActiveSupport::TestCase
     importer = SlackImporter.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(slug: "general")
-    random = Rooms::Open.find_by(slug: "random")
+    general = Rooms::Open.find_by(name: "General")
+    random = Rooms::Open.find_by(name: "Random")
 
     # Check that imported users are members of their channels
     lindy = User.find_by("preferences LIKE ?", "%lindy%")
@@ -90,7 +90,7 @@ class SlackImporterTest < ActiveSupport::TestCase
 
     assert stats[:messages] > 0
 
-    general = Rooms::Open.find_by(slug: "general")
+    general = Rooms::Open.find_by(name: "General")
     messages = general.messages.where.not(room_id: Rooms::Thread.pluck(:id)).order(:created_at)
 
     first_message = messages.first
@@ -105,7 +105,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     importer = SlackImporter.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(slug: "general")
+    general = Rooms::Open.find_by(name: "General")
     mention_message = general.messages.find { |m| m.body.to_plain_text.include?("@lindy") }
     assert mention_message.present?
     assert_includes mention_message.body.to_plain_text, "Hey @lindy"
@@ -115,7 +115,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     importer = SlackImporter.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(slug: "general")
+    general = Rooms::Open.find_by(name: "General")
     channel_message = general.messages.find { |m| m.body.to_plain_text.include?("@channel") }
     assert channel_message.present?
     assert_includes channel_message.body.to_plain_text, "@channel please review"
@@ -125,7 +125,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     importer = SlackImporter.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(slug: "general")
+    general = Rooms::Open.find_by(name: "General")
     link_message = general.messages.find { |m| m.body.to_plain_text.include?("Example Site") }
     assert link_message.present?
     assert_includes link_message.body.to_plain_text, "Example Site (https://example.com)"
@@ -135,7 +135,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     importer = SlackImporter.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(slug: "general")
+    general = Rooms::Open.find_by(name: "General")
     messages = general.messages.map { |m| m.body.to_plain_text }
 
     assert_not messages.any? { |m| m.include?("has left the channel") }
@@ -146,7 +146,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     importer = SlackImporter.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(slug: "general")
+    general = Rooms::Open.find_by(name: "General")
     messages = general.messages.map { |m| m.body.to_plain_text }
 
     assert_not messages.any? { |m| m.include?("set the channel purpose") }
@@ -197,7 +197,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     importer = SlackImporter.new(@zip_path.to_s)
     importer.import!
 
-    random = Rooms::Open.find_by(slug: "random")
+    random = Rooms::Open.find_by(name: "Random")
     channel_ref_message = random.messages.find { |m| m.body.to_plain_text.include?("#general") }
     assert channel_ref_message.present?
   end
@@ -211,7 +211,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     user_count_after_first = User.count
     message_count_after_first = Message.count
 
-    assert Rooms::Open.exists?(slug: "general")
+    assert Rooms::Open.exists?(name: "General")
     assert stats1[:rooms] > 0
     assert stats1[:users] > 0
 

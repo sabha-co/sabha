@@ -31,9 +31,9 @@ module Slack
     end
 
     def import_channel(channel_data, room_class)
-      base_slug = channel_data["name"].to_s.parameterize
+      room_name = channel_data["name"].tr("-_", " ").titleize
 
-      existing_room = Room.find_by(slug: base_slug)
+      existing_room = Room.where("LOWER(name) = LOWER(?)", room_name).first
       if existing_room
         @context.channel_map[channel_data["id"]] = existing_room
         grant_open_room_access(existing_room) if existing_room.is_a?(Rooms::Open)
@@ -42,8 +42,7 @@ module Slack
       end
 
       room = room_class.create!(
-        name: channel_data["name"].tr("-_", " ").titleize,
-        slug: base_slug,
+        name: room_name,
         creator: @context.admin_user
       )
 

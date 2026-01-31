@@ -14,13 +14,6 @@ class RoomsController < ApplicationController
   end
 
   def show
-    # Redirect to canonical slug URL when available, unless viewing a specific message
-    if params[:message_id].blank? && @room.slug.present? && params[:slug].blank?
-      target = room_slug_url(@room.slug)
-      target = target + "?" + request.query_string if request.query_string.present?
-      return redirect_to(target)
-    end
-
     @messages = find_messages
   end
 
@@ -37,19 +30,11 @@ class RoomsController < ApplicationController
     end
 
     def set_room
-      identifier = params[:room_id] || params[:id] || params[:slug]
-
-      # Try by numeric id first (preserve existing behavior)
-      room = Current.user.rooms.includes(parent_message: { creator: :avatar_attachment }).find_by(id: identifier)
-
-      # Fallback to slug-based lookup when identifier is not a numeric id
-      if room.nil?
-        room = Current.user.rooms.includes(parent_message: { creator: :avatar_attachment }).find_by(slug: identifier)
+      if room = Current.user.rooms.includes(parent_message: { creator: :avatar_attachment }).find_by(id: params[:room_id] || params[:id])
+        @room = room
+      else
+        redirect_to root_url, alert: "Room not found or inaccessible"
       end
-
-      return @room = room if room
-
-      redirect_to root_url, alert: "Room not found or inaccessible"
     end
 
     def set_membership
@@ -98,9 +83,7 @@ class RoomsController < ApplicationController
     end
 
     def room_params
-      permitted = [ :name ]
-      permitted << :slug if Current.user.administrator?
-      params.require(:room).permit(*permitted)
+      params.require(:room).permit(:name)
     end
 
     def ensure_permission_to_create_rooms

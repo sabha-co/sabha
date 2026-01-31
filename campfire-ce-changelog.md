@@ -1,6 +1,6 @@
 # Campfire-CE Modifications
 
-This document tracks modifications made to the Campfire codebase specifically for Campfire-CE. These are additions beyond the Small Bets modifications documented in [`smallbets-mods.md`](smallbets-mods.md).
+This document tracks modifications made to the Campfire codebase specifically for Campfire-CE. These are additions beyond the Small Bets modifications documented in [`smallbets-mods.md`](./smallbets-mods.md).
 
 
 ## Features
@@ -163,3 +163,4 @@ The following features from the original Campfire have been removed:
 - **Video library** [#14](https://github.com/superforumio/campfire-ce/pull/14): Removed video feature and Inertia.js/React infrastructure
 - **Stats dashboard** [#49](https://github.com/superforumio/campfire-ce/pull/49): Replaced with simpler user streak tracking
 - **Expert feature** [#3](https://github.com/superforumio/campfire-ce/pull/3): Removed expert role, expert directory, and message "answered" functionality
+- **Room URL slugs** [#59](https://github.com/superforumio/campfire-ce/pull/59): Removed custom slug routing for rooms—users navigate via sidebar, not bookmarked URLs

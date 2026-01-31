@@ -22,8 +22,6 @@ Campfire-CE is a Ruby on Rails chat application combining:
   - `Rooms::Closed` - Private invite-only rooms
   - `Rooms::Direct` - 1-on-1 or group direct messages
   - `Rooms::Thread` - Special rooms tied to a parent message (threaded discussions)
-- Rooms are identified by slugs for clean URLs (`/general` instead of `/rooms/1`)
-- See `RoomSlugConstraint` in routes.rb for slug routing logic
 
 ### Messaging & Engagement
 - `Message` - Rich text content via ActionText, with attachments, mentions, sounds
@@ -198,7 +196,6 @@ Optional features:
 - `dicebear.rb` - DiceBear avatar generation configuration
 
 ### Routes Structure
-- Top-level room slug routing via `RoomSlugConstraint`
 - Conditional root routes (authenticated → `welcome#show`, unauthenticated → redirect to sign-in)
 - Nested resources: `/rooms/:room_id/messages/:id`
 

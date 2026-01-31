@@ -1,9 +1,4 @@
 Rails.application.routes.draw do
-  # Top-level room slug routing (must come before other catch-alls that could conflict)
-  constraints(RoomSlugConstraint.new) do
-    get "/:slug", to: "rooms#show", as: :room_slug
-  end
-
   # Optional: Redirect www subdomain to root domain
   # Uncomment and configure for your domain if needed
   # constraints(host: /^www\.yourdomain\.com/) do

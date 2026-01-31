@@ -1,7 +1,6 @@
 module RoomsHelper
   def link_to_room(room, **attributes, &)
-    path = room.slug.present? ? room_slug_path(room.slug) : room_path(room)
-    link_to path, **attributes, data: {
+    link_to room_path(room), **attributes, data: {
       rooms_list_target: "room", room_id: room.id, badge_dot_target: "unread"
     }.merge(attributes.delete(:data) || {}), &
   end

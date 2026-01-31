@@ -239,20 +239,19 @@ namespace :generate do
 
       # Open rooms
       open_rooms_data = [
-        { name: "General", slug: "general" },
-        { name: "Introductions", slug: "introductions" },
-        { name: "Random", slug: "random" },
-        { name: "Show & Tell", slug: "show-and-tell" },
-        { name: "Help & Support", slug: "help" },
-        { name: "Announcements", slug: "announcements" },
-        { name: "Feedback", slug: "feedback" },
-        { name: "Off-Topic", slug: "off-topic" }
+        "General",
+        "Introductions",
+        "Random",
+        "Show & Tell",
+        "Help & Support",
+        "Announcements",
+        "Feedback",
+        "Off-Topic"
       ]
 
-      open_rooms_data.each do |data|
+      open_rooms_data.each do |name|
         rooms[:open] << Rooms::Open.create!(
-          name: data[:name],
-          slug: data[:slug],
+          name: name,
           creator: admin
         )
       end
@@ -260,22 +259,21 @@ namespace :generate do
 
       # Closed rooms with varying membership sizes
       closed_rooms_data = [
-        { name: "Founders Circle", slug: "founders", size: 25 },
-        { name: "Backend Guild", slug: "backend", size: 100 },
-        { name: "Frontend Crew", slug: "frontend", size: 90 },
-        { name: "Design Team", slug: "design", size: 50 },
-        { name: "DevOps", slug: "devops", size: 40 },
-        { name: "Book Club", slug: "books", size: 75 },
-        { name: "Fitness Buddies", slug: "fitness", size: 60 },
-        { name: "Music Lovers", slug: "music", size: 45 },
-        { name: "Gaming Squad", slug: "gaming", size: 100 },
-        { name: "Mentorship", slug: "mentorship", size: 30 }
+        { name: "Founders Circle", size: 25 },
+        { name: "Backend Guild", size: 100 },
+        { name: "Frontend Crew", size: 90 },
+        { name: "Design Team", size: 50 },
+        { name: "DevOps", size: 40 },
+        { name: "Book Club", size: 75 },
+        { name: "Fitness Buddies", size: 60 },
+        { name: "Music Lovers", size: 45 },
+        { name: "Gaming Squad", size: 100 },
+        { name: "Mentorship", size: 30 }
       ]
 
       closed_rooms_data.each do |data|
         room = Rooms::Closed.create!(
           name: data[:name],
-          slug: data[:slug],
           creator: admin
         )
         members = users.sample(data[:size])
@@ -876,37 +874,35 @@ namespace :generate do
 
     # Open rooms (everyone gets auto-membership)
     open_rooms = [
-      { name: "General", slug: "general" },
-      { name: "Introductions", slug: "introductions" },
-      { name: "Random", slug: "random" },
-      { name: "Show & Tell", slug: "show-and-tell" },
-      { name: "Help & Support", slug: "help" }
+      { name: "General", key: "general" },
+      { name: "Introductions", key: "introductions" },
+      { name: "Random", key: "random" },
+      { name: "Show & Tell", key: "show-and-tell" },
+      { name: "Help & Support", key: "help" }
     ]
 
     open_rooms.each do |room_data|
-      rooms[room_data[:slug]] = Rooms::Open.create!(
+      rooms[room_data[:key]] = Rooms::Open.create!(
         name: room_data[:name],
-        slug: room_data[:slug],
         creator: admin
       )
     end
 
     # Closed rooms (invite only)
     closed_rooms = [
-      { name: "Founders Circle", slug: "founders", members: users.sample(6) },
-      { name: "Backend Guild", slug: "backend", members: users.sample(5) },
-      { name: "Design Crew", slug: "design", members: users.sample(4) },
-      { name: "Book Club", slug: "books", members: users.sample(7) }
+      { name: "Founders Circle", key: "founders", members: users.sample(6) },
+      { name: "Backend Guild", key: "backend", members: users.sample(5) },
+      { name: "Design Crew", key: "design", members: users.sample(4) },
+      { name: "Book Club", key: "books", members: users.sample(7) }
     ]
 
     closed_rooms.each do |room_data|
       room = Rooms::Closed.create!(
         name: room_data[:name],
-        slug: room_data[:slug],
         creator: admin
       )
       room.memberships.grant_to([ admin ] + room_data[:members])
-      rooms[room_data[:slug]] = room
+      rooms[room_data[:key]] = room
     end
 
     # Direct messages (1-on-1 conversations)
@@ -992,11 +988,11 @@ namespace :generate do
     ]
 
     # Generate messages for each room
-    rooms.each do |slug, room|
+    rooms.each do |key, room|
       next if room.direct? # DMs handled separately
 
       room_users = room.users.to_a
-      message_count = case slug
+      message_count = case key
       when "general" then rand(80..120)
       when "introductions" then rand(15..25)
       when "random" then rand(40..60)
@@ -1005,7 +1001,7 @@ namespace :generate do
       else rand(20..40)
       end
 
-      templates = case slug
+      templates = case key
       when "introductions" then intro_messages
       when "help" then help_messages
       when "show-and-tell" then show_tell_messages

@@ -55,7 +55,6 @@ def deactivate
     deactivate_threads
     memberships.update_all(active: false)
     Message.unscoped.where(room_id: id).update_all(active: false)
-    update!(slug: nil) if slug.present?
     deactivate!
   end
 end
@@ -66,7 +65,6 @@ end
 | Threads | All threads from this room deactivated |
 | Memberships | All marked `active: false` |
 | Messages | All marked `active: false` |
-| Slug | Cleared (freed for reuse) |
 | Room | Marked `active: false` |
 
 **Result:** Room disappears from sidebar for all users.
@@ -122,7 +120,6 @@ def merge_into!(target_room)
     memberships.update(active: false)
     Message.unscoped.where(room_id: id).update_all(room_id: target_room.id)
     Message::RichTextUpdater.update_room_links_in_quoted_messages(from: id, to: target_room.id)
-    update!(slug: nil) if slug.present?
     deactivate!
   end
 
