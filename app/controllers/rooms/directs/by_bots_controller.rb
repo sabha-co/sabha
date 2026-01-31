@@ -3,13 +3,12 @@ class Rooms::Directs::ByBotsController < Rooms::DirectsController
   allow_bot_access only: :create
 
   def create
-    create_room
+    @room = Rooms::Direct.find_or_create_for(selected_users)
     render json: { room: { id: @room.id } }, status: (@room.previously_new_record? ? :created : :ok)
   end
 
   private
-
-  def respond_with_error(error)
-    render json: { error: error.message }, status: :internal_server_error
-  end
+    def respond_with_error(error)
+      render json: { error: error.message }, status: :internal_server_error
+    end
 end

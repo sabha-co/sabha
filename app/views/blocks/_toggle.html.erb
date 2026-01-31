@@ -1,0 +1,17 @@
+<% if user %>
+  <% is_blocked = Current.user.blocked?(user) %>
+  <%= form_with url: user_blocks_path(user, return_to: request.path),
+                method: is_blocked ? :delete : :post,
+                data: { controller: "form" },
+                class: "flex align-center gap pad-block" do %>
+    <span>Block messages from this user</span>
+    <hr class="separator" aria-hidden="true">
+    <label class="switch">
+      <input type="checkbox"
+             class="switch__input"
+             <%= "checked" if is_blocked %>
+             data-action="change->form#submit">
+      <span class="switch__btn round"></span>
+    </label>
+  <% end %>
+<% end %>

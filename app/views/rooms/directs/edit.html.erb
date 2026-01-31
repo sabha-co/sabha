@@ -1,26 +1,3 @@
-<% @page_title = "Edit settings for #{room_display_name(@room)}" %>
-
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to_last_room_visited %>
-  </div>
+<%= render layout: "rooms/layouts/edit", locals: { room: @room } do %>
+  <%= render "rooms/directs/participants", users: @users %>
 <% end %>
-
-<div class="panel txt-align-center">
-  <section class="directs--edit margin-block-end">
-    <% users = @room.users.many? ? @room.users.without(Current.user) : @room.users %>
-    <% users.each do | user | %>
-      <div class="member flex flex-column gap fill-shade pad border-radius">
-        <figure class="avatar center" style="--avatar-border-radius: 10ch; --avatar-size: 10ch;" >
-          <%= avatar_link_tag user, loading: :lazy %>
-        </figure>
-
-        <strong><%= user.name %></strong>
-      </div>
-    <% end %>
-  </section>
-
-  <%= render "rooms/layouts/involvement_settings", room: @room %>
-
-  <%= button_to_delete_room(@room) %>
-</div>

@@ -1,4 +1,4 @@
-<% @page_title = "Edit settings for #{room.name}" %>
+<% @page_title = "Edit settings for #{room_display_name(room)}" %>
 
 <% content_for :nav do %>
   <div class="flex-item-justify-start">
@@ -6,37 +6,76 @@
   </div>
 <% end %>
 
-<section class="panel txt-align-center" style="view-transition-name: edit-room-<%= room.id %>">
-  <%= yield %>
-</section>
+<% membership = @membership %>
+<% is_muted = membership&.involved_in_nothing? %>
+<% is_hidden = membership&.involved_in_invisible? %>
 
-<%= render "rooms/layouts/involvement_settings", room: room %>
+<section class="panel" style="view-transition-name: edit-room-<%= room.id %>">
+  <div class="txt-align-center">
+    <%= yield %>
+  </div>
 
-<% if Current.user.can_administer?(@room) %>
-  <section class="panel flex flex-column gap">
-    
-    <% if Current.user.administrator? && @room.open? %>
-      <%= form_with url: room_merges_path(@room.id) do |form| %>
-        <div class="flex flex-column gap">
-          <legend class="txt-large txt-align-center"><strong>Merge room</strong></legend>
-          <div class="flex flex-column gap-half">
-            <span>Move all messages from <%= @room.name %> into the selected room and delete <%= @room.name %>:</span>
-            <div class="flex gap">
-              <%= form.select :target_room_id, options_from_collection_for_select(Room.opens.without(@room).active.ordered, :id, :name),
-                              { include_blank: true }, { style: '--input-padding: 0.3em 0.3em' } %>
-              <%= form.button class: "btn btn--negative center txt-large", type: "submit", name: "merge",
-                              data: { turbo_confirm: "Are you sure you want to merge and delete #{@room.name}?" } do %>
-                <%= icon_tag "arrow-right" %>
-                <span class="for-screen-reader">Merge</span>
-              <% end %>
-            </div>
+  <% if membership && !room.thread? %>
+    <hr class="margin-block separator full-width" style="--border-style: solid">
+    <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form" }, class: "flex align-center gap pad-block" do %>
+      <% unmuted_involvement = room.direct? ? "everything" : "mentions" %>
+      <%= hidden_field_tag :involvement, is_muted ? unmuted_involvement : "nothing" %>
+      <span>Mute notifications</span>
+      <hr class="separator" aria-hidden="true">
+      <label class="switch">
+        <input type="checkbox"
+               class="switch__input"
+               <%= "checked" if is_muted %>
+               data-action="change->form#submit">
+        <span class="switch__btn round"></span>
+      </label>
+    <% end %>
+
+    <% if room.respond_to?(:other_user) && (block_target = room.other_user) %>
+      <%= render "blocks/toggle", user: block_target %>
+    <% end %>
+
+    <% unless room.direct? %>
+      <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form" }, class: "flex align-center gap pad-block" do %>
+        <%= hidden_field_tag :involvement, is_hidden ? "mentions" : "invisible" %>
+        <span>Hide from sidebar</span>
+        <hr class="separator" aria-hidden="true">
+        <label class="switch">
+          <input type="checkbox"
+                 class="switch__input"
+                 <%= "checked" if is_hidden %>
+                 data-action="change->form#submit">
+          <span class="switch__btn round"></span>
+        </label>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if Current.user.administrator? && room.open? %>
+    <hr class="margin-block separator full-width" style="--border-style: solid">
+    <%= form_with url: room_merges_path(room.id) do |form| %>
+      <div class="flex flex-column gap">
+        <legend class="txt-large txt-align-center"><strong>Merge room</strong></legend>
+        <div class="flex flex-column gap-half">
+          <span>Move all messages from <%= room.name %> into the selected room and delete <%= room.name %>:</span>
+          <div class="flex gap">
+            <%= form.select :target_room_id, options_from_collection_for_select(Room.opens.without(room).active.ordered, :id, :name),
+                            { include_blank: true }, { style: '--input-padding: 0.3em 0.3em' } %>
+            <%= form.button class: "btn btn--negative center txt-large", type: "submit", name: "merge",
+                            data: { turbo_confirm: "Are you sure you want to merge and delete #{room.name}?" } do %>
+              <%= icon_tag "arrow-right" %>
+              <span class="for-screen-reader">Merge</span>
+            <% end %>
           </div>
         </div>
-      <% end %>
-      <hr class="margin-block separator full-width" style="--border-style: solid">
+      </div>
     <% end %>
+  <% end %>
+
+  <% if Current.user.can_administer?(room) || room.direct? %>
+    <hr class="margin-block separator full-width" style="--border-style: solid">
     <div class="txt-align-center">
       <%= button_to_delete_room room %>
     </div>
-  </section>
-<% end %>
+  <% end %>
+</section>

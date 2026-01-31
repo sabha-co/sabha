@@ -1,0 +1,11 @@
+<div class="directs--edit margin-block-end">
+  <% users.each do |user| %>
+    <div class="member flex flex-column gap fill-shade pad border-radius">
+      <figure class="avatar center" style="--avatar-border-radius: 10ch; --avatar-size: 10ch;">
+        <%= avatar_link_tag user, loading: :lazy %>
+      </figure>
+
+      <strong><%= user.name %></strong>
+    </div>
+  <% end %>
+</div>

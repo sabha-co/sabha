@@ -48,4 +48,18 @@ class BlocksControllerTest < ActionDispatch::IntegrationTest
       post user_blocks_url(users(:david))
     end
   end
+
+  test "create redirects to return_to path when provided" do
+    post user_blocks_url(users(:jason)), params: { return_to: "/some/path" }
+
+    assert_redirected_to "/some/path"
+  end
+
+  test "destroy redirects to return_to path when provided" do
+    users(:david).block!(users(:jason))
+
+    delete user_blocks_url(users(:jason)), params: { return_to: "/some/path" }
+
+    assert_redirected_to "/some/path"
+  end
 end

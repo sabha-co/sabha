@@ -1,38 +1,46 @@
 # Rooms for direct message chats between users. These act as a singleton, so a single set of users will
 # always refer to the same direct room.
 class Rooms::Direct < Room
+  after_create_commit :broadcast_to_sidebar
+  after_create_commit :ensure_members_hash
+
   class << self
     def find_or_create_for(users)
       hash = members_hash_for(users)
-      find_for(hash, users) || create_for({ members_hash: hash }, users: users)
+      find_by(members_hash: hash) || create_for({ members_hash: hash }, users: users)
     end
 
     def members_hash_for(users)
       Digest::MD5.hexdigest(users.map(&:id).sort.join(","))
     end
-
-    private
-      def find_for(hash, users)
-        find_by(members_hash: hash) ||
-          find_by_users(users)&.tap { |room| room.update_column(:members_hash, hash) }
-      end
-
-      def find_by_users(users)
-        user_ids = Set.new(users.map(&:id))
-        includes(:users)
-          .joins(:memberships)
-          .where(memberships: { active: true })
-          .group(:id)
-          .having("COUNT(memberships.id) = ?", user_ids.size)
-          .find { |room| Set.new(room.users.map(&:id)) == user_ids }
-      end
   end
 
   def default_involvement(user: nil)
     "everything"
   end
 
+  def one_on_one?
+    users.size == 2
+  end
+
+  def other_user(for_user: Current.user)
+    users.without(for_user).first if one_on_one?
+  end
+
   def compute_members_hash
     self.class.members_hash_for(users)
   end
+
+  private
+    def broadcast_to_sidebar
+      memberships.each do |membership|
+        membership.broadcast_prepend_to membership.user, :rooms,
+          target: :direct_rooms,
+          partial: "users/sidebars/rooms/direct"
+      end
+    end
+
+    def ensure_members_hash
+      update_column(:members_hash, compute_members_hash) if members_hash.blank?
+    end
 end

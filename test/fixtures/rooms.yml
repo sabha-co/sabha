@@ -26,8 +26,10 @@ david_and_jason:
   type: Rooms::Direct
   creator: :david
   last_active_at: <%= 30.minutes.ago %>
+  members_hash: <%= Digest::MD5.hexdigest([ActiveRecord::FixtureSet.identify(:david), ActiveRecord::FixtureSet.identify(:jason)].sort.join(",")) %>
 
 david_and_kevin:
   type: Rooms::Direct
   creator: :david
   last_active_at: <%= 15.minutes.ago %>
+  members_hash: <%= Digest::MD5.hexdigest([ActiveRecord::FixtureSet.identify(:david), ActiveRecord::FixtureSet.identify(:kevin)].sort.join(",")) %>

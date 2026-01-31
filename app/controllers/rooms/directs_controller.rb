@@ -3,6 +3,7 @@ class Rooms::DirectsController < RoomsController
   skip_before_action :ensure_can_administer, only: %i[ destroy ]
 
   before_action :set_direct_room, only: %i[ edit destroy ]
+  before_action :set_membership, only: %i[ edit ]
   before_action :ensure_permission_to_create_direct_messages, only: %i[ new create ]
 
   def new
@@ -10,11 +11,18 @@ class Rooms::DirectsController < RoomsController
   end
 
   def create
-    create_room
-    redirect_to room_url(@room)
+    @room = Rooms::Direct.find_or_create_for(selected_users)
+
+    if @room.persisted?
+      redirect_to room_url(@room)
+    else
+      redirect_to new_rooms_direct_path, alert: "Could not create conversation"
+    end
   end
 
-  def edit ; end
+  def edit
+    @users = @room.users.many? ? @room.users.without(Current.user) : @room.users
+  end
 
   def destroy
     deactivate_room
@@ -22,15 +30,13 @@ class Rooms::DirectsController < RoomsController
   end
 
   private
-
     def set_direct_room
       @room = Current.user.rooms.find_by(id: params[:id], type: Rooms::Direct.sti_name)
       redirect_to root_url, alert: "Conversation not found" unless @room
     end
 
-    def create_room
-      @room = Rooms::Direct.find_or_create_for(selected_users)
-      broadcast_create_room(@room)
+    def set_membership
+      @membership = Current.user.memberships.find_by(room: @room)
     end
 
     def selected_users
@@ -39,14 +45,6 @@ class Rooms::DirectsController < RoomsController
 
     def selected_users_ids
       params.fetch(:user_ids, [])
-    end
-
-    def broadcast_create_room(room)
-      room.memberships.each do |membership|
-        membership.broadcast_prepend_to membership.user, :rooms,
-          target: :direct_rooms,
-          partial: "users/sidebars/rooms/direct"
-      end
     end
 
     def ensure_permission_to_create_direct_messages

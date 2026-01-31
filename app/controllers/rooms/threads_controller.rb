@@ -1,5 +1,6 @@
 class Rooms::ThreadsController < RoomsController
   before_action :set_room, only: %i[ edit update destroy ]
+  before_action :set_membership, only: %i[ edit ]
   before_action :set_parent_message, only: %i[ new ]
 
   def new

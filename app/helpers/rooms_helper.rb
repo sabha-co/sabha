@@ -38,16 +38,18 @@ module RoomsHelper
   end
 
   def button_to_delete_room(room, url: nil)
-    confirm_message = if room.is_a?(Rooms::Direct)
-      "Are you sure you want to delete this conversation and all messages in it? This can't be undone."
+    if room.is_a?(Rooms::Direct)
+      confirm_message = "Are you sure you want to delete this conversation and all messages in it? This can't be undone."
+      button_label = "Delete conversation"
     else
-      "Are you sure you want to delete this room and all messages in it? This can't be undone."
+      confirm_message = "Are you sure you want to delete this room and all messages in it? This can't be undone."
+      button_label = room_display_name(room)
     end
 
     button_to room, method: :delete, class: "btn btn--negative max-width", aria: { label: "Delete #{room.name}" },
         data: { turbo_confirm: confirm_message } do
       image_tag("trash.svg", aria: { hidden: "true" }, size: 20) +
-      tag.span(room_display_name(room), class: "overflow-ellipsis")
+      tag.span(button_label, class: "overflow-ellipsis")
     end
   end
 

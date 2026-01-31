@@ -621,21 +621,20 @@ app/views/rooms/closeds/
 **Singleton pattern:**
 ```ruby
 class Rooms::Direct < Room
+  after_create_commit :broadcast_to_sidebar
+
   def self.find_or_create_for(users)
-    find_for(users) || create_for({}, users: users)
+    hash = members_hash_for(users)
+    find_by(members_hash: hash) || create_for({ members_hash: hash }, users: users)
+  end
+
+  def self.members_hash_for(users)
+    Digest::MD5.hexdigest(users.map(&:id).sort.join(","))
   end
 
   def default_involvement(user: nil)
     "everything"  # DM participants get all notifications
   end
-
-  private
-    def self.find_for(users)
-      # Finds existing room with exact same user set
-      all.joins(:users).detect do |room|
-        Set.new(room.user_ids) == Set.new(users.pluck(:id))
-      end
-    end
 end
 ```
 
@@ -648,10 +647,16 @@ end
 ```ruby
 def create
   @room = Rooms::Direct.find_or_create_for(selected_users)
-  broadcast_create_room(@room)
-  redirect_to room_url(@room)
+
+  if @room.persisted?
+    redirect_to room_url(@room)
+  else
+    redirect_to new_rooms_direct_path, alert: "Could not create conversation"
+  end
 end
 ```
+
+Note: Sidebar broadcasting is handled by `after_create_commit :broadcast_to_sidebar` in the model.
 
 **Bot API:** `app/controllers/rooms/directs/by_bots_controller.rb`
 ```ruby
@@ -1278,8 +1283,8 @@ app/
     │   ├── threads/
     │   ├── involvements/
     │   └── layouts/
-    │       ├── _form.html.erb
-    │       └── _involvement_settings.html.erb
+    │       ├── _edit.html.erb          # Shared edit layout with involvement controls
+    │       └── _form.html.erb
     ├── inboxes/
     │   ├── mentions.html.erb
     │   ├── threads.html.erb

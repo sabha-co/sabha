@@ -325,7 +325,7 @@
 .directs--edit {
   display: grid;
   gap: var(--inline-space);
-  grid-template-columns: repeat(auto-fit, minmax(33%, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   grid-template-rows: min-content;
   place-items: center;
 
@@ -333,6 +333,7 @@
     aspect-ratio: 1;
     block-size: auto;
     inline-size: 100%;
+    max-inline-size: 200px;
     margin-inline: auto;
     place-content: center;
   }
