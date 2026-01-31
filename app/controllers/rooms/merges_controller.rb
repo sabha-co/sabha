@@ -1,5 +1,5 @@
 class Rooms::MergesController < ApplicationController
-  before_action :ensure_is_administrator
+  before_action :ensure_administrator
   before_action :set_source_room
   before_action :set_target_room
 
@@ -21,9 +21,5 @@ class Rooms::MergesController < ApplicationController
       @target_room = Room.opens.active.find_by(id: params[:target_room_id])
 
       redirect_to edit_room_path(@source_room), alert: "Please select a destination room!" unless @target_room
-    end
-
-    def ensure_is_administrator
-      head :forbidden unless Current.user.administrator?
     end
 end

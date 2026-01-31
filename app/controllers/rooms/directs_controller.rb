@@ -48,7 +48,6 @@ class Rooms::DirectsController < RoomsController
     end
 
     def ensure_permission_to_create_direct_messages
-      return unless Current.account.settings.restrict_direct_messages_to_administrators?
-      head :forbidden unless Current.user.administrator?
+      head :forbidden unless Current.user.can_create_direct_messages?
     end
 end

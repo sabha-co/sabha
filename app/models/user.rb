@@ -246,7 +246,7 @@ class User < ApplicationRecord
   def can_direct_message?(other_user)
     other_user&.active? &&
       can_ping?(other_user) &&
-      (staff? || dm_allowed_for_members?)
+      can_create_direct_messages?
   end
 
   def blocked?(other_user)
@@ -321,9 +321,6 @@ class User < ApplicationRecord
       UserMailer.email_changed(self, old_email).deliver_later if old_email.present?
     end
 
-    def dm_allowed_for_members?
-      !Current.account.settings.restrict_direct_messages_to_administrators?
-    end
 
     def grant_membership_to_open_rooms
       Membership.insert_all(Rooms::Open.active.pluck(:id).collect { |room_id| { room_id: room_id, user_id: id } })

@@ -44,4 +44,8 @@ module User::Role
   def reactivatable_by?(admin)
     admin.can_administer? && deactivated?
   end
+
+  def can_create_direct_messages?
+    administrator? || !Current.account.settings.restrict_direct_messages_to_administrators?
+  end
 end

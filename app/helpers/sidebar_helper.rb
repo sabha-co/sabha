@@ -7,7 +7,7 @@ module SidebarHelper
   DM_SEPARATOR_THRESHOLD = 5
 
   def can_create_dms?
-    Current.user.staff? || !Current.account.settings.restrict_direct_messages_to_administrators?
+    Current.user.can_create_direct_messages?
   end
 
   def show_dm_section?(direct_memberships)
