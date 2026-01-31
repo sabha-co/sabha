@@ -1,7 +1,8 @@
 class MessagesController < ApplicationController
   include ActiveStorage::SetCurrent, RoomScoped, NotifyBots
 
-  before_action :set_room, only: %i[ index create destroy ]
+  skip_before_action :set_room
+  before_action :set_room, only: %i[ index destroy ]
   before_action :set_room_if_found, only: %i[ show edit update ]
   before_action :set_message, only: %i[ show edit update destroy ]
   before_action :ensure_can_administer, only: %i[ edit update destroy ]
@@ -20,7 +21,7 @@ class MessagesController < ApplicationController
 
     if @message.persisted?
       @message.broadcast_create
-      broadcast_update_message_involvements
+      @message.broadcast_mentionee_sidebar_updates
       deliver_webhooks_to_bots(@message, :created)
     else
       render action: :not_allowed
@@ -41,7 +42,7 @@ class MessagesController < ApplicationController
     presentation_html = render_to_string(partial: "messages/presentation", locals: { message: @message })
     @message.broadcast_replace_to @message.room, :messages, target: [ @message, :presentation ], html: presentation_html, attributes: { maintain_scroll: true }
     @message.broadcast_replace_to :inbox, target: [ @message, :presentation ], html: presentation_html, attributes: { maintain_scroll: true }
-    broadcast_update_message_involvements
+    @message.broadcast_mentionee_sidebar_updates
     deliver_webhooks_to_bots(@message, :updated)
 
     redirect_to @room ? room_message_url(@room, @message) : @message
@@ -67,53 +68,34 @@ class MessagesController < ApplicationController
       head :forbidden unless Current.user.can_administer?(@message)
     end
 
-
-    def find_paged_messages
-      base = @room.messages.with_thread_summary.with_creator.with_bookmark_status_for(Current.user)
-      messages = case
-      when params[:before].present?
-        base.page_before(@room.messages.find(params[:before]))
-      when params[:after].present?
-        base.page_after(@room.messages.find(params[:after]))
-      else
-        base.last_page
-      end
-
-      # If this is a thread and we've loaded the very first message, prepend the parent message
-      # Parent message bookmark status uses fallback query (single record, acceptable)
-      if @room.thread? && messages.any? && @room.parent_message.present?
-        first_thread_message = @room.messages.ordered.first
-        messages_array = messages.to_a
-        if messages_array.first&.id == first_thread_message&.id
-          [ @room.parent_message ] + messages_array
-        else
-          messages_array
-        end
-      else
-        messages
-      end
-    end
-
     def message_params
       params.require(:message).permit(:body, :attachment, :client_message_id)
     end
 
-    def broadcast_update_message_involvements
-      @message.mentionees.each do |user|
-        refresh_shared_rooms(user)
+    def find_paged_messages
+      scope = @room.messages.with_thread_summary.with_creator.with_bookmark_status_for(Current.user)
+
+      messages = if params[:before].present?
+        scope.page_before(@room.messages.find(params[:before]))
+      elsif params[:after].present?
+        scope.page_after(@room.messages.find(params[:after]))
+      else
+        scope.last_page
       end
+
+      prepend_thread_parent(messages)
     end
 
-    def refresh_shared_rooms(user)
-      memberships = user.memberships.shared.visible
-      {
-        starred_rooms: memberships.with_room_by_last_active_newest_first,
-        shared_rooms: memberships.with_room_by_last_active_newest_first
-      }.each do |list_name, memberships|
-        user.broadcast_replace_to user, :rooms, target: list_name,
-                                  partial: "users/sidebars/rooms/shared_rooms_list",
-                                  locals: { list_name:, memberships: },
-                                  attributes: { maintain_scroll: true }
+    def prepend_thread_parent(messages)
+      return messages unless @room.thread? && messages.any? && @room.parent_message.present?
+
+      first_thread_message = @room.messages.ordered.first
+      messages_array = messages.to_a
+
+      if messages_array.first&.id == first_thread_message&.id
+        [ @room.parent_message ] + messages_array
+      else
+        messages_array
       end
     end
 end

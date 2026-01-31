@@ -97,4 +97,17 @@ module Message::Broadcasts
       creator_id: creator_id
     )
   end
+
+  def broadcast_mentionee_sidebar_updates
+    mentionees.each do |user|
+      memberships = user.memberships.shared.visible
+      { starred_rooms: memberships, shared_rooms: memberships }.each do |list_name, scope|
+        user.broadcast_replace_to user, :rooms,
+          target: list_name,
+          partial: "users/sidebars/rooms/shared_rooms_list",
+          locals: { list_name:, memberships: scope.with_room_by_last_active_newest_first },
+          attributes: { maintain_scroll: true }
+      end
+    end
+  end
 end
