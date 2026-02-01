@@ -46,3 +46,4 @@ node_modules
 # Host-specific Caddy configuration
 Caddyfile
 
+.worktrees
