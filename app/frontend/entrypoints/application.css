@@ -5,6 +5,7 @@
 
 @source "../../views";
 @source "../../helpers";
+@source "../../../saas/app/views";
 
 @theme inline {
   /* Colors - Base LCH values (light mode) */

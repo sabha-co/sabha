@@ -1,28 +1,26 @@
 <% content_for :title, "Sign in" %>
 
 <section class="txt-align-center">
-  <div class="panel <%= "shake" if flash[:alert] %>">
-    <%= link_to root_path do %>
-      <figure class="account-logo avatar center margin-block-end txt-xx-large">
-        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, size: 300 %>
-      </figure>
-    <% end %>
-
-    <div class="flex flex-column gap">
-      <%= form_with url: session_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
-        <fieldset class="flex flex-column gap center-block upad">
-          <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.saas_app_name %></strong></legend>
-
-          <p class="txt-small txt-align-center">
-            Don't have an account?
-            <%= link_to "Create one", new_registration_path(return_to: params[:return_to].presence || session[:return_to_after_authenticating]), style: "color: var(--color-accent); text-decoration: underline;" %>
-          </p>
-
-          <%= render "sessions/flash_messages" %>
-          <%= render "sessions/email_field", form: form %>
-          <%= render "sessions/submit_button", form: form, label: "Sign in with email" %>
-        </fieldset>
+  <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
+    <div class="flex justify-center mb-6">
+      <%= link_to root_path do %>
+        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, class: "w-24 h-auto rounded-lg" %>
       <% end %>
     </div>
+
+    <%= form_with url: session_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
+      <fieldset class="flex flex-column gap center-block upad">
+        <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.saas_app_name %></strong></legend>
+
+        <p class="txt-medium">
+          Don't have an account?
+          <%= link_to "Create one", new_registration_path(return_to: params[:return_to].presence || session[:return_to_after_authenticating]) %>
+        </p>
+
+        <%= render "sessions/flash_messages" %>
+        <%= render "sessions/email_field", form: form %>
+        <%= render "sessions/submit_button", form: form, label: "Sign in with email" %>
+      </fieldset>
+    <% end %>
   </div>
 </section>

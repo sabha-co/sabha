@@ -40,6 +40,21 @@
   --panel-width: 80ch;
 }
 
+.panel--centered {
+  --panel-width: 28rem;
+  margin: 0;
+  box-shadow:
+    0 0 0 1px oklch(var(--lch-always-black) / 0.02),
+    0 .2em 1.6em -0.8em oklch(var(--lch-always-black) / 0.2),
+    0 .4em 2.4em -1em oklch(var(--lch-always-black) / 0.3),
+    0 .4em .8em -1.2em oklch(var(--lch-always-black) / 0.4),
+    0 .8em 1.2em -1.6em oklch(var(--lch-always-black) / 0.5),
+    0 1.2em 1.6em -2em oklch(var(--lch-always-black) / 0.6);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.8em;
+}
+
 .settings-layout {
   display: grid;
   gap: var(--block-space);

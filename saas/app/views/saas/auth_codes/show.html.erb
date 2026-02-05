@@ -1,30 +1,28 @@
 <% content_for :title, "Enter code" %>
 
 <section class="txt-align-center">
-  <div class="panel <%= "shake" if flash[:alert] %>">
-    <%= link_to root_path do %>
-      <figure class="account-logo avatar center margin-block-end txt-xx-large">
-        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, size: 300 %>
-      </figure>
-    <% end %>
-
-    <div class="flex flex-column gap">
-      <%= form_with url: auth_code_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
-        <fieldset class="flex flex-column gap center-block upad">
-          <legend class="txt-large txt-align-center"><strong>Check your email</strong></legend>
-
-          <%= render "sessions/flash_messages" %>
-
-          <p class="txt-medium">Enter the 6-character code we sent you.</p>
-
-          <%= render "sessions/code_field", form: form, styled: true %>
-          <%= render "sessions/submit_button", form: form, label: "Verify" %>
-
-          <p class="txt-small txt-align-center">
-            Didn't receive it? <%= link_to "Try again", new_session_path, style: "color: var(--color-accent); text-decoration: underline;" %>
-          </p>
-        </fieldset>
+  <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
+    <div class="flex justify-center mb-6">
+      <%= link_to root_path do %>
+        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, class: "w-24 h-auto rounded-lg" %>
       <% end %>
     </div>
+
+    <%= form_with url: auth_code_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
+      <fieldset class="flex flex-column gap center-block upad">
+        <legend class="txt-large txt-align-center"><strong>Check your email</strong></legend>
+
+        <%= render "sessions/flash_messages" %>
+
+        <p class="txt-medium">Enter the 6-character code we sent you.</p>
+
+        <%= render "sessions/code_field", form: form, styled: true %>
+        <%= render "sessions/submit_button", form: form, label: "Verify" %>
+
+        <p class="txt-small">
+          Didn't receive it? <%= link_to "Try again", new_session_path %>
+        </p>
+      </fieldset>
+    <% end %>
   </div>
 </section>
