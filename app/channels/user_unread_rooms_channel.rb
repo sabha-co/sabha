@@ -1,5 +1,5 @@
 class UserUnreadRoomsChannel < ApplicationCable::Channel
   def subscribed
-    stream_from "user_#{current_user.id}_unreads"
+    stream_for current_user
   end
 end

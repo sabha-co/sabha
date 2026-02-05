@@ -73,6 +73,70 @@ brew install anycable-go
 
 ---
 
+## SaaS Mode (Multi-Tenant)
+
+Campfire-CE supports two deployment modes:
+
+| Mode | Description | Gemfile |
+|------|-------------|---------|
+| **Self-host** (default) | Single-tenant, one workspace | `Gemfile` |
+| **SaaS mode** | Multi-tenant, database-per-workspace | `Gemfile.saas` |
+
+### Switching Modes
+
+```bash
+# Check current mode
+bin/rails saas:status
+
+# Enable SaaS mode
+bin/rails saas:enable
+bundle install    # Important: switches to Gemfile.saas
+bin/dev
+
+# Disable SaaS mode
+bin/rails saas:disable
+bundle install    # Important: switches back to Gemfile
+bin/dev
+```
+
+### How It Works
+
+- `bin/rails saas:enable` creates `tmp/saas.txt` marker file
+- `bin/rails saas:disable` removes `tmp/saas.txt`
+- The marker file determines which Gemfile is used during `bundle install`
+- For temporary SaaS mode (single session): `SAAS=true bin/dev`
+
+### SaaS Architecture
+
+When SaaS mode is enabled:
+
+- **Multi-tenant database**: Each workspace gets its own SQLite database via `activerecord-tenanted` gem
+- **Path-based routing**: URLs include workspace ID (`/1000001/rooms/general`)
+- **GlobalIdentity**: Cross-workspace user authentication
+- **Workspace model**: Registry of all workspaces (in untenanted database)
+- **Workspace selector**: Sidebar for users with multiple workspaces
+
+### SaaS-Specific Files
+
+```
+saas/                           # SaaS engine (Rails Engine)
+├── app/
+│   ├── controllers/            # Workspace management
+│   ├── models/                 # GlobalIdentity, Workspace, etc.
+│   └── views/                  # Workspace selector, landing pages
+├── config/
+│   ├── initializers/tenanting/ # Tenant context setup
+│   └── routes.rb               # SaaS routes (prepended)
+├── db/untenanted_migrate/      # Migrations for untenanted DB
+└── lib/campfire/saas/          # Engine definition
+
+Gemfile.saas                    # Extends Gemfile with tenanting gems
+```
+
+See `docs/multi-tenant/` for detailed architecture documentation.
+
+---
+
 ## Running Tests
 
 ```bash
@@ -88,6 +152,12 @@ bin/rails test:system             # Browser tests (requires Chrome)
 - **Mocha** - Mocking/stubbing
 - **Capybara** - Browser testing
 - **WebMock** - HTTP stubbing
+
+### Test data strategy
+
+- **Real database**: Tests use the standard Rails test DB.
+- **Fixtures**: Loaded once per suite, then accessed via `fixtures :all` (self-hosted) or explicit fixture lists (SaaS).
+- **Transactions**: Per-test transactions with rollback (default Rails `use_transactional_tests`).
 
 ---
 
@@ -166,13 +236,15 @@ message.deactivate!    # Sets active: false
 
 ## Environment Modes
 
-| | **bin/dev** | **bin/dev + AnyCable** |
-|---|---|---|
-| **WebSockets** | ActionCable (Puma) | AnyCable-Go |
-| **Cable Adapter** | `redis` | `any_cable` |
-| **Jobs** | Inline (sync) | Inline (sync) |
-| **Cache** | `:memory_store` | `:memory_store` |
-| **Processes** | vite, web | vite, web, anycable |
+| | **bin/dev** | **bin/dev + AnyCable** | **SaaS mode** |
+|---|---|---|---|
+| **Tenant Mode** | Single-tenant | Single-tenant | Multi-tenant |
+| **WebSockets** | ActionCable (Puma) | AnyCable-Go | ActionCable (Puma) |
+| **Cable Adapter** | `redis` | `any_cable` | `redis` |
+| **Jobs** | Inline (sync) | Inline (sync) | Inline (sync) |
+| **Cache** | `:memory_store` | `:memory_store` | `:memory_store` |
+| **Processes** | vite, web | vite, web, anycable | vite, web |
+| **Gemfile** | `Gemfile` | `Gemfile` | `Gemfile.saas` |
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for production modes.
 
@@ -266,25 +338,26 @@ The code shows what changed; the message explains why.
 
 ## Architecture Comparison
 
-| | **Development** | **Dev + AnyCable** | **bin/boot** | **Kamal** | **Campfire Cloud** |
-|---|---|---|---|---|---|
-| **Start** | `bin/dev` | `ANYCABLE_ENABLED=true bin/dev` | `bin/boot` | `kamal deploy` | `bin/boot` (Docker) |
-| | | | | | |
-| **WebSockets** | ActionCable | AnyCable-Go | ActionCable | AnyCable-Go | AnyCable-Go |
-| **Cable Adapter** | `redis` | `any_cable` | `redis` | `any_cable` | `any_cable` |
-| | | | | | |
-| **Jobs** | Inline | Inline | Separate workers | Puma threads | Separate workers |
-| **Job Mode** | sync | sync | `solid_queue:start` | `SOLID_QUEUE_IN_PUMA` | `solid_queue:start` |
-| | | | | | |
-| **Cache** | `:memory_store` | `:memory_store` | `:redis_cache_store` | `:redis_cache_store` | `:redis_cache_store` |
-| | | | | | |
-| **Database** | SQLite | SQLite | SQLite | SQLite | SQLite |
-| | | | | | |
-| **Redis** | External | External | Procfile starts it | External | Procfile starts it |
-| **Redis For** | Cable | - | Cable + Cache | Cache | Cache |
-| | | | | | |
-| **Processes** | vite, web | vite, web, anycable | web, redis, workers | web + anycable | web, redis, workers, anycable, caddy |
-| **TLS/Proxy** | None | None | Thruster | Thruster + Traefik | Caddy |
+| | **Development** | **Dev + AnyCable** | **SaaS Dev** | **bin/boot** | **Kamal** | **Campfire Cloud** |
+|---|---|---|---|---|---|---|
+| **Start** | `bin/dev` | `ANYCABLE_ENABLED=true bin/dev` | `bin/rails saas:enable && bundle && bin/dev` | `bin/boot` | `kamal deploy` | `bin/boot` (Docker) |
+| **Tenant Mode** | Single | Single | Multi | Single | Single | Multi |
+| | | | | | | |
+| **WebSockets** | ActionCable | AnyCable-Go | ActionCable | ActionCable | AnyCable-Go | AnyCable-Go |
+| **Cable Adapter** | `redis` | `any_cable` | `redis` | `redis` | `any_cable` | `any_cable` |
+| | | | | | | |
+| **Jobs** | Inline | Inline | Inline | Separate workers | Puma threads | Separate workers |
+| **Job Mode** | sync | sync | sync | `solid_queue:start` | `SOLID_QUEUE_IN_PUMA` | `solid_queue:start` |
+| | | | | | | |
+| **Cache** | `:memory_store` | `:memory_store` | `:memory_store` | `:redis_cache_store` | `:redis_cache_store` | `:redis_cache_store` |
+| | | | | | | |
+| **Database** | SQLite | SQLite | SQLite per-tenant | SQLite | SQLite | SQLite per-tenant |
+| | | | | | | |
+| **Redis** | External | External | External | Procfile starts it | External | Procfile starts it |
+| **Redis For** | Cable | - | Cable | Cable + Cache | Cache | Cache |
+| | | | | | | |
+| **Processes** | vite, web | vite, web, anycable | vite, web | web, redis, workers | web + anycable | web, redis, workers, anycable, caddy |
+| **TLS/Proxy** | None | None | None | Thruster | Thruster + Traefik | Caddy |
 
 ---
 

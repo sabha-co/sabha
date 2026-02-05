@@ -15,13 +15,19 @@
   <%= messages_tag(@room) do %>
     <%= render "rooms/show/invitation", room: @room %>
     <%= render "rooms/show/block_notice", room: @room %>
+    <% seen_first_unread = false %>
     <% @messages.each do |message| %>
+      <% seen_first_unread = true if message == @first_unread_message %>
       <% if message == @room.parent_message %>
         <% cache message_cache_key(message, room_id: @room.id, is_parent: true) do %>
           <%= render "messages/parent_message", message: message, thread: @room %>
         <% end %>
       <% else %>
-        <%= render partial: "messages/message", locals: { message: message, current_room: @room, first_unread_message: @first_unread_message }, cached: message_cache_key(message, room_id: @room.id, is_first_unread_message: message == @first_unread_message) %>
+        <% is_unread = @first_unread_message.present? && seen_first_unread %>
+        <% is_first_unread = message == @first_unread_message %>
+        <%= render partial: "messages/message",
+              locals: { message:, current_room: @room, first_unread_message: @first_unread_message, is_unread: },
+              cached: message_cache_key(message, room_id: @room.id, is_first_unread_message: is_first_unread, is_unread:) %>
       <% end %>
     <% end %>
   <% end %>

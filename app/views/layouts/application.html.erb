@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-    <%= action_cable_meta_tag %>
+    <%= Campfire.saas? ? tenanted_action_cable_meta_tag : action_cable_meta_tag %>
     <%= tag.meta name: "anycable-whisper", content: "true" if anycable_whisper_enabled? %>
     <%= current_user_meta_tags %>
 
@@ -41,6 +41,10 @@
   <body class="<%= body_classes %>" data-controller="local-time lightbox page-title theme">
     <% if DemoMode.enabled? %>
       <%= render "shared/demo_banner" %>
+    <% end %>
+
+    <% if Campfire.saas? && respond_to?(:show_workspace_selector?) && show_workspace_selector? %>
+      <%= render "shared/workspace_selector" %>
     <% end %>
 
     <a href="#main-content" class="skip-navigation btn" data-turbo="false">Skip to main content</a>
@@ -76,7 +80,7 @@
       <%= yield :sidebar %>
     </template>
 
-    <aside id="sidebar" data-controller="toggle-class" data-toggle-class-toggle-class="open" data-toggle-class-close-on-escape-value="true" data-toggle-class-focus-trap-value="true" data-toggle-class-initial-focus-selector-value="#room-search" data-turbo-permanent="true">
+    <aside id="sidebar" data-controller="toggle-class" data-toggle-class-toggle-class="open" data-toggle-class-close-on-escape-value="true" data-toggle-class-focus-trap-value="true" data-toggle-class-initial-focus-selector-value="#room-search" <%= "data-turbo-permanent" unless Campfire.saas? %>>
       <%= yield :sidebar %>
     </aside>
 

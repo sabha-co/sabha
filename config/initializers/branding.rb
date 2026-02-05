@@ -11,13 +11,21 @@ Rails.application.configure do
 
   config.x.branding.app_name = ENV.fetch("APP_NAME", "Campfire Community Edition")
   config.x.branding.app_short_name = ENV.fetch("APP_SHORT_NAME") { config.x.branding.app_name }
+
+  # SaaS mode branding (used on login/signup pages before workspace is selected)
+  # Defaults to "Campfire" - workspace-specific names come from Account model
+  config.x.branding.saas_app_name = ENV.fetch("SAAS_APP_NAME", "Campfire")
   config.x.branding.support_email = ENV.fetch("SUPPORT_EMAIL", "support@example.com")
   config.x.branding.app_host = ENV.fetch("APP_HOST", "localhost")
   config.x.branding.app_description = ENV.fetch("APP_DESCRIPTION", "A community chat platform powered by Campfire-CE")
 
-  # Mailer configuration
+  # Mailer configuration (self-hosted mode)
   config.x.branding.mailer_from_name = ENV.fetch("MAILER_FROM_NAME") { config.x.branding.app_name }
   config.x.branding.mailer_from_email = ENV.fetch("MAILER_FROM_EMAIL") { config.x.branding.support_email }
+
+  # SaaS mode mailer (used for GlobalIdentity auth codes, workspace invites, etc.)
+  config.x.branding.saas_mailer_from_name = ENV.fetch("SAAS_MAILER_FROM_NAME") { config.x.branding.saas_app_name }
+  config.x.branding.saas_mailer_from_email = ENV.fetch("SAAS_MAILER_FROM_EMAIL") { config.x.branding.mailer_from_email }
 
   # PWA theme colors
   config.x.branding.theme_color = ENV.fetch("THEME_COLOR", "#1d4ed8")
@@ -35,9 +43,9 @@ end
 # Usage: Branding.app_name instead of Rails.configuration.x.branding.app_name
 module Branding
   class << self
-    delegate :app_name, :app_short_name, :support_email, :app_host, :app_description,
-             :mailer_from_name, :mailer_from_email, :theme_color, :background_color,
-             :analytics_domain, :csp_frame_ancestors,
+    delegate :app_name, :app_short_name, :saas_app_name, :support_email, :app_host, :app_description,
+             :mailer_from_name, :mailer_from_email, :saas_mailer_from_name, :saas_mailer_from_email,
+             :theme_color, :background_color, :analytics_domain, :csp_frame_ancestors,
              to: :config
 
     def app_url
@@ -45,8 +53,27 @@ module Branding
       "#{protocol}://#{app_host}"
     end
 
+    # Context-aware app name:
+    # - SaaS mode inside workspace: returns workspace name
+    # - SaaS mode outside workspace: returns saas_app_name
+    # - Self-hosted mode: returns app_name
+    def contextual_app_name
+      if Campfire.saas?
+        Current.workspace&.name || saas_app_name
+      else
+        app_name
+      end
+    end
+
+    # Context-aware mailer from:
+    # - SaaS mode: uses saas_mailer_from_* settings
+    # - Self-hosted mode: uses mailer_from_* settings
     def mailer_from
-      "#{mailer_from_name} <#{mailer_from_email}>"
+      if Campfire.saas?
+        "#{saas_mailer_from_name} <#{saas_mailer_from_email}>"
+      else
+        "#{mailer_from_name} <#{mailer_from_email}>"
+      end
     end
 
     private

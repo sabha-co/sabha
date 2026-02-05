@@ -75,13 +75,18 @@
         <%= translation_button(:email_address) %>
 
         <label class="flex align-center gap flex-item-grow input input--actor">
-          <%= form.email_field :email_address, class: "input txt-medium", value: @user.email_address, autocomplete: "username",
-                               placeholder: "Enter your email address", required: true %>
+          <% if Campfire.saas? %>
+            <%= form.email_field :email_address, class: "input txt-medium", value: @user.email_address,
+                                 disabled: true, readonly: true %>
+          <% else %>
+            <%= form.email_field :email_address, class: "input txt-medium", value: @user.email_address, autocomplete: "username",
+                                 placeholder: "Enter your email address", required: true %>
+          <% end %>
           <%= icon_tag "email" %>
         </label>
       </div>
 
-      <% if @user.pending_email_change? %>
+      <% if @user.pending_email_change? && !Campfire.saas? %>
         <div class="flex align-center gap">
           <div class="btn" style="visibility: hidden;"></div>
           <p class="txt-small txt-faded margin-none">

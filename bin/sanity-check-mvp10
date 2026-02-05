@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+# MVP-10 Sanity Check Script
+# Run: bin/sanity-check-mvp10
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo ""
+echo "======================================"
+echo "MVP-10 Sanity Check: Background Jobs"
+echo "======================================"
+
+# ------------------------------
+# Single-Tenant Mode
+# ------------------------------
+echo ""
+echo -e "${YELLOW}Single-Tenant Mode (SAAS=false)${NC}"
+echo "--------------------------------------"
+
+SAAS=false bin/rails runner '
+checks = []
+
+# Check 1: Campfire.saas? returns false
+checks << ["Campfire.saas? returns false", Campfire.saas? == false]
+
+# Check 2: Job loads
+begin
+  UnreadMentionsNotifierJob.new
+  checks << ["UnreadMentionsNotifierJob loads", true]
+rescue => e
+  checks << ["UnreadMentionsNotifierJob loads", false, e.message]
+end
+
+# Check 3: WebPush::Pool loads
+begin
+  p = WebPush::Pool.new(invalid_subscription_handler: nil)
+  checks << ["WebPush::Pool loads with helpers", p.respond_to?(:shutdown)]
+  p.shutdown
+rescue => e
+  checks << ["WebPush::Pool loads with helpers", false, e.message]
+end
+
+# Check 4: Job can perform (will query DB but no users to notify)
+begin
+  UnreadMentionsNotifierJob.perform_now
+  checks << ["Job performs without error", true]
+rescue => e
+  checks << ["Job performs without error", false, e.message]
+end
+
+# Print results
+checks.each do |name, passed, error|
+  status = passed ? "\e[32m✓\e[0m" : "\e[31m✗\e[0m"
+  msg = passed ? "" : " (#{error})"
+  puts "  #{name.ljust(45)} #{status}#{msg}"
+end
+
+exit checks.all? { |_, passed, _| passed } ? 0 : 1
+'
+
+SINGLE_RESULT=$?
+
+# ------------------------------
+# SaaS Mode
+# ------------------------------
+echo ""
+echo -e "${YELLOW}SaaS Mode (SAAS=true)${NC}"
+echo "--------------------------------------"
+
+if [ ! -f "Gemfile.saas" ]; then
+  echo -e "  ${RED}Skipping - Gemfile.saas not found${NC}"
+  SAAS_RESULT=0
+else
+  SAAS=true bin/rails runner '
+checks = []
+
+# Check 1: Campfire.saas? returns true
+checks << ["Campfire.saas? returns true", Campfire.saas? == true]
+
+# Check 2: Job loads
+begin
+  UnreadMentionsNotifierJob.new
+  checks << ["UnreadMentionsNotifierJob loads", true]
+rescue => e
+  checks << ["UnreadMentionsNotifierJob loads", false, e.message]
+end
+
+# Check 3: with_each_tenant available
+checks << ["ApplicationRecord.with_each_tenant available", ApplicationRecord.respond_to?(:with_each_tenant)]
+
+# Check 4: current_tenant available
+checks << ["ApplicationRecord.current_tenant available", ApplicationRecord.respond_to?(:current_tenant)]
+
+# Check 5: WebPush::Pool loads
+begin
+  p = WebPush::Pool.new(invalid_subscription_handler: nil)
+  checks << ["WebPush::Pool loads with helpers", p.respond_to?(:shutdown)]
+  p.shutdown
+rescue => e
+  checks << ["WebPush::Pool loads with helpers", false, e.message]
+end
+
+# Note: Cannot fully test job execution without workspaces set up
+
+# Print results
+checks.each do |name, passed, error|
+  status = passed ? "\e[32m✓\e[0m" : "\e[31m✗\e[0m"
+  msg = passed ? "" : " (#{error})"
+  puts "  #{name.ljust(45)} #{status}#{msg}"
+end
+
+exit checks.all? { |_, passed, _| passed } ? 0 : 1
+'
+  SAAS_RESULT=$?
+fi
+
+# ------------------------------
+# Run job tests
+# ------------------------------
+echo ""
+echo -e "${YELLOW}Job Tests${NC}"
+echo "--------------------------------------"
+if SAAS=false bin/rails test test/jobs/ 2>&1 | tail -3; then
+  TEST_RESULT=0
+else
+  TEST_RESULT=1
+fi
+
+# ------------------------------
+# Summary
+# ------------------------------
+echo ""
+echo "======================================"
+if [ $SINGLE_RESULT -eq 0 ] && [ $SAAS_RESULT -eq 0 ] && [ $TEST_RESULT -eq 0 ]; then
+  echo -e "Result: ${GREEN}All checks passed${NC}"
+  exit 0
+else
+  echo -e "Result: ${RED}Some checks failed${NC}"
+  exit 1
+fi

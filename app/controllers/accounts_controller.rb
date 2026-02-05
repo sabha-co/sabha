@@ -7,7 +7,8 @@ class AccountsController < ApplicationController
   end
 
   def update
-    @account.update!(merged_account_params)
+    @account.attach_logo(account_params[:logo]) if account_params[:logo].present?
+    @account.update!(merged_account_params.except(:logo))
     redirect_to edit_account_url, notice: "✓"
   end
 

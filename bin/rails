@@ -1,4 +1,9 @@
 #!/usr/bin/env ruby
+
+# Configure SaaS mode before Bundler loads
+require_relative "../lib/campfire"
+Campfire.configure_bundle
+
 APP_PATH = File.expand_path("../config/application", __dir__)
 require_relative "../config/boot"
 require "rails/commands"

@@ -3,23 +3,31 @@ class PresenceChannel < RoomChannel
   on_unsubscribe :absent,  unless: :subscription_rejected?
 
   def present
-    m = membership
-    return unless m
+    with_tenant_context do
+      m = membership
+      return unless m
 
-    m.present
-    ActionCable.server.broadcast "user_#{current_user.id}_reads", { room_id: m.room_id }
+      m.present
+      ReadRoomsChannel.broadcast_to(current_user, { room_id: m.room_id })
+    end
   end
 
   def absent
-    membership&.disconnected
+    with_tenant_context do
+      membership&.disconnected
+    end
   end
 
   def refresh
-    membership&.refresh_connection
+    with_tenant_context do
+      membership&.refresh_connection
+    end
   end
 
   private
     def membership
-      room&.memberships&.find_by(user: current_user)
+      with_tenant_context do
+        room&.memberships&.find_by(user: current_user)
+      end
     end
 end

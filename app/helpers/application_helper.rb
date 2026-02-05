@@ -2,7 +2,11 @@ module ApplicationHelper
   include RoomsHelper
 
   def page_title_tag
-    tag.title @page_title || Branding.app_name
+    tag.title page_title
+  end
+
+  def page_title
+    @page_title || Branding.contextual_app_name
   end
 
   def current_user_meta_tags
@@ -31,7 +35,7 @@ module ApplicationHelper
   end
 
   def body_classes
-    [ @body_class, admin_body_class, account_logo_body_class ].compact.join(" ")
+    [ @body_class, admin_body_class, account_logo_body_class, workspace_selector_body_class ].compact.join(" ")
   end
 
   def link_back
@@ -62,5 +66,11 @@ module ApplicationHelper
 
     def account_logo_body_class
       "account-has-logo" if Current.account&.logo&.attached?
+    end
+
+    def workspace_selector_body_class
+      # SaaS mode: show_workspace_selector? is defined in WorkspaceSelectorHelper
+      # Single-tenant mode: returns nil (no workspace selector)
+      "app-with-workspaces" if respond_to?(:show_workspace_selector?) && show_workspace_selector?
     end
 end

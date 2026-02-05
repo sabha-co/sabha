@@ -35,7 +35,13 @@ module Authentication
     end
 
     def restore_authentication
-      if session = find_session_by_cookie
+      session = find_session_by_cookie
+      return unless session
+
+      if session.expired?
+        session.destroy
+        nil
+      else
         resume_session session
       end
     end
@@ -48,8 +54,15 @@ module Authentication
     end
 
     def request_authentication
+      # request.url includes script_name (workspace prefix) per Rack spec
       session[:return_to_after_authenticating] = request.url unless turbo_frame_request?
-      redirect_to new_session_url
+
+      if Campfire.saas?
+        # In SaaS mode, redirect to the global login page
+        redirect_to "/session/new"
+      else
+        redirect_to new_session_url
+      end
     end
 
     def turbo_frame_request?
@@ -65,20 +78,47 @@ module Authentication
     end
 
     def start_new_session_for(user)
+      # Preserve return_to URL before resetting session (session fixation prevention)
+      return_to = session[:return_to_after_authenticating]
+      reset_session
+      session[:return_to_after_authenticating] = return_to if return_to.present?
+
       user.sessions.start!(user_agent: request.user_agent, ip_address: request.remote_ip).tap do |session|
         authenticated_as session
       end
     end
 
     def resume_session(session)
-      session.resume user_agent: request.user_agent, ip_address: request.remote_ip
-      authenticated_as session
+      # Expired sessions are already filtered out in find_session_by_cookie
+      if Campfire.saas?
+        session.resume(user_agent: request.user_agent, ip_address: request.remote_ip)
+        Current.global_session = session
+        ensure_workspace_user_exists if ApplicationRecord.current_tenant.present?
+        set_authenticated_by(:session)
+      else
+        session.resume user_agent: request.user_agent, ip_address: request.remote_ip
+        authenticated_as session
+      end
+    end
+
+    # In SaaS mode, create the workspace User if it doesn't exist yet
+    def ensure_workspace_user_exists
+      return unless Current.workspace_membership.present?
+      return if Current.workspace_membership.user_id.present?
+
+      # Create User in this workspace from GlobalIdentity
+      Current.workspace_membership.create_user!
     end
 
     def terminate_current_session
-      Current.session&.destroy!
-      reset_session
-      cookies.delete(:session_token, domain: ENV["COOKIE_DOMAIN"])
+      if Campfire.saas?
+        Current.global_session&.destroy
+        cookies.delete(:global_session_token)
+      else
+        Current.session&.destroy!
+        reset_session
+        cookies.delete(:session_token, domain: ENV["COOKIE_DOMAIN"])
+      end
     end
 
     def authenticated_as(session)

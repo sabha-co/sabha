@@ -195,4 +195,109 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
   end
+
+  # ============================================================================
+  # Signed-in user access
+  # ============================================================================
+
+  test "join page redirects signed-in users to root" do
+    sign_in :david
+
+    get join_url(@join_code)
+
+    assert_redirected_to root_url
+  end
+
+  test "join form submission redirects signed-in users to root" do
+    sign_in :david
+    ENV["AUTH_METHOD"] = "password"
+
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: {
+        user: {
+          name: "David Again",
+          email_address: "david-again@example.com",
+          password: "secure_password_123"
+        }
+      }
+    end
+
+    assert_redirected_to root_url
+  end
+
+  # ============================================================================
+  # Invalid/expired join codes
+  # ============================================================================
+
+  test "join page with invalid code returns 404" do
+    get join_url("INVALID_CODE_123")
+
+    assert_response :not_found
+  end
+
+  test "join page with expired code returns 410 gone" do
+    # Expire the join code
+    Current.account.join_code.update!(expires_at: 1.day.ago)
+
+    get join_url(@join_code)
+
+    assert_response :gone
+  end
+
+  test "join form with exhausted code returns 410 gone" do
+    ENV["AUTH_METHOD"] = "password"
+    join_code_record = Current.account.join_code
+    join_code_record.update!(usage_limit: 1, usage_count: 1)
+
+    post join_url(@join_code), params: {
+      user: {
+        name: "New User",
+        email_address: "newuser@example.com",
+        password: "valid_password_123"
+      }
+    }
+
+    # Exhausted codes are treated as inactive and return 410
+    assert_response :gone
+  end
+
+  # ============================================================================
+  # Duplicate email handling
+  # ============================================================================
+
+  test "create with existing email redirects to sign-in" do
+    ENV["AUTH_METHOD"] = "password"
+    existing_user = users(:david)
+
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: {
+        user: {
+          name: "Impersonator",
+          email_address: existing_user.email_address,
+          password: "secure_password_123"
+        }
+      }
+    end
+
+    assert_redirected_to new_session_url(email_address: existing_user.email_address)
+    assert_match /already exists/i, flash[:notice]
+  end
+
+  test "create with existing email in OTP mode starts OTP flow" do
+    ENV["AUTH_METHOD"] = "otp"
+    existing_user = users(:david)
+    existing_user.update!(last_authenticated_at: 1.day.ago) # Mark as having authenticated before
+
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: {
+        user: {
+          name: "Impersonator",
+          email_address: existing_user.email_address
+        }
+      }
+    end
+
+    # Should redirect to OTP validation for existing user
+    assert_redirected_to new_auth_tokens_validations_url
+  end
 end

@@ -62,7 +62,8 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     other_member = @room.memberships.visible.where.not(user: users(:david)).first
     other_member.update!(unread_at: nil, connected_at: nil)
 
-    assert_broadcasts "user_#{other_member.user_id}_unreads", 1 do
+    stream_name = UserUnreadRoomsChannel.broadcasting_for(other_member.user)
+    assert_broadcasts stream_name, 1 do
       post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
     end
   end

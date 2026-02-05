@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for(:title) || Branding.saas_app_name %></title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="<%= Branding.theme_color %>">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
+
+    <%= javascript_importmap_tags %>
+
+    <%= render "layouts/theme_preference" %>
+
+    <%= vite_client_tag %>
+    <%= vite_javascript_tag 'application' %>
+  </head>
+
+  <body class="<%= class_names("saas-layout", @body_class, "app-with-workspaces": show_workspace_selector?) %>" data-controller="theme">
+    <% if show_workspace_selector? %>
+      <%= render "shared/workspace_selector" %>
+    <% end %>
+
+    <main class="saas-container">
+      <% if notice = flash[:notice] || flash[:alert] %>
+        <div class="flash" data-controller="element-removal" data-action="animationend->element-removal#remove">
+          <div class="flash__inner" style="<%= "--flash-background: var(--color-negative)" if flash[:alert] %>">
+            <span><%= notice %></span>
+          </div>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+  </body>
+</html>

@@ -1,5 +1,5 @@
 class RoomListChannel < ApplicationCable::Channel
   def subscribed
-    stream_from "room_list"
+    stream_for Current.account
   end
 end

@@ -4,6 +4,8 @@
 #   Ensure the SQLite 3 gem is defined in your Gemfile
 #   gem "sqlite3"
 #
+<% saas_mode = defined?(Campfire) ? Campfire.saas? : false %>
+
 default: &default
   adapter: sqlite3
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
@@ -14,7 +16,19 @@ default: &default
 development:
   primary:
     <<: *default
+<% if saas_mode %>
+    database: "storage/workspaces/development/%{tenant}/db/main.sqlite3"
+    tenanted: true
+    max_connection_pools: 50
+<% else %>
     database: storage/db/development.sqlite3
+<% end %>
+<% if saas_mode %>
+  untenanted:
+    <<: *default
+    database: storage/untenanted/development.sqlite3
+    migrations_paths: saas/db/untenanted_migrate
+<% end %>
   queue:
     <<: *default
     database: storage/db/development_queue.sqlite3
@@ -26,7 +40,18 @@ development:
 test:
   primary:
     <<: *default
+<% if saas_mode %>
+    database: "storage/workspaces/test/%{tenant}/db/main.sqlite3"
+    tenanted: true
+<% else %>
     database: storage/db/test.sqlite3
+<% end %>
+<% if saas_mode %>
+  untenanted:
+    <<: *default
+    database: storage/untenanted/test.sqlite3
+    migrations_paths: saas/db/untenanted_migrate
+<% end %>
   queue:
     <<: *default
     database: storage/db/test_queue.sqlite3
@@ -44,7 +69,19 @@ performance:
 production:
   primary:
     <<: *default
+<% if saas_mode %>
+    database: "storage/workspaces/production/%{tenant}/db/main.sqlite3"
+    tenanted: true
+    max_connection_pools: 100
+<% else %>
     database: storage/db/production.sqlite3
+<% end %>
+<% if saas_mode %>
+  untenanted:
+    <<: *default
+    database: storage/untenanted/production.sqlite3
+    migrations_paths: saas/db/untenanted_migrate
+<% end %>
   queue:
     <<: *default
     database: storage/db/production_queue.sqlite3

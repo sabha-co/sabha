@@ -1,0 +1,19 @@
+<%# locals: (form:, autofocus: true, show_icon: true, show_translation: true, styled: false) %>
+<div class="flex align-center gap">
+  <% if show_translation && defined?(translation_button) %>
+    <%= translation_button(:one_time_code) %>
+  <% end %>
+  <label class="flex align-center gap input input--actor txt-large">
+    <%= form.text_field :code,
+        required: true,
+        class: "input",
+        autofocus: autofocus,
+        autocomplete: "one-time-code",
+        placeholder: "Enter code",
+        maxlength: 6,
+        style: styled ? "text-transform: uppercase; letter-spacing: 0.25em; text-align: center;" : nil %>
+    <% if show_icon && defined?(icon_tag) %>
+      <%= icon_tag "password" %>
+    <% end %>
+  </label>
+</div>

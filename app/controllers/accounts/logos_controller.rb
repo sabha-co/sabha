@@ -18,7 +18,7 @@ class Accounts::LogosController < ApplicationController
   end
 
   def destroy
-    Current.account.logo.destroy
+    Current.account.purge_logo
     redirect_to edit_account_url
   end
 

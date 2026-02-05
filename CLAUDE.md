@@ -10,9 +10,18 @@ Campfire-CE is a Ruby on Rails chat application combining:
 - **Vite** for modern frontend asset processing (Tailwind CSS v4)
 - **Importmap** for JavaScript module loading (Stimulus controllers)
 
-**Deployment:**
-- **Self-hosting:** Deploy via Kamal (see `config/deploy.yml`) or Docker Compose
-- **Campfire Cloud:** Managed hosting via [campfire_cloud](../campfire_cloud) platform, which provisions servers and deploys this application using Docker Compose with AnyCable for WebSockets
+**Deployment Modes:**
+- **Self-hosted (default):** Single-tenant, deploy via Kamal or Docker Compose
+- **SaaS mode:** Multi-tenant with database-per-workspace isolation via `activerecord-tenanted` gem
+
+**SaaS Engine (`saas/` folder):**
+The multi-tenant layer is implemented as a Rails engine in `saas/`:
+- `saas/lib/campfire/saas/engine.rb` - Engine configuration, routes, and middleware
+- `saas/app/models/` - Untenanted models (GlobalIdentity, Workspace, WorkspaceMembership)
+- `saas/app/controllers/saas/` - Controllers inheriting from `Saas::BaseController`
+- `saas/config/initializers/tenanting/` - Tenant resolution, path rewriting, Turbo/Storage hooks
+- Enabled via `Campfire.saas?` check (set by `SAAS=true` env var or `tmp/saas.txt` file)
+- Uses `Gemfile.saas` which extends the base `Gemfile`
 
 ## Core Domain Models
 
@@ -31,10 +40,17 @@ Campfire-CE is a Ruby on Rails chat application combining:
 - Messages use soft deletion (`active` boolean) - deleted messages marked inactive but preserved in database
 
 ### Authentication (Dual Strategy)
+**Self-hosted mode:**
 - **Passwordless (Email OTP)**: `AuthToken` model generates 6-digit codes sent via email
 - **Traditional Password**: Standard `has_secure_password` with password reset tokens
 - `Session` - Tracks browser, IP, platform for multi-device support
 - Email verification required for new users (`verified_at` timestamp)
+
+**SaaS mode:**
+- `GlobalIdentity` - Cross-workspace user identity (email only, no password)
+- `AuthCode` - OTP codes for GlobalIdentity (parallels AuthToken)
+- `GlobalSession` - Cross-workspace session with `global_session_token` cookie
+- `WorkspaceMembership` - Links GlobalIdentity to workspace tenant
 
 ## Key Architectural Patterns
 
@@ -48,8 +64,18 @@ Campfire-CE is a Ruby on Rails chat application combining:
 
 ### Current Context
 ```ruby
-Current.user      # Thread-safe request context
-Current.session   # Available throughout application
+# Self-hosted mode:
+Current.user      # Current user (from session)
+Current.session   # Session record
+Current.account   # Workspace settings (singleton)
+Current.request   # HTTP request object
+
+# SaaS mode (additional):
+Current.global_session        # Cross-workspace GlobalSession
+Current.global_identity       # GlobalIdentity (via global_session)
+Current.workspace_membership  # Link between identity and workspace
+Current.workspace             # Current Workspace record (lazy-loaded)
+# Current.user derives from workspace_membership.user in SaaS mode
 ```
 
 ### Query Objects
@@ -62,6 +88,67 @@ Messages, room updates, and notifications broadcast via:
 ```ruby
 broadcast_append_to room, :messages, partial: "messages/message"
 broadcast_replace_to room, :unread_count, target: "unread-#{room.id}"
+```
+
+## Rails Code Quality Standards
+
+**Write it right the first time - don't rely on reviews to catch these:**
+
+### RESTful Controllers
+- **NEVER** add custom actions like `leave`, `activate`, `process` to controllers
+- Map actions to standard CRUD: `index`, `show`, `new`, `create`, `edit`, `update`, `destroy`
+- If you need a "leave" action, it's `destroy` on a `MembershipsController`
+- If you need a "publish" action, it's `create` on a `PublicationsController`
+- Create new controllers for new resources rather than adding non-REST actions
+
+### Business Logic in Models
+- **NEVER** put business logic in controllers - controllers only route and respond
+- Auth code creation, email sending, state changes → all belong in models
+- Controller actions should be ~5-10 lines max, calling model methods
+- If you're writing a `case` statement in a controller parsing return values, refactor
+
+### Model Method Conventions
+- Methods ending in `!` should raise exceptions on failure, not return symbols
+- Return booleans or raise exceptions, never status symbols like `:success`, `:error`
+- Let ActiveRecord validations speak - don't reinvent error handling
+
+### Example Patterns
+
+```ruby
+# BAD - Non-RESTful action, business logic in controller
+class SettingsController < ApplicationController
+  def leave
+    case membership.leave!
+    when :success then redirect_to root_path
+    when :last_admin then redirect_back alert: "Can't leave"
+    end
+  end
+end
+
+# GOOD - RESTful, thin controller
+class MembershipsController < ApplicationController
+  def destroy
+    Current.membership.leave!
+    redirect_to root_path
+  rescue Membership::LastAdministratorError
+    redirect_back alert: "Can't leave as last admin"
+  end
+end
+```
+
+```ruby
+# BAD - Returns symbols
+def leave!
+  return :last_admin if last_admin?
+  destroy!
+  :success
+end
+
+# GOOD - Raises exceptions
+def leave!
+  raise LastAdministratorError if last_admin?
+  destroy!
+end
 ```
 
 ## Development Commands
@@ -79,6 +166,71 @@ bin/boot   # Full stack: web + redis + workers (production-like)
 
 Vite runs automatically via vite_rails with autoBuild: true.
 
+### SaaS Mode (Multi-Tenant)
+
+Campfire-CE supports two deployment modes:
+- **Self-host (default)**: Single-tenant, one workspace per installation
+- **SaaS mode**: Multi-tenant with database-per-workspace isolation
+
+```bash
+# Check current mode
+bin/rails saas:status
+
+# Enable SaaS mode (creates tmp/saas.txt, uses Gemfile.saas)
+bin/rails saas:enable
+bundle install
+bin/rails saas:setup   # Creates default workspace (ID 1000001)
+bin/dev
+
+# Disable SaaS mode (removes tmp/saas.txt, uses regular Gemfile)
+bin/rails saas:disable
+bundle install
+bin/dev
+
+# Temporary SaaS mode (single session only)
+SAAS=true bin/dev
+```
+
+**Important**: After switching modes, always run `bundle install` to use the correct Gemfile.
+
+**SaaS Development Workflow:**
+```bash
+# Initial setup (after enabling SaaS mode)
+bin/setup                    # Runs saas:setup automatically
+
+# Workspace management
+bin/rails workspace:list                          # List all workspaces
+bin/rails workspace:create[name,email]            # Create new workspace
+bin/rails workspace:destroy[1000001]              # Destroy workspace
+bin/rails workspace:info[1000001]                 # Show workspace details
+
+# Access URLs
+# Landing page: http://localhost:3000/
+# Workspace:    http://localhost:3000/1000001/
+
+# Reset everything (destructive)
+bin/rails saas:reset
+```
+
+**Running Tests:**
+```bash
+# Self-hosted tests
+bin/rails test
+
+# SaaS tests (separate test suite)
+SAAS=true bin/rails test saas/test/
+```
+
+SaaS mode adds:
+- `activerecord-tenanted` gem for per-workspace SQLite databases
+- Path-based workspace routing (`/1000001/rooms/general`)
+- `GlobalIdentity` model for cross-workspace authentication
+- `AuthCode` model for OTP codes (parallels `AuthToken` in self-hosted)
+- `Workspace` model in untenanted database
+- Workspace selector sidebar for users with multiple workspaces
+
+See `docs/multi-tenant/` for detailed SaaS architecture documentation.
+
 ### Tailwind CSS
 ```bash
 # Tailwind is processed by Vite from app/frontend/entrypoints/application.css
@@ -87,11 +239,28 @@ Vite runs automatically via vite_rails with autoBuild: true.
 
 ### Testing
 ```bash
-bin/rails test                          # Run all tests
+bin/rails test                          # Run all tests (self-hosted mode)
 bin/rails test test/models/user_test.rb # Single test file
 bin/rails test:system                   # Browser-based system tests
 ```
+
+**SaaS Mode Tests:**
+```bash
+# Run SaaS test suite
+SAAS=true bin/rails test saas/test/
+
+# Run a single SaaS test file
+SAAS=true bin/rails test saas/test/models/workspace_test.rb
+```
+
+SaaS tests are located in `saas/test/` and test the multi-tenant infrastructure:
+- `saas/test/models/` - GlobalIdentity, GlobalSession, Workspace, WorkspaceMembership, AuthCode
+- `saas/test/controllers/saas/` - Sessions, registrations, workspaces, profiles, landing, auth codes
+- `saas/test/fixtures/` - Fixtures for untenanted models
+
 Test framework: Minitest with mocha (mocking), webmock (HTTP stubbing), capybara/cuprite (system tests)
+
+**Testing approach:** Real database. Uses vanilla Rails setup of loading fixtures once, then using per-test transactions to rollback changes. No mocking of database interactions.
 
 ### Database
 ```bash
@@ -141,9 +310,12 @@ app/frontend/
 - `InboxActivityChannel` & `InboxThreadsChannel` - Inbox real-time updates
 
 ### Connection
-Authentication via cookie-based session in `ApplicationCable::Connection`:
+Authentication via signed cookie in `ApplicationCable::Connection`:
 ```ruby
-self.current_user = User.find_by(id: request.session[:user_id])
+# Self-hosted: Uses session_token cookie → Session → User
+# SaaS mode:   Uses global_session_token cookie → GlobalSession → WorkspaceMembership → User
+#              Gem's around_command :with_tenant wraps all channel commands
+self.current_user = user  # Set after cookie-based lookup
 ```
 
 ## Background Jobs
@@ -151,6 +323,8 @@ self.current_user = User.find_by(id: request.session[:user_id])
 Uses Solid Queue (SQLite-backed) for background processing:
 - `Room::PushMessageJob` - Web push notifications for new messages
 - `UnreadMentionsNotifierJob` - Daily email digest of unread mentions/DMs
+
+**SaaS mode:** The `activerecord-tenanted` gem automatically serializes `current_tenant` with job payloads and restores it during `perform`. GlobalID parameters also include tenant context.
 
 ### Production Startup (`bin/boot`)
 ```
@@ -195,21 +369,40 @@ Optional features:
 - `sqlite3.rb` - SQLite production optimizations (busy timeout, journal mode)
 - `dicebear.rb` - DiceBear avatar generation configuration
 
+**SaaS mode initializers** (`saas/config/initializers/tenanting/`):
+- `tenant_resolver.rb` - Extracts tenant from SCRIPT_NAME
+- `path_rewriter.rb` - Middleware moves workspace prefix to SCRIPT_NAME
+- `turbo.rb` - Ensures Turbo broadcasts include workspace prefix
+- `active_storage.rb` - Sets URL options with script_name for attachments
+- `logging.rb` - Adds tenant tags to Rails and SQL logs
+
 ### Routes Structure
+**Self-hosted mode:**
 - Conditional root routes (authenticated → `welcome#show`, unauthenticated → redirect to sign-in)
 - Nested resources: `/rooms/:room_id/messages/:id`
+
+**SaaS mode:**
+- Workspace prefix in all URLs: `/{workspace_id}/rooms/general` (e.g., `/1000001/rooms/general`)
+- PathRewriter middleware moves prefix to SCRIPT_NAME, URL helpers auto-include it
+- Global routes without prefix: `/session/new`, `/workspaces`, `/join`
+- SaaS controllers in `saas/app/controllers/saas/` inherit from `Saas::BaseController`
 
 ## Testing Guidelines
 
 ### Test Structure
 ```
-test/
-├── controllers/  # Controller unit tests
-├── models/       # Model unit tests
-├── system/       # Full-stack Capybara tests (browser-based)
-├── channels/     # ActionCable channel tests
-├── jobs/         # Background job tests
-└── fixtures/     # Test data
+test/                    # Self-hosted tests (bin/rails test)
+├── controllers/         # Controller unit tests
+├── models/              # Model unit tests
+├── system/              # Full-stack Capybara tests (browser-based)
+├── channels/            # ActionCable channel tests
+├── jobs/                # Background job tests
+└── fixtures/            # Test data
+
+saas/test/               # SaaS tests (SAAS=true bin/rails test saas/test/)
+├── models/              # GlobalIdentity, Workspace, WorkspaceMembership, etc.
+├── controllers/saas/    # SaaS controller tests
+└── fixtures/            # Untenanted model fixtures
 ```
 
 ### Test Helpers
@@ -255,6 +448,12 @@ test/
 - Schema format: SQL (required for FTS5 full-text search extensions)
 - Migrations in `db/migrate/` with schema in `db/schema.rb`
 - Full-text search on messages via `messages_fts` virtual table
+
+**SaaS mode databases:**
+- `storage/{env}/untenanted.sqlite3` - GlobalIdentity, Workspace, WorkspaceMembership, GlobalSession
+- `storage/{env}/workspaces/{tenant_id}/main.sqlite3` - Per-workspace data (User, Room, Message, etc.)
+- Untenanted migrations in `db/untenanted_migrate/`
+- Models inherit from `UntenantedRecord` or `ApplicationRecord` (tenanted)
 
 ### Migrations During Feature Development
 When a feature is under development and the table structure needs to be rethought, do NOT create new migrations to modify the schema. Instead:

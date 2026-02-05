@@ -10,10 +10,10 @@
   </div>
 <% end %>
 
-<%= form_with model: @user, url: join_path(params[:join_code]), class: "center" do |form| %>
+<%= form_with model: @user, url: request.fullpath, class: "center" do |form| %>
   <section class="nametag u-relative">
     <div class="flex justify-center align-center pad-block">
-      <%= icon_tag "lanyard", class: "nametag__lanyard" %>
+      <%= image_tag "lanyard.svg", class: "nametag__lanyard", alt: "" %>
     </div>
 
     <div class="nametag__inner flex flex-column gap">
@@ -49,41 +49,64 @@
         <p class="txt-medium txt-negative txt-align-center"><%= flash[:alert] %></p>
       <% end %>
 
-      <div class="flex align-center gap">
-        <%= translation_button(:user_name) %>
-        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-          <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
-                data: { "1p-ignore": true } %>
-          <%= icon_tag "person" %>
-        </label>
-      </div>
+      <% if saas_unauthenticated? %>
+        <%# SaaS: User is not logged in - show sign in/sign up options %>
+        <div class="flex flex-column gap">
+          <%= link_to untenanted_path(:new_session, return_to: @return_to_url), class: "btn btn--reversed center txt-large" do %>
+            Sign in to join
+          <% end %>
+        </div>
 
-      <div class="flex align-center gap">
-        <%= translation_button(:email_address) %>
-        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-          <%= form.email_field :email_address, class: "input", autocomplete: "username", placeholder: "Your email address", required: true %>
-          <%= icon_tag "email" %>
-        </label>
-      </div>
+        <div class="txt-medium txt-align-center">
+          Don't have an account? <%= link_to "Create one", untenanted_path(:new_registration, return_to: @return_to_url) %>
+        </div>
+      <% elsif saas_authenticated? %>
+        <%# SaaS: User is globally authenticated, one-click join %>
+        <p class="txt-medium txt-align-center txt-faded">
+          Joining as <strong><%= Current.global_identity.email_address %></strong>
+        </p>
 
-      <% if Current.account.auth_method_value != "otp" %>
+        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+          Join <%= Current.account.name %>
+        <% end %>
+      <% else %>
+        <%# Self-hosted or new SaaS user: full signup form %>
         <div class="flex align-center gap">
-          <%= translation_button(:password) %>
+          <%= translation_button(:user_name) %>
           <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-            <%= form.password_field :password, class: "input", autocomplete: "new-password",
-                placeholder: "Choose a password", required: true, minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
-            <%= icon_tag "password" %>
+            <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
+                  data: { "1p-ignore": true } %>
+            <%= icon_tag "person" %>
           </label>
         </div>
-      <% end %>
 
-      <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-        Join <%= Current.account.name %>
-      <% end %>
+        <div class="flex align-center gap">
+          <%= translation_button(:email_address) %>
+          <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+            <%= form.email_field :email_address, class: "input", autocomplete: "username", placeholder: "Your email address", required: true %>
+            <%= icon_tag "email" %>
+          </label>
+        </div>
 
-      <div class="txt-medium txt-align-center">
-        Already have an account? <%= link_to "Sign in", new_session_path %>
-      </div>
+        <% if Current.account.auth_method_value != "otp" %>
+          <div class="flex align-center gap">
+            <%= translation_button(:password) %>
+            <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+              <%= form.password_field :password, class: "input", autocomplete: "new-password",
+                  placeholder: "Choose a password", required: true, minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
+              <%= icon_tag "password" %>
+            </label>
+          </div>
+        <% end %>
+
+        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+          Join <%= Current.account.name %>
+        <% end %>
+
+        <div class="txt-medium txt-align-center">
+          Already have an account? <%= link_to "Sign in", new_session_path %>
+        </div>
+      <% end %>
     </div>
   </section>
 <% end %>

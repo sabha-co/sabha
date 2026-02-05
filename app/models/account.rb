@@ -15,6 +15,18 @@ class Account < ApplicationRecord
     value.in?(VALID_AUTH_METHODS) ? value : "password"
   end
 
+  def attach_logo(blob)
+    logo.attach(blob)
+    touch
+    sync_logo_to_workspace
+  end
+
+  def purge_logo
+    logo.purge
+    touch
+    sync_logo_to_workspace
+  end
+
   private
     def invite_links_disabled?
       saved_change_to_settings? && !settings.allow_users_to_create_invite_links?
@@ -22,5 +34,14 @@ class Account < ApplicationRecord
 
     def invalidate_personal_invite_links
       join_codes.personal.destroy_all
+    end
+
+    def sync_logo_to_workspace
+      return unless Campfire.saas?
+      return unless ApplicationRecord.current_tenant.present?
+
+      Workspace
+        .find_by(external_id: ApplicationRecord.current_tenant)
+        &.update_column(:has_logo, logo.attached?)
     end
 end

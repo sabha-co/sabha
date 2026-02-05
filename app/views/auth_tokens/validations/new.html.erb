@@ -9,29 +9,14 @@
       <fieldset class="flex flex-column gap center-block upad">
         <legend class="txt-large txt-align-center"><strong>Enter one-time code</strong></legend>
 
-        <% if flash[:notice] %>
-          <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
-        <% end %>
-
-        <% if flash[:alert] %>
-          <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
-        <% end %>
+        <%= render "sessions/flash_messages" %>
 
         <p class="txt-medium">
           We sent an email to <%= session[:otp_email_address] %> with a code you can use to sign in below.
         </p>
 
-        <div class="flex align-center gap">
-          <%= translation_button(:one_time_code) %>
-          <label class="flex align-center gap input input--actor txt-large">
-            <%= form.text_field :code, required: true, class: "input", inputmode: "numeric", autofocus: true, placeholder: "Enter code" %>
-            <%= icon_tag "password" %>
-          </label>
-        </div>
-
-        <%= form.button class: "btn btn--reversed center txt-large", type: "submit", data: hotwire_native_app? ? { controller: "bridge--button", bridge_title: "Submit" } : {} do %>
-          Verify code
-        <% end %>
+        <%= render "sessions/code_field", form: form %>
+        <%= render "sessions/submit_button", form: form, label: "Verify code" %>
 
         <div class="txt-medium txt-align-center">
           Didn't receive it? <%= link_to "Try again", new_session_url, class: "txt-white" %>

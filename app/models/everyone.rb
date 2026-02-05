@@ -3,6 +3,12 @@ class Everyone
   include ActionText::Attachable
   extend ActiveModel::Naming
 
+  # Required by activerecord-tenanted gem for GlobalID serialization
+  # Everyone is a singleton, not tenant-scoped
+  def self.tenanted?
+    false
+  end
+
   # Stub object to satisfy avatar.attached? checks
   class NullAvatar
     def attached?

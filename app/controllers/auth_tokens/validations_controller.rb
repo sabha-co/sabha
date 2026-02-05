@@ -3,6 +3,8 @@ class AuthTokens::ValidationsController < ApplicationController
 
   rate_limit to: 10, within: 1.minute, with: -> { head :too_many_requests }
 
+  before_action :redirect_to_saas_login, if: -> { Campfire.saas? }
+
   # Token-based login (magic link) is always allowed for Cloud bootstrap
   # Code-based OTP is only allowed when AUTH_METHOD=otp
   before_action :require_otp_or_token
@@ -21,13 +23,18 @@ class AuthTokens::ValidationsController < ApplicationController
       auth_token.user.verify_email! unless auth_token.user.verified?
 
       start_new_session_for(auth_token.user)
-      redirect_to post_authenticating_url, notice: "Welcome back to #{Branding.app_name}!"
+      redirect_to post_authenticating_url, notice: "Welcome back to #{Branding.contextual_app_name}!"
     else
       redirect_to new_auth_tokens_validations_path, alert: "Invalid or expired token. Please try again."
     end
   end
 
   private
+
+  def redirect_to_saas_login
+    # In SaaS mode, workspace login pages redirect to the global SaaS login
+    redirect_to "/session/new"
+  end
 
   def require_otp_or_token
     # Token-based login is always allowed (for Cloud bootstrap magic links)

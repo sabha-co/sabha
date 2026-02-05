@@ -1,0 +1,1013 @@
+/* Workspace selector sidebar - Discord/Slack-style design */
+/* Uses neutral grays and integrates with app's color system */
+
+:root {
+  --workspace-selector-width: 72px;
+  --workspace-selector-width-mobile: 64px;
+
+  /* Discord-style neutral dark grays (no purple tint) */
+  /* Brightened for better icon contrast */
+  --workspace-selector-bg: oklch(17% 0 0);
+  --workspace-selector-icon-bg: oklch(32% 0 0);
+  --workspace-selector-icon-bg-hover: oklch(42% 0 0);
+
+  /* Active state uses app's blue accent */
+  --workspace-selector-icon-bg-active: var(--color-lch-blue);
+  --workspace-selector-text: oklch(92% 0 0);
+  --workspace-selector-text-active: oklch(100% 0 0);
+  --workspace-selector-border: oklch(22% 0 0);
+  --workspace-selector-indicator: oklch(100% 0 0);
+
+  /* Shadows for depth */
+  --workspace-selector-shadow: 2px 0 8px oklch(0% 0 0 / 0.15);
+}
+
+/* Light mode - slightly lighter grays, still dark sidebar */
+@media (prefers-color-scheme: light) {
+  :root {
+    --workspace-selector-bg: oklch(22% 0 0);
+    --workspace-selector-icon-bg: oklch(36% 0 0);
+    --workspace-selector-icon-bg-hover: oklch(46% 0 0);
+    --workspace-selector-border: oklch(28% 0 0);
+    --workspace-selector-shadow: 2px 0 12px oklch(0% 0 0 / 0.08);
+  }
+}
+
+/* Manual theme overrides */
+:root[data-theme="light"] {
+  --workspace-selector-bg: oklch(22% 0 0);
+  --workspace-selector-icon-bg: oklch(36% 0 0);
+  --workspace-selector-icon-bg-hover: oklch(46% 0 0);
+  --workspace-selector-border: oklch(28% 0 0);
+  --workspace-selector-shadow: 2px 0 12px oklch(0% 0 0 / 0.08);
+}
+
+:root[data-theme="dark"] {
+  --workspace-selector-bg: oklch(17% 0 0);
+  --workspace-selector-icon-bg: oklch(32% 0 0);
+  --workspace-selector-icon-bg-hover: oklch(42% 0 0);
+  --workspace-selector-border: oklch(22% 0 0);
+  --workspace-selector-shadow: 2px 0 8px oklch(0% 0 0 / 0.15);
+}
+
+.workspace-selector {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--workspace-selector-width);
+  background: var(--workspace-selector-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  z-index: 2; /* Below sidebar (z-index: 3) so it doesn't overlap when sidebar opens */
+  border-right: 1px solid var(--workspace-selector-border);
+  box-shadow: var(--workspace-selector-shadow);
+  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+
+  /* Smooth transitions for width changes */
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Hardware acceleration for smoother animations */
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.workspace-selector__header {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 12px;
+}
+
+/* Home button - Discord-style house icon */
+.workspace-selector__home {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background: var(--workspace-selector-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--workspace-selector-text);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  position: relative;
+  text-decoration: none;
+}
+
+.workspace-selector__home:hover {
+  background: var(--workspace-selector-icon-bg-hover);
+  border-radius: 16px;
+}
+
+.workspace-selector__home--active {
+  background: var(--color-lch-blue);
+  color: var(--workspace-selector-text-active);
+}
+
+.workspace-selector__home .icon {
+  --icon-size: 20px;
+}
+
+/* Separator line between sections */
+.workspace-selector__separator {
+  width: 32px;
+  height: 2px;
+  background: var(--workspace-selector-border);
+  border-radius: 1px;
+  margin: 8px auto;
+  flex-shrink: 0;
+}
+
+
+.workspace-selector__list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+
+  /* Better scroll performance on mobile */
+  overscroll-behavior: contain;
+}
+
+.workspace-selector__list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Add scroll fade indicators for long workspace lists */
+.workspace-selector__list::before,
+.workspace-selector__list::after {
+  content: "";
+  position: sticky;
+  display: block;
+  width: 100%;
+  height: 20px;
+  flex-shrink: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.workspace-selector__list::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--workspace-selector-bg) 0%, transparent 100%);
+  margin-bottom: -20px;
+}
+
+.workspace-selector__list::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--workspace-selector-bg) 0%, transparent 100%);
+  margin-top: -20px;
+}
+
+.workspace-selector__item {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  flex-shrink: 0;
+  transform-origin: center;
+}
+
+.workspace-selector__item:hover {
+  border-radius: 16px;
+  transform: translateX(2px);
+}
+
+.workspace-selector__item--active {
+  border-radius: 16px;
+  transform: translateX(2px);
+}
+
+/* Micro-interaction bounce on click */
+@keyframes workspace-bounce {
+  0% { transform: translateX(2px) scale(1); }
+  50% { transform: translateX(2px) scale(0.92); }
+  100% { transform: translateX(2px) scale(1); }
+}
+
+.workspace-selector__item:active {
+  animation: workspace-bounce 0.2s ease-out;
+}
+
+.workspace-selector__workspace-icon {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--workspace-selector-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--workspace-selector-text);
+  font-weight: 600;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Subtle gradient overlay on hover for depth */
+.workspace-selector__workspace-icon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, oklch(100% 0 0 / 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.workspace-selector__item:hover .workspace-selector__workspace-icon::before {
+  opacity: 1;
+}
+
+.workspace-selector__logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.workspace-selector__item:hover .workspace-selector__workspace-icon {
+  background: var(--workspace-selector-icon-bg-hover);
+}
+
+.workspace-selector__item--active .workspace-selector__workspace-icon {
+  background: var(--workspace-selector-icon-bg-active);
+  color: var(--workspace-selector-text-active);
+}
+
+.workspace-selector__active-indicator {
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 32px;
+  background: var(--workspace-selector-indicator);
+  border-radius: 0 4px 4px 0;
+  transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px oklch(100% 0 0 / 0.3);
+}
+
+.workspace-selector__item:hover .workspace-selector__active-indicator {
+  height: 20px;
+}
+
+.workspace-selector__item--active .workspace-selector__active-indicator {
+  height: 40px;
+  /* Static glow instead of pulse animation - softer and less distracting */
+  box-shadow: 0 0 8px oklch(100% 0 0 / 0.4);
+}
+
+.workspace-selector__footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+/* Profile button in footer */
+.workspace-selector__profile {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--workspace-selector-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--workspace-selector-text);
+  font-weight: 600;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  text-decoration: none;
+  position: relative;
+}
+
+.workspace-selector__profile:hover {
+  background: var(--workspace-selector-icon-bg-hover);
+  transform: scale(1.05);
+}
+
+.workspace-selector__profile--active {
+  background: var(--workspace-selector-icon-bg-active);
+  color: var(--workspace-selector-text-active);
+  box-shadow: 0 0 0 2px var(--workspace-selector-bg), 0 0 0 4px var(--workspace-selector-indicator);
+}
+
+.workspace-selector__profile--active:hover {
+  background: var(--workspace-selector-icon-bg-active);
+  transform: scale(1.05);
+}
+
+/* Notification dot on profile */
+.workspace-selector__profile .icon {
+  --icon-size: 20px;
+}
+
+.workspace-selector__add {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background: transparent;
+  border: 2px dashed oklch(40% 0 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: oklch(50% 0 0);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.workspace-selector__add::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-lch-green);
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: inherit;
+}
+
+.workspace-selector__add:hover {
+  border-color: var(--color-lch-green);
+  color: var(--color-lch-white);
+  border-radius: 16px;
+  border-style: solid;
+  transform: translateX(2px) scale(1.05);
+}
+
+.workspace-selector__add:hover::before {
+  opacity: 1;
+}
+
+.workspace-selector__add:active {
+  transform: translateX(2px) scale(0.95);
+}
+
+.workspace-selector__add .icon {
+  --icon-size: 24px;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.workspace-selector__add:hover .icon {
+  transform: rotate(90deg);
+}
+
+/* Layout adjustment for app with workspace selector */
+.app-with-workspaces {
+  margin-left: var(--workspace-selector-width);
+  transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hide campfire logo and adjust layout in SaaS mode */
+.app-with-workspaces #app-logo {
+  display: none;
+}
+
+/* Nav is position:fixed, so it needs explicit left offset for workspace selector */
+.app-with-workspaces #nav {
+  left: var(--workspace-selector-width);
+}
+
+.app-with-workspaces.sidebar #main-content {
+  @media (min-width: 120ch) {
+    margin-inline-start: 0;
+  }
+}
+
+.app-with-workspaces.sidebar #nav {
+  @media (min-width: 120ch) {
+    margin-inline-start: 0;
+  }
+}
+
+/* SaaS container - main content area */
+.saas-container {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100dvh;
+  padding: var(--block-space, 1rem) var(--inline-space, 1rem);
+  box-sizing: border-box;
+}
+
+/* Ensure content doesn't overflow on mobile with workspace selector */
+.app-with-workspaces .saas-container {
+  width: calc(100vw - var(--workspace-selector-width));
+  max-width: calc(100vw - var(--workspace-selector-width));
+}
+
+/* Fix input and form widths in SaaS pages */
+.saas-container .input,
+.saas-container .btn,
+.saas-container fieldset {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.saas-container .panel {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Tablet: slightly narrower */
+@media (max-width: 768px) {
+  :root {
+    --workspace-selector-width: var(--workspace-selector-width-mobile);
+  }
+
+  .workspace-selector {
+    padding: 10px 0;
+  }
+
+  /* Ensure container fits properly on tablet */
+  .saas-container {
+    padding: var(--block-space, 0.75rem) var(--inline-space, 0.75rem);
+  }
+
+  .workspace-selector__home {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+  }
+
+  .workspace-selector__home:hover {
+    border-radius: 14px;
+  }
+
+  .workspace-selector__home .icon {
+    --icon-size: 18px;
+  }
+
+  .workspace-selector__separator {
+    width: 28px;
+    margin: 6px auto;
+  }
+
+  .workspace-selector__profile {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .workspace-selector__profile .icon {
+    --icon-size: 18px;
+  }
+
+  .workspace-selector__list {
+    gap: 6px;
+    padding: 4px 8px;
+  }
+
+  .workspace-selector__item {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+  }
+
+  .workspace-selector__item:hover,
+  .workspace-selector__item--active {
+    border-radius: 14px;
+  }
+
+  .workspace-selector__workspace-icon {
+    font-size: 16px;
+  }
+
+  .workspace-selector__add {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+  }
+
+  .workspace-selector__add:hover {
+    border-radius: 14px;
+  }
+
+  .workspace-selector__add .icon {
+    --icon-size: 22px;
+  }
+
+  .workspace-selector__footer {
+    gap: 6px;
+  }
+}
+
+/* Mobile: compact design with touch-friendly targets */
+@media (max-width: 640px) {
+  :root {
+    --workspace-selector-width-mobile: 60px;
+  }
+
+  .workspace-selector {
+    padding: 8px 0;
+  }
+
+  /* Tighter padding on mobile */
+  .saas-container {
+    padding: var(--block-space, 0.5rem) var(--inline-space, 0.5rem);
+  }
+
+  /* Ensure form elements don't overflow */
+  .saas-container .input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  .workspace-selector__home {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+  }
+
+  .workspace-selector__home:hover {
+    border-radius: 12px;
+  }
+
+  .workspace-selector__home .icon {
+    --icon-size: 16px;
+  }
+
+  .workspace-selector__separator {
+    width: 24px;
+    margin: 4px auto;
+  }
+
+  .workspace-selector__profile {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .workspace-selector__profile .icon {
+    --icon-size: 16px;
+  }
+
+  .workspace-selector__list {
+    gap: 6px;
+    padding: 4px 6px;
+  }
+
+  .workspace-selector__item {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+  }
+
+  .workspace-selector__item:hover,
+  .workspace-selector__item--active {
+    border-radius: 12px;
+  }
+
+  /* Disable hover transform on mobile (only active state) */
+  .workspace-selector__item:hover {
+    transform: none;
+  }
+
+  .workspace-selector__item--active {
+    transform: translateX(2px);
+  }
+
+  .workspace-selector__workspace-icon {
+    font-size: 15px;
+  }
+
+  .workspace-selector__add {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+  }
+
+  .workspace-selector__add:hover {
+    border-radius: 12px;
+    transform: none;
+  }
+
+  .workspace-selector__add:active {
+    transform: scale(0.95);
+  }
+
+  .workspace-selector__add .icon {
+    --icon-size: 20px;
+  }
+
+  .workspace-selector__footer {
+    gap: 4px;
+  }
+
+  /* Reduce active indicator size on mobile */
+  .workspace-selector__active-indicator {
+    left: -10px;
+    height: 24px;
+  }
+
+  .workspace-selector__item:hover .workspace-selector__active-indicator {
+    height: 16px;
+  }
+
+  .workspace-selector__item--active .workspace-selector__active-indicator {
+    height: 32px;
+  }
+
+  /* Disable gradient overlay on mobile for performance */
+  .workspace-selector__item:hover .workspace-selector__workspace-icon::before {
+    opacity: 0;
+  }
+}
+
+/* Extra small screens: even more compact */
+@media (max-width: 480px) {
+  :root {
+    --workspace-selector-width-mobile: 56px;
+  }
+
+  .workspace-selector {
+    padding: 6px 0;
+  }
+
+  /* Minimal padding on extra small screens */
+  .saas-container {
+    padding: var(--block-space, 0.5rem) var(--inline-space, 0.25rem);
+  }
+
+  .workspace-selector__home {
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+  }
+
+  .workspace-selector__home:hover {
+    border-radius: 10px;
+  }
+
+  .workspace-selector__home .icon {
+    --icon-size: 14px;
+  }
+
+  .workspace-selector__separator {
+    width: 20px;
+    margin: 4px auto;
+  }
+
+  .workspace-selector__profile {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .workspace-selector__list {
+    gap: 4px;
+    padding: 4px 6px;
+  }
+
+  .workspace-selector__item {
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+  }
+
+  .workspace-selector__item:hover,
+  .workspace-selector__item--active {
+    border-radius: 10px;
+  }
+
+  .workspace-selector__workspace-icon {
+    font-size: 14px;
+  }
+
+  .workspace-selector__add {
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+  }
+
+  .workspace-selector__add:hover {
+    border-radius: 10px;
+  }
+
+  .workspace-selector__add .icon {
+    --icon-size: 18px;
+  }
+
+  .workspace-selector__footer {
+    gap: 4px;
+  }
+}
+
+/* Accessibility: Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .workspace-selector,
+  .workspace-selector__item,
+  .workspace-selector__workspace-icon,
+  .workspace-selector__workspace-icon::before,
+  .workspace-selector__active-indicator,
+  .workspace-selector__add,
+  .workspace-selector__add::before,
+  .workspace-selector__add .icon,
+  .workspace-selector__home,
+  .workspace-selector__profile,
+  .app-with-workspaces,
+  .app-with-workspaces #app-logo {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .workspace-selector {
+    border-right-width: 2px;
+  }
+
+  .workspace-selector__item,
+  .workspace-selector__add,
+  .workspace-selector__home,
+  .workspace-selector__profile {
+    outline: 1px solid transparent;
+  }
+
+  .workspace-selector__item:focus-visible,
+  .workspace-selector__add:focus-visible,
+  .workspace-selector__home:focus-visible,
+  .workspace-selector__profile:focus-visible {
+    outline-color: var(--workspace-selector-text);
+  }
+}
+
+/* Focus styles for keyboard navigation */
+.workspace-selector__item:focus-visible,
+.workspace-selector__add:focus-visible,
+.workspace-selector__home:focus-visible,
+.workspace-selector__profile:focus-visible {
+  outline: 2px solid var(--color-lch-blue);
+  outline-offset: 2px;
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets */
+  .workspace-selector__item,
+  .workspace-selector__add,
+  .workspace-selector__home,
+  .workspace-selector__profile {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Disable hover effects on touch devices */
+  .workspace-selector__item:hover {
+    border-radius: 24px;
+    transform: none;
+  }
+
+  .workspace-selector__item--active {
+    border-radius: 16px;
+    transform: translateX(2px);
+  }
+
+  .workspace-selector__add:hover {
+    border-radius: 24px;
+    transform: none;
+  }
+
+  .workspace-selector__add:hover .icon {
+    transform: none;
+  }
+
+  .workspace-selector__home:hover {
+    border-radius: 24px;
+    transform: none;
+    background: var(--workspace-selector-icon-bg);
+  }
+
+  .workspace-selector__profile:hover {
+    transform: none;
+    background: var(--workspace-selector-icon-bg);
+  }
+
+  /* Better tap feedback */
+  .workspace-selector__item:active,
+  .workspace-selector__add:active,
+  .workspace-selector__home:active,
+  .workspace-selector__profile:active {
+    opacity: 0.7;
+  }
+}
+
+/* Drag-to-reorder styles */
+.workspace-selector__item[draggable="true"] {
+  cursor: grab;
+}
+
+.workspace-selector__item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.workspace-selector__item.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.workspace-selector__item.drag-over {
+  transform: translateX(2px) scale(1.05);
+}
+
+/* Loading state for workspace switching */
+.workspace-selector__item[aria-busy="true"] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.workspace-selector__item[aria-busy="true"] .workspace-selector__workspace-icon {
+  animation: workspace-loading 1s ease-in-out infinite;
+}
+
+@keyframes workspace-loading {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Print styles - hide workspace selector when printing */
+@media print {
+  .workspace-selector {
+    display: none;
+  }
+
+  .app-with-workspaces {
+    margin-left: 0;
+  }
+
+  .app-with-workspaces .saas-container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .app-with-workspaces #app-logo {
+    left: 0;
+  }
+}
+
+/* Landscape mobile - optimize vertical space */
+@media (max-height: 500px) and (orientation: landscape) {
+  .workspace-selector {
+    padding: 4px 0;
+  }
+
+  .workspace-selector__separator {
+    margin: 2px auto;
+  }
+
+  .workspace-selector__list {
+    gap: 4px;
+  }
+
+  .workspace-selector__footer {
+    gap: 4px;
+  }
+
+  .workspace-selector__home {
+    width: 32px;
+    height: 32px;
+  }
+
+  .workspace-selector__home .icon {
+    --icon-size: 14px;
+  }
+
+  .workspace-selector__profile {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .workspace-selector__item {
+    width: 36px;
+    height: 36px;
+  }
+
+  .workspace-selector__add {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Safe area insets for notched devices (iPhone X+, etc.) */
+@supports (padding: max(0px)) {
+  .workspace-selector {
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-left: env(safe-area-inset-left);
+  }
+
+  /* Ensure container respects safe areas on right edge */
+  .saas-container {
+    padding-right: max(var(--inline-space, 1rem), env(safe-area-inset-right));
+    padding-bottom: max(var(--block-space, 1rem), env(safe-area-inset-bottom));
+  }
+
+  @media (max-width: 768px) {
+    .workspace-selector {
+      padding-top: max(10px, env(safe-area-inset-top));
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .workspace-selector {
+      padding-top: max(8px, env(safe-area-inset-top));
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+  }
+
+  @media (max-width: 480px) {
+    .workspace-selector {
+      padding-top: max(6px, env(safe-area-inset-top));
+      padding-bottom: max(6px, env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* PWA standalone mode adjustments */
+@media (display-mode: standalone) {
+  /* In standalone mode, ensure the sidebar respects system UI */
+  @supports (padding: max(0px)) {
+    .workspace-selector {
+      /* Extra padding for iOS status bar in standalone */
+      padding-top: max(16px, env(safe-area-inset-top));
+    }
+  }
+}
+
+/* Disable drag-to-reorder on touch devices - use long-press menu instead */
+@media (hover: none) and (pointer: coarse) {
+  .workspace-selector__item[draggable="true"] {
+    /* Disable HTML5 drag on touch - it doesn't work well */
+    -webkit-user-drag: none;
+    user-drag: none;
+    cursor: pointer;
+  }
+
+  .workspace-selector__item[draggable="true"]:active {
+    cursor: pointer;
+  }
+
+  /* Prevent text selection during touch */
+  .workspace-selector {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .workspace-selector {
+    /* Prevent iOS rubber-band scrolling on the sidebar */
+    overscroll-behavior: none;
+  }
+
+  .workspace-selector__list {
+    /* Smoother momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Android-specific: ensure proper rendering */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .workspace-selector {
+    /* Force GPU compositing for smoother scrolling */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+}

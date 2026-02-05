@@ -1,0 +1,75 @@
+<%# Workspace selector sidebar - Discord-style with home, workspaces, profile %>
+<% if show_workspace_selector? %>
+  <% workspaces = workspace_selector_workspaces %>
+  <% settings_active = controller.controller_path == "saas/settings" %>
+  <% workspaces_active = controller.controller_path == "saas/workspaces" && action_name == "index" %>
+
+  <aside class="workspace-selector" role="navigation" aria-label="Workspace navigation" data-controller="workspace-sortable">
+    <%# Home button - links to workspace list %>
+    <div class="workspace-selector__header">
+      <%= link_to untenanted_path(:workspaces),
+          class: class_names("workspace-selector__home", "workspace-selector__home--active": workspaces_active),
+          title: "Home",
+          data: { turbo_prefetch: "false" },
+          "aria-label": "Home - View all workspaces#{workspaces_active ? ' (current)' : ''}",
+          "aria-current": (workspaces_active ? "page" : nil) do %>
+        <%= icon_tag("home") %>
+      <% end %>
+    </div>
+
+    <div class="workspace-selector__separator" aria-hidden="true"></div>
+
+    <%# Workspace list (sortable) %>
+    <nav class="workspace-selector__list" aria-label="Your workspaces">
+      <% if workspaces.any? %>
+        <% workspaces.each do |workspace| %>
+          <%= link_to workspace_url(workspace),
+              class: class_names("workspace-selector__item", "workspace-selector__item--active": workspace.current?),
+              title: workspace.name,
+              draggable: true,
+              data: {
+                workspace_sortable_target: "item",
+                workspace_id: workspace.external_id,
+                action: "dragstart->workspace-sortable#dragstart dragover->workspace-sortable#dragover dragend->workspace-sortable#dragend",
+                turbo_prefetch: "false"
+              },
+              "aria-label": "Switch to #{workspace.name}#{workspace.current? ? ' (current)' : ''}",
+              "aria-current": (workspace.current? ? "page" : nil) do %>
+            <div class="workspace-selector__workspace-icon" role="img" aria-hidden="true">
+              <% if workspace.respond_to?(:has_logo?) && workspace.has_logo? %>
+                <%= image_tag workspace_logo_url(workspace), alt: "", class: "workspace-selector__logo" %>
+              <% else %>
+                <span><%= workspace.name.first.upcase %></span>
+              <% end %>
+            </div>
+            <% if workspace.current? %>
+              <div class="workspace-selector__active-indicator" aria-hidden="true"></div>
+            <% end %>
+          <% end %>
+        <% end %>
+      <% end %>
+    </nav>
+
+    <div class="workspace-selector__separator" aria-hidden="true"></div>
+
+    <%# Footer: Settings + Add workspace %>
+    <div class="workspace-selector__footer">
+      <%= link_to untenanted_path(:settings),
+          class: class_names("workspace-selector__profile", "workspace-selector__profile--active": settings_active),
+          title: "Settings",
+          data: { turbo_prefetch: "false" },
+          "aria-label": "Settings#{settings_active ? ' (current)' : ''}",
+          "aria-current": (settings_active ? "page" : nil) do %>
+        <%= icon_tag("gear", style: "--icon-size: 20px") %>
+      <% end %>
+
+      <%= link_to untenanted_path(:new_workspace),
+          class: "workspace-selector__add",
+          title: "Create workspace",
+          data: { turbo_prefetch: "false" },
+          "aria-label": "Create new workspace" do %>
+        <%= icon_tag("add") %>
+      <% end %>
+    </div>
+  </aside>
+<% end %>

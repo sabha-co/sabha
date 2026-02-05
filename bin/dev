@@ -1,5 +1,10 @@
 #!/usr/bin/env sh
 
+# Configure SaaS mode via Gemfile selection
+if [ "$SAAS" = "true" ] || [ -f "tmp/saas.txt" ]; then
+  export BUNDLE_GEMFILE="${BUNDLE_GEMFILE:-Gemfile.saas}"
+fi
+
 if ! gem list foreman -i --silent; then
   echo "Installing foreman..."
   gem install foreman

@@ -46,5 +46,6 @@ class ActiveSupport::TestCase
 
   teardown do
     WebMock.reset!
+    Current.reset
   end
 end

@@ -737,11 +737,13 @@ img.message__attachment {
   .message__body-content {
     --message-background: oklch(var(--lch-red) / 0.1);
 
-    animation: wiggle 0.4s both;
-
     @media (prefers-color-scheme: dark) {
       --message-background: oklch(var(--lch-red) / 0.2);
     }
+  }
+
+  &.message--mentioned-unread .message__body-content {
+    animation: wiggle 0.4s both;
   }
 }
 

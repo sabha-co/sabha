@@ -23,27 +23,33 @@ class WebPush::Pool
 
   private
     def deliver_later(payload, subscription)
+      # Capture tenant context FIRST for SaaS mode (thread pool loses context)
+      # Must capture before any AR operations to ensure consistency
+      tenant = current_tenant
+
       # Ensure any AR operations happen before we post to the thread pool
       notification = subscription.notification(**payload)
       subscription_id = subscription.id
 
       delivery_pool.post do
-        deliver(notification, subscription_id)
+        deliver(notification, subscription_id, tenant)
       rescue Exception => e
         Rails.logger.error "Error in WebPush::Pool.deliver: #{e.class} #{e.message}"
       end
     rescue Concurrent::RejectedExecutionError
     end
 
-    def deliver(notification, id)
+    def deliver(notification, id, tenant)
       notification.deliver(connection: connection)
     rescue WebPush::ExpiredSubscription, OpenSSL::OpenSSLError => ex
-      invalidate_subscription_later(id) if invalid_subscription_handler
+      invalidate_subscription_later(id, tenant) if invalid_subscription_handler
     end
 
-    def invalidate_subscription_later(id)
+    def invalidate_subscription_later(id, tenant)
       invalidation_pool.post do
-        invalid_subscription_handler.call(id)
+        with_tenant(tenant) do
+          invalid_subscription_handler.call(id)
+        end
       rescue Exception => e
         Rails.logger.error "Error in WebPush::Pool.invalid_subscription_handler: #{e.class} #{e.message}"
       end
@@ -52,5 +58,21 @@ class WebPush::Pool
     def shutdown_pool(pool)
       pool.shutdown
       pool.kill unless pool.wait_for_termination(1)
+    end
+
+    # Get current tenant (if SaaS mode with activerecord-tenanted)
+    def current_tenant
+      if defined?(ApplicationRecord) && ApplicationRecord.respond_to?(:current_tenant)
+        ApplicationRecord.current_tenant
+      end
+    end
+
+    # Execute block with tenant context restored
+    def with_tenant(tenant, &block)
+      if tenant.present? && defined?(ApplicationRecord) && ApplicationRecord.respond_to?(:with_tenant)
+        ApplicationRecord.with_tenant(tenant, &block)
+      else
+        yield
+      end
     end
 end

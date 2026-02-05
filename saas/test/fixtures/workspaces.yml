@@ -1,0 +1,29 @@
+# frozen_string_literal: true
+
+# Workspace fixtures for SaaS tests
+#
+# Each workspace has a unique external_id used in URLs (/1000001/rooms/general)
+# The actual workspace data lives in per-workspace SQLite databases.
+
+acme:
+  name: Acme Corp
+  external_id: 1000001
+  creator: alice
+
+widgets:
+  name: Widgets Inc
+  external_id: 1000002
+  creator: bob
+
+# Workspace with multiple members
+shared:
+  name: Shared Workspace
+  external_id: 1000003
+  creator: admin
+
+# Suspended workspace for testing access control
+suspended:
+  name: Suspended Workspace
+  external_id: 1000004
+  creator: admin
+  suspended_at: <%= 1.day.ago.to_fs(:db) %>

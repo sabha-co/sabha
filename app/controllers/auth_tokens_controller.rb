@@ -5,6 +5,7 @@ class AuthTokensController < ApplicationController
 
   rate_limit to: 10, within: 1.minute, with: -> { head :too_many_requests }
 
+  before_action :redirect_to_saas_login, if: -> { Campfire.saas? }
   before_action :require_otp_auth
   before_action :validate_email_param
   before_action :set_user
@@ -19,6 +20,11 @@ class AuthTokensController < ApplicationController
   end
 
   private
+
+  def redirect_to_saas_login
+    # In SaaS mode, workspace login pages redirect to the global SaaS login
+    redirect_to "/session/new"
+  end
 
   def require_otp_auth
     if Current.account.auth_method_value != "otp"

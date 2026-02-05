@@ -3,9 +3,19 @@ class User < ApplicationRecord
   MINIMUM_PASSWORD_LENGTH = 8
 
   has_subscriptions
-  after_create_commit :subscribe_to_emails
+  after_create :subscribe_to_emails, unless: -> { Campfire.saas? }  # Mailkick deferred to v2 for SaaS
 
   include Avatar, Bannable, Bot, DicebearAvatar, Mentionable, Role, Transferable, Preferences
+
+  # SaaS mode: Link to GlobalIdentity via WorkspaceMembership
+  # In single-tenant mode, workspace_membership_id is nil
+  belongs_to :workspace_membership, optional: true, class_name: "WorkspaceMembership"
+
+  # Access GlobalIdentity through WorkspaceMembership (SaaS mode)
+  def global_identity
+    return nil unless Campfire.saas?
+    workspace_membership&.global_identity
+  end
 
   # User status enum (replaces active boolean + suspended_at)
   enum :status, %i[active deactivated banned], default: :active
@@ -115,8 +125,8 @@ class User < ApplicationRecord
   validates :email_address, presence: true, if: :person?
   validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }, if: -> { email_address.present? }
   validates :unconfirmed_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
-  normalizes :email_address, with: ->(email_address) { email_address.downcase }
-  normalizes :unconfirmed_email, with: ->(email) { email&.downcase }
+  normalizes :email_address, with: ->(email_address) { email_address.strip.downcase }
+  normalizes :unconfirmed_email, with: ->(email) { email&.strip&.downcase }
 
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }
   scope :verified, -> { where.not(verified_at: nil) }
@@ -360,7 +370,14 @@ class User < ApplicationRecord
     end
 
     def close_remote_connections(reconnect: false)
-      ActionCable.server.remote_connections.where(current_user: self).disconnect reconnect: reconnect
+      if Campfire.saas? && ApplicationRecord.current_tenant.present?
+        ActionCable.server.remote_connections.where(
+          current_tenant: ApplicationRecord.current_tenant,
+          current_user: self
+        ).disconnect reconnect: reconnect
+      else
+        ActionCable.server.remote_connections.where(current_user: self).disconnect reconnect: reconnect
+      end
     end
 
     # Clean up ALL associated records (including inactive ones) to satisfy FK constraints.

@@ -1,7 +1,7 @@
 <%= turbo_frame_tag "invite_link" do %>
   <% invite_link = Current.user.active_invite_link %>
   <% if invite_link %>
-    <% url = join_url(invite_link.code) %>
+    <% url = Campfire.saas? ? untenanted_url(:join, invite_link.code) : join_url(invite_link.code) %>
     <div class="flex flex-column gap">
       <div class="txt-medium txt-align-center">Share this link to invite friends</div>
 

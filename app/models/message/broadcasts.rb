@@ -1,6 +1,8 @@
 module Message::Broadcasts
+  extend ActiveSupport::Concern
+
   def broadcast_create
-    broadcast_append_to room, :messages, target: [ room, :messages ], partial: "messages/message", locals: { current_room: room }
+    broadcast_append_to room, :messages, target: [ room, :messages ], partial: "messages/message", locals: { current_room: room, is_unread: true }
     # User-scoped broadcasts are handled via Membership#broadcast_unread when memberships are marked unread
 
     broadcast_notifications
@@ -20,8 +22,8 @@ module Message::Broadcasts
     payload = { roomId: room.id }
 
     # Auto-batching enabled in config/anycable.yml handles aggregation
-    user_ids.each do |user_id|
-      ActionCable.server.broadcast "user_#{user_id}_notifications", payload
+    User.where(id: user_ids).find_each do |user|
+      UnreadNotificationsChannel.broadcast_to(user, payload)
     end
   end
 
@@ -57,7 +59,7 @@ module Message::Broadcasts
                         action:,
                         target:,
                         partial: "messages/message",
-                        locals: { message: self, current_room: room },
+                        locals: { message: self, current_room: room, is_unread: true },
                         attributes: { maintain_scroll: true }
   end
 

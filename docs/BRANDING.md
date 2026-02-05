@@ -4,11 +4,30 @@ This guide explains how to fully customize Campfire-CE to match your brand ident
 
 ## Table of Contents
 
+- [Deployment Modes](#deployment-modes)
 - [Environment Variables](#environment-variables)
 - [Visual Assets](#visual-assets)
 - [Custom Styles](#custom-styles)
 - [Advanced Customization](#advanced-customization)
 - [Testing Your Branding](#testing-your-branding)
+
+## Deployment Modes
+
+Campfire-CE supports two deployment modes with different branding behavior:
+
+### Self-Hosted Mode (Default)
+
+Single-tenant deployment where `APP_NAME` is used throughout the application:
+- Page titles, welcome messages, emails all show `APP_NAME`
+- One workspace per installation
+
+### SaaS Mode (Multi-Tenant)
+
+Multi-tenant deployment where branding is context-aware:
+- **Outside workspace** (login, signup pages): Uses `SAAS_APP_NAME`
+- **Inside workspace**: Uses the workspace name set during creation
+
+This means in SaaS mode, users see their workspace name (e.g., "Acme Corp") instead of a global app name when inside their workspace.
 
 ## Environment Variables
 
@@ -19,7 +38,7 @@ All textual branding is controlled through environment variables in your `.env` 
 These variables define how your community is named and identified:
 
 ```bash
-# The full name of your community
+# The full name of your community (self-hosted mode)
 APP_NAME="My Awesome Community"
 
 # Short name for mobile/PWA (keep under 12 characters)
@@ -33,10 +52,30 @@ APP_HOST="chat.yourdomain.com"
 ```
 
 **Where these appear:**
-- `APP_NAME`: Page titles, email subject lines, welcome messages, sign-in pages, PWA manifest
+- `APP_NAME`: Page titles, email subject lines, welcome messages, sign-in pages, PWA manifest (self-hosted mode only)
 - `APP_SHORT_NAME`: Mobile home screen icon label
 - `APP_DESCRIPTION`: PWA description, meta tags, app store descriptions
 - `APP_HOST`: Email links, URL generation, CSP policies
+
+### SaaS Mode Branding
+
+When running in SaaS mode, additional branding variables apply:
+
+```bash
+# App name shown on login/signup pages (before workspace is selected)
+SAAS_APP_NAME="Campfire"
+```
+
+**How branding works in SaaS mode:**
+
+| Context | What's Displayed |
+|---------|------------------|
+| Login/signup pages | `SAAS_APP_NAME` (default: "Campfire") |
+| Inside a workspace | Workspace name (set during creation) |
+| Emails from workspace | Workspace name |
+| PWA manifest | Workspace name |
+
+**Note:** In SaaS mode, `APP_NAME` from `.env` is ignored inside workspaces. Each workspace displays its own name configured during workspace creation.
 
 ### Contact & Support
 
@@ -191,6 +230,35 @@ Campfire-CE supports custom logo uploads through the admin panel:
 2. Upload your logo in the "Account Logo" section
 3. The logo will automatically replace default branding
 
+### Branding API for Developers
+
+The `Branding` module provides several methods for accessing branding values:
+
+```ruby
+# Static values (from environment variables)
+Branding.app_name          # APP_NAME (self-hosted)
+Branding.saas_app_name     # SAAS_APP_NAME (SaaS login pages)
+Branding.support_email     # SUPPORT_EMAIL
+Branding.app_host          # APP_HOST
+
+# Context-aware method (recommended for most uses)
+Branding.contextual_app_name
+```
+
+**`Branding.contextual_app_name`** automatically returns the correct name based on context:
+
+| Mode | Context | Returns |
+|------|---------|---------|
+| Self-hosted | Anywhere | `APP_NAME` |
+| SaaS | Outside workspace | `SAAS_APP_NAME` |
+| SaaS | Inside workspace | Workspace name |
+
+Use `contextual_app_name` in views, mailers, and controllers where you want the name to adapt automatically:
+
+```erb
+<h1>Welcome to <%= Branding.contextual_app_name %></h1>
+```
+
 ### Extending Branding Configuration
 
 For developers who want to add more branding options, edit `config/initializers/branding.rb`:
@@ -274,6 +342,7 @@ Check that emails show:
 
 ### Browser Testing Checklist
 
+**Self-Hosted Mode:**
 - [ ] Favicon appears in browser tabs
 - [ ] Page titles show your app name
 - [ ] Error messages use your support email
@@ -282,6 +351,13 @@ Check that emails show:
 - [ ] Help/support buttons link to your support email
 - [ ] Footer shows your app name
 - [ ] PWA install shows correct name and icon
+
+**SaaS Mode (additional checks):**
+- [ ] Login page shows `SAAS_APP_NAME`
+- [ ] Inside workspace, pages show workspace name (not `APP_NAME`)
+- [ ] Emails from workspace show workspace name
+- [ ] PWA manifest uses workspace name
+- [ ] Workspace selector shows correct workspace names
 
 ## Troubleshooting
 

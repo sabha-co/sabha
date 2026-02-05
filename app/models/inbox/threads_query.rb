@@ -23,7 +23,7 @@ class Inbox::ThreadsQuery
   # 1. User has a direct membership in the thread (visible, not invisible)
   # 2. User has "everything" involvement in the parent room (implicit thread access)
   def accessible_thread_parent_ids_sql
-    ActiveRecord::Base.sanitize_sql_array([ <<~SQL.squish, user.id, user.id ])
+    ApplicationRecord.sanitize_sql_array([ <<~SQL.squish, user.id, user.id ])
       SELECT DISTINCT threads.parent_message_id
       FROM rooms threads
       WHERE threads.active = 1

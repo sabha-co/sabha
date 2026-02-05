@@ -1,0 +1,39 @@
+# frozen_string_literal: true
+
+# GlobalSession fixtures for SaaS tests
+#
+# Sessions are cross-workspace - one session works for all workspaces
+# the GlobalIdentity has access to.
+
+alice_session:
+  global_identity: alice
+  token: alice_test_token_12345678901234567890
+  user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+  ip_address: "192.168.1.100"
+  last_active_at: <%= 1.hour.ago.to_fs(:db) %>
+  expires_at: <%= 30.days.from_now.to_fs(:db) %>
+
+bob_session:
+  global_identity: bob
+  token: bob_test_token_123456789012345678901
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+  ip_address: "192.168.1.101"
+  last_active_at: <%= 2.hours.ago.to_fs(:db) %>
+  expires_at: <%= 30.days.from_now.to_fs(:db) %>
+
+admin_session:
+  global_identity: admin
+  token: admin_test_token_12345678901234567890
+  user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+  ip_address: "10.0.0.1"
+  last_active_at: <%= 30.minutes.ago.to_fs(:db) %>
+  expires_at: <%= 30.days.from_now.to_fs(:db) %>
+
+# Expired session for testing cleanup
+expired_session:
+  global_identity: charlie
+  token: expired_token_123456789012345678901
+  user_agent: "Mozilla/5.0 (Linux; Android 10)"
+  ip_address: "192.168.1.102"
+  last_active_at: <%= 31.days.ago.to_fs(:db) %>
+  expires_at: <%= 1.day.ago.to_fs(:db) %>

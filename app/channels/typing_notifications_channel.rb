@@ -8,11 +8,15 @@ class TypingNotificationsChannel < RoomChannel
   end
 
   def start(data)
-    broadcast_to room, action: :start, user: current_user_attributes if room
+    with_tenant_context do
+      broadcast_to room, action: :start, user: current_user_attributes if room
+    end
   end
 
   def stop(data)
-    broadcast_to room, action: :stop, user: current_user_attributes if room
+    with_tenant_context do
+      broadcast_to room, action: :stop, user: current_user_attributes if room
+    end
   end
 
   private

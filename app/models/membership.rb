@@ -140,20 +140,16 @@ class Membership < ApplicationRecord
     end
 
     def broadcast_read
-      ActionCable.server.broadcast user_channel(:reads), { room_id: room_id }
+      ReadRoomsChannel.broadcast_to(user, { room_id: room_id })
     end
 
     def broadcast_unread
-      ActionCable.server.broadcast user_channel(:unreads), unread_payload
-      ActionCable.server.broadcast user_channel(:notifications), notification_payload if has_unread_notifications?
+      UserUnreadRoomsChannel.broadcast_to(user, unread_payload)
+      UnreadNotificationsChannel.broadcast_to(user, notification_payload) if has_unread_notifications?
     end
 
     def broadcast_involvement
-      ActionCable.server.broadcast user_channel(:involvements), { roomId: room_id, involvement: involvement }
-    end
-
-    def user_channel(type)
-      "user_#{user_id}_#{type}"
+      UserInvolvementsChannel.broadcast_to(user, { roomId: room_id, involvement: involvement })
     end
 
     def unread_payload

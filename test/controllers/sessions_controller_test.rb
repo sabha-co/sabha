@@ -127,4 +127,30 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :redirect
     refute_match /Too many/, flash[:alert].to_s
   end
+
+  test "expired session redirects to sign in and cleans up cookie" do
+    sign_in :david
+    session = users(:david).sessions.last
+
+    # Expire the session
+    session.update_column(:expires_at, 1.day.ago)
+
+    get root_url
+    assert_redirected_to new_session_url
+
+    # Session should be destroyed
+    assert_not Session.exists?(session.id)
+  end
+
+  test "session token rotates on login" do
+    # First, get the current session ID before login
+    get new_session_url
+    old_session_id = request.session.id
+
+    # Now sign in
+    post session_url, params: { email_address: "david@37signals.com", password: "secret123456" }
+
+    # The session ID should have changed (reset_session was called)
+    assert_not_equal old_session_id, request.session.id
+  end
 end

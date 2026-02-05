@@ -1,13 +1,109 @@
 # rails generate:demo
 # rails generate:demo:max
 
+# Shared helpers for both MaxDemo and regular demo
+module DemoHelpers
+  extend self
+
+  # ActionText mention HTML for proper @mentions
+  def mention_html_for(user)
+    %(<action-text-attachment sgid="#{user.attachable_sgid}" content-type="application/vnd.campfire.mention"></action-text-attachment>)
+  end
+
+  # Create message body with proper ActionText mention
+  def body_with_mention(user, text)
+    "<div>#{mention_html_for(user)} #{text}</div>"
+  end
+
+  # Safe message creation with error handling
+  def create_message_safely(room:, creator:, body:, created_at:)
+    Message.create!(
+      room: room,
+      creator: creator,
+      body: body,
+      created_at: created_at,
+      client_message_id: SecureRandom.uuid
+    )
+  rescue ActiveRecord::RecordInvalid
+    nil
+  end
+
+  # Shared database cleanup (order matters due to foreign keys)
+  def clean_database
+    Boost.delete_all
+    Bookmark.delete_all
+    Mention.delete_all
+    Block.delete_all
+    ActionText::RichText.delete_all
+    Message.where(room_id: Rooms::Thread.select(:id)).delete_all
+    Membership.where(room_id: Rooms::Thread.select(:id)).delete_all
+    Rooms::Thread.delete_all
+    Message.delete_all
+    Membership.delete_all
+    Room.delete_all
+    Session.delete_all
+    AuthToken.delete_all
+    Ban.delete_all
+    User.delete_all
+    Badge.delete_all
+
+    Account.first_or_create!(name: "Campfire")
+  end
+end
+
 namespace :generate do
   namespace :demo do
     desc "Generate MAX demo: 500 users, 2000 messages, all features"
     task max: :environment do
       require "faker"
 
-      puts "🔥 MAXIMUM DEMO MODE"
+      if Campfire.saas?
+        run_saas_max_demo
+      else
+        run_single_tenant_max_demo
+      end
+    end
+
+    def run_saas_max_demo
+      puts "🔥 MAXIMUM DEMO MODE (SaaS - 2 workspaces)"
+      puts "   500 users, 2000+ messages, all features per workspace"
+      puts ""
+
+      workspace_configs = [
+        { name: "Acme Corp", admin_email: "admin@acme.com" },
+        { name: "Startup Inc", admin_email: "admin@startup.com" }
+      ]
+
+      workspaces = create_saas_workspaces(workspace_configs)
+
+      workspaces.each do |workspace|
+        puts ""
+        puts "=" * 60
+        puts "📦 Generating demo for workspace: #{workspace.name} (#{workspace.external_id})"
+        puts "=" * 60
+
+        ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+          run_single_tenant_max_demo(workspace_name: workspace.name, tenant_id: workspace.external_id.to_s)
+        end
+      end
+
+      puts ""
+      puts "=" * 60
+      puts "✅ SaaS MAX demo complete!"
+      puts ""
+      puts "🔑 Login credentials (password: 'password'):"
+      workspaces.each do |ws|
+        puts ""
+        puts "   #{ws.name} (#{ws.external_id}):"
+        puts "     Admin: admin@campfirecloud.com"
+        puts "     Mod:   mod@campfirecloud.com"
+        puts "     User:  user@campfirecloud.com"
+        puts "     URL:   http://localhost:3000/#{ws.external_id}/"
+      end
+    end
+
+    def run_single_tenant_max_demo(workspace_name: nil, tenant_id: nil)
+      puts "🔥 MAXIMUM DEMO MODE" unless workspace_name
       puts "   500 users, 2000+ messages, all features"
       puts ""
 
@@ -19,6 +115,9 @@ namespace :generate do
 
       puts "👥 Creating 500 users..."
       users = MaxDemo.create_users(badges)
+
+      # In SAAS mode, create GlobalIdentities and WorkspaceMemberships
+      create_saas_identities_for_workspace(users, tenant_id) if tenant_id
 
       puts "🏠 Creating rooms..."
       rooms = MaxDemo.create_rooms(users)
@@ -63,11 +162,14 @@ namespace :generate do
       puts "   Bookmarks: #{Bookmark.count}"
       puts "   Blocks: #{Block.count}"
       puts "   Bans: #{Ban.count}"
-      puts ""
-      puts "🔑 Login credentials (password: 'password'):"
-      puts "   Admin: admin@campfirecloud.com"
-      puts "   Mod:   mod@campfirecloud.com"
-      puts "   User:  user@campfirecloud.com"
+
+      unless workspace_name
+        puts ""
+        puts "🔑 Login credentials (password: 'password'):"
+        puts "   Admin: admin@campfirecloud.com"
+        puts "   Mod:   mod@campfirecloud.com"
+        puts "   User:  user@campfirecloud.com"
+      end
     end
   end
 
@@ -127,27 +229,10 @@ namespace :generate do
       end
     end
 
-    def clean_database
-      # Order matters due to foreign keys
-      Boost.delete_all
-      Bookmark.delete_all
-      Mention.delete_all
-      Block.delete_all
-      ActionText::RichText.delete_all
-      Message.where(room_id: Rooms::Thread.select(:id)).delete_all
-      Membership.where(room_id: Rooms::Thread.select(:id)).delete_all
-      Rooms::Thread.delete_all
-      Message.delete_all
-      Membership.delete_all
-      Room.delete_all
-      Session.delete_all
-      AuthToken.delete_all
-      Ban.delete_all
-      User.delete_all
-      Badge.delete_all
-
-      Account.first_or_create!(name: "Campfire")
-    end
+    # Delegate to shared helpers
+    def clean_database = DemoHelpers.clean_database
+    def mention_html_for(user) = DemoHelpers.mention_html_for(user)
+    def body_with_mention(user, text) = DemoHelpers.body_with_mention(user, text)
 
     def create_badges
       now = Time.current
@@ -230,7 +315,8 @@ namespace :generate do
       User.insert_all(user_records)
       puts " done!"
 
-      User.order(:id).to_a
+      # Query only the users we just created (by email) instead of loading all users
+      User.where(email_address: user_records.map { |u| u[:email_address] }).order(:id).to_a
     end
 
     def create_rooms(users)
@@ -290,13 +376,25 @@ namespace :generate do
       special_users = users.first(3) # admin, mod, user
       other_users = users[3..]
 
-      # DMs between special users
+      # DMs between special users (1-on-1)
       special_users.combination(2).each do |pair|
         Current.user = pair.first
         begin
           dm = Rooms::Direct.create_for({}, users: pair)
           rooms[:direct] << dm
           add_dm_messages(dm, pair)
+        rescue ActiveRecord::RecordInvalid
+          nil
+        end
+      end
+
+      # Group DM with all 3 special users (admin, mod, user)
+      if special_users.length >= 3
+        Current.user = special_users.first
+        begin
+          dm = Rooms::Direct.create_for({}, users: special_users)
+          rooms[:direct] << dm
+          add_special_group_dm_messages(dm, special_users)
         rescue ActiveRecord::RecordInvalid
           nil
         end
@@ -401,6 +499,40 @@ namespace :generate do
       end
     end
 
+    def add_special_group_dm_messages(dm, participants)
+      base_time = rand(3..7).days.ago
+      admin, mod, regular = participants
+
+      # A realistic conversation between admin, mod, and regular user
+      conversation = [
+        { user: admin, body: "Hey team! Quick sync about community updates 👋" },
+        { user: mod, body: "Hey! Perfect timing, I had some things to discuss" },
+        { user: regular, body: "Hi! What's up?" },
+        { user: admin, body: "Just wanted to check in on how things are going" },
+        { user: mod, body: "All good on my end. Handled a few reports this week" },
+        { user: regular, body: "Same here, loving the community so far!" },
+        { user: admin, body: "Great to hear! Let me know if you need anything" },
+        { user: mod, body: "Will do 👍" },
+        { user: regular, body: "Thanks!" }
+      ]
+
+      conversation.each_with_index do |msg, i|
+        time_offset = (i * rand(2..10)).minutes
+
+        begin
+          Message.create!(
+            room: dm,
+            creator: msg[:user],
+            body: msg[:body],
+            created_at: base_time + time_offset,
+            client_message_id: SecureRandom.uuid
+          )
+        rescue ActiveRecord::RecordInvalid
+          nil
+        end
+      end
+    end
+
     def create_messages(rooms, users)
       all_rooms = rooms[:open] + rooms[:closed]
       message_count = 0
@@ -422,15 +554,10 @@ namespace :generate do
           time_offset = (i * rand(3..30)).minutes
           body = CHAT_MESSAGES.sample
 
-          # Add mentions occasionally
+          # Add proper ActionText mentions occasionally
           if rand < 0.1 && room_users.length > 1
             mentioned = (room_users - [ user ]).sample
-            body = "@#{mentioned.name.split.first.downcase} #{body}"
-          end
-
-          # Admin can mention everyone in open rooms
-          if rand < 0.02 && user.administrator? && room.is_a?(Rooms::Open)
-            body = "@everyone #{body}"
+            body = body_with_mention(mentioned, body)
           end
 
           begin
@@ -447,6 +574,39 @@ namespace :generate do
           end
         end
         print "."
+      end
+
+      # Create specific mentions for special users (admin, mod, user@campfirecloud.com)
+      special_users = users.select { |u| u.email_address.include?("campfirecloud.com") }
+      if special_users.any?
+        print " mentions for special users: "
+        open_rooms = rooms[:open]
+
+        special_users.each do |special|
+          # Create 3-5 messages mentioning each special user in different rooms
+          rand(3..5).times do
+            room = open_rooms.sample
+            room_users = room.users.to_a - [ special ]
+            next if room_users.empty?
+
+            sender = room_users.sample
+            body = body_with_mention(special, CHAT_MESSAGES.sample)
+
+            begin
+              Message.create!(
+                room: room,
+                creator: sender,
+                body: body,
+                created_at: rand(1..14).days.ago,
+                client_message_id: SecureRandom.uuid
+              )
+              message_count += 1
+            rescue ActiveRecord::RecordInvalid
+              nil
+            end
+          end
+          print "."
+        end
       end
 
       # Add ~500 messages to DMs
@@ -502,15 +662,125 @@ namespace :generate do
     ].freeze
 
     def create_threads(rooms, users)
-      # Get messages that can have threads
-      threadable = Message.joins(:room)
+      special_users = users.select { |u| u.email_address.include?("campfirecloud.com") }
+
+      # First, create threads specifically for special users (they'll be thread creators)
+      print "   Creating threads for special users: "
+      thread_count = 0
+
+      special_users.each do |special|
+        # Find messages in rooms the special user is a member of (not their own messages)
+        special_room_ids = special.room_ids
+        parent_messages = Message.includes(room: :users)
+                                  .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
+                                  .where(room_id: special_room_ids)
+                                  .where.not(creator_id: special.id)
+                                  .where("messages.created_at < ?", 3.days.ago)
+                                  .order("RANDOM()")
+                                  .limit(2)
+
+        parent_messages.each do |parent|
+          room_users = parent.room.users.to_a
+          Current.user = special  # Special user creates the thread
+
+          begin
+            thread = Rooms::Thread.create_for(
+              { parent_message_id: parent.id },
+              users: room_users
+            )
+
+            base_time = parent.created_at + rand(30..180).minutes
+
+            # First message from special user
+            Message.create!(
+              room: thread,
+              creator: special,
+              body: THREAD_STARTERS.sample,
+              created_at: base_time,
+              client_message_id: SecureRandom.uuid
+            )
+
+            # Replies from others
+            rand(3..6).times do |i|
+              user = (room_users - [ special ]).sample || room_users.sample
+              time_offset = (i + 1) * rand(5..30).minutes
+
+              Message.create!(
+                room: thread,
+                creator: user,
+                body: THREAD_REPLIES.sample,
+                created_at: base_time + time_offset,
+                client_message_id: SecureRandom.uuid
+              )
+            end
+
+            thread_count += 1
+            print "."
+          rescue ActiveRecord::RecordInvalid
+            nil
+          end
+        end
+      end
+
+      # Also create threads on messages BY special users (they'll be parent message creators)
+      special_messages = Message.includes(room: :users)
+                                 .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
+                                 .where(creator_id: special_users.map(&:id))
+                                 .where("messages.created_at < ?", 3.days.ago)
+                                 .order("RANDOM()")
+                                 .limit(special_users.length * 2)
+
+      special_messages.each do |parent|
+        room_users = parent.room.users.to_a
+        next if room_users.length < 2
+
+        creator = (room_users - [ parent.creator ]).sample || room_users.sample
+        Current.user = creator
+
+        begin
+          thread = Rooms::Thread.create_for(
+            { parent_message_id: parent.id },
+            users: room_users
+          )
+
+          base_time = parent.created_at + rand(30..180).minutes
+
+          Message.create!(
+            room: thread,
+            creator: creator,
+            body: THREAD_STARTERS.sample,
+            created_at: base_time,
+            client_message_id: SecureRandom.uuid
+          )
+
+          rand(3..6).times do |i|
+            user = room_users.sample
+            time_offset = (i + 1) * rand(5..30).minutes
+
+            Message.create!(
+              room: thread,
+              creator: user,
+              body: THREAD_REPLIES.sample,
+              created_at: base_time + time_offset,
+              client_message_id: SecureRandom.uuid
+            )
+          end
+
+          thread_count += 1
+          print "."
+        rescue ActiveRecord::RecordInvalid
+          nil
+        end
+      end
+
+      # Now create random threads for other users
+      print " random: "
+      threadable = Message.includes(room: :users)
                           .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
+                          .where.not(id: Rooms::Thread.select(:parent_message_id))  # Exclude messages that already have threads
                           .where("messages.created_at < ?", 3.days.ago)
                           .order("RANDOM()")
-                          .limit(30)
-
-      print "   Creating threads: "
-      thread_count = 0
+                          .limit(20)
 
       threadable.each do |parent|
         room_users = parent.room.users.to_a
@@ -527,7 +797,6 @@ namespace :generate do
 
           base_time = parent.created_at + rand(30..180).minutes
 
-          # First message
           Message.create!(
             room: thread,
             creator: creator,
@@ -536,7 +805,6 @@ namespace :generate do
             client_message_id: SecureRandom.uuid
           )
 
-          # Replies
           rand(3..8).times do |i|
             user = room_users.sample
             time_offset = (i + 1) * rand(5..30).minutes
@@ -562,7 +830,7 @@ namespace :generate do
     end
 
     def create_boosts(users)
-      messages = Message.joins(:room)
+      messages = Message.includes(room: :users)
                         .where.not(rooms: { type: "Rooms::Direct" })
                         .where(active: true)
                         .order("RANDOM()")
@@ -596,8 +864,28 @@ namespace :generate do
       now = Time.current
       bookmark_records = []
 
-      # Only ~20% of users bookmark things
-      bookmarking_users = users.sample(users.count / 5)
+      # Special users always get bookmarks (3-5 each)
+      special_users = users.select { |u| u.email_address.include?("campfirecloud.com") }
+      special_users.each do |user|
+        message_ids = Message.where(room_id: user.room_ids, active: true)
+                             .where.not(creator_id: user.id)
+                             .order("RANDOM()")
+                             .limit(rand(3..5))
+                             .pluck(:id)
+
+        message_ids.each do |message_id|
+          bookmark_records << {
+            user_id: user.id,
+            message_id: message_id,
+            created_at: now - rand(1..180).minutes,
+            updated_at: now
+          }
+        end
+      end
+
+      # ~20% of other users bookmark things
+      other_users = users.reject { |u| u.email_address.include?("campfirecloud.com") }
+      bookmarking_users = other_users.sample(other_users.count / 5)
 
       bookmarking_users.each do |user|
         message_ids = Message.where(room_id: user.room_ids, active: true)
@@ -616,7 +904,7 @@ namespace :generate do
       end
 
       Bookmark.insert_all(bookmark_records) if bookmark_records.any?
-      puts "   Created #{bookmark_records.count} bookmarks"
+      puts "   Created #{bookmark_records.count} bookmarks (#{special_users.count} special users)"
     end
 
     def create_blocks(users)
@@ -714,14 +1002,65 @@ namespace :generate do
   task demo: :environment do
     require "faker"
 
+    if Campfire.saas?
+      run_saas_demo
+    else
+      run_single_tenant_demo
+    end
+  end
+
+  def run_saas_demo
+    puts "📦 DEMO MODE (SaaS - 2 workspaces)"
+    puts ""
+
+    workspace_configs = [
+      { name: "Acme Corp", admin_email: "admin@acme.com" },
+      { name: "Startup Inc", admin_email: "admin@startup.com" }
+    ]
+
+    workspaces = create_saas_workspaces(workspace_configs)
+
     # Use simple password locally, random password in production
     demo_password = Rails.env.local? ? "password" : SecureRandom.alphanumeric(12)
+
+    workspaces.each do |workspace|
+      puts ""
+      puts "=" * 60
+      puts "📦 Generating demo for workspace: #{workspace.name} (#{workspace.external_id})"
+      puts "=" * 60
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        run_single_tenant_demo(demo_password: demo_password, workspace_name: workspace.name, tenant_id: workspace.external_id.to_s)
+      end
+    end
+
+    puts ""
+    puts "=" * 60
+    puts "✅ SaaS demo complete!"
+    puts ""
+    puts "🔑 Login credentials (password: '#{demo_password}'):"
+    workspaces.each do |ws|
+      puts ""
+      puts "   #{ws.name} (#{ws.external_id}):"
+      puts "     Admin: admin@campfirecloud.com"
+      puts "     Mod:   mod@campfirecloud.com"
+      puts "     User:  user@campfirecloud.com"
+      puts "     URL:   http://localhost:3000/#{ws.external_id}/"
+    end
+  end
+
+  def run_single_tenant_demo(demo_password: nil, workspace_name: nil, tenant_id: nil)
+    # Use simple password locally, random password in production
+    demo_password ||= Rails.env.local? ? "password" : SecureRandom.alphanumeric(12)
 
     puts "🧹 Cleaning existing data..."
     clean_database
 
     puts "👥 Creating demo users..."
     users = create_users(demo_password)
+
+    # In SAAS mode, create GlobalIdentities and WorkspaceMemberships
+    create_saas_identities_for_workspace(users, tenant_id) if tenant_id
 
     puts "🏠 Creating rooms..."
     rooms = create_rooms(users)
@@ -746,10 +1085,75 @@ namespace :generate do
     puts "   Messages: #{Message.count}"
     puts "   Boosts: #{Boost.count}"
     puts "   Bookmarks: #{Bookmark.count}"
-    puts ""
-    puts "🔑 Login credentials:"
-    puts "   Email: admin@campfirecloud.com"
-    puts "   Password: #{demo_password}"
+
+    unless workspace_name
+      puts ""
+      puts "🔑 Login credentials (password: '#{demo_password}'):"
+      puts "   Admin: admin@campfirecloud.com"
+      puts "   Mod:   mod@campfirecloud.com"
+      puts "   User:  user@campfirecloud.com"
+    end
+  end
+
+  def create_saas_workspaces(configs)
+    puts "🏢 Creating #{configs.length} workspaces..."
+
+    creator_emails = configs.map { |c| c[:admin_email].downcase }
+
+    # Clean existing workspaces and their tenant databases
+    Workspace.find_each do |workspace|
+      puts "   Destroying existing workspace #{workspace.external_id}..."
+      ApplicationRecord.destroy_tenant(workspace.external_id.to_s) rescue nil
+      workspace.destroy!
+    end
+
+    # Clean up all SAAS data except workspace creators
+    # Order matters: sessions/codes first, then memberships, then identities
+    puts "   Cleaning up SAAS identities..."
+    GlobalSession.delete_all
+    AuthCode.delete_all
+    WorkspaceMembership.delete_all
+    GlobalIdentity.where.not(email_address: creator_emails).delete_all
+
+    workspaces = []
+    configs.each do |config|
+      creator = GlobalIdentity.find_or_create_by!(email_address: config[:admin_email].downcase)
+      creator.verify! unless creator.verified?
+
+      workspace = Workspace.create_with_database!(
+        name: config[:name],
+        creator: creator
+      )
+      workspaces << workspace
+      puts "   Created: #{workspace.name} (ID: #{workspace.external_id})"
+    end
+
+    workspaces
+  end
+
+  # Create GlobalIdentity and WorkspaceMembership for a user in SAAS mode
+  # Returns the WorkspaceMembership record
+  def create_saas_identity_for_user(user, tenant_id)
+    identity = GlobalIdentity.find_or_create_by!(email_address: user.email_address.downcase)
+    identity.verify! unless identity.verified?
+
+    membership = identity.workspace_memberships.find_or_create_by!(tenant: tenant_id)
+    membership.cache_user_id!(user.id)
+
+    # Link User to WorkspaceMembership
+    user.update_column(:workspace_membership_id, membership.id)
+
+    membership
+  end
+
+  # Batch create SAAS identities for all users in a workspace
+  def create_saas_identities_for_workspace(users, tenant_id)
+    return unless Campfire.saas?
+
+    puts "   Creating GlobalIdentities and WorkspaceMemberships..."
+    users.each do |user|
+      create_saas_identity_for_user(user, tenant_id)
+    end
   end
 
   desc "Generate messages in a specific room (default: Lobby)"
@@ -792,30 +1196,10 @@ namespace :generate do
 
   private
 
-  def clean_database
-    # Order matters due to foreign keys
-    # 1. Delete reactions/references to messages
-    Boost.delete_all
-    Bookmark.delete_all
-    Mention.delete_all
-    ActionText::RichText.delete_all
-    # 2. Delete messages inside threads (before deleting threads)
-    Message.where(room_id: Rooms::Thread.select(:id)).delete_all
-    # 3. Delete thread memberships and threads (threads have FK to parent_message)
-    Membership.where(room_id: Rooms::Thread.select(:id)).delete_all
-    Rooms::Thread.delete_all
-    # 4. Now safe to delete remaining messages and rooms
-    Message.delete_all
-    Membership.delete_all
-    Room.delete_all
-    Session.delete_all
-    AuthToken.delete_all
-    Ban.delete_all
-    User.delete_all
-
-    # Ensure we have an account
-    Account.first_or_create!(name: "Campfire")
-  end
+  # Delegate to shared helpers
+  def clean_database = DemoHelpers.clean_database
+  def mention_html_for(user) = DemoHelpers.mention_html_for(user)
+  def body_with_mention(user, text) = DemoHelpers.body_with_mention(user, text)
 
   def create_users(password)
     # Admin user
@@ -829,7 +1213,29 @@ namespace :generate do
       verified_at: Time.current
     )
 
-    # Regular users with varied profiles
+    # Moderator user
+    mod = User.create!(
+      name: "Moderator",
+      email_address: "mod@campfirecloud.com",
+      password: password,
+      password_confirmation: password,
+      role: "moderator",
+      bio: "Community moderator",
+      verified_at: Time.current
+    )
+
+    # Regular user with @campfirecloud.com email for easy testing
+    regular = User.create!(
+      name: "Regular User",
+      email_address: "user@campfirecloud.com",
+      password: password,
+      password_confirmation: password,
+      role: "member",
+      bio: "Just a regular member",
+      verified_at: Time.current
+    )
+
+    # Additional users with varied profiles
     user_profiles = [
       { name: "Sarah Chen", bio: "Product designer & coffee enthusiast ☕", twitter_url: "https://x.com/sarahchen" },
       { name: "Marcus Johnson", bio: "Full-stack developer. Building cool stuff.", linkedin_url: "https://linkedin.com/in/marcusj" },
@@ -848,7 +1254,7 @@ namespace :generate do
       { name: "Nina Kowalski", bio: "Product manager turned founder" }
     ]
 
-    users = [ admin ]
+    users = [ admin, mod, regular ]
 
     user_profiles.each_with_index do |profile, i|
       users << User.create!(
@@ -1018,10 +1424,10 @@ namespace :generate do
         template = templates.sample
         body = template.arity == 1 ? template.call(user) : template.call
 
-        # Occasionally add mentions
+        # Occasionally add proper ActionText mentions
         if rand < 0.15 && room_users.length > 1
           mentioned_user = (room_users - [ user ]).sample
-          body = "@#{mentioned_user.name.split.first.downcase} #{body}"
+          body = body_with_mention(mentioned_user, body)
         end
 
         # Occasionally add replies/reactions
@@ -1031,6 +1437,28 @@ namespace :generate do
       end
 
       print "."
+    end
+
+    # Create specific mentions for the admin user
+    admin = users.find { |u| u.email_address == "admin@campfirecloud.com" }
+    if admin
+      print " admin mentions: "
+      open_room_keys = %w[general random help show-and-tell]
+      open_room_keys.each do |key|
+        room = rooms[key]
+        next unless room
+
+        room_users = room.users.to_a - [ admin ]
+        next if room_users.empty?
+
+        # Create 2-3 messages mentioning admin in each room
+        rand(2..3).times do
+          sender = room_users.sample
+          body = body_with_mention(admin, [ "what do you think?", "any thoughts?", "need your input on this", "can you help?" ].sample)
+          create_message_safely(room, sender, body, rand(1..14).days.ago)
+        end
+        print "."
+      end
     end
 
     # Generate DM conversations
@@ -1060,17 +1488,9 @@ namespace :generate do
     puts " done!"
   end
 
+  # Wrapper for positional args (delegates to shared helper)
   def create_message_safely(room, user, body, created_at)
-    Message.create!(
-      room: room,
-      creator: user,
-      body: body,
-      created_at: created_at,
-      client_message_id: SecureRandom.uuid
-    )
-  rescue ActiveRecord::RecordInvalid => e
-    # Skip messages that fail validation (e.g., blocked users in DMs)
-    nil
+    DemoHelpers.create_message_safely(room: room, creator: user, body: body, created_at: created_at)
   end
 
   def create_single_message(room, user, all_users)
@@ -1103,12 +1523,81 @@ namespace :generate do
       -> { "#{%w[+1 👍 This! Exactly! 💯].sample}" }
     ]
 
-    # Pick some messages from non-DM rooms to start threads on
-    threadable_messages = Message.joins(:room)
+    # First, create threads where admin is the thread creator (so admin can see them)
+    admin = users.find { |u| u.email_address == "admin@campfirecloud.com" }
+    if admin
+      print " admin threads: "
+      admin_room_ids = admin.room_ids
+      admin_threadable = Message.includes(room: :users)
+                                 .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
+                                 .where(room_id: admin_room_ids)
+                                 .where.not(creator_id: admin.id)
+                                 .where("messages.created_at < ?", 2.days.ago)
+                                 .order("RANDOM()")
+                                 .limit(3)
+
+      admin_threadable.each do |parent_message|
+        room_users = parent_message.room.users.to_a
+        Current.user = admin  # Admin creates the thread
+
+        thread = Rooms::Thread.create_for(
+          { parent_message_id: parent_message.id },
+          users: room_users
+        )
+
+        base_time = parent_message.created_at + rand(30..180).minutes
+        create_message_safely(thread, admin, thread_starters.sample.call, base_time)
+
+        rand(3..6).times do |i|
+          user = (room_users - [ admin ]).sample || room_users.sample
+          time_offset = (i + 1) * rand(5..30).minutes
+          create_message_safely(thread, user, thread_replies.sample.call, base_time + time_offset)
+        end
+
+        print "."
+      end
+
+      # Also create threads on messages BY admin (admin is parent message creator)
+      admin_messages = Message.includes(room: :users)
+                               .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
+                               .where(creator_id: admin.id)
+                               .where("messages.created_at < ?", 2.days.ago)
+                               .order("RANDOM()")
+                               .limit(2)
+
+      admin_messages.each do |parent_message|
+        room_users = parent_message.room.users.to_a
+        next if room_users.length < 2
+
+        thread_creator = (room_users - [ admin ]).sample || room_users.sample
+        Current.user = thread_creator
+
+        thread = Rooms::Thread.create_for(
+          { parent_message_id: parent_message.id },
+          users: room_users
+        )
+
+        base_time = parent_message.created_at + rand(30..180).minutes
+        create_message_safely(thread, thread_creator, thread_starters.sample.call, base_time)
+
+        rand(3..6).times do |i|
+          user = room_users.sample
+          time_offset = (i + 1) * rand(5..30).minutes
+          create_message_safely(thread, user, thread_replies.sample.call, base_time + time_offset)
+        end
+
+        print "."
+      end
+    end
+
+    # Pick some more random messages from non-DM rooms to start threads on
+    print " random: "
+    threadable_messages = Message.includes(room: :users)
                                   .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
+                                  .where.not(id: Rooms::Thread.select(:parent_message_id))
                                   .where("messages.created_at < ?", 2.days.ago)
                                   .order("RANDOM()")
-                                  .limit(8)
+                                  .limit(5)
 
     threadable_messages.each do |parent_message|
       room_users = parent_message.room.users.to_a
@@ -1117,17 +1606,14 @@ namespace :generate do
       thread_creator = (room_users - [ parent_message.creator ]).sample || room_users.sample
       Current.user = thread_creator
 
-      # Create the thread
       thread = Rooms::Thread.create_for(
         { parent_message_id: parent_message.id },
         users: room_users
       )
 
-      # Add the first message (why thread was started)
       base_time = parent_message.created_at + rand(30..180).minutes
       create_message_safely(thread, thread_creator, thread_starters.sample.call, base_time)
 
-      # Add replies to the thread
       rand(3..10).times do |i|
         user = room_users.sample
         time_offset = (i + 1) * rand(5..30).minutes
@@ -1143,8 +1629,10 @@ namespace :generate do
 
   def create_boosts(users)
     boost_emojis = %w[👍 ❤️ 🔥 😂 🎉 👏 💯 🙌 ✨ 🚀]
+    now = Time.current
+    boost_records = []
 
-    messages = Message.joins(:room)
+    messages = Message.includes(room: :users)
                       .where.not(rooms: { type: "Rooms::Direct" })
                       .order("RANDOM()")
                       .limit(50)
@@ -1152,34 +1640,40 @@ namespace :generate do
     messages.each do |message|
       boosters = (message.room.users.to_a - [ message.creator ]).sample(rand(1..4))
       boosters.each do |booster|
-        Boost.create!(
-          message: message,
-          booster: booster,
+        boost_records << {
+          message_id: message.id,
+          booster_id: booster.id,
           content: boost_emojis.sample,
-          created_at: message.created_at + rand(1..60).minutes
-        )
-      rescue ActiveRecord::RecordInvalid, ActiveRecord::NotNullViolation
-        nil
+          created_at: message.created_at + rand(1..60).minutes,
+          updated_at: now
+        }
       end
     end
+
+    Boost.insert_all(boost_records) if boost_records.any?
   end
 
   def create_bookmarks(users)
+    now = Time.current
+    bookmark_records = []
+
     users.each do |user|
       # Each user bookmarks a few random messages from rooms they're in
-      user_messages = Message.where(room_id: user.room_ids)
-                             .order("RANDOM()")
-                             .limit(rand(3..8))
+      message_ids = Message.where(room_id: user.room_ids)
+                           .order("RANDOM()")
+                           .limit(rand(3..8))
+                           .pluck(:id)
 
-      user_messages.each do |message|
-        Bookmark.create!(
-          user: user,
-          message: message,
-          created_at: message.created_at + rand(1..120).minutes
-        )
-      rescue ActiveRecord::RecordInvalid
-        nil
+      message_ids.each do |message_id|
+        bookmark_records << {
+          user_id: user.id,
+          message_id: message_id,
+          created_at: now - rand(1..120).minutes,
+          updated_at: now
+        }
       end
     end
+
+    Bookmark.insert_all(bookmark_records) if bookmark_records.any?
   end
 end

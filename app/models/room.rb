@@ -118,13 +118,13 @@ class Room < ApplicationRecord
   end
 
   def active_member_count
-    Rails.cache.fetch("room:#{id}:active_member_count", expires_in: 5.minutes) do
+    Rails.cache.fetch(active_member_count_cache_key, expires_in: 5.minutes) do
       memberships.visible.joins(:user).merge(User.active).count
     end
   end
 
   def invalidate_member_count_cache
-    Rails.cache.delete("room:#{id}:active_member_count")
+    Rails.cache.delete(active_member_count_cache_key)
   end
 
   def reactivate
@@ -177,6 +177,11 @@ class Room < ApplicationRecord
   end
 
   private
+    def active_member_count_cache_key
+      tenant_prefix = ApplicationRecord.current_tenant if Campfire.saas?
+      [ tenant_prefix, "room", id, "active_member_count" ].compact.join(":")
+    end
+
     def set_sortable_name
       self.sortable_name = name.to_s.gsub(/[[:^ascii:]\p{So}]/, "").strip.downcase
     end
@@ -192,8 +197,8 @@ class Room < ApplicationRecord
     end
 
     def broadcast_unread_to_disconnected_users(message)
-      user_ids = memberships.visible.disconnected.where.not(user: message.creator).pluck(:user_id)
-      return if user_ids.empty?
+      users = memberships.visible.disconnected.where.not(user: message.creator).includes(:user).map(&:user)
+      return if users.empty?
 
       payload = {
         roomId: id,
@@ -201,8 +206,8 @@ class Room < ApplicationRecord
         roomUpdatedAt: last_active_at.iso8601,
         forceUnread: true
       }
-      user_ids.each do |user_id|
-        ActionCable.server.broadcast "user_#{user_id}_unreads", payload
+      users.each do |user|
+        UserUnreadRoomsChannel.broadcast_to(user, payload)
       end
     end
 
@@ -211,7 +216,7 @@ class Room < ApplicationRecord
     end
 
     def broadcast_updates
-      ActionCable.server.broadcast "room_list", { roomId: id, sortableName: sortable_name }
+      RoomListChannel.broadcast_to(Current.account, { roomId: id, sortableName: sortable_name })
     end
 
     def broadcast_reactivation

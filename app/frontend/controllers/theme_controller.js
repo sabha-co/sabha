@@ -21,27 +21,27 @@ export default class extends Controller {
   }
 
   setAuto() {
-    localStorage.removeItem("theme")
+    localStorage.setItem("theme", "auto")
     this.applyTheme()
     this.updateButtons()
   }
 
   applyTheme() {
     const theme = localStorage.getItem("theme")
-    const currentTheme = document.documentElement.getAttribute("data-theme") || "auto"
-    const newTheme = theme || "auto"
+    const currentTheme = document.documentElement.getAttribute("data-theme") || "light"
+    const newTheme = theme === "dark" ? "dark" : (theme === "auto" ? "auto" : "light")
     const hasChanged = currentTheme !== newTheme
 
     const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
     const animate = hasChanged && !prefersReducedMotion
 
     const apply = () => {
-      if (theme === "light") {
-        document.documentElement.setAttribute("data-theme", "light")
-      } else if (theme === "dark") {
+      if (theme === "dark") {
         document.documentElement.setAttribute("data-theme", "dark")
-      } else {
+      } else if (theme === "auto") {
         document.documentElement.removeAttribute("data-theme")
+      } else {
+        document.documentElement.setAttribute("data-theme", "light")
       }
     }
 
@@ -54,15 +54,18 @@ export default class extends Controller {
 
   updateButtons() {
     const theme = localStorage.getItem("theme")
+    const isLight = !theme || theme === "light"
+    const isDark = theme === "dark"
+    const isAuto = theme === "auto"
 
     if (this.hasLightButtonTarget) {
-      this.lightButtonTarget.setAttribute("aria-selected", theme === "light")
+      this.lightButtonTarget.setAttribute("aria-selected", isLight)
     }
     if (this.hasDarkButtonTarget) {
-      this.darkButtonTarget.setAttribute("aria-selected", theme === "dark")
+      this.darkButtonTarget.setAttribute("aria-selected", isDark)
     }
     if (this.hasAutoButtonTarget) {
-      this.autoButtonTarget.setAttribute("aria-selected", !theme)
+      this.autoButtonTarget.setAttribute("aria-selected", isAuto)
     }
   }
 }

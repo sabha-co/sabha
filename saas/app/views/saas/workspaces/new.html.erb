@@ -1,0 +1,27 @@
+<% content_for :title, "Create workspace" %>
+
+<section class="txt-align-center">
+  <div class="panel">
+    <div class="flex flex-column gap">
+      <%= form_with url: workspaces_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
+        <fieldset class="flex flex-column gap center-block upad">
+          <legend class="txt-large txt-align-center"><strong>Create a workspace</strong></legend>
+
+          <p class="txt-small txt-faded txt-align-center">
+            Create a workspace to start chatting with your team.
+          </p>
+
+          <div class="flex align-center gap">
+            <label class="flex align-center gap input input--actor txt-large">
+              <%= form.text_field :name, required: true, class: "input", autofocus: true, placeholder: "Workspace name" %>
+            </label>
+          </div>
+
+          <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+            Create workspace
+          <% end %>
+        </fieldset>
+      <% end %>
+    </div>
+  </div>
+</section>

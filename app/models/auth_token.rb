@@ -1,4 +1,13 @@
 class AuthToken < ApplicationRecord
+  # OTP code for User authentication (self-hosted mode)
+  #
+  # Two authentication methods:
+  # - code: 6-character OTP sent via email, entered manually
+  # - token: Secure token for direct auto-login links (used by campfire_cloud)
+  #
+  # Records are marked as used (not deleted) to preserve audit trail.
+  # Contrast with SaaS AuthCode which deletes records after use.
+
   belongs_to :user
 
   has_secure_token :token
@@ -23,8 +32,9 @@ class AuthToken < ApplicationRecord
       return valid.find_by(token: token)
     elsif email_address.present? && code.present?
       user = User.find_by(email_address: email_address)
-
-      return valid.find_by(user: user, code: code)
+      # Sanitize code input for typo tolerance (O→0, I→1, L→1)
+      sanitized_code = OtpCode.sanitize(code)
+      return valid.find_by(user: user, code: sanitized_code)
     end
 
     nil
@@ -32,6 +42,7 @@ class AuthToken < ApplicationRecord
 
   private
     def generate_code
-      self.code = format("%06d", rand(100_000..999_999))
+      # Use shared OtpCode module for alphanumeric typo-tolerant codes
+      self.code ||= OtpCode.generate(6)
     end
 end

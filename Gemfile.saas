@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+# SaaS Gemfile - extends core Gemfile with multi-tenancy dependencies
+#
+# This file is automatically selected when SAAS=true or tmp/saas.txt exists
+# via bin/rails configure_bundle
+
+eval_gemfile "Gemfile"
+
+# Multi-tenancy infrastructure
+# TODO: Switch back to basecamp/activerecord-tenanted once Rails 8.2 fix is merged
+# Fork fixes: rails/rails#54333 changed type_for_column signature, gem needs version check
+gem "activerecord-tenanted", github: "ashwin47/activerecord-tenanted", branch: "fix-rails-82-type-for-column-signature"
+
+# SaaS engine
+gem "campfire-saas", path: "saas"

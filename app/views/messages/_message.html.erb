@@ -1,13 +1,13 @@
 <%# Be sure to check/update messages/_template.html.erb when changing this file %>
-<%# locals: (message:, current_room: nil, first_unread_message: nil, timestamp_style: :time, show_date_separator: true) -%>
+<%# locals: (message:, current_room: nil, first_unread_message: nil, is_unread: false, timestamp_style: :time, show_date_separator: true) -%>
 
 <% is_first_unread_message = (message == first_unread_message) %>
-<% cache message_cache_key(message, room_id: current_room&.id, is_first_unread_message:) do %>
-  <%= message_tag message do %>
+<% cache message_cache_key(message, room_id: current_room&.id, is_first_unread_message:, is_unread:) do %>
+  <%= message_tag message, is_unread: is_unread do %>
     <div class="message-separator message__loading-indicator">
       <span class="busy txt-muted"></span>
     </div>
-    
+
     <% if is_first_unread_message %>
       <h2 id="unread_separator" class="message-separator message__new-separator"><span>New since last visit</span></h2>
     <% end %>
@@ -26,7 +26,7 @@
           <div class="message__meta">
             <h3 class="message__heading">
               <%= link_to user_path(message.creator), class: "message__author txt-undecorated", title: message.creator.title, data: { turbo_frame: "_top" } do %>
-                <strong data-reply-target="author"><%= message.creator.name %></strong>
+                <strong data-reply-target="author" class="<%= 'txt-strikethrough' if message.creator.deactivated? %>"><%= message.creator.name %></strong>
               <% end %>
               <%= render "users/role_badge", user: message.creator %>
               <%= link_to message_timestamp(message, style: timestamp_style, class: "message__timestamp"), room_at_message_path(message.room, message), target: "_top",

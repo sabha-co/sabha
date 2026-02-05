@@ -34,6 +34,8 @@ class Users::ProfilesController < ApplicationController
     end
 
     def email_change_requested?
+      return false if Campfire.saas?  # SaaS mode: email changes via GlobalIdentity profile only
+
       new_email = user_params[:email_address]
       new_email.present? && new_email.downcase != @user.email_address
     end

@@ -7,6 +7,11 @@ app_name=campfire
 # Use application binstubs
 export PATH="$app_root/bin:$PATH"
 
+# Configure SaaS mode via Gemfile selection
+if [ "$SAAS" = "true" ] || [ -f "$app_root/tmp/saas.txt" ]; then
+  export BUNDLE_GEMFILE="${BUNDLE_GEMFILE:-$app_root/Gemfile.saas}"
+fi
+
 announce() {
   echo
   echo "--- $@"
@@ -62,10 +67,19 @@ fi
 
 announce "Preparing database"
 if [[ $* == *--reset* ]]; then
-  rm -rf ./storage/{db,files}
-  rails db:migrate:reset
+  rm -rf ./storage/{db,files,workspaces,untenanted}
+  if [ "$SAAS" = "true" ] || [ -f "$app_root/tmp/saas.txt" ]; then
+    rails db:drop db:create db:migrate
+    rails saas:setup
+  else
+    rails db:migrate:reset
+  fi
 else
   rails db:prepare
+  # In SaaS mode, also run saas:setup to ensure default workspace exists
+  if [ "$SAAS" = "true" ] || [ -f "$app_root/tmp/saas.txt" ]; then
+    rails saas:setup
+  fi
 fi
 
 announce "Cleaning up old logs, caches, and temporary files"

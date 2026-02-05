@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_01_25_071403) do
+ActiveRecord::Schema[8.2].define(version: 2026_02_02_000001) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -232,6 +232,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_25_071403) do
 
   create_table "sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "expires_at"
     t.string "ip_address"
     t.datetime "last_active_at", null: false
     t.string "token", null: false
@@ -266,9 +267,11 @@ ActiveRecord::Schema[8.2].define(version: 2026_01_25_071403) do
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
     t.datetime "verified_at"
+    t.bigint "workspace_membership_id"
     t.index ["badge_id"], name: "index_users_on_badge_id"
     t.index ["bot_token"], name: "index_users_on_bot_token", unique: true
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["workspace_membership_id"], name: "index_users_on_workspace_membership_id"
   end
 
   create_table "webhook_events", force: :cascade do |t|

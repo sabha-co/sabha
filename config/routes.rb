@@ -7,12 +7,25 @@ Rails.application.routes.draw do
   #   }, via: :all
   # end
 
-  constraints(lambda { |req| req.session[:user_id].present? }) do
-    root to: "welcome#show"
-  end
+  if Campfire.saas?
+    # In SaaS mode, root only works inside workspace context (tenant set)
+    constraints(->(req) { ApplicationRecord.current_tenant.present? }) do
+      root to: "welcome#show"
 
-  constraints(lambda { |req| req.session[:user_id].blank? }) do
-    root to: redirect("/session/new"), as: :unauthenticated_root
+      # Workspace settings page (view settings, delete workspace)
+      resource :settings, only: [ :show, :destroy ], controller: "saas/workspace_settings"
+
+      # Leave workspace (RESTful destroy on membership)
+      resource :membership, only: [ :destroy ], controller: "saas/workspace_memberships"
+    end
+  else
+    constraints(lambda { |req| req.session[:user_id].present? }) do
+      root to: "welcome#show"
+    end
+
+    constraints(lambda { |req| req.session[:user_id].blank? }) do
+      root to: redirect("/session/new"), as: :unauthenticated_root
+    end
   end
   get "/chat", to: "welcome#show"
 
@@ -108,8 +121,17 @@ Rails.application.routes.draw do
     route_for :user_avatar, user.avatar_token, v: user.updated_at.to_fs(:number)
   end
 
-  get "join/:join_code", to: "users#new", as: :join
-  post "join/:join_code", to: "users#create"
+  # Join routes for signup via invite link
+  if Campfire.saas?
+    # In SaaS mode, the global /join/:code route is in the engine (goes to Saas::WorkspacesController#join)
+    # This workspace-scoped route handles the actual signup after redirect
+    get "join/:join_code", to: "users#new"
+    post "join/:join_code", to: "users#create"
+  else
+    # Self-hosted mode: direct signup via join link
+    get "join/:join_code", to: "users#new", as: :join
+    post "join/:join_code", to: "users#create"
+  end
 
   resources :rooms do
     resources :messages do

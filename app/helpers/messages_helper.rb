@@ -16,6 +16,7 @@ module MessagesHelper
       messages_formatted_class: "message--formatted",
       messages_me_class: "message--me",
       messages_mentioned_class: "message--mentioned",
+      messages_mentioned_unread_class: "message--mentioned-unread",
       messages_threaded_class: "message--threaded",
       messages_loading_up_class: "message--loading-up",
       messages_loading_down_class: "message--loading-down",
@@ -34,7 +35,7 @@ module MessagesHelper
     }, &
   end
 
-  def message_tag(message, &)
+  def message_tag(message, is_unread: false, &)
     message_timestamp_milliseconds = message.created_at.to_fs(:epoch)
 
     tag.div id: dom_id(message),
@@ -46,6 +47,7 @@ module MessagesHelper
         message_timestamp: message_timestamp_milliseconds,
         message_updated_at: message.updated_at.to_fs(:epoch),
         sort_value: message_timestamp_milliseconds,
+        unread: is_unread || nil,
         messages_target: "message",
         search_results_target: "message",
         refresh_room_target: "message",
@@ -79,13 +81,14 @@ module MessagesHelper
     ""
   end
 
-  def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_parent: false, show_room_name: false)
+  def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false)
     [
       message,
       room_id,
       message.bookmarked_by_current_user?,
       message.creator,
       is_first_unread_message,
+      is_unread,
       is_parent,
       show_room_name
     ]

@@ -1,0 +1,60 @@
+# SaaS Database Configuration Template
+#
+# This file shows the database.yml configuration needed for SaaS mode.
+# Copy these settings to your config/database.yml when running in SaaS mode.
+#
+# Key differences from single-tenant:
+# - primary database uses `tenanted: true` and `%{tenant}` placeholder
+# - untenanted database added for GlobalIdentity, Workspace, etc.
+# - max_connection_pools limits tenanted connection pool count
+
+default: &default
+  adapter: sqlite3
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
+  timeout: 5000
+  retries: 1000
+  default_transaction_mode: immediate
+
+development:
+  primary:
+    <<: *default
+    database: "storage/workspaces/development/%{tenant}/db/main.sqlite3"
+    tenanted: true
+    max_connection_pools: 50
+  untenanted:
+    <<: *default
+    database: storage/untenanted/development.sqlite3
+    migrations_paths: saas/db/untenanted_migrate
+  queue:
+    <<: *default
+    database: storage/db/development_queue.sqlite3
+    migrations_paths: db/queue_migrate
+
+test:
+  primary:
+    <<: *default
+    database: "storage/workspaces/test/%{tenant}/db/main.sqlite3"
+    tenanted: true
+  untenanted:
+    <<: *default
+    database: storage/untenanted/test.sqlite3
+    migrations_paths: saas/db/untenanted_migrate
+  queue:
+    <<: *default
+    database: storage/db/test_queue.sqlite3
+    migrations_paths: db/queue_migrate
+
+production:
+  primary:
+    <<: *default
+    database: "storage/workspaces/production/%{tenant}/db/main.sqlite3"
+    tenanted: true
+    max_connection_pools: 100
+  untenanted:
+    <<: *default
+    database: storage/untenanted/production.sqlite3
+    migrations_paths: saas/db/untenanted_migrate
+  queue:
+    <<: *default
+    database: storage/db/production_queue.sqlite3
+    migrations_paths: db/queue_migrate

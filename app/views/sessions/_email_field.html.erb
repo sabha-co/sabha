@@ -1,0 +1,18 @@
+<%# locals: (form:, autofocus: true, show_icon: true, show_translation: true) %>
+<div class="flex align-center gap">
+  <% if show_translation && defined?(translation_button) %>
+    <%= translation_button(:email_address) %>
+  <% end %>
+  <label class="flex align-center gap input input--actor txt-large">
+    <%= form.email_field :email_address,
+        required: true,
+        class: "input",
+        autofocus: autofocus,
+        autocomplete: "email",
+        placeholder: "Enter your email address",
+        value: params[:email_address] %>
+    <% if show_icon && defined?(icon_tag) %>
+      <%= icon_tag "email" %>
+    <% end %>
+  </label>
+</div>

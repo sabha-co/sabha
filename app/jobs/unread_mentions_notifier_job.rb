@@ -1,5 +1,23 @@
 class UnreadMentionsNotifierJob < ApplicationJob
   def perform
+    if Campfire.saas?
+      # SaaS mode: iterate over all workspaces
+      ApplicationRecord.with_each_tenant do
+        notify_users_in_current_workspace
+      end
+    else
+      # Single-tenant mode: run directly
+      notify_users_in_current_workspace
+    end
+
+    log "Done notifying all users."
+  end
+
+  private
+
+  def notify_users_in_current_workspace
+    log_tenant_info if Campfire.saas?
+
     # Single consolidated query for all unread mentions
     unread_by_user = fetch_unread_mentions_by_user
 
@@ -8,11 +26,12 @@ class UnreadMentionsNotifierJob < ApplicationJob
         .find_each do |user|
       notify_user(user, unread_by_user[user.id])
     end
-
-    log "Done notifying all users."
   end
 
-  private
+  def log_tenant_info
+    tenant = ApplicationRecord.current_tenant
+    log "Processing workspace #{tenant}"
+  end
 
   def fetch_unread_mentions_by_user
     cutoff_time = 7.days.ago

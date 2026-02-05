@@ -8,7 +8,7 @@ import ScrollTracker from "models/scroll_tracker"
 
 export default class extends Controller {
   static targets = [ "latest", "message", "body", "messages", "template" ]
-  static classes = [ "firstOfDay", "firstUnread", "formatted", "me", "mentioned", "threaded", "loadingUp", "loadingDown" ]
+  static classes = [ "firstOfDay", "firstUnread", "formatted", "me", "mentioned", "mentionedUnread", "threaded", "loadingUp", "loadingDown" ]
   static values = { pageUrl: String }
 
   #clientMessage
@@ -25,6 +25,7 @@ export default class extends Controller {
       formatted: this.formattedClass,
       me: this.meClass,
       mentioned: this.mentionedClass,
+      mentionedUnread: this.mentionedUnreadClass,
       threaded: this.threadedClass,
     })
   }

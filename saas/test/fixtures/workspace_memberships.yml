@@ -1,0 +1,38 @@
+# frozen_string_literal: true
+
+# WorkspaceMembership fixtures for SaaS tests
+#
+# Links GlobalIdentity to workspaces via tenant (external_id as string)
+# The user_id caches the workspace User's ID for faster lookups.
+
+# Alice owns acme, is member of shared
+alice_acme:
+  global_identity: alice
+  tenant: "1000001"
+
+alice_shared:
+  global_identity: alice
+  tenant: "1000003"
+
+# Bob owns widgets, is member of shared
+bob_widgets:
+  global_identity: bob
+  tenant: "1000002"
+
+bob_shared:
+  global_identity: bob
+  tenant: "1000003"
+
+# Charlie only in shared workspace
+charlie_shared:
+  global_identity: charlie
+  tenant: "1000003"
+
+# Admin created shared and suspended workspaces
+admin_shared:
+  global_identity: admin
+  tenant: "1000003"
+
+admin_suspended:
+  global_identity: admin
+  tenant: "1000004"

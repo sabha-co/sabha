@@ -13,6 +13,8 @@ class RoomChannel < ApplicationCable::Channel
     end
 
     def find_room
-      current_user&.rooms&.find_by(id: params[:room_id])
+      with_tenant_context do
+        current_user&.rooms&.find_by(id: params[:room_id])
+      end
     end
 end
