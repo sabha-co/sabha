@@ -229,7 +229,7 @@ SaaS mode adds:
 - `Workspace` model in untenanted database
 - Workspace selector sidebar for users with multiple workspaces
 
-See `docs/multi-tenant/` for detailed SaaS architecture documentation.
+See `docs/multi-tenant/` for detailed SaaS architecture documentation (internal reference only - not for public users).
 
 ### Tailwind CSS
 ```bash

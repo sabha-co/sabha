@@ -26,6 +26,7 @@ bun.lock
 .ruby-gemset
 .bundle/
 .env
+.env.multitenant
 dump.rdb
 
 # Ignore master key for decrypting credentials (if used)

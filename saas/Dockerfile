@@ -1,0 +1,120 @@
+# syntax = docker/dockerfile:1
+
+# SaaS mode Dockerfile for Campfire-CE multi-tenant deployment
+# This Dockerfile uses Gemfile.saas which includes activerecord-tenanted
+
+# Make sure it matches the Ruby version in .ruby-version and Gemfile
+ARG RUBY_VERSION=4.0.1
+FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+
+# Rails app lives here
+WORKDIR /rails
+
+# Set production environment with SaaS-specific configuration
+ENV RAILS_ENV="production" \
+  SAAS="true" \
+  BUNDLE_DEPLOYMENT="1" \
+  BUNDLE_PATH="/usr/local/bundle" \
+  BUNDLE_GEMFILE="Gemfile.saas" \
+  BUNDLE_WITHOUT="development:test" \
+  RUBY_YJIT_ENABLE="1"
+
+# Throw-away build stage to reduce size of final image
+FROM base AS build
+
+# Install packages need to build gems and Node.js for Vite
+ARG PNPM_VERSION=10.28.0
+RUN apt-get update -qq && \
+  apt-get install --no-install-recommends -y \
+  build-essential git pkg-config curl libyaml-dev libssl-dev ca-certificates && \
+  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
+  apt-get install --no-install-recommends -y nodejs && \
+  npm install -g pnpm@$PNPM_VERSION && \
+  rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Copy all Gemfile variants and the saas gem (needed for path: "saas" dependency)
+COPY Gemfile Gemfile.lock Gemfile.saas Gemfile.saas.lock ./
+COPY saas/campfire-saas.gemspec ./saas/
+COPY saas/lib/ ./saas/lib/
+
+# Install application gems using Gemfile.saas
+RUN bundle install && \
+  rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
+  bundle clean --force && \
+  gem install thruster && \
+  gem cleanup
+
+# Precompile bootsnap code for faster boot times
+RUN bundle exec bootsnap precompile --gemfile
+
+# Install Node dependencies (before copying app for better caching)
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# Copy application code
+COPY . .
+
+# Precompile bootsnap code for faster boot times
+RUN bundle exec bootsnap precompile app/ lib/
+
+# Build assets with Vite
+RUN pnpm build
+
+# Precompile assets
+RUN mkdir -p /rails/storage/logs && \
+  SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+
+# Clean up build artifacts
+RUN rm -rf node_modules tmp/cache .git
+
+
+# Final stage for app image
+FROM base
+
+# Install runtime packages
+RUN apt-get update -qq && \
+  apt-get install --no-install-recommends -y \
+  curl libsqlite3-0 libvips libjemalloc2 libyaml-0-2 ca-certificates \
+  ffmpeg redis-server git sqlite3 && \
+  ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
+  rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Configure environment defaults
+ENV LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
+  HTTP_IDLE_TIMEOUT=60 \
+  HTTP_READ_TIMEOUT=300 \
+  HTTP_WRITE_TIMEOUT=300
+
+# Copy built artifacts: gems, application
+COPY --from=build /usr/local/bundle /usr/local/bundle
+COPY --from=build /rails /rails
+
+# Create non-root user for running the application
+RUN groupadd -r campfire && useradd -r -g campfire -d /rails -s /bin/bash campfire && \
+  chown -R campfire:campfire /rails
+
+# Set version and revision
+ARG APP_VERSION
+ENV APP_VERSION=$APP_VERSION
+ARG GIT_REVISION
+ENV GIT_REVISION=$GIT_REVISION
+
+# Image metadata
+ARG OCI_DESCRIPTION
+LABEL org.opencontainers.image.description="${OCI_DESCRIPTION}"
+ARG OCI_SOURCE
+LABEL org.opencontainers.image.source="${OCI_SOURCE}"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Expose app ports
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:3000/up || exit 1
+
+# Switch to non-root user
+USER campfire
+
+# Start the server
+CMD ["sh", "-c", "bin/configure && bin/boot"]

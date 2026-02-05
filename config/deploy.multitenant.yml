@@ -1,0 +1,95 @@
+# Kamal deployment configuration for sabha.co (SaaS mode)
+# Deploy with: kamal deploy -d multitenant
+
+service: sabha
+
+ssh:
+  user: campfire
+
+image: superforumio/campfire-ce
+
+servers:
+  web:
+    hosts:
+      - <%= ENV.fetch("SERVER_IP") %>
+    options:
+      network-alias: sabha-web
+
+proxy:
+  ssl: true
+  host: <%= ENV.fetch("PROXY_HOST") %>
+  app_port: 3000
+
+registry:
+  server: ghcr.io
+  username: superforumio
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  dockerfile: saas/Dockerfile
+
+env:
+  clear:
+    RAILS_ENV: "production"
+    SAAS: "true"
+
+  secret:
+    - APP_VERSION
+    - LAST_DEPLOY
+    - SECRET_KEY_BASE
+    - VAPID_PUBLIC_KEY
+    - VAPID_PRIVATE_KEY
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
+    - AWS_DEFAULT_REGION
+    - RESEND_API_KEY
+    - WEBHOOK_SECRET
+    - COOKIE_DOMAIN
+    - APP_NAME
+    - APP_SHORT_NAME
+    - APP_DESCRIPTION
+    - APP_HOST
+    - SUPPORT_EMAIL
+    - MAILER_FROM_NAME
+    - MAILER_FROM_EMAIL
+    - SAAS_MAILER_FROM_NAME
+    - SAAS_MAILER_FROM_EMAIL
+    - THEME_COLOR
+    - BACKGROUND_COLOR
+    - ANALYTICS_DOMAIN
+    - CSP_FRAME_ANCESTORS
+    - ANYCABLE_ENABLED
+    - ANYCABLE_SECRET
+
+volumes:
+  - "/disk/sabha/:/rails/storage/"
+
+accessories:
+  anycable:
+    image: anycable/anycable-go:1.6
+    host: <%= ENV.fetch("SERVER_IP") %>
+    proxy:
+      host: <%= ENV.fetch("PROXY_HOST") %>
+      app_port: 8080
+      path_prefix: /cable
+      healthcheck:
+        path: /health
+    env:
+      clear:
+        ANYCABLE_HOST: "0.0.0.0"
+        ANYCABLE_PORT: "8080"
+        ANYCABLE_PATH: "/"
+        ANYCABLE_RPC_HOST: "http://sabha-web:3000/_anycable"
+        ANYCABLE_BROADCAST_ADAPTER: "http"
+        ANYCABLE_HTTP_BROADCAST_PORT: "8080"
+        ANYCABLE_LOG_LEVEL: "info"
+      secret:
+        - ANYCABLE_SECRET
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole"
