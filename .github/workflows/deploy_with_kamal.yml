@@ -1,9 +1,6 @@
 name: Deploy with Kamal
 
 on:
-  # Automatic deployment disabled
-  # push:
-  #   branches: [master]
   workflow_dispatch:
     inputs:
       environment:
@@ -15,7 +12,7 @@ on:
           - production
           - staging
       run_setup:
-        description: 'Run kamal setup before deploy'
+        description: 'Run kamal setup before deploy (first-time provisioning)'
         required: false
         default: false
         type: boolean
@@ -28,7 +25,7 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Fetch all history for git operations
+          fetch-depth: 0
 
       - name: Get short SHA
         uses: benjlevesque/short-sha@599815c8ee942a9616c92bcfb4f947a3b670ab0b # v3.0
@@ -62,11 +59,9 @@ jobs:
       - name: Create Kamal secrets file
         run: |
           mkdir -p .kamal
-          cat > .kamal/secrets << EOF
-          # Docker registry credentials
+          cat > .kamal/secrets.multitenant << EOF
           KAMAL_REGISTRY_PASSWORD=${{ secrets.DOCKER_PASSWORD }}
 
-          # Application secrets
           APP_VERSION=${{ steps.short-sha.outputs.sha }}
           LAST_DEPLOY=${{ env.DEPLOY_TIME }}
           SECRET_KEY_BASE=${{ secrets.SECRET_KEY_BASE }}
@@ -78,21 +73,37 @@ jobs:
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
           WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
           COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
+
+          APP_NAME=${{ secrets.APP_NAME }}
+          APP_SHORT_NAME=${{ secrets.APP_SHORT_NAME }}
+          APP_DESCRIPTION=${{ secrets.APP_DESCRIPTION }}
+          APP_HOST=${{ secrets.APP_HOST }}
+          SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
+          MAILER_FROM_NAME=${{ secrets.MAILER_FROM_NAME }}
+          MAILER_FROM_EMAIL=${{ secrets.MAILER_FROM_EMAIL }}
+          SAAS_MAILER_FROM_NAME=${{ secrets.SAAS_MAILER_FROM_NAME }}
+          SAAS_MAILER_FROM_EMAIL=${{ secrets.SAAS_MAILER_FROM_EMAIL }}
+          THEME_COLOR=${{ secrets.THEME_COLOR }}
+          BACKGROUND_COLOR=${{ secrets.BACKGROUND_COLOR }}
+          ANALYTICS_DOMAIN=${{ secrets.ANALYTICS_DOMAIN }}
+          CSP_FRAME_ANCESTORS=${{ secrets.CSP_FRAME_ANCESTORS }}
+
+          ANYCABLE_ENABLED=${{ secrets.ANYCABLE_ENABLED }}
+          ANYCABLE_SECRET=${{ secrets.ANYCABLE_SECRET }}
           EOF
 
-      - name: Run Kamal setup (if requested)
+      - name: Run Kamal setup (first-time provisioning)
         if: ${{ github.event.inputs.run_setup == 'true' }}
-        run: kamal setup
+        run: kamal setup -d multitenant
         env:
           KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
           PROXY_HOST: ${{ secrets.DOMAIN }}
-          REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
       - name: Deploy with Kamal
-        run: kamal deploy
+        if: ${{ github.event.inputs.run_setup != 'true' }}
+        run: kamal deploy -d multitenant
         env:
           KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
           PROXY_HOST: ${{ secrets.DOMAIN }}
-          REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
