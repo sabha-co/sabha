@@ -4,7 +4,7 @@
 service: sabha
 
 ssh:
-  user: sabha
+  user: campfire
 
 image: sabha-co/sabha
 
