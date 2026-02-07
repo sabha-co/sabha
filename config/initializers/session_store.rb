@@ -1,5 +1,5 @@
 session_options = {
-  key: "_campfire_session",
+  key: "_sabha_session",
   # Persist session cookie as permament so re-opened browser windows maintain a CSRF token
   expire_after: 20.years
 }

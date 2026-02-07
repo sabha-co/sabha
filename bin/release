@@ -121,4 +121,4 @@ system "git", "fetch", "--tags"
 
 puts "\n\e[1;32m✓ Release v#{version} created!\e[0m"
 puts "\e[0;36mGitHub Actions will now build and push the Docker image.\e[0m"
-puts "  → https://github.com/superforumio/campfire-ce/actions"
+puts "  → https://github.com/sabha-co/sabha/actions"

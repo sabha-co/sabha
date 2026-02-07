@@ -102,7 +102,7 @@ kamal console -d multitenant
 
 ```ruby
 # In Rails console
-Campfire::Saas::Setup.call
+Sabha::Saas::Setup.call
 
 # Or create a workspace manually
 workspace = Workspace.create!(name: "My Workspace")
@@ -238,7 +238,7 @@ Multi-tenant backups require backing up all workspace databases plus the untenan
 ssh root@your-server
 
 # Checkpoint all databases
-docker exec campfire-multitenant-web bin/rails runner "
+docker exec sabha-multitenant-web bin/rails runner "
   ActiveRecord::Base.connection.execute('PRAGMA wal_checkpoint(TRUNCATE)')
   Workspace.find_each do |w|
     Tenant.switch(w.id) do

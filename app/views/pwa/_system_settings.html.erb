@@ -17,19 +17,19 @@
       <ol>
         <li>Click <em>Start</em>, then <em>Settings</em>.</li>
         <li>Go to <em>System &gt; Notification</em>.</li>
-        <li>Click <em><%= image_tag "external/switch.svg", alt: "the toggle button", size: 22 %></em> <em>ON</em> for Campfire.</li>
+        <li>Click <em><%= image_tag "external/switch.svg", alt: "the toggle button", size: 22 %></em> <em>ON</em> for Sabha.</li>
       </ol>
     <% when (platform.firefox? || platform.chrome?) && platform.desktop? %>
       <ol>
         <% if platform.windows? %>
           <li>Click <em>Start</em>, then <em>Settings</em>.</li>
           <li>Go to <em>System &gt; Notification</em>.</li>
-          <li>Click <em><%= image_tag "external/switch.svg", alt: "the toggle button", size: 22 %></em> <em>ON</em> for Campfire.</li>
+          <li>Click <em><%= image_tag "external/switch.svg", alt: "the toggle button", size: 22 %></em> <em>ON</em> for Sabha.</li>
         <% else %>
           <li>Click <em aria-label="the Apple menu"></em> in the top left.</li>
           <li>Click <em>System Settings…</em>.</li>
           <li>Click <em>Notifications</em>.</li>
-          <li>Click <em>Campfire</em>.</li>
+          <li>Click <em>Sabha</em>.</li>
           <li>Click <em><%= image_tag "external/switch.svg", alt: "the allow notifications switch", size: 22 %></em> to <em>Allow notifications</em>.</li>
         <% end %>
       </ol>
@@ -38,13 +38,13 @@
         <li>Click <em aria-label="the Apple menu"></em> in the top left.</li>
         <li>Click <em>System Settings…</em>.</li>
         <li>Click <em>Notifications</em>.</li>
-        <li>Click <em>Campfire</em>.</li>
+        <li>Click <em>Sabha</em>.</li>
         <li>Click <em><%= image_tag "external/switch.svg", alt: "the allow notifications switch", size: 22 %></em> to <em>Allow notifications</em>.</li>
       </ol>
     <% when (platform.safari? || platform.chrome?) && platform.ios? %>
       <ol>
         <li>Open the <em><%= image_tag "external/gear.svg", aria: { hidden: "true" }, size: 20 %></em> Settings app.</li>
-        <li>Scroll to and tap <em>Campfire</em>.</li>
+        <li>Scroll to and tap <em>Sabha</em>.</li>
         <li>Tap <em>Notifications</em>.</li>
         <li>Tap <em><%= image_tag "external/switch.svg", alt: "the allow notifications switch button", size: 22 %></em> to <em>Allow Notifications</em>.</li>
       </ol>
@@ -53,7 +53,7 @@
         <li>Open the <em><%= image_tag "external/gear.svg", aria: { hidden: "true" }, size: 20 %></em> Settings app.</li>
         <li>Tap <em>Notifications</em>.</li>
         <li>Tap <em>App notifications</em>.</li>
-        <li>Scroll to <em>Campfire</em>.</li>
+        <li>Scroll to <em>Sabha</em>.</li>
         <li>Tap <em><%= image_tag "external/switch.svg", alt: "the switch", size: 22 %></em> to <em>Allow Notifications</em>.</li>
       </ol>
     <% else %>

@@ -1,4 +1,4 @@
-# Technical PRD: Multi-Tenancy for Campfire-CE
+# Technical PRD: Multi-Tenancy for Sabha
 
 **Related Documents:**
 - [Product PRD](./multi-tenancy-product-prd.md) - Business goals, user stories, requirements
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Add multi-tenancy capability to Campfire-CE as an **opt-in SaaS layer**. The core application remains single-tenant and works out of the box for self-hosters. Multi-tenancy is enabled via the `saas/` folder (Rails engine) for those who want to run a multi-workspace deployment.
+Add multi-tenancy capability to Sabha as an **opt-in SaaS layer**. The core application remains single-tenant and works out of the box for self-hosters. Multi-tenancy is enabled via the `saas/` folder (Rails engine) for those who want to run a multi-workspace deployment.
 
 ## Design Philosophy
 
@@ -27,7 +27,7 @@ Add multi-tenancy capability to Campfire-CE as an **opt-in SaaS layer**. The cor
 ## Goals
 
 1. **Preserve single-tenant simplicity** - Core repo works without multi-tenancy overhead (true self-hosting)
-2. **Enable multi-workspace deployment** - One Campfire instance serves many independent communities (via SaaS layer)
+2. **Enable multi-workspace deployment** - One Sabha instance serves many independent communities (via SaaS layer)
 3. **Complete data isolation** - Each workspace's data in separate SQLite database files
 4. **GlobalIdentity** - Users can switch between workspaces without re-authenticating
 5. **Self-service workspace creation** - Users can create new workspaces themselves
@@ -224,8 +224,8 @@ Invite links and join codes are the **same mechanism** - the link simply wraps t
 
 ```
 Join code:    ABCD-EFGH-IJKL
-Invite link:  https://campfire.example.com/join?code=ABCD-EFGH-IJKL
-Pretty link:  https://campfire.example.com/join/ABCD-EFGH-IJKL
+Invite link:  https://sabha.example.com/join?code=ABCD-EFGH-IJKL
+Pretty link:  https://sabha.example.com/join/ABCD-EFGH-IJKL
 ```
 
 Join codes are stored per-workspace via `Account::Joinable` (existing implementation). For fast lookup without querying all tenant DBs, cache join codes in untenanted `Workspace` model.
@@ -276,9 +276,9 @@ end
 ### Workspace Identification: Path Prefix (like Fizzy)
 
 ```
-campfire.example.com/                    → Landing page / workspace creation
-campfire.example.com/1000001/general     → Workspace 1000001's general room
-campfire.example.com/1000002/rooms       → Workspace 1000002's room list
+sabha.example.com/                    → Landing page / workspace creation
+sabha.example.com/1000001/general     → Workspace 1000001's general room
+sabha.example.com/1000002/rooms       → Workspace 1000002's room list
                      └──────┘
                    7+ digit workspace ID
 ```
@@ -365,7 +365,7 @@ PATTERN = /\A(\/\d{7,})(?:/|$)/  # Matches /1234567, /897362094, etc.
 ### 1. First-Time Visitor - Sign Up
 
 ```
-1. User visits campfire.example.com/
+1. User visits sabha.example.com/
 2. Sees combined login/signup page: "Enter your email"
 3. Enters email address
 4. If email not found → GlobalIdentity created
@@ -607,7 +607,7 @@ stream_for @room  # → gid://app/Room/123?tenant=1000001
 # Channels using string streams need workspace prefix inline
 class PresenceChannel < ApplicationCable::Channel
   def subscribed
-    stream_name = Campfire.saas? ? "workspace_#{current_tenant}_presence" : "presence"
+    stream_name = Sabha.saas? ? "workspace_#{current_tenant}_presence" : "presence"
     stream_from stream_name
   end
 end
@@ -615,9 +615,9 @@ end
 
 **Note:** There is no shared `workspace_stream` helper - each channel handles prefixing inline where needed.
 
-### Campfire Channels (All Auto-Scoped)
+### Sabha Channels (All Auto-Scoped)
 
-All Campfire channels use `stream_for` with models, so they're automatically tenant-scoped via GlobalID:
+All Sabha channels use `stream_for` with models, so they're automatically tenant-scoped via GlobalID:
 
 | Channel | Implementation | Tenant-Safe? |
 |---------|---------------|--------------|
@@ -713,7 +713,7 @@ Fragment caching and Russian doll caching work automatically via model cache key
 - **Landing page** - First-time visitor flow with "Create Workspace" CTA
 - **Workspace settings** - Each workspace has its own `Account` for settings
 - **All existing features** - Work within workspace context
-- **SaaS detection** - `Campfire.saas?` method to conditionally enable multi-tenancy
+- **SaaS detection** - `Sabha.saas?` method to conditionally enable multi-tenancy
 
 ### Excluded (v1 Scope)
 
@@ -955,7 +955,7 @@ Workspace links use `slug` to switch workspaces:
 
 ```bash
 # Application host (single domain, no wildcard needed)
-APP_HOST=campfire.example.com
+APP_HOST=sabha.example.com
 ```
 
 ### Optional
@@ -1049,7 +1049,7 @@ The multi-tenancy code lives in the `saas/` folder, keeping the core app clean f
 ### Structure (like Fizzy)
 
 ```
-campfire/
+sabha/
 ├── app/                      # Core open-source app
 ├── config/
 ├── db/
@@ -1061,18 +1061,18 @@ campfire/
     │   ├── controllers/      # Admin dashboards, billing
     │   ├── models/           # Subscriptions, plans, billing
     │   └── views/            # SaaS-specific UI
-    ├── lib/campfire/saas/
+    ├── lib/sabha/saas/
     │   └── engine.rb         # Rails engine setup
     ├── config/routes.rb      # SaaS routes (admin namespace)
     ├── db/saas_schema.rb     # SaaS-only tables
-    └── campfire-saas.gemspec # Packaged as gem
+    └── sabha-saas.gemspec # Packaged as gem
 ```
 
 ### SaaS Detection
 
 ```ruby
-# lib/campfire.rb
-module Campfire
+# lib/sabha.rb
+module Sabha
   def self.saas?
     return @saas if defined?(@saas)
     @saas = ENV["SAAS"] == "true" || File.exist?(Rails.root.join("tmp/saas.txt"))
@@ -1080,7 +1080,7 @@ module Campfire
 end
 
 # Usage in code
-if Campfire.saas?
+if Sabha.saas?
   # SaaS-only feature
 end
 ```
@@ -1091,7 +1091,7 @@ end
 # Gemfile.saas
 eval_gemfile "Gemfile"  # Inherit core gems
 
-gem "campfire-saas", path: "saas"
+gem "sabha-saas", path: "saas"
 gem "stripe"           # Billing
 gem "sentry-ruby"      # Error tracking
 # ... other SaaS dependencies
@@ -1143,7 +1143,7 @@ bin/rails saas:disable  # Removes tmp/saas.txt
 
 Not supported. This is a clean implementation for new deployments only.
 
-Existing single-workspace Campfire deployments should:
+Existing single-workspace Sabha deployments should:
 1. Export their data
 2. Deploy fresh multi-workspace instance
 3. Import data to a new workspace

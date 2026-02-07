@@ -37,7 +37,7 @@ production:
   # WebSocket URL for clients (same domain, /cable path)
   websocket_url: <%= ENV.fetch("ANYCABLE_WEBSOCKET_URL", "wss://#{ENV['APP_HOST']}/cable") %>
   # Broadcast URL - container name varies by deployment:
-  # - Kamal: campfire-anycable
+  # - Kamal: sabha-anycable
   # - campfire_cloud/Docker Compose: anycable
-  http_broadcast_url: <%= ENV.fetch("ANYCABLE_BROADCAST_URL", "http://campfire-anycable:8080/_broadcast") %>
+  http_broadcast_url: <%= ENV.fetch("ANYCABLE_BROADCAST_URL", "http://sabha-anycable:8080/_broadcast") %>
   secret: <%= ENV["ANYCABLE_SECRET"] %>

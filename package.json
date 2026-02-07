@@ -1,5 +1,5 @@
 {
-  "name": "campfire-ce",
+  "name": "sabha",
   "private": true,
   "packageManager": "pnpm@10.28.0",
   "engines": {

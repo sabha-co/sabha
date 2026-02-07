@@ -20,9 +20,9 @@ namespace :saas do
 
   desc "Check SaaS mode status"
   task :status do
-    require_relative "../../lib/campfire"
+    require_relative "../../lib/sabha"
 
-    if Campfire.saas?
+    if Sabha.saas?
       puts "SaaS mode: ENABLED"
       if ENV["SAAS"] == "true"
         puts "  (via SAAS environment variable)"
@@ -36,7 +36,7 @@ namespace :saas do
 
   desc "Setup SaaS mode (run migrations, create default workspace)"
   task setup: :environment do
-    unless Campfire.saas?
+    unless Sabha.saas?
       puts "SaaS mode is not enabled. Run 'bin/rails saas:enable' first."
       exit 1
     end
@@ -76,7 +76,7 @@ namespace :saas do
 
   desc "Reset SaaS databases (drops and recreates all workspace databases)"
   task reset: :environment do
-    unless Campfire.saas?
+    unless Sabha.saas?
       puts "SaaS mode is not enabled."
       exit 1
     end

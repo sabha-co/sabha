@@ -3,7 +3,7 @@
 namespace :workspace do
   desc "List all workspaces"
   task list: :environment do
-    unless Campfire.saas?
+    unless Sabha.saas?
       puts "SaaS mode is not enabled. Run with SAAS=true or bin/rails saas:enable"
       exit 1
     end
@@ -26,7 +26,7 @@ namespace :workspace do
 
   desc "Create a new workspace"
   task :create, [ :name, :email ] => :environment do |_t, args|
-    unless Campfire.saas?
+    unless Sabha.saas?
       puts "SaaS mode is not enabled. Run with SAAS=true or bin/rails saas:enable"
       exit 1
     end
@@ -60,7 +60,7 @@ namespace :workspace do
 
   desc "Destroy a workspace and its database"
   task :destroy, [ :external_id ] => :environment do |_t, args|
-    unless Campfire.saas?
+    unless Sabha.saas?
       puts "SaaS mode is not enabled. Run with SAAS=true or bin/rails saas:enable"
       exit 1
     end
@@ -98,7 +98,7 @@ namespace :workspace do
 
   desc "Show workspace info"
   task :info, [ :external_id ] => :environment do |_t, args|
-    unless Campfire.saas?
+    unless Sabha.saas?
       puts "SaaS mode is not enabled. Run with SAAS=true or bin/rails saas:enable"
       exit 1
     end

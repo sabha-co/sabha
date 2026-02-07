@@ -17,7 +17,7 @@ class Load
   include SSHKit::DSL
 
   attr_reader :users, :setup, :host, :port, :ssh_user
-  attr_reader :campfire_image
+  attr_reader :sabha_image
 
   def initialize(users: 1000, setup: true, host: "localhost", port: nil, ssh_user: "ubuntu")
     @users = users
@@ -25,7 +25,7 @@ class Load
     @host = host
     @ssh_user = ssh_user
     @port = port || (remote? ? 80 : 3000)
-    @campfire_image = "localhost/campfire:latest"
+    @sabha_image = "localhost/sabha:latest"
   end
 
   def setup?
@@ -67,9 +67,9 @@ class Load
       os, arch = host_os_and_arch
 
       on(:local) do
-        execute :docker, :build, "-t", load.campfire_image, "--platform", arch, "."
+        execute :docker, :build, "-t", load.sabha_image, "--platform", arch, "."
         if load.remote?
-          execute :docker, :save, "-o", "tmp/campfire-image.tar", load.campfire_image
+          execute :docker, :save, "-o", "tmp/sabha-image.tar", load.sabha_image
         end
       end
 
@@ -78,10 +78,10 @@ class Load
           unless execute(:docker, "-v", raise_on_non_zero_exit: false)
             execute :curl, "-fsSL", "https://get.docker.com", "|", :sh
           end
-          upload! "tmp/campfire-image.tar", "campfire-image.tar"
+          upload! "tmp/sabha-image.tar", "sabha-image.tar"
           upload! "test/performance/chatter.js", "chatter.js"
           upload! "test/performance/cookies.txt", "cookies.txt"
-          execute :docker, :load, "-i", "campfire-image.tar"
+          execute :docker, :load, "-i", "sabha-image.tar"
         end
       end
     end
@@ -100,8 +100,8 @@ class Load
       load = self
 
       on(ssh_host) do
-        execute :docker, :rm, "-f", :campfire_load, raise_on_non_zero_exit: false
-        execute :docker, :run, "-d", "--rm", "--name", :campfire_load, "-p", "#{load.port}:80", "-e", "SECRET_KEY_BASE=dummy", "-e RAILS_ENV=performance", load.campfire_image
+        execute :docker, :rm, "-f", :sabha_load, raise_on_non_zero_exit: false
+        execute :docker, :run, "-d", "--rm", "--name", :sabha_load, "-p", "#{load.port}:80", "-e", "SECRET_KEY_BASE=dummy", "-e RAILS_ENV=performance", load.sabha_image
       end
 
       wait_for_app_to_start
@@ -151,7 +151,7 @@ class Load
 
     def cleanup
       on(ssh_host) do |host|
-        execute :docker, :rm, "-f", :campfire_load, :k6
+        execute :docker, :rm, "-f", :sabha_load, :k6
       end
     end
 end

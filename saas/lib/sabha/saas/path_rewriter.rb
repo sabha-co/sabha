@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Campfire
+module Sabha
   module Saas
     # Middleware that extracts workspace ID from path and rewrites for routing.
     #
@@ -31,7 +31,7 @@ module Campfire
           request.path_info = remaining_path
 
           # Stash for tenant resolver
-          env["campfire.workspace_id"] = workspace_id
+          env["sabha.workspace_id"] = workspace_id
         end
 
         @app.call(env)

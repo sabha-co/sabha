@@ -8,7 +8,7 @@
 #
 # Pattern adapted from Fizzy's multi-tenant implementation.
 
-return unless Campfire.saas?
+return unless Sabha.saas?
 
 module TurboStreamsChannelExtensions
   extend ActiveSupport::Concern

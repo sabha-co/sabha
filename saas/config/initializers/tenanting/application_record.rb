@@ -4,12 +4,12 @@
 #
 # The `tenanted` macro is called directly in app/models/application_record.rb:
 #
-#   tenanted if defined?(ActiveRecord::Tenanted) && Campfire.saas?
+#   tenanted if defined?(ActiveRecord::Tenanted) && Sabha.saas?
 #
 # This approach ensures the macro is called at the right time (when ApplicationRecord
 # is first loaded) rather than via initializers which have timing issues.
 
-return unless defined?(ActiveRecord::Tenanted) && Campfire.saas?
+return unless defined?(ActiveRecord::Tenanted) && Sabha.saas?
 
 # Explicitly configure the connection class for gem integrations.
 # This tells the gem which abstract base class is tenanted, enabling:

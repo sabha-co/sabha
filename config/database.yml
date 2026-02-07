@@ -4,7 +4,7 @@
 #   Ensure the SQLite 3 gem is defined in your Gemfile
 #   gem "sqlite3"
 #
-<% saas_mode = Campfire.saas? %>
+<% saas_mode = Sabha.saas? %>
 
 default: &default
   adapter: sqlite3

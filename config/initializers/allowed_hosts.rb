@@ -26,7 +26,7 @@ Rails.application.configure do
     config.hosts << "localhost"
     config.hosts << "127.0.0.1"
     config.hosts << "www.example.com"  # Default Rails test host
-    config.hosts << "once.campfire.test"  # Custom test host
+    config.hosts << "once.sabha.test"  # Custom test host
   end
 
   # Get the primary APP_HOST

@@ -67,14 +67,15 @@ class Workspace < UntenantedRecord
 
       # Create initial data in the new workspace
       # Note: Uses find_or_create patterns to handle partial data from failed attempts
+      # and stale tenant DBs reused during tests (same external_id due to sequence rollback)
       ApplicationRecord.with_tenant(tenant_id) do
         # Create or update Account (singleton per workspace)
-        # Use singleton_guard as key since that's the unique constraint
         account = Account.find_or_initialize_by(singleton_guard: 0)
         account.update!(name: name) if account.name != name
 
-        # Create or find administrator User (linked to workspace_membership)
-        admin_user = User.find_or_initialize_by(email_address: creator.email_address)
+        # Create or reactivate administrator User (linked to workspace_membership)
+        # Uses unscoped to find deactivated users from stale tenant DBs
+        admin_user = User.unscoped.find_or_initialize_by(email_address: creator.email_address)
         if admin_user.new_record?
           admin_user.assign_attributes(
             workspace_membership_id: membership.id,
@@ -83,7 +84,14 @@ class Workspace < UntenantedRecord
             verified_at: Time.current
           )
           admin_user.save!
+        else
+          admin_user.reactivate if admin_user.deactivated?
+          admin_user.update!(workspace_membership_id: membership.id, role: :administrator)
         end
+
+        # Deactivate any other users left from stale tenant DBs
+        User.where.not(id: admin_user.id).find_each(&:deactivate)
+
         membership.cache_user_id!(admin_user.id)
 
         # Create default rooms (creator is required)

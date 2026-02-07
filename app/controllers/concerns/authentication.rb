@@ -57,7 +57,7 @@ module Authentication
       # request.url includes script_name (workspace prefix) per Rack spec
       session[:return_to_after_authenticating] = request.url unless turbo_frame_request?
 
-      if Campfire.saas?
+      if Sabha.saas?
         # In SaaS mode, redirect to the global login page
         redirect_to "/session/new"
       else
@@ -90,7 +90,7 @@ module Authentication
 
     def resume_session(session)
       # Expired sessions are already filtered out in find_session_by_cookie
-      if Campfire.saas?
+      if Sabha.saas?
         session.resume(user_agent: request.user_agent, ip_address: request.remote_ip)
         Current.global_session = session
         ensure_workspace_user_exists if ApplicationRecord.current_tenant.present?
@@ -111,7 +111,7 @@ module Authentication
     end
 
     def terminate_current_session
-      if Campfire.saas?
+      if Sabha.saas?
         Current.global_session&.destroy
         cookies.delete(:global_session_token)
       else

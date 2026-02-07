@@ -99,7 +99,7 @@ class MessageTest < ActiveSupport::TestCase
 
   test "@everyone mention sets mentions_everyone flag" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div>Hey <action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div>Hey <action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     admin = users(:jason)  # jason is already an administrator
 
@@ -116,7 +116,7 @@ class MessageTest < ActiveSupport::TestCase
 
   test "@everyone returns all room users as mentionees" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     admin = users(:jason)  # jason is already an administrator
 
@@ -134,7 +134,7 @@ class MessageTest < ActiveSupport::TestCase
 
   test "only admins can use @everyone" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     non_admin = users(:jz)  # jz is not an administrator
 
@@ -151,7 +151,7 @@ class MessageTest < ActiveSupport::TestCase
 
   test "@everyone only allowed in open rooms" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     admin = users(:jason)  # jason is already an administrator
 
@@ -170,7 +170,7 @@ class MessageTest < ActiveSupport::TestCase
 
   test "Message.mentioning scope includes @everyone messages" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     admin = users(:jason)  # jason is already an administrator
 

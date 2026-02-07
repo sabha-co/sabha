@@ -75,7 +75,7 @@
         <%= translation_button(:email_address) %>
 
         <label class="flex align-center gap flex-item-grow input input--actor">
-          <% if Campfire.saas? %>
+          <% if Sabha.saas? %>
             <%= form.email_field :email_address, class: "input txt-medium", value: @user.email_address,
                                  disabled: true, readonly: true %>
           <% else %>
@@ -86,7 +86,7 @@
         </label>
       </div>
 
-      <% if @user.pending_email_change? && !Campfire.saas? %>
+      <% if @user.pending_email_change? && !Sabha.saas? %>
         <div class="flex align-center gap">
           <div class="btn" style="visibility: hidden;"></div>
           <p class="txt-small txt-faded margin-none">

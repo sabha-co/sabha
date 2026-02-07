@@ -1,6 +1,6 @@
 # Multi-Tenancy & SaaS Architecture Notes
 
-Comparison of approaches between Fizzy (37signals) and Campfire-CE.
+Comparison of approaches between Fizzy (37signals) and Sabha.
 
 **Related Documents:**
 - [Product PRD](./multi-tenancy-product-prd.md) - Business goals, user stories, requirements
@@ -53,7 +53,7 @@ Comparison of approaches between Fizzy (37signals) and Campfire-CE.
    - All existing `user_id` FKs stay within workspace DB
    - Works cleanly with separate SQLite files
 
-2. **Minimal changes to existing Campfire code**
+2. **Minimal changes to existing Sabha code**
    - Just add `workspace_membership_id` to User model
    - All existing associations stay the same
    - No need to add `workspace_id` to every model
@@ -74,7 +74,7 @@ Comparison of approaches between Fizzy (37signals) and Campfire-CE.
 | Multi-tenant | GlobalIdentity | GlobalIdentity (GlobalSession) | Yes (links to WorkspaceMembership) |
 
 ```ruby
-# Self-hosted: User handles everything (current Campfire behavior)
+# Self-hosted: User handles everything (current Sabha behavior)
 # Multi-tenant: GlobalIdentity handles auth, WorkspaceMembership links to tenant, User handles workspace presence
 
 class User < ApplicationRecord
@@ -105,11 +105,11 @@ end
 
 ### Core Auth Code: Not Used in SaaS Mode
 
-The existing Campfire authentication code is **completely bypassed** in SaaS mode:
+The existing Sabha authentication code is **completely bypassed** in SaaS mode:
 
 | Core Component | Status in SaaS | Reason |
 |----------------|----------------|--------|
-| `app/controllers/concerns/authentication.rb` | **Extended** | Includes SaaS auth when `Campfire.saas?` |
+| `app/controllers/concerns/authentication.rb` | **Extended** | Includes SaaS auth when `Sabha.saas?` |
 | `app/controllers/sessions_controller.rb` | **Replaced** | SaaS uses `Saas::SessionsController` |
 | `app/controllers/auth_tokens_controller.rb` | **Not used** | Replaced by `Saas::AuthCodesController` |
 | `app/controllers/first_runs_controller.rb` | **Skipped** | No global first run in SaaS |
@@ -132,16 +132,16 @@ The existing Campfire authentication code is **completely bypassed** in SaaS mod
 - **`/saas` folder adds SaaS-specific features** - billing, admin dashboard, telemetry, security auditing
 - Core tenancy code lives in `config/initializers/tenanting/` and models
 
-**Campfire-CE's architecture (intentionally different):**
+**Sabha's architecture (intentionally different):**
 - **Core app is single-tenant** - no multi-tenancy code, works for self-hosters out of the box
 - **`saas/` folder adds ALL multi-tenancy** - middleware, shared models, auth, workspace selector
 - **Later:** billing/admin in same saas/ folder (v2)
 
-**Why different?** Campfire is primarily for self-hosted single-tenant deployments. Multi-tenancy is opt-in for SaaS providers.
+**Why different?** Sabha is primarily for self-hosted single-tenant deployments. Multi-tenancy is opt-in for SaaS providers.
 
 ### Comparison Table
 
-| Aspect | Fizzy (pre-Plan B) | Campfire-CE (Planned) |
+| Aspect | Fizzy (pre-Plan B) | Sabha (Planned) |
 |--------|-------|----------------------|
 | Core app | **Multi-tenant** | **Single-tenant** |
 | SaaS folder | Billing/admin/telemetry | **Core tenancy + billing** |
@@ -201,7 +201,7 @@ The saas/ folder only adds billing, admin, and telemetry on top of already-worki
 
 **Key pattern**: Fizzy uses `concerns/` to inject behavior into core controllers (e.g., `Card::LimitedCreation`).
 
-### Campfire-CE Approach (Planned)
+### Sabha Approach (Planned)
 
 ```
 saas/
@@ -230,11 +230,11 @@ saas/
 ├── db/
 │   └── untenanted_migrate/
 ├── lib/
-│   └── campfire/
+│   └── sabha/
 │       └── saas/
 │           ├── engine.rb
 │           └── tenant_resolver.rb           # Path-based workspace resolution
-└── campfire-saas.gemspec
+└── sabha-saas.gemspec
 ```
 
 **Key difference**: We use `tenant_resolver.rb` with a simple lambda for path-based workspace resolution. Fizzy uses the same pattern (simple lambda in initializer).
@@ -268,16 +268,16 @@ end
 2. If SaaS mode, set `BUNDLE_GEMFILE=Gemfile.saas`
 3. Bundler loads the engine as a gem
 
-### Campfire-CE Approach (Same Pattern)
+### Sabha Approach (Same Pattern)
 
 ```ruby
 # Gemfile.saas
 eval_gemfile "Gemfile"
-gem "campfire-saas", path: "saas"
+gem "sabha-saas", path: "saas"
 gem "activerecord-tenanted"  # Multi-tenant gem
 
-# lib/campfire.rb
-module Campfire
+# lib/sabha.rb
+module Sabha
   def self.saas?
     return @saas if defined?(@saas)
     @saas = ENV["SAAS"] == "true" || File.exist?(Rails.root.join("tmp/saas.txt"))
@@ -291,7 +291,7 @@ end
 
 ## 3. Workspace Identification (Path-Based)
 
-### Fizzy Approach: Path-Based (Same as Campfire!)
+### Fizzy Approach: Path-Based (Same as Sabha!)
 
 ```ruby
 # config/initializers/tenanting/account_slug.rb
@@ -367,7 +367,7 @@ tenant_id = ActiveRecord::FixtureSet.identify("37signals")
 # => 897362094 (large integer, 7+ digits naturally)
 ```
 
-### Campfire-CE Approach: Path-Based with Tenant Resolver
+### Sabha Approach: Path-Based with Tenant Resolver
 
 Uses `activerecord-tenanted` gem's built-in tenant resolver (simpler than custom middleware):
 
@@ -393,13 +393,13 @@ end
 
 **URL structure**: Workspace ID in path.
 ```
-campfire.example.com/1000001/general    # Tenant 1000001
-campfire.example.com/1000002/rooms      # Tenant 1000002
+sabha.example.com/1000001/general    # Tenant 1000001
+sabha.example.com/1000002/rooms      # Tenant 1000002
 ```
 
 ### Comparison
 
-Both Fizzy and Campfire-CE use the **same path-based approach**:
+Both Fizzy and Sabha use the **same path-based approach**:
 
 | Aspect | Value |
 |--------|-------|
@@ -410,14 +410,14 @@ Both Fizzy and Campfire-CE use the **same path-based approach**:
 
 **Key difference is what happens AFTER workspace is identified:**
 
-| Aspect | Fizzy (pre-Plan B) | Campfire-CE |
+| Aspect | Fizzy (pre-Plan B) | Sabha |
 |--------|-------|-------------|
 | Database lookup | `Account.find_by(external_account_id:)` | Gem switches to tenant SQLite file automatically |
 | Data access | Queries routed to tenant DB by gem | Queries routed to tenant DB by gem |
 | Account access | `Account` in tenant DB | `Account` in tenant DB (same!) |
 | Isolation | File-level (SQLite per tenant) | File-level (SQLite per tenant) |
 
-**Note:** Pre-Plan B Fizzy and Campfire-CE use the same database-per-tenant approach with SQLite.
+**Note:** Pre-Plan B Fizzy and Sabha use the same database-per-tenant approach with SQLite.
 
 ---
 
@@ -457,7 +457,7 @@ storage/
 
 **Note:** Plan B moved to MySQL for availability at 37signals scale. We don't have those concerns.
 
-### Campfire-CE Approach: Database-per-Tenant
+### Sabha Approach: Database-per-Tenant
 
 ```ruby
 # config/database.yml (when saas enabled)
@@ -487,11 +487,11 @@ storage/
     └── 1000003/main.sqlite3          # Workspace 1000003's data + Account
 ```
 
-### Comparison: Pre-Plan B Fizzy vs Campfire-CE
+### Comparison: Pre-Plan B Fizzy vs Sabha
 
 Both use database-per-tenant with SQLite. The approaches are nearly identical:
 
-| Aspect | Fizzy (pre-Plan B) | Campfire-CE |
+| Aspect | Fizzy (pre-Plan B) | Sabha |
 |--------|------------------|-------------------------|
 | Database | SQLite per-tenant | SQLite per-tenant |
 | Data isolation | Complete file isolation | Complete file isolation |
@@ -537,15 +537,15 @@ end
 
 **Key pattern**: Engine extends core models via `include` in `to_prepare` block.
 
-### Campfire-CE Approach: Same Pattern
+### Sabha Approach: Same Pattern
 
 ```ruby
-# saas/lib/campfire/saas/engine.rb
+# saas/lib/sabha/saas/engine.rb
 config.to_prepare do
-  ::ApplicationRecord.include Campfire::Saas::Tenanted
-  ::User.include Campfire::Saas::IdentityLink
-  ::ApplicationController.include Campfire::Saas::SharedAuthentication
-  ::ApplicationCable::Channel.include Campfire::Saas::WorkspaceBroadcasting
+  ::ApplicationRecord.include Sabha::Saas::Tenanted
+  ::User.include Sabha::Saas::IdentityLink
+  ::ApplicationController.include Sabha::Saas::SharedAuthentication
+  ::ApplicationCable::Channel.include Sabha::Saas::WorkspaceBroadcasting
 end
 ```
 
@@ -609,7 +609,7 @@ end
 
 **Route loading order:**
 1. **Prepended routes** (billing) - take precedence
-2. **Main app routes** - standard Campfire routes
+2. **Main app routes** - standard Sabha routes
 3. **Appended routes** (admin) - after main routes
 4. **Engine routes** (mounted at `/`) - engine-namespaced
 
@@ -618,13 +618,13 @@ end
 - Engine routes: `saas.admin_accounts_path`
 - Prepended routes: `account_subscription_path`
 
-### Campfire-CE Approach
+### Sabha Approach
 
 ```ruby
-# saas/lib/campfire/saas/engine.rb
+# saas/lib/sabha/saas/engine.rb
 
 # Public routes (no workspace context)
-initializer "campfire.saas.routes" do |app|
+initializer "sabha.saas.routes" do |app|
   app.routes.prepend do
     # These work without workspace prefix
     resource :registration, only: [:new, :create], controller: "saas/registrations"
@@ -635,7 +635,7 @@ initializer "campfire.saas.routes" do |app|
 end
 
 # saas/config/routes.rb
-Campfire::Saas::Engine.routes.draw do
+Sabha::Saas::Engine.routes.draw do
   namespace :admin do
     resources :workspaces
     resource :dashboard, only: :show
@@ -669,7 +669,7 @@ Queenbee handles:
 - Account creation
 - Cross-product authentication (HEY, Basecamp, etc.)
 
-### Campfire-CE: Custom GlobalIdentity (OTP-Only for MVP)
+### Sabha: Custom GlobalIdentity (OTP-Only for MVP)
 
 ```ruby
 # saas/app/models/global_identity.rb
@@ -757,7 +757,7 @@ end
 - Billing waivers for comped accounts
 - Stripe webhooks for subscription state
 
-### Campfire-CE Approach (v2)
+### Sabha Approach (v2)
 
 ```ruby
 # v2 scope - similar pattern
@@ -779,7 +779,7 @@ before_action :ensure_under_limits, only: [:invite_user]
 
 ## 9. Key Differences Summary
 
-| Feature | Fizzy (pre-Plan B) | Campfire-CE |
+| Feature | Fizzy (pre-Plan B) | Sabha |
 |---------|-------|-------------|
 | Engine structure | Same | Same |
 | Gemfile.saas pattern | Same | Same |
@@ -795,7 +795,7 @@ before_action :ensure_under_limits, only: [:invite_user]
 
 ---
 
-## 10. Decisions for Campfire-CE
+## 10. Decisions for Sabha
 
 ### Adopt from Fizzy (pre-Plan B):
 1. **Rails Engine pattern** - Clean separation, proven approach
@@ -824,34 +824,34 @@ before_action :ensure_under_limits, only: [:invite_user]
 ### Engine Initialization Order
 
 ```ruby
-# saas/lib/campfire/saas/engine.rb
-module Campfire
+# saas/lib/sabha/saas/engine.rb
+module Sabha
   module Saas
     class Engine < ::Rails::Engine
-      isolate_namespace Campfire::Saas
+      isolate_namespace Sabha::Saas
 
       # 1. Add middleware early
-      initializer "campfire.saas.middleware", before: :build_middleware_stack do |app|
-        app.middleware.insert_before 0, Campfire::Saas::WorkspaceMiddleware
+      initializer "sabha.saas.middleware", before: :build_middleware_stack do |app|
+        app.middleware.insert_before 0, Sabha::Saas::WorkspaceMiddleware
       end
 
       # 2. Extend models after they're loaded
       config.to_prepare do
-        ::ApplicationRecord.tenanted if Campfire.saas?
-        ::User.include Campfire::Saas::IdentityLink
+        ::ApplicationRecord.tenanted if Sabha.saas?
+        ::User.include Sabha::Saas::IdentityLink
       end
 
       # 3. Add routes
-      initializer "campfire.saas.routes" do |app|
+      initializer "sabha.saas.routes" do |app|
         app.routes.prepend do
           # Public routes...
         end
       end
 
       # 4. Mount engine
-      initializer "campfire.saas.mount" do |app|
+      initializer "sabha.saas.mount" do |app|
         app.routes.append do
-          mount Campfire::Saas::Engine => "/saas"
+          mount Sabha::Saas::Engine => "/saas"
         end
       end
     end
@@ -899,7 +899,7 @@ end
 
 ---
 
-## 12. 37signals Style Guide Insights (Relevant to Campfire)
+## 12. 37signals Style Guide Insights (Relevant to Sabha)
 
 From `/Users/ashwin/dev/unofficial-37signals-coding-style-guide`
 
@@ -1059,11 +1059,11 @@ test "moves tenant prefix from PATH_INFO to SCRIPT_NAME" do
 end
 ```
 
-### Authentication Comparison: Campfire vs 37signals
+### Authentication Comparison: Sabha vs 37signals
 
 #### Architecture Overview
 
-| Aspect | Campfire (Current) | 37signals/Fizzy |
+| Aspect | Sabha (Current) | 37signals/Fizzy |
 |--------|-------------------|-----------------|
 | Model structure | User has_secure_password + AuthToken for OTP | Identity + AuthCode (no passwords) |
 | Session storage | Session model with token | Session model with signed_id |
@@ -1072,7 +1072,7 @@ end
 | Bot support | Yes (bot_key param) | Via AccessToken/Bearer |
 | Rate limiting | Not built-in | Rails 7.1+ rate_limit |
 
-#### Campfire's Current Approach
+#### Sabha's Current Approach
 
 ```ruby
 # User model - dual auth
@@ -1106,12 +1106,12 @@ module Authentication
 end
 ```
 
-**Campfire's strengths:**
+**Sabha's strengths:**
 - Supports both password AND OTP (configurable per-account)
 - Bot authentication via bot_key
 - Clean session tracking with IP/user-agent
 
-**Campfire's gaps for multi-tenant:**
+**Sabha's gaps for multi-tenant:**
 - User model tied to single account (no Identity separation)
 - No cross-workspace session support
 - Cookie not scoped to workspace path
@@ -1172,7 +1172,7 @@ end
 
 #### Key Differences
 
-| Feature | Campfire | 37signals |
+| Feature | Sabha | 37signals |
 |---------|----------|-----------|
 | Token in cookie | Raw `session.token` | `session.signed_id` |
 | OTP model | `AuthToken` (kept, marked used) | `AuthCode` (destroyed on use) |
@@ -1181,7 +1181,7 @@ end
 | Session belongs to | User | Identity |
 | Multi-account | No | Yes (Identity → many Users) |
 
-#### What Campfire Should Adopt for Multi-Tenancy
+#### What Sabha Should Adopt for Multi-Tenancy
 
 1. **Separate GlobalIdentity from User**
    - GlobalIdentity = global (email, OTP-only for MVP)
@@ -1213,7 +1213,7 @@ end
 
 #### Migration Path
 
-Campfire keeps single-tenant mode unchanged. Multi-tenant adds GlobalIdentity (OTP-only for MVP):
+Sabha keeps single-tenant mode unchanged. Multi-tenant adds GlobalIdentity (OTP-only for MVP):
 
 ```ruby
 # Multi-tenant structure (OTP-only for MVP)
@@ -1375,7 +1375,7 @@ message.destroy
 
 **Why**: Simpler queries. If you need history, use audit logs.
 
-**Note**: Campfire currently uses soft deletes for messages (`active` boolean). Consider if this is truly needed.
+**Note**: Sabha currently uses soft deletes for messages (`active` boolean). Consider if this is truly needed.
 
 #### State as Records, Not Booleans
 
@@ -1539,7 +1539,7 @@ class JoinCodesController < ApplicationController
 end
 ```
 
-**Campfire already has this:** The `Account::Joinable` concern stores `join_code` directly on Account (per-tenant). Each workspace's Account has its own join code. The existing implementation is simpler than Fizzy's (no usage limits/tracking) but works correctly for multi-tenant.
+**Sabha already has this:** The `Account::Joinable` concern stores `join_code` directly on Account (per-tenant). Each workspace's Account has its own join code. The existing implementation is simpler than Fizzy's (no usage limits/tracking) but works correctly for multi-tenant.
 
 ---
 
@@ -1690,7 +1690,7 @@ class Webhook::DelinquencyTracker < ApplicationRecord
 end
 ```
 
-**Adopt for Campfire:** The existing webhook system could benefit from SSRF protection and delinquency tracking.
+**Adopt for Sabha:** The existing webhook system could benefit from SSRF protection and delinquency tracking.
 
 ---
 
@@ -1733,7 +1733,7 @@ class Current < ActiveSupport::CurrentAttributes
   attribute :global_session, :workspace_membership
   attribute :http_method, :request_id, :user_agent, :ip_address, :referrer
 
-  # Derive global_identity and user via delegates (Fizzy pattern adapted for Campfire)
+  # Derive global_identity and user via delegates (Fizzy pattern adapted for Sabha)
   delegate :global_identity, to: :global_session, allow_nil: true
   delegate :user, to: :workspace_membership, allow_nil: true
 
@@ -1755,7 +1755,7 @@ class Current < ActiveSupport::CurrentAttributes
 end
 ```
 
-**Adopt for Campfire:** Current pattern for cascading identity → user lookup within workspace context.
+**Adopt for Sabha:** Current pattern for cascading identity → user lookup within workspace context.
 
 ---
 
@@ -1940,7 +1940,7 @@ end
 
 ### High Priority (MVP)
 
-| Pattern | Description | Campfire Benefit |
+| Pattern | Description | Sabha Benefit |
 |---------|-------------|-----------------|
 | Path-based workspace ID | Same 7-digit pattern, middleware approach | Already planned, confirmed approach |
 | External ID Sequence | Sequential with database locking | Deterministic workspace IDs |
@@ -1951,7 +1951,7 @@ end
 
 ### Medium Priority (v1)
 
-| Pattern | Description | Campfire Benefit |
+| Pattern | Description | Sabha Benefit |
 |---------|-------------|-----------------|
 | Delinquency tracking | Auto-disable failing webhooks | Reduce webhook noise |
 | SSRF protection | DNS pinning for webhooks | Security hardening |
@@ -1961,7 +1961,7 @@ end
 
 ### Lower Priority (v2)
 
-| Pattern | Description | Campfire Benefit |
+| Pattern | Description | Sabha Benefit |
 |---------|-------------|-----------------|
 | Lazy turbo frames | Defer expensive menu loads | Performance |
 | Client-side cache personalization | JS handles user-specific UI | Better cache hit rate |

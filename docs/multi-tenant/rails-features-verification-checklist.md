@@ -16,7 +16,7 @@ Verify all Rails features work correctly in both modes:
 | Feature | SaaS Mode | Self-Hosted | Notes |
 |---------|-----------|-------------|-------|
 | `Current.user` | [x] | [x] | SaaS: via workspace_membership, Self-hosted: direct attribute |
-| `Current.global_session` | [x] | N/A | SaaS only - set in `Saas::Authentication` and core `Authentication` (when `Campfire.saas?`) |
+| `Current.global_session` | [x] | N/A | SaaS only - set in `Saas::Authentication` and core `Authentication` (when `Sabha.saas?`) |
 | `Current.global_identity` | [x] | N/A | SaaS only - delegates to `global_session.global_identity` |
 | `Current.workspace_membership` | [x] | N/A | SaaS only - auto-set in `global_session=` setter |
 | `Current.workspace` | [x] | [x] | Returns nil in self-hosted; lazy-loads Workspace in SaaS |
@@ -48,7 +48,7 @@ Verify all Rails features work correctly in both modes:
 **Key Pattern:** Jobs like `UnreadMentionsNotifierJob` show dual-mode pattern:
 ```ruby
 def perform
-  if Campfire.saas?
+  if Sabha.saas?
     ApplicationRecord.with_each_tenant { notify_users_in_current_workspace }
   else
     notify_users_in_current_workspace
@@ -69,7 +69,7 @@ end
 | Disconnect | [x] | [x] | Standard ActionCable behavior |
 | Multiple tenants same user | [x] | N/A | Different connections per workspace |
 
-**Campfire channels verified:**
+**Sabha channels verified:**
 - [x] `RoomChannel` - `stream_for @room` (model-based stream, tenant-safe via GlobalID)
 - [x] `PresenceChannel` - Inherits `RoomChannel` (model-based stream)
 - [x] `RoomListChannel` - `stream_for Current.account` (model-based stream)
@@ -218,8 +218,8 @@ user.cache_key
 
 **Format:**
 ```ruby
-# SaaS: gid://campfire-ce/User/123?tenant=1000001
-# Self-hosted: gid://campfire-ce/User/123
+# SaaS: gid://sabha/User/123?tenant=1000001
+# Self-hosted: gid://sabha/User/123
 user.to_global_id
 ```
 
@@ -246,7 +246,7 @@ user.to_global_id
 
 **Implementation:** `app/models/application_record.rb`
 ```ruby
-tenanted if defined?(ActiveRecord::Tenanted) && Campfire.saas?
+tenanted if defined?(ActiveRecord::Tenanted) && Sabha.saas?
 ```
 
 **Database Configuration:** `saas/config/database.yml.saas`
@@ -438,7 +438,7 @@ end
 | Invalid tenant → 404 | [x] | N/A | TenantSelector raises `TenantDoesNotExistError` → 404 |
 | No tenant in path → untenanted | [x] | N/A | SaaS routes match |
 
-**Implementation:** `saas/lib/campfire/saas/path_rewriter.rb`
+**Implementation:** `saas/lib/sabha/saas/path_rewriter.rb`
 ```ruby
 PATH_INFO_MATCH = %r{\A(/(\d{7,}))(/.*)?\z}
 # Extracts workspace ID, rewrites SCRIPT_NAME/PATH_INFO
@@ -513,7 +513,7 @@ PATH_INFO_MATCH = %r{\A(/(\d{7,}))(/.*)?\z}
 
 ## 23. Self-Hosted Viability (Non-Tenanted Mode)
 
-Verify self-hosters can deploy Campfire on their own domain without multi-tenancy.
+Verify self-hosters can deploy Sabha on their own domain without multi-tenancy.
 
 ### Architecture Separation
 
@@ -521,7 +521,7 @@ Verify self-hosters can deploy Campfire on their own domain without multi-tenanc
 |-----------|-------------|------|-----------|
 | Gemfile | Base `Gemfile` | `Gemfile.saas` (extends base) | [x] None |
 | `activerecord-tenanted` gem | Not installed | Installed | [x] None |
-| `campfire-saas` engine | Not loaded | Loaded | [x] None |
+| `sabha-saas` engine | Not loaded | Loaded | [x] None |
 | Database | Single SQLite | Tenant DBs + untenanted | [x] None |
 | Authentication | Password/OTP | Magic link | [x] Separate routes |
 | Domain | Any (`chat.company.com`) | Path-based (`/1000001/`) | [x] Independent |
@@ -530,7 +530,7 @@ Verify self-hosters can deploy Campfire on their own domain without multi-tenanc
 
 | Change | Self-Hosted Behavior | Verified? |
 |--------|---------------------|-----------|
-| `Campfire.saas?` | Returns `false` | [x] |
+| `Sabha.saas?` | Returns `false` | [x] |
 | `Current.user` | Uses direct attribute (existing behavior) | [x] |
 | `Current.workspace` | Returns `nil` | [x] |
 | `Current.global_session` | Not used (nil) | [x] |
@@ -568,13 +568,13 @@ All SaaS-specific code must use this pattern:
 
 ```ruby
 # CORRECT - guarded
-if Campfire.saas?
+if Sabha.saas?
   # SaaS-only code
 end
 
 # CORRECT - dual-mode method
 def user
-  if Campfire.saas? && workspace_membership
+  if Sabha.saas? && workspace_membership
     workspace_membership.user
   else
     super  # Self-hosted path
@@ -588,8 +588,8 @@ ApplicationRecord.current_tenant  # NoMethodError if gem not loaded
 ### Required Core File
 
 ```ruby
-# lib/campfire.rb (MUST be in core app, not just saas/)
-module Campfire
+# lib/sabha.rb (MUST be in core app, not just saas/)
+module Sabha
   SAAS_MARKER = File.expand_path("../tmp/saas.txt", __dir__)
 
   def self.saas?

@@ -13,4 +13,4 @@ eval_gemfile "Gemfile"
 gem "activerecord-tenanted", github: "ashwin47/activerecord-tenanted", branch: "fix-rails-82-type-for-column-signature"
 
 # SaaS engine
-gem "campfire-saas", path: "saas"
+gem "sabha-saas", path: "saas"

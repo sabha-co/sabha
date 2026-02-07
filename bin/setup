@@ -2,7 +2,7 @@
 set -eo pipefail
 
 app_root="$( cd "$(dirname "$0")/.."; pwd )"
-app_name=campfire
+app_name=sabha
 
 # Use application binstubs
 export PATH="$app_root/bin:$PATH"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Demo server reset script for campfire_cloud deployments
+# Demo server reset script for sabha_cloud deployments
 #
 # Usage:
 #   bin/demo-reset init    # Generate demo data and create snapshot (run once after deploy)
@@ -11,7 +11,7 @@ set -euo pipefail
 #   1. Generate demo data locally (requires faker gem): bin/rails generate:demo:max
 #   2. Upload the database: scp storage/db/development.sqlite3 user@server:/tmp/demo.sqlite3
 #   3. On server, copy to volume as snapshot and production DB
-#   4. Add cron: 0 * * * * /opt/campfire/demo-reset.sh >> /var/log/demo-reset.log 2>&1
+#   4. Add cron: 0 * * * * /opt/sabha/demo-reset.sh >> /var/log/demo-reset.log 2>&1
 #
 # Note: Demo servers don't have litestream (backups disabled via DEMO_MODE=true).
 #       For hourly cron, use the host script (demo-reset-host.sh) not this one,
@@ -34,11 +34,11 @@ case "${1:-restore}" in
 
     echo "$(date): Snapshot created at $SNAPSHOT_PATH"
     echo ""
-    echo "Next: Create /opt/campfire/demo-reset.sh on the host with:"
+    echo "Next: Create /opt/sabha/demo-reset.sh on the host with:"
     echo '  #!/bin/bash'
-    echo '  cd /opt/campfire'
+    echo '  cd /opt/sabha'
     echo '  docker compose stop web'
-    echo '  docker compose run --rm -v campfire_data:/rails/storage web cp /rails/storage/db/demo_snapshot.sqlite3 /rails/storage/db/production.sqlite3'
+    echo '  docker compose run --rm -v sabha_data:/rails/storage web cp /rails/storage/db/demo_snapshot.sqlite3 /rails/storage/db/production.sqlite3'
     echo '  docker compose start web'
     ;;
 

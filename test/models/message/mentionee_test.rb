@@ -51,7 +51,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
 
   test "create_mentionees sets mentions_everyone for @everyone" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
       room: @room,
@@ -124,7 +124,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
 
   test "mentionees returns all room users for @everyone message" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
       room: @room,
@@ -166,7 +166,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
 
   test "mentionee_ids returns all room user ids for @everyone" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
       room: @room,
@@ -194,7 +194,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
 
   test "mentioning scope finds @everyone messages" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
       room: @room,
@@ -232,7 +232,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
 
   test "without_user_mentions excludes @everyone messages" do
     everyone_sgid = Everyone.new.attachable_sgid
-    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.campfire.mention\"></action-text-attachment></div>"
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
       room: @room,

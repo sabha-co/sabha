@@ -3,7 +3,7 @@ class AuthTokens::ValidationsController < ApplicationController
 
   rate_limit to: 10, within: 1.minute, with: -> { head :too_many_requests }
 
-  before_action :redirect_to_saas_login, if: -> { Campfire.saas? }
+  before_action :redirect_to_saas_login, if: -> { Sabha.saas? }
 
   # Token-based login (magic link) is always allowed for Cloud bootstrap
   # Code-based OTP is only allowed when AUTH_METHOD=otp

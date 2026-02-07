@@ -4,7 +4,7 @@ module WorkspaceSelectorHelper
   def show_workspace_selector?
     # Always show in SaaS mode when user is authenticated
     # Shows empty state on /workspaces/new when user has no workspaces
-    Campfire.saas? && Current.global_identity.present?
+    Sabha.saas? && Current.global_identity.present?
   end
 
   def workspace_selector_workspaces

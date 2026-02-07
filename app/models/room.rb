@@ -178,7 +178,7 @@ class Room < ApplicationRecord
 
   private
     def active_member_count_cache_key
-      tenant_prefix = ApplicationRecord.current_tenant if Campfire.saas?
+      tenant_prefix = ApplicationRecord.current_tenant if Sabha.saas?
       [ tenant_prefix, "room", id, "active_member_count" ].compact.join(":")
     end
 

@@ -17,7 +17,7 @@ module TenantContext
 
     def with_tenant_context(&block)
       tenant = respond_to?(:current_tenant) ? current_tenant : nil
-      if Campfire.saas? && tenant.present?
+      if Sabha.saas? && tenant.present?
         ApplicationRecord.with_tenant(tenant, &block)
       else
         yield

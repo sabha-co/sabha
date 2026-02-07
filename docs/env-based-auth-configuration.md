@@ -26,9 +26,9 @@ AUTH_METHOD=otp       # Passwordless: email + 6-digit code
 
 Invalid `AUTH_METHOD` values fall back to `"password"` for safety.
 
-### AutoBootstrap Variables (Campfire Cloud Only)
+### AutoBootstrap Variables (Sabha Cloud Only)
 
-For Campfire Cloud managed deployments, set these to create an admin account on first startup:
+For Sabha Cloud managed deployments, set these to create an admin account on first startup:
 
 ```bash
 AUTO_BOOTSTRAP=true
@@ -43,7 +43,7 @@ ADMIN_AUTH_TOKEN=<32+-char-secure-token>  # One-time login link
 
 ## Deployment Scenarios
 
-### Campfire Cloud
+### Sabha Cloud
 
 ```bash
 AUTO_BOOTSTRAP=true
@@ -116,7 +116,7 @@ When `ADMIN_AUTH_TOKEN` is set:
 | File | Change |
 |------|--------|
 | `app/models/account.rb` | ENV priority + validation for `auth_method_value` |
-| `app/models/first_run.rb` | AutoBootstrap with `ADMIN_AUTH_TOKEN` (Campfire Cloud) |
+| `app/models/first_run.rb` | AutoBootstrap with `ADMIN_AUTH_TOKEN` (Sabha Cloud) |
 | `app/views/accounts/_admin_settings.html.erb` | Removed auth_method toggle |
 | `app/controllers/accounts_controller.rb` | Removed auth_method from params |
 | `app/views/auth_token_mailer/otp.text.erb` | OTP email with code only (no magic link) |

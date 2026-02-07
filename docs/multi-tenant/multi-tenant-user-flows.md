@@ -1,6 +1,6 @@
 # Multi-Tenant User Flows (SaaS Mode)
 
-Detailed user flows for Campfire in **multi-tenant (SaaS)** mode.
+Detailed user flows for Sabha in **multi-tenant (SaaS)** mode.
 
 **Related Documents:**
 - [Product PRD](./multi-tenancy-product-prd.md) - Business goals, user stories, requirements
@@ -341,7 +341,7 @@ redirect_to root_url
 │ 2. PathRewriter middleware:                                     │
 │    - Extracts workspace_id from URL (1000001)                   │
 │    - Sets SCRIPT_NAME=/1000001, PATH_INFO=/rooms/general        │
-│    - Stashes workspace_id in env["campfire.workspace_id"]       │
+│    - Stashes workspace_id in env["sabha.workspace_id"]       │
 │ 3. TenantSelector middleware:                                   │
 │    - Sets ApplicationRecord.current_tenant = "1000001"          │
 │ 4. Authentication flow (resume_session):                        │
@@ -562,5 +562,5 @@ Cons:
 - `app/models/current.rb` - Current context
 
 ### Middleware
-- `saas/lib/campfire/saas/path_rewriter.rb` - URL → tenant extraction
+- `saas/lib/sabha/saas/path_rewriter.rb` - URL → tenant extraction
 - `saas/config/initializers/tenanting/tenant_resolver.rb` - Tenant context setup

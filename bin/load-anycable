@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 #
-# Load testing script for Campfire WebSocket performance
+# Load testing script for Sabha WebSocket performance
 #
 # Usage:
 #   bin/load-anycable [options]
@@ -60,7 +60,7 @@ class Load
   include SSHKit::DSL
 
   attr_reader :users, :setup, :host, :port, :ssh_user
-  attr_reader :campfire_image, :anycable
+  attr_reader :sabha_image, :anycable
 
   def initialize(users: 1000, setup: true, host: "localhost", port: nil, ssh_user: "ubuntu", image: nil, anycable: false)
     @users = users
@@ -69,7 +69,7 @@ class Load
     @ssh_user = ssh_user
     @anycable = anycable
     @port = port || (remote? ? 80 : 3000)
-    @campfire_image = image || (anycable ? "ghcr.io/superforumio/campfire-ce:anycable" : "ghcr.io/superforumio/campfire-ce:latest")
+    @sabha_image = image || (anycable ? "ghcr.io/sabha-co/sabha:anycable" : "ghcr.io/sabha-co/sabha:latest")
   end
 
   def anycable?
@@ -98,7 +98,7 @@ class Load
   end
 
   def k6_dir
-    remote? ? "/tmp/campfire-load" : "$PWD/test/performance"
+    remote? ? "/tmp/sabha-load" : "$PWD/test/performance"
   end
 
   def caddyfile_content
@@ -141,20 +141,20 @@ class Load
         unless execute(:docker, "-v", raise_on_non_zero_exit: false)
           execute :curl, "-fsSL", "https://get.docker.com", "|", :sh
         end
-        execute :docker, :pull, load.campfire_image
+        execute :docker, :pull, load.sabha_image
         execute :docker, :pull, "anycable/anycable-go:1.6" if load.anycable?
         execute :docker, :pull, "caddy:2-alpine"
-        execute :mkdir, "-p", "/tmp/campfire-load"
+        execute :mkdir, "-p", "/tmp/sabha-load"
         if host.local?
-          execute :cp, "test/performance/chatter.js", "/tmp/campfire-load/chatter.js"
-          execute :cp, "test/performance/cookies.txt", "/tmp/campfire-load/cookies.txt"
-          execute :cp, "tmp/Caddyfile", "/tmp/campfire-load/Caddyfile"
+          execute :cp, "test/performance/chatter.js", "/tmp/sabha-load/chatter.js"
+          execute :cp, "test/performance/cookies.txt", "/tmp/sabha-load/cookies.txt"
+          execute :cp, "tmp/Caddyfile", "/tmp/sabha-load/Caddyfile"
         else
-          upload! "test/performance/chatter.js", "/tmp/campfire-load/chatter.js"
-          upload! "test/performance/cookies.txt", "/tmp/campfire-load/cookies.txt"
-          upload! "tmp/Caddyfile", "/tmp/campfire-load/Caddyfile"
+          upload! "test/performance/chatter.js", "/tmp/sabha-load/chatter.js"
+          upload! "test/performance/cookies.txt", "/tmp/sabha-load/cookies.txt"
+          upload! "tmp/Caddyfile", "/tmp/sabha-load/Caddyfile"
         end
-        execute :chmod, "-R", "755", "/tmp/campfire-load"
+        execute :chmod, "-R", "755", "/tmp/sabha-load"
       end
     end
 
@@ -163,28 +163,28 @@ class Load
       load = self
 
       on(ssh_host) do
-        execute :docker, :rm, "-f", :campfire_load, :campfire_anycable, :campfire_caddy, raise_on_non_zero_exit: false
-        execute :docker, :network, :rm, :campfire_net, raise_on_non_zero_exit: false
+        execute :docker, :rm, "-f", :sabha_load, :sabha_anycable, :sabha_caddy, raise_on_non_zero_exit: false
+        execute :docker, :network, :rm, :sabha_net, raise_on_non_zero_exit: false
 
         # Create network for container communication
-        execute :docker, :network, :create, :campfire_net
+        execute :docker, :network, :create, :sabha_net
 
         # Start Rails app
         execute :docker, :run, "-d", "--rm",
-          "--name", :campfire_load,
-          "--network", :campfire_net,
+          "--name", :sabha_load,
+          "--network", :sabha_net,
           "--network-alias", :web,
           "-e", "SECRET_KEY_BASE=dummy",
           "-e", "RAILS_ENV=performance",
           "-e", "CABLE_ADAPTER=#{load.anycable? ? 'any_cable' : 'redis'}",
           "-e", "ANYCABLE_SECRET=test-secret",
-          load.campfire_image
+          load.sabha_image
 
         if load.anycable?
           # Start anycable-go
           execute :docker, :run, "-d", "--rm",
-            "--name", :campfire_anycable,
-            "--network", :campfire_net,
+            "--name", :sabha_anycable,
+            "--network", :sabha_net,
             "--network-alias", :anycable,
             "-e", "ANYCABLE_HOST=0.0.0.0",
             "-e", "ANYCABLE_PORT=8080",
@@ -198,10 +198,10 @@ class Load
 
         # Start Caddy (exposed to host)
         execute :docker, :run, "-d", "--rm",
-          "--name", :campfire_caddy,
-          "--network", :campfire_net,
+          "--name", :sabha_caddy,
+          "--network", :sabha_net,
           "-p", "#{load.port}:80",
-          "-v", "/tmp/campfire-load/Caddyfile:/etc/caddy/Caddyfile:ro",
+          "-v", "/tmp/sabha-load/Caddyfile:/etc/caddy/Caddyfile:ro",
           "caddy:2-alpine"
       end
 
@@ -260,8 +260,8 @@ class Load
 
     def cleanup
       on(ssh_host) do |host|
-        execute :docker, :rm, "-f", :campfire_load, :campfire_anycable, :campfire_caddy, :k6, raise_on_non_zero_exit: false
-        execute :docker, :network, :rm, :campfire_net, raise_on_non_zero_exit: false
+        execute :docker, :rm, "-f", :sabha_load, :sabha_anycable, :sabha_caddy, :k6, raise_on_non_zero_exit: false
+        execute :docker, :network, :rm, :sabha_net, raise_on_non_zero_exit: false
       end
     end
 end

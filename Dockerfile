@@ -81,8 +81,8 @@ COPY --from=build /usr/local/bundle /usr/local/bundle
 COPY --from=build /rails /rails
 
 # Create non-root user for running the application
-RUN groupadd -r campfire && useradd -r -g campfire -d /rails -s /bin/bash campfire && \
-  chown -R campfire:campfire /rails
+RUN groupadd -r sabha && useradd -r -g sabha -d /rails -s /bin/bash sabha && \
+  chown -R sabha:sabha /rails
 
 # Set version and revision
 ARG APP_VERSION
@@ -105,7 +105,7 @@ HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:3000/up || exit 1
 
 # Switch to non-root user
-USER campfire
+USER sabha
 
 # Start the server
 CMD ["sh", "-c", "bin/configure && bin/boot"]

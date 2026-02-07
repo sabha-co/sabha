@@ -2,7 +2,7 @@ class Users::PushSubscriptions::TestNotificationsController < ApplicationControl
   before_action :set_push_subscription
 
   def create
-    @push_subscription.notification(title: "Campfire Test", body: Random.uuid, path: user_push_subscriptions_url).deliver
+    @push_subscription.notification(title: "Sabha Test", body: Random.uuid, path: user_push_subscriptions_url).deliver
     redirect_to user_push_subscriptions_url
   end
 

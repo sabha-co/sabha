@@ -25,7 +25,7 @@ class Everyone
   end
 
   def to_global_id(options = {})
-    GlobalID.new("gid://campfire-ce/Everyone/everyone")
+    GlobalID.new("gid://sabha/Everyone/everyone")
   end
 
   def name

@@ -1,28 +1,28 @@
-# Product PRD: Campfire Multi-Tenant SaaS
+# Product PRD: Sabha Multi-Tenant SaaS
 
 ## Problem Statement
 
-Campfire-CE is a self-hosted chat application. Currently, each deployment serves a single organization. Users who want to host chat for multiple organizations must deploy and maintain separate instances.
+Sabha is a self-hosted chat application. Currently, each deployment serves a single organization. Users who want to host chat for multiple organizations must deploy and maintain separate instances.
 
 **Pain points:**
 - Operators managing multiple communities need separate deployments
 - Each deployment requires its own server, domain, and maintenance
-- No way to offer "Campfire as a Service" to multiple customers
+- No way to offer "Sabha as a Service" to multiple customers
 - Users belonging to multiple communities need separate accounts per instance
 
 ## Product Vision
 
-Enable Campfire-CE to serve multiple isolated workspaces from a single deployment, allowing:
+Enable Sabha to serve multiple isolated workspaces from a single deployment, allowing:
 1. **Operators** to host multiple communities/organizations efficiently
 2. **Users** to access all their workspaces with a single login
-3. **Self-hosters** to continue using Campfire without any changes
+3. **Self-hosters** to continue using Sabha without any changes
 
 ## Target Users
 
 ### Persona 1: SaaS Operator
 > "I want to run a chat service for multiple clients without managing separate servers."
 
-- Hosts Campfire for multiple organizations
+- Hosts Sabha for multiple organizations
 - Needs tenant isolation for security and privacy
 - Wants centralized billing and administration
 - Example: Agency hosting chat for multiple client companies
@@ -36,17 +36,17 @@ Enable Campfire-CE to serve multiple isolated workspaces from a single deploymen
 - Example: Creator with communities for different courses/products
 
 ### Persona 3: Multi-Workspace User
-> "I'm a member of several Campfire workspaces and want one login for all."
+> "I'm a member of several Sabha workspaces and want one login for all."
 
-- Belongs to multiple organizations using the same Campfire instance
+- Belongs to multiple organizations using the same Sabha instance
 - Wants seamless switching between workspaces
 - Expects single sign-on experience (one email, one login)
 - Example: Consultant working with multiple client workspaces
 
 ### Persona 4: Self-Hoster (unchanged)
-> "I just want to run Campfire for my team. Keep it simple."
+> "I just want to run Sabha for my team. Keep it simple."
 
-- Deploys Campfire for a single organization
+- Deploys Sabha for a single organization
 - Doesn't need multi-tenancy features
 - Wants zero additional complexity
 - Example: Startup running internal team chat

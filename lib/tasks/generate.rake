@@ -7,7 +7,7 @@ module DemoHelpers
 
   # ActionText mention HTML for proper @mentions
   def mention_html_for(user)
-    %(<action-text-attachment sgid="#{user.attachable_sgid}" content-type="application/vnd.campfire.mention"></action-text-attachment>)
+    %(<action-text-attachment sgid="#{user.attachable_sgid}" content-type="application/vnd.sabha.mention"></action-text-attachment>)
   end
 
   # Create message body with proper ActionText mention
@@ -47,7 +47,7 @@ module DemoHelpers
     User.delete_all
     Badge.delete_all
 
-    Account.first_or_create!(name: "Campfire")
+    Account.first_or_create!(name: "Sabha")
   end
 end
 
@@ -57,7 +57,7 @@ namespace :generate do
     task max: :environment do
       require "faker"
 
-      if Campfire.saas?
+      if Sabha.saas?
         run_saas_max_demo
       else
         run_single_tenant_max_demo
@@ -95,9 +95,9 @@ namespace :generate do
       workspaces.each do |ws|
         puts ""
         puts "   #{ws.name} (#{ws.external_id}):"
-        puts "     Admin: admin@campfirecloud.com"
-        puts "     Mod:   mod@campfirecloud.com"
-        puts "     User:  user@campfirecloud.com"
+        puts "     Admin: admin@sabha.co"
+        puts "     Mod:   mod@sabha.co"
+        puts "     User:  user@sabha.co"
         puts "     URL:   http://localhost:3000/#{ws.external_id}/"
       end
     end
@@ -166,9 +166,9 @@ namespace :generate do
       unless workspace_name
         puts ""
         puts "🔑 Login credentials (password: 'password'):"
-        puts "   Admin: admin@campfirecloud.com"
-        puts "   Mod:   mod@campfirecloud.com"
-        puts "   User:  user@campfirecloud.com"
+        puts "   Admin: admin@sabha.co"
+        puts "   Mod:   mod@sabha.co"
+        puts "   User:  user@sabha.co"
       end
     end
   end
@@ -254,9 +254,9 @@ namespace :generate do
 
       # Special users first
       special_users = [
-        { name: "Admin User", email_address: "admin@campfirecloud.com", role: 2, bio: "Community administrator", badge_id: badge_ids["Founder"]&.id, current_streak: 45 },
-        { name: "Moderator", email_address: "mod@campfirecloud.com", role: 1, bio: "Community moderator", badge_id: badge_ids["Mod"]&.id, current_streak: 12 },
-        { name: "Regular User", email_address: "user@campfirecloud.com", role: 0, bio: "Just a regular member", badge_id: nil, current_streak: 3 }
+        { name: "Admin User", email_address: "admin@sabha.co", role: 2, bio: "Community administrator", badge_id: badge_ids["Founder"]&.id, current_streak: 45 },
+        { name: "Moderator", email_address: "mod@sabha.co", role: 1, bio: "Community moderator", badge_id: badge_ids["Mod"]&.id, current_streak: 12 },
+        { name: "Regular User", email_address: "user@sabha.co", role: 0, bio: "Just a regular member", badge_id: nil, current_streak: 3 }
       ]
 
       # Pre-generate all user data
@@ -576,8 +576,8 @@ namespace :generate do
         print "."
       end
 
-      # Create specific mentions for special users (admin, mod, user@campfirecloud.com)
-      special_users = users.select { |u| u.email_address.include?("campfirecloud.com") }
+      # Create specific mentions for special users (admin, mod, user@sabha.co)
+      special_users = users.select { |u| u.email_address.include?("sabha.co") }
       if special_users.any?
         print " mentions for special users: "
         open_rooms = rooms[:open]
@@ -662,7 +662,7 @@ namespace :generate do
     ].freeze
 
     def create_threads(rooms, users)
-      special_users = users.select { |u| u.email_address.include?("campfirecloud.com") }
+      special_users = users.select { |u| u.email_address.include?("sabha.co") }
 
       # First, create threads specifically for special users (they'll be thread creators)
       print "   Creating threads for special users: "
@@ -865,7 +865,7 @@ namespace :generate do
       bookmark_records = []
 
       # Special users always get bookmarks (3-5 each)
-      special_users = users.select { |u| u.email_address.include?("campfirecloud.com") }
+      special_users = users.select { |u| u.email_address.include?("sabha.co") }
       special_users.each do |user|
         message_ids = Message.where(room_id: user.room_ids, active: true)
                              .where.not(creator_id: user.id)
@@ -884,7 +884,7 @@ namespace :generate do
       end
 
       # ~20% of other users bookmark things
-      other_users = users.reject { |u| u.email_address.include?("campfirecloud.com") }
+      other_users = users.reject { |u| u.email_address.include?("sabha.co") }
       bookmarking_users = other_users.sample(other_users.count / 5)
 
       bookmarking_users.each do |user|
@@ -909,7 +909,7 @@ namespace :generate do
 
     def create_blocks(users)
       now = Time.current
-      regular_users = users.reject { |u| u.email_address.include?("campfirecloud.com") }
+      regular_users = users.reject { |u| u.email_address.include?("sabha.co") }
       block_records = []
 
       15.times do
@@ -930,7 +930,7 @@ namespace :generate do
     end
 
     def ban_users(users)
-      bannable = users.reject { |u| u.email_address.include?("campfirecloud.com") }
+      bannable = users.reject { |u| u.email_address.include?("sabha.co") }
       to_ban = bannable.sample(15)
       now = Time.current
 
@@ -964,7 +964,7 @@ namespace :generate do
     def deactivate_users(users)
       # Deactivate some users (not special accounts or banned)
       deactivatable = users.reject do |u|
-        u.email_address.include?("campfirecloud.com") || u.banned?
+        u.email_address.include?("sabha.co") || u.banned?
       end
       to_deactivate = deactivatable.sample(25)
 
@@ -975,12 +975,12 @@ namespace :generate do
     def set_streaks
       # Set streaks at the end to avoid being overwritten by message callbacks
       # Special users keep their fixed streaks
-      User.where(email_address: "admin@campfirecloud.com").update_all(current_streak: 45)
-      User.where(email_address: "mod@campfirecloud.com").update_all(current_streak: 12)
-      User.where(email_address: "user@campfirecloud.com").update_all(current_streak: 3)
+      User.where(email_address: "admin@sabha.co").update_all(current_streak: 45)
+      User.where(email_address: "mod@sabha.co").update_all(current_streak: 12)
+      User.where(email_address: "user@sabha.co").update_all(current_streak: 3)
 
       # Random streaks for other users: 60% zero, 20% short, 15% medium, 5% long
-      other_users = User.where.not(email_address: %w[admin@campfirecloud.com mod@campfirecloud.com user@campfirecloud.com])
+      other_users = User.where.not(email_address: %w[admin@sabha.co mod@sabha.co user@sabha.co])
       other_users.find_each do |user|
         r = rand
         streak = if r < 0.6
@@ -1002,7 +1002,7 @@ namespace :generate do
   task demo: :environment do
     require "faker"
 
-    if Campfire.saas?
+    if Sabha.saas?
       run_saas_demo
     else
       run_single_tenant_demo
@@ -1042,9 +1042,9 @@ namespace :generate do
     workspaces.each do |ws|
       puts ""
       puts "   #{ws.name} (#{ws.external_id}):"
-      puts "     Admin: admin@campfirecloud.com"
-      puts "     Mod:   mod@campfirecloud.com"
-      puts "     User:  user@campfirecloud.com"
+      puts "     Admin: admin@sabha.co"
+      puts "     Mod:   mod@sabha.co"
+      puts "     User:  user@sabha.co"
       puts "     URL:   http://localhost:3000/#{ws.external_id}/"
     end
   end
@@ -1089,9 +1089,9 @@ namespace :generate do
     unless workspace_name
       puts ""
       puts "🔑 Login credentials (password: '#{demo_password}'):"
-      puts "   Admin: admin@campfirecloud.com"
-      puts "   Mod:   mod@campfirecloud.com"
-      puts "   User:  user@campfirecloud.com"
+      puts "   Admin: admin@sabha.co"
+      puts "   Mod:   mod@sabha.co"
+      puts "   User:  user@sabha.co"
     end
   end
 
@@ -1148,7 +1148,7 @@ namespace :generate do
 
   # Batch create SAAS identities for all users in a workspace
   def create_saas_identities_for_workspace(users, tenant_id)
-    return unless Campfire.saas?
+    return unless Sabha.saas?
 
     puts "   Creating GlobalIdentities and WorkspaceMemberships..."
     users.each do |user|
@@ -1205,7 +1205,7 @@ namespace :generate do
     # Admin user
     admin = User.create!(
       name: "Admin User",
-      email_address: "admin@campfirecloud.com",
+      email_address: "admin@sabha.co",
       password: password,
       password_confirmation: password,
       role: "administrator",
@@ -1216,7 +1216,7 @@ namespace :generate do
     # Moderator user
     mod = User.create!(
       name: "Moderator",
-      email_address: "mod@campfirecloud.com",
+      email_address: "mod@sabha.co",
       password: password,
       password_confirmation: password,
       role: "moderator",
@@ -1224,10 +1224,10 @@ namespace :generate do
       verified_at: Time.current
     )
 
-    # Regular user with @campfirecloud.com email for easy testing
+    # Regular user with @sabha.co email for easy testing
     regular = User.create!(
       name: "Regular User",
-      email_address: "user@campfirecloud.com",
+      email_address: "user@sabha.co",
       password: password,
       password_confirmation: password,
       role: "member",
@@ -1440,7 +1440,7 @@ namespace :generate do
     end
 
     # Create specific mentions for the admin user
-    admin = users.find { |u| u.email_address == "admin@campfirecloud.com" }
+    admin = users.find { |u| u.email_address == "admin@sabha.co" }
     if admin
       print " admin mentions: "
       open_room_keys = %w[general random help show-and-tell]
@@ -1524,7 +1524,7 @@ namespace :generate do
     ]
 
     # First, create threads where admin is the thread creator (so admin can see them)
-    admin = users.find { |u| u.email_address == "admin@campfirecloud.com" }
+    admin = users.find { |u| u.email_address == "admin@sabha.co" }
     if admin
       print " admin threads: "
       admin_room_ids = admin.room_ids

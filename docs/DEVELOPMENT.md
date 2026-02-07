@@ -1,6 +1,6 @@
 # Development Guide
 
-Guide for contributing to Campfire-CE.
+Guide for contributing to Sabha.
 
 ---
 
@@ -33,8 +33,8 @@ npm install -g pnpm
 ## Setup
 
 ```bash
-git clone https://github.com/superforumio/campfire-ce.git
-cd campfire-ce
+git clone https://github.com/sabha-co/sabha.git
+cd sabha
 bin/setup
 ```
 
@@ -75,7 +75,7 @@ brew install anycable-go
 
 ## SaaS Mode (Multi-Tenant)
 
-Campfire-CE supports two deployment modes:
+Sabha supports two deployment modes:
 
 | Mode | Description | Gemfile |
 |------|-------------|---------|
@@ -128,7 +128,7 @@ saas/                           # SaaS engine (Rails Engine)
 │   ├── initializers/tenanting/ # Tenant context setup
 │   └── routes.rb               # SaaS routes (prepended)
 ├── db/untenanted_migrate/      # Migrations for untenanted DB
-└── lib/campfire/saas/          # Engine definition
+└── lib/sabha/saas/          # Engine definition
 
 Gemfile.saas                    # Extends Gemfile with tenanting gems
 ```
@@ -338,7 +338,7 @@ The code shows what changed; the message explains why.
 
 ## Architecture Comparison
 
-| | **Development** | **Dev + AnyCable** | **SaaS Dev** | **bin/boot** | **Kamal** | **Campfire Cloud** |
+| | **Development** | **Dev + AnyCable** | **SaaS Dev** | **bin/boot** | **Kamal** | **Sabha Cloud** |
 |---|---|---|---|---|---|---|
 | **Start** | `bin/dev` | `ANYCABLE_ENABLED=true bin/dev` | `bin/rails saas:enable && bundle && bin/dev` | `bin/boot` | `kamal deploy` | `bin/boot` (Docker) |
 | **Tenant Mode** | Single | Single | Multi | Single | Single | Multi |
@@ -364,5 +364,5 @@ The code shows what changed; the message explains why.
 
 ## Questions?
 
-- Open an issue: [GitHub Issues](https://github.com/superforumio/campfire-ce/issues)
+- Open an issue: [GitHub Issues](https://github.com/sabha-co/sabha/issues)
 - See [CLAUDE.md](../CLAUDE.md) for AI-assisted development context

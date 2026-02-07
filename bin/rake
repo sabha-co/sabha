@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
 # Configure SaaS mode before Bundler loads
-require_relative "../lib/campfire"
-Campfire.configure_bundle
+require_relative "../lib/sabha"
+Sabha.configure_bundle
 
 require_relative "../config/boot"
 require "rake"

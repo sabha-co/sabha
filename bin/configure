@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # NOTE: AWS backup configuration is disabled by default.
-# Campfire Cloud (https://campfirecloud.com) handles backups via CreateFilesBackupJob.
+# Sabha Cloud (https://cloud.sabha.co) handles backups via CreateFilesBackupJob.
 # Uncomment below if you need AWS credentials for S3 storage or self-hosted backups.
 
 # create log directory
@@ -11,6 +11,11 @@ mkdir -p /rails/storage/logs
 # This must run BEFORE bin/boot starts parallel processes (web, workers, redis)
 # to ensure Solid Queue tables exist before workers try to access them.
 ./bin/rails db:prepare
+
+# In SaaS mode, also run seeds to create default workspace
+if [ "$SAAS" = "true" ] || [ -f tmp/saas.txt ]; then
+  ./bin/rails db:seed
+fi
 
 # create config directories
 mkdir -p ~/.aws

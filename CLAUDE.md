@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-Campfire-CE is a Ruby on Rails chat application combining:
+Sabha is a Ruby on Rails chat application combining:
 - **Traditional Rails views + Hotwire/Turbo** for the core chat interface (real-time messaging)
 - **ActionCable (WebSockets)** for real-time updates across all chat features
 - **Vite** for modern frontend asset processing (Tailwind CSS v4)
@@ -16,11 +16,11 @@ Campfire-CE is a Ruby on Rails chat application combining:
 
 **SaaS Engine (`saas/` folder):**
 The multi-tenant layer is implemented as a Rails engine in `saas/`:
-- `saas/lib/campfire/saas/engine.rb` - Engine configuration, routes, and middleware
+- `saas/lib/sabha/saas/engine.rb` - Engine configuration, routes, and middleware
 - `saas/app/models/` - Untenanted models (GlobalIdentity, Workspace, WorkspaceMembership)
 - `saas/app/controllers/saas/` - Controllers inheriting from `Saas::BaseController`
 - `saas/config/initializers/tenanting/` - Tenant resolution, path rewriting, Turbo/Storage hooks
-- Enabled via `Campfire.saas?` check (set by `SAAS=true` env var or `tmp/saas.txt` file)
+- Enabled via `Sabha.saas?` check (set by `SAAS=true` env var or `tmp/saas.txt` file)
 - Uses `Gemfile.saas` which extends the base `Gemfile`
 
 ## Core Domain Models
@@ -168,7 +168,7 @@ Vite runs automatically via vite_rails with autoBuild: true.
 
 ### SaaS Mode (Multi-Tenant)
 
-Campfire-CE supports two deployment modes:
+Sabha supports two deployment modes:
 - **Self-host (default)**: Single-tenant, one workspace per installation
 - **SaaS mode**: Multi-tenant with database-per-workspace isolation
 
@@ -466,10 +466,10 @@ This keeps the migration history clean and avoids unnecessary migration churn fo
 ## Deployment Architecture
 
 - **Kamal/Docker self-hosting**: Thruster provides HTTP/2, automatic TLS (Let's Encrypt), caching, and compression
-- **campfire_cloud**: Caddy handles TLS/HTTP2, set `SKIP_THRUSTER=true` to run Puma directly
-- SQLite database persisted in mounted volume `/disk/campfire/`
+- **Sabha Cloud**: Caddy handles TLS/HTTP2, set `SKIP_THRUSTER=true` to run Puma directly
+- SQLite database persisted in mounted volume `/disk/sabha/`
 - Redis container for ActionCable pub/sub
-- Automated SSL via Thruster (self-host) or Caddy (campfire_cloud) with health checks at `/up`
+- Automated SSL via Thruster (self-host) or Caddy (Sabha Cloud) with health checks at `/up`
 - GitHub Actions auto-deploys on push to `master` (see `.github/workflows/deploy_with_kamal.yml`)
 
 ## Special Features (from Small Bets fork)

@@ -1,12 +1,12 @@
-# Campfire Rooms & Inbox Guide
+# Sabha Rooms & Inbox Guide
 
-This guide explains how rooms, notifications, and inbox features work in Campfire.
+This guide explains how rooms, notifications, and inbox features work in Sabha.
 
 ---
 
 ## Part 1: Room Types
 
-Campfire has four types of rooms, each designed for different communication needs.
+Sabha has four types of rooms, each designed for different communication needs.
 
 ### Open Rooms
 
@@ -368,18 +368,18 @@ All room and inbox views update instantly via WebSocket connections:
 
 ## Part 6: Technical Comparison with Once Campfire
 
-This section compares Campfire-CE with the original Once Campfire (37signals) implementation.
+This section compares Sabha with the original Once Campfire (37signals) implementation.
 
 ### Room Types
 
-| Feature | Once Campfire | Campfire-CE |
+| Feature | Once Campfire | Sabha |
 |---------|---------------|-------------|
 | Open Rooms | ✅ | ✅ |
 | Closed Rooms | ✅ | ✅ |
 | Direct Messages | ✅ | ✅ |
 | **Thread Rooms** | ❌ | ✅ Added |
 
-**Thread Rooms:** Campfire-CE adds `Rooms::Thread` as a new room type with STI. Threads have:
+**Thread Rooms:** Sabha adds `Rooms::Thread` as a new room type with STI. Threads have:
 - `parent_message_id` foreign key linking to origin message
 - User-aware `default_involvement()` - thread creator AND parent message author get "everything", others get "invisible"
 - All parent room members automatically get thread membership (with invisible involvement by default)
@@ -387,7 +387,7 @@ This section compares Campfire-CE with the original Once Campfire (37signals) im
 
 ### Involvement System
 
-| Feature | Once Campfire | Campfire-CE |
+| Feature | Once Campfire | Sabha |
 |---------|---------------|-------------|
 | Levels | 4 (invisible, nothing, mentions, everything) | 4 (same) |
 | Shared room cycling | 4-state full cycle | 3-state (mentions ↔ everything ↔ nothing) |
@@ -395,26 +395,26 @@ This section compares Campfire-CE with the original Once Campfire (37signals) im
 | Settings panel toggles | ❌ | ✅ Added |
 | Hidden rooms UI | ❌ | ✅ Added |
 
-**Cycling difference:** Once Campfire cycles shared rooms through all 4 states including "invisible". Campfire-CE simplifies to 3 states via the bell icon, with "invisible" only accessible through the Settings panel to prevent accidental hiding.
+**Cycling difference:** Once Campfire cycles shared rooms through all 4 states including "invisible". Sabha simplifies to 3 states via the bell icon, with "invisible" only accessible through the Settings panel to prevent accidental hiding.
 
-**Hidden rooms:** Campfire-CE adds a dedicated UI for accessing hidden rooms via the sidebar menu, lazy-loaded via Turbo Frames for better performance.
+**Hidden rooms:** Sabha adds a dedicated UI for accessing hidden rooms via the sidebar menu, lazy-loaded via Turbo Frames for better performance.
 
 **DM restrictions:** Direct Messages cannot be hidden from the sidebar - only the "Mute notifications" toggle is available for DMs.
 
 ### Involvement Labels
 
-| Level | Once Campfire | Campfire-CE |
+| Level | Once Campfire | Sabha |
 |-------|---------------|-------------|
 | mentions | "Notifying about @ mentions" | "Room in All Rooms" |
 | everything | "Notifying about all messages" | "Room in My Rooms" |
 | nothing | "Notifications are off" | "Notifications muted" |
 | invisible | "Notifications are off and room invisible" | "Room hidden from sidebar" |
 
-Campfire-CE uses location-focused labels ("My Rooms"/"All Rooms") vs notification-focused labels.
+Sabha uses location-focused labels ("My Rooms"/"All Rooms") vs notification-focused labels.
 
 ### Inbox Features
 
-| Feature | Once Campfire | Campfire-CE |
+| Feature | Once Campfire | Sabha |
 |---------|---------------|-------------|
 | Activity tab | ❌ | ✅ Added |
 | Notifications tab | ❌ | ✅ Added |
@@ -424,14 +424,14 @@ Campfire-CE uses location-focused labels ("My Rooms"/"All Rooms") vs notificatio
 | Email digest | ❌ | ✅ Added (twice daily) |
 | Mark all as seen | ❌ | ✅ Added |
 
-**Inbox system:** Campfire-CE adds a complete inbox system with dedicated pages for activity, notifications, all messages, threads, and bookmarks. Each has:
+**Inbox system:** Sabha adds a complete inbox system with dedicated pages for activity, notifications, all messages, threads, and bookmarks. Each has:
 - Dedicated query objects (`Inbox::ActivityQuery`, `Inbox::MessagesQuery`, etc.)
 - Real-time ActionCable channels
 - Cursor-based pagination
 
 ### Data Model Additions
 
-**New tables in Campfire-CE:**
+**New tables in Sabha:**
 - `mentions` - Join table for @mention tracking
 - `bookmarks` - User message bookmarks with soft deletion
 
@@ -441,14 +441,14 @@ Campfire-CE uses location-focused labels ("My Rooms"/"All Rooms") vs notificatio
 
 ### Broadcasting Differences
 
-| Feature | Once Campfire | Campfire-CE |
+| Feature | Once Campfire | Sabha |
 |---------|---------------|-------------|
 | Room nav updates | Basic | Enhanced with multiple targets |
 | Sidebar sections | Single broadcast | Per-section broadcasts (starred, shared) |
 | Hidden rooms sync | ❌ | ✅ Real-time add/remove |
 | Inbox real-time | ❌ | ✅ Per-feature channels |
 
-**Broadcast count:** Involvement changes in Campfire-CE trigger 2-5 broadcasts depending on visibility transitions, compared to simpler broadcasting in Once Campfire.
+**Broadcast count:** Involvement changes in Sabha trigger 2-5 broadcasts depending on visibility transitions, compared to simpler broadcasting in Once Campfire.
 
 ### Controller Enhancements
 
@@ -460,7 +460,7 @@ Campfire-CE uses location-focused labels ("My Rooms"/"All Rooms") vs notificatio
 
 ### Query Objects
 
-Campfire-CE extracts complex queries into dedicated objects:
+Sabha extracts complex queries into dedicated objects:
 
 ```
 app/models/inbox/
@@ -476,14 +476,14 @@ app/models/
 
 ### API Additions
 
-**Bot DM API:** Campfire-CE adds `Rooms::Directs::ByBotsController` for bot-initiated DMs:
+**Bot DM API:** Sabha adds `Rooms::Directs::ByBotsController` for bot-initiated DMs:
 - `POST /rooms/:bot_key/directs` - Create DM as bot
 - Returns `201 Created` for new rooms, `200 OK` for existing
 - JSON error handling with `rescue_from Exception`
 
 ### Summary
 
-Campfire-CE extends Once Campfire with:
+Sabha extends Once Campfire with:
 1. **Thread rooms** for focused side conversations
 2. **Inbox system** for tracking mentions, threads, and bookmarks
 3. **Enhanced involvement UI** with Settings panel and hidden rooms

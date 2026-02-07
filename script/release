@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Release script for Campfire CE
+# Release script for Sabha
 # Usage: ./script/release <version> <title>
 # Example: ./script/release 1.2.0 "Bug fixes and improvements"
 
@@ -17,7 +17,7 @@ fi
 # Ensure we're on master and up to date
 CURRENT_BRANCH=$(git branch --show-current)
 if [ "$CURRENT_BRANCH" != "master" ]; then
-  echo "⚠️  Warning: You're not on master branch (currently on $CURRENT_BRANCH)"
+  echo "Warning: You're not on master branch (currently on $CURRENT_BRANCH)"
   read -p "Continue anyway? (y/n) " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -27,12 +27,12 @@ fi
 
 TAG="v$VERSION"
 
-echo "🚀 Creating Release $TAG - $TITLE"
+echo "Creating Release $TAG - $TITLE"
 echo ""
 
 # Check if tag already exists
 if git rev-parse "$TAG" >/dev/null 2>&1; then
-  echo "❌ Tag $TAG already exists!"
+  echo "Tag $TAG already exists!"
   exit 1
 fi
 
@@ -40,14 +40,14 @@ fi
 COMMITS=$(git log --oneline --no-merges $(git describe --tags --abbrev=0 2>/dev/null || echo "")..HEAD 2>/dev/null || git log --oneline --no-merges -10)
 
 # 1. Create and push git tag
-echo "📌 Creating and pushing git tag..."
+echo "Creating and pushing git tag..."
 git tag -a "$TAG" -m "$TITLE"
 git push origin "$TAG"
-echo "✅ Git tag pushed"
+echo "Git tag pushed"
 echo ""
 
 # 2. Create GitHub release
-echo "📝 Creating GitHub release..."
+echo "Creating GitHub release..."
 gh release create "$TAG" \
   --title "$TAG - $TITLE" \
   --notes "$(cat <<EOF
@@ -58,27 +58,25 @@ $COMMITS
 
 ### Docker Deployment
 \`\`\`bash
-docker pull ghcr.io/ashwin47/campfire-ce:$TAG
-docker restart campfire-web
+docker pull ghcr.io/sabha-co/sabha:$TAG
+docker restart sabha-web
 \`\`\`
 
 ### Architecture
 \`\`\`
-Internet → Caddy (SSL, HTTP/2, ports 80/443) → Puma (port 3000)
+Internet -> Caddy (SSL, HTTP/2, ports 80/443) -> Puma (port 3000)
 \`\`\`
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
-echo "✅ GitHub release created"
+echo "GitHub release created"
 echo ""
 
-echo "🎉 Release $TAG complete!"
+echo "Release $TAG complete!"
 echo ""
-echo "View release: https://github.com/ashwin47/campfire-ce/releases/tag/$TAG"
+echo "View release: https://github.com/sabha-co/sabha/releases/tag/$TAG"
 echo ""
-echo "⏳ GitHub Actions will automatically build and push Docker images:"
-echo "   - ghcr.io/ashwin47/campfire-ce:$TAG"
-echo "   - ghcr.io/ashwin47/campfire-ce:latest"
+echo "GitHub Actions will automatically build and push Docker images:"
+echo "   - ghcr.io/sabha-co/sabha:$TAG"
+echo "   - ghcr.io/sabha-co/sabha:latest"
 echo ""
-echo "Monitor build: https://github.com/ashwin47/campfire-ce/actions"
+echo "Monitor build: https://github.com/sabha-co/sabha/actions"

@@ -29,7 +29,7 @@ class FirstRunTest < ActiveSupport::TestCase
 end
 
 class FirstRunAutoBootstrapTest < ActiveSupport::TestCase
-  # AutoBootstrap is for Campfire Cloud only (uses ADMIN_AUTH_TOKEN)
+  # AutoBootstrap is for Sabha Cloud only (uses ADMIN_AUTH_TOKEN)
   # For Kamal/self-hosted: use the manual first_run flow
 
   VALID_TEST_TOKEN = "test-token-abc123-secure-random-value-here"

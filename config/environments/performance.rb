@@ -8,7 +8,7 @@ Rails.application.configure do
 
   config.after_initialize do
     if defined?(Rails::Server) && User.none?
-      Account.create!(name: "Campfire")
+      Account.create!(name: "Sabha")
 
       password_digest = User.new(password: "password").password_digest
       users = (1..10000).map do |i|

@@ -24,8 +24,8 @@ echo "--------------------------------------"
 SAAS=false bin/rails runner '
 checks = []
 
-# Check 1: Campfire.saas? returns false
-checks << ["Campfire.saas? returns false", Campfire.saas? == false]
+# Check 1: Sabha.saas? returns false
+checks << ["Sabha.saas? returns false", Sabha.saas? == false]
 
 # Check 2: Job loads
 begin
@@ -78,8 +78,8 @@ else
   SAAS=true bin/rails runner '
 checks = []
 
-# Check 1: Campfire.saas? returns true
-checks << ["Campfire.saas? returns true", Campfire.saas? == true]
+# Check 1: Sabha.saas? returns true
+checks << ["Sabha.saas? returns true", Sabha.saas? == true]
 
 # Check 2: Job loads
 begin

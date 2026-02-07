@@ -1,10 +1,10 @@
 # Authentication System
 
-This document describes how authentication works in Campfire-CE.
+This document describes how authentication works in Sabha.
 
 ## Overview
 
-Campfire-CE supports two authentication methods, configured via the `AUTH_METHOD` environment variable:
+Sabha supports two authentication methods, configured via the `AUTH_METHOD` environment variable:
 
 | Method | `AUTH_METHOD=` | User Experience |
 |--------|----------------|-----------------|
@@ -25,7 +25,7 @@ AUTH_METHOD=password
 AUTO_BOOTSTRAP=true
 ADMIN_EMAIL=admin@example.com
 ADMIN_NAME=Administrator
-ADMIN_AUTH_TOKEN=<32+-char-token> # For Campfire Cloud only
+ADMIN_AUTH_TOKEN=<32+-char-token> # For Sabha Cloud only
 ```
 
 ### How It Works
@@ -144,7 +144,7 @@ Code validated → Session created → Redirected to chat
 The OTP email contains only a 6-digit code (no magic link):
 
 ```
-Your sign-in code for Campfire is: 123456
+Your sign-in code for Sabha is: 123456
 
 This code expires in 15 minutes.
 
@@ -157,7 +157,7 @@ If you did not request this, please ignore this email.
 # app/models/auth_token.rb
 class AuthToken < ApplicationRecord
   belongs_to :user
-  has_secure_token :token  # For Campfire Cloud bootstrap only
+  has_secure_token :token  # For Sabha Cloud bootstrap only
 
   before_validation :generate_code
 
@@ -165,7 +165,7 @@ class AuthToken < ApplicationRecord
 
   def self.lookup(token: nil, email_address: nil, code: nil)
     if token.present?
-      return valid.find_by(token: token)  # Campfire Cloud bootstrap
+      return valid.find_by(token: token)  # Sabha Cloud bootstrap
     elsif email_address.present? && code.present?
       user = User.find_by(email_address: email_address)
       return valid.find_by(user: user, code: code)  # Regular OTP
@@ -196,7 +196,7 @@ end
 
 ## Initial Setup: Manual vs AutoBootstrap
 
-There are two ways to set up a new Campfire instance:
+There are two ways to set up a new Sabha instance:
 
 ### Manual First-Run (Default)
 
@@ -214,7 +214,7 @@ Admin account created → signed in → redirected to chat
 
 The first visitor becomes the administrator. Subsequent visitors see the marketing page or login screen.
 
-### AutoBootstrap (Campfire Cloud Only)
+### AutoBootstrap (Sabha Cloud Only)
 
 **For managed hosting platforms** where the deployment is controlled programmatically.
 
@@ -250,7 +250,7 @@ Subsequent logins use OTP (6-digit code via email)
 ```
 
 **When to use AutoBootstrap:**
-- ✅ Campfire Cloud managed deployments
+- ✅ Sabha Cloud managed deployments
 - ❌ Kamal/self-hosted (use manual first_run instead)
 
 ### Security Requirements
@@ -438,7 +438,7 @@ last_active_at DATETIME NOT NULL
 ```sql
 id         BIGINT PRIMARY KEY
 user_id    BIGINT NOT NULL REFERENCES users(id)
-token      VARCHAR NOT NULL UNIQUE  -- Secure token (Campfire Cloud)
+token      VARCHAR NOT NULL UNIQUE  -- Secure token (Sabha Cloud)
 code       VARCHAR NOT NULL         -- 6-digit OTP code
 expires_at DATETIME NOT NULL        -- 15 minutes from creation
 used_at    DATETIME                 -- When code was used
@@ -468,7 +468,7 @@ AUTH_METHOD=otp
 - 6-digit code sent via email
 - Email verification via OTP validation
 
-### Campfire Cloud Managed
+### Sabha Cloud Managed
 
 ```bash
 AUTO_BOOTSTRAP=true

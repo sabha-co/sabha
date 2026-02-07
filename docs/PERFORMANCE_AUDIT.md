@@ -1,4 +1,4 @@
-# Performance Audit: Campfire-CE at Scale
+# Performance Audit: Sabha at Scale
 
 **Date:** 2026-01-23 (Updated: 2026-01-24)
 **Target Scale:** Thousands of messages/day, hundreds of active users daily
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This audit identifies performance bottlenecks that will impact Campfire-CE at scale. Issues are categorized by severity and include specific file locations, code samples, and recommended fixes.
+This audit identifies performance bottlenecks that will impact Sabha at scale. Issues are categorized by severity and include specific file locations, code samples, and recommended fixes.
 
 **Critical issues requiring immediate attention:**
 - N+1 queries in broadcast operations blocking message creation
@@ -313,7 +313,7 @@ end
 
 **User Experience:**
 
-You open Campfire and your sidebar loads. The app needs to find which rooms have unread messages for you.
+You open Sabha and your sidebar loads. The app needs to find which rooms have unread messages for you.
 
 - **Before:** The database scanned through all your memberships to find ones with `unread_at` set. With 50+ room memberships, this added latency to every page load.
 - **After:** A targeted index on `(user_id, unread_at)` lets the database jump directly to your unread rooms. Sidebar loads faster.
@@ -725,7 +725,7 @@ end
 
 **User Experience:**
 
-You open Campfire and your browser establishes WebSocket connections to each visible room for real-time updates.
+You open Sabha and your browser establishes WebSocket connections to each visible room for real-time updates.
 
 - **Before:** The `present` method called `membership` 3 times (guard clause, update, broadcast). With 10 rooms = 30 queries just to establish presence.
 - **After:** Use a local variable in `present` to query once. 10 rooms = 10 queries. `absent` and `refresh` still do fresh lookups (correct for handling membership changes).

@@ -2,7 +2,7 @@
 # Automated browser login for agent-browser
 # Usage: bin/browser-login [email] [password]
 
-EMAIL="${1:-admin@campfirecloud.com}"
+EMAIL="${1:-admin@sabha.co}"
 PASSWORD="${2:-password}"
 BASE_URL="${3:-http://localhost:3000}"
 

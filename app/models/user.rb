@@ -3,7 +3,7 @@ class User < ApplicationRecord
   MINIMUM_PASSWORD_LENGTH = 8
 
   has_subscriptions
-  after_create :subscribe_to_emails, unless: -> { Campfire.saas? }  # Mailkick deferred to v2 for SaaS
+  after_create :subscribe_to_emails, unless: -> { Sabha.saas? }  # Mailkick deferred to v2 for SaaS
 
   include Avatar, Bannable, Bot, DicebearAvatar, Mentionable, Role, Transferable, Preferences
 
@@ -13,7 +13,7 @@ class User < ApplicationRecord
 
   # Access GlobalIdentity through WorkspaceMembership (SaaS mode)
   def global_identity
-    return nil unless Campfire.saas?
+    return nil unless Sabha.saas?
     workspace_membership&.global_identity
   end
 
@@ -370,7 +370,7 @@ class User < ApplicationRecord
     end
 
     def close_remote_connections(reconnect: false)
-      if Campfire.saas? && ApplicationRecord.current_tenant.present?
+      if Sabha.saas? && ApplicationRecord.current_tenant.present?
         ActionCable.server.remote_connections.where(
           current_tenant: ApplicationRecord.current_tenant,
           current_user: self

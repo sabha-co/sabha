@@ -3,5 +3,5 @@ class ApplicationRecord < ActiveRecord::Base
 
   # Enable multi-tenant database isolation when SaaS mode is active
   # The activerecord-tenanted gem provides the `tenanted` macro
-  tenanted if defined?(ActiveRecord::Tenanted) && Campfire.saas?
+  tenanted if defined?(ActiveRecord::Tenanted) && Sabha.saas?
 end

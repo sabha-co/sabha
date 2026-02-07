@@ -7,7 +7,7 @@ Rails.application.routes.draw do
   #   }, via: :all
   # end
 
-  if Campfire.saas?
+  if Sabha.saas?
     # In SaaS mode, root only works inside workspace context (tenant set)
     constraints(->(req) { ApplicationRecord.current_tenant.present? }) do
       root to: "welcome#show"
@@ -122,7 +122,7 @@ Rails.application.routes.draw do
   end
 
   # Join routes for signup via invite link
-  if Campfire.saas?
+  if Sabha.saas?
     # In SaaS mode, the global /join/:code route is in the engine (goes to Saas::WorkspacesController#join)
     # This workspace-scoped route handles the actual signup after redirect
     get "join/:join_code", to: "users#new"

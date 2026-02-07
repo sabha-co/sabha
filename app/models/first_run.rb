@@ -1,13 +1,13 @@
 # FirstRun handles initial account and admin user creation.
 #
-# There are two ways to set up a new Campfire instance:
+# There are two ways to set up a new Sabha instance:
 #
 # 1. MANUAL FIRST-RUN (Default for Kamal/self-hosted deployments)
 #    - First visitor to the site sees a setup form
 #    - They enter their name, email, and password to become admin
 #    - Uses FirstRun.create! directly from FirstRunsController
 #
-# 2. AUTO-BOOTSTRAP (Campfire Cloud managed deployments only)
+# 2. AUTO-BOOTSTRAP (Sabha Cloud managed deployments only)
 #    - Headless setup without user interaction
 #    - Requires ENV vars: AUTO_BOOTSTRAP=true, ADMIN_EMAIL, ADMIN_AUTH_TOKEN
 #    - Creates admin account automatically on first request
@@ -69,7 +69,7 @@ class FirstRun
         raise ArgumentError, "ADMIN_AUTH_TOKEN must be at least 32 characters for security"
       end
 
-      Rails.logger.info "[AutoBootstrap] Creating admin account for Campfire Cloud..."
+      Rails.logger.info "[AutoBootstrap] Creating admin account for Sabha Cloud..."
 
       admin = create!(
         name: ENV.fetch("ADMIN_NAME", "Administrator"),

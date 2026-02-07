@@ -2,9 +2,9 @@
 
 require_relative "saas/engine"
 
-module Campfire
+module Sabha
   module Saas
-    # SaaS layer for Campfire multi-tenancy
+    # SaaS layer for Sabha multi-tenancy
     #
     # This module provides:
     # - GlobalIdentity authentication (cross-workspace)

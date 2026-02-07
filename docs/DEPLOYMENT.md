@@ -1,15 +1,15 @@
-# Deploying Campfire-CE
+# Deploying Sabha
 
 Two ways to run your community:
 
 1. **Self-hosting** - Run on your own server with full control
-2. **Campfire Cloud** - Managed hosting, we handle everything
+2. **Sabha Cloud** - Managed hosting, we handle everything
 
 ---
 
 ## Self-Hosting
 
-Deploy Campfire-CE on your own VPS. You get full control, own your data, and pay only for server costs (~$5-20/month).
+Deploy Sabha on your own VPS. You get full control, own your data, and pay only for server costs (~$5-20/month).
 
 ### Requirements
 
@@ -32,8 +32,8 @@ curl -fsSL https://get.docker.com | sh
 **3. Clone and configure**
 
 ```bash
-git clone https://github.com/superforumio/campfire-ce.git
-cd campfire-ce
+git clone https://github.com/sabha-co/sabha.git
+cd sabha
 cp .env.sample .env
 nano .env
 ```
@@ -85,7 +85,7 @@ For zero-downtime deployments, use [Kamal](https://kamal-deploy.org/).
 gem install kamal
 
 # Prepare your server
-ssh root@your-server "curl -fsSL https://get.docker.com | sh && mkdir -p /disk/campfire"
+ssh root@your-server "curl -fsSL https://get.docker.com | sh && mkdir -p /disk/sabha"
 
 # Configure secrets
 cp .env.sample .kamal/secrets
@@ -110,8 +110,8 @@ kamal app boot            # Start app
 The repo includes `config/deploy.yml`:
 
 ```yaml
-service: campfire
-image: campfire-ce
+service: sabha
+image: sabha
 
 servers:
   web:
@@ -126,7 +126,7 @@ registry:
   server: localhost:5000
 
 volumes:
-  - "/disk/campfire/:/rails/storage/"
+  - "/disk/sabha/:/rails/storage/"
 ```
 
 **Environment variables**
@@ -194,7 +194,7 @@ No manual certificate management needed.
 
 ### Backups
 
-Your data lives in `/rails/storage/` (or `/disk/campfire/` with Kamal). Back it up regularly.
+Your data lives in `/rails/storage/` (or `/disk/sabha/` with Kamal). Back it up regularly.
 
 **Manual backup**
 
@@ -203,7 +203,7 @@ Your data lives in `/rails/storage/` (or `/disk/campfire/` with Kamal). Back it 
 kamal app exec 'bin/rails runner "ActiveRecord::Base.connection.execute(\"PRAGMA wal_checkpoint(TRUNCATE)\")"'
 
 # Create backup
-ssh root@your-server "cd /disk/campfire && tar -czf ~/backup-$(date +%Y%m%d).tar.gz ."
+ssh root@your-server "cd /disk/sabha && tar -czf ~/backup-$(date +%Y%m%d).tar.gz ."
 
 # Download
 scp root@your-server:~/backup-*.tar.gz ./backups/
@@ -214,7 +214,7 @@ scp root@your-server:~/backup-*.tar.gz ./backups/
 ```bash
 kamal app stop
 scp backup.tar.gz root@your-server:/tmp/
-ssh root@your-server "cd /disk/campfire && rm -rf * && tar -xzf /tmp/backup.tar.gz"
+ssh root@your-server "cd /disk/sabha && rm -rf * && tar -xzf /tmp/backup.tar.gz"
 kamal app boot
 ```
 
@@ -243,7 +243,7 @@ kamal deploy
 ```bash
 kamal app logs                    # Check logs
 kamal app details                 # Container status
-docker logs campfire-web          # Direct Docker logs
+docker logs sabha-web          # Direct Docker logs
 ```
 
 **Database locked errors**
@@ -383,9 +383,9 @@ Add secrets to your GitHub repository settings.
 
 ---
 
-## Campfire Cloud
+## Sabha Cloud
 
-Don't want to manage servers? [Campfire Cloud](https://campfirecloud.com) handles everything.
+Don't want to manage servers? [Sabha Cloud](https://cloud.sabha.co) handles everything.
 
 ### What You Get
 
@@ -397,8 +397,8 @@ Don't want to manage servers? [Campfire Cloud](https://campfirecloud.com) handle
 
 ### Getting Started
 
-1. Sign up at [campfirecloud.com](https://campfirecloud.com)
-2. Choose your subdomain (e.g., `mycommunity.campfirecloud.com`)
+1. Sign up at [cloud.sabha.co](https://cloud.sabha.co)
+2. Choose your subdomain (e.g., `mycommunity.cloud.sabha.co`)
 3. Optionally connect a custom domain
 4. Invite your community
 
@@ -409,7 +409,7 @@ Don't want to manage servers? [Campfire Cloud](https://campfirecloud.com) handle
 3. Add the DNS records we provide
 4. SSL is provisioned automatically
 
-### When to Choose Campfire Cloud
+### When to Choose Sabha Cloud
 
 - You want to focus on community, not infrastructure
 - You don't have technical staff
@@ -420,7 +420,7 @@ Don't want to manage servers? [Campfire Cloud](https://campfirecloud.com) handle
 
 ## Comparison
 
-| Feature | Self-Hosting | Campfire Cloud |
+| Feature | Self-Hosting | Sabha Cloud |
 |---------|--------------|----------------|
 | Setup time | 30-60 min | 5 min |
 | Server management | You | Us |
@@ -429,12 +429,12 @@ Don't want to manage servers? [Campfire Cloud](https://campfirecloud.com) handle
 | Custom domain | Yes | Yes |
 | SSL | Automatic | Automatic |
 | Data ownership | Full control | You own it |
-| Monthly cost | ~$5-20 | [Pricing](https://campfirecloud.com/pricing) |
+| Monthly cost | ~$5-20 | [Pricing](https://cloud.sabha.co/pricing) |
 
 ---
 
 ## Questions?
 
-- **Self-hosting**: [GitHub Issues](https://github.com/superforumio/campfire-ce/issues)
-- **Campfire Cloud**: ashwin@campfirecloud.com
+- **Self-hosting**: [GitHub Issues](https://github.com/sabha-co/sabha/issues)
+- **Sabha Cloud**: ashwin@cloud.sabha.co
 - **Customization**: See [BRANDING.md](../BRANDING.md)

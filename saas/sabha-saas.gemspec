@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 Gem::Specification.new do |spec|
-  spec.name        = "campfire-saas"
-  spec.version     = "0.1.0"
-  spec.authors     = [ "Campfire" ]
-  spec.email       = [ "support@campfire.com" ]
-  spec.homepage    = "https://github.com/basecamp/campfire"
-  spec.summary     = "Multi-tenancy SaaS layer for Campfire"
-  spec.description = "Adds multi-workspace support, GlobalIdentity authentication, and workspace isolation to Campfire"
+  spec.name        = "sabha-saas"
+  spec.version     = "0.2.0"
+  spec.authors     = [ "Sabha" ]
+  spec.email       = [ "support@sabha.co" ]
+  spec.homepage    = "https://github.com/sabha-co/sabha"
+  spec.summary     = "Multi-tenancy SaaS layer for Sabha"
+  spec.description = "Adds multi-workspace support, GlobalIdentity authentication, and workspace isolation to Sabha"
   spec.license     = "MIT"
 
   spec.metadata["homepage_uri"] = spec.homepage

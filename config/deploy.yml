@@ -1,6 +1,6 @@
-service: campfire
+service: sabha
 
-image: superforumio/campfire-ce
+image: sabha-co/sabha
 
 servers:
   web:
@@ -8,7 +8,7 @@ servers:
       - <%= ENV.fetch("SERVER_IP") %>
     options:
       # Network alias for anycable-go to reach Rails RPC endpoint
-      network-alias: campfire-web
+      network-alias: sabha-web
 
 proxy:
   ssl: true
@@ -17,7 +17,7 @@ proxy:
 
 registry:
   server: ghcr.io
-  username: superforumio
+  username: sabha-co
   password:
     - KAMAL_REGISTRY_PASSWORD
 
@@ -55,7 +55,7 @@ env:
     - ANYCABLE_SECRET
 
 volumes:
-  - "/disk/campfire/:/rails/storage/"
+  - "/disk/sabha/:/rails/storage/"
 
 # AnyCable WebSocket server (enabled by default)
 # Routes /cable path to AnyCable on the same domain
@@ -79,7 +79,7 @@ accessories:
         ANYCABLE_HOST: "0.0.0.0"
         ANYCABLE_PORT: "8080"
         ANYCABLE_PATH: "/"
-        ANYCABLE_RPC_HOST: "http://campfire-web:3000/_anycable"
+        ANYCABLE_RPC_HOST: "http://sabha-web:3000/_anycable"
         ANYCABLE_BROADCAST_ADAPTER: "http"
         ANYCABLE_HTTP_BROADCAST_PORT: "8080"
         ANYCABLE_LOG_LEVEL: "info"

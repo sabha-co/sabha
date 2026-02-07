@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-    <%= Campfire.saas? ? tenanted_action_cable_meta_tag : action_cable_meta_tag %>
+    <%= Sabha.saas? ? tenanted_action_cable_meta_tag : action_cable_meta_tag %>
     <%= tag.meta name: "anycable-whisper", content: "true" if anycable_whisper_enabled? %>
     <%= current_user_meta_tags %>
 
@@ -43,7 +43,7 @@
       <%= render "shared/demo_banner" %>
     <% end %>
 
-    <% if Campfire.saas? && respond_to?(:show_workspace_selector?) && show_workspace_selector? %>
+    <% if Sabha.saas? && respond_to?(:show_workspace_selector?) && show_workspace_selector? %>
       <%= render "shared/workspace_selector" %>
     <% end %>
 
@@ -80,14 +80,14 @@
       <%= yield :sidebar %>
     </template>
 
-    <aside id="sidebar" data-controller="toggle-class" data-toggle-class-toggle-class="open" data-toggle-class-close-on-escape-value="true" data-toggle-class-focus-trap-value="true" data-toggle-class-initial-focus-selector-value="#room-search" <%= "data-turbo-permanent" unless Campfire.saas? %>>
+    <aside id="sidebar" data-controller="toggle-class" data-toggle-class-toggle-class="open" data-toggle-class-close-on-escape-value="true" data-toggle-class-focus-trap-value="true" data-toggle-class-initial-focus-selector-value="#room-search" <%= "data-turbo-permanent" unless Sabha.saas? %>>
       <%= yield :sidebar %>
     </aside>
 
     <%= render "layouts/lightbox" %>
 
     <a href="https://once.com" id="app-logo" target="_blank" aria-label="Once software from 37signals home page">
-      <%= image_tag "campfire-icon.png", alt: "Campfire logo", width: 256, height: 216 %>
+      <%= image_tag "campfire-icon.png", alt: "Sabha logo", width: 256, height: 216 %>
     </a>
   </body>
 </html>

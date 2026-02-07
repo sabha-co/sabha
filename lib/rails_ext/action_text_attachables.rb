@@ -20,7 +20,7 @@ ActiveSupport.on_load(:action_text_content) do
               # Rails 7 used an older format of GID that serialized the payload using Marshall
               # Since we intentionally skip signature verification, we can't safely unmarshal the data
               # To work around this, we manually extract the GID from the marshaled data
-              Base64.urlsafe_decode64(data).match(%r{(gid://campfire/[^/]+/\d+)})&.to_s
+              Base64.urlsafe_decode64(data).match(%r{(gid://sabha/[^/]+/\d+)})&.to_s
             else
               nil
             end

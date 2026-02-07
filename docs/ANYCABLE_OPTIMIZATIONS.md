@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document outlines AnyCable-specific optimizations to improve Campfire-CE's real-time performance. These build on the existing AnyCable HTTP RPC setup documented in [ANYCABLE_IMPLEMENTATION.md](./ANYCABLE_IMPLEMENTATION.md).
+This document outlines AnyCable-specific optimizations to improve Sabha's real-time performance. These build on the existing AnyCable HTTP RPC setup documented in [ANYCABLE_IMPLEMENTATION.md](./ANYCABLE_IMPLEMENTATION.md).
 
 **Current AnyCable Setup:**
 - HTTP RPC mode (no gRPC dependency)

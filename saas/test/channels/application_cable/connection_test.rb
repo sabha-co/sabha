@@ -19,10 +19,10 @@ class ApplicationCable::SaasConnectionTest < ActionCable::Connection::TestCase
     cookies.signed[:global_session_token] = session.token
 
     # Simulate the tenant being set by the gem's middleware
-    # The gem reads from env["campfire.workspace_id"] or uses tenant_resolver
+    # The gem reads from env["sabha.workspace_id"] or uses tenant_resolver
     connect env: {
       "SCRIPT_NAME" => "/#{workspace.external_id}",
-      "campfire.workspace_id" => workspace.external_id.to_s
+      "sabha.workspace_id" => workspace.external_id.to_s
     }
 
     assert_equal workspace.external_id.to_s, connection.current_tenant
@@ -35,7 +35,7 @@ class ApplicationCable::SaasConnectionTest < ActionCable::Connection::TestCase
     assert_reject_connection do
       connect env: {
         "SCRIPT_NAME" => "/#{workspace.external_id}",
-        "campfire.workspace_id" => workspace.external_id.to_s
+        "sabha.workspace_id" => workspace.external_id.to_s
       }
     end
   end
@@ -49,7 +49,7 @@ class ApplicationCable::SaasConnectionTest < ActionCable::Connection::TestCase
     assert_reject_connection do
       connect env: {
         "SCRIPT_NAME" => "/#{workspace.external_id}",
-        "campfire.workspace_id" => workspace.external_id.to_s
+        "sabha.workspace_id" => workspace.external_id.to_s
       }
     end
   end
@@ -64,7 +64,7 @@ class ApplicationCable::SaasConnectionTest < ActionCable::Connection::TestCase
     assert_reject_connection do
       connect env: {
         "SCRIPT_NAME" => "/#{workspace.external_id}",
-        "campfire.workspace_id" => workspace.external_id.to_s
+        "sabha.workspace_id" => workspace.external_id.to_s
       }
     end
   end
@@ -104,7 +104,7 @@ class ApplicationCable::SaasConnectionTest < ActionCable::Connection::TestCase
 
     connect env: {
       "SCRIPT_NAME" => "/#{workspace.external_id}",
-      "campfire.workspace_id" => workspace.external_id.to_s
+      "sabha.workspace_id" => workspace.external_id.to_s
     }
 
     assert_equal workspace.external_id.to_s, connection.current_tenant

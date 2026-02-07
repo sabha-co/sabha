@@ -1,10 +1,10 @@
-# Architecture: Campfire-CE vs Small Bets
+# Architecture: Sabha vs Small Bets
 
-This document outlines the architectural differences between Campfire-CE and the upstream Small Bets fork.
+This document outlines the architectural differences between Sabha and the upstream Small Bets fork.
 
 ## Philosophy
 
-| | Small Bets | Campfire-CE |
+| | Small Bets | Sabha |
 |---|---|---|
 | **Focus** | All-in-one community platform (chat + video library + experts + feed) custom made for closed/paid communities | Pure chat platform |
 | **Frontend** | Hybrid Rails + React/Inertia.js | Traditional Rails + Hotwire |
@@ -19,7 +19,7 @@ This document outlines the architectural differences between Campfire-CE and the
 - `@vitejs/plugin-react` in Vite config
 - Inertia handles React app bootstrapping with SSR support
 
-### Campfire-CE
+### Sabha
 - **Vite + Tailwind CSS only** (no React/Inertia)
 - Pure server-rendered views with Hotwire (Turbo + Stimulus)
 - Vite used only for Tailwind v4 processing
@@ -51,7 +51,7 @@ This document outlines the architectural differences between Campfire-CE and the
 
 ## Runtime & Dependencies
 
-| | Small Bets | Campfire-CE |
+| | Small Bets | Sabha |
 |---|---|---|
 | **Ruby** | 3.3.1 | 3.4.5 |
 | **Puma** | ~6.4 | ~7.1 |
@@ -81,7 +81,7 @@ This document outlines the architectural differences between Campfire-CE and the
 
 ### Environment Variables
 
-Campfire-CE has comprehensive environment variable support for white-labeling:
+Sabha has comprehensive environment variable support for white-labeling:
 
 ```bash
 # Branding
@@ -109,7 +109,7 @@ Small Bets has minimal environment configuration with hardcoded branding.
 
 ## Docker/Deployment
 
-### Campfire-CE Optimizations
+### Sabha Optimizations
 - Jemalloc memory allocator (`LD_PRELOAD="/usr/local/lib/libjemalloc.so"`)
 - Explicit build cleanup (`rm -rf node_modules tmp/cache .git`)
 - Node.js 24.x LTS via NodeSource
@@ -138,7 +138,7 @@ Both codebases include these Small Bets modifications:
 ## File Structure Comparison
 
 ```
-smallbets/                          campfire-ce/
+smallbets/                          sabha/
 ├── app/frontend/                   ├── app/frontend/
 │   ├── pages/                      │   ├── pages/          (empty)
 │   │   ├── library/   (React)      │   │

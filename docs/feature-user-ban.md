@@ -11,7 +11,7 @@ Add a complete user ban system that allows administrators to ban users, which:
 
 ---
 
-## Current Implementation (campfire-ce)
+## Current Implementation (sabha)
 
 Our codebase uses **two separate columns** for user state:
 
@@ -127,7 +127,7 @@ end
 
 ## Key Differences
 
-| Aspect | campfire-ce (after implementation) | once-campfire |
+| Aspect | sabha (after implementation) | once-campfire |
 |--------|-------------|---------------|
 | User state storage | 1 column (`status` enum) | 1 column (`status` enum) |
 | Suspended state | N/A (replaced by ban) | N/A (no suspend, only ban) |
@@ -152,7 +152,7 @@ end
 
 **Recommendation: Option A** - Migrate fully to match upstream for long-term maintainability.
 
-**Important**: Keep campfire-ce's soft-delete pattern for memberships AND messages because:
+**Important**: Keep sabha's soft-delete pattern for memberships AND messages because:
 1. Allows user reactivation with memberships restored
 2. Preserves room history even for deactivated users
 3. Banned user messages can be recovered if user is unbanned
@@ -261,7 +261,7 @@ end
 20. **Update test fixtures**
     - Add `status: active` to user fixtures
     - Add `auth_method: password` to account fixtures
-    - Update `allowed_hosts.rb` to include test hosts (`www.example.com`, `once.campfire.test`)
+    - Update `allowed_hosts.rb` to include test hosts (`www.example.com`, `once.sabha.test`)
 
 21. **Fix existing tests**
     - Update `user_test.rb` to check soft-delete behavior (Membership.active.count decreases, not Membership.count)
@@ -329,7 +329,7 @@ end
 
 ### Differences from once-campfire
 
-| Component | campfire-ce | once-campfire |
+| Component | sabha | once-campfire |
 |-----------|-------------|---------------|
 | `User::Bannable#remove_banned_content` | `message.deactivate` (soft-delete) | `message.destroy` (hard-delete) |
 | `User::Bannable#create_bans_from_sessions` | `bans.create()` (graceful, skips invalid IPs) | `bans.create!()` (strict, raises on failure) |

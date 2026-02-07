@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Campfire
+module Sabha
   SAAS_MARKER = File.expand_path("../tmp/saas.txt", __dir__)
 
   class << self

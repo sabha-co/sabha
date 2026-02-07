@@ -1,6 +1,6 @@
-# Campfire SaaS Layer
+# Sabha SaaS Layer
 
-This folder contains the multi-tenancy SaaS layer for Campfire. It's implemented as a Rails engine that extends the core application with:
+This folder contains the multi-tenancy SaaS layer for Sabha. It's implemented as a Rails engine that extends the core application with:
 
 - **GlobalIdentity**: Cross-workspace user authentication (email + OTP)
 - **Workspace isolation**: Each workspace has its own SQLite database
@@ -38,7 +38,7 @@ saas/
 ├── db/
 │   └── untenanted_migrate/    # Migrations for untenanted database
 └── lib/
-    └── campfire/saas/
+    └── sabha/saas/
         └── engine.rb          # Rails engine configuration
 ```
 

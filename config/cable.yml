@@ -6,7 +6,7 @@ development:
   adapter: <%= ENV["ANYCABLE_ENABLED"] == "true" ? "any_cable" : "redis" %>
   <% if ENV["ANYCABLE_ENABLED"] != "true" %>
   url: redis://localhost:6379
-  channel_prefix: campfire_development
+  channel_prefix: sabha_development
   <% end %>
 
 test:
@@ -15,11 +15,11 @@ test:
 performance:
   adapter: <%= ENV.fetch("CABLE_ADAPTER", "redis") %>
   url: redis://localhost:6379
-  channel_prefix: campfire_performance
+  channel_prefix: sabha_performance
 
 production:
   adapter: <%= ENV["ANYCABLE_ENABLED"] == "false" ? "redis" : "any_cable" %>
   <% if ENV["ANYCABLE_ENABLED"] == "false" %>
   url: <%= ENV.fetch("REDIS_URL", "redis://localhost:6379") %>
-  channel_prefix: campfire_production
+  channel_prefix: sabha_production
   <% end %>

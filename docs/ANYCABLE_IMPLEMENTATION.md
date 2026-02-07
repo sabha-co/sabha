@@ -1,6 +1,6 @@
 # AnyCable Implementation Plan
 
-This document outlines the plan to add AnyCable support to campfire-ce for improved WebSocket scalability.
+This document outlines the plan to add AnyCable support to sabha for improved WebSocket scalability.
 
 ## Problem
 
@@ -52,9 +52,9 @@ AnyCable offers multiple RPC modes. We'll use **HTTP RPC** as the simplest appro
 **Before (Action Cable):**
 ```
 ┌─────────────────────────────────────────────────────┐
-│                   campfire-ce instance              │
+│                   sabha instance              │
 │  ┌──────────┐   ┌────────────────┐   ┌───────────┐ │
-│  │  Caddy   │──▶│  campfire-web  │   │ Litestream│ │
+│  │  Caddy   │──▶│  sabha-web  │   │ Litestream│ │
 │  │  :443    │   │   Rails+Redis  │   │  backup   │ │
 │  └──────────┘   │   ActionCable  │   └───────────┘ │
 │                 │     :3000      │                  │
@@ -65,7 +65,7 @@ AnyCable offers multiple RPC modes. We'll use **HTTP RPC** as the simplest appro
 **After (AnyCable):**
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                     campfire-ce instance                     │
+│                     sabha instance                     │
 │                                                              │
 │  ┌────────┐   /cable    ┌─────────────┐                     │
 │  │ Caddy  │────────────▶│ anycable-go │                     │
@@ -77,7 +77,7 @@ AnyCable offers multiple RPC modes. We'll use **HTTP RPC** as the simplest appro
 │                    │           │ HTTP Broadcast (/_broadcast)│
 │                    │           ▼                            │
 │                    │    ┌────────────────┐   ┌───────────┐  │
-│                    └───▶│  campfire-web  │   │ Litestream│  │
+│                    └───▶│  sabha-web  │   │ Litestream│  │
 │                         │  Rails :3000   │   │  backup   │  │
 │                         └────────────────┘   └───────────┘  │
 └──────────────────────────────────────────────────────────────┘
@@ -113,7 +113,7 @@ anycable-go --version
 ### Step 2: Add AnyCable Gem
 
 ```bash
-cd /path/to/campfire-ce
+cd /path/to/sabha
 # Use anycable-rails-core to avoid gRPC dependency (HTTP RPC mode doesn't need it)
 bundle add anycable-rails-core
 ```
@@ -157,7 +157,7 @@ development:
   adapter: <%= ENV["ANYCABLE_ENABLED"] == "false" ? "redis" : "any_cable" %>
   <% if ENV["ANYCABLE_ENABLED"] == "false" %>
   url: redis://localhost:6379
-  channel_prefix: campfire_development
+  channel_prefix: sabha_development
   <% end %>
 
 test:
@@ -167,7 +167,7 @@ production:
   adapter: <%= ENV["ANYCABLE_ENABLED"] == "false" ? "redis" : "any_cable" %>
   <% if ENV["ANYCABLE_ENABLED"] == "false" %>
   url: <%= ENV.fetch("REDIS_URL", "redis://localhost:6379") %>
-  channel_prefix: campfire_production
+  channel_prefix: sabha_production
   <% end %>
 ```
 
@@ -282,7 +282,7 @@ bin/rails test:system
 
 ## Standalone Deployment
 
-By default, campfire-ce uses **AnyCable** for WebSocket connections in production. This requires:
+By default, sabha uses **AnyCable** for WebSocket connections in production. This requires:
 
 1. **anycable-go container** running alongside the Rails app
 2. **Proxy routing** to send `/cable` requests to anycable-go
@@ -316,12 +316,12 @@ ANYCABLE_BROADCAST_URL=http://anycable:8080/_broadcast
 ```yaml
 services:
   web:
-    image: ghcr.io/superforumio/campfire-ce:latest
+    image: ghcr.io/sabha-co/sabha:latest
     environment:
       # AnyCable is enabled by default (ANYCABLE_ENABLED != "false")
       - ANYCABLE_SECRET=${ANYCABLE_SECRET}
     networks:
-      - campfire
+      - sabha
 
   anycable:
     image: anycable/anycable-go:1.6
@@ -333,7 +333,7 @@ services:
       - ANYCABLE_HTTP_BROADCAST_PORT=8080
       - ANYCABLE_SECRET=${ANYCABLE_SECRET}
     networks:
-      - campfire
+      - sabha
 
   caddy:
     image: caddy:2-alpine
@@ -343,10 +343,10 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
     networks:
-      - campfire
+      - sabha
 
 networks:
-  campfire:
+  sabha:
 ```
 
 **Caddyfile:**

@@ -1,19 +1,19 @@
 # frozen_string_literal: true
 
-module Campfire
+module Sabha
   module Saas
     class Engine < ::Rails::Engine
-      # Non-isolated engine - we extend Campfire, not create a separate namespace
+      # Non-isolated engine - we extend Sabha, not create a separate namespace
       # This means models like GlobalIdentity are accessible as ::GlobalIdentity
 
-      engine_name "campfire_saas"
+      engine_name "sabha_saas"
 
       # Disable automatic route loading - we define routes inline in initializer
       paths["config/routes.rb"] = []
 
       # Add SaaS paths to autoload
-      initializer "campfire_saas.autoload_paths", before: :set_autoload_paths do |app|
-        if Campfire.saas?
+      initializer "sabha_saas.autoload_paths", before: :set_autoload_paths do |app|
+        if Sabha.saas?
           app.config.autoload_paths << root.join("app/models")
           app.config.autoload_paths << root.join("app/controllers")
           app.config.autoload_paths << root.join("app/controllers/concerns")
@@ -24,23 +24,23 @@ module Campfire
       end
 
       # Add SaaS stylesheets to asset paths
-      initializer "campfire_saas.assets" do |app|
-        if Campfire.saas?
+      initializer "sabha_saas.assets" do |app|
+        if Sabha.saas?
           app.config.assets.paths << root.join("app/assets/stylesheets")
         end
       end
 
       # Add SaaS views to view paths (for partials like workspace_selector)
-      initializer "campfire_saas.view_paths", before: :add_view_paths do |app|
-        if Campfire.saas?
+      initializer "sabha_saas.view_paths", before: :add_view_paths do |app|
+        if Sabha.saas?
           app.config.paths["app/views"].unshift(root.join("app/views").to_s)
         end
       end
 
       # Prepend SaaS routes to take precedence over core routes
       # These routes only match when OUTSIDE a workspace context (no tenant set)
-      initializer "campfire_saas.routes", after: :add_routing_paths do |app|
-        next unless Campfire.saas?
+      initializer "sabha_saas.routes", after: :add_routing_paths do |app|
+        next unless Sabha.saas?
 
         app.routes.prepend do
           constraints(->(req) { ApplicationRecord.current_tenant.blank? }) do
@@ -73,10 +73,10 @@ module Campfire
       end
 
       # Detect misconfiguration: gem loaded but SaaS mode disabled
-      initializer "campfire_saas.check_configuration", before: :load_config_initializers do
-        if defined?(ActiveRecord::Tenanted) && !Campfire.saas?
+      initializer "sabha_saas.check_configuration", before: :load_config_initializers do
+        if defined?(ActiveRecord::Tenanted) && !Sabha.saas?
           raise <<~ERROR
-            \e[31m[Campfire] Configuration Error: activerecord-tenanted gem is loaded but SaaS mode is disabled.
+            \e[31m[Sabha] Configuration Error: activerecord-tenanted gem is loaded but SaaS mode is disabled.
 
             The Gemfile.saas was used (likely because tmp/saas.txt exists) but SAAS=false.
 
@@ -90,8 +90,8 @@ module Campfire
 
 
       # Load SaaS initializers
-      initializer "campfire_saas.load_initializers", after: :load_config_initializers do
-        if Campfire.saas?
+      initializer "sabha_saas.load_initializers", after: :load_config_initializers do
+        if Sabha.saas?
           Dir[root.join("config/initializers/**/*.rb")].sort.each do |initializer|
             load initializer
           end
@@ -104,16 +104,16 @@ module Campfire
 
       # Override authentication concern when SaaS enabled
       config.to_prepare do
-        if Campfire.saas?
+        if Sabha.saas?
           # Load SaaS authentication concern which overrides core Authentication
-          require_dependency Campfire::Saas::Engine.root.join("app/controllers/concerns/saas/authentication")
+          require_dependency Sabha::Saas::Engine.root.join("app/controllers/concerns/saas/authentication")
         end
       end
 
       # Include SaaS helpers in ActionController views
-      initializer "campfire_saas.helpers" do
+      initializer "sabha_saas.helpers" do
         ActiveSupport.on_load(:action_controller_base) do
-          if Campfire.saas?
+          if Sabha.saas?
             helper WorkspaceSelectorHelper
             helper TenantingHelper
           end

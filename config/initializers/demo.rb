@@ -17,7 +17,7 @@ module DemoMode
 
   def self.credentials
     {
-      email: "admin@campfirecloud.com",
+      email: "admin@sabha.co",
       password: "password"
     }
   end

@@ -6,7 +6,7 @@
 # 1. Rails tagged logging - prefixes log lines with tenant=XXXXX
 # 2. SQL query logs - includes tenant in query comments (requires query_log_tags_enabled)
 
-return unless Campfire.saas?
+return unless Sabha.saas?
 
 # Add :tenant to SQL query log tags (if not already present)
 # This shows the tenant in SQL log comments when query_log_tags_enabled = true
@@ -20,7 +20,7 @@ end
 
 Rails.application.config.to_prepare do
   ApplicationController.class_eval do
-    around_action :tag_logs_with_tenant, if: -> { Campfire.saas? }
+    around_action :tag_logs_with_tenant, if: -> { Sabha.saas? }
 
     private
 

@@ -1,6 +1,6 @@
 # Slack Import Feature
 
-Import Slack workspace data into Campfire, enabling teams to migrate their chat history from Slack.
+Import Slack workspace data into Sabha, enabling teams to migrate their chat history from Slack.
 
 ## Quick Start
 
@@ -100,7 +100,7 @@ export.zip/
 
 ## Data Mapping
 
-| Slack Entity | Campfire Entity | Notes |
+| Slack Entity | Sabha Entity | Notes |
 |--------------|-----------------|-------|
 | User | User | Placeholder (no email, claimable later) |
 | Public Channel | Rooms::Open | Auto-membership for listed members |

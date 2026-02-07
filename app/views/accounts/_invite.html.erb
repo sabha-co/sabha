@@ -1,5 +1,5 @@
 <div class="flex flex-column align-center gap">
-  <% url = Campfire.saas? ? untenanted_url(:join, Current.account.join_code.code) : join_url(Current.account.join_code.code) %>
+  <% url = Sabha.saas? ? untenanted_url(:join, Current.account.join_code.code) : join_url(Current.account.join_code.code) %>
 
   <label class="flex flex-column gap full-width" style="--row-gap: 0.5em">
     <strong id="invite_label" class="invite-label">Share to invite more people</strong>
@@ -20,7 +20,7 @@
       <%= icon_tag "copy-paste" %>
     <% end %>
 
-    <%= web_share_session_button(url, "Link to join Campfire", "Hit this link to join me in Campfire and start chatting.") do %>
+    <%= web_share_session_button(url, "Link to join Sabha", "Hit this link to join me in Sabha and start chatting.") do %>
       <span class="for-screen-reader">Share join link</span>
       <%= icon_tag "share" %>
     <% end %>

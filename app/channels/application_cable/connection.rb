@@ -8,9 +8,9 @@ module ApplicationCable
 
     def connect
       # Call super first to let the gem set current_tenant from tenant_resolver
-      super if Campfire.saas?
+      super if Sabha.saas?
 
-      if Campfire.saas?
+      if Sabha.saas?
         connect_saas
       else
         connect_single_tenant

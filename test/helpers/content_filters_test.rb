@@ -65,7 +65,7 @@ class ContentFiltersTest < ActionView::TestCase
     message = Message.create! room: rooms(:pets), body: "<div>Hey #{mention_attachment_for(:david)}</div>", creator: users(:jason)
 
     filtered = ContentFilters::TextMessagePresentationFilters.apply(message.body.body)
-    expected = /<action-text-attachment sgid="#{users(:david).attachable_sgid}" content-type="application\/vnd\.campfire\.mention" content="(.*?)"><\/action-text-attachment>/m
+    expected = /<action-text-attachment sgid="#{users(:david).attachable_sgid}" content-type="application\/vnd\.sabha\.mention" content="(.*?)"><\/action-text-attachment>/m
 
     assert_match expected, filtered.to_html
   end

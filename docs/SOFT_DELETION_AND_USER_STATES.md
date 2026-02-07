@@ -1,6 +1,6 @@
 # Soft Deletion and User States
 
-This document explains the soft deletion patterns and user state management in Campfire.
+This document explains the soft deletion patterns and user state management in Sabha.
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@ This document explains the soft deletion patterns and user state management in C
 
 ## Overview
 
-Campfire uses soft deletion for most content. Records are marked `active: false` rather than destroyed, preserving data for potential recovery and maintaining referential integrity.
+Sabha uses soft deletion for most content. Records are marked `active: false` rather than destroyed, preserving data for potential recovery and maintaining referential integrity.
 
 ### Deactivatable Concern
 

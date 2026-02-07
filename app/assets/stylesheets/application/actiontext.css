@@ -140,7 +140,7 @@ trix-editor {
   }
 }
 
-[data-trix-content-type~='application/vnd.campfire.mention'] {
+[data-trix-content-type~='application/vnd.sabha.mention'] {
   .trix-button-group {
     display: inline;
   }

@@ -11,7 +11,7 @@
 # With this:
 #   image.url → /1000001/rails/active_storage/blobs/.../image.jpg
 
-return unless Campfire.saas?
+return unless Sabha.saas?
 
 # Use proxy mode for ActiveStorage in SaaS mode
 # This serves files through Rails instead of redirecting to disk URLs,
@@ -22,7 +22,7 @@ Rails.application.config.to_prepare do
   # Helper method for setting ActiveStorage URL options with workspace prefix
   set_active_storage_url_options_method = lambda do |controller|
     controller.class_eval do
-      before_action :set_active_storage_url_options, if: -> { Campfire.saas? }
+      before_action :set_active_storage_url_options, if: -> { Sabha.saas? }
 
       private
 

@@ -1,6 +1,6 @@
 class UnreadMentionsNotifierJob < ApplicationJob
   def perform
-    if Campfire.saas?
+    if Sabha.saas?
       # SaaS mode: iterate over all workspaces
       ApplicationRecord.with_each_tenant do
         notify_users_in_current_workspace
@@ -16,7 +16,7 @@ class UnreadMentionsNotifierJob < ApplicationJob
   private
 
   def notify_users_in_current_workspace
-    log_tenant_info if Campfire.saas?
+    log_tenant_info if Sabha.saas?
 
     # Single consolidated query for all unread mentions
     unread_by_user = fetch_unread_mentions_by_user

@@ -8,7 +8,7 @@
 # Can be overridden with ARTENANT environment variable:
 #   ARTENANT=1000002 bin/rails console
 
-return unless defined?(ActiveRecord::Tenanted) && Campfire.saas?
+return unless defined?(ActiveRecord::Tenanted) && Sabha.saas?
 
 # Only set default tenant in development/test
 if Rails.env.development? || Rails.env.test?

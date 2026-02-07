@@ -4,9 +4,9 @@
 service: sabha
 
 ssh:
-  user: campfire
+  user: sabha
 
-image: superforumio/campfire-ce
+image: sabha-co/sabha
 
 servers:
   web:
@@ -22,7 +22,7 @@ proxy:
 
 registry:
   server: ghcr.io
-  username: superforumio
+  username: sabha-co
   password:
     - KAMAL_REGISTRY_PASSWORD
 

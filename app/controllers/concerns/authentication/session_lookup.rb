@@ -1,6 +1,6 @@
 module Authentication::SessionLookup
   def find_session_by_cookie
-    if Campfire.saas?
+    if Sabha.saas?
       find_global_session_by_cookie
     else
       find_local_session_by_cookie

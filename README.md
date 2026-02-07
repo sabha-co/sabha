@@ -1,4 +1,4 @@
-# Campfire-CE (Community Edition)
+# Sabha
 
 A community-driven fork of [Small Bets](https://github.com/antiwork/smallbets) that makes it easy to run your own branded community. All branding (app name, logos, colors, emails) is configurable through environment variables—no code changes required.
 
@@ -8,7 +8,7 @@ Based on [Once Campfire](https://github.com/basecamp/once-campfire/), a Ruby on 
 
 This project combines the simplicity of Campfire with passwordless authentication and community features. Perfect for running course communities or private group chats.
 
-If you find a bug or have a feature request, please [post an issue](https://github.com/ashwin47/campfire-ce/issues/new). Contributions welcome!
+If you find a bug or have a feature request, please [post an issue](https://github.com/sabha-co/sabha/issues/new). Contributions welcome!
 
 ## Running in development
 
@@ -54,7 +54,7 @@ All CSS is managed through Vite. Tailwind processes styles from `app/frontend/en
 
 ## Running in production
 
-Campfire-CE uses [Kamal](https://kamal-deploy.org/docs/installation/) for deployment. A modern tool that provides zero-downtime deployments with Docker.
+Sabha uses [Kamal](https://kamal-deploy.org/docs/installation/) for deployment. A modern tool that provides zero-downtime deployments with Docker.
 
 ### Prerequisites
 
@@ -134,12 +134,12 @@ If you prefer not to use Kamal, you can deploy manually with Docker:
 
 ```bash
 # Build and run
-docker build -t campfire-ce .
+docker build -t sabha .
 docker run -p 3000:3000 \
   -e RAILS_ENV=production \
   -e SECRET_KEY_BASE=your-secret-key \
   -v /path/to/storage:/rails/storage \
-  campfire-ce
+  sabha
 ```
 
 ### Environment Variables Reference
@@ -160,7 +160,7 @@ docker run -p 3000:3000 \
 
 ### Database Backups
 
-**IMPORTANT:** Campfire-CE does not include automatic database backups out of the box. You must implement your own backup strategy.
+**IMPORTANT:** Sabha does not include automatic database backups out of the box. You must implement your own backup strategy.
 
 **Recommended Options:**
 
@@ -169,7 +169,7 @@ docker run -p 3000:3000 \
 2. **Periodic Backups** - Schedule cron jobs or scripts to backup the SQLite database:
    ```bash
    # Example: Daily backup at 2 AM
-   0 2 * * * tar -czf /backups/campfire-$(date +\%Y\%m\%d).tar.gz /disk/campfire/db/production.sqlite3
+   0 2 * * * tar -czf /backups/sabha-$(date +\%Y\%m\%d).tar.gz /disk/sabha/db/production.sqlite3
    ```
 
 See [DEPLOYMENT.md](docs/DEPLOYMENT.md#database-backups) for detailed backup strategies.
@@ -181,8 +181,8 @@ Based on [Once Campfire](https://github.com/basecamp/once-campfire/) by 37signal
 
 ## Contributing
 
-Open an [issue](https://github.com/superforumio/campfire-ce/issues/new) for bugs or feature requests.
+Open an [issue](https://github.com/sabha-co/sabha/issues/new) for bugs or feature requests.
 
 ## License
 
-Campfire-CE is available under the MIT license. See LICENSE for details.
+Sabha is available under the MIT license. See LICENSE for details.

@@ -1,6 +1,6 @@
-# Fizzy vs Campfire-CE Multi-Tenancy Comparison
+# Fizzy vs Sabha Multi-Tenancy Comparison
 
-A detailed comparison of multi-tenancy implementations between Fizzy (37signals) and Campfire-CE with the `activerecord-tenanted` gem.
+A detailed comparison of multi-tenancy implementations between Fizzy (37signals) and Sabha with the `activerecord-tenanted` gem.
 
 **Scope:** This comparison covers MVP-0 through MVP-9 implementation phases:
 - MVP-0: SaaS Folder Structure
@@ -16,7 +16,7 @@ A detailed comparison of multi-tenancy implementations between Fizzy (37signals)
 
 ## Architecture Overview
 
-| Aspect | Fizzy | Campfire-CE |
+| Aspect | Fizzy | Sabha |
 |--------|-------|-------------|
 | **Database Strategy** | Single MySQL, account-scoped queries | Per-workspace SQLite databases |
 | **Tenancy Model** | `Account` as tenant, `Current.account` scoping | `Workspace` registry + separate DBs via gem |
@@ -44,10 +44,10 @@ module Fizzy
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
-# lib/campfire.rb
-module Campfire
+# lib/sabha.rb
+module Sabha
   SAAS_MARKER = File.expand_path("../tmp/saas.txt", __dir__)
 
   class << self
@@ -65,7 +65,7 @@ module Campfire
 end
 ```
 
-**Difference:** Campfire adds `configure_bundle` to auto-select `Gemfile.saas` before boot.
+**Difference:** Sabha adds `configure_bundle` to auto-select `Gemfile.saas` before boot.
 
 ---
 
@@ -86,16 +86,16 @@ gem "sentry-ruby", "sentry-rails"              # Error tracking
 gem "yabeda-*"                                  # Metrics/telemetry
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 eval_gemfile "Gemfile"
 
 gem "activerecord-tenanted", github: "ashwin47/activerecord-tenanted",
     branch: "fix-rails-82-type-for-column-signature"
-gem "campfire-saas", path: "saas"
+gem "sabha-saas", path: "saas"
 ```
 
-**Difference:** Fizzy includes billing (Stripe/Queenbee), auditing, and telemetry. Campfire-CE is minimal - just the tenanting gem and SaaS engine.
+**Difference:** Fizzy includes billing (Stripe/Queenbee), auditing, and telemetry. Sabha is minimal - just the tenanting gem and SaaS engine.
 
 ---
 
@@ -128,30 +128,30 @@ module Fizzy
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
-# saas/lib/campfire/saas/engine.rb
-module Campfire
+# saas/lib/sabha/saas/engine.rb
+module Sabha
   module Saas
     class Engine < ::Rails::Engine
-      engine_name "campfire_saas"
+      engine_name "sabha_saas"
       paths["config/routes.rb"] = []  # Disable auto-loading
 
-      initializer "campfire_saas.prepend_routes", after: :add_routing_paths do |app|
-        if Campfire.saas?
+      initializer "sabha_saas.prepend_routes", after: :add_routing_paths do |app|
+        if Sabha.saas?
           saas_routes = root.join("config/routes.rb").to_s
           app.routes_reloader.paths.unshift(saas_routes)
         end
       end
 
-      initializer "campfire_saas.migrations" do |app|
-        if Campfire.saas?
+      initializer "sabha_saas.migrations" do |app|
+        if Sabha.saas?
           app.config.paths["db/migrate"] << root.join("db/untenanted_migrate").to_s
         end
       end
 
       config.to_prepare do
-        if Campfire.saas?
+        if Sabha.saas?
           require_dependency Engine.root.join("app/controllers/concerns/saas/authentication")
         end
       end
@@ -160,7 +160,7 @@ module Campfire
 end
 ```
 
-**Difference:** Fizzy's engine focuses on billing/authorization extensions. Campfire's engine manages route prepending and untenanted migrations.
+**Difference:** Fizzy's engine focuses on billing/authorization extensions. Sabha's engine manages route prepending and untenanted migrations.
 
 ---
 
@@ -197,10 +197,10 @@ end
 Rails.application.config.middleware.insert_after Rack::TempfileReaper, AccountSlug::Extractor
 ```
 
-### Campfire-CE - Gem Configuration
+### Sabha - Gem Configuration
 ```ruby
 # saas/config/initializers/tenanting/tenant_resolver.rb
-return unless Campfire.saas?
+return unless Sabha.saas?
 
 Rails.application.configure do
   config.active_record_tenanted.tenant_resolver = ->(request) {
@@ -215,7 +215,7 @@ end
 
 **Key Difference:**
 - Fizzy: Custom middleware sets `Current.account` manually, stores ID in `env["fizzy.external_account_id"]`
-- Campfire: Gem handles path rewriting automatically, stores tenant in `ApplicationRecord.current_tenant`
+- Sabha: Gem handles path rewriting automatically, stores tenant in `ApplicationRecord.current_tenant`
 
 ---
 
@@ -241,7 +241,7 @@ class Identity < ApplicationRecord
 end
 ```
 
-### Campfire-CE - GlobalIdentity (Untenanted Database)
+### Sabha - GlobalIdentity (Untenanted Database)
 ```ruby
 # saas/app/models/global_identity.rb
 class GlobalIdentity < UntenantedRecord
@@ -265,7 +265,7 @@ end
 ```
 
 **Key Differences:**
-| Aspect | Fizzy | Campfire-CE |
+| Aspect | Fizzy | Sabha |
 |--------|-------|-------------|
 | Base class | `ApplicationRecord` | `UntenantedRecord` |
 | Database | Same as tenanted data | Separate untenanted DB |
@@ -285,7 +285,7 @@ end
 # Uses Rails' signed_id for cookie: Session.find_signed(cookies.signed[:session_token])
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 # saas/app/models/global_session.rb
 class GlobalSession < UntenantedRecord
@@ -297,7 +297,7 @@ class GlobalSession < UntenantedRecord
 end
 ```
 
-**Difference:** Fizzy uses Rails' built-in `signed_id`. Campfire uses a custom `token` column with `has_secure_token`.
+**Difference:** Fizzy uses Rails' built-in `signed_id`. Sabha uses a custom `token` column with `has_secure_token`.
 
 ---
 
@@ -323,7 +323,7 @@ FIZZY (Single MySQL Database - Direct FK):
         Same MySQL database - direct association works
 
 
-CAMPFIRE-CE (Separate SQLite Databases - Bridge Required):
+Sabha (Separate SQLite Databases - Bridge Required):
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
 │   GlobalIdentity    │    │ WorkspaceMembership │    │        User         │
 │─────────────────────│    │─────────────────────│    │─────────────────────│
@@ -355,14 +355,14 @@ end
 # Unique index on (account_id, identity_id) - one identity per account
 ```
 
-### Campfire-CE - Via WorkspaceMembership (Cross-Database)
+### Sabha - Via WorkspaceMembership (Cross-Database)
 ```ruby
 # app/models/user.rb (core app, per-workspace DB)
 class User < ApplicationRecord
   belongs_to :workspace_membership, optional: true, class_name: "WorkspaceMembership"
 
   def global_identity
-    return nil unless Campfire.saas?
+    return nil unless Sabha.saas?
     workspace_membership&.global_identity
   end
 end
@@ -393,7 +393,7 @@ end
 
 **Why the difference?**
 
-| Aspect | Fizzy | Campfire-CE |
+| Aspect | Fizzy | Sabha |
 |--------|-------|-------------|
 | Database | Single MySQL | SQLite per-workspace |
 | FK possible? | Yes - same DB | No - different DB files |
@@ -428,7 +428,7 @@ class Current < ActiveSupport::CurrentAttributes
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 # app/models/current.rb
 class Current < ActiveSupport::CurrentAttributes
@@ -437,20 +437,20 @@ class Current < ActiveSupport::CurrentAttributes
 
   def session=(value)
     super
-    self.user = value&.user unless Campfire.saas?
+    self.user = value&.user unless Sabha.saas?
   end
 
   def global_session=(value)
     super
     return if value.nil?
-    if Campfire.saas? && ApplicationRecord.current_tenant.present?
+    if Sabha.saas? && ApplicationRecord.current_tenant.present?
       self.workspace_membership = value.global_identity
         &.workspace_memberships&.find_by(tenant: ApplicationRecord.current_tenant)
     end
   end
 
   def user
-    if Campfire.saas? && workspace_membership.present?
+    if Sabha.saas? && workspace_membership.present?
       workspace_membership.user
     else
       super
@@ -458,13 +458,13 @@ class Current < ActiveSupport::CurrentAttributes
   end
 
   def workspace
-    return nil unless Campfire.saas? && ApplicationRecord.current_tenant.present?
+    return nil unless Sabha.saas? && ApplicationRecord.current_tenant.present?
     @workspace ||= Workspace.find_by(external_id: ApplicationRecord.current_tenant)
   end
 end
 ```
 
-**Key Difference:** Campfire has conditional `Campfire.saas?` checks to maintain single-tenant compatibility.
+**Key Difference:** Sabha has conditional `Sabha.saas?` checks to maintain single-tenant compatibility.
 
 ---
 
@@ -518,7 +518,7 @@ module Authentication
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 # saas/app/controllers/concerns/saas/authentication.rb
 module Saas
@@ -565,7 +565,7 @@ end
 ```
 
 **Key Differences:**
-| Aspect | Fizzy | Campfire-CE |
+| Aspect | Fizzy | Sabha |
 |--------|-------|-------------|
 | Account check | `require_account` before_action | No account check (tenant from URL) |
 | Session lookup | `Session.find_signed` | `GlobalSession.find_by(token:)` |
@@ -610,7 +610,7 @@ module AuthCode::Code
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 # saas/app/models/auth_code.rb
 class AuthCode < UntenantedRecord
@@ -641,8 +641,8 @@ end
 
 **Differences:**
 - Fizzy `consume` returns the auth_code itself
-- Campfire `consume` returns the `global_identity` directly
-- Campfire uses a custom alphabet excluding ambiguous characters (O, I, L)
+- Sabha `consume` returns the `global_identity` directly
+- Sabha uses a custom alphabet excluding ambiguous characters (O, I, L)
 
 ---
 
@@ -671,7 +671,7 @@ module ApplicationCable
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 # app/channels/application_cable/connection.rb
 module ApplicationCable
@@ -679,8 +679,8 @@ module ApplicationCable
     identified_by :current_user
 
     def connect
-      super if Campfire.saas?  # Let gem set current_tenant
-      Campfire.saas? ? connect_saas : connect_single_tenant
+      super if Sabha.saas?  # Let gem set current_tenant
+      Sabha.saas? ? connect_saas : connect_single_tenant
     end
 
     private
@@ -703,8 +703,8 @@ end
 
 **Key Differences:**
 - Fizzy uses `env["fizzy.external_account_id"]` from middleware
-- Campfire uses gem's `current_tenant` and calls `super` to initialize gem
-- Campfire creates user lazily if not exists
+- Sabha uses gem's `current_tenant` and calls `super` to initialize gem
+- Sabha creates user lazily if not exists
 
 ---
 
@@ -722,7 +722,7 @@ module TenantingHelper
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 # saas/app/helpers/tenanting_helper.rb
 module TenantingHelper
@@ -745,7 +745,7 @@ module TenantingHelper
 end
 ```
 
-**Difference:** Campfire adds `untenanted_url/path` helpers for generating URLs outside workspace context.
+**Difference:** Sabha adds `untenanted_url/path` helpers for generating URLs outside workspace context.
 
 ---
 
@@ -769,7 +769,7 @@ class Sessions::MenusController < ApplicationController
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 # saas/app/controllers/saas/workspaces_controller.rb
 class Saas::WorkspacesController < BaseController
@@ -791,7 +791,7 @@ end
 # saas/app/helpers/workspace_selector_helper.rb
 module WorkspaceSelectorHelper
   def show_workspace_selector?
-    Campfire.saas? && Current.global_identity.present? &&
+    Sabha.saas? && Current.global_identity.present? &&
       Current.global_identity.workspace_memberships.count >= 1
   end
 
@@ -804,7 +804,7 @@ end
 ```
 
 **Key Differences:**
-| Aspect | Fizzy | Campfire-CE |
+| Aspect | Fizzy | Sabha |
 |--------|-------|-------------|
 | Controller location | `Sessions::MenusController` | `Saas::WorkspacesController` |
 | Layout | `public` | `saas` (outside workspace context) |
@@ -856,7 +856,7 @@ class Signup
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 # saas/app/controllers/saas/registrations_controller.rb
 class Saas::RegistrationsController < BaseController
@@ -889,7 +889,7 @@ end
 ```
 
 **Key Differences:**
-| Aspect | Fizzy | Campfire-CE |
+| Aspect | Fizzy | Sabha |
 |--------|-------|-------------|
 | Registration location | Via `SessionsController` | Separate `RegistrationsController` |
 | Signup model | `ActiveModel::Model` with validation contexts | Direct `GlobalIdentity.find_or_create_by!` |
@@ -947,7 +947,7 @@ module Identity::Joinable
 end
 ```
 
-### Campfire-CE
+### Sabha
 ```ruby
 # saas/app/controllers/saas/workspaces_controller.rb
 class Saas::WorkspacesController < BaseController
@@ -1002,7 +1002,7 @@ end
 ```
 
 **Key Differences:**
-| Aspect | Fizzy | Campfire-CE |
+| Aspect | Fizzy | Sabha |
 |--------|-------|-------------|
 | Workspace creation | Via `Signup.complete` (billing-gated) | User self-service via `Workspace.create_with_database!` |
 | Join codes | `JoinCodesController` with `identity.join(account)` | `WorkspacesController#join` with membership creation |
@@ -1020,7 +1020,7 @@ end
 - Simpler cross-tenant queries needed
 - Billing/subscription built-in required
 
-### Use Campfire's Pattern When:
+### Use Sabha's Pattern When:
 - Physical database isolation required (compliance, security)
 - SQLite per-tenant for self-hosting simplicity
 - Need to maintain single-tenant compatibility
@@ -1052,11 +1052,11 @@ Fizzy's "Plan B" (PR #1558) migrated from SQLite+`activerecord-tenanted` to MySQ
 | Database read replicas | No | MySQL-specific scaling pattern |
 | Direct `User.belongs_to :identity` | No | We need `WorkspaceMembership` bridge for cross-DB linking |
 
-## Patterns Unique to Campfire-CE
+## Patterns Unique to Sabha
 
 1. **`activerecord-tenanted` gem** for automatic scoping
 2. **`UntenantedRecord` base class** for global models
 3. **`WorkspaceMembership` bridge** for cross-DB linking
 4. **Lazy user creation** on first workspace visit
 5. **`untenanted_url/path` helpers** for join links
-6. **Conditional `Campfire.saas?`** checks for compatibility
+6. **Conditional `Sabha.saas?`** checks for compatibility

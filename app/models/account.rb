@@ -37,7 +37,7 @@ class Account < ApplicationRecord
     end
 
     def sync_logo_to_workspace
-      return unless Campfire.saas?
+      return unless Sabha.saas?
       return unless ApplicationRecord.current_tenant.present?
 
       Workspace

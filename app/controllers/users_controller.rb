@@ -191,7 +191,7 @@ class UsersController < ApplicationController
     end
 
     def tenant_cache_key(key)
-      if Campfire.saas? && ApplicationRecord.current_tenant.present?
+      if Sabha.saas? && ApplicationRecord.current_tenant.present?
         "#{ApplicationRecord.current_tenant}/#{key}"
       else
         key
@@ -200,12 +200,12 @@ class UsersController < ApplicationController
 
     # Check if user is globally authenticated in SaaS mode (but not yet a workspace member)
     def saas_authenticated?
-      Campfire.saas? && Current.global_identity.present? && Current.user.blank?
+      Sabha.saas? && Current.global_identity.present? && Current.user.blank?
     end
 
     # Check if user is unauthenticated in SaaS mode
     def saas_unauthenticated?
-      Campfire.saas? && Current.global_identity.blank?
+      Sabha.saas? && Current.global_identity.blank?
     end
 
     # Build return_to URL for auth redirects

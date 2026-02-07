@@ -1,6 +1,6 @@
 # Multi-Tenancy Implementation Tasks
 
-Detailed task breakdown for implementing multi-tenancy in Campfire-CE with GlobalIdentity.
+Detailed task breakdown for implementing multi-tenancy in Sabha with GlobalIdentity.
 
 **Related Documents:**
 - [Product PRD](./multi-tenancy-product-prd.md) - Business goals, user stories, requirements
@@ -70,7 +70,7 @@ See [multitenant-saas-notes.md](./multitenant-saas-notes.md) for detailed compar
 
 Reference: [Rails Engines Guide](https://guides.rubyonrails.org/engines.html)
 
-**Engine Type:** Non-isolated (no namespace prefix on tables/models) - we extend Campfire, not create separate app.
+**Engine Type:** Non-isolated (no namespace prefix on tables/models) - we extend Sabha, not create separate app.
 
 - [x] Create `saas/` folder as Rails engine
   ```
@@ -113,25 +113,25 @@ Reference: [Rails Engines Guide](https://guides.rubyonrails.org/engines.html)
   ├── db/
   │   └── untenanted_migrate/
   ├── lib/
-  │   └── campfire/
+  │   └── sabha/
   │       └── saas/
   │           └── engine.rb
-  └── campfire-saas.gemspec
+  └── sabha-saas.gemspec
   ```
-- [x] Create `saas/lib/campfire/saas/engine.rb`
+- [x] Create `saas/lib/sabha/saas/engine.rb`
   ```ruby
-  module Campfire
+  module Sabha
     module Saas
       class Engine < ::Rails::Engine
-        # Non-isolated engine - extends Campfire, doesn't namespace
-        engine_name "campfire_saas"
+        # Non-isolated engine - extends Sabha, doesn't namespace
+        engine_name "sabha_saas"
 
         # Disable automatic route loading - we define routes inline in initializer
         paths["config/routes.rb"] = []
 
         # Add SaaS paths to autoload
-        initializer "campfire_saas.autoload_paths", before: :set_autoload_paths do |app|
-          if Campfire.saas?
+        initializer "sabha_saas.autoload_paths", before: :set_autoload_paths do |app|
+          if Sabha.saas?
             app.config.autoload_paths << root.join("app/models")
             app.config.autoload_paths << root.join("app/controllers")
             app.config.autoload_paths << root.join("app/controllers/concerns")
@@ -143,8 +143,8 @@ Reference: [Rails Engines Guide](https://guides.rubyonrails.org/engines.html)
 
         # Prepend SaaS routes to take precedence over core routes
         # These routes only match when OUTSIDE a workspace context (no tenant set)
-        initializer "campfire_saas.routes", after: :add_routing_paths do |app|
-          next unless Campfire.saas?
+        initializer "sabha_saas.routes", after: :add_routing_paths do |app|
+          next unless Sabha.saas?
 
           app.routes.prepend do
             constraints(->(req) { ApplicationRecord.current_tenant.blank? }) do
@@ -191,13 +191,13 @@ Reference: [Rails Engines Guide](https://guides.rubyonrails.org/engines.html)
     end
   end
   ```
-- [x] Create `saas/campfire-saas.gemspec`
+- [x] Create `saas/sabha-saas.gemspec`
 - [x] Create `Gemfile.saas` that extends base Gemfile
   ```ruby
   eval_gemfile "Gemfile"
-  gem "campfire-saas", path: "saas"
+  gem "sabha-saas", path: "saas"
   ```
-- [x] Create `lib/campfire.rb` with `Campfire.saas?` detection
+- [x] Create `lib/sabha.rb` with `Sabha.saas?` detection
 - [x] Add `saas:enable` / `saas:disable` rake tasks
 - [x] Update `.gitignore` for SaaS-specific files
 
@@ -211,13 +211,13 @@ Reference: [Rails Engines Guide](https://guides.rubyonrails.org/engines.html)
 - [x] Update `.gitignore` for workspace database files
 - [x] Create `saas/app/models/untenanted_record.rb`
 - [x] Create engine initializer to add `tenanted` macro to ApplicationRecord when SaaS enabled
-- [x] Create `saas/lib/campfire/saas/path_rewriter.rb` middleware for path-based workspace resolution
+- [x] Create `saas/lib/sabha/saas/path_rewriter.rb` middleware for path-based workspace resolution
   - Extracts 7+ digit workspace ID from path (e.g., `/1000001/rooms/general`)
   - Moves workspace prefix from `PATH_INFO` to `SCRIPT_NAME`
-  - Stashes workspace ID in `env["campfire.workspace_id"]` for tenant resolver
+  - Stashes workspace ID in `env["sabha.workspace_id"]` for tenant resolver
 - [x] Create `saas/config/initializers/tenanting/tenant_resolver.rb`
   - Configures middleware insertion: `PathRewriter` runs BEFORE `TenantSelector`
-  - Simple lambda reads `env["campfire.workspace_id"]` for the gem's tenant resolver
+  - Simple lambda reads `env["sabha.workspace_id"]` for the gem's tenant resolver
   - `Current.workspace` is lazy-loaded when accessed (no before_action needed)
 - [x] Create `saas/config/initializers/tenanting/active_storage.rb` - Fix attachment URLs
   - Sets `ActiveStorage::Current.url_options` with `script_name` in before_action
@@ -323,7 +323,7 @@ Reference: [Rails Engines Guide](https://guides.rubyonrails.org/engines.html)
   - Seeds/fixtures use `ActiveRecord::FixtureSet.identify(name)` for deterministic IDs
 - [x] Create all untenanted migrations in `saas/db/untenanted_migrate/`
 
-### MVP-3: Core App Modifications (conditional on Campfire.saas?)
+### MVP-3: Core App Modifications (conditional on Sabha.saas?)
 
 These changes to the core app only apply when SaaS mode is enabled:
 
@@ -344,14 +344,14 @@ These changes to the core app only apply when SaaS mode is enabled:
     # Single-tenant: session sets user directly
     def session=(value)
       super
-      self.user = value&.user unless Campfire.saas?
+      self.user = value&.user unless Sabha.saas?
     end
 
     # SaaS: global_session sets workspace_membership
     def global_session=(value)
       super
       return if value.nil?
-      if Campfire.saas? && ApplicationRecord.current_tenant.present?
+      if Sabha.saas? && ApplicationRecord.current_tenant.present?
         self.workspace_membership = value.global_identity
           &.workspace_memberships
           &.find_by(tenant: ApplicationRecord.current_tenant)
@@ -363,7 +363,7 @@ These changes to the core app only apply when SaaS mode is enabled:
     end
 
     def user
-      if Campfire.saas? && workspace_membership.present?
+      if Sabha.saas? && workspace_membership.present?
         workspace_membership.user
       else
         super
@@ -371,7 +371,7 @@ These changes to the core app only apply when SaaS mode is enabled:
     end
 
     def workspace
-      return nil unless Campfire.saas? && ApplicationRecord.current_tenant.present?
+      return nil unless Sabha.saas? && ApplicationRecord.current_tenant.present?
       @workspace ||= Workspace.find_by(external_id: ApplicationRecord.current_tenant)
     end
 
@@ -451,10 +451,10 @@ These changes to the core app only apply when SaaS mode is enabled:
   ```
 - [x] Engine hooks to override Authentication concern
   ```ruby
-  # saas/lib/campfire/saas/engine.rb
+  # saas/lib/sabha/saas/engine.rb
   initializer "saas.override_authentication" do
     ActiveSupport.on_load(:action_controller_base) do
-      if Campfire.saas?
+      if Sabha.saas?
         # Remove core Authentication, add SaaS version
         include Saas::Authentication
       end
@@ -490,7 +490,7 @@ Apply lessons learned from v1 implementation. These fixes only matter when multi
 - [x] **User-scoped channels** - Channels like `UserUnreadRoomsChannel` use `stream_for current_user` which includes tenant in GlobalID
 - [x] **Fix `User#close_remote_connections`** - Includes `current_tenant` filter in SaaS mode:
   ```ruby
-  if Campfire.saas? && ApplicationRecord.current_tenant.present?
+  if Sabha.saas? && ApplicationRecord.current_tenant.present?
     ActionCable.server.remote_connections.where(
       current_tenant: ApplicationRecord.current_tenant,
       current_user: self
@@ -519,9 +519,9 @@ Apply lessons learned from v1 implementation. These fixes only matter when multi
   - Dark mode support via CSS custom properties and `[data-theme]` attribute
   - Mobile responsive (hidden on small screens)
 - [x] Engine injects workspace selector into main layout when saas enabled
-  - Added `campfire_saas.assets` initializer to add SaaS stylesheets to asset paths
-  - Added `campfire_saas.view_paths` initializer to add SaaS views
-  - Added `campfire_saas.helpers` initializer to include WorkspaceSelectorHelper and TenantingHelper
+  - Added `sabha_saas.assets` initializer to add SaaS stylesheets to asset paths
+  - Added `sabha_saas.view_paths` initializer to add SaaS views
+  - Added `sabha_saas.helpers` initializer to include WorkspaceSelectorHelper and TenantingHelper
   - Layout conditionally renders `shared/workspace_selector` partial
 - [x] Add body class `.app-with-workspaces` when selector is shown
   - Added `workspace_selector_body_class` helper to ApplicationHelper
@@ -542,7 +542,7 @@ Apply lessons learned from v1 implementation. These fixes only matter when multi
   - Separator lines between sections
   - Improved icon contrast for better legibility
 - [x] **Layout adjustments**
-  - Hide campfire logo in SaaS mode (workspace selector replaces it)
+  - Hide sabha logo in SaaS mode (workspace selector replaces it)
   - Adjust nav positioning for workspace selector width
   - Remove 5vw left margin column in SaaS mode
 
@@ -558,7 +558,7 @@ Apply lessons learned from v1 implementation. These fixes only matter when multi
   - Changing email requires re-verification (marks as unverified, signs out)
   - Route: `resource :profile, only: [:edit, :update]`
 - [x] Create/update views in `saas/app/views/saas/registrations/` and `saas/app/views/saas/profiles/`
-  - Views use Campfire styling (panel, fieldset, btn classes)
+  - Views use Sabha styling (panel, fieldset, btn classes)
   - Registration links to sign in, session links to registration
   - Profile allows email change with cancel option
 - [x] Update login flow
@@ -686,7 +686,7 @@ SAAS=true BUNDLE_GEMFILE=Gemfile.saas bin/rails test saas/test/
 - `saas/test/controllers/saas/workspace_settings_controller_test.rb` - Workspace settings tests
 
 **Files Modified:**
-- `saas/lib/campfire/saas/engine.rb` - Changed profile route to settings
+- `saas/lib/sabha/saas/engine.rb` - Changed profile route to settings
 - `saas/app/views/shared/_workspace_selector.html.erb` - Changed to gear icon for settings
 - `saas/app/helpers/workspace_selector_helper.rb` - Removed unused profile_has_notifications
 - `saas/app/assets/stylesheets/workspace_selector.css` - Icon sizing, removed notification CSS
@@ -856,7 +856,7 @@ Note: SaaS folder structure is now created in MVP. v2 extends it.
 ```ruby
 # In app/models/user.rb - close_remote_connections method
 def close_remote_connections(reconnect: false)
-  if Campfire.saas? && ApplicationRecord.current_tenant.present?
+  if Sabha.saas? && ApplicationRecord.current_tenant.present?
     ActionCable.server.remote_connections.where(
       current_tenant: ApplicationRecord.current_tenant,
       current_user: self
@@ -959,7 +959,7 @@ broadcast_to user, :inbox_mentions, target: "inbox", partial: "..."
 ```ruby
 # saas/app/channels/concerns/tenant_context.rb
 def with_tenant_context(&block)
-  if Campfire.saas? && current_tenant.present?
+  if Sabha.saas? && current_tenant.present?
     ApplicationRecord.with_tenant(current_tenant, &block)
   else
     yield
@@ -974,7 +974,7 @@ The `activerecord-tenanted` gem provides `around_command :with_tenant` that auto
 ```ruby
 # app/channels/application_cable/connection.rb
 def connect
-  super if Campfire.saas?  # Let gem set current_tenant from tenant_resolver
+  super if Sabha.saas?  # Let gem set current_tenant from tenant_resolver
   # ... then do custom auth using current_tenant
 end
 ```
@@ -1148,18 +1148,18 @@ saas/
 │       ├── YYYYMMDD_create_workspaces.rb
 │       └── YYYYMMDD_create_workspace_memberships.rb
 ├── lib/
-│   └── campfire/
+│   └── sabha/
 │       └── saas/
 │           ├── engine.rb                    # Rails engine setup
 │           └── path_rewriter.rb             # Middleware to extract workspace from path
-└── campfire-saas.gemspec
+└── sabha-saas.gemspec
 ```
 
 ### New Files in Core App
 
 ```
 lib/
-└── campfire.rb                    # Campfire.saas? detection
+└── sabha.rb                    # Sabha.saas? detection
 
 Gemfile.saas                       # eval_gemfile "Gemfile" + SaaS deps
 
@@ -1258,21 +1258,21 @@ The gem automatically prepends test helpers when `connection_class` is set:
 | `ActiveJob::TestCase` | Wraps `perform_enqueued_jobs` in `without_tenant` |
 | `ActionCable::Connection::TestCase` | Sets `HTTP_HOST` with tenant |
 
-### Campfire Test Modes
+### Sabha Test Modes
 
 **Two test suites needed:**
 
 1. **Self-hosted tests** (`bin/rails test`)
    - No tenant context
-   - Uses existing Campfire fixtures
+   - Uses existing Sabha fixtures
    - Tests password auth, single Account
-   - `Campfire.saas?` returns `false`
+   - `Sabha.saas?` returns `false`
 
 2. **SaaS tests** (`SAAS=true bin/rails test`)
    - With tenant context
    - Uses SaaS fixtures (GlobalIdentity, WorkspaceMembership, Workspace)
    - Tests auth code auth, multi-workspace
-   - `Campfire.saas?` returns `true`
+   - `Sabha.saas?` returns `true`
 
 ### Test Helper Configuration
 

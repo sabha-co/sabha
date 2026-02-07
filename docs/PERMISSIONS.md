@@ -1,6 +1,6 @@
 # Permissions
 
-This document outlines the permission system for rooms and actions in Campfire.
+This document outlines the permission system for rooms and actions in Sabha.
 
 ## Room Types
 
