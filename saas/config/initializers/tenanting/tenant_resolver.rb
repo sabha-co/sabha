@@ -18,7 +18,9 @@ Rails.application.config.middleware.insert_before(
   Sabha::Saas::PathRewriter
 )
 
-# Tenant resolver reads the workspace ID stashed by PathRewriter
+# Tenant resolver reads the workspace ID stashed by PathRewriter.
+# Falls back to "wid" query param for AnyCable WebSocket connections,
+# where the workspace prefix can't be in the path (kamal-proxy routes /cable).
 Rails.application.config.active_record_tenanted.tenant_resolver = ->(request) do
-  request.env["sabha.workspace_id"]
+  request.env["sabha.workspace_id"] || request.params["wid"]
 end

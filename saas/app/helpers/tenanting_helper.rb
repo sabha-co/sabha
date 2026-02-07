@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
 module TenantingHelper
-  # Generate ActionCable meta tag with workspace prefix in URL
-  # This ensures WebSocket connections go through the path rewriter
-  # so tenant context is established for channels.
+  # Generate ActionCable meta tag with workspace ID as query parameter.
   #
-  # Without this: /cable
-  # With this:    /1000002/cable
+  # kamal-proxy routes /cable to AnyCable-Go via path_prefix, so the
+  # workspace ID can't be a path prefix (/1000001/cable won't match).
+  # Instead: wss://sabha.co/cable?wid=1000002
   def tenanted_action_cable_meta_tag
-    tag "meta",
-        name: "action-cable-url",
-        content: "#{request.script_name}#{ActionCable.server.config.mount_path}"
+    workspace_id = request.env["sabha.workspace_id"]
+    base_url = ActionCable.server.config.url || "#{request.script_name}/cable"
+
+    tag "meta", name: "action-cable-url", content: "#{base_url}?wid=#{workspace_id}"
   end
 
   # Generate a URL without the workspace prefix (script_name)
