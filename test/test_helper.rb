@@ -9,6 +9,7 @@ require "webmock/minitest"
 require_relative "test_helpers/session_test_helper"
 require_relative "test_helpers/mention_test_helper"
 require_relative "test_helpers/turbo_test_helper"
+require_relative "test_helpers/turnstile_test_helper"
 
 WebMock.enable!
 

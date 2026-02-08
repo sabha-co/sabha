@@ -6,6 +6,9 @@ class UsersController < ApplicationController
   rate_limit to: 10, within: 1.hour, only: :create, with: -> { redirect_to new_session_url, alert: "Too many signup attempts. Please try again later." }
 
   before_action :set_user, only: :show
+  before_action :validate_cloudflare_turnstile, only: :create
+  rescue_from RailsCloudflareTurnstile::Forbidden, with: :handle_turnstile_failure
+
   before_action :set_join_code, only: %i[ new create ]
   before_action :verify_join_code_active, only: %i[ new create ]
   before_action :set_return_to_url, only: %i[ new create ]
@@ -35,6 +38,10 @@ class UsersController < ApplicationController
   end
 
   private
+    def handle_turnstile_failure
+      redirect_back fallback_location: root_url, alert: "Please complete the CAPTCHA verification."
+    end
+
     # SaaS mode: user is globally authenticated, just needs to join this workspace
     def create_for_saas_user
       global_identity = Current.global_identity

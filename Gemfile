@@ -57,6 +57,7 @@ gem "kredis"
 gem "platform_agent"
 gem "faraday"
 gem "rubyzip", require: "zip"
+gem "rails_cloudflare_turnstile"
 
 group :development, :test do
   gem "debug"

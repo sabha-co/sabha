@@ -342,6 +342,9 @@ GEM
       actionview (> 3.1)
       activesupport (> 3.1)
       railties (> 3.1)
+    rails_cloudflare_turnstile (0.4.4)
+      faraday (>= 1.0, < 3.0)
+      rails (>= 6.0, < 8.2)
     rainbow (3.1.1)
     rake (13.3.1)
     rdoc (7.1.0)
@@ -499,6 +502,7 @@ DEPENDENCIES
   rack-mini-profiler (~> 4.0)
   rails!
   rails_autolink
+  rails_cloudflare_turnstile
   redis (~> 5.4)
   resend
   rqrcode
@@ -637,6 +641,7 @@ CHECKSUMS
   rails-dom-testing (2.3.0) sha256=8acc7953a7b911ca44588bf08737bc16719f431a1cc3091a292bca7317925c1d
   rails-html-sanitizer (1.6.2) sha256=35fce2ca8242da8775c83b6ba9c1bcaad6751d9eb73c1abaa8403475ab89a560
   rails_autolink (1.1.8) sha256=fbcb9d2e5f2cea9435a32e5f12556c7a9b7ed6867889fb9cf5eac405049bfc3a
+  rails_cloudflare_turnstile (0.4.4)
   railties (8.2.0.alpha)
   rainbow (3.1.1) sha256=039491aa3a89f42efa1d6dec2fc4e62ede96eb6acd95e52f1ad581182b79bc6a
   rake (13.3.1) sha256=8c9e89d09f66a26a01264e7e3480ec0607f0c497a861ef16063604b1b08eb19c

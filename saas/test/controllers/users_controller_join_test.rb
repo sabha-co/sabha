@@ -10,6 +10,8 @@ require_relative "../test_helper"
 # Run with: SAAS=true bin/rails test saas/test/controllers/users_controller_join_test.rb
 
 class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
+  include TurnstileTestHelper
+
   setup do
     @workspace = workspaces(:acme)
     @alice = global_identities(:alice)
@@ -81,9 +83,9 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
   # ============================================================================
 
   test "submit join form when signed out redirects to sign-in" do
-    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: {
+    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response(
       user: { name: "New User" }
-    }
+    )
 
     assert_redirected_to "/session/new"
     assert_match /sign in to join/i, flash[:alert]
@@ -97,7 +99,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
     sign_in_global_identity(@bob)
 
     assert_difference -> { WorkspaceMembership.count }, 1 do
-      workspace_post "/join/#{@join_code.code}", workspace: @workspace
+      workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
     end
 
     membership = WorkspaceMembership.find_by(
@@ -110,7 +112,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
   test "submit join form creates user with email prefix as name" do
     sign_in_global_identity(@bob)
 
-    workspace_post "/join/#{@join_code.code}", workspace: @workspace
+    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
 
     ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
       user = User.find_by(email_address: "bob@example.com")
@@ -124,7 +126,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
 
     initial_count = @join_code.reload.usage_count
 
-    workspace_post "/join/#{@join_code.code}", workspace: @workspace
+    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
 
     assert_equal initial_count + 1, @join_code.reload.usage_count
   end
@@ -132,7 +134,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
   test "submit join form redirects to workspace root with welcome message" do
     sign_in_global_identity(@bob)
 
-    workspace_post "/join/#{@join_code.code}", workspace: @workspace
+    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
 
     # Allow trailing slash variation in redirect
     assert_response :redirect
@@ -143,7 +145,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
   test "submit join form caches user_id in workspace membership" do
     sign_in_global_identity(@bob)
 
-    workspace_post "/join/#{@join_code.code}", workspace: @workspace
+    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
 
     membership = WorkspaceMembership.find_by(
       global_identity: @bob,
@@ -167,7 +169,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
     # The before_action chain (restore_authentication → ensure_workspace_user_exists →
     # redirect_signed_in_user_to_root) will redirect before the create action runs
 
-    workspace_post "/join/#{@join_code.code}", workspace: @workspace
+    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
 
     # Should be redirected by redirect_signed_in_user_to_root before create action
     assert_response :redirect
@@ -198,7 +200,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
   test "submit join form with invalid code shows error" do
     sign_in_global_identity(@bob)
 
-    workspace_post "/join/INVALID_CODE", workspace: @workspace
+    workspace_post "/join/INVALID_CODE", workspace: @workspace, params: with_turnstile_response({})
 
     assert_response :not_found
   end
@@ -209,7 +211,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
     # Expire the join code
     @join_code.update!(expires_at: 1.day.ago)
 
-    workspace_post "/join/#{@join_code.code}", workspace: @workspace
+    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
 
     assert_response :gone
   end
@@ -226,7 +228,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
 
     initial_membership_count = WorkspaceMembership.count
 
-    workspace_post "/join/#{@join_code.code}", workspace: @workspace
+    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
 
     # Exhausted codes are treated as inactive and return 410 (verify_join_code_active)
     assert_response :gone

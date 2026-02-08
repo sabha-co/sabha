@@ -1,6 +1,8 @@
 require "test_helper"
 
 class UsersControllerTest < ActionDispatch::IntegrationTest
+  include TurnstileTestHelper
+
   setup do
     @join_code = Current.account.join_code.code
     @original_auth_method = ENV["AUTH_METHOD"]
@@ -24,13 +26,13 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     ENV["AUTH_METHOD"] = "password"
 
     assert_emails 1 do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "New User",
           email_address: "newuser@example.com",
           password: "secure_password_123"
         }
-      }
+      )
     end
 
     assert_redirected_to new_session_url(email_address: "newuser@example.com")
@@ -45,12 +47,12 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     ENV["AUTH_METHOD"] = "otp"
 
     assert_emails 1 do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "New User",
           email_address: "newuser@example.com"
         }
-      }
+      )
     end
 
     assert_redirected_to new_auth_tokens_validations_url
@@ -65,12 +67,12 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     ENV["AUTH_METHOD"] = "otp"
 
     # Sign up new user
-    post join_url(@join_code), params: {
+    post join_url(@join_code), params: with_turnstile_response(
       user: {
         name: "New OTP User",
         email_address: "otpuser@example.com"
       }
-    }
+    )
 
     user = User.find_by(email_address: "otpuser@example.com")
     assert_not user.verified?
@@ -90,13 +92,13 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     ENV["AUTH_METHOD"] = "password"
 
     assert_no_difference -> { User.count } do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "Hacker",
           email_address: "hacker@example.com",
           password: ""
         }
-      }
+      )
     end
 
     assert_response :unprocessable_entity
@@ -107,13 +109,13 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     ENV["AUTH_METHOD"] = "password"
 
     assert_no_difference -> { User.count } do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "Hacker",
           email_address: "hacker@example.com",
           password: "short"
         }
-      }
+      )
     end
 
     assert_response :unprocessable_entity
@@ -124,13 +126,13 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     ENV["AUTH_METHOD"] = "password"
 
     assert_difference -> { User.count }, 1 do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "Valid User",
           email_address: "valid@example.com",
           password: "valid_password_123"
         }
-      }
+      )
     end
 
     assert_redirected_to new_session_url(email_address: "valid@example.com")
@@ -145,25 +147,25 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     join_code = Current.account.join_code
 
     assert_difference -> { join_code.reload.usage_count }, 1 do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "New User",
           email_address: "newuser123@example.com",
           password: "valid_password_123"
         }
-      }
+      )
     end
   end
 
   test "create with invalid email returns 422" do
     assert_no_difference -> { User.count } do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "Hacker",
           email_address: "not-an-email",
           password: "secure_password_123"
         }
-      }
+      )
     end
 
     assert_response :unprocessable_entity
@@ -171,13 +173,13 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
   test "create with blank email returns 422" do
     assert_no_difference -> { User.count } do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "Hacker",
           email_address: "",
           password: "secure_password_123"
         }
-      }
+      )
     end
 
     assert_response :unprocessable_entity
@@ -185,12 +187,12 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
   test "create with nil email returns 422" do
     assert_no_difference -> { User.count } do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "Hacker",
           password: "secure_password_123"
         }
-      }
+      )
     end
 
     assert_response :unprocessable_entity
@@ -213,13 +215,13 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     ENV["AUTH_METHOD"] = "password"
 
     assert_no_difference -> { User.count } do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "David Again",
           email_address: "david-again@example.com",
           password: "secure_password_123"
         }
-      }
+      )
     end
 
     assert_redirected_to root_url
@@ -249,13 +251,13 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     join_code_record = Current.account.join_code
     join_code_record.update!(usage_limit: 1, usage_count: 1)
 
-    post join_url(@join_code), params: {
+    post join_url(@join_code), params: with_turnstile_response(
       user: {
         name: "New User",
         email_address: "newuser@example.com",
         password: "valid_password_123"
       }
-    }
+    )
 
     # Exhausted codes are treated as inactive and return 410
     assert_response :gone
@@ -270,13 +272,13 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     existing_user = users(:david)
 
     assert_no_difference -> { User.count } do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "Impersonator",
           email_address: existing_user.email_address,
           password: "secure_password_123"
         }
-      }
+      )
     end
 
     assert_redirected_to new_session_url(email_address: existing_user.email_address)
@@ -289,12 +291,12 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     existing_user.update!(last_authenticated_at: 1.day.ago) # Mark as having authenticated before
 
     assert_no_difference -> { User.count } do
-      post join_url(@join_code), params: {
+      post join_url(@join_code), params: with_turnstile_response(
         user: {
           name: "Impersonator",
           email_address: existing_user.email_address
         }
-      }
+      )
     end
 
     # Should redirect to OTP validation for existing user

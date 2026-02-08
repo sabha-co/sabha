@@ -49,6 +49,8 @@ env:
     - CSP_FRAME_ANCESTORS
     - ANYCABLE_ENABLED
     - ANYCABLE_SECRET
+    - CLOUDFLARE_TURNSTILE_SITE_KEY
+    - CLOUDFLARE_TURNSTILE_SECRET_KEY
 
 volumes:
   - "/disk/sabha/:/rails/storage/"

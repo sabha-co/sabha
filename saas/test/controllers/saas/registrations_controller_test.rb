@@ -4,13 +4,15 @@ require_relative "../../test_helper"
 
 module Saas
   class RegistrationsControllerTest < ActionDispatch::IntegrationTest
+    include TurnstileTestHelper
+
     test "new renders signup form" do
       get new_registration_path
       assert_response :success
     end
 
     test "create with blank email redirects with error" do
-      post registration_path, params: { email_address: "" }
+      post registration_path, params: with_turnstile_response(email_address: "")
       assert_redirected_to new_registration_path
       assert_equal "Please enter an email address", flash[:alert]
     end
@@ -20,7 +22,7 @@ module Saas
 
       assert_difference "AuthCode.count", 1 do
         assert_enqueued_emails 1 do
-          post registration_path, params: { email_address: existing_identity.email_address }
+          post registration_path, params: with_turnstile_response(email_address: existing_identity.email_address)
         end
       end
 
@@ -40,7 +42,7 @@ module Saas
       assert_difference "GlobalIdentity.count", 1 do
         assert_difference "AuthCode.count", 1 do
           assert_enqueued_emails 1 do
-            post registration_path, params: { email_address: new_email }
+            post registration_path, params: with_turnstile_response(email_address: new_email)
           end
         end
       end
@@ -60,7 +62,7 @@ module Saas
     end
 
     test "create normalizes email to lowercase" do
-      post registration_path, params: { email_address: "  NewUser@Example.COM  " }
+      post registration_path, params: with_turnstile_response(email_address: "  NewUser@Example.COM  ")
       assert_redirected_to auth_code_path
 
       identity = GlobalIdentity.find_by(email_address: "newuser@example.com")

@@ -19,6 +19,7 @@
 
         <%= render "sessions/flash_messages" %>
         <%= render "sessions/email_field", form: form %>
+        <div class="flex justify-center"><%= cloudflare_turnstile %></div>
         <%= render "sessions/submit_button", form: form, label: "Create account" %>
       </fieldset>
     <% end %>

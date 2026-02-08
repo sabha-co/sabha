@@ -16,6 +16,8 @@ require "rails/test_help"
 require "mocha/minitest"
 require "webmock/minitest"
 
+require_relative "../../test/test_helpers/turnstile_test_helper"
+
 # Load untenanted fixtures from saas/test/fixtures/
 SAAS_FIXTURE_PATH = File.expand_path("fixtures", __dir__)
 

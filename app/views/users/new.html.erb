@@ -99,6 +99,8 @@
           </div>
         <% end %>
 
+        <div class="flex justify-center"><%= cloudflare_turnstile %></div>
+
         <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
           Join <%= Current.account.name %>
         <% end %>

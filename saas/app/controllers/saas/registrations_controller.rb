@@ -14,6 +14,9 @@ module Saas
       redirect_to new_registration_path, alert: "Too many attempts. Please try again later."
     }
 
+    before_action :validate_cloudflare_turnstile, only: :create
+    rescue_from RailsCloudflareTurnstile::Forbidden, with: :handle_turnstile_failure
+
     def new
       # Store return_to param for redirect after authentication
       if params[:return_to].present?
@@ -46,5 +49,11 @@ module Saas
       # Show same message regardless of whether account existed
       redirect_to auth_code_path, notice: "Check your email for a verification code"
     end
+
+    private
+
+      def handle_turnstile_failure
+        redirect_to new_registration_path, alert: "Please complete the CAPTCHA verification."
+      end
   end
 end
