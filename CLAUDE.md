@@ -278,6 +278,9 @@ kamal deploy          # Zero-downtime deployment
 kamal app exec 'bin/rails console'  # Run console on production
 kamal app logs        # View application logs
 kamal envify          # Show environment variables being used
+
+# SaaS (multitenant) deploy — source env first since Kamal needs vars for ERB templates
+set -a && source .env.multitenant && set +a && kamal deploy -d multitenant
 ```
 
 ## Frontend Architecture

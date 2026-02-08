@@ -60,6 +60,7 @@ env:
     - ANYCABLE_SECRET
     - CLOUDFLARE_TURNSTILE_SITE_KEY
     - CLOUDFLARE_TURNSTILE_SECRET_KEY
+    - SENTRY_DSN
 
 volumes:
   - "/disk/sabha/:/rails/storage/"
