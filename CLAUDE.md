@@ -351,9 +351,7 @@ Core branding (see `.env.sample` and `BRANDING.md`):
 Required for production:
 - `SECRET_KEY_BASE` - Rails encryption key
 - `RESEND_API_KEY` - Email delivery via Resend
-- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` - File storage (S3)
 - `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` - Web push notifications
-- `WEBHOOK_SECRET` - Webhook security token
 
 Optional features:
 - `JOB_CONCURRENCY` - Number of Solid Queue worker processes

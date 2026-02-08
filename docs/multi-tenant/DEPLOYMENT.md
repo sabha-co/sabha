@@ -73,11 +73,6 @@ VAPID_PRIVATE_KEY=your_private_key
 ANYCABLE_ENABLED=true
 ANYCABLE_SECRET=$(openssl rand -hex 32)
 
-# File storage (S3 or compatible)
-AWS_ACCESS_KEY_ID=your_key
-AWS_SECRET_ACCESS_KEY=your_secret
-AWS_DEFAULT_REGION=us-east-1
-
 # Registry
 KAMAL_REGISTRY_PASSWORD=your_github_token
 ```
@@ -390,8 +385,6 @@ end
 | `SAAS_MAILER_FROM_EMAIL` | Yes | Sender email for auth emails |
 | `ANYCABLE_ENABLED` | No | Enable AnyCable (default: true) |
 | `ANYCABLE_SECRET` | If AnyCable | AnyCable authentication secret |
-| `AWS_ACCESS_KEY_ID` | No | S3 file storage |
-| `AWS_SECRET_ACCESS_KEY` | No | S3 file storage |
 
 ---
 

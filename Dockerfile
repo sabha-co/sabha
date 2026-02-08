@@ -84,11 +84,9 @@ COPY --from=build /rails /rails
 RUN groupadd -r sabha && useradd -r -g sabha -d /rails -s /bin/bash sabha && \
   chown -R sabha:sabha /rails
 
-# Set version and revision
+# Set version
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
-ARG GIT_REVISION
-ENV GIT_REVISION=$GIT_REVISION
 
 # Image metadata
 ARG OCI_DESCRIPTION

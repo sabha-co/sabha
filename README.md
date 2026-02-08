@@ -87,12 +87,8 @@ Sabha uses [Kamal](https://kamal-deploy.org/docs/installation/) for deployment. 
    # Application secrets (generate with: rails secret)
    SECRET_KEY_BASE=your-rails-secret-key
    RESEND_API_KEY=your-resend-api-key
-   AWS_ACCESS_KEY_ID=your-aws-access-key
-   AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-   AWS_DEFAULT_REGION=us-east-1
    VAPID_PUBLIC_KEY=your-vapid-public-key
    VAPID_PRIVATE_KEY=your-vapid-private-key
-   WEBHOOK_SECRET=your-webhook-secret
    COOKIE_DOMAIN=your-domain.com
    ```
 
@@ -118,10 +114,7 @@ This repository includes GitHub Actions for automatic deployment:
    - `DOCKER_USERNAME` & `DOCKER_PASSWORD` - Docker Hub credentials
    - `SECRET_KEY_BASE` - Rails encryption key
    - `RESEND_API_KEY` - Email delivery service
-   - `AWS_ACCESS_KEY_ID` & `AWS_SECRET_ACCESS_KEY` - File storage
-   - `AWS_DEFAULT_REGION` - AWS region (default: us-east-1)
    - `VAPID_PUBLIC_KEY` & `VAPID_PRIVATE_KEY` - Push notifications
-   - `WEBHOOK_SECRET` - Webhook security
    - `COOKIE_DOMAIN` - Your domain for cookies
 
 2. **Deploy automatically:**
@@ -148,12 +141,8 @@ docker run -p 3000:3000 \
 | ------------------------------ | --------------------------- | -------- |
 | `SECRET_KEY_BASE`              | Rails encryption key        | ✅       |
 | `RESEND_API_KEY`               | Email delivery via Resend   | ✅       |
-| `AWS_ACCESS_KEY_ID`            | File storage on AWS         | ✅       |
-| `AWS_SECRET_ACCESS_KEY`        | File storage on AWS         | ✅       |
-| `AWS_DEFAULT_REGION`           | AWS region (us-east-1)      | ✅       |
 | `VAPID_PUBLIC_KEY`             | Web push notifications      | ✅       |
 | `VAPID_PRIVATE_KEY`            | Web push notifications      | ✅       |
-| `WEBHOOK_SECRET`               | Webhook security            | ✅       |
 | `COOKIE_DOMAIN`                | Session cookies domain      | ✅       |
 
 ✅ = Required for production deployment

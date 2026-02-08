@@ -67,11 +67,7 @@ jobs:
           SECRET_KEY_BASE=${{ secrets.SECRET_KEY_BASE }}
           VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
-          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
-          WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
           COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
 
           APP_NAME=${{ secrets.APP_NAME }}

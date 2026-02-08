@@ -158,9 +158,6 @@ MAILER_FROM_EMAIL=noreply@yourdomain.com
 # Web Push (see "Generate VAPID Keys" below)
 VAPID_PUBLIC_KEY=your_public_key
 VAPID_PRIVATE_KEY=your_private_key
-
-# Webhook
-WEBHOOK_SECRET=$(openssl rand -hex 32)
 ```
 
 **Generate VAPID keys**
