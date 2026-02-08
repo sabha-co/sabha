@@ -1,21 +1,19 @@
 name: Deploy with Kamal
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
       run_setup:
         description: 'Run kamal setup before deploy (first-time provisioning)'
         required: false
         default: false
         type: boolean
+
+concurrency:
+  group: deploy-multitenant
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -86,6 +84,11 @@ jobs:
 
           ANYCABLE_ENABLED=${{ secrets.ANYCABLE_ENABLED }}
           ANYCABLE_SECRET=${{ secrets.ANYCABLE_SECRET }}
+
+          CLOUDFLARE_TURNSTILE_SITE_KEY=${{ secrets.CLOUDFLARE_TURNSTILE_SITE_KEY }}
+          CLOUDFLARE_TURNSTILE_SECRET_KEY=${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}
+
+          SENTRY_DSN=${{ secrets.SENTRY_DSN }}
           EOF
 
       - name: Run Kamal setup (first-time provisioning)
