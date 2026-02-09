@@ -1,8 +1,10 @@
 name: Deploy with Kamal
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Test"]
     branches: [main]
+    types: [completed]
   workflow_dispatch:
     inputs:
       run_setup:
@@ -19,6 +21,9 @@ jobs:
   deploy:
     name: Deploy with Kamal
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6
