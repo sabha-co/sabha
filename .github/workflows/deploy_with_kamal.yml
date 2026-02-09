@@ -60,9 +60,13 @@ jobs:
           cat > .kamal/secrets.multitenant << EOF
           KAMAL_REGISTRY_PASSWORD=${{ secrets.DOCKER_PASSWORD }}
 
+          SERVER_IP=${{ secrets.SERVER_IP }}
+          PROXY_HOST=${{ secrets.DOMAIN }}
+
           APP_VERSION=${{ steps.short-sha.outputs.sha }}
           LAST_DEPLOY=${{ env.DEPLOY_TIME }}
           SECRET_KEY_BASE=${{ secrets.SECRET_KEY_BASE }}
+          UNTENANTED_DATABASE_URL=${{ secrets.UNTENANTED_DATABASE_URL }}
           VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
@@ -81,6 +85,7 @@ jobs:
           BACKGROUND_COLOR=${{ secrets.BACKGROUND_COLOR }}
           ANALYTICS_DOMAIN=${{ secrets.ANALYTICS_DOMAIN }}
           CSP_FRAME_ANCESTORS=${{ secrets.CSP_FRAME_ANCESTORS }}
+          ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
 
           ANYCABLE_ENABLED=${{ secrets.ANYCABLE_ENABLED }}
           ANYCABLE_SECRET=${{ secrets.ANYCABLE_SECRET }}
