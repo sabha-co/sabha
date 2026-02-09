@@ -52,7 +52,7 @@ if ENV["RAILS_ENV"] == "production"
   # to ensure clean state when deploying new versions.
   before_fork do
     require File.expand_path("environment", __dir__)
-    Membership.disconnect_all
+    Membership.disconnect_all unless Sabha.saas?
   end
 end
 
