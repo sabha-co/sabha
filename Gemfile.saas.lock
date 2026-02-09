@@ -11,7 +11,7 @@ GIT
 GIT
   remote: https://github.com/rails/rails.git
   revision: 03fd08a62790d279361cf67de135e1fea85986ea
-  branch: main
+  ref: 03fd08a62790d279361cf67de135e1fea85986ea
   specs:
     actioncable (8.2.0.alpha)
       actionpack (= 8.2.0.alpha)
@@ -300,6 +300,10 @@ GEM
     parser (3.3.10.1)
       ast (~> 2.4.1)
       racc
+    pg (1.6.3)
+    pg (1.6.3-aarch64-linux)
+    pg (1.6.3-arm64-darwin)
+    pg (1.6.3-x86_64-linux)
     platform_agent (1.0.1)
       activesupport (>= 5.2.0)
       useragent (~> 0.16.3)
@@ -496,6 +500,7 @@ DEPENDENCIES
   mocha
   msgpack (>= 1.8.0)
   net-http-persistent
+  pg
   platform_agent
   propshaft
   puma (~> 7.1)
@@ -621,6 +626,10 @@ CHECKSUMS
   openssl (4.0.0) sha256=185711ed93d4e9c9a9db6efea7edb202dfe04f7d3692fbab988e3d84e498ee91
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.10.1) sha256=06f6a725d2cd91e5e7f2b7c32ba143631e1f7c8ae2fb918fc4cebec187e6a688
+  pg (1.6.3) sha256=1388d0563e13d2758c1089e35e973a3249e955c659592d10e5b77c468f628a99
+  pg (1.6.3-aarch64-linux) sha256=0698ad563e02383c27510b76bf7d4cd2de19cd1d16a5013f375dd473e4be72ea
+  pg (1.6.3-arm64-darwin) sha256=7240330b572e6355d7c75a7de535edb5dfcbd6295d9c7777df4d9dddfb8c0e5f
+  pg (1.6.3-x86_64-linux) sha256=5d9e188c8f7a0295d162b7b88a768d8452a899977d44f3274d1946d67920ae8d
   platform_agent (1.0.1) sha256=25521aa44d483c067a74900bc1d5ed5244a993850ee4f935736058488373d74c
   pp (0.6.3) sha256=2951d514450b93ccfeb1df7d021cae0da16e0a7f95ee1e2273719669d0ab9df6
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193

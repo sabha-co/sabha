@@ -451,10 +451,11 @@ saas/test/               # SaaS tests (SAAS=true bin/rails test saas/test/)
 - Full-text search on messages via `messages_fts` virtual table
 
 **SaaS mode databases:**
-- `storage/{env}/untenanted.sqlite3` - GlobalIdentity, Workspace, WorkspaceMembership, GlobalSession
+- PostgreSQL `sabha_untenanted_{env}` - GlobalIdentity, Workspace, WorkspaceMembership, GlobalSession (platform-owned, managed separately)
 - `storage/{env}/workspaces/{tenant_id}/main.sqlite3` - Per-workspace data (User, Room, Message, etc.)
-- Untenanted migrations in `db/untenanted_migrate/`
-- Models inherit from `UntenantedRecord` or `ApplicationRecord` (tenanted)
+- Untenanted migrations in `saas/db/untenanted_migrate/`, schema in `saas/db/untenanted_schema.rb`
+- Models inherit from `UntenantedRecord` (PostgreSQL) or `ApplicationRecord` (tenanted SQLite)
+- Database config: `config/database.yml` delegates to `config/database.sqlite.yml` (self-hosted) or `saas/config/database.yml` (SaaS)
 
 ### Migrations During Feature Development
 When a feature is under development and the table structure needs to be rethought, do NOT create new migrations to modify the schema. Instead:

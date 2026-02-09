@@ -34,11 +34,11 @@ env:
   clear:
     RAILS_ENV: "production"
     SAAS: "true"
-
   secret:
     - APP_VERSION
     - LAST_DEPLOY
     - SECRET_KEY_BASE
+    - UNTENANTED_DATABASE_URL
     - VAPID_PUBLIC_KEY
     - VAPID_PRIVATE_KEY
     - RESEND_API_KEY
@@ -61,6 +61,7 @@ env:
     - CLOUDFLARE_TURNSTILE_SITE_KEY
     - CLOUDFLARE_TURNSTILE_SECRET_KEY
     - SENTRY_DSN
+    - ADMIN_EMAIL
 
 volumes:
   - "/disk/sabha/:/rails/storage/"

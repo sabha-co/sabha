@@ -26,7 +26,7 @@ FROM base AS build
 ARG PNPM_VERSION=10.28.0
 RUN apt-get update -qq && \
   apt-get install --no-install-recommends -y \
-  build-essential git pkg-config curl libyaml-dev libssl-dev ca-certificates && \
+  build-essential git pkg-config curl libyaml-dev libssl-dev libpq-dev ca-certificates && \
   curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt-get install --no-install-recommends -y nodejs && \
   npm install -g pnpm@$PNPM_VERSION && \
@@ -74,7 +74,7 @@ FROM base
 # Install runtime packages
 RUN apt-get update -qq && \
   apt-get install --no-install-recommends -y \
-  curl libsqlite3-0 libvips libjemalloc2 libyaml-0-2 ca-certificates \
+  curl libsqlite3-0 libpq5 libvips libjemalloc2 libyaml-0-2 ca-certificates \
   ffmpeg redis-server git sqlite3 && \
   ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
   rm -rf /var/lib/apt/lists /var/cache/apt/archives

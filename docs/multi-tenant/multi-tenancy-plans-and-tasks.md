@@ -206,7 +206,7 @@ Reference: [Rails Engines Guide](https://guides.rubyonrails.org/engines.html)
 - [x] Add `activerecord-tenanted` gem to `Gemfile.saas`
   - **Note:** Using fork `ashwin47/activerecord-tenanted` branch `fix-rails-82-type-for-column-signature` until [upstream PR](https://github.com/basecamp/activerecord-tenanted/pull/XXX) is merged
   - Rails 8.2 changed `type_for_column` signature (rails/rails#54333), gem fork adds version check to skip the `Attributes` patch for Rails 8.2+
-- [x] Create `saas/config/database.yml.saas` template with tenanted primary + untenanted databases
+- [x] Create `saas/config/database.yml` with tenanted primary + PostgreSQL untenanted + SQLite queue
 - [x] Create `saas/db/untenanted_migrate/` directory for untenanted DB migrations
 - [x] Update `.gitignore` for workspace database files
 - [x] Create `saas/app/models/untenanted_record.rb`
@@ -726,6 +726,27 @@ SAAS=true BUNDLE_GEMFILE=Gemfile.saas bin/rails test saas/test/
 ## v1 Phase
 
 **Goal**: Admin dashboard, workspace management, production deployment.
+
+### v1-0: PostgreSQL for Untenanted Database ✅
+
+Switch the shared untenanted database from SQLite to PostgreSQL 18. Platform data (identities, sessions, workspaces, future payments) runs on a managed Postgres instance that can be independently backed up, replicated, and recovered. Tenant data stays on SQLite for portability — users can download their SQLite file and self-host.
+
+See [postgres-untenanted.md](./postgres-untenanted.md) for architecture decision and comparison.
+
+- [x] Add `pg` gem to `Gemfile.saas`
+- [x] Split `config/database.yml` into delegator + dedicated config files (Fizzy pattern)
+  - `config/database.yml` — delegator that loads the right config based on `Sabha.saas?`
+  - `config/database.sqlite.yml` — self-hosted config (pure SQLite)
+  - `saas/config/database.yml` — SaaS config (PostgreSQL untenanted + SQLite tenant/queue)
+- [x] Remove stale `saas/config/database.yml.saas` template
+- [x] Add `schema_dump: saas/db/untenanted_schema.rb` config so schema dumps to `saas/db/`
+- [x] Create `saas/config/initializers/schema_dump_path.rb` — patch for root-relative schema dump paths
+- [x] Add `libpq-dev` (build) and `libpq5` (runtime) to `saas/Dockerfile`
+- [x] Add PostgreSQL 18 accessory to `config/deploy.multitenant.yml`
+- [x] Add `UNTENANTED_DB_*` env vars to deploy config and `.env.multitenant.sample`
+- [x] Verify all 9 untenanted migrations run against PostgreSQL without modification
+- [x] Verify all 6 untenanted models unchanged (adapter-agnostic `connects_to`)
+- [x] SaaS tests pass (169/169), self-hosted tests pass (771/771)
 
 ### v1-1: Super Admin
 

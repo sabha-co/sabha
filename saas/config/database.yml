@@ -1,0 +1,59 @@
+# SaaS mode database configuration
+#
+# - Primary (tenanted): SQLite per workspace — portable, isolated, user-owned
+# - Untenanted (shared): PostgreSQL — managed, replicated, platform-owned
+# - Queue: SQLite — local to the server, no shared state needed
+
+sqlite: &sqlite
+  adapter: sqlite3
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
+  timeout: 5000
+  retries: 1000
+  default_transaction_mode: immediate
+
+untenanted: &untenanted
+  adapter: postgresql
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
+  migrations_paths: saas/db/untenanted_migrate
+  schema_dump: saas/db/untenanted_schema.rb
+
+development:
+  primary:
+    <<: *sqlite
+    database: "storage/workspaces/development/%{tenant}/db/main.sqlite3"
+    tenanted: true
+    max_connection_pools: 50
+  untenanted:
+    <<: *untenanted
+    url: <%= ENV.fetch("UNTENANTED_DATABASE_URL", "postgres://localhost/sabha_untenanted_development") %>
+  queue:
+    <<: *sqlite
+    database: storage/db/development_queue.sqlite3
+    migrations_paths: db/queue_migrate
+
+test:
+  primary:
+    <<: *sqlite
+    database: "storage/workspaces/test/%{tenant}/db/main.sqlite3"
+    tenanted: true
+  untenanted:
+    <<: *untenanted
+    url: <%= ENV.fetch("UNTENANTED_DATABASE_URL", "postgres://localhost/sabha_untenanted_test") %>
+  queue:
+    <<: *sqlite
+    database: storage/db/test_queue.sqlite3
+    migrations_paths: db/queue_migrate
+
+production:
+  primary:
+    <<: *sqlite
+    database: "storage/workspaces/production/%{tenant}/db/main.sqlite3"
+    tenanted: true
+    max_connection_pools: 100
+  untenanted:
+    <<: *untenanted
+    url: <%= ENV["UNTENANTED_DATABASE_URL"] %>
+  queue:
+    <<: *sqlite
+    database: storage/db/production_queue.sqlite3
+    migrations_paths: db/queue_migrate

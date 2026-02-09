@@ -69,12 +69,27 @@ jobs:
     name: SaaS Tests
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sabha_untenanted_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libvips-dev ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y libvips-dev ffmpeg libpq-dev
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -120,6 +135,7 @@ jobs:
           SAAS: "true"
           BUNDLE_GEMFILE: Gemfile.saas
           BUNDLE_PATH: vendor/bundle
+          UNTENANTED_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test
 
       - name: Build assets
         run: bin/rails assets:precompile
@@ -138,3 +154,4 @@ jobs:
           SECRET_KEY_BASE: test_secret_key_base_for_ci
           BUNDLE_GEMFILE: Gemfile.saas
           BUNDLE_PATH: vendor/bundle
+          UNTENANTED_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test

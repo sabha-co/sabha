@@ -21,6 +21,7 @@ Multi-tenant mode enables:
 
 - A VPS with 4GB+ RAM (scales with number of workspaces)
 - A domain name pointing to your server
+- A managed PostgreSQL instance (e.g., PlanetScale Postgres) for the untenanted database
 - Docker and Kamal installed locally
 - GitHub Container Registry access (or your own registry)
 
@@ -58,6 +59,9 @@ SAAS_MAILER_FROM_EMAIL="noreply@sabha.co"
 
 # IMPORTANT: Cookie domain enables cross-workspace sessions
 COOKIE_DOMAIN=sabha.co
+
+# Managed PostgreSQL (e.g., PlanetScale Postgres)
+UNTENANTED_DATABASE_URL=postgres://user:password@host:port/database?sslmode=require
 
 # Rails
 SECRET_KEY_BASE=$(openssl rand -hex 64)
@@ -111,11 +115,18 @@ puts "Workspace created with ID: #{workspace.id}"
 
 ### Database Structure
 
-Multi-tenant mode uses multiple SQLite databases:
+Multi-tenant mode uses PostgreSQL for the shared layer and SQLite per workspace:
 
 ```
+PostgreSQL (sabha_untenanted_production):
+├── global_identities           # Cross-workspace user identity
+├── global_sessions             # Cross-workspace sessions
+├── workspaces                  # Workspace registry
+├── workspace_memberships       # Identity-to-workspace links
+├── auth_codes                  # OTP codes
+└── workspace_external_id_sequences
+
 /rails/storage/production/
-├── untenanted.sqlite3          # GlobalIdentity, Workspace, WorkspaceMembership, GlobalSession
 └── workspaces/
     ├── 1000001/
     │   └── main.sqlite3        # Workspace 1 data (User, Room, Message, etc.)
@@ -155,7 +166,8 @@ https://sabha.co/1000001/rooms/general # Room in workspace 1
 | `SAAS` | Not set | `true` |
 | `COOKIE_DOMAIN` | Optional | Required (e.g., `sabha.co`) |
 | `SAAS_MAILER_FROM_*` | Not needed | Required |
-| Database | Single SQLite | Per-workspace SQLite |
+| `UNTENANTED_DATABASE_URL` | Not needed | Required (managed Postgres URL) |
+| Database | Single SQLite | Managed Postgres (shared) + SQLite per workspace |
 | Auth | Password or OTP | OTP via GlobalIdentity |
 
 ---
@@ -224,17 +236,16 @@ puts "Members: #{workspace.workspace_memberships.count}"
 
 ## Backups
 
-Multi-tenant backups require backing up all workspace databases plus the untenanted database.
+The untenanted database (PostgreSQL) is managed externally — backups are handled by your provider (e.g., PlanetScale). Tenant SQLite databases need local backup.
 
-### Manual Backup
+### Tenant Database Backup
 
 ```bash
 # SSH to server
 ssh root@your-server
 
-# Checkpoint all databases
+# Checkpoint all tenant databases
 docker exec sabha-multitenant-web bin/rails runner "
-  ActiveRecord::Base.connection.execute('PRAGMA wal_checkpoint(TRUNCATE)')
   Workspace.find_each do |w|
     Tenant.switch(w.id) do
       ActiveRecord::Base.connection.execute('PRAGMA wal_checkpoint(TRUNCATE)')
@@ -242,12 +253,12 @@ docker exec sabha-multitenant-web bin/rails runner "
   end
 "
 
-# Create backup archive
+# Create backup archive of tenant data
 cd /disk/sabha
 tar -czf ~/backup-$(date +%Y%m%d).tar.gz .
 ```
 
-### Restore
+### Restore Tenant Data
 
 ```bash
 kamal app stop -d multitenant
@@ -272,10 +283,11 @@ kamal console -d multitenant
 ```
 
 ```ruby
-# Untenanted database size
-puts "Untenanted: #{File.size(UntenantedRecord.connection.db_config.database) / 1024 / 1024.0} MB"
+# Untenanted database size (managed Postgres)
+size = UntenantedRecord.connection.execute("SELECT pg_database_size(current_database()) / 1024 / 1024.0 AS mb").first["mb"]
+puts "Untenanted (Postgres): #{size.round(2)} MB"
 
-# Per-workspace sizes
+# Per-workspace sizes (SQLite)
 Workspace.find_each do |w|
   Tenant.switch(w.id) do
     size = ActiveRecord::Base.connection.execute(
@@ -378,6 +390,7 @@ end
 | `PROXY_HOST` | Yes | Domain name (e.g., `sabha.co`) |
 | `COOKIE_DOMAIN` | Yes | Domain for session cookies |
 | `SECRET_KEY_BASE` | Yes | Rails encryption key |
+| `UNTENANTED_DATABASE_URL` | Yes | Managed PostgreSQL connection URL |
 | `RESEND_API_KEY` | Yes | Email service API key |
 | `VAPID_PUBLIC_KEY` | Yes | Web push public key |
 | `VAPID_PRIVATE_KEY` | Yes | Web push private key |
