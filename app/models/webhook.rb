@@ -8,7 +8,7 @@ class Webhook < ApplicationRecord
 
   enum :receives, %w[ mentions everything ].index_by(&:itself), prefix: :receives
 
-  validates :url, presence: true, format: { with: /\Ahttps?:\/\/.+/i, message: "must be a valid HTTP(S) URL" }
+  validates :url, presence: true, format: { with: /\Ahttps?:\/\/.+\z/i, message: "must be a valid HTTP(S) URL" }
   validate :url_not_targeting_private_network
 
   private def url_not_targeting_private_network

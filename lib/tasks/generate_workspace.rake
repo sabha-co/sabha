@@ -121,19 +121,19 @@ module WorkspaceDemo
 
   # --- Users ---
 
-  def create_users(badges)
+  def create_users(badges, admin_email:)
     password_digest = BCrypt::Password.create("password")
     now = Time.current
     badge_ids = badges.index_by(&:name)
 
     user_records = [
-      { name: "Admin User", email_address: "admin@sabha.co", password_digest: password_digest,
+      { name: "Admin User", email_address: admin_email, password_digest: password_digest,
         role: 2, bio: "Community administrator", twitter_url: nil, linkedin_url: nil,
         badge_id: badge_ids["Founder"]&.id, current_streak: 45,
         verified_at: now, created_at: now, updated_at: now }
     ]
 
-    used_emails = Set.new([ "admin@sabha.co" ])
+    used_emails = Set.new([ admin_email ])
     name_pairs = FIRST_NAMES.product(LAST_NAMES).shuffle
 
     99.times do |i|
@@ -388,7 +388,6 @@ namespace :generate do
     desc "Create a demo workspace with 100 users, 500 messages, threads, boosts, bookmarks (production-safe, no Faker)"
     task :workspace, [ :name, :email ] => :environment do |_, args|
       abort "SaaS mode required. Enable with: bin/rails saas:enable" unless Sabha.saas?
-      Rails.application.eager_load!
 
       name = args[:name].presence || "Demo Workspace"
       email = args[:email].presence || "demo@sabha.co"
@@ -402,6 +401,9 @@ namespace :generate do
       tenant_id = workspace.external_id.to_s
       puts "   Workspace #{workspace.external_id}"
 
+      # Eager load after create_with_database! (which may run migrations and trigger Zeitwerk reload)
+      Rails.application.eager_load!
+
       ApplicationRecord.with_tenant(tenant_id) do
         DemoHelpers.clean_database
 
@@ -409,7 +411,7 @@ namespace :generate do
         badges = MaxDemo.create_badges
 
         puts "   100 users..."
-        users = WorkspaceDemo.create_users(badges)
+        users = WorkspaceDemo.create_users(badges, admin_email: email)
         WorkspaceDemo.create_saas_identities(users, tenant_id)
 
         puts "   10 rooms + 20 DMs..."

@@ -79,16 +79,26 @@ namespace :workspace do
       exit 1
     end
 
-    print "Are you sure you want to destroy workspace '#{workspace.name}' (#{external_id})? [y/N] "
-    confirm = $stdin.gets.chomp.downcase
+    unless ENV["CONFIRM"] == "1"
+      print "Are you sure you want to destroy workspace '#{workspace.name}' (#{external_id})? [y/N] "
+      confirm = $stdin.gets.chomp.downcase
 
-    unless confirm == "y"
-      puts "Aborted."
-      exit 0
+      unless confirm == "y"
+        puts "Aborted."
+        exit 0
+      end
     end
 
-    # Destroy tenant database
+    # Purge Active Storage files before destroying the tenant database
+    ApplicationRecord.with_tenant(external_id.to_s) do
+      ActiveStorage::Blob.find_each(&:purge)
+    end
+
+    # Destroy tenant database (deletes the SQLite file)
     ApplicationRecord.destroy_tenant(external_id.to_s)
+
+    # Clean up workspace memberships
+    WorkspaceMembership.where(tenant: external_id.to_s).delete_all
 
     # Destroy workspace record
     workspace.destroy!
