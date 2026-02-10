@@ -3,5 +3,8 @@ inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
 AllCops:
   Exclude:
-    - db/schema.rb
-    - db/queue_schema.rb
+    - 'db/migrate/**/*'
+    - 'db/schema*.rb'
+    - 'db/queue_schema.rb'
+    - 'saas/db/untenanted_migrate/**/*'
+    - 'saas/db/untenanted_schema.rb'

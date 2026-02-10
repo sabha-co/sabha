@@ -3,8 +3,7 @@ pre-commit:
   commands:
     rubocop:
       glob: "*.{rb,rake}"
-      exclude: "db/schema.rb"
-      run: bundle exec rubocop -A {staged_files}
+      run: bundle exec rubocop --force-exclusion -A {staged_files}
       stage_fixed: true
 
 pre-push:
