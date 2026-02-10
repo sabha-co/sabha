@@ -136,3 +136,9 @@ jobs:
           KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
           PROXY_HOST: ${{ secrets.DOMAIN }}
+
+      - name: Notify deploy channel
+        if: ${{ secrets.DEPLOY_BOT_URL != '' }}
+        run: |
+          curl -s -X POST "${{ secrets.DEPLOY_BOT_URL }}" \
+            -d "Deployed ${{ steps.short-sha.outputs.sha }} by ${{ github.actor }} at ${{ env.DEPLOY_TIME }}"

@@ -15,8 +15,8 @@ module User::Bot
       everything_url = attributes.delete(:everything_url)
 
       User.create!(**attributes, bot_token: bot_token, role: :bot).tap do |user|
-        user.webhooks.create!(url: mentions_url, receives: :mentions) if mentions_url
-        user.webhooks.create!(url: everything_url, receives: :everything) if everything_url
+        user.webhooks.create!(url: mentions_url, receives: :mentions) if mentions_url.present?
+        user.webhooks.create!(url: everything_url, receives: :everything) if everything_url.present?
       end
     end
 
