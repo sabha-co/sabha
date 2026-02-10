@@ -27,8 +27,6 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Get short SHA
         uses: benjlevesque/short-sha@599815c8ee942a9616c92bcfb4f947a3b670ab0b # v3.0
@@ -42,8 +40,20 @@ jobs:
           ruby-version: '4.0.1'
           bundler-cache: true
 
+      - name: Cache Kamal gem
+        id: kamal-cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ runner.tool_cache }}/kamal-gems
+          key: kamal-gem-${{ runner.os }}-ruby-4.0.1
+
       - name: Install Kamal
-        run: gem install kamal
+        run: |
+          export GEM_HOME="${{ runner.tool_cache }}/kamal-gems"
+          export PATH="${{ runner.tool_cache }}/kamal-gems/bin:$PATH"
+          if [ "${{ steps.kamal-cache.outputs.cache-hit }}" != "true" ]; then
+            gem install kamal
+          fi
 
       - name: Set up SSH key
         uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
@@ -105,6 +115,8 @@ jobs:
         if: ${{ github.event.inputs.run_setup == 'true' }}
         run: kamal setup -d multitenant
         env:
+          GEM_HOME: ${{ runner.tool_cache }}/kamal-gems
+          PATH: ${{ runner.tool_cache }}/kamal-gems/bin:${{ env.PATH }}
           KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
           PROXY_HOST: ${{ secrets.DOMAIN }}
@@ -113,6 +125,8 @@ jobs:
         if: ${{ github.event.inputs.run_setup != 'true' }}
         run: kamal deploy -d multitenant
         env:
+          GEM_HOME: ${{ runner.tool_cache }}/kamal-gems
+          PATH: ${{ runner.tool_cache }}/kamal-gems/bin:${{ env.PATH }}
           KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
           PROXY_HOST: ${{ secrets.DOMAIN }}

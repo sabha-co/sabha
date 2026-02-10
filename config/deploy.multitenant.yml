@@ -19,6 +19,12 @@ proxy:
   ssl: true
   host: <%= ENV.fetch("PROXY_HOST") %>
   app_port: 3000
+  healthcheck:
+    interval: 1
+    path: /up
+    timeout: 3
+
+drain_timeout: 10
 
 registry:
   server: ghcr.io
@@ -29,6 +35,10 @@ registry:
 builder:
   arch: amd64
   dockerfile: saas/Dockerfile
+  cache:
+    type: registry
+    options: mode=max,image-manifest=true,oci-mediatypes=true
+    image: sabha-co/sabha-build-cache
 
 env:
   clear:
