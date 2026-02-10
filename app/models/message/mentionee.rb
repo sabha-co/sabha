@@ -2,7 +2,7 @@ module Message::Mentionee
   extend ActiveSupport::Concern
 
   included do
-    has_many :mentions, dependent: :destroy
+    has_many :mentions, dependent: :delete_all
     has_many :mentioned_users_association, through: :mentions, source: :user
 
     after_save :create_mentionees
