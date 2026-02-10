@@ -16,7 +16,7 @@ Rails.application.configure do
   # Defaults to "Sabha" - workspace-specific names come from Account model
   config.x.branding.saas_app_name = ENV.fetch("SAAS_APP_NAME", "Sabha")
   config.x.branding.support_email = ENV.fetch("SUPPORT_EMAIL", "support@example.com")
-  config.x.branding.app_host = ENV.fetch("APP_HOST", "localhost")
+  config.x.branding.app_host = ENV.fetch("APP_HOST", "localhost").presence || "localhost"
   config.x.branding.app_description = ENV.fetch("APP_DESCRIPTION", "A community chat platform powered by Sabha")
 
   # Mailer configuration (self-hosted mode)

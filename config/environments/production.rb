@@ -58,7 +58,7 @@ Rails.application.configure do
   config.action_mailer.resend_settings = {
     api_key: ENV["RESEND_API_KEY"]
   }
-  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "localhost"), protocol: "https" }
+  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "localhost").presence || "localhost", protocol: "https" }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
@@ -72,7 +72,7 @@ Rails.application.configure do
 
   # WebSocket URL (used by action_cable_meta_tag)
   # Both AnyCable and ActionCable use the same /cable path on the main domain
-  config.action_cable.url = ENV.fetch("ANYCABLE_WEBSOCKET_URL", "wss://#{ENV.fetch('APP_HOST', 'localhost')}/cable")
+  config.action_cable.url = ENV.fetch("ANYCABLE_WEBSOCKET_URL", "wss://#{ENV.fetch('APP_HOST', 'localhost').presence || 'localhost'}/cable")
 
   # Skip host authorization for health checks and internal RPC endpoints.
   # Health checks use Docker container IDs as hostnames.
