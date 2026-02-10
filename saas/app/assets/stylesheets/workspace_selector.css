@@ -473,12 +473,13 @@
 .saas-container .btn,
 .saas-container fieldset {
   max-width: 100%;
+  min-inline-size: 0;
   box-sizing: border-box;
 }
 
-.saas-container .panel {
-  max-width: 100%;
-  overflow-x: hidden;
+.saas-container .panel,
+.app-with-workspaces .panel {
+  max-inline-size: calc(100vw - var(--workspace-selector-width) - 2rem);
 }
 
 /* Tablet: slightly narrower */
@@ -866,7 +867,7 @@
 
 /* Drag-to-reorder styles */
 .workspace-selector__item[draggable="true"] {
-  cursor: grab;
+  cursor: pointer;
 }
 
 .workspace-selector__item[draggable="true"]:active {
