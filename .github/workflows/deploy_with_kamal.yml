@@ -128,3 +128,11 @@ jobs:
           KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
           PROXY_HOST: ${{ secrets.DOMAIN }}
+
+      - name: Reboot AnyCable to sync secrets
+        if: ${{ github.event.inputs.run_setup != 'true' }}
+        run: kamal accessory reboot anycable -d multitenant
+        env:
+          KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          PROXY_HOST: ${{ secrets.DOMAIN }}
