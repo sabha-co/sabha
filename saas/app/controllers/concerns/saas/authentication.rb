@@ -142,8 +142,7 @@ module Saas
 
         current_global_identity
           .workspace_memberships
-          .joins(:workspace)
-          .exists?(workspaces: { external_id: external_id })
+          .exists?(tenant: external_id.to_s)
       end
   end
 end

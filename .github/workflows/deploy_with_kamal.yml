@@ -49,8 +49,9 @@ jobs:
 
       - name: Install Kamal
         run: |
+          echo "GEM_HOME=${{ runner.tool_cache }}/kamal-gems" >> $GITHUB_ENV
+          echo "${{ runner.tool_cache }}/kamal-gems/bin" >> $GITHUB_PATH
           export GEM_HOME="${{ runner.tool_cache }}/kamal-gems"
-          export PATH="${{ runner.tool_cache }}/kamal-gems/bin:$PATH"
           if [ "${{ steps.kamal-cache.outputs.cache-hit }}" != "true" ]; then
             gem install kamal
           fi
@@ -115,8 +116,6 @@ jobs:
         if: ${{ github.event.inputs.run_setup == 'true' }}
         run: kamal setup -d multitenant
         env:
-          GEM_HOME: ${{ runner.tool_cache }}/kamal-gems
-          PATH: ${{ runner.tool_cache }}/kamal-gems/bin:${{ env.PATH }}
           KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
           PROXY_HOST: ${{ secrets.DOMAIN }}
@@ -125,8 +124,6 @@ jobs:
         if: ${{ github.event.inputs.run_setup != 'true' }}
         run: kamal deploy -d multitenant
         env:
-          GEM_HOME: ${{ runner.tool_cache }}/kamal-gems
-          PATH: ${{ runner.tool_cache }}/kamal-gems/bin:${{ env.PATH }}
           KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           SERVER_IP: ${{ secrets.SERVER_IP }}
           PROXY_HOST: ${{ secrets.DOMAIN }}
