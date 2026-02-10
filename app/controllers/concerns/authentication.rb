@@ -32,11 +32,11 @@ module Authentication
 
     def require_authentication
       restore_authentication || bot_authentication || request_authentication
-      redirect_non_members_to_workspaces unless performed?
+      require_workspace_membership unless performed?
     end
 
     # In SaaS mode, redirect authenticated users who aren't members of this workspace
-    def redirect_non_members_to_workspaces
+    def require_workspace_membership
       return unless Sabha.saas?
       return unless ApplicationRecord.current_tenant.present?
       return if Current.user.present?
@@ -114,7 +114,7 @@ module Authentication
     # In SaaS mode, create the workspace User if it doesn't exist yet
     def ensure_workspace_user_exists
       return unless Current.workspace_membership.present?
-      return if Current.workspace_membership.user_id.present?
+      return if Current.workspace_membership.user_id.present? && Current.workspace_membership.user.present?
 
       # Create User in this workspace from GlobalIdentity
       Current.workspace_membership.create_user!

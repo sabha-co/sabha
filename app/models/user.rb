@@ -387,6 +387,12 @@ class User < ApplicationRecord
     # `dependent: :destroy` only finds active records. We need to delete inactive
     # records too, hence the explicit unscoped queries.
     def destroy_all_associated_records
+      # Clear cached user_id on WorkspaceMembership (SaaS mode)
+      if Sabha.saas? && workspace_membership_id.present?
+        WorkspaceMembership.where(id: workspace_membership_id, user_id: id)
+                           .update_all(user_id: nil)
+      end
+
       # Delete messages first (they have FKs to boosts, bookmarks, mentions)
       Message.unscoped.where(creator_id: id).find_each(&:destroy)
 

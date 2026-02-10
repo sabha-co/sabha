@@ -92,6 +92,32 @@ module Saas
       assert_equal "/workspaces", session[:return_to_after_authenticating]
     end
 
+    test "user whose tenant User was deleted gets it recreated on next visit" do
+      workspace = Workspace.create_with_database!(name: "Orphan Test", creator: global_identities(:alice))
+      sign_in_global_identity(global_identities(:alice))
+      membership = global_identities(:alice).workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+
+      # Delete the User from the tenant DB (simulates CleanupUnverifiedUsersJob)
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).destroy!
+      end
+
+      # Visit the workspace — should recreate the User, not crash or redirect loop
+      workspace_get "/", workspace: workspace
+
+      # WelcomeController redirects to landing room on success — no error, no loop
+      assert_response :redirect
+      assert_not_equal "/workspaces", response.location # not bounced to workspace selector
+
+      # User was recreated
+      membership.reload
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        assert User.exists?(id: membership.user_id)
+      end
+    ensure
+      workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+    end
+
     test "authenticated user accessing workspace they are not a member of is redirected to workspace selector" do
       # Bob is NOT a member of acme workspace
       sign_in_global_identity(global_identities(:bob))
