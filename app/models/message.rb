@@ -16,21 +16,17 @@ class Message < ApplicationRecord
 
   before_create -> { self.client_message_id ||= Random.uuid } # Bots don't care
   before_create :touch_room_activity
-  after_create_commit -> { room.receive(self) }
-  after_update_commit -> do
-    if saved_change_to_attribute?(:active) && active?
-      broadcast_reactivation
-    end
-  end
+  after_create_commit :deliver_to_room
+  after_create_commit :involve_mentionees_on_create
+  after_create_commit :involve_creator_in_thread
+  after_create_commit :update_thread_reply_count
+  after_create_commit :update_parent_message_threads
+  after_create_commit :update_creator_streak
+
+  after_update_commit :broadcast_reactivation_if_restored
   after_update_commit :clear_unread_timestamps_if_deactivated
   after_update_commit :broadcast_parent_message_to_threads
-
-  after_create_commit -> { involve_mentionees_in_room(unread: true) }
-  after_create_commit -> { involve_creator_in_thread }
-  after_create_commit -> { update_thread_reply_count }
-  after_create_commit -> { update_parent_message_threads }
-  after_create_commit -> { creator.recalculate_streak!(excluding_message: self) unless room.direct? || room.parent_room&.direct? }
-  after_update_commit -> { involve_mentionees_in_room(unread: false) }
+  after_update_commit :involve_mentionees_on_update
 
   scope :ordered, -> { order(:created_at) }
   scope :with_creator, -> { includes(creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ]) }
@@ -97,6 +93,27 @@ class Message < ApplicationRecord
   end
 
   private
+    def deliver_to_room
+      room.receive(self)
+    end
+
+    def involve_mentionees_on_create
+      involve_mentionees_in_room(unread: true)
+    end
+
+    def involve_mentionees_on_update
+      involve_mentionees_in_room(unread: false)
+    end
+
+    def update_creator_streak
+      return if room.direct? || room.parent_room&.direct?
+      creator.recalculate_streak!(excluding_message: self)
+    end
+
+    def broadcast_reactivation_if_restored
+      broadcast_reactivation if saved_change_to_attribute?(:active) && active?
+    end
+
     def involve_mentionees_in_room(unread:)
       # Skip auto-involvement for @everyone to avoid creating thousands of membership updates
       # Users already in the room will be notified via the updated queries

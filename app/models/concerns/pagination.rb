@@ -1,3 +1,4 @@
+# Requires the including model to define an `ordered` scope.
 module Pagination
   extend ActiveSupport::Concern
 

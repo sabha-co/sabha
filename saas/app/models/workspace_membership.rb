@@ -81,7 +81,8 @@ class WorkspaceMembership < UntenantedRecord
           email_address: global_identity.email_address,
           workspace_membership_id: id,
           name: name || global_identity.email_address.split("@").first,
-          role: role
+          role: role,
+          verified_at: global_identity.verified? ? Time.current : nil
         )
       end
 

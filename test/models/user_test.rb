@@ -388,6 +388,42 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.posted_on?(Date.current)
   end
 
+  # Destroy cascade tests
+
+  test "destroying a user cleans up all associated records without FK errors" do
+    user = create_new_user
+
+    # Create associated records across all association types
+    room = rooms(:hq)
+    message = Message.create!(room: room, creator: user, body: "Hello", client_message_id: SecureRandom.uuid)
+    Mention.insert_all([ { message_id: message.id, user_id: user.id } ])
+    Boost.create!(message: messages(:first), booster: user, content: "🎉")
+    Bookmark.create!(message: messages(:first), user: user)
+    Search.create!(user: user, query: "test")
+    user.sessions.create!(ip_address: "127.0.0.1", user_agent: "Test")
+    user.auth_tokens.create!(expires_at: 1.hour.from_now)
+    user.block!(users(:jason))
+    Push::Subscription.create!(user: user, endpoint: "https://example.com/push", p256dh_key: "key", auth_key: "auth")
+
+    assert_nothing_raised do
+      user.destroy!
+    end
+
+    # Verify no orphaned records remain
+    assert_not User.exists?(user.id)
+    assert_empty Mention.where(user_id: user.id)
+    assert_empty Boost.unscoped.where(booster_id: user.id)
+    assert_empty Bookmark.unscoped.where(user_id: user.id)
+    assert_empty Search.where(user_id: user.id)
+    assert_empty Session.where(user_id: user.id)
+    assert_empty AuthToken.where(user_id: user.id)
+    assert_empty Block.where(blocker_id: user.id)
+    assert_empty Block.where(blocked_id: user.id)
+    assert_empty Push::Subscription.where(user_id: user.id)
+    assert_empty Message.unscoped.where(creator_id: user.id)
+    assert_empty Membership.unscoped.where(user_id: user.id)
+  end
+
   private
     def create_new_user
       User.create!(name: "User", email_address: "user@example.com", password: "secret123456")

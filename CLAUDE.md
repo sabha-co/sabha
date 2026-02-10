@@ -151,6 +151,26 @@ def leave!
 end
 ```
 
+### Callbacks
+- Use **named methods**, not inline lambdas, for `after_*_commit` callbacks — easier to read and debug
+- Keep callbacks as **separate declarations** — each `after_create_commit` gets its own error boundary in Rails. Don't collapse into a single orchestrator method
+- `before_validation` and `before_save` callbacks for data transformation are fine (score 5/5)
+- `after_create_commit` callbacks for side effects (broadcasts, notifications) are acceptable Rails
+- **Don't move model `deliver_later`/`send_*` methods to controllers** — models encapsulate *how* delivery happens, controllers decide *when*. Scattering mailer calls across controllers breaks DRY
+
+### Tables with `id: false` (Join Tables)
+- The `mentions` table uses `id: false` (composite key: `message_id` + `user_id`)
+- **ALWAYS use `dependent: :delete_all`** (not `dependent: :destroy`) on associations pointing to `id: false` tables
+- `dependent: :destroy` tries to delete records by primary key — generates broken SQL on keyless tables: `DELETE FROM "table" WHERE "table"."" IS NULL`
+- When adding new associations to users/rooms/messages, **update `destroy_all_associated_records`** in the model — soft-deletion scopes mean `dependent: :destroy` misses inactive records
+
+### Don't Over-Extract
+- 453 lines is not a god object for a chat app User model — users do a lot of things
+- Don't extract 20-25 line chunks into separate concern files — that's complexity theater
+- The test for extraction: "Does this make the code genuinely easier to understand?"
+- Prefer namespace decomposition (`User::Role`, `Message::Searchable`) over `app/services/` directory bloat
+- No form objects, policy gems, or service layers unless pain is real and measurable
+
 ## Development Commands
 
 ### Setup

@@ -37,6 +37,10 @@ class AuthCode < UntenantedRecord
     global_identity.tap { destroy }
   end
 
+  def deliver_later
+    AuthCodeMailer.code(self).deliver_later
+  end
+
   def expired?
     expires_at < Time.current
   end

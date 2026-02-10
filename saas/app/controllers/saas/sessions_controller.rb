@@ -30,7 +30,7 @@ module Saas
       if global_identity
         # Existing account - send auth code
         auth_code = global_identity.auth_codes.create!(purpose: :sign_in)
-        AuthCodeMailer.code(auth_code).deliver_later
+        auth_code.deliver_later
       end
       # Don't reveal whether email exists (prevent email enumeration)
       # Show same message regardless of whether account exists
