@@ -138,7 +138,9 @@ jobs:
           PROXY_HOST: ${{ secrets.DOMAIN }}
 
       - name: Notify deploy channel
-        if: ${{ secrets.DEPLOY_BOT_URL != '' }}
+        if: ${{ env.DEPLOY_BOT_URL != '' }}
+        env:
+          DEPLOY_BOT_URL: ${{ secrets.DEPLOY_BOT_URL }}
         run: |
-          curl -s -X POST "${{ secrets.DEPLOY_BOT_URL }}" \
+          curl -s -X POST "$DEPLOY_BOT_URL" \
             -d "Deployed ${{ steps.short-sha.outputs.sha }} by ${{ github.actor }} at ${{ env.DEPLOY_TIME }}"
