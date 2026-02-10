@@ -32,6 +32,16 @@ module Authentication
 
     def require_authentication
       restore_authentication || bot_authentication || request_authentication
+      redirect_non_members_to_workspaces unless performed?
+    end
+
+    # In SaaS mode, redirect authenticated users who aren't members of this workspace
+    def redirect_non_members_to_workspaces
+      return unless Sabha.saas?
+      return unless ApplicationRecord.current_tenant.present?
+      return if Current.user.present?
+
+      redirect_to "/workspaces"
     end
 
     def restore_authentication

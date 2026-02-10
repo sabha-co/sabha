@@ -92,6 +92,15 @@ module Saas
       assert_equal "/workspaces", session[:return_to_after_authenticating]
     end
 
+    test "authenticated user accessing workspace they are not a member of is redirected to workspace selector" do
+      # Bob is NOT a member of acme workspace
+      sign_in_global_identity(global_identities(:bob))
+
+      workspace_get "/", workspace: workspaces(:acme)
+
+      assert_redirected_to "/workspaces"
+    end
+
     test "require_unauthenticated_access redirects authenticated users" do
       sign_in_global_identity(global_identities(:alice))
 
