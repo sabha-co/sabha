@@ -28,7 +28,7 @@
               <%= link_to user_path(message.creator), class: "message__author txt-undecorated", title: message.creator.title, data: { turbo_frame: "_top" } do %>
                 <strong data-reply-target="author" class="<%= 'txt-strikethrough' if message.creator.deactivated? %>"><%= message.creator.name %></strong>
               <% end %>
-              <%= render "users/role_badge", user: message.creator %>
+              <span class="message__badge"><%= render "users/role_badge", user: message.creator %></span>
               <%= link_to message_timestamp(message, style: timestamp_style, class: "message__timestamp"), room_at_message_path(message.room, message), target: "_top",
                     class: "message__permalink" %>
               <%= render "messages/actions/bookmark_indicator", message: %>

@@ -8,19 +8,19 @@
 
 ## Executive Summary
 
-Sabha is a well-structured Rails chat application with solid architectural foundations. Tenant isolation, ActionCable authentication, CSRF protection, cursor-based pagination, query objects, and concern organization are all implemented well. However, the review identified **31 actionable findings** including 3 critical issues that should be addressed promptly.
+Sabha is a well-structured Rails chat application with solid architectural foundations. Tenant isolation, ActionCable authentication, CSRF protection, cursor-based pagination, query objects, and concern organization are all implemented well. The review identified **31 actionable findings** including 3 critical issues, all of which have been resolved.
 
-| Severity | Count |
-|----------|-------|
-| Critical | 3 |
-| High | 11 |
-| Medium | 17 |
+| Severity | Count | Status |
+|----------|-------|--------|
+| Critical | 3 | All fixed (commit `8431ecb`) |
+| High | 11 | Backlog |
+| Medium | 17 | Backlog |
 
 ---
 
-## Critical — Must Fix
+## Critical — Fixed
 
-### C1. Stored XSS via Custom Styles
+### C1. Stored XSS via Custom Styles ~RESOLVED~
 **Area:** Security
 **File:** `app/helpers/application_helper.rb:29`, `app/controllers/accounts/custom_styles_controller.rb:8`
 
@@ -36,9 +36,11 @@ An administrator can inject `</style><script>malicious_js</script><style>` to es
 
 **Recommendation:** Sanitize custom styles before rendering. Strip `</style>` and `<script>` tags, use a CSS-specific sanitizer, or serve custom styles from a separate endpoint with `Content-Type: text/css`.
 
+**Resolution:** Added `gsub(%r{</style}i, "")` to strip style tag breakout sequences before `html_safe` rendering.
+
 ---
 
-### C2. SSRF via Bot Webhook URLs
+### C2. SSRF via Bot Webhook URLs ~RESOLVED~
 **Area:** Security
 **File:** `app/models/webhook.rb:61-76`, `app/controllers/accounts/bots_controller.rb:37`
 
@@ -50,9 +52,11 @@ An admin can create a bot with `url: "http://169.254.169.254/latest/meta-data/"`
 
 **Recommendation:** Validate webhook URLs on save — require HTTPS, block private IPs using the existing `PrivateNetworkGuard`. At minimum, validate URL format and scheme.
 
+**Resolution:** Added URL format validation + `PrivateNetworkGuard.resolve` on save. Added runtime SSRF guard with `http.ipaddr` pinning at delivery time to prevent DNS rebinding.
+
 ---
 
-### C3. Race Condition in DM Room Creation
+### C3. Race Condition in DM Room Creation ~RESOLVED~
 **Area:** Data Integrity
 **File:** `app/models/rooms/direct.rb:8-11`, `db/schema.rb:218`
 
@@ -61,6 +65,8 @@ An admin can create a bot with `url: "http://169.254.169.254/latest/meta-data/"`
 **Impact:** Duplicate DM rooms for the same user pair, leading to fragmented conversations.
 
 **Recommendation:** Add a unique index on `members_hash` (filtered to `Rooms::Direct` type) and handle `ActiveRecord::RecordNotUnique` with a retry/find pattern.
+
+**Resolution:** New migration makes `members_hash` index unique. Added `rescue ActiveRecord::RecordNotUnique` with `find_by!` fallback in `find_or_create_for`.
 
 ---
 
@@ -409,11 +415,11 @@ The review identified many well-implemented patterns:
 
 ## Recommended Remediation Priority
 
-| Priority | Item | Effort |
-|----------|------|--------|
-| 1 | Sanitize `custom_styles` (C1) | Small |
-| 2 | Add SSRF protection to webhooks (C2) | Small |
-| 3 | Unique constraint on `members_hash` (C3) | Small |
+| Priority | Item | Effort | Status |
+|----------|------|--------|--------|
+| ~~1~~ | ~~Sanitize `custom_styles` (C1)~~ | ~~Small~~ | Done |
+| ~~2~~ | ~~Add SSRF protection to webhooks (C2)~~ | ~~Small~~ | Done |
+| ~~3~~ | ~~Unique constraint on `members_hash` (C3)~~ | ~~Small~~ | Done |
 | 4 | Atomic connection counter updates (H1) | Small |
 | 5 | Add comprehensive CSP headers (M1) | Medium |
 | 6 | Add missing FK constraints (H2) | Small |

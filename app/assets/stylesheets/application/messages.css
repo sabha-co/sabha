@@ -749,6 +749,7 @@ img.message__attachment {
 
 .message--threaded {
   .message__author,
+  .message__badge,
   .message__avatar {
     display: none;
   }
