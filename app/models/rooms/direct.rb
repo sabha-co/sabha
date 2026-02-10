@@ -8,6 +8,8 @@ class Rooms::Direct < Room
     def find_or_create_for(users)
       hash = members_hash_for(users)
       find_by(members_hash: hash) || create_for({ members_hash: hash }, users: users)
+    rescue ActiveRecord::RecordNotUnique
+      find_by!(members_hash: hash)
     end
 
     def members_hash_for(users)

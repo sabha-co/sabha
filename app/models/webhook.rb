@@ -8,6 +8,19 @@ class Webhook < ApplicationRecord
 
   enum :receives, %w[ mentions everything ].index_by(&:itself), prefix: :receives
 
+  validates :url, presence: true, format: { with: /\Ahttps?:\/\/.+/i, message: "must be a valid HTTP(S) URL" }
+  validate :url_not_targeting_private_network
+
+  private def url_not_targeting_private_network
+    return if url.blank?
+
+    RestrictedHTTP::PrivateNetworkGuard.resolve(URI(url).host)
+  rescue URI::InvalidURIError
+    errors.add(:url, "is not a valid URL")
+  rescue RestrictedHTTP::Violation
+    errors.add(:url, "must not target private or internal networks")
+  end
+
   scope :receiving_mentions, -> { where(receives: :mentions) }
   scope :receiving_everything, -> { where(receives: :everything) }
 
@@ -64,10 +77,13 @@ class Webhook < ApplicationRecord
     end
 
     def http
+      resolved_ip = RestrictedHTTP::PrivateNetworkGuard.resolve(uri.host)
+
       Net::HTTP.new(uri.host, uri.port).tap do |http|
         http.use_ssl = (uri.scheme == "https")
         http.open_timeout = ENDPOINT_TIMEOUT
         http.read_timeout = ENDPOINT_TIMEOUT
+        http.ipaddr = resolved_ip
       end
     end
 

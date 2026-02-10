@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_02_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_02_10_090448) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -215,7 +215,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_02_000001) do
     t.string "sortable_name"
     t.string "type", null: false
     t.datetime "updated_at", null: false
-    t.index ["members_hash"], name: "index_rooms_on_members_hash"
+    t.index ["members_hash"], name: "index_rooms_on_members_hash", unique: true
     t.index ["parent_message_id"], name: "index_rooms_on_parent_message_id_unique_thread", unique: true, where: "type = 'Rooms::Thread' AND parent_message_id IS NOT NULL"
     t.index ["slug"], name: "index_rooms_on_slug", unique: true, where: "slug IS NOT NULL"
   end

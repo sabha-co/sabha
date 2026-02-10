@@ -26,7 +26,9 @@ module ApplicationHelper
   def custom_styles_tag
     if custom_styles = Current.account&.custom_styles
       # Inline custom styles should not force a full Turbo reload across navigations
-      tag.style(custom_styles.to_s.html_safe)
+      # Sanitize to prevent breaking out of the <style> tag context (XSS via </style><script>...)
+      sanitized = custom_styles.to_s.gsub(%r{</style}i, "")
+      tag.style(sanitized.html_safe)
     end
   end
 
