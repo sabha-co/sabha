@@ -89,7 +89,7 @@
       <% if @user.pending_email_change? && !Sabha.saas? %>
         <div class="flex align-center gap">
           <div class="btn" style="visibility: hidden;"></div>
-          <p class="txt-small txt-faded margin-none">
+          <p class="txt-small txt-muted margin-none">
             Pending: <strong><%= @user.unconfirmed_email %></strong> ·
             <%= link_to "Cancel", cancel_email_change_user_profile_path, data: { turbo_method: :delete } %>
           </p>

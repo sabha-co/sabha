@@ -1,7 +1,7 @@
 <%# locals: (user:, role:, icon:) %>
 <% active = user.public_send("#{role}?") %>
 <%= form_with model: user, url: account_user_path(user), data: { controller: "form" }, method: :patch do |form| %>
-  <label class="btn txt-small flex-item-no-shrink <%= "btn--active" if active %>"
+  <label class="btn txt-small flex-item-no-shrink"
          for="<%= dom_id(user, role) %>"
          title="<%= active ? "Remove #{role}" : "Make #{role}" %>">
     <span class="for-screen-reader"><%= active ? "Remove #{role}" : "Make #{role}" %></span>

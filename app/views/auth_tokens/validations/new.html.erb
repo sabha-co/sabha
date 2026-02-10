@@ -6,7 +6,7 @@
     <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
 
     <%= form_with url: auth_tokens_validations_url, class: "flex flex-column gap", data: { controller: "form", turbo: hotwire_native_app?, action: "keydown.enter->form#submit" } do |form| %>
-      <fieldset class="flex flex-column gap center-block upad">
+      <fieldset class="flex flex-column gap center-block pad">
         <legend class="txt-large txt-align-center"><strong>Enter one-time code</strong></legend>
 
         <%= render "sessions/flash_messages" %>

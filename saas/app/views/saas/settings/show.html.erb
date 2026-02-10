@@ -4,18 +4,18 @@
   <div class="panel">
     <div class="flex flex-column gap">
       <%# Account Section %>
-      <fieldset class="flex flex-column gap center-block upad">
+      <fieldset class="flex flex-column gap center-block pad">
         <legend class="txt-large txt-align-center"><strong>Account</strong></legend>
 
-        <p class="txt-small txt-faded txt-align-center">
+        <p class="txt-small txt-muted txt-align-center">
           <%= current_global_identity.email_address %>
-          <span class="txt-faded">&middot;</span>
-          <%= link_to "Sign out", session_path, data: { turbo_method: :delete }, style: "color: inherit; text-decoration: underline;" %>
+          <span class="txt-muted">&middot;</span>
+          <%= link_to "Sign out", session_path, data: { turbo_method: :delete } %>
         </p>
       </fieldset>
 
       <%= form_with model: @global_identity, url: settings_path, method: :patch, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
-        <fieldset class="flex flex-column gap center-block upad">
+        <fieldset class="flex flex-column gap center-block pad">
           <% if @global_identity.errors[:email_address].any? %>
             <p class="txt-small txt-negative txt-align-center"><%= @global_identity.errors[:email_address].first %></p>
           <% end %>
@@ -27,7 +27,7 @@
             </label>
           </div>
 
-          <p class="txt-small txt-faded txt-align-center">
+          <p class="txt-small txt-muted txt-align-center">
             Changing your email will require re-verification.
           </p>
 
@@ -38,33 +38,32 @@
       <% end %>
 
       <%# Workspaces Section %>
-      <fieldset class="flex flex-column gap center-block upad">
+      <fieldset class="flex flex-column gap center-block pad">
         <legend class="txt-large txt-align-center"><strong>Your Workspaces</strong></legend>
 
         <% if @workspace_memberships.any? %>
-          <div class="flex flex-column" style="gap: 0.5rem;">
+          <div class="flex flex-column gap-half">
             <% @workspace_memberships.each do |membership| %>
               <% workspace = membership.workspace %>
               <% user = membership.user %>
 
               <%= link_to settings_path(script_name: workspace.slug),
-                    class: "flex align-center justify-space-between pad-half",
-                    style: "text-decoration: none; color: inherit; gap: 0.75rem;" do %>
-                <div class="flex align-center" style="gap: 0.75rem;">
-                  <div style="width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; background: var(--color-border-darkest); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 1rem; color: var(--color-lch-white);">
+                    class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated" do %>
+                <div class="flex align-center gap">
+                  <div class="workspace-initial">
                     <%= workspace.name.first.upcase %>
                   </div>
                   <div class="flex flex-column txt-align-start">
                     <strong><%= workspace.name %></strong>
-                    <span class="txt-small txt-faded"><%= user&.role&.capitalize || "Member" %></span>
+                    <span class="txt-small txt-muted"><%= user&.role&.capitalize || "Member" %></span>
                   </div>
                 </div>
-                <%= icon_tag "arrow-right", class: "txt-faded" %>
+                <%= icon_tag "arrow-right", class: "txt-muted" %>
               <% end %>
             <% end %>
           </div>
         <% else %>
-          <p class="txt-small txt-faded">You haven't joined any workspaces yet.</p>
+          <p class="txt-small txt-muted">You haven't joined any workspaces yet.</p>
         <% end %>
 
         <%= link_to new_workspace_path, class: "btn btn--reversed center" do %>

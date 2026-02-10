@@ -484,3 +484,7 @@ This keeps the migration history clean and avoids unnecessary migration churn fo
 - **Soft Deletion** - Messages marked inactive but preserved
 - **Enhanced Bot API** - Webhooks and DM initiation for bots
 - use docker/caddy based deployment as default.
+
+## UI/Styling Guidelines
+
+When making UI/styling changes, always ask for specific color values, backgrounds, and visual references before implementing. Show a summary of proposed changes before editing CSS/view files.

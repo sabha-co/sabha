@@ -1,22 +1,22 @@
 <% @page_title = "Workspace settings" %>
 
-<section class="panel txt-align-center flex flex-column gap" style="view-transition-name: workspace-settings; max-width: 100%; overflow-x: hidden;">
-  <fieldset class="flex flex-column gap center-block upad" style="max-width: 100%;">
+<section class="panel txt-align-center flex flex-column gap" style="view-transition-name: workspace-settings;">
+  <fieldset class="flex flex-column gap center-block pad max-inline-size">
     <legend class="txt-large txt-align-center"><strong>Workspace settings</strong></legend>
 
-    <p class="txt-small txt-faded txt-align-center">
+    <p class="txt-small txt-muted txt-align-center">
       <%= @workspace.name %>
-      <span class="txt-faded">&middot;</span>
+      <span class="txt-muted">&middot;</span>
       <%= pluralize(@member_count, "member") %>
     </p>
   </fieldset>
 
   <%# Leave Workspace Section %>
-  <fieldset class="flex flex-column gap center-block upad" style="max-width: 100%;">
+  <fieldset class="flex flex-column gap center-block pad max-inline-size">
     <legend class="txt-medium txt-align-center"><strong>Leave workspace</strong></legend>
 
     <% if @is_last_admin %>
-      <p class="txt-small txt-faded">
+      <p class="txt-small txt-muted">
         You cannot leave this workspace because you are the last administrator.
         Make another member an administrator first.
       </p>
@@ -24,7 +24,7 @@
         Leave workspace
       </button>
     <% else %>
-      <p class="txt-small txt-faded">
+      <p class="txt-small txt-muted">
         Leaving will remove your access to this workspace. Your messages will remain visible.
       </p>
       <%= button_to membership_path, method: :delete, class: "btn btn--negative center",
@@ -36,14 +36,14 @@
 
   <%# Delete Workspace Section (Admin only) %>
   <% if @is_admin %>
-    <fieldset class="flex flex-column gap center-block upad" style="max-width: 100%;" data-controller="confirm-delete">
+    <fieldset class="flex flex-column gap center-block pad max-inline-size" data-controller="confirm-delete">
       <legend class="txt-medium txt-align-center txt-negative"><strong>Delete workspace</strong></legend>
 
-      <p class="txt-small txt-faded">
+      <p class="txt-small txt-muted">
         Permanently delete this workspace and all its data. This cannot be undone.
       </p>
 
-      <%= form_with url: settings_path, method: :delete, class: "flex flex-column gap", style: "max-width: 100%;" do |form| %>
+      <%= form_with url: settings_path, method: :delete, class: "flex flex-column gap max-inline-size" do |form| %>
         <label class="flex flex-column gap-half">
           <span class="txt-small">Type <strong><%= @workspace.name %></strong> to confirm:</span>
           <%= form.text_field :confirmation, class: "input txt-align-center",
@@ -65,7 +65,7 @@
 
   <%# Back to Settings %>
   <div class="center-block">
-    <%= link_to settings_path(script_name: ""), class: "txt-small", style: "color: inherit; text-decoration: none;" do %>
+    <%= link_to settings_path(script_name: ""), class: "btn txt-small" do %>
       <%= icon_tag "arrow-left" %> Back to settings
     <% end %>
   </div>

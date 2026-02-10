@@ -33,12 +33,12 @@
     <% end %>
 
     <% if user.reactivatable_by?(Current.user) %>
-      <%= button_to reactivate_account_user_path(user), method: :patch, class: "btn txt-small flex-item-no-shrink btn--success", data: {
+      <%= button_to reactivate_account_user_path(user), method: :patch, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
             turbo_confirm: "Reactivate #{user.name}? They will be able to log in again." } do %>
         Reactivate
       <% end %>
     <% elsif user.unbannable_by?(Current.user) %>
-      <%= button_to user_ban_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--success", data: {
+      <%= button_to user_ban_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
             turbo_confirm: "Unban #{user.name}? They will be able to access the chat again." } do %>
         Unban
       <% end %>

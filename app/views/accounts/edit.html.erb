@@ -28,7 +28,7 @@
 <section class="panel txt-align-center flex flex-column gap" style="view-transition-name: account-settings">
   <% if Current.user.can_administer? %>
     <div class="align-center center avatar__form gap" data-controller="upload-preview">
-      <%= form_with model: @account, method: :patch, class: "txt--medium", data: { controller: "form" } do |form| %>
+      <%= form_with model: @account, method: :patch, class: "txt-medium", data: { controller: "form" } do |form| %>
         <label class="btn input--file">
           <%= icon_tag "camera" %>
           <%= form.file_field :logo, class: "input", accept: "image/*",
@@ -63,7 +63,7 @@
                 data: { action: "keydown.enter->form#submit" } %>
         </label>
 
-        <%= form.button class: "btn btn--reversed center", type: "submit" do %>
+        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
           <%= icon_tag "check" %>
           <span class="for-screen-reader">Save changes</span>
         <% end %>

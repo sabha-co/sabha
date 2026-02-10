@@ -5,7 +5,7 @@
     <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
 
     <%= form_with url: password_reset_path(params[:token]), method: :patch, class: "flex flex-column gap" do |form| %>
-      <fieldset class="flex flex-column gap center-block upad">
+      <fieldset class="flex flex-column gap center-block pad">
         <legend class="txt-large txt-align-center"><strong>Set new password</strong></legend>
 
         <% if flash[:notice] %>

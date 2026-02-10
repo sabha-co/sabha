@@ -62,7 +62,7 @@
         </div>
       <% elsif saas_authenticated? %>
         <%# SaaS: User is globally authenticated, one-click join %>
-        <p class="txt-medium txt-align-center txt-faded">
+        <p class="txt-medium txt-align-center txt-muted">
           Joining as <strong><%= Current.global_identity.email_address %></strong>
         </p>
 

@@ -410,6 +410,21 @@
   transform: rotate(90deg);
 }
 
+/* Workspace initial letter avatar - used in settings workspace list */
+.workspace-initial {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: var(--color-border-darkest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-lch-white);
+  flex-shrink: 0;
+}
+
 /* Layout adjustment for app with workspace selector */
 .app-with-workspaces {
   margin-left: var(--workspace-selector-width);

@@ -11,16 +11,16 @@
     <%= render "accounts/bots/form", form: form, bot: @bot %>
   <% end %>
 
-  <hr class="separator full-width margin-block-double">
+  <hr class="separator full-width margin-block-double" style="--border-style: solid">
 
   <div class="flex align-center gap justify-space-between">
-    <%= button_to account_bot_path(@bot), method: :delete, class: "btn txt--small btn--negative", aria: { label: "Delete this chat bot" },
+    <%= button_to account_bot_path(@bot), method: :delete, class: "btn txt-small btn--negative", aria: { label: "Delete this chat bot" },
           data: { turbo_confirm: "Are you sure you want to permanently remove this bot from the account? This can’t be undone." } do %>
       <%= icon_tag "trash" %>
       <%= icon_tag "bot" %>
     <% end %>
 
-    <%= button_to account_bot_key_path(@bot), method: :put, class: "btn full-width txt--small btn--negative", aria: { label: "Generate a new key" },
+    <%= button_to account_bot_key_path(@bot), method: :put, class: "btn full-width txt-small btn--negative", aria: { label: "Generate a new key" },
           data: { turbo_confirm: "Are you sure you want to change the bot key? All usage of this bot must be updated." } do %>
       <%= icon_tag "refresh" %>
       <%= icon_tag "key" %>
