@@ -91,22 +91,18 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get update && sudo apt-get install -y libvips-dev ffmpeg libpq-dev
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 4.0.1
-          bundler-cache: false
-
       - name: Enable SaaS mode
         run: |
           mkdir -p tmp
           touch tmp/saas.txt
 
-      - name: Install Ruby dependencies (SaaS)
-        run: bundle install
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 4.0.1
+          bundler-cache: true
         env:
           BUNDLE_GEMFILE: Gemfile.saas
-          BUNDLE_PATH: vendor/bundle
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -134,7 +130,6 @@ jobs:
           RAILS_ENV: test
           SAAS: "true"
           BUNDLE_GEMFILE: Gemfile.saas
-          BUNDLE_PATH: vendor/bundle
           UNTENANTED_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test
 
       - name: Build assets
@@ -144,7 +139,6 @@ jobs:
           SAAS: "true"
           SECRET_KEY_BASE: test_secret_key_base_for_ci
           BUNDLE_GEMFILE: Gemfile.saas
-          BUNDLE_PATH: vendor/bundle
 
       - name: Run SaaS tests
         run: bin/rails test saas/test/
@@ -153,5 +147,4 @@ jobs:
           SAAS: "true"
           SECRET_KEY_BASE: test_secret_key_base_for_ci
           BUNDLE_GEMFILE: Gemfile.saas
-          BUNDLE_PATH: vendor/bundle
           UNTENANTED_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test
