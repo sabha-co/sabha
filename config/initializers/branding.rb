@@ -32,7 +32,8 @@ Rails.application.configure do
   config.x.branding.background_color = ENV.fetch("BACKGROUND_COLOR", "#ffffff")
 
   # Analytics (optional)
-  config.x.branding.analytics_domain = ENV.fetch("ANALYTICS_DOMAIN", nil)
+  config.x.branding.umami_website_id = ENV.fetch("UMAMI_WEBSITE_ID", nil)
+  config.x.branding.umami_host = ENV.fetch("UMAMI_HOST", "cloud.umami.is")
 
   # CSP frame ancestors
   default_ancestors = "https://#{config.x.branding.app_host}, https://*.#{config.x.branding.app_host}"
@@ -45,7 +46,8 @@ module Branding
   class << self
     delegate :app_name, :app_short_name, :saas_app_name, :support_email, :app_host, :app_description,
              :mailer_from_name, :mailer_from_email, :saas_mailer_from_name, :saas_mailer_from_email,
-             :theme_color, :background_color, :analytics_domain, :csp_frame_ancestors,
+             :theme_color, :background_color,
+             :umami_website_id, :umami_host, :csp_frame_ancestors,
              to: :config
 
     def app_url

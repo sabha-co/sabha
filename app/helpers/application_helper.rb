@@ -59,6 +59,12 @@ module ApplicationHelper
     end
   end
 
+  def umami_analytics_tag
+    return unless Rails.env.production? && Branding.umami_website_id.present?
+
+    tag.script(defer: true, "data-website-id": Branding.umami_website_id, src: "https://#{Branding.umami_host}/script.js")
+  end
+
   private
     def admin_body_class
       "admin" if Current.user&.can_administer?

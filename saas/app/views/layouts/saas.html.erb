@@ -19,6 +19,7 @@
     <%= vite_javascript_tag 'application' %>
 
     <%= cloudflare_turnstile_script_tag %>
+    <%= umami_analytics_tag %>
   </head>
 
   <body class="<%= class_names(@body_class, "app-with-workspaces": show_workspace_selector?) %>" data-controller="theme">

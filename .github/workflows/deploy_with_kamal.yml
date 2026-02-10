@@ -99,7 +99,8 @@ jobs:
           SAAS_MAILER_FROM_EMAIL=${{ secrets.SAAS_MAILER_FROM_EMAIL }}
           THEME_COLOR=${{ secrets.THEME_COLOR }}
           BACKGROUND_COLOR=${{ secrets.BACKGROUND_COLOR }}
-          ANALYTICS_DOMAIN=${{ secrets.ANALYTICS_DOMAIN }}
+          UMAMI_WEBSITE_ID=${{ secrets.UMAMI_WEBSITE_ID }}
+          UMAMI_HOST=${{ secrets.UMAMI_HOST }}
           CSP_FRAME_ANCESTORS=${{ secrets.CSP_FRAME_ANCESTORS }}
           ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
 

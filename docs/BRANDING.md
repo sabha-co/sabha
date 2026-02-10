@@ -123,14 +123,15 @@ BACKGROUND_COLOR="#ffffff"
 
 ### Analytics (Optional)
 
-If you use Plausible Analytics:
+If you use [Umami Analytics](https://umami.is):
 
 ```bash
-# Your Plausible analytics domain
-ANALYTICS_DOMAIN="yourdomain.com"
+UMAMI_WEBSITE_ID="your-website-id"
+# Self-hosted instance (default: cloud.umami.is)
+# UMAMI_HOST="your-umami-host.com"
 ```
 
-Leave empty to disable analytics tracking.
+Leave `UMAMI_WEBSITE_ID` unset to disable analytics.
 
 ### Security
 
