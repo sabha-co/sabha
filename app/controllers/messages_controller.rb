@@ -39,9 +39,7 @@ class MessagesController < ApplicationController
   def update
     @message.update!(message_params)
 
-    presentation_html = render_to_string(partial: "messages/presentation", locals: { message: @message })
-    @message.broadcast_replace_to @message.room, :messages, target: [ @message, :presentation ], html: presentation_html, attributes: { maintain_scroll: true }
-    @message.broadcast_replace_to :inbox, target: [ @message, :presentation ], html: presentation_html, attributes: { maintain_scroll: true }
+    @message.broadcast_update
     @message.broadcast_mentionee_sidebar_updates
     deliver_webhooks_to_bots(@message, :updated)
 
@@ -50,8 +48,7 @@ class MessagesController < ApplicationController
 
   def destroy
     @message.deactivate
-    @message.broadcast_remove_to @room, :messages
-    @message.broadcast_remove_to :inbox
+    @message.broadcast_remove
     deliver_webhooks_to_bots(@message, :deleted)
   end
 

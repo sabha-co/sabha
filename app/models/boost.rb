@@ -8,13 +8,25 @@ class Boost < ApplicationRecord
 
   scope :ordered, -> { order(:created_at) }
 
-  after_update_commit -> do
-    if saved_change_to_attribute?(:active) && active?
-      broadcast_reactivation
-    end
-  end
+  after_create_commit :broadcast_create
+  after_update_commit :broadcast_reactivation, if: -> { saved_change_to_attribute?(:active) && active? }
+  after_update_commit :broadcast_deactivation, if: -> { saved_change_to_attribute?(:active) && !active? }
 
   private
+    def broadcast_create
+      broadcast_append_to message.room, :messages, target: boosts_target, partial: "messages/boosts/boost", locals: { boost: self }
+      broadcast_append_to :inbox, target: boosts_target, partial: "messages/boosts/boost", locals: { boost: self }
+    end
+
+    def broadcast_deactivation
+      broadcast_remove_to message.room, :messages
+      broadcast_remove_to :inbox
+    end
+
+    def boosts_target
+      "boosts_message_#{message.client_message_id}"
+    end
+
     def broadcast_reactivation
       previous_boost = message.boosts.where("created_at < ?", created_at).last
 

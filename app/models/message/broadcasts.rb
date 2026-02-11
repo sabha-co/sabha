@@ -12,6 +12,9 @@ module Message::Broadcasts
   end
 
   def broadcast_update
+    broadcast_replace_to room, :messages, target: [ self, :presentation ], partial: "messages/presentation", locals: { message: self }, attributes: { maintain_scroll: true }
+    broadcast_replace_to :inbox, target: [ self, :presentation ], partial: "messages/presentation", locals: { message: self }, attributes: { maintain_scroll: true }
+
     broadcast_notifications(ignore_if_older_message: true)
   end
 
@@ -88,6 +91,7 @@ module Message::Broadcasts
 
   def broadcast_remove
     broadcast_remove_to room, :messages
+    broadcast_remove_to :inbox
   end
 
   def broadcast_to_inbox_threads

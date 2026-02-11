@@ -25,20 +25,13 @@ class RoomUpdateBroadcastJob < ApplicationJob
 
   def broadcast_membership_update(membership, room)
     SIDEBAR_SECTIONS.each do |list_name|
-      html = render_partial_for(membership, list_name, room)
       Turbo::StreamsChannel.broadcast_replace_to(
         membership.user, :rooms,
         target: [ room, helpers.dom_prefix(list_name, :list_node) ],
-        html: html
+        partial: "users/sidebars/rooms/shared",
+        locals: { membership: membership, list_name: list_name, room: room }
       )
     end
-  end
-
-  def render_partial_for(membership, list_name, room)
-    ApplicationController.render(
-      partial: "users/sidebars/rooms/shared",
-      locals: { membership: membership, list_name: list_name, room: room }
-    )
   end
 
   def helpers

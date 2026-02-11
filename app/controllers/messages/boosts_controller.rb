@@ -16,7 +16,6 @@ class Messages::BoostsController < ApplicationController
     @boost = @message.boosts.create(boost_params)
     return head :ok unless @boost.persisted?
 
-    broadcast_create
     deliver_webhooks_to_bots(@boost, :created)
   end
 
@@ -24,7 +23,6 @@ class Messages::BoostsController < ApplicationController
     @boost = Current.user.boosts.find(params[:id])
     @boost.deactivate!
 
-    broadcast_remove
     deliver_webhooks_to_bots(@boost, :deleted)
   end
 
@@ -35,20 +33,5 @@ class Messages::BoostsController < ApplicationController
 
     def boost_params
       params.require(:boost).permit(:content)
-    end
-
-    def broadcast_create
-      boost_html = render_to_string(partial: "messages/boosts/boost", formats: [ :html ], locals: { boost: @boost })
-
-      @boost.broadcast_append_to @boost.message.room, :messages,
-        target: "boosts_message_#{@boost.message.client_message_id}", html: boost_html
-
-      @boost.broadcast_append_to :inbox, target: "boosts_message_#{@boost.message.client_message_id}",
-                                 html: boost_html
-    end
-
-    def broadcast_remove
-      @boost.broadcast_remove_to @boost.message.room, :messages
-      @boost.broadcast_remove_to :inbox
     end
 end
