@@ -9,7 +9,7 @@ class Sessions::TransfersController < ApplicationController
       start_new_session_for user
       redirect_to post_authenticating_url
     else
-      head :bad_request
+      redirect_to new_session_url, alert: "That sign-in link is invalid or has expired."
     end
   end
 end
