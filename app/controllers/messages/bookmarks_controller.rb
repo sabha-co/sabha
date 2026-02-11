@@ -20,13 +20,15 @@ class Messages::BookmarksController < ApplicationController
     end
 
     def broadcast_message_update
-      html = render_to_string(partial: "messages/actions/bookmark", locals: { message: @message })
-      @message.broadcast_replace_to Current.user, @message.room, :messages, target: [ @message, :bookmarking ], html: html
-      @message.broadcast_replace_to Current.user, :inbox, target: [ @message, :bookmarking ], html: html
+      @message.broadcast_replace_to Current.user, @message.room, :messages,
+        target: [ @message, :bookmarking ], partial: "messages/actions/bookmark", locals: { message: @message }
+      @message.broadcast_replace_to Current.user, :inbox,
+        target: [ @message, :bookmarking ], partial: "messages/actions/bookmark", locals: { message: @message }
 
-      indicator_html = render_to_string(partial: "messages/actions/bookmark_indicator", locals: { message: @message })
-      @message.broadcast_replace_to Current.user, @message.room, :messages, target: [ @message, :bookmark_indicator ], html: indicator_html
-      @message.broadcast_replace_to Current.user, :inbox, target: [ @message, :bookmark_indicator ], html: indicator_html
+      @message.broadcast_replace_to Current.user, @message.room, :messages,
+        target: [ @message, :bookmark_indicator ], partial: "messages/actions/bookmark_indicator", locals: { message: @message }
+      @message.broadcast_replace_to Current.user, :inbox,
+        target: [ @message, :bookmark_indicator ], partial: "messages/actions/bookmark_indicator", locals: { message: @message }
     end
 
     def broadcast_remove_from_bookmarks_inbox

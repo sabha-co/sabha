@@ -78,18 +78,13 @@ class Rooms::ClosedsController < RoomsController
 
     def broadcast_create_room(room)
       for_each_sidebar_section do |list_name|
-        each_user_and_html_for_create(room, list_name:) do |user, html|
-          broadcast_append_to user, :rooms, target: list_name, html: html, attributes: { maintain_scroll: true }
+        # render_to_string runs in request context (has script_name), so URLs are tenant-safe.
+        # Render once and reuse: new rooms have no per-member unread state to differentiate.
+        html = render_to_string(partial: "users/sidebars/rooms/shared", locals: { list_name:, room: room })
+
+        room.memberships.visible.includes(:user).each do |membership|
+          broadcast_append_to membership.user, :rooms, target: list_name, html: html, attributes: { maintain_scroll: true }
         end
-      end
-    end
-
-    def each_user_and_html_for_create(room, **locals)
-      # Optimization to avoid rendering the same partial for every user
-      html = render_to_string(partial: "users/sidebars/rooms/shared", locals: { room: room }.merge(locals))
-
-      room.memberships.visible.each do |membership|
-        yield membership.user, html
       end
     end
 end
