@@ -8,6 +8,10 @@
 # Catches misconfigured deploys at boot instead of silently producing
 # broken WebSocket URLs, mailer configs, etc.
 
+if Sabha.saas? && ENV["AUTH_METHOD"] == "password"
+  abort "FATAL: AUTH_METHOD=password is not supported in SaaS mode. SaaS uses OTP-only authentication via GlobalIdentity."
+end
+
 if Rails.env.production? && !ENV["SECRET_KEY_BASE_DUMMY"].present?
   required = %w[APP_HOST SECRET_KEY_BASE]
 
