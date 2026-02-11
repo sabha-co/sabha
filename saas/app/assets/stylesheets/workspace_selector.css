@@ -499,6 +499,12 @@
   top: var(--workspace-banner-height);
 }
 
+@media (max-width: 120ch) {
+  .app-with-workspaces.has-workspace-banner #sidebar {
+    top: var(--workspace-banner-height);
+  }
+}
+
 .app-with-workspaces.has-workspace-banner .flash {
   inset-block-start: calc(var(--workspace-banner-height) + var(--block-space));
 }
@@ -519,6 +525,14 @@
 
   .app-with-workspaces.has-workspace-banner .workspace-selector {
     top: 0;
+  }
+
+  .app-with-workspaces.has-workspace-banner #sidebar {
+    top: 0;
+  }
+
+  .app-with-workspaces.has-workspace-banner .flash {
+    inset-block-start: var(--block-space);
   }
 }
 
