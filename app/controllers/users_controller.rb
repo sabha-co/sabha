@@ -189,8 +189,8 @@ class UsersController < ApplicationController
     end
 
     def set_member_counts
-      @online_user_count = Rails.cache.fetch(tenant_cache_key("users/online_count"), expires_in: 5.minutes) do
-        User.active.verified.where(last_authenticated_at: 24.hours.ago..).count
+      @online_user_count_extended = Rails.cache.fetch(tenant_cache_key("users/online_count_extended"), expires_in: 5.minutes) do
+        Membership.where(connected_at: 24.hours.ago..).select(:user_id).distinct.count
       end
       @member_count = Rails.cache.fetch(tenant_cache_key("users/member_count"), expires_in: 5.minutes) do
         User.active.verified.count

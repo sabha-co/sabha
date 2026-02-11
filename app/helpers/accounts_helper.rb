@@ -6,7 +6,7 @@ module AccountsHelper
   end
 
   def online_users_count
-    Membership.connected.select(:user_id).distinct.count
+    Membership.where(connected_at: 10.minutes.ago..).select(:user_id).distinct.count
   end
 
   def badge_options
