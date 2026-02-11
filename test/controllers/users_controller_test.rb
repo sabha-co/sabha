@@ -231,22 +231,23 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   # Invalid/expired join codes
   # ============================================================================
 
-  test "join page with invalid code returns 404" do
+  test "join page with invalid code redirects with alert" do
     get join_url("INVALID_CODE_123")
 
-    assert_response :not_found
+    assert_redirected_to root_url
+    assert_match /not valid/, flash[:alert]
   end
 
-  test "join page with expired code returns 410 gone" do
-    # Expire the join code
+  test "join page with expired code redirects with alert" do
     Current.account.join_code.update!(expires_at: 1.day.ago)
 
     get join_url(@join_code)
 
-    assert_response :gone
+    assert_redirected_to root_url
+    assert_match /expired/, flash[:alert]
   end
 
-  test "join form with exhausted code returns 410 gone" do
+  test "join form with exhausted code redirects with alert" do
     ENV["AUTH_METHOD"] = "password"
     join_code_record = Current.account.join_code
     join_code_record.update!(usage_limit: 1, usage_count: 1)
@@ -259,8 +260,8 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
       }
     )
 
-    # Exhausted codes are treated as inactive and return 410
-    assert_response :gone
+    assert_redirected_to root_url
+    assert_match /expired/, flash[:alert]
   end
 
   # ============================================================================

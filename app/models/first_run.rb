@@ -35,6 +35,7 @@ class FirstRun
     room    = Rooms::Open.new(name: FIRST_ROOM_NAME)
 
     administrator = room.creator = User.new(user_params.merge(role: :administrator))
+    administrator.validate!
     room.save!
 
     room.memberships.grant_to administrator

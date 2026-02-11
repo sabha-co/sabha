@@ -5,6 +5,15 @@ class SessionTest < ActiveSupport::TestCase
     @user = users(:david)
   end
 
+  test "creating a session updates user last_authenticated_at" do
+    @user.update_column(:last_authenticated_at, 1.week.ago)
+
+    travel_to Time.current do
+      @user.sessions.create!(user_agent: "Test", ip_address: "127.0.0.1")
+      assert_in_delta Time.current, @user.reload.last_authenticated_at, 2.seconds
+    end
+  end
+
   test "session expires after 30 days" do
     session = @user.sessions.create!(user_agent: "Test", ip_address: "127.0.0.1")
 

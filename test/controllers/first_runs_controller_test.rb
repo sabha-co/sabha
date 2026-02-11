@@ -31,6 +31,15 @@ class FirstRunsControllerTest < ActionDispatch::IntegrationTest
     assert parsed_cookies.signed[:session_token]
   end
 
+  test "create with short password shows validation error" do
+    assert_no_difference -> { User.count } do
+      post first_run_url, params: { user: { name: "Admin", email_address: "admin@example.com", password: "short" } }
+    end
+
+    assert_response :unprocessable_entity
+    assert_match /too short/, flash[:alert]
+  end
+
   test "create is not vulnerable to race conditions" do
     num_attackers = 5
     url = first_run_url

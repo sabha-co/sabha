@@ -7,7 +7,7 @@ class Session < ApplicationRecord
   belongs_to :user
 
   before_create :set_defaults
-  after_create_commit -> { user.update_column(:last_authenticated_at, Time.current) }
+  after_create_commit :update_user_last_authenticated_at
 
   scope :active, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
 
@@ -26,6 +26,10 @@ class Session < ApplicationRecord
   end
 
   private
+    def update_user_last_authenticated_at
+      user.update_column(:last_authenticated_at, Time.current)
+    end
+
     def set_defaults
       self.last_active_at ||= Time.now
       self.expires_at ||= SESSION_LIFETIME.from_now

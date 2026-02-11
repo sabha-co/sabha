@@ -133,6 +133,7 @@ class User < ApplicationRecord
   scope :unverified, -> { where(verified_at: nil) }
 
   has_secure_password validations: false
+  validates :password, length: { minimum: MINIMUM_PASSWORD_LENGTH }, if: -> { password.present? }
 
   generates_token_for :email_verification, expires_in: 24.hours
   generates_token_for :email_change, expires_in: 24.hours

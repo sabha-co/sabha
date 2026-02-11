@@ -14,7 +14,7 @@ class Message < ApplicationRecord
 
   has_rich_text :body
 
-  before_create -> { self.client_message_id ||= Random.uuid } # Bots don't care
+  before_create :set_default_client_message_id
   before_create :touch_room_activity
   after_create_commit :deliver_to_room
   after_create_commit :involve_mentionees_on_create
@@ -93,6 +93,11 @@ class Message < ApplicationRecord
   end
 
   private
+    # Bots and API consumers don't generate client-side IDs for Turbo dedup
+    def set_default_client_message_id
+      self.client_message_id ||= Random.uuid
+    end
+
     def deliver_to_room
       room.receive(self)
     end

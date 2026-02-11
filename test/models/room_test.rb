@@ -1,6 +1,12 @@
 require "test_helper"
 
 class RoomTest < ActiveSupport::TestCase
+  test "last_active_at is set on room creation" do
+    room = Rooms::Open.create!(name: "New Room", creator: users(:david))
+    assert room.last_active_at.present?
+    assert_in_delta Time.current, room.last_active_at, 2.seconds
+  end
+
   test "grant membership to user" do
     rooms(:watercooler).memberships.grant_to(users(:kevin))
     assert rooms(:watercooler).users.include?(users(:kevin))

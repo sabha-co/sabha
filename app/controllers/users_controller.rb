@@ -13,6 +13,7 @@ class UsersController < ApplicationController
   before_action :verify_join_code_active, only: %i[ new create ]
   before_action :set_return_to_url, only: %i[ new create ]
   before_action :validate_email_param, only: :create, unless: -> { saas_authenticated? || saas_unauthenticated? }
+  before_action :ensure_password_provided, only: :create, unless: -> { saas_authenticated? || saas_unauthenticated? }
   before_action :start_otp_if_user_exists, only: :create, if: -> { !saas_authenticated? && !saas_unauthenticated? && Current.account.auth_method_value == "otp" }
 
   helper_method :saas_authenticated?, :saas_unauthenticated?
@@ -44,30 +45,20 @@ class UsersController < ApplicationController
 
     # SaaS mode: user is globally authenticated, just needs to join this workspace
     def create_for_saas_user
-      global_identity = Current.global_identity
-
-      # Create records first, then redeem join code
-      # This avoids burning limited-use invites on creation failures
       membership = WorkspaceMembership.create!(
-        global_identity: global_identity,
+        global_identity: Current.global_identity,
         tenant: ApplicationRecord.current_tenant
       )
 
       @user = membership.create_user!
-
-      # Redeem join code after successful creation
-      unless redeem_join_code
-        cleanup_failed_join(membership, @user)
-        redirect_to root_url, alert: "This invite link is no longer valid.", status: :see_other
-        return
-      end
-
+      @join_code.redeem!
       deliver_webhooks_to_bots(@user, :created)
-
-      # Set up Current context so redirect works correctly
       Current.workspace_membership = membership
 
       redirect_to root_url, notice: "Welcome to #{Current.account.name}!"
+    rescue Account::JoinCode::InactiveCodeError
+      cleanup_failed_join(membership, @user)
+      redirect_to root_url, alert: "This invite link is no longer valid.", status: :see_other
     rescue ActiveRecord::RecordInvalid => e
       if e.record.is_a?(WorkspaceMembership) && e.record.errors[:global_identity_id].present?
         redirect_to root_url, notice: "You're already a member of this workspace."
@@ -91,40 +82,21 @@ class UsersController < ApplicationController
 
     # Self-hosted mode or unauthenticated SaaS: full signup flow
     def create_for_new_user
-      # Validate password for password-based authentication
-      if Current.account.auth_method_value == "password"
-        return unless validate_password_params
-      end
-
-      # Create user first, then redeem join code
-      # This avoids burning limited-use invites on creation failures
       @user = User.create!(user_params)
-
-      unless redeem_join_code
-        @user.destroy!
-        redirect_to root_url, alert: "This invite link is no longer valid. Please request a new one.", status: :see_other
-        return
-      end
-
+      @join_code.redeem!
       deliver_webhooks_to_bots(@user, :created)
-
-      # Always require email verification for new users
-      if @user.person? && !@user.verified?
-        if Current.account.auth_method_value == "otp"
-          # For OTP: Send verification code
-          start_otp_for @user
-          redirect_to new_auth_tokens_validations_path, notice: "Please check your email for a verification code.", status: :see_other
-        else
-          # For password: Send verification email with link
-          @user.send_verification_email
-          redirect_to new_session_url(email_address: @user.email_address), notice: "Please check your email to verify your account.", status: :see_other
-        end
-      else
-        start_new_session_for @user
-        redirect_to root_url
-      end
+      redirect_after_signup
+    rescue Account::JoinCode::InactiveCodeError
+      @user.destroy!
+      redirect_to root_url, alert: "This invite link is no longer valid. Please request a new one.", status: :see_other
+    rescue ActiveRecord::RecordInvalid => e
+      flash.now[:alert] = e.record.errors.full_messages.to_sentence
+      @user = User.new
+      set_member_counts
+      render :new, status: :unprocessable_entity
     rescue ActiveRecord::RecordNotUnique
-      redirect_to new_session_url(email_address: user_params[:email_address]), notice: "An account with this email already exists. Please sign in.", status: :see_other
+      redirect_to new_session_url(email_address: user_params[:email_address]),
+        notice: "An account with this email already exists. Please sign in.", status: :see_other
     end
 
     def set_user
@@ -133,15 +105,11 @@ class UsersController < ApplicationController
 
     def set_join_code
       @join_code = Current.account.join_codes.find_by(code: params[:join_code])
-      head :not_found unless @join_code
+      redirect_to root_url, alert: "This invite link is not valid. Please request a new one." unless @join_code
     end
 
     def verify_join_code_active
-      head :gone unless @join_code.active?
-    end
-
-    def redeem_join_code
-      @join_code.redeem
+      redirect_to root_url, alert: "This invite link has expired. Please request a new one." unless @join_code.active?
     end
 
     def start_otp_if_user_exists
@@ -160,22 +128,29 @@ class UsersController < ApplicationController
       auth_token.deliver_later
     end
 
-    def validate_password_params
+    def ensure_password_provided
+      return unless Current.account.auth_method_value == "password"
+      return if user_params[:password].present?
+
       @user = User.new
+      flash.now[:alert] = "Password can't be blank"
+      set_member_counts
+      render :new, status: :unprocessable_entity
+    end
 
-      if user_params[:password].blank?
-        flash.now[:alert] = "Password can't be blank"
-        set_member_counts
-        render :new, status: :unprocessable_entity
-        return false
-      elsif user_params[:password].length < User::MINIMUM_PASSWORD_LENGTH
-        flash.now[:alert] = "Password is too short (minimum is #{User::MINIMUM_PASSWORD_LENGTH} characters)"
-        set_member_counts
-        render :new, status: :unprocessable_entity
-        return false
+    def redirect_after_signup
+      if @user.person? && !@user.verified?
+        if Current.account.auth_method_value == "otp"
+          start_otp_for @user
+          redirect_to new_auth_tokens_validations_path, notice: "Please check your email for a verification code.", status: :see_other
+        else
+          @user.send_verification_email
+          redirect_to new_session_url(email_address: @user.email_address), notice: "Please check your email to verify your account.", status: :see_other
+        end
+      else
+        start_new_session_for @user
+        redirect_to root_url
       end
-
-      true
     end
 
     def user_params

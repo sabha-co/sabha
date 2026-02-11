@@ -82,6 +82,16 @@ class MembershipTest < ActiveSupport::TestCase
     assert @membership.connected?
   end
 
+  test "deactivating a membership resets user connections" do
+    @membership.user.expects(:reset_remote_connections)
+    @membership.deactivate!
+  end
+
+  test "updating a non-active field does not reset user connections" do
+    @membership.user.expects(:reset_remote_connections).never
+    @membership.update!(involvement: :everything)
+  end
+
   test "removing a membership resets the user's connections" do
     @membership.user.expects :reset_remote_connections
 

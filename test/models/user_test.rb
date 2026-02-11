@@ -6,6 +6,22 @@ class UserTest < ActiveSupport::TestCase
     assert users(:david).valid?
   end
 
+  test "password shorter than minimum length is invalid" do
+    user = User.new(name: "Test", email_address: "short@example.com", password: "short")
+    assert_not user.valid?
+    assert_includes user.errors[:password], "is too short (minimum is #{User::MINIMUM_PASSWORD_LENGTH} characters)"
+  end
+
+  test "password at exactly minimum length is valid" do
+    user = User.new(name: "Test", email_address: "exact@example.com", password: "a" * User::MINIMUM_PASSWORD_LENGTH)
+    assert user.valid?
+  end
+
+  test "blank password skips length validation" do
+    user = User.new(name: "Test", email_address: "nopw@example.com")
+    assert user.valid?
+  end
+
   test "creating users grants membership to the open rooms" do
     assert_difference -> { Membership.count }, +Rooms::Open.count do
       create_new_user

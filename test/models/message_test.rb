@@ -3,6 +3,17 @@ require "test_helper"
 class MessageTest < ActiveSupport::TestCase
   include ActionCable::TestHelper, ActiveJob::TestHelper
 
+  test "client_message_id is auto-generated when not provided" do
+    message = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello")
+    assert message.client_message_id.present?
+    assert_match(/\A[0-9a-f-]+\z/, message.client_message_id) # UUID format
+  end
+
+  test "client_message_id is preserved when explicitly provided" do
+    message = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello", client_message_id: "custom-id")
+    assert_equal "custom-id", message.client_message_id
+  end
+
   test "creating a message enqueues to push later" do
     assert_enqueued_jobs 1, only: [ Room::PushMessageJob ] do
       create_new_message_in rooms(:designers)

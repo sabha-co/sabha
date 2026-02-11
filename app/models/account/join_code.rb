@@ -15,12 +15,20 @@ class Account::JoinCode < ApplicationRecord
   before_validation :set_default_expiration, on: :create, if: :personal?
   before_validation :set_account_from_current, on: :create, if: -> { account_id.blank? }
 
-  def redeem
+  class InactiveCodeError < StandardError; end
+
+  def redeem!
     with_lock do
-      return false unless active?
+      raise InactiveCodeError unless active?
       increment!(:usage_count)
-      true
     end
+  end
+
+  def redeem
+    redeem!
+    true
+  rescue InactiveCodeError
+    false
   end
 
   def active?

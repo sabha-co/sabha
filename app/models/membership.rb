@@ -49,8 +49,8 @@ class Membership < ApplicationRecord
     )
   }
 
-  after_update_commit { user.reset_remote_connections if deactivated? }
-  after_destroy_commit { user.reset_remote_connections }
+  after_update_commit :reset_user_connections_if_deactivated
+  after_destroy_commit :reset_user_connections
   after_commit :invalidate_room_member_count_cache
 
   enum :involvement, %w[ invisible nothing mentions everything ].index_by(&:itself), prefix: :involved_in
@@ -130,6 +130,14 @@ class Membership < ApplicationRecord
   end
 
   private
+    def reset_user_connections_if_deactivated
+      user.reset_remote_connections if deactivated?
+    end
+
+    def reset_user_connections
+      user.reset_remote_connections
+    end
+
     def invalidate_room_member_count_cache
       room&.invalidate_member_count_cache
 

@@ -119,6 +119,33 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
     assert_nil join_code.expires_at
   end
 
+  test "redeem! raises InactiveCodeError when exhausted" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(usage_limit: 1, usage_count: 1)
+
+    assert_raises Account::JoinCode::InactiveCodeError do
+      join_code.redeem!
+    end
+  end
+
+  test "redeem! raises InactiveCodeError when expired" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(expires_at: 1.hour.ago)
+
+    assert_raises Account::JoinCode::InactiveCodeError do
+      join_code.redeem!
+    end
+  end
+
+  test "redeem! increments usage_count when active" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(usage_limit: nil, usage_count: 0)
+
+    assert_changes -> { join_code.reload.usage_count }, from: 0, to: 1 do
+      join_code.redeem!
+    end
+  end
+
   test "redeem returns false when expired" do
     join_code = account_join_codes(:signal)
     join_code.update!(expires_at: 1.hour.ago)

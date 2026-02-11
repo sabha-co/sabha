@@ -40,7 +40,7 @@ class Room < ApplicationRecord
   # Use before_destroy to clean up ALL records (including inactive) to satisfy FK constraints
   before_destroy :destroy_all_associated_records
 
-  before_validation -> { self.last_active_at = Time.current }, on: :create
+  before_validation :set_initial_last_active_at, on: :create
 
   before_save :set_sortable_name
   after_save_commit :broadcast_updates, if: :saved_change_to_sortable_name?
@@ -52,11 +52,7 @@ class Room < ApplicationRecord
 
   scope :ordered, -> { order(:sortable_name) }
 
-  after_update_commit -> do
-    if saved_change_to_attribute?(:active) && active?
-      broadcast_reactivation
-    end
-  end
+  after_update_commit :broadcast_reactivation_if_restored
 
   class << self
     def create_for(attributes, users:)
@@ -180,6 +176,14 @@ class Room < ApplicationRecord
     def active_member_count_cache_key
       tenant_prefix = ApplicationRecord.current_tenant if Sabha.saas?
       [ tenant_prefix, "room", id, "active_member_count" ].compact.join(":")
+    end
+
+    def set_initial_last_active_at
+      self.last_active_at = Time.current
+    end
+
+    def broadcast_reactivation_if_restored
+      broadcast_reactivation if saved_change_to_attribute?(:active) && active?
     end
 
     def set_sortable_name

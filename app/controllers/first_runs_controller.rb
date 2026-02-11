@@ -14,6 +14,10 @@ class FirstRunsController < ApplicationController
     redirect_to root_url
   rescue ActiveRecord::RecordNotUnique
     redirect_to root_url
+  rescue ActiveRecord::RecordInvalid => e
+    @user = e.record.is_a?(User) ? e.record : User.new
+    flash.now[:alert] = e.record.errors.full_messages.to_sentence
+    render :show, status: :unprocessable_entity
   end
 
   private

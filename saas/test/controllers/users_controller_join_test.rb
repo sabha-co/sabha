@@ -197,15 +197,16 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
   # POST /workspace_id/join/:join_code (invalid join code)
   # ============================================================================
 
-  test "submit join form with invalid code shows error" do
+  test "submit join form with invalid code redirects with alert" do
     sign_in_global_identity(@bob)
 
     workspace_post "/join/INVALID_CODE", workspace: @workspace, params: with_turnstile_response({})
 
-    assert_response :not_found
+    assert_response :redirect
+    assert_match /not valid/, flash[:alert]
   end
 
-  test "submit join form with expired code shows error" do
+  test "submit join form with expired code redirects with alert" do
     sign_in_global_identity(@bob)
 
     # Expire the join code
@@ -213,14 +214,15 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
 
     workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
 
-    assert_response :gone
+    assert_response :redirect
+    assert_match /expired/, flash[:alert]
   end
 
   # ============================================================================
   # Transaction rollback when join code redemption fails
   # ============================================================================
 
-  test "exhausted join code returns 410 gone and does not create membership" do
+  test "exhausted join code redirects with alert and does not create membership" do
     sign_in_global_identity(@bob)
 
     # Make the join code exhausted (can't be redeemed)
@@ -230,8 +232,9 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
 
     workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
 
-    # Exhausted codes are treated as inactive and return 410 (verify_join_code_active)
-    assert_response :gone
+    # Exhausted codes are treated as inactive and redirect with alert
+    assert_response :redirect
+    assert_match /expired/, flash[:alert]
 
     # Membership should not have been created
     assert_equal initial_membership_count, WorkspaceMembership.count
