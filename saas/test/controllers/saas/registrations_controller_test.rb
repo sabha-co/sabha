@@ -11,10 +11,20 @@ module Saas
       assert_response :success
     end
 
-    test "create with blank email redirects with error" do
-      post registration_path, params: with_turnstile_response(email_address: "")
+    test "create with blank email redirects with validation errors" do
+      post registration_path, params: with_turnstile_response(name: "Test", email_address: "")
       assert_redirected_to new_registration_path
-      assert_equal "Please enter an email address", flash[:alert]
+      assert_match /Email address/, flash[:alert]
+    end
+
+    test "create with blank name still succeeds (name is optional, fallback to email prefix)" do
+      assert_difference "GlobalIdentity.count", 1 do
+        post registration_path, params: with_turnstile_response(name: "", email_address: "noname@example.com")
+      end
+
+      assert_redirected_to auth_code_path
+      identity = GlobalIdentity.find_by(email_address: "noname@example.com")
+      assert_nil identity.name
     end
 
     test "create with existing email sends sign_in auth code (same message as new)" do
@@ -22,7 +32,7 @@ module Saas
 
       assert_difference "AuthCode.count", 1 do
         assert_enqueued_emails 1 do
-          post registration_path, params: with_turnstile_response(email_address: existing_identity.email_address)
+          post registration_path, params: with_turnstile_response(name: "Alice", email_address: existing_identity.email_address)
         end
       end
 
@@ -42,7 +52,7 @@ module Saas
       assert_difference "GlobalIdentity.count", 1 do
         assert_difference "AuthCode.count", 1 do
           assert_enqueued_emails 1 do
-            post registration_path, params: with_turnstile_response(email_address: new_email)
+            post registration_path, params: with_turnstile_response(name: "New User", email_address: new_email)
           end
         end
       end
@@ -50,9 +60,10 @@ module Saas
       assert_redirected_to auth_code_path
       assert_match /Check your email for a verification code/, flash[:notice]
 
-      # GlobalIdentity should be created
+      # GlobalIdentity should be created with name
       identity = GlobalIdentity.find_by(email_address: new_email)
       assert identity.present?
+      assert_equal "New User", identity.name
       assert_nil identity.verified_at
 
       # Auth code should be for sign_up
@@ -62,7 +73,7 @@ module Saas
     end
 
     test "create normalizes email to lowercase" do
-      post registration_path, params: with_turnstile_response(email_address: "  NewUser@Example.COM  ")
+      post registration_path, params: with_turnstile_response(name: "New User", email_address: "  NewUser@Example.COM  ")
       assert_redirected_to auth_code_path
 
       identity = GlobalIdentity.find_by(email_address: "newuser@example.com")

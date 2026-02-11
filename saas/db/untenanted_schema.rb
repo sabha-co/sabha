@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_05_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_02_11_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -21,19 +21,20 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_05_000001) do
     t.integer "global_identity_id", null: false
     t.integer "purpose", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.index [ "code" ], name: "index_auth_codes_on_code", unique: true
-    t.index [ "expires_at" ], name: "index_auth_codes_on_expires_at"
-    t.index [ "global_identity_id" ], name: "index_auth_codes_on_global_identity_id"
+    t.index ["code"], name: "index_auth_codes_on_code", unique: true
+    t.index ["expires_at"], name: "index_auth_codes_on_expires_at"
+    t.index ["global_identity_id"], name: "index_auth_codes_on_global_identity_id"
   end
 
   create_table "global_identities", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email_address", null: false
+    t.string "name"
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
     t.datetime "verified_at"
-    t.index [ "email_address" ], name: "index_global_identities_on_email_address", unique: true
-    t.index [ "verified_at" ], name: "index_global_identities_on_verified_at"
+    t.index ["email_address"], name: "index_global_identities_on_email_address", unique: true
+    t.index ["verified_at"], name: "index_global_identities_on_verified_at"
   end
 
   create_table "global_sessions", force: :cascade do |t|
@@ -45,9 +46,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_05_000001) do
     t.string "token", null: false
     t.datetime "updated_at", null: false
     t.string "user_agent"
-    t.index [ "expires_at" ], name: "index_global_sessions_on_expires_at"
-    t.index [ "global_identity_id" ], name: "index_global_sessions_on_global_identity_id"
-    t.index [ "token" ], name: "index_global_sessions_on_token", unique: true
+    t.index ["expires_at"], name: "index_global_sessions_on_expires_at"
+    t.index ["global_identity_id"], name: "index_global_sessions_on_global_identity_id"
+    t.index ["token"], name: "index_global_sessions_on_token", unique: true
   end
 
   create_table "workspace_external_id_sequences", force: :cascade do |t|
@@ -63,10 +64,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_05_000001) do
     t.string "tenant", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
-    t.index [ "global_identity_id", "position" ], name: "index_workspace_memberships_on_global_identity_id_and_position"
-    t.index [ "global_identity_id", "tenant" ], name: "index_workspace_memberships_on_global_identity_id_and_tenant", unique: true
-    t.index [ "global_identity_id" ], name: "index_workspace_memberships_on_global_identity_id"
-    t.index [ "tenant" ], name: "index_workspace_memberships_on_tenant"
+    t.index ["global_identity_id", "position"], name: "index_workspace_memberships_on_global_identity_id_and_position"
+    t.index ["global_identity_id", "tenant"], name: "index_workspace_memberships_on_global_identity_id_and_tenant", unique: true
+    t.index ["global_identity_id"], name: "index_workspace_memberships_on_global_identity_id"
+    t.index ["tenant"], name: "index_workspace_memberships_on_tenant"
   end
 
   create_table "workspaces", force: :cascade do |t|
@@ -78,10 +79,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_05_000001) do
     t.string "slug"
     t.datetime "suspended_at"
     t.datetime "updated_at", null: false
-    t.index [ "creator_id" ], name: "index_workspaces_on_creator_id"
-    t.index [ "external_id" ], name: "index_workspaces_on_external_id", unique: true
-    t.index [ "slug" ], name: "index_workspaces_on_slug", unique: true
-    t.index [ "suspended_at" ], name: "index_workspaces_on_suspended_at"
+    t.index ["creator_id"], name: "index_workspaces_on_creator_id"
+    t.index ["external_id"], name: "index_workspaces_on_external_id", unique: true
+    t.index ["slug"], name: "index_workspaces_on_slug", unique: true
+    t.index ["suspended_at"], name: "index_workspaces_on_suspended_at"
   end
 
   add_foreign_key "auth_codes", "global_identities"

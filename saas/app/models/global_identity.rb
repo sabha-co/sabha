@@ -17,6 +17,7 @@ class GlobalIdentity < UntenantedRecord
                            uniqueness: { case_sensitive: false },
                            format: { with: URI::MailTo::EMAIL_REGEXP }
 
+  normalizes :name, with: ->(name) { name&.strip.presence }
   normalizes :email_address, with: ->(email) { email.strip.downcase }
   normalizes :unconfirmed_email, with: ->(email) { email&.strip&.downcase }
 

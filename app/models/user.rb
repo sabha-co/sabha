@@ -140,6 +140,7 @@ class User < ApplicationRecord
   generates_token_for :password_reset, expires_in: 1.hour
 
   after_update :send_email_change_notification, if: :saved_change_to_email_address?
+  after_update :sync_name_to_global_identity, if: -> { Sabha.saas? && saved_change_to_name? }
 
   before_validation :set_default_name
   before_validation :normalize_social_urls
@@ -362,6 +363,11 @@ class User < ApplicationRecord
       UserMailer.email_changed(self, old_email).deliver_later if old_email.present?
     end
 
+    def sync_name_to_global_identity
+      global_identity&.update!(name: name)
+    rescue => error
+      Rails.logger.error "[GlobalIdentity sync] Failed to sync name for User##{id}: #{error.message}"
+    end
 
     def grant_membership_to_open_rooms
       Membership.insert_all(Rooms::Open.active.pluck(:id).collect { |room_id| { room_id: room_id, user_id: id } })

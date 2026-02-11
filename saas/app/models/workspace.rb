@@ -79,7 +79,7 @@ class Workspace < UntenantedRecord
         if admin_user.new_record?
           admin_user.assign_attributes(
             workspace_membership_id: membership.id,
-            name: creator.email_address.split("@").first.titleize,
+            name: creator.name || creator.email_address.split("@").first.titleize,
             role: :administrator,
             verified_at: Time.current
           )

@@ -6,29 +6,35 @@
 # Each GlobalIdentity may have multiple WorkspaceMemberships.
 
 alice:
+  name: Alice
   email_address: alice@example.com
   verified_at: <%= 1.week.ago.to_fs(:db) %>
 
 bob:
+  name: Bob
   email_address: bob@example.com
   verified_at: <%= 1.day.ago.to_fs(:db) %>
 
 charlie:
+  name: Charlie
   email_address: charlie@example.com
   verified_at: <%= 2.days.ago.to_fs(:db) %>
 
 # Unverified user (hasn't clicked magic link yet)
 unverified:
+  name: Unverified
   email_address: unverified@example.com
   verified_at: ~
 
 # Admin who created multiple workspaces
 admin:
+  name: Admin
   email_address: admin@example.com
   verified_at: <%= 1.month.ago.to_fs(:db) %>
 
 # User with pending email change
 pending_email:
+  name: Pending
   email_address: pending@example.com
   unconfirmed_email: newpending@example.com
   verified_at: <%= 3.days.ago.to_fs(:db) %>

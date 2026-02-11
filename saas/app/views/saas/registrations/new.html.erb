@@ -18,7 +18,17 @@
         </p>
 
         <%= render "sessions/flash_messages" %>
-        <%= render "sessions/email_field", form: form %>
+
+        <div class="flex align-center gap">
+          <%= translation_button(:user_name) %>
+          <label class="flex align-center gap input input--actor txt-large">
+            <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
+                  data: { "1p-ignore": true } %>
+            <%= icon_tag "person" %>
+          </label>
+        </div>
+
+        <%= render "sessions/email_field", form: form, autofocus: false %>
         <div class="flex justify-center"><%= cloudflare_turnstile %></div>
         <%= render "sessions/submit_button", form: form, label: "Create account" %>
       </fieldset>

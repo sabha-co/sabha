@@ -117,7 +117,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
     ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
       user = User.find_by(email_address: "bob@example.com")
       assert user.present?
-      assert_equal "bob", user.name
+      assert_equal "Bob", user.name
     end
   end
 

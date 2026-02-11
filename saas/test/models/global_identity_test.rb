@@ -21,8 +21,8 @@ class GlobalIdentityTest < ActiveSupport::TestCase
   end
 
   test "email must be unique" do
-    GlobalIdentity.create!(email_address: "unique@example.com")
-    duplicate = GlobalIdentity.new(email_address: "UNIQUE@example.com")
+    GlobalIdentity.create!(name: "Test", email_address: "unique@example.com")
+    duplicate = GlobalIdentity.new(name: "Test", email_address: "UNIQUE@example.com")
     assert_not duplicate.valid?
   end
 
@@ -43,7 +43,7 @@ class GlobalIdentityTest < ActiveSupport::TestCase
   end
 
   test "destroying identity cascades to sessions and auth_codes" do
-    identity = GlobalIdentity.create!(email_address: "cascade@example.com")
+    identity = GlobalIdentity.create!(name: "Cascade", email_address: "cascade@example.com")
     identity.global_sessions.create!(user_agent: "Test", ip_address: "127.0.0.1")
     identity.auth_codes.create!(code: "TEST12", expires_at: 15.minutes.from_now, purpose: :sign_in)
 
