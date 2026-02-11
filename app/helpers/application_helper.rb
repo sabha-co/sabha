@@ -37,7 +37,7 @@ module ApplicationHelper
   end
 
   def body_classes
-    [ @body_class, admin_body_class, account_logo_body_class, workspace_selector_body_class ].compact.join(" ")
+    [ @body_class, admin_body_class, account_logo_body_class, workspace_selector_body_class, workspace_banner_body_class ].compact.join(" ")
   end
 
   def link_back
@@ -80,5 +80,9 @@ module ApplicationHelper
       # SaaS mode: show_workspace_selector? is defined in WorkspaceSelectorHelper
       # Single-tenant mode: returns nil (no workspace selector)
       "app-with-workspaces" if respond_to?(:show_workspace_selector?) && show_workspace_selector?
+    end
+
+    def workspace_banner_body_class
+      "has-workspace-banner" if Sabha.saas? && Current.workspace.present?
     end
 end

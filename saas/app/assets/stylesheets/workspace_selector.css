@@ -425,6 +425,121 @@
   flex-shrink: 0;
 }
 
+/* Workspace banner - Discord-style thin top bar showing workspace name */
+:root {
+  --workspace-banner-height: 32px;
+}
+
+.workspace-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--workspace-banner-height);
+  background: var(--workspace-selector-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  border-bottom: 1px solid var(--workspace-selector-border);
+  box-shadow: 0 1px 4px oklch(0% 0 0 / 0.12);
+  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+}
+
+.workspace-banner__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspace-banner__icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--workspace-selector-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--workspace-selector-text);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.workspace-banner__logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.workspace-banner__name {
+  color: var(--workspace-selector-text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* Push content down when banner is present */
+.app-with-workspaces.has-workspace-banner {
+  padding-top: var(--workspace-banner-height);
+}
+
+.app-with-workspaces.has-workspace-banner #nav {
+  top: var(--workspace-banner-height);
+}
+
+.app-with-workspaces.has-workspace-banner .workspace-selector {
+  top: var(--workspace-banner-height);
+}
+
+.app-with-workspaces.has-workspace-banner .flash {
+  inset-block-start: calc(var(--workspace-banner-height) + var(--block-space));
+}
+
+/* Banner responsive: hide on mobile to preserve vertical space */
+@media (max-width: 768px) {
+  .workspace-banner {
+    display: none;
+  }
+
+  .app-with-workspaces.has-workspace-banner {
+    padding-top: 0;
+  }
+
+  .app-with-workspaces.has-workspace-banner #nav {
+    top: 0;
+  }
+
+  .app-with-workspaces.has-workspace-banner .workspace-selector {
+    top: 0;
+  }
+}
+
+/* Hide banner when printing */
+@media print {
+  .workspace-banner {
+    display: none;
+  }
+
+  .app-with-workspaces.has-workspace-banner {
+    padding-top: 0;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .workspace-banner {
+    transition: none;
+  }
+}
+
 /* Layout adjustment for app with workspace selector */
 .app-with-workspaces {
   margin-left: var(--workspace-selector-width);

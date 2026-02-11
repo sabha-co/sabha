@@ -48,6 +48,7 @@
 
     <% if Sabha.saas? && respond_to?(:show_workspace_selector?) && show_workspace_selector? %>
       <%= render "shared/workspace_selector" %>
+      <%= render "shared/workspace_banner" %>
     <% end %>
 
     <a href="#main-content" class="skip-navigation btn" data-turbo="false">Skip to main content</a>

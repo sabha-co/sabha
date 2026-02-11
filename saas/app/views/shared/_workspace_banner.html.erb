@@ -1,0 +1,15 @@
+<%# Workspace name banner for SaaS multi-tenant context %>
+<% if Current.workspace.present? %>
+  <div class="workspace-banner" role="banner" aria-label="Current workspace">
+    <div class="workspace-banner__content">
+      <div class="workspace-banner__icon" aria-hidden="true">
+        <% if Current.workspace.has_logo? %>
+          <%= image_tag workspace_logo_url(Current.workspace), alt: "", class: "workspace-banner__logo" %>
+        <% else %>
+          <span><%= Current.workspace.name.first.upcase %></span>
+        <% end %>
+      </div>
+      <span class="workspace-banner__name"><%= Current.workspace.name %></span>
+    </div>
+  </div>
+<% end %>
