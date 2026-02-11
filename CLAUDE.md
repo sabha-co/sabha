@@ -213,6 +213,8 @@ SAAS=true bin/dev
 
 **Important**: After switching modes, always run `bundle install` to use the correct Gemfile.
 
+**Important**: When updating gems in `Gemfile` (e.g. bumping the Rails ref), you must also run `BUNDLE_GEMFILE=Gemfile.saas bundle install` to keep the SaaS lockfile in sync.
+
 **SaaS Development Workflow:**
 ```bash
 # Initial setup (after enabling SaaS mode)

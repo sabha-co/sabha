@@ -3,7 +3,7 @@ source "https://rubygems.org"
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 # Rails
-gem "rails", github: "rails/rails", ref: "03fd08a62790d279361cf67de135e1fea85986ea"
+gem "rails", github: "rails/rails", ref: "630a6d9fb1e6f2b7866033923cdf29ebe181902c"
 gem "bootsnap", require: false
 
 # Drivers
