@@ -10,6 +10,8 @@ class Rooms::MergesController < ApplicationController
     end
 
     redirect_to room_url(@target_room), notice: "✓"
+  rescue Room::CannotDeleteOriginalError
+    redirect_back fallback_location: edit_room_path(@source_room), alert: "The original room can't be deleted"
   end
 
   private

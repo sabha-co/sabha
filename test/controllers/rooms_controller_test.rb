@@ -29,6 +29,14 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "destroy redirects with alert for original room" do
+    assert_no_difference -> { Room.active.count } do
+      delete room_url(rooms(:hq))
+    end
+
+    assert_equal "The original room can't be deleted", flash[:alert]
+  end
+
   test "destroy only allowed for creators or those who can administer" do
     sign_in :jz
 

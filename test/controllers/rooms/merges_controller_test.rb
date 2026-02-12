@@ -81,6 +81,18 @@ class Rooms::MergesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "cannot merge the original room" do
+    source_room = rooms(:hq) # original room
+    target_room = rooms(:pets)
+
+    assert_no_difference -> { Room.active.count } do
+      post room_merges_url(source_room), params: { target_room_id: target_room.id }
+    end
+
+    assert source_room.reload.active?
+    assert_equal "The original room can't be deleted", flash[:alert]
+  end
+
   test "only open rooms can be merged" do
     # Closed rooms cannot be source
     source_room = rooms(:watercooler) # closed room

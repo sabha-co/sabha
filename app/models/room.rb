@@ -1,6 +1,8 @@
 class Room < ApplicationRecord
   include Deactivatable
 
+  CannotDeleteOriginalError = Class.new(StandardError)
+
   has_many :memberships, -> { active } do
     def grant_to(users)
       room = proxy_association.owner
@@ -64,7 +66,7 @@ class Room < ApplicationRecord
     end
 
     def original
-      order(:created_at).first
+      unscoped.order(:created_at).first
     end
   end
 
@@ -134,7 +136,13 @@ class Room < ApplicationRecord
     end
   end
 
+  def original?
+    id == Room.original&.id
+  end
+
   def merge_into!(target_room)
+    raise CannotDeleteOriginalError if original?
+
     transaction do
       memberships.update(active: false)
       # Use unscoped to move ALL messages (including inactive/soft-deleted ones)
@@ -153,6 +161,8 @@ class Room < ApplicationRecord
   # a room from the UI. Also deactivates any threads spawned from messages in
   # this room - those threads become inaccessible until the room is reactivated.
   def deactivate
+    raise CannotDeleteOriginalError if original?
+
     transaction do
       deactivate_threads
       memberships.update_all(active: false)

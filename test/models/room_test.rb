@@ -88,6 +88,24 @@ class RoomTest < ActiveSupport::TestCase
     assert_not Membership.exists?(membership_id), "Inactive membership should be destroyed"
   end
 
+  test "original? identifies the first-created room" do
+    assert rooms(:hq).original?
+    assert_not rooms(:pets).original?
+  end
+
+  test "cannot deactivate the original room" do
+    assert_raises(Room::CannotDeleteOriginalError) { rooms(:hq).deactivate }
+  end
+
+  test "cannot merge the original room into another" do
+    assert_raises(Room::CannotDeleteOriginalError) { rooms(:hq).merge_into!(rooms(:pets)) }
+  end
+
+  test "can deactivate a non-original room" do
+    rooms(:pets).deactivate
+    assert_not rooms(:pets).active?
+  end
+
   test "active_member_count returns count of active visible members" do
     room = rooms(:watercooler)
     initial_count = room.active_member_count

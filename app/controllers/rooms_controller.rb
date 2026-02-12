@@ -20,6 +20,8 @@ class RoomsController < ApplicationController
   def destroy
     deactivate_room
     redirect_to root_url
+  rescue Room::CannotDeleteOriginalError
+    redirect_back fallback_location: root_url, alert: "The original room can't be deleted"
   end
 
   private

@@ -51,7 +51,7 @@
     <% end %>
   <% end %>
 
-  <% if Current.user.administrator? && room.open? %>
+  <% if Current.user.administrator? && room.open? && !room.original? %>
     <hr class="margin-block separator full-width" style="--border-style: solid">
     <%= form_with url: room_merges_path(room.id) do |form| %>
       <div class="flex flex-column gap">
@@ -72,7 +72,7 @@
     <% end %>
   <% end %>
 
-  <% if Current.user.can_administer?(room) || room.direct? %>
+  <% if room.direct? || (Current.user.can_administer?(room) && !room.original?) %>
     <hr class="margin-block separator full-width" style="--border-style: solid">
     <div class="txt-align-center">
       <%= button_to_delete_room room %>
