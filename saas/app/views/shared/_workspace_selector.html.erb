@@ -35,7 +35,10 @@
               },
               "aria-label": "Switch to #{workspace.name}#{workspace.current? ? ' (current)' : ''}",
               "aria-current": (workspace.current? ? "page" : nil) do %>
-            <div class="workspace-selector__workspace-icon" role="img" aria-hidden="true">
+            <div class="workspace-selector__workspace-icon" role="img" aria-hidden="true"
+              <% unless workspace.respond_to?(:has_logo?) && workspace.has_logo? %>
+                style="<%= workspace_gradient_style(workspace) %>"
+              <% end %>>
               <% if workspace.respond_to?(:has_logo?) && workspace.has_logo? %>
                 <%= image_tag workspace_logo_url(workspace), alt: "", class: "workspace-selector__logo" %>
               <% else %>

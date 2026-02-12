@@ -2,7 +2,10 @@
 <% if Current.workspace.present? %>
   <div class="workspace-banner" role="banner" aria-label="Current workspace">
     <div class="workspace-banner__content">
-      <div class="workspace-banner__icon" aria-hidden="true">
+      <div class="workspace-banner__icon" aria-hidden="true"
+        <% unless Current.workspace.has_logo? %>
+          style="<%= workspace_gradient_style(Current.workspace) %>"
+        <% end %>>
         <% if Current.workspace.has_logo? %>
           <%= image_tag workspace_logo_url(Current.workspace), alt: "", class: "workspace-banner__logo" %>
         <% else %>

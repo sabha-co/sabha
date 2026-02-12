@@ -50,7 +50,7 @@
               <%= link_to settings_path(script_name: workspace.slug),
                     class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated" do %>
                 <div class="flex align-center gap">
-                  <div class="workspace-initial">
+                  <div class="workspace-initial" style="<%= workspace_gradient_style(workspace) %>">
                     <%= workspace.name.first.upcase %>
                   </div>
                   <div class="flex flex-column txt-align-start">

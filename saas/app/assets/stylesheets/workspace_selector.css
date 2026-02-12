@@ -246,12 +246,15 @@
   border-radius: inherit;
 }
 
-.workspace-selector__item:hover .workspace-selector__workspace-icon {
+.workspace-selector__item:hover .workspace-selector__workspace-icon:not([style]) {
   background: var(--workspace-selector-icon-bg-hover);
 }
 
-.workspace-selector__item--active .workspace-selector__workspace-icon {
+.workspace-selector__item--active .workspace-selector__workspace-icon:not([style]) {
   background: var(--workspace-selector-icon-bg-active);
+}
+
+.workspace-selector__item--active .workspace-selector__workspace-icon {
   color: var(--workspace-selector-text-active);
 }
 
