@@ -1,5 +1,5 @@
 if Sabha.saas?
-  email = ENV.fetch("ADMIN_EMAIL", "admin@example.com")
+  email = ENV.fetch("ADMIN_EMAIL", "admin@example.com").presence || "admin@example.com"
   name  = ENV.fetch("WORKSPACE_NAME", "Sabha")
 
   # Idempotent: skip if default workspace already exists
