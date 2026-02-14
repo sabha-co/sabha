@@ -291,6 +291,16 @@ bin/rails db:reset            # Drop, create, migrate, seed
 bin/rails db:rollback         # Rollback last migration
 bin/rails console             # Rails console for debugging
 ```
+
+**SaaS Mode Migrations:**
+```bash
+# Migrate tenanted (per-workspace SQLite) databases
+SAAS=true bin/rails db:migrate:primary
+
+# Migrate untenanted (PostgreSQL) database
+SAAS=true bin/rails db:migrate:untenanted
+```
+
 Database: SQLite3 with FTS5 full-text search support
 
 ### Deployment (Kamal)
