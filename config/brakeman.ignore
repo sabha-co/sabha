@@ -25,13 +25,13 @@
     {
       "warning_type": "SQL Injection",
       "warning_code": 0,
-      "fingerprint": "95277d8a7cc8bbb4c8b4602e3484ac715dd326cb5f461f9711095bc0b5daa6a4",
+      "fingerprint": "d945fde5757cce776dfa778dd65837908a22403c6e966c46803374767d94592a",
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/inbox/threads_query.rb",
-      "line": 11,
+      "line": 12,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "Message.active.joins(:room).where.not(:rooms => ({ :type => \"Rooms::Thread\" })).where(\"messages.id IN (#{accessible_thread_parent_ids_sql})\")",
+      "code": "Message.active.without_events.joins(:room).where.not(:rooms => ({ :type => \"Rooms::Thread\" })).where(\"messages.id IN (#{accessible_thread_parent_ids_sql})\")",
       "render_path": null,
       "location": {
         "type": "method",

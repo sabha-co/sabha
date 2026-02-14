@@ -38,22 +38,27 @@ module MessagesHelper
   def message_tag(message, is_unread: false, &)
     message_timestamp_milliseconds = message.created_at.to_fs(:epoch)
 
+    data = {
+      user_id: message.creator_id,
+      message_id: message.id,
+      message_timestamp: message_timestamp_milliseconds,
+      message_updated_at: message.updated_at.to_fs(:epoch),
+      sort_value: message_timestamp_milliseconds,
+      unread: is_unread || nil,
+      messages_target: "message",
+      search_results_target: "message",
+      refresh_room_target: "message",
+      inbox_target: "message"
+    }
+
+    unless message.event?
+      data[:controller] = "reply"
+      data[:reply_composer_outlet] = "#composer"
+    end
+
     tag.div id: dom_id(message),
-      class: "message #{"message--emoji" if message.plain_text_body.all_emoji?}",
-      data: {
-        controller: "reply",
-        user_id: message.creator_id,
-        message_id: message.id,
-        message_timestamp: message_timestamp_milliseconds,
-        message_updated_at: message.updated_at.to_fs(:epoch),
-        sort_value: message_timestamp_milliseconds,
-        unread: is_unread || nil,
-        messages_target: "message",
-        search_results_target: "message",
-        refresh_room_target: "message",
-        inbox_target: "message",
-        reply_composer_outlet: "#composer"
-      }, &
+      class: class_names("message", "message--event": message.event?, "message--emoji": !message.event? && message.plain_text_body.all_emoji?),
+      data: data, &
   rescue Exception => e
     Sentry.capture_exception(e, extra: { message: message })
     Rails.logger.error "Exception while rendering message #{message.class.name}##{message.id}, failed with: #{e.class} `#{e.message}`"

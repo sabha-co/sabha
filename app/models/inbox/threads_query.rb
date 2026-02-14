@@ -6,6 +6,7 @@ class Inbox::ThreadsQuery
 
   def call
     Message.active
+           .without_events
            .joins(:room)
            .where.not(rooms: { type: "Rooms::Thread" })
            .where("messages.id IN (#{accessible_thread_parent_ids_sql})")

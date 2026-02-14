@@ -128,6 +128,70 @@ class RoomTest < ActiveSupport::TestCase
     assert_equal initial_count - 1, room.active_member_count
   end
 
+  # System event messages
+
+  test "post_system_message creates a message without triggering callbacks" do
+    room = rooms(:pets)
+    actor = users(:david)
+
+    assert_no_enqueued_jobs only: Room::PushMessageJob do
+      message = room.post_system_message(event: "room_renamed", body: "renamed the room from X to Y", actor: actor)
+
+      assert message.persisted?
+      assert_equal "room_renamed", message.event
+      assert_equal "renamed the room from X to Y", message.reload.plain_text_body
+      assert_equal actor.id, message.creator_id
+    end
+  end
+
+  test "post_system_message does not touch room last_active_at" do
+    room = rooms(:pets)
+    original_last_active_at = room.last_active_at
+
+    room.post_system_message(event: "member_joined", body: "added Alice", actor: users(:david))
+
+    assert_equal original_last_active_at, room.reload.last_active_at
+  end
+
+  test "post_system_message does not index in search" do
+    room = rooms(:pets)
+
+    message = room.post_system_message(event: "member_joined", body: "added Alice", actor: users(:david))
+    results = Message.connection.execute("SELECT count(*) FROM message_search_index WHERE rowid = #{message.id}")
+
+    assert_equal 0, results.first.values.first
+  end
+
+  test "announce_rename posts a room_renamed event" do
+    room = rooms(:pets)
+    room.update!(name: "New Pets")
+
+    message = room.announce_rename("All Pets", actor: users(:david))
+
+    assert_equal "room_renamed", message.event
+    assert_equal "renamed the room from All Pets to New Pets", message.reload.plain_text_body
+  end
+
+  test "announce_membership_changes posts events for granted and revoked users" do
+    room = rooms(:watercooler)
+    granted = [ users(:kevin) ]
+    revoked = [ users(:jason) ]
+
+    assert_difference -> { Message.unscoped.where(room: room, event: "member_joined").count } do
+      assert_difference -> { Message.unscoped.where(room: room, event: "member_left").count } do
+        room.announce_membership_changes(granted: granted, revoked: revoked, actor: users(:david))
+      end
+    end
+  end
+
+  test "announce_membership_changes skips when no changes" do
+    room = rooms(:watercooler)
+
+    assert_no_difference -> { Message.unscoped.where(room: room).count } do
+      room.announce_membership_changes(granted: [], revoked: [], actor: users(:david))
+    end
+  end
+
   test "active_member_count excludes inactive users" do
     room = rooms(:watercooler)
     initial_count = room.active_member_count

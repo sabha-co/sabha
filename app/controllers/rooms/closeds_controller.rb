@@ -43,8 +43,14 @@ class Rooms::ClosedsController < RoomsController
   end
 
   def update
+    new_grantees = grantees.where.not(id: @room.user_ids).to_a
+    actual_revokees = revokees.to_a
+    old_name = @room.name
+
     @room.update! room_params
     @room.memberships.revise(granted: grantees, revoked: revokees)
+    @room.announce_rename(old_name, actor: Current.user) if @room.name != old_name
+    @room.announce_membership_changes(granted: new_grantees, revoked: actual_revokees, actor: Current.user)
 
     RoomUpdateBroadcastJob.perform_later(@room)
     redirect_to room_url(@room)

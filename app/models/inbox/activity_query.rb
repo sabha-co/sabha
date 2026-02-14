@@ -7,6 +7,7 @@ class Inbox::ActivityQuery
 
   def call
     user.mentioning_messages
+        .without_events
         .without_created_by(user)
         .where.not(rooms: { type: "Rooms::Direct" })
         .with_thread_summary

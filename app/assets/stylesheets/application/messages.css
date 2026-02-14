@@ -265,6 +265,25 @@
   visibility: visible !important;
 }
 
+.message__event-separator {
+  grid-area: event;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-transform: none;
+  color: var(--color-border-darkest);
+  padding-block: 0.25rem;
+
+  span {
+    background-color: transparent;
+  }
+
+  &::after,
+  &::before {
+    display: none;
+  }
+}
+
 .message__new-separator {
   grid-area: new;
   margin-block: calc(var(--message-space) / 2);
@@ -731,6 +750,17 @@ img.message__attachment {
   .message__actions {
     justify-content: end;
   }
+}
+
+/* Event (system messages) */
+.message--event {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "loading_up"
+    "new"
+    "sep"
+    "event"
+    "loading_down";
 }
 
 .message--mentioned {

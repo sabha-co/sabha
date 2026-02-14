@@ -32,7 +32,7 @@ class Room < ApplicationRecord
   has_many :visible_memberships, -> { active.visible }, class_name: "Membership"
   has_many :visible_users, through: :visible_memberships, source: :user, class_name: "User"
   has_many :messages, -> { active }, class_name: "Message"
-  has_one :last_message, -> { active.order(created_at: :desc) }, class_name: "Message"
+  has_one :last_message, -> { active.without_events.order(created_at: :desc) }, class_name: "Message"
   has_many :threads, through: :messages, class_name: "Rooms::Thread"
   belongs_to :parent_message, class_name: "Message", optional: true, touch: true
   has_one :parent_room, through: :parent_message, source: :room, class_name: "Room"
@@ -171,6 +171,53 @@ class Room < ApplicationRecord
     end
   end
 
+  # Creates a system event message using insert! to bypass all ActiveRecord
+  # callbacks (notifications, search indexing, push, counter_cache, etc.).
+  # Only the room-level Turbo Stream append is broadcast.
+  def post_system_message(event:, body:, actor:)
+    now = Time.current
+    client_message_id = Random.uuid
+
+    Message.insert!({
+      room_id: id,
+      event: event,
+      creator_id: actor.id,
+      client_message_id: client_message_id,
+      mentions_everyone: false,
+      created_at: now,
+      updated_at: now
+    })
+
+    message = Message.find_by!(client_message_id: client_message_id)
+
+    ActionText::RichText.insert!({
+      record_type: "Message",
+      record_id: message.id,
+      name: "body",
+      body: body,
+      created_at: now,
+      updated_at: now
+    })
+
+    message.broadcast_append_to self, :messages, target: [ self, :messages ],
+      partial: "messages/message", locals: { current_room: self, is_unread: true }
+
+    message
+  end
+
+  def announce_membership_changes(granted: [], revoked: [], actor:)
+    if granted.present?
+      post_system_message(event: "member_joined", body: membership_change_text("added", granted), actor: actor)
+    end
+    if revoked.present?
+      post_system_message(event: "member_left", body: membership_change_text("removed", revoked), actor: actor)
+    end
+  end
+
+  def announce_rename(old_name, actor:)
+    post_system_message(event: "room_renamed", body: "renamed the room from #{old_name} to #{name}", actor: actor)
+  end
+
   def display_name(for_user: nil)
     if direct?
       # Use Ruby select/map instead of pluck to leverage preloaded users
@@ -186,6 +233,14 @@ class Room < ApplicationRecord
     def active_member_count_cache_key
       tenant_prefix = ApplicationRecord.current_tenant if Sabha.saas?
       [ tenant_prefix, "room", id, "active_member_count" ].compact.join(":")
+    end
+
+    def membership_change_text(verb, users)
+      if users.size <= 2
+        "#{verb} #{users.map(&:name).to_sentence}"
+      else
+        "#{verb} #{users.size} members"
+      end
     end
 
     def set_initial_last_active_at

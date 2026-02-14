@@ -91,7 +91,7 @@ class Membership < ApplicationRecord
   def read_until(time)
     return if read? || time < unread_at
 
-    update!(unread_at: room.messages.ordered.where("created_at > ?", time).first&.created_at)
+    update!(unread_at: room.messages.without_events.ordered.where("created_at > ?", time).first&.created_at)
     broadcast_read if read?
   end
 

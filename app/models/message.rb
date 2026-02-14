@@ -29,6 +29,7 @@ class Message < ApplicationRecord
   after_update_commit :involve_mentionees_on_update
 
   scope :ordered, -> { order(:created_at) }
+  scope :without_events, -> { where(event: nil) }
   scope :with_creator, -> { includes(creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ]) }
   # Lightweight thread loading - fetches threads but NOT their messages
   # The partial uses Rooms::Thread#participant_creators for efficient participant fetching
@@ -59,6 +60,10 @@ class Message < ApplicationRecord
 
   validate :ensure_can_message_recipient, on: :create
   validate :ensure_everyone_mention_allowed, on: :create
+
+  def event?
+    event.present?
+  end
 
   def bookmarked_by_current_user?
     # Scope path: with_bookmark_status_for LEFT JOIN sets is_bookmarked

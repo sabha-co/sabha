@@ -93,6 +93,40 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to room_url(Room.last)
   end
 
+  # Event messages
+
+  test "update posts rename event when name changes" do
+    room = rooms(:designers)
+
+    assert_difference -> { Message.unscoped.where(room: room, event: "room_renamed").count } do
+      put rooms_closed_url(room), params: { room: { name: "New Designers" }, user_ids: room.user_ids }
+    end
+
+    event = Message.unscoped.where(room: room, event: "room_renamed").last
+    assert_equal "renamed the room from Designers to New Designers", event.reload.plain_text_body
+  end
+
+  test "update posts membership events when members change" do
+    room = rooms(:designers)
+
+    assert_difference -> { Message.unscoped.where(room: room, event: "member_joined").count } do
+      assert_difference -> { Message.unscoped.where(room: room, event: "member_left").count } do
+        put rooms_closed_url(room), params: {
+          room: { name: room.name },
+          user_ids: (room.user_ids - [ users(:jason).id ] + [ users(:bender).id ])
+        }
+      end
+    end
+  end
+
+  test "update does not post events when nothing changes" do
+    room = rooms(:designers)
+
+    assert_no_difference -> { Message.unscoped.where(room: room).where.not(event: nil).count } do
+      put rooms_closed_url(room), params: { room: { name: room.name }, user_ids: room.user_ids }
+    end
+  end
+
   # Destroy permission tests
 
   test "admin can destroy any closed room" do

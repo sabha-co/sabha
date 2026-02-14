@@ -20,6 +20,26 @@ class MessageTest < ActiveSupport::TestCase
     end
   end
 
+  # Event messages
+
+  test "event? returns true when event is present" do
+    message = Message.new(event: "room_renamed")
+    assert message.event?
+  end
+
+  test "event? returns false for regular messages" do
+    message = Message.new
+    assert_not message.event?
+  end
+
+  test "without_events scope excludes event messages" do
+    room = rooms(:pets)
+    room.post_system_message(event: "room_renamed", body: "renamed", actor: users(:david))
+
+    assert Message.unscoped.where(room: room).where.not(event: nil).exists?
+    assert_not room.messages.without_events.where.not(event: nil).exists?
+  end
+
   test "all emoji" do
     assert Message.new(body: "😄🤘").plain_text_body.all_emoji?
     assert_not Message.new(body: "Haha! 😄🤘").plain_text_body.all_emoji?

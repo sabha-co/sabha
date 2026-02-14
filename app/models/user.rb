@@ -62,7 +62,7 @@ class User < ApplicationRecord
       next unless m.has_unread_notifications?
       next if m.room.is_a?(Rooms::Direct)  # Skip DMs - handled separately
 
-      non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, activity_until)
+      non_mentions = m.room.messages.without_events.without_user_mentions(self).between(m.unread_at, activity_until)
       m.read_until(activity_until) if non_mentions.none?
     end
   end
@@ -99,7 +99,7 @@ class User < ApplicationRecord
       if m.room.is_a?(Rooms::Direct)
         m.read_until(activity_until)
       else
-        non_mentions = m.room.messages.without_user_mentions(self).between(m.unread_at, activity_until)
+        non_mentions = m.room.messages.without_events.without_user_mentions(self).between(m.unread_at, activity_until)
         m.read_until(activity_until) if non_mentions.none?
       end
     end

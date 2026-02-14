@@ -18,11 +18,15 @@ export default class MessageFormatter {
   }
 
   format(message, threadstyle) {
-    this.#setMeClass(message)
-    this.#highlightMentions(message)
+    const isEvent = message.classList.contains("message--event")
+
+    if (!isEvent) {
+      this.#setMeClass(message)
+      this.#highlightMentions(message)
+    }
 
     if (threadstyle != ThreadStyle.none) {
-      this.#threadMessage(message)
+      if (!isEvent) this.#threadMessage(message)
       this.#setFirstOfDayClass(message)
     }
 
@@ -57,10 +61,11 @@ export default class MessageFormatter {
 
   #threadMessage(message) {
     if (message.previousElementSibling) {
+      const prevIsEvent = message.previousElementSibling.classList.contains("message--event")
       const isSameUser = message.previousElementSibling.dataset.userId == message.dataset.userId
       const previousMessageIsRecent = this.#previousMessageIsRecent(message)
 
-      message.classList.toggle(this.#classes.threaded, isSameUser && previousMessageIsRecent)
+      message.classList.toggle(this.#classes.threaded, !prevIsEvent && isSameUser && previousMessageIsRecent)
     }
   }
 

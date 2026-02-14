@@ -11,6 +11,7 @@ class Inbox::MessagesQuery
 
   def call
     user.reachable_messages
+        .without_events
         .without_created_by(user)
         .with_thread_summary
         .with_creator

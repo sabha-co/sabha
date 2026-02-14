@@ -26,7 +26,10 @@ class Rooms::OpensController < RoomsController
   def edit ; end
 
   def update
+    old_name = @room.name
+
     @room.update! room_params
+    @room.announce_rename(old_name, actor: Current.user) if @room.name != old_name
 
     RoomUpdateBroadcastJob.perform_later(@room)
     redirect_to room_url(@room)

@@ -122,6 +122,27 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
   end
 
+  # Event messages
+
+  test "update posts rename event when name changes" do
+    room = rooms(:pets)
+
+    assert_difference -> { Message.unscoped.where(room: room, event: "room_renamed").count } do
+      put rooms_open_url(room), params: { room: { name: "New Pets Name" } }
+    end
+
+    event = Message.unscoped.where(room: room, event: "room_renamed").last
+    assert_equal "renamed the room from All Pets to New Pets Name", event.reload.plain_text_body
+  end
+
+  test "update does not post rename event when name unchanged" do
+    room = rooms(:pets)
+
+    assert_no_difference -> { Message.unscoped.where(room: room, event: "room_renamed").count } do
+      put rooms_open_url(room), params: { room: { name: room.name } }
+    end
+  end
+
   # Creator update permission tests
 
   test "creator can update their own open room" do
