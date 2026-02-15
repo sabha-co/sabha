@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <%= render "layouts/theme_preference" %>
+
     <%= page_title_tag %>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, interactive-widget=resizes-content">
     <meta name="view-transition" content="same-origin">
-    <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="<%= Branding.theme_color %>">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
@@ -29,8 +30,6 @@
     <%= custom_styles_tag %>
 
     <%= javascript_importmap_tags %>
-
-    <%= render "layouts/theme_preference" %>
 
     <%= yield :head %>
 

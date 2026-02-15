@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <%= render "layouts/theme_preference" %>
+
     <title><%= content_for(:title) || Branding.saas_app_name %></title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="<%= Branding.theme_color %>">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -12,8 +13,6 @@
     <%= stylesheet_link_tag *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
 
     <%= javascript_importmap_tags %>
-
-    <%= render "layouts/theme_preference" %>
 
     <%= vite_client_tag %>
     <%= vite_javascript_tag 'application' %>

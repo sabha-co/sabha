@@ -38,10 +38,13 @@ export default class extends Controller {
     const apply = () => {
       if (theme === "dark") {
         document.documentElement.setAttribute("data-theme", "dark")
+        document.documentElement.style.colorScheme = "dark"
       } else if (theme === "auto") {
         document.documentElement.removeAttribute("data-theme")
+        document.documentElement.style.colorScheme = "light dark"
       } else {
         document.documentElement.setAttribute("data-theme", "light")
+        document.documentElement.style.colorScheme = "light"
       }
     }
 

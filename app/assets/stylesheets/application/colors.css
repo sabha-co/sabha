@@ -36,7 +36,10 @@
   --color-alert: oklch(var(--lch-orange));
   --color-contrast: oklch(var(--lch-purple));
 
-  /* Redefine named color values for dark mode */
+}
+
+/* Dark mode for "auto" theme (no explicit data-theme set) */
+:root:not([data-theme]) {
   @media (prefers-color-scheme: dark) {
     --lch-black: 100% 0 0;
     --lch-white: 0% 0 0;
