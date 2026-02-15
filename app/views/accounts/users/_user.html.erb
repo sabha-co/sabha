@@ -1,5 +1,7 @@
 <%# locals: (user:) %>
 <%= turbo_frame_tag dom_id(user), class: "member-row flex align-center gap #{"banned" if user.banned?}" do %>
+  <span class="status-dot <%= activity_status_class(user) %>" aria-hidden="true"></span>
+
   <div class="flex-item-no-shrink" style="--avatar-size: 3.75ch;">
     <%= render "users/popup", user: user %>
   </div>
@@ -15,46 +17,50 @@
     </div>
   </div>
 
-  <hr class="separator" aria-hidden="true">
+  <% has_controls = user.manageable_by?(Current.user) || user.reactivatable_by?(Current.user) || user.unbannable_by?(Current.user) || user.removable_by?(Current.user) || user == Current.user %>
 
-  <div class="member-controls flex align-center gap">
-    <% if user.manageable_by?(Current.user) %>
-      <%= render "accounts/users/role_toggle", user: user, role: :administrator, icon: "crown" %>
-      <%= render "accounts/users/role_toggle", user: user, role: :moderator, icon: "shield" %>
+  <% if has_controls %>
+    <hr class="separator" aria-hidden="true">
 
-      <%= form_with model: user, url: account_user_path(user), data: { turbo: false, controller: "form" }, method: :patch, class: "flex-item-no-shrink" do |form| %>
-        <%= form.select :badge_id,
-              options_for_select(badge_options, user.badge&.id),
-              {},
-              class: "input txt-small",
-              style: "width: 10ch;",
-              data: { action: "form#submit" } %>
-      <% end %>
-    <% end %>
+    <div class="member-controls flex align-center gap">
+      <% if user.manageable_by?(Current.user) %>
+        <%= render "accounts/users/role_toggle", user: user, role: :administrator, icon: "crown" %>
+        <%= render "accounts/users/role_toggle", user: user, role: :moderator, icon: "shield" %>
 
-    <% if user.reactivatable_by?(Current.user) %>
-      <%= button_to reactivate_account_user_path(user), method: :patch, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
-            turbo_confirm: "Reactivate #{user.name}? They will be able to log in again." } do %>
-        Reactivate
+        <%= form_with model: user, url: account_user_path(user), data: { turbo: false, controller: "form" }, method: :patch, class: "flex-item-no-shrink" do |form| %>
+          <%= form.select :badge_id,
+                options_for_select(badge_options, user.badge&.id),
+                {},
+                class: "input txt-small",
+                style: "width: 10ch;",
+                data: { action: "form#submit" } %>
+        <% end %>
       <% end %>
-    <% elsif user.unbannable_by?(Current.user) %>
-      <%= button_to user_ban_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
-            turbo_confirm: "Unban #{user.name}? They will be able to access the chat again." } do %>
-        Unban
-      <% end %>
-    <% elsif user.removable_by?(Current.user) %>
-      <%= button_to account_user_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--negative", data: {
-            turbo_confirm: "Deactivate #{user.name}? They will no longer be able to log in, but their messages will remain visible. To remove their messages, use Ban instead from their profile page."} do %>
-        <%= icon_tag "minus" %>
-        <span class="for-screen-reader">Deactivate <%= user.name %></span>
-      <% end %>
-    <% end %>
 
-    <% if user == Current.user %>
-      <%= link_to user_profile_path, class: "btn txt-small flex-item-no-shrink", target: "_top" do %>
-        <%= icon_tag "pencil" %>
-        <span class="for-screen-reader">My settings</span>
+      <% if user.reactivatable_by?(Current.user) %>
+        <%= button_to reactivate_account_user_path(user), method: :patch, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
+              turbo_confirm: "Reactivate #{user.name}? They will be able to log in again." } do %>
+          Reactivate
+        <% end %>
+      <% elsif user.unbannable_by?(Current.user) %>
+        <%= button_to user_ban_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
+              turbo_confirm: "Unban #{user.name}? They will be able to access the chat again." } do %>
+          Unban
+        <% end %>
+      <% elsif user.removable_by?(Current.user) %>
+        <%= button_to account_user_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--negative", data: {
+              turbo_confirm: "Deactivate #{user.name}? They will no longer be able to log in, but their messages will remain visible. To remove their messages, use Ban instead from their profile page."} do %>
+          <%= icon_tag "minus" %>
+          <span class="for-screen-reader">Deactivate <%= user.name %></span>
+        <% end %>
       <% end %>
-    <% end %>
-  </div>
+
+      <% if user == Current.user %>
+        <%= link_to user_profile_path, class: "btn txt-small flex-item-no-shrink", target: "_top" do %>
+          <%= icon_tag "pencil" %>
+          <span class="for-screen-reader">My settings</span>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
 <% end %>

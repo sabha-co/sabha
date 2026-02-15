@@ -98,6 +98,51 @@ class MembershipTest < ActiveSupport::TestCase
     @membership.destroy
   end
 
+  # Activity status tests
+
+  test "activity_status returns :active when connected within 5 minutes" do
+    assert_equal :active, Membership.activity_status(2.minutes.ago)
+    assert_equal :active, Membership.activity_status(4.minutes.ago)
+    assert_equal :active, Membership.activity_status(Time.current)
+  end
+
+  test "activity_status returns :away when connected within 1 hour" do
+    assert_equal :away, Membership.activity_status(6.minutes.ago)
+    assert_equal :away, Membership.activity_status(30.minutes.ago)
+    assert_equal :away, Membership.activity_status(59.minutes.ago)
+  end
+
+  test "activity_status returns :offline when connected over 1 hour ago or never" do
+    assert_equal :offline, Membership.activity_status(2.hours.ago)
+    assert_equal :offline, Membership.activity_status(nil)
+  end
+
+  test "last_connected_at_for returns max connected_at per user" do
+    david = users(:david)
+
+    # Set different connected_at across david's memberships
+    Membership.unscoped.where(user_id: david.id).update_all(connected_at: 1.hour.ago)
+    memberships(:david_watercooler).update_column(:connected_at, 2.minutes.ago)
+
+    result = Membership.last_connected_at_for([ david.id ])
+
+    assert_in_delta memberships(:david_watercooler).reload.connected_at, result[david.id], 1.second
+  end
+
+  test "last_connected_at_for returns results for multiple users" do
+    david = users(:david)
+    jason = users(:jason)
+
+    Membership.unscoped.where(user_id: [ david.id, jason.id ]).update_all(connected_at: 1.day.ago)
+    memberships(:david_watercooler).update_column(:connected_at, 3.minutes.ago)
+    memberships(:jason_watercooler).update_column(:connected_at, 30.minutes.ago)
+
+    result = Membership.last_connected_at_for([ david.id, jason.id ])
+
+    assert_equal :active, Membership.activity_status(result[david.id])
+    assert_equal :away, Membership.activity_status(result[jason.id])
+  end
+
   # Read/Unread tests
 
   test "mark_unread_at sets unread_at to message created_at" do

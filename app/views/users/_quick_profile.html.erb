@@ -27,6 +27,9 @@
       <% end %>
       <div class="flex flex-column gap-half" style="min-width: 0;">
         <div class="flex align-center gap-half">
+          <% if (dot_class = online_status_class(user)) %>
+            <span class="status-dot <%= dot_class %>" aria-hidden="true"></span>
+          <% end %>
           <strong class="txt-medium">
             <%= link_to user.name, user_path(user), title: user.title, class: "txt-undecorated txt-primary", data: { turbo_frame: "_top" } %>
           </strong>

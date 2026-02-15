@@ -3,3 +3,14 @@
 <%= turbo_stream.append "#{@user.role.pluralize}_section" do %>
   <%= render "accounts/users/user", user: @user %>
 <% end %>
+
+<% if @notice %>
+  <%= turbo_stream.prepend "main-content" do %>
+    <div class="flash" data-controller="element-removal" data-action="animationend->element-removal#remove">
+      <div class="flash__inner">
+        <%= icon_tag "check" %>
+        <span><%= @notice %></span>
+      </div>
+    </div>
+  <% end %>
+<% end %>

@@ -111,6 +111,18 @@
   flex-shrink: 0;
 }
 
+.status-dot {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.status--active  { background-color: var(--color-positive); }
+.status--away    { background-color: var(--color-alert); }
+.status--offline { background-color: var(--color-border-darker); }
+
 @media (max-width: 480px) {
   .panel--members .member-row .separator {
     display: none;
@@ -125,7 +137,7 @@
     flex-basis: 100%;
     flex-shrink: 1;
     justify-content: flex-end;
-    padding-inline-start: calc(3.75ch + 0.5rem);
+    padding-inline-start: calc(0.5em + 3.75ch + 1rem);
   }
 
   .panel--members .members-header {

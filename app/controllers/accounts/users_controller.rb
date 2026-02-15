@@ -21,10 +21,11 @@ class Accounts::UsersController < ApplicationController
 
   def update
     @user.update(user_params)
+    @notice = role_change_notice if @user.saved_change_to_role?
 
     respond_to do |format|
       format.turbo_stream
-      format.html { redirect_to account_users_url }
+      format.html { redirect_to account_users_url, notice: @notice }
     end
   end
 
@@ -42,6 +43,10 @@ class Accounts::UsersController < ApplicationController
   end
 
   private
+    def role_change_notice
+      "#{@user.name} is now #{@user.role.humanize(capitalize: false)}"
+    end
+
     def set_user
       @user = User.find(params[:user_id] || params[:id])
     end
@@ -72,16 +77,20 @@ class Accounts::UsersController < ApplicationController
       @searching = true
       query = params[:query].to_s.strip
       @users = users_scope.active.where("name LIKE ?", "%#{User.sanitize_sql_like(query)}%").limit(50)
+      preload_activity(@users)
+      @users = sort_by_activity(@users)
     end
 
     def load_banned_users
       @filtering_banned = true
       @users = users_scope.banned
+      preload_activity(@users)
     end
 
     def load_deactivated_users
       @filtering_deactivated = true
       @users = users_scope.deactivated
+      preload_activity(@users)
     end
 
     def load_members_by_role
@@ -93,9 +102,25 @@ class Accounts::UsersController < ApplicationController
       set_page_and_extract_portion_from members, per_page: 25
       @members = @page.records
 
+      preload_activity(@administrators + @moderators + @members)
+
+      @administrators = sort_by_activity(@administrators)
+      @moderators = sort_by_activity(@moderators)
+      @members = sort_by_activity(@members)
+
       if Current.user.staff?
         @deactivated_count = User.without_bots.deactivated.count
         @banned_count = User.without_bots.banned.count
       end
+    end
+
+    ACTIVITY_SORT_ORDER = { active: 0, away: 1, offline: 2 }.freeze
+
+    def preload_activity(users)
+      @activity_statuses = Membership.activity_statuses_for(users.map(&:id))
+    end
+
+    def sort_by_activity(users)
+      users.sort_by { |u| ACTIVITY_SORT_ORDER.fetch(@activity_statuses[u.id], 2) }
     end
 end

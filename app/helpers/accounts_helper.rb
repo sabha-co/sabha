@@ -9,6 +9,18 @@ module AccountsHelper
     Membership.where(connected_at: 10.minutes.ago..).select(:user_id).distinct.count
   end
 
+  STATUS_CSS_CLASSES = { active: "status--active", away: "status--away", offline: "status--offline" }.freeze
+
+  def activity_status_class(user)
+    status = @activity_statuses&.dig(user.id) || :offline
+    STATUS_CSS_CLASSES[status]
+  end
+
+  def online_status_class(user)
+    status = @activity_statuses&.dig(user.id)
+    STATUS_CSS_CLASSES[status] unless status.nil? || status == :offline
+  end
+
   def badge_options
     badges = @badges || Badge.ordered
     [ [ "No badge", "" ] ] + badges.map { |b| [ b.name, b.id ] }

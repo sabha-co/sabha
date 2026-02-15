@@ -47,6 +47,9 @@
 
     <div class="flex flex-column align-center gap-half txt-align-center">
       <div class="flex align-center gap-half">
+        <% if (dot_class = online_status_class(@user)) %>
+          <span class="status-dot <%= dot_class %>" aria-hidden="true"></span>
+        <% end %>
         <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
         <% if @user.administrator? %>
           <span class="txt-small txt-muted" title="Administrator"><%= icon_tag "crown" %></span>
