@@ -100,14 +100,14 @@ class MembershipTest < ActiveSupport::TestCase
 
   # Activity status tests
 
-  test "activity_status returns :active when connected within 5 minutes" do
+  test "activity_status returns :active when connected within 10 minutes" do
     assert_equal :active, Membership.activity_status(2.minutes.ago)
-    assert_equal :active, Membership.activity_status(4.minutes.ago)
+    assert_equal :active, Membership.activity_status(9.minutes.ago)
     assert_equal :active, Membership.activity_status(Time.current)
   end
 
   test "activity_status returns :away when connected within 1 hour" do
-    assert_equal :away, Membership.activity_status(6.minutes.ago)
+    assert_equal :away, Membership.activity_status(11.minutes.ago)
     assert_equal :away, Membership.activity_status(30.minutes.ago)
     assert_equal :away, Membership.activity_status(59.minutes.ago)
   end

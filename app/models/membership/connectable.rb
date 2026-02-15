@@ -8,7 +8,7 @@ module Membership::Connectable
     scope :disconnected, -> { where(connected_at: [ nil, ...CONNECTION_TTL.ago ]) }
   end
 
-  ACTIVITY_TIERS = { active: 5.minutes, away: 1.hour }.freeze
+  ACTIVITY_TIERS = { active: 10.minutes, away: 1.hour, recently_active: 24.hours }.freeze
 
   class_methods do
     def disconnect_all
@@ -37,6 +37,10 @@ module Membership::Connectable
 
     def activity_statuses_for(user_ids)
       last_connected_at_for(user_ids).transform_values { |t| activity_status(t) }
+    end
+
+    def online_user_count(since: ACTIVITY_TIERS[:active])
+      where(connected_at: since.ago..).select(:user_id).distinct.count
     end
   end
 

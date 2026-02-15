@@ -6,7 +6,7 @@ module AccountsHelper
   end
 
   def online_users_count
-    Membership.where(connected_at: 10.minutes.ago..).select(:user_id).distinct.count
+    Membership.online_user_count
   end
 
   STATUS_CSS_CLASSES = { active: "status--active", away: "status--away", offline: "status--offline" }.freeze
