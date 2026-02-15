@@ -140,7 +140,6 @@ This is a feature specific for sabha.co
 Comprehensive fixes to soft deletion behavior:
 
 - User reactivation properly restores memberships
-- Room merge moves all messages including inactive ones
 - Ban properly deactivates memberships, auth tokens, and push subscriptions
 - Deactivated users are blocked from authentication
 - Added user reactivation UI for administrators
@@ -164,3 +163,5 @@ The following features from the original codebase have been removed:
 - **Stats dashboard** [#49](https://github.com/sabha-co/sabha/pull/49): Replaced with simpler user streak tracking
 - **Expert feature** [#3](https://github.com/sabha-co/sabha/pull/3): Removed expert role, expert directory, and message "answered" functionality
 - **Room URL slugs** [#59](https://github.com/sabha-co/sabha/pull/59): Removed custom slug routing for rooms—users navigate via sidebar, not bookmarked URLs
+- **Room merge** [#73](https://github.com/sabha-co/sabha/pull/73): Removed room merge feature due to data integrity concerns
+- **Email notifications** [#73](https://github.com/sabha-co/sabha/pull/73): Removed mailkick-based email digest of unread mentions — simplifying, will revisit later

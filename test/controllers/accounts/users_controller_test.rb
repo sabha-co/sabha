@@ -102,11 +102,27 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert user.reload.deactivated?
   end
 
-  test "non-admins cannot access index" do
+  test "non-admins can access index" do
     sign_in :kevin
 
     get account_users_url
-    assert_redirected_to root_path
+    assert_response :success
+  end
+
+  test "non-admins cannot access deactivated filter" do
+    sign_in :kevin
+
+    get account_users_url(status: "deactivated")
+    assert_response :success
+    assert_select ".role-section__heading", text: "Deactivated", count: 0
+  end
+
+  test "non-admins cannot access banned filter" do
+    sign_in :kevin
+
+    get account_users_url(status: "banned")
+    assert_response :success
+    assert_select ".role-section__heading", text: "Banned", count: 0
   end
 
   test "non-admins cannot update users" do

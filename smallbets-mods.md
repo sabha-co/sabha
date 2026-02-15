@@ -13,7 +13,7 @@ Members can see the list of mentions easily from a new view in the sidebar.
 
 
 ## Email notifications
-Members get an email notification if they have an unread mention or direct message.
+**[REMOVED]** Members get an email notification if they have an unread mention or direct message.
 
 <img width="969" height="890" src="https://github.com/user-attachments/assets/d84719a5-e526-4f74-9c9a-58acab1304b9" />
 

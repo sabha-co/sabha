@@ -27,12 +27,12 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
-  test "non-admins cannot access edit" do
+  test "non-admins can access edit as read-only about page" do
     sign_in :kevin
     assert users(:kevin).member?
 
     get edit_account_url
-    assert_redirected_to root_path
+    assert_response :success
   end
 
   test "updating one setting does not overwrite other settings" do

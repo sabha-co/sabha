@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_13_085447) do
+ActiveRecord::Schema[8.2].define(version: 2026_02_14_163011) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -136,22 +136,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_13_085447) do
     t.index ["message_id"], name: "index_boosts_on_message_id"
   end
 
-  create_table "mailkick_subscriptions", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "list"
-    t.integer "subscriber_id"
-    t.string "subscriber_type"
-    t.datetime "updated_at", null: false
-    t.index ["subscriber_type", "subscriber_id", "list"], name: "index_mailkick_subscriptions_on_subscriber_and_list", unique: true
-  end
-
   create_table "memberships", force: :cascade do |t|
     t.boolean "active", default: true
     t.datetime "connected_at"
     t.integer "connections", default: 0, null: false
     t.datetime "created_at", null: false
     t.string "involvement", default: "mentions"
-    t.datetime "notified_until"
     t.integer "room_id", null: false
     t.datetime "unread_at"
     t.datetime "updated_at", null: false

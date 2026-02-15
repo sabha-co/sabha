@@ -471,13 +471,9 @@ These changes to the core app only apply when SaaS mode is enabled:
 
 Apply lessons learned from v1 implementation. These fixes only matter when multi-tenancy is enabled:
 
-- [x] Replace `ActiveRecord::Base` with `ApplicationRecord` in `app/models/message/rich_text_updater.rb`
 - [x] Add `tenanted?` class method to non-AR GlobalID classes (when saas?)
   - `app/models/everyone.rb` - Added `self.tenanted?` returning `false`
-- [x] Fix `after_create_commit` → `after_create` for workspace callbacks (when saas?)
-  - `User#subscribe_to_emails` - Already uses `after_create`
 - [x] Form routes work correctly - Rails uses `script_name` when generating URLs, no explicit `url:` needed
-- Mailkick subtenant config deferred to v2 (works fine in self-hosted mode)
 
 ### MVP-6: ActionCable (conditional on saas?)
 
@@ -598,7 +594,6 @@ Apply lessons learned from v1 implementation. These fixes only matter when multi
 ### MVP-10: Background Jobs
 
 - [x] Update jobs that process all users to iterate workspaces
-  - `UnreadMentionsNotifierJob` - Now uses `ApplicationRecord.with_each_tenant` in SaaS mode
   - Other jobs (`BroadcastInboxThreadsJob`, `RoomUpdateBroadcastJob`, `Room::PushMessageJob`, `Bot::WebhookJob`) are event-triggered and work automatically via gem's job serialization
 - [x] Verify job workspace serialization works (gem feature)
   - The gem automatically serializes `current_tenant` with jobs and restores it on `perform_now`
@@ -850,11 +845,9 @@ Note: SaaS folder structure is now created in MVP. v2 extends it.
 - [ ] Test Slack import works correctly within workspace context
 - [ ] Consider admin-only access to Slack import in SaaS mode
 
-### v2-7: Mailkick Multi-tenancy
+### v2-7: ~~Mailkick Multi-tenancy~~ (Removed)
 
-- [ ] Configure Mailkick::Subscription as subtenant of ApplicationRecord
-- [ ] Use `to_prepare` callback for code reload support
-- [ ] Test email subscription/unsubscription across workspaces
+Email notification feature removed to simplify codebase. Will revisit when it makes sense.
 
 ### v2-8: WebPush Multi-tenancy Review
 
@@ -1030,30 +1023,7 @@ Use `untenanted_url` helper from `TenantingHelper` for URLs that need to work ou
 
 ### Medium Priority
 
-#### 6. Mailkick Subscription Subworkspace Config
-
-Must use `to_prepare` (not `after_initialize`) for code reload:
-
-```ruby
-# config/initializers/mailkick.rb
-Rails.application.config.to_prepare do
-  Mailkick::Subscription.subtenant_of "ApplicationRecord"
-end
-```
-
-#### 7. after_create_commit Runs Outside Workspace Context
-
-```ruby
-# WRONG - NoWorkspaceError because callback runs after transaction
-after_create_commit :subscribe_to_emails
-
-# CORRECT - runs inside transaction with workspace context
-after_create :subscribe_to_emails
-```
-
-**Location**: `app/models/user.rb`
-
-#### 8. Form Routes with Workspace Model
+#### 6. Form Routes with Workspace Model
 
 ```erb
 <%# WRONG - looks for workspace_path because @account is a Workspace %>
@@ -1081,8 +1051,6 @@ def perform
   end
 end
 ```
-
-**Location**: `app/jobs/unread_mentions_notifier_job.rb`
 
 ### Low Priority
 
@@ -1225,11 +1193,6 @@ app/services/
 lib/web_push/
 └── pool.rb                        # ✅ Fixed thread pool context (captures/restores tenant)
 
-app/jobs/
-└── unread_mentions_notifier_job.rb # Iterate workspaces (when saas?)
-
-config/
-└── initializers/mailkick.rb       # Subtenant config (when saas?)
 ```
 
 ### Test Files (saas/ folder)

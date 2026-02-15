@@ -357,7 +357,6 @@ self.current_user = user  # Set after cookie-based lookup
 
 Uses Solid Queue (SQLite-backed) for background processing:
 - `Room::PushMessageJob` - Web push notifications for new messages
-- `UnreadMentionsNotifierJob` - Daily email digest of unread mentions/DMs
 
 **SaaS mode:** The `activerecord-tenanted` gem automatically serializes `current_tenant` with job payloads and restores it during `perform`. GlobalID parameters also include tenant context.
 
@@ -371,7 +370,7 @@ bin/boot → reads Procfile → spawns 3 processes:
 
 ### Configuration
 - `config/queue.yml` - Worker/dispatcher configuration (threads, polling interval)
-- `config/recurring.yml` - Scheduled/recurring jobs (runs at 9am/6pm PT for email digests)
+- `config/recurring.yml` - Scheduled/recurring jobs
 - Queue database: Separate SQLite database (`storage/db/*_queue.sqlite3`)
 
 ## Important Configuration
@@ -501,7 +500,6 @@ saas/test/               # SaaS tests (SAAS=true bin/rails test saas/test/)
 ## Special Features (from Small Bets fork)
 
 - **Activity Tab** - Dedicated inbox for @mentions and DMs
-- **Email Notifications** - Daily digest of unread mentions/DMs
 - **Bookmarks** - Save messages for later
 - **Reboost** - One-click message resharing
 - **Stats Page** - Community leaderboards and analytics

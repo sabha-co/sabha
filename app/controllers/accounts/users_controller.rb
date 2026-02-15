@@ -1,18 +1,18 @@
 class Accounts::UsersController < ApplicationController
   include NotifyBots
 
-  before_action :ensure_can_administer
+  before_action :ensure_can_administer, only: %i[update destroy reactivate]
   before_action :set_user, only: %i[update destroy reactivate]
 
   def index
-    @badges = Badge.ordered.includes(:users).to_a
-    @total_members = User.without_bots.active.verified.count
+    @badges = Badge.ordered.includes(:users).to_a if Current.user.can_administer?
+    @member_count = User.without_bots.active.verified.count
 
     if searching?
       search_users
-    elsif filtering_banned?
+    elsif Current.user.staff? && filtering_banned?
       load_banned_users
-    elsif filtering_deactivated?
+    elsif Current.user.staff? && filtering_deactivated?
       load_deactivated_users
     else
       load_members_by_role
@@ -93,7 +93,9 @@ class Accounts::UsersController < ApplicationController
       set_page_and_extract_portion_from members, per_page: 25
       @members = @page.records
 
-      @deactivated_count = User.without_bots.deactivated.count
-      @banned_count = User.without_bots.banned.count
+      if Current.user.staff?
+        @deactivated_count = User.without_bots.deactivated.count
+        @banned_count = User.without_bots.banned.count
+      end
     end
 end

@@ -188,14 +188,6 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "Jose Garcia", user.ascii_name
   end
 
-  test "destroying a user removes their email subscriptions" do
-    user = create_new_user
-
-    assert_difference -> { Mailkick::Subscription.count }, -1 do
-      user.destroy
-    end
-  end
-
   # Blocking tests
 
   test "block! creates a block record" do

@@ -34,7 +34,6 @@ gem "image_processing", ">= 1.2"
 
 # Email
 gem "resend"
-gem "mailkick"
 
 # Telemetry
 gem "sentry-ruby"

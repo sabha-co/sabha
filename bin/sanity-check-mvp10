@@ -27,29 +27,13 @@ checks = []
 # Check 1: Sabha.saas? returns false
 checks << ["Sabha.saas? returns false", Sabha.saas? == false]
 
-# Check 2: Job loads
-begin
-  UnreadMentionsNotifierJob.new
-  checks << ["UnreadMentionsNotifierJob loads", true]
-rescue => e
-  checks << ["UnreadMentionsNotifierJob loads", false, e.message]
-end
-
-# Check 3: WebPush::Pool loads
+# Check 2: WebPush::Pool loads
 begin
   p = WebPush::Pool.new(invalid_subscription_handler: nil)
   checks << ["WebPush::Pool loads with helpers", p.respond_to?(:shutdown)]
   p.shutdown
 rescue => e
   checks << ["WebPush::Pool loads with helpers", false, e.message]
-end
-
-# Check 4: Job can perform (will query DB but no users to notify)
-begin
-  UnreadMentionsNotifierJob.perform_now
-  checks << ["Job performs without error", true]
-rescue => e
-  checks << ["Job performs without error", false, e.message]
 end
 
 # Print results
@@ -81,21 +65,13 @@ checks = []
 # Check 1: Sabha.saas? returns true
 checks << ["Sabha.saas? returns true", Sabha.saas? == true]
 
-# Check 2: Job loads
-begin
-  UnreadMentionsNotifierJob.new
-  checks << ["UnreadMentionsNotifierJob loads", true]
-rescue => e
-  checks << ["UnreadMentionsNotifierJob loads", false, e.message]
-end
-
-# Check 3: with_each_tenant available
+# Check 2: with_each_tenant available
 checks << ["ApplicationRecord.with_each_tenant available", ApplicationRecord.respond_to?(:with_each_tenant)]
 
-# Check 4: current_tenant available
+# Check 3: current_tenant available
 checks << ["ApplicationRecord.current_tenant available", ApplicationRecord.respond_to?(:current_tenant)]
 
-# Check 5: WebPush::Pool loads
+# Check 4: WebPush::Pool loads
 begin
   p = WebPush::Pool.new(invalid_subscription_handler: nil)
   checks << ["WebPush::Pool loads with helpers", p.respond_to?(:shutdown)]

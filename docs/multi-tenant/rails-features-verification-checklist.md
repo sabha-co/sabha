@@ -45,13 +45,13 @@ Verify all Rails features work correctly in both modes:
 
 **Implementation:** `activerecord-tenanted` gem at `lib/active_record/tenanted/job.rb`
 
-**Key Pattern:** Jobs like `UnreadMentionsNotifierJob` show dual-mode pattern:
+**Key Pattern:** Jobs that need to iterate over all workspaces use a dual-mode pattern:
 ```ruby
 def perform
   if Sabha.saas?
-    ApplicationRecord.with_each_tenant { notify_users_in_current_workspace }
+    ApplicationRecord.with_each_tenant { do_work }
   else
-    notify_users_in_current_workspace
+    do_work
   end
 end
 ```

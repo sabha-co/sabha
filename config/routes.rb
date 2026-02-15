@@ -76,7 +76,6 @@ Rails.application.routes.draw do
 
   scope module: :users do
     resource :preference, only: [ :update ]
-    resource :email_subscription, only: %i[ show update ]
   end
 
   resources :users, only: :show do
@@ -146,7 +145,6 @@ Rails.application.routes.draw do
       resource :involvement, only: %i[ show update ] do
         get :notifications_ready, on: :member
       end
-      resources :merges, only: :create
     end
 
     get "@:message_id", to: "rooms#show", as: :at_message

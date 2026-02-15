@@ -110,26 +110,6 @@ end
 
 Restores all related records including threads. Broadcasts room reappearance to sidebar.
 
-### Room Merge
-
-Merges one room into another, moving all messages (including inactive ones).
-
-```ruby
-def merge_into!(target_room)
-  transaction do
-    memberships.update(active: false)
-    Message.unscoped.where(room_id: id).update_all(room_id: target_room.id)
-    Message::RichTextUpdater.update_room_links_in_quoted_messages(from: id, to: target_room.id)
-    deactivate!
-  end
-
-  Room.reset_counters(id, :messages)
-  Room.reset_counters(target_room.id, :messages)
-end
-```
-
----
-
 ## User States
 
 Users have a `status` enum instead of a simple boolean.
@@ -324,7 +304,6 @@ Tests verify:
 - Room deactivation sets room/memberships/messages to inactive
 - Room deactivation cascades to thread rooms
 - Room reactivation restores room/memberships/messages/threads
-- Room merge moves all messages (including inactive)
 
 **User Deactivation:**
 - User deactivation deletes sessions, auth_tokens, push subscriptions

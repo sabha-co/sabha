@@ -341,13 +341,10 @@ Model validates uniqueness scoped to active boosts, but there's no corresponding
 
 ---
 
-### M15. Room.merge_into! Thread and Counter Issues
+### M15. ~REMOVED~ Room Merge Feature Removed
 **Area:** Data Integrity
-**File:** `app/models/room.rb:141-154`
 
-When merging rooms, messages are moved but `Rooms::Thread` records with `parent_message_id` pointing to moved messages are not updated. `Room.reset_counters` runs outside the transaction.
-
-**Recommendation:** Move threads along with messages. Run `reset_counters` inside the transaction.
+The room merge feature was removed entirely due to multiple integrity concerns (thread orphaning, counter cache outside transaction, no test coverage for associated data).
 
 ---
 

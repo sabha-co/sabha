@@ -2,9 +2,6 @@ class User < ApplicationRecord
   DEFAULT_NAME = "New Member"
   MINIMUM_PASSWORD_LENGTH = 8
 
-  has_subscriptions
-  after_create :subscribe_to_emails, unless: -> { Sabha.saas? }  # Mailkick deferred to v2 for SaaS
-
   include Avatar, Bannable, Bot, DicebearAvatar, Mentionable, Role, Transferable, Preferences
 
   # SaaS mode: Link to GlobalIdentity via WorkspaceMembership
@@ -259,22 +256,6 @@ class User < ApplicationRecord
     scope.exists?
   end
 
-  def subscribed_to_emails?
-    subscribed?("notifications")
-  end
-
-  def subscribe_to_emails
-    subscribe("notifications")
-  end
-
-  def unsubscribe_from_emails
-    unsubscribe("notifications")
-  end
-
-  def toggle_email_subscription
-    subscribed_to_emails? ? unsubscribe_from_emails : subscribe_to_emails
-  end
-
   def blocked_in?(room)
     return false unless room.one_on_one?
 
@@ -417,7 +398,6 @@ class User < ApplicationRecord
       Block.where(blocked_id: id).delete_all
       Push::Subscription.where(user_id: id).delete_all
       Webhook.where(user_id: id).delete_all
-      Mailkick::Subscription.where(subscriber: self).delete_all
     end
 
     def set_default_name

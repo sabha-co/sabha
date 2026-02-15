@@ -226,76 +226,9 @@ end
 
 ---
 
-### CRIT-4: `UnreadMentionsNotifierJob` N+1 Queries
+### CRIT-4: ~~`UnreadMentionsNotifierJob` N+1 Queries~~ (Feature removed)
 
-| Attribute | Value |
-|-----------|-------|
-| **Status** | 🟢 Complete |
-| **Priority** | P0 - Critical |
-| **Impact** | Medium - job duration |
-| **Effort** | High |
-| **File** | `app/jobs/unread_mentions_notifier_job.rb` |
-
-**User Experience:**
-
-This is a scheduled job (runs at 9am/6pm) that emails users about unread @mentions. No direct user interaction triggers it.
-
-- **Before:** For each user, query their memberships, then for each membership query unread messages with dynamic `.since()` filters. 1000 users × 10 memberships = ~10,000 database queries. Job takes minutes.
-- **After:** One SQL query finds all unread mentions across all users, grouped by user. Then iterate to send emails. Job completes in seconds.
-
-**Problem:**
-
-Despite using `includes`, the job triggers N+1 queries due to dynamic conditions in `unread_notifications` that cannot be preloaded.
-
-```ruby
-# Current implementation
-User.active.subscribed("notifications").find_each do |user|
-  unread_messages = user.memberships.visible.unread
-    .includes(room: :users, unread_notifications: :creator)
-    .flat_map { |m| m.unread_notifications.since(m.notified_until || m.room.created_at).since(7.days.ago) }
-  # ...
-end
-```
-
-**Impact at Scale:**
-- 500 users × 20 memberships = 10,000+ membership loads
-- Each membership loads room.users (potentially 100+ users per room)
-- Job could take 10+ minutes during peak periods
-
-**Recommended Fix:**
-
-```ruby
-def perform
-  # Pre-compute all unread mentions in a single query
-  unread_by_user = Message.active
-    .joins(:room, :mentions)
-    .joins("INNER JOIN memberships ON memberships.room_id = messages.room_id")
-    .where("messages.created_at > memberships.unread_at")
-    .where("messages.created_at > COALESCE(memberships.notified_until, rooms.created_at)")
-    .where("messages.created_at > ?", 7.days.ago)
-    .where("messages.created_at <= ?", 12.hours.ago)
-    .where(memberships: { active: true })
-    .where.not("memberships.involvement = 'invisible'")
-    .includes(:creator)
-    .group_by { |m| m.mentions.first&.user_id }
-
-  User.active.subscribed("notifications")
-      .where(id: unread_by_user.keys)
-      .find_each do |user|
-    messages = unread_by_user[user.id]
-    next if messages.blank?
-
-    NotifierMailer.unread_mentions(user, messages.sort_by(&:created_at)).deliver_now
-    user.memberships.update_all(notified_until: Time.current)
-  end
-end
-```
-
-**Acceptance Criteria:**
-- [x] Rewrite to use single consolidated query
-- [x] Eliminate N+1 patterns
-- [x] Add job duration logging
-- [ ] Target: < 60 seconds for 500 users (needs production verification)
+Email notification feature removed to simplify codebase.
 
 ---
 
@@ -1195,7 +1128,7 @@ Run with:
 | CRIT-1 | O(n) broadcasts + heavy preload in `broadcast_to_inbox_threads` | Low | 🟢 Complete |
 | CRIT-2 | `RoomUpdateBroadcastJob` per-membership | Medium | ⏸️ Deferred |
 | CRIT-3 | Global `unread_rooms` thundering herd | Medium | 🟢 Complete |
-| CRIT-4 | `UnreadMentionsNotifierJob` N+1 | High | 🟢 Complete |
+| CRIT-4 | `UnreadMentionsNotifierJob` N+1 | High | 🗑️ Feature removed |
 
 ### P1 - High (This Sprint)
 
@@ -1236,7 +1169,7 @@ Run with:
 | 2026-01-23 | Performance Oracle | Initial audit |
 | 2026-01-24 | Claude | Implemented CRIT-1: Move `broadcast_to_inbox_threads` to `BroadcastInboxThreadsJob` |
 | 2026-01-24 | Claude | Implemented CRIT-3: Replace global `unread_rooms` channel with user-scoped broadcasts |
-| 2026-01-24 | Claude | Implemented CRIT-4: Rewrite `UnreadMentionsNotifierJob` with consolidated query |
+| 2026-01-24 | Claude | Implemented CRIT-4: Rewrite `UnreadMentionsNotifierJob` with consolidated query (feature later removed) |
 | 2026-01-24 | Claude | Deferred CRIT-2: Redis pipelining reverted, existing debounce is adequate |
 | 2026-01-24 | Claude | Implemented DB-1: Add indexes on `memberships.unread_at` |
 | 2026-01-24 | Claude | Implemented DB-3: Replace `with_threads` with `with_thread_summary` and add `participant_creators` |

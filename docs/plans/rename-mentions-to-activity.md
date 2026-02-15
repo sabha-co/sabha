@@ -89,8 +89,6 @@ The mark-as-read button on the Mentions page couldn't clear DMs because the old 
 - Updated `paged_inbox_mentions_url` → `paged_inbox_activity_index_url`
 
 ## NOT Changed (Out of Scope)
-- `UnreadMentionsNotifierJob` - Email digest is specifically about @mentions
-- `app/views/notifier_mailer/unread_mentions.*` - Keep as-is
 - `app/assets/images/mentions.svg` - Keep icon file name
 - `docs/ROOMS_AND_INBOX_GUIDE.md` - Documentation update deferred
 

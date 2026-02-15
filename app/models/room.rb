@@ -140,23 +140,6 @@ class Room < ApplicationRecord
     id == Room.original&.id
   end
 
-  def merge_into!(target_room)
-    raise CannotDeleteOriginalError if original?
-
-    transaction do
-      memberships.update(active: false)
-      # Use unscoped to move ALL messages (including inactive/soft-deleted ones)
-      Message.unscoped.where(room_id: id).update_all(room_id: target_room.id)
-      Message::RichTextUpdater.update_room_links_in_quoted_messages(from: id, to: target_room.id)
-      deactivate!
-    end
-
-    # Reset counter caches outside transaction. The `messages.update(room_id:)`
-    # above bypasses AR callbacks, so counter_cache isn't updated automatically.
-    Room.reset_counters(id, :messages)
-    Room.reset_counters(target_room.id, :messages)
-  end
-
   # Deactivates the room and all associated data. Called when an admin deletes
   # a room from the UI. Also deactivates any threads spawned from messages in
   # this room - those threads become inaccessible until the room is reactivated.

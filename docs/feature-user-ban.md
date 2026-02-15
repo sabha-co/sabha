@@ -303,7 +303,6 @@ end
 - `app/controllers/rooms/stats_controller.rb`
 - `app/services/stats_service.rb`
 - `app/helpers/rooms_helper.rb`
-- `app/jobs/unread_mentions_notifier_job.rb`
 - `app/views/users/show.html.erb`
 - `app/views/accounts/users/_user.html.erb`
 - `app/assets/stylesheets/application/avatars.css`

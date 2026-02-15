@@ -1,4 +1,4 @@
-<% @page_title = "Account settings" %>
+<% @page_title = Current.user.administrator? ? "Account settings" : "About" %>
 
 <% content_for :nav do %>
   <div class="flex-item-justify-start">
@@ -72,6 +72,14 @@
   <% else %>
     <%= account_logo_tag style: "txt-xx-large center" %>
     <h1 class="flex-item-grow txt-x-large"><%= @account.name %></h1>
+
+    <div class="flex justify-center gap txt-small txt-muted">
+      <span><%= pluralize(@member_count, "member") %></span>
+      <span>&middot;</span>
+      <span><%= pluralize(online_users_count, "online") %></span>
+      <span>&middot;</span>
+      <span><%= pluralize(@room_count, "room") %></span>
+    </div>
   <% end %>
 
   <% if Current.user.administrator? %>
@@ -80,14 +88,18 @@
     <div class="pad-inline pad-block fill-shade border-radius txt-align-center">
       <%= render "accounts/invite" %>
     </div>
-
-    <div class="flex justify-center">
-      <%= link_to account_users_path, class: "btn btn--reversed" do %>
-        <%= icon_tag "everyone" %>
-        <span>Manage members</span>
-      <% end %>
+  <% elsif Current.account.settings.allow_users_to_create_invite_links? %>
+    <div class="pad-inline pad-block fill-shade border-radius txt-align-center">
+      <%= render "users/profiles/invite_link" %>
     </div>
   <% end %>
+
+  <div class="flex justify-center">
+    <%= link_to account_users_path, class: "btn btn--reversed" do %>
+      <%= icon_tag "everyone" %>
+      <span><%= Current.user.staff? ? "Manage members" : "Members" %></span>
+    <% end %>
+  </div>
 </section>
 
 <% content_for :footer do %>

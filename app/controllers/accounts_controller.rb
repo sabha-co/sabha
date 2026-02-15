@@ -1,9 +1,12 @@
 class AccountsController < ApplicationController
-  before_action :ensure_can_administer, only: %i[edit update]
+  before_action :ensure_can_administer, only: %i[update]
   before_action :set_account
 
   def edit
-    # Users are now managed on a separate page at /account/users
+    unless Current.user.can_administer?
+      @member_count = User.without_bots.active.verified.count
+      @room_count = Room.where(type: %w[Rooms::Open Rooms::Closed]).count
+    end
   end
 
   def update
@@ -28,13 +31,5 @@ class AccountsController < ApplicationController
         permitted[:settings] = existing_settings.merge(permitted[:settings])
       end
       permitted
-    end
-
-    def account_users
-      if Current.user.can_administer?
-        User.where(status: [ :active, :banned ])
-      else
-        User.active
-      end
     end
 end

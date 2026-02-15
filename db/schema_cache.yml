@@ -522,40 +522,6 @@ columns:
   - *6
   - *22
   - *9
-  mailkick_subscriptions:
-  - *5
-  - *6
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
-    name: list
-    cast_type: *7
-    sql_type_metadata: *8
-    'null': true
-    default:
-    default_function:
-    collation:
-    comment:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
-    name: subscriber_id
-    cast_type: *3
-    sql_type_metadata: *4
-    'null': true
-    default:
-    default_function:
-    collation:
-    comment:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
-    name: subscriber_type
-    cast_type: *7
-    sql_type_metadata: *8
-    'null': true
-    default:
-    default_function:
-    collation:
-    comment:
-  - *9
   memberships:
   - *21
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
@@ -587,16 +553,6 @@ columns:
     sql_type_metadata: *8
     'null': true
     default: mentions
-    default_function:
-    collation:
-    comment:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
-    name: notified_until
-    cast_type: *1
-    sql_type_metadata: *2
-    'null': true
-    default:
     default_function:
     collation:
     comment:
@@ -1182,7 +1138,6 @@ primary_keys:
   blocks: id
   bookmarks: id
   boosts: id
-  mailkick_subscriptions: id
   memberships: id
   mentions:
   messages: id
@@ -1208,7 +1163,6 @@ data_sources:
   blocks: true
   bookmarks: true
   boosts: true
-  mailkick_subscriptions: true
   memberships: true
   mentions: true
   messages: true
@@ -1587,25 +1541,6 @@ indexes:
     unique: false
     columns:
     - message_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  mailkick_subscriptions:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: mailkick_subscriptions
-    name: index_mailkick_subscriptions_on_subscriber_and_list
-    unique: true
-    columns:
-    - subscriber_type
-    - subscriber_id
-    - list
     lengths: {}
     orders: {}
     opclasses: {}
@@ -2137,4 +2072,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260213085447
+version: 20260214163011

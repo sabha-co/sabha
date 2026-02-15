@@ -22,11 +22,10 @@ These must ship together — the app won't boot with a half-renamed module.
 - `config/application.rb` — update require + `module Campfire` → `module Sabha`
 - `bin/rails`, `bin/rake` — update require + `Campfire.configure_bundle` → `Sabha.configure_bundle`
 - All `Campfire.saas?` → `Sabha.saas?` across ~30 files:
-  - `config/routes.rb`, `config/database.yml`, `config/initializers/00_boot_mode.rb`, `config/initializers/branding.rb`, `config/initializers/mailkick.rb`
+  - `config/routes.rb`, `config/database.yml`, `config/initializers/00_boot_mode.rb`, `config/initializers/branding.rb`
   - `app/models/` — `application_record.rb`, `current.rb`, `user.rb`, `account.rb`, `room.rb`
   - `app/controllers/concerns/authentication.rb`, `authentication/session_lookup.rb`, `sessions_controller.rb`, `auth_tokens_controller.rb`, `auth_tokens/validations_controller.rb`, `users_controller.rb`, `users/profiles_controller.rb`
   - `app/channels/application_cable/connection.rb`
-  - `app/jobs/unread_mentions_notifier_job.rb`
   - `app/views/layouts/application.html.erb`, `accounts/_invite.html.erb`, `users/profiles/_invite_link.html.erb`
   - `db/seeds.rb`
   - `lib/tasks/saas.rake`, `lib/tasks/workspace.rake`, `lib/tasks/generate.rake`

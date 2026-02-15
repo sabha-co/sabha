@@ -239,8 +239,6 @@ GEM
       net-imap
       net-pop
       net-smtp
-    mailkick (2.0.0)
-      activesupport (>= 7.1)
     marcel (1.1.0)
     matrix (0.4.3)
     mini_magick (5.3.1)
@@ -472,7 +470,6 @@ DEPENDENCIES
   kredis
   lefthook (~> 2.0)
   letter_opener
-  mailkick
   mocha
   msgpack (>= 1.8.0)
   net-http-persistent

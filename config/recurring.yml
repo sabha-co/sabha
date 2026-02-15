@@ -14,10 +14,3 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
-  unread_mentions_morning:
-    class: UnreadMentionsNotifierJob
-    schedule: "0 9 * * * America/Los_Angeles"
-
-  unread_mentions_evening:
-    class: UnreadMentionsNotifierJob
-    schedule: "0 18 * * * America/Los_Angeles"

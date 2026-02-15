@@ -97,10 +97,6 @@ class RoomTest < ActiveSupport::TestCase
     assert_raises(Room::CannotDeleteOriginalError) { rooms(:hq).deactivate }
   end
 
-  test "cannot merge the original room into another" do
-    assert_raises(Room::CannotDeleteOriginalError) { rooms(:hq).merge_into!(rooms(:pets)) }
-  end
-
   test "can deactivate a non-original room" do
     rooms(:pets).deactivate
     assert_not rooms(:pets).active?

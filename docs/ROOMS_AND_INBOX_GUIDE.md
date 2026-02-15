@@ -312,10 +312,6 @@ The inbox helps you track important messages across all rooms. Access it from th
 
 1. **In-app badges:** Red dots on rooms and inbox icons
 2. **Browser notifications:** If enabled in your browser
-3. **Email digest:** Twice-daily summary of unread mentions (9am and 6pm PT)
-   - Only sent to users subscribed to "notifications" in settings
-   - Only triggers if at least one unread mention is older than 12 hours
-   - Includes unread messages from the past 7 days
 
 ### Real-Time Updates
 
@@ -421,7 +417,6 @@ Sabha uses location-focused labels ("My Rooms"/"All Rooms") vs notification-focu
 | All Messages tab | ❌ | ✅ Added |
 | Threads tab | ❌ | ✅ Added |
 | Bookmarks tab | ❌ | ✅ Added |
-| Email digest | ❌ | ✅ Added (twice daily) |
 | Mark all as seen | ❌ | ✅ Added |
 
 **Inbox system:** Sabha adds a complete inbox system with dedicated pages for activity, notifications, all messages, threads, and bookmarks. Each has:
@@ -1314,8 +1309,7 @@ app/
 │   │   ├── directs/
 │   │   │   └── by_bots_controller.rb
 │   │   ├── threads_controller.rb
-│   │   ├── involvements_controller.rb
-│   │   └── merges_controller.rb
+│   │   └── involvements_controller.rb
 │   ├── inboxes_controller.rb
 │   ├── inboxes/
 │   │   ├── activity_controller.rb
