@@ -9,8 +9,8 @@
 }
 
 /* Text */
-.txt-x-small { font-size: 0.7rem; }
-.txt-small { font-size: 0.8rem; }
+.txt-x-small { font-size: 0.8rem; }
+.txt-small { font-size: 0.85rem; }
 .txt-medium { font-size: 1rem; }
 .txt-large { font-size: 1.4rem; }
 .txt-x-large { font-size: 1.8rem; }
@@ -24,13 +24,12 @@
 .txt-reversed { color: var(--color-text-reversed); }
 .txt-negative { color: var(--color-negative); }
 .txt-lighter { color: var(--color-text-lighter); }
-.txt-muted { color: var(--color-border-darkest); }
-.txt-subtle { color: var(--color-border-darker); }
+.txt-muted { color: var(--color-text-muted); }
+.txt-subtle { color: var(--color-text-subtle); }
 .txt-undecorated { text-decoration: none; }
 .txt-strikethrough { text-decoration: line-through; opacity: 0.6; }
 .txt-tight-lines { line-height: 1.2; }
 .txt-normal { font-weight: 400; font-style: normal; }
-.txt-medium { font-weight: 500; }
 .txt-nowrap { white-space: nowrap; }
 .txt-label { text-transform: uppercase; letter-spacing: 0.02em; }
 

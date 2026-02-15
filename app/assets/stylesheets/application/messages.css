@@ -271,7 +271,7 @@
   font-size: 0.8rem;
   font-weight: 400;
   text-transform: none;
-  color: var(--color-border-darkest);
+  color: var(--color-text-muted);
   padding-block: 0.25rem;
 
   span {
@@ -455,7 +455,7 @@
     }
 
     .txt-muted {
-      color: var(--color-text-muted, #666);
+      color: var(--color-text-muted);
       font-size: 0.95em;
     }
   }
@@ -565,7 +565,6 @@ img.message__attachment {
     --busy-inset: calc(var(--inline-space) * 1.5);
   
     justify-content: start;
-    font-weight: 500;
   } 
 }
 

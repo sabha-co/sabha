@@ -95,8 +95,7 @@
 }
 
 .sidebar__tool-label {
-  font-size: 0.65rem;
-  letter-spacing: -0.02em;
+  font-size: 0.75rem;
   margin-top: 4px;
   text-align: center;
   color: var(--color-text);
@@ -384,7 +383,7 @@
   margin-block-start: 0.1em;
 
   .unread & {
-    font-weight: 800;
+    font-weight: 700;
     position: relative;
 
     &::after {
@@ -501,12 +500,12 @@
 
   time {
     opacity: 0.4;
-    font-weight: 500;
+    font-weight: 400;
 
     .sidebar__list:not(#shared_rooms) .room.unread &,
     .sidebar__list .room.unread.badge & {
       opacity: 1;
-      font-weight: 800;
+      font-weight: 700;
     }
 
     .sidebar__list .room.unread.badge & {
@@ -661,7 +660,7 @@
 
     white-space: nowrap;
     justify-content: start;
-    font-weight: 500;
+    font-weight: 400;
   }
 }
 
@@ -753,7 +752,7 @@
 }
 
 .dm-conversation__time {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
   opacity: 0.6;
   white-space: nowrap;

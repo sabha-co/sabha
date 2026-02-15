@@ -3,10 +3,10 @@
   <% if invite_link %>
     <% url = Sabha.saas? ? untenanted_url(:join, invite_link.code) : join_url(invite_link.code) %>
     <div class="flex flex-column gap">
-      <div class="txt-medium txt-align-center">Share this link to invite friends</div>
+      <strong class="txt-align-center">Share this link to invite friends</strong>
 
       <label for="invite_link_url" class="for-screen-reader">Your personal invite link</label>
-      <input type="text" class="input" value="<%= url %>" id="invite_link_url" readonly>
+      <input type="text" class="input fill-white" value="<%= url %>" id="invite_link_url" readonly>
 
       <div class="flex align-center center gap">
         <%= button_to_copy_to_clipboard(url) do %>
@@ -31,7 +31,7 @@
     </div>
   <% else %>
     <div class="flex flex-column gap txt-align-center">
-      <div class="txt-medium">Invite friends to <%= Current.account.name %></div>
+      <strong>Invite friends to <%= Current.account.name %></strong>
       <%= button_to user_invite_link_path, method: :post, class: "btn txt-small center" do %>
         Create Invite Link
       <% end %>

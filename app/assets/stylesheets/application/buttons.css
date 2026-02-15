@@ -194,10 +194,11 @@
 }
 
 .btn--success {
-  animation: success 1s ease-out;
+  --success-timing-function: cubic-bezier(0.25, 1.25, 0.5, 1);
+  animation: success 1s var(--success-timing-function);
 
-  img {
-    animation: zoom-fade 300ms ease-out;
+  img, .icon {
+    animation: zoom-fade 500ms var(--success-timing-function);
   }
 }
 

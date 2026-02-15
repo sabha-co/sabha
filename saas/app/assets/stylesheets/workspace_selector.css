@@ -218,7 +218,6 @@
   font-weight: 600;
   font-size: 18px;
   text-transform: uppercase;
-  letter-spacing: -0.02em;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   position: relative;
@@ -303,7 +302,6 @@
   font-weight: 600;
   font-size: 15px;
   text-transform: uppercase;
-  letter-spacing: -0.02em;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
@@ -482,15 +480,16 @@
   color: var(--workspace-selector-text);
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 200px;
 }
 
-/* Push content down when banner is present */
+/* Push content down when banner is present.
+   --app-height accounts for the banner so all 100dvh elements fit. */
 .app-with-workspaces.has-workspace-banner {
+  --app-height: calc(100dvh - var(--workspace-banner-height));
   padding-top: var(--workspace-banner-height);
 }
 
@@ -500,6 +499,18 @@
 
 .app-with-workspaces.has-workspace-banner .workspace-selector {
   top: var(--workspace-banner-height);
+  block-size: var(--app-height);
+}
+
+.app-with-workspaces.has-workspace-banner .sidebar__container,
+.app-with-workspaces.has-workspace-banner .sidebar__tools {
+  block-size: var(--app-height);
+  max-block-size: var(--app-height);
+}
+
+.sidebar.app-with-workspaces.has-workspace-banner #sidebar {
+  block-size: var(--app-height);
+  max-block-size: var(--app-height);
 }
 
 @media (max-width: 120ch) {
@@ -519,6 +530,7 @@
   }
 
   .app-with-workspaces.has-workspace-banner {
+    --app-height: 100dvh;
     padding-top: 0;
   }
 

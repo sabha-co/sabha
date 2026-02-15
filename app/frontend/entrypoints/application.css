@@ -70,8 +70,8 @@
   --font-family:
     -apple-system, BlinkMacSystemFont, Aptos, Roboto, "Segoe UI", Helvetica,
     Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --font-size-x-small: 0.7rem;
-  --font-size-small: 0.8rem;
+  --font-size-x-small: 0.8rem;
+  --font-size-small: 0.85rem;
   --font-size-medium: 1rem;
   --font-size-large: 1.4rem;
   --font-size-x-large: 1.8rem;
@@ -145,6 +145,10 @@
   --ring: oklch(70.8% 0 0);
   --border: var(--color-border);
   --control-border: #b1adae;
+
+  /* Text contrast: muted/subtle use dedicated text colors, not border colors */
+  --color-text-muted: oklch(50% 0 0);
+  --color-text-subtle: oklch(60% 0 0);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -164,6 +168,9 @@
     --lch-green: 75% 0.21 141.89;
     --lch-purple: 70% 0.32 282;
     --control-border: #555;
+
+    --color-text-muted: oklch(60% 0 0);
+    --color-text-subtle: oklch(50% 0 0);
 
     /* Color values for Tailwind utilities (dark mode) */
     /* These update via CSS cascade when prefers-color-scheme: dark */
@@ -225,6 +232,8 @@
   --lch-green: 65.59% 0.234 142.49;
   --lch-purple: 45% 0.32 282;
   --control-border: #b1adae;
+  --color-text-muted: oklch(50% 0 0);
+  --color-text-subtle: oklch(60% 0 0);
 
   /* Light mode Tailwind utilities */
   --background: oklch(100% 0 0);
@@ -282,6 +291,8 @@
   --lch-green: 75% 0.21 141.89;
   --lch-purple: 70% 0.32 282;
   --control-border: #555;
+  --color-text-muted: oklch(60% 0 0);
+  --color-text-subtle: oklch(50% 0 0);
 
   /* Dark mode Tailwind utilities */
   --background: oklch(0% 0 0);
@@ -328,34 +339,9 @@ main#main-content:focus {
   outline: none;
 }
 
-/* Text utilities */
-.txt-x-small {
-  @apply text-[length:var(--font-size-x-small)];
-}
-
-.txt-small {
-  @apply text-[length:var(--font-size-small)];
-}
-
-.txt-medium {
-  @apply text-[length:var(--font-size-medium)];
-}
-
-.txt-large {
-  @apply text-[length:var(--font-size-large)];
-}
-
-.txt-primary {
-  @apply text-[var(--color-text)];
-}
-
-.txt-negative {
-  @apply text-[var(--color-negative)];
-}
-
-.txt-muted {
-  @apply text-[var(--color-border-darkest)];
-}
+/* Text size and color utilities are defined in utilities.css (vanilla CSS).
+   They load after this Tailwind layer so those definitions always win.
+   Do not duplicate .txt-* classes here. */
 
 /* Spacing utilities */
 .pad {

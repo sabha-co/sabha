@@ -1,10 +1,4 @@
-body {
-  font-size: 0.95rem;
-}
-
-.txt-medium {
-  font-size: 0.95rem;
-}
+/* txt-medium inherits the default 1rem body size */
 
 .quick-boosts {
   font-size: 1rem;

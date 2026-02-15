@@ -40,7 +40,7 @@
 
 @keyframes success {
   0%  { background-color: var(--color-border-darker); scale: 0.8; }
-  20% { background-color: var(--color-border-darker); scale: 1; }
+  33% { background-color: var(--color-border-darker); scale: 1; }
 }
 
 @keyframes wiggle {
@@ -53,7 +53,7 @@
 }
 
 @keyframes zoom-fade {
-  100% { transform: translateY(-2em); opacity: 0; }
+  100% { transform: translateY(-1.5em); scale: 2; opacity: 0; }
 }
 
 @keyframes border-fade-out {

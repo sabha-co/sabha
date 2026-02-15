@@ -21,6 +21,11 @@
     <%= tag.link rel: "icon", href: fresh_account_logo_path, type: "image/png" %>
     <%= tag.link rel: "apple-touch-icon", href: fresh_account_logo_path %>
 
+    <%= javascript_inline_importmap_tag %>
+    <%= javascript_importmap_module_preload_tags %>
+
+    <%= vite_stylesheet_tag 'application', "data-turbo-track": "reload" %>
+
     <%= stylesheet_link_tag *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
     <% if hotwire_native_app? %>
       <%= stylesheet_link_tag "native", "data-turbo-track": "reload" %>
@@ -28,14 +33,9 @@
     <%= stylesheet_link_tag "overrides", "data-turbo-track": "reload" %>
     <%= custom_styles_tag %>
 
-    <%= javascript_importmap_tags %>
-
     <%= render "layouts/theme_preference" %>
 
     <%= yield :head %>
-
-    <%= vite_client_tag %>
-    <%= vite_javascript_tag 'application' %>
 
     <%= cloudflare_turnstile_script_tag %>
     <%= umami_analytics_tag %>
@@ -93,5 +93,7 @@
     <a href="https://once.com" id="app-logo" target="_blank" aria-label="Once software from 37signals home page">
       <%= image_tag "campfire-icon.png", alt: "Sabha logo", width: 256, height: 216 %>
     </a>
+    <%= vite_client_tag %>
+    <%= javascript_import_module_tag "application" %>
   </body>
 </html>

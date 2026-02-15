@@ -144,7 +144,7 @@
 }
 
 .typing-indicator__author {
-  line-height: 1;
+  line-height: 1.2;
   padding-inline-start: 1.5em;
 
   &.spinner {

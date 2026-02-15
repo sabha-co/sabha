@@ -224,7 +224,17 @@ trix-editor,
   }
 
   h1 {
-    font-size: 1.4rem !important;
-    margin: 0;
+    font-size: 1.5rem !important;
+    margin: 0.75em 0 0.25em;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+    margin: 0.5em 0 0.25em;
+  }
+
+  h1:first-child,
+  h2:first-child {
+    margin-block-start: 0;
   }
 }
