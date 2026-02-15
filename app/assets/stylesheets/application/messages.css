@@ -400,8 +400,12 @@
   min-inline-size: 0;
 }
 
+.message__badge,
 .message__heading > .txt-x-small {
+  align-items: center;
+  display: inline-flex;
   flex-shrink: 0;
+  gap: calc(var(--message-column-gap) / 2);
   white-space: nowrap;
 }
 
