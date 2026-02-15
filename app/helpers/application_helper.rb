@@ -6,7 +6,8 @@ module ApplicationHelper
   end
 
   def page_title
-    @page_title || Branding.contextual_app_name
+    parts = [ @page_title, Branding.contextual_app_name ].compact.uniq
+    parts.join(" | ")
   end
 
   def current_user_meta_tags
