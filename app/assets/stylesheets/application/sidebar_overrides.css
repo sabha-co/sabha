@@ -4,6 +4,10 @@
   top: 36px !important;
   bottom: auto !important;
   transform: translateX(-50%) !important;
+
+  @media (max-width: 120ch) {
+    letter-spacing: -0.04em !important;
+  }
 }
 
 /* Move the profile button 10px further down */

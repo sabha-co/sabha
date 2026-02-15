@@ -1,4 +1,9 @@
-/* txt-medium inherits the default 1rem body size */
+/* On mobile, restore tighter body font-size to save space */
+@media (max-width: 120ch) {
+  body {
+    font-size: 0.95rem;
+  }
+}
 
 .quick-boosts {
   font-size: 1rem;

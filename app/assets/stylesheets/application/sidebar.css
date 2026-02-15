@@ -107,6 +107,11 @@
   bottom: -18px;
   left: 50%;
   transform: translateX(-50%);
+
+  @media (max-width: 120ch) {
+    font-size: 0.65rem;
+    letter-spacing: -0.02em;
+  }
 }
 
 /* Create a solid background for the bottom of the sidebar */
