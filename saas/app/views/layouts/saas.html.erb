@@ -9,14 +9,14 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= javascript_inline_importmap_tag %>
-    <%= javascript_importmap_module_preload_tags %>
-
-    <%= vite_stylesheet_tag 'application', "data-turbo-track": "reload" %>
-
     <%= stylesheet_link_tag *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
 
+    <%= javascript_importmap_tags %>
+
     <%= render "layouts/theme_preference" %>
+
+    <%= vite_client_tag %>
+    <%= vite_javascript_tag 'application' %>
 
     <%= cloudflare_turnstile_script_tag %>
     <%= umami_analytics_tag %>
@@ -38,7 +38,5 @@
 
       <%= yield %>
     </main>
-    <%= vite_client_tag %>
-    <%= javascript_import_module_tag "application" %>
   </body>
 </html>
