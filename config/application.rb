@@ -39,5 +39,14 @@ module Sabha
 
     # Fallback to English if translation key is missing
     config.i18n.fallbacks = true
+
+    console do
+      if Sabha.saas?
+        require_relative "../lib/console/tenant_helpers"
+        TOPLEVEL_BINDING.eval("self").extend(Console::TenantHelpers)
+        puts "  Tenant helpers: tenants, tenant(<id>), current_tenant, tenant_reset"
+        puts ""
+      end
+    end
   end
 end
