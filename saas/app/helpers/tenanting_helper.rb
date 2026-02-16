@@ -13,6 +13,12 @@ module TenantingHelper
     tag "meta", name: "action-cable-url", content: "#{base_url}?wid=#{workspace_id}"
   end
 
+  # Expose the workspace path prefix (request.script_name) to JavaScript.
+  # Used by frontend code that builds URLs for fetch requests (e.g., unfurl links).
+  def workspace_base_path_meta_tag
+    tag "meta", name: "base-path", content: request.script_name
+  end
+
   # Generate a URL without the workspace prefix (script_name)
   # Use this for URLs that should work outside workspace context,
   # like join links which are accessed at the root domain.

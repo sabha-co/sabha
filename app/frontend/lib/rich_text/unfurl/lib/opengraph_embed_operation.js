@@ -25,7 +25,8 @@ export default class OpengraphEmbedOperation {
   }
 
   #createOpenGraphMetadataRequest() {
-    return post("/unfurl_link", {
+    const basePath = document.querySelector('meta[name="base-path"]')?.content || ""
+    return post(`${basePath}/unfurl_link`, {
       body: { url: this.url },
       contentType: "application/json",
       signal: this.abortController.signal

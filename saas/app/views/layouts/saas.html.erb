@@ -9,6 +9,7 @@
     <meta name="theme-color" content="<%= Branding.theme_color %>">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <%= workspace_base_path_meta_tag %>
 
     <%= stylesheet_link_tag *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
 
