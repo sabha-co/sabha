@@ -477,7 +477,7 @@ saas/test/               # SaaS tests (SAAS=true bin/rails test saas/test/)
 ## Database Schema Notes
 
 - **SQLite3** in production (optimized for single-server deployments)
-- Schema format: SQL (required for FTS5 full-text search extensions)
+- Schema format: Ruby (`db/schema.rb`), using `create_virtual_table` for FTS5
 - Migrations in `db/migrate/` with schema in `db/schema.rb`
 - Full-text search on messages via `messages_fts` virtual table
 

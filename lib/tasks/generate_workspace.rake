@@ -160,6 +160,7 @@ module WorkspaceDemo
   def create_saas_identities(users, tenant_id)
     users.each do |user|
       identity = GlobalIdentity.find_or_create_by!(email_address: user.email_address.downcase)
+      identity.update!(name: user.name) if identity.name.blank? && user.name.present?
       identity.verify! unless identity.verified?
       membership = identity.workspace_memberships.find_or_create_by!(tenant: tenant_id)
       membership.cache_user_id!(user.id)
