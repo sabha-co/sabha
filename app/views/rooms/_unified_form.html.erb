@@ -1,0 +1,48 @@
+<%= form_with model: room, url: open_url,
+      data: { controller: "room-form",
+              room_form_open_url_value: open_url,
+              room_form_closed_url_value: closed_url } do |form| %>
+
+  <div class="flex flex-column gap">
+    <label class="flex align-center gap input input--actor">
+      <%= form.text_field :name, name: "room[name]", class: "input txt-large",
+            required: true, autofocus: true, placeholder: "Name the room",
+            data: { action: "keydown.enter->form#submit:prevent" } %>
+      <%= icon_tag "chat-bubble" %>
+      <span class="for-screen-reader">Name this room</span>
+    </label>
+
+    <label class="flex align-center gap input input--actor">
+      <%= form.text_area :description, name: "room[description]", rows: 1, maxlength: 280, class: "input txt-medium",
+            placeholder: "What's this room about? (optional)" %>
+      <span class="for-screen-reader">Room description</span>
+    </label>
+  </div>
+
+  <hr class="margin-block borderless">
+
+  <div class="flex flex-column gap pad-inline margin-block">
+    <label class="flex align-center gap cursor-pointer">
+      <input type="radio" name="room_type" value="open"
+             <%= "checked" if local_assigns[:default_type] != "closed" %>
+             data-action="change->room-form#selectType">
+      <span><strong># Public</strong> <span class="txt-deemphasize">&mdash; Anyone can find and join</span></span>
+    </label>
+
+    <div data-room-form-target="autoJoinOption" class="pad-inline-double" <%= "hidden" if local_assigns[:default_type] == "closed" %>>
+      <label class="flex align-center gap cursor-pointer">
+        <%= form.check_box :auto_join %>
+        <span class="txt-small">Add all existing members</span>
+      </label>
+    </div>
+
+    <label class="flex align-center gap cursor-pointer">
+      <input type="radio" name="room_type" value="closed"
+             <%= "checked" if local_assigns[:default_type] == "closed" %>
+             data-action="change->room-form#selectType">
+      <span><strong><%= icon_tag "lock", size: 12 %> Private</strong> <span class="txt-deemphasize">&mdash; Only invited members</span></span>
+    </label>
+  </div>
+
+  <%= submit_room_button_tag %>
+<% end %>

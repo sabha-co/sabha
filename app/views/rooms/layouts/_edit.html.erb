@@ -11,12 +11,11 @@
 <% is_hidden = membership&.involved_in_invisible? %>
 
 <section class="panel" style="view-transition-name: edit-room-<%= room.id %>">
-  <div class="txt-align-center">
-    <%= yield %>
-  </div>
+  <%= yield %>
 
   <% if membership && !room.thread? %>
     <hr class="margin-block separator full-width" style="--border-style: solid">
+    <p class="txt-muted margin-none margin-block-half txt-align-center">Notifications</p>
     <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form" }, class: "flex align-center gap pad-block" do %>
       <% unmuted_involvement = room.direct? ? "everything" : "mentions" %>
       <%= hidden_field_tag :involvement, is_muted ? unmuted_involvement : "nothing" %>
@@ -36,24 +35,23 @@
     <% end %>
 
     <% unless room.direct? %>
-      <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form" }, class: "flex align-center gap pad-block" do %>
-        <%= hidden_field_tag :involvement, is_hidden ? "mentions" : "invisible" %>
-        <span>Hide from sidebar</span>
-        <hr class="separator" aria-hidden="true">
-        <label class="switch">
-          <input type="checkbox"
-                 class="switch__input"
-                 <%= "checked" if is_hidden %>
-                 data-action="change->form#submit">
-          <span class="switch__btn round"></span>
-        </label>
-      <% end %>
+      <hr class="margin-block separator full-width" style="--border-style: solid">
+      <p class="txt-muted margin-none margin-block-half txt-align-center">Membership</p>
+
+      <div class="txt-align-center pad-block">
+        <%= button_to room_membership_path(room), method: :delete,
+              class: "btn max-width",
+              data: { turbo_confirm: "Leave #{room_display_name(room)}?" } do %>
+          Leave room
+        <% end %>
+      </div>
     <% end %>
   <% end %>
 
   <% if room.direct? || (Current.user.can_administer?(room) && !room.original?) %>
     <hr class="margin-block separator full-width" style="--border-style: solid">
-    <div class="txt-align-center">
+    <p class="txt-muted margin-none margin-block-half txt-align-center">Danger zone</p>
+    <div class="txt-align-center pad-block">
       <%= button_to_delete_room room %>
     </div>
   <% end %>

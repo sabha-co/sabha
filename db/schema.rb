@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_14_163011) do
+ActiveRecord::Schema[8.2].define(version: 2026_02_18_172602) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -195,8 +195,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_14_163011) do
 
   create_table "rooms", force: :cascade do |t|
     t.boolean "active", default: true
+    t.boolean "auto_join", default: false, null: false
     t.datetime "created_at", null: false
     t.bigint "creator_id", null: false
+    t.text "description"
     t.datetime "last_active_at"
     t.string "members_hash"
     t.integer "messages_count", default: 0

@@ -16,34 +16,21 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create" do
-    # 2 broadcasts per user: one for :starred_rooms and one for :shared_rooms
+    # Only creator is added; 2 broadcasts for creator's sidebar sections
     assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 2 do
-    assert_turbo_stream_broadcasts [ users(:kevin), :rooms ], count: 2 do
-    assert_turbo_stream_broadcasts [ users(:jason), :rooms ], count: 2 do
-      post rooms_closeds_url, params: { room: { name: "My New Room" }, user_ids: [ users(:david).id, users(:kevin).id, users(:jason).id ] }
-    end
-    end
+      post rooms_closeds_url, params: { room: { name: "My New Room" } }
     end
 
     new_room = Room.last
-    assert_equal new_room.memberships.count, 3
-    assert_redirected_to room_url(Room.last)
+    assert_equal 1, new_room.memberships.count
+    assert_redirected_to room_url(new_room)
   end
 
-  test "update with membership revisions" do
-    assert_difference -> { rooms(:designers).reload.users.count }, -1 do
-      put rooms_closed_url(rooms(:designers)), params: {
-        room: { name: "New Name" }, user_ids: rooms(:designers).users.without(users(:jason)).collect(&:id)
-      }
-    end
+  test "update room name" do
+    put rooms_closed_url(rooms(:designers)), params: { room: { name: "New Name" } }
 
     assert_redirected_to room_url(rooms(:designers))
-    assert rooms(:designers).reload.name, "New Name"
-  end
-
-  test "update an open room to be closed" do
-    put rooms_closed_url(rooms(:pets)), params: { room: { name: "Doesn't matter" }, user_ids: [ users(:david).id, users(:jason).id ] }
-    assert_equal rooms(:pets).memberships.count, 2
+    assert_equal "New Name", rooms(:designers).reload.name
   end
 
   test "only admins or creators can update" do
@@ -57,15 +44,6 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
     assert rooms(:designers).reload.name, "Designers"
   end
 
-  test "remove yourself" do
-    assert_difference -> { users(:david).rooms.count }, -1 do
-      put rooms_closed_url(rooms(:designers), params: { room: { name: "Designers" }, user_ids: [ users(:jason).id, users(:jz).id ] })
-
-      assert_redirected_to room_url(rooms(:designers))
-      follow_redirect!
-      assert_redirected_to root_url
-    end
-  end
 
   test "non-admin cannot create room when restricted to administrators" do
     accounts(:signal).settings.restrict_room_creation_to_administrators = true
@@ -76,7 +54,7 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
     get new_rooms_closed_url
     assert_response :forbidden
 
-    post rooms_closeds_url, params: { room: { name: "My New Room" }, user_ids: [ users(:jz).id ] }
+    post rooms_closeds_url, params: { room: { name: "My New Room" } }
     assert_response :forbidden
   end
 
@@ -89,7 +67,7 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
     get new_rooms_closed_url
     assert_response :success
 
-    post rooms_closeds_url, params: { room: { name: "Admin Room" }, user_ids: [ users(:david).id ] }
+    post rooms_closeds_url, params: { room: { name: "Admin Room" } }
     assert_redirected_to room_url(Room.last)
   end
 
@@ -99,31 +77,18 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
     room = rooms(:designers)
 
     assert_difference -> { Message.unscoped.where(room: room, event: "room_renamed").count } do
-      put rooms_closed_url(room), params: { room: { name: "New Designers" }, user_ids: room.user_ids }
+      put rooms_closed_url(room), params: { room: { name: "New Designers" } }
     end
 
     event = Message.unscoped.where(room: room, event: "room_renamed").last
     assert_equal "renamed the room from Designers to New Designers", event.reload.plain_text_body
   end
 
-  test "update posts membership events when members change" do
-    room = rooms(:designers)
-
-    assert_difference -> { Message.unscoped.where(room: room, event: "member_joined").count } do
-      assert_difference -> { Message.unscoped.where(room: room, event: "member_left").count } do
-        put rooms_closed_url(room), params: {
-          room: { name: room.name },
-          user_ids: (room.user_ids - [ users(:jason).id ] + [ users(:bender).id ])
-        }
-      end
-    end
-  end
-
   test "update does not post events when nothing changes" do
     room = rooms(:designers)
 
     assert_no_difference -> { Message.unscoped.where(room: room).where.not(event: nil).count } do
-      put rooms_closed_url(room), params: { room: { name: room.name }, user_ids: room.user_ids }
+      put rooms_closed_url(room), params: { room: { name: room.name } }
     end
   end
 
@@ -141,7 +106,7 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
 
   test "creator can destroy their own closed room" do
     sign_in :kevin
-    post rooms_closeds_url, params: { room: { name: "Kevin's Private Room" }, user_ids: [ users(:kevin).id, users(:jz).id ] }
+    post rooms_closeds_url, params: { room: { name: "Kevin's Private Room" } }
     room = Room.last
 
     assert_difference -> { Room.active.count }, -1 do
@@ -161,14 +126,27 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  # Tabbed edit layout
+
+  test "edit renders tabbed layout with three tabs" do
+    get edit_rooms_closed_url(rooms(:designers))
+    assert_response :success
+    assert_select '[role="tablist"]', 1
+    assert_select '[role="tab"]', 3
+    assert_select '[role="tabpanel"]', 3
+    assert_select '[role="tab"]', text: /About/
+    assert_select '[role="tab"]', text: /Members/
+    assert_select '[role="tab"]', text: /Settings/
+  end
+
   # Creator update permission tests
 
   test "creator can update their own closed room" do
     sign_in :kevin
-    post rooms_closeds_url, params: { room: { name: "Kevin's Room" }, user_ids: [ users(:kevin).id ] }
+    post rooms_closeds_url, params: { room: { name: "Kevin's Room" } }
     room = Room.last
 
-    put rooms_closed_url(room), params: { room: { name: "Kevin's Updated Room" }, user_ids: [ users(:kevin).id ] }
+    put rooms_closed_url(room), params: { room: { name: "Kevin's Updated Room" } }
 
     assert_redirected_to room_url(room)
     assert_equal "Kevin's Updated Room", room.reload.name

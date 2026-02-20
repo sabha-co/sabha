@@ -1,0 +1,9 @@
+<%= turbo_stream.remove :next_page_container %>
+
+<%= turbo_stream.append :browsable_rooms do %>
+  <%= render partial: "rooms/browse/room", collection: @rooms, as: :room %>
+<% end %>
+
+<% unless @page.last? %>
+  <%= turbo_stream.append :browsable_rooms, partial: "rooms/browse/next_page_container", locals: { page: @page.next_param } %>
+<% end %>

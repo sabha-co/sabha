@@ -132,6 +132,16 @@ Rails.application.routes.draw do
     post "join/:join_code", to: "users#create"
   end
 
+  namespace :rooms do
+    get "browse", to: "browse#index", as: :browse
+    resources :opens
+    resources :closeds
+    resources :directs
+    resources :threads, only: %i[ new edit update destroy ]
+
+    post ":bot_key/directs", to: "directs/by_bots#create", as: :bot_directs
+  end
+
   resources :rooms do
     resources :messages do
       resources :unreads, only: %i[ create ], module: "messages"
@@ -145,20 +155,12 @@ Rails.application.routes.draw do
       resource :involvement, only: %i[ show update ] do
         get :notifications_ready, on: :member
       end
+      resource :membership, only: %i[ create destroy ]
+      resources :members, only: %i[ index create destroy ]
+      resource :access, only: :update, controller: "access"
     end
 
     get "@:message_id", to: "rooms#show", as: :at_message
-  end
-
-  namespace :rooms do
-    resources :opens
-    resources :closeds do
-      get :users, on: :collection
-    end
-    resources :directs
-    resources :threads, only: %i[ new edit update destroy ]
-
-    post ":bot_key/directs", to: "directs/by_bots#create", as: :bot_directs
   end
 
   resources :messages do

@@ -7,90 +7,45 @@ class Rooms::ClosedsController < RoomsController
   before_action :ensure_permission_to_create_rooms, only: %i[ new create ]
 
   DEFAULT_ROOM_NAME = "New room"
-  USER_SEARCH_LIMIT = 50
 
   def show
     redirect_to room_url(@room)
   end
 
   def new
-    @room  = Rooms::Closed.new(name: DEFAULT_ROOM_NAME)
-    @selected_users = [ Current.user ]
-    @unselected_users = User.active.verified.where.not(id: Current.user.id).includes(avatar_attachment: :blob).ordered.limit(10)
-    @total_user_count = User.active.verified.count
-  end
-
-  def users
-    @room = Rooms::Closed.new
-    @selected_user_ids = Array(params[:selected_ids]).map(&:to_i)
-    @users = search_users(params[:query], exclude_ids: @selected_user_ids)
-
-    render partial: "rooms/closeds/user_results", locals: { users: @users, room: @room, selected_user_ids: @selected_user_ids }
+    @room = Rooms::Closed.new(name: DEFAULT_ROOM_NAME)
   end
 
   def create
-    room = Rooms::Closed.create_for(room_params, users: grantees)
+    room = Rooms::Closed.create_for(room_params, users: [ Current.user ])
 
     broadcast_create_room(room)
     redirect_to room_url(room)
   end
 
   def edit
-    @selected_users = @room.users.active.includes(avatar_attachment: :blob).ordered
-    selected_ids = @selected_users.pluck(:id)
-    @unselected_users = User.active.verified.where.not(id: selected_ids).includes(avatar_attachment: :blob).ordered.limit(10)
-    @total_user_count = User.active.verified.count
+    load_users_for_access_management
   end
 
   def update
-    new_grantees = grantees.where.not(id: @room.user_ids).to_a
-    actual_revokees = revokees.to_a
     old_name = @room.name
 
     @room.update! room_params
-    @room.memberships.revise(granted: grantees, revoked: revokees)
     @room.announce_rename(old_name, actor: Current.user) if @room.name != old_name
-    @room.announce_membership_changes(granted: new_grantees, revoked: actual_revokees, actor: Current.user)
 
     RoomUpdateBroadcastJob.perform_later(@room)
-    redirect_to room_url(@room)
+    redirect_back fallback_location: room_url(@room)
   end
 
   private
-    def search_users(query, exclude_ids: [])
-      return [] if query.blank?
-
-      scope = User.active.verified.filtered_by(query)
-      scope = scope.where.not(id: exclude_ids) if exclude_ids.present?
-      scope.includes(avatar_attachment: :blob).ordered.limit(USER_SEARCH_LIMIT)
-    end
-
     # Allows us to edit an open room and turn it into a closed one on saving.
     def force_room_type
       @room = @room.becomes!(Rooms::Closed)
     end
 
-    def grantees
-      User.where(id: grantee_ids)
-    end
-
-    def revokees
-      @room.users.where.not(id: grantee_ids)
-    end
-
-    def grantee_ids
-      params.fetch(:user_ids, [])
-    end
-
     def broadcast_create_room(room)
-      for_each_sidebar_section do |list_name|
-        # render_to_string runs in request context (has script_name), so URLs are tenant-safe.
-        # Render once and reuse: new rooms have no per-member unread state to differentiate.
-        html = render_to_string(partial: "users/sidebars/rooms/shared", locals: { list_name:, room: room })
-
-        room.memberships.visible.includes(:user).each do |membership|
-          broadcast_append_to membership.user, :rooms, target: list_name, html: html, attributes: { maintain_scroll: true }
-        end
+      room.memberships.visible.includes(:user).each do |membership|
+        broadcast_sidebar_room_added(membership.user, room)
       end
     end
 end

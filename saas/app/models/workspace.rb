@@ -98,6 +98,7 @@ class Workspace < UntenantedRecord
         Rooms::Open.find_or_create_by!(name: "General") do |room|
           room.slug = "general"
           room.creator = admin_user
+          room.auto_join = true
         end
       end
 

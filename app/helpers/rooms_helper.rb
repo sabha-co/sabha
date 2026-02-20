@@ -75,6 +75,10 @@ module RoomsHelper
       id: "composer", class: "margin-block flex-item-grow contain", data: composer_data_options(room), &
   end
 
+  def room_type_indicator(room)
+    "#" if room.is_a?(Rooms::Open)
+  end
+
   def room_display_name(room, for_user: Current.user)
     room.display_name(for_user: for_user)
   end

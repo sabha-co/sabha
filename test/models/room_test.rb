@@ -17,6 +17,27 @@ class RoomTest < ActiveSupport::TestCase
     assert_not rooms(:watercooler).users.include?(users(:david))
   end
 
+  test "revoke_from raises LastVisibleMemberError when removing last visible member from closed room" do
+    room = rooms(:designers)
+    visible = room.memberships.visible.to_a
+    visible[1..].each { |m| m.update!(involvement: :invisible) }
+
+    assert_raises(Membership::LastVisibleMemberError) do
+      room.memberships.revoke_from(visible.first.user)
+    end
+
+    assert visible.first.reload.active?, "membership should not have been revoked"
+  end
+
+  test "revoke_from allows removing members from open rooms freely" do
+    room = rooms(:hq)
+    user = room.memberships.visible.first.user
+
+    assert_nothing_raised do
+      room.memberships.revoke_from(user)
+    end
+  end
+
   test "revise memberships" do
     rooms(:watercooler).memberships.revise(granted: users(:kevin), revoked: users(:david))
     assert rooms(:watercooler).users.include?(users(:kevin))
@@ -186,6 +207,84 @@ class RoomTest < ActiveSupport::TestCase
     assert_no_difference -> { Message.unscoped.where(room: room).count } do
       room.announce_membership_changes(granted: [], revoked: [], actor: users(:david))
     end
+  end
+
+  # add_member! / remove_member! / accept_join!
+
+  test "add_member! grants membership and posts joined event" do
+    room = rooms(:designers)
+    user = users(:bender)
+
+    assert_difference -> { room.memberships.visible.count } do
+      assert_difference -> { Message.unscoped.where(room: room, event: "member_joined").count } do
+        room.add_member!(user, actor: users(:david))
+      end
+    end
+  end
+
+  test "remove_member! revokes membership and posts left event" do
+    room = rooms(:designers)
+    user = users(:jason)
+
+    assert_difference -> { room.memberships.visible.count }, -1 do
+      assert_difference -> { Message.unscoped.where(room: room, event: "member_left").count } do
+        room.remove_member!(user, actor: users(:david))
+      end
+    end
+  end
+
+  test "accept_join! grants membership and posts joined event" do
+    room = rooms(:pets)
+    user = users(:kevin)
+    room.memberships.where(user: user).update_all(active: false)
+
+    assert_difference -> { Membership.where(room: room, user: user, active: true).count } do
+      assert_difference -> { Message.unscoped.where(room: room, event: "member_joined").count } do
+        room.accept_join!(user)
+      end
+    end
+  end
+
+  test "accept_leave! makes membership invisible and posts left event" do
+    room = rooms(:watercooler)
+    user = users(:david)
+
+    assert_difference -> { Message.unscoped.where(room: room, event: "member_left").count } do
+      room.accept_leave!(user)
+    end
+
+    assert Membership.find_by(room: room, user: user).involved_in_invisible?
+  end
+
+  test "accept_leave! raises LastVisibleMemberError for closed rooms with one visible member" do
+    room = rooms(:designers)
+    visible = room.memberships.visible.to_a
+    visible[1..].each { |m| m.update!(involvement: :invisible) }
+
+    assert_raises(Membership::LastVisibleMemberError) do
+      room.accept_leave!(visible.first.user)
+    end
+  end
+
+  # toggle_access!
+
+  test "toggle_access! returns reloaded room with correct class" do
+    room = rooms(:watercooler)
+    assert room.closed?
+
+    result = room.toggle_access!(open: true)
+
+    assert_instance_of Rooms::Open, result
+    assert_equal room.id, result.id
+  end
+
+  test "toggle_access! returns self when already the target type" do
+    room = rooms(:pets)
+    assert room.open?
+
+    result = room.toggle_access!(open: true)
+
+    assert_equal room.object_id, result.object_id
   end
 
   test "active_member_count excludes inactive users" do

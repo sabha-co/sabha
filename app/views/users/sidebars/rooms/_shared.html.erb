@@ -14,7 +14,7 @@
      class="room-row flex align-center gap-half">
   <%= link_to_room room,
         class: [ "room btn txt-nowrap flex-item-grow", "unread": unread, "badge": has_notifications ] do %>
-    <span class="overflow-ellipsis"><%= room_display_name(room) %></span>
+    <span class="overflow-ellipsis"><%= room_type_indicator(room) %> <%= room_display_name(room) %></span>
   <% end %>
 
   <%= turbo_frame_tag dom_id(room, dom_prefix(:sidebar, :involvement)) do %>

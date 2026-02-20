@@ -1,0 +1,55 @@
+<% @page_title = "Edit settings for #{room_display_name(room)}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to_last_room_visited %>
+  </div>
+<% end %>
+
+<% membership = @membership %>
+<% is_muted = membership&.involved_in_nothing? %>
+<% can_administer = Current.user.can_administer?(room) %>
+
+<section class="panel" style="view-transition-name: edit-room-<%= room.id %>"
+         data-controller="tabs" <%= tag.attributes("data-tabs-initial-value": params[:tab]) if params[:tab].present? %>>
+  <% unless can_administer %>
+    <div class="pad txt-align-center">
+      <h1 class="txt-x-large margin-none"><%= room.name %></h1>
+      <% if room.description.present? %>
+        <p class="txt-deemphasize margin-none margin-block-half"><%= room.description %></p>
+      <% end %>
+    </div>
+    <hr class="separator full-width margin-none" style="--border-style: solid">
+  <% end %>
+
+  <div class="room-tabs" role="tablist">
+    <% if can_administer %>
+      <button role="tab" aria-controls="tab-about" aria-selected="true" tabindex="0"
+              data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
+        About
+      </button>
+    <% end %>
+    <button role="tab" aria-controls="tab-members" aria-selected="<%= !can_administer %>" tabindex="<%= can_administer ? -1 : 0 %>"
+            data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
+      Members (<span id="room_<%= room.id %>_member_count"><%= room.active_member_count %></span>)
+    </button>
+    <button role="tab" aria-controls="tab-settings" aria-selected="false" tabindex="-1"
+            data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
+      Settings
+    </button>
+  </div>
+
+  <% if can_administer %>
+    <div id="tab-about" role="tabpanel" data-tabs-target="panel">
+      <%= yield %>
+    </div>
+  <% end %>
+
+  <div id="tab-members" role="tabpanel" data-tabs-target="panel" <%= "hidden" if can_administer %>>
+    <%= render "rooms/layouts/members_panel", room: room %>
+  </div>
+
+  <div id="tab-settings" role="tabpanel" data-tabs-target="panel" hidden>
+    <%= render "rooms/layouts/settings_panel", room: room, membership: membership, is_muted: is_muted %>
+  </div>
+</section>

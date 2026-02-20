@@ -674,6 +674,16 @@ columns:
   - *20
   rooms:
   - *21
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: auto_join
+    cast_type: *23
+    sql_type_metadata: *24
+    'null': false
+    default: false
+    default_function:
+    collation:
+    comment:
   - *5
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
@@ -681,6 +691,16 @@ columns:
     cast_type: *13
     sql_type_metadata: *14
     'null': false
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: description
+    cast_type: *10
+    sql_type_metadata: *11
+    'null': true
     default:
     default_function:
     collation:
@@ -2072,4 +2092,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260214163011
+version: 20260218172602

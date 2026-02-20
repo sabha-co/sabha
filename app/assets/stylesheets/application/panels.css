@@ -36,6 +36,37 @@
   }
 }
 
+.room-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border-darker);
+  margin-block-end: var(--block-space);
+  margin-inline: calc(-1 * var(--panel-padding));
+  padding-inline: var(--panel-padding);
+}
+
+.room-tabs [role="tab"] {
+  flex: 1;
+  padding: 0.75em 0.5em;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  text-align: center;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.room-tabs [role="tab"][aria-selected="true"] {
+  color: var(--color-text);
+  border-bottom-color: currentColor;
+}
+
+.room-tabs [role="tab"]:hover:not([aria-selected="true"]) {
+  color: var(--color-text);
+}
+
 .panel--wide {
   --panel-width: 80ch;
 }

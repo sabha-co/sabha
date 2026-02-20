@@ -84,8 +84,17 @@ class RoomsController < ApplicationController
       first_in_thread && messages.first&.id == first_in_thread.id
     end
 
+    def load_users_for_access_management
+      all_members = @room.visible_users.active.includes(avatar_attachment: :blob).ordered
+      @preview_members = all_members.limit(10)
+      @remaining_members = all_members.offset(10)
+      @available_users_json = User.active.verified.where.not(id: all_members.select(:id))
+                                  .ordered.pluck(:id, :name)
+                                  .map { |id, name| { id: id, name: name } }
+    end
+
     def room_params
-      params.require(:room).permit(:name)
+      params.require(:room).permit(:name, :description, :auto_join)
     end
 
     def ensure_permission_to_create_rooms

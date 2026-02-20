@@ -15,4 +15,8 @@ module RoomScoped
       @membership = Current.user.memberships.find_by(room_id: params[:room_id])
       @room = @membership&.room
     end
+
+    def ensure_can_administer
+      head :forbidden unless Current.user.can_administer?(@room)
+    end
 end

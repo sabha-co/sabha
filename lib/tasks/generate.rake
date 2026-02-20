@@ -338,7 +338,8 @@ namespace :generate do
       open_rooms_data.each do |name|
         rooms[:open] << Rooms::Open.create!(
           name: name,
-          creator: admin
+          creator: admin,
+          auto_join: true
         )
       end
       puts "   Created #{rooms[:open].count} open rooms"
@@ -1290,7 +1291,8 @@ namespace :generate do
     open_rooms.each do |room_data|
       rooms[room_data[:key]] = Rooms::Open.create!(
         name: room_data[:name],
-        creator: admin
+        creator: admin,
+        auto_join: true
       )
     end
 

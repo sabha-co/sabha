@@ -1,0 +1,9 @@
+<%= turbo_stream.remove :next_page_container %>
+
+<%= turbo_stream.append :room_members_list do %>
+  <%= render partial: "rooms/threads/user", collection: @members, as: :user, locals: { room: @room } %>
+<% end %>
+
+<% unless @page.last? %>
+  <%= turbo_stream.append :room_members_list, partial: "rooms/members/next_page_container", locals: { page: @page.next_param } %>
+<% end %>

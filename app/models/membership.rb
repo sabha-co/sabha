@@ -1,6 +1,15 @@
 class Membership < ApplicationRecord
   include Connectable, Deactivatable
 
+  class LastVisibleMemberError < StandardError; end
+
+  def leave!
+    with_lock do
+      room.ensure_visible_members_remain!(excluding: user_id)
+      update!(involvement: :invisible)
+    end
+  end
+
   belongs_to :room
   belongs_to :user
 

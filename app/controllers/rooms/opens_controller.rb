@@ -20,10 +20,17 @@ class Rooms::OpensController < RoomsController
     @room = Rooms::Open.create_for(room_params, users: Current.user)
 
     broadcast_create_room
-    redirect_to room_url(@room)
+
+    if @room.auto_join?
+      redirect_to room_url(@room)
+    else
+      redirect_to edit_rooms_open_url(@room, tab: "members")
+    end
   end
 
-  def edit ; end
+  def edit
+    load_users_for_access_management
+  end
 
   def update
     old_name = @room.name
@@ -32,7 +39,7 @@ class Rooms::OpensController < RoomsController
     @room.announce_rename(old_name, actor: Current.user) if @room.name != old_name
 
     RoomUpdateBroadcastJob.perform_later(@room)
-    redirect_to room_url(@room)
+    redirect_back fallback_location: room_url(@room)
   end
 
   private

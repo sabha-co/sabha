@@ -1,4 +1,4 @@
-<li class="flex align-center gap margin-none" data-value="<%= user.name.downcase %>">
+<li id="<%= "#{dom_id_prefix}_#{user.id}" if local_assigns[:dom_id_prefix] %>" class="flex align-center gap margin-none" data-filter-target="item" <%= "hidden data-filter-default=hidden" if local_assigns[:default_hidden] %>>
   <figure class="avatar flex-item-no-shrink" style="--avatar-size: 4ch;">
     <%= avatar_link_tag user, loading: :lazy %>
   </figure>
@@ -15,7 +15,7 @@
       <%= icon_tag "check", class: "flex-item-no-shrink" %>
     <% else %>
       <label class="switch flex-item-no-shrink">
-        <%= check_box_tag "user_ids[]", user.id, selected, class: "switch__input", id: nil, data: { action: "change->user-search#toggle" } %>
+        <%= check_box_tag "user_ids[]", user.id, selected, class: "switch__input", id: nil, data: { action: "change->member-toggle#toggle" } %>
         <span class="switch__btn round"></span>
         <span class="for-screen-reader">Give <%= user.name %> access to this room</span>
       </label>

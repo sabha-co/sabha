@@ -176,7 +176,7 @@ module WorkspaceDemo
 
     # 6 open rooms
     %w[General Introductions Random Announcements Feedback Off-Topic].each do |name|
-      rooms[:open] << Rooms::Open.create!(name: name, creator: admin)
+      rooms[:open] << Rooms::Open.create!(name: name, creator: admin, auto_join: true)
     end
 
     # 4 closed rooms

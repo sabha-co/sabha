@@ -173,4 +173,65 @@ class MembershipTest < ActiveSupport::TestCase
     assert_not @membership.read?
     assert @membership.unread?
   end
+
+  # Leave! tests
+
+  test "leave! makes membership invisible" do
+    assert_not @membership.involved_in_invisible?
+    @membership.leave!
+    assert @membership.reload.involved_in_invisible?
+  end
+
+  test "leave! works for open rooms even as last member" do
+    open_room = rooms(:hq)
+    assert open_room.open?
+
+    # Get the only visible membership
+    membership = open_room.memberships.visible.first
+
+    # Should not raise error
+    assert_nothing_raised do
+      membership.leave!
+    end
+
+    assert membership.reload.involved_in_invisible?
+  end
+
+  test "leave! raises LastVisibleMemberError for closed rooms when last visible member" do
+    closed_room = rooms(:designers)
+    assert closed_room.closed?
+
+    # Make all but one membership invisible
+    visible_memberships = closed_room.memberships.visible.to_a
+    assert visible_memberships.count > 1
+
+    visible_memberships[1..-1].each do |m|
+      m.update!(involvement: :invisible)
+    end
+
+    # Now only one visible membership remains
+    last_membership = closed_room.memberships.visible.first
+    assert_equal 1, closed_room.memberships.visible.count
+
+    assert_raises(Membership::LastVisibleMemberError) do
+      last_membership.leave!
+    end
+
+    # Should still be visible
+    assert_not last_membership.reload.involved_in_invisible?
+  end
+
+  test "leave! allows leaving closed room when multiple visible members exist" do
+    closed_room = rooms(:designers)
+    assert closed_room.closed?
+    assert closed_room.memberships.visible.count > 1
+
+    membership = closed_room.memberships.visible.first
+
+    assert_nothing_raised do
+      membership.leave!
+    end
+
+    assert membership.reload.involved_in_invisible?
+  end
 end

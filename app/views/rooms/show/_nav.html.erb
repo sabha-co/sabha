@@ -10,7 +10,7 @@
       <% if room.thread? %>
         🧵 <%= room_display_name(room.parent_message.room) %>
       <% else %>
-        <%= room_display_name(room) %>
+        <%= room_type_indicator(room) %> <%= room_display_name(room) %>
       <% end %>
     </h1>
   <% end %>

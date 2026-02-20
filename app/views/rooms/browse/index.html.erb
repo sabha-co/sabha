@@ -1,0 +1,23 @@
+<% @page_title = "Browse rooms" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to root_path %>
+  </div>
+<% end %>
+
+<section class="panel">
+  <h1 class="txt-large txt-align-center margin-block">Browse rooms</h1>
+
+  <% if @rooms.any? %>
+    <div id="browsable_rooms" class="flex flex-column gap">
+      <%= render partial: "rooms/browse/room", collection: @rooms, as: :room %>
+
+      <% unless @page.last? %>
+        <%= render partial: "rooms/browse/next_page_container", locals: { page: @page.next_param } %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="txt-deemphasize txt-align-center pad">You're a member of all available rooms.</p>
+  <% end %>
+</section>

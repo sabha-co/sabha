@@ -28,6 +28,10 @@
       <span>Bookmarks</span>
     <% end %>
 
+    <%= link_to rooms_browse_path, class: "btn action-btn full-width" do %>
+      <span>Browse rooms</span>
+    <% end %>
+
     <%= link_to hidden_rooms_user_sidebar_path, class: "btn action-btn full-width",
             data: { turbo_frame: :hidden_rooms, action: "click->popup#close" } do %>
       <span>Hidden rooms</span>

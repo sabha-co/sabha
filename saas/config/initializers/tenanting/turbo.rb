@@ -40,3 +40,20 @@ end
 Rails.application.config.after_initialize do
   Turbo::StreamsChannel.prepend TurboStreamsChannelExtensions
 end
+
+# Also override the instance-level render_format used when controllers call
+# broadcast_replace_to etc. (Turbo::Streams::Broadcasts is included as instance
+# methods in ApplicationController, separate from the class-method path above).
+Rails.application.config.to_prepare do
+  ApplicationController.class_eval do
+    private
+
+    def render_format(format, **rendering)
+      if request.script_name.present?
+        ApplicationController.renderer.new(script_name: request.script_name).render(formats: [ format ], **rendering)
+      else
+        ApplicationController.render(formats: [ format ], **rendering)
+      end
+    end
+  end
+end

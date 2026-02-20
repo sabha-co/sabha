@@ -15,13 +15,21 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "create" do
+  test "create without auto_join redirects to edit members" do
     # 2 broadcasts: one for :starred_rooms and one for :shared_rooms
     assert_turbo_stream_broadcasts :rooms, count: 2 do
       post rooms_opens_url, params: { room: { name: "My New Room" } }
     end
 
-    assert_equal Room.last.memberships.count, User.count
+    assert_equal 1, Room.last.memberships.count
+    assert_redirected_to edit_rooms_open_url(Room.last, tab: "members")
+  end
+
+  test "create with auto_join adds all users and redirects to room" do
+    post rooms_opens_url, params: { room: { name: "Forced Room", auto_join: true } }
+
+    assert_equal User.count, Room.last.memberships.count
+    assert Room.last.auto_join?
     assert_redirected_to room_url(Room.last)
   end
 
@@ -44,9 +52,15 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert rooms(:pets).reload.name, "New Name"
   end
 
-  test "update a closed room to be open" do
+  test "update a closed room to be open does not auto-add all users" do
+    original_count = rooms(:designers).memberships.count
     put rooms_open_url(rooms(:designers)), params: { room: { name: "Doesn't matter" } }
-    assert_equal rooms(:designers).memberships.count, User.count
+    assert_equal original_count, rooms(:designers).memberships.count
+  end
+
+  test "update a closed room to be open with auto_join adds all users" do
+    put rooms_open_url(rooms(:designers)), params: { room: { name: "Doesn't matter", auto_join: true } }
+    assert_equal User.count, rooms(:designers).memberships.count
   end
 
   test "non-admin cannot create room when restricted to administrators" do
@@ -72,7 +86,7 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     post rooms_opens_url, params: { room: { name: "Admin Room" } }
-    assert_redirected_to room_url(Room.last)
+    assert_redirected_to edit_rooms_open_url(Room.last, tab: "members")
   end
 
   # Destroy permission tests
@@ -141,6 +155,19 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference -> { Message.unscoped.where(room: room, event: "room_renamed").count } do
       put rooms_open_url(room), params: { room: { name: room.name } }
     end
+  end
+
+  # Tabbed edit layout
+
+  test "edit renders tabbed layout with three tabs" do
+    get edit_rooms_open_url(rooms(:pets))
+    assert_response :success
+    assert_select '[role="tablist"]', 1
+    assert_select '[role="tab"]', 3
+    assert_select '[role="tabpanel"]', 3
+    assert_select '[role="tab"]', text: /About/
+    assert_select '[role="tab"]', text: /Members/
+    assert_select '[role="tab"]', text: /Settings/
   end
 
   # Creator update permission tests

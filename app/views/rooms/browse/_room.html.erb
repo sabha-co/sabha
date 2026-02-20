@@ -1,0 +1,17 @@
+<div class="flex align-center gap pad-block pad-inline fill-shade border-radius">
+  <div class="flex-item-grow min-width">
+    <div class="overflow-ellipsis">
+      <span class="txt-deemphasize"><%= room_type_indicator(room) %></span>
+      <strong><%= room.name %></strong>
+    </div>
+    <% if room.description.present? %>
+      <div class="txt-small txt-deemphasize overflow-ellipsis"><%= room.description %></div>
+    <% end %>
+    <div class="txt-small txt-deemphasize"><%= pluralize(room.active_member_count, "member") %></div>
+  </div>
+
+  <%= button_to room_membership_path(room),
+        method: :post, class: "btn btn--reversed" do %>
+    Join
+  <% end %>
+</div>

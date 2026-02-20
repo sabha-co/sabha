@@ -22,8 +22,9 @@ class UserTest < ActiveSupport::TestCase
     assert user.valid?
   end
 
-  test "creating users grants membership to the open rooms" do
-    assert_difference -> { Membership.count }, +Rooms::Open.count do
+  test "creating users grants membership to auto_join open rooms only" do
+    auto_join_count = Rooms::Open.active.where(auto_join: true).count
+    assert_difference -> { Membership.count }, +auto_join_count do
       create_new_user
     end
   end

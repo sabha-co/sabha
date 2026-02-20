@@ -15,8 +15,12 @@ class Room < ApplicationRecord
 
     def revoke_from(users)
       room = proxy_association.owner
+      user_ids = Array(users).map(&:id)
+
+      room.ensure_visible_members_remain!(excluding: user_ids)
+
       # Must use the `user_id: ...` condition and not `user: ...` for the hierarchical permissions to work
-      Membership.active.where(room_id: room.id, user_id: Array(users).map(&:id)).update(active: false)
+      Membership.active.where(room_id: room.id, user_id: user_ids).update(active: false)
       room.threads.find_each { |thread| thread.memberships.revoke_from(users) }
     end
 
@@ -136,6 +140,14 @@ class Room < ApplicationRecord
     end
   end
 
+  def toggle_access!(open:)
+    target_class = open ? Rooms::Open : Rooms::Closed
+    return self if self.class == target_class
+
+    becomes!(target_class).save!
+    Room.find(id)
+  end
+
   def original?
     id == Room.original&.id
   end
@@ -186,6 +198,35 @@ class Room < ApplicationRecord
       partial: "messages/message", locals: { current_room: self, is_unread: true }
 
     message
+  end
+
+  def add_member!(user, actor:)
+    memberships.grant_to(user)
+    invalidate_member_count_cache
+    announce_membership_changes(granted: [ user ], actor: actor)
+  end
+
+  def remove_member!(user, actor:)
+    memberships.revoke_from(user)
+    invalidate_member_count_cache
+    announce_membership_changes(revoked: [ user ], actor: actor)
+  end
+
+  def accept_join!(user)
+    memberships.grant_to(user)
+    invalidate_member_count_cache
+    post_system_message(event: "member_joined", body: "joined", actor: user)
+  end
+
+  def ensure_visible_members_remain!(excluding:)
+    return if open?
+    remaining = memberships.visible.where.not(user_id: Array(excluding)).count
+    raise Membership::LastVisibleMemberError if remaining <= 0
+  end
+
+  def accept_leave!(user)
+    memberships.find_by!(user: user).leave!
+    post_system_message(event: "member_left", body: "left", actor: user)
   end
 
   def announce_membership_changes(granted: [], revoked: [], actor:)
