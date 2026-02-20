@@ -16,8 +16,8 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create without auto_join redirects to edit members" do
-    # 2 broadcasts: one for :starred_rooms and one for :shared_rooms
-    assert_turbo_stream_broadcasts :rooms, count: 2 do
+    # 1 per-user broadcast to shared_rooms (new rooms are never starred)
+    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 1 do
       post rooms_opens_url, params: { room: { name: "My New Room" } }
     end
 

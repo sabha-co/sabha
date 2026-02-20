@@ -1,7 +1,12 @@
 module TurboTestHelper
   def assert_rendered_turbo_stream_broadcast(*streambles, action:, target:, &block)
     streams = find_broadcasts_for(*streambles)
-    target = ActionView::RecordIdentifier.dom_id(*target)
+    target = case target
+    when String, Symbol
+      target.to_s
+    else
+      ActionView::RecordIdentifier.dom_id(*Array(target))
+    end
     assert_select Nokogiri::HTML.fragment(streams), %(turbo-stream[action="#{action}"][target="#{target}"]), &block
   end
 

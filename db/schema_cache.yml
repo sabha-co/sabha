@@ -568,6 +568,16 @@ columns:
     comment:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
+    name: starred
+    cast_type: *23
+    sql_type_metadata: *24
+    'null': false
+    default: false
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
     name: unread_at
     cast_type: *1
     sql_type_metadata: *2
@@ -1675,6 +1685,23 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: memberships
+    name: index_memberships_on_user_id_and_starred
+    unique: false
+    columns:
+    - user_id
+    - starred
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: memberships
     name: index_memberships_on_user_unread_active
     unique: false
     columns:
@@ -2092,4 +2119,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260218172602
+version: 20260220100000

@@ -1,17 +1,11 @@
 <% if membership %>
   <p class="txt-muted margin-none margin-block-half txt-align-center">Notifications</p>
-  <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form" }, class: "flex align-center gap pad-block" do %>
-    <% unmuted_involvement = "mentions" %>
-    <%= hidden_field_tag :involvement, is_muted ? unmuted_involvement : "nothing" %>
-    <span>Mute notifications</span>
-    <hr class="separator" aria-hidden="true">
-    <label class="switch">
-      <input type="checkbox"
-             class="switch__input"
-             <%= "checked" if is_muted %>
-             data-action="change->form#submit">
-      <span class="switch__btn round"></span>
-    </label>
+
+  <% if membership.involved_in_invisible? %>
+    <%= render "rooms/involvements/hide_toggle", room: room, is_hidden: true %>
+  <% else %>
+    <%= render "rooms/involvements/involvement_select", room: room, membership: membership %>
+    <%= render "rooms/involvements/hide_toggle", room: room, is_hidden: false %>
   <% end %>
 
   <hr class="margin-block separator full-width" style="--border-style: solid">

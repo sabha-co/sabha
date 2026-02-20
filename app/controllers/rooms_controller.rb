@@ -104,7 +104,7 @@ class RoomsController < ApplicationController
     end
 
     def broadcast_remove_room
-      for_each_sidebar_section do |list_name|
+      Sidebar::SIDEBAR_SECTIONS.each do |list_name|
         broadcast_remove_to :rooms, target: [ @room, helpers.dom_prefix(list_name, :list_node) ]
       end
     end

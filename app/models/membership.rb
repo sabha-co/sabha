@@ -64,7 +64,11 @@ class Membership < ApplicationRecord
 
   enum :involvement, %w[ invisible nothing mentions everything ].index_by(&:itself), prefix: :involved_in
 
+  validate :starred_only_for_shared_visible_rooms, if: :starred?
+  before_validation :unstar_if_invisible
+
   after_update :broadcast_involvement, if: :saved_change_to_involvement?
+  after_update_commit :broadcast_star_change, if: :saved_change_to_starred?
 
   scope :with_ordered_room, -> { includes(:room).joins(:room).order("rooms.sortable_name") }
   scope :with_room_by_activity, -> { includes(:room).joins(:room).order("rooms.messages_count DESC") }
@@ -92,6 +96,8 @@ class Membership < ApplicationRecord
     joins(:room).where("memberships.unread_at IS NOT NULL OR rooms.updated_at > ?", since)
   }
 
+  scope :starred, -> { where(starred: true) }
+  scope :unstarred, -> { where(starred: false) }
   scope :notifications_on, -> { where(involvement: :everything) }
   scope :visible, -> { where.not(involvement: :invisible) }
   scope :read,  -> { where(unread_at: nil) }
@@ -130,6 +136,10 @@ class Membership < ApplicationRecord
     end
   end
 
+  def sidebar_list_name
+    starred? ? :starred_rooms : :shared_rooms
+  end
+
   def receives_mentions?
     involved_in_mentions? || involved_in_everything?
   end
@@ -139,6 +149,16 @@ class Membership < ApplicationRecord
   end
 
   private
+    def starred_only_for_shared_visible_rooms
+      if room.direct? || room.thread?
+        errors.add(:starred, "is not allowed for direct or thread rooms")
+      end
+    end
+
+    def unstar_if_invisible
+      self.starred = false if involved_in_invisible? && starred?
+    end
+
     def reset_user_connections_if_deactivated
       user.reset_remote_connections if deactivated?
     end
@@ -167,6 +187,26 @@ class Membership < ApplicationRecord
 
     def broadcast_involvement
       UserInvolvementsChannel.broadcast_to(user, { roomId: room_id, involvement: involvement })
+    end
+
+    def broadcast_star_change
+      return if involved_in_invisible? || room.direct? || room.thread?
+
+      helpers = ApplicationController.helpers
+      old_list = starred_before_last_save ? :starred_rooms : :shared_rooms
+
+      Turbo::StreamsChannel.broadcast_remove_to(
+        user, :rooms,
+        target: [ room, helpers.dom_prefix(old_list, :list_node) ]
+      )
+
+      Turbo::StreamsChannel.broadcast_append_to(
+        user, :rooms,
+        target: sidebar_list_name,
+        partial: "users/sidebars/rooms/shared",
+        locals: { list_name: sidebar_list_name, membership: self },
+        attributes: { maintain_scroll: true }
+      )
     end
 
     def unread_payload

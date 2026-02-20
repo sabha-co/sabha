@@ -31,17 +31,16 @@ class SidebarMemberships
       .limit(10)
   end
 
-  # Shared room memberships (Open/Closed rooms) shown in My Rooms and All Rooms.
-  # Visibility between sections is controlled client-side by Stimulus based on involvement.
+  # Starred room memberships shown in the "Favorites" section.
+  #
+  def starred
+    shared_base.starred
+  end
+
+  # Unstarred shared room memberships shown in the "All Rooms" section.
   #
   def shared
-    user.memberships
-      .visible
-      .without_thread_rooms
-      .without_direct_rooms
-      .active_rooms
-      .with_has_unread_notifications
-      .includes(:room)
+    shared_base.unstarred
   end
 
   # Hidden room memberships (rooms with invisible involvement).
@@ -71,6 +70,16 @@ class SidebarMemberships
   end
 
   private
+
+  def shared_base
+    user.memberships
+      .visible
+      .without_thread_rooms
+      .without_direct_rooms
+      .active_rooms
+      .with_has_unread_notifications
+      .includes(:room)
+  end
 
   def other_members(memberships)
     memberships.map(&:user).reject { |u| u.id == user.id }

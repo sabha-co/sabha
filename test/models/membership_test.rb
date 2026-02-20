@@ -143,6 +143,33 @@ class MembershipTest < ActiveSupport::TestCase
     assert_equal :away, Membership.activity_status(result[jason.id])
   end
 
+  # Starred tests
+
+  test "starred scope returns starred memberships" do
+    @membership.update!(starred: true)
+    assert Membership.starred.exists?(@membership.id)
+    assert_not Membership.unstarred.exists?(@membership.id)
+  end
+
+  test "unstarred scope returns unstarred memberships" do
+    @membership.update!(starred: false)
+    assert Membership.unstarred.exists?(@membership.id)
+    assert_not Membership.starred.exists?(@membership.id)
+  end
+
+  test "cannot star a direct room membership" do
+    membership = memberships(:david_david_and_jason)
+    membership.starred = true
+    assert_not membership.valid?
+    assert_includes membership.errors[:starred], "is not allowed for direct or thread rooms"
+  end
+
+  test "hiding a starred room automatically unstars it" do
+    @membership.update!(starred: true)
+    @membership.update!(involvement: :invisible)
+    assert_not @membership.reload.starred?
+  end
+
   # Read/Unread tests
 
   test "mark_unread_at sets unread_at to message created_at" do

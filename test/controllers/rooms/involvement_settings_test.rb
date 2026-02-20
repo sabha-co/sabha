@@ -52,7 +52,7 @@ class Rooms::InvolvementSettingsTest < ActionDispatch::IntegrationTest
     room = rooms(:hq)
     membership = memberships(:david_hq)
 
-    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 5 do
+    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 4 do
       put room_involvement_url(room), params: { involvement: "invisible", return_to: edit_room_path(room) }
     end
 
@@ -64,7 +64,7 @@ class Rooms::InvolvementSettingsTest < ActionDispatch::IntegrationTest
     membership = memberships(:david_hq)
     membership.update!(involvement: "invisible")
 
-    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 5 do
+    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 3 do
       put room_involvement_url(room), params: { involvement: "mentions", return_to: edit_room_path(room) }
     end
 

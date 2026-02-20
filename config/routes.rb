@@ -155,6 +155,7 @@ Rails.application.routes.draw do
       resource :involvement, only: %i[ show update ] do
         get :notifications_ready, on: :member
       end
+      resource :star, only: %i[ create destroy ]
       resource :membership, only: %i[ create destroy ]
       resources :members, only: %i[ index create destroy ]
       resource :access, only: :update, controller: "access"

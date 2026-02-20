@@ -80,12 +80,22 @@ class SidebarMembershipsTest < ActiveSupport::TestCase
 
   # --- shared ---
 
-  test "shared returns open and closed room memberships" do
+  test "shared returns unstarred open and closed room memberships" do
     shared = @sidebar.shared
 
-    assert_includes shared.map(&:room), rooms(:watercooler)
+    # watercooler and hq are starred in fixtures, so they appear in starred instead
+    assert_not_includes shared.map(&:room), rooms(:watercooler)
+    assert_not_includes shared.map(&:room), rooms(:hq)
     assert_includes shared.map(&:room), rooms(:pets)
-    assert_includes shared.map(&:room), rooms(:hq)
+    assert_includes shared.map(&:room), rooms(:designers)
+  end
+
+  test "starred returns starred room memberships" do
+    starred = @sidebar.starred
+
+    assert_includes starred.map(&:room), rooms(:watercooler)
+    assert_includes starred.map(&:room), rooms(:hq)
+    assert_not_includes starred.map(&:room), rooms(:pets)
   end
 
   test "shared excludes direct rooms" do

@@ -1,5 +1,6 @@
 <% room = local_assigns[:room] || local_assigns[:membership].room %>
-<% involvement = local_assigns[:membership]&.involvement || "mentions" %>
+<% starred = local_assigns[:membership]&.starred? %>
+<% muted = local_assigns[:membership]&.involved_in_nothing? %>
 <% unread = local_assigns[:membership]&.unread? %>
 <% has_notifications = local_assigns[:membership]&.has_unread_notifications? %>
 
@@ -8,16 +9,23 @@
      data-name="<%= room.sortable_name %>"
      data-size="<%= room.messages_count %>"
      data-updated-at="<%= room.last_active_at.iso8601 %>"
-     data-sidebar-rooms-target="room"
-     data-involvement="<%= involvement %>"
      data-type="list_node"
      class="room-row flex align-center gap-half">
   <%= link_to_room room,
         class: [ "room btn txt-nowrap flex-item-grow", "unread": unread, "badge": has_notifications ] do %>
     <span class="overflow-ellipsis"><%= room_type_indicator(room) %> <%= room_display_name(room) %></span>
+    <% if muted %><span class="muted-indicator"><%= icon_tag "bell-off" %></span><% end %>
   <% end %>
 
-  <%= turbo_frame_tag dom_id(room, dom_prefix(:sidebar, :involvement)) do %>
-    <%= button_to_change_involvement(room, involvement, from_sidebar: true) %>
+  <% if local_assigns[:membership] %>
+    <% if starred %>
+      <%= button_to room_star_path(room), method: :delete, class: "btn star starred", aria: { label: "Unstar #{room.name}" } do %>
+        <%= icon_tag "star" %>
+      <% end %>
+    <% else %>
+      <%= button_to room_star_path(room), method: :post, class: "btn star", aria: { label: "Star #{room.name}" } do %>
+        <%= icon_tag "star-outline" %>
+      <% end %>
+    <% end %>
   <% end %>
 </div>

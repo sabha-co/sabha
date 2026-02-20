@@ -1,0 +1,3 @@
+<%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form", turbo: false }, class: "pad-block" do %>
+  <%= select_tag :involvement, options_for_select(involvement_options_for(room), membership.involvement), data: { action: "change->form#submit" }, class: "max-width" %>
+<% end %>

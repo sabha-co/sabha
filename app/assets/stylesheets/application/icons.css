@@ -131,6 +131,7 @@ img.icon {
 .icon--shield { --svg: url("../shield.svg"); }
 .icon--sliders { --svg: url("../sliders.svg"); }
 .icon--star { --svg: url("../star.svg"); }
+.icon--star-outline { --svg: url("../star-outline.svg"); }
 .icon--stats { --svg: url("../stats.svg"); }
 .icon--sun { --svg: url("../sun.svg"); }
 .icon--switch { --svg: url("../switch.svg"); }

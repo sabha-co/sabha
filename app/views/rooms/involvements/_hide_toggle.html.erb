@@ -1,0 +1,12 @@
+<%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form", turbo: false }, class: "flex align-center gap pad-block" do %>
+  <%= hidden_field_tag :involvement, is_hidden ? "mentions" : "invisible" %>
+  <span>Hide from sidebar</span>
+  <hr class="separator" aria-hidden="true">
+  <label class="switch">
+    <input type="checkbox"
+           class="switch__input"
+           <%= "checked" if is_hidden %>
+           data-action="change->form#submit">
+    <span class="switch__btn round"></span>
+  </label>
+<% end %>

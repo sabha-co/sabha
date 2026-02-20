@@ -9,12 +9,17 @@ module Rooms::InvolvementsHelper
     end
   end
 
+  def involvement_options_for(room)
+    levels = room.direct? ? DIRECT_INVOLVEMENT_ORDER : SHARED_INVOLVEMENT_ORDER
+    levels.map { |level| [ HUMANIZE_INVOLVEMENT[level], level ] }
+  end
+
   private
     HUMANIZE_INVOLVEMENT = {
-      "mentions" => "Room in All Rooms",
-      "everything" => "Room in My Rooms",
+      "mentions" => "Mentions only",
+      "everything" => "All notifications",
       "nothing" => "Notifications muted",
-      "invisible" => "Room hidden from sidebar"
+      "invisible" => "Room hidden"
     }
 
     SHARED_INVOLVEMENT_ORDER = %w[ mentions everything nothing ]

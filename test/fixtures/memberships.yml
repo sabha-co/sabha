@@ -30,6 +30,7 @@ david_watercooler:
   room: watercooler
   user: david
   involvement: everything
+  starred: true
 
 jason_watercooler:
   room: watercooler
@@ -44,6 +45,7 @@ david_hq:
   room: hq
   user: david
   involvement: everything
+  starred: true
 
 jason_hq:
   room: hq

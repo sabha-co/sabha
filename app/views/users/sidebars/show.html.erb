@@ -41,15 +41,16 @@
     <% end %>
 
     <div class="rooms position-relative flex flex-col gap">
-      <div data-controller="sidebar-rooms sorted-list" data-sidebar-rooms-show-starred-value="true"
+      <div id="favorites_section"
+           data-controller="sorted-list"
            data-sorted-list-attribute-value="updatedAt" data-sorted-list-order-value="desc"
-           data-action="rooms-list:involved@window->sidebar-rooms#toggleRooms rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
+           data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
            class="flex position-relative flex-col rooms-list">
         <div class="flex items-center gap-half mb-2">
-          <h1 class="text-base font-medium">My Rooms</h1>
+          <h1 class="text-base font-medium">Favorites</h1>
         </div>
 
-        <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :starred_rooms, memberships: @shared_memberships %>
+        <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :starred_rooms, memberships: @starred_memberships %>
       </div>
 
       <div class="flex items-center justify-between gap-half mb-2">
@@ -64,8 +65,8 @@
           <% end %>
         </div>
       </div>
-      <div data-controller="sidebar-rooms sorted-list" <%= all_rooms_sort_order %>
-           data-action="rooms-list:involved@window->sidebar-rooms#toggleRooms rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
+      <div data-controller="sorted-list" <%= all_rooms_sort_order %>
+           data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
            class="flex position-relative flex-col rooms-list">
         <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @shared_memberships %>
       </div>

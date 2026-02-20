@@ -7,7 +7,6 @@
 <% end %>
 
 <% membership = @membership %>
-<% is_muted = membership&.involved_in_nothing? %>
 <% can_administer = Current.user.can_administer?(room) %>
 
 <section class="panel" style="view-transition-name: edit-room-<%= room.id %>"
@@ -50,6 +49,6 @@
   </div>
 
   <div id="tab-settings" role="tabpanel" data-tabs-target="panel" hidden>
-    <%= render "rooms/layouts/settings_panel", room: room, membership: membership, is_muted: is_muted %>
+    <%= render "rooms/layouts/settings_panel", room: room, membership: membership %>
   </div>
 </section>

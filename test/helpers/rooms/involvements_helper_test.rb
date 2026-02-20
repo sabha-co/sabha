@@ -91,9 +91,9 @@ class Rooms::InvolvementsHelperTest < ActionView::TestCase
 
   # Humanize labels
   test "humanize involvement labels are correct" do
-    assert_equal "Room in All Rooms", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["mentions"]
-    assert_equal "Room in My Rooms", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["everything"]
+    assert_equal "Mentions only", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["mentions"]
+    assert_equal "All notifications", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["everything"]
     assert_equal "Notifications muted", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["nothing"]
-    assert_equal "Room hidden from sidebar", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["invisible"]
+    assert_equal "Room hidden", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["invisible"]
   end
 end

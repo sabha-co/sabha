@@ -292,14 +292,12 @@ bin/rails db:rollback         # Rollback last migration
 bin/rails console             # Rails console for debugging
 ```
 
-**SaaS Mode Migrations:**
+**IMPORTANT: After running `bin/rails db:migrate`, ALWAYS also migrate SaaS databases:**
 ```bash
-# Migrate tenanted (per-workspace SQLite) databases
-SAAS=true bin/rails db:migrate:primary
-
-# Migrate untenanted (PostgreSQL) database
-SAAS=true bin/rails db:migrate:untenanted
+SAAS=true bin/rails db:migrate:primary    # Tenanted (per-workspace SQLite) databases
+SAAS=true bin/rails db:migrate:untenanted # Untenanted (PostgreSQL) database — only if migration touches untenanted tables
 ```
+Do NOT forget this step. Tenanted migrations must be applied to both self-hosted and SaaS databases.
 
 Database: SQLite3 with FTS5 full-text search support
 

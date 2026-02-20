@@ -16,8 +16,8 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create" do
-    # Only creator is added; 2 broadcasts for creator's sidebar sections
-    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 2 do
+    # Only creator is added; 1 broadcast to the correct sidebar section
+    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 1 do
       post rooms_closeds_url, params: { room: { name: "My New Room" } }
     end
 

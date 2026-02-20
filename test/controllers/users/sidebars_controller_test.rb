@@ -11,6 +11,17 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     users(:david).rooms.opens.each do |room|
       assert_match /#{room.name}/, @response.body
     end
+
+    # Starred rooms render only under Favorites.
+    assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:watercooler), "starred_rooms_list_node")}", count: 1
+    assert_select "#shared_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:watercooler), "shared_rooms_list_node")}", count: 0
+
+    assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:hq), "starred_rooms_list_node")}", count: 1
+    assert_select "#shared_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:hq), "shared_rooms_list_node")}", count: 0
+
+    # Unstarred rooms render only under All Rooms.
+    assert_select "#shared_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:pets), "shared_rooms_list_node")}", count: 1
+    assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:pets), "starred_rooms_list_node")}", count: 0
   end
 
   test "unread directs" do
@@ -26,9 +37,9 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     rooms(:watercooler).messages.create! client_message_id: 999, body: "Hello", creator: users(:jason)
 
     get user_sidebar_url
-    # Non-direct rooms appear in both starred_rooms and shared_rooms, so multiply by 2
+    # Non-direct rooms appear in one section only (starred or shared)
     unread_count = users(:david).memberships.reject { |m| m.room.direct? || !m.unread? }.count
-    assert_select ".unread", count: unread_count * 2
+    assert_select ".unread", count: unread_count
   end
 
   test "direct room members are preloaded to avoid N+1 queries" do

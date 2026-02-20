@@ -1,8 +1,6 @@
 class RoomUpdateBroadcastJob < ApplicationJob
   queue_as :default
 
-  SIDEBAR_SECTIONS = [ :starred_rooms, :shared_rooms ].freeze
-
   rescue_from ActiveJob::DeserializationError do
   end
 
@@ -24,14 +22,13 @@ class RoomUpdateBroadcastJob < ApplicationJob
   private
 
   def broadcast_membership_update(membership, room)
-    SIDEBAR_SECTIONS.each do |list_name|
-      Turbo::StreamsChannel.broadcast_replace_to(
-        membership.user, :rooms,
-        target: [ room, helpers.dom_prefix(list_name, :list_node) ],
-        partial: "users/sidebars/rooms/shared",
-        locals: { membership: membership, list_name: list_name, room: room }
-      )
-    end
+    list_name = membership.sidebar_list_name
+    Turbo::StreamsChannel.broadcast_replace_to(
+      membership.user, :rooms,
+      target: [ room, helpers.dom_prefix(list_name, :list_node) ],
+      partial: "users/sidebars/rooms/shared",
+      locals: { membership: membership, list_name: list_name, room: room }
+    )
   end
 
   def helpers

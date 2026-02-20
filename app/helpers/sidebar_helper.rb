@@ -27,6 +27,6 @@ module SidebarHelper
   end
 
   def sidebar_membership_cache_key(prefix, membership)
-    [ prefix, membership.room, membership.involvement, membership.unread?, membership.has_unread_notifications? ]
+    [ prefix, membership.room, membership.involvement, membership.starred?, membership.involved_in_nothing?, membership.unread?, membership.has_unread_notifications? ]
   end
 end
