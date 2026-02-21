@@ -139,6 +139,28 @@ body.library-collapsed:has(#sidebar.open) #main-content {
   }
 }
 
+/* Thread panel: three-column grid when open (desktop only) */
+@media (min-width: 120ch) {
+  body:has(#thread-panel:not([hidden])) {
+    grid-template-areas:
+      "nav nav sidebar"
+      "main thread sidebar";
+    grid-template-columns: 1fr clamp(300px, 25vw, 420px) var(--sidebar-width);
+  }
+
+  body.sidebar:has(#thread-panel:not([hidden])) {
+    --sidebar-width: calc(20vw + var(--sidebar-tools-width));
+  }
+
+  body:has(#thread-panel:not([hidden])) #main-content {
+    margin-inline-start: 0;
+  }
+}
+
+#thread-panel {
+  grid-area: thread;
+}
+
 #footer {
   grid-area: footer;
 }

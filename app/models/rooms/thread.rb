@@ -2,6 +2,11 @@
 class Rooms::Thread < Room
   validates_presence_of :parent_message
 
+  def self.find_or_create_for(parent_message, users:)
+    parent_message.threads.active.find_by(type: "Rooms::Thread") ||
+      create_for({ parent_message_id: parent_message.id }, users: users)
+  end
+
   # Returns users in chronological order (by their first message in the thread)
   def participant_creators(limit: 5)
     ordered_creator_ids = messages.active

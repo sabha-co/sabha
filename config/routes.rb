@@ -137,7 +137,7 @@ Rails.application.routes.draw do
     resources :opens
     resources :closeds
     resources :directs
-    resources :threads, only: %i[ new edit update destroy ]
+    resources :threads, only: %i[ create show edit update destroy ]
 
     post ":bot_key/directs", to: "directs/by_bots#create", as: :bot_directs
   end

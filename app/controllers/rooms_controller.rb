@@ -6,7 +6,7 @@ class RoomsController < ApplicationController
   before_action :remember_last_room_visited, only: %i[ show ]
 
   def index
-    if (room = Current.user.rooms.last)
+    if (room = Current.user.rooms.without_threads.last)
       redirect_to room_url(room)
     else
       redirect_to root_url
@@ -14,6 +14,11 @@ class RoomsController < ApplicationController
   end
 
   def show
+    if @room.thread? && @room.parent_message
+      redirect_to room_at_message_path(@room.parent_message.room, @room.parent_message)
+      return
+    end
+
     @messages = find_messages
   end
 

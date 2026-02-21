@@ -1,0 +1,121 @@
+#thread-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--color-bg);
+  border-inline: 1px solid var(--color-border-darker);
+  transition: transform 300ms ease;
+}
+
+#thread-panel[hidden] {
+  display: none !important;
+}
+
+/* Desktop: slide from right */
+@media (min-width: 120ch) {
+  #thread-panel {
+    transform: translateX(100%);
+  }
+
+  body.thread-panel-open #thread-panel {
+    transform: translateX(0);
+  }
+}
+
+/* Mobile: full-screen overlay sliding up from bottom */
+@media (width < 120ch) {
+  #thread-panel:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    z-index: 10;
+    transform: translateY(100%);
+  }
+
+  body.thread-panel-open #thread-panel {
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.thread-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: var(--inline-space);
+  border-block-end: 1px solid var(--color-border);
+  block-size: var(--navbar-height);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.thread-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  & a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.thread-panel__close {
+  flex-shrink: 0;
+  font-size: 1.25em;
+  line-height: 1;
+  padding: 0.15em 0.4em;
+}
+
+/* Turbo frame — flex child to contain scrolling content */
+#thread_panel_frame {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+/* Override message-area display:contents so it scrolls independently in the panel */
+#thread-panel .message-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Messages container is the scroll container — IntersectionObserver root must scroll */
+#thread-panel .messages {
+  flex: 1;
+  overflow-y: auto;
+  padding-inline: var(--inline-space);
+}
+
+/* Return-to-latest button positioning within thread panel */
+#thread-panel .message-area__return-to-latest {
+  position: absolute;
+  inset-block-end: var(--block-space);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+}
+
+/* Composer */
+#thread-panel .composer--thread {
+  flex-shrink: 0;
+  padding: var(--block-space-half) var(--inline-space);
+  border-block-start: 1px solid var(--color-border);
+}

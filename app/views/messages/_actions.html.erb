@@ -1,11 +1,21 @@
 <%# Be sure to check/update messages/_template.html.erb when changing this file %>
 <%# locals: (message:, current_room: nil) -%>
 
+<% show_thread_actions = !message.room.direct? && !current_room&.thread? && !message.room.thread? %>
+<% existing_thread = message.threads.find { |t| t.active? } if show_thread_actions %>
+
 <div class="message__actions" data-controller="soft-keyboard">
-  <% unless message.room.direct? || current_room&.thread? || message.room.thread? %>
-    <%= link_to new_rooms_thread_path(parent_message_id: message.id), class: "btn message__action-btn message__options-btn message__reply-btn", data: { turbo_frame: "_top" } do %>
-      <%= icon_tag "reply" %>
-      <span class="for-screen-reader">Reply</span>
+  <% if show_thread_actions %>
+    <% if existing_thread %>
+      <%= link_to rooms_thread_path(existing_thread), class: "btn message__action-btn message__options-btn message__reply-btn", data: { turbo_frame: "thread_panel_frame" } do %>
+        <%= icon_tag "reply" %>
+        <span class="for-screen-reader">Reply</span>
+      <% end %>
+    <% else %>
+      <%= button_to rooms_threads_path, params: { parent_message_id: message.id }, class: "btn message__action-btn message__options-btn message__reply-btn", form: { data: { turbo_frame: "thread_panel_frame" } } do %>
+        <%= icon_tag "reply" %>
+        <span class="for-screen-reader">Reply</span>
+      <% end %>
     <% end %>
   <% end %>
 
@@ -47,9 +57,15 @@
             <span>Share</span>
           <% end %>
         <% else %>
-          <% unless message.room.direct? || current_room&.thread? || message.room.thread? %>
-            <%= link_to new_rooms_thread_path(parent_message_id: message.id), class: "btn message__action-btn full-width", data: { turbo_frame: "_top" } do %>
-              <span>Reply</span>
+          <% if show_thread_actions %>
+            <% if existing_thread %>
+              <%= link_to rooms_thread_path(existing_thread), class: "btn message__action-btn full-width", data: { turbo_frame: "thread_panel_frame" } do %>
+                <span>Reply</span>
+              <% end %>
+            <% else %>
+              <%= button_to rooms_threads_path, params: { parent_message_id: message.id }, class: "btn message__action-btn full-width", form: { data: { turbo_frame: "thread_panel_frame" } } do %>
+                <span>Reply</span>
+              <% end %>
             <% end %>
           <% end %>
 
@@ -58,7 +74,7 @@
               <span>Quote</span>
             <% end %>
           <% else %>
-            <%= link_to room_at_message_url(message.room, message, reply: true), class: "btn message__action-btn full-width",
+            <%= link_to message_permalink_url(message), class: "btn message__action-btn full-width",
                         target: "_top" do %>
               <span>Quote</span>
             <% end %>
@@ -77,7 +93,7 @@
           <span>Delete</span>
         <% end %>
 
-        <%= tag.button class: "btn message__action-btn full-width", data: { controller: "copy-to-clipboard", action: "copy-to-clipboard#copy", copy_to_clipboard_success_class: "btn--success", copy_to_clipboard_content_value: room_at_message_url(message.room, message) } do %>
+        <%= tag.button class: "btn message__action-btn full-width", data: { controller: "copy-to-clipboard", action: "copy-to-clipboard#copy", copy_to_clipboard_success_class: "btn--success", copy_to_clipboard_content_value: message_permalink_url(message) } do %>
           <span>Copy link</span>
         <% end %>
 

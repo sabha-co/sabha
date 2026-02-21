@@ -62,6 +62,12 @@ export default class extends Controller {
 
   messageTargetConnected(target) {
     this.#formatMessage(target)
+
+    // Fix reply outlet for messages rendered with the default composer_id
+    if (target.dataset.replyComposerOutlet) {
+      const composerId = this.element.id === "thread-message-area" ? "thread-composer" : "composer"
+      target.dataset.replyComposerOutlet = `#${composerId}`
+    }
   }
 
   bodyTargetConnected(target) {
@@ -125,7 +131,16 @@ export default class extends Controller {
   }
 
   async editMyLastMessage() {
-    const editorEmpty = document.querySelector("#composer trix-editor").matches(":empty")
+    const composerSelector = this.element.closest("#thread-message-area") ? "#thread-composer trix-editor" : "#composer trix-editor"
+    const editor = document.querySelector(composerSelector)
+
+    // Only act when our own composer or message area has focus — prevents
+    // the document-level keydown.up from triggering edits in both the main
+    // room and the thread panel simultaneously.
+    const focused = document.activeElement
+    if (!editor?.contains(focused) && !this.element.contains(focused)) return
+
+    const editorEmpty = editor && editor.matches(":empty")
 
     if (editorEmpty && this.#paginator.upToDate) {
       this.#myLastMessage?.querySelector(".message__edit-btn")?.click()

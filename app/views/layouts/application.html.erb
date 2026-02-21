@@ -80,6 +80,13 @@
       </footer>
     </main>
 
+    <aside id="thread-panel" hidden
+           data-controller="thread-panel"
+           data-action="keydown@document->thread-panel#closeOnEscape turbo:before-visit@document->thread-panel#closeOnNavigation">
+      <turbo-frame id="thread_panel_frame" data-thread-panel-target="frame">
+      </turbo-frame>
+    </aside>
+
     <template id="sidebar-slot" hidden>
       <%= yield :sidebar %>
     </template>

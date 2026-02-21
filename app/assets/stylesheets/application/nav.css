@@ -9,6 +9,7 @@
   position: fixed;
   row-gap: var(--block-space);
   z-index: 2;
+  transition: inset-inline-end 300ms ease;
 
   &:has(.btn--faux) {
     padding-inline: var(--inline-space);
@@ -16,6 +17,15 @@
     @media (min-width: 120ch) {
       margin-inline-start: 5vw;
 
+      .thread-panel-open & {
+        margin-inline-start: 0;
+      }
+    }
+  }
+
+  @media (min-width: 120ch) {
+    .thread-panel-open & {
+      inset-inline-end: calc(var(--sidebar-width) + clamp(300px, 25vw, 420px));
     }
   }
 

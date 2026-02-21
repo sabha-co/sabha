@@ -88,8 +88,15 @@ export default class extends Controller {
     this.#updateFileList()
   }
 
-  dropFiles({ detail: { files } }) {
-    for (const file of files) {
+  dropFiles(event) {
+    // When multiple composers are on the page (main + thread), the @window
+    // listener fires on all of them. Only handle drops originating from our
+    // own element or our associated message area.
+    const source = event.target
+    const messageArea = this.hasMessagesOutlet ? this.messagesOutlet.element : null
+    if (!this.element.contains(source) && !messageArea?.contains(source)) return
+
+    for (const file of event.detail.files) {
       this.#files.push(file)
     }
 

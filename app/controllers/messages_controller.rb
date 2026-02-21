@@ -73,9 +73,11 @@ class MessagesController < ApplicationController
       scope = @room.messages.with_thread_summary.with_creator.with_bookmark_status_for(Current.user)
 
       messages = if params[:before].present?
-        scope.page_before(@room.messages.find(params[:before]))
+        anchor = @room.messages.find_by(id: params[:before])
+        anchor ? scope.page_before(anchor) : Message.none
       elsif params[:after].present?
-        scope.page_after(@room.messages.find(params[:after]))
+        anchor = @room.messages.find_by(id: params[:after])
+        anchor ? scope.page_after(anchor) : Message.none
       else
         scope.last_page
       end

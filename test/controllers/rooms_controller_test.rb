@@ -37,6 +37,37 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "The original room can't be deleted", flash[:alert]
   end
 
+  test "show redirects thread rooms to parent room" do
+    parent_message = rooms(:pets).messages.create!(
+      body: "Thread parent",
+      creator: users(:jason),
+      client_message_id: "redirect_thread_1"
+    )
+    thread = Rooms::Thread.create_for(
+      { parent_message_id: parent_message.id, creator: users(:jason) },
+      users: [ users(:david), users(:jason) ]
+    )
+
+    get room_url(thread)
+    assert_redirected_to room_at_message_url(parent_message.room, parent_message)
+  end
+
+  test "index skips thread rooms" do
+    parent_message = rooms(:pets).messages.create!(
+      body: "Thread parent for index",
+      creator: users(:jason),
+      client_message_id: "index_thread_1"
+    )
+    Rooms::Thread.create_for(
+      { parent_message_id: parent_message.id, creator: users(:jason) },
+      users: [ users(:david) ]
+    )
+
+    get rooms_url
+    # Should redirect to a non-thread room, not the thread
+    assert_redirected_to room_url(users(:david).rooms.without_threads.last)
+  end
+
   test "destroy only allowed for creators or those who can administer" do
     sign_in :jz
 

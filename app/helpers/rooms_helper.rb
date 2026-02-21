@@ -70,9 +70,9 @@ module RoomsHelper
     end
   end
 
-  def composer_form_tag(room, &)
+  def composer_form_tag(room, form_id: "composer", message_area_id: "message-area", connection_monitor: true, &)
     form_with model: Message.new, url: room_messages_path(room),
-      id: "composer", class: "margin-block flex-item-grow contain", data: composer_data_options(room), &
+      id: form_id, class: "margin-block flex-item-grow contain", data: composer_data_options(room, message_area_id: message_area_id, connection_monitor: connection_monitor), &
   end
 
   def room_type_indicator(room)
@@ -94,24 +94,25 @@ module RoomsHelper
   end
 
   private
-    def composer_data_options(room)
+    def composer_data_options(room, message_area_id: "message-area", connection_monitor: true)
       {
         controller: "composer drop-target",
-        action: composer_data_actions,
-        composer_messages_outlet: "#message-area",
+        action: composer_data_actions(connection_monitor: connection_monitor),
+        composer_messages_outlet: "##{message_area_id}",
         composer_toolbar_class: "composer--rich-text", composer_room_id_value: room.id,
         composer_direct_upload_url_value: rails_direct_uploads_url
       }
     end
 
-    def composer_data_actions
+    def composer_data_actions(connection_monitor: true)
       drag_and_drop_actions = "drop-target:drop@window->composer#dropFiles"
 
-      trix_attachment_actions =
-        "trix-file-accept->composer#preventAttachment refresh-room:online@window->composer#online"
+      trix_attachment_actions = "trix-file-accept->composer#preventAttachment"
+      trix_attachment_actions += " refresh-room:online@window->composer#online" if connection_monitor
 
       remaining_actions =
-        "typing-notifications#stop paste->composer#pasteFiles turbo:submit-end->composer#submitEnd refresh-room:offline@window->composer#offline"
+        "typing-notifications#stop paste->composer#pasteFiles turbo:submit-end->composer#submitEnd"
+      remaining_actions += " refresh-room:offline@window->composer#offline" if connection_monitor
 
       [ drop_target_actions, drag_and_drop_actions, trix_attachment_actions, remaining_actions ].join(" ")
     end

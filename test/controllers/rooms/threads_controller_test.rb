@@ -9,10 +9,10 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # ===================
-  # New action tests
+  # Create action tests
   # ===================
 
-  test "new creates thread and redirects to it" do
+  test "create creates thread and redirects to show" do
     parent_message = @room.messages.create!(
       body: "Parent message for thread",
       creator: @jason,
@@ -20,15 +20,15 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     )
 
     assert_difference -> { Rooms::Thread.count }, 1 do
-      get new_rooms_thread_url(parent_message_id: parent_message.id)
+      post rooms_threads_url, params: { parent_message_id: parent_message.id }
     end
 
     thread = Rooms::Thread.last
-    assert_redirected_to room_url(thread)
     assert_equal parent_message.id, thread.parent_message_id
+    assert_redirected_to rooms_thread_url(thread)
   end
 
-  test "new redirects to existing thread if one exists" do
+  test "create redirects to existing thread if one exists" do
     parent_message = @room.messages.create!(
       body: "Parent with existing thread",
       creator: @jason,
@@ -36,22 +36,24 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     )
 
     existing_thread = Rooms::Thread.create!(parent_message: parent_message, creator: @jason)
+    existing_thread.memberships.grant_to(@david)
 
     assert_no_difference -> { Rooms::Thread.count } do
-      get new_rooms_thread_url(parent_message_id: parent_message.id)
+      post rooms_threads_url, params: { parent_message_id: parent_message.id }
     end
 
-    assert_redirected_to room_url(existing_thread)
+    assert_redirected_to rooms_thread_url(existing_thread)
   end
 
-  test "new grants membership to all parent room users" do
+  test "create grants membership to all parent room users" do
     parent_message = @room.messages.create!(
       body: "Parent message",
       creator: @jason,
       client_message_id: "thread_membership_1"
     )
 
-    get new_rooms_thread_url(parent_message_id: parent_message.id)
+    post rooms_threads_url, params: { parent_message_id: parent_message.id }
+    assert_response :redirect
 
     thread = Rooms::Thread.last
     @room.users.each do |user|
@@ -59,7 +61,7 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "new requires parent message to be reachable by user" do
+  test "create requires parent message to be reachable by user" do
     # Create a message in a room david is not a member of
     closed_room = Rooms::Closed.create!(name: "Secret Room", creator: @jason)
     closed_room.memberships.grant_to(@jason)
@@ -69,12 +71,12 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "unreachable_1"
     )
 
-    get new_rooms_thread_url(parent_message_id: parent_message.id)
+    post rooms_threads_url, params: { parent_message_id: parent_message.id }
     assert_redirected_to root_url
     assert_equal "Message not found or inaccessible", flash[:alert]
   end
 
-  test "new does not allow threads on direct messages" do
+  test "create does not allow threads on direct messages" do
     dm_room = rooms(:david_and_jason)
     dm_message = dm_room.messages.create!(
       body: "DM message",
@@ -82,19 +84,74 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "dm_thread_1"
     )
 
-    get new_rooms_thread_url(parent_message_id: dm_message.id)
+    post rooms_threads_url, params: { parent_message_id: dm_message.id }
     assert_redirected_to root_url
     assert_equal "Message not found or inaccessible", flash[:alert]
   end
 
-  test "new redirects with alert for non-existent message" do
-    get new_rooms_thread_url(parent_message_id: 999999)
+  test "create does not allow nested threads" do
+    parent_message = @room.messages.create!(
+      body: "Parent message",
+      creator: @jason,
+      client_message_id: "nested_thread_parent_1"
+    )
+    thread = Rooms::Thread.create_for(
+      { parent_message_id: parent_message.id, creator: @jason },
+      users: [ @david, @jason ]
+    )
+    thread_message = thread.messages.create!(
+      body: "Thread reply",
+      creator: @jason,
+      client_message_id: "nested_thread_msg_1"
+    )
+
+    assert_no_difference -> { Rooms::Thread.count } do
+      post rooms_threads_url, params: { parent_message_id: thread_message.id }
+    end
+
+    assert_redirected_to root_url
+    assert_equal "Message not found or inaccessible", flash[:alert]
+  end
+
+  test "create redirects with alert for non-existent message" do
+    post rooms_threads_url, params: { parent_message_id: 999999 }
     assert_redirected_to root_url
     assert_equal "Message not found or inaccessible", flash[:alert]
   end
 
   # Note: The unique constraint prevents creating a new thread when an inactive one exists
   # This is by design - threads are unique per parent message
+
+  # ===================
+  # Show action tests
+  # ===================
+
+  test "show renders thread panel content" do
+    parent_message = @room.messages.create!(
+      body: "Parent for show test",
+      creator: @jason,
+      client_message_id: "show_thread_1"
+    )
+
+    thread = Rooms::Thread.create_for({ parent_message_id: parent_message.id, creator: @jason }, users: [ @david, @jason ])
+
+    get rooms_thread_url(thread)
+    assert_response :success
+  end
+
+  test "show requires membership in thread" do
+    parent_message = @room.messages.create!(
+      body: "Parent for access test",
+      creator: @jason,
+      client_message_id: "access_thread_1"
+    )
+
+    thread = Rooms::Thread.create!(parent_message: parent_message, creator: @jason)
+    # Don't grant membership to david
+
+    get rooms_thread_url(thread)
+    assert_redirected_to root_url
+  end
 
   # ===================
   # Edit action tests
@@ -145,7 +202,7 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     thread.memberships.grant_to(@david)
 
     patch rooms_thread_url(thread), params: { room: { name: "New Thread Name" } }
-    assert_redirected_to room_url(thread)
+    assert_redirected_to room_at_message_url(parent_message.room, parent_message)
 
     thread.reload
     assert_equal "New Thread Name", thread.name

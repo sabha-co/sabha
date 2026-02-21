@@ -1,18 +1,20 @@
 class Rooms::ThreadsController < RoomsController
-  before_action :set_room, only: %i[ edit update destroy ]
-  before_action :set_membership, only: %i[ edit ]
-  before_action :set_parent_message, only: %i[ new ]
+  skip_before_action :remember_last_room_visited, only: %i[ show create ]
+  skip_before_action :ensure_has_real_name, only: %i[ show create ]
+  before_action :set_room, only: %i[ show edit update destroy ]
+  before_action :set_membership, only: %i[ show edit ]
+  before_action :set_parent_message, only: %i[ create ]
 
-  def new
-    # Check if thread already exists for this message (there can only be one)
-    existing_thread = @parent_message.threads.active.find_by(type: "Rooms::Thread")
+  def create
+    @room = Rooms::Thread.find_or_create_for(@parent_message, users: parent_room.users)
+    @room.involve_user(Current.user, unread: false)
 
-    if existing_thread
-      redirect_to room_url(existing_thread)
-    else
-      @room = Rooms::Thread.create_for({ parent_message_id: @parent_message.id }, users: parent_room.users)
-      redirect_to room_url(@room)
-    end
+    redirect_to rooms_thread_path(@room)
+  end
+
+  def show
+    @messages = find_messages
+    render layout: false
   end
 
   def edit
@@ -22,7 +24,7 @@ class Rooms::ThreadsController < RoomsController
   def update
     @room.update! room_params
 
-    redirect_to room_url(@room)
+    redirect_to room_at_message_path(@room.parent_message.room, @room.parent_message)
   end
 
   def destroy
@@ -32,7 +34,7 @@ class Rooms::ThreadsController < RoomsController
 
   private
   def set_parent_message
-    if message = Current.user.reachable_messages.joins(:room).where.not(room: { type: "Rooms::Direct" }).find_by(id: params[:parent_message_id])
+    if message = Current.user.reachable_messages.joins(:room).where.not(room: { type: [ "Rooms::Direct", "Rooms::Thread" ] }).find_by(id: params[:parent_message_id])
       @parent_message = message
     else
       redirect_to root_url, alert: "Message not found or inaccessible"

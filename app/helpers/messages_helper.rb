@@ -7,10 +7,32 @@ module MessagesHelper
     room ? room_message_path(room, message) : message_path(message)
   end
 
-  def message_area_tag(room, &)
-    tag.div id: "message-area", class: "message-area", contents: true, data: {
-      controller: "messages presence drop-target",
-      action: [ messages_actions, drop_target_actions, presence_actions ].join(" "),
+  def message_permalink_path(message)
+    room = message.room
+    if room.thread? && (parent = room.parent_message)
+      room_at_message_path(parent.room, parent)
+    else
+      room_at_message_path(room, message)
+    end
+  end
+
+  def message_permalink_url(message)
+    room = message.room
+    if room.thread? && (parent = room.parent_message)
+      room_at_message_url(parent.room, parent)
+    else
+      room_at_message_url(room, message)
+    end
+  end
+
+  def message_area_tag(room, id: "message-area", presence: true, &)
+    controllers = [ "messages", ("presence" if presence), "drop-target" ].compact.join(" ")
+    actions = [ messages_actions, drop_target_actions ]
+    actions << presence_actions if presence
+
+    data = {
+      controller: controllers,
+      action: actions.join(" "),
       messages_first_of_day_class: "message--first-of-day",
       messages_first_unread_class: "message__new-separator",
       messages_formatted_class: "message--formatted",
@@ -21,21 +43,33 @@ module MessagesHelper
       messages_loading_up_class: "message--loading-up",
       messages_loading_down_class: "message--loading-down",
       messages_page_url_value: room_messages_url(room)
-    }, &
+    }
+
+    data[:presence_room_id_value] = room.id if presence
+
+    tag.div id: id, class: "message-area", contents: true, data: data, &
   end
 
-  def messages_tag(room, &)
-    tag.div id: dom_id(room, :messages), class: "messages", data: {
-      controller: "maintain-scroll refresh-room",
-      action: [ maintain_scroll_actions, refresh_room_actions ].join(" "),
-      messages_target: "messages",
-      refresh_room_loaded_at_value: room.updated_at.to_fs(:epoch),
-      refresh_room_url_value: room_refresh_url(room),
-      refresh_room_first_unread_class: "message__new-separator"
-    }, &
+  def messages_tag(room, refresh: true, &)
+    controllers = refresh ? "maintain-scroll refresh-room" : "maintain-scroll"
+    actions = refresh ? [ maintain_scroll_actions, refresh_room_actions ].join(" ") : maintain_scroll_actions
+
+    data = {
+      controller: controllers,
+      action: actions,
+      messages_target: "messages"
+    }
+
+    if refresh
+      data[:refresh_room_loaded_at_value] = room.updated_at.to_fs(:epoch)
+      data[:refresh_room_url_value] = room_refresh_url(room)
+      data[:refresh_room_first_unread_class] = "message__new-separator"
+    end
+
+    tag.div id: dom_id(room, :messages), class: "messages", data: data, &
   end
 
-  def message_tag(message, is_unread: false, &)
+  def message_tag(message, is_unread: false, composer_id: "composer", &)
     message_timestamp_milliseconds = message.created_at.to_fs(:epoch)
 
     data = {
@@ -53,7 +87,7 @@ module MessagesHelper
 
     unless message.event?
       data[:controller] = "reply"
-      data[:reply_composer_outlet] = "#composer"
+      data[:reply_composer_outlet] = "##{composer_id}"
     end
 
     tag.div id: dom_id(message),
@@ -86,7 +120,7 @@ module MessagesHelper
     ""
   end
 
-  def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false)
+  def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false, composer_id: "composer")
     [
       message,
       room_id,
@@ -95,7 +129,8 @@ module MessagesHelper
       is_first_unread_message,
       is_unread,
       is_parent,
-      show_room_name
+      show_room_name,
+      composer_id
     ]
   end
 

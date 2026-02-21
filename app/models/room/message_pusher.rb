@@ -25,7 +25,7 @@ class Room::MessagePusher
       {
         title: message.creator.name,
         body: message.plain_text_body,
-        path: Rails.application.routes.url_helpers.room_path(room)
+        path: push_path
       }
     end
 
@@ -33,8 +33,18 @@ class Room::MessagePusher
       {
         title: room.display_name,
         body: "#{message.creator.name}: #{message.plain_text_body}",
-        path: Rails.application.routes.url_helpers.room_path(room)
+        path: push_path
       }
+    end
+
+    def push_path
+      helpers = Rails.application.routes.url_helpers
+
+      if room.thread? && room.parent_message
+        helpers.room_at_message_path(room.parent_message.room, room.parent_message)
+      else
+        helpers.room_path(room)
+      end
     end
 
     def push_to_users_involved_in_everything(payload)

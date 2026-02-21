@@ -55,6 +55,7 @@ class Room < ApplicationRecord
   scope :closeds,         -> { where(type: "Rooms::Closed") }
   scope :directs,         -> { where(type: "Rooms::Direct") }
   scope :without_directs, -> { where.not(type: "Rooms::Direct") }
+  scope :without_threads, -> { where.not(type: "Rooms::Thread") }
 
   scope :ordered, -> { order(:sortable_name) }
 

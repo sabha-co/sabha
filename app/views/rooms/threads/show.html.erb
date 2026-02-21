@@ -1,0 +1,72 @@
+<%= turbo_frame_tag "thread_panel_frame" do %>
+  <% parent_message = @room.parent_message %>
+  <div class="thread-panel__header">
+    <h2 class="thread-panel__title">
+      <%= icon_tag "thread" %>
+      <%= link_to room_at_message_path(parent_message.room, parent_message), data: { turbo_frame: "_top" } do %>
+        <%= room_type_indicator(parent_message.room) %><%= room_display_name(parent_message.room) %>
+      <% end %>
+    </h2>
+    <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close thread">&times;</button>
+  </div>
+
+  <%= message_area_tag(@room, id: "thread-message-area") do %>
+    <%= render "messages/template" %>
+
+    <%= messages_tag(@room, refresh: false) do %>
+      <%= render "messages/message_list", messages: @messages, room: @room, first_unread_message: @first_unread_message, composer_id: "thread-composer" %>
+    <% end %>
+
+    <%= turbo_stream_from @membership if @membership %>
+    <%= turbo_stream_from @room, :messages %>
+    <%= turbo_stream_from Current.user, @room, :messages %>
+    <%= button_to_jump_to_newest_message %>
+  <% end %>
+
+  <% unless Current.user.blocked_in?(@room) %>
+    <div class="composer composer--thread flex align-end gap position-relative">
+      <%= composer_form_tag(@room, form_id: "thread-composer", message_area_id: "thread-message-area", connection_monitor: false) do |form| %>
+        <fieldset data-composer-target="fields" contents>
+          <div class="flex flex-column">
+            <div class="composer__filelist flex flex--align-center gap flex-wrap" data-composer-target="fileList"></div>
+
+            <div class="flex composer__input input input--actor fill-white min-width" style="--input-border-radius: 1.3rem">
+              <div class="flex align-end gap full-width">
+                <%= icon_tag "messages-outlined", class: "composer__input-hint", style: "view-transition-name: none;" %>
+
+                <div class="flex flex-column flex-item-grow min-width gap">
+                  <%= form.rich_text_area :body,
+                        id: "thread_message_body",
+                        rows: 1,
+                        class: "input",
+                        style: "order: -1",
+                        aria: { multiline: "true", label: "Reply in thread" },
+                        data: {
+                          controller: "rich-autocomplete",
+                          action: rich_text_data_actions,
+                          rich_autocomplete_url_value: autocompletable_users_path(room_id: @room.id),
+                          permitted_attachment_types: "application/vnd.actiontext.opengraph-embed",
+                          composer_target: "text" } %>
+                </div>
+
+                <label class="btn btn--borderless txt-small flex-item-no-shrink composer__attachment-btn input--file">
+                  <%= icon_tag "attachment" %>
+                  <input type="file" data-action="composer#filePicked" multiple />
+                  <span class="for-screen-reader">Attach a file</span>
+                </label>
+
+                <%= form.button name: "send", type: "submit", data: { action: "composer#submit" },
+                      class: "btn btn--reversed flex-item-no-shrink txt-small" do %>
+                  <%= icon_tag "arrow-up" %>
+                  <span class="for-screen-reader">Send Reply</span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <%= form.hidden_field :client_message_id, data: { composer_target: "clientid" } %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

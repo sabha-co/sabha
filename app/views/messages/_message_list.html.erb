@@ -1,0 +1,16 @@
+<%# locals: (messages:, room:, first_unread_message: nil, composer_id: "composer") %>
+<% seen_first_unread = false %>
+<% messages.each do |message| %>
+  <% seen_first_unread = true if message == first_unread_message %>
+  <% if message == room.parent_message %>
+    <% cache message_cache_key(message, room_id: room.id, is_parent: true) do %>
+      <%= render "messages/parent_message", message: message, thread: room %>
+    <% end %>
+  <% else %>
+    <% is_unread = first_unread_message.present? && seen_first_unread %>
+    <% is_first_unread = message == first_unread_message %>
+    <%= render partial: "messages/message",
+          locals: { message:, current_room: room, first_unread_message:, is_unread:, composer_id: },
+          cached: message_cache_key(message, room_id: room.id, is_first_unread_message: is_first_unread, is_unread:, composer_id:) %>
+  <% end %>
+<% end %>
