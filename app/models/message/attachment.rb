@@ -4,10 +4,23 @@ module Message::Attachment
   THUMBNAIL_MAX_WIDTH = 1200
   THUMBNAIL_MAX_HEIGHT = 800
 
+  ALLOWED_CONTENT_TYPES = %w[
+    image/jpeg image/png image/gif image/webp
+    video/mp4 video/quicktime video/webm
+    audio/mpeg audio/mp4 audio/ogg audio/webm
+    application/pdf
+    text/plain text/csv
+    application/zip
+  ].freeze
+
+  MAX_ATTACHMENT_SIZE = 50.megabytes
+
   included do
     has_one_attached :attachment do |attachable|
       attachable.variant :thumb, resize_to_limit: [ THUMBNAIL_MAX_WIDTH, THUMBNAIL_MAX_HEIGHT ]
     end
+
+    validate :acceptable_attachment, if: :attachment?
   end
 
   module ClassMethods
@@ -30,6 +43,16 @@ module Message::Attachment
   end
 
   private
+    def acceptable_attachment
+      unless ALLOWED_CONTENT_TYPES.include?(attachment.content_type)
+        errors.add(:attachment, "type is not allowed")
+      end
+
+      if attachment.blob.byte_size > MAX_ATTACHMENT_SIZE
+        errors.add(:attachment, "is too large (max #{MAX_ATTACHMENT_SIZE / 1.megabyte}MB)")
+      end
+    end
+
     def ensure_attachment_analyzed
       attachment&.analyze
     end

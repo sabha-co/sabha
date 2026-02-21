@@ -264,6 +264,49 @@ class MessageTest < ActiveSupport::TestCase
     assert_not Bookmark.exists?(bookmark_id), "Inactive bookmark should be destroyed when message is destroyed"
   end
 
+  test "attachment with allowed content type is valid" do
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("hello"), filename: "note.txt", content_type: "text/plain"
+    )
+
+    message = rooms(:pets).messages.new(
+      creator: users(:jason), body: "See attached", client_message_id: "allowed-type"
+    )
+    message.attachment.attach(blob)
+
+    assert message.valid?
+  end
+
+  test "attachment with disallowed content type is invalid" do
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("MZ..."), filename: "malware.exe", content_type: "application/x-msdownload"
+    )
+
+    message = rooms(:pets).messages.new(
+      creator: users(:jason), body: "See attached", client_message_id: "bad-type"
+    )
+    message.attachment.attach(blob)
+
+    assert_not message.valid?
+    assert_includes message.errors[:attachment], "type is not allowed"
+  end
+
+  test "attachment exceeding max size is invalid" do
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("x" * 1024), filename: "big.txt", content_type: "text/plain"
+    )
+    # Fake the byte_size to exceed the limit without creating a huge file
+    blob.update_column(:byte_size, 51.megabytes)
+
+    message = rooms(:pets).messages.new(
+      creator: users(:jason), body: "See attached", client_message_id: "too-big"
+    )
+    message.attachment.attach(blob)
+
+    assert_not message.valid?
+    assert_includes message.errors[:attachment], "is too large (max 50MB)"
+  end
+
   private
     def create_new_message_in(room)
       room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "123")

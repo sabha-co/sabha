@@ -149,6 +149,22 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "creating a message with a direct-uploaded attachment via signed_id" do
+    blob = ActiveStorage::Blob.create_and_upload!(
+      io: StringIO.new("hello world"),
+      filename: "test.txt",
+      content_type: "text/plain"
+    )
+
+    assert_difference -> { Message.count }, 1 do
+      post room_messages_url(@room, format: :turbo_stream),
+        params: { message: { attachment: blob.signed_id, client_message_id: "test-123" } }
+    end
+
+    assert Message.last.attachment.attached?
+    assert_equal "test.txt", Message.last.attachment.filename.to_s
+  end
+
   test "mentioning a bot triggers a 'mentions' and an 'everything' webhook" do
     WebMock.stub_request(:post, webhooks(:mentions).url).to_return(status: 200)
 

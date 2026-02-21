@@ -99,7 +99,8 @@ module RoomsHelper
         controller: "composer drop-target",
         action: composer_data_actions,
         composer_messages_outlet: "#message-area",
-        composer_toolbar_class: "composer--rich-text", composer_room_id_value: room.id
+        composer_toolbar_class: "composer--rich-text", composer_room_id_value: room.id,
+        composer_direct_upload_url_value: rails_direct_uploads_url
       }
     end
 
