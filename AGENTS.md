@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - Rails app code lives in `app/` (models, controllers, views, channels, jobs, mailers).
-- Frontend assets: `app/frontend/` (Vite/Tailwind entrypoints) and `app/assets/`.
+- Frontend assets: `app/frontend/` (Tailwind CSS source, Stimulus controllers) and `app/assets/`.
 - Configuration in `config/`, database migrations in `db/migrate/`.
 - Tests: `test/` (self-hosted) and `saas/test/` (SaaS multi-tenant).
 - Multi-tenant SaaS engine code lives under `saas/` (models, controllers, initializers, views).

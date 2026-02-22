@@ -45,12 +45,12 @@ Start the app in development:
 bin/dev
 ```
 
-This starts both the Rails server and Vite dev server using Foreman (via Procfile.dev).
+This starts the Rails server and Tailwind CSS watcher using Foreman (via Procfile.dev).
 
 The `bin/setup` script installs Ruby gems and Node packages (via `pnpm install`), prepares the database, and configures the application.
 If you skip `bin/setup`, install frontend dependencies manually with `pnpm install`.
 
-All CSS is managed through Vite. Tailwind processes styles from `app/frontend/entrypoints/application.css`, which is automatically rebuilt during development.
+Tailwind CSS is compiled via `@tailwindcss/cli` from `app/frontend/entrypoints/application.css`, automatically rebuilt during development.
 
 ## Running in production
 

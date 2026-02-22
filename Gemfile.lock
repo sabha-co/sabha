@@ -156,7 +156,6 @@ GEM
       reline (>= 0.3.8)
     dotenv (3.2.0)
     drb (2.2.3)
-    dry-cli (1.4.1)
     erb (6.0.1)
     erubi (1.13.1)
     et-orbi (1.4.0)
@@ -251,7 +250,6 @@ GEM
     msgpack (1.8.0)
     multi_xml (0.8.1)
       bigdecimal (>= 3.1, < 5)
-    mutex_m (0.3.0)
     net-http (0.9.1)
       uri (>= 0.11.1)
     net-http-persistent (4.0.8)
@@ -301,8 +299,6 @@ GEM
     rack (3.2.5)
     rack-mini-profiler (4.0.1)
       rack (>= 1.2.0)
-    rack-proxy (0.7.7)
-      rack
     rack-session (2.1.1)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
@@ -419,15 +415,6 @@ GEM
     unicode-emoji (4.2.0)
     uri (1.1.1)
     useragent (0.16.11)
-    vite_rails (3.0.20)
-      railties (>= 5.1, < 9)
-      vite_ruby (~> 3.0, >= 3.2.2)
-    vite_ruby (3.9.2)
-      dry-cli (>= 0.7, < 2)
-      logger (~> 1.6)
-      mutex_m
-      rack-proxy (~> 0.6, >= 0.6.1)
-      zeitwerk (~> 2.2)
     web-push (3.1.0)
       jwt (~> 3.0)
       openssl (>= 3.0)
@@ -494,7 +481,6 @@ DEPENDENCIES
   stimulus-rails
   thruster
   turbo-rails
-  vite_rails (~> 3.0)
   web-push
   webmock
 

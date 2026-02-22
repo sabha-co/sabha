@@ -22,7 +22,7 @@ ENV RAILS_ENV="production" \
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages need to build gems and Node.js for Vite
+# Install packages needed to build gems and Node.js for Tailwind CSS
 ARG PNPM_VERSION=10.28.0
 RUN apt-get update -qq && \
   apt-get install --no-install-recommends -y \
@@ -57,8 +57,8 @@ COPY . .
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Build assets with Vite
-RUN pnpm build
+# Build Tailwind CSS
+RUN pnpm run build:css
 
 # Precompile assets
 RUN mkdir -p /rails/storage/logs && \

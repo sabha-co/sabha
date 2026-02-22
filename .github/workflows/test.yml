@@ -42,16 +42,13 @@ jobs:
       - name: Install Node dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Vite build
-        uses: actions/cache@v5
-        with:
-          path: public/vite
-          key: vite-${{ runner.os }}-${{ hashFiles('app/frontend/**', 'package.json', 'pnpm-lock.yaml', 'vite.config.mts') }}
-
       - name: Set up database
         run: bin/rails db:prepare
         env:
           RAILS_ENV: test
+
+      - name: Build Tailwind CSS
+        run: pnpm run build:css
 
       - name: Build assets
         run: bin/rails assets:precompile
@@ -118,12 +115,6 @@ jobs:
       - name: Install Node dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Vite build
-        uses: actions/cache@v5
-        with:
-          path: public/vite
-          key: vite-saas-${{ runner.os }}-${{ hashFiles('app/frontend/**', 'package.json', 'pnpm-lock.yaml', 'vite.config.mts') }}
-
       - name: Set up database
         run: bin/rails db:prepare
         env:
@@ -131,6 +122,9 @@ jobs:
           SAAS: "true"
           BUNDLE_GEMFILE: Gemfile.saas
           UNTENANTED_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test
+
+      - name: Build Tailwind CSS
+        run: pnpm run build:css
 
       - name: Build assets
         run: bin/rails assets:precompile

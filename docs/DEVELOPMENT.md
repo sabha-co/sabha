@@ -55,7 +55,7 @@ Opens at `http://localhost:3000`
 | Process | Purpose |
 |---------|---------|
 | `web` | Rails server (Puma) |
-| `vite` | Vite dev server for Tailwind CSS |
+| `css` | Tailwind CSS watcher (`@tailwindcss/cli`) |
 
 ### With AnyCable (optional)
 
@@ -185,7 +185,7 @@ Lefthook runs rubocop automatically on commit.
 | Real-time | ActionCable / AnyCable |
 | Jobs | Solid Queue (SQLite-backed) |
 | Frontend | Hotwire (Turbo + Stimulus) |
-| CSS | Tailwind v4 (via Vite) |
+| CSS | Tailwind v4 (via `@tailwindcss/cli`) |
 | JS loading | Importmap |
 
 ### Directory Structure
@@ -194,7 +194,7 @@ Lefthook runs rubocop automatically on commit.
 app/
 ├── channels/        # ActionCable channels
 ├── controllers/     # Rails controllers
-├── frontend/        # Vite entrypoints (CSS only)
+├── frontend/        # Tailwind CSS source + Stimulus controllers
 │   └── controllers/ # Stimulus controllers
 ├── jobs/            # Solid Queue jobs
 ├── models/          # ActiveRecord models
@@ -243,7 +243,7 @@ message.deactivate!    # Sets active: false
 | **Cable Adapter** | `redis` | `any_cable` | `redis` |
 | **Jobs** | Inline (sync) | Inline (sync) | Inline (sync) |
 | **Cache** | `:memory_store` | `:memory_store` | `:memory_store` |
-| **Processes** | vite, web | vite, web, anycable | vite, web |
+| **Processes** | css, web | css, web, anycable | css, web |
 | **Gemfile** | `Gemfile` | `Gemfile` | `Gemfile.saas` |
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for production modes.
@@ -356,7 +356,7 @@ The code shows what changed; the message explains why.
 | **Redis** | External | External | External | Procfile starts it | External | Procfile starts it |
 | **Redis For** | Cable | - | Cable | Cable + Cache | Cache | Cache |
 | | | | | | | |
-| **Processes** | vite, web | vite, web, anycable | vite, web | web, redis, workers | web + anycable | web, redis, workers, anycable, caddy |
+| **Processes** | css, web | css, web, anycable | css, web | web, redis, workers | web + anycable | web, redis, workers, anycable, caddy |
 | **TLS/Proxy** | None | None | None | Thruster | Thruster + Traefik | Caddy |
 
 ---

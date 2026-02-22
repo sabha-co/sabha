@@ -28,9 +28,9 @@ class Stylesheets
       asset_path = asset_path.to_s
       # Skip application stylesheets directory (handled by Stylesheets.from)
       next if asset_path == Rails.root.join("app/assets/stylesheets").to_s
-      # Skip Vite-managed frontend directory to avoid pulling in entrypoints/application.css
+      # Skip frontend directory (Importmap JS, Tailwind source CSS)
       next if asset_path == Rails.root.join("app/frontend").to_s
-      # Skip legacy Tailwind builds directory
+      # Skip Tailwind CLI builds directory (loaded explicitly via stylesheet_link_tag)
       next if asset_path == Rails.root.join("app/assets/builds").to_s
 
       Dir.glob(File.join(asset_path, "**", "*.css")).sort.each do |file|

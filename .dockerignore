@@ -50,7 +50,6 @@ yarn-error.log*
 # Build artifacts
 app/assets/builds/
 public/assets/
-public/vite*
 public/packs*
 
 # Docker

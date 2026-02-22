@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Sabha is a Ruby on Rails chat application combining:
 - **Traditional Rails views + Hotwire/Turbo** for the core chat interface (real-time messaging)
 - **ActionCable (WebSockets)** for real-time updates across all chat features
-- **Vite** for modern frontend asset processing (Tailwind CSS v4)
+- **Tailwind CSS v4** via `@tailwindcss/cli` (no Vite, no bundler)
 - **Importmap** for JavaScript module loading (Stimulus controllers)
 
 **Deployment Modes:**
@@ -184,7 +184,7 @@ bin/dev    # Start dev server (jobs run in web process)
 bin/boot   # Full stack: web + redis + workers (production-like)
 ```
 
-Vite runs automatically via vite_rails with autoBuild: true.
+Tailwind CSS is compiled by `@tailwindcss/cli` via pnpm (runs as `css` process in Procfile.dev).
 
 ### SaaS Mode (Multi-Tenant)
 
@@ -255,8 +255,11 @@ See `docs/multi-tenant/` for detailed SaaS architecture documentation (internal 
 
 ### Tailwind CSS
 ```bash
-# Tailwind is processed by Vite from app/frontend/entrypoints/application.css
-# Automatically rebuilt during development - no separate command needed
+# Tailwind CSS is compiled by @tailwindcss/cli
+# Source: app/frontend/entrypoints/application.css
+# Output: app/assets/builds/tailwind.css
+# Automatically rebuilt during development via Procfile.dev watch process
+pnpm run build:css   # One-off production build
 ```
 
 ### Testing
@@ -316,16 +319,15 @@ set -a && source .env.multitenant && set +a && kamal deploy -d multitenant
 ## Frontend Architecture
 
 ### Build Tools
-- **Vite** - Used ONLY for Tailwind CSS v4 (requires build step). Not used for JavaScript bundling.
+- **Tailwind CSS v4** - Compiled via `@tailwindcss/cli` (pnpm). No Vite, no bundler.
 - **Importmap** - Handles all JavaScript/Stimulus controllers. No bundling, direct ESM imports.
 
 ### Directory Structure
 ```
 app/frontend/
 ├── entrypoints/
-│   ├── application.js      # Just imports CSS, no app logic
-│   └── application.css     # Tailwind v4 styles + theme
-└── controllers/            # Stimulus controllers (loaded via importmap, not Vite)
+│   └── application.css     # Tailwind v4 source (input for @tailwindcss/cli)
+└── controllers/            # Stimulus controllers (loaded via importmap)
 ```
 
 ### Rails Views

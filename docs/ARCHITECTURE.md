@@ -53,7 +53,7 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
 - **Rails 8.2** with Hotwire (Turbo + Stimulus) for server-rendered HTML with real-time updates
 - **SQLite** in production, optimized for single-server deployments
 - **AnyCable** for WebSocket scaling (HTTP RPC mode, no gRPC)
-- **Vite** solely for Tailwind CSS v4 compilation; **Importmap** for all JavaScript (zero JS bundling)
+- **Tailwind CSS v4** compiled via `@tailwindcss/cli`; **Importmap** for all JavaScript (zero JS bundling)
 - **Solid Queue** (SQLite-backed) for background jobs
 - **Propshaft** as the asset pipeline
 
@@ -334,7 +334,7 @@ Turbo Stream broadcasts are emitted from models, jobs, and selected controller a
 
 ```
                  ┌──────────────┐
-                 │   Vite       │──── Tailwind CSS v4 ──▶ application.css
+                 │ Tailwind CLI │──── @tailwindcss/cli ──▶ app/assets/builds/tailwind.css
                  │ (CSS only)   │
                  └──────────────┘
 
@@ -349,15 +349,14 @@ Turbo Stream broadcasts are emitted from models, jobs, and selected controller a
                  └──────────────┘
 ```
 
-Vite is used exclusively for Tailwind CSS v4 (which requires a build step). All JavaScript loads as native ES modules via Importmap -- no bundler, no transpilation.
+Tailwind CSS v4 is compiled via `@tailwindcss/cli` (pnpm). All JavaScript loads as native ES modules via Importmap -- no bundler, no transpilation.
 
 ### Directory Layout
 
 ```
 app/frontend/
 ├── entrypoints/
-│   ├── application.js        # Imports CSS only (Vite entry)
-│   └── application.css       # Tailwind v4 + custom OKLCH color theme
+│   └── application.css       # Tailwind v4 source (input for @tailwindcss/cli)
 ├── application.js            # Main JS entry (Importmap): Turbo, Trix, Stimulus
 ├── initializers/             # Setup modules (autocomplete, current user, rich text)
 ├── controllers/              # 50+ Stimulus controllers
@@ -631,7 +630,7 @@ bin/boot                   # Minimal process manager (reads Procfile)
 ### Docker Image
 
 Multi-stage build:
-1. **Build stage**: Ruby + Node.js + pnpm → install gems, compile Tailwind (Vite), precompile assets (Propshaft)
+1. **Build stage**: Ruby + Node.js + pnpm → install gems, compile Tailwind (`@tailwindcss/cli`), precompile assets (Propshaft)
 2. **Runtime stage**: Minimal image with `libsqlite3`, `libvips`, `jemalloc`, `ffmpeg`, `redis-server` -- runs as non-root `sabha` user with YJIT enabled
 
 ---
@@ -650,7 +649,7 @@ Multi-stage build:
 | `turbo-rails` | Turbo Drive, Frames, Streams |
 | `stimulus-rails` | Stimulus controllers |
 | `importmap-rails` | ES module loading (no bundler) |
-| `vite_rails` | Tailwind CSS v4 compilation |
+| `@tailwindcss/cli` (npm) | Tailwind CSS v4 compilation |
 | `propshaft` | Asset pipeline |
 | `bcrypt` | Password hashing |
 | `resend` | Transactional email |
@@ -696,7 +695,7 @@ SaaS mode prepends `/{workspace_id}/` to all workspace-scoped routes (handled tr
 
 1. **SQLite as the production database.** Tuned with `default_transaction_mode: immediate` plus adapter/runtime SQLite optimizations. FTS5 provides full-text search without an external search service via the `message_search_index` virtual table.
 
-2. **Importmap for JS, Vite only for CSS.** Avoids bundler complexity. Browsers load Stimulus controllers directly as ES modules. Vite exists solely because Tailwind CSS v4 requires a build step.
+2. **Importmap for JS, Tailwind CLI for CSS.** Avoids bundler complexity. Browsers load Stimulus controllers directly as ES modules. Tailwind CSS v4 is compiled via `@tailwindcss/cli` -- no Vite, no bundler.
 
 3. **AnyCable-Go for WebSockets.** Uses HTTP RPC mode (no gRPC dependency). Scales WebSocket connections outside the Ruby process while keeping authentication and channel logic in Rails.
 

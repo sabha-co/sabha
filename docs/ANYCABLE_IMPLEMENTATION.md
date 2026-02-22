@@ -177,7 +177,7 @@ AnyCable is enabled by default. Set `ANYCABLE_ENABLED=false` to use standard Act
 
 **Procfile.dev:**
 ```
-vite: bin/vite dev
+css: pnpm exec tailwindcss -i app/frontend/entrypoints/application.css -o app/assets/builds/tailwind.css --watch
 web: PORT=3000 bin/rails s
 anycable: anycable-go --port=8080 --rpc_host=http://localhost:3000/_anycable --broadcast_adapter=http --secret=development-secret-change-in-production
 ```
@@ -192,25 +192,18 @@ The JavaScript client needs to connect to AnyCable instead of Rails. Check if th
 <%= action_cable_meta_tag %>
 ```
 
-**app/frontend/entrypoints/application.js** (if WebSocket URL is configured):
-```javascript
-// If you have custom ActionCable configuration, update the URL:
-// In development, this should point to AnyCable-Go at ws://localhost:8080/cable
-// The action_cable_meta_tag helper handles this automatically
-```
-
 ### Step 7: Run Development Server
 
 ```bash
 # Terminal 1: Start all services with foreman/overmind
-bin/rails dev
+bin/dev
 
 # Or run each process manually:
 # Terminal 1: Rails
 bin/rails s
 
-# Terminal 2: Vite
-bin/vite dev
+# Terminal 2: Tailwind CSS watcher
+pnpm exec tailwindcss -i app/frontend/entrypoints/application.css -o app/assets/builds/tailwind.css --watch
 
 # Terminal 3: AnyCable-Go
 anycable-go --port=8080 \

@@ -1,2 +1,2 @@
-vite: bin/vite dev
+css: pnpm exec tailwindcss -i app/frontend/entrypoints/application.css -o app/assets/builds/tailwind.css --watch
 web: PORT=3000 bin/rails s

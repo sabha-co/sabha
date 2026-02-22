@@ -20,7 +20,6 @@ gem "solid_queue"
 # Assets
 gem "propshaft"
 gem "importmap-rails"
-gem "vite_rails", "~> 3.0"
 
 # Hotwire
 gem "turbo-rails"
