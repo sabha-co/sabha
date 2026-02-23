@@ -34,7 +34,7 @@ module User::Bannable
   private
     def create_bans_from_sessions
       sessions.pluck(:ip_address).compact_blank.uniq.each do |ip|
-        bans.create(ip_address: ip)
+        bans.find_or_create_by(ip_address: ip)
       end
     end
 

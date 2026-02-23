@@ -1,11 +1,13 @@
 class UsersController < ApplicationController
   include NotifyBots
   include EmailValidation
+  include BlockBannedRequests
 
   require_unauthenticated_access only: %i[ new create ]
   rate_limit to: 10, within: 1.hour, only: :create, with: -> { redirect_to new_session_url, alert: "Too many signup attempts. Please try again later." }
 
   before_action :set_user, only: :show
+  before_action :reject_banned_ip, only: :create
   before_action :validate_cloudflare_turnstile, only: :create, unless: -> { Sabha.saas? }
   rescue_from RailsCloudflareTurnstile::Forbidden, with: :handle_turnstile_failure
 

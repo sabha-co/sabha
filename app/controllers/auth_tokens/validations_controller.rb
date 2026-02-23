@@ -1,8 +1,11 @@
 class AuthTokens::ValidationsController < ApplicationController
+  include BlockBannedRequests
+
   allow_unauthenticated_access
 
   rate_limit to: 10, within: 1.minute, with: -> { head :too_many_requests }
 
+  before_action :reject_banned_ip, only: :create
   before_action :redirect_to_saas_login, if: -> { Sabha.saas? }
 
   # Token-based login (magic link) is always allowed for Cloud bootstrap

@@ -1,10 +1,12 @@
 class AuthTokensController < ApplicationController
   include EmailValidation
+  include BlockBannedRequests
 
   allow_unauthenticated_access
 
   rate_limit to: 10, within: 1.minute, with: -> { head :too_many_requests }
 
+  before_action :reject_banned_ip, only: :create
   before_action :redirect_to_saas_login, if: -> { Sabha.saas? }
   before_action :require_otp_auth
   before_action :validate_email_param
