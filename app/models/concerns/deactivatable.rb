@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
+# Soft deletion via an `active` boolean column. Used by Message, Room, and Membership.
+#
+# Note: There is no UI to undo deletion for Rooms or Messages — deactivation is
+# one-way from the user's perspective. This was inherited from the Small Bets fork
+# and is likely intended for manual reversion via Rails console. Keeping as-is for now.
 module Deactivatable
   extend ActiveSupport::Concern
 

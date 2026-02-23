@@ -21,7 +21,6 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
     bookmark = Bookmark.last
     assert_equal @david, bookmark.user
     assert_equal @message, bookmark.message
-    assert bookmark.active?
   end
 
   test "create is idempotent - does not create duplicate" do
@@ -57,28 +56,23 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
   # Destroy action tests
   # ===================
 
-  test "destroy soft deletes bookmark" do
-    bookmark = Bookmark.create!(user: @david, message: @message)
+  test "destroy deletes bookmark" do
+    Bookmark.create!(user: @david, message: @message)
 
-    assert_no_difference -> { Bookmark.count } do
+    assert_difference -> { Bookmark.count }, -1 do
       delete message_bookmarks_url(@message), as: :turbo_stream
     end
-
-    bookmark.reload
-    assert_not bookmark.active?, "Bookmark should be deactivated"
   end
 
   test "destroy only affects current user bookmark" do
     jason_bookmark = Bookmark.create!(user: users(:jason), message: @message)
-    david_bookmark = Bookmark.create!(user: @david, message: @message)
+    Bookmark.create!(user: @david, message: @message)
 
-    delete message_bookmarks_url(@message), as: :turbo_stream
+    assert_difference -> { Bookmark.count }, -1 do
+      delete message_bookmarks_url(@message), as: :turbo_stream
+    end
 
-    jason_bookmark.reload
-    david_bookmark.reload
-
-    assert jason_bookmark.active?, "Other user's bookmark should remain active"
-    assert_not david_bookmark.active?, "Current user's bookmark should be deactivated"
+    assert Bookmark.exists?(jason_bookmark.id), "Other user's bookmark should still exist"
   end
 
   test "destroy handles non-existent bookmark gracefully" do
@@ -121,12 +115,10 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
 
     # Create bookmark
     post message_bookmarks_url(@message), as: :turbo_stream
-    bookmark = Bookmark.find_by(user: @david, message: @message)
-    assert bookmark.active?
+    assert Bookmark.exists?(user: @david, message: @message)
 
     # Remove bookmark
     delete message_bookmarks_url(@message), as: :turbo_stream
-    bookmark.reload
-    assert_not bookmark.active?
+    assert_not Bookmark.exists?(user: @david, message: @message)
   end
 end

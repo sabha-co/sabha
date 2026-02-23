@@ -1,18 +1,16 @@
 class Boost < ApplicationRecord
-  include Deactivatable
-
   belongs_to :message, touch: true
   belongs_to :booster, class_name: "User", default: -> { Current.user }
 
-  validates :content, uniqueness: { scope: [ :message_id, :booster_id ], conditions: -> { active } }
+  validates :content, uniqueness: { scope: [ :message_id, :booster_id ] }
 
   scope :ordered, -> { order(:created_at) }
 
   after_create_commit :broadcast_create
   after_create_commit :create_boost_notification
-  after_update_commit :broadcast_reactivation, if: -> { saved_change_to_attribute?(:active) && active? }
-  after_update_commit :broadcast_deactivation, if: -> { saved_change_to_attribute?(:active) && !active? }
-  after_update_commit :destroy_boost_notification, if: -> { saved_change_to_attribute?(:active) && !active? }
+  before_destroy :delete_notification
+  after_destroy_commit :broadcast_removal
+  after_destroy_commit :broadcast_notification_removal
 
   private
     def broadcast_create
@@ -40,47 +38,39 @@ class Boost < ApplicationRecord
       )
     end
 
-    def destroy_boost_notification
+    def delete_notification
       notification = Notification.find_by(boost_id: id)
       return unless notification
 
-      user = notification.user
-      notification_dom_id = ActionView::RecordIdentifier.dom_id(notification)
+      @destroyed_notification = {
+        user: notification.user,
+        dom_id: ActionView::RecordIdentifier.dom_id(notification),
+        message_id: notification.message_id
+      }
 
       notification.destroy!
-
-      Turbo::StreamsChannel.broadcast_remove_to(
-        [ user, :inbox_activity ],
-        target: notification_dom_id
-      )
-
-      Notification::BoostGroup.broadcast_update_after_removal(user: user, message_id: notification.message_id)
     end
 
-    def broadcast_deactivation
+    def broadcast_notification_removal
+      return unless @destroyed_notification
+
+      Turbo::StreamsChannel.broadcast_remove_to(
+        [ @destroyed_notification[:user], :inbox_activity ],
+        target: @destroyed_notification[:dom_id]
+      )
+
+      Notification::BoostGroup.broadcast_update_after_removal(
+        user: @destroyed_notification[:user],
+        message_id: @destroyed_notification[:message_id]
+      )
+    end
+
+    def broadcast_removal
       broadcast_remove_to message.room, :messages
       broadcast_remove_to :inbox
     end
 
     def boosts_target
       "boosts_message_#{message.client_message_id}"
-    end
-
-    def broadcast_reactivation
-      previous_boost = message.boosts.where("created_at < ?", created_at).last
-
-      if previous_boost.present?
-        target = previous_boost
-        action = "after"
-      else
-        target = [ message.room, :messages ]
-        action = "prepend"
-      end
-
-      broadcast_action_to message.room, :messages,
-                          action:,
-                          target:,
-                          partial: "messages/boosts/boost",
-                          locals: { boost: self }
     end
 end

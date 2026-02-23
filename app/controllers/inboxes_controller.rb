@@ -111,8 +111,8 @@ class InboxesController < ApplicationController
     end
 
     def set_bookmark_pagination_anchors
-      @before = Bookmark.active.find_by(message_id: params[:before], user_id: Current.user.id) if params[:before].present?
-      @after = Bookmark.active.find_by(message_id: params[:after], user_id: Current.user.id) if params[:after].present?
+      @before = Bookmark.find_by(message_id: params[:before], user_id: Current.user.id) if params[:before].present?
+      @after = Bookmark.find_by(message_id: params[:after], user_id: Current.user.id) if params[:after].present?
     end
 
     def track_last_loaded_message(key)

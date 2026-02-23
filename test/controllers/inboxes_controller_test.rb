@@ -358,17 +358,6 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Bookmarked message marker", response.body
   end
 
-  test "bookmarks excludes inactive bookmarks" do
-    message = messages(:first)
-    message.update!(body: "Inactive bookmark marker")
-    bookmark = Bookmark.create!(user: @david, message: message)
-    bookmark.update!(active: false)
-
-    get bookmarks_inbox_url
-    assert_response :success
-    assert_no_match "Inactive bookmark marker", response.body
-  end
-
   test "bookmarks excludes inactive messages" do
     message = messages(:first)
     message.update!(body: "Inactive message marker")
@@ -544,7 +533,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "edit removal test", response.body
   end
 
-  test "soft-deleting a boost broadcasts removal for its notification" do
+  test "destroying a boost broadcasts removal for its notification" do
     room = rooms(:pets)
     message = room.messages.create!(
       body: "Boost removal broadcast",
@@ -556,7 +545,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     notification = Notification.find_by(boost_id: boost.id)
     assert notification
 
-    boost.deactivate!
+    boost.destroy!
 
     assert_rendered_turbo_stream_broadcast @david, :inbox_activity,
       action: "remove",

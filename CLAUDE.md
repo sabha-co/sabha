@@ -35,8 +35,8 @@ The multi-tenant layer is implemented as a Rails engine in `saas/`:
 ### Messaging & Engagement
 - `Message` - Rich text content via ActionText, with attachments, mentions, sounds
 - `Membership` - Join table between Users and Rooms with involvement levels (invisible, nothing, mentions, everything)
-- `Boost` - Message reactions/reposts (similar to retweets)
-- `Bookmark` - Save messages for later reference
+- `Boost` - Message reactions/reposts (similar to retweets). Hard-deleted when removed.
+- `Bookmark` - Save messages for later reference. Hard-deleted when removed.
 - Messages use soft deletion (`active` boolean) - deleted messages marked inactive but preserved in database
 
 ### Authentication (Dual Strategy)
@@ -55,7 +55,7 @@ The multi-tenant layer is implemented as a Rails engine in `saas/`:
 ## Key Architectural Patterns
 
 ### Concerns for Shared Behavior
-- `Deactivatable` - Soft deletion with `active` scope
+- `Deactivatable` - Soft deletion with `active` scope (used by Message, Room, Membership — not Boost/Bookmark)
 - `Mentionable` - Entities that can be @mentioned in messages
 - `Searchable` - Full-text search with SQLite FTS5
 - `Connectable` - Tracks WebSocket connection state for memberships
@@ -162,7 +162,7 @@ end
 - The `mentions` table uses `id: false` (composite key: `message_id` + `user_id`)
 - **ALWAYS use `dependent: :delete_all`** (not `dependent: :destroy`) on associations pointing to `id: false` tables
 - `dependent: :destroy` tries to delete records by primary key — generates broken SQL on keyless tables: `DELETE FROM "table" WHERE "table"."" IS NULL`
-- When adding new associations to users/rooms/messages, **update `destroy_all_associated_records`** in the model — soft-deletion scopes mean `dependent: :destroy` misses inactive records
+- When adding new associations to users/rooms/messages, **update `destroy_all_associated_records`** in the model — some associations have soft-deletion scopes, so `dependent: :destroy` may miss inactive records
 
 ### Don't Over-Extract
 - 453 lines is not a god object for a chat app User model — users do a lot of things

@@ -20,7 +20,7 @@ class User < ApplicationRecord
   has_many :memberships, -> { active }, class_name: "Membership"
   has_many :rooms, -> { active }, through: :memberships, source: :room
 
-  has_many :bookmarks, -> { active }, class_name: "Bookmark"
+  has_many :bookmarks, class_name: "Bookmark"
   has_many :bookmarked_messages, -> { order("bookmarks.created_at DESC") }, through: :bookmarks, source: :message
   has_many :reachable_messages, through: :rooms, source: :messages
   has_many :messages, -> { active }, foreign_key: :creator_id, class_name: "Message"
@@ -90,7 +90,7 @@ class User < ApplicationRecord
 
   has_many :push_subscriptions, class_name: "Push::Subscription", dependent: :delete_all
 
-  has_many :boosts, -> { active }, foreign_key: :booster_id, class_name: "Boost"
+  has_many :boosts, foreign_key: :booster_id, class_name: "Boost"
   has_many :searches, dependent: :delete_all
 
   has_many :sessions, dependent: :destroy
@@ -357,12 +357,12 @@ class User < ApplicationRecord
       end
     end
 
-    # Clean up ALL associated records (including inactive ones) to satisfy FK constraints.
+    # Clean up all associated records to satisfy FK constraints.
     #
     # Why this exists instead of `dependent: :destroy`:
-    # Most associations have `-> { active }` scopes for soft deletion, so Rails'
-    # `dependent: :destroy` only finds active records. We need to delete inactive
-    # records too, hence the explicit unscoped queries.
+    # Some associations have `-> { active }` scopes for soft deletion, so Rails'
+    # `dependent: :destroy` only finds active records. We need to delete all
+    # records regardless, hence the explicit queries.
     def destroy_all_associated_records
       # Clear cached user_id on WorkspaceMembership (SaaS mode)
       if Sabha.saas? && workspace_membership_id.present?
@@ -377,8 +377,8 @@ class User < ApplicationRecord
       Notification.where(user_id: id).delete_all
       Notification.where(actor_id: id).delete_all
       Membership.unscoped.where(user_id: id).delete_all
-      Bookmark.unscoped.where(user_id: id).delete_all
-      Boost.unscoped.where(booster_id: id).delete_all
+      Bookmark.where(user_id: id).delete_all
+      Boost.where(booster_id: id).delete_all
       Mention.where(user_id: id).delete_all
       Search.where(user_id: id).delete_all
       Search.where(creator_id: id).delete_all

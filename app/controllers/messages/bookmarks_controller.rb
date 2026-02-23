@@ -8,7 +8,7 @@ class Messages::BookmarksController < ApplicationController
   end
 
   def destroy
-    Current.user.bookmarks.where(message: @message).find_each(&:deactivate!)
+    Current.user.bookmarks.find_by(message: @message)&.destroy!
 
     broadcast_message_update
     broadcast_remove_from_bookmarks_inbox

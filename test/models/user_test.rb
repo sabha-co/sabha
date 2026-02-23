@@ -421,8 +421,8 @@ class UserTest < ActiveSupport::TestCase
     # Verify no orphaned records remain
     assert_not User.exists?(user.id)
     assert_empty Mention.where(user_id: user.id)
-    assert_empty Boost.unscoped.where(booster_id: user.id)
-    assert_empty Bookmark.unscoped.where(user_id: user.id)
+    assert_empty Boost.where(booster_id: user.id)
+    assert_empty Bookmark.where(user_id: user.id)
     assert_empty Search.where(user_id: user.id)
     assert_empty Session.where(user_id: user.id)
     assert_empty AuthToken.where(user_id: user.id)

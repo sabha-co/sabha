@@ -10,18 +10,17 @@ class Messages::BoostsController < ApplicationController
   end
 
   def create
-    @boost = @message.boosts.active.find_by(boost_params.merge(booster: Current.user))
-    return head :ok if @boost
-
     @boost = @message.boosts.create(boost_params)
     return head :ok unless @boost.persisted?
 
     deliver_webhooks_to_bots(@boost, :created)
+  rescue ActiveRecord::RecordNotUnique
+    head :ok
   end
 
   def destroy
     @boost = Current.user.boosts.find(params[:id])
-    @boost.deactivate!
+    @boost.destroy!
 
     deliver_webhooks_to_bots(@boost, :deleted)
   end

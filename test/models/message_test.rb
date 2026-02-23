@@ -241,29 +241,6 @@ class MessageTest < ActiveSupport::TestCase
     assert_not Message.exists?(thread_message_id), "Thread messages should be destroyed when thread is destroyed"
   end
 
-  test "destroying a message removes inactive boosts and bookmarks" do
-    room = rooms(:pets)
-    message = room.messages.create!(body: "Test message", creator: users(:jason), client_message_id: "test_inactive")
-
-    # Create a boost and deactivate it
-    boost = Boost.create!(message: message, booster: users(:david), content: "🔥")
-    boost.deactivate!
-
-    # Create a bookmark and deactivate it
-    bookmark = Bookmark.create!(message: message, user: users(:david))
-    bookmark.deactivate!
-
-    boost_id = boost.id
-    bookmark_id = bookmark.id
-
-    # Destroy the message
-    message.destroy
-
-    # Inactive boosts and bookmarks should also be destroyed
-    assert_not Boost.exists?(boost_id), "Inactive boost should be destroyed when message is destroyed"
-    assert_not Bookmark.exists?(bookmark_id), "Inactive bookmark should be destroyed when message is destroyed"
-  end
-
   test "attachment with allowed content type is valid" do
     blob = ActiveStorage::Blob.create_and_upload!(
       io: StringIO.new("hello"), filename: "note.txt", content_type: "text/plain"

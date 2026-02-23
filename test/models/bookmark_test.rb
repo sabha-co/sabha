@@ -22,29 +22,6 @@ class BookmarkTest < ActiveSupport::TestCase
   end
 
   # ===================
-  # Deactivatable concern tests
-  # ===================
-
-  test "includes Deactivatable concern" do
-    bookmark = Bookmark.create!(user: @david, message: @message)
-    assert bookmark.active?
-
-    bookmark.deactivate!
-    assert_not bookmark.active?
-
-    bookmark.activate!
-    assert bookmark.active?
-  end
-
-  test "active scope excludes inactive bookmarks" do
-    bookmark = Bookmark.create!(user: @david, message: @message)
-    assert_includes Bookmark.active, bookmark
-
-    bookmark.deactivate!
-    assert_not_includes Bookmark.active, bookmark
-  end
-
-  # ===================
   # with_bookmark_status_for scope tests (LEFT JOIN approach)
   # ===================
 
@@ -73,15 +50,6 @@ class BookmarkTest < ActiveSupport::TestCase
 
     # SQLite returns 0 for false, which is truthy in Ruby without proper casting
     assert_not loaded_message.bookmarked_by_current_user?, "Unbookmarked message should return false, not truthy 0"
-  end
-
-  test "with_bookmark_status_for only considers active bookmarks" do
-    message = messages(:first)
-    bookmark = Bookmark.create!(user: @david, message: message)
-    bookmark.deactivate!
-
-    messages = Message.where(id: message.id).with_bookmark_status_for(@david)
-    assert_not messages.first.bookmarked_by_current_user?, "Message with inactive bookmark should return false"
   end
 
   test "with_bookmark_status_for only considers specified user bookmarks" do

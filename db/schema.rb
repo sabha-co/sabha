@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_22_100000) do
+ActiveRecord::Schema[8.2].define(version: 2026_02_23_141607) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -114,25 +114,24 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_22_100000) do
   end
 
   create_table "bookmarks", force: :cascade do |t|
-    t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.integer "message_id", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["message_id"], name: "index_bookmarks_on_message_id"
-    t.index ["user_id", "message_id", "active"], name: "index_bookmarks_on_user_message_active"
+    t.index ["user_id", "message_id"], name: "index_bookmarks_on_user_message", unique: true
     t.index ["user_id"], name: "index_bookmarks_on_user_id"
   end
 
   create_table "boosts", force: :cascade do |t|
-    t.boolean "active", default: true
     t.integer "booster_id", null: false
     t.string "content", limit: 16, null: false
     t.datetime "created_at", null: false
     t.integer "message_id", null: false
     t.datetime "updated_at", null: false
     t.index ["booster_id"], name: "index_boosts_on_booster_id"
-    t.index ["message_id", "active", "created_at"], name: "index_boosts_on_message_active_created"
+    t.index ["message_id", "booster_id", "content"], name: "index_boosts_on_message_booster_content", unique: true
+    t.index ["message_id", "created_at"], name: "index_boosts_on_message_created"
     t.index ["message_id"], name: "index_boosts_on_message_id"
   end
 

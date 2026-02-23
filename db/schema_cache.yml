@@ -121,7 +121,7 @@ columns:
     collation:
     comment:
   accounts:
-  - &21 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+  - &22 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: active
     cast_type: &23 !ruby/object:ActiveModel::Type::Boolean
@@ -471,10 +471,9 @@ columns:
   - *6
   - *9
   bookmarks:
-  - *21
   - *5
   - *6
-  - &22 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+  - &21 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: message_id
     cast_type: *3
@@ -487,7 +486,6 @@ columns:
   - *9
   - *20
   boosts:
-  - *21
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: booster_id
@@ -520,10 +518,10 @@ columns:
     comment:
   - *5
   - *6
-  - *22
+  - *21
   - *9
   memberships:
-  - *21
+  - *22
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: connected_at
@@ -589,10 +587,10 @@ columns:
   - *9
   - *20
   mentions:
-  - *22
+  - *21
   - *20
   messages:
-  - *21
+  - *22
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: client_message_id
@@ -670,7 +668,7 @@ columns:
     comment:
   - *5
   - *6
-  - *22
+  - *21
   - *9
   - *20
   push_subscriptions:
@@ -719,7 +717,7 @@ columns:
     comment:
   - *20
   rooms:
-  - *21
+  - *22
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: auto_join
@@ -1552,12 +1550,11 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: bookmarks
-    name: index_bookmarks_on_user_message_active
-    unique: false
+    name: index_bookmarks_on_user_message
+    unique: true
     columns:
     - user_id
     - message_id
-    - active
     lengths: {}
     orders: {}
     opclasses: {}
@@ -1587,11 +1584,28 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: boosts
-    name: index_boosts_on_message_active_created
+    name: index_boosts_on_message_booster_content
+    unique: true
+    columns:
+    - message_id
+    - booster_id
+    - content
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: boosts
+    name: index_boosts_on_message_created
     unique: false
     columns:
     - message_id
-    - active
     - created_at
     lengths: {}
     orders: {}
@@ -1711,23 +1725,6 @@ indexes:
     unique: false
     columns:
     - user_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: memberships
-    name: index_memberships_on_user_id_and_starred
-    unique: false
-    columns:
-    - user_id
-    - starred
     lengths: {}
     orders: {}
     opclasses: {}
@@ -2241,4 +2238,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260222100000
+version: 20260223141607

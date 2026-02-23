@@ -1,5 +1,5 @@
 class Account < ApplicationRecord
-  include Joinable, Deactivatable
+  include Joinable
 
   VALID_AUTH_METHODS = %w[password otp].freeze
 

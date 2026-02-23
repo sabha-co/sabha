@@ -1,5 +1,5 @@
 class Bookmark < ApplicationRecord
-  include Pagination, Deactivatable
+  include Pagination
 
   belongs_to :user
   belongs_to :message

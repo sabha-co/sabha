@@ -108,7 +108,7 @@ class NotificationTest < ActiveSupport::TestCase
     assert_not Notification.exists?(boost_id: boost.id)
   end
 
-  test "soft-deleting a boost destroys its notification" do
+  test "destroying a boost destroys its notification" do
     message = @room.messages.create!(
       body: "Boost then delete",
       creator: @david,
@@ -118,7 +118,7 @@ class NotificationTest < ActiveSupport::TestCase
     boost = message.boosts.create!(content: "🔥", booster: @jason)
     assert Notification.exists?(boost_id: boost.id)
 
-    boost.deactivate!
+    boost.destroy!
     assert_not Notification.exists?(boost_id: boost.id)
   end
 

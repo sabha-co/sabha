@@ -4,12 +4,12 @@ class Message < ApplicationRecord
   belongs_to :room, counter_cache: true
   belongs_to :creator, class_name: "User", default: -> { Current.user }
 
-  has_many :boosts, -> { active.order(:created_at) }, class_name: "Boost"
-  has_many :bookmarks, -> { active }, class_name: "Bookmark"
+  has_many :boosts, -> { order(:created_at) }, class_name: "Boost"
+  has_many :bookmarks, class_name: "Bookmark"
 
   has_many :threads, class_name: "Rooms::Thread", foreign_key: :parent_message_id, dependent: :destroy
 
-  # Clean up ALL associated records (including inactive) before destroying
+  # Clean up associated records before destroying
   before_destroy :destroy_all_associated_records
 
   has_rich_text :body
@@ -55,7 +55,6 @@ class Message < ApplicationRecord
       LEFT JOIN bookmarks
         ON bookmarks.message_id = messages.id
         AND bookmarks.user_id = ?
-        AND bookmarks.active = 1
     SQL
   }
 
@@ -231,11 +230,11 @@ class Message < ApplicationRecord
     end
 
     def destroy_all_associated_records
-      # Delete ALL boosts, bookmarks, and notifications (including inactive ones) to satisfy FK constraints
+      # Delete all boosts, bookmarks, and notifications to satisfy FK constraints
       # Mentions are handled by the Mentionee concern's `dependent: :destroy`
       Notification.where(message_id: id).delete_all
-      Boost.unscoped.where(message_id: id).delete_all
-      Bookmark.unscoped.where(message_id: id).delete_all
+      Boost.where(message_id: id).delete_all
+      Bookmark.where(message_id: id).delete_all
     end
 
     def destroy_notifications_if_deactivated
