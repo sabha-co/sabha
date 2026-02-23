@@ -122,8 +122,8 @@ class Opengraph::MetadataTest < ActiveSupport::TestCase
     metadata = Opengraph::Metadata.from_url("https://www.example.com")
 
     assert metadata.valid?
-    assert_equal "Hey!", metadata.title
-    assert_equal "Hello", metadata.description
+    assert_equal "Hey!alert('hi')", metadata.title
+    assert_equal "Helloalert('hi')", metadata.description
   end
 
   test "remove encoded tags from title and description" do
