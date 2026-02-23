@@ -1,0 +1,32 @@
+<%# locals: (notification:, timestamp_style: :long_datetime) -%>
+<div id="<%= dom_id(notification) %>" class="message notification--boost"
+     data-message-id="<%= notification.id %>"
+     data-sort-value="<%= notification.created_at.to_fs(:epoch) %>"
+     data-search-results-target="message"
+     data-inbox-target="message">
+  <div class="avatar message__avatar">
+    <%= render "users/popup", user: notification.actor %>
+  </div>
+  <div class="message__body">
+    <div class="message__body-content">
+      <div class="message__meta">
+        <h3 class="message__heading">
+          <strong><%= notification.actor.name %></strong>
+          <span class="txt-muted">
+            boosted your message<% if notification.boost&.content.present? %> with <%= notification.boost.content %><% end %>
+          </span>
+          <%= link_to message_timestamp(notification.message, style: timestamp_style, class: "message__timestamp"),
+              message_permalink_path(notification.message), target: "_top", class: "message__permalink" %>
+          <span class="message__meta-block message__room message__original-room">
+            <span class="message__room-in">in</span>
+            <%= link_to room_display_name(notification.message.room, for_user: nil),
+                message_permalink_path(notification.message), target: "_top" %>
+          </span>
+        </h3>
+      </div>
+      <div class="message__presentation">
+        <div class="trix-content txt-muted"><%= truncate(notification.message.plain_text_body, length: 120) %></div>
+      </div>
+    </div>
+  </div>
+</div>

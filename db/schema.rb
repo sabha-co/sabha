@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_20_100000) do
+ActiveRecord::Schema[8.2].define(version: 2026_02_22_100000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -183,6 +183,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_20_100000) do
     t.index ["room_id"], name: "index_messages_on_room_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.string "activity_type", null: false
+    t.integer "actor_id", null: false
+    t.integer "boost_id"
+    t.datetime "created_at", null: false
+    t.integer "message_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["actor_id"], name: "index_notifications_on_actor_id"
+    t.index ["boost_id"], name: "index_notifications_on_boost_id", where: "boost_id IS NOT NULL"
+    t.index ["message_id", "user_id", "activity_type"], name: "index_notifications_on_message_user_type", unique: true, where: "boost_id IS NULL"
+    t.index ["message_id"], name: "index_notifications_on_message_id"
+    t.index ["user_id", "created_at"], name: "index_notifications_on_user_created"
+  end
+
   create_table "push_subscriptions", force: :cascade do |t|
     t.string "auth_key"
     t.datetime "created_at", null: false
@@ -302,6 +317,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_20_100000) do
   add_foreign_key "mentions", "users"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users", column: "creator_id"
+  add_foreign_key "notifications", "boosts"
+  add_foreign_key "notifications", "messages"
+  add_foreign_key "notifications", "users"
+  add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "push_subscriptions", "users"
   add_foreign_key "searches", "users"
   add_foreign_key "searches", "users", column: "creator_id"

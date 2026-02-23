@@ -81,6 +81,110 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Hey David direct message excluded!", response.body
   end
 
+  test "activity shows boost notifications" do
+    room = rooms(:pets)
+
+    # Create a message by david, then boost it from jason
+    message = room.messages.create!(
+      body: "My boosted message content",
+      creator: @david,
+      client_message_id: "boost_activity_test"
+    )
+    boost = message.boosts.create!(content: "🔥", booster: @jason)
+
+    get activity_inbox_url
+    assert_response :success
+    assert_match "boosted your message", response.body
+    assert_match @jason.name, response.body
+  end
+
+  test "activity shows thread reply notifications" do
+    room = rooms(:pets)
+
+    # Create a parent message
+    parent = room.messages.create!(
+      body: "Parent for thread reply test",
+      creator: @jason,
+      client_message_id: "thread_parent_1"
+    )
+
+    # Create a thread with david as a visible member
+    thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
+    thread.memberships.grant_to(@david)
+    thread.memberships.find_by(user: @david).update!(involvement: :mentions)
+
+    # Reply in the thread
+    reply = thread.messages.create!(
+      body: "Thread reply visible in activity",
+      creator: @jason,
+      client_message_id: "thread_reply_1"
+    )
+
+    # The job creates notifications synchronously in test
+    CreateThreadReplyNotificationsJob.perform_now(
+      message_id: reply.id,
+      thread_id: thread.id,
+      creator_id: @jason.id
+    )
+
+    get activity_inbox_url
+    assert_response :success
+    assert_match "Thread reply visible in activity", response.body
+  end
+
+  test "activity unreads filter shows only notifications after clear" do
+    room = rooms(:pets)
+
+    # Create an old mention
+    room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} old mention</div>",
+      creator: @jason,
+      client_message_id: "unreads_old"
+    )
+
+    # Visit activity to set the session timestamp, then clear
+    get activity_inbox_url
+    post clear_inbox_url, params: { scope: "activity", stay: true }
+
+    # Create a new mention after clearing
+    room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} new mention after clear</div>",
+      creator: @jason,
+      client_message_id: "unreads_new"
+    )
+
+    # With unreads filter, should only see the new mention
+    get activity_inbox_url, params: { unreads: "true" }
+    assert_response :success
+    assert_match "new mention after clear", response.body
+    assert_no_match "old mention", response.body
+  end
+
+  test "activity without unreads filter shows all notifications" do
+    room = rooms(:pets)
+
+    room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} all visible</div>",
+      creator: @jason,
+      client_message_id: "all_visible"
+    )
+
+    get activity_inbox_url
+    post clear_inbox_url, params: { scope: "activity", stay: true }
+
+    room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} also visible</div>",
+      creator: @jason,
+      client_message_id: "also_visible"
+    )
+
+    # Without unreads filter, both should appear
+    get activity_inbox_url
+    assert_response :success
+    assert_match "all visible", response.body
+    assert_match "also visible", response.body
+  end
+
   test "mentioning a non-member adds them to the room so they can see the mention" do
     # Kevin is not initially a member of pets room
     sign_in :kevin
@@ -295,6 +399,13 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     membership = room.memberships.find_by(user: @david)
     membership.update!(unread_at: 1.hour.ago)
 
+    # Create a mention so mark_activity_as_read finds a notified room
+    room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason,
+      client_message_id: "clear_test_mention"
+    )
+
     # First visit activity to set the session timestamp
     get activity_inbox_url
 
@@ -377,10 +488,89 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # Pagination tests
   # ===================
 
+  # ===================
+  # Broadcast removal tests
+  # ===================
+
+  test "soft-deleting a message broadcasts removal for its notifications" do
+    room = rooms(:pets)
+    message = room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason,
+      client_message_id: "broadcast_removal_test"
+    )
+
+    notification = Notification.find_by(user: @david, message: message)
+    assert notification
+
+    message.deactivate!
+
+    assert_rendered_turbo_stream_broadcast @david, :inbox_activity,
+      action: "remove",
+      target: notification
+  end
+
+  test "deactivating a room removes its notifications from activity" do
+    room = rooms(:pets)
+    room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} room deactivation test</div>",
+      creator: @jason,
+      client_message_id: "room_deactivate_activity"
+    )
+
+    get activity_inbox_url
+    assert_match "room deactivation test", response.body
+
+    room.deactivate
+
+    get activity_inbox_url
+    assert_no_match "room deactivation test", response.body
+  end
+
+  test "editing a mention out of a message removes notification from activity" do
+    room = rooms(:pets)
+    message = room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} edit removal test</div>",
+      creator: @jason,
+      client_message_id: "edit_removal_activity"
+    )
+
+    get activity_inbox_url
+    assert_match "edit removal test", response.body
+
+    message.update!(body: "<div>Hey everyone</div>")
+
+    get activity_inbox_url
+    assert_no_match "edit removal test", response.body
+  end
+
+  test "soft-deleting a boost broadcasts removal for its notification" do
+    room = rooms(:pets)
+    message = room.messages.create!(
+      body: "Boost removal broadcast",
+      creator: @david,
+      client_message_id: "boost_removal_broadcast"
+    )
+
+    boost = message.boosts.create!(content: "🔥", booster: @jason)
+    notification = Notification.find_by(boost_id: boost.id)
+    assert notification
+
+    boost.deactivate!
+
+    assert_rendered_turbo_stream_broadcast @david, :inbox_activity,
+      action: "remove",
+      target: notification
+  end
+
+  # ===================
+  # Pagination tests
+  # ===================
+
   test "activity supports before pagination" do
     room = rooms(:pets)
 
-    messages = 3.times.map do |i|
+    3.times do |i|
       room.messages.create!(
         body: "<div>Hey #{mention_attachment_for(:david)}</div>",
         creator: @jason,
@@ -388,14 +578,15 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       )
     end
 
-    get activity_inbox_url, params: { before: messages.last.id }
+    last_notification = Notification.where(user: @david, activity_type: "mention").order(:created_at).last
+    get activity_inbox_url, params: { before: last_notification.id }
     assert_response :success
   end
 
   test "activity supports after pagination" do
     room = rooms(:pets)
 
-    messages = 3.times.map do |i|
+    3.times do |i|
       room.messages.create!(
         body: "<div>Hey #{mention_attachment_for(:david)}</div>",
         creator: @jason,
@@ -403,7 +594,8 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       )
     end
 
-    get activity_inbox_url, params: { after: messages.first.id }
+    first_notification = Notification.where(user: @david, activity_type: "mention").order(:created_at).first
+    get activity_inbox_url, params: { after: first_notification.id }
     assert_response :success
   end
 end

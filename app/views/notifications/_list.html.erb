@@ -1,0 +1,4 @@
+<%# locals: (notifications:, timestamp_style: :long_datetime) -%>
+<% group_boost_notifications(notifications).each do |item| %>
+  <%= render partial: item.to_partial_path, locals: { notification: item, timestamp_style: timestamp_style } %>
+<% end %>

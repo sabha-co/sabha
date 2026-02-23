@@ -1,17 +1,14 @@
-# Fetches messages where the user was @mentioned or mentioned via @everyone.
-# DMs are excluded - they have their own inbox view.
+# Fetches notifications for the user's Activity tab:
+# @mentions, boost reactions, and thread replies.
 class Inbox::ActivityQuery
   def initialize(user)
     @user = user
   end
 
   def call
-    user.mentioning_messages
-        .without_events
-        .without_created_by(user)
-        .where.not(rooms: { type: "Rooms::Direct" })
-        .with_thread_summary
-        .with_creator
+    Notification.where(user: user)
+                .with_message_and_creator
+                .ordered
   end
 
   private

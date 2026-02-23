@@ -314,6 +314,15 @@
   box-shadow: 0 0 0 var(--hover-size) var(--color-bg);
 }
 
+.message__avatar.avatar--stacked {
+  flex-direction: row;
+
+  .avatar + .avatar,
+  .btn.avatar + .btn.avatar {
+    margin-inline-start: -1ch;
+  }
+}
+
 .message__meta {
   align-items: center;
   column-gap: calc(var(--message-column-gap) / 2);

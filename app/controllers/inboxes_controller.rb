@@ -1,5 +1,6 @@
 class InboxesController < ApplicationController
-  before_action :set_message_pagination_anchors, only: %i[ activity notifications messages ]
+  before_action :set_notification_pagination_anchors, only: %i[ activity ]
+  before_action :set_message_pagination_anchors, only: %i[ notifications messages ]
   before_action :set_bookmark_pagination_anchors, only: %i[ bookmarks ]
   before_action :set_sidebar_memberships, except: :direct_messages
   before_action :set_sidebar_memberships_for_dms, only: :direct_messages
@@ -11,9 +12,9 @@ class InboxesController < ApplicationController
   end
 
   def activity
-    @messages = find_messages_with(Inbox::ActivityQuery)
-
-    track_last_loaded_message :inbox_last_loaded_activity_created_at
+    @unreads_active = params[:unreads] == "true"
+    @notifications = find_notifications
+    track_last_loaded_notification
   end
 
   def direct_messages
@@ -44,6 +45,7 @@ class InboxesController < ApplicationController
   def clear
     case params[:scope]
     when "activity"
+      session[:inbox_activity_cleared_at] = session[:inbox_last_loaded_activity_created_at]
       Current.user.mark_activity_as_read(session[:inbox_last_loaded_activity_created_at])
     when "direct_messages"
       Current.user.mark_direct_messages_as_read(session[:inbox_last_loaded_dms_created_at])
@@ -84,6 +86,25 @@ class InboxesController < ApplicationController
       end
     end
 
+    def find_notifications
+      scope = Inbox::ActivityQuery.new(Current.user).call
+
+      if params[:unreads] == "true" && session[:inbox_activity_cleared_at].present?
+        scope = scope.where("notifications.created_at > ?", Time.iso8601(session[:inbox_activity_cleared_at]))
+      end
+
+      paginate(scope)
+    end
+
+    def set_notification_pagination_anchors
+      @before = Notification.find_by(id: params[:before])
+      @after = Notification.find_by(id: params[:after])
+    end
+
+    def track_last_loaded_notification
+      session[:inbox_last_loaded_activity_created_at] = (@notifications.last&.created_at || Time.current).iso8601(6)
+    end
+
     def set_message_pagination_anchors
       @before = Message.active.find_by(id: params[:before])
       @after = Message.active.find_by(id: params[:after])
@@ -102,6 +123,7 @@ class InboxesController < ApplicationController
       session.delete :inbox_last_loaded_activity_created_at
       session.delete :inbox_last_loaded_notification_created_at
       session.delete :inbox_last_loaded_message_created_at
+      session.delete :inbox_activity_cleared_at
     end
 
     # Sidebar setup for DMs inbox - loads first page for inbox content

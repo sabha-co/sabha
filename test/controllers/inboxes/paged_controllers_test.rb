@@ -31,13 +31,14 @@ class Inboxes::PagedControllersTest < ActionDispatch::IntegrationTest
 
   test "paged activity supports pagination" do
     room = rooms(:pets)
-    message = room.messages.create!(
+    room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "paged_mention_paginate"
     )
 
-    get paged_inbox_activity_index_url, params: { before: message.id }
+    notification = Notification.where(user: @david, activity_type: "mention").order(:created_at).last
+    get paged_inbox_activity_index_url, params: { before: notification.id }
     assert_response :success
   end
 

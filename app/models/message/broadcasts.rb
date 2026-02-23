@@ -6,7 +6,6 @@ module Message::Broadcasts
     # User-scoped broadcasts are handled via Membership#broadcast_unread when memberships are marked unread
 
     broadcast_notifications
-    broadcast_to_inbox_activity
     broadcast_to_inbox_threads
     broadcast_to_inbox_direct_messages
   end
@@ -66,26 +65,16 @@ module Message::Broadcasts
                         attributes: { maintain_scroll: true }
   end
 
-  def broadcast_to_inbox_activity
-    return if mentionee_ids.blank?
-    return if mentions_everyone?
-
-    mentionees.each do |user|
-      next if user.id == creator_id
-
-      broadcast_remove_to user, :inbox_activity,
-                         target: ActionView::RecordIdentifier.dom_id(self)
-
-      broadcast_append_to user, :inbox_activity,
-                          target: "inbox",
-                          partial: "messages/message",
-                          locals: {
-                            message: self,
-                            current_room: nil,
-                            first_unread_message: nil,
-                            timestamp_style: :long_datetime,
-                            show_date_separator: true
-                          }
+  def broadcast_mention_notifications(recipient_ids)
+    Notification.where(message_id: id, activity_type: "mention", user_id: recipient_ids)
+                .with_message_and_creator
+                .each do |notification|
+      Turbo::StreamsChannel.broadcast_append_to(
+        [ notification.user, :inbox_activity ],
+        target: "inbox",
+        partial: "notifications/notification",
+        locals: { notification: notification, timestamp_style: :long_datetime }
+      )
     end
   end
 

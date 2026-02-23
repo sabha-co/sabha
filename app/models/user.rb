@@ -26,6 +26,7 @@ class User < ApplicationRecord
   has_many :messages, -> { active }, foreign_key: :creator_id, class_name: "Message"
 
   has_many :mentions, dependent: :delete_all
+  has_many :notifications
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
 
   def active_invite_link
@@ -48,20 +49,12 @@ class User < ApplicationRecord
       .distinct
   end
 
-  # Marks only rooms with unread activity (@mentions) as read.
+  # Marks rooms with unread activity (mentions, boosts, thread replies) as read.
   # DMs are handled separately by mark_direct_messages_as_read.
-  # Only marks as read if there were no non-mention messages in the window
+  # Only marks as read if there were no non-notified messages in the window
   # (avoids accidentally marking unread messages as read when user only viewed activity)
   def mark_activity_as_read(loaded_at)
-    activity_until = freshness_checked_time(loaded_at)
-
-    memberships.unread.with_has_unread_notifications.each do |m|
-      next unless m.has_unread_notifications?
-      next if m.room.is_a?(Rooms::Direct)  # Skip DMs - handled separately
-
-      non_mentions = m.room.messages.without_events.without_user_mentions(self).between(m.unread_at, activity_until)
-      m.read_until(activity_until) if non_mentions.none?
-    end
+    mark_notified_rooms_as_read(freshness_checked_time(loaded_at))
   end
 
   # Marks all direct message rooms as read up to the loaded timestamp.
@@ -78,7 +71,7 @@ class User < ApplicationRecord
   # (user likely left the page open without interacting).
   #
   # For activity: DMs are always marked as read. For other rooms, only marks as read
-  # if the room had no non-mention messages in the window (avoids accidentally marking
+  # if the room had no non-notified messages in the window (avoids accidentally marking
   # unread messages as read when user only viewed activity)
   def mark_inbox_as_read(messages_loaded_at:, notifications_loaded_at:, activity_loaded_at:)
     messages_until = freshness_checked_time(messages_loaded_at)
@@ -91,15 +84,8 @@ class User < ApplicationRecord
     # Mark notification rooms as read up to when notifications were loaded
     memberships.notifications_on.unread.each { |m| m.read_until(notifications_until) }
 
-    # Mark activity rooms as read: DMs always, others only if no non-mention messages
-    memberships.unread.each do |m|
-      if m.room.is_a?(Rooms::Direct)
-        m.read_until(activity_until)
-      else
-        non_mentions = m.room.messages.without_events.without_user_mentions(self).between(m.unread_at, activity_until)
-        m.read_until(activity_until) if non_mentions.none?
-      end
-    end
+    # Mark activity rooms as read: DMs always, others only if all unread messages have notifications
+    mark_notified_rooms_as_read(activity_until, include_dms: true)
   end
 
   has_many :push_subscriptions, class_name: "Push::Subscription", dependent: :delete_all
@@ -388,6 +374,8 @@ class User < ApplicationRecord
       Message.unscoped.where(creator_id: id).find_each(&:destroy)
 
       # Then delete other records with FKs to users
+      Notification.where(user_id: id).delete_all
+      Notification.where(actor_id: id).delete_all
       Membership.unscoped.where(user_id: id).delete_all
       Bookmark.unscoped.where(user_id: id).delete_all
       Boost.unscoped.where(booster_id: id).delete_all
@@ -430,6 +418,31 @@ class User < ApplicationRecord
 
       handle = url.strip
       "https://www.linkedin.com/in/#{handle}"
+    end
+
+    # Marks rooms as read where all unread messages have corresponding notifications.
+    # For non-DM rooms, only marks as read if there are no non-notified messages in the window.
+    def mark_notified_rooms_as_read(until_time, include_dms: false)
+      notified_room_ids = notifications
+        .where("notifications.created_at <= ?", until_time)
+        .joins(:message).distinct.pluck(Arel.sql("messages.room_id"))
+
+      memberships.unread.includes(:room).where(room_id: notified_room_ids).each do |m|
+        if m.room.is_a?(Rooms::Direct)
+          m.read_until(until_time) if include_dms
+          next
+        end
+
+        notified_message_ids = Notification.where(user: self)
+          .where(message_id: m.room.messages.without_events.between(m.unread_at, until_time).select(:id))
+          .pluck(:message_id)
+
+        non_notified = m.room.messages.without_events
+          .where.not(id: notified_message_ids)
+          .between(m.unread_at, until_time)
+
+        m.read_until(until_time) if non_notified.none?
+      end
     end
 
     # Returns Time.current if the timestamp is missing or stale (> 1 hour old).

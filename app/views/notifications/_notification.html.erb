@@ -1,0 +1,8 @@
+<%# locals: (notification:, timestamp_style: :long_datetime) -%>
+<% if notification.boost_notification? %>
+  <%= render "notifications/boost", notification: notification, timestamp_style: timestamp_style %>
+<% else %>
+  <%= tag.div id: dom_id(notification), data: { message_id: notification.id } do %>
+    <%= render "messages/message", message: notification.message, timestamp_style: timestamp_style, show_date_separator: false %>
+  <% end %>
+<% end %>

@@ -163,6 +163,7 @@ class Room < ApplicationRecord
       deactivate_threads
       memberships.update_all(active: false)
       Message.unscoped.where(room_id: id).update_all(active: false)
+      destroy_notifications_for_messages
       deactivate!
     end
   end
@@ -255,6 +256,13 @@ class Room < ApplicationRecord
   end
 
   private
+    def destroy_notifications_for_messages
+      message_ids = Message.unscoped.where(room_id: id).pluck(:id)
+      return if message_ids.empty?
+
+      Notification.delete_all_and_broadcast(Notification.where(message_id: message_ids))
+    end
+
     def active_member_count_cache_key
       tenant_prefix = ApplicationRecord.current_tenant if Sabha.saas?
       [ tenant_prefix, "room", id, "active_member_count" ].compact.join(":")

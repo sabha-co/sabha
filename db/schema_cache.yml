@@ -637,6 +637,42 @@ columns:
     comment:
   - *25
   - *9
+  notifications:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: activity_type
+    cast_type: *7
+    sql_type_metadata: *8
+    'null': false
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: actor_id
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': false
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: boost_id
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - *5
+  - *6
+  - *22
+  - *9
+  - *20
   push_subscriptions:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
@@ -1171,6 +1207,7 @@ primary_keys:
   memberships: id
   mentions:
   messages: id
+  notifications: id
   push_subscriptions: id
   rooms: id
   schema_migrations: version
@@ -1196,6 +1233,7 @@ data_sources:
   memberships: true
   mentions: true
   messages: true
+  notifications: true
   push_subscriptions: true
   rooms: true
   schema_migrations: true
@@ -1885,6 +1923,90 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
+  notifications:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: notifications
+    name: index_notifications_on_actor_id
+    unique: false
+    columns:
+    - actor_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: notifications
+    name: index_notifications_on_boost_id
+    unique: false
+    columns:
+    - boost_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where: boost_id IS NOT NULL
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: notifications
+    name: index_notifications_on_message_id
+    unique: false
+    columns:
+    - message_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: notifications
+    name: index_notifications_on_message_user_type
+    unique: true
+    columns:
+    - message_id
+    - user_id
+    - activity_type
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where: boost_id IS NULL
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: notifications
+    name: index_notifications_on_user_created
+    unique: false
+    columns:
+    - user_id
+    - created_at
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
   push_subscriptions:
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: push_subscriptions
@@ -2119,4 +2241,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260220100000
+version: 20260222100000

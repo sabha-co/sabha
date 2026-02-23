@@ -1,11 +1,11 @@
 class Inboxes::ActivityController < InboxesController
-  before_action :set_message_pagination_anchors
+  before_action :set_notification_pagination_anchors
 
   layout false
 
   def index
-    @messages = find_messages_with(Inbox::ActivityQuery)
+    @notifications = find_notifications
 
-    render "inboxes/messages/index"
+    render "inboxes/activity/index"
   end
 end

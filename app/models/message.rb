@@ -22,9 +22,13 @@ class Message < ApplicationRecord
   after_create_commit :update_thread_reply_count
   after_create_commit :update_parent_message_threads
   after_create_commit :update_creator_streak
+  after_create_commit :create_mention_notifications
+  after_create_commit :create_thread_reply_notifications
 
   after_update_commit :broadcast_reactivation_if_restored
   after_update_commit :clear_unread_timestamps_if_deactivated
+  after_update_commit :destroy_notifications_if_deactivated
+  after_update_commit :destroy_stale_mention_notifications
   after_update_commit :broadcast_parent_message_to_threads
   after_update_commit :involve_mentionees_on_update
 
@@ -198,11 +202,65 @@ class Message < ApplicationRecord
       end
     end
 
+    def create_mention_notifications
+      return if room.direct? || room.parent_room&.direct?
+
+      recipient_ids = if mentions_everyone?
+        room.user_ids - [ creator_id ]
+      else
+        mentionee_ids - [ creator_id ]
+      end
+
+      return if recipient_ids.empty?
+
+      now = Time.current
+      Notification.insert_all(
+        recipient_ids.map { |uid|
+          { user_id: uid, message_id: id, actor_id: creator_id, activity_type: "mention", created_at: now, updated_at: now }
+        },
+        unique_by: "index_notifications_on_message_user_type"
+      )
+
+      broadcast_mention_notifications(recipient_ids)
+    end
+
+    def create_thread_reply_notifications
+      return unless room.thread? && room.parent_message
+
+      CreateThreadReplyNotificationsJob.perform_later(message_id: id, thread_id: room.id, creator_id: creator_id)
+    end
+
     def destroy_all_associated_records
-      # Delete ALL boosts and bookmarks (including inactive ones) to satisfy FK constraints
+      # Delete ALL boosts, bookmarks, and notifications (including inactive ones) to satisfy FK constraints
       # Mentions are handled by the Mentionee concern's `dependent: :destroy`
+      Notification.where(message_id: id).delete_all
       Boost.unscoped.where(message_id: id).delete_all
       Bookmark.unscoped.where(message_id: id).delete_all
+    end
+
+    def destroy_notifications_if_deactivated
+      return unless saved_change_to_attribute?(:active) && !active?
+
+      Notification.delete_all_and_broadcast(Notification.where(message_id: id))
+    end
+
+    def destroy_stale_mention_notifications
+      return if room.direct?
+      return unless active? # already handled by destroy_notifications_if_deactivated
+      return unless rich_text_body.saved_changes?
+
+      # Use body parsing (not DB records) to get current mentions,
+      # since mention records only accumulate and are never removed on edit
+      current_recipient_ids = if mentions_everyone_in_body?
+        room.user_ids - [ creator_id ]
+      else
+        mentioned_users.map(&:id) - [ creator_id ]
+      end
+
+      Notification.delete_all_and_broadcast(
+        Notification.where(message_id: id, activity_type: "mention")
+                    .where.not(user_id: current_recipient_ids)
+      )
     end
 
     def clear_unread_timestamps_if_deactivated
