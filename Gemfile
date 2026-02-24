@@ -63,6 +63,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
   gem "faker", require: false
   gem "brakeman", require: false
+  gem "bundler-audit", require: false
   gem "dotenv"
 end
 

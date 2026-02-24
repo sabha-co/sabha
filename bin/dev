@@ -5,28 +5,24 @@ if [ "$SAAS" = "true" ] || [ -f "tmp/saas.txt" ]; then
   export BUNDLE_GEMFILE="${BUNDLE_GEMFILE:-Gemfile.saas}"
 fi
 
-if ! gem list foreman -i --silent; then
-  echo "Installing foreman..."
-  gem install foreman
-fi
-
-# Default to port 3000 if not specified
 export PORT="${PORT:-3000}"
-
-# Let the debug gem allow remote connections,
-# but avoid loading until `debugger` is called
 export RUBY_DEBUG_OPEN="true"
 export RUBY_DEBUG_LAZY="true"
 
-# Use AnyCable Procfile if enabled, otherwise standard Procfile
-if [ "$ANYCABLE_ENABLED" = "true" ]; then
-  PROCFILE="Procfile.dev.anycable"
-else
-  PROCFILE="Procfile.dev"
-fi
+USE_ANYCABLE=0
+for arg in "$@"; do
+  case $arg in
+    --anycable) USE_ANYCABLE=1 ;;
+  esac
+done
 
-if command -v overmind > /dev/null 2>&1; then
-  exec overmind start -f "$PROCFILE" "$@"
+if [ "$USE_ANYCABLE" = "1" ]; then
+  export ANYCABLE_ENABLED="true"
+  if ! gem list foreman -i --silent; then
+    echo "Installing foreman..."
+    gem install foreman
+  fi
+  exec foreman start -f Procfile.dev.anycable
 else
-  exec foreman start -f "$PROCFILE" "$@"
+  exec ./bin/rails server -b 0.0.0.0 -p $PORT
 fi

@@ -1,0 +1,14 @@
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+  '''log''',
+  '''tmp''',
+  '''.*\.yml\.enc''',
+  '''docs/''',
+  '''test/''',
+  '''\.env''',
+  '''\.env\..*''',
+  '''\.claude/''',
+]

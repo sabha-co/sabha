@@ -187,11 +187,12 @@ bin/setup  # Installs gems, pnpm packages, prepares DB, builds Tailwind once
 
 ### Running Locally
 ```bash
-bin/dev    # Start dev server (jobs run in web process)
-bin/boot   # Full stack: web + redis + workers (production-like)
+bin/dev              # Start dev server (Solid Queue runs in-process)
+bin/dev --anycable   # Start with AnyCable via foreman
+bin/boot             # Full stack: web + redis + workers (production-like)
 ```
 
-Tailwind CSS is compiled by `@tailwindcss/cli` via pnpm (runs as `css` process in Procfile.dev).
+Tailwind CSS is compiled by `@tailwindcss/cli` via pnpm. `bin/setup` does a one-off build. For active CSS work, run `pnpm run build:css:watch` in a separate terminal.
 
 ### SaaS Mode (Multi-Tenant)
 
@@ -265,8 +266,8 @@ See `docs/multi-tenant/` for detailed SaaS architecture documentation (internal 
 # Tailwind CSS is compiled by @tailwindcss/cli
 # Source: app/frontend/entrypoints/application.css
 # Output: app/assets/builds/tailwind.css
-# Automatically rebuilt during development via Procfile.dev watch process
-pnpm run build:css   # One-off production build
+pnpm run build:css         # One-off production build
+pnpm run build:css:watch   # Watch mode for active CSS development
 ```
 
 ### Testing
@@ -369,10 +370,12 @@ Uses Solid Queue (SQLite-backed) for background processing:
 
 ### Production Startup (`bin/boot`)
 ```
-bin/boot → reads Procfile → spawns 3 processes:
-├── web: bin/start-app (db:prepare + Puma)
-├── redis: redis-server
-└── workers: rake solid_queue:start
+bin/boot
+├── Pre-boot: db:prepare (+ db:seed in SaaS) — production only
+└── ProcessMonitor reads Procfile → spawns:
+    ├── web: bin/start-app (Puma via Thruster)
+    ├── redis: redis-server
+    └── workers: rake solid_queue:start
 ```
 
 ### Configuration
@@ -396,7 +399,7 @@ Required for production:
 
 Optional features:
 - `JOB_CONCURRENCY` - Number of Solid Queue worker processes
-- `SOLID_QUEUE_IN_PUMA=true` - Run jobs inside Puma instead of separate workers
+- `SOLID_QUEUE_IN_PUMA=true` - Run jobs inside Puma instead of separate workers (default in dev/test, opt-in for production)
 - `DICEBEAR_ENABLED=true` - Enable auto-generated avatars for users without photos
 - `DICEBEAR_HOST` - DiceBear API host (default: api.dicebear.com, must be HTTPS in production)
 - `DICEBEAR_STYLE` - Avatar style (default: thumbs)

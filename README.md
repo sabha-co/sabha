@@ -45,7 +45,7 @@ Start the app in development:
 bin/dev
 ```
 
-This starts the Rails server and Tailwind CSS watcher using Foreman (via Procfile.dev).
+This starts the Rails server with Solid Queue running in-process. For active CSS development, run `pnpm run build:css:watch` in a separate terminal. For AnyCable support, use `bin/dev --anycable`.
 
 The `bin/setup` script installs Ruby gems and Node packages (via `pnpm install`), prepares the database, and configures the application.
 If you skip `bin/setup`, install frontend dependencies manually with `pnpm install`.

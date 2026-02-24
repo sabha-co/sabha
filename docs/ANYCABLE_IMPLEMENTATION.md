@@ -173,14 +173,15 @@ production:
 
 AnyCable is enabled by default. Set `ANYCABLE_ENABLED=false` to use standard ActionCable with Redis.
 
-### Step 5: Update Procfile.dev
+### Step 5: AnyCable Development Setup
 
-**Procfile.dev:**
+Run with `--anycable` flag to start Rails + AnyCable-Go + CSS watcher via foreman:
+
+```bash
+bin/dev --anycable
 ```
-css: pnpm exec tailwindcss -i app/frontend/entrypoints/application.css -o app/assets/builds/tailwind.css --watch
-web: PORT=3000 bin/rails s
-anycable: anycable-go --port=8080 --rpc_host=http://localhost:3000/_anycable --broadcast_adapter=http --secret=development-secret-change-in-production
-```
+
+This uses `Procfile.dev.anycable` which starts all three processes.
 
 ### Step 6: Update JavaScript WebSocket URL
 
@@ -195,8 +196,8 @@ The JavaScript client needs to connect to AnyCable instead of Rails. Check if th
 ### Step 7: Run Development Server
 
 ```bash
-# Terminal 1: Start all services with foreman/overmind
-bin/dev
+# Terminal 1: Start all services
+bin/dev --anycable
 
 # Or run each process manually:
 # Terminal 1: Rails

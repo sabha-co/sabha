@@ -52,18 +52,23 @@ Opens at `http://localhost:3000`
 
 ### What `bin/dev` starts
 
-| Process | Purpose |
-|---------|---------|
-| `web` | Rails server (Puma) |
-| `css` | Tailwind CSS watcher (`@tailwindcss/cli`) |
+A single Rails server process (Puma) with Solid Queue running in-process.
+
+For active CSS development, run the Tailwind watcher in a separate terminal:
+
+```bash
+pnpm run build:css:watch
+```
 
 ### With AnyCable (optional)
 
 For production-like WebSocket handling:
 
 ```bash
-ANYCABLE_ENABLED=true bin/dev
+bin/dev --anycable
 ```
+
+This uses foreman to run Rails + AnyCable-Go + CSS watcher together.
 
 Requires `anycable-go` installed:
 
@@ -241,9 +246,9 @@ message.deactivate!    # Sets active: false
 | **Tenant Mode** | Single-tenant | Single-tenant | Multi-tenant |
 | **WebSockets** | ActionCable (Puma) | AnyCable-Go | ActionCable (Puma) |
 | **Cable Adapter** | `redis` | `any_cable` | `redis` |
-| **Jobs** | Inline (sync) | Inline (sync) | Inline (sync) |
+| **Jobs** | Solid Queue (in Puma) | Solid Queue (in Puma) | Solid Queue (in Puma) |
 | **Cache** | `:memory_store` | `:memory_store` | `:memory_store` |
-| **Processes** | css, web | css, web, anycable | css, web |
+| **Processes** | web | web, css, anycable | web |
 | **Gemfile** | `Gemfile` | `Gemfile` | `Gemfile.saas` |
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for production modes.
@@ -273,7 +278,7 @@ Controllers go in `app/frontend/controllers/` and are loaded via importmap.
 bin/rails generate job JobName
 ```
 
-Jobs use Solid Queue. In development, jobs run inline (synchronously).
+Jobs use Solid Queue. In development, jobs run in Puma via the `solid_queue` plugin.
 
 ### Reset database
 
@@ -340,14 +345,14 @@ The code shows what changed; the message explains why.
 
 | | **Development** | **Dev + AnyCable** | **SaaS Dev** | **bin/boot** | **Kamal** | **Sabha Cloud** |
 |---|---|---|---|---|---|---|
-| **Start** | `bin/dev` | `ANYCABLE_ENABLED=true bin/dev` | `bin/rails saas:enable && bundle && bin/dev` | `bin/boot` | `kamal deploy` | `bin/boot` (Docker) |
+| **Start** | `bin/dev` | `bin/dev --anycable` | `bin/rails saas:enable && bundle && bin/dev` | `bin/boot` | `kamal deploy` | `bin/boot` (Docker) |
 | **Tenant Mode** | Single | Single | Multi | Single | Single | Multi |
 | | | | | | | |
 | **WebSockets** | ActionCable | AnyCable-Go | ActionCable | ActionCable | AnyCable-Go | AnyCable-Go |
 | **Cable Adapter** | `redis` | `any_cable` | `redis` | `redis` | `any_cable` | `any_cable` |
 | | | | | | | |
-| **Jobs** | Inline | Inline | Inline | Separate workers | Puma threads | Separate workers |
-| **Job Mode** | sync | sync | sync | `solid_queue:start` | `SOLID_QUEUE_IN_PUMA` | `solid_queue:start` |
+| **Jobs** | Solid Queue (in Puma) | Solid Queue (in Puma) | Solid Queue (in Puma) | Separate workers | Separate workers | Separate workers |
+| **Job Mode** | Puma plugin | Puma plugin | Puma plugin | `solid_queue:start` | `solid_queue:start` | `solid_queue:start` |
 | | | | | | | |
 | **Cache** | `:memory_store` | `:memory_store` | `:memory_store` | `:redis_cache_store` | `:redis_cache_store` | `:redis_cache_store` |
 | | | | | | | |
@@ -356,7 +361,7 @@ The code shows what changed; the message explains why.
 | **Redis** | External | External | External | Procfile starts it | External | Procfile starts it |
 | **Redis For** | Cable | - | Cable | Cable + Cache | Cache | Cache |
 | | | | | | | |
-| **Processes** | css, web | css, web, anycable | css, web | web, redis, workers | web + anycable | web, redis, workers, anycable, caddy |
+| **Processes** | web | web, css, anycable | web | web, redis, workers | web + anycable | web, redis, workers, anycable, caddy |
 | **TLS/Proxy** | None | None | None | Thruster | Thruster + Traefik | Caddy |
 
 ---

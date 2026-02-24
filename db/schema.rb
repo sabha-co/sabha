@@ -151,6 +151,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_23_200000) do
     t.index ["room_id", "user_id", "involvement"], name: "index_memberships_on_room_user_involvement"
     t.index ["room_id", "user_id"], name: "index_memberships_on_room_id_and_user_id", unique: true
     t.index ["room_id"], name: "index_memberships_on_room_id"
+    t.index ["user_id", "starred"], name: "index_memberships_on_user_id_and_starred"
     t.index ["user_id", "unread_at"], name: "index_memberships_on_user_unread_active", where: "active = 1 AND unread_at IS NOT NULL"
     t.index ["user_id"], name: "index_memberships_on_user_id"
   end

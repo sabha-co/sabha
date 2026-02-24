@@ -106,4 +106,4 @@ HEALTHCHECK --interval=5s --timeout=3s --start-period=30s --retries=3 \
 USER sabha
 
 # Start the server
-CMD ["sh", "-c", "bin/configure && bin/boot"]
+CMD ["bin/boot"]

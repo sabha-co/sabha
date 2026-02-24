@@ -17,6 +17,7 @@
     "@tailwindcss/typography": "^0.5.19"
   },
   "scripts": {
-    "build:css": "pnpm exec tailwindcss -i app/frontend/entrypoints/application.css -o app/assets/builds/tailwind.css --minify"
+    "build:css": "pnpm exec tailwindcss -i app/frontend/entrypoints/application.css -o app/assets/builds/tailwind.css --minify",
+    "build:css:watch": "pnpm exec tailwindcss -i app/frontend/entrypoints/application.css -o app/assets/builds/tailwind.css --watch"
   }
 }

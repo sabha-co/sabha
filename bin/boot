@@ -5,6 +5,14 @@
 # Handles graceful shutdown by forwarding signals to child processes.
 # Similar to Foreman/Overmind but simpler.
 
+# Pre-boot: prepare database before spawning processes.
+# Must complete before workers start (they need Solid Queue tables).
+# Absorbs what was previously bin/configure.
+if ENV["RAILS_ENV"] == "production"
+  system("mkdir -p storage/logs")
+  abort("db:prepare failed") unless system("./bin/rails db:prepare")
+end
+
 require "json"
 require "yaml"
 
@@ -23,8 +31,8 @@ class ProcessMonitor
     def process_list(procfile)
       config = YAML.load_file(procfile)
 
-      # Skip workers process when SOLID_QUEUE_IN_PUMA is set (runs in Puma threads instead)
-      config.delete("workers") if ENV["SOLID_QUEUE_IN_PUMA"]
+      # Skip workers process when SOLID_QUEUE_IN_PUMA=true (runs in Puma threads instead)
+      config.delete("workers") if ENV["SOLID_QUEUE_IN_PUMA"] == "true"
 
       config.map { |name, cmd| MonitoredProcess.new(name, cmd) }
     end

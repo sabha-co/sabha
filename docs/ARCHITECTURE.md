@@ -384,11 +384,15 @@ Tailwind CSS v4 with a custom OKLCH color system supporting light and dark modes
 
 ## Background Jobs
 
-**Solid Queue** (SQLite-backed) runs in a separate process alongside the web server.
+**Solid Queue** (SQLite-backed) for background job processing.
+
+- **Dev/test:** Runs inside Puma via `plugin :solid_queue` (no separate process needed)
+- **Production:** Runs as separate workers via Procfile (`rake solid_queue:start`)
+- **Override:** Set `SOLID_QUEUE_IN_PUMA=true` in production to run inside Puma
 
 ```
-Procfile:
-  web:     bin/start-app          # Puma (optionally wrapped by Thruster)
+Procfile (production):
+  web:     bin/start-app          # Puma (via Thruster)
   redis:   redis-server           # ActionCable pub/sub + cache
   workers: rake solid_queue:start # Background job processing
 ```
@@ -396,8 +400,6 @@ Procfile:
 Configuration (`config/queue.yml`):
 - 1 dispatcher (polling every 1s, batch size 500)
 - Workers: 3 threads, process count from `JOB_CONCURRENCY` env (default: 1)
-
-Alternative: set `SOLID_QUEUE_IN_PUMA=true` to run jobs inside the Puma process (fewer moving parts for small deployments).
 
 ### Job Classes
 
@@ -617,14 +619,17 @@ For users deploying their own instance via Kamal:
 ### Startup Sequence
 
 ```
-bin/configure              # Create dirs, run db:prepare (+ db:seed in SaaS)
+bin/boot
     │
-    ▼
-bin/boot                   # Minimal process manager (reads Procfile)
+    ├── Pre-boot (production only):
+    │   ├── mkdir -p storage/logs
+    │   ├── rails db:prepare
+    │   └── rails db:seed           # SaaS mode only
     │
-    ├── bin/start-app      # Puma (via Thruster or direct)
-    ├── redis-server       # Redis for pub/sub + cache
-    └── solid_queue:start  # Background workers (skipped if SOLID_QUEUE_IN_PUMA)
+    └── ProcessMonitor (reads Procfile):
+        ├── bin/start-app           # Puma (via Thruster or direct)
+        ├── redis-server            # Redis for pub/sub + cache
+        └── solid_queue:start       # Background workers (skipped if SOLID_QUEUE_IN_PUMA=true)
 ```
 
 ### Docker Image

@@ -374,7 +374,7 @@ cache_ttl: 300  # 5 minutes
 
 ```bash
 # Start with AnyCable enabled
-ANYCABLE_ENABLED=true bin/dev
+bin/dev --anycable
 
 # Watch AnyCable-Go logs for RPC calls
 # After whispering: typing should NOT trigger RPC
