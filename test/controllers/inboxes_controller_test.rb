@@ -185,28 +185,21 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "also visible", response.body
   end
 
-  test "mentioning a non-member adds them to the room so they can see the mention" do
-    # Kevin is not initially a member of pets room
+  test "mentioning a non-member does not add them to the room" do
     sign_in :kevin
     kevin = users(:kevin)
     room = rooms(:pets)
 
     assert_not room.users.include?(kevin), "Kevin should not be a member of pets initially"
 
-    # Creating a message that mentions kevin automatically involves him in the room
     room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:kevin)} you can see this because mentioning adds you</div>",
+      body: "<div>Hey #{mention_attachment_for(:kevin)} this mention should not add you</div>",
       creator: @jason,
-      client_message_id: "auto_involve_test"
+      client_message_id: "no_involve_test"
     )
 
     room.reload
-    assert room.users.include?(kevin), "Kevin should now be a member of pets after being mentioned"
-
-    get activity_inbox_url
-    assert_response :success
-    # Kevin CAN see the mention because he was auto-added to the room
-    assert_match "you can see this because mentioning adds you", response.body
+    assert_not room.users.include?(kevin), "Kevin should still not be a member after being mentioned"
   end
 
   # ===================

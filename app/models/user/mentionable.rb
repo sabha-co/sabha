@@ -5,7 +5,7 @@ module User::Mentionable
     "users/mention"
   end
 
-  def to_trix_content_attachment_partial_path
+  def to_editor_content_attachment_partial_path
     "users/mention"
   end
 

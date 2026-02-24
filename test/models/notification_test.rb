@@ -277,6 +277,39 @@ class NotificationTest < ActiveSupport::TestCase
       "Re-mentioning via edit does not re-create notifications (create-only)"
   end
 
+  test "quoting a message creates mention notification for original author" do
+    original_message = @room.messages.create!(
+      body: "<div>Original message</div>",
+      creator: @david,
+      client_message_id: "cited_notif_original"
+    )
+
+    citing_message = @room.messages.create!(
+      body: "<div><cite><a href=\"/rooms/#{@room.id}/messages/@#{original_message.id}\">quoted</a></cite> responding</div>",
+      creator: @jason,
+      client_message_id: "cited_notif_reply"
+    )
+
+    assert Notification.exists?(user: @david, message: citing_message, activity_type: "mention"),
+      "Quoted author should get a mention notification"
+  end
+
+  test "mentioning a non-member creates no notification" do
+    jz = users(:jz)
+    assert_not @room.memberships.exists?(user: jz), "jz should not be a member of the room"
+
+    message = @room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:jz)}</div>",
+      creator: @jason,
+      client_message_id: "non_member_notif"
+    )
+
+    assert_not Notification.exists?(user: jz, message: message),
+      "Non-member should not receive a notification"
+    assert_not @room.memberships.exists?(user: jz),
+      "Non-member should not be added to the room"
+  end
+
   test "ordered scope sorts by created_at ascending" do
     message = @room.messages.create!(body: "test", creator: @jason, client_message_id: "order_test")
 

@@ -586,9 +586,6 @@ columns:
     comment:
   - *9
   - *20
-  mentions:
-  - *21
-  - *20
   messages:
   - *22
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
@@ -1203,7 +1200,6 @@ primary_keys:
   bookmarks: id
   boosts: id
   memberships: id
-  mentions:
   messages: id
   notifications: id
   push_subscriptions: id
@@ -1229,7 +1225,6 @@ data_sources:
   bookmarks: true
   boosts: true
   memberships: true
-  mentions: true
   messages: true
   notifications: true
   push_subscriptions: true
@@ -1752,73 +1747,6 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-  mentions:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: mentions
-    name: index_mentions_on_message_id
-    unique: false
-    columns:
-    - message_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: mentions
-    name: index_mentions_on_message_id_and_user_id
-    unique: false
-    columns:
-    - message_id
-    - user_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: mentions
-    name: index_mentions_on_user_id
-    unique: false
-    columns:
-    - user_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: mentions
-    name: index_mentions_on_user_id_and_message_id
-    unique: false
-    columns:
-    - user_id
-    - message_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
   messages:
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: messages
@@ -2238,4 +2166,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260223141607
+version: 20260223200000

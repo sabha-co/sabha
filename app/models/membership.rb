@@ -19,9 +19,12 @@ class Membership < ApplicationRecord
     if membership.room.direct?
       scope
     else
-      scope.left_joins(:mentions)
-        .where("mentions.user_id = ? OR messages.mentions_everyone = ?", membership.user_id, true)
-        .distinct
+      scope.where(
+        "EXISTS (SELECT 1 FROM notifications WHERE notifications.message_id = messages.id
+          AND notifications.user_id = ? AND notifications.activity_type = 'mention')
+         OR messages.mentions_everyone = ?",
+        membership.user_id, true
+      ).distinct
     end
   }, through: :room, source: :messages
 
@@ -47,9 +50,10 @@ class Membership < ApplicationRecord
             )
             OR EXISTS (
               SELECT 1
-              FROM mentions
-              WHERE mentions.message_id = messages.id
-                AND mentions.user_id = memberships.user_id
+              FROM notifications
+              WHERE notifications.message_id = messages.id
+                AND notifications.user_id = memberships.user_id
+                AND notifications.activity_type = 'mention'
             )
             OR messages.mentions_everyone = true
           )

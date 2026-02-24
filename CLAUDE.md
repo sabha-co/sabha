@@ -35,9 +35,19 @@ The multi-tenant layer is implemented as a Rails engine in `saas/`:
 ### Messaging & Engagement
 - `Message` - Rich text content via ActionText, with attachments, mentions, sounds
 - `Membership` - Join table between Users and Rooms with involvement levels (invisible, nothing, mentions, everything)
+- `Notification` - Tracks mentions, boost reactions, and thread replies. Used for the Activity tab inbox and mention-aware unread badges. One unified table with `activity_type` column (`mention`, `boost`, `thread_reply`)
 - `Boost` - Message reactions/reposts (similar to retweets). Hard-deleted when removed.
 - `Bookmark` - Save messages for later reference. Hard-deleted when removed.
 - Messages use soft deletion (`active` boolean) - deleted messages marked inactive but preserved in database
+
+### Mentions Architecture
+Mentions are **stateless for real-time behavior, persistent for historical queries:**
+- **Body-parsing** (`Message::Mentionee`) — `mentionees`, `mentionee_ids`, and `mentioned_users` parse @mention attachables directly from ActionText body HTML. No mentions table exists.
+- **Notifications** — `create_mention_notifications` callback writes `Notification` records on message create. These power the Activity tab inbox and sidebar unread badges via efficient `EXISTS` subqueries.
+- **`mentions_everyone` flag** — set via `before_save` callback, enables `@everyone` mentions (admin-only, open rooms). Stored on the `messages` table for cheap SQL filtering.
+- **Cited users** — quoting a message (via `<cite>`) auto-mentions the original author.
+- **Auto-involvement** — mentioning a user not in the room auto-adds them with `involvement: "mentions"`.
+- **Stale cleanup** — editing a message to remove a mention destroys the corresponding notification via `destroy_stale_mention_notifications`.
 
 ### Authentication (Dual Strategy)
 **Self-hosted mode:**
@@ -158,11 +168,8 @@ end
 - `after_create_commit` callbacks for side effects (broadcasts, notifications) are acceptable Rails
 - **Don't move model `deliver_later`/`send_*` methods to controllers** — models encapsulate *how* delivery happens, controllers decide *when*. Scattering mailer calls across controllers breaks DRY
 
-### Tables with `id: false` (Join Tables)
-- The `mentions` table uses `id: false` (composite key: `message_id` + `user_id`)
-- **ALWAYS use `dependent: :delete_all`** (not `dependent: :destroy`) on associations pointing to `id: false` tables
-- `dependent: :destroy` tries to delete records by primary key — generates broken SQL on keyless tables: `DELETE FROM "table" WHERE "table"."" IS NULL`
-- When adding new associations to users/rooms/messages, **update `destroy_all_associated_records`** in the model — some associations have soft-deletion scopes, so `dependent: :destroy` may miss inactive records
+### Manual Cleanup in `destroy_all_associated_records`
+- When adding new associations to users/rooms/messages, **update `destroy_all_associated_records`** in the model — some associations have `-> { active }` scopes for soft deletion, so Rails' `dependent: :destroy` only finds active records. The explicit cleanup queries delete all records regardless.
 
 ### Don't Over-Extract
 - 453 lines is not a god object for a chat app User model — users do a lot of things

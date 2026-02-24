@@ -142,7 +142,6 @@ class MessageTest < ActiveSupport::TestCase
     )
 
     assert message.mentions_everyone?
-    assert_equal 0, message.mentions.count  # No individual mention records created
   end
 
   test "@everyone returns all room users as mentionees" do
@@ -282,6 +281,21 @@ class MessageTest < ActiveSupport::TestCase
 
     assert_not message.valid?
     assert_includes message.errors[:attachment], "is too large (max 50MB)"
+  end
+
+  test "mentioning a non-member does not add them to the room" do
+    room = rooms(:pets)
+    jz = users(:jz)
+
+    assert_not room.memberships.exists?(user: jz)
+
+    room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:jz)}</div>",
+      creator: users(:jason),
+      client_message_id: "no_involve_1"
+    )
+
+    assert_not room.memberships.exists?(user: jz), "Non-member should not be added to room via mention"
   end
 
   private

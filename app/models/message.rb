@@ -17,7 +17,6 @@ class Message < ApplicationRecord
   before_create :set_default_client_message_id
   before_create :touch_room_activity
   after_create_commit :deliver_to_room
-  after_create_commit :involve_mentionees_on_create
   after_create_commit :involve_creator_in_thread
   after_create_commit :update_thread_reply_count
   after_create_commit :update_parent_message_threads
@@ -30,7 +29,6 @@ class Message < ApplicationRecord
   after_update_commit :destroy_notifications_if_deactivated
   after_update_commit :destroy_stale_mention_notifications
   after_update_commit :broadcast_parent_message_to_threads
-  after_update_commit :involve_mentionees_on_update
 
   scope :ordered, -> { order(:created_at) }
   scope :without_events, -> { where(event: nil) }
@@ -40,7 +38,6 @@ class Message < ApplicationRecord
   scope :with_thread_summary, -> { includes(:threads) }
   scope :for_display, -> {
     with_rich_text_body_and_embeds
-      .includes(:mentions)
       .with_creator
       .includes(attachment_attachment: { blob: :variant_records })
       .includes(boosts: { booster: { avatar_attachment: { blob: :variant_records } } })
@@ -110,14 +107,6 @@ class Message < ApplicationRecord
       room.receive(self)
     end
 
-    def involve_mentionees_on_create
-      involve_mentionees_in_room(unread: true)
-    end
-
-    def involve_mentionees_on_update
-      involve_mentionees_in_room(unread: false)
-    end
-
     def update_creator_streak
       return if room.direct? || room.parent_room&.direct?
       creator.recalculate_streak!(excluding_message: self)
@@ -125,14 +114,6 @@ class Message < ApplicationRecord
 
     def broadcast_reactivation_if_restored
       broadcast_reactivation if saved_change_to_attribute?(:active) && active?
-    end
-
-    def involve_mentionees_in_room(unread:)
-      # Skip auto-involvement for @everyone to avoid creating thousands of membership updates
-      # Users already in the room will be notified via the updated queries
-      return if mentions_everyone?
-
-      mentionees.each { |user| room.involve_user(user, unread: unread) }
     end
 
     def involve_creator_in_thread
@@ -231,7 +212,6 @@ class Message < ApplicationRecord
 
     def destroy_all_associated_records
       # Delete all boosts, bookmarks, and notifications to satisfy FK constraints
-      # Mentions are handled by the Mentionee concern's `dependent: :destroy`
       Notification.where(message_id: id).delete_all
       Boost.where(message_id: id).delete_all
       Bookmark.where(message_id: id).delete_all
@@ -248,8 +228,6 @@ class Message < ApplicationRecord
       return unless active? # already handled by destroy_notifications_if_deactivated
       return unless rich_text_body.saved_changes?
 
-      # Use body parsing (not DB records) to get current mentions,
-      # since mention records only accumulate and are never removed on edit
       current_recipient_ids = if mentions_everyone_in_body?
         room.user_ids - [ creator_id ]
       else
