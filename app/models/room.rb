@@ -358,7 +358,7 @@ class Room < ApplicationRecord
       message_ids = Message.unscoped.where(room_id: id).pluck(:id)
       Rooms::Thread.unscoped.where(parent_message_id: message_ids).find_each(&:destroy)
 
-      # Then delete messages (they have FKs to boosts, bookmarks, mentions)
+      # Then delete messages (they have FKs to boosts, bookmarks, notifications)
       Message.unscoped.where(room_id: id).find_each(&:destroy)
 
       # Finally delete memberships

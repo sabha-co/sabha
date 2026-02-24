@@ -2,7 +2,7 @@ require "test_helper"
 
 class Message::BroadcastsTest < ActiveSupport::TestCase
   setup do
-    @room = rooms(:designers)
+    @room = rooms(:pets)
     @user = users(:david)
   end
 
@@ -27,9 +27,11 @@ class Message::BroadcastsTest < ActiveSupport::TestCase
   end
 
   test "notification_recipient_ids filters by unread_at when ignore_if_older_message is true" do
+    everyone_sgid = Everyone.new.attachable_sgid
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
+
     message = @room.messages.create!(
-      body: "Hello @everyone",
-      mentions_everyone: true,
+      body: body_html,
       client_message_id: "test_filter",
       creator: @user
     )

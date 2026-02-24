@@ -2,63 +2,33 @@ module Message::Mentionee
   extend ActiveSupport::Concern
 
   included do
-    has_many :mentions, dependent: :delete_all
-    has_many :mentioned_users_association, through: :mentions, source: :user
-
-    after_save :create_mentionees
+    before_save :set_mentions_everyone_flag
 
     scope :mentioning, ->(user_id) {
-      left_joins(:mentions)
-        .where("mentions.user_id = ? OR messages.mentions_everyone = ?", user_id, true)
-        .distinct
-    }
-    scope :without_user_mentions, ->(user) {
-      left_outer_joins(:mentions)
-        .where.not(mentions: { user_id: user.id })
-        .where(mentions_everyone: false)
-        .distinct
+      where(
+        "EXISTS (SELECT 1 FROM notifications WHERE notifications.message_id = messages.id
+          AND notifications.user_id = ? AND notifications.activity_type = 'mention')
+         OR messages.mentions_everyone = ?",
+        user_id, true
+      )
     }
   end
 
   def mentionees
     if mentions_everyone?
       room.users
-    elsif persisted?
-      mentioned_users_association
     else
-      # For unsaved messages, parse the body directly and filter to room members only
-      mentioned_users.select { |user| room.user_ids.include?(user.id) }
+      room.users.where(id: mentioned_users.map(&:id))
     end
   end
 
   def mentionee_ids
-    if mentions_everyone?
-      room.user_ids
-    else
-      mentions.pluck(:user_id)
-    end
+    mentionees.pluck(:id)
   end
 
   private
-    def create_mentionees
-      if mentions_everyone_in_body?
-        update_column(:mentions_everyone, true)
-      else
-        sync_mentions_with(mentioned_users)
-      end
-    end
-
-    def sync_mentions_with(users)
-      return if users.empty?
-
-      existing_user_ids = mentions.pluck(:user_id).to_set
-      new_users = users.reject { |user| existing_user_ids.include?(user.id) }
-
-      return if new_users.empty?
-
-      Mention.insert_all(
-        new_users.map { |user| { message_id: id, user_id: user.id } }
-      )
+    def set_mentions_everyone_flag
+      self.mentions_everyone = mentions_everyone_in_body?
     end
 
     def mentions_everyone_in_body?

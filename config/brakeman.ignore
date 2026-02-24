@@ -3,13 +3,13 @@
     {
       "warning_type": "SQL Injection",
       "warning_code": 0,
-      "fingerprint": "8b32d9cb82628d26231aa067b78d652f0b7893c1a0b228920483bc585c6a74aa",
+      "fingerprint": "43ff845d42f2a91f33a9af11328531aec6b0f6980ab7f1864a00f869b360726f",
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/membership.rb",
-      "line": 30,
+      "line": 42,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "select(\"memberships.*\", \"EXISTS (\\n  SELECT 1\\n  FROM messages\\n  WHERE messages.room_id = memberships.room_id\\n    AND messages.created_at >= COALESCE(\\n      memberships.unread_at,\\n      '#{Time.current.utc.iso8601}'\\n    )\\n    AND (\\n      EXISTS (\\n        SELECT 1\\n        FROM rooms\\n        WHERE rooms.id = memberships.room_id\\n          AND rooms.type = 'Rooms::Direct'\\n      )\\n      OR EXISTS (\\n        SELECT 1\\n        FROM mentions\\n        WHERE mentions.message_id = messages.id\\n          AND mentions.user_id = memberships.user_id\\n      )\\n      OR messages.mentions_everyone = true\\n    )\\n) AS preloaded_has_unread_notifications\\n\".squish)",
+      "code": "select(\"memberships.*\", \"EXISTS (\\n  SELECT 1\\n  FROM messages\\n  WHERE messages.room_id = memberships.room_id\\n    AND messages.created_at >= COALESCE(\\n      memberships.unread_at,\\n      '#{Time.current.utc.iso8601}'\\n    )\\n    AND (\\n      EXISTS (\\n        SELECT 1\\n        FROM rooms\\n        WHERE rooms.id = memberships.room_id\\n          AND rooms.type = 'Rooms::Direct'\\n      )\\n      OR EXISTS (\\n        SELECT 1\\n        FROM notifications\\n        WHERE notifications.message_id = messages.id\\n          AND notifications.user_id = memberships.user_id\\n          AND notifications.activity_type = 'mention'\\n      )\\n      OR messages.mentions_everyone = true\\n    )\\n) AS preloaded_has_unread_notifications\\n\".squish)",
       "render_path": null,
       "location": {
         "type": "method",

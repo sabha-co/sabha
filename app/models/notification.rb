@@ -13,7 +13,6 @@ class Notification < ApplicationRecord
       message: [
         :room,
         :rich_text_body,
-        :mentions,
         :threads,
         { creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ] },
         { boosts: { booster: { avatar_attachment: { blob: :variant_records } } } },

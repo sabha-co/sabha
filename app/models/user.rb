@@ -25,7 +25,6 @@ class User < ApplicationRecord
   has_many :reachable_messages, through: :rooms, source: :messages
   has_many :messages, -> { active }, foreign_key: :creator_id, class_name: "Message"
 
-  has_many :mentions, dependent: :delete_all
   has_many :notifications
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
 
@@ -44,9 +43,13 @@ class User < ApplicationRecord
   def mentioning_messages
     Message.active
       .where(room_id: room_ids)
-      .left_joins(:mentions, :room)
-      .where("mentions.user_id = ? OR messages.mentions_everyone = ? OR rooms.type = ?", id, true, "Rooms::Direct")
-      .distinct
+      .where(
+        "EXISTS (SELECT 1 FROM notifications WHERE notifications.message_id = messages.id
+          AND notifications.user_id = ? AND notifications.activity_type = 'mention')
+         OR messages.mentions_everyone = ?
+         OR EXISTS (SELECT 1 FROM rooms WHERE rooms.id = messages.room_id AND rooms.type = 'Rooms::Direct')",
+        id, true
+      )
   end
 
   # Marks rooms with unread activity (mentions, boosts, thread replies) as read.
@@ -370,7 +373,7 @@ class User < ApplicationRecord
                            .update_all(user_id: nil)
       end
 
-      # Delete messages first (they have FKs to boosts, bookmarks, mentions)
+      # Delete messages first (they have FKs to boosts, bookmarks, notifications)
       Message.unscoped.where(creator_id: id).find_each(&:destroy)
 
       # Then delete other records with FKs to users
@@ -379,7 +382,6 @@ class User < ApplicationRecord
       Membership.unscoped.where(user_id: id).delete_all
       Bookmark.where(user_id: id).delete_all
       Boost.where(booster_id: id).delete_all
-      Mention.where(user_id: id).delete_all
       Search.where(user_id: id).delete_all
       Search.where(creator_id: id).delete_all
       Session.where(user_id: id).delete_all

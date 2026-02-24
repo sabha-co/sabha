@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_23_141607) do
+ActiveRecord::Schema[8.2].define(version: 2026_02_23_200000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -151,18 +151,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_23_141607) do
     t.index ["room_id", "user_id", "involvement"], name: "index_memberships_on_room_user_involvement"
     t.index ["room_id", "user_id"], name: "index_memberships_on_room_id_and_user_id", unique: true
     t.index ["room_id"], name: "index_memberships_on_room_id"
-    t.index ["user_id", "starred"], name: "index_memberships_on_user_id_and_starred"
     t.index ["user_id", "unread_at"], name: "index_memberships_on_user_unread_active", where: "active = 1 AND unread_at IS NOT NULL"
     t.index ["user_id"], name: "index_memberships_on_user_id"
-  end
-
-  create_table "mentions", id: false, force: :cascade do |t|
-    t.integer "message_id", null: false
-    t.integer "user_id", null: false
-    t.index ["message_id", "user_id"], name: "index_mentions_on_message_id_and_user_id"
-    t.index ["message_id"], name: "index_mentions_on_message_id"
-    t.index ["user_id", "message_id"], name: "index_mentions_on_user_id_and_message_id"
-    t.index ["user_id"], name: "index_mentions_on_user_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -312,8 +302,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_23_141607) do
   add_foreign_key "bookmarks", "messages"
   add_foreign_key "bookmarks", "users"
   add_foreign_key "boosts", "messages"
-  add_foreign_key "mentions", "messages"
-  add_foreign_key "mentions", "users"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users", column: "creator_id"
   add_foreign_key "notifications", "boosts"

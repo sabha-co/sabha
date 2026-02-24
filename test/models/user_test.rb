@@ -405,7 +405,6 @@ class UserTest < ActiveSupport::TestCase
     # Create associated records across all association types
     room = rooms(:hq)
     message = Message.create!(room: room, creator: user, body: "Hello", client_message_id: SecureRandom.uuid)
-    Mention.insert_all([ { message_id: message.id, user_id: user.id } ])
     Boost.create!(message: messages(:first), booster: user, content: "🎉")
     Bookmark.create!(message: messages(:first), user: user)
     Search.create!(user: user, query: "test")
@@ -420,7 +419,6 @@ class UserTest < ActiveSupport::TestCase
 
     # Verify no orphaned records remain
     assert_not User.exists?(user.id)
-    assert_empty Mention.where(user_id: user.id)
     assert_empty Boost.where(booster_id: user.id)
     assert_empty Bookmark.where(user_id: user.id)
     assert_empty Search.where(user_id: user.id)
@@ -446,4 +444,91 @@ class UserTest < ActiveSupport::TestCase
         client_message_id: SecureRandom.uuid
       )
     end
+
+  # mentioning_messages tests
+
+  test "mentioning_messages returns messages that mention the user" do
+    room = rooms(:pets)
+    david = users(:david)
+
+    message = room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "mentioning_msg_1"
+    )
+
+    assert_includes david.mentioning_messages, message
+  end
+
+  test "mentioning_messages returns @everyone messages" do
+    room = rooms(:pets)
+    david = users(:david)
+
+    everyone_sgid = Everyone.new.attachable_sgid
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
+
+    message = Message.create!(
+      room: room,
+      body: body_html,
+      creator: users(:jason),
+      client_message_id: "mentioning_everyone_1"
+    )
+
+    assert_includes david.mentioning_messages, message
+  end
+
+  test "mentioning_messages returns direct messages" do
+    dm_room = rooms(:david_and_jason)
+    david = users(:david)
+
+    message = dm_room.messages.create!(
+      body: "Hey david",
+      creator: users(:jason),
+      client_message_id: "mentioning_dm_1"
+    )
+
+    assert_includes david.mentioning_messages, message
+  end
+
+  test "mentioning_messages excludes messages not mentioning the user" do
+    room = rooms(:pets)
+    david = users(:david)
+
+    message = room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+      creator: david,
+      client_message_id: "mentioning_exclude_1"
+    )
+
+    assert_not_includes david.mentioning_messages, message
+  end
+
+  test "mentioning_messages excludes inactive messages" do
+    room = rooms(:pets)
+    david = users(:david)
+
+    message = room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "mentioning_inactive_1"
+    )
+
+    message.deactivate!
+
+    assert_not_includes david.mentioning_messages, message
+  end
+
+  test "mentioning_messages only returns messages from rooms user is a member of" do
+    david = users(:david)
+    room = rooms(:pets)
+
+    # Create a message mentioning david in a room david is in
+    msg_in_room = room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "mentioning_in_room"
+    )
+
+    assert_includes david.mentioning_messages, msg_in_room
+  end
 end
