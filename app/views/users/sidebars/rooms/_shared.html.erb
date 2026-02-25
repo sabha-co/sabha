@@ -2,7 +2,8 @@
 <% starred = local_assigns[:membership]&.starred? %>
 <% muted = local_assigns[:membership]&.involved_in_nothing? %>
 <% unread = local_assigns[:membership]&.unread? %>
-<% has_notifications = local_assigns[:membership]&.has_unread_notifications? %>
+<% notifications_count = local_assigns[:membership]&.unread_notifications_count.to_i %>
+<% has_notifications = notifications_count > 0 %>
 
 <div id="<%= dom_id(room, dom_prefix(list_name, :list_node)) %>"
      data-sorted-list-target="item"
@@ -14,6 +15,7 @@
   <%= link_to_room room,
         class: [ "room btn txt-nowrap flex-item-grow", "unread": unread, "badge": has_notifications ] do %>
     <span class="overflow-ellipsis"><%= room_type_indicator(room) %> <%= room_display_name(room) %></span>
+    <% if notifications_count > 0 %><span class="notification-badge"><%= notifications_count %></span><% end %>
     <% if muted %><span class="muted-indicator"><%= icon_tag "bell-off" %></span><% end %>
   <% end %>
 

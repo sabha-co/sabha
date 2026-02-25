@@ -385,6 +385,49 @@ class MembershipTest < ActiveSupport::TestCase
     assert_not preloaded.has_unread_notifications?
   end
 
+  test "unread_notifications_count returns count of mentioned unread messages" do
+    room = rooms(:pets)
+    david_membership = room.memberships.find_by(user: users(:david))
+    david_membership.update!(unread_at: 1.day.ago)
+
+    room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "count_1"
+    )
+    room.messages.create!(
+      body: "<div>Again #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "count_2"
+    )
+
+    preloaded = Membership.where(id: david_membership.id).with_has_unread_notifications.first
+    assert_equal 2, preloaded.unread_notifications_count
+  end
+
+  test "unread_notifications_count zero when no mentions" do
+    room = rooms(:pets)
+    david_membership = room.memberships.find_by(user: users(:david))
+    david_membership.update!(unread_at: 1.day.ago)
+
+    room.messages.create!(
+      body: "<div>No mention</div>",
+      creator: users(:jason),
+      client_message_id: "count_none"
+    )
+
+    preloaded = Membership.where(id: david_membership.id).with_has_unread_notifications.first
+    assert_equal 0, preloaded.unread_notifications_count
+  end
+
+  test "unread_notifications_count zero when read" do
+    room = rooms(:pets)
+    membership = room.memberships.find_by(user: users(:david))
+    membership.update!(unread_at: nil)
+
+    assert_equal 0, membership.unread_notifications_count
+  end
+
   test "receives_mentions? true for mentions and everything involvement" do
     membership = memberships(:david_pets)
 

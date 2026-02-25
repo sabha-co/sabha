@@ -76,7 +76,11 @@ module RoomsHelper
   end
 
   def room_type_indicator(room)
-    "#" unless room.is_a?(Rooms::Direct)
+    if room.is_a?(Rooms::Closed)
+      icon_tag "lock"
+    elsif !room.is_a?(Rooms::Direct)
+      "#"
+    end
   end
 
   def room_display_name(room, for_user: Current.user)

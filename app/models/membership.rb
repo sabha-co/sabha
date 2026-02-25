@@ -33,8 +33,8 @@ class Membership < ApplicationRecord
       "memberships.*",
 
       <<~SQL.squish
-      EXISTS (
-        SELECT 1
+      (
+        SELECT COUNT(DISTINCT messages.id)
         FROM messages
         WHERE messages.room_id = memberships.room_id
           AND messages.created_at >= COALESCE(
@@ -57,7 +57,7 @@ class Membership < ApplicationRecord
             )
             OR messages.mentions_everyone = true
           )
-      ) AS preloaded_has_unread_notifications
+      ) AS preloaded_unread_notifications_count
     SQL
     )
   }
@@ -133,10 +133,18 @@ class Membership < ApplicationRecord
   end
 
   def has_unread_notifications?
-    if attributes.has_key?("preloaded_has_unread_notifications")
-      ActiveRecord::Type::Boolean.new.cast(self[:preloaded_has_unread_notifications])
+    if attributes.has_key?("preloaded_unread_notifications_count")
+      self[:preloaded_unread_notifications_count].to_i > 0
     else
       unread? && unread_notifications.any?
+    end
+  end
+
+  def unread_notifications_count
+    if attributes.has_key?("preloaded_unread_notifications_count")
+      self[:preloaded_unread_notifications_count].to_i
+    else
+      unread? ? unread_notifications.count : 0
     end
   end
 

@@ -503,6 +503,21 @@
   justify-content: start;
   max-inline-size: 100%;
 
+  .notification-badge {
+    margin-left: auto;
+    flex-shrink: 0;
+    background-color: var(--color-negative);
+    color: white;
+    font-size: 0.65em;
+    font-weight: 700;
+    line-height: 1;
+    min-width: 1.3em;
+    padding: 0.2em 0.35em;
+    border-radius: 1em;
+    text-align: center;
+    box-sizing: content-box;
+  }
+
   .muted-indicator {
     margin-left: auto;
     flex-shrink: 0;
