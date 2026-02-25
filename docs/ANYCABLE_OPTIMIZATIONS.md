@@ -110,7 +110,7 @@ end
 | **Priority** | P1 - High |
 | **Impact** | High - eliminates RPC for typing |
 | **Effort** | Medium |
-| **File** | `app/channels/typing_notifications_channel.rb`, `app/frontend/controllers/typing_notifications_controller.js` |
+| **File** | `app/channels/typing_notifications_channel.rb`, `app/javascript/controllers/typing_notifications_controller.js` |
 
 **Problem:**
 
@@ -167,7 +167,7 @@ class TypingNotificationsChannel < RoomChannel
 end
 ```
 
-Client-side (`app/frontend/controllers/typing_notifications_controller.js`):
+Client-side (`app/javascript/controllers/typing_notifications_controller.js`):
 - Added `@anycable/web` client import (via esm.sh in importmap)
 - Attempts AnyCable client connection with whisper support
 - Falls back to standard ActionCable if AnyCable unavailable

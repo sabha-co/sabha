@@ -50,7 +50,7 @@ This starts the Rails server with Solid Queue running in-process. For active CSS
 The `bin/setup` script installs Ruby gems and Node packages (via `pnpm install`), prepares the database, and configures the application.
 If you skip `bin/setup`, install frontend dependencies manually with `pnpm install`.
 
-Tailwind CSS is compiled via `@tailwindcss/cli` from `app/frontend/entrypoints/application.css`, automatically rebuilt during development.
+Tailwind CSS is compiled via `@tailwindcss/cli` from `app/javascript/entrypoints/application.css`, automatically rebuilt during development.
 
 ## Running in production
 

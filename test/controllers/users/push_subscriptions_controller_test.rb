@@ -6,7 +6,9 @@ class Users::PushSubscriptionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create new push subscription" do
-    subscription_params = { "endpoint" => "https://apple", "p256dh_key" => "123", "auth_key" => "456" }
+    stub_dns_resolution("142.250.185.206")
+
+    subscription_params = { "endpoint" => "https://web.push.apple.com/test123", "p256dh_key" => "123", "auth_key" => "456" }
 
     post user_push_subscriptions_url,
       params: { push_subscription: subscription_params }, headers: { "HTTP_USER_AGENT" => "Mozilla/5.0" }

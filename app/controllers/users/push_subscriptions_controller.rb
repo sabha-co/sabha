@@ -12,6 +12,8 @@ class Users::PushSubscriptionsController < ApplicationController
     end
 
     head :ok
+  rescue ActiveRecord::RecordInvalid
+    head :ok
   end
 
   def destroy

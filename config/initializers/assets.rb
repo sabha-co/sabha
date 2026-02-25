@@ -3,8 +3,8 @@
 # Version of your assets, change this if you want to expire all your assets.
 Rails.application.config.assets.version = "1.0"
 
-# app/frontend for Importmap-only JS (Turbo/Stimulus controllers)
-Rails.application.config.assets.paths << Rails.root.join("app", "frontend")
+# app/javascript for Importmap-only JS (Turbo/Stimulus controllers)
+Rails.application.config.assets.paths << Rails.root.join("app", "javascript")
 
 # Tailwind CSS CLI outputs to app/assets/builds/
 Rails.application.config.assets.paths << Rails.root.join("app", "assets", "builds")

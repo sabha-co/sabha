@@ -160,7 +160,7 @@ A single message creation triggers 5 `after_create_commit` callbacks plus multip
 
 ### H9. Memory Leak in busy_on_submit_controller
 **Area:** Frontend
-**File:** `app/frontend/controllers/busy_on_submit_controller.js:21-25`
+**File:** `app/javascript/controllers/busy_on_submit_controller.js:21-25`
 
 `.bind(this)` creates a new function reference in `disconnect()`, so `removeEventListener` never matches the original listener added in `connect()`. This leaks an event listener on every connect/disconnect cycle.
 
@@ -170,7 +170,7 @@ A single message creation triggers 5 `after_create_commit` callbacks plus multip
 
 ### H10. CSS Selector Injection in filter_controller
 **Area:** Frontend
-**File:** `app/frontend/controllers/filter_controller.js:42`
+**File:** `app/javascript/controllers/filter_controller.js:42`
 
 User input is interpolated directly into a CSS attribute selector without sanitization:
 
@@ -184,7 +184,7 @@ this.listTarget.querySelectorAll(`[data-value*=${value.toLowerCase()}]`)
 
 ### H11. Event Listener Leaks in lightbox and PWA Controllers
 **Area:** Frontend
-**Files:** `app/frontend/controllers/lightbox_controller.js:40-48`, `app/frontend/controllers/pwa_install_controller.js:8-11`
+**Files:** `app/javascript/controllers/lightbox_controller.js:40-48`, `app/javascript/controllers/pwa_install_controller.js:8-11`
 
 Both controllers add event listeners in `connect()` but have no `disconnect()` method to remove them.
 
@@ -350,7 +350,7 @@ The room merge feature was removed entirely due to multiple integrity concerns (
 
 ### M16. Stale Async Callbacks in presence_controller
 **Area:** Frontend
-**File:** `app/frontend/controllers/presence_controller.js:47-65`
+**File:** `app/javascript/controllers/presence_controller.js:47-65`
 
 `await delay(5000)` in `#visible` and `#hidden` has no cancellation. If the controller disconnects during the delay, the callback executes on a disconnected controller.
 
@@ -360,7 +360,7 @@ The room merge feature was removed entirely due to multiple integrity concerns (
 
 ### M17. Missing disconnect() in inbox_controller
 **Area:** Frontend
-**File:** `app/frontend/controllers/inbox_controller.js:23-31`
+**File:** `app/javascript/controllers/inbox_controller.js:23-31`
 
 Creates a `MessagePaginator` with `monitor()` in `connect()` but has no `disconnect()`. The paginator's internal `ScrollTracker` (MutationObserver + IntersectionObserver) is never cleaned up.
 

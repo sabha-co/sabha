@@ -1,5 +1,16 @@
-self.addEventListener("push", async (event) => {
-  const data = await event.data.json()
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return
+
+  if (event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-cache' })
+        .catch(() => caches.match(event.request))
+    )
+  }
+})
+
+self.addEventListener("push", (event) => {
+  const data = event.data.json()
   event.waitUntil(Promise.all([ showNotification(data), updateBadgeCount(data.options) ]))
 })
 
@@ -8,11 +19,7 @@ async function showNotification({ title, options }) {
 }
 
 async function updateBadgeCount({ data: { badge } }) {
-  if (badge && badge > 0) {
-    return self.navigator.setAppBadge?.(badge)
-  } else {
-    return self.navigator.clearAppBadge?.()
-  }
+  return self.navigator.setAppBadge?.(badge || 0)
 }
 
 self.addEventListener("notificationclick", (event) => {

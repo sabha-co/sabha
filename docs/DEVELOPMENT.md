@@ -270,7 +270,7 @@ bin/rails db:migrate
 bin/rails generate stimulus controller_name
 ```
 
-Controllers go in `app/frontend/controllers/` and are loaded via importmap.
+Controllers go in `app/javascript/controllers/` and are loaded via importmap.
 
 ### Add a background job
 

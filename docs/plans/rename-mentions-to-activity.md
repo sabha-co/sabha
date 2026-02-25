@@ -22,7 +22,7 @@ The mark-as-read button on the Mentions page couldn't clear DMs because the old 
 - `app/channels/inbox_mentions_channel.rb` → `app/channels/inbox_activity_channel.rb`
 - `app/controllers/inboxes/mentions_controller.rb` → `app/controllers/inboxes/activity_controller.rb`
 - `app/views/inboxes/mentions.html.erb` → `app/views/inboxes/activity.html.erb`
-- `app/frontend/controllers/mentions_indicator_controller.js` → `app/frontend/controllers/activity_indicator_controller.js`
+- `app/javascript/controllers/mentions_indicator_controller.js` → `app/javascript/controllers/activity_indicator_controller.js`
 
 ### Modified
 
@@ -73,7 +73,7 @@ The mark-as-read button on the Mentions page couldn't clear DMs because the old 
 - Same changes as above
 
 #### JavaScript & CSS
-**`app/frontend/controllers/activity_indicator_controller.js`**
+**`app/javascript/controllers/activity_indicator_controller.js`**
 - Updated CSS class: `has-unread-mentions` → `has-unread-activity`
 
 **`app/assets/stylesheets/application/sidebar.css`**

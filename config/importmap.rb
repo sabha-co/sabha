@@ -7,15 +7,15 @@ pin "@rails/actioncable", to: "actioncable.esm.js"
 pin "@rails/activestorage", to: "activestorage.esm.js"
 pin "@anycable/web", to: "https://esm.sh/@anycable/web@1.1.0"
 pin "@rails/request.js", to: "@rails--request.js" # @0.0.8
-pin "trix", to: "trix.esm.min.js" # @2.0.10
+pin "trix" # @2.1.16
 pin "@rails/actiontext", to: "actiontext.js"
 pin "highlight.js", to: "highlight.js/core.js"
 pin "@hotwired/hotwire-native-bridge", to: "@hotwired--hotwire-native-bridge.js" # @1.0.0
 
-pin_all_from "app/frontend/initializers", under: "initializers"
-pin_all_from "app/frontend/lib", under: "lib"
-pin_all_from "app/frontend/channels", under: "channels"
-pin_all_from "app/frontend/controllers", under: "controllers"
-pin_all_from "app/frontend/helpers", under: "helpers"
-pin_all_from "app/frontend/models", under: "models"
+pin_all_from "app/javascript/initializers", under: "initializers"
+pin_all_from "app/javascript/lib", under: "lib"
+pin_all_from "app/javascript/channels", under: "channels"
+pin_all_from "app/javascript/controllers", under: "controllers"
+pin_all_from "app/javascript/helpers", under: "helpers"
+pin_all_from "app/javascript/models", under: "models"
 pin_all_from "vendor/javascript/languages", under: "languages"

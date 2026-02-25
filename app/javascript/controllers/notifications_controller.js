@@ -6,8 +6,8 @@ import { getCookie, setCookie } from "lib/cookie"
 
 export default class extends Controller {
   static values = { subscriptionsUrl: String }
-  static targets = [ "notAllowedNotice", "bell", "details" ]
-  static classes = [ "attention" ]
+  static targets = ["notAllowedNotice", "bell", "details"]
+  static classes = ["attention"]
 
   async connect() {
     if (!pageIsTurboPreview()) {
@@ -38,8 +38,8 @@ export default class extends Controller {
     if (this.#allowed) {
       const registration = await this.#serviceWorkerRegistration || await this.#registerServiceWorker()
 
-      switch(Notification.permission) {
-        case "denied":  { this.#revealNotAllowedNotice(); break }
+      switch (Notification.permission) {
+        case "denied": { this.#revealNotAllowedNotice(); break }
         case "granted": { this.#subscribe(registration); break }
         case "default": { this.#requestPermissionAndSubscribe(registration) }
       }
@@ -69,8 +69,9 @@ export default class extends Controller {
     return navigator.serviceWorker.getRegistration()
   }
 
-  #registerServiceWorker() {
-    return navigator.serviceWorker.register("/service-worker.js", { scope: "/" })
+  async #registerServiceWorker() {
+    await navigator.serviceWorker.register("/service-worker.js", { scope: "/" })
+    return navigator.serviceWorker.ready
   }
 
   #revealNotAllowedNotice() {
@@ -89,7 +90,7 @@ export default class extends Controller {
   #showNotificationBell() {
     // Show the bell and the alert icon
     this.bellTarget.querySelectorAll(".icon").forEach(icon => icon.toggleAttribute("hidden"))
-    
+
     // Add the pulsing effect if it's the first run
     if (!this.#hasSeenFirstRun) {
       this.bellTarget.classList.add(this.attentionClass)
@@ -116,6 +117,10 @@ export default class extends Controller {
         this.#syncPushSubscription(subscription)
         this.dispatch("ready")
         this.#hideNotificationContainer()
+      })
+      .catch(error => {
+        console.warn("Push subscription failed:", error.message, "— HTTPS is required for push notifications.")
+        this.#revealNotAllowedNotice()
       })
   }
 

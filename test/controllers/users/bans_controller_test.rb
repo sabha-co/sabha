@@ -64,7 +64,8 @@ class Users::BansControllerTest < ActionDispatch::IntegrationTest
   test "create deletes push subscriptions" do
     user = users(:kevin)
     user.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")
-    user.push_subscriptions.create!(endpoint: "https://example.com", p256dh_key: "key", auth_key: "auth")
+    stub_dns_resolution("142.250.185.206")
+    user.push_subscriptions.create!(endpoint: "https://fcm.googleapis.com/fcm/send/test", p256dh_key: "key", auth_key: "auth")
 
     assert user.push_subscriptions.any?
 

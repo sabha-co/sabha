@@ -264,7 +264,7 @@ See `docs/multi-tenant/` for detailed SaaS architecture documentation (internal 
 ### Tailwind CSS
 ```bash
 # Tailwind CSS is compiled by @tailwindcss/cli
-# Source: app/frontend/entrypoints/application.css
+# Source: app/javascript/entrypoints/application.css
 # Output: app/assets/builds/tailwind.css
 pnpm run build:css         # One-off production build
 pnpm run build:css:watch   # Watch mode for active CSS development
@@ -332,7 +332,7 @@ set -a && source .env.multitenant && set +a && kamal deploy -d multitenant
 
 ### Directory Structure
 ```
-app/frontend/
+app/javascript/
 ├── entrypoints/
 │   └── application.css     # Tailwind v4 source (input for @tailwindcss/cli)
 └── controllers/            # Stimulus controllers (loaded via importmap)
@@ -472,7 +472,7 @@ saas/test/               # SaaS tests (SAAS=true bin/rails test saas/test/)
 ### Adding ActionCable Channel
 1. Generate: `bin/rails generate channel FeatureName`
 2. Implement `#subscribed` and `#receive` in channel class
-3. Create JavaScript subscription in `app/frontend/entrypoints/application.js`
+3. Create JavaScript subscription in `app/javascript/entrypoints/application.js`
 4. Broadcast from model/controller: `ActionCable.server.broadcast "channel_name", data`
 
 ### Customizing Branding

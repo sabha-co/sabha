@@ -204,7 +204,7 @@ bin/dev --anycable
 bin/rails s
 
 # Terminal 2: Tailwind CSS watcher
-pnpm exec tailwindcss -i app/frontend/entrypoints/application.css -o app/assets/builds/tailwind.css --watch
+pnpm exec tailwindcss -i app/javascript/entrypoints/application.css -o app/assets/builds/tailwind.css --watch
 
 # Terminal 3: AnyCable-Go
 anycable-go --port=8080 \

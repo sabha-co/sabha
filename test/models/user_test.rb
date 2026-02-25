@@ -411,7 +411,8 @@ class UserTest < ActiveSupport::TestCase
     user.sessions.create!(ip_address: "127.0.0.1", user_agent: "Test")
     user.auth_tokens.create!(expires_at: 1.hour.from_now)
     user.block!(users(:jason))
-    Push::Subscription.create!(user: user, endpoint: "https://example.com/push", p256dh_key: "key", auth_key: "auth")
+    stub_dns_resolution("142.250.185.206")
+    Push::Subscription.create!(user: user, endpoint: "https://fcm.googleapis.com/fcm/send/test", p256dh_key: "key", auth_key: "auth")
 
     assert_nothing_raised do
       user.destroy!

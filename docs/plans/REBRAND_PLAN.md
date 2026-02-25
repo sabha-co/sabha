@@ -87,7 +87,7 @@ All hardcoded "Campfire" strings in views:
 - `app/views/layouts/application.html.erb` — logo alt text, image reference
 - `app/controllers/users/push_subscriptions/test_notifications_controller.rb` — "Campfire Test" → "Sabha Test"
 - `app/helpers/translations_helper.rb` — 6-language translations
-- `app/frontend/controllers/web_share_controller.js` — shared file prefix
+- `app/javascript/controllers/web_share_controller.js` — shared file prefix
 - `app/models/first_run.rb` — comments and log messages
 - `public/502.html` — loading page title
 - `app/assets/images/campfire-icon.png` — rename or replace with Sabha logo

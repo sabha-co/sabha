@@ -676,7 +676,7 @@ SAAS=true BUNDLE_GEMFILE=Gemfile.saas bin/rails test saas/test/
 - `saas/app/controllers/saas/workspace_settings_controller.rb` - Workspace leave/delete
 - `saas/app/views/saas/settings/show.html.erb` - Global settings view
 - `saas/app/views/saas/workspace_settings/show.html.erb` - Workspace settings view
-- `app/frontend/controllers/confirm_delete_controller.js` - Type-to-confirm Stimulus controller
+- `app/javascript/controllers/confirm_delete_controller.js` - Type-to-confirm Stimulus controller
 - `saas/test/controllers/saas/settings_controller_test.rb` - Settings tests
 - `saas/test/controllers/saas/workspace_settings_controller_test.rb` - Workspace settings tests
 

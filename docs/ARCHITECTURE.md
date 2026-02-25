@@ -354,7 +354,7 @@ Tailwind CSS v4 is compiled via `@tailwindcss/cli` (pnpm). All JavaScript loads 
 ### Directory Layout
 
 ```
-app/frontend/
+app/javascript/
 ├── entrypoints/
 │   └── application.css       # Tailwind v4 source (input for @tailwindcss/cli)
 ├── application.js            # Main JS entry (Importmap): Turbo, Trix, Stimulus

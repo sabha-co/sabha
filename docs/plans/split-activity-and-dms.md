@@ -222,7 +222,7 @@ when "DMs"
 
 ### 5. JavaScript
 
-**`app/frontend/controllers/unread_indicator_controller.js`** - NEW FILE (unified controller)
+**`app/javascript/controllers/unread_indicator_controller.js`** - NEW FILE (unified controller)
 
 Instead of separate controllers for Activity and DMs indicators, a single generic controller handles both via configuration:
 
@@ -274,7 +274,7 @@ export default class extends Controller {
 }
 ```
 
-**`app/frontend/controllers/activity_indicator_controller.js`** - DELETED (replaced by unified controller)
+**`app/javascript/controllers/activity_indicator_controller.js`** - DELETED (replaced by unified controller)
 
 ### 6. CSS
 
