@@ -16,6 +16,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      attestations: write
+      id-token: write
 
     steps:
       - name: Check out the repo
@@ -54,3 +56,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          provenance: false
