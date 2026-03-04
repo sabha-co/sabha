@@ -1,13 +1,11 @@
 <div id="<%= dom_id(message, :bookmarking) %>">
   <% if message.bookmarked_by_current_user? %>
-    <%= button_to message_bookmarks_path(message), method: :delete, class: "btn message__action-btn full-width" do %>
+    <%= button_to message_bookmark_path(message), method: :delete, class: "btn message__action-btn full-width" do %>
       <span>Remove bookmark</span>
     <% end %>
   <% else %>
-    <%= form_with model: [ message, Bookmark.new ] do |form| %>
-      <%= form.button type: "submit", title: "Bookmark", class: "btn message__action-btn full-width" do %>
-        <span>Bookmark</span>
-      <% end %>
+    <%= button_to message_bookmark_path(message), class: "btn message__action-btn full-width" do %>
+      <span>Bookmark</span>
     <% end %>
   <% end %>
 </div>

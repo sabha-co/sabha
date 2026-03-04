@@ -428,6 +428,11 @@
   flex-shrink: 0;
 }
 
+.message__edited {
+  opacity: 0.5;
+  font-size: 0.8rem;
+}
+
 .message__body {
   column-gap: var(--inline-space-half);
   display: flex;

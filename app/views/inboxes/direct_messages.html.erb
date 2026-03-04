@@ -1,6 +1,7 @@
 <% @page_title = "Direct Messages" %>
 <%= render layout: "inboxes/nav", locals: { title: tag.span("Direct Messages", class: "hide-on-mobile") + tag.span("DMs", class: "hide-on-desktop") } do %>
-  <%= button_to clear_inbox_path(scope: "direct_messages"), class: "btn", title: "Mark all DMs as read" do %>
+  <%= button_to clear_inbox_path(scope: "direct_messages"), class: "btn", title: "Mark all DMs as read",
+      data: { turbo_confirm: "Mark all DMs as read?" } do %>
     <%= icon_tag "check" %>
   <% end %>
 <% end %>

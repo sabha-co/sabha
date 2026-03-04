@@ -52,7 +52,7 @@ Rails.application.routes.draw do
   resource :account do
     scope module: "accounts" do
       resources :users do
-        patch :reactivate, on: :member
+        resource :reactivation, only: :create, module: "users"
       end
       resources :badges, only: [ :create, :update, :destroy ]
 
@@ -73,10 +73,6 @@ Rails.application.routes.draw do
   end
 
   resources :qr_code, only: :show
-
-  scope module: :users do
-    resource :preference, only: [ :update ]
-  end
 
   resources :users, only: :show do
     scope module: "users" do
@@ -105,11 +101,7 @@ Rails.application.routes.draw do
         end
       end
     end
-    resources :blocks, only: [ :create ] do
-      collection do
-        delete "", to: "blocks#destroy"
-      end
-    end
+    resource :block, only: [ :create, :destroy ]
   end
 
   namespace :autocompletable do
@@ -167,11 +159,7 @@ Rails.application.routes.draw do
   resources :messages do
     scope module: "messages" do
       resources :boosts
-      resources :bookmarks, only: %i[ create ] do
-        collection do
-          delete "", to: "bookmarks#destroy"
-        end
-      end
+      resource :bookmark, only: %i[ create destroy ]
     end
   end
   scope module: "messages" do

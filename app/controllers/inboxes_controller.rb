@@ -50,6 +50,7 @@ class InboxesController < ApplicationController
     when "direct_messages"
       Current.user.mark_direct_messages_as_read(session[:inbox_last_loaded_dms_created_at])
     else
+      session[:inbox_activity_cleared_at] = session[:inbox_last_loaded_activity_created_at]
       Current.user.mark_inbox_as_read(
         messages_loaded_at: session[:inbox_last_loaded_message_created_at],
         notifications_loaded_at: session[:inbox_last_loaded_notification_created_at],

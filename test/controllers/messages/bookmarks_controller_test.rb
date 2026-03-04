@@ -15,7 +15,7 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
 
   test "create creates bookmark for current user" do
     assert_difference -> { Bookmark.count }, 1 do
-      post message_bookmarks_url(@message), as: :turbo_stream
+      post message_bookmark_url(@message), as: :turbo_stream
     end
 
     bookmark = Bookmark.last
@@ -27,12 +27,12 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
     Bookmark.create!(user: @david, message: @message)
 
     assert_no_difference -> { Bookmark.count } do
-      post message_bookmarks_url(@message), as: :turbo_stream
+      post message_bookmark_url(@message), as: :turbo_stream
     end
   end
 
   test "create returns turbo stream response" do
-    post message_bookmarks_url(@message), as: :turbo_stream
+    post message_bookmark_url(@message), as: :turbo_stream
     assert_response :success
     assert_match "turbo-stream", response.content_type
   end
@@ -48,7 +48,7 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
     )
 
     assert_raises(ActiveRecord::RecordNotFound) do
-      post message_bookmarks_url(secret_message), as: :turbo_stream
+      post message_bookmark_url(secret_message), as: :turbo_stream
     end
   end
 
@@ -60,7 +60,7 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
     Bookmark.create!(user: @david, message: @message)
 
     assert_difference -> { Bookmark.count }, -1 do
-      delete message_bookmarks_url(@message), as: :turbo_stream
+      delete message_bookmark_url(@message), as: :turbo_stream
     end
   end
 
@@ -69,7 +69,7 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
     Bookmark.create!(user: @david, message: @message)
 
     assert_difference -> { Bookmark.count }, -1 do
-      delete message_bookmarks_url(@message), as: :turbo_stream
+      delete message_bookmark_url(@message), as: :turbo_stream
     end
 
     assert Bookmark.exists?(jason_bookmark.id), "Other user's bookmark should still exist"
@@ -78,7 +78,7 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
   test "destroy handles non-existent bookmark gracefully" do
     # No bookmark exists
     assert_nothing_raised do
-      delete message_bookmarks_url(@message), as: :turbo_stream
+      delete message_bookmark_url(@message), as: :turbo_stream
     end
     assert_response :success
   end
@@ -86,7 +86,7 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
   test "destroy returns turbo stream response" do
     Bookmark.create!(user: @david, message: @message)
 
-    delete message_bookmarks_url(@message), as: :turbo_stream
+    delete message_bookmark_url(@message), as: :turbo_stream
     assert_response :success
     assert_match "turbo-stream", response.content_type
   end
@@ -101,7 +101,7 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
     )
 
     assert_raises(ActiveRecord::RecordNotFound) do
-      delete message_bookmarks_url(secret_message), as: :turbo_stream
+      delete message_bookmark_url(secret_message), as: :turbo_stream
     end
   end
 
@@ -114,11 +114,11 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
     assert_nil Bookmark.find_by(user: @david, message: @message)
 
     # Create bookmark
-    post message_bookmarks_url(@message), as: :turbo_stream
+    post message_bookmark_url(@message), as: :turbo_stream
     assert Bookmark.exists?(user: @david, message: @message)
 
     # Remove bookmark
-    delete message_bookmarks_url(@message), as: :turbo_stream
+    delete message_bookmark_url(@message), as: :turbo_stream
     assert_not Bookmark.exists?(user: @david, message: @message)
   end
 end

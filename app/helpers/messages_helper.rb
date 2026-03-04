@@ -101,7 +101,9 @@ module MessagesHelper
   end
 
   def message_timestamp(message, style: :time, **attributes)
-    local_datetime_tag message.created_at, style: style, **attributes
+    timestamp = local_datetime_tag message.created_at, style: style, **attributes
+    timestamp += tag.span("(edited)", class: "message__edited") if message.edited?
+    timestamp
   end
 
   def message_presentation(message)

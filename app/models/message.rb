@@ -83,6 +83,10 @@ class Message < ApplicationRecord
     [ client_message_id ]
   end
 
+  def edited?
+    updated_at > created_at + 30.seconds
+  end
+
   def content_type
     case
     when attachment?    then "attachment"

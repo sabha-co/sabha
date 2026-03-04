@@ -1,8 +1,8 @@
 class Accounts::UsersController < ApplicationController
   include NotifyBots
 
-  before_action :ensure_can_administer, only: %i[update destroy reactivate]
-  before_action :set_user, only: %i[update destroy reactivate]
+  before_action :ensure_can_administer, only: %i[update destroy]
+  before_action :set_user, only: %i[update destroy]
 
   def index
     @badges = Badge.ordered.includes(:users).to_a if Current.user.can_administer?
@@ -32,14 +32,11 @@ class Accounts::UsersController < ApplicationController
   def destroy
     @user.deactivate
     deliver_webhooks_to_bots(@user, :deleted)
-    redirect_to account_users_url
-  end
 
-  def reactivate
-    if @user.reactivatable_by?(Current.user)
-      @user.reactivate
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.remove(@user) }
+      format.html { redirect_to account_users_url }
     end
-    redirect_to account_users_url
   end
 
   private

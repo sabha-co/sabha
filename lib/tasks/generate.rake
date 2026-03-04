@@ -32,7 +32,6 @@ module DemoHelpers
   def clean_database
     Boost.delete_all
     Bookmark.delete_all
-    Mention.delete_all
     Block.delete_all
     ActionText::RichText.delete_all
     Message.where(room_id: Rooms::Thread.select(:id)).delete_all

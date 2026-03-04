@@ -38,7 +38,7 @@
       <% end %>
 
       <% if user.reactivatable_by?(Current.user) %>
-        <%= button_to reactivate_account_user_path(user), method: :patch, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
+        <%= button_to account_user_reactivation_path(user), method: :post, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
               turbo_confirm: "Reactivate #{user.name}? They will be able to log in again." } do %>
           Reactivate
         <% end %>

@@ -1,6 +1,6 @@
 <% if user %>
   <% is_blocked = Current.user.blocked?(user) %>
-  <%= form_with url: user_blocks_path(user, return_to: request.path),
+  <%= form_with url: user_block_path(user, return_to: request.path),
                 method: is_blocked ? :delete : :post,
                 data: { controller: "form" },
                 class: "flex align-center gap pad-block" do %>

@@ -6,7 +6,8 @@
     <%= icon_tag "eye" %>
     <span class="for-screen-reader"><%= @unreads_active ? "Show all" : "Unreads" %></span>
   <% end %>
-  <%= button_to clear_inbox_path(scope: "activity"), class: "btn", title: "Mark activity as read" do %>
+  <%= button_to clear_inbox_path(scope: "activity"), class: "btn", title: "Mark activity as read",
+      data: { turbo_confirm: "Mark all activity as read?" } do %>
     <%= icon_tag "check-circle" %>
   <% end %>
 <% end %>

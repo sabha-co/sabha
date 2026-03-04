@@ -20,7 +20,7 @@ Sabha is a fork of Once Campfire with 59 additional features. This document list
 |---|---------|--------|-------|
 | 1 | **Threading** — Reply chains with `Rooms::Thread` sub-rooms, thread panel sidebar, parent message context | Keep | |
 | 2 | **Message Bookmarks** — Save/unsave messages, dedicated inbox tab | Review | |
-| 3 | **Soft Deletion** — Messages/rooms/memberships deactivated not destroyed, preserved in DB | Refine | Add admin UI to restore deleted messages/rooms |
+| 3 | **Soft Deletion** — Messages/rooms/memberships deactivated not destroyed, preserved in DB | Keep | Add admin UI to restore deleted messages/rooms |
 | 4 | **Message Unreads** — Mark messages/threads as unread manually | Keep | |
 | 5 | **Boost Groups** — Boost reactions show contributor avatars, grouped display | Keep | |
 | 6 | **@everyone Mentions** — Admin-only broadcast mentions in open rooms | Review | |
@@ -52,7 +52,7 @@ Sabha is a fork of Once Campfire with 59 additional features. This document list
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 20 | **Sidebar Overhaul** — Vertical right-side toolbar with organized sections (Favorites, All Rooms, DMs) | Refine | |
+| 20 | **Sidebar Overhaul** — Vertical right-side toolbar with organized sections (Favorites, All Rooms, DMs) | Keep | Star visibility, focus indicators, merged duplicate CSS |
 | 21 | **Quick Access Tools** — Activity, DMs, Threads, Bookmarks, Bell, Profile links in sidebar | Review | |
 | 22 | **Unread Badges** — Dynamic unread indicators on rooms and sidebar sections | Keep | |
 | 23 | **Return-to-Latest Button** — Pulsing scroll-to-bottom when scrolled away | Keep | |
@@ -71,7 +71,7 @@ Sabha is a fork of Once Campfire with 59 additional features. This document list
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 29 | **User Blocking** — Block/unblock users | Review | |
+| 29 | **User Blocking** — Block/unblock users | Keep | RESTful route fix, system messages on block/unblock |
 | 30 | **User Badges** — Achievement/role badges with admin assignment | Review | |
 | 31 | **DiceBear Avatars** — Auto-generated avatars for users without photos | Keep | |
 | 32 | **User Preferences** — Notification and display preferences | Review | |

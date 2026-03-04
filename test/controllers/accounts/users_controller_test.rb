@@ -155,7 +155,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert user.reload.deactivated?
 
-    patch reactivate_account_user_url(user)
+    post account_user_reactivation_url(user)
 
     assert_redirected_to account_users_url
     assert user.reload.active?
@@ -167,7 +167,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     user = users(:jz)
     user.deactivate
 
-    patch reactivate_account_user_url(user)
+    post account_user_reactivation_url(user)
 
     assert_redirected_to root_path
     assert user.reload.deactivated?
@@ -180,7 +180,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert user.reload.banned?
 
-    patch reactivate_account_user_url(user)
+    post account_user_reactivation_url(user)
 
     assert_redirected_to account_users_url
     assert user.reload.banned?, "Banned user should not be reactivated via reactivate action"
@@ -191,7 +191,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert user.active?
 
-    patch reactivate_account_user_url(user)
+    post account_user_reactivation_url(user)
 
     assert_redirected_to account_users_url
     assert user.reload.active?

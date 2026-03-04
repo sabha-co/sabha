@@ -2,7 +2,9 @@ class User < ApplicationRecord
   DEFAULT_NAME = "New Member"
   MINIMUM_PASSWORD_LENGTH = 8
 
-  include Avatar, Bannable, Bot, DicebearAvatar, Mentionable, Role, Transferable, Preferences
+  include Avatar, Bannable, Bot, DicebearAvatar, Mentionable, Role, Transferable
+
+  serialize :preferences, coder: JSON
 
   # SaaS mode: Link to GlobalIdentity via WorkspaceMembership
   # In single-tenant mode, workspace_membership_id is nil
@@ -270,11 +272,13 @@ class User < ApplicationRecord
   end
 
   def block!(other_user)
-    blocks_given.find_or_create_by!(blocked: other_user)
+    block = blocks_given.find_or_create_by!(blocked: other_user)
+    dm_room_with(other_user)&.post_system_message(event: "user_blocked", body: "blocked #{other_user.name}", actor: self) if block.previously_new_record?
   end
 
   def unblock!(other_user)
-    blocks_given.where(blocked: other_user).destroy_all
+    count = blocks_given.where(blocked: other_user).delete_all
+    dm_room_with(other_user)&.post_system_message(event: "user_unblocked", body: "unblocked #{other_user.name}", actor: self) if count > 0
   end
 
   def verified?
@@ -347,6 +351,10 @@ class User < ApplicationRecord
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
         thread.memberships.grant_to(self)
       end
+    end
+
+    def dm_room_with(other_user)
+      Rooms::Direct.find_by(members_hash: Rooms::Direct.members_hash_for(User.where(id: [ id, other_user.id ])))
     end
 
     def close_remote_connections(reconnect: false)

@@ -1,7 +1,7 @@
 <% indent = [local_assigns[:indent].to_i, 3].min %>
 <li class="flex align-center gap margin-none min-width membership-item" style="padding-left: calc(var(--block-space) * <%= indent %>)">
   <%= link_to room_path(membership.room), class: "overflow-ellipsis fill-shade txt-primary txt-undecorated" do %>
-    <%= room_display_name(membership.room) %>
+    <strong><%= room_display_name(membership.room) %></strong>
   <% end %>
 
   <hr class="separator" aria-hidden="true">
