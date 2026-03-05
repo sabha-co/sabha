@@ -10,9 +10,12 @@
 
     <%= form_with url: workspaces_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
       <fieldset class="flex flex-column gap center-block pad">
-        <legend class="txt-large txt-align-center"><strong>You're not part of any workspace yet</strong></legend>
-
-        <p class="txt-muted txt-medium txt-align-center">Create your first workspace to get started.</p>
+        <% if current_global_identity.active_workspaces_recent_first.any? %>
+          <legend class="txt-large txt-align-center"><strong>Create a new workspace</strong></legend>
+        <% else %>
+          <legend class="txt-large txt-align-center"><strong>You're not part of any workspace yet</strong></legend>
+          <p class="txt-muted txt-medium txt-align-center">Create your first workspace to get started.</p>
+        <% end %>
 
         <label class="flex align-center gap input input--actor txt-large">
           <%= form.text_field :name, required: true, class: "input", autofocus: true, placeholder: "Workspace name" %>

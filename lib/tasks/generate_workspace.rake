@@ -434,7 +434,7 @@ namespace :generate do
         puts "Done! /#{workspace.external_id}/"
         puts "   Users: #{User.count} | Rooms: #{Room.where(type: %w[Rooms::Open Rooms::Closed]).count} | DMs: #{Rooms::Direct.count} | Threads: #{Rooms::Thread.count}"
         puts "   Messages: #{Message.count} | Boosts: #{Boost.count} | Bookmarks: #{Bookmark.count}"
-        puts "   Login: #{email} / password"
+        puts "   Login: #{email}#{" / password" unless Sabha.saas?}"
       end
     end
   end
