@@ -47,6 +47,8 @@ module TimeHelpers
 end
 include TimeHelpers
 
+puts "\n--- Seeding..."
+
 if Sabha.saas?
   seed "saas"
 else

@@ -95,13 +95,8 @@ After implementing changes, run the relevant test suite to verify. For SaaS chan
 
 ### Database Migrations
 ```bash
-bin/rails db:migrate
-```
-
-IMPORTANT: After `db:migrate`, ALWAYS also run:
-```bash
-SAAS=true bin/rails db:migrate:primary    # Tenanted databases
-SAAS=true bin/rails db:migrate:untenanted # Only if migration touches untenanted tables
+bin/rails db:migrate                       # Self-hosted only
+SAAS=true bin/rails db:migrate:primary     # SaaS (auto-chains untenanted)
 ```
 
 ### SaaS Mode
