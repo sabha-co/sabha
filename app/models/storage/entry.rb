@@ -16,7 +16,9 @@ class Storage::Entry < ApplicationRecord
       user_id: Current.user&.id,
       request_id: Current.request&.request_id
 
-    Account.sole.materialize_storage_later
+    # Current.account is memoized per-request; falls back to Account.sole
+    # in background jobs where Current isn't set (e.g. reconciliation).
+    (Current.account || Account.sole).materialize_storage_later
 
     entry
   end
