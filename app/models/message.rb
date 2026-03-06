@@ -101,6 +101,8 @@ class Message < ApplicationRecord
     end
   end
 
+  def storage_tracked_record = self
+
   private
     # Bots and API consumers don't generate client-side IDs for Turbo dedup
     def set_default_client_message_id
@@ -215,7 +217,8 @@ class Message < ApplicationRecord
     end
 
     def destroy_all_associated_records
-      # Delete all boosts, bookmarks, and notifications to satisfy FK constraints
+      # Delete all boosts, bookmarks, and notifications to satisfy FK constraints.
+      # Storage entries are intentionally preserved as an audit log (recordable is optional).
       Notification.where(message_id: id).delete_all
       Boost.where(message_id: id).delete_all
       Bookmark.where(message_id: id).delete_all

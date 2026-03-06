@@ -1,5 +1,5 @@
 class Account < ApplicationRecord
-  include Joinable
+  include Joinable, Account::Storage
 
   VALID_AUTH_METHODS = %w[password otp].freeze
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_23_200000) do
+ActiveRecord::Schema[8.2].define(version: 2026_03_06_100000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -241,6 +241,30 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_23_200000) do
     t.integer "user_id", null: false
     t.index ["token"], name: "index_sessions_on_token", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "storage_entries", force: :cascade do |t|
+    t.integer "blob_id"
+    t.datetime "created_at", null: false
+    t.bigint "delta", null: false
+    t.string "operation", null: false
+    t.integer "recordable_id"
+    t.string "recordable_type"
+    t.string "request_id"
+    t.integer "user_id"
+    t.index ["blob_id"], name: "index_storage_entries_on_blob_id"
+    t.index ["recordable_type", "recordable_id"], name: "index_storage_entries_on_recordable"
+    t.index ["user_id"], name: "index_storage_entries_on_user_id"
+  end
+
+  create_table "storage_totals", force: :cascade do |t|
+    t.bigint "bytes_stored", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.bigint "last_entry_id"
+    t.integer "owner_id", null: false
+    t.string "owner_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id"], name: "index_storage_totals_on_owner", unique: true
   end
 
   create_table "users", force: :cascade do |t|
