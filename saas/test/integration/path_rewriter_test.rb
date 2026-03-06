@@ -29,8 +29,7 @@ class PathRewriterTest < ActionDispatch::IntegrationTest
   test "raises TenantDoesNotExistError for non-existent workspace" do
     sign_in_global_identity(global_identities(:alice))
 
-    # Try to access a workspace that doesn't exist
-    # The gem's TenantSelector raises TenantDoesNotExistError
+    # Non-existent workspace ID → TenantDoesNotExistError (404 in production via rescue_responses)
     assert_raises(ActiveRecord::Tenanted::TenantDoesNotExistError) do
       get "/9999999/"
     end
