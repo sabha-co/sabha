@@ -55,7 +55,7 @@ module Message::Attachment
     end
 
     def within_storage_limit
-      if Account.sole.exceeding_storage_limit?
+      if Current.account&.exceeding_storage_limit?
         errors.add(:attachment, "cannot be uploaded — workspace storage limit reached")
       end
     end

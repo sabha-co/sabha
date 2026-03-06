@@ -13,7 +13,7 @@
 
   <%# Storage Usage Section (Admin only) %>
   <% if @is_admin %>
-    <% account = Account.sole %>
+    <% account = Current.account %>
     <fieldset class="flex flex-column gap center-block pad max-inline-size">
       <legend class="txt-medium txt-align-center"><strong>Storage</strong></legend>
 

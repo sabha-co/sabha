@@ -34,6 +34,9 @@ module Storage::AttachmentTracking
       @storage_snapshot = { recordable: storage_tracked_record }
     end
 
+    # Only tracks direct attachments on models that define storage_tracked_record (Message).
+    # ActionText embeds (rich text inline images) are NOT tracked in the ledger — they're
+    # insignificant in a chat app and caught by daily reconciliation via calculate_real_storage_bytes.
     def storage_tracked_record
       record.try(:storage_tracked_record)
     end

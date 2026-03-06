@@ -1,4 +1,4 @@
-<% if Sabha.saas? && Current.user && Account.exists? && Account.sole.exceeding_storage_limit? %>
+<% if Sabha.saas? && Current.user && Current.account&.exceeding_storage_limit? %>
   <div class="banner banner--warning" role="alert">
     <span>This workspace has reached its 1 GB storage limit. File uploads are disabled.</span>
     <% if Current.user.administrator? %>

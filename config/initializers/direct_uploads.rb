@@ -13,7 +13,7 @@ module ActiveStorageDirectUploadsControllerAuthentication
       end
 
       def check_storage_limit
-        if Sabha.saas? && Account.sole.exceeding_storage_limit?
+        if Sabha.saas? && Current.account&.exceeding_storage_limit?
           head :unprocessable_entity
         end
       end
