@@ -13,7 +13,7 @@ class Account::JoinCode < ApplicationRecord
 
   before_validation :generate_code, on: :create, if: -> { code.blank? }
   before_validation :set_default_expiration, on: :create, if: :personal?
-  before_validation :set_account_from_current, on: :create, if: -> { account_id.blank? }
+  before_validation :set_default_account, on: :create, if: -> { account_id.blank? }
 
   class InactiveCodeError < StandardError; end
 
@@ -75,7 +75,7 @@ class Account::JoinCode < ApplicationRecord
       self.expires_at ||= DEFAULT_EXPIRATION.from_now
     end
 
-    def set_account_from_current
-      self.account = Current.account
+    def set_default_account
+      self.account = Account.sole
     end
 end

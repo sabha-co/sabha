@@ -46,6 +46,6 @@ module User::Role
   end
 
   def can_create_direct_messages?
-    administrator? || !Current.account.settings.restrict_direct_messages_to_administrators?
+    administrator? || !Account.sole.settings.restrict_direct_messages_to_administrators?
   end
 end

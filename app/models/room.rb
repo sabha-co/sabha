@@ -318,7 +318,9 @@ class Room < ApplicationRecord
     end
 
     def broadcast_updates
-      RoomListChannel.broadcast_to(Current.account, { roomId: id, sortableName: sortable_name })
+      RoomListChannel.broadcast_to(Account.sole, { roomId: id, sortableName: sortable_name })
+    rescue ActiveRecord::RecordNotFound
+      # No account yet (e.g., during setup or seed)
     end
 
     def broadcast_reactivation
