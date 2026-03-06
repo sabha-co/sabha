@@ -16,6 +16,11 @@ class Account::StorageTest < ActiveSupport::TestCase
     assert @account.exceeding_storage_limit?
   end
 
+  test "exceeding_storage_limit? returns true when exactly at limit" do
+    @account.create_storage_total!(bytes_stored: 1.gigabyte)
+    assert @account.exceeding_storage_limit?
+  end
+
   test "nearing_storage_limit? returns true when within 100MB of limit" do
     @account.create_storage_total!(bytes_stored: 950.megabytes.to_i)
     assert @account.nearing_storage_limit?

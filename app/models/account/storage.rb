@@ -3,11 +3,11 @@ module Account::Storage
   include Storage::Totaled
 
   def exceeding_storage_limit?
-    bytes_used > Storage::WORKSPACE_LIMIT
+    bytes_used >= Storage::WORKSPACE_LIMIT
   end
 
   def nearing_storage_limit?
-    bytes_used > Storage::WORKSPACE_LIMIT - 100.megabytes
+    bytes_used >= Storage::WORKSPACE_LIMIT - 100.megabytes
   end
 
   def storage_percentage_used
@@ -26,11 +26,9 @@ module Account::Storage
     end
 
     def message_embed_bytes
-      rich_text_ids = ActionText::RichText.where(record_type: "Message").ids
-      return 0 if rich_text_ids.empty?
-
       ActiveStorage::Attachment
-        .where(record_type: "ActionText::RichText", name: "embeds", record_id: rich_text_ids)
+        .where(record_type: "ActionText::RichText", name: "embeds")
+        .where(record_id: ActionText::RichText.where(record_type: "Message").select(:id))
         .joins(:blob).sum("active_storage_blobs.byte_size")
     end
 end
