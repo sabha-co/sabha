@@ -101,6 +101,8 @@ class Message < ApplicationRecord
     end
   end
 
+  def storage_tracked_record = self
+
   private
     # Bots and API consumers don't generate client-side IDs for Turbo dedup
     def set_default_client_message_id

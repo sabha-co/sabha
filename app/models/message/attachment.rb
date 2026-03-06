@@ -21,6 +21,7 @@ module Message::Attachment
     end
 
     validate :acceptable_attachment, if: :attachment?
+    validate :within_storage_limit, on: :create, if: -> { Sabha.saas? && attachment? }
   end
 
   module ClassMethods
@@ -50,6 +51,12 @@ module Message::Attachment
 
       if attachment.blob.byte_size > MAX_ATTACHMENT_SIZE
         errors.add(:attachment, "is too large (max #{MAX_ATTACHMENT_SIZE / 1.megabyte}MB)")
+      end
+    end
+
+    def within_storage_limit
+      if Account.sole.exceeding_storage_limit?
+        errors.add(:attachment, "cannot be uploaded — workspace storage limit reached")
       end
     end
 
