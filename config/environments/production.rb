@@ -54,22 +54,12 @@ Rails.application.configure do
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
   # Email delivery: set EMAIL_PROVIDER to "ses" or "resend" (default: resend)
+  # Settings are configured in config/initializers/email.rb via env vars
   email_provider = ENV.fetch("EMAIL_PROVIDER", "resend").presence || "resend"
-  case email_provider
-  when "ses"
-    config.action_mailer.delivery_method = :ses
-    config.action_mailer.ses_settings = {
-      region: ENV["AWS_SES_REGION"],
-      configuration_set_name: ENV.fetch("SES_CONFIGURATION_SET", "sabha-ses")
-    }
-  when "resend"
-    config.action_mailer.delivery_method = :resend
-    config.action_mailer.resend_settings = {
-      api_key: ENV["RESEND_API_KEY"]
-    }
-  else
+  unless %w[ses resend].include?(email_provider)
     raise "Unknown EMAIL_PROVIDER: #{email_provider}. Use 'resend' or 'ses'."
   end
+  config.action_mailer.delivery_method = email_provider.to_sym
   config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "localhost").presence || "localhost", protocol: "https" }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
