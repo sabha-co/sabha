@@ -9,6 +9,13 @@
 # Must complete before workers start (they need Solid Queue tables).
 # Absorbs what was previously bin/configure.
 if ENV["RAILS_ENV"] == "production"
+  # In SaaS mode, verify the storage volume is mounted before proceeding.
+  # Without this check, tenant SQLite databases get written to ephemeral
+  # container storage and are lost when the container is replaced.
+  if ENV["SAAS"] == "true" && !system("mountpoint -q storage")
+    abort "FATAL: storage/ is not a mounted volume. Tenant databases would be written to ephemeral container storage. Aborting."
+  end
+
   system("mkdir -p storage/logs")
   abort("db:prepare failed") unless system("./bin/rails db:prepare")
 end
