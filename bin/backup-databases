@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Backup all tenant SQLite databases using SQLite's online backup API.
+# Safe to run while the app is serving requests.
+#
+# Usage:
+#   bin/backup-databases                    # uses defaults
+#   STORAGE=/disk/sabha bin/backup-databases
+#
+# Designed to run as a daily cron job on the host machine.
+
+STORAGE="${STORAGE:-/disk/sabha}"
+BACKUP_DIR="${STORAGE}/backups"
+LOG_DIR="${STORAGE}/logs"
+RETENTION_DAYS="${RETENTION_DAYS:-7}"
+DATE=$(date +%Y-%m-%d_%H%M%S)
+
+mkdir -p "$LOG_DIR"
+LOG_FILE="${LOG_DIR}/backup.log"
+
+log() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+log "Backup started"
+
+databases=$(find "${STORAGE}/workspaces/production" -name "main.sqlite3" -type f 2>/dev/null)
+
+if [ -z "$databases" ]; then
+  log "No tenant databases found in ${STORAGE}/workspaces/production/"
+  exit 0
+fi
+
+backed_up=0
+failed=0
+
+for db in $databases; do
+  # Extract tenant ID from path: .../production/{tenant_id}/db/main.sqlite3
+  tenant_id=$(echo "$db" | grep -oP 'production/\K[^/]+')
+  dest_dir="${BACKUP_DIR}/${tenant_id}"
+  dest="${dest_dir}/${DATE}.sqlite3"
+
+  mkdir -p "$dest_dir"
+
+  if sqlite3 "$db" ".backup '${dest}'" 2>>"$LOG_FILE"; then
+    size=$(du -h "$dest" | cut -f1)
+    backed_up=$((backed_up + 1))
+    log "OK  ${tenant_id} (${size}) -> ${dest}"
+  else
+    failed=$((failed + 1))
+    log "FAIL ${tenant_id}: backup failed"
+  fi
+done
+
+# Prune backups older than retention period
+pruned=$(find "$BACKUP_DIR" -name "*.sqlite3" -type f -mtime "+${RETENTION_DAYS}" -delete -print | wc -l)
+
+log "Done: ${backed_up} backed up, ${failed} failed, ${pruned} old backups pruned"
+
+[ "$failed" -eq 0 ]
