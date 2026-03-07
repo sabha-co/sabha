@@ -10,10 +10,12 @@ class SesDeliveryMethod
   end
 
   def deliver!(mail)
-    client.send_email(
-      content: { raw: { data: mail.to_s } },
-      configuration_set_name: configuration_set_for(mail)
-    )
+    params = { content: { raw: { data: mail.to_s } } }
+
+    config_set = configuration_set_for(mail)
+    params[:configuration_set_name] = config_set if config_set.present?
+
+    client.send_email(**params)
   end
 
   private
@@ -23,7 +25,8 @@ class SesDeliveryMethod
 
     def client_options
       options = {}
-      options[:region] = ENV["AWS_SES_REGION"] if ENV["AWS_SES_REGION"].present?
+      region = @settings[:region] || ENV["AWS_SES_REGION"]
+      options[:region] = region if region.present?
 
       # SES-specific credentials; falls back to SDK default chain (env vars, IAM role, etc.)
       access_key = ENV["AWS_SES_ACCESS_KEY_ID"]

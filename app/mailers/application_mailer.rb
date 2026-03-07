@@ -1,6 +1,5 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: -> { Branding.mailer_from },
-          "X-SES-CONFIGURATION-SET" => "sabha-ses"
+  default from: -> { Branding.mailer_from }
   layout "mailer"
 
   before_action :skip_in_demo_mode

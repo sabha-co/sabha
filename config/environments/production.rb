@@ -59,7 +59,8 @@ Rails.application.configure do
   when "ses"
     config.action_mailer.delivery_method = :ses
     config.action_mailer.ses_settings = {
-      region: ENV["AWS_SES_REGION"]
+      region: ENV["AWS_SES_REGION"],
+      configuration_set_name: ENV.fetch("SES_CONFIGURATION_SET", "sabha-ses")
     }
   when "resend"
     config.action_mailer.delivery_method = :resend
