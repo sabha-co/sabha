@@ -86,6 +86,11 @@ jobs:
           VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          EMAIL_PROVIDER=${{ secrets.EMAIL_PROVIDER }}
+          AWS_SES_REGION=${{ secrets.AWS_SES_REGION }}
+          AWS_SES_ACCESS_KEY_ID=${{ secrets.AWS_SES_ACCESS_KEY_ID }}
+          AWS_SES_SECRET_ACCESS_KEY=${{ secrets.AWS_SES_SECRET_ACCESS_KEY }}
+          SES_CONFIGURATION_SET=${{ secrets.SES_CONFIGURATION_SET }}
           COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
 
           APP_NAME=${{ secrets.APP_NAME }}
