@@ -15,5 +15,8 @@ gem "activerecord-tenanted", github: "ashwin47/activerecord-tenanted", branch: "
 # PostgreSQL for the shared untenanted database (global identities, workspaces, sessions)
 gem "pg"
 
+# AWS SES email delivery (alternative to Resend, set EMAIL_PROVIDER=ses)
+gem "aws-sdk-sesv2"
+
 # SaaS engine
 gem "sabha-saas", path: "saas"
