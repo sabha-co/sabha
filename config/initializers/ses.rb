@@ -10,22 +10,17 @@ class SesDeliveryMethod
   end
 
   def deliver!(mail)
-    client = Aws::SESV2::Client.new(**client_options)
-
     client.send_email(
-      from_email_address: mail.from.first,
-      destination: {
-        to_addresses: Array(mail.to),
-        cc_addresses: Array(mail.cc),
-        bcc_addresses: Array(mail.bcc)
-      }.compact_blank,
-      content: {
-        raw: { data: mail.to_s }
-      }
+      content: { raw: { data: mail.to_s } },
+      configuration_set_name: configuration_set_for(mail)
     )
   end
 
   private
+    def client
+      @client ||= Aws::SESV2::Client.new(**client_options)
+    end
+
     def client_options
       options = {}
       options[:region] = ENV["AWS_SES_REGION"] if ENV["AWS_SES_REGION"].present?
@@ -39,6 +34,10 @@ class SesDeliveryMethod
       end
 
       options
+    end
+
+    def configuration_set_for(mail)
+      mail.header["X-SES-CONFIGURATION-SET"]&.value || @settings[:configuration_set_name]
     end
 end
 
