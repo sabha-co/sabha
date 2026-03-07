@@ -1,0 +1,11 @@
+<p>Hi <%= @user.name %>,</p>
+
+<p>You requested to change your email address on <%= Branding.contextual_app_name %>.</p>
+
+<p>Please confirm your new email address by clicking the link below:</p>
+
+<p><%= link_to "Confirm new email address", @confirmation_url %></p>
+
+<p>This link will expire in 24 hours.</p>
+
+<p>If you did not request this change, you can safely ignore this email. Your email address will not be changed until you click the confirmation link.</p>
