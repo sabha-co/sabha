@@ -6,10 +6,15 @@
   inset-inline-end: var(--sidebar-width);
   padding-block: var(--block-space);
   padding-inline: calc(var(--inline-space) * 1.5) var(--inline-space-double);
+  pointer-events: none;
   position: fixed;
   row-gap: var(--block-space);
   z-index: 2;
   transition: inset-inline-end 300ms ease;
+
+  & > * {
+    pointer-events: auto;
+  }
 
   &:has(.btn--faux) {
     padding-inline: var(--inline-space);
@@ -46,76 +51,44 @@
   }
 }
 
-/* Styles for the countdown banner */
-#special-event-banner {
-  color: #cc0000;
-  background-color: white;
-  border-bottom: 1px solid var(--color-border-darker);
-  border-right: 1px solid var(--color-border-darker);
-  font-size: 90%;
-  font-weight: 600;
+
+.demo-banner__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-warning, #f59e0b);
+  color: var(--color-warning-contrast, #000);
+  font-size: 0.875rem;
   text-align: center;
-  padding: 0.5rem;
-  width: 100%;
-  cursor: pointer;
-  text-decoration: none;
-  box-sizing: border-box;
 }
 
-/* Explicitly define hover state to prevent inherited effects */
-/* Increase specificity by adding tag name 'a' */
-a#special-event-banner:hover {
-  background-color: white !important;
-  /* Force override */
-  color: #cc0000 !important;
-  /* Force override */
-  opacity: 1 !important;
-  /* Force override */
-  filter: none !important;
-  /* Force override */
+.demo-banner strong {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-a#special-event-banner:hover span {
-  /* Ensure span keeps color too */
-  color: #cc0000 !important;
-  /* Force override */
-}
-
-#special-event-banner.banner-urgent {
-  background-color: #cc0000;
+.storage-limit-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-negative, #dc2626);
   color: white;
-  border-color: #cc0000;
-  /* Match border to background */
+  font-size: 0.875rem;
+  text-align: center;
 }
 
-/* Ensure text inside also changes color */
-#special-event-banner.banner-urgent,
-#special-event-banner.banner-urgent span {
+.storage-limit-banner__link {
   color: white;
-}
+  text-decoration: underline;
+  font-weight: 600;
+  white-space: nowrap;
 
-/* Explicitly define hover state for urgent banner */
-/* Increase specificity by adding tag name 'a' */
-a#special-event-banner.banner-urgent:hover {
-  background-color: #cc0000 !important;
-  /* Match urgent background */
-  color: white !important;
-  /* Match urgent text color */
-  opacity: 1 !important;
-  /* Force override */
-  filter: none !important;
-  /* Force override */
-}
-
-/* Also ensure the span inside keeps the correct color on hover */
-a#special-event-banner.banner-urgent:hover span {
-  color: white !important;
-}
-
-/* Adjust font size for smaller screens */
-@media (max-width: 120ch) {
-  #special-event-banner {
-    font-size: 80%;
+  &:hover {
+    opacity: 0.85;
   }
 }
 
