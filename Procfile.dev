@@ -1,0 +1,2 @@
+web: bin/rails s -b 0.0.0.0 -p ${PORT:-3000}
+css: pnpm exec tailwindcss -i app/javascript/entrypoints/application.css -o app/assets/builds/tailwind.css --watch

@@ -16,13 +16,14 @@ for arg in "$@"; do
   esac
 done
 
+if ! gem list foreman -i --silent; then
+  echo "Installing foreman..."
+  gem install foreman
+fi
+
 if [ "$USE_ANYCABLE" = "1" ]; then
   export ANYCABLE_ENABLED="true"
-  if ! gem list foreman -i --silent; then
-    echo "Installing foreman..."
-    gem install foreman
-  fi
   exec foreman start -f Procfile.dev.anycable
 else
-  exec ./bin/rails server -b 0.0.0.0 -p $PORT
+  exec foreman start -f Procfile.dev
 fi
