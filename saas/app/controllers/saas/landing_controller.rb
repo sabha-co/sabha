@@ -4,18 +4,17 @@ module Saas
   class LandingController < BaseController
     # SaaS landing page - the root "/" in SaaS mode
     #
-    # Redirects based on authentication state:
-    # - Not signed in → redirect to sign in
+    # - Not signed in → renders marketing landing page
     # - Signed in with workspaces → redirect to most recent workspace
     # - Signed in without workspaces → redirect to create workspace
 
     allow_unauthenticated_access
 
+    layout "marketing"
+
     def show
       if signed_in?
         redirect_to_workspace_or_create
-      else
-        redirect_to new_session_path
       end
     end
 
