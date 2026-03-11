@@ -7,7 +7,7 @@
       <div class="landing-logo">
         <%= image_tag "sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg" %>
       </div>
-      <button class="landing-menu-toggle" onclick="this.closest('.landing-nav').classList.toggle('nav-open')" aria-label="Toggle menu">
+      <button class="landing-menu-toggle" id="landing-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
       </button>
       <div class="landing-nav-links">
@@ -53,7 +53,7 @@
       <a href="https://github.com/sabha-co/sabha" target="_blank" class="landing-btn-secondary">View on GitHub</a>
     </div>
     <div class="landing-screenshot">
-      <%= image_tag "screenshots/sabha.co-screenshot.png", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img" %>
+      <%= image_tag "screenshots/sabha.co-screenshot.png", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img", width: 2872, height: 1362 %>
     </div>
   </div>
 </section>
@@ -315,7 +315,7 @@
     <a href="https://once.com/campfire" target="_blank" style="display: inline-block;">
       <%= image_tag "logos/campfire-logo.png", alt: "Campfire by 37signals", class: "landing-campfire-logo" %>
     </a>
-    <h2><a href="https://once.com/campfire" target="_blank" style="color: inherit; text-decoration: none; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Built on Campfire,<br>By 37signals.</a></h2>
+    <h2><a href="https://once.com/campfire" target="_blank" class="landing-campfire-heading-link">Built on Campfire,<br>By 37signals.</a></h2>
     <p class="landing-campfire-body">Sabha isn't built from scratch. It's built on <a href="https://once.com/campfire" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Campfire</a>, the team chat created by 37signals — the company behind Basecamp, HEY, and Ruby on Rails. That means you get a decade of opinionated product thinking baked into every interaction: simplicity over feature bloat, speed over spectacle, calm over chaos.</p>
     <div class="landing-campfire-strip">
       <div class="landing-campfire-col">
@@ -396,3 +396,44 @@
 </footer>
 
 </div>
+
+<script>
+  (function() {
+    var toggle = document.getElementById('landing-menu-toggle');
+    var nav = toggle && toggle.closest('.landing-nav');
+    if (!toggle || !nav) return;
+
+    function openMenu() {
+      nav.classList.add('nav-open');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeMenu() {
+      nav.classList.remove('nav-open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', function() {
+      nav.classList.contains('nav-open') ? closeMenu() : openMenu();
+    });
+
+    // Close when any link in the mobile menu is tapped
+    var menu = nav.querySelector('.landing-mobile-menu');
+    if (menu) {
+      menu.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') closeMenu();
+      });
+    }
+
+    // Close when clicking outside the nav
+    document.addEventListener('click', function(e) {
+      if (!nav.contains(e.target)) closeMenu();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+  })();
+</script>
+
