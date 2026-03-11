@@ -11,6 +11,9 @@
     <%= csp_meta_tag %>
     <%= workspace_base_path_meta_tag %>
 
+    <%= tag.link rel: "icon", href: image_path("sabha-icon.svg"), type: "image/svg+xml" %>
+    <%= tag.link rel: "apple-touch-icon", href: image_path("sabha-icon.svg") %>
+
     <%= stylesheet_link_tag "tailwind", *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
 
     <%= javascript_importmap_tags %>
