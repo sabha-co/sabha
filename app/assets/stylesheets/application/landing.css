@@ -586,6 +586,12 @@
   gap: 48px;
 }
 
+.landing-campfire-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+}
+
 .landing-campfire h2 {
   color: var(--text-white);
 }

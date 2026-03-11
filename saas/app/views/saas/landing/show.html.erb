@@ -38,10 +38,10 @@
 <%# ═══════════════════════════════════ HERO ═══════════════════════════════════ %>
 <section class="landing-hero">
   <div class="landing-inner landing-hero-inner">
-    <div class="landing-hero-badge">
+    <a href="#campfire" class="landing-hero-badge">
       <span class="landing-hero-badge-dot"></span>
       Open source — built on Campfire by 37signals
-    </div>
+    </a>
     <div class="landing-hero-text">
       <h1>Your community deserves a home, not a feed.</h1>
       <p class="landing-hero-sub">Sabha is simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. That's the product.</p>
@@ -309,10 +309,10 @@
 <div class="landing-divider"></div>
 
 <%# ═══════════════════════════════════ BUILT ON CAMPFIRE ═══════════════════════════════════ %>
-<section class="landing-section landing-campfire">
+<section id="campfire" class="landing-section landing-campfire">
   <div class="landing-inner">
-    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#E8660A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-    <h2>Built on Campfire.<br>By 37signals.</h2>
+    <%= image_tag "logos/campfire-logo.png", alt: "Campfire by 37signals", class: "landing-campfire-logo" %>
+    <h2>Built on Campfire,<br>By 37signals.</h2>
     <p class="landing-campfire-body">Sabha isn't built from scratch. It's built on Campfire, the team chat created by 37signals — the company behind Basecamp, HEY, and Ruby on Rails. That means you get a decade of opinionated product thinking baked into every interaction: simplicity over feature bloat, speed over spectacle, calm over chaos.</p>
     <div class="landing-campfire-strip">
       <div class="landing-campfire-col">
@@ -387,8 +387,8 @@
     </div>
     <div class="landing-footer-divider"></div>
     <div class="landing-footer-bottom">
-      <span>&copy; <%= Time.current.year %> Sabha. All rights reserved.</span>
-      <span>Built with Campfire by 37signals</span>
+      <span>&copy; <%= Time.current.year %> Sabha LLC. All rights reserved.</span>
+      <span>Open source under MIT.</span>
     </div>
   </div>
 </footer>
