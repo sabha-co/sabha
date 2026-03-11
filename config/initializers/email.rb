@@ -90,6 +90,8 @@ class SesDeliveryMethod
     end
 end
 
-# Register both delivery methods before either triggers ActionMailer config loading
-ActionMailer::Base.add_delivery_method :ses, SesDeliveryMethod
-ActionMailer::Base.add_delivery_method :resend, ResendDeliveryMethod
+# Register delivery methods lazily to avoid loading ActionMailer too early
+ActiveSupport.on_load(:action_mailer) do
+  add_delivery_method :ses, SesDeliveryMethod
+  add_delivery_method :resend, ResendDeliveryMethod
+end

@@ -5,7 +5,7 @@ class ContentFiltersTest < ActionView::TestCase
     text = "https://basecamp.com/"
     message = Message.create! room: rooms(:pets), body: unfurled_message_body_for_basecamp(text), client_message_id: "0015", creator: users(:jason)
 
-    filtered = ContentFilters::TextMessagePresentationFilters.apply(message.body.body)
+    filtered = ContentFilters.text_message_presentation_filters.apply(message.body.body)
     assert_not_equal message.body.body.to_html, filtered.to_html
     assert_match /<div><action-text-attachment/, filtered.to_html
   end
@@ -14,7 +14,7 @@ class ContentFiltersTest < ActionView::TestCase
     text = "Hello https://basecamp.com/"
     message = Message.create! room: rooms(:pets), body: unfurled_message_body_for_basecamp(text), client_message_id: "0015", creator: users(:jason)
 
-    filtered = ContentFilters::TextMessagePresentationFilters.apply(message.body.body)
+    filtered = ContentFilters.text_message_presentation_filters.apply(message.body.body)
     assert_equal message.body.body.to_html, filtered.to_html
     assert_match %r{<div>Hello https://basecamp\.com/<action-text-attachment}, filtered.to_html
   end
@@ -39,7 +39,7 @@ class ContentFiltersTest < ActionView::TestCase
     text = "https://x.com/dhh/status/1752476663303323939"
     message = Message.create! room: rooms(:pets), body: unfurled_message_body_for_twitter(text), client_message_id: "0015", creator: users(:jason)
 
-    filtered = ContentFilters::TextMessagePresentationFilters.apply(message.body.body)
+    filtered = ContentFilters.text_message_presentation_filters.apply(message.body.body)
     assert_not_equal message.body.body.to_html, filtered.to_html
     assert_match /<div><action-text-attachment/, filtered.to_html
   end
@@ -48,7 +48,7 @@ class ContentFiltersTest < ActionView::TestCase
     text = "https://x.com/dhh/status/1752476663303323939?s=20"
     message = Message.create! room: rooms(:pets), body: unfurled_message_body_for_twitter(text), client_message_id: "0015", creator: users(:jason)
 
-    filtered = ContentFilters::TextMessagePresentationFilters.apply(message.body.body)
+    filtered = ContentFilters.text_message_presentation_filters.apply(message.body.body)
     assert_not_equal message.body.body.to_html, filtered.to_html
     assert_match /<div><action-text-attachment/, filtered.to_html
   end
@@ -57,14 +57,14 @@ class ContentFiltersTest < ActionView::TestCase
     exploit_image_tag = 'Hello <img src="https://ssecurityrise.com/tests/billionlaughs-cache.svg">World'
     message = Message.create! room: rooms(:pets), body: exploit_image_tag, client_message_id: "0015", creator: users(:jason)
 
-    filtered = ContentFilters::TextMessagePresentationFilters.apply(message.body.body)
+    filtered = ContentFilters.text_message_presentation_filters.apply(message.body.body)
     assert_equal "Hello World", filtered.to_html
   end
 
   test "message with a mention attachment" do
     message = Message.create! room: rooms(:pets), body: "<div>Hey #{mention_attachment_for(:david)}</div>", creator: users(:jason)
 
-    filtered = ContentFilters::TextMessagePresentationFilters.apply(message.body.body)
+    filtered = ContentFilters.text_message_presentation_filters.apply(message.body.body)
     expected = /<action-text-attachment sgid="#{users(:david).attachable_sgid}" content-type="application\/vnd\.sabha\.mention" content="(.*?)"><\/action-text-attachment>/m
 
     assert_match expected, filtered.to_html

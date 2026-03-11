@@ -113,7 +113,7 @@ module MessagesHelper
     when "sound"
       message_sound_presentation(message)
     else
-      auto_link h(ContentFilters::TextMessagePresentationFilters.apply(message.body.body)), html: { target: "_blank" }
+      auto_link h(ContentFilters.text_message_presentation_filters.apply(message.body.body)), html: { target: "_blank" }
     end
   rescue Exception => e
     Sentry.capture_exception(e, extra: { message: message })
