@@ -1,0 +1,397 @@
+<div class="landing">
+
+<%# ═══════════════════════════════════ HEADER ═══════════════════════════════════ %>
+<header class="landing-header">
+  <div class="landing-inner">
+    <nav class="landing-nav">
+      <div class="landing-logo">
+        <div class="landing-logo-mark"></div>
+        <span class="landing-logo-text">sabha</span>
+      </div>
+      <button class="landing-menu-toggle" onclick="this.closest('.landing-nav').classList.toggle('nav-open')" aria-label="Toggle menu">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+      </button>
+      <div class="landing-nav-links">
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#">Docs</a>
+        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+      </div>
+      <div class="landing-header-right">
+        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
+        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
+      </div>
+      <%# Mobile-only dropdown — combines nav links + auth buttons in one panel %>
+      <div class="landing-mobile-menu">
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#">Docs</a>
+        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+        <div class="landing-mobile-menu-divider"></div>
+        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
+        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<%# ═══════════════════════════════════ HERO ═══════════════════════════════════ %>
+<section class="landing-hero">
+  <div class="landing-inner landing-hero-inner">
+    <a href="#campfire" class="landing-hero-badge">
+      <span class="landing-hero-badge-dot"></span>
+      Open source — built on Campfire by 37signals
+    </a>
+    <div class="landing-hero-text">
+      <h1>The open source Discord alternative for communities.</h1>
+      <p class="landing-hero-sub">Sabha is simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. That's the product.</p>
+    </div>
+    <div class="landing-cta-row">
+      <a href="<%= new_registration_path %>" class="landing-btn-primary">
+        Create your community
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <a href="https://github.com/sabha-co/sabha" target="_blank" class="landing-btn-secondary">View on GitHub</a>
+    </div>
+    <div class="landing-screenshot">
+      <%= image_tag "screenshots/sabha.co-screenshot.png", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img" %>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ PROBLEM ═══════════════════════════════════ %>
+<section class="landing-section landing-problem">
+  <div class="landing-inner">
+    <div class="landing-section-header">
+      <span class="landing-label">THE PROBLEM</span>
+      <h2>Community chat is broken.</h2>
+      <p class="landing-section-sub">Discord buries conversations in an unindexed void. Slack charges per seat. Group chats are chaos. You need something that respects your community and your attention.</p>
+    </div>
+    <div class="landing-problem-cards">
+      <div class="landing-card">
+        <div class="landing-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 9a2 2 0 0 1-.88 1.664L12 13 8.88 10.664A2 2 0 0 1 8 9V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2z"/><line x1="1" x2="1" y1="14" y2="18"/><line x1="1" x2="23" y1="18" y2="18"/><line x1="23" x2="23" y1="14" y2="18"/></svg>
+        </div>
+        <h3>Discord</h3>
+        <p>Conversations disappear. Nothing is searchable. Bots, boosts, Nitro upsells. Your community becomes noise.</p>
+      </div>
+      <div class="landing-card">
+        <div class="landing-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+        </div>
+        <h3>Slack</h3>
+        <p>Per-seat pricing. 90-day message limits on free plans. Built for work, not community. Expensive lock-in.</p>
+      </div>
+      <div class="landing-card">
+        <div class="landing-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h3>Mattermost / Rocket.Chat</h3>
+        <p>Enterprise tools cosplaying as community platforms. Kubernetes deployments. Twelve environment variables. Overkill.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ CORE FEATURES ═══════════════════════════════════ %>
+<section id="features" class="landing-section landing-features-section">
+  <div class="landing-inner">
+    <div class="landing-section-header">
+      <span class="landing-label">WHAT YOU GET</span>
+      <h2>Everything your community needs. Nothing it doesn't.</h2>
+    </div>
+
+    <div class="landing-feature-row">
+      <div class="landing-feature-text">
+        <div class="landing-feature-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12"/><path d="M4 14h9"/><path d="M4 6h16"/><path d="M4 18h7"/></svg>
+        </div>
+        <h3>Rooms for every topic</h3>
+        <p>Create rooms for announcements, help, introductions, or anything your community talks about. Each room is a focused space — not a firehose.</p>
+      </div>
+      <div class="landing-feature-screenshot">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+        <span>Rooms view</span>
+      </div>
+    </div>
+
+    <div class="landing-feature-row landing-feature-row--reverse">
+      <div class="landing-feature-screenshot">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+        <span>Threads view</span>
+      </div>
+      <div class="landing-feature-text">
+        <div class="landing-feature-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3>Threads by default</h3>
+        <p>Every conversation can become a thread. Side discussions stay organized, not scattered. Your main room stays clean. Depth without chaos.</p>
+      </div>
+    </div>
+
+    <div class="landing-feature-row">
+      <div class="landing-feature-text">
+        <div class="landing-feature-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+        <h3>Full-text search across everything</h3>
+        <p>Every message, every thread, every room — fully indexed and searchable. Find that conversation from three months ago in seconds. Your community's knowledge doesn't disappear.</p>
+      </div>
+      <div class="landing-feature-screenshot">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+        <span>Search results</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ SECONDARY FEATURES ═══════════════════════════════════ %>
+<section class="landing-section landing-details">
+  <div class="landing-inner">
+    <div class="landing-section-header">
+      <span class="landing-label">BUILT DIFFERENT</span>
+      <h2>The details that matter.</h2>
+    </div>
+    <div class="landing-grid">
+      <div class="landing-card">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.8 4A6.3 8.7 0 0 1 20 9"/><path d="M9 9h.01"/><circle cx="9" cy="9" r="7"/><path d="M22 20 2 20"/></svg>
+        <h3>No noise</h3>
+        <p>Activity feed instead of a wall of unread channels. Push notifications that matter.</p>
+      </div>
+      <div class="landing-card">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+        <h3>Mobile-first</h3>
+        <p>PWA with push notifications. Works on every device. No app store required.</p>
+      </div>
+      <div class="landing-card">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+        <h3>Rich messages</h3>
+        <p>Images, PDFs, and videos inline. Share files without leaving the conversation.</p>
+      </div>
+      <div class="landing-card">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="0.5" fill="#E42313"/><circle cx="17.5" cy="10.5" r="0.5" fill="#E42313"/><circle cx="8.5" cy="7.5" r="0.5" fill="#E42313"/><circle cx="6.5" cy="12.5" r="0.5" fill="#E42313"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+        <h3>Your brand</h3>
+        <p>Custom name, logo, and theme colors. Your community feels like yours, not a generic chat app.</p>
+      </div>
+      <div class="landing-card">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <h3>Simple invites</h3>
+        <p>Share a link. People join. Email sign-up with magic links. No passwords, no friction.</p>
+      </div>
+      <div class="landing-card">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <h3>Open source</h3>
+        <p>Read the code, fix bugs, contribute back. Export your data anytime. No lock-in, ever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ SOCIAL PROOF ═══════════════════════════════════ %>
+<section class="landing-section landing-social-proof">
+  <div class="landing-inner">
+    <div class="landing-section-header">
+      <span class="landing-label">WHAT PEOPLE SAY</span>
+      <h2>Communities that chose simplicity.</h2>
+    </div>
+    <div class="landing-testimonials">
+      <div class="landing-testimonial">
+        <p>&ldquo;We moved our open source community from Discord to Sabha. Every conversation is now searchable. Our contributors can actually find answers.&rdquo;</p>
+        <div class="landing-testimonial-author">
+          <div class="landing-testimonial-avatar"></div>
+          <div>
+            <div class="landing-testimonial-name">Sarah Chen</div>
+            <div class="landing-testimonial-role">OSS Maintainer</div>
+          </div>
+        </div>
+      </div>
+      <div class="landing-testimonial">
+        <p>&ldquo;My course community finally has a home that feels intentional. No bots, no boost prompts, no overwhelm. People actually talk here.&rdquo;</p>
+        <div class="landing-testimonial-author">
+          <div class="landing-testimonial-avatar"></div>
+          <div>
+            <div class="landing-testimonial-name">James Okoro</div>
+            <div class="landing-testimonial-role">Course Creator</div>
+          </div>
+        </div>
+      </div>
+      <div class="landing-testimonial">
+        <p>&ldquo;Docker compose up and we were running. SQLite, no Redis, no managed database. It just works. The simplest deploy I've done in years.&rdquo;</p>
+        <div class="landing-testimonial-author">
+          <div class="landing-testimonial-avatar"></div>
+          <div>
+            <div class="landing-testimonial-name">Priya Sharma</div>
+            <div class="landing-testimonial-role">DevOps Engineer</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ PRICING ═══════════════════════════════════ %>
+<section id="pricing" class="landing-section landing-pricing-section">
+  <div class="landing-inner">
+    <div class="landing-section-header">
+      <span class="landing-label">PRICING</span>
+      <h2>Pick how you want to run Sabha.</h2>
+      <p class="landing-section-sub">Same app, different wrappers. The difference is who handles the infrastructure.</p>
+    </div>
+    <div class="landing-pricing-cards">
+      <div class="landing-pricing-card">
+        <div class="landing-pricing-top">
+          <span class="landing-pricing-label">SABHA.CO</span>
+          <span class="landing-pricing-title">Free</span>
+          <p>Sign up and start talking. We handle everything.</p>
+        </div>
+        <div class="landing-pricing-divider"></div>
+        <ul class="landing-pricing-features">
+          <li>Setup your community in minutes</li>
+          <li>Switch between workspaces like Slack or Discord</li>
+          <li>Unlimited members</li>
+          <li>Unlimited message history</li>
+          <li>Limited only by storage</li>
+          <li>Threads &amp; search</li>
+          <li>Data export anytime</li>
+        </ul>
+        <a href="<%= new_registration_path %>" class="landing-pricing-btn">Create Workspace</a>
+      </div>
+      <div class="landing-pricing-card">
+        <div class="landing-pricing-top">
+          <span class="landing-pricing-label">SABHA CLOUD</span>
+          <span class="landing-pricing-title">Managed</span>
+          <p>Your own dedicated server. We run it for you.</p>
+        </div>
+        <div class="landing-pricing-divider"></div>
+        <ul class="landing-pricing-features">
+          <li>Whitelabeled under your brand</li>
+          <li>Dedicated server</li>
+          <li>Automatic backups</li>
+          <li>Custom domain</li>
+          <li>Managed updates</li>
+          <li>Health monitoring</li>
+          <li>No ops required</li>
+        </ul>
+        <a href="https://cloud.sabha.co" target="_blank" class="landing-pricing-btn">View Plans</a>
+      </div>
+      <div class="landing-pricing-card">
+        <div class="landing-pricing-top">
+          <span class="landing-pricing-label">SELF-HOSTED</span>
+          <span class="landing-pricing-title">Open Source</span>
+          <p>Deploy on your own server. You own every byte.</p>
+        </div>
+        <div class="landing-pricing-divider"></div>
+        <ul class="landing-pricing-features">
+          <li>Full source code</li>
+          <li>Your server, your data</li>
+          <li>Custom domain</li>
+          <li>SQLite, no dependencies</li>
+          <li>Docker or bare metal</li>
+          <li>You pay for your server</li>
+        </ul>
+        <a href="https://github.com/sabha-co/sabha" target="_blank" class="landing-pricing-btn">View on GitHub</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ BUILT ON CAMPFIRE ═══════════════════════════════════ %>
+<section id="campfire" class="landing-section landing-campfire">
+  <div class="landing-inner">
+    <a href="https://once.com/campfire" target="_blank" style="display: inline-block;">
+      <%= image_tag "logos/campfire-logo.png", alt: "Campfire by 37signals", class: "landing-campfire-logo" %>
+    </a>
+    <h2><a href="https://once.com/campfire" target="_blank" style="color: inherit; text-decoration: none; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Built on Campfire,<br>By 37signals.</a></h2>
+    <p class="landing-campfire-body">Sabha isn't built from scratch. It's built on <a href="https://once.com/campfire" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Campfire</a>, the team chat created by 37signals — the company behind Basecamp, HEY, and Ruby on Rails. That means you get a decade of opinionated product thinking baked into every interaction: simplicity over feature bloat, speed over spectacle, calm over chaos.</p>
+    <div class="landing-campfire-strip">
+      <div class="landing-campfire-col">
+        <span class="landing-campfire-label">FOUNDATION</span>
+        <span class="landing-campfire-value">Campfire by 37signals</span>
+      </div>
+      <div class="landing-campfire-divider-v"></div>
+      <div class="landing-campfire-col">
+        <span class="landing-campfire-label">STACK</span>
+        <span class="landing-campfire-value">Rails, Hotwire, SQLite</span>
+      </div>
+      <div class="landing-campfire-divider-v"></div>
+      <div class="landing-campfire-col">
+        <span class="landing-campfire-label">PHILOSOPHY</span>
+        <span class="landing-campfire-value">Small, fast, personal</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ FINAL CTA ═══════════════════════════════════ %>
+<section class="landing-section landing-final-cta">
+  <div class="landing-inner">
+    <h2>Create your community in 30 seconds.</h2>
+    <p class="landing-final-cta-sub">Free to use. Open source. No credit card required.</p>
+    <div class="landing-cta-row">
+      <a href="<%= new_registration_path %>" class="landing-btn-primary">
+        Create your community
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <a href="https://github.com/sabha-co/sabha" target="_blank" class="landing-btn-secondary">Self-host for free</a>
+    </div>
+    <p class="landing-final-cta-trust">Built on Campfire by 37signals — battle-tested Rails, SQLite in production</p>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ FOOTER ═══════════════════════════════════ %>
+<footer class="landing-footer">
+  <div class="landing-inner">
+    <div class="landing-footer-top">
+      <div class="landing-footer-brand">
+        <div class="landing-logo" style="pointer-events: none;">
+          <div class="landing-logo-mark" style="width: 24px; height: 24px; border-radius: 5px;"></div>
+          <span class="landing-logo-text" style="font-size: 18px;">sabha</span>
+        </div>
+        <p>Simple, intentional chat for communities.</p>
+      </div>
+      <div class="landing-footer-cols">
+        <div class="landing-footer-col">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#">Changelog</a>
+          <a href="#">Docs</a>
+        </div>
+        <div class="landing-footer-col">
+          <h4>Company</h4>
+          <a href="#">About</a>
+          <a href="#">Blog</a>
+          <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+        </div>
+        <div class="landing-footer-col">
+          <h4>Legal</h4>
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+        </div>
+      </div>
+    </div>
+    <div class="landing-footer-divider"></div>
+    <div class="landing-footer-bottom">
+      <span>&copy; <%= Time.current.year %> Sabha LLC. All rights reserved.</span>
+      <span>Open source under MIT.</span>
+    </div>
+  </div>
+</footer>
+
+</div>

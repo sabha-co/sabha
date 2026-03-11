@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%= render "layouts/theme_preference" %>
+
+    <title>Sabha | The calm community space</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, interactive-widget=resizes-content">
+    <meta name="description" content="A self-hosted, open-source chat platform for communities. You own the server, the data, the domain, and the branding.">
+    <meta name="theme-color" content="<%= Branding.theme_color %>">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= tag.link rel: "icon", href: image_path("logos/app-icon.png"), type: "image/png" %>
+    <%= tag.link rel: "apple-touch-icon", href: image_path("logos/app-icon.png") %>
+
+    <%= stylesheet_link_tag "tailwind", *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
+    <% if hotwire_native_app? %>
+      <%= stylesheet_link_tag "native", "data-turbo-track": "reload" %>
+    <% end %>
+    <%= stylesheet_link_tag "overrides", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <%= yield :head %>
+
+    <%= cloudflare_turnstile_script_tag %>
+    <%= umami_analytics_tag %>
+  </head>
+
+  <body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 antialiased font-sans">
+    <% if notice = flash[:notice] || flash[:alert] %>
+      <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full" data-controller="element-removal" data-action="animationend->element-removal#remove">
+        <div class="bg-zinc-800 text-white rounded-lg shadow-lg p-4 flex items-start gap-3 <%= "bg-red-600" if flash[:alert] %>">
+          <div class="mt-0.5">
+            <% if flash[:alert] %>
+              <%= icon_tag "alert", class: "w-5 h-5 text-white" %>
+            <% else %>
+              <%= icon_tag "check", class: "w-5 h-5 text-white" %>
+            <% end %>
+          </div>
+          <p class="text-sm font-medium leading-relaxed"><%= notice %></p>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="min-h-screen flex flex-col">
+      <main class="flex-grow flex flex-col relative w-full overflow-hidden">
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>

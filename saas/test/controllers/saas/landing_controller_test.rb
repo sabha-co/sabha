@@ -4,9 +4,9 @@ require_relative "../../test_helper"
 
 module Saas
   class LandingControllerTest < ActionDispatch::IntegrationTest
-    test "show redirects unauthenticated users to sign in" do
+    test "show renders landing page for unauthenticated users" do
       get root_path
-      assert_redirected_to new_session_path
+      assert_response :success
     end
 
     test "show redirects authenticated users to most recent workspace" do
