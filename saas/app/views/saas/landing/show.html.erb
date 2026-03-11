@@ -5,8 +5,7 @@
   <div class="landing-inner">
     <nav class="landing-nav">
       <div class="landing-logo">
-        <div class="landing-logo-mark"></div>
-        <span class="landing-logo-text">sabha</span>
+        <%= image_tag "sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg" %>
       </div>
       <button class="landing-menu-toggle" onclick="this.closest('.landing-nav').classList.toggle('nav-open')" aria-label="Toggle menu">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
@@ -257,11 +256,12 @@
         <div class="landing-pricing-divider"></div>
         <ul class="landing-pricing-features">
           <li>Setup your community in minutes</li>
-          <li>Switch between workspaces like Slack or Discord</li>
+          <li>Switch between communities like Slack or Discord</li>
           <li>Unlimited members</li>
           <li>Unlimited message history</li>
-          <li>Limited only by storage</li>
-          <li>Threads &amp; search</li>
+          <li>Limited by file storage</li>
+          <li>No Custom domain</li>
+          <li>Slack import</li>
           <li>Data export anytime</li>
         </ul>
         <a href="<%= new_registration_path %>" class="landing-pricing-btn">Create Workspace</a>
@@ -274,10 +274,11 @@
         </div>
         <div class="landing-pricing-divider"></div>
         <ul class="landing-pricing-features">
+          <li>All features from sabha.co</li>
           <li>Whitelabeled under your brand</li>
+          <li>Custom domain</li>
           <li>Dedicated server</li>
           <li>Automatic backups</li>
-          <li>Custom domain</li>
           <li>Managed updates</li>
           <li>Health monitoring</li>
           <li>No ops required</li>
@@ -288,16 +289,17 @@
         <div class="landing-pricing-top">
           <span class="landing-pricing-label">SELF-HOSTED</span>
           <span class="landing-pricing-title">Open Source</span>
-          <p>Deploy on your own server. You own every byte.</p>
+          <p>Deploy on your own server. You own every byte. Your responsibility.</p>
         </div>
         <div class="landing-pricing-divider"></div>
         <ul class="landing-pricing-features">
-          <li>Full source code</li>
+          <li>MIT Licensed</li>
           <li>Your server, your data</li>
           <li>Custom domain</li>
           <li>SQLite, no dependencies</li>
           <li>Docker or bare metal</li>
           <li>You pay for your server</li>
+          <li>You are responsible for backups, security, and maintenance</li>
         </ul>
         <a href="https://github.com/sabha-co/sabha" target="_blank" class="landing-pricing-btn">View on GitHub</a>
       </div>
@@ -360,8 +362,7 @@
     <div class="landing-footer-top">
       <div class="landing-footer-brand">
         <div class="landing-logo" style="pointer-events: none;">
-          <div class="landing-logo-mark" style="width: 24px; height: 24px; border-radius: 5px;"></div>
-          <span class="landing-logo-text" style="font-size: 18px;">sabha</span>
+          <%= image_tag "sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg landing-logo-svg--small" %>
         </div>
         <p>Simple, intentional chat for communities.</p>
       </div>

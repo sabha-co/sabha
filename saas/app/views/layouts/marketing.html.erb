@@ -3,17 +3,17 @@
   <head>
     <%= render "layouts/theme_preference" %>
 
-    <title>Sabha | The calm community space</title>
+    <title>Sabha | Open source community chat</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, interactive-widget=resizes-content">
-    <meta name="description" content="A self-hosted, open-source chat platform for communities. You own the server, the data, the domain, and the branding.">
+    <meta name="description" content="Simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. Free to use, open source, self-hostable.">
     <meta name="theme-color" content="<%= Branding.theme_color %>">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= tag.link rel: "icon", href: image_path("logos/app-icon.png"), type: "image/png" %>
-    <%= tag.link rel: "apple-touch-icon", href: image_path("logos/app-icon.png") %>
+    <%= tag.link rel: "icon", href: image_path("sabha-icon.svg"), type: "image/svg+xml" %>
+    <%= tag.link rel: "apple-touch-icon", href: image_path("sabha-icon.svg") %>
 
     <%= stylesheet_link_tag "tailwind", *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
     <% if hotwire_native_app? %>

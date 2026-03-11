@@ -159,19 +159,14 @@
   gap: 10px;
 }
 
-.landing-logo-mark {
-  width: 28px;
-  height: 28px;
-  background: var(--accent-red);
-  border-radius: 6px;
+.landing-logo-svg {
+  height: 48px;
+  width: auto;
 }
 
-.landing-logo-text {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  color: var(--text-primary);
+.landing-logo-svg--small {
+  height: 40px;
+  margin-left: -8px;
 }
 
 .landing-nav-links {

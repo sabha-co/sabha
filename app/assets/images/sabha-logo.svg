@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 60" width="140" height="60">
+  <text
+    x="10"
+    y="45"
+    font-family="Inter, system-ui, -apple-system, sans-serif"
+    font-weight="700"
+    font-size="42"
+    fill="#202124"
+    letter-spacing="-1.5">
+    sabha
+  </text>
+
+  <circle cx="130" cy="18" r="6" fill="#FF3B30" />
+</svg>
