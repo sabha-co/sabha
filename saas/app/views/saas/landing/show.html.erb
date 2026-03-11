@@ -43,7 +43,7 @@
       Open source — built on Campfire by 37signals
     </a>
     <div class="landing-hero-text">
-      <h1>Your community deserves a home, not a feed.</h1>
+      <h1>The open source Discord alternative for communities.</h1>
       <p class="landing-hero-sub">Sabha is simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. That's the product.</p>
     </div>
     <div class="landing-cta-row">
@@ -54,8 +54,7 @@
       <a href="https://github.com/sabha-co/sabha" target="_blank" class="landing-btn-secondary">View on GitHub</a>
     </div>
     <div class="landing-screenshot">
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-      <span class="landing-screenshot-label">Sabha app screenshot</span>
+      <%= image_tag "screenshots/sabha.co-screenshot.png", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img" %>
     </div>
   </div>
 </section>
@@ -252,7 +251,7 @@
       <div class="landing-pricing-card">
         <div class="landing-pricing-top">
           <span class="landing-pricing-label">SABHA.CO</span>
-          <span class="landing-pricing-title">Hosted</span>
+          <span class="landing-pricing-title">Free</span>
           <p>Sign up and start talking. We handle everything.</p>
         </div>
         <div class="landing-pricing-divider"></div>
@@ -311,9 +310,11 @@
 <%# ═══════════════════════════════════ BUILT ON CAMPFIRE ═══════════════════════════════════ %>
 <section id="campfire" class="landing-section landing-campfire">
   <div class="landing-inner">
-    <%= image_tag "logos/campfire-logo.png", alt: "Campfire by 37signals", class: "landing-campfire-logo" %>
-    <h2>Built on Campfire,<br>By 37signals.</h2>
-    <p class="landing-campfire-body">Sabha isn't built from scratch. It's built on Campfire, the team chat created by 37signals — the company behind Basecamp, HEY, and Ruby on Rails. That means you get a decade of opinionated product thinking baked into every interaction: simplicity over feature bloat, speed over spectacle, calm over chaos.</p>
+    <a href="https://once.com/campfire" target="_blank" style="display: inline-block;">
+      <%= image_tag "logos/campfire-logo.png", alt: "Campfire by 37signals", class: "landing-campfire-logo" %>
+    </a>
+    <h2><a href="https://once.com/campfire" target="_blank" style="color: inherit; text-decoration: none; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Built on Campfire,<br>By 37signals.</a></h2>
+    <p class="landing-campfire-body">Sabha isn't built from scratch. It's built on <a href="https://once.com/campfire" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Campfire</a>, the team chat created by 37signals — the company behind Basecamp, HEY, and Ruby on Rails. That means you get a decade of opinionated product thinking baked into every interaction: simplicity over feature bloat, speed over spectacle, calm over chaos.</p>
     <div class="landing-campfire-strip">
       <div class="landing-campfire-col">
         <span class="landing-campfire-label">FOUNDATION</span>
@@ -342,7 +343,7 @@
     <p class="landing-final-cta-sub">Free to use. Open source. No credit card required.</p>
     <div class="landing-cta-row">
       <a href="<%= new_registration_path %>" class="landing-btn-primary">
-        Get started free
+        Create your community
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
       </a>
       <a href="https://github.com/sabha-co/sabha" target="_blank" class="landing-btn-secondary">Self-host for free</a>
