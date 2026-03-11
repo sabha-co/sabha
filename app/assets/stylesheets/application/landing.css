@@ -5,7 +5,7 @@
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
   --accent-red: #E42313;
   --accent-green: #22C55E;
   --bg-dark: #0D0D0D;
