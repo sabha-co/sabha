@@ -1,0 +1,141 @@
+# <%= Current.account.name %> — Bot API
+
+This document describes how to interact with <%= Current.account.name %> as a bot.
+
+## Self-Registration
+
+To register as a bot, POST JSON to the join URL with a valid join code:
+
+    POST <%= request.base_url %><%= request.script_name %>/join/JOIN_CODE
+    Accept: application/json
+    Content-Type: application/json
+
+    {
+      "name": "My Bot",
+      "mentions_url": "https://example.com/webhook"
+    }
+
+IMPORTANT: You MUST send the `Accept: application/json` header. Without it, the
+request will be treated as a human signup and fail.
+
+Parameters:
+- name (optional): Display name for the bot (defaults to "New Member" if omitted)
+- mentions_url (optional): Webhook URL called when the bot is @mentioned or DM'd.
+  Your response body (text/plain or text/html, 200 status) is auto-posted as a reply.
+- everything_url (optional): Webhook URL called for ALL events. Responses are ignored.
+
+Response (201 Created):
+
+    {
+      "bot_key": "42-AbCdEfGhIjKl",
+      "name": "My Bot",
+      "webhooks": { "mentions_url": "https://...", "everything_url": null },
+      "rooms": [
+        { "id": 1, "name": "General", "type": "Open",
+          "messages_url": "<%= request.base_url %><%= request.script_name %>/rooms/1/42-AbCdEfGhIjKl/messages" }
+      ]
+    }
+
+Store the bot_key immediately — it is shown only once.
+
+## Authentication
+
+All bot API requests authenticate via bot_key in the URL path. The bot_key is a
+secret equivalent to a bearer token. Always use HTTPS in production.
+
+## Posting Messages
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
+    Content-Type: text/plain
+
+    Hello from my bot!
+
+To mention a user, use @{user_id} syntax in the message body:
+
+    Hello @{42}, welcome!
+
+To send a file attachment:
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
+    Content-Type: multipart/form-data
+
+    attachment: (file)
+
+Response: 201 Created with Location header pointing to the message.
+
+## Creating Direct Messages
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}/directs
+    Content-Type: application/json
+
+    { "user_ids": [42] }
+
+Response: { "room": { "id": 5 } } with status 201 (new) or 200 (existing).
+
+## Listing Rooms
+
+    GET <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}
+
+Response: JSON array of rooms the bot is a member of, with message posting URLs.
+
+## Reading Messages
+
+    GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
+
+Response: JSON array of recent messages (last 50) with sender, body (HTML + plain text),
+mentionees, and created_at.
+
+## Updating Bot Settings
+
+    PATCH <%= request.base_url %><%= request.script_name %>/bots/{bot_key}
+    Content-Type: application/json
+
+    { "name": "New Name", "mentions_url": "https://new-url.com/webhook" }
+
+## Webhook Payloads
+
+When your bot receives a webhook, the payload is JSON:
+
+### message_created / message_updated
+
+    {
+      "event": "message_created",
+      "user": { "id": 1, "name": "Alice", "path": "/users/1" },
+      "room": {
+        "id": 5, "name": "General", "type": "Open",
+        "members": 42, "has_bot": true,
+        "path": "/rooms/5/42-AbCdEfGhIjKl/messages"
+      },
+      "message": {
+        "id": 10,
+        "body": { "html": "<p>Hello @MyBot</p>", "plain": "Hello @MyBot" },
+        "mentionees": [{ "id": 99, "name": "MyBot" }],
+        "path": "/rooms/5@10"
+      }
+    }
+
+### boost_created
+
+Same structure plus: "boost": { "id": 123, "body": "👍" }
+
+### user_created
+
+    { "event": "user_created", "user": { "id": 1, "name": "Alice", "path": "/users/1" } }
+
+### Webhook Response Convention (mentions webhooks only)
+
+For mentions webhooks, your HTTP response is automatically posted as a reply:
+- Return text/plain or text/html with 200 → auto-posted as a message from the bot
+- Return a binary content type with 200 → auto-posted as an attachment
+- Timeout (300s) or error → error message posted to the room
+
+Everything webhooks: responses are ignored (fire-and-forget).
+
+## Error Responses
+
+All errors return JSON with `error` (human-readable) and `code` (machine-stable):
+
+    { "error": "Join code has expired", "code": "join_code_expired" }
+
+Common codes: join_code_not_found, join_code_expired, join_code_inactive,
+self_registration_disabled, rate_limited, validation_failed, forbidden.

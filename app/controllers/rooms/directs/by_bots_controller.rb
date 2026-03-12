@@ -1,5 +1,5 @@
 class Rooms::Directs::ByBotsController < Rooms::DirectsController
-  rescue_from Exception, with: :respond_with_error
+  rescue_from StandardError, with: :respond_with_error
   allow_bot_access only: :create
 
   def create
@@ -9,6 +9,7 @@ class Rooms::Directs::ByBotsController < Rooms::DirectsController
 
   private
     def respond_with_error(error)
-      render json: { error: error.message }, status: :internal_server_error
+      message = Rails.env.local? ? error.message : "Internal server error"
+      render json: { error: message, code: "internal_error" }, status: :internal_server_error
     end
 end
