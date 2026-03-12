@@ -35,8 +35,8 @@ module User::Bot
   def update_bot!(attributes)
     attributes = attributes.to_h.symbolize_keys
     transaction do
-      update_webhook_url!(attributes.delete(:mentions_url), :mentions)
-      update_webhook_url!(attributes.delete(:everything_url), :everything)
+      update_webhook_url!(attributes.delete(:mentions_url), :mentions) if attributes.key?(:mentions_url)
+      update_webhook_url!(attributes.delete(:everything_url), :everything) if attributes.key?(:everything_url)
       update!(attributes)
     end
   end

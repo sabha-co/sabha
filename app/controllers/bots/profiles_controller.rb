@@ -1,5 +1,6 @@
 class Bots::ProfilesController < ApplicationController
   allow_bot_access only: :update
+  before_action :require_bot_authentication
 
   def update
     Current.user.update_bot!(bot_params)
@@ -12,6 +13,10 @@ class Bots::ProfilesController < ApplicationController
   end
 
   private
+    def require_bot_authentication
+      head :forbidden unless authenticated_by.bot_key?
+    end
+
     def bot_params
       params.permit(:name, :mentions_url, :everything_url).to_h
     end

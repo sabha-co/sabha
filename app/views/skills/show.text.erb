@@ -6,7 +6,7 @@ This document describes how to interact with <%= Current.account.name %> as a bo
 
 To register as a bot, POST JSON to the join URL with a valid join code:
 
-    POST <%= request.base_url %>/join/JOIN_CODE
+    POST <%= request.base_url %><%= request.script_name %>/join/JOIN_CODE
     Accept: application/json
     Content-Type: application/json
 
@@ -32,7 +32,7 @@ Response (201 Created):
       "webhooks": { "mentions_url": "https://...", "everything_url": null },
       "rooms": [
         { "id": 1, "name": "General", "type": "Open",
-          "messages_url": "<%= request.base_url %>/rooms/1/42-AbCdEfGhIjKl/messages" }
+          "messages_url": "<%= request.base_url %><%= request.script_name %>/rooms/1/42-AbCdEfGhIjKl/messages" }
       ]
     }
 
@@ -45,7 +45,7 @@ secret equivalent to a bearer token. Always use HTTPS in production.
 
 ## Posting Messages
 
-    POST <%= request.base_url %>/rooms/{room_id}/{bot_key}/messages
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
     Content-Type: text/plain
 
     Hello from my bot!
@@ -56,7 +56,7 @@ To mention a user, use @{user_id} syntax in the message body:
 
 To send a file attachment:
 
-    POST <%= request.base_url %>/rooms/{room_id}/{bot_key}/messages
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
     Content-Type: multipart/form-data
 
     attachment: (file)
@@ -65,7 +65,7 @@ Response: 201 Created with Location header pointing to the message.
 
 ## Creating Direct Messages
 
-    POST <%= request.base_url %>/rooms/{bot_key}/directs
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}/directs
     Content-Type: application/json
 
     { "user_ids": [42] }
@@ -74,20 +74,20 @@ Response: { "room": { "id": 5 } } with status 201 (new) or 200 (existing).
 
 ## Listing Rooms
 
-    GET <%= request.base_url %>/rooms/{bot_key}
+    GET <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}
 
 Response: JSON array of rooms the bot is a member of, with message posting URLs.
 
 ## Reading Messages
 
-    GET <%= request.base_url %>/rooms/{room_id}/{bot_key}/messages
+    GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
 
 Response: JSON array of recent messages (last 50) with sender, body (HTML + plain text),
 mentionees, and created_at.
 
 ## Updating Bot Settings
 
-    PATCH <%= request.base_url %>/bots/{bot_key}
+    PATCH <%= request.base_url %><%= request.script_name %>/bots/{bot_key}
     Content-Type: application/json
 
     { "name": "New Name", "mentions_url": "https://new-url.com/webhook" }

@@ -57,4 +57,29 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_url
   end
+
+  test "partial update preserves existing webhooks" do
+    original_mentions_url = @bot.mentions_url
+    assert original_mentions_url.present?
+
+    patch bot_profile_url(@bot.bot_key),
+      params: { name: "Partial" },
+      as: :json
+
+    assert_response :success
+    assert_equal "Partial", @bot.reload.name
+    assert_equal original_mentions_url, @bot.mentions_url
+  end
+
+  test "session-authenticated human cannot update bot profile" do
+    user = users(:david)
+    post session_url, params: { email_address: user.email_address, password: "secret123456" }
+
+    patch bot_profile_url(@bot.bot_key),
+      params: { name: "Hijacked" },
+      as: :json
+
+    assert_response :forbidden
+    assert_not_equal "Hijacked", @bot.reload.name
+  end
 end
