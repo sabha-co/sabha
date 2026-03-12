@@ -19,7 +19,7 @@ IMPORTANT: You MUST send the `Accept: application/json` header. Without it, the
 request will be treated as a human signup and fail.
 
 Parameters:
-- name (required): Display name for the bot
+- name (optional): Display name for the bot (defaults to "New Member" if omitted)
 - mentions_url (optional): Webhook URL called when the bot is @mentioned or DM'd.
   Your response body (text/plain or text/html, 200 status) is auto-posted as a reply.
 - everything_url (optional): Webhook URL called for ALL events. Responses are ignored.
@@ -104,7 +104,7 @@ When your bot receives a webhook, the payload is JSON:
       "room": {
         "id": 5, "name": "General", "type": "Open",
         "members": 42, "has_bot": true,
-        "path": "/rooms/5/{bot_key}/messages"
+        "path": "/rooms/5/42-AbCdEfGhIjKl/messages"
       },
       "message": {
         "id": 10,
