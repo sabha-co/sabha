@@ -32,6 +32,13 @@ admin:
   email_address: admin@example.com
   verified_at: <%= 1.month.ago.to_fs(:db) %>
 
+# Platform superadmin with access to /admin
+superadmin:
+  name: Superadmin
+  email_address: superadmin@example.com
+  verified_at: <%= 1.month.ago.to_fs(:db) %>
+  superadmin: true
+
 # User with pending email change
 pending_email:
   name: Pending

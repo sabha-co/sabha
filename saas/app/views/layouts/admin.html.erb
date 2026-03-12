@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%= render "layouts/theme_preference" %>
+
+    <title><%= [content_for(:title), "Admin", Branding.saas_app_name].compact.uniq.join(" | ") %></title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="theme-color" content="<%= Branding.theme_color %>">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= tag.link rel: "icon", href: image_path("sabha-icon.svg"), type: "image/svg+xml" %>
+
+    <%= stylesheet_link_tag "tailwind", *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
+
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <%# Override layout.css grid (designed for workspace app) with simple block layout %>
+  <body style="display: block; max-block-size: none; min-height: 100dvh;" data-controller="theme">
+    <header style="border-bottom: 1px solid var(--color-border-darker);">
+    <div style="display: grid; grid-template-columns: 1fr auto 1fr;" class="pad-block-half pad-inline align-center">
+      <div>
+        <%= link_to "← App", saas_root_path, class: "txt-muted txt-small txt-undecorated" %>
+      </div>
+
+      <div class="flex flex-column align-center" style="gap: 0.1em;">
+        <%= link_to "Sabha Admin", admin_root_path, class: "txt-undecorated", style: "font-weight: 600;" %>
+        <span class="txt-x-small" style="<%= "color: var(--color-negative); font-weight: 600;" if Rails.env.production? %>"><%= Rails.env.upcase %></span>
+      </div>
+
+      <div class="flex align-center gap txt-small txt-muted justify-end">
+        <%= current_global_identity.email_address %>
+        &middot;
+        <%= link_to "Sign out", session_path, data: { turbo_method: :delete }, class: "txt-muted" %>
+      </div>
+    </div>
+    <nav class="flex gap pad-inline pad-block-half" style="border-top: 1px solid var(--color-border);">
+      <%= link_to "Stats", admin_root_path,
+            class: "txt-small txt-undecorated #{current_page?(admin_root_path) ? "" : "txt-muted"}" %>
+      <%= link_to "Workspaces", admin_workspaces_path,
+            class: "txt-small txt-undecorated #{request.path.start_with?(admin_workspaces_path) ? "" : "txt-muted"}" %>
+    </nav>
+    </header>
+
+    <main class="pad">
+      <% if notice = flash[:notice] || flash[:alert] %>
+        <div class="flash" data-controller="element-removal" data-action="animationend->element-removal#remove">
+          <div class="flash__inner" style="<%= "--flash-background: var(--color-negative)" if flash[:alert] %>">
+            <span><%= notice %></span>
+          </div>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+  </body>
+</html>
