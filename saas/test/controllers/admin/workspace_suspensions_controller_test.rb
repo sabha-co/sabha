@@ -27,10 +27,10 @@ class Admin::WorkspaceSuspensionsControllerTest < ActionDispatch::IntegrationTes
     assert workspace.reload.active?
   end
 
-  test "create redirects non-superadmin" do
+  test "create returns 403 for non-superadmin" do
     delete session_path
     sign_in_global_identity(global_identities(:alice))
     post admin_workspace_suspension_path(workspaces(:acme))
-    assert_redirected_to saas_root_path
+    assert_response :forbidden
   end
 end

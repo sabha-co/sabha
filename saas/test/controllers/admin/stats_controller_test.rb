@@ -8,11 +8,10 @@ class Admin::StatsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "redirects non-superadmin with alert" do
+  test "returns 403 for non-superadmin" do
     sign_in_global_identity(global_identities(:alice))
     get admin_root_path
-    assert_redirected_to saas_root_path
-    assert_equal "Not authorized.", flash[:alert]
+    assert_response :forbidden
   end
 
   test "renders stats for superadmin" do

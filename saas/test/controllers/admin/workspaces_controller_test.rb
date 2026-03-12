@@ -13,11 +13,11 @@ class Admin::WorkspacesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
-  test "index redirects non-superadmin" do
+  test "index returns 403 for non-superadmin" do
     delete session_path
     sign_in_global_identity(global_identities(:alice))
     get admin_workspaces_path
-    assert_redirected_to saas_root_path
+    assert_response :forbidden
   end
 
   test "index renders workspace list" do
@@ -40,10 +40,10 @@ class Admin::WorkspacesControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", text: /Acme Corp/
   end
 
-  test "show redirects non-superadmin" do
+  test "show returns 403 for non-superadmin" do
     delete session_path
     sign_in_global_identity(global_identities(:alice))
     get admin_workspace_path(workspaces(:acme))
-    assert_redirected_to saas_root_path
+    assert_response :forbidden
   end
 end

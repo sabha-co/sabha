@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 module Admin
+  # Base controller for platform admin area (/admin).
+  #
+  # Operates entirely on the untenanted PostgreSQL database (GlobalIdentity,
+  # Workspace, WorkspaceMembership). Does NOT access per-workspace SQLite
+  # databases. To query tenanted data in the future, wrap calls in
+  # ApplicationRecord.with_tenant(workspace.external_id.to_s).
   class BaseController < Saas::BaseController
     before_action :ensure_superadmin
 
@@ -11,11 +17,7 @@ module Admin
     private
 
       def ensure_superadmin
-        if current_global_identity
-          redirect_to saas_root_path, alert: "Not authorized." unless current_global_identity.superadmin?
-        else
-          head :forbidden
-        end
+        head :forbidden unless current_global_identity&.superadmin?
       end
   end
 end
