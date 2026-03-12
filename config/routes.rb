@@ -112,14 +112,19 @@ Rails.application.routes.draw do
     route_for :user_avatar, user.avatar_token, v: user.updated_at.to_fs(:number)
   end
 
+  resource :skill, only: :show, controller: "skills"
+
   # Join routes for signup via invite link
+  # Bot self-registration (JSON) must come before human signup route
   if Sabha.saas?
     # In SaaS mode, the global /join/:code route is in the engine (goes to Saas::WorkspacesController#join)
     # This workspace-scoped route handles the actual signup after redirect
+    post "join/:join_code", to: "bots/registrations#create", constraints: ->(req) { req.format.json? }, as: :join_bot
     get "join/:join_code", to: "users#new"
     post "join/:join_code", to: "users#create"
   else
     # Self-hosted mode: direct signup via join link
+    post "join/:join_code", to: "bots/registrations#create", constraints: ->(req) { req.format.json? }, as: :join_bot
     get "join/:join_code", to: "users#new", as: :join
     post "join/:join_code", to: "users#create"
   end
@@ -132,6 +137,7 @@ Rails.application.routes.draw do
     resources :threads, only: %i[ create show edit update destroy ]
 
     post ":bot_key/directs", to: "directs/by_bots#create", as: :bot_directs
+    get ":bot_key", to: "/bots/rooms#index", as: :bot_rooms, constraints: { bot_key: /\d+-.+/ }
   end
 
   resources :rooms do
@@ -140,6 +146,7 @@ Rails.application.routes.draw do
     end
 
     post ":bot_key/messages", to: "messages/by_bots#create", as: :bot_messages
+    get ":bot_key/messages", to: "messages/reads_by_bots#index", as: :bot_messages_read
 
     scope module: "rooms" do
       resource :refresh, only: :show
@@ -155,6 +162,8 @@ Rails.application.routes.draw do
 
     get "@:message_id", to: "rooms#show", as: :at_message
   end
+
+  patch "bots/:bot_key", to: "bots/profiles#update", as: :bot_profile, constraints: { bot_key: /\d+-.+/ }
 
   resources :messages do
     scope module: "messages" do

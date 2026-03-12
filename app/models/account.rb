@@ -4,7 +4,7 @@ class Account < ApplicationRecord
   VALID_AUTH_METHODS = %w[password otp].freeze
 
   has_one_attached :logo
-  has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true
+  has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true, allow_bot_self_registration: false
 
   after_save :invalidate_personal_invite_links, if: :invite_links_disabled?
 

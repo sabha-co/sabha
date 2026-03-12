@@ -5,7 +5,7 @@ class Messages::ByBotsController < MessagesController
     super
     head :created, location: message_url(@message) if @message&.persisted? && !performed?
   rescue LoadError
-    head :service_unavailable
+    render json: { error: "Storage service unavailable", code: "service_unavailable" }, status: :service_unavailable
   end
 
   private
