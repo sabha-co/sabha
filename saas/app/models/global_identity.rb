@@ -24,6 +24,11 @@ class GlobalIdentity < UntenantedRecord
   validates :unconfirmed_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
 
   scope :verified, -> { where.not(verified_at: nil) }
+  scope :superadmin, -> { where(superadmin: true) }
+
+  def superadmin?
+    superadmin
+  end
 
   def verified?
     verified_at.present?

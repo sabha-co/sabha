@@ -1,0 +1,69 @@
+<% content_for :title, @workspace.name %>
+
+<div class="flex flex-column gap">
+  <div>
+    <%= link_to "← Workspaces", admin_workspaces_path, class: "txt-muted txt-small txt-undecorated" %>
+  </div>
+
+  <%# Workspace header %>
+  <div class="flex align-center justify-space-between">
+    <div class="flex flex-column gap-half">
+      <h1 class="txt-large" style="font-weight: 600;"><%= @workspace.name %></h1>
+      <div class="flex gap txt-small txt-muted">
+        <span>ID: <%= @workspace.external_id %></span>
+        <span>&middot;</span>
+        <span>Created <%= @workspace.created_at.to_fs(:date) %></span>
+        <span>&middot;</span>
+        <span>Creator: <%= @workspace.creator.email_address %></span>
+      </div>
+    </div>
+
+    <%# Suspension controls %>
+    <div class="flex align-center gap">
+      <% if @workspace.suspended? %>
+        <span class="txt-small txt-negative">Suspended <%= @workspace.suspended_at.to_fs(:date) %></span>
+        <%= button_to "Unsuspend", admin_workspace_suspension_path(@workspace),
+              method: :delete,
+              class: "btn",
+              form: { data: { turbo_confirm: "Unsuspend #{@workspace.name}?" } } %>
+      <% else %>
+        <span class="txt-small" style="color: var(--color-positive);">Active</span>
+        <%= button_to "Suspend", admin_workspace_suspension_path(@workspace),
+              method: :post,
+              class: "btn",
+              form: { data: { turbo_confirm: "Suspend #{@workspace.name}? Members will lose access." } } %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Members table %>
+  <section class="flex flex-column gap-half">
+    <h2 class="txt-small txt-muted txt-label">Members (<%= @memberships.count %>)</h2>
+    <div class="border" style="border-radius: 0.5em; overflow: hidden;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr class="txt-small txt-muted" style="border-bottom: 1px solid var(--color-border);">
+            <th class="pad-block-half pad-inline txt-align-start">Email</th>
+            <th class="pad-block-half pad-inline txt-align-start">Name</th>
+            <th class="pad-block-half pad-inline txt-align-start">Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @memberships.each do |membership| %>
+            <% identity = membership.global_identity %>
+            <tr style="border-bottom: 1px solid var(--color-border);">
+              <td class="pad-block-half pad-inline txt-small"><%= identity.email_address %></td>
+              <td class="pad-block-half pad-inline txt-small txt-muted"><%= identity.name.presence || "—" %></td>
+              <td class="pad-block-half pad-inline txt-small txt-muted"><%= membership.created_at.to_fs(:date) %></td>
+            </tr>
+          <% end %>
+          <% if @memberships.empty? %>
+            <tr>
+              <td colspan="3" class="pad txt-muted txt-align-center">No members.</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

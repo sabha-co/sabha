@@ -1,0 +1,54 @@
+<% content_for :title, "Workspaces" %>
+
+<div class="flex flex-column gap">
+  <div class="flex align-center justify-space-between">
+    <h1 class="txt-large" style="font-weight: 600;">Workspaces</h1>
+    <%= form_with url: admin_workspaces_path, method: :get, class: "flex gap-half" do |f| %>
+      <%= f.text_field :query, value: @query, placeholder: "Search by name…", class: "input" %>
+      <%= f.submit "Search", class: "btn" %>
+      <% if @query.present? %>
+        <%= link_to "Clear", admin_workspaces_path, class: "btn" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="border" style="border-radius: 0.5em; overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr class="txt-small txt-muted" style="border-bottom: 1px solid var(--color-border);">
+          <th class="pad-block-half pad-inline txt-align-start">Name</th>
+          <th class="pad-block-half pad-inline txt-align-start">ID</th>
+          <th class="pad-block-half pad-inline txt-align-start">Creator</th>
+          <th class="pad-block-half pad-inline txt-align-start">Members</th>
+          <th class="pad-block-half pad-inline txt-align-start">Created</th>
+          <th class="pad-block-half pad-inline txt-align-start">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @workspaces.each do |workspace| %>
+          <tr style="border-bottom: 1px solid var(--color-border);">
+            <td class="pad-block-half pad-inline">
+              <%= link_to workspace.name, admin_workspace_path(workspace), class: "txt-undecorated", style: "font-weight: 600;" %>
+            </td>
+            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.external_id %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.creator.email_address %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.workspace_memberships.count %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.created_at.to_fs(:date) %></td>
+            <td class="pad-block-half pad-inline txt-small">
+              <% if workspace.suspended? %>
+                <span class="txt-negative">Suspended</span>
+              <% else %>
+                <span style="color: var(--color-positive);">Active</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        <% if @workspaces.empty? %>
+          <tr>
+            <td colspan="6" class="pad txt-muted txt-align-center">No workspaces found.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

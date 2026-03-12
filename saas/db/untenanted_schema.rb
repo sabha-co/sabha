@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_11_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_03_12_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -30,10 +30,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_11_000001) do
     t.datetime "created_at", null: false
     t.string "email_address", null: false
     t.string "name"
+    t.boolean "superadmin", default: false, null: false
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
     t.datetime "verified_at"
     t.index ["email_address"], name: "index_global_identities_on_email_address", unique: true
+    t.index ["superadmin"], name: "index_global_identities_on_superadmin"
     t.index ["verified_at"], name: "index_global_identities_on_verified_at"
   end
 

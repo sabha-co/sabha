@@ -68,6 +68,15 @@ module Sabha
 
             # Workspace membership management
             patch "workspace_memberships/reorder", to: "saas/workspace_memberships#reorder"
+
+            # Platform admin area (superadmin only)
+            namespace :admin do
+              root to: "stats#show"
+              resources :workspaces, only: [ :index, :show ] do
+                resource :suspension, only: [ :create, :destroy ],
+                         controller: "workspace_suspensions"
+              end
+            end
           end
         end
       end
