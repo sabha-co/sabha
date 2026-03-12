@@ -10,6 +10,7 @@ module User::Bot
 
   module ClassMethods
     def create_bot!(attributes)
+      attributes = attributes.to_h.symbolize_keys
       bot_token = generate_bot_token
       mentions_url = attributes.delete(:mentions_url)
       everything_url = attributes.delete(:everything_url)
@@ -32,6 +33,7 @@ module User::Bot
   end
 
   def update_bot!(attributes)
+    attributes = attributes.to_h.symbolize_keys
     transaction do
       update_webhook_url!(attributes.delete(:mentions_url), :mentions)
       update_webhook_url!(attributes.delete(:everything_url), :everything)

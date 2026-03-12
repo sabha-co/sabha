@@ -4,6 +4,7 @@ class Messages::ReadsByBotsController < ApplicationController
 
   def index
     @room = Current.user.rooms.find(params[:room_id])
+    # last(50) generates LIMIT SQL; reverse restores chronological order
     messages = @room.messages.active.with_creator.ordered.last(50).reverse
 
     render json: messages.map { |msg|

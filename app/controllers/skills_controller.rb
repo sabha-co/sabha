@@ -9,10 +9,6 @@ class SkillsController < ApplicationController
 
   private
     def require_account
-      if Sabha.saas? && ApplicationRecord.current_tenant.blank?
-        head :not_found
-      elsif Current.account.nil?
-        head :not_found
-      end
+      head :not_found unless Current.account
     end
 end

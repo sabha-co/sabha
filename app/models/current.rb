@@ -55,6 +55,7 @@ class Current < ActiveSupport::CurrentAttributes
   end
 
   def account
+    return nil if Sabha.saas? && ApplicationRecord.try(:current_tenant).blank?
     @account ||= Account.sole
   rescue ActiveRecord::RecordNotFound
     nil

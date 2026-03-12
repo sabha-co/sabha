@@ -13,6 +13,6 @@ class Bots::ProfilesController < ApplicationController
 
   private
     def bot_params
-      params.permit(:name, :mentions_url, :everything_url).to_h.symbolize_keys
+      params.permit(:name, :mentions_url, :everything_url).to_h
     end
 end

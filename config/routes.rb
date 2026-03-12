@@ -116,18 +116,14 @@ Rails.application.routes.draw do
 
   # Join routes for signup via invite link
   # Bot self-registration (JSON) must come before human signup route
+  post "join/:join_code", to: "bots/registrations#create", constraints: ->(req) { req.format.json? }, as: :join_bot
+
   if Sabha.saas?
-    # In SaaS mode, the global /join/:code route is in the engine (goes to Saas::WorkspacesController#join)
-    # This workspace-scoped route handles the actual signup after redirect
-    post "join/:join_code", to: "bots/registrations#create", constraints: ->(req) { req.format.json? }, as: :join_bot
     get "join/:join_code", to: "users#new"
-    post "join/:join_code", to: "users#create"
   else
-    # Self-hosted mode: direct signup via join link
-    post "join/:join_code", to: "bots/registrations#create", constraints: ->(req) { req.format.json? }, as: :join_bot
     get "join/:join_code", to: "users#new", as: :join
-    post "join/:join_code", to: "users#create"
   end
+  post "join/:join_code", to: "users#create"
 
   namespace :rooms do
     get "browse", to: "browse#index", as: :browse

@@ -1,5 +1,5 @@
 class Rooms::Directs::ByBotsController < Rooms::DirectsController
-  rescue_from Exception, with: :respond_with_error
+  rescue_from StandardError, with: :respond_with_error
   allow_bot_access only: :create
 
   def create

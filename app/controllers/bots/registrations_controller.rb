@@ -9,8 +9,12 @@ class Bots::RegistrationsController < ApplicationController
 
   before_action :reject_banned_ip, only: :create
   before_action :verify_self_registration_enabled
-  before_action :set_join_code
+  before_action :set_join_code!
   before_action :verify_join_code_active
+
+  rescue_from ActiveRecord::RecordNotFound do
+    render json: { error: "Invalid join code", code: "join_code_not_found" }, status: :not_found
+  end
 
   def create
     ActiveRecord::Base.transaction do
@@ -31,9 +35,8 @@ class Bots::RegistrationsController < ApplicationController
       end
     end
 
-    def set_join_code
-      @join_code = Current.account.join_codes.find_by(code: params[:join_code])
-      render json: { error: "Invalid join code", code: "join_code_not_found" }, status: :not_found unless @join_code
+    def set_join_code!
+      @join_code = Current.account.join_codes.find_by!(code: params[:join_code])
     end
 
     def verify_join_code_active
@@ -41,7 +44,7 @@ class Bots::RegistrationsController < ApplicationController
     end
 
     def bot_params
-      params.permit(:name, :mentions_url, :everything_url).to_h.symbolize_keys
+      params.permit(:name, :mentions_url, :everything_url).to_h
     end
 
     def registration_response
@@ -51,9 +54,8 @@ class Bots::RegistrationsController < ApplicationController
         bot_key: @bot.bot_key,
         name: @bot.name,
         webhooks: { mentions_url: @bot.mentions_url, everything_url: @bot.everything_url },
-        rooms: @bot.rooms.where.not(type: "Rooms::Thread").map { |room|
-          { id: room.id, name: room.name, type: room.type.demodulize,
-            messages_url: room_bot_messages_url(room, @bot.bot_key) }
+        rooms: @bot.rooms.without_threads.map { |room|
+          room.as_bot_json(bot_key: @bot.bot_key, url_helper: method(:room_bot_messages_url))
         }
       }
     end
