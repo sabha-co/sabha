@@ -1,5 +1,4 @@
-class Bots::ProfilesController < ApplicationController
-  allow_bot_access only: :update
+class Bots::ProfilesController < Bots::BaseController
   before_action :require_bot_authentication
 
   def update

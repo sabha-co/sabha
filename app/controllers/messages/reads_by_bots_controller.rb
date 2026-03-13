@@ -1,4 +1,5 @@
 class Messages::ReadsByBotsController < ApplicationController
+  skip_forgery_protection
   allow_bot_access only: :index
   rescue_from ActiveRecord::RecordNotFound, with: :room_not_found
 

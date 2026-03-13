@@ -1,4 +1,5 @@
 class Rooms::Directs::ByBotsController < Rooms::DirectsController
+  skip_forgery_protection
   rescue_from StandardError, with: :respond_with_error
   allow_bot_access only: :create
 

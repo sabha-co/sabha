@@ -1,4 +1,5 @@
 class Messages::ByBotsController < MessagesController
+  skip_forgery_protection
   skip_before_action :deny_bots
 
   def create

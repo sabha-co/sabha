@@ -1,8 +1,7 @@
-class Bots::RegistrationsController < ApplicationController
+class Bots::RegistrationsController < Bots::BaseController
   include BlockBannedRequests
 
   allow_unauthenticated_access only: :create
-  allow_bot_access only: :create
 
   rate_limit to: 10, within: 1.hour, only: :create,
     with: -> { render json: { error: "Too many attempts", code: "rate_limited" }, status: :too_many_requests }
