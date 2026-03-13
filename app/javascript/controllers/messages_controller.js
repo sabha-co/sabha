@@ -54,8 +54,6 @@ export default class extends Controller {
     this.#paginator.monitor()
     this.#scrollTracker.connect()
 
-    // After initial render, mark subsequent messages for entrance animation
-    requestAnimationFrame(() => this.#loaded = true)
   }
 
   disconnect() {
@@ -63,10 +61,10 @@ export default class extends Controller {
     this.#scrollTracker.disconnect()
   }
 
-  #loaded = false
+  #streaming = false
 
   messageTargetConnected(target) {
-    if (this.#loaded) target.dataset.new = ""
+    if (this.#streaming) target.dataset.new = ""
     this.#formatMessage(target)
 
     // Fix reply outlet for messages rendered with the default composer_id
@@ -109,7 +107,9 @@ export default class extends Controller {
       if (upToDate) {
         event.detail.render = async (streamElement) => {
           const didScroll = await this.#scrollManager.autoscroll(false, async () => {
+            this.#streaming = true
             await render(streamElement)
+            this.#streaming = false
             await nextEventLoopTick()
 
             this.#positionLastMessage()
