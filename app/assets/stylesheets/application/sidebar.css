@@ -45,6 +45,19 @@
   }
 }
 
+.sidebar__close.sidebar__close {
+  display: none;
+
+  @media (max-width: 120ch) {
+    display: flex;
+    margin-block-start: var(--block-space);
+
+    + .sidebar__tool-container {
+      padding-top: 0;
+    }
+  }
+}
+
 .sidebar__tool-container {
   display: flex;
   flex-direction: column;

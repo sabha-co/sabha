@@ -88,6 +88,11 @@
   </button>
 
   <div class="sidebar__tools d-hotwire-native-none">
+    <button class="btn sidebar__tool sidebar__close" data-action="click->toggle-class#toggle" aria-label="Close sidebar">
+      <%= icon_tag "close" %>
+      <span class="sidebar__tool-label">Close</span>
+    </button>
+
     <div class="sidebar__tool-container">
       <%= link_to inbox_path, class: "btn sidebar__tool", data: { unread_indicator_target: "activity" } do %>
         <%= icon_tag "mentions" %>
