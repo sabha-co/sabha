@@ -16,7 +16,7 @@ class Bots::RegistrationsController < Bots::BaseController
   end
 
   def create
-    ActiveRecord::Base.transaction do
+    @join_code.transaction do
       @join_code.redeem!
       @bot = User.create_bot!(bot_params)
     end
