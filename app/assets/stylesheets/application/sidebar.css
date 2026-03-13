@@ -495,7 +495,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 0.15s ease;
+  transition: transform 150ms cubic-bezier(0.25, 1, 0.5, 1);
 
   .icon {
     --icon-size: 0.55em;

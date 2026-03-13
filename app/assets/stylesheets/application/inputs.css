@@ -68,7 +68,7 @@ input[type="checkbox"]:not(.switch__input)::after,
 input[type="radio"]::after {
   content: "";
   display: block;
-  transition: transform 150ms ease;
+  transition: transform 150ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 input[type="checkbox"]:not(.switch__input) {
@@ -268,7 +268,7 @@ input[type="radio"]:disabled::after {
   cursor: pointer;
   inset: 0;
   position: absolute;
-  transition: 150ms ease;
+  transition: background-color 200ms cubic-bezier(0.25, 1, 0.5, 1);
 
   &::before {
     background-color: var(--color-text-reversed);
@@ -279,7 +279,7 @@ input[type="radio"]:disabled::after {
     inset-block-end: 0.2em;
     inset-inline-start: 0.2em;
     position: absolute;
-    transition: 150ms ease;
+    transition: transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   .switch__input:disabled + & {
