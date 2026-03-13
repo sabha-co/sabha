@@ -24,6 +24,10 @@
     .message-area--empty > figure .icon {
       inline-size: 30dvw;
     }
+
+    .message-area--empty {
+      animation: empty-state-in 500ms cubic-bezier(0.25, 1, 0.5, 1) both;
+    }
   }
 }
 
@@ -487,12 +491,17 @@
     margin: -0.25em -0.5em;
     border-radius: 0.3em;
     flex-wrap: wrap;
+    transition: background-color 150ms ease-out;
 
     @media (any-hover: hover) {
       &:where(:not(:active):hover) {
         background-color: var(--color-message-bg);
         filter: brightness(0.9);
       }
+    }
+
+    &:active {
+      animation: thread-link-highlight 400ms cubic-bezier(0.25, 1, 0.5, 1) both;
     }
 
     .txt-muted {
@@ -607,6 +616,10 @@ img.message__attachment {
   
     justify-content: start;
   } 
+}
+
+.bookmark-indicator--active {
+  animation: bookmark-pop 250ms cubic-bezier(0.25, 1, 0.5, 1) both;
 }
 
 .message__edit-btn {

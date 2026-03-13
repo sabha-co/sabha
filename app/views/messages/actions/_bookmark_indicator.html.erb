@@ -1,6 +1,6 @@
 <%# locals: (message:) -%>
 <span id="<%= dom_id(message, :bookmark_indicator) %>">
   <% if message.bookmarked_by_current_user? %>
-    <%= icon_tag "bookmark-filled", class: "opacity-50", title: "Bookmarked" %>
+    <%= icon_tag "bookmark-filled", class: "opacity-50 bookmark-indicator--active", title: "Bookmarked" %>
   <% end %>
 </span>
