@@ -4,7 +4,7 @@
   <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
     <div class="flex justify-center mb-6">
       <%= link_to root_path do %>
-        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, class: "w-24 h-auto rounded-lg" %>
+        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, class: "w-18 h-auto rounded-lg" %>
       <% end %>
     </div>
 
@@ -14,12 +14,12 @@
 
         <%= render "sessions/flash_messages" %>
 
-        <p class="txt-medium">Enter the 6-character code we sent you.</p>
+        <p class="txt-medium txt-muted">Enter the 6-character code we sent to <strong class="txt-body"><%= @auth_code_email || "your email" %></strong></p>
 
-        <%= render "sessions/code_field", form: form, styled: true %>
+        <%= render "sessions/code_field", form: form, styled: true, show_icon: false, show_translation: false %>
         <%= render "sessions/submit_button", form: form, label: "Verify" %>
 
-        <p class="txt-small">
+        <p class="txt-small txt-muted">
           Didn't receive it? <%= link_to "Try again", new_session_path %>
         </p>
       </fieldset>

@@ -35,6 +35,7 @@ module Saas
       # Don't reveal whether email exists (prevent email enumeration)
       # Show same message regardless of whether account exists
 
+      session[:auth_code_email] = email
       redirect_to auth_code_path, notice: "If this email is registered, you'll receive a sign-in code"
     end
 

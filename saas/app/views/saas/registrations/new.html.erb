@@ -4,7 +4,7 @@
   <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
     <div class="flex justify-center mb-6">
       <%= link_to root_path do %>
-        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, class: "w-24 h-auto rounded-lg" %>
+        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, class: "w-18 h-auto rounded-lg" %>
       <% end %>
     </div>
 
@@ -12,7 +12,7 @@
       <fieldset class="flex flex-column gap center-block pad">
         <legend class="txt-large txt-align-center"><strong>Create your account</strong></legend>
 
-        <p class="txt-medium">
+        <p class="txt-medium txt-muted">
           Already have an account?
           <%= link_to "Sign in", new_session_path(return_to: params[:return_to].presence || session[:return_to_after_authenticating]) %>
         </p>
@@ -23,7 +23,7 @@
           <%= translation_button(:user_name) %>
           <label class="flex align-center gap input input--actor txt-large">
             <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
-                  data: { "1p-ignore": true } %>
+                  minlength: 2, maxlength: 100, data: { "1p-ignore": true } %>
             <%= icon_tag "person" %>
           </label>
         </div>

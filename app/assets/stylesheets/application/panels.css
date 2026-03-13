@@ -73,6 +73,7 @@
 
 .panel--centered {
   --panel-width: 28rem;
+  --panel-padding: 1.5em;
   max-inline-size: calc(100vw - 2rem);
   margin: 0;
   box-shadow:
@@ -89,6 +90,12 @@
 
 .panel--centered fieldset {
   min-inline-size: 0;
+}
+
+@media (max-width: 480px) {
+  .panel--centered .txt-large {
+    font-size: 1.1rem;
+  }
 }
 
 .settings-layout {

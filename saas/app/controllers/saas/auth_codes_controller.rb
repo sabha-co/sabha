@@ -13,6 +13,8 @@ module Saas
     }
 
     def show
+      @auth_code_email = session.delete(:auth_code_email)
+
       # Store return_to param for redirect after authentication
       if params[:return_to].present?
         session[:return_to_after_authenticating] = params[:return_to]

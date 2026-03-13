@@ -10,6 +10,8 @@
         autofocus: autofocus,
         autocomplete: "email",
         placeholder: "Your email address",
+        pattern: "[^@\\s]+@[^@\\s]+\\.[^@\\s]+",
+        title: "Enter a valid email address (e.g. name@example.com)",
         value: params[:email_address] %>
     <% if show_icon && defined?(icon_tag) %>
       <%= icon_tag "email" %>

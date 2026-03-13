@@ -41,6 +41,7 @@ module Saas
 
       # Don't reveal whether email exists (prevent email enumeration)
       # Show same message regardless of whether account existed
+      session[:auth_code_email] = params[:email_address].to_s.strip
       redirect_to auth_code_path, notice: "Check your email for a verification code"
     rescue ActiveRecord::RecordInvalid => e
       redirect_to new_registration_path, alert: e.record.errors.full_messages.to_sentence

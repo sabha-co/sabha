@@ -10,7 +10,10 @@
         autofocus: autofocus,
         autocomplete: "one-time-code",
         placeholder: "Enter code",
+        minlength: 6,
         maxlength: 6,
+        pattern: "[A-Za-z0-9]{6}",
+        title: "Enter the 6-character code from your email",
         style: styled ? "text-transform: uppercase; letter-spacing: 0.25em; text-align: center;" : nil %>
     <% if show_icon && defined?(icon_tag) %>
       <%= icon_tag "password" %>
