@@ -52,9 +52,9 @@
         <% end %>
         <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
         <% if @user.administrator? %>
-          <span class="txt-small txt-muted" title="Administrator"><%= icon_tag "crown" %></span>
+          <span class="txt-small txt-muted" title="Administrator" style="translate: 0 2px;"><%= icon_tag "crown" %></span>
         <% elsif @user.moderator? %>
-          <span class="txt-small txt-muted" title="Moderator"><%= icon_tag "shield" %></span>
+          <span class="txt-small txt-muted" title="Moderator" style="translate: 0 2px;"><%= icon_tag "shield" %></span>
         <% end %>
       </div>
       <% if @user.badge %>

@@ -1,5 +1,6 @@
 # rails generate:demo
 # rails generate:demo:max
+# BUNDLE_GEMFILE=Gemfile.saas SAAS=true bin/rails generate:demo:max
 
 # Shared helpers for both MaxDemo and regular demo
 module DemoHelpers
@@ -30,7 +31,7 @@ module DemoHelpers
 
   # Shared database cleanup (order matters due to foreign keys)
   def clean_database
-    unless Rails.env.development? || Rails.env.test? || DemoMode.enabled?
+    unless Rails.env.development? || Rails.env.test? || Sabha.saas? || DemoMode.enabled?
       abort "⛔ Refusing to clean database in #{Rails.env} without DEMO_MODE=true"
     end
 

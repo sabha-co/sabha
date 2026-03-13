@@ -381,7 +381,7 @@
 
   .message__heading {
     align-items: center;
-    column-gap: var(--message-column-gap);
+    column-gap: calc(var(--message-column-gap) / 2);
     display: inline-flex;
     margin: 0;
     min-inline-size: 0;
@@ -415,7 +415,12 @@
   display: inline-flex;
   flex-shrink: 0;
   gap: calc(var(--message-column-gap) / 2);
+  margin-inline: 0.25ch;
   white-space: nowrap;
+
+  &:empty {
+    margin-inline: 0;
+  }
 
   .icon {
     translate: 0 0.5px;
