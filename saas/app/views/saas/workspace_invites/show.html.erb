@@ -1,0 +1,24 @@
+<% content_for :title, "Invite your team" %>
+
+<section class="txt-align-center">
+  <div class="panel panel--centered" style="--panel-width: 36rem">
+    <div class="flex justify-center mb-6">
+      <%= link_to root_path do %>
+        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, class: "w-18 h-auto rounded-lg" %>
+      <% end %>
+    </div>
+
+    <fieldset class="flex flex-column gap center-block pad">
+      <legend class="txt-large txt-align-center"><strong>Invite people to <%= Current.account.name %></strong></legend>
+      <p class="txt-muted txt-medium txt-align-center">A chat app is better with people. Share this link to invite others.</p>
+
+      <%= render "accounts/invite" %>
+
+      <div class="margin-top">
+        <%= link_to root_path, class: "btn btn--reversed center txt-large" do %>
+          Done
+        <% end %>
+      </div>
+    </fieldset>
+  </div>
+</section>

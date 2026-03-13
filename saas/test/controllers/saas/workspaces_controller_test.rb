@@ -41,7 +41,7 @@ module Saas
 
       workspace = Workspace.last
       assert_equal "My New Workspace", workspace.name
-      assert_redirected_to "/#{workspace.external_id}"
+      assert_redirected_to "/#{workspace.external_id}/invite"
       assert_equal "Workspace created!", flash[:notice]
     end
 

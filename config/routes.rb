@@ -17,6 +17,9 @@ Rails.application.routes.draw do
 
       # Leave workspace (RESTful destroy on membership)
       resource :membership, only: [ :destroy ], controller: "saas/workspace_memberships"
+
+      # Post-creation invite step
+      resource :invite, only: :show, controller: "saas/workspace_invites"
     end
   else
     constraints(lambda { |req| req.session[:user_id].present? }) do
