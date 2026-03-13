@@ -604,6 +604,19 @@
     z-index: 4;
     animation: slide-in-left 300ms ease both;
   }
+
+  /* SaaS standalone pages (no #sidebar) — always show workspace selector */
+  body.app-with-workspaces:not(:has(#sidebar)) .workspace-selector {
+    display: flex !important;
+  }
+
+  body.app-with-workspaces:not(:has(#sidebar)) {
+    margin-left: var(--workspace-selector-width);
+  }
+
+  body.app-with-workspaces:not(:has(#sidebar)) main {
+    max-width: calc(100vw - var(--workspace-selector-width));
+  }
 }
 
 @keyframes slide-in-left {
@@ -669,6 +682,13 @@
 
   @media (max-width: 120ch) {
     max-inline-size: calc(100vw - 2rem);
+  }
+}
+
+/* SaaS standalone pages on mobile: panel accounts for visible workspace selector */
+@media (max-width: 120ch) {
+  body.app-with-workspaces:not(:has(#sidebar)) .panel {
+    max-inline-size: calc(100vw - var(--workspace-selector-width) - 2rem);
   }
 }
 
