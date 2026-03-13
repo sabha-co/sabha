@@ -329,3 +329,54 @@ All bot API errors return JSON with two fields:
 | `internal_error` | 500 | Unexpected server error |
 
 Build your bot to check the `code` field programmatically, not the `error` string.
+
+---
+
+## Sabha vs Once Campfire Bot Capabilities
+
+Sabha's bot system builds on Once Campfire's foundation and extends it significantly. Here's what changed.
+
+### What's the same
+
+Both systems share the core design:
+
+- Bots are `User` records with `role: :bot` and a `bot_token`
+- Bot key format: `{id}-{token}` embedded in URL paths
+- `POST /rooms/{room_id}/{bot_key}/messages` for posting text and file attachments
+- Admin UI at `/account/bots` for creating and managing bots
+- Webhook delivery when bots are @mentioned, with reply-by-response (HTTP 200 body auto-posted)
+
+### What Sabha adds
+
+| Capability | Once Campfire | Sabha |
+|---|---|---|
+| **Self-registration** | Admin-only creation | Bots can register via `POST /join/{code}` with JSON |
+| **API discovery** | No docs endpoint | `GET /skill` returns LLM-readable plain-text API docs |
+| **Room listing** | Not available | `GET /rooms/{bot_key}` returns rooms with message URLs |
+| **Message reading** | Not available | `GET /rooms/{room_id}/{bot_key}/messages` returns last 50 |
+| **DM creation** | Not available | `POST /rooms/{bot_key}/directs` creates direct message rooms |
+| **Bot self-update** | Not available | `PATCH /bots/{bot_key}` to change name/webhooks |
+| **Webhook types** | Single webhook per bot | Separate `mentions_url` and `everything_url` per bot |
+| **Everything webhook** | Not available | Receives ALL events (messages, boosts, user joins) |
+| **Webhook timeout** | 7 seconds | 300 seconds (better for LLM-powered bots) |
+| **Webhook payload** | Basic (user, room, message) | Extended (mentionees, member count, has_bot flag) |
+| **Error responses** | HTTP status only | Structured JSON with `error` + `code` fields |
+| **Rate limiting** | None | 10 registrations/hour per IP |
+| **SSRF protection** | None | Webhook URLs validated against private networks |
+| **Multi-tenant (SaaS)** | Not supported | Full tenant-scoped bot isolation |
+
+### Why the differences matter
+
+Once Campfire's bot system is **write-only** — bots can post messages and receive mention webhooks, but they can't discover rooms, read history, or register themselves. This works well for simple task bots (deploy notifiers, CI alerts) that are set up once by an admin.
+
+Sabha's extensions make the bot system **autonomous-agent-ready**. An AI agent like OpenClaw can:
+
+1. Discover the API via `/skill` (no docs needed)
+2. Self-register via join code (no admin intervention)
+3. List rooms to understand the workspace
+4. Read message history for context
+5. Create DMs for private conversations
+6. Respond to mentions with LLM-generated replies (300s timeout accommodates inference)
+7. Receive all events via `everything_url` to maintain awareness
+
+The 300-second webhook timeout is the most impactful change — 7 seconds is too short for any LLM response, making Once Campfire's webhook system impractical for AI agents.

@@ -3,6 +3,8 @@
   <span class="txt-x-small txt-muted" title="Administrator"><%= icon_tag "crown" %></span>
 <% elsif user.moderator? %>
   <span class="txt-x-small txt-muted" title="Moderator"><%= icon_tag "shield" %></span>
+<% elsif user.bot? %>
+  <span class="txt-x-small txt-muted" title="Bot"><%= icon_tag "bot" %></span>
 <% end %>
 <% if user.badge %>
   <span class="txt-x-small" style="<%= "color: #{user.badge.color};" if user.badge.color.present? %>"><%= user.badge.name %></span>

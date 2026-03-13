@@ -29,12 +29,16 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "deactivating a user deletes push subscriptions, searches, and deactivates memberships for non-direct rooms" do
+  test "deactivating a user deletes push subscriptions, searches, and deactivates all memberships including direct rooms" do
     user = users(:david)
-    membership_count_before = user.memberships.without_direct_rooms.count
+    non_direct_count = user.memberships.without_direct_rooms.count
+    # Direct room deactivation also deactivates the other user's membership in that room
+    direct_room_ids = Membership.where(user_id: user.id).direct_rooms.where(active: true).pluck(:room_id)
+    all_direct_memberships_count = Membership.where(room_id: direct_room_ids, active: true).count
+    total_deactivated = non_direct_count + all_direct_memberships_count
 
     assert_no_difference -> { Membership.count } do  # Memberships are soft-deleted (active: false), not removed
-    assert_difference -> { Membership.active.count }, -membership_count_before do  # But active count decreases
+    assert_difference -> { Membership.active.count }, -total_deactivated do  # All memberships deactivated
     assert_difference -> { Push::Subscription.count }, -user.push_subscriptions.count do
     assert_difference -> { Search.count }, -user.searches.count do
       user.deactivate
@@ -43,6 +47,29 @@ class UserTest < ActiveSupport::TestCase
     end
     end
     end
+  end
+
+  test "deactivating a user deactivates their direct rooms" do
+    user = users(:david)
+    other = users(:jason)
+    direct_room = Rooms::Direct.find_or_create_for(User.where(id: [ user.id, other.id ]))
+    assert direct_room.active?
+
+    user.deactivate
+
+    assert_not direct_room.reload.active?, "Direct room should be deactivated when a participant is deactivated"
+  end
+
+  test "reactivating a user restores their direct rooms" do
+    user = users(:david)
+    other = users(:jason)
+    direct_room = Rooms::Direct.find_or_create_for(User.where(id: [ user.id, other.id ]))
+
+    user.deactivate
+    assert_not direct_room.reload.active?
+
+    user.reactivate
+    assert direct_room.reload.active?, "Direct room should be reactivated when participant is reactivated"
   end
 
   test "deactivating a user deletes their sessions" do

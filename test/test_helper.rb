@@ -1,4 +1,6 @@
 ENV["RAILS_ENV"] ||= "test"
+# Clear COOKIE_DOMAIN before boot so session store isn't scoped to a production domain
+ENV.delete("COOKIE_DOMAIN")
 require_relative "../config/environment"
 
 require "rails/test_help"
@@ -37,10 +39,6 @@ class ActiveSupport::TestCase
       config.x.web_push_pool = WebPush::Pool.new \
         invalid_subscription_handler: config.x.web_push_pool.invalid_subscription_handler
     end
-
-    # Set ENV vars for tests
-    # Don't set COOKIE_DOMAIN in tests to allow cookies to work across different test hosts
-    ENV["COOKIE_DOMAIN"] = nil
 
     # Allow localhost:8080 for AnyCable HTTP broadcasts (background threads may persist across tests)
     WebMock.disable_net_connect!(allow: "localhost:8080")

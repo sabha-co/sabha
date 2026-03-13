@@ -179,6 +179,7 @@ class User < ApplicationRecord
       # rewhere replaces the default `-> { active }` scope on the association,
       # allowing us to find deactivated memberships
       memberships.rewhere(active: false).without_direct_rooms.update!(active: true)
+      reactivate_direct_rooms
       update! status: :active
       reset_remote_connections
     end
@@ -187,6 +188,7 @@ class User < ApplicationRecord
   def deactivate
     transaction do
       revoke_access
+      deactivate_direct_rooms
       searches.delete_all
       update! status: :deactivated
     end
@@ -331,6 +333,18 @@ class User < ApplicationRecord
   end
 
   private
+    def deactivate_direct_rooms
+      Membership.where(user_id: id).direct_rooms.each do |membership|
+        membership.room.deactivate
+      end
+    end
+
+    def reactivate_direct_rooms
+      Membership.unscoped.where(user_id: id, active: false).direct_rooms.each do |membership|
+        membership.room.reactivate
+      end
+    end
+
     def send_email_change_notification
       return if bot?
       old_email = email_address_before_last_save
