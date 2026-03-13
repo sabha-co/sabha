@@ -14,12 +14,5 @@ if Rails.env.production? && ENV["SENTRY_DSN"].present?
       "ActionDispatch::Http::MimeNegotiation::InvalidType",
       "ActionDispatch::Http::Parameters::ParseError"
     ]
-
-    if defined?(ActiveRecord::Tenanted)
-      config.excluded_exceptions += [
-        "ActiveRecord::Tenanted::TenantDoesNotExistError",
-        "ActiveRecord::Tenanted::NoTenantError"
-      ]
-    end
   end
 end
