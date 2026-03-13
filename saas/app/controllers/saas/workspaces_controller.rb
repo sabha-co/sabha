@@ -4,9 +4,6 @@ module Saas
   class WorkspacesController < BaseController
     # Workspace management (outside workspace context)
 
-    # Allow unauthenticated access to join page - users can sign up from there
-    allow_unauthenticated_access only: :join
-
     def index
       # Always redirect - workspace selection happens via sidebar, not this page
       workspaces = current_global_identity.active_workspaces_recent_first
@@ -42,21 +39,6 @@ module Saas
       flash.now[:alert] = "Failed to create workspace. Please try again."
       Rails.logger.error("Workspace creation failed: #{e.class} - #{e.message}")
       render :new, status: :unprocessable_entity
-    end
-
-    def join
-      code = params[:code].to_s.strip
-      @workspace = Workspace.find_by_join_code(code)
-
-      # Invalid code - show error
-      unless @workspace
-        flash[:alert] = "Invalid or expired join code."
-        redirect_to signed_in? ? workspaces_path : new_session_path
-        return
-      end
-
-      # Redirect to workspace-scoped join URL - reuses UsersController with nametag UI
-      redirect_to "/#{@workspace.external_id}/join/#{code}"
     end
   end
 end

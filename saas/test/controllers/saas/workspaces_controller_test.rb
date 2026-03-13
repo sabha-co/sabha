@@ -64,31 +64,5 @@ module Saas
 
       assert_response :unprocessable_entity
     end
-
-    # Join flow tests
-    # Note: Join codes are stored in Account model within tenant database,
-    # not directly on Workspace. These tests focus on the join controller behavior.
-
-    test "join with invalid code redirects unauthenticated user to login" do
-      get join_path(code: "INVALID123")
-
-      assert_redirected_to new_session_path
-      assert_match /Invalid or expired/, flash[:alert]
-    end
-
-    test "join with invalid code redirects authenticated user to workspaces" do
-      sign_in_global_identity(global_identities(:alice))
-      get join_path(code: "INVALID123")
-
-      assert_redirected_to workspaces_path
-      assert_match /Invalid or expired/, flash[:alert]
-    end
-
-    test "join with short code redirects to login" do
-      get "/join/AB"
-
-      assert_redirected_to new_session_path
-      assert_match /Invalid or expired/, flash[:alert]
-    end
   end
 end

@@ -20,13 +20,12 @@ module TenantingHelper
   end
 
   # Generate a URL without the workspace prefix (script_name)
-  # Use this for URLs that should work outside workspace context,
-  # like join links which are accessed at the root domain.
+  # Use this for URLs that should work outside workspace context.
   #
   # Example:
   #   Inside workspace 1000002:
-  #     join_url(code)           => "http://localhost:3000/1000002/join/abc123"
-  #     untenanted_url(:join, code) => "http://localhost:3000/join/abc123"
+  #     session_url()                    => "http://localhost:3000/1000002/session"
+  #     untenanted_url(:session)         => "http://localhost:3000/session"
   #
   def untenanted_url(route_name, *args, **kwargs)
     # Temporarily clear script_name to generate URL without workspace prefix

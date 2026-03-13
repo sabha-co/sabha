@@ -106,39 +106,7 @@ class Workspace < UntenantedRecord
     end
   end
 
-  # Find workspace by join code
-  # Join codes are stored per-workspace in Account model
-  def self.find_by_join_code(code)
-    return nil if code.blank?
 
-    # Iterate through workspaces to find matching join code
-    # This is acceptable for MVP; can optimize with denormalization later
-    find_each do |workspace|
-      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
-        account = Account.first
-        # Check both global and personal join codes
-        if account&.join_codes&.active&.exists?(code: code)
-          return workspace
-        end
-      rescue ActiveRecord::Tenanted::TenantDoesNotExistError
-        # Workspace database doesn't exist yet, skip
-        nil
-      end
-    end
-
-    nil
-  end
-
-  # Check if a join code is valid for this workspace
-  def valid_join_code?(code)
-    return false if code.blank?
-
-    ApplicationRecord.with_tenant(external_id.to_s) do
-      Account.first&.join_codes&.active&.exists?(code: code)
-    end
-  rescue ActiveRecord::Tenanted::TenantDoesNotExistError
-    false
-  end
 
   # Check if user is the last admin (prevents leaving)
   def last_administrator?(user)

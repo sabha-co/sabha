@@ -121,11 +121,7 @@ Rails.application.routes.draw do
   # Bot self-registration (JSON) must come before human signup route
   post "join/:join_code", to: "bots/registrations#create", constraints: ->(req) { req.format.json? }, as: :join_bot
 
-  if Sabha.saas?
-    get "join/:join_code", to: "users#new"
-  else
-    get "join/:join_code", to: "users#new", as: :join
-  end
+  get "join/:join_code", to: "users#new", as: :join
   post "join/:join_code", to: "users#create"
 
   namespace :rooms do

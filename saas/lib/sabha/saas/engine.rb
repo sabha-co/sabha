@@ -62,10 +62,6 @@ module Sabha
             # Workspace management
             resources :workspaces, only: [ :index, :new, :create ], controller: "saas/workspaces"
 
-            # Join workspace
-            get "join/:code", to: "saas/workspaces#join", as: :join
-            post "join/:code", to: "saas/workspaces#join"
-
             # Workspace membership management
             patch "workspace_memberships/reorder", to: "saas/workspace_memberships#reorder"
 
