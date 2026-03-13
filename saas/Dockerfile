@@ -60,12 +60,10 @@ RUN bundle exec bootsnap precompile app/ lib/
 # Build Tailwind CSS
 RUN pnpm run build:css
 
-# Precompile assets
+# Precompile assets and clean up build artifacts
 RUN mkdir -p /rails/storage/logs && \
-  SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
-
-# Clean up build artifacts
-RUN rm -rf node_modules tmp/cache .git
+  SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile && \
+  rm -rf node_modules tmp/cache .git
 
 
 # Final stage for app image
@@ -85,13 +83,12 @@ ENV LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
   HTTP_READ_TIMEOUT=300 \
   HTTP_WRITE_TIMEOUT=300
 
-# Copy built artifacts: gems, application
-COPY --from=build /usr/local/bundle /usr/local/bundle
-COPY --from=build /rails /rails
-
 # Create non-root user for running the application
-RUN groupadd -r sabha && useradd -r -g sabha -d /rails -s /bin/bash sabha && \
-  chown -R sabha:sabha /rails
+RUN groupadd -r sabha && useradd -r -g sabha -d /rails -s /bin/bash sabha
+
+# Copy built artifacts: gems, application (--chown avoids extra chown -R layer)
+COPY --from=build --chown=sabha:sabha /usr/local/bundle /usr/local/bundle
+COPY --from=build --chown=sabha:sabha /rails /rails
 
 # Set version
 ARG APP_VERSION
