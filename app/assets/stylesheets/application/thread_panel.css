@@ -77,6 +77,9 @@
   font-size: 1.25em;
   line-height: 1;
   padding: 0.15em 0.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Turbo frame — flex child to contain scrolling content */
@@ -102,7 +105,6 @@
 #thread-panel .messages {
   flex: 1;
   overflow-y: auto;
-  padding-inline: var(--inline-space);
 }
 
 /* Return-to-latest button positioning within thread panel */
