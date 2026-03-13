@@ -34,7 +34,7 @@ class Rooms::ClosedsController < RoomsController
     @room.announce_rename(old_name, actor: Current.user) if @room.name != old_name
 
     RoomUpdateBroadcastJob.perform_later(@room)
-    redirect_back fallback_location: room_url(@room)
+    redirect_back fallback_location: room_url(@room), notice: "Changes saved"
   end
 
   private
