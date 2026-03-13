@@ -135,7 +135,7 @@
   }
 
   /* Subtle entrance for newly arriving messages (not initial page load) */
-  [data-loaded] &.message--formatted {
+  &[data-new].message--formatted {
     animation: message-arrive 250ms cubic-bezier(0.25, 1, 0.5, 1) both;
   }
 

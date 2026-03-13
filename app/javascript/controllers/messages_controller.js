@@ -54,8 +54,8 @@ export default class extends Controller {
     this.#paginator.monitor()
     this.#scrollTracker.connect()
 
-    // Mark as loaded so CSS animations only apply to newly arriving messages
-    requestAnimationFrame(() => this.element.dataset.loaded = "")
+    // After initial render, mark subsequent messages for entrance animation
+    requestAnimationFrame(() => this.#loaded = true)
   }
 
   disconnect() {
@@ -63,7 +63,10 @@ export default class extends Controller {
     this.#scrollTracker.disconnect()
   }
 
+  #loaded = false
+
   messageTargetConnected(target) {
+    if (this.#loaded) target.dataset.new = ""
     this.#formatMessage(target)
 
     // Fix reply outlet for messages rendered with the default composer_id

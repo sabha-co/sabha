@@ -173,9 +173,9 @@
   );
   position: absolute;
   transition:
-    inset-inline-start 300ms ease,
-    border-color 300ms ease,
-    background-color 300ms ease;
+    inset-inline-start 300ms cubic-bezier(0.25, 1, 0.5, 1),
+    border-color 300ms cubic-bezier(0.25, 1, 0.5, 1),
+    background-color 300ms cubic-bezier(0.25, 1, 0.5, 1);
   z-index: 5;
 
   #sidebar:where(
@@ -553,6 +553,7 @@
   font-weight: normal;
   justify-content: start;
   max-inline-size: 100%;
+  transition: background-color 150ms ease-out;
 
   .notification-badge {
     margin-left: auto;
@@ -567,6 +568,7 @@
     border-radius: 1em;
     text-align: center;
     box-sizing: content-box;
+    animation: badge-in 200ms cubic-bezier(0.25, 1, 0.5, 1) both;
   }
 
   .muted-indicator {
@@ -797,7 +799,7 @@
   background-color: var(--color-message-bg);
   text-decoration: none;
   color: inherit;
-  transition: all 0.15s ease;
+  transition: background-color 150ms ease-out, transform 150ms cubic-bezier(0.25, 1, 0.5, 1);
 
   &:hover {
     background-color: var(--color-border);
@@ -901,4 +903,5 @@
   background: var(--color-negative);
   border-radius: 50%;
   flex-shrink: 0;
+  animation: badge-in 200ms cubic-bezier(0.25, 1, 0.5, 1) both;
 }

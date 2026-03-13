@@ -84,6 +84,13 @@
   }
 }
 
+@keyframes badge-in {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
 .shake {
   animation: shake 400ms both;
 }

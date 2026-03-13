@@ -10,7 +10,7 @@
   position: fixed;
   row-gap: var(--block-space);
   z-index: 2;
-  transition: inset-inline-end 300ms ease;
+  transition: inset-inline-end 300ms cubic-bezier(0.25, 1, 0.5, 1);
 
   & > * {
     pointer-events: auto;
