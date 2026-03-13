@@ -40,7 +40,7 @@
 
   <body class="<%= body_classes %>" data-controller="local-time lightbox page-title theme">
     <% if DemoMode.enabled? %>
-      <%= render "shared/demo_banner" %>
+      <%= render "shared/top_banner", style: :warning, label: "Demo Mode", text: "This server resets #{DemoMode.reset_interval}. Data is not persisted." %>
     <% end %>
 
     <% if Sabha.saas? && respond_to?(:show_workspace_selector?) && show_workspace_selector? %>

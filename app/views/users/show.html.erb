@@ -55,8 +55,6 @@
           <span class="txt-small txt-muted" title="Administrator"><%= icon_tag "crown" %></span>
         <% elsif @user.moderator? %>
           <span class="txt-small txt-muted" title="Moderator"><%= icon_tag "shield" %></span>
-        <% elsif @user.bot? %>
-          <span class="txt-small txt-muted" title="Bot"><%= icon_tag "bot" %></span>
         <% end %>
       </div>
       <% if @user.badge %>

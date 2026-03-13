@@ -10,9 +10,7 @@
           <strong class="txt-medium"><%= user.name %></strong>
           <span class="txt-x-small txt-muted" title="Bot"><%= icon_tag "bot" %></span>
         </div>
-        <% if user.active? %>
-          <span class="txt-x-small txt-muted txt-label">Bot</span>
-        <% else %>
+        <% if !user.active? %>
           <span class="txt-small txt-muted">No longer active</span>
         <% end %>
       </div>

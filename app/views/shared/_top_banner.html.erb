@@ -1,0 +1,8 @@
+<%# locals: (style:, label: nil, text:, link_text: nil, link_url: nil, alert: false) %>
+<div class="top-banner top-banner--<%= style %>"<%= ' role="alert"'.html_safe if alert %>>
+  <% if label %><strong><%= label %></strong><% end %>
+  <span><%= text %></span>
+  <% if link_text && link_url %>
+    <%= link_to link_text, link_url %>
+  <% end %>
+</div>

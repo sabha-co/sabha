@@ -30,6 +30,11 @@ module DemoHelpers
 
   # Shared database cleanup (order matters due to foreign keys)
   def clean_database
+    unless Rails.env.development? || Rails.env.test? || DemoMode.enabled?
+      abort "⛔ Refusing to clean database in #{Rails.env} without DEMO_MODE=true"
+    end
+
+    Notification.delete_all
     Boost.delete_all
     Bookmark.delete_all
     Block.delete_all

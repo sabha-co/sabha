@@ -1,9 +1,7 @@
 <% if Sabha.saas? && Current.user && Current.account&.exceeding_storage_limit? %>
-  <div class="storage-limit-banner" role="alert">
-    <span>This workspace has reached its <%= number_to_human_size(Storage::WORKSPACE_LIMIT) %> storage limit. File uploads are disabled.</span>
-    <% if Current.user.administrator? %>
-      <%= link_to "View usage", settings_path(script_name: ""), class: "storage-limit-banner__link" %>
-    <% end %>
-  </div>
-
+  <%= render "shared/top_banner", style: :error,
+        text: "This workspace has reached its #{number_to_human_size(Storage::WORKSPACE_LIMIT)} storage limit. File uploads are disabled.",
+        link_text: Current.user.administrator? ? "View usage" : nil,
+        link_url: Current.user.administrator? ? settings_path(script_name: "") : nil,
+        alert: true %>
 <% end %>
