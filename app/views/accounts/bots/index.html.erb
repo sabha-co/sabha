@@ -6,25 +6,46 @@
   </div>
 <% end %>
 
-<section class="panel panel--wide txt-align-center flex flex-column position-relative" style="view-transition-name: chat-bots">
+<section class="panel panel--wide flex flex-column gap" style="view-transition-name: chat-bots">
   <div class="flex align-center gap">
-    <div class="panel__button">
-      <%= translation_button(:chat_bots) %>
+    <div class="flex flex-column gap-half flex-item-grow">
+      <h1 class="txt-large margin-none"><strong>Chat bots</strong></h1>
+      <p class="txt-small txt-muted margin-none">Other sites and services can post updates directly to Sabha via bots. <%= link_to "API docs", skill_path, target: "_blank", style: "color: inherit; text-decoration: underline; text-underline-offset: 3px;" %></p>
     </div>
-    <div class="pad-inline-double center">
-      <h1 class="margin-none">Chat bots</h1>
-      <p class="margin-none-block-start">With Chat bots, other sites and services can post updates directly to Sabha.</p>
 
-      <%= link_to new_account_bot_path, class: "btn btn--reversed txt-large", aria: { label: "Add a chat bot" } do %>
-        <%= icon_tag "bot" %>
-        <%= icon_tag "add" %>
-      <% end %>
-    </div>
+    <%= link_to new_account_bot_path, class: "btn btn--reversed flex-item-no-shrink", aria: { label: "Add a chat bot" } do %>
+      <%= icon_tag "add" %>
+      <span>Add bot</span>
+    <% end %>
   </div>
 
-  <div class="pad-inline pad-block-start">
-    <menu class="flex flex-column gap margin-none pad">
+  <% if @bots.any? %>
+    <hr class="separator full-width" style="--border-style: solid">
+
+    <menu class="flex flex-column gap-half margin-none pad-none">
       <%= render partial: "accounts/bots/bot", collection: @bots %>
     </menu>
+  <% end %>
+
+  <hr class="separator full-width" style="--border-style: solid">
+
+  <div class="flex align-center gap">
+    <%= form_with model: Current.account, url: account_path, method: :put, data: { controller: "form" }, class: "flex align-center gap flex-item-grow" do |form| %>
+      <%= form.fields_for :settings, Current.account.settings do |settings_form| %>
+        <%= settings_form.hidden_field :allow_bot_self_registration,
+            value: !Current.account.settings.allow_bot_self_registration? %>
+      <% end %>
+      <label class="switch flex-item-no-shrink">
+        <input type="checkbox"
+              class="switch__input"
+              <%= "checked" if Current.account.settings.allow_bot_self_registration? %>
+              data-action="change->form#submit">
+        <span class="switch__btn"></span>
+      </label>
+      <div>
+        <div class="txt-small"><strong>Allow bot self-registration</strong></div>
+        <div class="txt-small txt-muted">Bots can join automatically via the workspace join code.</div>
+      </div>
+    <% end %>
   </div>
 </section>

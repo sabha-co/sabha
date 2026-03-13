@@ -8,7 +8,14 @@
     <% end %>
   </div>
 
-  <div class="flex-item-justify-end">
+  <div class="flex align-center gap flex-item-justify-end">
+    <% if Current.user.can_administer? %>
+      <%= link_to account_bots_path, class: "btn", style: "view-transition-name: chat-bots" do %>
+        <%= icon_tag "bot" %>
+        <span class="for-screen-reader">Set up chat bots</span>
+      <% end %>
+    <% end %>
+
     <%= link_to root_path, class: "btn" do %>
       <%= icon_tag "home" %>
       <span class="for-screen-reader">Home</span>

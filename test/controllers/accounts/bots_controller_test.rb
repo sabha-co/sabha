@@ -10,13 +10,19 @@ class Accounts::BotsControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
+  test "show" do
+    get account_bot_url(users(:bender))
+    assert_response :ok
+  end
+
   test "create" do
     get new_account_bot_url
     assert_response :ok
 
     post account_bots_url, params: { user: { name: "Bender's Friend" } }
-    assert_redirected_to account_bots_url
-    assert_equal "Bender's Friend", User.bot.last.name
+    bot = User.bot.last
+    assert_redirected_to account_bot_url(bot)
+    assert_equal "Bender's Friend", bot.name
   end
 
   test "update" do
@@ -24,7 +30,7 @@ class Accounts::BotsControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
 
     put account_bot_url(users(:bender)), params: { user: { name: "Bender's New Friend" } }
-    assert_redirected_to account_bots_url
+    assert_redirected_to account_bot_url(users(:bender))
     assert_equal "Bender's New Friend", users(:bender).reload.name
   end
 
@@ -39,12 +45,12 @@ class Accounts::BotsControllerTest < ActionDispatch::IntegrationTest
   test "remove webhooks" do
     assert_difference -> { Webhook.count }, -1 do
       put account_bot_url(users(:bender)), params: { user: { name: "Bender's New Friend", mentions_url: "", everything_url: "" } }
-      assert_redirected_to account_bots_url
+      assert_redirected_to account_bot_url(users(:bender))
     end
 
     assert_difference -> { Webhook.count }, -1 do
       put account_bot_url(users(:nsa)), params: { user: { name: "Bender's New Friend", everything_url: "" } }
-      assert_redirected_to account_bots_url
+      assert_redirected_to account_bot_url(users(:nsa))
     end
   end
 end

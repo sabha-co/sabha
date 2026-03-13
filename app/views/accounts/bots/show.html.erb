@@ -1,0 +1,83 @@
+<% @page_title = @bot.name %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to account_bots_path %>
+  </div>
+<% end %>
+
+<section class="panel panel--wide flex flex-column gap" style="view-transition-name: chat-bot-<%= @bot.id %>">
+  <div class="flex align-center gap pad-inline-double">
+    <figure class="avatar flex-item--no-shrink" style="--avatar-size: 3em;">
+      <%= avatar_tag @bot %>
+    </figure>
+
+    <div class="min-width flex-item-grow">
+      <h1 class="margin-none txt-x-large"><%= @bot.name %></h1>
+    </div>
+
+    <%= link_to edit_account_bot_path(@bot), class: "btn", aria: { label: "Edit #{@bot.name}" } do %>
+      <%= icon_tag "pencil" %>
+    <% end %>
+  </div>
+
+  <div class="pad-inline pad-block-start flex flex-column gap">
+    <%= render "accounts/bots/ping_command", bot: @bot %>
+
+    <% @bot.rooms.without_directs.ordered.each do |room| %>
+      <fieldset class="gap max-width pad border border-radius">
+        <legend class="min-width txt-align-start pad-inline">
+          <strong class="overflow-ellipsis"><%= room_display_name(room) %></strong>
+        </legend>
+
+        <% curl_text_line = "curl -d 'Hello!' #{room_bot_messages_url(room, @bot.bot_key)}" %>
+        <div class="flex align-center gap">
+          <%= icon_tag "messages-outlined" %>
+
+          <div class="flex-item-grow">
+            <input type="text" class="input full-width fill-white" value="<%= curl_text_line %>" aria-label="curl command for posting messages" readonly>
+          </div>
+
+          <div class="txt-small">
+            <%= button_to_copy_to_clipboard(curl_text_line) do %>
+              <%= icon_tag "copy-paste" %>
+              <span class="for-screen-reader">Copy message command</span>
+            <% end %>
+          </div>
+        </div>
+
+        <% curl_upload_line = %[curl -F "attachment=@/path/to/file" #{room_bot_messages_url(room, @bot.bot_key)}] %>
+        <div class="flex align-center gap">
+          <%= icon_tag "attachment" %>
+
+          <div class="flex-item-grow">
+            <input type="text" class="input full-width fill-white" value="<%= curl_upload_line %>" aria-label="curl command for posting attachments" readonly>
+          </div>
+
+          <div class="txt-small">
+            <%= button_to_copy_to_clipboard(curl_upload_line) do %>
+              <%= icon_tag "copy-paste" %>
+              <span class="for-screen-reader">Copy attachment command</span>
+            <% end %>
+          </div>
+        </div>
+      </fieldset>
+    <% end %>
+  </div>
+
+  <hr class="separator full-width margin-block-double" style="--border-style: solid">
+
+  <div class="flex align-center gap justify-space-between">
+    <%= button_to account_bot_path(@bot), method: :delete, class: "btn txt-small btn--negative", aria: { label: "Delete this chat bot" },
+          data: { turbo_confirm: "Are you sure you want to permanently remove this bot from the account? This can't be undone." } do %>
+      <%= icon_tag "trash" %>
+      <%= icon_tag "bot" %>
+    <% end %>
+
+    <%= button_to account_bot_key_path(@bot), method: :put, class: "btn full-width txt-small btn--negative", aria: { label: "Generate a new key" },
+          data: { turbo_confirm: "Are you sure you want to change the bot key? All usage of this bot must be updated." } do %>
+      <%= icon_tag "refresh" %>
+      <%= icon_tag "key" %>
+    <% end %>
+  </div>
+</section>

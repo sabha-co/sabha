@@ -1,6 +1,6 @@
 class Accounts::BotsController < ApplicationController
   before_action :ensure_can_administer
-  before_action :set_bot, only: %i[ edit update destroy ]
+  before_action :set_bot, only: %i[ show edit update destroy ]
 
   def index
     @bots = User.active_bots.ordered
@@ -11,8 +11,11 @@ class Accounts::BotsController < ApplicationController
   end
 
   def create
-    User.create_bot! bot_params
-    redirect_to account_bots_url
+    @bot = User.create_bot! bot_params
+    redirect_to account_bot_url(@bot)
+  end
+
+  def show
   end
 
   def edit
@@ -20,7 +23,7 @@ class Accounts::BotsController < ApplicationController
 
   def update
     @bot.update_bot! bot_params
-    redirect_to account_bots_url
+    redirect_to account_bot_url(@bot)
   end
 
   def destroy

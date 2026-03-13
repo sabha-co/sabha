@@ -1,58 +1,14 @@
-<li class="flex flex-column gap fill-shade border-radius pad-block pad-inline-double">
-  <div class="flex align-center gap">
-    <figure class="avatar flex-item--no-shrink" style="--avatar-size: 2.65em;">
-      <%= avatar_link_tag bot, loading: :lazy %>
+<li>
+  <%= link_to account_bot_path(bot), class: "flex align-center gap pad-block-half pad-inline fill-shade border-radius txt-undecorated", style: "view-transition-name: chat-bot-#{ bot.id }" do %>
+    <figure class="avatar flex-item-no-shrink" style="--avatar-size: 2.4em;">
+      <%= avatar_tag bot, loading: :lazy %>
     </figure>
 
-    <div class="min-width">
-      <div class="overflow-ellipsis txt-large"><strong><%= bot.name %></strong></div>
+    <div class="min-width flex-item-grow">
+      <div class="overflow-ellipsis txt-small"><strong><%= bot.name %></strong></div>
+      <div class="txt-x-small txt-muted"><%= pluralize(bot.rooms.without_directs.count, "room") %></div>
     </div>
 
-    <%= link_to edit_account_bot_path(bot), class: "btn flex-item-justify-end", style: "view-transition-name: chat-bot-#{ bot.id }" do %>
-      <%= icon_tag "pencil" %>
-      <span class="for-screen-reader">Edit <%= bot.name %></span>
-    <% end %>
-  </div>
-
-  <%= render "accounts/bots/ping_command", bot: bot %>
-  
-  <% bot.rooms.without_directs.ordered.each do |room| %>
-    <fieldset class="gap max-width pad border border-radius">
-      <legend class="min-width txt-align-start pad-inline">
-        <strong class="overflow-ellipsis"><%= room_display_name(room) %></strong>
-      </legend>
-
-      <% curl_text_line = "curl -d 'Hello!' #{room_bot_messages_url(room, bot.bot_key)}" %>
-      <div class="flex align-center gap">
-        <%= icon_tag "messages-outlined" %>
-
-        <div class="flex-item-grow">
-          <input type="text" class="input full-width fill-white" value="<%= curl_text_line %>" aria-label="curl command for posting messages" readonly>
-        </div>
-
-        <div class="txt-small">
-          <%= button_to_copy_to_clipboard(curl_text_line) do %>
-            <%= icon_tag "copy-paste" %>
-            <span class="for-screen-reader">Copy message command</span>
-          <% end %>
-        </div>
-      </div>
-
-      <% curl_upload_line = %[curl -F "attachment=@/path/to/file" #{room_bot_messages_url(room, bot.bot_key)}] %>
-      <div class="flex align-center gap">
-        <%= icon_tag "attachment" %>
-
-        <div class="flex-item-grow">
-          <input type="text" class="input full-width fill-white" value="<%= curl_upload_line %>" aria-label="curl command for posting attachments" readonly>
-        </div>
-
-        <div class="txt-small">
-          <%= button_to_copy_to_clipboard(curl_upload_line) do %>
-            <%= icon_tag "copy-paste" %>
-            <span class="for-screen-reader">Copy attachment command</span>
-          <% end %>
-        </div>
-      </div>
-    </fieldset>
+    <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
   <% end %>
 </li>
