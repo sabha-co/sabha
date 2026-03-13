@@ -2,10 +2,10 @@
   <% parent_message = @room.parent_message %>
   <div class="thread-panel__header">
     <h2 class="thread-panel__title">
-      <%= icon_tag "thread" %>
       <%= link_to room_at_message_path(parent_message.room, parent_message), data: { turbo_frame: "_top" } do %>
         <%= room_type_indicator(parent_message.room) %><%= room_display_name(parent_message.room) %>
       <% end %>
+      <%= icon_tag "thread", class: "thread-panel__icon" %>
     </h2>
     <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close thread">&times;</button>
   </div>
