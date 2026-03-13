@@ -122,8 +122,16 @@
     }
   }
 
+  /* Fallback: show messages after 2s if JS hasn't formatted them */
+  animation: message-fallback-show 0s 2s forwards;
+
+  @keyframes message-fallback-show {
+    to { visibility: visible; }
+  }
+
   &.message--formatted {
     visibility: visible;
+    animation: none;
   }
 
   &:has([open]) {
