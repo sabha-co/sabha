@@ -585,6 +585,43 @@
   left: var(--workspace-selector-width);
 }
 
+/* Mobile: hide workspace selector, slide in when sidebar opens */
+@media (max-width: 120ch) {
+  .workspace-selector {
+    display: none !important;
+  }
+
+  .app-with-workspaces {
+    margin-left: 0;
+  }
+
+  .app-with-workspaces #nav {
+    left: 0;
+  }
+
+  body:has(#sidebar.open) .workspace-selector {
+    display: flex !important;
+    z-index: 4;
+    animation: slide-in-left 300ms ease both;
+  }
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Offset sidebar content for workspace selector on mobile */
+@media (max-width: 120ch) {
+  #sidebar.open .sidebar__container {
+    padding-inline-start: var(--workspace-selector-width);
+  }
+
+  #sidebar.open .sidebar__toggle {
+    inset-inline-start: calc(var(--workspace-selector-width) + var(--sidebar-inline-space));
+  }
+}
+
 .app-with-workspaces.sidebar #main-content {
   @media (min-width: 120ch) {
     margin-inline-start: 0;
@@ -606,10 +643,15 @@
   box-sizing: border-box;
 }
 
-/* Ensure content doesn't overflow on mobile with workspace selector */
+/* Ensure content doesn't overflow with workspace selector */
 .app-with-workspaces .saas-container {
   width: calc(100vw - var(--workspace-selector-width));
   max-width: calc(100vw - var(--workspace-selector-width));
+
+  @media (max-width: 120ch) {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 /* Fix input and form widths in SaaS pages */
@@ -624,6 +666,10 @@
 .saas-container .panel,
 .app-with-workspaces .panel {
   max-inline-size: calc(100vw - var(--workspace-selector-width) - 2rem);
+
+  @media (max-width: 120ch) {
+    max-inline-size: calc(100vw - 2rem);
+  }
 }
 
 /* Tablet: slightly narrower */
