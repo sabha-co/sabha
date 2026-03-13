@@ -66,7 +66,7 @@ module MessagesHelper
       data[:refresh_room_first_unread_class] = "message__new-separator"
     end
 
-    tag.div id: dom_id(room, :messages), class: "messages", data: data, &
+    tag.div id: dom_id(room, :messages), class: "messages", aria: { live: "polite", relevant: "additions" }, data: data, &
   end
 
   def message_tag(message, is_unread: false, composer_id: "composer", &)

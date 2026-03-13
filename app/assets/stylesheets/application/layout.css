@@ -55,6 +55,10 @@ body.library-collapsed:has(#sidebar.open) #main-content {
   pointer-events: none;
 }
 
+body.library-collapsed:has(#sidebar.open) {
+  overflow: hidden;
+}
+
 #app-logo {
   display: none;
 
@@ -136,6 +140,13 @@ body.library-collapsed:has(#sidebar.open) #main-content {
     @media (max-width: 120ch) {
       transform: translate(0);
     }
+  }
+}
+
+/* Lock body scroll when mobile sidebar overlay is open */
+@media (max-width: 120ch) {
+  body.sidebar:has(#sidebar.open) {
+    overflow: hidden;
   }
 }
 
