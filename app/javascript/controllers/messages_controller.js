@@ -53,6 +53,9 @@ export default class extends Controller {
     
     this.#paginator.monitor()
     this.#scrollTracker.connect()
+
+    // Mark as loaded so CSS animations only apply to newly arriving messages
+    requestAnimationFrame(() => this.element.dataset.loaded = "")
   }
 
   disconnect() {

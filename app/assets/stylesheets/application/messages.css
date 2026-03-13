@@ -134,6 +134,11 @@
     animation: none;
   }
 
+  /* Subtle entrance for newly arriving messages (not initial page load) */
+  [data-loaded] &.message--formatted {
+    animation: message-arrive 250ms cubic-bezier(0.25, 1, 0.5, 1) both;
+  }
+
   &:has([open]) {
     z-index: 1;
 
@@ -296,6 +301,7 @@
   grid-area: new;
   margin-block: calc(var(--message-space) / 2);
   display: grid;
+  animation: separator-reveal 400ms cubic-bezier(0.25, 1, 0.5, 1) both;
 
   span {
     background-color: transparent;
@@ -626,6 +632,7 @@ img.message__attachment {
 
   [open] > & {
     display: block;
+    animation: popup-in 150ms cubic-bezier(0.25, 1, 0.5, 1) both;
   }
 
   &::before {
