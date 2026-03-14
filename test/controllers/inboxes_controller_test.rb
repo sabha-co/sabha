@@ -132,35 +132,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Thread reply visible in activity", response.body
   end
 
-  test "activity unreads filter shows only notifications after clear" do
-    room = rooms(:pets)
-
-    # Create an old mention
-    room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)} old mention</div>",
-      creator: @jason,
-      client_message_id: "unreads_old"
-    )
-
-    # Visit activity to set the session timestamp, then clear
-    get activity_inbox_url
-    post clear_inbox_url, params: { scope: "activity", stay: true }
-
-    # Create a new mention after clearing
-    room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)} new mention after clear</div>",
-      creator: @jason,
-      client_message_id: "unreads_new"
-    )
-
-    # With unreads filter, should only see the new mention
-    get activity_inbox_url, params: { unreads: "true" }
-    assert_response :success
-    assert_match "new mention after clear", response.body
-    assert_no_match "old mention", response.body
-  end
-
-  test "activity without unreads filter shows all notifications" do
+  test "activity shows all notifications" do
     room = rooms(:pets)
 
     room.messages.create!(
@@ -178,7 +150,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "also_visible"
     )
 
-    # Without unreads filter, both should appear
+    # Both should appear
     get activity_inbox_url
     assert_response :success
     assert_match "all visible", response.body
