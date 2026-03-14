@@ -91,7 +91,7 @@
     --size: 1em;
 
     aspect-ratio: 1;
-    background-color: var(--color-negative);
+    background-color: var(--color-text);
     block-size: var(--size);
     border-radius: calc(var(--size) * 2);
     content: "";
@@ -379,7 +379,7 @@
       --size: 0.6em;
 
       aspect-ratio: 1;
-      background-color: var(--color-negative);
+      background-color: var(--color-text);
       block-size: var(--size);
       border-radius: calc(var(--size) * 2);
       content: "";
