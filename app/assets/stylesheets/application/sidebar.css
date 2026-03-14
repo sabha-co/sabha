@@ -770,18 +770,18 @@
   }
 
   &.unread {
-    background-color: oklch(var(--lch-red) / 0.08);
-    box-shadow: inset 3px 0 0 var(--color-negative);
+    background-color: oklch(var(--lch-red) / 0.05);
+    box-shadow: inset 2px 0 0 var(--color-negative);
 
     @media (prefers-color-scheme: dark) {
-      background-color: oklch(var(--lch-red) / 0.15);
+      background-color: oklch(var(--lch-red) / 0.1);
     }
 
     &:hover {
-      background-color: oklch(var(--lch-red) / 0.12);
+      background-color: oklch(var(--lch-red) / 0.08);
 
       @media (prefers-color-scheme: dark) {
-        background-color: oklch(var(--lch-red) / 0.2);
+        background-color: oklch(var(--lch-red) / 0.15);
       }
     }
   }

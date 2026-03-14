@@ -14,7 +14,7 @@
   --lch-red: 51% 0.2 31;
   --lch-red-light: 98% 0.08 22;
   --lch-green: 65.59% 0.234 142.49;
-  --lch-purple: 45% 0.32 282;
+  --lch-purple: 50% 0.18 282;
   --lch-always-black: 0% 0 0;
 
   /* Abstractions */
@@ -54,6 +54,6 @@
     --lch-red: 73.8% 0.184 29.18;
     --lch-red-light: 28% 0.05 20;
     --lch-green: 75% 0.21 141.89;
-    --lch-purple: 70% 0.32 282;
+    --lch-purple: 72% 0.18 282;
   }
 }
