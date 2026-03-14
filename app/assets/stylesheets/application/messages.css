@@ -108,6 +108,7 @@
   --message-row-gap: 0.1em;
   --message-space: 1.33em;
 
+  contain: strict;
   display: grid;
   flex: 1;
   grid-auto-rows: min-content;
@@ -126,6 +127,8 @@
   --content-padding-inline: calc(var(--inline-space) * 1.5);
 
   column-gap: var(--message-column-gap);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 6em;
   display: grid;
   grid-auto-columns: var(--inline-space-double) 1fr min-content;
   grid-auto-rows: min-content;
