@@ -128,6 +128,8 @@
 .sidebar__tool.avatar {
   margin-top: auto;
   margin-bottom: 0;
+  position: sticky;
+  bottom: var(--block-space);
 }
 
 .sidebar__toggle {

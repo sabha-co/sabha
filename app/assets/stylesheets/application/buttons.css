@@ -266,6 +266,14 @@ button {
   --btn-size: var(--navbar-btn-size);
 }
 
+/* Room member-count button in navbar — text button, not circular */
+a.btn[data-room-id] {
+  height: var(--navbar-btn-size);
+  padding: 0 0.8em;
+  display: inline-flex;
+  align-items: center;
+}
+
 .notification-warning {
   display: inline-flex;
 }
