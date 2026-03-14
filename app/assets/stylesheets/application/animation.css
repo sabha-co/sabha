@@ -5,7 +5,7 @@
 }
 
 @keyframes boost {
-  0%   { transform: scale(0.5); opacity: 0; }
+  0%   { transform: scale(0.8); opacity: 0; }
   100% { transform: scale(1);   opacity: 1; }
 }
 
@@ -87,14 +87,14 @@
 @keyframes badge-in {
   from {
     opacity: 0;
-    transform: scale(0);
+    transform: scale(0.5);
   }
 }
 
 @keyframes empty-state-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(4px);
   }
 }
 
@@ -106,7 +106,7 @@
 @keyframes bookmark-pop {
   from {
     opacity: 0;
-    transform: scale(0.5);
+    transform: scale(0.7);
   }
 }
 
@@ -117,4 +117,14 @@
 
 .shake {
   animation: shake 400ms both;
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

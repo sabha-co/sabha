@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { debounce } from "helpers/timing_helpers"
 
 // Generic unread indicator controller that toggles classes on named targets
 // based on whether elements matching their selectors exist in the sidebar.
@@ -15,9 +16,10 @@ export default class extends Controller {
   }
 
   connect() {
+    this.debouncedUpdate = debounce(() => this.updateIndicators(), 200)
     this.updateIndicators()
 
-    this.observer = new MutationObserver(() => this.updateIndicators())
+    this.observer = new MutationObserver(() => this.debouncedUpdate())
 
     const sidebarContainer = this.element.querySelector('.sidebar__container')
     if (sidebarContainer) {

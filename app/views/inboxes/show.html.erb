@@ -40,14 +40,14 @@
 
 <div id="message-area" class="message-area">
   <div class="message-area--empty min-width center">
-    <div class="center pad" style="max-width: 28rem; margin: 0 auto;">
-      <figure class="center" style="margin-bottom: 1.5rem; text-align: center;">
-        <%= icon_tag empty_state[:icon], class: "translucent", style: "--icon-size: 6rem; opacity: 0.3;" %>
+    <div class="message-area--empty__content center pad">
+      <figure class="message-area--empty__figure">
+        <%= icon_tag empty_state[:icon] %>
       </figure>
 
-      <div class="center" style="text-align: center;">
-        <h2 class="txt-large" style="margin-bottom: 0.5rem; font-weight: 600;"><%= empty_state[:headline] %></h2>
-        <p class="txt-muted" style="line-height: 1.5;"><%= empty_state[:description] %></p>
+      <div class="message-area--empty__text">
+        <h2 class="txt-large"><%= empty_state[:headline] %></h2>
+        <p class="txt-muted"><%= empty_state[:description] %></p>
       </div>
     </div>
   </div>

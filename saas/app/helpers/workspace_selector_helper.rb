@@ -3,20 +3,20 @@
 require "zlib"
 
 module WorkspaceSelectorHelper
-  # Gradient pairs: [from_color, to_color] — rich, vibrant combinations
+  # Gradient pairs: [from_color, to_color] — rich, vibrant combinations (OKLch)
   WORKSPACE_GRADIENTS = [
-    %w[#6B21A8 #A855F7], # Purple (like reference)
-    %w[#1D4ED8 #60A5FA], # Blue
-    %w[#047857 #34D399], # Emerald
-    %w[#BE123C #FB7185], # Rose
-    %w[#B45309 #FBBF24], # Amber
-    %w[#3730A3 #818CF8], # Indigo
-    %w[#0F766E #5EEAD4], # Teal
-    %w[#C2410C #FB923C], # Orange
-    %w[#0E7490 #67E8F9], # Cyan
-    %w[#A21CAF #E879F9], # Fuchsia
-    %w[#5B21B6 #C084FC], # Violet
-    %w[#15803D #4ADE80] # Green
+    [ "oklch(40% 0.17 310)", "oklch(65% 0.20 300)" ], # Purple
+    [ "oklch(45% 0.20 260)", "oklch(68% 0.14 250)" ], # Blue
+    [ "oklch(48% 0.15 165)", "oklch(75% 0.17 165)" ], # Emerald
+    [ "oklch(45% 0.22 15)",  "oklch(70% 0.16 10)" ],  # Rose
+    [ "oklch(50% 0.15 60)",  "oklch(80% 0.16 80)" ],  # Amber
+    [ "oklch(38% 0.18 275)", "oklch(65% 0.15 270)" ], # Indigo
+    [ "oklch(48% 0.12 185)", "oklch(82% 0.14 180)" ], # Teal
+    [ "oklch(50% 0.18 40)",  "oklch(75% 0.16 45)" ],  # Orange
+    [ "oklch(48% 0.10 220)", "oklch(82% 0.12 210)" ], # Cyan
+    [ "oklch(48% 0.22 320)", "oklch(75% 0.20 325)" ], # Fuchsia
+    [ "oklch(38% 0.18 290)", "oklch(68% 0.16 295)" ], # Violet
+    [ "oklch(45% 0.17 145)", "oklch(72% 0.20 150)" ] # Green
   ].freeze
 
   # Returns inline CSS style for a workspace's gradient background

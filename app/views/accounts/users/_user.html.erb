@@ -10,6 +10,7 @@
     <div class="overflow-ellipsis">
       <%= link_to user_path(user), class: "txt-undecorated", data: { turbo_frame: "_top" } do %>
         <strong><%= user.name %></strong>
+        <% if user == Current.user %><span class="txt-x-small txt-muted">(you)</span><% end %>
       <% end %>
       <% if user.badge %>
         <span class="txt-x-small txt-muted"><%= user.badge.name %></span>

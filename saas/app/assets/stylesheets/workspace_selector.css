@@ -1,45 +1,40 @@
-/* Workspace selector sidebar - Discord/Slack-style design */
-/* Uses neutral grays and integrates with app's color system */
+/* Workspace selector sidebar — always-dark strip (Discord/Slack-style).
+   Colors are intentionally fixed (don't swap with light/dark mode).
+   References app tokens where possible (--lch-always-black, --color-lch-blue). */
 
 :root {
-  --workspace-selector-width: 72px;
-  --workspace-selector-width-mobile: 64px;
+  --workspace-selector-width: 4.5rem;
+  --workspace-selector-width-mobile: 4rem;
 
-  /* Discord-style neutral dark grays (no purple tint) */
-  /* Brightened for better icon contrast */
+  /* Always-dark grays — lightness values only differ by mode */
   --workspace-selector-bg: oklch(17% 0 0);
   --workspace-selector-icon-bg: oklch(32% 0 0);
   --workspace-selector-icon-bg-hover: oklch(42% 0 0);
-
-  /* Active state uses app's blue accent */
   --workspace-selector-icon-bg-active: var(--color-lch-blue);
   --workspace-selector-text: oklch(92% 0 0);
   --workspace-selector-text-active: oklch(100% 0 0);
   --workspace-selector-border: oklch(22% 0 0);
   --workspace-selector-indicator: oklch(100% 0 0);
-
-  /* Shadows for depth */
-  --workspace-selector-shadow: 2px 0 8px oklch(0% 0 0 / 0.15);
+  --workspace-selector-shadow: 2px 0 8px oklch(var(--lch-always-black) / 0.15);
 }
 
-/* Light mode - slightly lighter grays, still dark sidebar */
+/* Light mode — slightly brighter grays for subtle differentiation */
 @media (prefers-color-scheme: light) {
   :root {
     --workspace-selector-bg: oklch(22% 0 0);
     --workspace-selector-icon-bg: oklch(36% 0 0);
     --workspace-selector-icon-bg-hover: oklch(46% 0 0);
     --workspace-selector-border: oklch(28% 0 0);
-    --workspace-selector-shadow: 2px 0 12px oklch(0% 0 0 / 0.08);
+    --workspace-selector-shadow: 2px 0 12px oklch(var(--lch-always-black) / 0.08);
   }
 }
 
-/* Manual theme overrides */
 :root[data-theme="light"] {
   --workspace-selector-bg: oklch(22% 0 0);
   --workspace-selector-icon-bg: oklch(36% 0 0);
   --workspace-selector-icon-bg-hover: oklch(46% 0 0);
   --workspace-selector-border: oklch(28% 0 0);
-  --workspace-selector-shadow: 2px 0 12px oklch(0% 0 0 / 0.08);
+  --workspace-selector-shadow: 2px 0 12px oklch(var(--lch-always-black) / 0.08);
 }
 
 :root[data-theme="dark"] {
@@ -47,7 +42,7 @@
   --workspace-selector-icon-bg: oklch(32% 0 0);
   --workspace-selector-icon-bg-hover: oklch(42% 0 0);
   --workspace-selector-border: oklch(22% 0 0);
-  --workspace-selector-shadow: 2px 0 8px oklch(0% 0 0 / 0.15);
+  --workspace-selector-shadow: 2px 0 8px oklch(var(--lch-always-black) / 0.15);
 }
 
 .workspace-selector {
@@ -60,7 +55,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 0;
+  padding: 0.75rem 0;
   z-index: 2; /* Below sidebar (z-index: 3) so it doesn't overlap when sidebar opens */
   border-right: 1px solid var(--workspace-selector-border);
   box-shadow: var(--workspace-selector-shadow);
@@ -78,14 +73,14 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 0 12px;
+  padding: 0 0.75rem;
 }
 
 /* Home button - Discord-style house icon */
 .workspace-selector__home {
-  width: 48px;
-  height: 48px;
-  border-radius: 24px;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1.5rem;
   background: var(--workspace-selector-icon-bg);
   display: flex;
   align-items: center;
@@ -100,7 +95,7 @@
 
 .workspace-selector__home:hover {
   background: var(--workspace-selector-icon-bg-hover);
-  border-radius: 16px;
+  border-radius: 1rem;
 }
 
 .workspace-selector__home--active {
@@ -114,11 +109,11 @@
 
 /* Separator line between sections */
 .workspace-selector__separator {
-  width: 32px;
+  width: 2rem;
   height: 2px;
   background: var(--workspace-selector-border);
   border-radius: 1px;
-  margin: 8px auto;
+  margin: 0.5rem auto;
   flex-shrink: 0;
 }
 
@@ -131,10 +126,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
   scrollbar-width: none;
-  -ms-overflow-style: none;
 
   /* Smooth scrolling */
   scroll-behavior: smooth;
@@ -155,7 +149,7 @@
   position: sticky;
   display: block;
   width: 100%;
-  height: 20px;
+  height: 1.25rem;
   flex-shrink: 0;
   pointer-events: none;
   z-index: 1;
@@ -164,21 +158,21 @@
 .workspace-selector__list::before {
   top: 0;
   background: linear-gradient(to bottom, var(--workspace-selector-bg) 0%, transparent 100%);
-  margin-bottom: -20px;
+  margin-bottom: -1.25rem;
 }
 
 .workspace-selector__list::after {
   bottom: 0;
   background: linear-gradient(to top, var(--workspace-selector-bg) 0%, transparent 100%);
-  margin-top: -20px;
+  margin-top: -1.25rem;
 }
 
 .workspace-selector__item {
   position: relative;
   display: block;
-  width: 48px;
-  height: 48px;
-  border-radius: 24px;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1.5rem;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   flex-shrink: 0;
@@ -186,12 +180,12 @@
 }
 
 .workspace-selector__item:hover {
-  border-radius: 16px;
+  border-radius: 1rem;
   transform: translateX(2px);
 }
 
 .workspace-selector__item--active {
-  border-radius: 16px;
+  border-radius: 1rem;
   transform: translateX(2px);
 }
 
@@ -216,7 +210,7 @@
   justify-content: center;
   color: var(--workspace-selector-text);
   font-weight: 600;
-  font-size: 18px;
+  font-size: 1.125rem;
   text-transform: uppercase;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
@@ -259,23 +253,23 @@
 
 .workspace-selector__active-indicator {
   position: absolute;
-  left: -12px;
+  left: -0.75rem;
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
-  height: 32px;
+  height: 2rem;
   background: var(--workspace-selector-indicator);
   border-radius: 0 4px 4px 0;
   transition: height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 8px oklch(100% 0 0 / 0.3);
+  box-shadow: 0 0 8px oklch(100% 0 0 / 0.3); /* indicator glow */
 }
 
 .workspace-selector__item:hover .workspace-selector__active-indicator {
-  height: 20px;
+  height: 1.25rem;
 }
 
 .workspace-selector__item--active .workspace-selector__active-indicator {
-  height: 40px;
+  height: 2.5rem;
   /* Static glow instead of pulse animation - softer and less distracting */
   box-shadow: 0 0 8px oklch(100% 0 0 / 0.4);
 }
@@ -285,14 +279,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
 }
 
 /* Profile/Settings button in footer */
 .workspace-selector__profile {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
   background: var(--workspace-selector-icon-bg);
   display: flex;
@@ -300,7 +294,7 @@
   justify-content: center;
   color: var(--workspace-selector-text);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 0.9375rem;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -327,7 +321,7 @@
 
 .workspace-selector__profile:hover {
   background: var(--workspace-selector-icon-bg-hover);
-  border-radius: 14px;
+  border-radius: 0.875rem;
   transform: scale(1.05);
 }
 
@@ -338,7 +332,7 @@
 .workspace-selector__profile--active {
   background: var(--workspace-selector-icon-bg-active);
   color: var(--workspace-selector-text-active);
-  border-radius: 14px;
+  border-radius: 0.875rem;
   box-shadow: 0 0 0 2px var(--workspace-selector-bg), 0 0 0 4px var(--workspace-selector-indicator);
 }
 
@@ -359,15 +353,15 @@
 }
 
 .workspace-selector__add {
-  width: 48px;
-  height: 48px;
-  border-radius: 24px;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1.5rem;
   background: transparent;
-  border: 2px dashed oklch(40% 0 0);
+  border: 2px dashed var(--workspace-selector-icon-bg-hover);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: oklch(50% 0 0);
+  color: var(--workspace-selector-text);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   position: relative;
@@ -387,7 +381,7 @@
 .workspace-selector__add:hover {
   border-color: var(--color-lch-green);
   color: var(--color-lch-white);
-  border-radius: 16px;
+  border-radius: 1rem;
   border-style: solid;
   transform: translateX(2px) scale(1.05);
 }
@@ -428,7 +422,7 @@
 
 /* Workspace banner - Discord-style thin top bar showing workspace name */
 :root {
-  --workspace-banner-height: 32px;
+  --workspace-banner-height: 2rem;
 }
 
 .workspace-banner {
@@ -442,28 +436,28 @@
   align-items: center;
   justify-content: center;
   z-index: 4;
-  border-bottom: 1px solid var(--workspace-selector-border);
-  box-shadow: 0 1px 4px oklch(0% 0 0 / 0.12);
+  border-bottom: 1px solid var(--workspace-selector-icon-bg);
+  box-shadow: 0 1px 4px oklch(var(--lch-always-black) / 0.12);
   font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
 }
 
 .workspace-banner__content {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .workspace-banner__icon {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 0.25rem;
   background: var(--workspace-selector-icon-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--workspace-selector-text);
   font-weight: 600;
-  font-size: 10px;
+  font-size: 0.625rem;
   text-transform: uppercase;
   overflow: hidden;
   flex-shrink: 0;
@@ -478,12 +472,12 @@
 
 .workspace-banner__name {
   color: var(--workspace-selector-text);
-  font-size: 13px;
+  font-size: var(--font-size-small);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  max-width: 12.5rem;
 }
 
 /* Push content down when banner is present.
@@ -699,7 +693,7 @@
   }
 
   .workspace-selector {
-    padding: 10px 0;
+    padding: 0.625rem 0;
   }
 
   /* Ensure container fits properly on tablet */
@@ -708,81 +702,69 @@
   }
 
   .workspace-selector__home {
-    width: 44px;
-    height: 44px;
-    border-radius: 22px;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 1.375rem;
   }
 
   .workspace-selector__home:hover {
-    border-radius: 14px;
-  }
-
-  .workspace-selector__home .icon {
-    --icon-size: 18px;
+    border-radius: 0.875rem;
   }
 
   .workspace-selector__separator {
-    width: 28px;
-    margin: 6px auto;
+    width: 1.75rem;
+    margin: 0.375rem auto;
   }
 
   .workspace-selector__profile {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-  }
-
-  .workspace-selector__profile .icon {
-    --icon-size: 18px;
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.875rem;
   }
 
   .workspace-selector__list {
-    gap: 6px;
-    padding: 4px 8px;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
   }
 
   .workspace-selector__item {
-    width: 44px;
-    height: 44px;
-    border-radius: 22px;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 1.375rem;
   }
 
   .workspace-selector__item:hover,
   .workspace-selector__item--active {
-    border-radius: 14px;
+    border-radius: 0.875rem;
   }
 
   .workspace-selector__workspace-icon {
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   .workspace-selector__add {
-    width: 44px;
-    height: 44px;
-    border-radius: 22px;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 1.375rem;
   }
 
   .workspace-selector__add:hover {
-    border-radius: 14px;
-  }
-
-  .workspace-selector__add .icon {
-    --icon-size: 22px;
+    border-radius: 0.875rem;
   }
 
   .workspace-selector__footer {
-    gap: 6px;
+    gap: 0.375rem;
   }
 }
 
 /* Mobile: compact design with touch-friendly targets */
 @media (max-width: 640px) {
   :root {
-    --workspace-selector-width-mobile: 60px;
+    --workspace-selector-width-mobile: 3.75rem;
   }
 
   .workspace-selector {
-    padding: 8px 0;
+    padding: 0.5rem 0;
   }
 
   /* Tighter padding on mobile */
@@ -792,52 +774,44 @@
 
   /* Ensure form elements don't overflow */
   .saas-container .input {
-    font-size: 16px; /* Prevents iOS zoom on focus */
+    font-size: max(16px, 1rem); /* Prevents iOS zoom on focus */
   }
 
   .workspace-selector__home {
-    width: 40px;
-    height: 40px;
-    border-radius: 20px;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 1.25rem;
   }
 
   .workspace-selector__home:hover {
-    border-radius: 12px;
-  }
-
-  .workspace-selector__home .icon {
-    --icon-size: 16px;
+    border-radius: 0.75rem;
   }
 
   .workspace-selector__separator {
-    width: 24px;
-    margin: 4px auto;
+    width: 1.5rem;
+    margin: 0.25rem auto;
   }
 
   .workspace-selector__profile {
-    width: 32px;
-    height: 32px;
-    font-size: 13px;
-  }
-
-  .workspace-selector__profile .icon {
-    --icon-size: 16px;
+    width: 2rem;
+    height: 2rem;
+    font-size: var(--font-size-small);
   }
 
   .workspace-selector__list {
-    gap: 6px;
-    padding: 4px 6px;
+    gap: 0.375rem;
+    padding: 0.25rem 0.375rem;
   }
 
   .workspace-selector__item {
-    width: 40px;
-    height: 40px;
-    border-radius: 20px;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 1.25rem;
   }
 
   .workspace-selector__item:hover,
   .workspace-selector__item--active {
-    border-radius: 12px;
+    border-radius: 0.75rem;
   }
 
   /* Disable hover transform on mobile (only active state) */
@@ -850,17 +824,17 @@
   }
 
   .workspace-selector__workspace-icon {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
 
   .workspace-selector__add {
-    width: 40px;
-    height: 40px;
-    border-radius: 20px;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 1.25rem;
   }
 
   .workspace-selector__add:hover {
-    border-radius: 12px;
+    border-radius: 0.75rem;
     transform: none;
   }
 
@@ -868,26 +842,22 @@
     transform: scale(0.95);
   }
 
-  .workspace-selector__add .icon {
-    --icon-size: 20px;
-  }
-
   .workspace-selector__footer {
-    gap: 4px;
+    gap: 0.25rem;
   }
 
   /* Reduce active indicator size on mobile */
   .workspace-selector__active-indicator {
-    left: -10px;
-    height: 24px;
+    left: -0.625rem;
+    height: 1.5rem;
   }
 
   .workspace-selector__item:hover .workspace-selector__active-indicator {
-    height: 16px;
+    height: 1rem;
   }
 
   .workspace-selector__item--active .workspace-selector__active-indicator {
-    height: 32px;
+    height: 2rem;
   }
 
   /* Disable gradient overlay on mobile for performance */
@@ -899,11 +869,11 @@
 /* Extra small screens: even more compact */
 @media (max-width: 480px) {
   :root {
-    --workspace-selector-width-mobile: 56px;
+    --workspace-selector-width-mobile: 3.5rem;
   }
 
   .workspace-selector {
-    padding: 6px 0;
+    padding: 0.375rem 0;
   }
 
   /* Minimal padding on extra small screens */
@@ -912,66 +882,58 @@
   }
 
   .workspace-selector__home {
-    width: 36px;
-    height: 36px;
-    border-radius: 18px;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 1.125rem;
   }
 
   .workspace-selector__home:hover {
-    border-radius: 10px;
-  }
-
-  .workspace-selector__home .icon {
-    --icon-size: 14px;
+    border-radius: 0.625rem;
   }
 
   .workspace-selector__separator {
-    width: 20px;
-    margin: 4px auto;
+    width: 1.25rem;
+    margin: 0.25rem auto;
   }
 
   .workspace-selector__profile {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
   }
 
   .workspace-selector__list {
-    gap: 4px;
-    padding: 4px 6px;
+    gap: 0.25rem;
+    padding: 0.25rem 0.375rem;
   }
 
   .workspace-selector__item {
-    width: 36px;
-    height: 36px;
-    border-radius: 18px;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 1.125rem;
   }
 
   .workspace-selector__item:hover,
   .workspace-selector__item--active {
-    border-radius: 10px;
+    border-radius: 0.625rem;
   }
 
   .workspace-selector__workspace-icon {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 
   .workspace-selector__add {
-    width: 36px;
-    height: 36px;
-    border-radius: 18px;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 1.125rem;
   }
 
   .workspace-selector__add:hover {
-    border-radius: 10px;
-  }
-
-  .workspace-selector__add .icon {
-    --icon-size: 18px;
+    border-radius: 0.625rem;
   }
 
   .workspace-selector__footer {
-    gap: 4px;
+    gap: 0.25rem;
   }
 }
 
@@ -1031,23 +993,23 @@
   .workspace-selector__add,
   .workspace-selector__home,
   .workspace-selector__profile {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
   }
 
   /* Disable hover effects on touch devices */
   .workspace-selector__item:hover {
-    border-radius: 24px;
+    border-radius: 1.5rem;
     transform: none;
   }
 
   .workspace-selector__item--active {
-    border-radius: 16px;
+    border-radius: 1rem;
     transform: translateX(2px);
   }
 
   .workspace-selector__add:hover {
-    border-radius: 24px;
+    border-radius: 1.5rem;
     transform: none;
   }
 
@@ -1056,7 +1018,7 @@
   }
 
   .workspace-selector__home:hover {
-    border-radius: 24px;
+    border-radius: 1.5rem;
     transform: none;
     background: var(--workspace-selector-icon-bg);
   }
@@ -1135,52 +1097,48 @@
 /* Landscape mobile - optimize vertical space */
 @media (max-height: 500px) and (orientation: landscape) {
   .workspace-selector {
-    padding: 4px 0;
+    padding: 0.25rem 0;
   }
 
   .workspace-selector__separator {
-    margin: 2px auto;
+    margin: 0.125rem auto;
   }
 
   .workspace-selector__list {
-    gap: 4px;
+    gap: 0.25rem;
   }
 
   .workspace-selector__footer {
-    gap: 4px;
+    gap: 0.25rem;
   }
 
   .workspace-selector__home {
-    width: 32px;
-    height: 32px;
-  }
-
-  .workspace-selector__home .icon {
-    --icon-size: 14px;
+    width: 2rem;
+    height: 2rem;
   }
 
   .workspace-selector__profile {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
   }
 
   .workspace-selector__item {
-    width: 36px;
-    height: 36px;
+    width: 2.25rem;
+    height: 2.25rem;
   }
 
   .workspace-selector__add {
-    width: 36px;
-    height: 36px;
+    width: 2.25rem;
+    height: 2.25rem;
   }
 }
 
 /* Safe area insets for notched devices (iPhone X+, etc.) */
 @supports (padding: max(0px)) {
   .workspace-selector {
-    padding-top: max(12px, env(safe-area-inset-top));
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
     padding-left: env(safe-area-inset-left);
   }
 
@@ -1192,22 +1150,22 @@
 
   @media (max-width: 768px) {
     .workspace-selector {
-      padding-top: max(10px, env(safe-area-inset-top));
-      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      padding-top: max(0.625rem, env(safe-area-inset-top));
+      padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
     }
   }
 
   @media (max-width: 640px) {
     .workspace-selector {
-      padding-top: max(8px, env(safe-area-inset-top));
-      padding-bottom: max(8px, env(safe-area-inset-bottom));
+      padding-top: max(0.5rem, env(safe-area-inset-top));
+      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
     }
   }
 
   @media (max-width: 480px) {
     .workspace-selector {
-      padding-top: max(6px, env(safe-area-inset-top));
-      padding-bottom: max(6px, env(safe-area-inset-bottom));
+      padding-top: max(0.375rem, env(safe-area-inset-top));
+      padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
     }
   }
 }
@@ -1218,7 +1176,7 @@
   @supports (padding: max(0px)) {
     .workspace-selector {
       /* Extra padding for iOS status bar in standalone */
-      padding-top: max(16px, env(safe-area-inset-top));
+      padding-top: max(1rem, env(safe-area-inset-top));
     }
   }
 }

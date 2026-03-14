@@ -12,7 +12,6 @@ class InboxesController < ApplicationController
   end
 
   def activity
-    @unreads_active = params[:unreads] == "true"
     @notifications = find_notifications
     track_last_loaded_notification
   end
@@ -88,13 +87,7 @@ class InboxesController < ApplicationController
     end
 
     def find_notifications
-      scope = Inbox::ActivityQuery.new(Current.user).call
-
-      if params[:unreads] == "true" && session[:inbox_activity_cleared_at].present?
-        scope = scope.where("notifications.created_at > ?", Time.iso8601(session[:inbox_activity_cleared_at]))
-      end
-
-      paginate(scope)
+      paginate Inbox::ActivityQuery.new(Current.user).call
     end
 
     def set_notification_pagination_anchors

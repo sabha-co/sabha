@@ -32,6 +32,7 @@ body.library-collapsed #sidebar {
   backdrop-filter: blur(66px);
   background-color: oklch(var(--lch-white) / 0.66);
   block-size: 100dvh;
+  contain: layout style paint;
   max-block-size: 100dvh;
   z-index: 3;
   inset: 0;
@@ -126,6 +127,7 @@ body.library-collapsed:has(#sidebar.open) {
     backdrop-filter: blur(66px);
     background-color: oklch(var(--lch-white) / 0.66);
     block-size: 100dvh;
+    contain: layout style;
     max-block-size: 100dvh;
     z-index: 3;
 

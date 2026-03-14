@@ -117,3 +117,26 @@ When compacting, preserve the list of modified files, failing test output, and a
 ## UI/Styling Guidelines
 
 When making UI/styling changes, always ask for specific color values, backgrounds, and visual references before implementing. Show a summary of proposed changes before editing CSS/view files.
+
+## Design Context
+
+### Users
+Community-oriented chat. Users are members of online communities — hobbyist groups, open-source projects, interest-based collectives. They want a space that feels owned and personal, not corporate. They're chatting throughout the day, catching up on threads, and participating in group conversations.
+
+### Brand Personality
+**Warm, simple, reliable.** Sabha should feel like a well-made tool you trust — friendly and approachable without being cute, opinionated without being rigid. Think 37signals: clear opinions, no feature bloat, design that gets out of the way.
+
+### Aesthetic Direction
+- **Visual tone:** Clean, minimal, human. Generous whitespace. No visual noise.
+- **Reference:** Campfire / HEY — distinctive, opinionated design language with personality baked into restraint rather than decoration.
+- **Anti-references:** Discord feature overload, generic SaaS dashboards, dark-themed gamer aesthetics.
+- **Theme:** Light and dark mode via OKLch tokens. Light mode is the primary experience.
+- **Color:** Blues for interactive elements, warm earth tones for avatars/identity, grays for structure. Purple for contrast/emphasis. Red reserved for destructive/negative actions.
+- **Typography:** System font stack, 6-level size scale. Let the text breathe.
+
+### Design Principles
+1. **Clarity over cleverness** — Every element should be immediately understandable. No mystery meat navigation, no hidden features behind gestures.
+2. **Warmth through restraint** — Personality comes from thoughtful defaults and subtle touches (avatar colors, spacing, transitions), not from decoration or illustration.
+3. **Content-first** — Messages are the product. UI chrome should be minimal and recede. The conversation is always the hero.
+4. **Responsive by nature** — Mobile overlay sidebar, desktop docked sidebar. Design for both from the start, not as an afterthought.
+5. **Accessible by default** — WCAG AA contrast, keyboard navigation, screen reader support, `max(16px, 1em)` inputs. Accessibility is not a feature, it's the baseline.

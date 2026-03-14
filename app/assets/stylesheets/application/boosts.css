@@ -12,7 +12,7 @@
   margin-block-start: calc(var(--block-space-half) / 2);
   opacity: 1;
   padding: 0.1em 0.2em 0.1em 0.1em;
-  transition: opacity 100ms ease-in-out, box-shadow 150ms cubic-bezier(0.25, 1, 0.5, 1), transform 150ms cubic-bezier(0.25, 1, 0.5, 1);
+  transition: opacity 100ms ease-in-out, box-shadow 150ms cubic-bezier(0.25, 1, 0.5, 1);
   cursor: pointer;
 
   .boost__action {
@@ -28,7 +28,6 @@
       --boost-border-color: var(--color-border-darker);
 
       box-shadow: 0 0 0 var(--hover-size) var(--hover-color);
-      transform: translateY(-1px);
     }
   }
 
@@ -75,7 +74,7 @@
   transition: none;
 
   &.expanded {
-    animation: boost 0.2s cubic-bezier(0.25, 1, 0.5, 1) both;
+    animation: boost 0.15s cubic-bezier(0.25, 1, 0.5, 1) both;
     transform: translate3d(0, 0, 0);
   }
 
@@ -100,7 +99,7 @@
 
 /* Variants */
 .boost--deleting {
-  animation: scale-fade-out 0.2s both;
+  animation: scale-fade-out 0.15s both;
 }
 
 /* Reactions */
@@ -113,7 +112,7 @@
 
     @media (any-hover: hover) {
       &:where(:not(:active):hover) .boost-character {
-        transform: scale(1.25);
+        transform: scale(1.15);
       }
     }
   }

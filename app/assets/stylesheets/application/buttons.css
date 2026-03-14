@@ -199,7 +199,7 @@
 }
 
 .btn--success {
-  --success-timing-function: cubic-bezier(0.25, 1.25, 0.5, 1);
+  --success-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
   animation: success 1s var(--success-timing-function);
 
   img, .icon {
@@ -261,51 +261,12 @@ button {
    }
 }
 
-/* Make the notification warning button visible by default for testing */
-.notification-warning {
-  display: inline-flex;
+/* Navbar action buttons use a smaller size than the default */
+.navbar-actions {
+  --btn-size: var(--navbar-btn-size);
 }
 
-/* Style the notification warning button with black color instead of orange */
-.notification-warning .btn[data-notifications-target="bell"] {
-  color: var(--color-text, #000);
-  /* Make button size consistent with edit-room button */
-  height: var(--navbar-btn-size);
-  width: var(--navbar-btn-size);
-  padding: 0;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-}
-
-.notification-warning .btn[data-notifications-target="bell"] img {
-  filter: none; /* Remove the orange filter */
-  width: 18px;
-  height: 18px;
-}
-
-/* Make involvement buttons in the navbar consistent with edit-room button */
-.flex.gap-half.align-center .btn.everything,
-.flex.gap-half.align-center .btn.mentions,
-.flex.gap-half.align-center .btn.nothing,
-.flex.gap-half.align-center .btn.invisible {
-  height: var(--navbar-btn-size);
-  width: var(--navbar-btn-size);
-  padding: 0;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-}
-
-.flex.gap-half.align-center .btn.everything img,
-.flex.gap-half.align-center .btn.mentions img,
-.flex.gap-half.align-center .btn.nothing img,
-.flex.gap-half.align-center .btn.invisible img {
-  width: 18px;
-  height: 18px;
-}
-
-/* Ensure edit-room button uses the same size */
+/* Room member-count button in navbar — text button, not circular */
 a.btn[data-room-id] {
   height: var(--navbar-btn-size);
   padding: 0 0.8em;
@@ -313,25 +274,8 @@ a.btn[data-room-id] {
   align-items: center;
 }
 
-a.btn[data-room-id] img {
-  width: 18px;
-  height: 18px;
-}
-
-/* Hide text in navbar involvement buttons to match other circular buttons */
-.flex.gap-half.align-center .btn.everything .for-screen-reader,
-.flex.gap-half.align-center .btn.mentions .for-screen-reader,
-.flex.gap-half.align-center .btn.nothing .for-screen-reader,
-.flex.gap-half.align-center .btn.invisible .for-screen-reader {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+.notification-warning {
+  display: inline-flex;
 }
 
 /* Disabled checkbox button styling */
