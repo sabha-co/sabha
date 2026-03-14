@@ -46,7 +46,7 @@
            data-collapsible-section-key-value="favorites"
            data-sorted-list-attribute-value="updatedAt" data-sorted-list-order-value="desc"
            data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
-           class="flex position-relative flex-col rooms-list">
+           class="flex position-relative flex-col">
         <button type="button" class="favorites-toggle flex items-center gap-half mb-2"
                 aria-expanded="true"
                 data-collapsible-section-target="toggle"
@@ -55,7 +55,7 @@
           <h1 class="text-base font-medium">Favorites</h1>
         </button>
 
-        <div data-collapsible-section-target="content">
+        <div data-collapsible-section-target="content" class="flex flex-col rooms-list">
           <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :starred_rooms, memberships: @starred_memberships %>
         </div>
       </div>
