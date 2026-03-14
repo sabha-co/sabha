@@ -35,13 +35,18 @@ module Authentication
       require_workspace_membership unless performed?
     end
 
-    # In SaaS mode, redirect authenticated users who aren't members of this workspace
+    # In SaaS mode, ensure we have a valid workspace context and membership.
+    # Handles two cases:
+    # 1. No tenant set (request arrived without workspace prefix) — redirect to workspace selector
+    # 2. Tenant set but user isn't a member — redirect to workspace selector
     def require_workspace_membership
       return unless Sabha.saas?
-      return unless ApplicationRecord.current_tenant.present?
-      return if Current.user.present?
 
-      redirect_to "/workspaces"
+      if ApplicationRecord.current_tenant.blank?
+        redirect_to "/workspaces" if Current.global_session.present?
+      elsif Current.user.blank?
+        redirect_to "/workspaces"
+      end
     end
 
     def restore_authentication
