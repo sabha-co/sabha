@@ -18,6 +18,7 @@
   &::backdrop {
     -webkit-backdrop-filter: blur(66px);
     backdrop-filter: blur(66px);
+    will-change: filter;
   }
 }
 

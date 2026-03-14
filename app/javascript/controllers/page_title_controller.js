@@ -53,23 +53,18 @@ export default class extends Controller {
   }
 
   updateTitle() {
-    if (this.#checkForRedDot()) {
+    const sidebar = document.getElementById("sidebar")
+    if (!sidebar) {
+      document.title = this.originalTitleValue
+      return
+    }
+
+    if (sidebar.querySelector(".badge") || sidebar.querySelector(".direct.unread")) {
       document.title = `🔴 ${this.originalTitleValue}`
-    } else if (this.#checkForBlackDot()) {
+    } else if (sidebar.querySelector("#starred_rooms [data-type=list_node]:not([hidden]) .unread")) {
       document.title = `⚫ ${this.originalTitleValue}`
     } else {
       document.title = this.originalTitleValue
     }
   }
-  
-  #checkForRedDot() {
-    const hasDirectUnread = document.querySelector(".direct.unread") !== null
-    const hasRoomMention = document.querySelector(".room.badge") !== null
-    
-    return hasDirectUnread || hasRoomMention
-  }
-  
-  #checkForBlackDot() {
-    return document.querySelector("#starred_rooms [data-type=list_node]:not([hidden]) .unread") !== null
-  }
-} 
+}
