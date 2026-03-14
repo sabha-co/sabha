@@ -1,11 +1,5 @@
 <% @page_title = "Activity" %>
 <%= render layout: "inboxes/nav", locals: { title: "Activity" } do %>
-  <%= link_to activity_inbox_path(unreads: @unreads_active ? nil : true),
-      class: "btn", title: @unreads_active ? "Show all activity" : "Show unreads only",
-      "aria-selected": @unreads_active ? "true" : nil do %>
-    <%= icon_tag "eye" %>
-    <span class="for-screen-reader"><%= @unreads_active ? "Show all" : "Unreads" %></span>
-  <% end %>
   <%= button_to clear_inbox_path(scope: "activity"), class: "btn", title: "Mark activity as read",
       data: { turbo_confirm: "Mark all activity as read?" } do %>
     <%= icon_tag "check-circle" %>
@@ -13,7 +7,7 @@
 <% end %>
 
 <% content_for :messages do %>
-  <%= search_results_tag("inbox", paged_inbox_activity_index_url(unreads: params[:unreads].presence), highlight_mentions: true, thread_messages: false) do %>
+  <%= search_results_tag("inbox", paged_inbox_activity_index_url, highlight_mentions: true, thread_messages: false) do %>
     <%= render "notifications/list", notifications: @notifications %>
   <% end %>
   <%= turbo_stream_from Current.user, :inbox_activity %>
