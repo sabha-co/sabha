@@ -31,6 +31,34 @@
   }
 }
 
+.message-area--empty__content {
+  max-inline-size: 28rem;
+  margin-inline: auto;
+}
+
+.message-area--empty__figure {
+  margin-block-end: 1.5rem;
+  text-align: center;
+
+  .icon {
+    --icon-size: 6rem;
+    opacity: 0.3;
+  }
+}
+
+.message-area--empty__text {
+  text-align: center;
+
+  h2 {
+    margin-block-end: 0.5rem;
+    font-weight: 600;
+  }
+
+  p {
+    line-height: 1.5;
+  }
+}
+
 .message-area__return-to-latest {
   outline: 0 solid var(--color-selected-dark);
   inset-block-end: var(--footer-height);
