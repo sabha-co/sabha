@@ -108,7 +108,7 @@
   --message-row-gap: 0.1em;
   --message-space: 1.33em;
 
-  contain: strict;
+  contain: layout style;
   display: grid;
   flex: 1;
   grid-auto-rows: min-content;
@@ -175,6 +175,8 @@
   }
 
   &:has([open]) {
+    content-visibility: visible;
+    contain: none;
     z-index: 1;
 
     [open] .message__options-btn {
