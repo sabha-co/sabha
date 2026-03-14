@@ -199,7 +199,7 @@
 }
 
 .btn--success {
-  --success-timing-function: cubic-bezier(0.25, 1.25, 0.5, 1);
+  --success-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
   animation: success 1s var(--success-timing-function);
 
   img, .icon {
