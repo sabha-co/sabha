@@ -23,10 +23,13 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "creating users grants membership to auto_join open rooms only" do
-    auto_join_count = Rooms::Open.active.where(auto_join: true).count
-    assert_difference -> { Membership.count }, +auto_join_count do
-      create_new_user
-    end
+    auto_join_room = Rooms::Open.create!(name: "Auto Room", creator: users(:david), auto_join: true)
+    non_auto_room = Rooms::Open.create!(name: "Manual Room", creator: users(:david))
+
+    user = create_new_user
+
+    assert user.member_of?(auto_join_room), "New user should be auto-joined to auto_join rooms"
+    assert_not user.member_of?(non_auto_room), "New user should not be auto-joined to non-auto_join rooms"
   end
 
   test "creating a user posts a welcome message in the original room" do

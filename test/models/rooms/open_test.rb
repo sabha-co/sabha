@@ -25,4 +25,20 @@ class Rooms::OpenTest < ActiveSupport::TestCase
     room.save!
     assert_equal original_count, room.users.count
   end
+
+  test "new users are auto-joined to existing auto_join rooms" do
+    room = Rooms::Open.create!(name: "Auto Room", creator: users(:david), auto_join: true)
+
+    new_user = User.create!(name: "Newcomer", email_address: "newcomer@example.com", password: "secret123456")
+
+    assert room.memberships.exists?(user: new_user), "New user should be auto-joined to existing auto_join room"
+  end
+
+  test "new users are not auto-joined to rooms without auto_join" do
+    room = Rooms::Open.create!(name: "Manual Room", creator: users(:david))
+
+    new_user = User.create!(name: "Newcomer", email_address: "newcomer@example.com", password: "secret123456")
+
+    assert_not room.memberships.exists?(user: new_user), "New user should not be auto-joined to non-auto_join room"
+  end
 end

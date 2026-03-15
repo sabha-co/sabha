@@ -33,6 +33,16 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to room_url(Room.last)
   end
 
+  test "create with auto_join persists flag so future users are auto-joined" do
+    post rooms_opens_url, params: { room: { name: "Persistent Auto Room", auto_join: true } }
+    room = Room.last
+
+    new_user = User.create!(name: "Future User", email_address: "future@example.com", password: "secret123456")
+
+    assert room.auto_join?, "Room should persist auto_join flag"
+    assert room.memberships.exists?(user: new_user), "Future user should be auto-joined"
+  end
+
   test "only admins or creators can update" do
     sign_in :jz
 
