@@ -2,6 +2,10 @@ class ApplicationMailer < ActionMailer::Base
   default from: -> { Branding.mailer_from }
   layout "mailer"
 
+  # Discard mail deliveries targeting a deleted workspace (tenant DB no longer exists)
+  rescue_from "ActiveRecord::Tenanted::TenantDoesNotExistError" do; end if defined?(ActiveRecord::Tenanted)
+
+
   before_action :skip_in_demo_mode
 
   helper_method :formatted_time

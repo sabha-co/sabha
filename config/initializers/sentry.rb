@@ -12,7 +12,8 @@ if Rails.env.production? && ENV["SENTRY_DSN"].present?
       "ActionController::UnknownFormat",
       "ActionController::BadRequest",
       "ActionDispatch::Http::MimeNegotiation::InvalidType",
-      "ActionDispatch::Http::Parameters::ParseError"
+      "ActionDispatch::Http::Parameters::ParseError",
+      "ActiveRecord::Tenanted::TenantDoesNotExistError"
     ]
   end
 end
