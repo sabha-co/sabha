@@ -435,6 +435,24 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.posted_on?(Date.current)
   end
 
+  test "posted_on? excludes event messages like welcome" do
+    user = users(:rachel)
+    rooms(:hq).post_welcome_message(user: user)
+
+    assert_not user.posted_on?(Date.current)
+  end
+
+  test "welcome message does not prevent first real post from starting streak" do
+    user = users(:rachel)
+    user.update_column(:current_streak, 0)
+
+    rooms(:hq).post_welcome_message(user: user)
+    assert_equal 0, user.reload.current_streak
+
+    create_message(user: user, room: rooms(:hq))
+    assert_equal 1, user.reload.current_streak
+  end
+
   test "posted_on? excludes direct messages" do
     user = users(:rachel)
     dm = Rooms::Direct.create!(creator: user)

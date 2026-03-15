@@ -246,6 +246,7 @@ class User < ApplicationRecord
                     .where.not(rooms: { type: "Rooms::Direct" })
                     .where("parent_rooms.type IS NULL OR parent_rooms.type != ?", "Rooms::Direct")
                     .where("DATE(messages.created_at) = ?", date)
+                    .without_events
     scope = scope.where.not(id: excluding.id) if excluding
     scope.exists?
   end
