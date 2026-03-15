@@ -17,7 +17,7 @@
                   data-action="change->form#submit">
             <span class="switch__btn"></span>
           </label>
-          <span>Only admins can create rooms</span>
+          <span>Must be admin to create new rooms</span>
         <% end %>
 
         <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
@@ -32,7 +32,7 @@
                   data-action="change->form#submit">
             <span class="switch__btn"></span>
           </label>
-          <span>Only admins can start DMs</span>
+          <span>Must be admin to start DMs</span>
         <% end %>
 
         <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
@@ -47,7 +47,7 @@
                   data-action="change->form#submit">
             <span class="switch__btn"></span>
           </label>
-          <span>Allow users to create invite links</span>
+          <span>Allow everyone to create invite links</span>
         <% end %>
 
       </div>
