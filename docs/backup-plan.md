@@ -43,16 +43,17 @@ Cron (daily, 3am UTC, sabha user)
 **Server:** `sabha-prod` (5.78.83.76), Ubuntu 24.04, Hetzner
 **Volume:** `/disk/sabha/` (75GB, ext4, mounted at `/dev/sda1`)
 **Container mount:** `/disk/sabha/` → `/rails/storage/` (via Kamal)
-**User:** `sabha` (non-root)
+**Cron user:** `root` (required because tenant SQLite files are owned by container UID 999)
 
 ### What's deployed
 
 - Script: `/disk/sabha/backup-databases` (copied from repo `bin/backup-databases`)
-- Cron: `sabha` user, daily at 3am UTC
+- Cron: `root` user (`sudo crontab`), daily at 3am UTC
 - Logs: `/disk/sabha/logs/backup.log` (timestamped, written by script)
 - Cron output: `/disk/sabha/logs/cron.log`
+- Script runs `PRAGMA quick_check` before each backup — corrupt or empty databases are skipped (logged as `SKIP`) instead of counted as failures
 
-### Cron entry (sabha user)
+### Cron entry (root)
 
 ```
 0 3 * * * STORAGE=/disk/sabha /disk/sabha/backup-databases >> /disk/sabha/logs/cron.log 2>&1
@@ -61,7 +62,7 @@ Cron (daily, 3am UTC, sabha user)
 ### Manual run
 
 ```bash
-ssh sabha-prod 'STORAGE=/disk/sabha /disk/sabha/backup-databases'
+ssh sabha-prod 'sudo STORAGE=/disk/sabha /disk/sabha/backup-databases'
 ```
 
 ### Updating the script after code changes

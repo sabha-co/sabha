@@ -8,7 +8,8 @@ set -euo pipefail
 #   bin/backup-databases                    # uses defaults
 #   STORAGE=/disk/sabha bin/backup-databases
 #
-# Designed to run as a daily cron job on the host machine.
+# Designed to run as a daily cron job on the host machine (as root,
+# since tenant files are owned by container UID 999).
 
 STORAGE="${STORAGE:-/disk/sabha}"
 BACKUP_DIR="${STORAGE}/backups"
@@ -33,6 +34,7 @@ if [ -z "$databases" ]; then
 fi
 
 backed_up=0
+skipped=0
 failed=0
 
 for db in $databases; do
@@ -41,12 +43,19 @@ for db in $databases; do
   dest_dir="${BACKUP_DIR}/${tenant_id}"
   dest="${dest_dir}/${DATE}.sqlite3"
 
+  # Skip empty or corrupt databases
+  if ! sqlite3 "$db" "PRAGMA quick_check;" >/dev/null 2>&1; then
+    skipped=$((skipped + 1))
+    log "SKIP ${tenant_id}: failed integrity check"
+    continue
+  fi
+
   mkdir -p "$dest_dir"
 
   if sqlite3 "$db" ".backup '${dest}'" 2>>"$LOG_FILE"; then
     size=$(du -h "$dest" | cut -f1)
     backed_up=$((backed_up + 1))
-    log "OK  ${tenant_id} (${size}) -> ${dest}"
+    log "OK   ${tenant_id} (${size}) -> ${dest}"
   else
     failed=$((failed + 1))
     log "FAIL ${tenant_id}: backup failed"
@@ -56,6 +65,6 @@ done
 # Prune backups older than retention period
 pruned=$(find "$BACKUP_DIR" -name "*.sqlite3" -type f -mtime "+${RETENTION_DAYS}" -delete -print | wc -l)
 
-log "Done: ${backed_up} backed up, ${failed} failed, ${pruned} old backups pruned"
+log "Done: ${backed_up} backed up, ${failed} failed, ${skipped} skipped, ${pruned} old backups pruned"
 
 [ "$failed" -eq 0 ]
