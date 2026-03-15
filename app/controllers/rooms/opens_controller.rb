@@ -20,12 +20,7 @@ class Rooms::OpensController < RoomsController
     @room = Rooms::Open.create_for(room_params, users: Current.user)
 
     broadcast_create_room
-
-    if @room.auto_join?
-      redirect_to room_url(@room)
-    else
-      redirect_to edit_rooms_open_url(@room, tab: "members")
-    end
+    redirect_to room_url(@room)
   end
 
   def edit

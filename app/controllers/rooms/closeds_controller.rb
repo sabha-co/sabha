@@ -20,7 +20,7 @@ class Rooms::ClosedsController < RoomsController
     room = Rooms::Closed.create_for(room_params, users: [ Current.user ])
 
     broadcast_create_room(room)
-    redirect_to room_url(room)
+    redirect_to edit_rooms_closed_url(room, tab: "members"), notice: "Room created — add some people to get the conversation going"
   end
 
   def edit

@@ -15,14 +15,14 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "create without auto_join redirects to edit members" do
+  test "create without auto_join redirects to room" do
     # 1 per-user broadcast to shared_rooms (new rooms are never starred)
     assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 1 do
       post rooms_opens_url, params: { room: { name: "My New Room" } }
     end
 
     assert_equal 1, Room.last.memberships.count
-    assert_redirected_to edit_rooms_open_url(Room.last, tab: "members")
+    assert_redirected_to room_url(Room.last)
   end
 
   test "create with auto_join adds all users and redirects to room" do
@@ -96,7 +96,7 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     post rooms_opens_url, params: { room: { name: "Admin Room" } }
-    assert_redirected_to edit_rooms_open_url(Room.last, tab: "members")
+    assert_redirected_to room_url(Room.last)
   end
 
   # Destroy permission tests

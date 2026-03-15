@@ -18,7 +18,7 @@ class Rooms::MembersController < ApplicationController
 
     render turbo_stream: [
       turbo_stream.update("room_#{@room.id}_member_count", @room.active_member_count.to_s),
-      turbo_stream.append("room_#{@room.id}_preview_members",
+      turbo_stream.prepend("room_#{@room.id}_preview_members",
         partial: "rooms/closeds/user", locals: { user: user, room: @room, selected: true })
     ]
   end

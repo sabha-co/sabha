@@ -23,7 +23,7 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
 
     new_room = Room.last
     assert_equal 1, new_room.memberships.count
-    assert_redirected_to room_url(new_room)
+    assert_redirected_to edit_rooms_closed_url(new_room, tab: "members")
   end
 
   test "update room name" do
@@ -68,7 +68,7 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     post rooms_closeds_url, params: { room: { name: "Admin Room" } }
-    assert_redirected_to room_url(Room.last)
+    assert_redirected_to edit_rooms_closed_url(Room.last, tab: "members")
   end
 
   # Event messages

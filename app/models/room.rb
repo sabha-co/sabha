@@ -60,6 +60,7 @@ class Room < ApplicationRecord
   scope :ordered, -> { order(:sortable_name) }
 
   after_update_commit :broadcast_reactivation_if_restored
+  after_create_commit :announce_creation
 
   class << self
     def create_for(attributes, users:)
@@ -295,6 +296,11 @@ class Room < ApplicationRecord
 
     def broadcast_reactivation_if_restored
       broadcast_reactivation if saved_change_to_attribute?(:active) && active?
+    end
+
+    def announce_creation
+      return if direct? || thread?
+      post_system_message(event: "room_created", body: "created the room", actor: creator)
     end
 
     def set_sortable_name
