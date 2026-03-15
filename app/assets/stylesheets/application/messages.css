@@ -850,8 +850,16 @@ img.message__attachment {
     "loading_down";
 }
 
-/* Welcome message (new member joined) */
+/* Welcome message (new member joined) — also has message--event for formatter */
 .message--welcome {
+  grid-template-columns: var(--inline-space-double) 1fr min-content;
+  grid-template-areas:
+    "loading_up loading_up loading_up"
+    "new new new"
+    "sep sep sep"
+    "avatar body body"
+    "loading_down loading_down loading_down";
+
   .message__welcome {
     background-color: oklch(var(--lch-green) / 0.08);
     border-radius: 0.66em;
