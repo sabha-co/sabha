@@ -10,7 +10,7 @@ class Workspace
     # Usage:
     #   Workspace::ExternalIdSequence.next_id  # => 1000001, 1000002, ...
 
-    INITIAL_VALUE = 1_000_000
+    INITIAL_VALUE = 1_000_100
 
     class << self
       def next_id
