@@ -37,7 +37,7 @@ class UsersController < ApplicationController
   end
 
   def show
-    @recent_messages = Current.user.reachable_messages.created_by(@user).with_creator.ordered.last(5).reverse
+    @recent_messages = Current.user.reachable_messages.user_authored.created_by(@user).with_creator.ordered.last(5).reverse
     @activity_statuses = Membership.activity_statuses_for([ @user.id ])
   end
 

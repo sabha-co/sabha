@@ -16,7 +16,9 @@
       <h2 class="message-separator message__day-separator"><%= local_datetime_tag message.created_at, style: :date %></h2>
     <% end %>
 
-    <% if message.event? %>
+    <% if message.welcome? %>
+      <%= render "messages/welcome", message: message, current_room: current_room, timestamp_style: timestamp_style, composer_id: composer_id %>
+    <% elsif message.event? %>
       <div class="message-separator message__event-separator">
         <span><strong><%= message.creator.name %></strong> <%= message.plain_text_body %></span>
       </div>

@@ -31,8 +31,8 @@
 
     <div data-room-form-target="autoJoinOption" class="pad-inline-double" <%= "hidden" if local_assigns[:default_type] == "closed" %>>
       <label class="flex align-center gap cursor-pointer">
-        <%= form.check_box :auto_join %>
-        <span class="txt-small">Add all existing members</span>
+        <%= form.check_box :auto_join, name: "room[auto_join]" %>
+        <span class="txt-small">Add all members automatically</span>
       </label>
     </div>
 

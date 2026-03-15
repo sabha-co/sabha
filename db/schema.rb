@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_03_06_100000) do
+ActiveRecord::Schema[8.2].define(version: 2026_03_15_175342) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -165,6 +165,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_03_06_100000) do
     t.boolean "mentions_everyone", default: false, null: false
     t.integer "room_id", null: false
     t.datetime "updated_at", null: false
+    t.boolean "welcome", default: false, null: false
     t.index ["active", "room_id", "created_at"], name: "index_messages_on_active_room_created"
     t.index ["created_at"], name: "index_messages_on_created_at"
     t.index ["creator_id"], name: "index_messages_on_creator_id"

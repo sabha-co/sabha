@@ -23,9 +23,28 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "creating users grants membership to auto_join open rooms only" do
-    auto_join_count = Rooms::Open.active.where(auto_join: true).count
-    assert_difference -> { Membership.count }, +auto_join_count do
+    auto_join_room = Rooms::Open.create!(name: "Auto Room", creator: users(:david), auto_join: true)
+    non_auto_room = Rooms::Open.create!(name: "Manual Room", creator: users(:david))
+
+    user = create_new_user
+
+    assert user.member_of?(auto_join_room), "New user should be auto-joined to auto_join rooms"
+    assert_not user.member_of?(non_auto_room), "New user should not be auto-joined to non-auto_join rooms"
+  end
+
+  test "creating a user posts a welcome message in the original room" do
+    original_room = Room.original
+
+    assert_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
       create_new_user
+    end
+  end
+
+  test "creating a bot does not post a welcome message" do
+    original_room = Room.original
+
+    assert_no_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
+      User.create!(name: "Test Bot", bot_token: User.generate_bot_token, role: :bot)
     end
   end
 
@@ -414,6 +433,24 @@ class UserTest < ActiveSupport::TestCase
     user = users(:rachel)
 
     assert_not user.posted_on?(Date.current)
+  end
+
+  test "posted_on? excludes welcome messages" do
+    user = users(:rachel)
+    rooms(:hq).post_welcome_message(user: user)
+
+    assert_not user.posted_on?(Date.current)
+  end
+
+  test "welcome message does not prevent first real post from starting streak" do
+    user = users(:rachel)
+    user.update_column(:current_streak, 0)
+
+    rooms(:hq).post_welcome_message(user: user)
+    assert_equal 0, user.reload.current_streak
+
+    create_message(user: user, room: rooms(:hq))
+    assert_equal 1, user.reload.current_streak
   end
 
   test "posted_on? excludes direct messages" do

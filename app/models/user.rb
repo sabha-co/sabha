@@ -134,6 +134,7 @@ class User < ApplicationRecord
   before_validation :normalize_social_urls
   before_save :transliterate_name, if: :name_changed?
   after_create_commit :grant_membership_to_open_rooms
+  after_create_commit :post_welcome_message
 
   scope :ordered, -> { order(arel_table[:role].desc, arel_table[:name].lower) }
   scope :recent_posters_first, ->(room_id = nil) do
@@ -141,6 +142,8 @@ class User < ApplicationRecord
     users_table = active.arel_table
 
     left_join_condition = messages_table[:creator_id].eq(users_table[:id])
+      .and(messages_table[:event].eq(nil))
+      .and(messages_table[:welcome].eq(false))  # Mirrors Message.user_authored scope
     left_join_condition = left_join_condition.and(messages_table[:room_id].eq(room_id)) if room_id.present?
 
     left_join = users_table.join(messages_table, Arel::Nodes::OuterJoin).on(left_join_condition)
@@ -224,6 +227,7 @@ class User < ApplicationRecord
 
   def total_message_count
     Message.active
+           .user_authored
            .joins(:room)
            .where(creator_id: id)
            .where("rooms.type != ?", "Rooms::Direct")
@@ -245,6 +249,7 @@ class User < ApplicationRecord
                     .where.not(rooms: { type: "Rooms::Direct" })
                     .where("parent_rooms.type IS NULL OR parent_rooms.type != ?", "Rooms::Direct")
                     .where("DATE(messages.created_at) = ?", date)
+                    .user_authored
     scope = scope.where.not(id: excluding.id) if excluding
     scope.exists?
   end
@@ -365,6 +370,13 @@ class User < ApplicationRecord
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
         thread.memberships.grant_to(self)
       end
+    end
+
+    def post_welcome_message
+      return if bot?
+      return unless room = Room.original
+
+      room.post_welcome_message(user: self)
     end
 
     def dm_room_with(other_user)

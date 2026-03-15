@@ -32,6 +32,7 @@ class Message < ApplicationRecord
 
   scope :ordered, -> { order(:created_at) }
   scope :without_events, -> { where(event: nil) }
+  scope :user_authored, -> { where(event: nil, welcome: false) }
   scope :with_creator, -> { includes(creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ]) }
   # Lightweight thread loading - fetches threads but NOT their messages
   # The partial uses Rooms::Thread#participant_creators for efficient participant fetching
@@ -63,6 +64,10 @@ class Message < ApplicationRecord
 
   def event?
     event.present?
+  end
+
+  def repliable?
+    !event?
   end
 
   def bookmarked_by_current_user?
@@ -114,7 +119,7 @@ class Message < ApplicationRecord
     end
 
     def update_creator_streak
-      return if room.direct? || room.parent_room&.direct?
+      return if room.direct? || room.parent_room&.direct? || welcome?
       creator.recalculate_streak!(excluding_message: self)
     end
 
@@ -189,6 +194,7 @@ class Message < ApplicationRecord
     end
 
     def create_mention_notifications
+      return if event?
       return if room.direct? || room.parent_room&.direct?
 
       recipient_ids = if mentions_everyone?
