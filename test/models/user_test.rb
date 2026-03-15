@@ -35,7 +35,7 @@ class UserTest < ActiveSupport::TestCase
   test "creating a user posts a welcome message in the original room" do
     original_room = Room.original
 
-    assert_difference -> { Message.unscoped.where(room: original_room, event: "member_welcomed").count } do
+    assert_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
       create_new_user
     end
   end
@@ -43,7 +43,7 @@ class UserTest < ActiveSupport::TestCase
   test "creating a bot does not post a welcome message" do
     original_room = Room.original
 
-    assert_no_difference -> { Message.unscoped.where(room: original_room, event: "member_welcomed").count } do
+    assert_no_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
       User.create!(name: "Test Bot", bot_token: User.generate_bot_token, role: :bot)
     end
   end
@@ -435,7 +435,7 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.posted_on?(Date.current)
   end
 
-  test "posted_on? excludes event messages like welcome" do
+  test "posted_on? excludes welcome messages" do
     user = users(:rachel)
     rooms(:hq).post_welcome_message(user: user)
 

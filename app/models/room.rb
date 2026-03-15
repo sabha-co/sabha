@@ -224,12 +224,10 @@ class Room < ApplicationRecord
     post_system_message(event: "member_joined", body: "joined", actor: user)
   end
 
-  # Uses create! (not post_system_message) because welcome messages are social
-  # objects — they need ActionCable broadcast, boosts, and replies via callbacks.
   def post_welcome_message(user:)
     messages.create!(
       creator: user,
-      event: "member_welcomed",
+      welcome: true,
       body: "joined the community. Say hello!",
       client_message_id: Random.uuid
     )

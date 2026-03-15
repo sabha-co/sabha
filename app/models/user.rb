@@ -142,6 +142,8 @@ class User < ApplicationRecord
     users_table = active.arel_table
 
     left_join_condition = messages_table[:creator_id].eq(users_table[:id])
+      .and(messages_table[:event].eq(nil))
+      .and(messages_table[:welcome].eq(false))  # Mirrors Message.user_authored scope
     left_join_condition = left_join_condition.and(messages_table[:room_id].eq(room_id)) if room_id.present?
 
     left_join = users_table.join(messages_table, Arel::Nodes::OuterJoin).on(left_join_condition)
@@ -225,6 +227,7 @@ class User < ApplicationRecord
 
   def total_message_count
     Message.active
+           .user_authored
            .joins(:room)
            .where(creator_id: id)
            .where("rooms.type != ?", "Rooms::Direct")
@@ -246,7 +249,7 @@ class User < ApplicationRecord
                     .where.not(rooms: { type: "Rooms::Direct" })
                     .where("parent_rooms.type IS NULL OR parent_rooms.type != ?", "Rooms::Direct")
                     .where("DATE(messages.created_at) = ?", date)
-                    .without_events
+                    .user_authored
     scope = scope.where.not(id: excluding.id) if excluding
     scope.exists?
   end

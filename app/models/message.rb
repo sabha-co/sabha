@@ -32,6 +32,7 @@ class Message < ApplicationRecord
 
   scope :ordered, -> { order(:created_at) }
   scope :without_events, -> { where(event: nil) }
+  scope :user_authored, -> { where(event: nil, welcome: false) }
   scope :with_creator, -> { includes(creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ]) }
   # Lightweight thread loading - fetches threads but NOT their messages
   # The partial uses Rooms::Thread#participant_creators for efficient participant fetching
@@ -65,12 +66,8 @@ class Message < ApplicationRecord
     event.present?
   end
 
-  def welcome?
-    event == "member_welcomed"
-  end
-
   def repliable?
-    !event? || welcome?
+    !event?
   end
 
   def bookmarked_by_current_user?
