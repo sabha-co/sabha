@@ -70,7 +70,7 @@ class Message < ApplicationRecord
   end
 
   def repliable?
-    !event?
+    !event? || welcome?
   end
 
   def bookmarked_by_current_user?

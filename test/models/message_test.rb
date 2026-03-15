@@ -297,9 +297,9 @@ class MessageTest < ActiveSupport::TestCase
     assert_not Message.new.welcome?
   end
 
-  test "repliable? is true for regular messages but false for all events" do
+  test "repliable? is true for regular messages and welcome events but false for other events" do
     assert Message.new.repliable?
-    assert_not Message.new(event: "member_welcomed").repliable?
+    assert Message.new(event: "member_welcomed").repliable?
     assert_not Message.new(event: "member_joined").repliable?
     assert_not Message.new(event: "room_renamed").repliable?
   end
