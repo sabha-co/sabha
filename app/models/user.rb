@@ -370,8 +370,9 @@ class User < ApplicationRecord
 
     def post_welcome_message
       return if bot?
+      return unless room = Room.original
 
-      Room.original&.post_welcome_message(user: self)
+      room.post_welcome_message(user: self)
     end
 
     def dm_room_with(other_user)

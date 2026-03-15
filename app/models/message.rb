@@ -197,6 +197,7 @@ class Message < ApplicationRecord
     end
 
     def create_mention_notifications
+      return if event?
       return if room.direct? || room.parent_room&.direct?
 
       recipient_ids = if mentions_everyone?
