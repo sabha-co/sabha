@@ -134,6 +134,7 @@ class User < ApplicationRecord
   before_validation :normalize_social_urls
   before_save :transliterate_name, if: :name_changed?
   after_create_commit :grant_membership_to_open_rooms
+  after_create_commit :post_welcome_message
 
   scope :ordered, -> { order(arel_table[:role].desc, arel_table[:name].lower) }
   scope :recent_posters_first, ->(room_id = nil) do
@@ -365,10 +366,12 @@ class User < ApplicationRecord
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
         thread.memberships.grant_to(self)
       end
+    end
 
-      # Welcome message goes in the first open room (after membership is granted above)
-      welcome_room = Rooms::Open.active.where(auto_join: true).order(:created_at).first
-      welcome_room.post_welcome_message(user: self) if welcome_room && !bot?
+    def post_welcome_message
+      return if bot?
+
+      Room.original&.post_welcome_message(user: self)
     end
 
     def dm_room_with(other_user)

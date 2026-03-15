@@ -69,6 +69,10 @@ class Message < ApplicationRecord
     event == "member_welcomed"
   end
 
+  def repliable?
+    !event?
+  end
+
   def bookmarked_by_current_user?
     # Scope path: with_bookmark_status_for LEFT JOIN sets is_bookmarked
     # Use ActiveRecord::Type::Boolean to handle SQLite's 0/1/"0"/"1" values

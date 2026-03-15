@@ -297,6 +297,13 @@ class MessageTest < ActiveSupport::TestCase
     assert_not Message.new.welcome?
   end
 
+  test "repliable? is true for regular messages but false for all events" do
+    assert Message.new.repliable?
+    assert_not Message.new(event: "member_welcomed").repliable?
+    assert_not Message.new(event: "member_joined").repliable?
+    assert_not Message.new(event: "room_renamed").repliable?
+  end
+
   test "welcome message does not update creator streak" do
     user = users(:rachel)
     user.update_column(:current_streak, 0)

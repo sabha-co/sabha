@@ -29,18 +29,18 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "creating a user posts a welcome message in the first auto-join room" do
-    rooms(:hq).update!(auto_join: true)
+  test "creating a user posts a welcome message in the original room" do
+    original_room = Room.original
 
-    assert_difference -> { Message.unscoped.where(room: rooms(:hq), event: "member_welcomed").count } do
+    assert_difference -> { Message.unscoped.where(room: original_room, event: "member_welcomed").count } do
       create_new_user
     end
   end
 
   test "creating a bot does not post a welcome message" do
-    rooms(:hq).update!(auto_join: true)
+    original_room = Room.original
 
-    assert_no_difference -> { Message.unscoped.where(room: rooms(:hq), event: "member_welcomed").count } do
+    assert_no_difference -> { Message.unscoped.where(room: original_room, event: "member_welcomed").count } do
       User.create!(name: "Test Bot", bot_token: User.generate_bot_token, role: :bot)
     end
   end

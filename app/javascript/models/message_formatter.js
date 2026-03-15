@@ -18,7 +18,7 @@ export default class MessageFormatter {
   }
 
   format(message, threadstyle) {
-    const isEvent = message.classList.contains("message--event")
+    const isEvent = message.dataset.messageEvent !== undefined
 
     if (!isEvent) {
       this.#setMeClass(message)
@@ -61,7 +61,7 @@ export default class MessageFormatter {
 
   #threadMessage(message) {
     if (message.previousElementSibling) {
-      const prevIsEvent = message.previousElementSibling.classList.contains("message--event")
+      const prevIsEvent = message.previousElementSibling.dataset.messageEvent !== undefined
       const isSameUser = message.previousElementSibling.dataset.userId == message.dataset.userId
       const previousMessageIsRecent = this.#previousMessageIsRecent(message)
 
