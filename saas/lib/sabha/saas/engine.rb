@@ -60,7 +60,7 @@ module Sabha
             resource :settings, only: [ :show, :update ], controller: "saas/settings"
 
             # Workspace management
-            resources :workspaces, only: [ :index, :new, :create ], controller: "saas/workspaces"
+            resources :workspaces, only: [ :index, :new, :create, :show ], controller: "saas/workspaces"
 
             # Workspace membership management
             patch "workspace_memberships/reorder", to: "saas/workspace_memberships#reorder"

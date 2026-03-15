@@ -300,6 +300,7 @@ class Room < ApplicationRecord
 
     def announce_creation
       return if direct? || thread?
+      return unless User.active.where.not(id: creator_id).exists? # No audience on fresh setup
       post_system_message(event: "room_created", body: "created the room", actor: creator)
     end
 

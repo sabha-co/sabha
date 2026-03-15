@@ -41,8 +41,7 @@ module Saas
 
       workspace = Workspace.last
       assert_equal "My New Workspace", workspace.name
-      assert_redirected_to "/#{workspace.external_id}/invite"
-      assert_equal "Workspace created!", flash[:notice]
+      assert_redirected_to workspace_path(workspace)
     end
 
     test "create adds creator as workspace member" do
@@ -53,6 +52,24 @@ module Saas
 
       workspace = Workspace.last
       assert identity.workspace_memberships.exists?(tenant: workspace.external_id.to_s)
+    end
+
+    test "show requires authentication" do
+      get workspace_path(workspaces(:acme))
+      assert_redirected_to new_session_path
+    end
+
+    test "show displays provisioning page for own workspace" do
+      sign_in_global_identity(global_identities(:alice))
+      get workspace_path(workspaces(:acme))
+      assert_response :success
+    end
+
+    test "show rejects access to other users workspace" do
+      sign_in_global_identity(global_identities(:alice))
+      assert_raises(ActiveRecord::RecordNotFound) do
+        get workspace_path(workspaces(:widgets))
+      end
     end
 
     test "create with invalid name shows error" do
