@@ -365,6 +365,10 @@ class User < ApplicationRecord
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
         thread.memberships.grant_to(self)
       end
+
+      # Welcome message goes in the first open room (after membership is granted above)
+      welcome_room = Rooms::Open.active.where(auto_join: true).order(:created_at).first
+      welcome_room.post_welcome_message(user: self) if welcome_room && !bot?
     end
 
     def dm_room_with(other_user)

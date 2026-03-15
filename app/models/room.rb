@@ -224,6 +224,15 @@ class Room < ApplicationRecord
     post_system_message(event: "member_joined", body: "joined", actor: user)
   end
 
+  def post_welcome_message(user:)
+    messages.create!(
+      creator: user,
+      event: "member_welcomed",
+      body: "joined the community. Say hello!",
+      client_message_id: Random.uuid
+    )
+  end
+
   def ensure_visible_members_remain!(excluding:)
     return if open?
     remaining = memberships.visible.where.not(user_id: Array(excluding)).count

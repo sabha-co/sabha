@@ -287,6 +287,18 @@ class RoomTest < ActiveSupport::TestCase
     assert_equal room.object_id, result.object_id
   end
 
+  test "post_welcome_message creates a member_welcomed event" do
+    room = rooms(:hq)
+    user = users(:kevin)
+
+    message = room.post_welcome_message(user: user)
+
+    assert message.persisted?
+    assert_equal "member_welcomed", message.event
+    assert_equal user, message.creator
+    assert message.welcome?
+  end
+
   test "active_member_count excludes inactive users" do
     room = rooms(:watercooler)
     initial_count = room.active_member_count

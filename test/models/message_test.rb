@@ -283,6 +283,29 @@ class MessageTest < ActiveSupport::TestCase
     assert_includes message.errors[:attachment], "is too large (max 50MB)"
   end
 
+  # Welcome messages
+
+  test "welcome? returns true for member_welcomed event" do
+    message = Message.new(event: "member_welcomed")
+    assert message.welcome?
+    assert message.event?
+  end
+
+  test "welcome? returns false for other events" do
+    assert_not Message.new(event: "member_joined").welcome?
+    assert_not Message.new(event: "room_renamed").welcome?
+    assert_not Message.new.welcome?
+  end
+
+  test "welcome message does not update creator streak" do
+    user = users(:rachel)
+    user.update_column(:current_streak, 0)
+
+    rooms(:hq).post_welcome_message(user: user)
+
+    assert_equal 0, user.reload.current_streak
+  end
+
   test "mentioning a non-member does not add them to the room" do
     room = rooms(:pets)
     jz = users(:jz)

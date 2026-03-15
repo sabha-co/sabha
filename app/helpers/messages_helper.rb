@@ -85,13 +85,13 @@ module MessagesHelper
       inbox_target: "message"
     }
 
-    unless message.event?
+    if !message.event? || message.welcome? # Welcome messages are events but support replies
       data[:controller] = "reply"
       data[:reply_composer_outlet] = "##{composer_id}"
     end
 
     tag.div id: dom_id(message),
-      class: class_names("message", "message--event": message.event?, "message--emoji": !message.event? && message.plain_text_body.all_emoji?),
+      class: class_names("message", "message--event": message.event? && !message.welcome?, "message--welcome": message.welcome?, "message--emoji": !message.event? && message.plain_text_body.all_emoji?),
       data: data, &
   rescue Exception => e
     Sentry.capture_exception(e, extra: { message: message })

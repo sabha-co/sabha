@@ -850,6 +850,25 @@ img.message__attachment {
     "loading_down";
 }
 
+/* Welcome message (new member joined) */
+.message--welcome {
+  .message__welcome {
+    background-color: oklch(var(--lch-green) / 0.08);
+    border-radius: 0.66em;
+    padding: var(--content-padding-block) var(--content-padding-inline);
+
+    @media (prefers-color-scheme: dark) {
+      background-color: oklch(var(--lch-green) / 0.15);
+    }
+  }
+
+  .message__welcome-text {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    flex: 1;
+  }
+}
+
 .message--mentioned {
   .message__body-content {
     --message-background: oklch(var(--lch-red) / 0.1);

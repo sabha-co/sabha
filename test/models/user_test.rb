@@ -29,6 +29,22 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  test "creating a user posts a welcome message in the first auto-join room" do
+    rooms(:hq).update!(auto_join: true)
+
+    assert_difference -> { Message.unscoped.where(room: rooms(:hq), event: "member_welcomed").count } do
+      create_new_user
+    end
+  end
+
+  test "creating a bot does not post a welcome message" do
+    rooms(:hq).update!(auto_join: true)
+
+    assert_no_difference -> { Message.unscoped.where(room: rooms(:hq), event: "member_welcomed").count } do
+      User.create!(name: "Test Bot", bot_token: User.generate_bot_token, role: :bot)
+    end
+  end
+
   test "deactivating a user deletes push subscriptions, searches, and deactivates all memberships including direct rooms" do
     user = users(:david)
     non_direct_count = user.memberships.without_direct_rooms.count

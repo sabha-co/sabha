@@ -65,6 +65,10 @@ class Message < ApplicationRecord
     event.present?
   end
 
+  def welcome?
+    event == "member_welcomed"
+  end
+
   def bookmarked_by_current_user?
     # Scope path: with_bookmark_status_for LEFT JOIN sets is_bookmarked
     # Use ActiveRecord::Type::Boolean to handle SQLite's 0/1/"0"/"1" values
@@ -114,7 +118,7 @@ class Message < ApplicationRecord
     end
 
     def update_creator_streak
-      return if room.direct? || room.parent_room&.direct?
+      return if room.direct? || room.parent_room&.direct? || welcome?
       creator.recalculate_streak!(excluding_message: self)
     end
 
