@@ -60,6 +60,43 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     assert_equal "new@example.com", alice.unconfirmed_email
   end
 
+  test "confirm_email_change! propagates to tenant User records" do
+    # Use a throwaway identity to avoid mutating shared fixtures
+    identity = GlobalIdentity.create!(name: "Email Change", email_address: "emailchange@example.com", verified_at: Time.current)
+
+    with_provisioned_workspace(name: "Email Sync Test", creator: identity) do |workspace|
+      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+
+      identity.update!(unconfirmed_email: "newaddress@example.com")
+      result = identity.confirm_email_change!
+
+      assert_equal [ "emailchange@example.com", "newaddress@example.com" ], result
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        user = User.find(membership.user_id)
+        assert_equal "newaddress@example.com", user.email_address
+      end
+    end
+  ensure
+    identity&.destroy
+  end
+
+  test "sync_email_to_workspaces skips memberships without user_id" do
+    # Use a throwaway identity to avoid mutating shared fixture tenant Users
+    identity = GlobalIdentity.create!(name: "Sync Skip", email_address: "syncskip@example.com", verified_at: Time.current)
+
+    with_provisioned_workspace(name: "Sync Skip Test", creator: identity) do |workspace|
+      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+      membership.update_column(:user_id, nil)
+
+      assert_nothing_raised do
+        identity.sync_email_to_workspaces("skipped@example.com")
+      end
+    end
+  ensure
+    identity&.destroy
+  end
+
   test "email_available? checks primary email_address only" do
     alice = global_identities(:alice)
 

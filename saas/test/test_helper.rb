@@ -50,15 +50,10 @@ module SaasTestHelper
   end
 
   def set_global_session_cookie(token)
-    # In integration tests, we need to sign the cookie manually
-    # This matches how the application signs cookies
-    secret = Rails.application.secret_key_base
-    key_generator = ActiveSupport::KeyGenerator.new(secret, iterations: 1000)
-    signed_cookie_salt = Rails.application.config.action_dispatch.signed_cookie_salt || "signed cookie"
-    key = key_generator.generate_key(signed_cookie_salt)
-    verifier = ActiveSupport::MessageVerifier.new(key, serializer: ActiveSupport::MessageEncryptor::NullSerializer)
-    signed_value = verifier.generate(token.to_json)
-    cookies[:global_session_token] = signed_value
+    # Rack::Test::CookieJar (used before first request in integration tests)
+    # doesn't support .signed, so we use Rails' own key generator to sign.
+    verifier = Rails.application.message_verifier("signed cookie")
+    cookies[:global_session_token] = verifier.generate(token)
   end
 
   # Helper to access fixtures
@@ -80,6 +75,15 @@ module SaasTestHelper
 
   def auth_codes(name)
     AuthCode.find(ActiveRecord::FixtureSet.identify(name))
+  end
+
+  # Creates a workspace with a real tenant database, yields it, and
+  # guarantees cleanup even if an assertion fails mid-test.
+  def with_provisioned_workspace(name:, creator:)
+    workspace = Workspace.create_with_database!(name: name, creator: creator)
+    yield workspace
+  ensure
+    workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
   end
 end
 

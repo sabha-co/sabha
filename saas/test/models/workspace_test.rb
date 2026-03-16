@@ -62,16 +62,87 @@ class WorkspaceTest < ActiveSupport::TestCase
     assert workspace.workspace_memberships.count >= 2
   end
 
+  test "last_administrator? returns true when user is only admin" do
+    with_provisioned_workspace(name: "Last Admin Test", creator: global_identities(:alice)) do |workspace|
+      membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)
+      user = ApplicationRecord.with_tenant(workspace.external_id.to_s) { User.find(membership.user_id) }
+
+      assert workspace.last_administrator?(user)
+    end
+  end
+
+  test "last_administrator? returns false when multiple admins exist" do
+    with_provisioned_workspace(name: "Multi Admin Test", creator: global_identities(:alice)) do |workspace|
+      bob_membership = WorkspaceMembership.create!(
+        global_identity: global_identities(:bob),
+        tenant: workspace.external_id.to_s
+      )
+      bob_membership.create_user!(role: :administrator)
+
+      alice_membership = WorkspaceMembership.find_by(
+        tenant: workspace.external_id.to_s,
+        global_identity: global_identities(:alice)
+      )
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        alice_user = User.find(alice_membership.user_id)
+        assert_equal 2, User.active.administrator.count, "Expected 2 active admins"
+        assert_not workspace.last_administrator?(alice_user)
+      end
+    end
+  end
+
   test "last_administrator? returns false when tenant does not exist" do
-    workspace = workspaces(:acme)
+    # Use a workspace with a tenant ID that is guaranteed to never have a database
+    workspace = Workspace.create!(name: "No DB", external_id: 9999998, creator: global_identities(:alice))
     user = User.new(role: :administrator)
-    # No tenant DB exists for fixtures, so should return false safely
     assert_not workspace.last_administrator?(user)
+  ensure
+    workspace&.destroy
   end
 
   test "sends welcome email to creator after create" do
     assert_enqueued_emails 1 do
       Workspace.create!(name: "Email Test", creator: global_identities(:alice))
+    end
+  end
+
+  # --- Workspace provisioning (create_with_database!) ---
+
+  test "create_with_database! provisions a complete workspace" do
+    creator = global_identities(:alice)
+
+    with_provisioned_workspace(name: "Provisioning Test", creator: creator) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      # Creates tenant database
+      assert ApplicationRecord.tenant_exist?(tenant)
+
+      # Creates Account with workspace name
+      ApplicationRecord.with_tenant(tenant) do
+        assert_equal "Provisioning Test", Account.first.name
+      end
+
+      # Creates admin user linked to creator, caches user_id on membership
+      membership = creator.workspace_memberships.find_by(tenant: tenant)
+      assert_not_nil membership
+      assert_not_nil membership.user_id
+
+      ApplicationRecord.with_tenant(tenant) do
+        admin = User.find_by(email_address: creator.email_address)
+        assert admin.administrator?
+        assert admin.verified_at.present?
+        assert_equal membership.id, admin.workspace_membership_id
+        assert_equal admin.id, membership.user_id
+      end
+
+      # Creates default General room
+      ApplicationRecord.with_tenant(tenant) do
+        general = Rooms::Open.find_by(name: "General")
+        assert_not_nil general
+        assert_equal "general", general.slug
+        assert general.auto_join?
+      end
     end
   end
 

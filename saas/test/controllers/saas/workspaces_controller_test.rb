@@ -13,7 +13,8 @@ module Saas
       sign_in_global_identity(global_identities(:alice))
       get workspaces_path
       # Redirects to most recently accessed workspace (by membership updated_at)
-      assert_response :redirect
+      most_recent = global_identities(:alice).active_workspaces_recent_first.first
+      assert_redirected_to "/#{most_recent.external_id}"
     end
 
     test "new requires authentication" do
@@ -67,6 +68,7 @@ module Saas
 
     test "show rejects access to other users workspace" do
       sign_in_global_identity(global_identities(:alice))
+      # RecordNotFound → 404 via Rails rescue_responses middleware in production
       assert_raises(ActiveRecord::RecordNotFound) do
         get workspace_path(workspaces(:widgets))
       end
