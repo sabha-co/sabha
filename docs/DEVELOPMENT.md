@@ -199,7 +199,7 @@ Lefthook runs rubocop automatically on commit.
 app/
 ├── channels/        # ActionCable channels
 ├── controllers/     # Rails controllers
-├── frontend/        # Tailwind CSS source + Stimulus controllers
+├── javascript/      # Stimulus controllers, channels, helpers
 │   └── controllers/ # Stimulus controllers
 ├── jobs/            # Solid Queue jobs
 ├── models/          # ActiveRecord models
@@ -341,33 +341,7 @@ The code shows what changed; the message explains why.
 
 ---
 
-## Architecture Comparison
-
-| | **Development** | **Dev + AnyCable** | **SaaS Dev** | **bin/boot** | **Kamal** | **Sabha Cloud** |
-|---|---|---|---|---|---|---|
-| **Start** | `bin/dev` | `bin/dev --anycable` | `bin/rails saas:enable && bundle && bin/dev` | `bin/boot` | `kamal deploy` | `bin/boot` (Docker) |
-| **Tenant Mode** | Single | Single | Multi | Single | Single | Multi |
-| | | | | | | |
-| **WebSockets** | ActionCable | AnyCable-Go | ActionCable | ActionCable | AnyCable-Go | AnyCable-Go |
-| **Cable Adapter** | `redis` | `any_cable` | `redis` | `redis` | `any_cable` | `any_cable` |
-| | | | | | | |
-| **Jobs** | Solid Queue (in Puma) | Solid Queue (in Puma) | Solid Queue (in Puma) | Separate workers | Separate workers | Separate workers |
-| **Job Mode** | Puma plugin | Puma plugin | Puma plugin | `solid_queue:start` | `solid_queue:start` | `solid_queue:start` |
-| | | | | | | |
-| **Cache** | `:memory_store` | `:memory_store` | `:memory_store` | `:redis_cache_store` | `:redis_cache_store` | `:redis_cache_store` |
-| | | | | | | |
-| **Database** | SQLite | SQLite | SQLite per-tenant | SQLite | SQLite | SQLite per-tenant |
-| | | | | | | |
-| **Redis** | External | External | External | Procfile starts it | External | Procfile starts it |
-| **Redis For** | Cable | - | Cable | Cable + Cache | Cache | Cache |
-| | | | | | | |
-| **Processes** | web | web, css, anycable | web | web, redis, workers | web + anycable | web, redis, workers, anycable, caddy |
-| **TLS/Proxy** | None | None | None | Thruster | Thruster + Traefik | Caddy |
-
----
-
-
 ## Questions?
 
 - Open an issue: [GitHub Issues](https://github.com/sabha-co/sabha/issues)
-- See [CLAUDE.md](../CLAUDE.md) for AI-assisted development context
+- See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system architecture

@@ -24,10 +24,8 @@ Single-tenant deployment where `APP_NAME` is used throughout the application:
 ### SaaS Mode (Multi-Tenant)
 
 Multi-tenant deployment where branding is context-aware:
-- **Outside workspace** (login, signup pages): Uses `SAAS_APP_NAME`
+- **Outside workspace** (login, signup pages): Uses hardcoded "Sabha" branding
 - **Inside workspace**: Uses the workspace name set during creation
-
-This means in SaaS mode, users see their workspace name (e.g., "Acme Corp") instead of a global app name when inside their workspace.
 
 ## Environment Variables
 
@@ -59,23 +57,14 @@ APP_HOST="chat.yourdomain.com"
 
 ### SaaS Mode Branding
 
-When running in SaaS mode, additional branding variables apply:
-
-```bash
-# App name shown on login/signup pages (before workspace is selected)
-SAAS_APP_NAME="Sabha"
-```
-
-**How branding works in SaaS mode:**
+In SaaS mode, branding values (app name, support email, etc.) are hardcoded constants in `config/initializers/branding.rb`, not read from environment variables. This is because Sabha is the product in SaaS mode.
 
 | Context | What's Displayed |
 |---------|------------------|
-| Login/signup pages | `SAAS_APP_NAME` (default: "Sabha") |
+| Login/signup pages | "Sabha" (hardcoded) |
 | Inside a workspace | Workspace name (set during creation) |
 | Emails from workspace | Workspace name |
 | PWA manifest | Workspace name |
-
-**Note:** In SaaS mode, `APP_NAME` from `.env` is ignored inside workspaces. Each workspace displays its own name configured during workspace creation.
 
 ### Contact & Support
 
@@ -236,9 +225,8 @@ Sabha supports custom logo uploads through the admin panel:
 The `Branding` module provides several methods for accessing branding values:
 
 ```ruby
-# Static values (from environment variables)
-Branding.app_name          # APP_NAME (self-hosted)
-Branding.saas_app_name     # SAAS_APP_NAME (SaaS login pages)
+# Static values (self-hosted: from ENV, SaaS: hardcoded constants)
+Branding.app_name          # APP_NAME
 Branding.support_email     # SUPPORT_EMAIL
 Branding.app_host          # APP_HOST
 
@@ -251,7 +239,7 @@ Branding.contextual_app_name
 | Mode | Context | Returns |
 |------|---------|---------|
 | Self-hosted | Anywhere | `APP_NAME` |
-| SaaS | Outside workspace | `SAAS_APP_NAME` |
+| SaaS | Outside workspace | "Sabha" (hardcoded) |
 | SaaS | Inside workspace | Workspace name |
 
 Use `contextual_app_name` in views, mailers, and controllers where you want the name to adapt automatically:
@@ -267,7 +255,7 @@ For developers who want to add more branding options, edit `config/initializers/
 ```ruby
 Rails.application.configure do
   # Add your custom branding values
-  config.x.branding.custom_footer_text = ENV.fetch("CUSTOM_FOOTER_TEXT", "© 2024 Your Community")
+  config.x.branding.custom_footer_text = ENV.fetch("CUSTOM_FOOTER_TEXT", "© Your Community")
   config.x.branding.twitter_handle = ENV.fetch("TWITTER_HANDLE", "@yourcommunity")
 end
 
@@ -354,8 +342,8 @@ Check that emails show:
 - [ ] PWA install shows correct name and icon
 
 **SaaS Mode (additional checks):**
-- [ ] Login page shows `SAAS_APP_NAME`
-- [ ] Inside workspace, pages show workspace name (not `APP_NAME`)
+- [ ] Login page shows "Sabha" (hardcoded branding)
+- [ ] Inside workspace, pages show workspace name (not app name)
 - [ ] Emails from workspace show workspace name
 - [ ] PWA manifest uses workspace name
 - [ ] Workspace selector shows correct workspace names
@@ -464,11 +452,5 @@ BACKGROUND_COLOR="#0f172a"  # Dark blue
 
 ## Need Help?
 
-- Check the [main README](README.md) for deployment help
-- Review [smallbets-mods.md](smallbets-mods.md) for customization examples
-- Original Small Bets repo: [antiwork/smallbets](https://github.com/antiwork/smallbets)
-- Open an issue on GitHub if you encounter problems
-
----
-
-**Remember:** The beauty of Sabha is that everything is customizable. Make it yours! 🎨
+- See [DEPLOYMENT.md](./DEPLOYMENT.md) for deployment help
+- Open an issue on [GitHub](https://github.com/sabha-co/sabha/issues)

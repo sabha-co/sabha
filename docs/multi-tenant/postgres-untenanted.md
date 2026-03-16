@@ -2,27 +2,24 @@
 
 ## Decision
 
-The shared untenanted database (global identities, workspaces, sessions) runs on PostgreSQL. Per-workspace tenant databases remain on SQLite. This is the same hybrid pattern Fizzy uses (MySQL shared + SQLite per-tenant).
+The shared untenanted database (global identities, workspaces, sessions) runs on PostgreSQL. Per-workspace tenant databases remain on SQLite.
 
-## Architecture Comparison
+## Architecture
 
-|  | **Fizzy (Self-hosted)** | **Fizzy (SaaS)** | **Sabha (Self-hosted)** | **Sabha (SaaS)** |
-|---|---|---|---|---|
-| **Shared/Global DB** | SQLite | MySQL (Trilogy) | SQLite | **PostgreSQL 18** |
-| **Per-tenant DB** | N/A (single tenant) | MySQL (same server) | N/A (single tenant) | SQLite per workspace |
-| **Queue DB** | SQLite | MySQL | SQLite | SQLite |
-| **Cable DB** | SQLite | MySQL | Redis | Redis |
-| **Tenant isolation** | N/A | Separate MySQL databases | N/A | Separate SQLite files |
-| **Read replicas** | No | Yes (MySQL replica) | No | Possible (Postgres) |
-| **Infra dependency** | None | MySQL server | None | **Managed Postgres (PlanetScale)** |
-| **DB adapter gem** | `sqlite3` | `trilogy` | `sqlite3` | `sqlite3` + `pg` |
-| **Tenant portability** | N/A | No (MySQL export needed) | N/A | **Yes (download SQLite file)** |
+|  | **Self-hosted** | **SaaS** |
+|---|---|---|
+| **Shared/Global DB** | SQLite | PostgreSQL |
+| **Per-tenant DB** | N/A (single tenant) | SQLite per workspace |
+| **Queue DB** | SQLite | SQLite |
+| **Cable DB** | Redis | Redis |
+| **Tenant isolation** | N/A | Separate SQLite files |
+| **Infra dependency** | None | Managed Postgres |
+| **DB adapter gem** | `sqlite3` | `sqlite3` + `pg` |
+| **Tenant portability** | N/A | Yes (download SQLite file) |
 
 ## Why PostgreSQL for the shared layer
 
-The untenanted database is the platform layer — identities, sessions, workspaces, and eventually payments. It runs as a separate managed service that can be independently backed up, replicated, and recovered. PostgreSQL is the right tool for data that must be reliable at the global level.
-
-This also sets us up for the future: billing, subscriptions, and payment records will live here alongside identity data, all managed with proper transactional guarantees.
+The untenanted database is the platform layer -- identities, sessions, workspaces. It runs as a separate managed service that can be independently backed up, replicated, and recovered. PostgreSQL is the right tool for data that must be reliable at the global level.
 
 ## Why SQLite stays for tenants
 
@@ -84,7 +81,7 @@ SAAS=true bin/rails db:create db:migrate
 
 ### Production deployment (Kamal)
 
-Production uses a managed PostgreSQL service (PlanetScale Postgres). No database accessory in Kamal — the database is external infrastructure, same pattern as Fizzy with MySQL.
+Production uses a managed PostgreSQL service. No database accessory in Kamal -- the database is external infrastructure.
 
 Set `UNTENANTED_DATABASE_URL` in `.kamal/secrets` with the full connection string from your provider. SSL params are included in the URL (e.g., `?sslmode=require`).
 

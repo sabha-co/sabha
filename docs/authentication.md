@@ -524,8 +524,3 @@ AUTH_METHOD=otp
 | `auth_token_mailer.rb` | OTP code email |
 | `user_mailer.rb` | Email verification, password reset |
 
----
-
-## Related Documentation
-
-- [ENV-Based Auth Configuration](./env-based-auth-configuration.md) - Detailed ENV setup

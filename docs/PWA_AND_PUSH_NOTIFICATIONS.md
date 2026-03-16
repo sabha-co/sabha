@@ -1,6 +1,6 @@
 # PWA & Push Notifications
 
-Review of Sabha's implementation compared with Fizzy. Both share the same core infrastructure.
+Sabha's Progressive Web App and push notification architecture.
 
 ## Architecture Overview
 
@@ -87,58 +87,9 @@ Badge count (unread rooms) included in all payloads.
 - **Error handling:** `WebPush::ExpiredSubscription` and `OpenSSL::OpenSSLError` trigger auto-destroy of subscription
 - **SaaS support:** captures and restores tenant context across thread boundaries
 
-## Comparison with Fizzy
+## Design Decisions
 
-### Shared Infrastructure
-
-Both apps use identical patterns for:
-- `WebPush::Pool` (50 threads, 10K queue, persistent HTTP)
-- `WebPush::Notification` (same payload structure, endpoint IP pinning)
-- `Push::Subscription` model (SSRF-validated endpoints, permitted host allowlist, IP pinning)
-- `SsrfProtection` module (public DNS resolution, private/loopback/link-local/CGNAT rejection)
-- Service worker (fetch offline fallback + push + badge + notificationclick)
-- VAPID initializer
-- Stimulus `notifications_controller.js`
-- `discard_on ActiveJob::DeserializationError` on push jobs
-
-### Differences
-
-#### Notification Trigger
-
-| | Sabha | Fizzy |
-|---|---|---|
-| Trigger | `Room#receive` -> `Room::PushMessageJob` | `Notification#after_create_commit` -> `PushNotificationJob` |
-| Pusher | `Room::MessagePusher` (room-scoped) | `NotificationPusher` (notification-scoped) |
-| Filtering | Membership involvement level + connection state | `user.push_subscriptions.any?`, `!creator.system?`, `user.active?`, `account.active?` |
-
-Sabha filters at the room membership level. Fizzy filters at the notification model level.
-
-#### Connection-Aware Delivery — Sabha only
-
-Sabha tracks `connected_at` on memberships with a 60-second TTL. Users actively viewing a room don't get push. Fizzy sends push to all subscribed users regardless.
-
-#### Notification Payloads
-
-Sabha builds payloads based on **room type** (direct, shared, thread). Fizzy builds payloads based on **event type** (comment_created, card_assigned, card_published, mention, etc.).
-
-#### PWA Install Prompt — Sabha only
-
-Sabha has `pwa_install_controller.js` that intercepts `beforeinstallprompt` with platform-specific install instructions. Fizzy relies on native browser prompts.
-
-#### Subscription Deduplication
-
-| | Sabha | Fizzy |
-|---|---|---|
-| Unique index | `(endpoint, p256dh_key, auth_key)` | `(user_id, endpoint)` |
-| Create strategy | `find_or_create_by` + touch | `create_or_find_by!` |
-
-#### VAPID Subject
-
-- Sabha: `"mailto:#{Branding.support_email}"` (dynamic)
-- Fizzy: `"mailto:support@fizzy.do"` (hardcoded)
-
-### What Fizzy Could Adopt from Sabha
-
-1. **Connection-aware delivery** — skip push for users actively viewing the app
-2. **PWA install prompt** handling with platform-specific instructions
-3. **Dynamic VAPID subject** instead of hardcoded email
+- **Connection-aware delivery**: Sabha tracks `connected_at` on memberships with a 60-second TTL. Users actively viewing a room don't receive push notifications, reducing noise.
+- **Room-type payloads**: Notification payloads are built based on room type (direct, shared, thread) rather than event type, keeping the payload logic simple.
+- **PWA install prompt**: `pwa_install_controller.js` intercepts `beforeinstallprompt` with platform-specific install instructions rather than relying on native browser prompts.
+- **Dynamic VAPID subject**: Uses `"mailto:#{Branding.support_email}"` so push service contact info matches your deployment.

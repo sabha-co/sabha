@@ -2,7 +2,7 @@
 
 Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQLite. It supports two deployment modes: **self-hosted** (single-tenant) and **SaaS** (multi-tenant with database-per-workspace isolation).
 
-[Visual architecture diagrams (Excalidraw)](https://excalidraw.com/#json=NROsXM5J3pIdiRL_1x9d_,5hRkehIds4KTPlnKqJG7SA)
+[Visual architecture diagrams (Excalidraw)](once-campfire-architecture.excalidraw)
 
 ---
 
@@ -28,7 +28,7 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
                     ┌──────────────────────────────────────────────────────┐
                     │  Server (single host)                                │
                     │                                                      │
-  Browser ─HTTPS──▶ │  Kamal Proxy / Caddy (:443)                        │
+  Browser ─HTTPS──▶ │  Kamal Proxy (:443)                                │
                     │      │             │                                  │
                     │      │ /cable      │ /*                               │
                     │      ▼             ▼                                  │
@@ -71,7 +71,7 @@ Browser → Thruster → Puma → Rack middleware → Rails router → Controlle
                                         into SCRIPT_NAME
 ```
 
-1. **Thruster** terminates TLS, compresses responses, serves cached assets (skipped in Sabha Cloud where Caddy handles this)
+1. **Thruster** terminates TLS, compresses responses, serves cached assets
 2. **Puma** dispatches to Rails
 3. **Middleware** (SaaS mode): `PathRewriter` moves the workspace prefix (e.g., `/1000001/`) from PATH_INFO to SCRIPT_NAME, enabling transparent URL generation
 4. **Router** matches the request to a controller action
@@ -585,30 +585,6 @@ All deployment modes share the same container architecture: **3 containers** (we
 - `SKIP_THRUSTER=true` -- Puma runs directly, no Thruster wrapper
 - Deployed via `kamal deploy -d multitenant` (config: `config/deploy.multitenant.yml`)
 
-### Managed Hosting (Docker Compose + Caddy)
-
-```
-┌──────────────────────────────────────────────────┐
-│  DigitalOcean Droplet (per customer)              │
-│                                                   │
-│  Caddy (:443, :80)  ─── auto HTTPS + HTTP/3       │
-│      │ /cable     │ /*                             │
-│      ▼            ▼                                │
-│  AnyCable-Go   Web Container                       │
-│  (:8080)         Puma :3000                        │
-│                  Redis (in-container)               │
-│                  Solid Queue workers                │
-│                                                    │
-│  Docker volume: campfire_data → /rails/storage     │
-│  (single SQLite database)                          │
-└──────────────────────────────────────────────────┘
-```
-
-- **Caddy** handles automatic HTTPS (Let's Encrypt), HTTP/3, compression, and security headers
-- **Docker Compose** orchestrates 3 containers: `web`, `campfire-anycable`, `caddy`
-- Single-tenant mode (no SAAS env), `AUTH_METHOD=password`
-- Health check at `/up` with auto-restart
-
 ### Self-Hosted (Kamal + Thruster)
 
 For users deploying their own instance via Kamal:
@@ -714,4 +690,4 @@ SaaS mode prepends `/{workspace_id}/` to all workspace-scoped routes (handled tr
 
 8. **Tenant context propagated automatically.** The `activerecord-tenanted` gem serializes `current_tenant` with Solid Queue job payloads and wraps ActionCable channel commands with the correct tenant, eliminating manual tenant management.
 
-9. **3-container deployment.** The web container runs Puma, Redis, and Solid Queue workers together. AnyCable-Go runs as a separate container for WebSocket scaling. A reverse proxy (kamal-proxy, Caddy, or Thruster) handles TLS and routes `/cable` traffic to AnyCable-Go. This keeps operations simple while separating WebSocket connections from the Ruby process.
+9. **3-container deployment.** The web container runs Puma, Redis, and Solid Queue workers together. AnyCable-Go runs as a separate container for WebSocket scaling. A reverse proxy (kamal-proxy or Thruster) handles TLS and routes `/cable` traffic to AnyCable-Go. This keeps operations simple while separating WebSocket connections from the Ruby process.

@@ -1,15 +1,8 @@
 # Deploying Sabha
 
-Two ways to run your community:
+Deploy Sabha on your own VPS. Full control, own your data, server costs only (~$5-20/month).
 
-1. **Self-hosting** - Run on your own server with full control
-2. **Sabha Cloud** - Managed hosting, we handle everything
-
----
-
-## Self-Hosting
-
-Deploy Sabha on your own VPS. You get full control, own your data, and pay only for server costs (~$5-20/month).
+For multi-tenant SaaS deployment, see [multi-tenant/DEPLOYMENT.md](./multi-tenant/DEPLOYMENT.md).
 
 ### Requirements
 
@@ -40,10 +33,11 @@ nano .env
 
 **4. Set your environment variables**
 
+See `.env.sample` for a complete reference. Key variables:
+
 ```bash
-# Domain (required for automatic SSL)
+# Domain
 APP_HOST=chat.yourdomain.com
-TLS_DOMAIN=chat.yourdomain.com
 
 # Security
 SECRET_KEY_BASE=$(openssl rand -hex 64)
@@ -59,9 +53,18 @@ SUPPORT_EMAIL=support@yourdomain.com
 MAILER_FROM_NAME=My Community
 MAILER_FROM_EMAIL=noreply@yourdomain.com
 
-# Web Push (generate with: bundle exec rails runner "require 'webpush'; k = Webpush.generate_key; puts k.public_key; puts k.private_key")
+# Web Push (generate with: npx web-push generate-vapid-keys)
 VAPID_PUBLIC_KEY=your_public_key
 VAPID_PRIVATE_KEY=your_private_key
+
+# AnyCable (enabled by default, requires a secret)
+ANYCABLE_SECRET=$(openssl rand -hex 32)
+
+# Authentication method: "password" (default) or "otp"
+AUTH_METHOD=password
+
+# Cookie domain (set to your domain for production)
+COOKIE_DOMAIN=chat.yourdomain.com
 ```
 
 **5. Start**
@@ -131,39 +134,31 @@ volumes:
 
 **Environment variables**
 
-Add these to `.kamal/secrets`:
+Copy `.env.sample` to `.kamal/secrets` and fill in your values:
+
+```bash
+cp .env.sample .kamal/secrets
+```
+
+Add these Kamal-specific variables:
 
 ```bash
 # Server
 SERVER_IP=your.server.ip
 PROXY_HOST=chat.yourdomain.com
-
-# Rails
-SECRET_KEY_BASE=$(openssl rand -hex 64)
-RAILS_ENV=production
-
-# App
-APP_NAME=My Community
-APP_SHORT_NAME=Community
-APP_DESCRIPTION=Your community chat
-APP_HOST=chat.yourdomain.com
-COOKIE_DOMAIN=chat.yourdomain.com
-
-# Email (get key from resend.com)
-RESEND_API_KEY=your_key
-SUPPORT_EMAIL=support@yourdomain.com
-MAILER_FROM_NAME=My Community
-MAILER_FROM_EMAIL=noreply@yourdomain.com
-
-# Web Push (see "Generate VAPID Keys" below)
-VAPID_PUBLIC_KEY=your_public_key
-VAPID_PRIVATE_KEY=your_private_key
 ```
 
-**Generate VAPID keys**
+**Generate keys**
 
 ```bash
-bundle exec rails runner "require 'webpush'; k = Webpush.generate_key; puts 'VAPID_PUBLIC_KEY=' + k.public_key; puts 'VAPID_PRIVATE_KEY=' + k.private_key"
+# VAPID keys (web push notifications)
+npx web-push generate-vapid-keys
+
+# Secret key base
+rails secret
+
+# AnyCable secret
+openssl rand -hex 32
 ```
 
 ---
@@ -179,13 +174,7 @@ Self-hosting includes everything you need:
 
 ### Automatic SSL
 
-Set `TLS_DOMAIN` and Thruster handles SSL certificates automatically:
-
-```bash
-TLS_DOMAIN=chat.yourdomain.com
-```
-
-No manual certificate management needed.
+Thruster handles SSL certificates automatically via Let's Encrypt. No manual certificate management needed. Just ensure your domain's DNS points to the server.
 
 ---
 
@@ -259,8 +248,8 @@ kamal deploy
 # Check Thruster is receiving traffic on port 80/443
 curl -v http://chat.yourdomain.com
 
-# Verify TLS_DOMAIN is set
-kamal envify | grep TLS_DOMAIN
+# Verify your domain resolves to the server
+dig +short chat.yourdomain.com
 ```
 
 **Out of memory**
@@ -330,7 +319,7 @@ jobs:
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3'
+          ruby-version: '4.0'
 
       - name: Install Kamal
         run: gem install kamal
@@ -373,52 +362,21 @@ Add secrets to your GitHub repository settings.
 
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
-| RAM | 1 GB | 2 GB |
+| RAM | 2 GB | 4 GB |
 | CPU | 1 core | 2 cores |
-| Disk | 10 GB | 20 GB+ |
+| Disk | 40 GB | 80 GB+ |
 | OS | Ubuntu 22.04+ | Ubuntu 24.04 |
+
+---
 
 ---
 
 ## Sabha Cloud
 
-Don't want to manage servers? [Sabha Cloud](https://cloud.sabha.co) handles everything.
+Don't want to manage servers? [Sabha Cloud](https://cloud.sabha.co) is managed hosting -- we handle servers, updates, security, and backups.
 
-### What You Get
-
-- **Instant setup** - Live in minutes, not hours
-- **Managed hosting** - We handle servers, updates, security
-- **Automatic backups** - Continuous backup to cloud storage
-- **Custom domains** - Your domain with automatic SSL
-- **Zero maintenance** - No servers to manage, ever
-
-### Getting Started
-
-1. Sign up at [cloud.sabha.co](https://cloud.sabha.co)
-2. Choose your subdomain (e.g., `mycommunity.cloud.sabha.co`)
-3. Optionally connect a custom domain
-4. Invite your community
-
-### Custom Domains
-
-1. Go to Settings > Custom Domain
-2. Enter your domain (e.g., `chat.yourdomain.com`)
-3. Add the DNS records we provide
-4. SSL is provisioned automatically
-
-### When to Choose Sabha Cloud
-
-- You want to focus on community, not infrastructure
-- You don't have technical staff
-- You need guaranteed uptime and support
-- You want automatic updates and security patches
-
----
-
-## Comparison
-
-| Feature | Self-Hosting | Sabha Cloud |
-|---------|--------------|----------------|
+| | Self-Hosting | Sabha Cloud |
+|---|---|---|
 | Setup time | 30-60 min | 5 min |
 | Server management | You | Us |
 | Updates | Manual | Automatic |
@@ -426,12 +384,14 @@ Don't want to manage servers? [Sabha Cloud](https://cloud.sabha.co) handles ever
 | Custom domain | Yes | Yes |
 | SSL | Automatic | Automatic |
 | Data ownership | Full control | You own it |
-| Monthly cost | ~$5-20 | [Pricing](https://cloud.sabha.co/pricing) |
+| Monthly cost | ~$5-20 (server) | [Pricing](https://cloud.sabha.co/pricing) |
+
+Sign up at [cloud.sabha.co](https://cloud.sabha.co).
 
 ---
 
 ## Questions?
 
-- **Self-hosting**: [GitHub Issues](https://github.com/sabha-co/sabha/issues)
-- **Sabha Cloud**: ashwin@cloud.sabha.co
-- **Customization**: See [BRANDING.md](../BRANDING.md)
+- [GitHub Issues](https://github.com/sabha-co/sabha/issues)
+- **Sabha Cloud**: support@cloud.sabha.co
+- **Customization**: See [BRANDING.md](./BRANDING.md)

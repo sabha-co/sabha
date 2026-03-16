@@ -1,4 +1,4 @@
-# Slack Import Feature
+# Slack Import Feature (Beta)
 
 Import Slack workspace data into Sabha, enabling teams to migrate their chat history from Slack.
 
