@@ -42,11 +42,9 @@ module Saas
         post auth_code_path, params: { code: code.code }
       end
 
-      # Cookie should be set
-      assert cookies[:global_session_token].present?
-
-      # New session should be associated with the identity
+      # Cookie must round-trip through cookies.signed (contract test)
       new_session = GlobalSession.last
+      assert_equal new_session.token, parsed_cookies.signed[:global_session_token]
       assert_equal identity, new_session.global_identity
     end
 
