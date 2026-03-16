@@ -5,41 +5,27 @@ require_relative "../test_helper"
 class SaasRoomChannelTest < ActionCable::Channel::TestCase
   tests RoomChannel
 
-  # Note: Channel tests stub the connection. In SaaS mode, we need to
-  # set up tenant context and create workspace-scoped test data.
-
   setup do
-    @workspace = workspaces(:acme)
-    @membership = workspace_memberships(:alice_acme)
+    @workspace = Workspace.create_with_database!(
+      name: "Channel Test",
+      creator: global_identities(:alice)
+    )
+    @membership = global_identities(:alice).workspace_memberships.find_by(tenant: @workspace.external_id.to_s)
+    @user = @membership.user
 
-    # Create tenant database and test data
-    with_tenant_database(@workspace) do
-      # Create user linked to the workspace membership
-      @user = User.find_or_create_by!(email_address: "alice@example.com") do |u|
-        u.name = "Alice"
-        u.workspace_membership_id = @membership.id
-        u.role = :administrator
-        u.verified_at = Time.current
-      end
-
-      # Update membership with user_id cache
-      @membership.update!(user_id: @user.id) unless @membership.user_id == @user.id
-
-      # Create a room for testing
-      @room = Rooms::Open.find_or_create_by!(name: "General") do |r|
-        r.slug = "general"
-        r.creator = @user
-      end
-
-      # Create membership in room
+    ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
+      @room = Rooms::Open.find_by(name: "General")
       @room.memberships.find_or_create_by!(user: @user)
     end
 
-    # Stub connection with tenant context
     stub_connection(
       current_user: @user,
       current_tenant: @workspace.external_id.to_s
     )
+  end
+
+  teardown do
+    @workspace&.destroy_with_database! if @workspace && Workspace.exists?(id: @workspace.id)
   end
 
   test "subscribes to a room the user is a member of" do
@@ -53,12 +39,10 @@ class SaasRoomChannelTest < ActionCable::Channel::TestCase
 
   test "rejects subscription to room user is not a member of" do
     ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
-      # Create a closed room that alice is not a member of
       other_room = Rooms::Closed.create!(
         name: "Secret Room",
         creator: @user
       )
-      # Remove alice's auto-created membership
       other_room.memberships.where(user: @user).delete_all
 
       subscribe room_id: other_room.id
@@ -84,7 +68,6 @@ class SaasRoomChannelTest < ActionCable::Channel::TestCase
   end
 
   test "rejects subscription to non-existent room ID in current tenant" do
-    # Use a room ID that doesn't exist in this tenant (even if it exists in another)
     ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
       subscribe room_id: 999999
       assert subscription.rejected?

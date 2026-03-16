@@ -68,6 +68,7 @@ module Saas
 
     test "show rejects access to other users workspace" do
       sign_in_global_identity(global_identities(:alice))
+      # RecordNotFound → 404 via Rails rescue_responses middleware in production
       assert_raises(ActiveRecord::RecordNotFound) do
         get workspace_path(workspaces(:widgets))
       end
