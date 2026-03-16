@@ -73,10 +73,16 @@
 #system_welcome {
   --avatar-size: 5ch;
 
+  content-visibility: visible;
+  contain: none;
   display: block;
   margin-block-start: calc(var(--avatar-size) * 2);
   position: relative;
   z-index: 1;
+
+  a:has(.account-logo) {
+    display: inline-block;
+  }
 
   .avatar {
     margin-block-start: calc(var(--avatar-size) * -0.5);

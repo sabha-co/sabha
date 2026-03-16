@@ -9,9 +9,18 @@
           </div>
           <p>
             <strong>Welcome to <%= Branding.contextual_app_name %></strong><br>
-            Don't be a stranger—say hello and introduce yourself.
+            <% if Current.user.can_administer? %>
+              To invite people to chat, share the join link below.
+            <% else %>
+              Don't be a stranger—say hello and introduce yourself.
+            <% end %>
           </p>
         </div>
+        <% if Current.user.can_administer? %>
+          <div class="margin-block-start">
+            <%= render "accounts/invite" %>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>
