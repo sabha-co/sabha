@@ -37,6 +37,12 @@
       <% end %>
 
       <%= yield %>
+
+      <% if content_for?(:back_nav) %>
+        <div class="margin-block">
+          <%= yield :back_nav %>
+        </div>
+      <% end %>
     </main>
   </body>
 </html>

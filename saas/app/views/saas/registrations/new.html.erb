@@ -1,4 +1,7 @@
 <% content_for :title, "Create account" %>
+<% content_for :back_nav do %>
+  <%= link_to "← Back", root_path, class: "txt-medium txt-muted txt-undecorated" %>
+<% end %>
 
 <section class="txt-align-center">
   <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
