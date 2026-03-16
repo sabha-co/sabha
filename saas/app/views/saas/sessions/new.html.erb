@@ -7,13 +7,13 @@
   <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
     <div class="flex justify-center mb-6">
       <%= link_to root_path do %>
-        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, class: "w-18 h-auto rounded-lg" %>
+        <%= image_tag "logos/app-icon.png", alt: Branding.app_name, class: "w-18 h-auto rounded-lg" %>
       <% end %>
     </div>
 
     <%= form_with url: session_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
       <fieldset class="flex flex-column gap center-block pad">
-        <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.saas_app_name %></strong></legend>
+        <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.app_name %></strong></legend>
 
         <p class="txt-medium txt-muted">
           Don't have an account?

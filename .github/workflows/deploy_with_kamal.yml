@@ -98,8 +98,6 @@ jobs:
           SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
           MAILER_FROM_NAME=${{ secrets.MAILER_FROM_NAME }}
           MAILER_FROM_EMAIL=${{ secrets.MAILER_FROM_EMAIL }}
-          SAAS_MAILER_FROM_NAME=${{ secrets.SAAS_MAILER_FROM_NAME }}
-          SAAS_MAILER_FROM_EMAIL=${{ secrets.SAAS_MAILER_FROM_EMAIL }}
           THEME_COLOR=${{ secrets.THEME_COLOR }}
           BACKGROUND_COLOR=${{ secrets.BACKGROUND_COLOR }}
           UMAMI_WEBSITE_ID=${{ secrets.UMAMI_WEBSITE_ID }}

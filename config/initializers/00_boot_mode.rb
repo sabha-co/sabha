@@ -16,7 +16,7 @@ if Rails.env.production? && !ENV["SECRET_KEY_BASE_DUMMY"].present?
   required = %w[APP_HOST SECRET_KEY_BASE]
 
   if Sabha.saas?
-    required += %w[COOKIE_DOMAIN UNTENANTED_DATABASE_URL SAAS_MAILER_FROM_EMAIL]
+    required += %w[COOKIE_DOMAIN UNTENANTED_DATABASE_URL]
   end
 
   if ENV["AUTO_BOOTSTRAP"] == "true"
