@@ -106,54 +106,35 @@ class WorkspaceTest < ActiveSupport::TestCase
 
   # --- Workspace provisioning (create_with_database!) ---
 
-  test "create_with_database! creates tenant database" do
-    with_provisioned_workspace(name: "Provisioning Test", creator: global_identities(:alice)) do |workspace|
-      assert ApplicationRecord.tenant_exist?(workspace.external_id.to_s)
-    end
-  end
-
-  test "create_with_database! creates Account with workspace name" do
-    with_provisioned_workspace(name: "Account Test", creator: global_identities(:alice)) do |workspace|
-      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
-        account = Account.first
-        assert_not_nil account
-        assert_equal "Account Test", account.name
-      end
-    end
-  end
-
-  test "create_with_database! creates admin user linked to creator" do
+  test "create_with_database! provisions a complete workspace" do
     creator = global_identities(:alice)
-    with_provisioned_workspace(name: "Admin User Test", creator: creator) do |workspace|
-      membership = creator.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
-      assert_not_nil membership
 
-      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+    with_provisioned_workspace(name: "Provisioning Test", creator: creator) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      # Creates tenant database
+      assert ApplicationRecord.tenant_exist?(tenant)
+
+      # Creates Account with workspace name
+      ApplicationRecord.with_tenant(tenant) do
+        assert_equal "Provisioning Test", Account.first.name
+      end
+
+      # Creates admin user linked to creator, caches user_id on membership
+      membership = creator.workspace_memberships.find_by(tenant: tenant)
+      assert_not_nil membership
+      assert_not_nil membership.user_id
+
+      ApplicationRecord.with_tenant(tenant) do
         admin = User.find_by(email_address: creator.email_address)
-        assert_not_nil admin
         assert admin.administrator?
         assert admin.verified_at.present?
         assert_equal membership.id, admin.workspace_membership_id
+        assert_equal admin.id, membership.user_id
       end
-    end
-  end
 
-  test "create_with_database! caches user_id on membership" do
-    creator = global_identities(:alice)
-    with_provisioned_workspace(name: "Cache User ID Test", creator: creator) do |workspace|
-      membership = creator.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
-      assert_not_nil membership.user_id
-
-      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
-        user = User.find_by(email_address: creator.email_address)
-        assert_equal user.id, membership.user_id
-      end
-    end
-  end
-
-  test "create_with_database! creates default General room" do
-    with_provisioned_workspace(name: "Default Room Test", creator: global_identities(:alice)) do |workspace|
-      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+      # Creates default General room
+      ApplicationRecord.with_tenant(tenant) do
         general = Rooms::Open.find_by(name: "General")
         assert_not_nil general
         assert_equal "general", general.slug
