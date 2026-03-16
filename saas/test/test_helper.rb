@@ -81,6 +81,15 @@ module SaasTestHelper
   def auth_codes(name)
     AuthCode.find(ActiveRecord::FixtureSet.identify(name))
   end
+
+  # Creates a workspace with a real tenant database, yields it, and
+  # guarantees cleanup even if an assertion fails mid-test.
+  def with_provisioned_workspace(name:, creator:)
+    workspace = Workspace.create_with_database!(name: name, creator: creator)
+    yield workspace
+  ensure
+    workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+  end
 end
 
 class ActiveSupport::TestCase

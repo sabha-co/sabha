@@ -13,12 +13,15 @@ module Saas
 
     test "expired session cookie is cleared on request" do
       session = global_sessions(:expired_session)
-      cookies[:global_session_token] = session.token
+      sign_in_with_session(session)
 
       get workspaces_path
 
-      # Should redirect to login (session invalid)
+      # Should redirect to login because the session is expired, not because cookie is malformed
       assert_redirected_to new_session_path
+
+      # Session should be destroyed (cleaned up on expired access)
+      assert_not GlobalSession.exists?(id: session.id)
     end
 
     test "valid session cookie authenticates user" do
@@ -134,6 +137,55 @@ module Saas
 
       # Should redirect away from login page
       assert_response :redirect
+    end
+
+    # --- return_to safety tests ---
+
+    test "return_to rejects external host URLs" do
+      code = auth_codes(:alice_signin)
+
+      # Store a malicious external URL as return_to
+      get new_session_path, params: { return_to: "https://evil.com/steal" }
+      post auth_code_path, params: { code: code.code }
+
+      # Should redirect to root, not the external URL
+      assert_redirected_to "/"
+    end
+
+    test "return_to rejects workspace URL user is not a member of" do
+      code = auth_codes(:alice_signin)
+      widgets = workspaces(:widgets)
+
+      # Alice is not a member of widgets workspace
+      get new_session_path, params: { return_to: "/#{widgets.external_id}/rooms/general" }
+      post auth_code_path, params: { code: code.code }
+
+      # Should redirect to root, not the inaccessible workspace
+      assert_redirected_to "/"
+    end
+
+    test "return_to allows join URL for existing workspace" do
+      code = auth_codes(:alice_signin)
+      widgets = workspaces(:widgets)
+
+      # Alice is not a member of widgets, but join URLs should be allowed
+      get new_session_path, params: { return_to: "/#{widgets.external_id}/join/abc123" }
+      post auth_code_path, params: { code: code.code }
+
+      # Should redirect to the join URL
+      assert_redirected_to "/#{widgets.external_id}/join/abc123"
+    end
+
+    test "return_to allows workspace URL user is a member of" do
+      code = auth_codes(:alice_signin)
+      acme = workspaces(:acme)
+
+      # Alice IS a member of acme
+      get new_session_path, params: { return_to: "/#{acme.external_id}/rooms/general" }
+      post auth_code_path, params: { code: code.code }
+
+      # Should redirect to the stored workspace URL
+      assert_redirected_to "/#{acme.external_id}/rooms/general"
     end
   end
 end

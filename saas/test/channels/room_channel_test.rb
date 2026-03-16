@@ -83,14 +83,11 @@ class SaasRoomChannelTest < ActionCable::Channel::TestCase
     end
   end
 
-  test "subscription uses tenant-scoped GlobalID for stream" do
+  test "rejects subscription to non-existent room ID in current tenant" do
+    # Use a room ID that doesn't exist in this tenant (even if it exists in another)
     ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
-      subscribe room_id: @room.id
-
-      assert subscription.confirmed?
-      # The stream should be scoped to the room in this tenant
-      # GlobalID includes tenant parameter automatically
-      assert_has_stream_for @room
+      subscribe room_id: 999999
+      assert subscription.rejected?
     end
   end
 end

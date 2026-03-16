@@ -110,4 +110,75 @@ class ApplicationCable::SaasConnectionTest < ActionCable::Connection::TestCase
     assert_equal workspace.external_id.to_s, connection.current_tenant
     assert connection.current_user.present?
   end
+
+  test "lazily creates user on first connection when membership exists but user_id is nil" do
+    with_provisioned_workspace(name: "Lazy Create Test", creator: global_identities(:alice)) do |workspace|
+      bob_membership = WorkspaceMembership.create!(
+        global_identity: global_identities(:bob),
+        tenant: workspace.external_id.to_s
+      )
+
+      session = global_sessions(:bob_session)
+      cookies.signed[:global_session_token] = session.token
+
+      connect env: {
+        "SCRIPT_NAME" => "/#{workspace.external_id}",
+        "sabha.workspace_id" => workspace.external_id.to_s
+      }
+
+      assert connection.current_user.present?
+      assert_equal "bob@example.com", connection.current_user.email_address
+
+      bob_membership.reload
+      assert_not_nil bob_membership.user_id
+    end
+  end
+
+  test "rejects connection for deactivated user" do
+    with_provisioned_workspace(name: "Deactivated User Test", creator: global_identities(:alice)) do |workspace|
+      bob_membership = WorkspaceMembership.create!(
+        global_identity: global_identities(:bob),
+        tenant: workspace.external_id.to_s
+      )
+      bob_membership.create_user!(role: :member)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(bob_membership.user_id).deactivate
+      end
+
+      session = global_sessions(:bob_session)
+      cookies.signed[:global_session_token] = session.token
+
+      assert_reject_connection do
+        connect env: {
+          "SCRIPT_NAME" => "/#{workspace.external_id}",
+          "sabha.workspace_id" => workspace.external_id.to_s
+        }
+      end
+    end
+  end
+
+  test "rejects connection for banned user" do
+    with_provisioned_workspace(name: "Banned User Test", creator: global_identities(:alice)) do |workspace|
+      bob_membership = WorkspaceMembership.create!(
+        global_identity: global_identities(:bob),
+        tenant: workspace.external_id.to_s
+      )
+      bob_membership.create_user!(role: :member)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(bob_membership.user_id).update!(status: :banned)
+      end
+
+      session = global_sessions(:bob_session)
+      cookies.signed[:global_session_token] = session.token
+
+      assert_reject_connection do
+        connect env: {
+          "SCRIPT_NAME" => "/#{workspace.external_id}",
+          "sabha.workspace_id" => workspace.external_id.to_s
+        }
+      end
+    end
+  end
 end

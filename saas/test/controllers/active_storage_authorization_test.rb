@@ -46,6 +46,17 @@ class ActiveStorageAuthorizationTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
+  test "authenticated non-member is blocked from direct upload" do
+    # Bob is NOT a member of acme
+    sign_in_global_identity(global_identities(:bob))
+
+    post "/#{@workspace.external_id}/rails/active_storage/direct_uploads", params: {
+      blob: { filename: "test.png", byte_size: 123, checksum: "abc", content_type: "image/png" }
+    }, as: :json
+
+    assert_redirected_to "/workspaces"
+  end
+
   private
     def create_blob_in_workspace
       ApplicationRecord.with_tenant(@tenant_id) do

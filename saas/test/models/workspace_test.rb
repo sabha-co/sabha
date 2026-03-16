@@ -62,16 +62,103 @@ class WorkspaceTest < ActiveSupport::TestCase
     assert workspace.workspace_memberships.count >= 2
   end
 
+  test "last_administrator? returns true when user is only admin" do
+    with_provisioned_workspace(name: "Last Admin Test", creator: global_identities(:alice)) do |workspace|
+      membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)
+      user = ApplicationRecord.with_tenant(workspace.external_id.to_s) { User.find(membership.user_id) }
+
+      assert workspace.last_administrator?(user)
+    end
+  end
+
+  test "last_administrator? returns false when multiple admins exist" do
+    with_provisioned_workspace(name: "Multi Admin Test", creator: global_identities(:alice)) do |workspace|
+      bob_membership = WorkspaceMembership.create!(
+        global_identity: global_identities(:bob),
+        tenant: workspace.external_id.to_s
+      )
+      bob_membership.create_user!(role: :administrator)
+
+      alice_membership = WorkspaceMembership.find_by(
+        tenant: workspace.external_id.to_s,
+        global_identity: global_identities(:alice)
+      )
+      alice_user = ApplicationRecord.with_tenant(workspace.external_id.to_s) { User.find(alice_membership.user_id) }
+
+      assert_not workspace.last_administrator?(alice_user)
+    end
+  end
+
   test "last_administrator? returns false when tenant does not exist" do
-    workspace = workspaces(:acme)
+    # Use a workspace with a tenant ID that is guaranteed to never have a database
+    workspace = Workspace.create!(name: "No DB", external_id: 9999998, creator: global_identities(:alice))
     user = User.new(role: :administrator)
-    # No tenant DB exists for fixtures, so should return false safely
     assert_not workspace.last_administrator?(user)
+  ensure
+    workspace&.destroy
   end
 
   test "sends welcome email to creator after create" do
     assert_enqueued_emails 1 do
       Workspace.create!(name: "Email Test", creator: global_identities(:alice))
+    end
+  end
+
+  # --- Workspace provisioning (create_with_database!) ---
+
+  test "create_with_database! creates tenant database" do
+    with_provisioned_workspace(name: "Provisioning Test", creator: global_identities(:alice)) do |workspace|
+      assert ApplicationRecord.tenant_exist?(workspace.external_id.to_s)
+    end
+  end
+
+  test "create_with_database! creates Account with workspace name" do
+    with_provisioned_workspace(name: "Account Test", creator: global_identities(:alice)) do |workspace|
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        account = Account.first
+        assert_not_nil account
+        assert_equal "Account Test", account.name
+      end
+    end
+  end
+
+  test "create_with_database! creates admin user linked to creator" do
+    creator = global_identities(:alice)
+    with_provisioned_workspace(name: "Admin User Test", creator: creator) do |workspace|
+      membership = creator.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+      assert_not_nil membership
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        admin = User.find_by(email_address: creator.email_address)
+        assert_not_nil admin
+        assert admin.administrator?
+        assert admin.verified_at.present?
+        assert_equal membership.id, admin.workspace_membership_id
+      end
+    end
+  end
+
+  test "create_with_database! caches user_id on membership" do
+    creator = global_identities(:alice)
+    with_provisioned_workspace(name: "Cache User ID Test", creator: creator) do |workspace|
+      membership = creator.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+      assert_not_nil membership.user_id
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        user = User.find_by(email_address: creator.email_address)
+        assert_equal user.id, membership.user_id
+      end
+    end
+  end
+
+  test "create_with_database! creates default General room" do
+    with_provisioned_workspace(name: "Default Room Test", creator: global_identities(:alice)) do |workspace|
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        general = Rooms::Open.find_by(name: "General")
+        assert_not_nil general
+        assert_equal "general", general.slug
+        assert general.auto_join?
+      end
     end
   end
 

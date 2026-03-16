@@ -58,7 +58,9 @@ module Saas
             as: :json
 
       assert_response :ok
-      # Charlie has no membership to acme, so nothing should change
+
+      # Charlie should NOT gain a membership to acme
+      assert_not identity.workspace_memberships.exists?(tenant: workspace.external_id.to_s)
     end
   end
 end
