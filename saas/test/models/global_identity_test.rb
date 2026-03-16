@@ -82,18 +82,19 @@ class GlobalIdentityTest < ActiveSupport::TestCase
   end
 
   test "sync_email_to_workspaces skips memberships without user_id" do
-    with_provisioned_workspace(name: "Sync Skip Test", creator: global_identities(:alice)) do |workspace|
-      membership = global_identities(:alice).workspace_memberships.find_by(tenant: workspace.external_id.to_s)
-      original_user_id = membership.user_id
+    # Use a throwaway identity to avoid mutating shared fixture tenant Users
+    identity = GlobalIdentity.create!(name: "Sync Skip", email_address: "syncskip@example.com", verified_at: Time.current)
+
+    with_provisioned_workspace(name: "Sync Skip Test", creator: identity) do |workspace|
+      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
       membership.update_column(:user_id, nil)
 
       assert_nothing_raised do
-        global_identities(:alice).sync_email_to_workspaces("skipped@example.com")
+        identity.sync_email_to_workspaces("skipped@example.com")
       end
-
-      # Restore for other tests using this membership
-      membership.update_column(:user_id, original_user_id)
     end
+  ensure
+    identity&.destroy
   end
 
   test "email_available? checks primary email_address only" do
