@@ -103,8 +103,7 @@
     position: absolute;
   }
 
-  .invite-label,
-  .btn--regenerate {
+  .invite-label {
     display: none;
   }
 }

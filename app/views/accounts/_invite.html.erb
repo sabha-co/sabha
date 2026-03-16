@@ -1,3 +1,4 @@
+<%# locals: (show_regenerate: true) %>
 <div class="flex flex-column align-center gap">
   <% url = join_url(Current.account.join_code.code) %>
 
@@ -25,7 +26,7 @@
       <%= icon_tag "share" %>
     <% end %>
 
-    <% if Current.user.can_administer? %>
+    <% if show_regenerate && Current.user.can_administer? %>
       <%= button_to account_join_code_path, class: "btn btn--regenerate" do %>
         <%= icon_tag "refresh" %>
         <span class="for-screen-reader">Regenerate join link</span>
