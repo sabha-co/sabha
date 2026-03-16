@@ -83,9 +83,12 @@ class WorkspaceTest < ActiveSupport::TestCase
         tenant: workspace.external_id.to_s,
         global_identity: global_identities(:alice)
       )
-      alice_user = ApplicationRecord.with_tenant(workspace.external_id.to_s) { User.find(alice_membership.user_id) }
 
-      assert_not workspace.last_administrator?(alice_user)
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        alice_user = User.find(alice_membership.user_id)
+        assert_equal 2, User.active.administrator.count, "Expected 2 active admins"
+        assert_not workspace.last_administrator?(alice_user)
+      end
     end
   end
 
