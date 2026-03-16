@@ -38,21 +38,55 @@ class BrandingTest < ActiveSupport::TestCase
     end
   end
 
-  test "support_email returns hardcoded value in SaaS mode" do
+  test "support_email defaults to hardcoded value in SaaS mode" do
     stub_saas do
-      assert_equal "ashwin@sabha.co", Branding.support_email
+      stub_env("SUPPORT_EMAIL", nil) do
+        assert_equal "ashwin@sabha.co", Branding.support_email
+      end
     end
   end
 
-  test "app_host returns hardcoded value in SaaS mode" do
+  test "support_email respects ENV override in SaaS mode" do
     stub_saas do
-      assert_equal "sabha.co", Branding.app_host
+      stub_env("SUPPORT_EMAIL", "staging@example.com") do
+        assert_equal "staging@example.com", Branding.support_email
+      end
     end
   end
 
-  test "mailer_from returns hardcoded sender in SaaS mode" do
+  test "app_host defaults to hardcoded value in SaaS mode" do
     stub_saas do
-      assert_equal "Sabha <ashwin@sabha.co>", Branding.mailer_from
+      stub_env("APP_HOST", nil) do
+        assert_equal "sabha.co", Branding.app_host
+      end
+    end
+  end
+
+  test "app_host respects ENV override in SaaS mode" do
+    stub_saas do
+      stub_env("APP_HOST", "staging.sabha.co") do
+        assert_equal "staging.sabha.co", Branding.app_host
+      end
+    end
+  end
+
+  test "mailer_from defaults to hardcoded sender in SaaS mode" do
+    stub_saas do
+      stub_env("MAILER_FROM_NAME", nil) do
+        stub_env("MAILER_FROM_EMAIL", nil) do
+          assert_equal "Sabha <ashwin@sabha.co>", Branding.mailer_from
+        end
+      end
+    end
+  end
+
+  test "mailer_from respects ENV override in SaaS mode" do
+    stub_saas do
+      stub_env("MAILER_FROM_NAME", "Staging") do
+        stub_env("MAILER_FROM_EMAIL", "noreply@staging.sabha.co") do
+          assert_equal "Staging <noreply@staging.sabha.co>", Branding.mailer_from
+        end
+      end
     end
   end
 
@@ -82,5 +116,13 @@ class BrandingTest < ActiveSupport::TestCase
     yield
   ensure
     Sabha.unstub(:saas?)
+  end
+
+  def stub_env(key, value)
+    old = ENV[key]
+    value.nil? ? ENV.delete(key) : ENV[key] = value
+    yield
+  ensure
+    old.nil? ? ENV.delete(key) : ENV[key] = old
   end
 end

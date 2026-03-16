@@ -28,11 +28,11 @@ module Branding
     end
 
     def support_email
-      saas? ? SAAS[:support_email] : config.support_email
+      saas? ? ENV.fetch("SUPPORT_EMAIL", SAAS[:support_email]) : config.support_email
     end
 
     def app_host
-      saas? ? SAAS[:app_host] : config.app_host
+      saas? ? ENV.fetch("APP_HOST", SAAS[:app_host]) : config.app_host
     end
 
     def app_description
@@ -64,7 +64,9 @@ module Branding
 
     def mailer_from
       if saas?
-        "#{SAAS[:mailer_from_name]} <#{SAAS[:mailer_from_email]}>"
+        name = ENV.fetch("MAILER_FROM_NAME", SAAS[:mailer_from_name])
+        email = ENV.fetch("MAILER_FROM_EMAIL", SAAS[:mailer_from_email])
+        "#{name} <#{email}>"
       else
         "#{config.mailer_from_name} <#{config.mailer_from_email}>"
       end
