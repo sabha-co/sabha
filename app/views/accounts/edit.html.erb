@@ -102,6 +102,8 @@
   </div>
 </section>
 
-<% content_for :footer do %>
-  <div class="txt-align-center center margin-block-double txt-subtle">Sabha&trade; version <%= version_badge %></div>
+<% unless Sabha.saas? %>
+  <% content_for :footer do %>
+    <div class="txt-align-center center margin-block-double txt-subtle">Sabha&trade; version <%= version_badge %></div>
+  <% end %>
 <% end %>
