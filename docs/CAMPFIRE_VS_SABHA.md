@@ -89,6 +89,14 @@ Users select Light, Dark, or Auto from their profile. Applied before page render
 
 Full white-label via environment variables — app name, support email, PWA colors, icons. Custom CSS via admin panel. See [BRANDING.md](./BRANDING.md).
 
+### Welcome Messages
+
+New members receive an automatic welcome message when they join, with the community join link shown to admins. Configurable per account.
+
+### Email Providers
+
+Supports Resend (default) and AWS SES. Configurable via `EMAIL_PROVIDER` env var. SES includes HTML email templates with open tracking.
+
 ### Other
 
 - **User streaks** — consecutive days of posting with tiered icons
@@ -118,6 +126,11 @@ Optional Rails engine in `saas/` for database-per-workspace isolation:
 - Path-based routing (`/1000001/rooms/general`)
 - OTP-only auth via GlobalIdentity
 - Tenant context auto-propagated to jobs and channels
+
+Also includes:
+- **Platform superadmin area** — admin dashboard for managing all workspaces
+- **Event-sourced storage tracking** — per-workspace storage usage monitoring
+- **Workspace provisioning screen** — guided setup flow with invite step after creation
 
 See [multi-tenant/](./multi-tenant/) docs. The `saas/` directory is under the [Sabha SaaS License](../saas/LICENSE), not MIT.
 
@@ -149,9 +162,9 @@ Three-container architecture: web (Puma + Redis + Solid Queue), AnyCable-Go, rev
 
 ---
 
-## Inherited from Small Bets Fork
+## Inherited from Small Bets
 
-Sabha was forked from [Gumroad's Small Bets fork](https://github.com/antiwork/smallbets), which added:
+[Gumroad's Small Bets](https://github.com/antiwork/smallbets) is a fork of Campfire,  which added:
 
 - Mentions tab and @mention notifications
 - Bookmarks (save messages)
@@ -164,7 +177,7 @@ Sabha was forked from [Gumroad's Small Bets fork](https://github.com/antiwork/sm
 - Empty DM hiding in sidebar
 - Sidebar scroll preservation
 
-### Removed from Small Bets
+### Removed from Small Bets Changes
 
 | Feature | Reason |
 |---------|--------|
