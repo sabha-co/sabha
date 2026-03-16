@@ -1,87 +1,111 @@
 # Centralized branding configuration for Sabha
-# All branding elements are configured through environment variables
-# This allows anyone to run their own branded community without code changes
 #
-# Access via: Rails.configuration.x.branding.app_name
-# Or shortcut: Branding.app_name
+# SaaS mode: values are hardcoded — Sabha is the product
+# Self-hosted mode: values come from environment variables
+#
+# Access via: Branding.app_name, Branding.support_email, etc.
 
-Rails.application.configure do
-  # Initialize the branding namespace explicitly
-  config.x.branding = ActiveSupport::OrderedOptions.new
-
-  config.x.branding.app_name = ENV.fetch("APP_NAME", "Sabha")
-  config.x.branding.app_short_name = ENV.fetch("APP_SHORT_NAME") { config.x.branding.app_name }
-
-  # SaaS mode branding (used on login/signup pages before workspace is selected)
-  # Defaults to "Sabha" - workspace-specific names come from Account model
-  config.x.branding.saas_app_name = ENV.fetch("SAAS_APP_NAME", "Sabha")
-  config.x.branding.support_email = ENV.fetch("SUPPORT_EMAIL", "support@example.com")
-  config.x.branding.app_host = ENV.fetch("APP_HOST", "localhost").presence || "localhost"
-  config.x.branding.app_description = ENV.fetch("APP_DESCRIPTION", "A community chat platform powered by Sabha")
-
-  # Mailer configuration (self-hosted mode)
-  config.x.branding.mailer_from_name = ENV.fetch("MAILER_FROM_NAME") { config.x.branding.app_name }
-  config.x.branding.mailer_from_email = ENV.fetch("MAILER_FROM_EMAIL") { config.x.branding.support_email }
-
-  # SaaS mode mailer (used for GlobalIdentity auth codes, workspace invites, etc.)
-  config.x.branding.saas_mailer_from_name = ENV.fetch("SAAS_MAILER_FROM_NAME") { config.x.branding.saas_app_name }
-  config.x.branding.saas_mailer_from_email = ENV.fetch("SAAS_MAILER_FROM_EMAIL") { config.x.branding.mailer_from_email }
-
-  # PWA theme colors
-  config.x.branding.theme_color = ENV.fetch("THEME_COLOR", "#1d4ed8")
-  config.x.branding.background_color = ENV.fetch("BACKGROUND_COLOR", "#ffffff")
-
-  # Analytics (optional)
-  config.x.branding.umami_website_id = ENV.fetch("UMAMI_WEBSITE_ID", nil)
-  config.x.branding.umami_host = ENV.fetch("UMAMI_HOST", "cloud.umami.is")
-
-  # CSP frame ancestors
-  default_ancestors = "https://#{config.x.branding.app_host}, https://*.#{config.x.branding.app_host}"
-  config.x.branding.csp_frame_ancestors = ENV.fetch("CSP_FRAME_ANCESTORS", default_ancestors).split(",").map(&:strip)
-end
-
-# Convenience module for cleaner access throughout the app
-# Usage: Branding.app_name instead of Rails.configuration.x.branding.app_name
 module Branding
+  SAAS = {
+    app_name: "Sabha",
+    app_short_name: "Sabha",
+    support_email: "ashwin@sabha.co",
+    app_host: "sabha.co",
+    app_description: "Community chat powered by Sabha",
+    mailer_from_name: "Sabha",
+    mailer_from_email: "ashwin@sabha.co",
+    theme_color: "#1d4ed8",
+    background_color: "#ffffff"
+  }.freeze
+
   class << self
-    delegate :app_name, :app_short_name, :saas_app_name, :support_email, :app_host, :app_description,
-             :mailer_from_name, :mailer_from_email, :saas_mailer_from_name, :saas_mailer_from_email,
-             :theme_color, :background_color,
-             :umami_website_id, :umami_host, :csp_frame_ancestors,
-             to: :config
+    def app_name
+      saas? ? SAAS[:app_name] : config.app_name
+    end
+
+    def app_short_name
+      saas? ? SAAS[:app_short_name] : config.app_short_name
+    end
+
+    def support_email
+      saas? ? ENV.fetch("SUPPORT_EMAIL", SAAS[:support_email]) : config.support_email
+    end
+
+    def app_host
+      saas? ? ENV.fetch("APP_HOST", SAAS[:app_host]) : config.app_host
+    end
+
+    def app_description
+      saas? ? SAAS[:app_description] : config.app_description
+    end
+
+    def theme_color
+      saas? ? SAAS[:theme_color] : config.theme_color
+    end
+
+    def background_color
+      saas? ? SAAS[:background_color] : config.background_color
+    end
 
     def app_url
       protocol = Rails.env.production? ? "https" : "http"
       "#{protocol}://#{app_host}"
     end
 
-    # Context-aware app name:
-    # - SaaS mode inside workspace: returns workspace name
-    # - SaaS mode outside workspace: returns saas_app_name
-    # - Self-hosted mode: returns app_name
+    # Inside a workspace: returns workspace name
+    # Outside a workspace (or self-hosted): returns app_name
     def contextual_app_name
-      if Sabha.saas?
-        Current.workspace&.name || saas_app_name
+      if saas?
+        Current.workspace&.name || app_name
       else
         app_name
       end
     end
 
-    # Context-aware mailer from:
-    # - SaaS mode: uses saas_mailer_from_* settings
-    # - Self-hosted mode: uses mailer_from_* settings
     def mailer_from
-      if Sabha.saas?
-        "#{saas_mailer_from_name} <#{saas_mailer_from_email}>"
+      if saas?
+        name = ENV.fetch("MAILER_FROM_NAME", SAAS[:mailer_from_name])
+        email = ENV.fetch("MAILER_FROM_EMAIL", SAAS[:mailer_from_email])
+        "#{name} <#{email}>"
       else
-        "#{mailer_from_name} <#{mailer_from_email}>"
+        "#{config.mailer_from_name} <#{config.mailer_from_email}>"
       end
     end
 
+    # Analytics (optional, self-hosted only)
+    delegate :umami_website_id, :umami_host, :csp_frame_ancestors, to: :config
+
     private
+
+    def saas?
+      Sabha.saas?
+    end
 
     def config
       Rails.configuration.x.branding
     end
   end
+end
+
+# Self-hosted configuration from environment variables
+Rails.application.configure do
+  config.x.branding = ActiveSupport::OrderedOptions.new
+
+  config.x.branding.app_name = ENV.fetch("APP_NAME", "Sabha")
+  config.x.branding.app_short_name = ENV.fetch("APP_SHORT_NAME") { config.x.branding.app_name }
+  config.x.branding.support_email = ENV.fetch("SUPPORT_EMAIL", "support@example.com")
+  config.x.branding.app_host = ENV.fetch("APP_HOST", "localhost").presence || "localhost"
+  config.x.branding.app_description = ENV.fetch("APP_DESCRIPTION", "A community chat platform powered by Sabha")
+
+  config.x.branding.mailer_from_name = ENV.fetch("MAILER_FROM_NAME") { config.x.branding.app_name }
+  config.x.branding.mailer_from_email = ENV.fetch("MAILER_FROM_EMAIL") { config.x.branding.support_email }
+
+  config.x.branding.theme_color = ENV.fetch("THEME_COLOR", "#1d4ed8")
+  config.x.branding.background_color = ENV.fetch("BACKGROUND_COLOR", "#ffffff")
+
+  config.x.branding.umami_website_id = ENV.fetch("UMAMI_WEBSITE_ID", nil)
+  config.x.branding.umami_host = ENV.fetch("UMAMI_HOST", "cloud.umami.is")
+
+  default_ancestors = "https://#{config.x.branding.app_host}, https://*.#{config.x.branding.app_host}"
+  config.x.branding.csp_frame_ancestors = ENV.fetch("CSP_FRAME_ANCESTORS", default_ancestors).split(",").map(&:strip)
 end

@@ -3,7 +3,7 @@
   <head>
     <%= render "layouts/theme_preference" %>
 
-    <title><%= [content_for(:title), Branding.saas_app_name].compact.uniq.join(" | ") %></title>
+    <title><%= [content_for(:title), Branding.app_name].compact.uniq.join(" | ") %></title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="<%= Branding.theme_color %>">
@@ -37,6 +37,12 @@
       <% end %>
 
       <%= yield %>
+
+      <% if content_for?(:back_nav) %>
+        <div class="margin-block">
+          <%= yield :back_nav %>
+        </div>
+      <% end %>
     </main>
   </body>
 </html>

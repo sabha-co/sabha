@@ -9,7 +9,8 @@ class WorkspaceMailer < ApplicationMailer
 
     mail(
       to: @creator.email_address,
-      subject: "Your workspace \"#{workspace.name}\" is ready"
+      subject: "Your workspace \"#{workspace.name}\" is ready",
+      reply_to: Branding.support_email
     )
   end
 end

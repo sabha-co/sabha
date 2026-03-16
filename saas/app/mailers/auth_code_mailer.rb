@@ -21,7 +21,7 @@ class AuthCodeMailer < ApplicationMailer
 
     mail(
       to: recipient,
-      subject: "Your sabha.co verification code"
+      subject: "Your #{Branding.app_name} verification code"
     )
   end
 end

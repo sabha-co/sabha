@@ -1,10 +1,13 @@
 <% content_for :title, "Create account" %>
+<% content_for :back_nav do %>
+  <%= link_to "← Back", root_path, class: "txt-medium txt-muted txt-undecorated" %>
+<% end %>
 
 <section class="txt-align-center">
   <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
     <div class="flex justify-center mb-6">
       <%= link_to root_path do %>
-        <%= image_tag "logos/app-icon.png", alt: Branding.saas_app_name, class: "w-18 h-auto rounded-lg" %>
+        <%= image_tag "logos/app-icon.png", alt: Branding.app_name, class: "w-18 h-auto rounded-lg" %>
       <% end %>
     </div>
 
