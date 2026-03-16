@@ -3,6 +3,7 @@
 require_relative "../test_helper"
 
 class WorkspaceTest < ActiveSupport::TestCase
+  include ActionMailer::TestHelper
   test "requires name" do
     workspace = Workspace.new(external_id: 9999999, creator: global_identities(:alice))
     assert_not workspace.valid?
@@ -66,6 +67,12 @@ class WorkspaceTest < ActiveSupport::TestCase
     user = User.new(role: :administrator)
     # No tenant DB exists for fixtures, so should return false safely
     assert_not workspace.last_administrator?(user)
+  end
+
+  test "sends welcome email to creator after create" do
+    assert_enqueued_emails 1 do
+      Workspace.create!(name: "Email Test", creator: global_identities(:alice))
+    end
   end
 
   test "destroy_with_database! removes workspace and destroys memberships" do

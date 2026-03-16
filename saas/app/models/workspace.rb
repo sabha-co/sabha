@@ -18,6 +18,7 @@ class Workspace < UntenantedRecord
   validates :external_id, presence: true, uniqueness: true
 
   before_validation :assign_external_id, on: :create
+  after_create_commit :send_welcome_email
 
   scope :active, -> { where(suspended_at: nil) }
   scope :suspended, -> { where.not(suspended_at: nil) }
@@ -128,5 +129,9 @@ class Workspace < UntenantedRecord
 
     def assign_external_id
       self.external_id ||= Workspace::ExternalIdSequence.next_id
+    end
+
+    def send_welcome_email
+      WorkspaceMailer.welcome(self).deliver_later
     end
 end
