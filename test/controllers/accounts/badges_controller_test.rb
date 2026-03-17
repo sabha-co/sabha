@@ -42,6 +42,31 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to account_badges_url
   end
 
+  test "update badge" do
+    badge = badges(:staff)
+    patch account_badge_url(badge), params: { badge: { name: "Crew", color: "#00FF00" } }
+
+    assert_redirected_to account_badges_url
+    assert_equal "Crew", badge.reload.name
+    assert_equal "#00FF00", badge.color
+  end
+
+  test "update badge with invalid params" do
+    badge = badges(:staff)
+    patch account_badge_url(badge), params: { badge: { name: "", color: "#00FF00" } }
+
+    assert_redirected_to account_badges_url
+    assert_equal "Staff", badge.reload.name
+  end
+
+  test "non-admins cannot update badges" do
+    sign_in :kevin
+    patch account_badge_url(badges(:founder)), params: { badge: { name: "Hacked" } }
+
+    assert_redirected_to root_path
+    assert_equal "Founder", badges(:founder).reload.name
+  end
+
   test "destroy badge" do
     badge = badges(:staff)
 
