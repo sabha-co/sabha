@@ -40,6 +40,12 @@ bin/setup
 
 This installs gems, pnpm packages, prepares the database, and builds Tailwind.
 
+To populate development data (users, rooms, messages):
+
+```bash
+bin/rails db:seed
+```
+
 ---
 
 ## Running Locally
@@ -88,14 +94,12 @@ brew install anycable-go
 bin/rails test                    # All tests
 bin/rails test test/models        # Model tests only
 bin/rails test test/models/user_test.rb  # Single file
-bin/rails test:system             # Browser tests (requires Chrome)
 ```
 
 ### Test stack
 
 - **Minitest** - Test framework
 - **Mocha** - Mocking/stubbing
-- **Capybara** - Browser testing
 - **WebMock** - HTTP stubbing
 
 ### Test data strategy
@@ -119,63 +123,9 @@ Lefthook runs rubocop automatically on commit.
 
 ---
 
-## Architecture Overview
+## Architecture
 
-### Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Framework | Rails (edge) |
-| Database | SQLite |
-| Real-time | ActionCable / AnyCable |
-| Jobs | Solid Queue (SQLite-backed) |
-| Frontend | Hotwire (Turbo + Stimulus) |
-| CSS | Tailwind v4 (via `@tailwindcss/cli`) |
-| JS loading | Importmap |
-
-### Directory Structure
-
-```
-app/
-├── channels/        # ActionCable channels
-├── controllers/     # Rails controllers
-├── javascript/      # Stimulus controllers, channels, helpers
-│   └── controllers/ # Stimulus controllers
-├── jobs/            # Solid Queue jobs
-├── models/          # ActiveRecord models
-│   ├── concerns/    # Shared model behavior
-│   └── rooms/       # Room STI subclasses
-└── views/           # ERB templates
-
-config/
-├── cable.yml        # ActionCable/AnyCable config
-├── database.yml     # SQLite databases
-├── queue.yml        # Solid Queue config
-└── deploy.yml       # Kamal deployment
-```
-
-### Key Patterns
-
-**Room Types (STI)**
-```
-Room
-├── Rooms::Open      # Public rooms
-├── Rooms::Closed    # Private rooms
-├── Rooms::Direct    # DMs
-└── Rooms::Thread    # Threaded replies
-```
-
-**Current Context**
-```ruby
-Current.user         # Logged-in user
-Current.session      # Browser session
-```
-
-**Soft Deletion**
-```ruby
-include Deactivatable  # Adds `active` scope
-message.deactivate!    # Sets active: false
-```
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full system architecture, domain model, and deployment details.
 
 ---
 

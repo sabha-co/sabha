@@ -174,21 +174,6 @@ Models primarily use namespace decomposition, with selective service objects whe
 | `Push::Subscription` | Web push subscription endpoints (VAPID) |
 | `Everyone` | Attachable for `@everyone` mentions (not an AR model) |
 
-### Key Concerns
-
-| Concern | Used By | Purpose |
-|---------|---------|---------|
-| `Deactivatable` | Account, Room, Message, Membership, Boost, Bookmark | Soft deletion via `active` boolean with scopes |
-| `Membership::Connectable` | Membership | WebSocket presence tracking (`connected_at`, 60s TTL). Provides activity status tiers: online (green, connected now), away (yellow, connected within TTL), offline (gray). Powers status indicators on member lists and profiles. |
-| `Message::Searchable` | Message | FTS5 full-text search index maintenance |
-| `Message::Broadcasts` | Message | Turbo Stream broadcasting on create/update/remove |
-| `Message::Mentionee` | Message | Parses ActionText body for @mentions, syncs `mentions` join table |
-| `Message::Attachment` | Message | Single file attachment with thumbnail variant |
-| `User::Mentionable` | User | ActionText `Attachable` interface for @mention embedding |
-| `User::Role` | User | Role enum (`member`, `moderator`, `administrator`, `bot`) with permission methods |
-| `User::Bot` | User | Bot authentication via `{id}-{token}` URL key |
-| `Pagination` | Message, Bookmark | Cursor-based pagination (`page_before`, `page_after`, `page_around`) |
-
 ---
 
 ## Authentication
@@ -476,32 +461,6 @@ Multi-stage build:
 | `kredis` | Higher-level Redis data structures |
 | `sentry-ruby` | Error tracking (production) |
 | `rails_cloudflare_turnstile` | Bot protection |
-
----
-
-## Routes Structure
-
-Routes are organized RESTfully around resources:
-
-| Path | Controller | Purpose |
-|------|-----------|---------|
-| `/session` | `SessionsController` | Sign in/out |
-| `/auth_tokens` | `AuthTokensController` | OTP code generation |
-| `/account` | `AccountsController` | Workspace settings (admin) |
-| `/account/users` | `Accounts::UsersController` | User management |
-| `/account/bots` | `Accounts::BotsController` | Bot management |
-| `/rooms` | `RoomsController` | Room CRUD |
-| `/rooms/:id/messages` | `MessagesController` | Messages within a room |
-| `/rooms/opens` | `Rooms::OpensController` | Public room creation |
-| `/rooms/closeds` | `Rooms::ClosedsController` | Private room creation |
-| `/rooms/directs` | `Rooms::DirectsController` | DM creation |
-| `/rooms/threads` | `Rooms::ThreadsController` | Thread management |
-| `/messages/:id/boosts` | `Messages::BoostsController` | Reactions |
-| `/messages/:id/bookmarks` | `Messages::BookmarksController` | Bookmarks |
-| `/inbox` | `InboxesController` | Inbox (activity, threads, DMs, bookmarks) |
-| `/searches` | `SearchesController` | Full-text search |
-| `/users/:id` | `UsersController` | User profiles |
-| `/join/:code` | `UsersController` | Invite link signup |
 
 ---
 
