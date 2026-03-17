@@ -36,19 +36,6 @@ services:
     volumes:
       - sabha_storage:/rails/storage
 
-  anycable:
-    image: anycable/anycable-go:1.6
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    environment:
-      - ANYCABLE_HOST=0.0.0.0
-      - ANYCABLE_PORT=8080
-      - ANYCABLE_RPC_HOST=http://web:3000/_anycable
-      - ANYCABLE_BROADCAST_ADAPTER=http
-      - ANYCABLE_HTTP_BROADCAST_URL=http://web:3000/_broadcast
-    env_file: .env
-
 volumes:
   sabha_storage:
 ```
@@ -60,6 +47,9 @@ Create a `.env` file with your settings:
 ```bash
 # Domain
 APP_HOST=chat.yourdomain.com
+
+# SSL (required for automatic Let's Encrypt certificate)
+TLS_DOMAIN=chat.yourdomain.com
 
 # Security (generate with: openssl rand -hex 64)
 SECRET_KEY_BASE=your_secret_key_here
@@ -79,8 +69,8 @@ MAILER_FROM_EMAIL=noreply@yourdomain.com
 VAPID_PUBLIC_KEY=your_public_key
 VAPID_PRIVATE_KEY=your_private_key
 
-# AnyCable (generate with: openssl rand -hex 32)
-ANYCABLE_SECRET=your_anycable_secret
+# WebSockets (uses ActionCable through Puma)
+ANYCABLE_ENABLED=false
 
 # Authentication: "password" (default) or "otp"
 AUTH_METHOD=password
@@ -110,6 +100,10 @@ The Docker image includes everything you need:
 
 Thruster handles SSL certificates automatically via Let's Encrypt. Just ensure your domain's DNS points to the server.
 
+**Cloudflare users:** Set your DNS record to **DNS only** (grey cloud, not proxied). Cloudflare's proxy intercepts the Let's Encrypt ACME challenge, preventing Thruster from provisioning its certificate.
+
+**AnyCable:** The Docker Compose setup uses ActionCable (WebSockets through Puma) by default. AnyCable requires a reverse proxy to route `/cable` traffic — see the [Kamal deployment](#deploying-with-kamal) for an AnyCable setup with kamal-proxy handling the routing.
+
 ---
 
 ## Updating
@@ -122,7 +116,7 @@ docker compose pull && docker compose up -d
 
 ## Backups
 
-Your data lives in the `sabha_storage` Docker volume (mounted at `/rails/storage` inside the container). Back it up regularly.
+Your data lives in a Docker volume mounted at `/rails/storage` inside the container. Back it up regularly.
 
 **Manual backup**
 
@@ -130,16 +124,17 @@ Your data lives in the `sabha_storage` Docker volume (mounted at `/rails/storage
 # Checkpoint the database
 docker compose exec web bin/rails runner "ActiveRecord::Base.connection.execute('PRAGMA wal_checkpoint(TRUNCATE)')"
 
-# Find and back up the volume
-docker volume inspect sabha_storage --format '{{ .Mountpoint }}'
-tar -czf ~/sabha-backup-$(date +%Y%m%d).tar.gz -C $(docker volume inspect sabha_storage --format '{{ .Mountpoint }}') .
+# Find volume path and back up
+VOLUME=$(docker volume ls -q | grep sabha_storage)
+tar -czf ~/sabha-backup-$(date +%Y%m%d).tar.gz -C $(docker volume inspect $VOLUME --format '{{ .Mountpoint }}') .
 ```
 
 **Restore from backup**
 
 ```bash
 docker compose down
-tar -xzf sabha-backup.tar.gz -C $(docker volume inspect sabha_storage --format '{{ .Mountpoint }}')
+VOLUME=$(docker volume ls -q | grep sabha_storage)
+tar -xzf sabha-backup.tar.gz -C $(docker volume inspect $VOLUME --format '{{ .Mountpoint }}')
 docker compose up -d
 ```
 
@@ -235,39 +230,6 @@ docker compose exec web bin/rails runner "puts ActiveRecord::Base.connection.exe
 
 ---
 
-## Troubleshooting
-
-**App won't start**
-
-```bash
-docker compose logs web
-docker compose ps
-```
-
-**SSL certificate issues**
-
-```bash
-# Verify your domain resolves to the server
-dig +short chat.yourdomain.com
-
-# Check Thruster is receiving traffic
-curl -v http://chat.yourdomain.com
-```
-
-**Out of memory**
-
-```bash
-ssh root@your-server "fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile"
-```
-
-**Disk space**
-
-```bash
-ssh root@your-server "df -h && docker system prune -a -f"
-```
-
----
-
 ## Server Requirements
 
 | Resource | Minimum | Recommended |
@@ -276,10 +238,3 @@ ssh root@your-server "df -h && docker system prune -a -f"
 | CPU | 1 core | 2 cores |
 | Disk | 40 GB | 80 GB+ |
 | OS | Ubuntu 22.04+ | Ubuntu 24.04 |
-
----
-
-## Questions?
-
-- [GitHub Issues](https://github.com/sabha-co/sabha/issues)
-- **Customization**: See [BRANDING.md](./BRANDING.md)
