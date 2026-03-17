@@ -85,11 +85,7 @@ COPY --from=build --chown=sabha:sabha /rails /rails
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 
-# Image metadata
-ARG OCI_DESCRIPTION
-LABEL org.opencontainers.image.description="${OCI_DESCRIPTION}"
-ARG OCI_SOURCE
-LABEL org.opencontainers.image.source="${OCI_SOURCE}"
+# Image metadata (source/description set by CI via docker/metadata-action labels)
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Expose app ports
