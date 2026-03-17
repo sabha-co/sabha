@@ -78,67 +78,7 @@ brew install anycable-go
 
 ---
 
-## SaaS Mode (Multi-Tenant)
-
-Sabha supports two deployment modes:
-
-| Mode | Description | Gemfile |
-|------|-------------|---------|
-| **Self-host** (default) | Single-tenant, one workspace | `Gemfile` |
-| **SaaS mode** | Multi-tenant, database-per-workspace | `Gemfile.saas` |
-
-### Switching Modes
-
-```bash
-# Check current mode
-bin/rails saas:status
-
-# Enable SaaS mode
-bin/rails saas:enable
-bundle install    # Important: switches to Gemfile.saas
-bin/dev
-
-# Disable SaaS mode
-bin/rails saas:disable
-bundle install    # Important: switches back to Gemfile
-bin/dev
-```
-
-### How It Works
-
-- `bin/rails saas:enable` creates `tmp/saas.txt` marker file
-- `bin/rails saas:disable` removes `tmp/saas.txt`
-- The marker file determines which Gemfile is used during `bundle install`
-- For temporary SaaS mode (single session): `SAAS=true bin/dev`
-
-### SaaS Architecture
-
-When SaaS mode is enabled:
-
-- **Multi-tenant database**: Each workspace gets its own SQLite database via `activerecord-tenanted` gem
-- **Path-based routing**: URLs include workspace ID (`/1000001/rooms/general`)
-- **GlobalIdentity**: Cross-workspace user authentication
-- **Workspace model**: Registry of all workspaces (in untenanted database)
-- **Workspace selector**: Sidebar for users with multiple workspaces
-
-### SaaS-Specific Files
-
-```
-saas/                           # SaaS engine (Rails Engine)
-├── app/
-│   ├── controllers/            # Workspace management
-│   ├── models/                 # GlobalIdentity, Workspace, etc.
-│   └── views/                  # Workspace selector, landing pages
-├── config/
-│   ├── initializers/tenanting/ # Tenant context setup
-│   └── routes.rb               # SaaS routes (prepended)
-├── db/untenanted_migrate/      # Migrations for untenanted DB
-└── lib/sabha/saas/          # Engine definition
-
-Gemfile.saas                    # Extends Gemfile with tenanting gems
-```
-
-See `docs/multi-tenant/` for detailed architecture documentation.
+> For SaaS (multi-tenant) development, see [multi-tenant/DEVELOPMENT.md](./multi-tenant/DEVELOPMENT.md).
 
 ---
 
@@ -241,15 +181,13 @@ message.deactivate!    # Sets active: false
 
 ## Environment Modes
 
-| | **bin/dev** | **bin/dev + AnyCable** | **SaaS mode** |
-|---|---|---|---|
-| **Tenant Mode** | Single-tenant | Single-tenant | Multi-tenant |
-| **WebSockets** | ActionCable (Puma) | AnyCable-Go | ActionCable (Puma) |
-| **Cable Adapter** | `redis` | `any_cable` | `redis` |
-| **Jobs** | Solid Queue (in Puma) | Solid Queue (in Puma) | Solid Queue (in Puma) |
-| **Cache** | `:memory_store` | `:memory_store` | `:memory_store` |
-| **Processes** | web | web, css, anycable | web |
-| **Gemfile** | `Gemfile` | `Gemfile` | `Gemfile.saas` |
+| | **bin/dev** | **bin/dev + AnyCable** |
+|---|---|---|
+| **WebSockets** | ActionCable (Puma) | AnyCable-Go |
+| **Cable Adapter** | `redis` | `any_cable` |
+| **Jobs** | Solid Queue (in Puma) | Solid Queue (in Puma) |
+| **Cache** | `:memory_store` | `:memory_store` |
+| **Processes** | web | web, css, anycable |
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for production modes.
 
