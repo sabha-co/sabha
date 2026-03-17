@@ -123,49 +123,7 @@ puts "Workspace created with ID: #{workspace.id}"
 
 ## Architecture
 
-### Database Structure
-
-Multi-tenant mode uses PostgreSQL for the shared layer and SQLite per workspace:
-
-```
-PostgreSQL (sabha_untenanted_production):
-├── global_identities           # Cross-workspace user identity
-├── global_sessions             # Cross-workspace sessions
-├── workspaces                  # Workspace registry
-├── workspace_memberships       # Identity-to-workspace links
-├── auth_codes                  # OTP codes
-└── workspace_external_id_sequences
-
-/rails/storage/production/
-└── workspaces/
-    ├── 1000001/
-    │   └── main.sqlite3        # Workspace 1 data (User, Room, Message, etc.)
-    ├── 1000002/
-    │   └── main.sqlite3        # Workspace 2 data
-    └── ...
-```
-
-### Key Models
-
-**Untenanted (shared across all workspaces):**
-- `GlobalIdentity` - User identity (email, cross-workspace profile)
-- `GlobalSession` - Authentication sessions
-- `Workspace` - Workspace metadata
-- `WorkspaceMembership` - Links identities to workspaces
-
-**Tenanted (per-workspace):**
-- `User` - Workspace-specific user record
-- `Room`, `Message`, `Membership` - All chat data
-
-### URL Structure
-
-```
-https://sabha.co/                     # Landing page
-https://sabha.co/session/new          # Global sign-in
-https://sabha.co/workspaces           # Workspace selector
-https://sabha.co/1000001/             # Workspace 1 home
-https://sabha.co/1000001/rooms/general # Room in workspace 1
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture overview (database structure, key models, URL routing, request flow).
 
 ---
 
@@ -322,31 +280,6 @@ puts "Active users (24h): #{count}"
 ```
 
 ---
-
-## Scaling Considerations
-
-### When to Scale
-
-- **CPU**: Sustained >70% usage
-- **Memory**: Sustained >80% usage
-- **Disk**: >80% full
-- **Workspaces**: >100 active workspaces on a single server
-
-### Scaling Options
-
-1. **Vertical scaling** - Upgrade to larger VPS (easiest)
-2. **Read replicas** - Use Litestream for SQLite replication
-3. **Multiple servers** - Route workspaces to different servers by ID range
-
-### Performance Tips
-
-- Enable AnyCable for WebSocket scaling (`ANYCABLE_ENABLED=true`)
-- Use S3/R2 for file storage instead of local disk
-- Set up CDN for static assets
-- Monitor SQLite WAL file sizes
-
----
-
 ## Troubleshooting
 
 ### "Workspace not found"
@@ -417,6 +350,5 @@ end
 ## See Also
 
 - [activerecord-tenanted Guide](activerecord-tenanted-guide.md)
-- [GlobalIdentity Sync](global-identity-user-sync.md)
 - [PostgreSQL Decision](postgres-untenanted.md)
 - [Self-Hosted Deployment](../DEPLOYMENT.md)

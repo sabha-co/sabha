@@ -12,12 +12,12 @@ For self-hosted development, see [../DEVELOPMENT.md](../DEVELOPMENT.md).
 
 Everything from the [self-hosted prerequisites](../DEVELOPMENT.md#prerequisites), plus:
 
-- **PostgreSQL** 16+ (for the untenanted database)
+- **PostgreSQL** (for the untenanted database)
 
 ```bash
 # macOS
-brew install postgresql@16
-brew services start postgresql@16
+brew install postgresql
+brew services start postgresql
 
 # Ubuntu/Debian
 sudo apt-get install -y postgresql postgresql-contrib

@@ -69,8 +69,8 @@ Production URL includes SSL params: `postgres://user:pass@host:port/db?sslmode=r
 PostgreSQL must be running locally. With Homebrew:
 
 ```bash
-brew install postgresql@18
-brew services start postgresql@18
+brew install postgresql
+brew services start postgresql
 ```
 
 Then create the databases:
