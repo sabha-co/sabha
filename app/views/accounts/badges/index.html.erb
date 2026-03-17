@@ -4,6 +4,13 @@
   <div class="flex-item-justify-start">
     <%= link_back_to account_users_path %>
   </div>
+
+  <div class="flex align-center gap flex-item-justify-end">
+    <%= link_to root_path, class: "btn" do %>
+      <%= icon_tag "home" %>
+      <span class="for-screen-reader">Home</span>
+    <% end %>
+  </div>
 <% end %>
 
 <section class="panel flex flex-column gap">
@@ -16,12 +23,15 @@
     <menu id="badges_list" class="flex flex-column gap-half margin-none pad-none">
       <%= render partial: "accounts/badges/badge", collection: @badges %>
     </menu>
+  <% else %>
+    <p class="txt-small txt-muted">No badges yet. Create one below to get started.</p>
   <% end %>
 
   <%= form_with url: account_badges_path, method: :post, class: "flex align-center gap" do |form| %>
     <%= form.text_field :name, name: "badge[name]", class: "input txt-small flex-item-grow", placeholder: "New badge name", required: true,
           maxlength: 10, style: "min-width: 0;" %>
-    <%= form.color_field :color, name: "badge[color]", class: "input txt-small", style: "width: 3ch; padding: 0.25rem;" %>
+    <%= form.color_field :color, name: "badge[color]", class: "input txt-small", title: "Badge color",
+          style: "width: 3ch; padding: 0.25rem;" %>
     <%= form.button class: "btn btn--reversed txt-small", type: "submit" do %>
       <%= icon_tag "add" %>
     <% end %>
