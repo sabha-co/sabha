@@ -28,12 +28,31 @@
           <p class="txt-small txt-negative txt-align-center">
             Storage limit reached. File uploads are disabled.
           </p>
+          <p class="txt-small txt-muted txt-align-center">
+            <a href="https://cloud.sabha.co" target="_blank" class="txt-underlined">Sabha Cloud</a> gives you a dedicated server with no storage limits.
+          </p>
         <% elsif account.nearing_storage_limit? %>
           <p class="txt-small txt-warning txt-align-center">
             Approaching storage limit.
           </p>
+          <p class="txt-small txt-muted txt-align-center">
+            <a href="https://cloud.sabha.co" target="_blank" class="txt-underlined">Sabha Cloud</a> gives you a dedicated server with no storage limits.
+          </p>
         <% end %>
       </div>
+    </fieldset>
+  <% end %>
+
+  <%# Your Data Section (hidden for admins when storage is stressed — the Storage section already nudges Cloud) %>
+  <% unless @is_admin && Current.account.storage_stressed? %>
+    <fieldset class="flex flex-column gap center-block pad max-inline-size">
+      <legend class="txt-medium txt-align-center"><strong>Your data</strong></legend>
+
+      <p class="txt-small txt-muted">
+        Workspaces on sabha.co run on shared infrastructure. We do our best, but we cannot guarantee backups or uptime.
+        For a dedicated server with continuous backups, custom domain, and managed updates, see
+        <a href="https://cloud.sabha.co" target="_blank" class="txt-underlined">Sabha Cloud</a>.
+      </p>
     </fieldset>
   <% end %>
 

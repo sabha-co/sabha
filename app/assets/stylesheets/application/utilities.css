@@ -27,6 +27,7 @@
 .txt-muted { color: var(--color-text-muted); }
 .txt-subtle { color: var(--color-text-subtle); }
 .txt-undecorated { text-decoration: none; }
+.txt-underlined { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .txt-strikethrough { text-decoration: line-through; opacity: 0.6; }
 .txt-tight-lines { line-height: 1.2; }
 .txt-normal { font-weight: 400; font-style: normal; }

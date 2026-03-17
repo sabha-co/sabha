@@ -1,7 +1,12 @@
 <% if Sabha.saas? && Current.user && Current.account&.exceeding_storage_limit? %>
   <%= render "shared/top_banner", style: :error,
         text: "This workspace has reached its #{number_to_human_size(Storage::WORKSPACE_LIMIT)} storage limit. File uploads are disabled.",
-        link_text: Current.user.administrator? ? "View usage" : nil,
-        link_url: Current.user.administrator? ? settings_path(script_name: "") : nil,
+        link_text: "Need more space?",
+        link_url: "https://cloud.sabha.co",
         alert: true %>
+<% elsif Sabha.saas? && Current.user&.staff? && Current.account&.nearing_storage_limit? %>
+  <%= render "shared/top_banner", style: :warning,
+        text: "This workspace is approaching its #{number_to_human_size(Storage::WORKSPACE_LIMIT)} storage limit.",
+        link_text: "Need more space?",
+        link_url: "https://cloud.sabha.co" %>
 <% end %>

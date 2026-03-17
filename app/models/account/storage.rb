@@ -7,7 +7,11 @@ module Account::Storage
   end
 
   def nearing_storage_limit?
-    bytes_used >= Storage::WORKSPACE_LIMIT - 100.megabytes
+    bytes_used >= Storage::WORKSPACE_LIMIT * 0.8
+  end
+
+  def storage_stressed?
+    exceeding_storage_limit? || nearing_storage_limit?
   end
 
   def storage_percentage_used
