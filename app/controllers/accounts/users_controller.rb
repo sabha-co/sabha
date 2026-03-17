@@ -5,7 +5,7 @@ class Accounts::UsersController < ApplicationController
   before_action :set_user, only: %i[update destroy]
 
   def index
-    @badges = Badge.ordered.includes(:users).to_a if Current.user.can_administer?
+    @badges = Badge.ordered.to_a if Current.user.can_administer?
     @member_count = User.without_bots.active.verified.count
 
     if searching?
