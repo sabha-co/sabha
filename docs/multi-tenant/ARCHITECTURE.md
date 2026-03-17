@@ -134,7 +134,7 @@ See [postgres-untenanted.md](postgres-untenanted.md) for the full rationale.
 │      │ /cable     │ /*                             │
 │      ▼            ▼                                │
 │  AnyCable-Go   Web Container (SAAS=true)           │
-│  (:8080)         Puma :3000 (SKIP_THRUSTER=true)   │
+│  (:8080)         Thruster → Puma :3000             │
 │                  Redis (in-container)               │
 │                  Solid Queue workers                │
 │                                                    │
@@ -145,7 +145,7 @@ See [postgres-untenanted.md](postgres-untenanted.md) for the full rationale.
 
 - **kamal-proxy** handles TLS (Let's Encrypt) and routes `/cable` to AnyCable-Go, everything else to Puma
 - **AnyCable-Go** runs as a Kamal accessory (`anycable/anycable-go:1.6`) on the same Docker network (`kamal`)
-- `SKIP_THRUSTER=true` — Puma runs directly, no Thruster wrapper
+- **Thruster** wraps Puma inside the web container for compression and asset caching
 - Deployed via `kamal deploy -d multitenant` (config: `config/deploy.multitenant.yml`)
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the full deployment guide.

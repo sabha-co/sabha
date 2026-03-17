@@ -53,7 +53,7 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
 **Technology choices:**
 - **Rails 8.2** with Hotwire (Turbo + Stimulus) for server-rendered HTML with real-time updates
 - **SQLite** in production, optimized for single-server deployments
-- **AnyCable** for WebSocket scaling (HTTP RPC mode, no gRPC)
+- **AnyCable** for WebSocket scaling (HTTP RPC mode)
 - **Tailwind CSS v4** compiled via `@tailwindcss/cli`; **Importmap** for all JavaScript (zero JS bundling)
 - **Solid Queue** (SQLite-backed) for background jobs
 - **Propshaft** as the asset pipeline
@@ -65,13 +65,14 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
 ### HTTP Request
 
 ```
-Browser → Thruster → Puma → Rack middleware → Rails router → Controller → View
+Browser → kamal-proxy → Thruster → Puma → Rack middleware → Rails router → Controller → View
 ```
 
-1. **Thruster** terminates TLS, compresses responses, serves cached assets
-2. **Puma** dispatches to Rails
-3. **Router** matches the request to a controller action
-4. **Controller** authenticates via `Current.user` (set in `before_action`), performs the action, renders a view or Turbo Stream
+1. **kamal-proxy** terminates TLS, routes `/cable` to AnyCable-Go, everything else to the web container
+2. **Thruster** compresses responses, serves cached assets
+3. **Puma** dispatches to Rails
+4. **Router** matches the request to a controller action
+5. **Controller** authenticates via `Current.user` (set in `before_action`), performs the action, renders a view or Turbo Stream
 
 ### WebSocket Connection
 
@@ -108,7 +109,7 @@ User ──────┐
   │              │
   │              ├── ActionText::RichText (body)
   │              ├── ActiveStorage attachments
-  │              ├── Mention (join: message_id + user_id, no PK)
+  │              ├── Mention (parsed from ActionText body HTML, persisted for history)
   │              ├── Boost (reactions/reposts)
   │              └── Bookmark
   │
@@ -134,20 +135,14 @@ Models primarily use namespace decomposition, with selective service objects whe
 | `app/models/inbox/` | Query objects: `ActivityQuery`, `ThreadsQuery`, `BookmarksQuery`, `MessagesQuery`, `DirectMessagesQuery` |
 | `app/models/concerns/` | `Deactivatable` (soft deletion), `Pagination` |
 
-### Soft Deletion
-
-Messages, rooms, memberships, boosts, bookmarks, and accounts use soft deletion via the `Deactivatable` concern (`active` boolean with explicit `active`/`inactive` scopes, not a default scope). Users use a `status` enum (`active`, `deactivated`, `banned`) rather than an `active` boolean.
-
-### System Event Messages
-
-Room lifecycle changes (renames, member additions/removals) are recorded as **system event messages** -- messages with a non-null `event` column (`room_renamed`, `member_joined`, `member_left`). These are created via `Room#post_system_message` which uses `Message.insert!` + `ActionText::RichText.insert!` to bypass all ActiveRecord callbacks (push notifications, search indexing, counter caches, streaks). Only the Turbo Stream append broadcast is emitted. System events are excluded from inbox queries, unread cursor advancement, and search via the `without_events` scope.
-
 ### Key Conventions
 
 - **Model-first business logic.** Most behavior lives in models/concerns, with selective service objects (e.g., `SlackImporter`) for isolated workflows.
 - **Strictly RESTful controllers.** Only standard CRUD actions (`index`, `show`, `new`, `create`, `edit`, `update`, `destroy`). Custom actions like `leave` or `activate` become `destroy` on a new resource controller (e.g., `MembershipsController#destroy`).
 - **Exceptions over return values.** Model methods raise on failure, controllers rescue with redirects.
 - **`id: false` tables** (like `mentions`) must use `dependent: :delete_all`, never `:destroy`.
+- **Soft deletion via `Deactivatable` concern.** Most models use an `active` boolean with explicit scopes (not a default scope). Users use a `status` enum (`active`/`deactivated`/`banned`) instead.
+- **System event messages bypass callbacks.** Room lifecycle changes (renames, joins, leaves) are recorded via `Message.insert!` to skip push notifications, search indexing, and counter caches. Excluded from inbox queries and search via `without_events` scope.
 
 ### Room Types in Detail
 
@@ -156,19 +151,25 @@ Room lifecycle changes (renames, member additions/removals) are recorded as **sy
 - **`Rooms::Direct`** - Identified by an MD5 `members_hash` of sorted user IDs, ensuring one DM room per unique set of participants. Default involvement: `everything`.
 - **`Rooms::Thread`** - Tied to a `parent_message`. Inherits permissions from the parent room. Default involvement: `invisible` except for thread creator and parent message author.
 
-### Supporting Models
+### All Models
 
 | Model | Purpose |
 |-------|---------|
-| `Account` | Singleton workspace settings. `has_json :settings` for feature flags. |
-| `Boost` | Message reactions/reshares (soft-deleted) |
-| `Bookmark` | Saved messages (soft-deleted) |
+| `User` | User record with role enum (`member`, `moderator`, `administrator`, `bot`) |
+| `Room` | STI base class for `Open`, `Closed`, `Direct`, `Thread` |
+| `Membership` | User ↔ Room link with involvement level |
+| `Message` | Chat message with ActionText body and attachments |
+| `Account` | Singleton workspace settings. `has_json :settings` for feature flags |
+| `Boost` | Message reactions/reshares |
+| `Bookmark` | Saved messages |
 | `Mention` | Join table (`message_id` + `user_id`, no PK). Must use `dependent: :delete_all` |
 | `Badge` | Custom user badges (name, icon, color) |
 | `Ban` | IP address bans tied to users |
 | `Block` | User-to-user blocking (prevents DMs) |
-| `Sound` | Pure Ruby value object (~50 built-in sounds via `/play name` syntax) |
+| `Session` | Browser sessions (IP, platform tracking) |
+| `AuthToken` | OTP codes for passwordless sign-in |
 | `Search` | Persisted search queries with per-user history |
+| `Sound` | Pure Ruby value object (~50 built-in sounds via `/play name` syntax) |
 | `Webhook` / `WebhookEvent` | Bot webhook endpoints and delivery records |
 | `Push::Subscription` | Web push subscription endpoints (VAPID) |
 | `Everyone` | Attachable for `@everyone` mentions (not an AR model) |
@@ -422,9 +423,11 @@ Schema format is Ruby (`db/schema.rb`), using `create_virtual_table` for FTS5.
 
 ## Deployment
 
-**3 containers** (web + AnyCable-Go + reverse proxy) with Redis and Solid Queue workers running inside the web container. AnyCable-Go always runs as a **separate container**, communicating with Rails via HTTP RPC at `/_anycable`.
-- **Thruster** wraps Puma for HTTP/2, TLS, compression, and static asset caching
-- **AnyCable-Go** runs as a Kamal accessory with path prefix `/cable`
+Deployed via [Kamal](https://kamal-deploy.org/) with 3 containers:
+
+- **kamal-proxy** — TLS termination (Let's Encrypt), routes `/cable` to AnyCable-Go, everything else to the web container
+- **Web container** — Thruster (compression, asset caching) → Puma, Redis, and Solid Queue workers
+- **AnyCable-Go** — WebSocket server, communicates with Rails via HTTP RPC at `/_anycable`
 
 ### Startup Sequence
 
@@ -433,8 +436,7 @@ bin/boot
     │
     ├── Pre-boot (production only):
     │   ├── mkdir -p storage/logs
-    │   ├── rails db:prepare
-    │   └── rails db:seed           # SaaS mode only
+    │   └── rails db:prepare
     │
     └── ProcessMonitor (reads Procfile):
         ├── bin/start-app           # Puma (via Thruster or direct)

@@ -16,13 +16,17 @@ We publish pre-built Docker images at `ghcr.io/sabha-co/sabha`. No need to clone
 - A domain name pointing to your server
 - Docker installed on the server
 
-### 1. Install Docker
+### 1. Install Docker on your server
 
 ```bash
 curl -fsSL https://get.docker.com | sh
 ```
 
-### 2. Create a `docker-compose.yml`
+### 2. Create a project directory and `docker-compose.yml`
+
+```bash
+mkdir -p ~/sabha && cd ~/sabha
+```
 
 ```yaml
 services:
@@ -125,7 +129,7 @@ Your data lives in a Docker volume mounted at `/rails/storage` inside the contai
 docker compose exec web bin/rails runner "ActiveRecord::Base.connection.execute('PRAGMA wal_checkpoint(TRUNCATE)')"
 
 # Find volume path and back up
-VOLUME=$(docker volume ls -q | grep sabha_storage)
+VOLUME=$(docker volume ls -q | grep sabha_storage | head -1)
 tar -czf ~/sabha-backup-$(date +%Y%m%d).tar.gz -C $(docker volume inspect $VOLUME --format '{{ .Mountpoint }}') .
 ```
 
@@ -133,7 +137,7 @@ tar -czf ~/sabha-backup-$(date +%Y%m%d).tar.gz -C $(docker volume inspect $VOLUM
 
 ```bash
 docker compose down
-VOLUME=$(docker volume ls -q | grep sabha_storage)
+VOLUME=$(docker volume ls -q | grep sabha_storage | head -1)
 tar -xzf sabha-backup.tar.gz -C $(docker volume inspect $VOLUME --format '{{ .Mountpoint }}')
 docker compose up -d
 ```
@@ -186,7 +190,10 @@ image: sabha-co/sabha
 
 servers:
   web:
-    - <%= ENV.fetch("SERVER_IP") %>
+    hosts:
+      - <%= ENV.fetch("SERVER_IP") %>
+    options:
+      network-alias: sabha-web
 
 proxy:
   ssl: true
@@ -195,6 +202,24 @@ proxy:
 
 volumes:
   - "/disk/sabha/:/rails/storage/"
+
+# AnyCable — kamal-proxy routes /cable to AnyCable-Go
+accessories:
+  anycable:
+    image: anycable/anycable-go:1.6
+    host: <%= ENV.fetch("SERVER_IP") %>
+    proxy:
+      host: <%= ENV.fetch("PROXY_HOST") %>
+      app_port: 8080
+      path_prefix: /cable
+    env:
+      clear:
+        ANYCABLE_HOST: "0.0.0.0"
+        ANYCABLE_PORT: "8080"
+        ANYCABLE_RPC_HOST: "http://sabha-web:3000/_anycable"
+        ANYCABLE_BROADCAST_ADAPTER: "http"
+      secret:
+        - ANYCABLE_SECRET
 ```
 
 ---
