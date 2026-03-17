@@ -1,52 +1,145 @@
 # Deploying Sabha
 
-Two ways to run your community:
+Deploy Sabha on your own server. Full control, own your data, server costs only (~$5-20/month).
 
-1. **Self-hosting** - Run on your own server with full control
-2. **Sabha Cloud** - Managed hosting, we handle everything
+For multi-tenant SaaS deployment, see [multi-tenant/DEPLOYMENT.md](./multi-tenant/DEPLOYMENT.md).
 
 ---
 
-## Self-Hosting
+## Deploying with Kamal (Recommended)
 
-Deploy Sabha on your own VPS. You get full control, own your data, and pay only for server costs (~$5-20/month).
+[Kamal](https://kamal-deploy.org/) gives you zero-downtime Docker deployments with AnyCable support for high-performance WebSockets.
 
 ### Requirements
 
 - A VPS with 2GB+ RAM (DigitalOcean, Hetzner, Linode, etc.)
 - A domain name pointing to your server
-- Basic command-line familiarity
+- Docker installed locally
+- Kamal installed locally (`gem install kamal`)
 
-### Quick Start with Docker
+### Setup
 
-**1. Get a server and point your domain to it**
+```bash
+# Prepare your server
+ssh root@your-server "curl -fsSL https://get.docker.com | sh && mkdir -p /disk/sabha"
 
-Any VPS provider works. Ubuntu 22.04+ recommended.
+# Clone the repo
+git clone https://github.com/sabha-co/sabha.git
+cd sabha
 
-**2. Install Docker**
+# Configure secrets
+cp .env.sample .kamal/secrets
+nano .kamal/secrets  # Add SERVER_IP, PROXY_HOST, and other vars
+
+# Deploy
+kamal setup
+```
+
+### Common commands
+
+```bash
+kamal deploy              # Deploy updates
+kamal app logs -f         # Follow logs
+kamal app exec 'bin/rails console'  # Rails console
+kamal app stop            # Stop app
+kamal app boot            # Start app
+```
+
+### Kamal configuration
+
+The repo includes `config/deploy.yml`:
+
+```yaml
+service: sabha
+image: sabha-co/sabha
+
+servers:
+  web:
+    hosts:
+      - <%= ENV.fetch("SERVER_IP") %>
+    options:
+      network-alias: sabha-web
+
+proxy:
+  ssl: true
+  host: <%= ENV.fetch("PROXY_HOST") %>
+  app_port: 3000
+
+volumes:
+  - "/disk/sabha/:/rails/storage/"
+
+# AnyCable — kamal-proxy routes /cable to AnyCable-Go
+accessories:
+  anycable:
+    image: anycable/anycable-go:1.6
+    host: <%= ENV.fetch("SERVER_IP") %>
+    proxy:
+      host: <%= ENV.fetch("PROXY_HOST") %>
+      app_port: 8080
+      path_prefix: /cable
+    env:
+      clear:
+        ANYCABLE_HOST: "0.0.0.0"
+        ANYCABLE_PORT: "8080"
+        ANYCABLE_RPC_HOST: "http://sabha-web:3000/_anycable"
+        ANYCABLE_BROADCAST_ADAPTER: "http"
+      secret:
+        - ANYCABLE_SECRET
+```
+
+---
+
+## Docker Compose (Alternative)
+
+For a simpler setup without Kamal. Uses pre-built Docker images — no need to clone the repo.
+
+### Requirements
+
+- A VPS with 2GB+ RAM
+- A domain name pointing to your server
+- Docker installed on the server
+
+### 1. Install Docker on your server
 
 ```bash
 curl -fsSL https://get.docker.com | sh
 ```
 
-**3. Clone and configure**
+### 2. Create a project directory and `docker-compose.yml`
 
 ```bash
-git clone https://github.com/sabha-co/sabha.git
-cd sabha
-cp .env.sample .env
-nano .env
+mkdir -p ~/sabha && cd ~/sabha
 ```
 
-**4. Set your environment variables**
+```yaml
+services:
+  web:
+    image: ghcr.io/sabha-co/sabha:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file: .env
+    volumes:
+      - sabha_storage:/rails/storage
+
+volumes:
+  sabha_storage:
+```
+
+### 3. Configure environment
+
+Create a `.env` file with your settings:
 
 ```bash
-# Domain (required for automatic SSL)
+# Domain
 APP_HOST=chat.yourdomain.com
+
+# SSL (required for automatic Let's Encrypt certificate)
 TLS_DOMAIN=chat.yourdomain.com
 
-# Security
-SECRET_KEY_BASE=$(openssl rand -hex 64)
+# Security (generate with: openssl rand -hex 64)
+SECRET_KEY_BASE=your_secret_key_here
 
 # Branding
 APP_NAME=My Community
@@ -59,12 +152,21 @@ SUPPORT_EMAIL=support@yourdomain.com
 MAILER_FROM_NAME=My Community
 MAILER_FROM_EMAIL=noreply@yourdomain.com
 
-# Web Push (generate with: bundle exec rails runner "require 'webpush'; k = Webpush.generate_key; puts k.public_key; puts k.private_key")
+# Web Push (generate with: npx web-push generate-vapid-keys)
 VAPID_PUBLIC_KEY=your_public_key
 VAPID_PRIVATE_KEY=your_private_key
+
+# WebSockets (uses ActionCable through Puma)
+ANYCABLE_ENABLED=false
+
+# Authentication: "password" (default) or "otp"
+AUTH_METHOD=password
+
+# Cookie domain
+COOKIE_DOMAIN=chat.yourdomain.com
 ```
 
-**5. Start**
+### 4. Start
 
 ```bash
 docker compose up -d
@@ -74,227 +176,68 @@ Your community is live at `https://chat.yourdomain.com`
 
 ---
 
-### Deploying with Kamal
+## What's Included
 
-For zero-downtime deployments, use [Kamal](https://kamal-deploy.org/).
+The Docker image includes everything you need:
 
-**Setup**
+- **Thruster** — HTTP/2 proxy with automatic Let's Encrypt SSL
+- **SQLite** — zero-config database (no separate DB server)
+- **Redis** — real-time features (ActionCable pub/sub + cache)
+- **Solid Queue** — background job processing
 
-```bash
-# Install Kamal
-gem install kamal
+Thruster handles SSL certificates automatically via Let's Encrypt. Just ensure your domain's DNS points to the server.
 
-# Prepare your server
-ssh root@your-server "curl -fsSL https://get.docker.com | sh && mkdir -p /disk/sabha"
+**Cloudflare users:** Set your DNS record to **DNS only** (grey cloud, not proxied). Cloudflare's proxy intercepts the Let's Encrypt ACME challenge, preventing Thruster from provisioning its certificate.
 
-# Configure secrets
-cp .env.sample .kamal/secrets
-nano .kamal/secrets  # Add SERVER_IP, PROXY_HOST, and other vars
+**AnyCable:** The Docker Compose setup uses ActionCable (WebSockets through Puma) by default. AnyCable requires a reverse proxy to route `/cable` traffic — the Kamal deployment handles this with kamal-proxy.
 
-# Deploy
-kamal setup
-```
+---
 
-**Common commands**
+## Updating
+
+**Kamal:**
 
 ```bash
-kamal deploy              # Deploy updates
-kamal app logs -f         # Follow logs
-kamal app exec 'bin/rails console'  # Rails console
-kamal app stop            # Stop app
-kamal app boot            # Start app
+kamal deploy
 ```
 
-**Kamal configuration**
-
-The repo includes `config/deploy.yml`:
-
-```yaml
-service: sabha
-image: sabha
-
-servers:
-  web:
-    - <%= ENV.fetch("SERVER_IP") %>
-
-proxy:
-  ssl: true
-  host: <%= ENV.fetch("PROXY_HOST") %>
-  app_port: 3000
-
-registry:
-  server: localhost:5000
-
-volumes:
-  - "/disk/sabha/:/rails/storage/"
-```
-
-**Environment variables**
-
-Add these to `.kamal/secrets`:
+**Docker Compose:**
 
 ```bash
-# Server
-SERVER_IP=your.server.ip
-PROXY_HOST=chat.yourdomain.com
-
-# Rails
-SECRET_KEY_BASE=$(openssl rand -hex 64)
-RAILS_ENV=production
-
-# App
-APP_NAME=My Community
-APP_SHORT_NAME=Community
-APP_DESCRIPTION=Your community chat
-APP_HOST=chat.yourdomain.com
-COOKIE_DOMAIN=chat.yourdomain.com
-
-# Email (get key from resend.com)
-RESEND_API_KEY=your_key
-SUPPORT_EMAIL=support@yourdomain.com
-MAILER_FROM_NAME=My Community
-MAILER_FROM_EMAIL=noreply@yourdomain.com
-
-# Web Push (see "Generate VAPID Keys" below)
-VAPID_PUBLIC_KEY=your_public_key
-VAPID_PRIVATE_KEY=your_private_key
-```
-
-**Generate VAPID keys**
-
-```bash
-bundle exec rails runner "require 'webpush'; k = Webpush.generate_key; puts 'VAPID_PUBLIC_KEY=' + k.public_key; puts 'VAPID_PRIVATE_KEY=' + k.private_key"
+docker compose pull && docker compose up -d
 ```
 
 ---
 
-### What's Included
+## Backups
 
-Self-hosting includes everything you need:
-
-- **Thruster** - HTTP/2 proxy with automatic Let's Encrypt SSL
-- **SQLite** - Zero-config database (no separate DB server)
-- **Redis** - Real-time features (ActionCable)
-- **Solid Queue** - Background job processing
-
-### Automatic SSL
-
-Set `TLS_DOMAIN` and Thruster handles SSL certificates automatically:
-
-```bash
-TLS_DOMAIN=chat.yourdomain.com
-```
-
-No manual certificate management needed.
-
----
-
-### Backups
-
-Your data lives in `/rails/storage/` (or `/disk/sabha/` with Kamal). Back it up regularly.
+Your data lives in a Docker volume mounted at `/rails/storage` inside the container. Back it up regularly.
 
 **Manual backup**
 
 ```bash
-# Checkpoint the database first
-kamal app exec 'bin/rails runner "ActiveRecord::Base.connection.execute(\"PRAGMA wal_checkpoint(TRUNCATE)\")"'
+# Checkpoint the database
+docker compose exec web bin/rails runner "ActiveRecord::Base.connection.execute('PRAGMA wal_checkpoint(TRUNCATE)')"
 
-# Create backup
-ssh root@your-server "cd /disk/sabha && tar -czf ~/backup-$(date +%Y%m%d).tar.gz ."
-
-# Download
-scp root@your-server:~/backup-*.tar.gz ./backups/
+# Find volume path and back up
+VOLUME=$(docker volume ls -q | grep sabha_storage | head -1)
+tar -czf ~/sabha-backup-$(date +%Y%m%d).tar.gz -C $(docker volume inspect $VOLUME --format '{{ .Mountpoint }}') .
 ```
 
 **Restore from backup**
 
 ```bash
-kamal app stop
-scp backup.tar.gz root@your-server:/tmp/
-ssh root@your-server "cd /disk/sabha && rm -rf * && tar -xzf /tmp/backup.tar.gz"
-kamal app boot
+docker compose down
+VOLUME=$(docker volume ls -q | grep sabha_storage | head -1)
+tar -xzf sabha-backup.tar.gz -C $(docker volume inspect $VOLUME --format '{{ .Mountpoint }}')
+docker compose up -d
 ```
-
-**Automated backups**
 
 For production, set up a cron job to back up daily to S3, R2, or similar object storage.
 
 ---
 
-### Updating
-
-```bash
-# Docker Compose
-docker compose pull && docker compose up -d
-
-# Kamal
-kamal deploy
-```
-
----
-
-### Troubleshooting
-
-**App won't start**
-
-```bash
-kamal app logs                    # Check logs
-kamal app details                 # Container status
-docker logs sabha-web          # Direct Docker logs
-```
-
-**Database locked errors**
-
-Stop the old container before deploying:
-
-```bash
-kamal app stop
-sleep 5
-kamal deploy
-```
-
-**SSL certificate issues**
-
-```bash
-# Check Thruster is receiving traffic on port 80/443
-curl -v http://chat.yourdomain.com
-
-# Verify TLS_DOMAIN is set
-kamal envify | grep TLS_DOMAIN
-```
-
-**Out of memory**
-
-Add swap to your server:
-
-```bash
-ssh root@your-server "fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile"
-```
-
-**Disk space**
-
-```bash
-ssh root@your-server "df -h && docker system prune -a -f"
-```
-
----
-
-### Database Maintenance
-
-```bash
-# Check WAL mode (should be "wal")
-kamal app exec 'bin/rails runner "puts ActiveRecord::Base.connection.execute(\"PRAGMA journal_mode;\").first[\"journal_mode\"]"'
-
-# Optimize database
-kamal app exec 'bin/rails runner "ActiveRecord::Base.connection.execute(\"VACUUM\")"'
-
-# Check database size (MB)
-kamal app exec 'bin/rails runner "puts ActiveRecord::Base.connection.execute(\"SELECT page_count * page_size / 1024 / 1024.0 as mb FROM pragma_page_count(), pragma_page_size();\").first[\"mb\"]"'
-```
-
----
-
-### Monitoring
+## Monitoring
 
 **Health check**
 
@@ -310,128 +253,26 @@ ssh root@your-server "docker stats --no-stream && df -h && free -h"
 
 ---
 
-### GitHub Actions CI/CD
+## Database Maintenance
 
-Automate deployments on push to main:
+```bash
+# Check WAL mode (should be "wal")
+docker compose exec web bin/rails runner "puts ActiveRecord::Base.connection.execute('PRAGMA journal_mode;').first['journal_mode']"
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
+# Optimize database
+docker compose exec web bin/rails runner "ActiveRecord::Base.connection.execute('VACUUM')"
 
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3'
-
-      - name: Install Kamal
-        run: gem install kamal
-
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
-
-      - name: Create secrets
-        run: |
-          mkdir -p .kamal
-          cat > .kamal/secrets <<EOF
-          SERVER_IP=${{ secrets.SERVER_IP }}
-          PROXY_HOST=${{ secrets.PROXY_HOST }}
-          SECRET_KEY_BASE=${{ secrets.SECRET_KEY_BASE }}
-          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
-          VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
-          VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
-          APP_NAME=${{ secrets.APP_NAME }}
-          APP_HOST=${{ secrets.APP_HOST }}
-          COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
-          SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
-          MAILER_FROM_NAME=${{ secrets.MAILER_FROM_NAME }}
-          MAILER_FROM_EMAIL=${{ secrets.MAILER_FROM_EMAIL }}
-          EOF
-
-      - name: Deploy
-        run: |
-          kamal app stop || true
-          sleep 5
-          kamal deploy
+# Check database size (MB)
+docker compose exec web bin/rails runner "puts ActiveRecord::Base.connection.execute('SELECT page_count * page_size / 1024 / 1024.0 as mb FROM pragma_page_count(), pragma_page_size();').first['mb']"
 ```
-
-Add secrets to your GitHub repository settings.
 
 ---
 
-### Server Requirements
+## Server Requirements
 
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
-| RAM | 1 GB | 2 GB |
+| RAM | 2 GB | 4 GB |
 | CPU | 1 core | 2 cores |
-| Disk | 10 GB | 20 GB+ |
+| Disk | 40 GB | 80 GB+ |
 | OS | Ubuntu 22.04+ | Ubuntu 24.04 |
-
----
-
-## Sabha Cloud
-
-Don't want to manage servers? [Sabha Cloud](https://cloud.sabha.co) handles everything.
-
-### What You Get
-
-- **Instant setup** - Live in minutes, not hours
-- **Managed hosting** - We handle servers, updates, security
-- **Automatic backups** - Continuous backup to cloud storage
-- **Custom domains** - Your domain with automatic SSL
-- **Zero maintenance** - No servers to manage, ever
-
-### Getting Started
-
-1. Sign up at [cloud.sabha.co](https://cloud.sabha.co)
-2. Choose your subdomain (e.g., `mycommunity.cloud.sabha.co`)
-3. Optionally connect a custom domain
-4. Invite your community
-
-### Custom Domains
-
-1. Go to Settings > Custom Domain
-2. Enter your domain (e.g., `chat.yourdomain.com`)
-3. Add the DNS records we provide
-4. SSL is provisioned automatically
-
-### When to Choose Sabha Cloud
-
-- You want to focus on community, not infrastructure
-- You don't have technical staff
-- You need guaranteed uptime and support
-- You want automatic updates and security patches
-
----
-
-## Comparison
-
-| Feature | Self-Hosting | Sabha Cloud |
-|---------|--------------|----------------|
-| Setup time | 30-60 min | 5 min |
-| Server management | You | Us |
-| Updates | Manual | Automatic |
-| Backups | You configure | Automatic |
-| Custom domain | Yes | Yes |
-| SSL | Automatic | Automatic |
-| Data ownership | Full control | You own it |
-| Monthly cost | ~$5-20 | [Pricing](https://cloud.sabha.co/pricing) |
-
----
-
-## Questions?
-
-- **Self-hosting**: [GitHub Issues](https://github.com/sabha-co/sabha/issues)
-- **Sabha Cloud**: ashwin@cloud.sabha.co
-- **Customization**: See [BRANDING.md](../BRANDING.md)

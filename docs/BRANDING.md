@@ -1,125 +1,51 @@
 # Branding Customization Guide
 
-This guide explains how to fully customize Sabha to match your brand identity. All branding can be configured through environment variables and asset files—no code changes required!
-
-## Table of Contents
-
-- [Deployment Modes](#deployment-modes)
-- [Environment Variables](#environment-variables)
-- [Visual Assets](#visual-assets)
-- [Custom Styles](#custom-styles)
-- [Advanced Customization](#advanced-customization)
-- [Testing Your Branding](#testing-your-branding)
-
-## Deployment Modes
-
-Sabha supports two deployment modes with different branding behavior:
-
-### Self-Hosted Mode (Default)
-
-Single-tenant deployment where `APP_NAME` is used throughout the application:
-- Page titles, welcome messages, emails all show `APP_NAME`
-- One workspace per installation
-
-### SaaS Mode (Multi-Tenant)
-
-Multi-tenant deployment where branding is context-aware:
-- **Outside workspace** (login, signup pages): Uses `SAAS_APP_NAME`
-- **Inside workspace**: Uses the workspace name set during creation
-
-This means in SaaS mode, users see their workspace name (e.g., "Acme Corp") instead of a global app name when inside their workspace.
+This guide explains how to customize Sabha's branding for a self-hosted deployment. All branding is configured through environment variables and asset files.
 
 ## Environment Variables
 
-All textual branding is controlled through environment variables in your `.env` file.
+Set these in your `.env` file.
 
 ### Application Identity
 
-These variables define how your community is named and identified:
-
 ```bash
-# The full name of your community (self-hosted mode)
+# The name of your community — appears in page titles, emails, sign-in pages, PWA manifest
 APP_NAME="My Awesome Community"
 
-# Short name for mobile/PWA (keep under 12 characters)
+# Short name for mobile/PWA home screen icon (keep under 12 characters)
 APP_SHORT_NAME="MAC"
 
-# Description shown in PWA manifest and meta tags
+# Description for PWA manifest and meta tags
 APP_DESCRIPTION="A welcoming community for creative entrepreneurs"
 
 # Your primary domain (without https://)
 APP_HOST="chat.yourdomain.com"
 ```
 
-**Where these appear:**
-- `APP_NAME`: Page titles, email subject lines, welcome messages, sign-in pages, PWA manifest (self-hosted mode only)
-- `APP_SHORT_NAME`: Mobile home screen icon label
-- `APP_DESCRIPTION`: PWA description, meta tags, app store descriptions
-- `APP_HOST`: Email links, URL generation, CSP policies
-
-### SaaS Mode Branding
-
-When running in SaaS mode, additional branding variables apply:
-
-```bash
-# App name shown on login/signup pages (before workspace is selected)
-SAAS_APP_NAME="Sabha"
-```
-
-**How branding works in SaaS mode:**
-
-| Context | What's Displayed |
-|---------|------------------|
-| Login/signup pages | `SAAS_APP_NAME` (default: "Sabha") |
-| Inside a workspace | Workspace name (set during creation) |
-| Emails from workspace | Workspace name |
-| PWA manifest | Workspace name |
-
-**Note:** In SaaS mode, `APP_NAME` from `.env` is ignored inside workspaces. Each workspace displays its own name configured during workspace creation.
-
 ### Contact & Support
 
-Configure how your community communicates with members:
-
 ```bash
-# Support email shown in error messages and help pages
+# Shown in error messages and help pages
 SUPPORT_EMAIL="support@yourdomain.com"
 
-# Name shown in "From" field of emails
+# "From" field in outgoing emails (sign-in codes, notifications, etc.)
 MAILER_FROM_NAME="My Awesome Community"
-
-# Email address shown in "From" field
 MAILER_FROM_EMAIL="noreply@yourdomain.com"
 ```
 
-**Where these appear:**
-- `SUPPORT_EMAIL`: Error messages, help contact buttons, footer
-- `MAILER_FROM_NAME` & `MAILER_FROM_EMAIL`: All outgoing emails (sign-in codes, notifications, etc.)
+### PWA Theme Colors
 
-### Visual Branding
-
-Configure PWA theme colors via environment variables:
+These control the mobile browser chrome and splash screen, not the app UI.
 
 ```bash
-# Theme color for mobile browser address bar and PWA
+# Mobile browser address bar and PWA theme (default: #1d4ed8)
 THEME_COLOR="#1d4ed8"
 
-# Background color for PWA splash screen
+# PWA splash screen background (default: #ffffff)
 BACKGROUND_COLOR="#ffffff"
 ```
 
-**Where these appear:**
-- Theme Color: Mobile browser address bar, PWA theme
-- Background Color: PWA splash screen background
-
-**Note:** These colors are for Progressive Web App (PWA) functionality only—they control the mobile browser chrome and splash screens, not the actual app UI styling.
-
-**Color recommendations:**
-- Use your brand's primary color for Theme Color
-- Use white (#ffffff) or your brand's background color for Background Color
-- Ensure good contrast between the two
-
-**Default values:** Theme Color: `#1d4ed8` (blue), Background Color: `#ffffff` (white)
+Use your brand's primary color for `THEME_COLOR`. Ensure good contrast between the two.
 
 ### Analytics (Optional)
 
@@ -127,31 +53,25 @@ If you use [Umami Analytics](https://umami.is):
 
 ```bash
 UMAMI_WEBSITE_ID="your-website-id"
-# Self-hosted instance (default: cloud.umami.is)
+# Self-hosted Umami instance (default: cloud.umami.is)
 # UMAMI_HOST="your-umami-host.com"
 ```
 
 Leave `UMAMI_WEBSITE_ID` unset to disable analytics.
 
-### Security
-
-Configure Content Security Policy frame ancestors:
+### Content Security Policy
 
 ```bash
 # Comma-separated list of allowed domains for iframe embedding
+# Defaults to https://APP_HOST, https://*.APP_HOST
 CSP_FRAME_ANCESTORS="https://yourdomain.com, https://*.yourdomain.com"
 ```
 
-**Default behavior:**
-If not set, automatically uses your `APP_HOST` value.
-
 ## Visual Assets
-
-Replace these image files with your own branding:
 
 ### Favicons & Icons
 
-Located in `app/assets/images/icons/`:
+Replace files in `app/assets/images/icons/`:
 
 | File | Size | Purpose |
 |------|------|---------|
@@ -164,259 +84,41 @@ Located in `app/assets/images/icons/`:
 
 ### Logo Files
 
-Located in `app/assets/images/logos/`:
+Replace files in `app/assets/images/logos/`:
 
 | File | Size | Purpose |
 |------|------|---------|
 | `app-icon.png` | 512x512 | Primary app logo |
 | `app-icon-192.png` | 192x192 | Smaller app logo variant |
 
-### Default Icon
+These are also the fallback when no custom logo is uploaded via the admin panel (see below).
 
-The `sabha-icon.png` in `app/assets/images/` is used as a fallback. Replace it with your brand's icon.
-
-### Creating Your Icons
-
-**Quick method using a single source image:**
-
-1. Start with a high-resolution square logo (1024x1024px minimum)
-2. Use an online tool like [RealFaviconGenerator](https://realfavicongenerator.net/)
-3. Upload your logo and download the generated icon pack
-4. Replace the files in the directories above
-
-**Design tips:**
-- Use simple, recognizable designs that work at small sizes
-- Ensure good contrast against both light and dark backgrounds
-- Test how your icon looks at 16x16px
-- For iOS, consider providing extra padding (safe area)
-
-## Custom Styles
-
-Administrators can add custom CSS directly through the admin interface:
-
-1. Log in as an administrator
-2. Go to `/accounts/edit`
-3. Scroll to "Custom Styles"
-4. Add your CSS
-
-**Example custom styles:**
-
-```css
-/* Change primary button colors */
-.btn-primary {
-  background-color: #your-brand-color;
-  border-color: #your-brand-color;
-}
-
-/* Customize header */
-#header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-/* Custom fonts */
-body {
-  font-family: 'Your Custom Font', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-```
-
-**Note:** Custom styles are stored per account, not globally. Each community can have its own styles.
-
-## Advanced Customization
+**Quick method:** Start with a 1024x1024px square logo, run it through [RealFaviconGenerator](https://realfavicongenerator.net/), and drop the generated files into the directories above.
 
 ### Logo Upload
 
-Sabha supports custom logo uploads through the admin panel:
+Administrators can upload a custom logo at `/accounts/edit` — it replaces the default `app-icon` files in the UI.
 
-1. Go to `/accounts/edit` as administrator
-2. Upload your logo in the "Account Logo" section
-3. The logo will automatically replace default branding
+## Custom Styles
 
-### Branding API for Developers
+Administrators can add custom CSS through the admin interface at `/accounts/custom_styles/edit`.
 
-The `Branding` module provides several methods for accessing branding values:
+Sabha uses CSS custom properties for theming. Override them to match your brand:
 
-```ruby
-# Static values (from environment variables)
-Branding.app_name          # APP_NAME (self-hosted)
-Branding.saas_app_name     # SAAS_APP_NAME (SaaS login pages)
-Branding.support_email     # SUPPORT_EMAIL
-Branding.app_host          # APP_HOST
-
-# Context-aware method (recommended for most uses)
-Branding.contextual_app_name
+```css
+:root {
+  --color-text: #1a1a1a;
+  --color-primary: #2563eb;
+  --color-link: #2563eb;
+  --color-border: #e5e7eb;
+}
 ```
 
-**`Branding.contextual_app_name`** automatically returns the correct name based on context:
+See `app/javascript/entrypoints/application.css` for the full list of available properties.
 
-| Mode | Context | Returns |
-|------|---------|---------|
-| Self-hosted | Anywhere | `APP_NAME` |
-| SaaS | Outside workspace | `SAAS_APP_NAME` |
-| SaaS | Inside workspace | Workspace name |
+Custom styles are stored per account and loaded inline.
 
-Use `contextual_app_name` in views, mailers, and controllers where you want the name to adapt automatically:
-
-```erb
-<h1>Welcome to <%= Branding.contextual_app_name %></h1>
-```
-
-### Extending Branding Configuration
-
-For developers who want to add more branding options, edit `config/initializers/branding.rb`:
-
-```ruby
-Rails.application.configure do
-  # Add your custom branding values
-  config.x.branding.custom_footer_text = ENV.fetch("CUSTOM_FOOTER_TEXT", "© 2024 Your Community")
-  config.x.branding.twitter_handle = ENV.fetch("TWITTER_HANDLE", "@yourcommunity")
-end
-
-# Add delegations to the Branding module
-module Branding
-  class << self
-    delegate :custom_footer_text, :twitter_handle, to: :config
-    # ... existing delegations
-  end
-end
-```
-
-Then use throughout your views:
-
-```erb
-<%= Branding.custom_footer_text %>
-<%= link_to "@#{Branding.twitter_handle}", "https://twitter.com/#{Branding.twitter_handle}" %>
-```
-
-### Translations & Internationalization
-
-The app includes built-in translation support. To customize text:
-
-1. Edit locale files in `config/locales/`
-2. Add your translations for different languages
-3. Community members can select their preferred language
-
-## Testing Your Branding
-
-### Local Testing
-
-1. Set your environment variables in `.env`
-2. Restart your Rails server: `bin/rails restart`
-3. Visit `http://localhost:3000`
-4. Test these pages:
-   - `/` - Home (redirects to sign-in if unauthenticated)
-   - `/sign_in` - Sign in page
-   - `/accounts/edit` - Settings (as admin)
-   - Check email templates by triggering sign-in codes
-
-### PWA Testing
-
-To test Progressive Web App branding:
-
-1. Deploy to a production server (PWA requires HTTPS)
-2. Visit on mobile browser
-3. Check "Add to Home Screen" functionality
-4. Verify:
-   - Home screen icon looks correct
-   - App name displays correctly
-   - Splash screen uses your branding
-   - Theme color appears in mobile browser
-
-### Email Testing
-
-Test email branding:
-
-```bash
-# In Rails console
-rails console
-
-# Send a test auth token email
-user = User.first
-auth_token = user.auth_tokens.create!(expires_at: 15.minutes.from_now)
-auth_token.deliver_later
-```
-
-Check that emails show:
-- Correct "From" name and email
-- Your app name in subject line
-- Your app name in email body
-- Correct support email address
-
-### Browser Testing Checklist
-
-**Self-Hosted Mode:**
-- [ ] Favicon appears in browser tabs
-- [ ] Page titles show your app name
-- [ ] Error messages use your support email
-- [ ] Sign-in page shows your branding
-- [ ] Welcome message uses your app name
-- [ ] Help/support buttons link to your support email
-- [ ] Footer shows your app name
-- [ ] PWA install shows correct name and icon
-
-**SaaS Mode (additional checks):**
-- [ ] Login page shows `SAAS_APP_NAME`
-- [ ] Inside workspace, pages show workspace name (not `APP_NAME`)
-- [ ] Emails from workspace show workspace name
-- [ ] PWA manifest uses workspace name
-- [ ] Workspace selector shows correct workspace names
-
-## Troubleshooting
-
-### Changes Not Appearing
-
-**Problem:** Updated environment variables but changes don't show
-
-**Solution:**
-```bash
-# Development: Restart Rails server
-bin/rails restart
-
-# Production with Docker: Restart containers
-docker-compose restart
-
-# Production with Kamal: Redeploy
-kamal deploy
-```
-
-### Icons Not Updating
-
-**Problem:** Replaced icon files but old icons still showing
-
-**Solution:**
-```bash
-# Clear browser cache, or test in incognito mode
-# For PWA: Uninstall the app and reinstall
-
-# Force asset recompilation in production:
-docker-compose exec app bin/rails assets:precompile
-docker-compose restart
-```
-
-### Email "From" Name Not Changing
-
-**Problem:** Emails still show old "From" name
-
-**Solution:**
-
-1. Check that `MAILER_FROM_NAME` and `MAILER_FROM_EMAIL` are set
-2. Restart your application
-3. Check `app/mailers/application_mailer.rb` is using `Branding`
-4. For some email providers, you may need to verify the sender domain
-
-### CSS Not Applying
-
-**Problem:** Custom CSS in admin panel not showing
-
-**Solution:**
-
-1. Ensure you're logged in as administrator
-2. CSS is account-specific; verify you're viewing the right account
-3. Check browser console for CSS errors
-4. CSS is loaded inline; it may be cached by the browser
-
-## Examples
-
-### Startup Community
+## Example Configuration
 
 ```bash
 APP_NAME="Startup Founders Club"
@@ -424,51 +126,44 @@ APP_SHORT_NAME="SFC"
 APP_DESCRIPTION="A community for early-stage startup founders"
 APP_HOST="chat.startupfounder.club"
 SUPPORT_EMAIL="help@startupfounder.club"
-THEME_COLOR="#10b981"  # Green
+MAILER_FROM_NAME="Startup Founders Club"
+MAILER_FROM_EMAIL="noreply@startupfounder.club"
+THEME_COLOR="#10b981"
 BACKGROUND_COLOR="#ffffff"
 ```
 
-### Creative Community
+## Troubleshooting
+
+### Changes Not Appearing
+
+Restart your server after changing environment variables:
 
 ```bash
-APP_NAME="Creative Collective"
-APP_SHORT_NAME="Creative"
-APP_DESCRIPTION="Where artists and creators collaborate"
-APP_HOST="community.creativecollective.io"
-SUPPORT_EMAIL="support@creativecollective.io"
-THEME_COLOR="#8b5cf6"  # Purple
-BACKGROUND_COLOR="#faf5ff"  # Light purple
+# Development
+bin/rails restart
+
+# Production (Docker Compose)
+docker compose restart
 ```
 
-### Developer Community
+### Icons Not Updating
+
+Clear your browser cache or test in incognito mode. For PWA, uninstall and reinstall the app.
+
+In production, force asset recompilation:
 
 ```bash
-APP_NAME="DevHub"
-APP_SHORT_NAME="DevHub"
-APP_DESCRIPTION="A community for developers to learn and grow"
-APP_HOST="chat.devhub.community"
-SUPPORT_EMAIL="hello@devhub.community"
-THEME_COLOR="#0ea5e9"  # Blue
-BACKGROUND_COLOR="#0f172a"  # Dark blue
+docker compose exec app bin/rails assets:precompile
+docker compose restart
 ```
 
-## Best Practices
+### Email "From" Name Not Changing
 
-1. **Keep APP_NAME concise** - It appears in many places; shorter is better
-2. **Use consistent branding** - Match your website colors and fonts
-3. **Test on mobile** - Most users will access via mobile
-4. **Verify emails** - Test email delivery with your branding before launch
-5. **Use high-quality icons** - Low-quality icons reflect poorly on your brand
-6. **Document custom changes** - If you modify code, document it for future reference
-7. **Test dark mode** - Ensure your branding works in dark mode if users enable it
+1. Verify `MAILER_FROM_NAME` and `MAILER_FROM_EMAIL` are set
+2. Restart the application
+3. Some email providers require sender domain verification
 
 ## Need Help?
 
-- Check the [main README](README.md) for deployment help
-- Review [smallbets-mods.md](smallbets-mods.md) for customization examples
-- Original Small Bets repo: [antiwork/smallbets](https://github.com/antiwork/smallbets)
-- Open an issue on GitHub if you encounter problems
-
----
-
-**Remember:** The beauty of Sabha is that everything is customizable. Make it yours! 🎨
+- See [DEPLOYMENT.md](./DEPLOYMENT.md) for deployment help
+- Open an issue on [GitHub](https://github.com/sabha-co/sabha/issues)

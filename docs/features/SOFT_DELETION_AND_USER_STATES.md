@@ -34,8 +34,8 @@ Provides:
 | User | Yes (status enum) | Admin UI or console |
 | Message | Yes | Console only |
 | Membership | No | Via Room/User reactivation |
-| Bookmark | No | No (user creates new) |
-| Boost | No | Console only |
+| Bookmark | No (hard-deleted) | No (user creates new) |
+| Boost | No (hard-deleted) | No (user creates new) |
 
 ---
 
@@ -51,10 +51,13 @@ Rooms use the `active` boolean via `Deactivatable`. Each room type behaves sligh
 
 ```ruby
 def deactivate
+  raise CannotDeleteOriginalError if original?
+
   transaction do
     deactivate_threads
     memberships.update_all(active: false)
     Message.unscoped.where(room_id: id).update_all(active: false)
+    destroy_notifications_for_messages
     deactivate!
   end
 end
@@ -143,7 +146,6 @@ def revoke_access
   close_remote_connections
   memberships.without_direct_rooms.update!(active: false)
   push_subscriptions.delete_all
-  searches.delete_all
   sessions.delete_all
   auth_tokens.delete_all
 end
@@ -153,7 +155,6 @@ This method:
 - Disconnects WebSocket connections
 - Deactivates non-DM memberships
 - Deletes push subscriptions
-- Deletes searches
 - Deletes sessions (logs out everywhere)
 - Deletes auth tokens (invalidates magic links)
 
@@ -167,7 +168,9 @@ This method:
 def deactivate
   transaction do
     revoke_access
-    deactivated!
+    deactivate_direct_rooms
+    searches.delete_all
+    update! status: :deactivated
   end
 end
 ```
@@ -175,6 +178,8 @@ end
 | Action | Effect |
 |--------|--------|
 | Access | Revoked (see above) |
+| Direct rooms | Deactivated |
+| Searches | Deleted |
 | Messages | Unchanged (remain visible) |
 | Status | Set to `deactivated` |
 
@@ -198,13 +203,14 @@ def reactivate
   transaction do
     # rewhere(active: false) replaces the default `active` scope to find inactive memberships
     memberships.rewhere(active: false).without_direct_rooms.update!(active: true)
-    active!
+    reactivate_direct_rooms
+    update! status: :active
     reset_remote_connections
   end
 end
 ```
 
-Restores memberships and sets status back to active. User must request new password/magic link.
+Restores memberships and direct rooms, sets status back to active. User must request new password/magic link.
 
 **Note:** Banned users cannot be reactivated via this action - they must be unbanned first.
 
@@ -288,44 +294,8 @@ Never deactivated directly. Deactivated as part of:
 
 ### Bookmark
 
-Deactivated when user removes a bookmark. No custom logic - just toggles `active` boolean. User creates a new bookmark to re-add.
+Hard-deleted when user removes a bookmark. User creates a new bookmark to re-add.
 
 ### Boost
 
-Deactivated when user removes a reaction. Has `broadcast_reactivation` callback but no custom deactivation logic.
-
----
-
-## Test Coverage
-
-Tests verify:
-
-**Room:**
-- Room deactivation sets room/memberships/messages to inactive
-- Room deactivation cascades to thread rooms
-- Room reactivation restores room/memberships/messages/threads
-
-**User Deactivation:**
-- User deactivation deletes sessions, auth_tokens, push subscriptions
-- User deactivation deactivates non-DM memberships
-- User reactivation restores memberships
-- Deactivated users cannot authenticate
-
-**User Ban:**
-- Ban creates ban records from sessions
-- Ban destroys sessions
-- Ban enqueues content removal job
-- Ban deactivates non-DM memberships
-- Ban deletes auth tokens
-- Ban deletes push subscriptions
-- Ban soft-deletes messages
-- Non-admins cannot ban/unban
-- IP blocking for banned users
-
-**Admin UI:**
-- Admin can deactivate user
-- Admin can reactivate deactivated user
-- Non-admins cannot reactivate
-- Reactivate does not work on banned users (must unban first)
-- Reactivate does not work on active users
-- Deactivated users filter in admin panel
+Hard-deleted when user removes a reaction. Has `broadcast_removal` callback to update the UI in real-time.

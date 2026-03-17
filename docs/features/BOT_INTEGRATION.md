@@ -320,6 +320,7 @@ All bot API errors return JSON with two fields:
 | Code | HTTP Status | Meaning |
 |---|---|---|
 | `join_code_not_found` | 404 | Invalid join code |
+| `join_code_inactive` | 410 | Code is inactive |
 | `join_code_expired` | 410 | Code expired or usage exhausted |
 | `self_registration_disabled` | 403 | Account setting is off |
 | `rate_limited` | 429 | Too many registration attempts (10/hour) |

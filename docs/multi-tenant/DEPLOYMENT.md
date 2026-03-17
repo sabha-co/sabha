@@ -4,6 +4,8 @@ This guide covers deploying Sabha in multi-tenant SaaS mode, where multiple work
 
 For single-tenant self-hosting, see [DEPLOYMENT.md](../DEPLOYMENT.md).
 
+> **License note:** The multi-tenant SaaS engine (`saas/` directory) is licensed under the [Sabha SaaS License](../../saas/LICENSE), not MIT. The core application (everything outside `saas/`) remains MIT-licensed. You can freely read and reference this code for development and testing, but production use of the SaaS engine requires a Sabha subscription. See [LICENSE.md](../../LICENSE.md) for details.
+
 ---
 
 ## Overview
@@ -19,7 +21,7 @@ Multi-tenant mode enables:
 
 ## Requirements
 
-- A VPS with 4GB+ RAM (scales with number of workspaces)
+- A VPS with 8GB+ RAM (scales with number of workspaces)
 - A domain name pointing to your server
 - A managed PostgreSQL instance (e.g., PlanetScale Postgres) for the untenanted database
 - Docker and Kamal installed locally
@@ -37,37 +39,41 @@ cp .env.multitenant.sample .env.multitenant
 
 Edit `.env.multitenant`:
 
+See `.env.multitenant.sample` for a complete reference. Key variables:
+
 ```bash
 # Server
 SERVER_IP=your.server.ip
-PROXY_HOST=sabha.co
+PROXY_HOST=yourdomain.com
 
 # Branding
-APP_NAME="Sabha"
-APP_SHORT_NAME="Sabha"
+APP_NAME="Your Platform"
+APP_SHORT_NAME="Platform"
 APP_DESCRIPTION="Community workspaces powered by Sabha"
-APP_HOST="sabha.co"
+APP_HOST="yourdomain.com"
 
 # Email
-SUPPORT_EMAIL="support@sabha.co"
-MAILER_FROM_NAME="Sabha"
-MAILER_FROM_EMAIL="noreply@sabha.co"
-
-# SaaS-specific email (for auth codes, workspace invites)
-SAAS_MAILER_FROM_NAME="Sabha"
-SAAS_MAILER_FROM_EMAIL="noreply@sabha.co"
+SUPPORT_EMAIL="support@yourdomain.com"
+MAILER_FROM_NAME="Your Platform"
+MAILER_FROM_EMAIL="noreply@yourdomain.com"
 
 # IMPORTANT: Cookie domain enables cross-workspace sessions
-COOKIE_DOMAIN=sabha.co
+COOKIE_DOMAIN=yourdomain.com
 
-# Managed PostgreSQL (e.g., PlanetScale Postgres)
+# Managed PostgreSQL for the untenanted database
 UNTENANTED_DATABASE_URL=postgres://user:password@host:port/database?sslmode=require
 
 # Rails
 SECRET_KEY_BASE=$(openssl rand -hex 64)
 
-# Email service (get key from resend.com)
+# Email provider: "resend" (default) or "ses"
+EMAIL_PROVIDER=resend
 RESEND_API_KEY=your_resend_api_key
+# Or for AWS SES:
+# EMAIL_PROVIDER=ses
+# AWS_SES_REGION=us-east-1
+# AWS_SES_ACCESS_KEY_ID=
+# AWS_SES_SECRET_ACCESS_KEY=
 
 # Web Push (generate with: npx web-push generate-vapid-keys)
 VAPID_PUBLIC_KEY=your_public_key
@@ -77,7 +83,11 @@ VAPID_PRIVATE_KEY=your_private_key
 ANYCABLE_ENABLED=true
 ANYCABLE_SECRET=$(openssl rand -hex 32)
 
-# Registry
+# Cloudflare Turnstile CAPTCHA (optional)
+# CLOUDFLARE_TURNSTILE_SITE_KEY=
+# CLOUDFLARE_TURNSTILE_SECRET_KEY=
+
+# Docker registry
 KAMAL_REGISTRY_PASSWORD=your_github_token
 ```
 
@@ -113,49 +123,7 @@ puts "Workspace created with ID: #{workspace.id}"
 
 ## Architecture
 
-### Database Structure
-
-Multi-tenant mode uses PostgreSQL for the shared layer and SQLite per workspace:
-
-```
-PostgreSQL (sabha_untenanted_production):
-├── global_identities           # Cross-workspace user identity
-├── global_sessions             # Cross-workspace sessions
-├── workspaces                  # Workspace registry
-├── workspace_memberships       # Identity-to-workspace links
-├── auth_codes                  # OTP codes
-└── workspace_external_id_sequences
-
-/rails/storage/production/
-└── workspaces/
-    ├── 1000001/
-    │   └── main.sqlite3        # Workspace 1 data (User, Room, Message, etc.)
-    ├── 1000002/
-    │   └── main.sqlite3        # Workspace 2 data
-    └── ...
-```
-
-### Key Models
-
-**Untenanted (shared across all workspaces):**
-- `GlobalIdentity` - User identity (email, cross-workspace profile)
-- `GlobalSession` - Authentication sessions
-- `Workspace` - Workspace metadata
-- `WorkspaceMembership` - Links identities to workspaces
-
-**Tenanted (per-workspace):**
-- `User` - Workspace-specific user record
-- `Room`, `Message`, `Membership` - All chat data
-
-### URL Structure
-
-```
-https://sabha.co/                     # Landing page
-https://sabha.co/session/new          # Global sign-in
-https://sabha.co/workspaces           # Workspace selector
-https://sabha.co/1000001/             # Workspace 1 home
-https://sabha.co/1000001/rooms/general # Room in workspace 1
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture overview (database structure, key models, URL routing, request flow).
 
 ---
 
@@ -164,9 +132,9 @@ https://sabha.co/1000001/rooms/general # Room in workspace 1
 | Setting | Self-Hosted | Multi-Tenant |
 |---------|-------------|--------------|
 | `SAAS` | Not set | `true` |
-| `COOKIE_DOMAIN` | Optional | Required (e.g., `sabha.co`) |
-| `SAAS_MAILER_FROM_*` | Not needed | Required |
+| `COOKIE_DOMAIN` | Optional | Required (e.g., `yourdomain.com`) |
 | `UNTENANTED_DATABASE_URL` | Not needed | Required (managed Postgres URL) |
+| `EMAIL_PROVIDER` | `resend` only | `resend` or `ses` |
 | Database | Single SQLite | Managed Postgres (shared) + SQLite per workspace |
 | Auth | Password or OTP | OTP via GlobalIdentity |
 
@@ -312,31 +280,6 @@ puts "Active users (24h): #{count}"
 ```
 
 ---
-
-## Scaling Considerations
-
-### When to Scale
-
-- **CPU**: Sustained >70% usage
-- **Memory**: Sustained >80% usage
-- **Disk**: >80% full
-- **Workspaces**: >100 active workspaces on a single server
-
-### Scaling Options
-
-1. **Vertical scaling** - Upgrade to larger VPS (easiest)
-2. **Read replicas** - Use Litestream for SQLite replication
-3. **Multiple servers** - Route workspaces to different servers by ID range
-
-### Performance Tips
-
-- Enable AnyCable for WebSocket scaling (`ANYCABLE_ENABLED=true`)
-- Use S3/R2 for file storage instead of local disk
-- Set up CDN for static assets
-- Monitor SQLite WAL file sizes
-
----
-
 ## Troubleshooting
 
 ### "Workspace not found"
@@ -387,23 +330,25 @@ end
 |----------|----------|-------------|
 | `SAAS` | Yes | Set to `true` for multi-tenant mode |
 | `SERVER_IP` | Yes | Server IP address |
-| `PROXY_HOST` | Yes | Domain name (e.g., `sabha.co`) |
-| `COOKIE_DOMAIN` | Yes | Domain for session cookies |
+| `PROXY_HOST` | Yes | Domain name |
+| `COOKIE_DOMAIN` | Yes | Domain for session cookies (cross-workspace) |
 | `SECRET_KEY_BASE` | Yes | Rails encryption key |
 | `UNTENANTED_DATABASE_URL` | Yes | Managed PostgreSQL connection URL |
-| `RESEND_API_KEY` | Yes | Email service API key |
+| `EMAIL_PROVIDER` | No | `resend` (default) or `ses` |
+| `RESEND_API_KEY` | If Resend | Resend API key |
+| `AWS_SES_REGION` | If SES | AWS SES region |
+| `AWS_SES_ACCESS_KEY_ID` | If SES | AWS SES access key |
+| `AWS_SES_SECRET_ACCESS_KEY` | If SES | AWS SES secret key |
 | `VAPID_PUBLIC_KEY` | Yes | Web push public key |
 | `VAPID_PRIVATE_KEY` | Yes | Web push private key |
-| `SAAS_MAILER_FROM_NAME` | Yes | Sender name for auth emails |
-| `SAAS_MAILER_FROM_EMAIL` | Yes | Sender email for auth emails |
 | `ANYCABLE_ENABLED` | No | Enable AnyCable (default: true) |
 | `ANYCABLE_SECRET` | If AnyCable | AnyCable authentication secret |
+| `KAMAL_REGISTRY_PASSWORD` | Yes | GitHub Container Registry token |
 
 ---
 
 ## See Also
 
-- [Multi-Tenancy Technical PRD](multi-tenancy-technical-prd.md)
-- [User Flows](multi-tenant-user-flows.md)
 - [activerecord-tenanted Guide](activerecord-tenanted-guide.md)
+- [PostgreSQL Decision](postgres-untenanted.md)
 - [Self-Hosted Deployment](../DEPLOYMENT.md)

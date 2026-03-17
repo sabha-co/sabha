@@ -1,8 +1,10 @@
 # Sabha Architecture
 
-Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQLite. It supports two deployment modes: **self-hosted** (single-tenant) and **SaaS** (multi-tenant with database-per-workspace isolation).
+Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQLite.
 
-[Visual architecture diagrams (Excalidraw)](https://excalidraw.com/#json=NROsXM5J3pIdiRL_1x9d_,5hRkehIds4KTPlnKqJG7SA)
+> For multi-tenant SaaS architecture, see [multi-tenant/ARCHITECTURE.md](./multi-tenant/ARCHITECTURE.md).
+
+[Visual architecture diagrams (Excalidraw)](once-campfire-architecture.excalidraw)
 
 ---
 
@@ -15,7 +17,6 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
 - [Real-Time Layer](#real-time-layer)
 - [Frontend Architecture](#frontend-architecture)
 - [Background Jobs](#background-jobs)
-- [SaaS / Multi-Tenant](#saas--multi-tenant)
 - [Database](#database)
 - [Deployment](#deployment)
 - [Key Dependencies](#key-dependencies)
@@ -28,7 +29,7 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
                     ┌──────────────────────────────────────────────────────┐
                     │  Server (single host)                                │
                     │                                                      │
-  Browser ─HTTPS──▶ │  Kamal Proxy / Caddy (:443)                        │
+  Browser ─HTTPS──▶ │  Kamal Proxy (:443)                                │
                     │      │             │                                  │
                     │      │ /cable      │ /*                               │
                     │      ▼             ▼                                  │
@@ -52,7 +53,7 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
 **Technology choices:**
 - **Rails 8.2** with Hotwire (Turbo + Stimulus) for server-rendered HTML with real-time updates
 - **SQLite** in production, optimized for single-server deployments
-- **AnyCable** for WebSocket scaling (HTTP RPC mode, no gRPC)
+- **AnyCable** for WebSocket scaling (HTTP RPC mode)
 - **Tailwind CSS v4** compiled via `@tailwindcss/cli`; **Importmap** for all JavaScript (zero JS bundling)
 - **Solid Queue** (SQLite-backed) for background jobs
 - **Propshaft** as the asset pipeline
@@ -64,16 +65,12 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
 ### HTTP Request
 
 ```
-Browser → Thruster → Puma → Rack middleware → Rails router → Controller → View
-                                    │
-                                    └── SaaS mode: PathRewriter middleware
-                                        extracts /{workspace_id}/ prefix
-                                        into SCRIPT_NAME
+Browser → kamal-proxy → Thruster → Puma → Rack middleware → Rails router → Controller → View
 ```
 
-1. **Thruster** terminates TLS, compresses responses, serves cached assets (skipped in Sabha Cloud where Caddy handles this)
-2. **Puma** dispatches to Rails
-3. **Middleware** (SaaS mode): `PathRewriter` moves the workspace prefix (e.g., `/1000001/`) from PATH_INFO to SCRIPT_NAME, enabling transparent URL generation
+1. **kamal-proxy** terminates TLS, routes `/cable` to AnyCable-Go, everything else to the web container
+2. **Thruster** compresses responses, serves cached assets
+3. **Puma** dispatches to Rails
 4. **Router** matches the request to a controller action
 5. **Controller** authenticates via `Current.user` (set in `before_action`), performs the action, renders a view or Turbo Stream
 
@@ -112,7 +109,7 @@ User ──────┐
   │              │
   │              ├── ActionText::RichText (body)
   │              ├── ActiveStorage attachments
-  │              ├── Mention (join: message_id + user_id, no PK)
+  │              ├── Mention (parsed from ActionText body HTML, persisted for history)
   │              ├── Boost (reactions/reposts)
   │              └── Bookmark
   │
@@ -138,20 +135,14 @@ Models primarily use namespace decomposition, with selective service objects whe
 | `app/models/inbox/` | Query objects: `ActivityQuery`, `ThreadsQuery`, `BookmarksQuery`, `MessagesQuery`, `DirectMessagesQuery` |
 | `app/models/concerns/` | `Deactivatable` (soft deletion), `Pagination` |
 
-### Soft Deletion
-
-Messages, rooms, memberships, boosts, bookmarks, and accounts use soft deletion via the `Deactivatable` concern (`active` boolean with explicit `active`/`inactive` scopes, not a default scope). Users use a `status` enum (`active`, `deactivated`, `banned`) rather than an `active` boolean.
-
-### System Event Messages
-
-Room lifecycle changes (renames, member additions/removals) are recorded as **system event messages** -- messages with a non-null `event` column (`room_renamed`, `member_joined`, `member_left`). These are created via `Room#post_system_message` which uses `Message.insert!` + `ActionText::RichText.insert!` to bypass all ActiveRecord callbacks (push notifications, search indexing, counter caches, streaks). Only the Turbo Stream append broadcast is emitted. System events are excluded from inbox queries, unread cursor advancement, and search via the `without_events` scope.
-
 ### Key Conventions
 
 - **Model-first business logic.** Most behavior lives in models/concerns, with selective service objects (e.g., `SlackImporter`) for isolated workflows.
 - **Strictly RESTful controllers.** Only standard CRUD actions (`index`, `show`, `new`, `create`, `edit`, `update`, `destroy`). Custom actions like `leave` or `activate` become `destroy` on a new resource controller (e.g., `MembershipsController#destroy`).
 - **Exceptions over return values.** Model methods raise on failure, controllers rescue with redirects.
 - **`id: false` tables** (like `mentions`) must use `dependent: :delete_all`, never `:destroy`.
+- **Soft deletion via `Deactivatable` concern.** Most models use an `active` boolean with explicit scopes (not a default scope). Users use a `status` enum (`active`/`deactivated`/`banned`) instead.
+- **System event messages bypass callbacks.** Room lifecycle changes (renames, joins, leaves) are recorded via `Message.insert!` to skip push notifications, search indexing, and counter caches. Excluded from inbox queries and search via `without_events` scope.
 
 ### Room Types in Detail
 
@@ -160,45 +151,34 @@ Room lifecycle changes (renames, member additions/removals) are recorded as **sy
 - **`Rooms::Direct`** - Identified by an MD5 `members_hash` of sorted user IDs, ensuring one DM room per unique set of participants. Default involvement: `everything`.
 - **`Rooms::Thread`** - Tied to a `parent_message`. Inherits permissions from the parent room. Default involvement: `invisible` except for thread creator and parent message author.
 
-### Supporting Models
+### All Models
 
 | Model | Purpose |
 |-------|---------|
-| `Account` | Singleton workspace settings. `has_json :settings` for feature flags. |
-| `Boost` | Message reactions/reshares (soft-deleted) |
-| `Bookmark` | Saved messages (soft-deleted) |
+| `User` | User record with role enum (`member`, `moderator`, `administrator`, `bot`) |
+| `Room` | STI base class for `Open`, `Closed`, `Direct`, `Thread` |
+| `Membership` | User ↔ Room link with involvement level |
+| `Message` | Chat message with ActionText body and attachments |
+| `Account` | Singleton workspace settings. `has_json :settings` for feature flags |
+| `Boost` | Message reactions/reshares |
+| `Bookmark` | Saved messages |
 | `Mention` | Join table (`message_id` + `user_id`, no PK). Must use `dependent: :delete_all` |
 | `Badge` | Custom user badges (name, icon, color) |
 | `Ban` | IP address bans tied to users |
 | `Block` | User-to-user blocking (prevents DMs) |
-| `Sound` | Pure Ruby value object (~50 built-in sounds via `/play name` syntax) |
+| `Session` | Browser sessions (IP, platform tracking) |
+| `AuthToken` | OTP codes for passwordless sign-in |
 | `Search` | Persisted search queries with per-user history |
+| `Sound` | Pure Ruby value object (~50 built-in sounds via `/play name` syntax) |
 | `Webhook` / `WebhookEvent` | Bot webhook endpoints and delivery records |
 | `Push::Subscription` | Web push subscription endpoints (VAPID) |
 | `Everyone` | Attachable for `@everyone` mentions (not an AR model) |
-
-### Key Concerns
-
-| Concern | Used By | Purpose |
-|---------|---------|---------|
-| `Deactivatable` | Account, Room, Message, Membership, Boost, Bookmark | Soft deletion via `active` boolean with scopes |
-| `Membership::Connectable` | Membership | WebSocket presence tracking (`connected_at`, 60s TTL). Provides activity status tiers: online (green, connected now), away (yellow, connected within TTL), offline (gray). Powers status indicators on member lists and profiles. |
-| `Message::Searchable` | Message | FTS5 full-text search index maintenance |
-| `Message::Broadcasts` | Message | Turbo Stream broadcasting on create/update/remove |
-| `Message::Mentionee` | Message | Parses ActionText body for @mentions, syncs `mentions` join table |
-| `Message::Attachment` | Message | Single file attachment with thumbnail variant |
-| `User::Mentionable` | User | ActionText `Attachable` interface for @mention embedding |
-| `User::Role` | User | Role enum (`member`, `moderator`, `administrator`, `bot`) with permission methods |
-| `User::Bot` | User | Bot authentication via `{id}-{token}` URL key |
-| `Pagination` | Message, Bookmark | Cursor-based pagination (`page_before`, `page_after`, `page_around`) |
 
 ---
 
 ## Authentication
 
-Sabha supports two authentication strategies depending on deployment mode.
-
-### Self-Hosted Mode
+Configurable via `AUTH_METHOD` environment variable.
 
 ```
                     ┌─────────────────────┐
@@ -226,45 +206,13 @@ Sabha supports two authentication strategies depending on deployment mode.
 - Email verification required for new users (`verified_at` timestamp)
 - Cloudflare Turnstile bot protection on sign-in forms (production)
 
-### SaaS Mode
-
-```
-     ┌──────────────┐         ┌──────────────────┐
-     │ GlobalIdentity│────────▶│ WorkspaceMembership│
-     │ (email, cross-│         │ (links identity   │
-     │  workspace)   │         │  to workspace)     │
-     └──────┬───────┘         └────────┬───────────┘
-            │                          │
-            ▼                          ▼
-     GlobalSession              User (per-workspace)
-     (global_session_token      created/synced on
-      cookie)                   workspace access)
-            │
-            ▼
-     AuthCode (OTP only,
-     no passwords in SaaS)
-```
-
-- `GlobalIdentity` is the cross-workspace user record (email + name, no password). The `name` field syncs bidirectionally with workspace `User` records -- set during registration and updated when a user changes their name in any workspace.
-- `GlobalSession` persists across workspaces via `global_session_token` cookie
-- `WorkspaceMembership` links a `GlobalIdentity` to a specific workspace tenant
-- SaaS mode enforces OTP-only authentication (no password auth)
-
 ### Current Context
 
 ```ruby
-# Self-hosted:
 Current.user       # Authenticated user
 Current.session    # Session record
 Current.account    # Workspace settings (singleton)
 Current.request    # HTTP request
-
-# SaaS (additional):
-Current.global_session        # Cross-workspace session
-Current.global_identity       # Identity (via global_session)
-Current.workspace_membership  # Link to current workspace
-Current.workspace             # Current Workspace record
-# Current.user derived from workspace_membership.user
 ```
 
 ---
@@ -421,98 +369,6 @@ Configuration (`config/queue.yml`):
 A dedicated thread pool (`WebPush::Pool`) handles push notification delivery:
 - 50 delivery threads, 1 invalidation thread
 - 150 persistent HTTP connections (via `net-http-persistent`)
-- In SaaS mode, captures tenant context before dispatching to the thread pool
-
----
-
-## SaaS / Multi-Tenant
-
-The multi-tenant layer is a Rails engine in `saas/`, enabled via `Sabha.saas?` (set by `SAAS=true` env var or `tmp/saas.txt` marker file).
-
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│                  PostgreSQL                          │
-│           (untenanted database)                      │
-│                                                      │
-│  GlobalIdentity ─── WorkspaceMembership ─── Workspace│
-│  GlobalSession                                       │
-│  AuthCode                                            │
-└─────────────────────────────────────────────────────┘
-         │                    │                    │
-         │              ┌─────┘                    │
-         ▼              ▼                          ▼
-┌──────────────┐ ┌──────────────┐        ┌──────────────┐
-│  SQLite DB   │ │  SQLite DB   │  ...   │  SQLite DB   │
-│ Workspace A  │ │ Workspace B  │        │ Workspace N  │
-│              │ │              │        │              │
-│ User, Room,  │ │ User, Room,  │        │ User, Room,  │
-│ Message,     │ │ Message,     │        │ Message,     │
-│ Membership...│ │ Membership...│        │ Membership...│
-└──────────────┘ └──────────────┘        └──────────────┘
-```
-
-- **Untenanted database** (PostgreSQL): `GlobalIdentity`, `Workspace`, `WorkspaceMembership`, `GlobalSession`, `AuthCode` -- these models inherit from `UntenantedRecord`
-- **Tenanted databases** (SQLite, one per workspace): All application models (`User`, `Room`, `Message`, etc.) -- stored at `storage/workspaces/{env}/{tenant_id}/db/main.sqlite3`
-- Tenant isolation via `activerecord-tenanted` gem
-
-### Request Flow (SaaS)
-
-```
-GET /1000001/rooms/42
-         │
-         ▼
-PathRewriter middleware
-  SCRIPT_NAME = /1000001
-  PATH_INFO   = /rooms/42
-         │
-         ▼
-TenantResolver
-  extracts tenant ID from SCRIPT_NAME
-  sets ApplicationRecord.current_tenant
-         │
-         ▼
-Rails router (standard routing, unaware of tenant)
-  matches /rooms/42 → RoomsController#show
-         │
-         ▼
-URL helpers auto-include SCRIPT_NAME
-  room_path(@room) → /1000001/rooms/42
-```
-
-### SaaS Engine Structure
-
-```
-saas/
-├── lib/sabha/saas/engine.rb              # Engine config, routes
-├── lib/sabha/saas/path_rewriter.rb       # Middleware: move workspace prefix into SCRIPT_NAME
-├── app/models/
-│   ├── global_identity.rb                # Cross-workspace user identity
-│   ├── global_session.rb                 # Cross-workspace session
-│   ├── workspace.rb                      # Workspace record
-│   ├── workspace_membership.rb           # Identity ↔ workspace link
-│   ├── auth_code.rb                      # OTP codes (SaaS equivalent of AuthToken)
-│   └── untenanted_record.rb              # Base class for PostgreSQL models
-├── app/controllers/saas/
-│   ├── base_controller.rb                # Base for all SaaS controllers
-│   ├── sessions_controller.rb            # Global sign-in
-│   ├── registrations_controller.rb       # Global sign-up
-│   ├── workspaces_controller.rb          # Workspace selection, creation, joining
-│   ├── workspace_settings_controller.rb  # Workspace settings
-│   ├── workspace_memberships_controller.rb # Leave workspace
-│   ├── landing_controller.rb             # Landing page
-│   └── auth_codes_controller.rb          # OTP verification
-├── config/initializers/tenanting/
-│   ├── tenant_resolver.rb                # Load/insert PathRewriter + tenant resolver
-│   ├── application_record.rb             # Connect tenanted models to primary DB
-│   ├── default_tenant.rb                 # Optional default tenant for local/dev use
-│   ├── turbo.rb                          # Turbo broadcasts include workspace prefix
-│   ├── active_storage.rb                 # Storage URLs include script_name
-│   └── logging.rb                        # Tenant tags in logs
-├── db/untenanted_migrate/                # PostgreSQL migrations
-└── test/                                 # SaaS-specific test suite
-```
 
 ---
 
@@ -548,73 +404,15 @@ message_search_index (virtual table)
 
 Schema format is Ruby (`db/schema.rb`), using `create_virtual_table` for FTS5.
 
-### SaaS: PostgreSQL + SQLite
-
-- **PostgreSQL** (`sabha_untenanted_{env}`): Platform-level records (identity, workspace, sessions)
-- **SQLite** (per workspace): All application data, isolated per tenant
-- Untenanted migrations: `saas/db/untenanted_migrate/`
-- Tenanted migrations: standard `db/migrate/` (applied per-workspace)
-
 ---
 
 ## Deployment
 
-All deployment modes share the same container architecture: **3 containers** (web + AnyCable-Go + reverse proxy) with Redis and Solid Queue workers running inside the web container. AnyCable-Go always runs as a **separate container**, communicating with Rails via HTTP RPC at `/_anycable`.
+Deployed via [Kamal](https://kamal-deploy.org/) with 3 containers:
 
-### SaaS (Kamal + kamal-proxy)
-
-```
-┌──────────────────────────────────────────────────┐
-│  Server                                           │
-│                                                   │
-│  kamal-proxy (:443, :80)  ─── TLS + routing       │
-│      │ /cable     │ /*                             │
-│      ▼            ▼                                │
-│  AnyCable-Go   Web Container (SAAS=true)           │
-│  (:8080)         Puma :3000 (SKIP_THRUSTER=true)   │
-│                  Redis (in-container)               │
-│                  Solid Queue workers                │
-│                                                    │
-│  Volume: /disk/sabha/ → /rails/storage             │
-│  (per-workspace SQLite + PostgreSQL untenanted)     │
-└──────────────────────────────────────────────────┘
-```
-
-- **kamal-proxy** handles TLS (Let's Encrypt) and routes `/cable` to AnyCable-Go, everything else to Puma
-- **AnyCable-Go** runs as a Kamal accessory (`anycable/anycable-go:1.6`) on the same Docker network (`kamal`)
-- `SKIP_THRUSTER=true` -- Puma runs directly, no Thruster wrapper
-- Deployed via `kamal deploy -d multitenant` (config: `config/deploy.multitenant.yml`)
-
-### Managed Hosting (Docker Compose + Caddy)
-
-```
-┌──────────────────────────────────────────────────┐
-│  DigitalOcean Droplet (per customer)              │
-│                                                   │
-│  Caddy (:443, :80)  ─── auto HTTPS + HTTP/3       │
-│      │ /cable     │ /*                             │
-│      ▼            ▼                                │
-│  AnyCable-Go   Web Container                       │
-│  (:8080)         Puma :3000                        │
-│                  Redis (in-container)               │
-│                  Solid Queue workers                │
-│                                                    │
-│  Docker volume: campfire_data → /rails/storage     │
-│  (single SQLite database)                          │
-└──────────────────────────────────────────────────┘
-```
-
-- **Caddy** handles automatic HTTPS (Let's Encrypt), HTTP/3, compression, and security headers
-- **Docker Compose** orchestrates 3 containers: `web`, `campfire-anycable`, `caddy`
-- Single-tenant mode (no SAAS env), `AUTH_METHOD=password`
-- Health check at `/up` with auto-restart
-
-### Self-Hosted (Kamal + Thruster)
-
-For users deploying their own instance via Kamal:
-- **Thruster** wraps Puma for HTTP/2, TLS, compression, and static asset caching (when `SKIP_THRUSTER` is not set)
-- **AnyCable-Go** runs as a Kamal accessory with path prefix `/cable`
-- Same 3-container pattern: kamal-proxy + web + AnyCable-Go
+- **kamal-proxy** — TLS termination (Let's Encrypt), routes `/cable` to AnyCable-Go, everything else to the web container
+- **Web container** — Thruster (compression, asset caching) → Puma, Redis, and Solid Queue workers
+- **AnyCable-Go** — WebSocket server, communicates with Rails via HTTP RPC at `/_anycable`
 
 ### Startup Sequence
 
@@ -623,8 +421,7 @@ bin/boot
     │
     ├── Pre-boot (production only):
     │   ├── mkdir -p storage/logs
-    │   ├── rails db:prepare
-    │   └── rails db:seed           # SaaS mode only
+    │   └── rails db:prepare
     │
     └── ProcessMonitor (reads Procfile):
         ├── bin/start-app           # Puma (via Thruster or direct)
@@ -664,35 +461,6 @@ Multi-stage build:
 | `kredis` | Higher-level Redis data structures |
 | `sentry-ruby` | Error tracking (production) |
 | `rails_cloudflare_turnstile` | Bot protection |
-| `activerecord-tenanted` | Multi-tenant database isolation (SaaS) |
-
----
-
-## Routes Structure
-
-Routes are organized RESTfully around resources:
-
-| Path | Controller | Purpose |
-|------|-----------|---------|
-| `/session` | `SessionsController` | Sign in/out |
-| `/auth_tokens` | `AuthTokensController` | OTP code generation |
-| `/account` | `AccountsController` | Workspace settings (admin) |
-| `/account/users` | `Accounts::UsersController` | User management |
-| `/account/bots` | `Accounts::BotsController` | Bot management |
-| `/rooms` | `RoomsController` | Room CRUD |
-| `/rooms/:id/messages` | `MessagesController` | Messages within a room |
-| `/rooms/opens` | `Rooms::OpensController` | Public room creation |
-| `/rooms/closeds` | `Rooms::ClosedsController` | Private room creation |
-| `/rooms/directs` | `Rooms::DirectsController` | DM creation |
-| `/rooms/threads` | `Rooms::ThreadsController` | Thread management |
-| `/messages/:id/boosts` | `Messages::BoostsController` | Reactions |
-| `/messages/:id/bookmarks` | `Messages::BookmarksController` | Bookmarks |
-| `/inbox` | `InboxesController` | Inbox (activity, threads, DMs, bookmarks) |
-| `/searches` | `SearchesController` | Full-text search |
-| `/users/:id` | `UsersController` | User profiles |
-| `/join/:code` | `UsersController` | Invite link signup |
-
-SaaS mode prepends `/{workspace_id}/` to all workspace-scoped routes (handled transparently by the PathRewriter middleware).
 
 ---
 
@@ -710,8 +478,4 @@ SaaS mode prepends `/{workspace_id}/` to all workspace-scoped routes (handled tr
 
 6. **Broadcasts are close to state changes.** Most real-time updates are model/job-driven, with targeted controller broadcasts for user-scoped UI changes.
 
-7. **Lazy user creation in SaaS mode.** A `User` record in a workspace database is only created when a `GlobalIdentity` member first visits that workspace, avoiding pre-provisioning across all workspaces.
-
-8. **Tenant context propagated automatically.** The `activerecord-tenanted` gem serializes `current_tenant` with Solid Queue job payloads and wraps ActionCable channel commands with the correct tenant, eliminating manual tenant management.
-
-9. **3-container deployment.** The web container runs Puma, Redis, and Solid Queue workers together. AnyCable-Go runs as a separate container for WebSocket scaling. A reverse proxy (kamal-proxy, Caddy, or Thruster) handles TLS and routes `/cable` traffic to AnyCable-Go. This keeps operations simple while separating WebSocket connections from the Ruby process.
+7. **3-container deployment.** The web container runs Puma, Redis, and Solid Queue workers together. AnyCable-Go runs as a separate container for WebSocket scaling. A reverse proxy (kamal-proxy or Thruster) handles TLS and routes `/cable` traffic to AnyCable-Go. This keeps operations simple while separating WebSocket connections from the Ruby process.

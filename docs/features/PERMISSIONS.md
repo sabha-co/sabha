@@ -81,7 +81,7 @@ before_action :ensure_permission_to_create_rooms, only: %i[ new create ]
 ### Rooms::ThreadsController
 
 ```ruby
-before_action :set_room, only: %i[ edit update destroy ]
+before_action :set_room, only: %i[ show edit update destroy ]
 ```
 
 ## Membership Involvement Levels
