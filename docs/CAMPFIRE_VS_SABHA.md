@@ -10,20 +10,40 @@ Sabha is a fork of [Once Campfire](https://once.com/campfire) by 37signals. This
 
 | Feature | Description |
 |---------|-------------|
+| **User management** | Admins can manage users from the UI. Promote/demote users between member, moderator, and administrator roles. |
 | **User banning** | Admins ban users — terminates sessions, soft-deletes messages, blocks IP addresses. Unbanning restores the account. |
 | **User blocking** | Members block other users from sending DMs. Admins can see who's being blocked. |
-| **Role management** | Promote/demote users between member, moderator, and administrator roles. |
 | **User badges** | Custom badges (name + color) to highlight member roles or titles. |
 | **User search** | Search members by name or email in the admin panel. |
 | **User reactivation** | Admins can reactivate deactivated users from the UI. |
 
+### Inbox System
+
+Split inbox with dedicated views and real-time updates:
+
+- **Activity** — @mentions and @everyone
+- **Threads** — replies to threads you're participating in
+- **DMs** — direct message conversations
+- **Bookmarks** — saved messages
+
+### Authentication
+
+Flexible authentication, configurable via `AUTH_METHOD`:
+
+| Method | Flow |
+|---|---|
+| **Password** (default) | Email + password with bcrypt |
+| **OTP** | Email → 6-digit code → verified |
+
+Also: email verification for new users, password reset, QR code session transfer between devices.
+
+### DiceBear Avatars
+
+Auto-generated avatars for users without profile photos. Users can shuffle to get a new random design. Configurable style.
+
 ### Personal Invite Links
 
 Members can generate personal invite links from their profile (if enabled by admin). Links auto-expire after 7 days. The signup page shows the inviter's name and community stats.
-
-### Slack Import
-
-Full Slack workspace migration via `bin/rails slack:import[path/to/export.zip]`. Imports users, channels, messages, threads, and reactions. Placeholder user accounts can be claimed later. Idempotent — safe to re-run.
 
 ### Bot API
 
@@ -45,37 +65,9 @@ Sabha extends Campfire's write-only bot system into an autonomous-agent-ready AP
 
 The 300-second webhook timeout is key — it makes the bot system practical for LLM-powered agents.
 
-### Inbox System
+### Slack Import
 
-Split inbox with dedicated views and real-time ActionCable channels:
-
-- **Activity** — @mentions and @everyone
-- **Threads** — replies to threads you're participating in
-- **DMs** — direct message conversations
-- **Bookmarks** — saved messages
-
-Each inbox has its own query object (`app/models/inbox/`) and broadcast channel.
-
-### Push Notifications & PWA
-
-- **Web push** via VAPID — connection-aware delivery (skips users actively viewing the room)
-- **PWA** — installable with dynamic manifest, service worker, badge API for unread count
-- **Install prompt** — platform-specific instructions via Stimulus controller
-
-### Authentication
-
-Configurable via `AUTH_METHOD` environment variable:
-
-| Method | Flow |
-|---|---|
-| **Password** (default) | Email + password with bcrypt |
-| **OTP** | Email → 6-digit code → verified |
-
-Also: email verification for new users, password reset, QR code session transfer between devices.
-
-### DiceBear Avatars
-
-Auto-generated avatars for users without profile photos. Users can shuffle to get a new random design. Configurable style via `DICEBEAR_STYLE` env var.
+Full Slack workspace migration including users, channels, messages, threads, and reactions. Placeholder accounts for absent users can be claimed later. Idempotent — safe to re-run.
 
 ### Themes
 
@@ -83,11 +75,11 @@ Users select Light, Dark, or Auto from their profile. Applied before page render
 
 ### Presence Tracking
 
-`connected_at` on memberships with 60-second TTL. Three status tiers: online (green), away (yellow), offline (gray).
+Three status tiers: online, away, offline. 60-second TTL.
 
 ### Branding Customization
 
-Full white-label via environment variables — app name, support email, PWA colors, icons. Custom CSS via admin panel. See [BRANDING.md](./BRANDING.md).
+Full white-label — app name, support email, PWA colors, icons. Custom CSS via admin panel. See [BRANDING.md](./BRANDING.md).
 
 ### Welcome Messages
 
@@ -95,15 +87,16 @@ New members receive an automatic welcome message when they join, with the commun
 
 ### Email Providers
 
-Supports Resend (default) and AWS SES. Configurable via `EMAIL_PROVIDER` env var. SES includes HTML email templates with open tracking.
+Supports multiple email providers. Resend (default) and AWS SES for SaaS. SES includes HTML email templates with open tracking.
 
 ### Other
 
 - **User streaks** — consecutive days of posting with tiered icons
+- **System event messages** — room renames, member joins/leaves recorded as special messages
 - **Sound effects** — `/play name` syntax with ~50 built-in sounds
 - **Bookmark indicators** — icon on bookmarked messages
-- **System event messages** — room renames, member joins/leaves recorded as special messages
-- **@everyone mentions** — broadcast mentions via `mentions_everyone` flag
+- **@everyone mentions** — broadcast mentions to all room members
+- **Push notifications and PWA** — VAPID web push with connection-aware delivery
 
 ---
 
@@ -111,7 +104,7 @@ Supports Resend (default) and AWS SES. Configurable via `EMAIL_PROVIDER` env var
 
 ### AnyCable
 
-Optional AnyCable-Go for WebSocket scaling (HTTP RPC mode, no gRPC). Benchmarks show 167x faster WebSocket connections and 2x message throughput vs ActionCable. Enabled by default.
+AnyCable-Go for WebSocket scaling (HTTP RPC mode, no gRPC). Enabled by default. Benchmarks show 167x faster WebSocket connections and 2x message throughput vs ActionCable.
 
 ### Solid Queue
 
@@ -136,25 +129,7 @@ See [multi-tenant/](./multi-tenant/) docs. The `saas/` directory is under the [S
 
 ### Soft Deletion
 
-Comprehensive soft deletion via `Deactivatable` concern (`active` boolean). Users use a `status` enum (`active`/`deactivated`/`banned`) instead. Room deactivation cascades to threads, memberships, and messages. DM memberships are preserved so other participants keep their history.
-
-### 13 ActionCable Channels
-
-| Channel | Purpose |
-|---------|---------|
-| `RoomChannel` | Message broadcasts |
-| `PresenceChannel` | Online/offline tracking |
-| `RoomListChannel` | Sidebar updates |
-| `UserUnreadRoomsChannel` | Unread badges |
-| `TypingNotificationsChannel` | Typing indicators |
-| `HeartbeatChannel` | Keep-alive |
-| `ReadRoomsChannel` | Mark as read |
-| `UserInvolvementsChannel` | Notification preference changes |
-| `InboxActivityChannel` | @mentions |
-| `InboxThreadsChannel` | Thread replies |
-| `InboxDirectMessagesChannel` | DMs |
-| `InboxBookmarksChannel` | Bookmarks |
-| `UnreadNotificationsChannel` | Unread count |
+Comprehensive soft deletion for messages, rooms, and memberships. Users have a status (active/deactivated/banned). Room deactivation cascades to threads, memberships, and messages. DM memberships are preserved so other participants keep their history.
 
 ### Deployment
 
@@ -164,7 +139,7 @@ Three-container architecture: web (Puma + Redis + Solid Queue), AnyCable-Go, rev
 
 ## Inherited from Small Bets
 
-[Gumroad's Small Bets](https://github.com/antiwork/smallbets) is a fork of Campfire,  which added:
+Sabha includes these features, originally added by [Antiwork's Small Bets fork](https://github.com/antiwork/smallbets) of Campfire:
 
 - Mentions tab and @mention notifications
 - Bookmarks (save messages)
@@ -179,12 +154,10 @@ Three-container architecture: web (Puma + Redis + Solid Queue), AnyCable-Go, rev
 
 ### Removed from Small Bets Changes
 
-| Feature | Reason |
-|---------|--------|
-| Video library | Removed Inertia.js/React infrastructure — Sabha is server-rendered only |
-| Expert role | Removed expert directory and "answered" message functionality |
-| Stats dashboard | Replaced with simpler user streaks |
-| Room URL slugs | Users navigate via sidebar, not URL slugs |
-| Room merge | Data integrity concerns |
-| Email digest notifications | Removed (may revisit) |
-| Marketing pages | Unauthenticated users redirect to sign-in |
+- **Video library** — removed Inertia.js/React infrastructure; Sabha is server-rendered only
+- **Expert role** — removed expert directory and "answered" message functionality
+- **Stats dashboard** — replaced with simpler user streaks
+- **Room URL slugs** — users navigate via sidebar, not URL slugs
+- **Room merge** — data integrity concerns
+- **Email digest notifications** — removed
+- **Marketing pages** — unauthenticated users redirect to sign-in
