@@ -21,7 +21,7 @@ Multi-tenant mode enables:
 
 ## Requirements
 
-- A VPS with 4GB+ RAM (scales with number of workspaces)
+- A VPS with 8GB+ RAM (scales with number of workspaces)
 - A domain name pointing to your server
 - A managed PostgreSQL instance (e.g., PlanetScale Postgres) for the untenanted database
 - Docker and Kamal installed locally
