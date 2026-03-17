@@ -67,7 +67,7 @@ The 300-second webhook timeout is key — it makes the bot system practical for 
 
 ### Slack Import
 
-Full Slack workspace migration including users, channels, messages, threads, and reactions. Placeholder accounts for absent users can be claimed later. Idempotent — safe to re-run.
+Full Slack workspace migration including users, channels, messages, threads, and reactions. Placeholder accounts for absent users can be claimed later. Idempotent — safe to re-run. This is an experimental feature and may not work for all workspaces.
 
 ### Themes
 
@@ -142,7 +142,7 @@ Three-container architecture: web (Puma + Redis + Solid Queue), AnyCable-Go, rev
 
 ---
 
-## Inherited from Small Bets
+## Features Inherited from Small Bets
 
 Sabha includes features, originally added by [Antiwork's Small Bets fork](https://github.com/antiwork/smallbets) of Campfire. But refined and improved upon.
 
