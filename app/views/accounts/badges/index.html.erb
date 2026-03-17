@@ -1,0 +1,29 @@
+<% @page_title = "Badges" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to account_users_path %>
+  </div>
+<% end %>
+
+<section class="panel flex flex-column gap">
+  <div class="flex flex-column gap-half">
+    <h1 class="txt-large margin-none"><strong>Badges</strong></h1>
+    <p class="txt-small txt-muted margin-none">Labels you can assign to members to highlight their role or title.</p>
+  </div>
+
+  <% if @badges.any? %>
+    <menu id="badges_list" class="flex flex-column gap-half margin-none pad-none">
+      <%= render @badges %>
+    </menu>
+  <% end %>
+
+  <%= form_with url: account_badges_path, method: :post, class: "flex align-center gap" do |form| %>
+    <%= form.text_field :name, name: "badge[name]", class: "input txt-small flex-item-grow", placeholder: "New badge name", required: true,
+          maxlength: 10, style: "min-width: 0;" %>
+    <%= form.color_field :color, name: "badge[color]", class: "input txt-small", style: "width: 3ch; padding: 0.25rem;" %>
+    <%= form.button class: "btn btn--reversed txt-small", type: "submit" do %>
+      <%= icon_tag "add" %>
+    <% end %>
+  <% end %>
+</section>

@@ -57,7 +57,7 @@ Rails.application.routes.draw do
       resources :users do
         resource :reactivation, only: :create, module: "users"
       end
-      resources :badges, only: [ :create, :update, :destroy ]
+      resources :badges, only: [ :index, :create, :update, :destroy ]
 
       resources :bots do
         scope module: "bots" do

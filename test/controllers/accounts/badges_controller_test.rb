@@ -5,12 +5,23 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
     sign_in :david
   end
 
+  test "index badges" do
+    get account_badges_url
+    assert_response :success
+  end
+
+  test "non-admins cannot index badges" do
+    sign_in :kevin
+    get account_badges_url
+    assert_redirected_to root_path
+  end
+
   test "create badge" do
     assert_difference -> { Badge.count }, 1 do
       post account_badges_url, params: { badge: { name: "New", color: "#FF0000" } }
     end
 
-    assert_redirected_to account_users_url
+    assert_redirected_to account_badges_url
     assert_equal "New", Badge.last.name
     assert_equal "#FF0000", Badge.last.color
   end
@@ -20,7 +31,7 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
       post account_badges_url, params: { badge: { name: "", color: "#FF0000" } }
     end
 
-    assert_redirected_to account_users_url
+    assert_redirected_to account_badges_url
   end
 
   test "create badge with invalid color format" do
@@ -28,7 +39,7 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
       post account_badges_url, params: { badge: { name: "Test", color: "red" } }
     end
 
-    assert_redirected_to account_users_url
+    assert_redirected_to account_badges_url
   end
 
   test "destroy badge" do
@@ -38,7 +49,7 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
       delete account_badge_url(badge)
     end
 
-    assert_redirected_to account_users_url
+    assert_redirected_to account_badges_url
   end
 
   test "non-admins cannot create badges" do
