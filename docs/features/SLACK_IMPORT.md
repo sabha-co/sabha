@@ -173,7 +173,7 @@ Unknown emoji default to 👍.
 The importer is **idempotent** - running the same import multiple times is safe:
 
 - **Users**: Matched by `slack_user_id` in preferences, skipped if exists
-- **Rooms**: Matched by `slack_channel_id` in preferences, skipped if exists
+- **Rooms**: Matched by name (case-insensitive), skipped if exists
 - **Messages**: Matched by `client_message_id` (Slack's `ts`), skipped if exists
 - **Boosts**: Matched by user + message + content combination, skipped if exists
 - **Threads**: Created only if parent message has replies and thread doesn't exist
