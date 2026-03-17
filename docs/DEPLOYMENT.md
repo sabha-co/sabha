@@ -6,13 +6,96 @@ For multi-tenant SaaS deployment, see [multi-tenant/DEPLOYMENT.md](./multi-tenan
 
 ---
 
-## Quick Start with Docker
+## Deploying with Kamal (Recommended)
 
-We publish pre-built Docker images at `ghcr.io/sabha-co/sabha`. No need to clone the repo — just pull the image and run.
+[Kamal](https://kamal-deploy.org/) gives you zero-downtime Docker deployments with AnyCable support for high-performance WebSockets.
 
 ### Requirements
 
 - A VPS with 2GB+ RAM (DigitalOcean, Hetzner, Linode, etc.)
+- A domain name pointing to your server
+- Docker installed locally
+- Kamal installed locally (`gem install kamal`)
+
+### Setup
+
+```bash
+# Prepare your server
+ssh root@your-server "curl -fsSL https://get.docker.com | sh && mkdir -p /disk/sabha"
+
+# Clone the repo
+git clone https://github.com/sabha-co/sabha.git
+cd sabha
+
+# Configure secrets
+cp .env.sample .kamal/secrets
+nano .kamal/secrets  # Add SERVER_IP, PROXY_HOST, and other vars
+
+# Deploy
+kamal setup
+```
+
+### Common commands
+
+```bash
+kamal deploy              # Deploy updates
+kamal app logs -f         # Follow logs
+kamal app exec 'bin/rails console'  # Rails console
+kamal app stop            # Stop app
+kamal app boot            # Start app
+```
+
+### Kamal configuration
+
+The repo includes `config/deploy.yml`:
+
+```yaml
+service: sabha
+image: sabha-co/sabha
+
+servers:
+  web:
+    hosts:
+      - <%= ENV.fetch("SERVER_IP") %>
+    options:
+      network-alias: sabha-web
+
+proxy:
+  ssl: true
+  host: <%= ENV.fetch("PROXY_HOST") %>
+  app_port: 3000
+
+volumes:
+  - "/disk/sabha/:/rails/storage/"
+
+# AnyCable — kamal-proxy routes /cable to AnyCable-Go
+accessories:
+  anycable:
+    image: anycable/anycable-go:1.6
+    host: <%= ENV.fetch("SERVER_IP") %>
+    proxy:
+      host: <%= ENV.fetch("PROXY_HOST") %>
+      app_port: 8080
+      path_prefix: /cable
+    env:
+      clear:
+        ANYCABLE_HOST: "0.0.0.0"
+        ANYCABLE_PORT: "8080"
+        ANYCABLE_RPC_HOST: "http://sabha-web:3000/_anycable"
+        ANYCABLE_BROADCAST_ADAPTER: "http"
+      secret:
+        - ANYCABLE_SECRET
+```
+
+---
+
+## Docker Compose (Alternative)
+
+For a simpler setup without Kamal. Uses pre-built Docker images — no need to clone the repo.
+
+### Requirements
+
+- A VPS with 2GB+ RAM
 - A domain name pointing to your server
 - Docker installed on the server
 
@@ -106,11 +189,19 @@ Thruster handles SSL certificates automatically via Let's Encrypt. Just ensure y
 
 **Cloudflare users:** Set your DNS record to **DNS only** (grey cloud, not proxied). Cloudflare's proxy intercepts the Let's Encrypt ACME challenge, preventing Thruster from provisioning its certificate.
 
-**AnyCable:** The Docker Compose setup uses ActionCable (WebSockets through Puma) by default. AnyCable requires a reverse proxy to route `/cable` traffic — see the [Kamal deployment](#deploying-with-kamal) for an AnyCable setup with kamal-proxy handling the routing.
+**AnyCable:** The Docker Compose setup uses ActionCable (WebSockets through Puma) by default. AnyCable requires a reverse proxy to route `/cable` traffic — the Kamal deployment handles this with kamal-proxy.
 
 ---
 
 ## Updating
+
+**Kamal:**
+
+```bash
+kamal deploy
+```
+
+**Docker Compose:**
 
 ```bash
 docker compose pull && docker compose up -d
@@ -143,84 +234,6 @@ docker compose up -d
 ```
 
 For production, set up a cron job to back up daily to S3, R2, or similar object storage.
-
----
-
-## Deploying with Kamal
-
-For zero-downtime deployments, use [Kamal](https://kamal-deploy.org/). This approach is for users who want to build from source or customize the image.
-
-**Setup**
-
-```bash
-gem install kamal
-
-# Prepare your server
-ssh root@your-server "curl -fsSL https://get.docker.com | sh && mkdir -p /disk/sabha"
-
-# Clone the repo
-git clone https://github.com/sabha-co/sabha.git
-cd sabha
-
-# Configure secrets
-cp .env.sample .kamal/secrets
-nano .kamal/secrets  # Add SERVER_IP, PROXY_HOST, and other vars
-
-# Deploy
-kamal setup
-```
-
-**Common commands**
-
-```bash
-kamal deploy              # Deploy updates
-kamal app logs -f         # Follow logs
-kamal app exec 'bin/rails console'  # Rails console
-kamal app stop            # Stop app
-kamal app boot            # Start app
-```
-
-**Kamal configuration**
-
-The repo includes `config/deploy.yml`:
-
-```yaml
-service: sabha
-image: sabha-co/sabha
-
-servers:
-  web:
-    hosts:
-      - <%= ENV.fetch("SERVER_IP") %>
-    options:
-      network-alias: sabha-web
-
-proxy:
-  ssl: true
-  host: <%= ENV.fetch("PROXY_HOST") %>
-  app_port: 3000
-
-volumes:
-  - "/disk/sabha/:/rails/storage/"
-
-# AnyCable — kamal-proxy routes /cable to AnyCable-Go
-accessories:
-  anycable:
-    image: anycable/anycable-go:1.6
-    host: <%= ENV.fetch("SERVER_IP") %>
-    proxy:
-      host: <%= ENV.fetch("PROXY_HOST") %>
-      app_port: 8080
-      path_prefix: /cable
-    env:
-      clear:
-        ANYCABLE_HOST: "0.0.0.0"
-        ANYCABLE_PORT: "8080"
-        ANYCABLE_RPC_HOST: "http://sabha-web:3000/_anycable"
-        ANYCABLE_BROADCAST_ADAPTER: "http"
-      secret:
-        - ANYCABLE_SECRET
-```
 
 ---
 
