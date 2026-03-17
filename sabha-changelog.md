@@ -6,11 +6,11 @@ For a side-by-side comparison, see [docs/CAMPFIRE_VS_SABHA.md](docs/CAMPFIRE_VS_
 
 ---
 
-### From Small Bets (Feb 2024 - Oct 2025)
+## From SmallBets (Feb 2024 - Oct 2025)
 
-These features were built by [Gumroad](https://github.com/antiwork) for their Small Bets community and inherited by Sabha.
+These features were built by [Antiwork](https://github.com/antiwork) for their Small Bets community and inherited by Sabha.
 
-- **Email support** - Use resend for transactional emails
+- **Email support** — use Resend for transactional emails
 - **Threads** — reply to any message to start a focused discussion (Mar 2024)
 - **Mentions tab** — dedicated sidebar view for @mentions (Feb 2024)
 - **Bookmarks** — save messages, view from sidebar (Feb 2024)
@@ -32,6 +32,7 @@ These features were built by [Gumroad](https://github.com/antiwork) for their Sm
 
 - **Branding customization** — white-label via environment variables (app name, email, PWA colors, icons)
 - **Admin settings UI** — toggle room creation, DM, and invite link permissions from the web UI
+- **Jemalloc** — production memory allocator for lower memory usage
 - **Theme switch** — Light, Dark, or Auto from your profile
 
 ### Dec 2025
@@ -43,10 +44,12 @@ These features were built by [Gumroad](https://github.com/antiwork) for their Sm
 
 ### Jan 2026
 
-- **Slack import** — migrate users, channels, messages, threads, and reactions from a Slack export (Experimental)
-- **Personal invite links** — members generate their own invite links (7-day expiry)
-- **AnyCable** — optional high-performance WebSocket server (167x faster connections)
+- **Slack import (Experimental)** — migrate users, channels, messages, threads, and reactions from a Slack export.
+- **Personal invite links** — members generate their own invite links (if enabled by admin)
+- **AnyCable** — high-performance Go WebSocket server replacing ActionCable (10x faster connections, 2x throughput)
 - **Solid Queue** — SQLite-backed background jobs replacing in-process execution
+- **Tailwind CSS v4** — upgraded from v3 with pnpm build pipeline
+- **YJIT** — Ruby JIT compiler enabled in production for better performance
 - **DiceBear avatars** — auto-generated avatars for users without profile photos
 - **User streaks** — consecutive posting days with tiered streak icons
 - **Member management** — admin panel with role management, badges, search, banned users list
@@ -61,10 +64,13 @@ These features were built by [Gumroad](https://github.com/antiwork) for their Sm
 - **Push notification improvements** — VAPID web push with connection-aware delivery
 - **PWA improvements** — installable app with dynamic manifest, service worker, badge API
 - **Cloudflare Turnstile** — CAPTCHA on signup flows
+- **Authenticated file downloads** — Active Storage files served only to signed-in users
+- **OKLch color tokens** — design token system for light/dark theming
+- **@tailwindcss/cli** — direct CLI compilation for CSS builds
 
 ### Mar 2026
 
-- **Bot API upgrade** — self-registration, API discovery, message reading, 300s webhook timeout, SSRF protection
+- **Bot API upgrade** — self-registration, API discovery, message reading, webhook timeout, SSRF protection. Ready for LLM agents.
 - **Welcome messages** — automatic welcome message for new members
 - **Chat animations** — message arrival, popup menus, thread panel easing
 - **Accessibility** — pinch to zoom, aria-live regions, reduced motion support

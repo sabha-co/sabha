@@ -47,7 +47,7 @@ Members can generate personal invite links from their profile (if enabled by adm
 
 ### Bot API
 
-Sabha extends Campfire's write-only bot system into an autonomous-agent-ready API:
+Sabha extends Campfire's write-only bot system into an openclaw like autonomous-agent-ready API:
 
 | Capability | Campfire | Sabha |
 |---|---|---|
@@ -104,11 +104,16 @@ Supports multiple email providers. Resend (default) and AWS SES for SaaS. SES in
 
 ### AnyCable
 
-AnyCable-Go for WebSocket scaling (HTTP RPC mode, no gRPC). Enabled by default. Benchmarks show 167x faster WebSocket connections and 2x message throughput vs ActionCable.
+[AnyCable](https://docs.anycable.io/) is a high-performance WebSocket server written in Go that replaces Rails' built-in ActionCable, allowing Sabha to handle significantly more concurrent connections with less memory. Enabled by default (HTTP RPC mode). Benchmarks show 10x faster WebSocket connections and 2x message throughput vs ActionCable. This is optional and can be disabled by setting `ENABLE_ANYCABLE=false`.
 
 ### Solid Queue
 
-SQLite-backed background jobs replacing Redis-backed alternatives. Runs inside Puma in development, as separate workers in production.
+[Solid Queue](https://github.com/solidqueue/solid_queue) is a modern, Redis-backed job processing library for Ruby on Rails. It provides a simple, reliable way to run background jobs, with features like:
+
+- **SQLite-backed** — uses SQLite for job storage, eliminating the need for Redis
+- **Runs inside Puma** — development jobs run inside the Puma process, no separate workers needed
+- **Production workers** — separate workers for production environments
+- **Future-proof** — ensures future support as resque gem is old and solidqueue is rails default now.
 
 ### Multi-Tenant SaaS Mode
 
@@ -139,7 +144,7 @@ Three-container architecture: web (Puma + Redis + Solid Queue), AnyCable-Go, rev
 
 ## Inherited from Small Bets
 
-Sabha includes these features, originally added by [Antiwork's Small Bets fork](https://github.com/antiwork/smallbets) of Campfire:
+Sabha includes features, originally added by [Antiwork's Small Bets fork](https://github.com/antiwork/smallbets) of Campfire. But refined and improved upon.
 
 - Mentions tab and @mention notifications
 - Bookmarks (save messages)
