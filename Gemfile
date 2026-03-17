@@ -11,7 +11,7 @@ gem "sqlite3", ">= 2.9"
 gem "redis", "~> 5.4"
 
 # Deployment
-gem "puma", "~> 7.1"
+gem "puma", "~> 7.2"
 gem "thruster"
 
 # Jobs
@@ -26,7 +26,7 @@ gem "turbo-rails"
 gem "stimulus-rails"
 
 # Real-time WebSocket server (core gem avoids gRPC dependency since we use HTTP RPC mode)
-gem "anycable-rails-core", "~> 1.5"
+gem "anycable-rails-core", "~> 1.6"
 
 # Media handling
 gem "image_processing", ">= 1.2"
