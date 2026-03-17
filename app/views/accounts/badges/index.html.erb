@@ -14,7 +14,7 @@
 
   <% if @badges.any? %>
     <menu id="badges_list" class="flex flex-column gap-half margin-none pad-none">
-      <%= render @badges %>
+      <%= render partial: "accounts/badges/badge", collection: @badges %>
     </menu>
   <% end %>
 
