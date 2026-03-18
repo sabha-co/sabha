@@ -9,11 +9,26 @@
     <meta name="description" content="Simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. Free to use, open source, self-hostable.">
     <meta name="theme-color" content="<%= Branding.theme_color %>">
     <meta name="mobile-web-app-capable" content="yes">
+
+    <%# Open Graph %>
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Sabha — Open source community chat">
+    <meta property="og:description" content="Simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. Free to use, open source, self-hostable.">
+    <meta property="og:image" content="<%= image_url("screenshots/sabha-screenshot.png") %>">
+    <meta property="og:url" content="<%= request.original_url %>">
+    <meta property="og:site_name" content="Sabha">
+
+    <%# Twitter Card %>
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sabha — Open source community chat">
+    <meta name="twitter:description" content="Simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search.">
+    <meta name="twitter:image" content="<%= image_url("screenshots/sabha-screenshot.png") %>">
+
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= tag.link rel: "icon", href: image_path("sabha-icon.svg"), type: "image/svg+xml" %>
-    <%= tag.link rel: "apple-touch-icon", href: image_path("sabha-icon.svg") %>
+    <%= tag.link rel: "icon", href: image_path("icons/sabha-icon.svg"), type: "image/svg+xml" %>
+    <%= tag.link rel: "apple-touch-icon", href: image_path("icons/sabha-icon.svg") %>
 
     <%= stylesheet_link_tag "tailwind", *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
     <% if hotwire_native_app? %>
