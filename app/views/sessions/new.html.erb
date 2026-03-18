@@ -1,7 +1,5 @@
 <% content_for :title, "Sign in" %>
-<% content_for :back_nav do %>
-  <%= link_to "← Back", root_path, class: "txt-medium txt-muted txt-undecorated" %>
-<% end %>
+<% turbo_page_requires_reload %>
 
 <section class="txt-align-center">
   <div class="panel panel--centered <%= "shake" if flash[:alert] %>">

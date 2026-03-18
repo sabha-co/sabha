@@ -25,8 +25,14 @@
       <% if notice = flash[:notice] || flash[:alert] %>
         <div class="flash" data-controller="element-removal" data-action="animationend->element-removal#remove">
           <div class="flash__inner" style="<%= "--flash-background: var(--color-negative)" if flash[:alert] %>">
+            <% if flash[:alert] %>
+              <%= icon_tag "alert" %>
+            <% else %>
+              <%= icon_tag "check" %>
+            <% end %>
             <span><%= notice %></span>
           </div>
+          <span class="for-screen-reader" role="alert" aria-atomic="true"><%= notice %></span>
         </div>
       <% end %>
 

@@ -1,4 +1,5 @@
 <% content_for :title, "Enter code" %>
+<% turbo_page_requires_reload %>
 <% content_for :back_nav do %>
   <%= link_to "← Back", new_session_path, class: "txt-medium txt-muted txt-undecorated" %>
 <% end %>
