@@ -12,7 +12,7 @@
           <strong data-reply-target="author"><%= message.creator.name %></strong> <%= message.plain_text_body %>
           <%= link_to message_timestamp(message, style: timestamp_style, class: "message__timestamp"), message_permalink_path(message), target: "_top", class: "message__permalink", data: { reply_target: "link" } %>
         </div>
-        <%= render "messages/actions", message: message, current_room: current_room %>
+        <%= render "messages/actions/boost_only", message: message %>
       </div>
       <div data-reply-target="body" class="hidden"><div class="trix-content"><%= message.plain_text_body %></div></div>
       <%= render "messages/boosts/boosts", message: message %>
