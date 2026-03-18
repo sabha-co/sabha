@@ -4,7 +4,7 @@ A self-hosted group chat for communities. Built with Rails, Hotwire, and SQLite.
 
 Sabha is a fork of [Campfire](https://once.com/campfire) by 37signals, adding threads, mentions, DMs, an activity inbox, and everything else needed to run a community without handing your members over to a platform. See [what Sabha adds to Campfire](docs/CAMPFIRE_VS_SABHA.md).
 
-<img width="1297" height="867" src="https://github.com/user-attachments/assets/a615c6df-1952-49af-872a-793743e6ad6e" />
+![Sabha app — rooms, threads, and community chat](app/assets/images/screenshots/sabha-screenshot.png)
 
 ## Why Sabha?
 
