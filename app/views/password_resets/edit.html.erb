@@ -1,20 +1,21 @@
-<% @page_title = "Set New Password" %>
+<% content_for :title, "Set new password" %>
+<% content_for :back_nav do %>
+  <%= link_to "← Back", new_session_path, class: "txt-medium txt-muted txt-undecorated" %>
+<% end %>
 
 <section class="txt-align-center">
-  <div class="panel <%= "shake" if flash[:alert] %>">
-    <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
+  <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
+    <div class="flex justify-center mb-6">
+      <%= link_to root_path do %>
+        <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name, class: "w-18 h-auto rounded-lg" %>
+      <% end %>
+    </div>
 
-    <%= form_with url: password_reset_path(params[:token]), method: :patch, class: "flex flex-column gap" do |form| %>
+    <%= form_with url: password_reset_path(params[:token]), method: :patch, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
       <fieldset class="flex flex-column gap center-block pad">
         <legend class="txt-large txt-align-center"><strong>Set new password</strong></legend>
 
-        <% if flash[:notice] %>
-          <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
-        <% end %>
-
-        <% if flash[:alert] %>
-          <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
-        <% end %>
+        <%= render "sessions/flash_messages" %>
 
         <div class="flex align-center gap">
           <%= translation_button(:password) %>
@@ -34,11 +35,9 @@
           </label>
         </div>
 
-        <p class="txt-small" style="opacity: 0.7;">Password must be at least <%= User::MINIMUM_PASSWORD_LENGTH %> characters long.</p>
+        <p class="txt-small txt-muted">Password must be at least <%= User::MINIMUM_PASSWORD_LENGTH %> characters long.</p>
 
-        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-          Reset password
-        <% end %>
+        <%= render "sessions/submit_button", form: form, label: "Reset password" %>
       </fieldset>
     <% end %>
   </div>

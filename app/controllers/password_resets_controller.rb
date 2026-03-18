@@ -1,6 +1,8 @@
 class PasswordResetsController < ApplicationController
   include PasswordValidation
 
+  layout "session", only: %i[ new edit update ]
+
   allow_unauthenticated_access
   rate_limit to: 3, within: 1.minute, only: :create, with: -> { redirect_to new_password_reset_path, alert: "Too many requests. Please wait before trying again." }
 

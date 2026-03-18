@@ -1,26 +1,30 @@
-<% @page_title = "Sign in" %>
-<% turbo_page_requires_reload %>
+<% content_for :title, "Enter code" %>
+<% content_for :back_nav do %>
+  <%= link_to "← Back", new_session_path, class: "txt-medium txt-muted txt-undecorated" %>
+<% end %>
 
 <section class="txt-align-center">
-  <div class="panel <%= "shake" if flash[:alert] %>">
-    <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
+  <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
+    <div class="flex justify-center mb-6">
+      <%= link_to root_path do %>
+        <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name, class: "w-18 h-auto rounded-lg" %>
+      <% end %>
+    </div>
 
-    <%= form_with url: auth_tokens_validations_url, class: "flex flex-column gap", data: { controller: "form", turbo: hotwire_native_app?, action: "keydown.enter->form#submit" } do |form| %>
+    <%= form_with url: auth_tokens_validations_url, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
       <fieldset class="flex flex-column gap center-block pad">
-        <legend class="txt-large txt-align-center"><strong>Enter one-time code</strong></legend>
+        <legend class="txt-large txt-align-center"><strong>Check your email</strong></legend>
 
         <%= render "sessions/flash_messages" %>
 
-        <p class="txt-medium">
-          We sent an email to <%= session[:otp_email_address] %> with a code you can use to sign in below.
+        <p class="txt-medium txt-muted">Enter the 6-character code we sent to <strong class="txt-body"><%= session[:otp_email_address] || "your email" %></strong></p>
+
+        <%= render "sessions/code_field", form: form, styled: true, show_icon: false, show_translation: false %>
+        <%= render "sessions/submit_button", form: form, label: "Verify" %>
+
+        <p class="txt-small txt-muted">
+          Didn't receive it? <%= link_to "Try again", new_session_path %>
         </p>
-
-        <%= render "sessions/code_field", form: form %>
-        <%= render "sessions/submit_button", form: form, label: "Verify code" %>
-
-        <div class="txt-medium txt-align-center">
-          Didn't receive it? <%= link_to "Try again", new_session_url, class: "txt-white" %>
-        </div>
       </fieldset>
     <% end %>
   </div>

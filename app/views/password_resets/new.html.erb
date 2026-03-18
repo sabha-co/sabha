@@ -1,38 +1,26 @@
-<% @page_title = "Reset Password" %>
+<% content_for :title, "Reset password" %>
+<% content_for :back_nav do %>
+  <%= link_to "← Back", new_session_path, class: "txt-medium txt-muted txt-undecorated" %>
+<% end %>
 
 <section class="txt-align-center">
-  <div class="panel <%= "shake" if flash[:alert] %>">
-    <%= account_logo_tag style: "center margin-block-end txt-xx-large" %>
+  <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
+    <div class="flex justify-center mb-6">
+      <%= link_to root_path do %>
+        <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name, class: "w-18 h-auto rounded-lg" %>
+      <% end %>
+    </div>
 
-    <%= form_with url: password_resets_path, class: "flex flex-column gap" do |form| %>
+    <%= form_with url: password_resets_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
       <fieldset class="flex flex-column gap center-block pad">
         <legend class="txt-large txt-align-center"><strong>Reset your password</strong></legend>
 
-        <% if flash[:notice] %>
-          <p class="txt-medium txt-positive"><%= flash[:notice] %></p>
-        <% end %>
+        <%= render "sessions/flash_messages" %>
 
-        <% if flash[:alert] %>
-          <p class="txt-medium txt-negative"><%= flash[:alert] %></p>
-        <% end %>
+        <p class="txt-medium txt-muted">Enter your email address and we'll send you instructions to reset your password.</p>
 
-        <p class="txt-medium">Enter your email address and we'll send you instructions to reset your password.</p>
-
-        <div class="flex align-center gap">
-          <%= translation_button(:email_address) %>
-          <label class="flex align-center gap input input--actor txt-large">
-            <%= form.email_field :email_address, required: true, class: "input", autofocus: true, autocomplete: "email", placeholder: "Your email address" %>
-            <%= icon_tag "email" %>
-          </label>
-        </div>
-
-        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-          Send reset instructions
-        <% end %>
-
-        <div class="txt-medium txt-align-center">
-          <%= link_to "Back to sign in", new_session_path, class: "txt-white" %>
-        </div>
+        <%= render "sessions/email_field", form: form %>
+        <%= render "sessions/submit_button", form: form, label: "Send reset instructions" %>
       </fieldset>
     <% end %>
   </div>
