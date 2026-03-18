@@ -26,7 +26,7 @@
           <%= translation_button(:user_name) %>
           <label class="flex align-center gap input input--actor txt-large">
             <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
-                  minlength: 2, maxlength: 100, data: { "1p-ignore": true } %>
+                  minlength: 3, maxlength: 100, data: { "1p-ignore": true } %>
             <%= icon_tag "person" %>
           </label>
         </div>
