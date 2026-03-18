@@ -146,38 +146,26 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  box-shadow: rgb(255, 255, 255) 0px 0px 0px 0px, rgb(0, 0, 0) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px;
+  background-color: oklch(var(--monogram-bg));
+  box-shadow: 0 0 0 1px oklch(var(--lch-always-black) / 0.15);
 }
 
-/* Generate color classes for each avatar color */
-.avatar-monogram--0 { background-color: #AF2E1B !important; }
-.avatar-monogram--1 { background-color: #CC6324 !important; }
-.avatar-monogram--2 { background-color: #3B4B59 !important; }
-.avatar-monogram--3 { background-color: #BFA07A !important; }
-.avatar-monogram--4 { background-color: #ED8008 !important; }
-.avatar-monogram--5 { background-color: #ED3F1C !important; }
-.avatar-monogram--6 { background-color: #BF1B1B !important; }
-.avatar-monogram--7 { background-color: #736B1E !important; }
-.avatar-monogram--8 { background-color: #D07B53 !important; }
-.avatar-monogram--9 { background-color: #736356 !important; }
-.avatar-monogram--10 { background-color: #AD1D1D !important; }
-.avatar-monogram--11 { background-color: #BF7C2A !important; }
-.avatar-monogram--12 { background-color: #C09C6F !important; }
-.avatar-monogram--13 { background-color: #698F9C !important; }
-.avatar-monogram--14 { background-color: #7C956B !important; }
-.avatar-monogram--15 { background-color: #5D618F !important; }
-.avatar-monogram--16 { background-color: #3B3633 !important; }
-.avatar-monogram--17 { background-color: #67695E !important; }
-
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .avatar-monogram {
-    color: rgba(255, 255, 255, 0.95);
-  }
-  
-  /* Slightly brighten dark backgrounds in dark mode */
-  .avatar-monogram--2,
-  .avatar-monogram--16 {
-    filter: brightness(1.2);
-  }
-}
+/* Monogram color palette in OKLCH */
+.avatar-monogram--0 { --monogram-bg: 50.1% 0.169 31; }
+.avatar-monogram--1 { --monogram-bg: 61.7% 0.152 47; }
+.avatar-monogram--2 { --monogram-bg: 40.5% 0.031 245; }
+.avatar-monogram--3 { --monogram-bg: 72.4% 0.063 72; }
+.avatar-monogram--4 { --monogram-bg: 70.8% 0.169 57; }
+.avatar-monogram--5 { --monogram-bg: 62.5% 0.215 33; }
+.avatar-monogram--6 { --monogram-bg: 51.6% 0.196 28; }
+.avatar-monogram--7 { --monogram-bg: 52.0% 0.096 103; }
+.avatar-monogram--8 { --monogram-bg: 66.7% 0.119 45; }
+.avatar-monogram--9 { --monogram-bg: 51.1% 0.029 61; }
+.avatar-monogram--10 { --monogram-bg: 48.3% 0.179 27; }
+.avatar-monogram--11 { --monogram-bg: 64.3% 0.125 67; }
+.avatar-monogram--12 { --monogram-bg: 71.5% 0.074 72; }
+.avatar-monogram--13 { --monogram-bg: 62.7% 0.046 221; }
+.avatar-monogram--14 { --monogram-bg: 63.9% 0.067 133; }
+.avatar-monogram--15 { --monogram-bg: 50.8% 0.073 280; }
+.avatar-monogram--16 { --monogram-bg: 33.7% 0.009 53; }
+.avatar-monogram--17 { --monogram-bg: 51.6% 0.017 115; }
