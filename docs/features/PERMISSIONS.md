@@ -1,6 +1,22 @@
 # Permissions
 
-This document outlines the permission system for rooms and actions in Sabha.
+## Roles
+
+Sabha has four user roles defined in `app/models/user/role.rb`:
+
+| Role | Description |
+|------|-------------|
+| **Member** | Regular user, default role |
+| **Moderator** | Staff role — can moderate messages and view banned/deactivated users |
+| **Administrator** | Full control over account, users, rooms, and settings |
+| **Bot** | Automated user for integrations |
+
+Key predicates:
+
+- `staff?` — true for moderator or administrator
+- `can_moderate?` — alias for `staff?`
+- `can_administer?(record)` — true if administrator, record creator, or new record
+- `person?` — true if not a bot
 
 ## Room Types
 
@@ -11,78 +27,58 @@ This document outlines the permission system for rooms and actions in Sabha.
 | **Direct** | 1-on-1 or group direct messages |
 | **Thread** | Discussion threads tied to a parent message |
 
-## Permission Matrix
+## Room Permission Matrix
 
 | Room Type | Create | Read | Update | Delete |
 |-----------|--------|------|--------|--------|
 | **Direct** | Any user* | Members | N/A | Any member |
 | **Open** | Any user* | Members | Admin/Creator | Admin/Creator |
 | **Closed** | Any user* | Members | Admin/Creator | Admin/Creator |
-| **Thread** | Any user | Members | Members | Admin/Creator |
+| **Thread** | Any user | Members | Admin/Creator | Admin/Creator |
 
 *Can be restricted to admins via Account Settings
 
-## Permission Logic
+## Message Permission Matrix
 
-### `can_administer?(record)`
+| Action | Who Can Perform |
+|--------|----------------|
+| Create | Any active member in the room |
+| Edit own | Author |
+| Delete own | Author |
+| Edit others' | Moderator, Administrator |
+| Delete others' | Moderator, Administrator |
 
-Located in `app/models/user/role.rb`. Returns `true` if:
+Checked via `can_edit_message?(message)` and `can_delete_message?(message)` — both return true for `can_moderate? || message.creator == self`.
 
-1. User is an **administrator**, OR
-2. User is the **creator** of the record, OR
-3. Record is new (unsaved)
+## User Management Permissions
 
-```ruby
-def can_administer?(record = nil)
-  administrator? || self == record&.creator || record&.new_record?
-end
-```
+All user management actions require administrator role:
 
-### Direct Messages (DMs)
+| Action | Required Role | Method |
+|--------|--------------|--------|
+| Change user role | Administrator | `manageable_by?(admin)` |
+| Deactivate user | Administrator | `removable_by?(admin)` |
+| Ban user | Administrator | `removable_by?(admin)` |
+| Unban user | Administrator | `unbannable_by?(admin)` |
+| Reactivate user | Administrator | `reactivatable_by?(admin)` |
 
-DMs have relaxed permissions - any member can delete the conversation. This is handled by skipping the `ensure_can_administer` callback in `Rooms::DirectsController`.
+Moderators can view banned and deactivated user lists but cannot take action on them.
+
+## Notes
+
+**Direct Messages** have relaxed permissions — any member can delete the conversation (skips `ensure_can_administer`).
 
 ## Account Settings
 
-Administrators can restrict creation permissions via Account Settings (`/account/edit`):
+Administrators can restrict permissions via Account Settings (`/account/edit`):
 
 | Setting | Effect |
 |---------|--------|
 | `restrict_room_creation_to_administrators?` | Only admins can create Open/Closed rooms |
 | `restrict_direct_messages_to_administrators?` | Only admins can initiate DMs |
+| `allow_users_to_create_invite_links?` | When false, only admins can create invite links (default: true) |
 
 These settings are stored in `accounts.settings` JSON column.
-
-## Controller Callbacks
-
-### RoomsController (Base)
-
-```ruby
-before_action :set_room, only: %i[ show destroy ]
-before_action :ensure_can_administer, only: %i[ destroy ]
-```
-
-### Rooms::DirectsController
-
-```ruby
-skip_before_action :set_room, only: %i[ edit destroy ]
-skip_before_action :ensure_can_administer, only: %i[ destroy ]
-before_action :set_direct_room, only: %i[ edit destroy ]
-```
-
-### Rooms::OpensController / Rooms::ClosedsController
-
-```ruby
-before_action :set_room, only: %i[ show edit update destroy ]
-before_action :ensure_can_administer, only: %i[ update destroy ]
-before_action :ensure_permission_to_create_rooms, only: %i[ new create ]
-```
-
-### Rooms::ThreadsController
-
-```ruby
-before_action :set_room, only: %i[ show edit update destroy ]
-```
 
 ## Membership Involvement Levels
 
@@ -93,6 +89,6 @@ Users can set their involvement level for each room:
 | `everything` | All notifications, appears in "My Rooms" | All room types |
 | `mentions` | Only @mention notifications, appears in "All Rooms" | Open, Closed |
 | `nothing` | No notifications | Direct only |
-| `invisible` | Hidden from sidebar entirely | Open, Closed |
+| `invisible` | User has left the room — membership persists for history but is hidden from sidebar and room lists | Open, Closed |
 
 Note: DMs only cycle between `everything` and `nothing` in the UI.
