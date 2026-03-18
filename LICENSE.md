@@ -1,6 +1,8 @@
+# MIT License
+
 Copyright (c) 37signals, LLC
 Copyright (c) 2025 Gumroad, Inc.
-Copyright (c) 2025-26 Sabha LLC
+Copyright (c) 2026 Sabha LLC
 
 Portions of this software are licensed as follows:
 
