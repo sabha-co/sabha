@@ -38,7 +38,7 @@ class Room < ApplicationRecord
   has_many :messages, -> { active }, class_name: "Message"
   has_one :last_message, -> { active.without_events.order(created_at: :desc) }, class_name: "Message"
   has_many :threads, through: :messages, class_name: "Rooms::Thread"
-  belongs_to :parent_message, class_name: "Message", optional: true, touch: true
+  belongs_to :parent_message, class_name: "Message", optional: true
   has_one :parent_room, through: :parent_message, source: :room, class_name: "Room"
 
   belongs_to :creator, class_name: "User", default: -> { Current.user }
