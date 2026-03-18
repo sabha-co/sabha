@@ -33,7 +33,7 @@
 
         <div class="flex justify-center gap txt-medium">
           <span class="flex align-center gap-half">
-            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3ba55c"></span>
+            <span class="status-dot status--active"></span>
             <%= @online_user_count_extended %> Online
           </span>
           <span>&middot;</span>
@@ -75,7 +75,7 @@
           <%= translation_button(:user_name) %>
           <label class="flex align-center gap flex-item-grow txt-large input input--actor">
             <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
-                  data: { "1p-ignore": true } %>
+                  minlength: 2, maxlength: 100, data: { "1p-ignore": true } %>
             <%= icon_tag "person" %>
           </label>
         </div>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%= render "layouts/theme_preference" %>
+
+    <title><%= [content_for(:title), Branding.contextual_app_name].compact.uniq.join(" | ") %></title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="<%= Branding.theme_color %>">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= tag.link rel: "icon", href: fresh_account_logo_path, type: "image/png" %>
+    <%= tag.link rel: "apple-touch-icon", href: fresh_account_logo_path %>
+
+    <%= stylesheet_link_tag "tailwind", *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
+
+    <%= javascript_importmap_tags %>
+
+    <%= umami_analytics_tag %>
+  </head>
+
+  <body data-controller="theme">
+    <main class="min-h-dvh flex flex-col items-center justify-center p-4 sm:p-6">
+      <% if notice = flash[:notice] || flash[:alert] %>
+        <div class="flash" data-controller="element-removal" data-action="animationend->element-removal#remove">
+          <div class="flash__inner" style="<%= "--flash-background: var(--color-negative)" if flash[:alert] %>">
+            <% if flash[:alert] %>
+              <%= icon_tag "alert" %>
+            <% else %>
+              <%= icon_tag "check" %>
+            <% end %>
+            <span><%= notice %></span>
+          </div>
+          <span class="for-screen-reader" role="alert" aria-atomic="true"><%= notice %></span>
+        </div>
+      <% end %>
+
+      <%= yield %>
+
+      <% if content_for?(:back_nav) %>
+        <div class="margin-block">
+          <%= yield :back_nav %>
+        </div>
+      <% end %>
+    </main>
+  </body>
+</html>

@@ -2,7 +2,10 @@ class SessionsController < ApplicationController
   include EmailValidation
   include BlockBannedRequests
 
-  allow_unauthenticated_access only: %i[ new create ]
+  layout "session", only: %i[ new ]
+
+  require_unauthenticated_access only: %i[ new ]
+  allow_unauthenticated_access only: %i[ create ]
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_session_url, alert: "Too many sign in attempts. Please try again later." }
 
   before_action :reject_banned_ip, only: :create

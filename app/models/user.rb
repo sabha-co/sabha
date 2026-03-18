@@ -110,6 +110,7 @@ class User < ApplicationRecord
   has_many :blocks_received, class_name: "Block", foreign_key: :blocked_id, dependent: :destroy
   has_many :blocked_by_users, through: :blocks_received, source: :blocker
 
+  validates :name, presence: true, length: { minimum: 2, maximum: 100 }
   validates :email_address, presence: true, if: :person?
   validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }, if: -> { email_address.present? }
   validates :unconfirmed_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
