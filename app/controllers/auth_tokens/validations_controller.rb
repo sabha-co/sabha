@@ -3,7 +3,7 @@ class AuthTokens::ValidationsController < ApplicationController
 
   layout "session", only: %i[ new ]
 
-  allow_unauthenticated_access
+  require_unauthenticated_access
 
   rate_limit to: 10, within: 1.minute, with: -> { head :too_many_requests }
 
