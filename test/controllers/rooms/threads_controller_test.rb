@@ -208,6 +208,26 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "New Thread Name", thread.name
   end
 
+  test "update requires appropriate permissions" do
+    sign_in :jz
+    @jz = users(:jz)
+
+    parent_message = @room.messages.create!(
+      body: "Parent for update permission test",
+      creator: @jason,
+      client_message_id: "update_perm_thread_1"
+    )
+
+    thread = Rooms::Thread.create_for({ parent_message_id: parent_message.id, creator: @david }, users: [ @jz ])
+
+    # jz is not creator or admin, should be forbidden
+    patch rooms_thread_url(thread), params: { room: { name: "Hijacked Name" } }
+    assert_response :forbidden
+
+    thread.reload
+    assert_not_equal "Hijacked Name", thread.name
+  end
+
   # ===================
   # Destroy action tests
   # ===================

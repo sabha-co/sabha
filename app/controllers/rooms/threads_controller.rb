@@ -2,6 +2,7 @@ class Rooms::ThreadsController < RoomsController
   skip_before_action :remember_last_room_visited, only: %i[ show create ]
   skip_before_action :ensure_has_real_name, only: %i[ show create ]
   before_action :set_room, only: %i[ show edit update destroy ]
+  before_action :ensure_can_administer, only: %i[ update destroy ]
   before_action :set_membership, only: %i[ show edit ]
   before_action :set_parent_message, only: %i[ create ]
 
