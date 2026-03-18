@@ -16,8 +16,6 @@
       <fieldset class="flex flex-column gap center-block pad">
         <legend class="txt-large txt-align-center"><strong>Check your email</strong></legend>
 
-        <%= render "sessions/flash_messages" %>
-
         <p class="txt-medium txt-muted">Enter the 6-character code we sent to <strong class="txt-body"><%= session[:otp_email_address] || "your email" %></strong></p>
 
         <%= render "sessions/code_field", form: form, styled: true, show_icon: false, show_translation: false %>

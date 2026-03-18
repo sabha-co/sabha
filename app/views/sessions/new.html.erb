@@ -15,7 +15,6 @@
           <fieldset class="flex flex-column gap center-block pad">
             <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.contextual_app_name %></strong></legend>
 
-            <%= render "sessions/flash_messages" %>
             <%= render "sessions/email_field", form: form %>
             <%= render "sessions/submit_button", form: form, label: "Sign in with email" %>
           </fieldset>
@@ -25,7 +24,6 @@
           <fieldset class="flex flex-column gap center-block pad">
             <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.contextual_app_name %></strong></legend>
 
-            <%= render "sessions/flash_messages" %>
             <%= render "sessions/email_field", form: form %>
             <%= render "sessions/password_field", form: form %>
             <%= render "sessions/submit_button", form: form, label: "Sign in" %>
