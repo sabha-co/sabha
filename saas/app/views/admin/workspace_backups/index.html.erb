@@ -1,0 +1,48 @@
+<% content_for :title, "Backups — #{@workspace.name}" %>
+
+<div class="flex flex-column gap">
+  <div>
+    <%= link_to "← #{@workspace.name}", admin_workspace_path(@workspace), class: "txt-muted txt-small txt-undecorated" %>
+  </div>
+
+  <div class="flex align-center justify-space-between">
+    <h1 class="txt-large" style="font-weight: 600;">Backups</h1>
+
+    <%= button_to "Back up now", admin_workspace_backups_path(@workspace),
+          method: :post,
+          class: "btn" %>
+  </div>
+
+  <section class="flex flex-column gap-half">
+    <div class="border" style="border-radius: 0.5em; overflow: hidden;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr class="txt-small txt-muted" style="border-bottom: 1px solid var(--color-border);">
+            <th class="pad-block-half pad-inline txt-align-start">Date</th>
+            <th class="pad-block-half pad-inline txt-align-start">Size</th>
+            <th class="pad-block-half pad-inline txt-align-end"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @backups.each do |backup| %>
+            <tr style="border-bottom: 1px solid var(--color-border);">
+              <td class="pad-block-half pad-inline txt-small"><%= backup.created_at.to_fs(:long) %></td>
+              <td class="pad-block-half pad-inline txt-small txt-muted"><%= number_to_human_size(backup.size) %></td>
+              <td class="pad-block-half pad-inline txt-align-end">
+                <%= button_to "Restore", admin_workspace_backup_restore_path(@workspace, backup),
+                      method: :post,
+                      class: "btn btn--small",
+                      form: { data: { turbo_confirm: "Restore #{@workspace.name} to #{backup.created_at.to_fs(:short)}? This will replace the current database." } } %>
+              </td>
+            </tr>
+          <% end %>
+          <% if @backups.empty? %>
+            <tr>
+              <td colspan="3" class="pad txt-muted txt-align-center">No backups yet.</td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
