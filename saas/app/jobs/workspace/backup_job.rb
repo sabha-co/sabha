@@ -7,7 +7,7 @@ class Workspace
     def perform(workspace)
       tenant_id = workspace.external_id.to_s
       timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-      key = "backups/#{workspace.external_id}/#{timestamp}.sqlite3"
+      key = "backups/#{workspace.external_id}/#{timestamp}-#{SecureRandom.hex(4)}.sqlite3"
 
       # Checkpoint WAL to flush as much data as possible to the main database file.
       # PASSIVE avoids blocking active readers/writers — the backup API handles the rest.

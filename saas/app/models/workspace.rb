@@ -119,9 +119,10 @@ class Workspace < UntenantedRecord
     false
   end
 
-  # Full cleanup: destroy tenant DB + Workspace record
+  # Full cleanup: destroy tenant DB + Workspace record + R2 backup objects
   # Pattern from lib/tasks/workspace.rake
   def destroy_with_database!
+    backups.each(&:purge!)
     ApplicationRecord.destroy_tenant(external_id.to_s)
     destroy!  # Cascades to WorkspaceMemberships via dependent: :destroy
   end

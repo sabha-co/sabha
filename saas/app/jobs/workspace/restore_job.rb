@@ -17,7 +17,10 @@ class Workspace
         response_target: staging_path
       )
 
-      # Disconnect the tenant's connection pool (same pattern as destroy_tenant)
+      # Suspend the workspace to block new requests across all processes,
+      # then disconnect this process's tenant connection pool
+      workspace.suspend!
+
       ApplicationRecord.with_tenant(tenant_id) do
         ApplicationRecord.remove_connection
       end
@@ -27,9 +30,10 @@ class Workspace
       FileUtils.rm_f("#{db_path}-wal")
       FileUtils.rm_f("#{db_path}-shm")
 
-      # Next request to this tenant will re-establish the connection automatically
+      workspace.unsuspend!
     ensure
       FileUtils.rm_f(staging_path) if staging_path && File.exist?(staging_path)
+      workspace.unsuspend! if workspace.suspended?
     end
   end
 end
