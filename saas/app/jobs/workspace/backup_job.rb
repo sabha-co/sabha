@@ -5,6 +5,8 @@ class Workspace
     queue_as :default
 
     def perform(workspace)
+      return unless ENV["R2_ACCESS_KEY_ID"].present?
+
       tenant_id = workspace.external_id.to_s
       timestamp = Time.current.strftime("%Y%m%d%H%M%S")
       key = "backups/#{workspace.external_id}/#{timestamp}-#{SecureRandom.hex(4)}.sqlite3"
