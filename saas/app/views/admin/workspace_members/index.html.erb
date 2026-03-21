@@ -6,7 +6,7 @@
   </div>
 
   <div class="flex align-center justify-space-between">
-    <h1 class="txt-large" style="font-weight: 600;">Members (<%= @memberships.size %>)</h1>
+    <h1 class="txt-large" style="font-weight: 600;">Members (<%= @members_count %>)</h1>
     <%= form_with url: admin_workspace_members_path(@workspace), method: :get, class: "flex gap-half" do |f| %>
       <%= f.text_field :query, value: @query, placeholder: "Search by email or name…", class: "input" %>
       <%= f.submit "Search", class: "btn" %>

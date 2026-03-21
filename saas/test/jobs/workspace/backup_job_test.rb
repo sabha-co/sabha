@@ -5,8 +5,12 @@ require_relative "../../test_helper"
 class Workspace::BackupJobTest < ActiveSupport::TestCase
   test "creates backup record and uploads to R2" do
     with_provisioned_workspace(name: "Backup Test", creator: global_identities(:alice)) do |workspace|
-      s3_client = stub
-      s3_client.stubs(:put_object)
+      s3_client = mock
+      s3_client.expects(:put_object).with(
+        bucket: Workspace::Backup.bucket,
+        key: regexp_matches(/\Abackups\/#{workspace.external_id}\/\d{14}-[0-9a-f]{8}\.sqlite3\z/),
+        body: anything
+      ).once
       s3_client.stubs(:delete_object)
       Workspace::Backup.stubs(:s3_client).returns(s3_client)
 

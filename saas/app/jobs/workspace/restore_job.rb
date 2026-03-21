@@ -7,6 +7,12 @@ class Workspace
     def perform(workspace, backup)
       tenant_id = workspace.external_id.to_s
       db_path = Rails.root.join("storage/workspaces/#{Rails.env}/#{tenant_id}/db/main.sqlite3")
+      was_suspended = workspace.suspended?
+
+      # Suspend the workspace to stop new requests from routing to this tenant.
+      # Give in-flight requests a moment to drain before swapping the database.
+      workspace.suspend! unless was_suspended
+      sleep 2
 
       # Download backup to a staging file in the same directory (required for atomic rename)
       staging_path = "#{db_path}.restoring"
@@ -35,6 +41,9 @@ class Workspace
       FileUtils.rm_f(old_path)
       FileUtils.rm_f("#{old_path}-wal")
       FileUtils.rm_f("#{old_path}-shm")
+
+      # Unsuspend so the workspace is accessible again with the restored data
+      workspace.unsuspend! unless was_suspended
     ensure
       FileUtils.rm_f(staging_path) if staging_path && File.exist?(staging_path)
     end

@@ -23,6 +23,7 @@ module Admin
       end
 
       @memberships = scope.order("last_sessions.last_active_at DESC NULLS LAST")
+      @members_count = @memberships.size
     end
 
     private

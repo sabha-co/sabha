@@ -13,7 +13,7 @@ class Workspace < UntenantedRecord
 
   belongs_to :creator, class_name: "GlobalIdentity"
   has_many :workspace_memberships, primary_key: :external_id, foreign_key: :tenant, dependent: :destroy
-  has_many :backups, class_name: "Workspace::Backup", dependent: :destroy
+  has_many :backups, class_name: "Workspace::Backup"
 
   validates :name, presence: true, length: { maximum: 100 }
   validates :external_id, presence: true, uniqueness: true
