@@ -41,10 +41,6 @@ class Workspace::RestoreJobTest < ActiveSupport::TestCase
 
       Workspace::RestoreJob.perform_now(workspace, backup)
 
-      # Verify workspace was unsuspended after restore
-      workspace.reload
-      assert_not workspace.suspended?, "Workspace should be unsuspended after successful restore"
-
       # Verify the restored DB has the pre-backup user but not the post-backup one
       ApplicationRecord.with_tenant(tenant_id) do
         assert User.exists?(email_address: "before@example.com")
@@ -52,29 +48,6 @@ class Workspace::RestoreJobTest < ActiveSupport::TestCase
       end
     ensure
       backup_copy&.unlink
-    end
-  end
-
-  test "preserves suspension state if workspace was already suspended" do
-    with_provisioned_workspace(name: "Suspended Restore Test", creator: global_identities(:alice)) do |workspace|
-      workspace.suspend!
-      backup = workspace.backups.create!(key: "backups/#{workspace.external_id}/test.sqlite3", size: 1024)
-
-      tenant_id = workspace.external_id.to_s
-      db_path = Rails.root.join("storage/workspaces/#{Rails.env}/#{tenant_id}/db/main.sqlite3")
-
-      s3_client = stub
-      s3_client.stubs(:get_object).with do |params|
-        FileUtils.cp(db_path.to_s, params[:response_target])
-        true
-      end
-      s3_client.stubs(:delete_object)
-      Workspace::Backup.stubs(:s3_client).returns(s3_client)
-
-      Workspace::RestoreJob.perform_now(workspace, backup)
-
-      workspace.reload
-      assert workspace.suspended?, "Workspace should remain suspended if it was suspended before restore"
     end
   end
 

@@ -9,11 +9,6 @@ class Workspace
       db_path = Rails.root.join("storage/workspaces/#{Rails.env}/#{tenant_id}/db/main.sqlite3")
       was_suspended = workspace.suspended?
 
-      # Suspend the workspace to stop new requests from routing to this tenant.
-      # Give in-flight requests a moment to drain before swapping the database.
-      workspace.suspend! unless was_suspended
-      sleep 2
-
       # Download backup to a staging file in the same directory (required for atomic rename)
       staging_path = "#{db_path}.restoring"
       old_path = "#{db_path}.old"
@@ -24,14 +19,7 @@ class Workspace
         response_target: staging_path
       )
 
-      # Disconnect this process's tenant connection pool
-      ApplicationRecord.with_tenant(tenant_id) do
-        ApplicationRecord.remove_connection
-      end
-
-      # Atomic swap: move current DB aside, rename backup into place, clean up.
-      # Other processes holding the old file will get SQLITE_IOERR on their next
-      # query and re-establish a connection to the new file automatically.
+      # Swap the database file
       File.rename(db_path, old_path) if File.exist?(db_path)
       File.rename(staging_path, db_path)
 
@@ -42,8 +30,12 @@ class Workspace
       FileUtils.rm_f("#{old_path}-wal")
       FileUtils.rm_f("#{old_path}-shm")
 
-      # Unsuspend so the workspace is accessible again with the restored data
-      workspace.unsuspend! unless was_suspended
+      # Drop the tenant connection pool so all threads in this process get a
+      # fresh connection to the new database file. Without this, existing
+      # connections hold open file descriptors to the old (renamed) inode.
+      ApplicationRecord.with_tenant(tenant_id, prohibit_shard_swapping: false) do
+        ApplicationRecord.remove_connection
+      end
     ensure
       FileUtils.rm_f(staging_path) if staging_path && File.exist?(staging_path)
     end
