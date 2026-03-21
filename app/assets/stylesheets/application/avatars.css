@@ -128,7 +128,7 @@
   height: 100%;
   
   /* Text styling */
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-family);
   font-weight: 900;
   color: white;
   text-transform: uppercase;

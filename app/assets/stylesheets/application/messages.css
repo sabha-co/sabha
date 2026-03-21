@@ -519,7 +519,7 @@
   }
 
   .thread__link {
-    font-family: sans-serif;
+    font-family: var(--font-family);
     font-size: 0.85em;
     text-decoration: none;
     color: inherit;

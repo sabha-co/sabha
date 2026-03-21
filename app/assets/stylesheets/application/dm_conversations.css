@@ -55,7 +55,7 @@
 
 .dm-conversation__names {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--font-size-small);
   line-height: 1.3;
 
   .dm-conversation.unread & {
@@ -72,7 +72,7 @@
 }
 
 .dm-conversation__time {
-  font-size: 0.85rem;
+  font-size: var(--font-size-small);
   color: var(--color-text-muted);
   opacity: 0.6;
   white-space: nowrap;
@@ -84,7 +84,7 @@
 }
 
 .dm-conversation__preview {
-  font-size: 0.875rem;
+  font-size: var(--font-size-small);
   line-height: 1.4;
   color: var(--color-text);
   opacity: 0.75;

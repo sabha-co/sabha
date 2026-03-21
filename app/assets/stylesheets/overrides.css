@@ -15,7 +15,7 @@
 
 .room {
   font-weight: 400;
-  font-size: 90%;
+  font-size: var(--font-size-small);
   margin-inline-end: inherit;
 }
 

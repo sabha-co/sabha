@@ -52,7 +52,7 @@
                 data-collapsible-section-target="toggle"
                 data-action="collapsible-section#toggle">
           <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
-          <h1 class="text-base font-medium">Favorites</h1>
+          <h1 class="txt-small font-semibold txt-label">Favorites</h1>
         </button>
 
         <div data-collapsible-section-target="content" class="flex flex-col rooms-list">
@@ -61,7 +61,7 @@
       </div>
 
       <div class="flex items-center justify-between gap-half mb-2">
-        <h1 class="text-base font-medium">All Rooms</h1>
+        <h1 class="txt-small font-semibold txt-label">All Rooms</h1>
         <div class="flex items-center gap-half">
           <%= render "users/sidebars/all_rooms_actions" %>
           <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>

@@ -9,12 +9,12 @@
 }
 
 /* Text */
-.txt-x-small { font-size: 0.8rem; }
-.txt-small { font-size: 0.85rem; }
-.txt-medium { font-size: 1rem; }
-.txt-large { font-size: 1.4rem; }
-.txt-x-large { font-size: 1.8rem; }
-.txt-xx-large { font-size: 2.4rem; }
+.txt-x-small { font-size: var(--font-size-x-small); }
+.txt-small { font-size: var(--font-size-small); }
+.txt-medium { font-size: var(--font-size-medium); }
+.txt-large { font-size: var(--font-size-large); }
+.txt-x-large { font-size: var(--font-size-x-large); }
+.txt-xx-large { font-size: var(--font-size-xx-large); }
 
 .txt-align-center { text-align: center; }
 .txt-align-start { text-align: start; }
