@@ -41,11 +41,15 @@ class Workspace::RestoreJobTest < ActiveSupport::TestCase
 
       Workspace::RestoreJob.perform_now(workspace, backup)
 
-      # Re-establish a fresh connection after the pool was dropped by the restore
-      ApplicationRecord.with_tenant(tenant_id) do
-        assert User.exists?(email_address: "before@example.com")
-        assert_not User.exists?(email_address: "after@example.com")
-      end
+      # The restore job drops the connection pool. Verify the new DB by
+      # opening a fresh connection directly to avoid any stale pool state.
+      restored_db = SQLite3::Database.new(db_path.to_s)
+      users = restored_db.execute("SELECT email_address FROM users")
+      restored_db.close
+
+      emails = users.flatten
+      assert_includes emails, "before@example.com"
+      assert_not_includes emails, "after@example.com"
     ensure
       backup_copy&.unlink
     end

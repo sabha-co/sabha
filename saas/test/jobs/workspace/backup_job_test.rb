@@ -5,6 +5,8 @@ require_relative "../../test_helper"
 class Workspace::BackupJobTest < ActiveSupport::TestCase
   test "creates backup record and uploads to R2" do
     with_provisioned_workspace(name: "Backup Test", creator: global_identities(:alice)) do |workspace|
+      Workspace::Backup.stubs(:r2_configured?).returns(true)
+
       s3_client = mock
       s3_client.expects(:put_object).with(
         bucket: Workspace::Backup.bucket,
@@ -26,6 +28,8 @@ class Workspace::BackupJobTest < ActiveSupport::TestCase
   test "cleans up expired backups after creating new one" do
     with_provisioned_workspace(name: "Cleanup Test", creator: global_identities(:alice)) do |workspace|
       old_backup = workspace.backups.create!(key: "backups/old.sqlite3", size: 1024, created_at: 8.days.ago)
+
+      Workspace::Backup.stubs(:r2_configured?).returns(true)
 
       s3_client = stub
       s3_client.stubs(:put_object)

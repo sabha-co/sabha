@@ -22,10 +22,22 @@ class Admin::WorkspaceBackupsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create enqueues backup job" do
+    Workspace::Backup.stubs(:r2_configured?).returns(true)
+
     assert_enqueued_with(job: Workspace::BackupJob, args: [ @workspace ]) do
       post admin_workspace_backups_path(@workspace)
     end
     assert_redirected_to admin_workspace_backups_path(@workspace)
+  end
+
+  test "create returns alert when R2 is not configured" do
+    Workspace::Backup.stubs(:r2_configured?).returns(false)
+
+    assert_no_enqueued_jobs do
+      post admin_workspace_backups_path(@workspace)
+    end
+    assert_redirected_to admin_workspace_backups_path(@workspace)
+    assert_equal "Backups are not configured. Set R2 credentials to enable.", flash[:alert]
   end
 
   test "restore enqueues restore job" do

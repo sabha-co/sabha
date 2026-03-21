@@ -5,7 +5,7 @@ class Workspace
     queue_as :default
 
     def perform(workspace)
-      return unless ENV["R2_ACCESS_KEY_ID"].present?
+      return unless Workspace::Backup.r2_configured?
 
       Workspace::Backup.create_from_database!(workspace)
       workspace.backups.expired.find_each(&:purge!)
