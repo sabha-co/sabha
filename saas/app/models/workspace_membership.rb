@@ -26,8 +26,9 @@ class WorkspaceMembership < UntenantedRecord
       .joins("LEFT JOIN (#{GlobalSession.select("global_identity_id, MAX(last_active_at) AS last_active_at").group(:global_identity_id).to_sql}) last_sessions ON last_sessions.global_identity_id = workspace_memberships.global_identity_id")
       .includes(:global_identity)
       .select("workspace_memberships.*, last_sessions.last_active_at AS last_active_at")
-      .order("last_sessions.last_active_at DESC NULLS LAST")
   }
+
+  scope :by_last_active, -> { order("last_sessions.last_active_at DESC NULLS LAST") }
 
   scope :search, ->(query) {
     if query.present?

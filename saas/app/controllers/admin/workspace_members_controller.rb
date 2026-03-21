@@ -6,7 +6,7 @@ module Admin
 
     def index
       @query = params[:query]
-      @memberships = WorkspaceMembership.for_workspace(@workspace).search(@query)
+      @memberships = WorkspaceMembership.for_workspace(@workspace).search(@query).by_last_active
       @members_count = @memberships.size
     end
 
