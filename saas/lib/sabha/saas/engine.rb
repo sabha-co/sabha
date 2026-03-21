@@ -20,6 +20,7 @@ module Sabha
           app.config.autoload_paths << root.join("app/helpers")
           app.config.autoload_paths << root.join("app/mailers")
           app.config.autoload_paths << root.join("app/channels/concerns")
+          app.config.autoload_paths << root.join("app/jobs")
         end
       end
 
@@ -71,6 +72,10 @@ module Sabha
               resources :workspaces, only: [ :index, :show ] do
                 resource :suspension, only: [ :create, :destroy ],
                          controller: "workspace_suspensions"
+                resources :members, only: [ :index ], controller: "workspace_members"
+                resources :backups, only: [ :index, :create ], controller: "workspace_backups" do
+                  resource :restore, only: [ :create ], controller: "workspace_restores"
+                end
               end
             end
           end

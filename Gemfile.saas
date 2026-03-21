@@ -18,5 +18,8 @@ gem "pg"
 # AWS SES email delivery (alternative to Resend, set EMAIL_PROVIDER=ses)
 gem "aws-sdk-sesv2"
 
+# S3-compatible storage for workspace backups (Cloudflare R2)
+gem "aws-sdk-s3"
+
 # SaaS engine
 gem "sabha-saas", path: "saas"

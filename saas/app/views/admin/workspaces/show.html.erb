@@ -36,34 +36,13 @@
     </div>
   </div>
 
-  <%# Members table %>
-  <section class="flex flex-column gap-half">
-    <h2 class="txt-small txt-muted txt-label">Members (<%= @memberships.count %>)</h2>
-    <div class="border" style="border-radius: 0.5em; overflow: hidden;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <thead>
-          <tr class="txt-small txt-muted" style="border-bottom: 1px solid var(--color-border);">
-            <th class="pad-block-half pad-inline txt-align-start">Email</th>
-            <th class="pad-block-half pad-inline txt-align-start">Name</th>
-            <th class="pad-block-half pad-inline txt-align-start">Joined</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @memberships.each do |membership| %>
-            <% identity = membership.global_identity %>
-            <tr style="border-bottom: 1px solid var(--color-border);">
-              <td class="pad-block-half pad-inline txt-small"><%= identity.email_address %></td>
-              <td class="pad-block-half pad-inline txt-small txt-muted"><%= identity.name.presence || "—" %></td>
-              <td class="pad-block-half pad-inline txt-small txt-muted"><%= membership.created_at.to_fs(:date) %></td>
-            </tr>
-          <% end %>
-          <% if @memberships.empty? %>
-            <tr>
-              <td colspan="3" class="pad txt-muted txt-align-center">No members.</td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  </section>
+  <%# Quick links %>
+  <div class="flex gap" style="margin-top: 0.5em;">
+    <%= link_to admin_workspace_members_path(@workspace), class: "btn" do %>
+      Members (<%= @members_count %>)
+    <% end %>
+    <%= link_to admin_workspace_backups_path(@workspace), class: "btn" do %>
+      Backups (<%= @backups_count %>)
+    <% end %>
+  </div>
 </div>

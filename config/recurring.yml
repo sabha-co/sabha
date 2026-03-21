@@ -20,5 +20,9 @@ production:
   reconcile_storage:
     command: "Workspace.find_each { |w| ApplicationRecord.with_tenant(w.external_id.to_s) { Storage::ReconcileJob.perform_later(Account.sole) } }"
     schedule: every day at 3am
+
+  backup_workspaces:
+    command: "Workspace.active.find_each { |w| Workspace::BackupJob.perform_later(w) }"
+    schedule: every day at 2am
 <% end %>
 

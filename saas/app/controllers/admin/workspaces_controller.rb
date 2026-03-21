@@ -9,10 +9,8 @@ module Admin
 
     def show
       @workspace = Workspace.find(params[:id])
-      @memberships = WorkspaceMembership
-        .where(tenant: @workspace.external_id.to_s)
-        .includes(:global_identity)
-        .order(created_at: :asc)
+      @members_count = WorkspaceMembership.where(tenant: @workspace.external_id.to_s).count
+      @backups_count = @workspace.backups.count
     end
 
     private
