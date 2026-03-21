@@ -20,6 +20,23 @@ class WorkspaceMembership < UntenantedRecord
   # Order by position (user-defined), falling back to most recently updated
   scope :ordered, -> { order(Arel.sql("COALESCE(position, 999999) ASC, updated_at DESC")) }
 
+  scope :for_workspace, ->(workspace) {
+    where(tenant: workspace.external_id.to_s)
+      .joins(:global_identity)
+      .joins("LEFT JOIN (#{GlobalSession.select("global_identity_id, MAX(last_active_at) AS last_active_at").group(:global_identity_id).to_sql}) last_sessions ON last_sessions.global_identity_id = workspace_memberships.global_identity_id")
+      .includes(:global_identity)
+      .select("workspace_memberships.*, last_sessions.last_active_at AS last_active_at")
+      .order("last_sessions.last_active_at DESC NULLS LAST")
+  }
+
+  scope :search, ->(query) {
+    if query.present?
+      where("global_identities.email_address ILIKE :q OR global_identities.name ILIKE :q", q: "%#{query}%")
+    else
+      all
+    end
+  }
+
   # Bulk update positions for a global identity's workspace memberships
   def self.reorder_for_identity(global_identity, workspace_ids)
     return false if workspace_ids.blank? || !workspace_ids.is_a?(Array)

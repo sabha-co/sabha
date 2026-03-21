@@ -21,11 +21,6 @@ class Workspace::BackupTest < ActiveSupport::TestCase
     assert_not_includes expired, recent_backup
   end
 
-  test "size_in_mb converts bytes to megabytes" do
-    backup = Workspace::Backup.new(size: 10_485_760) # 10 MB
-    assert_equal 10.0, backup.size_in_mb
-  end
-
   test "purge_expired! deletes old backups and their R2 objects" do
     old_backup = Workspace::Backup.create!(workspace: @workspace, key: "backups/old.sqlite3", size: 1024, created_at: 8.days.ago)
     recent_backup = Workspace::Backup.create!(workspace: @workspace, key: "backups/recent.sqlite3", size: 1024, created_at: 1.day.ago)

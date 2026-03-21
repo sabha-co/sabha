@@ -7,17 +7,11 @@ class Workspace
     def perform(workspace, backup)
       tenant_id = workspace.external_id.to_s
       db_path = Rails.root.join("storage/workspaces/#{Rails.env}/#{tenant_id}/db/main.sqlite3")
-      was_suspended = workspace.suspended?
-
       # Download backup to a staging file in the same directory (required for atomic rename)
       staging_path = "#{db_path}.restoring"
       old_path = "#{db_path}.old"
 
-      Workspace::Backup.s3_client.get_object(
-        bucket: Workspace::Backup.bucket,
-        key: backup.key,
-        response_target: staging_path
-      )
+      backup.download_to(staging_path)
 
       # Swap the database file
       File.rename(db_path, old_path) if File.exist?(db_path)
@@ -30,9 +24,16 @@ class Workspace
       FileUtils.rm_f("#{old_path}-wal")
       FileUtils.rm_f("#{old_path}-shm")
 
-      # Drop the tenant connection pool so all threads in this process get a
-      # fresh connection to the new database file. Without this, existing
-      # connections hold open file descriptors to the old (renamed) inode.
+      # Drop the tenant connection pool in this process so subsequent queries
+      # connect to the new database file.
+      #
+      # NOTE: This only affects the current process. Other processes (web,
+      # AnyCable) retain open file descriptors to the old inode until their
+      # connection pools are reaped or the process restarts. In production,
+      # the max_connection_pools LRU reaper handles this — idle tenant pools
+      # are evicted and reconnect to the new file on next access. For
+      # immediate consistency across all processes, restart the web container
+      # after a restore.
       ApplicationRecord.with_tenant(tenant_id, prohibit_shard_swapping: false) do
         ApplicationRecord.remove_connection
       end

@@ -31,17 +31,17 @@ class Workspace::RestoreJobTest < ActiveSupport::TestCase
 
       backup = workspace.backups.create!(key: "backups/#{workspace.external_id}/test.sqlite3", size: 1024)
 
-      s3_client = stub
-      s3_client.stubs(:get_object).with do |params|
-        FileUtils.cp(backup_copy.path, params[:response_target])
-        true
-      end
-      s3_client.stubs(:delete_object)
-      Workspace::Backup.stubs(:s3_client).returns(s3_client)
+      fake_s3 = Class.new do
+        define_method(:get_object) do |bucket:, key:, response_target:|
+          FileUtils.cp(backup_copy.path, response_target)
+        end
+        def delete_object(...) = nil
+      end.new
+      Workspace::Backup.stubs(:s3_client).returns(fake_s3)
 
       Workspace::RestoreJob.perform_now(workspace, backup)
 
-      # Verify the restored DB has the pre-backup user but not the post-backup one
+      # Re-establish a fresh connection after the pool was dropped by the restore
       ApplicationRecord.with_tenant(tenant_id) do
         assert User.exists?(email_address: "before@example.com")
         assert_not User.exists?(email_address: "after@example.com")

@@ -8,9 +8,11 @@
   <div class="flex align-center justify-space-between">
     <h1 class="txt-large" style="font-weight: 600;">Backups</h1>
 
-    <%= button_to "Back up now", admin_workspace_backups_path(@workspace),
-          method: :post,
-          class: "btn" %>
+    <% if Workspace::Backup.r2_configured? %>
+      <%= button_to "Back up now", admin_workspace_backups_path(@workspace),
+            method: :post,
+            class: "btn" %>
+    <% end %>
   </div>
 
   <section class="flex flex-column gap-half">
