@@ -13,6 +13,11 @@ class Workspace::RestoreJobTest < ActiveSupport::TestCase
         User.create!(name: "Before Restore", email_address: "before@example.com", password: "password123456")
       end
 
+      # Flush WAL to main database file before snapshotting
+      ApplicationRecord.with_tenant(tenant_id) do
+        ApplicationRecord.connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+      end
+
       # Snapshot the DB at this point — this becomes our "backup"
       backup_copy = Tempfile.new([ "restore-test", ".sqlite3" ])
       source_db = SQLite3::Database.new(db_path.to_s)
