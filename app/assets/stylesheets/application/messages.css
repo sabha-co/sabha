@@ -2,14 +2,13 @@
   display: contents;
 
   &:has(.message),
-  &:has(.dm-conversation),
-  &:has(.dm-compose) {
+  &:has(.dm-conversation) {
     .message-area--empty {
       display: none;
     }
   }
 
-  &:not(:has(.message)):not(:has(.dm-conversation)):not(:has(.dm-compose)) {
+  &:not(:has(.message)):not(:has(.dm-conversation)) {
     --opacity: 0.2;
 
     block-size: 100vh;
@@ -17,7 +16,7 @@
     place-content: center stretch;
     place-items: center center;
 
-    > * {
+    > *:not(.dm-compose) {
       grid-area: 1/1;
     }
 

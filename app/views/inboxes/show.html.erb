@@ -15,7 +15,7 @@
     {
       icon: "messages",
       headline: "No conversations yet",
-      description: "Type a name above to start one."
+      description: Current.user.can_create_direct_messages? ? "Type a name above to start one." : "Direct messages will appear here."
     }
   when "threads"
     {
