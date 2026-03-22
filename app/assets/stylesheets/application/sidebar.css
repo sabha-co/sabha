@@ -184,6 +184,7 @@
     inset-block-start: var(--block-space);
 
     @media (max-width: 120ch) {
+      display: none;
       inset-inline-start: var(--sidebar-inline-space);
 
       & img {
@@ -298,10 +299,8 @@
         oklch(0% 0 0 / 1) 85%,
         oklch(0% 0 0 / 0) 99%
       );
-      padding-inline-start: calc(
-        var(--btn-size) + var(--sidebar-inline-space) +
-          (var(--column-gap) * 2.5)
-      );
+      padding-block-start: var(--block-space-half);
+      padding-inline-start: var(--sidebar-inline-space);
     }
   }
 
