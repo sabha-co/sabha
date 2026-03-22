@@ -368,6 +368,10 @@
   .avatar {
     margin-inline: 0;
   }
+
+  @media (max-width: 120ch) {
+    display: none;
+  }
 }
 
 .direct__author {
