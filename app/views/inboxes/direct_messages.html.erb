@@ -28,7 +28,8 @@
        data-controller="dm-list"
        data-dm-list-target="conversations"
        data-dm-list-loading-class="dm-conversation--loading"
-       data-dm-list-page-url-value="<%= paged_inbox_direct_messages_url %>">
+       data-dm-list-page-url-value="<%= paged_inbox_direct_messages_url %>"
+       <%= "hidden" unless @memberships.present? %>>
     <%= render partial: "inboxes/direct_messages/conversation",
                collection: @memberships,
                as: :membership,
