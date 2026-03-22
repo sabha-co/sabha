@@ -13,20 +13,19 @@ class Workspace::RestoreJobTest < ActiveSupport::TestCase
         User.create!(name: "Before Restore", email_address: "before@example.com", password: "password123456")
       end
 
-      # Flush WAL to main database file before snapshotting
-      ApplicationRecord.with_tenant(tenant_id) do
-        ApplicationRecord.connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-      end
-
-      # Snapshot the DB at this point — this becomes our "backup"
+      # Snapshot the DB at this point — this becomes our "backup".
+      # Use the AR connection's raw handle as the backup source to avoid
+      # stale file-descriptor issues when connection pools are reused
+      # across tests with the same tenant_id.
       backup_copy = Tempfile.new([ "restore-test", ".sqlite3" ])
-      source_db = SQLite3::Database.new(db_path.to_s)
-      dest_db = SQLite3::Database.new(backup_copy.path)
-      sqlite_backup = SQLite3::Backup.new(dest_db, "main", source_db, "main")
-      sqlite_backup.step(-1)
-      sqlite_backup.finish
-      source_db.close
-      dest_db.close
+      ApplicationRecord.with_tenant(tenant_id) do
+        source_db = ApplicationRecord.connection.raw_connection
+        dest_db = SQLite3::Database.new(backup_copy.path)
+        sqlite_backup = SQLite3::Backup.new(dest_db, "main", source_db, "main")
+        sqlite_backup.step(-1)
+        sqlite_backup.finish
+        dest_db.close
+      end
 
       # Add another user after the snapshot — this should disappear after restore
       ApplicationRecord.with_tenant(tenant_id) do
