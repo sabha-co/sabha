@@ -14,9 +14,37 @@
   }
 }
 
-/* Hide empty state when DM list has conversations */
-.message-area:has(.dm-list .dm-conversation) .message-area--empty {
-  display: none;
+/* DM compose form — sits above the dm-list, outside of it */
+.dm-compose {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem var(--inline-space);
+  padding-block-start: calc(var(--navbar-height) + 0.5rem);
+  border-radius: 0.66em;
+  position: relative;
+  z-index: 1;
+
+  @media (max-width: 120ch) {
+    padding-block-start: calc(var(--navbar-height) + var(--inline-space));
+  }
+}
+
+/* When compose form is present, dm-list doesn't need navbar offset */
+.dm-compose + .dm-list {
+  padding-block-start: 0;
+
+  @media (max-width: 120ch) {
+    padding-block-start: 0;
+  }
+}
+
+.dm-compose__container {
+  flex: 1;
+}
+
+.dm-compose__submit {
+  flex-shrink: 0;
 }
 
 .dm-conversation {

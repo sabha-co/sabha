@@ -748,11 +748,6 @@
   }
 }
 
-/* Hide empty state when DM list has conversations */
-.message-area:has(.dm-list .dm-conversation) .message-area--empty {
-  display: none;
-}
-
 .dm-conversation {
   display: grid;
   grid-template-columns: auto 1fr auto;

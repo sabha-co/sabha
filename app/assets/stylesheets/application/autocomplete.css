@@ -149,17 +149,20 @@ suggestion-option {
   --input-padding: 0.3em 0;
 
   @media (min-width: 120ch) {
-    /* In Library overlay, --sidebar-width is 0; avoid collapsing width */
-    body.library-collapsed & {
-      max-inline-size: 100% !important;
-      inline-size: 100%;
-    }
-    /* Default pages keep previous calculation */
-    body:not(.library-collapsed) & {
-      max-inline-size: calc(
-        var(--sidebar-width) - (var(--btn-size) * 2) - (var(--column-gap) * 2) -
-          (var(--sidebar-inline-space) * 2)
-      );
+    /* Sidebar-specific sizing — only constrain when inside the sidebar new-DM form */
+    .directs--new & {
+      /* In Library overlay, --sidebar-width is 0; avoid collapsing width */
+      body.library-collapsed & {
+        max-inline-size: 100%;
+        inline-size: 100%;
+      }
+      /* Default pages keep previous calculation */
+      body:not(.library-collapsed) & {
+        max-inline-size: calc(
+          var(--sidebar-width) - (var(--btn-size) * 2) - (var(--column-gap) * 2) -
+            (var(--sidebar-inline-space) * 2)
+        );
+      }
     }
   }
 }

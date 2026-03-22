@@ -2,13 +2,14 @@
   display: contents;
 
   &:has(.message),
-  &:has(.dm-conversation) {
+  &:has(.dm-conversation),
+  &:has(.dm-compose) {
     .message-area--empty {
       display: none;
     }
   }
 
-  &:not(:has(.message)):not(:has(.dm-conversation)) {
+  &:not(:has(.message)):not(:has(.dm-conversation)):not(:has(.dm-compose)) {
     --opacity: 0.2;
 
     block-size: 100vh;
