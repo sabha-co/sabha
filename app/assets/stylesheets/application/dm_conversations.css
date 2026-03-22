@@ -1,16 +1,18 @@
 /* DM Inbox conversation list */
 .dm-list {
+  --dm-list-block-start: var(--navbar-height);
+
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: var(--inline-space);
-  padding-block-start: var(--navbar-height);
+  padding-block-start: var(--dm-list-block-start);
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
 
   @media (max-width: 120ch) {
-    padding-block-start: calc(var(--navbar-height) + var(--inline-space));
+    --dm-list-block-start: calc(var(--navbar-height) + var(--inline-space));
   }
 }
 
@@ -28,13 +30,13 @@
   @media (max-width: 120ch) {
     padding-block-start: calc(var(--navbar-height) + var(--inline-space));
   }
-}
 
-/* When compose form is present, dm-list doesn't need navbar offset */
-.dm-compose ~ .dm-list {
-  padding-block-start: 0.5rem !important;
-  border-block-start: 1px solid var(--color-border-dark);
-  margin-block-start: 0.5rem;
+  /* When compose form is present, dm-list doesn't need navbar offset */
+  ~ .dm-list {
+    --dm-list-block-start: 0.5rem;
+    border-block-start: 1px solid var(--color-border-dark);
+    margin-block-start: 0.5rem;
+  }
 }
 
 .dm-compose__container {
