@@ -12,21 +12,25 @@
     --opacity: 0.2;
 
     block-size: 100vh;
-    display: grid;
-    place-content: center stretch;
-    place-items: center center;
-
-    > *:not(.dm-compose) {
-      grid-area: 1/1;
-    }
-
-    .message-area--empty > figure img,
-    .message-area--empty > figure .icon {
-      inline-size: 30dvw;
-    }
+    display: flex;
+    flex-direction: column;
 
     .message-area--empty {
+      flex: 1;
+      display: grid;
+      place-content: center;
+      place-items: center;
       animation: empty-state-in 350ms cubic-bezier(0.25, 1, 0.5, 1) both;
+      order: 1;
+
+      > figure img,
+      > figure .icon {
+        inline-size: 30dvw;
+      }
+    }
+
+    .dm-compose {
+      order: 0;
     }
   }
 }
