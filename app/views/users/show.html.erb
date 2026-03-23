@@ -123,10 +123,6 @@
       </div>
     <% end %>
 
-    <% if Current.user.can_administer? && !@user.bot? %>
-      <%= render "users/profiles/transfer", user: @user %>
-    <% end %>
-
     <% if Current.user != @user && !@user.bot? %>
       <hr class="margin-block-start borderless">
       <div class="flex justify-center gap">
