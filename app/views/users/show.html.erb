@@ -127,9 +127,14 @@
       <%= render "users/profiles/transfer", user: @user %>
     <% end %>
 
-    <% if Current.user.can_administer? && Current.user != @user && !@user.bot? %>
+    <% if Current.user != @user && !@user.bot? %>
       <hr class="margin-block-start borderless">
-      <%= render "users/ban_button", user: @user %>
+      <div class="flex justify-center gap">
+        <%= render "blocks/button", user: @user, compact: false %>
+        <% if Current.user.staff? %>
+          <%= render "users/ban_button", user: @user %>
+        <% end %>
+      </div>
     <% end %>
 
   <% elsif @user.banned? %>
@@ -144,9 +149,11 @@
       <span class="txt-small txt-negative">Banned</span>
     </div>
 
-    <% if Current.user.can_administer? && Current.user != @user %>
+    <% if Current.user.staff? && Current.user != @user %>
       <hr class="margin-block-start borderless">
-      <%= render "users/ban_button", user: @user %>
+      <div class="flex justify-center">
+        <%= render "users/ban_button", user: @user %>
+      </div>
     <% end %>
 
   <% else %>

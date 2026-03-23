@@ -31,10 +31,6 @@
           <%= button_to_change_involvement(room, @membership.involvement) %>
         <% end %>
       <% end %>
-      
-      <% if room.one_on_one? %>
-        <%= render 'blocks/button', user: room.roommate_to(Current.user), compact: true %>
-      <% end %>
     </div>
   <% end %>
 <% end %>

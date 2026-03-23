@@ -9,6 +9,6 @@
           turbo_confirm: blocked ? "Are you sure you want to unblock #{user.name}?" : "Are you sure you want to block #{user.name} from messaging you?"
         } do %>
     <%= icon_tag(blocked ? "unblock" : "block") %>
-    <%= compact ? "" : (blocked ? "Unblock user" : "Block user") %>
+    <%= compact ? "" : (blocked ? "Unblock" : "Block") %>
   <% end %>
 <% end %>
