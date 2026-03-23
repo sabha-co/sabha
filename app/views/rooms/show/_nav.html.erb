@@ -16,9 +16,9 @@
   <% end %>
 
   <% if room.thread? %>
-    <%= link_back_to room_at_message_path(room.parent_message.room, room.parent_message) %>
+    <%= link_back_to_or_referrer room_at_message_path(room.parent_message.room, room.parent_message) %>
   <% elsif room.direct? %>
-    <%= link_back_to direct_messages_inbox_path %>
+    <%= link_back_to_or_referrer direct_messages_inbox_path %>
     <%= link_to_edit_room(room) %>
   <% else %>
     <%= link_to_edit_room(room) %>

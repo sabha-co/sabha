@@ -42,14 +42,15 @@ module ApplicationHelper
   end
 
   def link_back
-    # Check for from= query string parameter
     if params[:from].present?
-      # Use the from parameter as the back destination
       link_back_to params[:from]
     else
-      # Otherwise, return to the last room visited
       link_back_to_last_room_visited
     end
+  end
+
+  def link_back_to_or_referrer(default_path)
+    link_back_to(params[:from].presence || referrer_back_path || default_path)
   end
 
   def link_home
@@ -85,5 +86,16 @@ module ApplicationHelper
 
     def workspace_banner_body_class
       "has-workspace-banner" if Sabha.saas? && Current.workspace.present?
+    end
+
+    # Extracts a back path from the referer if it matches a known inbox/search page.
+    # Returns nil for room pages or unrecognized paths so callers fall back to defaults.
+    def referrer_back_path
+      return unless request.referer.present?
+
+      path = URI.parse(request.referer).path
+      path if path&.match?(%r{\A/inbox/|/searches|/users/\d+/messages})
+    rescue URI::InvalidURIError
+      nil
     end
 end

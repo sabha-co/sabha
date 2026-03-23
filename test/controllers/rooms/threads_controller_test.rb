@@ -139,6 +139,20 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "show renders thread panel without layout" do
+    parent_message = @room.messages.create!(
+      body: "Parent for layout test",
+      creator: @jason,
+      client_message_id: "layout_thread_1"
+    )
+
+    thread = Rooms::Thread.create_for({ parent_message_id: parent_message.id, creator: @jason }, users: [ @david, @jason ])
+
+    get rooms_thread_url(thread)
+    assert_response :success
+    assert_select "turbo-frame#thread_panel_frame"
+  end
+
   test "show requires membership in thread" do
     parent_message = @room.messages.create!(
       body: "Parent for access test",
