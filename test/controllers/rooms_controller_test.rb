@@ -100,6 +100,14 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href='#{direct_messages_inbox_path}']"
   end
 
+  test "back button preserves search query string from referrer" do
+    dm_room = rooms(:david_and_jason)
+
+    get room_url(dm_room), headers: { "HTTP_REFERER" => "http://www.example.com/searches?q=hello" }
+    assert_response :success
+    assert_select "a[href='/searches?q=hello']"
+  end
+
   test "destroy only allowed for creators or those who can administer" do
     sign_in :jz
 

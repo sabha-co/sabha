@@ -90,11 +90,21 @@ module ApplicationHelper
 
     # Extracts a back path from the referer if it matches a known inbox/search page.
     # Returns nil for room pages or unrecognized paths so callers fall back to defaults.
+    # Preserves query string for search pages and handles SaaS workspace path prefixes.
     def referrer_back_path
       return unless request.referer.present?
 
-      path = URI.parse(request.referer).path
-      path if path&.match?(%r{\A/inbox/|/searches|/users/\d+/messages})
+      uri = URI.parse(request.referer)
+      path = uri.path
+
+      # Strip SaaS workspace prefix (SCRIPT_NAME) from referrer path
+      prefix = request.script_name
+      path = path.delete_prefix(prefix) if prefix.present?
+
+      if path.match?(%r{\A/inbox/|/searches|/users/\d+/messages})
+        query = uri.query
+        query.present? ? "#{prefix}#{path}?#{query}" : "#{prefix}#{path}"
+      end
     rescue URI::InvalidURIError
       nil
     end
