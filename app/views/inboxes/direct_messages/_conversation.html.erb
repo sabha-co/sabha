@@ -39,7 +39,7 @@
 
   <div class="dm-conversation__meta">
     <span class="dm-conversation__time">
-      <%= time_ago_in_words(membership.room.last_active_at) %>
+      <%= time_ago_in_words(membership.room.last_active_at) %> ago
     </span>
     <% if membership.unread? %>
       <span class="dm-conversation__badge"></span>

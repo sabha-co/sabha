@@ -4,26 +4,26 @@
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <%
-  empty_state = case @page_title
-  when "Activity"
+  empty_state = case action_name
+  when "activity"
     {
       icon: "mentions",
       headline: "No activity yet",
       description: "Mentions, boosts, and thread replies will appear here."
     }
-  when "Direct Messages"
+  when "direct_messages"
     {
       icon: "messages",
       headline: "No conversations yet",
-      description: "Start a conversation by clicking the + DM button in the sidebar."
+      description: Current.user.can_create_direct_messages? ? "Type a name above to start one." : "Direct messages will appear here."
     }
-  when "Threads"
+  when "threads"
     {
       icon: "threads",
       headline: "No threads yet",
       description: "Replies to messages you've participated in will appear here."
     }
-  when "Bookmarks"
+  when "bookmarks"
     {
       icon: "bookmark",
       headline: "No bookmarks yet",

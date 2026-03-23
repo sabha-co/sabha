@@ -7,12 +7,29 @@
 <% end %>
 
 <% content_for :messages do %>
+  <% if Current.user.can_create_direct_messages? %>
+    <%= form_with url: rooms_directs_path, class: "dm-compose" do |form| %>
+      <section class="autocomplete__container dm-compose__container">
+        <div class="autocomplete__input input flex flex-wrap position-relative"
+            data-controller="autocomplete" data-autocomplete-url-value="<%= autocompletable_users_path %>">
+          <%= render "users/autocompletables/user_select", form: form, placeholder: "New message to…" %>
+        </div>
+      </section>
+
+      <%= button_tag class: "btn btn--reversed dm-compose__submit", type: "submit" do %>
+        <%= icon_tag "arrow-right" %>
+        <span class="for-screen-reader">Start conversation</span>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <div id="inbox"
        class="dm-list"
        data-controller="dm-list"
        data-dm-list-target="conversations"
        data-dm-list-loading-class="dm-conversation--loading"
-       data-dm-list-page-url-value="<%= paged_inbox_direct_messages_url %>">
+       data-dm-list-page-url-value="<%= paged_inbox_direct_messages_url %>"
+       <%= "hidden" unless @memberships.present? %>>
     <%= render partial: "inboxes/direct_messages/conversation",
                collection: @memberships,
                as: :membership,

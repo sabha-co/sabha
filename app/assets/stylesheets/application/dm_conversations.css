@@ -1,22 +1,53 @@
+/*
+ * DM inbox layout uses --dm-content-inset for the first element's top padding,
+ * accounting for the fixed navbar. Both the compose form and dm-list use it
+ * so only one place needs updating if the navbar changes.
+ */
+.dm-list,
+.dm-compose {
+  --dm-content-inset: var(--navbar-height);
+
+  @media (max-width: 120ch) {
+    --dm-content-inset: calc(var(--navbar-height) + var(--inline-space));
+  }
+}
+
 /* DM Inbox conversation list */
 .dm-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: var(--inline-space);
-  padding-block-start: var(--navbar-height);
+  padding-block-start: var(--dm-content-inset);
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+}
 
-  @media (max-width: 120ch) {
-    padding-block-start: calc(var(--navbar-height) + var(--inline-space));
+/* DM compose form — sits above the dm-list, outside of it */
+.dm-compose {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem var(--inline-space);
+  padding-block-start: var(--dm-content-inset);
+  border-radius: 0.66em;
+  position: relative;
+  z-index: 1;
+
+  /* When compose form is present, dm-list doesn't need navbar offset */
+  ~ .dm-list {
+    padding-block-start: 0.5rem;
+    border-block-start: 1px solid var(--color-border-dark);
   }
 }
 
-/* Hide empty state when DM list has conversations */
-.message-area:has(.dm-list .dm-conversation) .message-area--empty {
-  display: none;
+.dm-compose__container {
+  flex: 1;
+}
+
+.dm-compose__submit {
+  flex-shrink: 0;
 }
 
 .dm-conversation {
