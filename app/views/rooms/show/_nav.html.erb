@@ -1,6 +1,12 @@
 <% content_for :nav do %>
   <%= account_logo_tag if Current.account.logo.attached? %>
 
+  <% if room.thread? %>
+    <%= link_back_to_or_referrer room_at_message_path(room.parent_message.room, room.parent_message) %>
+  <% elsif room.direct? %>
+    <%= link_back_to_or_referrer direct_messages_inbox_path %>
+  <% end %>
+
   <%= link_to edit_room_path(room), class: "btn btn--reversed btn--faux room--current" do %>
     <h1 class="room__contents txt-medium overflow-ellipsis">
       <% if room.direct? %>
@@ -15,12 +21,7 @@
     </h1>
   <% end %>
 
-  <% if room.thread? %>
-    <%= link_back_to_or_referrer room_at_message_path(room.parent_message.room, room.parent_message) %>
-  <% elsif room.direct? %>
-    <%= link_back_to_or_referrer direct_messages_inbox_path %>
-    <%= link_to_edit_room(room) %>
-  <% else %>
+  <% unless room.thread? %>
     <%= link_to_edit_room(room) %>
   <% end %>
 

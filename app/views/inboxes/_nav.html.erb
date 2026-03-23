@@ -1,7 +1,9 @@
 <% content_for :nav do %>
   <%= account_logo_tag if Current.account.logo.attached? %>
 
-  <%= tag.span class: "btn btn--reversed btn--faux room--current", style: "margin-left: 0.5ch" do %>
+  <%= link_back %>
+
+  <%= tag.span class: "btn btn--reversed btn--faux room--current" do %>
     <h1 class="room__contents txt-medium overflow-ellipsis">
       <%= title %>
     </h1>
@@ -9,8 +11,6 @@
       <span class="flex-item-no-shrink"><%= count %></span>
     <% end %>
   <% end %>
-
-  <%= link_back %>
 
   <%= yield if block_given? %>
 
