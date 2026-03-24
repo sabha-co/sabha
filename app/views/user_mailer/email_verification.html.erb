@@ -2,8 +2,8 @@
 
 <p>Please verify your email address by clicking the link below:</p>
 
-<p><%= link_to "Verify email address", @verification_url %></p>
+<p style="text-align: center; margin: 28px 0;">
+  <%= link_to "Verify email address", @verification_url, style: "display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;" %>
+</p>
 
-<p>This link will expire in 24 hours.</p>
-
-<p>If you did not create an account, please ignore this email.</p>
+<p style="color: #9b9a97; font-size: 13px;">This link will expire in 24 hours. If you did not create an account, please ignore this email.</p>

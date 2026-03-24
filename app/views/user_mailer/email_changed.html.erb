@@ -2,4 +2,4 @@
 
 <p>This is a confirmation that the email address for your <%= Branding.contextual_app_name %> account has been changed<%= " from #{@old_email}" if @old_email %> to <%= @user.email_address %>.</p>
 
-<p>If you did not make this change, please contact support immediately at <%= mail_to Branding.support_email %>.</p>
+<p style="color: #9b9a97; font-size: 13px;">If you did not make this change, please contact support immediately at <%= mail_to Branding.support_email %>.</p>

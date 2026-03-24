@@ -4,8 +4,8 @@ class WorkspaceMailer < ApplicationMailer
   def welcome(workspace)
     @workspace = workspace
     @creator = workspace.creator
-    @workspace_url = "#{Branding.app_url}/#{workspace.external_id}"
-    @invite_url = "#{@workspace_url}/invite"
+    @workspace_url = root_url(script_name: workspace.slug)
+    @invite_url = invite_url(script_name: workspace.slug)
 
     mail(
       to: @creator.email_address,

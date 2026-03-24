@@ -1,5 +1,7 @@
 <p>Your workspace <strong><%= @workspace.name %></strong> is ready!</p>
 
-<p>You can start using it right away: <%= link_to "Open your workspace", @workspace_url %></p>
+<p style="text-align: center; margin: 28px 0;">
+  <%= link_to "Open your workspace", @workspace_url, style: "display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;" %>
+</p>
 
 <p>To invite others, share your invite link: <%= link_to "Invite people", @invite_url %></p>
