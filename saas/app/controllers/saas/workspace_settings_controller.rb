@@ -7,7 +7,6 @@ module Saas
 
     def show
       @membership = Current.workspace_membership
-      @is_admin = Current.user.administrator?
       @is_last_admin = @workspace.last_administrator?(Current.user)
       @member_count = User.active.count
     end

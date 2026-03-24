@@ -1,76 +1,77 @@
 <% content_for :title, "Settings" %>
 
-<section class="txt-align-center">
+<div class="settings-layout">
+  <%# Workspaces Section %>
   <div class="panel">
-    <div class="flex flex-column gap">
-      <%# Account Section %>
-      <fieldset class="flex flex-column gap center-block pad">
-        <legend class="txt-large txt-align-center"><strong>Account</strong></legend>
+    <fieldset class="flex flex-column gap pad">
+      <legend class="txt-large txt-align-center"><strong>Your Workspaces</strong></legend>
 
-        <p class="txt-small txt-muted txt-align-center">
-          <%= current_global_identity.email_address %>
-          <span class="txt-muted">&middot;</span>
-          <%= link_to "Sign out", session_path, data: { turbo_method: :delete } %>
-        </p>
-      </fieldset>
+      <% if @workspace_memberships.any? %>
+        <div class="flex flex-column gap-half">
+          <% @workspace_memberships.each do |membership| %>
+            <% workspace = membership.workspace %>
+            <% user = membership.user %>
 
-      <%= form_with model: @global_identity, url: settings_path, method: :patch, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
-        <fieldset class="flex flex-column gap center-block pad">
-          <% if @global_identity.errors[:email_address].any? %>
-            <p class="txt-small txt-negative txt-align-center"><%= @global_identity.errors[:email_address].first %></p>
+            <%= link_to settings_path(script_name: workspace.slug),
+                  class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated" do %>
+              <div class="flex align-center gap">
+                <div class="workspace-initial" style="<%= workspace_gradient_style(workspace) %>">
+                  <%= workspace.name.first.upcase %>
+                </div>
+                <div class="flex flex-column">
+                  <strong><%= workspace.name %></strong>
+                  <span class="txt-small txt-muted"><%= user&.role&.capitalize || "Member" %></span>
+                </div>
+              </div>
+              <%= icon_tag "arrow-right", class: "txt-muted" %>
+            <% end %>
           <% end %>
-
-          <div class="flex align-center gap">
-            <label class="flex align-center gap input input--actor txt-large">
-              <%= form.email_field :email_address, required: true, class: "input", autofocus: true, placeholder: "your.email@example.com", autocomplete: "email" %>
-              <%= icon_tag "email" %>
-            </label>
-          </div>
-
-          <p class="txt-small txt-muted txt-align-center">
-            Changing your email will require re-verification.
-          </p>
-
-          <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-            Save changes
-          <% end %>
-        </fieldset>
+        </div>
+      <% else %>
+        <p class="txt-small txt-muted txt-align-center">Start by creating your first workspace.</p>
       <% end %>
 
-      <%# Workspaces Section %>
-      <fieldset class="flex flex-column gap center-block pad">
-        <legend class="txt-large txt-align-center"><strong>Your Workspaces</strong></legend>
+      <%= link_to new_workspace_path, class: "btn btn--reversed center" do %>
+        <%= icon_tag "add" %>
+        <span>Create workspace</span>
+      <% end %>
+    </fieldset>
+  </div>
 
-        <% if @workspace_memberships.any? %>
-          <div class="flex flex-column gap-half">
-            <% @workspace_memberships.each do |membership| %>
-              <% workspace = membership.workspace %>
-              <% user = membership.user %>
+  <%# Account Section %>
+  <div class="panel">
+    <fieldset class="flex flex-column gap pad">
+      <legend class="txt-large txt-align-center"><strong>Account</strong></legend>
 
-              <%= link_to settings_path(script_name: workspace.slug),
-                    class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated" do %>
-                <div class="flex align-center gap">
-                  <div class="workspace-initial" style="<%= workspace_gradient_style(workspace) %>">
-                    <%= workspace.name.first.upcase %>
-                  </div>
-                  <div class="flex flex-column txt-align-start">
-                    <strong><%= workspace.name %></strong>
-                    <span class="txt-small txt-muted"><%= user&.role&.capitalize || "Member" %></span>
-                  </div>
-                </div>
-                <%= icon_tag "arrow-right", class: "txt-muted" %>
-              <% end %>
-            <% end %>
-          </div>
-        <% else %>
-          <p class="txt-small txt-muted">You haven't joined any workspaces yet.</p>
+      <p class="txt-small txt-muted txt-align-center">
+        <%= current_global_identity.email_address %>
+      </p>
+
+      <%= link_to session_path, data: { turbo_method: :delete }, class: "btn center txt-small" do %>
+        Sign out
+      <% end %>
+    </fieldset>
+
+    <%= form_with model: @global_identity, url: settings_path, method: :patch, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
+      <fieldset class="flex flex-column gap pad">
+        <legend class="txt-medium txt-align-center"><strong>Change email</strong></legend>
+
+        <% if @global_identity.errors[:email_address].any? %>
+          <p class="txt-small txt-negative txt-align-center"><%= @global_identity.errors[:email_address].first %></p>
         <% end %>
 
-        <%= link_to new_workspace_path, class: "btn btn--reversed center" do %>
-          <%= icon_tag "add" %>
-          <span>Create workspace</span>
+        <label class="flex align-center gap input input--actor">
+          <%= form.email_field :email_address, required: true, class: "input", placeholder: "your.email@example.com", autocomplete: "email" %>
+        </label>
+
+        <p class="txt-small txt-muted">
+          Changing your email will require re-verification.
+        </p>
+
+        <%= form.button class: "btn center", type: "submit" do %>
+          Save changes
         <% end %>
       </fieldset>
-    </div>
+    <% end %>
   </div>
-</section>
+</div>

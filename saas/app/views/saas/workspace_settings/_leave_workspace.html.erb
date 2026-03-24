@@ -1,0 +1,25 @@
+<fieldset class="flex flex-column gap pad">
+  <legend class="<%= legend_class %> txt-align-center"><strong><%= legend_text %></strong></legend>
+
+  <% if is_last_admin %>
+    <p class="txt-small txt-muted">
+      You cannot leave this workspace because you are the last administrator.
+      Make another member an administrator first.
+    </p>
+    <div class="flex justify-center">
+      <button class="btn" disabled>
+        Leave workspace
+      </button>
+    </div>
+  <% else %>
+    <p class="txt-small txt-muted">
+      Leaving will remove your access to this workspace. Your messages will remain visible.
+    </p>
+    <div class="flex justify-center">
+      <%= button_to membership_path, method: :delete, class: "btn",
+            data: { turbo_confirm: "Are you sure you want to leave #{workspace.name}? You will need a new invite to rejoin." } do %>
+        Leave workspace
+      <% end %>
+    </div>
+  <% end %>
+</fieldset>
