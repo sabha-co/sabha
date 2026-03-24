@@ -123,6 +123,11 @@
   box-shadow: 0 6px 20px rgba(228, 35, 19, 0.25);
 }
 
+.landing .landing-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
 .landing .landing-btn-secondary {
   display: inline-flex;
   align-items: center;
@@ -142,6 +147,25 @@
   border-color: var(--text-secondary);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.landing .landing-btn-secondary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Focus states for keyboard navigation */
+.landing .landing-btn-primary:focus-visible,
+.landing .landing-btn-secondary:focus-visible,
+.landing a.landing-signup-btn:focus-visible,
+.landing a.landing-pricing-btn:focus-visible,
+.landing a.landing-login-btn:focus-visible,
+.landing-hero-badge:focus-visible,
+.landing-nav-links a:focus-visible,
+.landing-footer-col a:focus-visible,
+.landing-menu-toggle:focus-visible {
+  outline: 2px solid var(--accent-red);
+  outline-offset: 2px;
 }
 
 .landing-cta-row {
@@ -234,12 +258,13 @@
 }
 
 .landing a.landing-signup-btn:hover { opacity: 0.9; color: var(--text-white); }
+.landing a.landing-signup-btn:active { opacity: 0.8; }
 
 .landing-menu-toggle {
   display: none;
   background: none;
   border: 1px solid var(--border-gray);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px 12px;
   cursor: pointer;
   color: var(--text-primary);
@@ -338,12 +363,10 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+  transition: border-color 0.15s ease;
 }
 
 .landing-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
   border-color: #D8D8D8;
 }
 
@@ -491,12 +514,10 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+  transition: border-color 0.15s ease;
 }
 
 .landing-testimonial:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   border-color: #555555;
 }
 
@@ -627,6 +648,7 @@
 }
 
 .landing a.landing-pricing-btn:hover { opacity: 0.9; color: var(--text-white); }
+.landing a.landing-pricing-btn:active { opacity: 0.8; }
 
 
 /* ═══════════════════════════ BUILT ON CAMPFIRE ═══════════════════════════ */
@@ -891,7 +913,7 @@
   .landing-details .landing-grid { grid-template-columns: 1fr; }
 
   /* Screenshot */
-  .landing-screenshot { height: 300px; }
+  .landing-screenshot { height: auto; }
 
   /* CTA row stack */
   .landing-cta-row { flex-direction: column; width: 100%; }
