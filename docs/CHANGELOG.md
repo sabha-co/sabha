@@ -2,7 +2,7 @@
 
 Chronological list of features added to Sabha. Sabha is built on [Once Campfire](https://once.com/campfire) via the [Small Bets fork](https://github.com/antiwork/smallbets).
 
-For a side-by-side comparison, see [docs/CAMPFIRE_VS_SABHA.md](docs/CAMPFIRE_VS_SABHA.md).
+For a side-by-side comparison, see [CAMPFIRE_VS_SABHA.md](https://github.com/sabha-co/sabha/blob/main/docs/CAMPFIRE_VS_SABHA.md).
 
 ---
 
@@ -79,7 +79,7 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 
 ### Multi-tenant SaaS features
 
-> The `saas/` directory is under the [Sabha SaaS License](saas/LICENSE), not MIT.
+> The `saas/` directory is under the [Sabha SaaS License](https://github.com/sabha-co/sabha/blob/main/saas/LICENSE), not MIT.
 
 - **Database-per-workspace isolation** — PostgreSQL for shared data, SQLite per workspace
 - **Path-based routing** — `/1000001/rooms/general` with transparent URL generation

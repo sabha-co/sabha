@@ -4,7 +4,7 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
 
 > For multi-tenant SaaS architecture, see [multi-tenant/ARCHITECTURE.md](./multi-tenant/ARCHITECTURE.md).
 
-[Visual architecture diagrams (Excalidraw)](once-campfire-architecture.excalidraw)
+[Visual architecture diagrams (Excalidraw)](./multi-tenant/once-campfire-architecture.excalidraw)
 
 ---
 
