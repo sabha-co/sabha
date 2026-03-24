@@ -64,7 +64,7 @@ class UsersController < ApplicationController
       redirect_to root_url, alert: "This invite link is no longer valid.", status: :see_other
     rescue ActiveRecord::RecordInvalid => e
       if e.record.is_a?(WorkspaceMembership) && e.record.errors[:global_identity_id].present?
-        redirect_to root_url, notice: "You're already a member of this workspace."
+        redirect_to new_session_url, notice: "An account with this email already exists. Please sign in."
       else
         flash.now[:alert] = e.record.errors.full_messages.to_sentence
         @user = User.new
