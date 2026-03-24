@@ -1,0 +1,144 @@
+<div class="landing">
+
+<%# ═══════════════════════════════════ HEADER ═══════════════════════════════════ %>
+<header class="landing-header">
+  <div class="landing-inner">
+    <nav class="landing-nav">
+      <div class="landing-logo">
+        <a href="/">
+          <%= image_tag "logos/sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg" %>
+        </a>
+      </div>
+      <button class="landing-menu-toggle" id="landing-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+      </button>
+      <div class="landing-nav-links">
+        <a href="/#features">Features</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="#">Docs</a>
+        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+      </div>
+      <div class="landing-header-right">
+        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
+        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
+      </div>
+      <div class="landing-mobile-menu">
+        <a href="/#features">Features</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="#">Docs</a>
+        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+        <div class="landing-mobile-menu-divider"></div>
+        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
+        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<%# ═══════════════════════════════════ CHANGELOG ═══════════════════════════════════ %>
+<section class="landing-section" style="padding-top: 6rem;">
+  <div class="landing-inner" style="max-width: 680px;">
+    <div class="landing-section-header">
+      <span class="landing-label">CHANGELOG</span>
+      <h2>What's new in Sabha</h2>
+    </div>
+
+    <div style="margin-top: 2rem;">
+      <% @changelog.each do |section| %>
+        <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary, #111); margin-top: 3rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #e5e5e5);"><%= section[:heading] %></h3>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <% section[:items].each do |item| %>
+            <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--color-border-light, #f0f0f0);">
+              <strong style="color: var(--color-text-primary, #111);"><%= item[:title] %></strong>
+              <span style="color: var(--color-text-secondary, #555);"> — <%= item[:description] %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+
+    <p style="margin-top: 3rem; font-size: 0.9375rem; color: var(--color-text-secondary, #555);">
+      See the full changelog on <a href="https://github.com/sabha-co/sabha/blob/main/docs/CHANGELOG.md" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">GitHub</a>.
+    </p>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ FOOTER ═══════════════════════════════════ %>
+<footer class="landing-footer">
+  <div class="landing-inner">
+    <div class="landing-footer-top">
+      <div class="landing-footer-brand">
+        <div class="landing-logo" style="pointer-events: none;">
+          <%= image_tag "logos/sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg landing-logo-svg--small" %>
+        </div>
+        <p>Simple, intentional chat for communities.</p>
+      </div>
+      <div class="landing-footer-cols">
+        <div class="landing-footer-col">
+          <h4>Product</h4>
+          <a href="/#features">Features</a>
+          <a href="/#pricing">Pricing</a>
+          <a href="/changelog">Changelog</a>
+          <a href="#">Docs</a>
+        </div>
+        <div class="landing-footer-col">
+          <h4>Company</h4>
+          <a href="/about">About</a>
+          <a href="#">Blog</a>
+          <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+        </div>
+        <div class="landing-footer-col">
+          <h4>Legal</h4>
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+        </div>
+      </div>
+    </div>
+    <div class="landing-footer-divider"></div>
+    <div class="landing-footer-bottom">
+      <span>&copy; <%= Time.current.year %> Sabha LLC. All rights reserved.</span>
+      <span>Open source under MIT.</span>
+    </div>
+  </div>
+</footer>
+
+</div>
+
+<script>
+  (function() {
+    var toggle = document.getElementById('landing-menu-toggle');
+    var nav = toggle && toggle.closest('.landing-nav');
+    if (!toggle || !nav) return;
+
+    function openMenu() {
+      nav.classList.add('nav-open');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeMenu() {
+      nav.classList.remove('nav-open');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', function() {
+      nav.classList.contains('nav-open') ? closeMenu() : openMenu();
+    });
+
+    var menu = nav.querySelector('.landing-mobile-menu');
+    if (menu) {
+      menu.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') closeMenu();
+      });
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!nav.contains(e.target)) closeMenu();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+  })();
+</script>

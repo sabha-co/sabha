@@ -60,6 +60,10 @@ module Sabha
             # Settings - edit GlobalIdentity + workspace list
             resource :settings, only: [ :show, :update ], controller: "saas/settings"
 
+            # Static pages
+            get "about", to: "saas/static#about"
+            get "changelog", to: "saas/static#changelog"
+
             # Workspace management
             resources :workspaces, only: [ :index, :new, :create, :show ], controller: "saas/workspaces"
 

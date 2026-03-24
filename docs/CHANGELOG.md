@@ -74,6 +74,8 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 - **Welcome messages** — automatic welcome message for new members
 - **Chat animations** — message arrival, popup menus, thread panel easing
 - **Accessibility** — pinch to zoom, aria-live regions, reduced motion support
+- **Badge management** — dedicated admin page for managing user badges
+- **Inline DM compose** — start new direct messages directly from the DM index page
 
 ### Multi-tenant SaaS features
 
@@ -89,3 +91,4 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 - **SaaS landing page** — marketing page for multi-tenant deployments
 - **Welcome email** — sent to workspace creator after provisioning
 - **Tenant-aware jobs and channels** — Solid Queue and ActionCable auto-propagate tenant context
+- **Workspace backups** — automated backups to R2 cloud storage with restore support
