@@ -52,6 +52,28 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     end
   end
 
+  # Superadmin domain restriction tests
+
+  test "superadmin? is true when superadmin flag set and email domain is allowed" do
+    identity = GlobalIdentity.new(email_address: "admin@sabha.co", superadmin: true)
+    assert identity.superadmin?
+  end
+
+  test "superadmin? is true for superforum.io domain" do
+    identity = GlobalIdentity.new(email_address: "admin@superforum.io", superadmin: true)
+    assert identity.superadmin?
+  end
+
+  test "superadmin? is false when superadmin flag set but email domain is not allowed" do
+    identity = GlobalIdentity.new(email_address: "hacker@evil.com", superadmin: true)
+    assert_not identity.superadmin?
+  end
+
+  test "superadmin? is false when email domain is allowed but flag is not set" do
+    identity = GlobalIdentity.new(email_address: "user@sabha.co", superadmin: false)
+    assert_not identity.superadmin?
+  end
+
   # Email change tests
 
   test "unconfirmed_email normalizes to lowercase" do

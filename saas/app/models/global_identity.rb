@@ -26,8 +26,14 @@ class GlobalIdentity < UntenantedRecord
   scope :verified, -> { where.not(verified_at: nil) }
   scope :superadmin, -> { where(superadmin: true) }
 
+  SUPERADMIN_DOMAINS = %w[sabha.co superforum.io].freeze
+
   def superadmin?
-    superadmin
+    superadmin && SUPERADMIN_DOMAINS.include?(email_domain)
+  end
+
+  def email_domain
+    email_address.split("@").last
   end
 
   def verified?
