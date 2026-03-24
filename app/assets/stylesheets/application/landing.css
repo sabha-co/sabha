@@ -109,6 +109,7 @@
   color: var(--text-white);
   padding: 18px 40px;
   border: none;
+  border-radius: 8px;
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: 500;
@@ -130,6 +131,7 @@
   color: var(--text-primary);
   padding: 18px 40px;
   border: 1px solid var(--border-gray);
+  border-radius: 8px;
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: 500;
@@ -225,6 +227,7 @@
   background: var(--bg-dark);
   color: var(--text-white);
   padding: 10px 24px;
+  border-radius: 8px;
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 500;
@@ -265,6 +268,7 @@
   gap: 8px;
   padding: 6px 16px;
   border: 1px solid var(--border-gray);
+  border-radius: 100px;
   background: var(--bg-surface);
   font-size: 12px;
   font-weight: 500;
@@ -308,6 +312,7 @@
 .landing-screenshot {
   width: 100%;
   border: 1px solid var(--border-gray);
+  border-radius: 16px;
   background: var(--bg-surface);
   overflow: hidden;
 }
@@ -328,6 +333,7 @@
 .landing-card {
   flex: 1;
   border: 1px solid var(--border-gray);
+  border-radius: 12px;
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -359,6 +365,7 @@
   width: 44px;
   height: 44px;
   border: 1px solid var(--border-gray);
+  border-radius: 10px;
   background: var(--bg-surface);
   display: flex;
   align-items: center;
@@ -417,6 +424,7 @@
   width: 48px;
   height: 48px;
   border: 1px solid var(--border-gray);
+  border-radius: 10px;
   background: var(--bg-white);
   display: flex;
   align-items: center;
@@ -427,6 +435,7 @@
   flex: 1;
   height: 340px;
   border: 1px solid var(--border-gray);
+  border-radius: 12px;
   background: var(--bg-white);
   display: flex;
   flex-direction: column;
@@ -477,6 +486,7 @@
 .landing-testimonial {
   flex: 1;
   border: 1px solid #333333;
+  border-radius: 12px;
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -538,6 +548,7 @@
 .landing-pricing-card {
   flex: 1;
   border: 1px solid var(--border-gray);
+  border-radius: 12px;
   padding: 36px 36px 40px;
   display: flex;
   flex-direction: column;
@@ -608,6 +619,7 @@
   background: var(--bg-dark);
   color: var(--text-white);
   padding: 16px 0;
+  border-radius: 8px;
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 500;
@@ -839,6 +851,7 @@
     right: -24px;
     background: var(--bg-white);
     border-bottom: 1px solid var(--border-gray);
+    border-radius: 0 0 12px 12px;
     padding: 20px 24px;
     gap: 16px;
     z-index: 10;
@@ -863,6 +876,7 @@
     background: var(--bg-dark);
     color: var(--text-white);
     padding: 12px 24px;
+    border-radius: 8px;
     font-family: var(--font-display);
     font-size: 14px;
     font-weight: 500;
