@@ -887,9 +887,16 @@
     background: var(--border-gray);
   }
   .nav-open .landing-mobile-menu .landing-login-btn {
-    font-family: var(--font-display);
-    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-gray);
     color: var(--text-primary);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 500;
   }
   .nav-open .landing-mobile-menu .landing-signup-btn {
     display: flex;
