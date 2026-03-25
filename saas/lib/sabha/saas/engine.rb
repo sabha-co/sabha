@@ -120,7 +120,7 @@ module Sabha
       config.to_prepare do
         if Sabha.saas?
           # Load SaaS authentication concern which overrides core Authentication
-          require_dependency Sabha::Saas::Engine.root.join("app/controllers/concerns/saas/authentication")
+          Sabha::Saas::Engine.root.join("app/controllers/concerns/saas/authentication.rb").then { |path| load path }
         end
       end
 
