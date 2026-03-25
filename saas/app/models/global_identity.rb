@@ -84,6 +84,8 @@ class GlobalIdentity < UntenantedRecord
       sync_email_to_workspaces(new_email)
     end
 
+    notify_email_changed(old_email, new_email)
+
     [ old_email, new_email ]
   end
 
@@ -138,6 +140,10 @@ class GlobalIdentity < UntenantedRecord
     auth_code = auth_codes.create!(purpose: :email_change)
     AuthCodeMailer.code(auth_code).deliver_later
     true
+  end
+
+  def notify_email_changed(old_email, new_email)
+    WorkspaceMailer.email_changed(self, old_email, new_email).deliver_later
   end
 
   # Check if email is available (not taken as primary email by another user)

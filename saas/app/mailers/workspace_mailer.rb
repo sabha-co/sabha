@@ -3,6 +3,17 @@
 class WorkspaceMailer < ApplicationMailer
   layout "mailer"
 
+  def email_changed(global_identity, old_email, new_email)
+    @identity = global_identity
+    @old_email = old_email
+    @new_email = new_email
+
+    mail(
+      to: [ old_email, new_email ].compact.uniq,
+      subject: "Your email address has been changed for #{Branding.app_name}"
+    )
+  end
+
   def welcome(workspace)
     @workspace = workspace
     @creator = workspace.creator
