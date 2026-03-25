@@ -1,5 +1,6 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: -> { Branding.mailer_from }
+  default from: -> { Branding.mailer_from },
+          "X-SES-DISABLE-TRACKING" => "true"
   layout "mailer"
 
   # Discard mail deliveries targeting a deleted workspace (tenant DB no longer exists)
