@@ -61,6 +61,7 @@ Rails.application.configure do
   end
   config.action_mailer.delivery_method = email_provider.to_sym
   config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "localhost").presence || "localhost", protocol: "https" }
+  config.action_mailer.asset_host = "https://#{ENV.fetch("APP_HOST", "localhost").presence || "localhost"}"
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
