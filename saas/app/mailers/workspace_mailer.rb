@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class WorkspaceMailer < ApplicationMailer
+  layout "mailer"
+
   def welcome(workspace)
     @workspace = workspace
     @creator = workspace.creator

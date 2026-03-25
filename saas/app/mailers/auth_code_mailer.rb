@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AuthCodeMailer < ApplicationMailer
+  layout "mailer"
+
   # Sends OTP code for GlobalIdentity authentication (SaaS mode)
   #
   # Parallels AuthTokenMailer in self-hosted mode

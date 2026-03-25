@@ -4,8 +4,8 @@
 
 <p>Please confirm your new email address by clicking the link below:</p>
 
-<p style="text-align: center; margin: 28px 0;">
-  <%= link_to "Confirm new email address", @confirmation_url, style: "display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;" %>
-</p>
+<p><%= link_to "Confirm new email address", @confirmation_url %></p>
 
-<p style="color: #9b9a97; font-size: 13px;">This link will expire in 24 hours. If you did not request this change, you can safely ignore this email.</p>
+<p>This link will expire in 24 hours.</p>
+
+<p>If you did not request this change, you can safely ignore this email. Your email address will not be changed until you click the confirmation link.</p>
