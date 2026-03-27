@@ -295,6 +295,7 @@ class User < ApplicationRecord
 
   def verify_email!
     update!(verified_at: Time.current)
+    post_welcome_message
   end
 
   def send_verification_email
@@ -375,6 +376,7 @@ class User < ApplicationRecord
 
     def post_welcome_message
       return if bot?
+      return unless verified?
       return unless room = Room.original
 
       room.post_welcome_message(user: self)

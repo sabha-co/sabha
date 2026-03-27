@@ -32,11 +32,20 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.member_of?(non_auto_room), "New user should not be auto-joined to non-auto_join rooms"
   end
 
-  test "creating a user posts a welcome message in the original room" do
+  test "creating an unverified user does not post a welcome message" do
     original_room = Room.original
 
-    assert_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
+    assert_no_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
       create_new_user
+    end
+  end
+
+  test "verifying a user posts a welcome message in the original room" do
+    original_room = Room.original
+    user = create_new_user
+
+    assert_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
+      user.verify_email!
     end
   end
 
