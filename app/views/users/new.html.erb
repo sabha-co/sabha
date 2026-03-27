@@ -3,7 +3,7 @@
 
 <% content_for :nav do %>
   <div class="flex-item-justify-end">
-    <%= link_to new_session_path, class: "btn flex-item-justify-end" do %>
+    <%= link_to new_session_path(return_to: request.fullpath), class: "btn flex-item-justify-end" do %>
       <%= icon_tag "login-keys" %>
       <span class="for-screen-reader">Sign in</span>
     <% end %>
@@ -106,7 +106,7 @@
         <% end %>
 
         <div class="txt-medium txt-align-center">
-          Already have an account? <%= link_to "Sign in", new_session_path %>
+          Already have an account? <%= link_to "Sign in", new_session_path(return_to: request.fullpath) %>
         </div>
       <% end %>
     </div>

@@ -146,6 +146,12 @@ module Authentication
       request.session[:user_id] = session.user.id
     end
 
+    def store_return_to
+      if params[:return_to].present? && safe_redirect_url?(params[:return_to])
+        session[:return_to_after_authenticating] = params[:return_to]
+      end
+    end
+
     def post_authenticating_url
       return_url = session.delete(:return_to_after_authenticating)
       safe_redirect_url?(return_url) ? return_url : root_url

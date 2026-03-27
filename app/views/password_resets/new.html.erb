@@ -1,6 +1,6 @@
 <% content_for :title, "Reset password" %>
 <% content_for :back_nav do %>
-  <%= link_to "← Back", new_session_path, class: "txt-medium txt-muted txt-undecorated" %>
+  <%= link_to "← Back", new_session_path(return_to: session[:return_to_after_authenticating]), class: "txt-medium txt-muted txt-undecorated" %>
 <% end %>
 
 <section class="txt-align-center">

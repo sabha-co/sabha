@@ -10,6 +10,7 @@ class PasswordResetsController < ApplicationController
   before_action :require_password_auth
 
   def new
+    store_return_to
   end
 
   def create
@@ -50,7 +51,7 @@ class PasswordResetsController < ApplicationController
       @user.verify_email! unless @user.verified?
 
       start_new_session_for @user
-      redirect_to root_path, notice: "Your password has been reset successfully!"
+      redirect_to post_authenticating_url, notice: "Your password has been reset successfully!"
     else
       render_password_error(@user.errors.full_messages.to_sentence)
     end

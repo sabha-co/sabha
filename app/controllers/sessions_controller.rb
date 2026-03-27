@@ -15,6 +15,7 @@ class SessionsController < ApplicationController
   before_action :validate_email_param, only: :create
 
   def new
+    store_return_to
   end
 
   def create
