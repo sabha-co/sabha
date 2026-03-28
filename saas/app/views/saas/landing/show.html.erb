@@ -74,14 +74,14 @@
     <div class="landing-problem-cards">
       <div class="landing-card">
         <div class="landing-card-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 9a2 2 0 0 1-.88 1.664L12 13 8.88 10.664A2 2 0 0 1 8 9V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2z"/><line x1="1" x2="1" y1="14" y2="18"/><line x1="1" x2="23" y1="18" y2="18"/><line x1="23" x2="23" y1="14" y2="18"/></svg>
+          <%= image_tag "logos/discord-icon.png", alt: "Discord", width: 22, height: 22 %>
         </div>
         <h3>Discord</h3>
         <p>Conversations disappear. Nothing is searchable. Bots, boosts, Nitro upsells. Your community becomes noise.</p>
       </div>
       <div class="landing-card">
         <div class="landing-card-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          <%= image_tag "logos/slack-icon.png", alt: "Slack", width: 22, height: 22 %>
         </div>
         <h3>Slack</h3>
         <p>Per-seat pricing. 90-day message limits on free plans. Built for work, not community. Expensive lock-in.</p>
@@ -161,11 +161,6 @@
       <h2>The details that matter.</h2>
     </div>
     <div class="landing-grid">
-      <div class="landing-card">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.8 4A6.3 8.7 0 0 1 20 9"/><path d="M9 9h.01"/><circle cx="9" cy="9" r="7"/><path d="M22 20 2 20"/></svg>
-        <h3>No noise</h3>
-        <p>Activity feed instead of a wall of unread channels. Push notifications that matter.</p>
-      </div>
       <div class="landing-card">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
         <h3>Mobile-first</h3>
@@ -348,6 +343,40 @@
 
 <div class="landing-divider"></div>
 
+<%# ═══════════════════════════════════ FAQ ═══════════════════════════════════ %>
+<section class="landing-section landing-faq">
+  <div class="landing-inner" style="max-width: 720px;">
+    <div class="landing-section-header">
+      <span class="landing-label">FAQ</span>
+      <h2>Common questions.</h2>
+    </div>
+    <div class="landing-faq-list">
+      <details class="landing-faq-item">
+        <summary>How is Sabha different from Discord?</summary>
+        <p>Discord buries conversations in an unindexed void. Sabha makes every message searchable, keeps threads organized, and skips the noise — no bots marketplace, no Nitro upsells, no server boosting. Text-first chat that does fewer things, on purpose.</p>
+      </details>
+      <details class="landing-faq-item">
+        <summary>Is Sabha really free?</summary>
+        <p>The self-hosted version is MIT licensed and always free. On sabha.co, creating a workspace is free with unlimited members and message history. We offer Sabha Cloud for teams that want a dedicated managed server.</p>
+      </details>
+      <details class="landing-faq-item">
+        <summary>Can I self-host Sabha?</summary>
+        <p>Yes. Sabha runs on Rails, Hotwire, and SQLite — one server, no external dependencies. Deploy with Docker or bare metal on a $5 VPS. No Redis, no managed database, no Kubernetes. You own every byte of data.</p>
+      </details>
+      <details class="landing-faq-item">
+        <summary>What's the difference between sabha.co and Sabha Cloud?</summary>
+        <p>sabha.co is shared multi-tenant hosting — free, instant setup. Sabha Cloud gives you a dedicated server with continuous backups, custom domain support, and no storage limits. Same app, different infrastructure.</p>
+      </details>
+      <details class="landing-faq-item">
+        <summary>What is Sabha built on?</summary>
+        <p>Sabha is built on <a href="https://once.com/campfire" target="_blank" style="text-decoration: underline; text-underline-offset: 4px;">Campfire</a> by 37signals — the company behind Basecamp, HEY, and Ruby on Rails. Battle-tested foundations, not a weekend project.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
 <%# ═══════════════════════════════════ FINAL CTA ═══════════════════════════════════ %>
 <section class="landing-section landing-final-cta">
   <div class="landing-inner">
@@ -382,7 +411,7 @@
           <a href="#features">Features</a>
           <a href="#pricing">Pricing</a>
           <a href="/changelog">Changelog</a>
-  
+
           <a href="<%= new_session_path %>">Log in</a>
           <a href="<%= new_registration_path %>">Create account</a>
         </div>

@@ -727,6 +727,57 @@
   background: #333333;
 }
 
+/* ═══════════════════════════ FAQ ═══════════════════════════ */
+
+.landing-faq-list {
+  margin-top: 3rem;
+}
+
+.landing-faq-item {
+  border-bottom: 1px solid var(--border-gray);
+  padding: 1.25rem 0;
+}
+
+.landing-faq-item:first-child {
+  border-top: 1px solid var(--border-gray);
+}
+
+.landing-faq-item summary {
+  cursor: pointer;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.landing-faq-item summary::-webkit-details-marker { display: none; }
+.landing-faq-item,
+.landing-faq-item summary { outline: none; }
+
+.landing-faq-item summary::after {
+  content: "+";
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.landing-faq-item[open] summary::after {
+  content: "\2212";
+}
+
+.landing-faq-item p {
+  margin-top: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
 /* ═══════════════════════════ FINAL CTA ═══════════════════════════ */
 
 .landing-final-cta {
