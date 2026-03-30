@@ -14,6 +14,7 @@
 
     <div class="min-width flex-item-grow">
       <h1 class="margin-none txt-x-large"><%= @bot.name %></h1>
+      <p class="txt-small txt-muted margin-none">Post messages to rooms via the API, receive webhooks when mentioned.</p>
     </div>
 
     <%= link_to edit_account_bot_path(@bot), class: "btn", aria: { label: "Edit #{@bot.name}" } do %>
@@ -22,15 +23,21 @@
   </div>
 
   <% if @bot.webhook_url.present? %>
-    <div class="pad-inline">
+    <div class="pad-inline flex flex-column gap-half">
+      <label class="txt-small txt-muted">Webhook URL — Sabha sends events here when the bot is mentioned</label>
       <div class="flex align-center gap">
-        <%= icon_tag "web" %>
-        <span class="flex-item-grow txt-small txt-muted overflow-ellipsis"><%= @bot.webhook_url %></span>
+        <div class="flex-item-grow">
+          <input type="text" class="input full-width fill-white txt-small" value="<%= @bot.webhook_url %>" readonly>
+        </div>
         <%= button_to_copy_to_clipboard(@bot.webhook_url) do %>
           <%= icon_tag "copy-paste" %>
           <span class="for-screen-reader">Copy webhook URL</span>
         <% end %>
       </div>
+    </div>
+  <% else %>
+    <div class="pad-inline">
+      <p class="txt-small txt-muted margin-none">No webhook URL set. <%= link_to "Add one", edit_account_bot_path(@bot), style: "color: inherit; text-decoration: underline; text-underline-offset: 3px;" %> to receive events when the bot is mentioned.</p>
     </div>
   <% end %>
 
@@ -38,6 +45,7 @@
 
   <div class="pad-inline flex flex-column gap-half">
     <h2 class="txt-small txt-muted margin-none">Rooms</h2>
+    <p class="txt-small txt-muted margin-none">Choose which rooms this bot can access. Tap a room to configure webhooks and copy its message URL.</p>
 
     <% if @bot_memberships.any? %>
       <menu class="flex flex-column gap-half margin-none pad-none">
@@ -55,7 +63,7 @@
         <% end %>
       </menu>
     <% else %>
-      <p class="txt-small txt-muted">Not in any rooms yet.</p>
+      <p class="txt-small txt-muted">Not in any rooms yet. Add this bot to a room to start posting messages.</p>
     <% end %>
 
     <% if @available_rooms.any? %>
@@ -79,6 +87,12 @@
         </menu>
       </details>
     <% end %>
+  </div>
+
+  <hr class="separator full-width" style="--border-style: solid">
+
+  <div class="pad-inline flex flex-column gap-half">
+    <p class="txt-small txt-muted margin-none"><%= link_to "API docs", skill_path, target: "_blank", style: "color: inherit; text-decoration: underline; text-underline-offset: 3px;" %> — full reference for posting messages, reading history, and webhook payloads.</p>
   </div>
 
   <hr class="separator full-width" style="--border-style: solid">
