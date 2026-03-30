@@ -36,11 +36,14 @@
       <% end %>
 
       <% message_url = room_bot_messages_url(@room, @bot.bot_key) %>
+      <label class="txt-small txt-muted">Message URL</label>
       <div class="flex align-center gap">
-        <span class="txt-small txt-muted flex-item-grow">Message URL</span>
+        <div class="flex-item-grow">
+          <input type="text" class="input full-width fill-white txt-small" value="<%= message_url %>" aria-label="Message URL" readonly>
+        </div>
         <%= button_to_copy_to_clipboard(message_url) do %>
           <%= icon_tag "copy-paste" %>
-          <span class="txt-small">Copy</span>
+          <span class="for-screen-reader">Copy message URL</span>
         <% end %>
       </div>
 
