@@ -258,6 +258,24 @@ class Room < ApplicationRecord
     post_system_message(event: "room_renamed", body: "renamed the room from #{old_name} to #{name}", actor: actor)
   end
 
+  def bot_memberships_for_webhook(message, event)
+    bot_ids_with_webhook = User.active_bots.joins(:webhook).pluck(:id)
+    return [] if bot_ids_with_webhook.empty?
+
+    eligible = memberships.active
+      .where.not(involvement: [ :invisible, :nothing ])
+      .where(user_id: bot_ids_with_webhook)
+      .includes(user: :webhook)
+
+    if direct?
+      eligible.to_a
+    elsif message.is_a?(Message) && event == :created
+      eligible.to_a.select { |m| m.involved_in_everything? || message.mentionees.include?(m.user) || message.mentions_everyone? }
+    else
+      eligible.where(involvement: :everything).to_a
+    end
+  end
+
   def display_name(for_user: nil)
     if direct?
       # Use Ruby select/map instead of pluck to leverage preloaded users

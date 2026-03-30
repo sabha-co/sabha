@@ -153,11 +153,7 @@ class Webhook < ApplicationRecord
     end
 
     def blob_url(blob)
-      Rails.application.routes.url_helpers.rails_blob_url(blob, **url_options)
-    end
-
-    def url_options
-      Rails.application.routes.default_url_options.presence || { host: "localhost", port: 3000 }
+      Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
     end
 
     def user_to_api(user)

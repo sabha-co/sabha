@@ -66,12 +66,10 @@
       <p class="txt-small txt-muted"><%= @bot.name %> does not have access to this room.</p>
       <p class="txt-small txt-muted margin-none">Adding the bot will grant it permission to post and read messages. Webhook delivery defaults to mentions only — you can change this after adding.</p>
 
-      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch do %>
-        <%= hidden_field_tag :involvement, "mentions" %>
-        <button type="submit" class="btn btn--primary full-width">
-          <%= icon_tag "add" %>
-          <span>Add to room</span>
-        </button>
+      <%= button_to account_bot_room_permission_path(@bot, @room), method: :post,
+            class: "btn btn--primary full-width" do %>
+        <%= icon_tag "add" %>
+        <span>Add to room</span>
       <% end %>
     </div>
   <% end %>

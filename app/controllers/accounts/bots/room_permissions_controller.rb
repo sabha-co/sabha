@@ -7,16 +7,13 @@ class Accounts::Bots::RoomPermissionsController < ApplicationController
     @membership = @bot.memberships.visible.find_by(room: @room)
   end
 
+  def create
+    @room.add_member!(@bot, actor: Current.user)
+    redirect_to account_bot_room_permission_path(@bot, @room)
+  end
+
   def update
-    membership = @bot.memberships.visible.find_by(room: @room)
-
-    if membership
-      membership.update!(involvement: params[:involvement])
-    else
-      @room.add_member!(@bot, actor: Current.user)
-      @bot.memberships.find_by!(room: @room).update!(involvement: params[:involvement] || :mentions)
-    end
-
+    @bot.memberships.find_by!(room: @room).update!(involvement: params[:involvement])
     redirect_to account_bot_room_permission_path(@bot, @room)
   end
 
