@@ -1,0 +1,69 @@
+<% @page_title = "#{@bot.name} in #{@room.name}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to account_bot_path(@bot) %>
+  </div>
+<% end %>
+
+<section class="panel flex flex-column gap">
+  <div class="flex align-center gap pad-inline-double">
+    <figure class="avatar flex-item--no-shrink" style="--avatar-size: 2em;">
+      <%= avatar_tag @bot %>
+    </figure>
+
+    <div class="min-width flex-item-grow">
+      <h1 class="margin-none txt-large"><%= room_type_indicator(@room) %> <%= room_display_name(@room) %></h1>
+      <p class="txt-small txt-muted margin-none"><%= @bot.name %></p>
+    </div>
+  </div>
+
+  <% if @membership %>
+    <div class="pad-inline flex flex-column gap">
+      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch, class: "flex flex-column gap" do %>
+        <label class="txt-small txt-muted" for="involvement">Webhook delivery</label>
+        <%= select_tag :involvement,
+              options_for_select([
+                ["Mentions only — webhook fires on @mention, reply auto-posted", "mentions"],
+                ["Everything — webhook fires on all messages, fire-and-forget", "everything"],
+                ["Muted — no webhooks, bot can still post and read", "nothing"]
+              ], @membership.involvement),
+              id: "involvement", class: "input" %>
+
+        <button type="submit" class="btn btn--primary full-width">
+          Save
+        </button>
+      <% end %>
+
+      <% message_url = room_bot_messages_url(@room, @bot.bot_key) %>
+      <div class="flex align-center gap">
+        <span class="txt-small txt-muted flex-item-grow">Message URL</span>
+        <%= button_to_copy_to_clipboard(message_url) do %>
+          <%= icon_tag "copy-paste" %>
+          <span class="txt-small">Copy</span>
+        <% end %>
+      </div>
+
+      <hr class="separator full-width" style="--border-style: solid">
+
+      <%= button_to account_bot_room_permission_path(@bot, @room), method: :delete,
+            class: "btn btn--negative full-width txt-small",
+            data: { turbo_confirm: "Remove #{@bot.name} from #{@room.name}?" } do %>
+        <%= icon_tag "minus" %>
+        <span>Remove from room</span>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="pad-inline flex flex-column gap">
+      <p class="txt-small txt-muted"><%= @bot.name %> does not have access to this room.</p>
+
+      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch, class: "flex flex-column gap" do %>
+        <%= hidden_field_tag :involvement, "mentions" %>
+        <button type="submit" class="btn btn--primary full-width">
+          <%= icon_tag "add" %>
+          <span>Add to room</span>
+        </button>
+      <% end %>
+    </div>
+  <% end %>
+</section>

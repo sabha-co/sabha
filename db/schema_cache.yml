@@ -1281,16 +1281,6 @@ columns:
   webhooks:
   - *5
   - *6
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
-    name: receives
-    cast_type: *7
-    sql_type_metadata: *8
-    'null': true
-    default:
-    default_function:
-    collation:
-    comment:
   - *9
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
@@ -2360,7 +2350,7 @@ indexes:
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: webhooks
     name: index_webhooks_on_user_id
-    unique: false
+    unique: true
     columns:
     - user_id
     lengths: {}
@@ -2373,4 +2363,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260315175342
+version: 20260330103742

@@ -25,25 +25,15 @@
   </div>
 
   <div class="pad-inline flex flex-column gap-half">
-    <div class="flex align-center gap">
-      <h2 class="txt-small txt-muted margin-none flex-item-grow">Room permissions</h2>
-      <%= link_to account_bot_room_permissions_path(@bot), class: "btn btn--small txt-small", aria: { label: "Edit room permissions" } do %>
-        <%= icon_tag "pencil" %>
-        <span>Edit</span>
-      <% end %>
-    </div>
+    <h2 class="txt-small txt-muted margin-none">Room permissions</h2>
 
     <% if @bot_rooms.any? %>
       <% @bot_rooms.each do |membership| %>
-        <div class="flex align-center gap pad-block-half">
+        <%= link_to account_bot_room_permission_path(@bot, membership.room), class: "flex align-center gap pad-block-half" do %>
           <%= room_type_indicator(membership.room) %>
           <span class="flex-item-grow txt-small"><%= room_display_name(membership.room) %></span>
           <span class="badge txt-small"><%= membership.involvement.humanize %></span>
-          <%= button_to_copy_to_clipboard(room_bot_messages_url(membership.room, @bot.bot_key)) do %>
-            <%= icon_tag "copy-paste" %>
-            <span class="for-screen-reader">Copy message URL for <%= membership.room.name %></span>
-          <% end %>
-        </div>
+        <% end %>
       <% end %>
     <% else %>
       <p class="txt-small txt-muted">No rooms assigned.</p>
