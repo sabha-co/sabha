@@ -6,8 +6,6 @@ class Webhook < ApplicationRecord
 
   belongs_to :user
 
-  enum :receives, %w[ mentions everything ].index_by(&:itself), prefix: :receives
-
   validates :url, presence: true, format: { with: /\Ahttps?:\/\/.+\z/i, message: "must be a valid HTTP(S) URL" }
   validate :url_not_targeting_private_network
 
@@ -21,31 +19,20 @@ class Webhook < ApplicationRecord
     errors.add(:url, "must not target private or internal networks")
   end
 
-  scope :receiving_mentions, -> { where(receives: :mentions) }
-  scope :receiving_everything, -> { where(receives: :everything) }
-
-  def cares_about?(item, event)
-    if receives_mentions?
-       event == :created && item.is_a?(Message) && item.mentionees.include?(user)
-    else
-      true
-    end
-  end
-
-  def deliver_later(item, event)
+  def deliver_later(item, event, reply: false)
     payload = create_payload(item, event)
 
-    Bot::WebhookJob.perform_later(self, payload, item.try(:room))
+    Bot::WebhookJob.perform_later(self, payload, item.try(:room), reply)
   end
 
-  def deliver_now(item, event)
+  def deliver_now(item, event, reply: false)
     payload = create_payload(item, event)
 
-    deliver(payload, item.try(:room))
+    deliver(payload, item.try(:room), reply: reply)
   end
 
-  def deliver(payload, room)
-    if receives_mentions?
+  def deliver(payload, room, reply: false)
+    if reply
       deliver_with_reply(payload, room)
     else
       deliver_without_reply(payload)
@@ -144,9 +131,31 @@ class Webhook < ApplicationRecord
       {
         id: message.id,
         body: { html: message.body.body, plain: message.plain_text_body },
+        has_attachment: message.attachment?,
+        attachment: attachment_to_api(message),
         mentionees: message.mentionees.map { |m| { id: m.id, name: m.name } },
         path: message_path(message)
       }
+    end
+
+    def attachment_to_api(message)
+      return nil unless message.attachment?
+
+      blob = message.attachment.blob
+      {
+        url: blob_url(blob),
+        filename: blob.filename.to_s,
+        content_type: blob.content_type,
+        byte_size: blob.byte_size
+      }
+    end
+
+    def blob_url(blob)
+      Rails.application.routes.url_helpers.rails_blob_url(blob, **url_options)
+    end
+
+    def url_options
+      Rails.application.routes.default_url_options.presence || { host: "localhost", port: 3000 }
     end
 
     def user_to_api(user)

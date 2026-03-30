@@ -5,7 +5,7 @@ class Bots::ProfilesController < Bots::BaseController
     Current.user.update_bot!(bot_params)
     render json: {
       name: Current.user.name,
-      webhooks: { mentions_url: Current.user.mentions_url, everything_url: Current.user.everything_url }
+      webhook_url: Current.user.webhook_url
     }
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.record.errors.full_messages.to_sentence, code: "validation_failed" }, status: :unprocessable_entity
@@ -17,6 +17,6 @@ class Bots::ProfilesController < Bots::BaseController
     end
 
     def bot_params
-      params.permit(:name, :mentions_url, :everything_url).to_h
+      params.permit(:name, :webhook_url, :mentions_url, :everything_url).to_h
     end
 end

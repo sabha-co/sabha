@@ -43,7 +43,7 @@ class Bots::RegistrationsController < Bots::BaseController
     end
 
     def bot_params
-      params.permit(:name, :mentions_url, :everything_url).to_h
+      params.permit(:name, :webhook_url, :mentions_url, :everything_url).to_h
     end
 
     def registration_response
@@ -52,7 +52,7 @@ class Bots::RegistrationsController < Bots::BaseController
       {
         bot_key: @bot.bot_key,
         name: @bot.name,
-        webhooks: { mentions_url: @bot.mentions_url, everything_url: @bot.everything_url },
+        webhook_url: @bot.webhook_url,
         rooms: @bot.rooms.without_threads.map { |room|
           room.as_bot_json(bot_key: @bot.bot_key, url_helper: method(:room_bot_messages_url))
         }

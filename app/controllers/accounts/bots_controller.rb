@@ -16,9 +16,13 @@ class Accounts::BotsController < ApplicationController
   end
 
   def show
+    @rooms = Room.active.without_directs.without_threads.ordered
+    @bot_memberships = @bot.memberships.visible.index_by(&:room_id)
   end
 
   def edit
+    @rooms = Room.active.without_directs.without_threads.ordered
+    @bot_memberships = @bot.memberships.visible.index_by(&:room_id)
   end
 
   def update
@@ -37,6 +41,6 @@ class Accounts::BotsController < ApplicationController
     end
 
     def bot_params
-      params.require(:user).permit(:name, :avatar, :mentions_url, :everything_url)
+      params.require(:user).permit(:name, :avatar, :webhook_url)
     end
 end

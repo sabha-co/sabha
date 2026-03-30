@@ -165,8 +165,9 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "test.txt", Message.last.attachment.filename.to_s
   end
 
-  test "mentioning a bot triggers a 'mentions' and an 'everything' webhook" do
-    WebMock.stub_request(:post, webhooks(:mentions).url).to_return(status: 200)
+  test "mentioning a bot triggers webhooks for mentioned and everything bots" do
+    WebMock.stub_request(:post, webhooks(:bender).url).to_return(status: 200)
+    WebMock.stub_request(:post, webhooks(:nsa).url).to_return(status: 200)
 
     assert_enqueued_jobs 2, only: Bot::WebhookJob do
       post room_messages_url(@room, format: :turbo_stream), params: { message: {

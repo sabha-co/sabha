@@ -22,17 +22,9 @@
 </div>
 
 <div class="flex align-center gap">
-  <%= translation_button(:mentions_webhook_url) %>
+  <%= translation_button(:webhook_url) %>
   <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-    <%= form.url_field :mentions_url, class: "input", placeholder: "Mentions URL" %>
-    <%= icon_tag "web" %>
-  </label>
-</div>
-
-<div class="flex align-center gap">
-  <%= translation_button(:everything_webhook_url) %>
-  <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-    <%= form.url_field :everything_url, class: "input", placeholder: "Everything URL" %>
+    <%= form.url_field :webhook_url, class: "input", placeholder: "Webhook URL" %>
     <%= icon_tag "web" %>
   </label>
 </div>

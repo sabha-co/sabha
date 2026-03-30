@@ -1,9 +1,9 @@
 class Bot::WebhookJob < ApplicationJob
   retry_on Exception, wait: :polynomially_longer, attempts: 10
 
-  def perform(webhook, payload, room)
+  def perform(webhook, payload, room, reply = false)
     return if DemoMode.enabled?
 
-    webhook.deliver(payload, room)
+    webhook.deliver(payload, room, reply: reply)
   end
 end

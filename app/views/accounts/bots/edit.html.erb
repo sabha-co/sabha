@@ -10,4 +10,43 @@
   <%= form_with model: @bot, url: account_bot_path(@bot), class: "flex flex-column gap" do |form| %>
     <%= render "accounts/bots/form", form: form, bot: @bot %>
   <% end %>
+
+  <% if @rooms.any? %>
+    <hr class="separator full-width" style="--border-style: solid">
+
+    <div class="flex flex-column gap-half pad-block">
+      <h2 class="txt-small txt-muted margin-none pad-inline">Room permissions</h2>
+
+      <% @rooms.each do |room| %>
+        <% membership = @bot_memberships[room.id] %>
+        <div class="flex align-center gap pad-inline pad-block-half">
+          <%= icon_tag room.is_a?(Rooms::Open) ? "hash" : "lock" %>
+          <span class="flex-item-grow"><%= room.name %></span>
+
+          <% if membership %>
+            <%= form_with url: account_bot_room_permission_path(@bot, membership), method: :patch,
+                  data: { controller: "form" }, class: "flex align-center gap" do %>
+              <%= select_tag :involvement,
+                    options_for_select([["Mentions only", "mentions"], ["Everything", "everything"], ["Muted", "nothing"]], membership.involvement),
+                    data: { action: "change->form#submit" },
+                    class: "input txt-small", style: "min-width: 10em;" %>
+            <% end %>
+
+            <%= button_to account_bot_room_permission_path(@bot, membership), method: :delete,
+                  class: "btn btn--small txt-small", aria: { label: "Remove from #{room.name}" } do %>
+              <%= icon_tag "x" %>
+            <% end %>
+          <% else %>
+            <%= button_to account_bot_room_permissions_path(@bot), method: :post,
+                  class: "btn btn--small txt-small",
+                  params: { room_id: room.id },
+                  aria: { label: "Add to #{room.name}" } do %>
+              <%= icon_tag "add" %>
+              <span>Add</span>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </section>

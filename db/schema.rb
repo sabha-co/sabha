@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_03_15_175342) do
+ActiveRecord::Schema[8.2].define(version: 2026_03_30_103742) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -310,11 +310,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_03_15_175342) do
 
   create_table "webhooks", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "receives"
     t.datetime "updated_at", null: false
     t.string "url"
     t.integer "user_id", null: false
-    t.index ["user_id"], name: "index_webhooks_on_user_id"
+    t.index ["user_id"], name: "index_webhooks_on_user_id", unique: true
   end
 
   add_foreign_key "account_join_codes", "accounts"
