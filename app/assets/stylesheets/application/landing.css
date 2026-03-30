@@ -334,6 +334,31 @@
   margin: 0;
 }
 
+.landing-hero-rotate {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  height: 1.15em;
+  min-width: 4.5em;
+  text-align: left;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.landing-hero-rotate.is-out {
+  opacity: 0;
+  transform: translateY(-50%);
+}
+
+.landing-hero-rotate.is-in {
+  opacity: 0;
+  transform: translateY(50%);
+}
+
+.landing-hero-rotate.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .landing-screenshot {
   width: 100%;
   border: 1px solid var(--border-gray);
