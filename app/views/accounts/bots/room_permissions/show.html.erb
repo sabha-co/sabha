@@ -20,20 +20,29 @@
 
   <% if @membership %>
     <div class="pad-inline flex flex-column gap">
-      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch, class: "flex flex-column gap" do %>
+      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch,
+            data: { controller: "form" } do %>
         <label class="txt-small txt-muted" for="involvement">Webhook delivery</label>
         <%= select_tag :involvement,
               options_for_select([
-                ["Mentions only — webhook fires on @mention, reply auto-posted", "mentions"],
-                ["Everything — webhook fires on all messages, fire-and-forget", "everything"],
-                ["Muted — no webhooks, bot can still post and read", "nothing"]
+                ["Mentions only", "mentions"],
+                ["Everything", "everything"],
+                ["Muted", "nothing"]
               ], @membership.involvement),
-              id: "involvement", class: "input" %>
-
-        <button type="submit" class="btn btn--primary full-width">
-          Save
-        </button>
+              id: "involvement", class: "input full-width",
+              data: { action: "change->form#submit" } %>
       <% end %>
+
+      <p class="txt-small txt-muted margin-none">
+        <% case @membership.involvement %>
+        <% when "mentions" %>
+          Webhook fires when @mentioned. Response is auto-posted as a reply.
+        <% when "everything" %>
+          Webhook fires on all messages. Responses are ignored.
+        <% when "nothing" %>
+          No webhooks. Bot can still post and read via the API.
+        <% end %>
+      </p>
 
       <% message_url = room_bot_messages_url(@room, @bot.bot_key) %>
       <label class="txt-small txt-muted">Message URL</label>
