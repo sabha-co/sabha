@@ -34,7 +34,7 @@
 
             <%= button_to account_bot_room_permission_path(@bot, membership), method: :delete,
                   class: "btn btn--small txt-small", aria: { label: "Remove from #{room.name}" } do %>
-              <%= icon_tag "x" %>
+              <%= icon_tag "minus" %>
             <% end %>
           <% else %>
             <%= button_to account_bot_room_permissions_path(@bot), method: :post,
