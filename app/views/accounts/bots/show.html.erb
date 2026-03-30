@@ -24,31 +24,25 @@
     <% end %>
   </div>
 
-  <% bot_rooms = @rooms.select { |room| @bot_memberships[room.id] } %>
-  <% if bot_rooms.any? %>
-    <div class="pad-inline flex flex-column gap">
-      <% bot_rooms.each do |room| %>
+  <% if @rooms.any? %>
+    <div class="pad-inline flex flex-column gap-half">
+      <h2 class="txt-small txt-muted margin-none">Room permissions</h2>
+
+      <% @rooms.each do |room| %>
         <% membership = @bot_memberships[room.id] %>
-        <fieldset class="gap max-width pad border border-radius">
-          <legend class="min-width txt-align-start pad-inline">
-            <strong class="overflow-ellipsis"><%= room_type_indicator(room) %> <%= room_display_name(room) %></strong>
-            <span class="txt-small txt-muted"><%= membership.involvement.humanize %></span>
-          </legend>
-
-          <% message_url = room_bot_messages_url(room, @bot.bot_key) %>
-          <div class="flex align-center gap">
-            <div class="flex-item-grow">
-              <input type="text" class="input full-width fill-white txt-small" value="<%= message_url %>" aria-label="Message URL for <%= room.name %>" readonly>
-            </div>
-
-            <div class="txt-small">
-              <%= button_to_copy_to_clipboard(message_url) do %>
-                <%= icon_tag "copy-paste" %>
-                <span class="for-screen-reader">Copy message URL for <%= room.name %></span>
-              <% end %>
-            </div>
-          </div>
-        </fieldset>
+        <div class="flex align-center gap pad-block-half">
+          <%= room_type_indicator(room) %>
+          <span class="flex-item-grow txt-small"><%= room.name %></span>
+          <% if membership %>
+            <span class="badge txt-small"><%= membership.involvement.humanize %></span>
+            <%= button_to_copy_to_clipboard(room_bot_messages_url(room, @bot.bot_key)) do %>
+              <%= icon_tag "copy-paste" %>
+              <span class="for-screen-reader">Copy message URL for <%= room.name %></span>
+            <% end %>
+          <% else %>
+            <span class="txt-small txt-muted">No access</span>
+          <% end %>
+        </div>
       <% end %>
     </div>
   <% end %>
