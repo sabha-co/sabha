@@ -7,7 +7,7 @@
 <% end %>
 
 <section class="panel flex flex-column gap">
-  <div class="flex align-center gap pad-inline-double">
+  <div class="flex align-center gap pad-inline">
     <figure class="avatar flex-item--no-shrink" style="--avatar-size: 2em;">
       <%= avatar_tag @bot %>
     </figure>
@@ -34,18 +34,14 @@
       <% end %>
 
       <p class="txt-small txt-muted margin-none">
-        <% case @membership.involvement %>
-        <% when "mentions" %>
-          Webhook fires when @mentioned. Response is auto-posted as a reply.
-        <% when "everything" %>
-          Webhook fires on all messages. Responses are ignored.
-        <% when "nothing" %>
-          No webhooks. Bot can still post and read via the API.
-        <% end %>
+        <% case @membership.involvement
+        when "mentions" %>Webhook fires when @mentioned or in a DM. Your response is auto-posted as a reply.
+        <% when "everything" %>Webhook fires on all messages in this room. Responses are ignored.
+        <% when "nothing" %>No webhooks fired. Bot can still post and read messages via the API.<% end %>
       </p>
 
       <% message_url = room_bot_messages_url(@room, @bot.bot_key) %>
-      <label class="txt-small txt-muted">Message URL</label>
+      <label class="txt-small txt-muted">Message URL — POST to this URL to send messages to this room</label>
       <div class="flex align-center gap">
         <div class="flex-item-grow">
           <input type="text" class="input full-width fill-white txt-small" value="<%= message_url %>" aria-label="Message URL" readonly>
@@ -68,8 +64,9 @@
   <% else %>
     <div class="pad-inline flex flex-column gap">
       <p class="txt-small txt-muted"><%= @bot.name %> does not have access to this room.</p>
+      <p class="txt-small txt-muted margin-none">Adding the bot will grant it permission to post and read messages. Webhook delivery defaults to mentions only — you can change this after adding.</p>
 
-      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch, class: "flex flex-column gap" do %>
+      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch do %>
         <%= hidden_field_tag :involvement, "mentions" %>
         <button type="submit" class="btn btn--primary full-width">
           <%= icon_tag "add" %>
