@@ -1,0 +1,50 @@
+<% @page_title = "Room permissions for #{@bot.name}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to account_bot_path(@bot) %>
+  </div>
+<% end %>
+
+<section class="panel panel--wide flex flex-column gap">
+  <div class="flex align-center gap pad-inline-double">
+    <figure class="avatar flex-item--no-shrink" style="--avatar-size: 2em;">
+      <%= avatar_tag @bot %>
+    </figure>
+
+    <h1 class="margin-none txt-large">Room permissions</h1>
+  </div>
+
+  <div class="flex flex-column gap-half">
+    <% @rooms.each do |room| %>
+      <% membership = @bot_memberships[room.id] %>
+      <div class="flex align-center gap pad-inline pad-block-half">
+        <%= room_type_indicator(room) %>
+        <span class="flex-item-grow"><%= room.name %></span>
+
+        <% if membership %>
+          <%= form_with url: account_bot_room_permission_path(@bot, membership), method: :patch,
+                data: { controller: "form" }, class: "flex align-center gap" do %>
+            <%= select_tag :involvement,
+                  options_for_select([["Mentions only", "mentions"], ["Everything", "everything"], ["Muted", "nothing"]], membership.involvement),
+                  data: { action: "change->form#submit" },
+                  class: "input txt-small", style: "min-width: 10em;" %>
+          <% end %>
+
+          <%= button_to account_bot_room_permission_path(@bot, membership), method: :delete,
+                class: "btn btn--small txt-small", aria: { label: "Remove from #{room.name}" } do %>
+            <%= icon_tag "minus" %>
+          <% end %>
+        <% else %>
+          <%= button_to account_bot_room_permissions_path(@bot), method: :post,
+                class: "btn btn--small txt-small",
+                params: { room_id: room.id },
+                aria: { label: "Add to #{room.name}" } do %>
+            <%= icon_tag "add" %>
+            <span>Add</span>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</section>

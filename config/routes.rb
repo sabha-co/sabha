@@ -62,7 +62,7 @@ Rails.application.routes.draw do
       resources :bots do
         scope module: "bots" do
           resource :key, only: :update
-          resources :room_permissions, only: %i[ create update destroy ]
+          resources :room_permissions, only: %i[ index create update destroy ]
         end
       end
 

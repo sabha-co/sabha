@@ -24,28 +24,31 @@
     <% end %>
   </div>
 
-  <% if @rooms.any? %>
-    <div class="pad-inline flex flex-column gap-half">
-      <h2 class="txt-small txt-muted margin-none">Room permissions</h2>
+  <div class="pad-inline flex flex-column gap-half">
+    <div class="flex align-center gap">
+      <h2 class="txt-small txt-muted margin-none flex-item-grow">Room permissions</h2>
+      <%= link_to account_bot_room_permissions_path(@bot), class: "btn btn--small txt-small", aria: { label: "Edit room permissions" } do %>
+        <%= icon_tag "pencil" %>
+        <span>Edit</span>
+      <% end %>
+    </div>
 
-      <% @rooms.each do |room| %>
-        <% membership = @bot_memberships[room.id] %>
+    <% if @bot_rooms.any? %>
+      <% @bot_rooms.each do |membership| %>
         <div class="flex align-center gap pad-block-half">
-          <%= room_type_indicator(room) %>
-          <span class="flex-item-grow txt-small"><%= room.name %></span>
-          <% if membership %>
-            <span class="badge txt-small"><%= membership.involvement.humanize %></span>
-            <%= button_to_copy_to_clipboard(room_bot_messages_url(room, @bot.bot_key)) do %>
-              <%= icon_tag "copy-paste" %>
-              <span class="for-screen-reader">Copy message URL for <%= room.name %></span>
-            <% end %>
-          <% else %>
-            <span class="txt-small txt-muted">No access</span>
+          <%= room_type_indicator(membership.room) %>
+          <span class="flex-item-grow txt-small"><%= room_display_name(membership.room) %></span>
+          <span class="badge txt-small"><%= membership.involvement.humanize %></span>
+          <%= button_to_copy_to_clipboard(room_bot_messages_url(membership.room, @bot.bot_key)) do %>
+            <%= icon_tag "copy-paste" %>
+            <span class="for-screen-reader">Copy message URL for <%= membership.room.name %></span>
           <% end %>
         </div>
       <% end %>
-    </div>
-  <% end %>
+    <% else %>
+      <p class="txt-small txt-muted">No rooms assigned.</p>
+    <% end %>
+  </div>
 
   <hr class="separator full-width margin-block-double" style="--border-style: solid">
 

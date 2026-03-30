@@ -16,13 +16,11 @@ class Accounts::BotsController < ApplicationController
   end
 
   def show
-    @rooms = Room.active.without_directs.without_threads.ordered
-    @bot_memberships = @bot.memberships.visible.index_by(&:room_id)
+    @bot_rooms = @bot.memberships.visible.without_direct_rooms.without_thread_rooms
+      .includes(:room).where(rooms: { active: true }).order("rooms.sortable_name")
   end
 
   def edit
-    @rooms = Room.active.without_directs.without_threads.ordered
-    @bot_memberships = @bot.memberships.visible.index_by(&:room_id)
   end
 
   def update
