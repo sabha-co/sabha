@@ -26,7 +26,7 @@
     <div class="pad-inline flex flex-column gap-half">
       <label class="txt-small txt-muted">Webhook URL — Sabha sends events here when the bot is mentioned</label>
       <div class="flex align-center gap">
-        <div class="flex-item-grow">
+        <div class="flex-item-grow min-width">
           <input type="text" class="input full-width fill-white txt-small" value="<%= @bot.webhook_url %>" readonly>
         </div>
         <%= button_to_copy_to_clipboard(@bot.webhook_url) do %>
@@ -54,8 +54,8 @@
             <%= link_to account_bot_room_permission_path(@bot, membership.room),
                   class: "flex align-center gap pad-block-half", style: "text-decoration: none; color: inherit;" do %>
               <%= room_type_indicator(membership.room) %>
-              <span class="flex-item-grow"><%= room_display_name(membership.room) %></span>
-              <span class="txt-small txt-muted"><% case membership.involvement
+              <span class="flex-item-grow min-width overflow-ellipsis"><%= room_display_name(membership.room) %></span>
+              <span class="txt-small txt-muted txt-nowrap"><% case membership.involvement
                 when "mentions" %>Mentions only<% when "everything" %>All messages<% when "nothing" %>Muted<% end %></span>
               <%= icon_tag "arrow-right" %>
             <% end %>
@@ -79,7 +79,7 @@
               <%= link_to account_bot_room_permission_path(@bot, room),
                     class: "flex align-center gap pad-block-half", style: "text-decoration: none; color: inherit;" do %>
                 <%= room_type_indicator(room) %>
-                <span class="flex-item-grow txt-muted"><%= room.name %></span>
+                <span class="flex-item-grow min-width overflow-ellipsis txt-muted"><%= room.name %></span>
                 <%= icon_tag "arrow-right" %>
               <% end %>
             </li>
