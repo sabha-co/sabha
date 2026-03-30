@@ -35,7 +35,7 @@
       <% @rooms.each do |room| %>
         <% membership = @bot_memberships[room.id] %>
         <div class="flex align-center gap pad-block-half">
-          <%= icon_tag room.is_a?(Rooms::Open) ? "hash" : "lock" %>
+          <%= room_type_indicator(room) %>
           <span class="flex-item-grow txt-small"><%= room.name %></span>
           <% if membership %>
             <span class="badge txt-small"><%= membership.involvement.humanize %></span>
