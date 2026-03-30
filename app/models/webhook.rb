@@ -15,6 +15,8 @@ class Webhook < ApplicationRecord
     RestrictedHTTP::PrivateNetworkGuard.resolve(URI(url).host)
   rescue URI::InvalidURIError
     errors.add(:url, "is not a valid URL")
+  rescue Resolv::ResolvError
+    errors.add(:url, "could not be resolved")
   rescue RestrictedHTTP::Violation
     errors.add(:url, "must not target private or internal networks")
   end
