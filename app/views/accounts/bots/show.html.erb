@@ -24,30 +24,20 @@
     <% end %>
   </div>
 
-  <div class="pad-inline pad-block-start flex flex-column gap">
-    <%= render "accounts/bots/ping_command", bot: @bot %>
+  <% if @bot.webhook_url.present? %>
+    <div class="pad-inline flex align-center gap">
+      <div class="flex-item-grow">
+        <input type="text" class="input full-width fill-white" value="<%= @bot.webhook_url %>" aria-label="Webhook URL" readonly>
+      </div>
 
-    <% if @bot.webhook_url.present? %>
-      <fieldset class="gap max-width pad border border-radius">
-        <legend class="min-width txt-align-start pad-inline">
-          <strong>Webhook URL</strong>
-        </legend>
-
-        <div class="flex align-center gap">
-          <div class="flex-item-grow">
-            <input type="text" class="input full-width fill-white" value="<%= @bot.webhook_url %>" aria-label="Webhook URL" readonly>
-          </div>
-
-          <div class="txt-small">
-            <%= button_to_copy_to_clipboard(@bot.webhook_url) do %>
-              <%= icon_tag "copy-paste" %>
-              <span class="for-screen-reader">Copy webhook URL</span>
-            <% end %>
-          </div>
-        </div>
-      </fieldset>
-    <% end %>
-  </div>
+      <div class="txt-small">
+        <%= button_to_copy_to_clipboard(@bot.webhook_url) do %>
+          <%= icon_tag "copy-paste" %>
+          <span class="for-screen-reader">Copy webhook URL</span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 
   <% if @rooms.any? %>
     <div class="pad-inline flex flex-column gap-half">
