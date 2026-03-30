@@ -5,7 +5,7 @@ class Accounts::Bots::RoomPermissionsController < ApplicationController
 
   def create
     room = Room.without_directs.without_threads.find(params[:room_id])
-    @bot.memberships.create!(room: room, involvement: params[:involvement] || :mentions)
+    room.add_member!(@bot, actor: Current.user)
     redirect_to account_bot_path(@bot)
   end
 
@@ -15,7 +15,7 @@ class Accounts::Bots::RoomPermissionsController < ApplicationController
   end
 
   def destroy
-    @membership.update!(involvement: :invisible)
+    @membership.room.remove_member!(@bot, actor: Current.user)
     redirect_to account_bot_path(@bot)
   end
 
