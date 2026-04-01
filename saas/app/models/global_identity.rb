@@ -9,6 +9,10 @@ class GlobalIdentity < UntenantedRecord
   # MVP: Email + OTP only (no password)
   # v2: Add password_digest for optional password auth
 
+  MAX_WORKSPACES = 10
+
+  class WorkspaceLimitReachedError < StandardError; end
+
   has_many :global_sessions, dependent: :destroy
   has_many :auth_codes, dependent: :destroy
   has_many :workspace_memberships, dependent: :destroy
@@ -42,6 +46,10 @@ class GlobalIdentity < UntenantedRecord
 
   def verify!
     update!(verified_at: Time.current) unless verified?
+  end
+
+  def workspace_limit_reached?
+    Workspace.where(creator: self).count >= MAX_WORKSPACES
   end
 
   def workspaces

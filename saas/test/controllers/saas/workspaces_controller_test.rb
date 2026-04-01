@@ -83,5 +83,24 @@ module Saas
 
       assert_response :unprocessable_entity
     end
+
+    test "create blocked when workspace limit reached" do
+      identity = global_identities(:alice)
+      sign_in_global_identity(identity)
+
+      # Alice owns 1 workspace (acme), so limit of 1 should block creation
+      original = GlobalIdentity::MAX_WORKSPACES
+      GlobalIdentity.send(:remove_const, :MAX_WORKSPACES)
+      GlobalIdentity.const_set(:MAX_WORKSPACES, 1)
+
+      assert_no_difference "Workspace.count" do
+        post workspaces_path, params: { name: "One Too Many" }
+      end
+
+      assert_response :unprocessable_entity
+    ensure
+      GlobalIdentity.send(:remove_const, :MAX_WORKSPACES)
+      GlobalIdentity.const_set(:MAX_WORKSPACES, original)
+    end
   end
 end

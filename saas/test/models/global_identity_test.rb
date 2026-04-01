@@ -119,6 +119,25 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     identity&.destroy
   end
 
+  # Workspace limit tests
+
+  test "workspace_limit_reached? is false when under limit" do
+    identity = global_identities(:alice)
+    assert_not identity.workspace_limit_reached?
+  end
+
+  test "workspace_limit_reached? is true when at limit" do
+    identity = global_identities(:alice)
+    # Alice owns 1 workspace (acme), so limit of 1 should be reached
+    original = GlobalIdentity::MAX_WORKSPACES
+    GlobalIdentity.send(:remove_const, :MAX_WORKSPACES)
+    GlobalIdentity.const_set(:MAX_WORKSPACES, 1)
+    assert identity.workspace_limit_reached?
+  ensure
+    GlobalIdentity.send(:remove_const, :MAX_WORKSPACES)
+    GlobalIdentity.const_set(:MAX_WORKSPACES, original)
+  end
+
   test "email_available? checks primary email_address only" do
     alice = global_identities(:alice)
 
