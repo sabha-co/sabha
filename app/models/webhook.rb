@@ -162,7 +162,7 @@ class Webhook < ApplicationRecord
 
           blob = message.attachment.blob
           {
-            url: absolute_url(routes.rails_blob_path(blob, only_path: true)),
+            url: blob.url(expires_in: 1.hour),
             filename: blob.filename.to_s,
             content_type: blob.content_type,
             byte_size: blob.byte_size

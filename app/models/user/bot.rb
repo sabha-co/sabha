@@ -11,7 +11,7 @@ module User::Bot
     def create_bot!(attributes)
       attributes = attributes.to_h.symbolize_keys
       bot_token = generate_bot_token
-      webhook_url = attributes.delete(:webhook_url) || attributes.delete(:mentions_url) || attributes.delete(:everything_url)
+      webhook_url = attributes.delete(:webhook_url).presence || attributes.delete(:mentions_url).presence || attributes.delete(:everything_url).presence
 
       User.create!(**attributes, bot_token: bot_token, role: :bot).tap do |user|
         user.create_webhook!(url: webhook_url) if webhook_url.present?
@@ -32,7 +32,7 @@ module User::Bot
   def update_bot!(attributes)
     attributes = attributes.to_h.symbolize_keys
     has_webhook_param = attributes.key?(:webhook_url) || attributes.key?(:mentions_url) || attributes.key?(:everything_url)
-    webhook_url = attributes.delete(:webhook_url) || attributes.delete(:mentions_url) || attributes.delete(:everything_url)
+    webhook_url = attributes.delete(:webhook_url).presence || attributes.delete(:mentions_url).presence || attributes.delete(:everything_url).presence
 
     transaction do
       update_webhook_url!(webhook_url) if has_webhook_param
