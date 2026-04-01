@@ -6,7 +6,7 @@ class Workspace
 
     RETENTION_PERIOD = 7.days
 
-    belongs_to :workspace
+    belongs_to :workspace, optional: true
 
     scope :expired, -> { where(created_at: ...RETENTION_PERIOD.ago) }
 
@@ -16,10 +16,11 @@ class Workspace
       end
     end
 
-    def self.create_from_database!(workspace)
+    def self.create_from_database!(workspace, key_prefix: nil)
       tenant_id = workspace.external_id.to_s
       timestamp = Time.current.strftime("%Y%m%d%H%M%S")
-      r2_key = "backups/#{workspace.external_id}/#{timestamp}-#{SecureRandom.hex(4)}.sqlite3"
+      filename = [ key_prefix, "#{timestamp}-#{SecureRandom.hex(4)}" ].compact.join("-")
+      r2_key = "backups/#{workspace.external_id}/#{filename}.sqlite3"
 
       ApplicationRecord.with_tenant(tenant_id) do
         ApplicationRecord.connection.execute("PRAGMA wal_checkpoint(PASSIVE)")

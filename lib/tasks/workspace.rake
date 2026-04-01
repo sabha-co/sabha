@@ -89,19 +89,7 @@ namespace :workspace do
       end
     end
 
-    # Purge Active Storage files before destroying the tenant database
-    ApplicationRecord.with_tenant(external_id.to_s) do
-      ActiveStorage::Blob.find_each(&:purge)
-    end
-
-    # Destroy tenant database (deletes the SQLite file)
-    ApplicationRecord.destroy_tenant(external_id.to_s)
-
-    # Clean up workspace memberships
-    WorkspaceMembership.where(tenant: external_id.to_s).delete_all
-
-    # Destroy workspace record
-    workspace.destroy!
+    workspace.destroy_with_database!
 
     puts "Workspace #{external_id} destroyed."
   end

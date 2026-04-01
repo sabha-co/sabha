@@ -13,13 +13,14 @@ class Workspace < UntenantedRecord
 
   belongs_to :creator, class_name: "GlobalIdentity"
   has_many :workspace_memberships, primary_key: :external_id, foreign_key: :tenant, dependent: :destroy
-  has_many :backups, class_name: "Workspace::Backup", dependent: :destroy
+  has_many :backups, class_name: "Workspace::Backup"
 
   validates :name, presence: true, length: { maximum: 100 }
   validates :external_id, presence: true, uniqueness: true
 
   before_validation :assign_external_id, on: :create
   after_create_commit :send_welcome_email
+  after_destroy_commit :purge_storage_later
 
   scope :active, -> { where(suspended_at: nil) }
   scope :suspended, -> { where.not(suspended_at: nil) }
@@ -123,15 +124,23 @@ class Workspace < UntenantedRecord
     false
   end
 
-  # Full cleanup: destroy tenant DB + Workspace record + R2 backup objects
-  # Pattern from lib/tasks/workspace.rake
+  # Full cleanup: take a final backup, then destroy everything else
   def destroy_with_database!
-    backups.each(&:purge!)
-    ApplicationRecord.destroy_tenant(external_id.to_s)
+    create_final_backup!
     destroy!  # Cascades to WorkspaceMemberships via dependent: :destroy
   end
 
   private
+
+    # Take a final backup and detach all backup records from this workspace
+    def create_final_backup!
+      Workspace::Backup.create_from_database!(self, key_prefix: "final") if Workspace::Backup.r2_configured?
+      backups.update_all(workspace_id: nil)
+    end
+
+    def purge_storage_later
+      Workspace::PurgeStorageJob.perform_later(external_id.to_s)
+    end
 
     def assign_external_id
       self.external_id ||= Workspace::ExternalIdSequence.next_id
