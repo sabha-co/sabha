@@ -81,93 +81,101 @@ class Webhook < ApplicationRecord
     end
 
     def create_payload(item, event, base_url: "")
-      @base_url = base_url
+      urls = UrlBuilder.new(base_url, user.bot_key)
 
       if item.is_a?(Message)
-        message_payload(item, event)
+        message_payload(item, event, urls)
       elsif item.is_a?(Boost)
-        boost_payload(item, event)
+        boost_payload(item, event, urls)
       elsif item.is_a?(User)
-        user_payload(item, event)
+        user_payload(item, event, urls)
       else
         {}.to_json
       end
     end
 
-    def message_payload(message, event)
+    def message_payload(message, event, urls)
       {
         event:   "message_#{event}",
-        user:    user_to_api(message.creator),
-        room:    room_to_api(message.room),
-        message: message_to_api(message)
+        user:    urls.user_to_api(message.creator),
+        room:    urls.room_to_api(message.room, bot_is_member: user.member_of?(message.room)),
+        message: urls.message_to_api(message)
       }.to_json
     end
 
-    def boost_payload(boost, event)
+    def boost_payload(boost, event, urls)
       {
         event:   "boost_#{event}",
-        user:    user_to_api(boost.booster),
-        room:    room_to_api(boost.message.room),
-        message: message_to_api(boost.message),
+        user:    urls.user_to_api(boost.booster),
+        room:    urls.room_to_api(boost.message.room, bot_is_member: user.member_of?(boost.message.room)),
+        message: urls.message_to_api(boost.message),
         boost:   { id: boost.id, body: boost.content }
       }.to_json
     end
 
-    def user_payload(user, event)
+    def user_payload(user, event, urls)
       {
         event:   "user_#{event}",
-        user:    user_to_api(user)
+        user:    urls.user_to_api(user)
       }.to_json
     end
 
-    def room_to_api(room)
-      {
-        id: room.id,
-        name: room.name,
-        type: room.class.name.demodulize,
-        members: room.memberships.visible.count,
-        has_bot: user.member_of?(room),
-        messages_url: absolute_url(routes.room_bot_messages_path(room, user.bot_key))
-      }
-    end
+    class UrlBuilder
+      def initialize(base_url, bot_key)
+        @base_url = base_url
+        @bot_key = bot_key
+      end
 
-    def message_to_api(message)
-      {
-        id: message.id,
-        body: { html: message.body.body, plain: message.plain_text_body },
-        has_attachment: message.attachment?,
-        attachment: attachment_to_api(message),
-        mentionees: message.mentionees.map { |m| { id: m.id, name: m.name } },
-        url: absolute_url(routes.room_at_message_path(message.room, message))
-      }
-    end
+      def room_to_api(room, bot_is_member: false)
+        {
+          id: room.id,
+          name: room.name,
+          type: room.class.name.demodulize,
+          members: room.memberships.visible.count,
+          has_bot: bot_is_member,
+          messages_url: absolute_url(routes.room_bot_messages_path(room, @bot_key))
+        }
+      end
 
-    def attachment_to_api(message)
-      return nil unless message.attachment?
+      def message_to_api(message)
+        {
+          id: message.id,
+          body: { html: message.body.body, plain: message.plain_text_body },
+          has_attachment: message.attachment?,
+          attachment: attachment_to_api(message),
+          mentionees: message.mentionees.map { |m| { id: m.id, name: m.name } },
+          url: absolute_url(routes.room_at_message_path(message.room, message))
+        }
+      end
 
-      blob = message.attachment.blob
-      {
-        url: absolute_url(routes.rails_blob_path(blob, only_path: true)),
-        filename: blob.filename.to_s,
-        content_type: blob.content_type,
-        byte_size: blob.byte_size
-      }
-    end
+      def user_to_api(user)
+        {
+          id: user.id,
+          name: user.name,
+          url: absolute_url(routes.user_path(user))
+        }
+      end
 
-    def user_to_api(user)
-      {
-        id: user.id,
-        name: user.name,
-        url: absolute_url(routes.user_path(user))
-      }
-    end
+      private
+        def attachment_to_api(message)
+          return nil unless message.attachment?
 
-    def routes
-      Rails.application.routes.url_helpers
-    end
+          blob = message.attachment.blob
+          {
+            url: absolute_url(routes.rails_blob_path(blob, only_path: true)),
+            filename: blob.filename.to_s,
+            content_type: blob.content_type,
+            byte_size: blob.byte_size
+          }
+        end
 
-    def absolute_url(path)
-      "#{@base_url}#{path}"
+        def routes
+          Rails.application.routes.url_helpers
+        end
+
+        def absolute_url(path)
+          "#{@base_url}#{path}"
+        end
     end
 
     def extract_text_from(response)
