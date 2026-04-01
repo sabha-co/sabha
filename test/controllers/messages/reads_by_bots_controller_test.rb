@@ -29,6 +29,8 @@ class Messages::ReadsByBotsControllerTest < ActionDispatch::IntegrationTest
     assert msg["body"].is_a?(Hash)
     assert msg.key?("mentionees")
     assert msg["created_at"].present?
+    assert_equal false, msg["has_attachment"]
+    assert_nil msg["attachment"]
   end
 
   test "returns 404 for room the bot is not a member of" do

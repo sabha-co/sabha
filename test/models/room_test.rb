@@ -309,4 +309,46 @@ class RoomTest < ActiveSupport::TestCase
 
     assert_equal initial_count - 1, room.active_member_count
   end
+
+  # bot_memberships_for_webhook
+
+  test "bot_memberships_for_webhook returns empty for non-message events" do
+    room = rooms(:watercooler)
+    result = room.bot_memberships_for_webhook(room, :updated)
+    assert_equal [], result
+  end
+
+  test "bot_memberships_for_webhook returns mentioned bots" do
+    room = rooms(:watercooler)
+    bender = users(:bender)
+    message = room.messages.create!(body: "Hey", creator: users(:david), client_message_id: "wh-test-1")
+    message.stubs(:mentionees).returns(User.where(id: bender.id))
+
+    result = room.bot_memberships_for_webhook(message, :created)
+    assert_includes result.map(&:user_id), bender.id
+  end
+
+  test "bot_memberships_for_webhook excludes muted bots" do
+    room = rooms(:watercooler)
+    bender = users(:bender)
+    bender.memberships.find_by!(room: room).update!(involvement: :nothing)
+
+    message = room.messages.create!(body: "Hey", creator: users(:david), client_message_id: "wh-test-2")
+    message.stubs(:mentionees).returns(User.where(id: bender.id))
+
+    result = room.bot_memberships_for_webhook(message, :created)
+    assert_empty result
+  end
+
+  test "bot_memberships_for_webhook excludes bots without webhook" do
+    room = rooms(:watercooler)
+    bender = users(:bender)
+    bender.webhook.destroy!
+
+    message = room.messages.create!(body: "Hey", creator: users(:david), client_message_id: "wh-test-3")
+    message.stubs(:mentionees).returns(User.where(id: bender.id))
+
+    result = room.bot_memberships_for_webhook(message, :created)
+    assert_empty result
+  end
 end
