@@ -46,8 +46,7 @@ secret equivalent to a bearer token. Always use HTTPS in production.
 Your bot's access is controlled per room via the membership involvement level:
 
 - **mentions**: Webhook fires when @mentioned or in a DM. Your response is auto-posted as a reply.
-- **everything**: Webhook fires for all events. Responses are ignored (fire-and-forget).
-- **nothing**: No webhooks fired. Bot can still post and read via the API.
+- **muted**: No webhooks fired. Bot can still post and read via the API.
 
 Admins configure your bot's involvement per room. By default, new bots join
 open rooms with "mentions" involvement.
@@ -174,14 +173,10 @@ Same structure plus: "boost": { "id": 123, "body": "👍" }
 
 ### Webhook Response Convention
 
-Webhook response behavior depends on your bot's involvement in the room:
-
-**Mentions involvement:** Your HTTP response is automatically posted as a reply:
+Your HTTP response is automatically posted as a reply:
 - Return text/plain or text/html with 200 → auto-posted as a message from the bot
 - Return a binary content type with 200 → auto-posted as an attachment
 - Timeout (300s) or error → error message posted to the room
-
-**Everything involvement:** Responses are ignored (fire-and-forget).
 
 ## Error Responses
 

@@ -45,7 +45,7 @@ bender_watercooler:
 nsa_watercooler:
   room: watercooler
   user: nsa
-  involvement: everything
+  involvement: mentions
 
 david_hq:
   room: hq

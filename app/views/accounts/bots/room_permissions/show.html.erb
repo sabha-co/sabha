@@ -26,7 +26,6 @@
         <%= select_tag :involvement,
               options_for_select([
                 ["Mentions only", "mentions"],
-                ["Everything", "everything"],
                 ["Muted", "nothing"]
               ], @membership.involvement),
               id: "involvement", class: "input full-width",
@@ -36,7 +35,6 @@
       <p class="txt-small txt-muted margin-none">
         <% case @membership.involvement
         when "mentions" %>Webhook fires when @mentioned or in a DM. Your response is auto-posted as a reply.
-        <% when "everything" %>Webhook fires on all messages in this room. Responses are ignored.
         <% when "nothing" %>No webhooks fired. Bot can still post and read messages via the API.<% end %>
       </p>
 

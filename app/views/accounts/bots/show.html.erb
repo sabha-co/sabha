@@ -56,7 +56,7 @@
               <%= room_type_indicator(membership.room) %>
               <span class="flex-item-grow min-width overflow-ellipsis"><%= room_display_name(membership.room) %></span>
               <span class="txt-small txt-muted txt-nowrap"><% case membership.involvement
-                when "mentions" %>Mentions only<% when "everything" %>All messages<% when "nothing" %>Muted<% end %></span>
+                when "mentions" %>Mentions only<% when "nothing" %>Muted<% end %></span>
               <%= icon_tag "arrow-right" %>
             <% end %>
           </li>

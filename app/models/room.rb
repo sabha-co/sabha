@@ -259,20 +259,20 @@ class Room < ApplicationRecord
   end
 
   def bot_memberships_for_webhook(message, event)
+    return [] unless message.is_a?(Message) && event == :created
+
     bot_ids_with_webhook = User.active_bots.joins(:webhook).pluck(:id)
     return [] if bot_ids_with_webhook.empty?
 
     eligible = memberships.active
-      .where.not(involvement: [ :invisible, :nothing ])
+      .where(involvement: [ :mentions, :everything ])
       .where(user_id: bot_ids_with_webhook)
       .includes(user: :webhook)
 
     if direct?
       eligible.to_a
-    elsif message.is_a?(Message) && event == :created
-      eligible.to_a.select { |m| m.involved_in_everything? || message.mentionees.include?(m.user) || message.mentions_everyone? }
     else
-      eligible.where(involvement: :everything).to_a
+      eligible.to_a.select { |m| message.mentionees.include?(m.user) || message.mentions_everyone? }
     end
   end
 
