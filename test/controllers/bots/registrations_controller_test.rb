@@ -10,7 +10,7 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
   test "successful bot registration returns 201 with bot_key and rooms" do
     assert_difference "User.count", 1 do
       post join_bot_url(@join_code.code),
-        params: { name: "TestBot", mentions_url: "https://example.com/hook" },
+        params: { name: "TestBot", webhook_url: "https://example.com/hook" },
         as: :json
     end
 
@@ -19,13 +19,12 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
 
     assert json["bot_key"].present?
     assert_equal "TestBot", json["name"]
-    assert_equal "https://example.com/hook", json["webhooks"]["mentions_url"]
-    assert_nil json["webhooks"]["everything_url"]
+    assert_equal "https://example.com/hook", json["webhook_url"]
     assert json["rooms"].is_a?(Array)
 
     bot = User.find_by(name: "TestBot")
     assert bot.bot?
-    assert_equal "https://example.com/hook", bot.mentions_url
+    assert_equal "https://example.com/hook", bot.webhook_url
   end
 
   test "registration redeems join code" do
@@ -84,15 +83,14 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "join_code_expired", json["code"]
   end
 
-  test "registration with both webhook URLs" do
+  test "registration with legacy mentions_url param" do
     post join_bot_url(@join_code.code),
-      params: { name: "DualBot", mentions_url: "https://example.com/mentions", everything_url: "https://example.com/everything" },
+      params: { name: "DualBot", mentions_url: "https://example.com/mentions" },
       as: :json
 
     assert_response :created
     json = response.parsed_body
-    assert_equal "https://example.com/mentions", json["webhooks"]["mentions_url"]
-    assert_equal "https://example.com/everything", json["webhooks"]["everything_url"]
+    assert_equal "https://example.com/mentions", json["webhook_url"]
   end
 
   test "registration without name uses default" do

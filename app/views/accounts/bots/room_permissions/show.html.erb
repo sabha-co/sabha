@@ -1,0 +1,74 @@
+<% @page_title = "#{@bot.name} in #{@room.name}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to account_bot_path(@bot) %>
+  </div>
+<% end %>
+
+<section class="panel flex flex-column gap">
+  <div class="flex align-center gap pad-inline">
+    <figure class="avatar flex-item--no-shrink" style="--avatar-size: 2em;">
+      <%= avatar_tag @bot %>
+    </figure>
+
+    <div class="min-width flex-item-grow">
+      <h1 class="margin-none txt-large overflow-ellipsis"><%= room_type_indicator(@room) %> <%= room_display_name(@room) %></h1>
+      <p class="txt-small txt-muted margin-none"><%= @bot.name %></p>
+    </div>
+  </div>
+
+  <% if @membership %>
+    <div class="pad-inline flex flex-column gap">
+      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch,
+            data: { controller: "form" } do %>
+        <label class="txt-small txt-muted" for="involvement">Webhook delivery</label>
+        <%= select_tag :involvement,
+              options_for_select([
+                ["Mentions only", "mentions"],
+                ["Muted", "nothing"]
+              ], @membership.involvement),
+              id: "involvement", class: "input full-width",
+              data: { action: "change->form#submit" } %>
+      <% end %>
+
+      <p class="txt-small txt-muted margin-none">
+        <% case @membership.involvement
+        when "mentions" %>Webhook fires when @mentioned or in a DM. Your response is auto-posted as a reply.
+        <% when "nothing" %>No webhooks fired. Bot can still post and read messages via the API.<% end %>
+      </p>
+
+      <% message_url = room_bot_messages_url(@room, @bot.bot_key) %>
+      <label class="txt-small txt-muted">Message URL — POST to this URL to send messages to this room</label>
+      <div class="flex align-center gap">
+        <div class="flex-item-grow min-width">
+          <input type="text" class="input full-width fill-white txt-small" value="<%= message_url %>" aria-label="Message URL" readonly>
+        </div>
+        <%= button_to_copy_to_clipboard(message_url) do %>
+          <%= icon_tag "copy-paste" %>
+          <span class="for-screen-reader">Copy message URL</span>
+        <% end %>
+      </div>
+
+      <hr class="separator full-width" style="--border-style: solid">
+
+      <%= button_to account_bot_room_permission_path(@bot, @room), method: :delete,
+            class: "btn btn--negative full-width txt-small",
+            data: { turbo_confirm: "Remove #{@bot.name} from #{@room.name}?" } do %>
+        <%= icon_tag "minus" %>
+        <span>Remove from room</span>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="pad-inline flex flex-column gap">
+      <p class="txt-small txt-muted"><%= @bot.name %> does not have access to this room.</p>
+      <p class="txt-small txt-muted margin-none">Adding the bot will grant it permission to post and read messages. Webhook delivery defaults to mentions only — you can change this after adding.</p>
+
+      <%= button_to account_bot_room_permission_path(@bot, @room), method: :post,
+            class: "btn btn--primary full-width" do %>
+        <%= icon_tag "add" %>
+        <span>Add to room</span>
+      <% end %>
+    </div>
+  <% end %>
+</section>

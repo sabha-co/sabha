@@ -4,20 +4,17 @@ module User::Bot
   included do
     scope :active_bots, -> { active.where(role: :bot) }
     scope :without_bots, -> { where.not(role: :bot) }
-    scope :observing_everything, -> { joins(:webhooks).where(webhooks: { receives: :everything }).distinct }
-    has_many :webhooks, dependent: :destroy
+    has_one :webhook, dependent: :destroy
   end
 
   module ClassMethods
     def create_bot!(attributes)
       attributes = attributes.to_h.symbolize_keys
       bot_token = generate_bot_token
-      mentions_url = attributes.delete(:mentions_url)
-      everything_url = attributes.delete(:everything_url)
+      webhook_url = attributes.delete(:webhook_url).presence || attributes.delete(:mentions_url).presence || attributes.delete(:everything_url).presence
 
       User.create!(**attributes, bot_token: bot_token, role: :bot).tap do |user|
-        user.webhooks.create!(url: mentions_url, receives: :mentions) if mentions_url.present?
-        user.webhooks.create!(url: everything_url, receives: :everything) if everything_url.present?
+        user.create_webhook!(url: webhook_url) if webhook_url.present?
       end
     end
 
@@ -34,13 +31,14 @@ module User::Bot
 
   def update_bot!(attributes)
     attributes = attributes.to_h.symbolize_keys
+    has_webhook_param = attributes.key?(:webhook_url) || attributes.key?(:mentions_url) || attributes.key?(:everything_url)
+    webhook_url = attributes.delete(:webhook_url).presence || attributes.delete(:mentions_url).presence || attributes.delete(:everything_url).presence
+
     transaction do
-      update_webhook_url!(attributes.delete(:mentions_url), :mentions) if attributes.key?(:mentions_url)
-      update_webhook_url!(attributes.delete(:everything_url), :everything) if attributes.key?(:everything_url)
+      update_webhook_url!(webhook_url) if has_webhook_param
       update!(attributes)
     end
   end
-
 
   def bot_key
     "#{id}-#{bot_token}"
@@ -50,34 +48,20 @@ module User::Bot
     update! bot_token: self.class.generate_bot_token
   end
 
-  def mentions_url
-    mentions_webhook&.url
+  def webhook_url
+    webhook&.url
   end
 
-  def everything_url
-    everything_webhook&.url
-  end
-
-  def deliver_webhooks_later(item, event)
-    webhooks.each do |webhook|
-      webhook.deliver_later(item, event) if webhook.cares_about?(item, event)
-    end
+  def deliver_webhook_later(item, event, reply: false, base_url: "")
+    webhook&.deliver_later(item, event, reply: reply, base_url: base_url)
   end
 
   private
-    def mentions_webhook
-      webhooks.receiving_mentions.first
-    end
-
-    def everything_webhook
-      webhooks.receiving_everything.first
-    end
-
-    def update_webhook_url!(url, receives)
+    def update_webhook_url!(url)
       if url.present?
-        webhooks.where(receives: receives).first&.update!(url: url) || webhooks.create!(url: url, receives: receives)
+        webhook&.update!(url: url) || create_webhook!(url: url)
       else
-        webhooks.where(receives: receives).destroy_all
+        webhook&.destroy
       end
     end
 end

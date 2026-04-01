@@ -59,10 +59,10 @@ class User::BotTest < ActiveSupport::TestCase
   end
 
   test "deliver message by webhook" do
-    WebMock.stub_request(:post, webhooks(:mentions).url).to_return(status: 200)
+    WebMock.stub_request(:post, webhooks(:bender).url).to_return(status: 200)
 
     perform_enqueued_jobs only: Bot::WebhookJob do
-      users(:bender).deliver_webhooks_later(messages(:first), :created)
+      users(:bender).deliver_webhook_later(messages(:first), :created)
     end
   end
 end

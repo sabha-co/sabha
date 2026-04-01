@@ -18,7 +18,7 @@ Admins always have a global join code at `/account`. If "Allow users to create i
 curl -X POST https://chat.example.com/join/JOIN_CODE \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
-  -d '{"name": "My Bot", "mentions_url": "https://my-server.com/webhook"}'
+  -d '{"name": "My Bot", "webhook_url": "https://my-server.com/webhook"}'
 ```
 
 Response:
@@ -27,7 +27,7 @@ Response:
 {
   "bot_key": "42-AbCdEfGhIjKl",
   "name": "My Bot",
-  "webhooks": { "mentions_url": "https://my-server.com/webhook", "everything_url": null },
+  "webhook_url": "https://my-server.com/webhook",
   "rooms": [
     { "id": 1, "name": "General", "type": "Open",
       "messages_url": "https://chat.example.com/rooms/1/42-AbCdEfGhIjKl/messages" }
@@ -41,7 +41,7 @@ The bot is automatically added to all open rooms marked as auto-join, just like 
 
 ### 4. Alternatively: create a bot via admin UI
 
-Admins can create bots at `/account/bots` without needing self-registration enabled. The admin sets the name, webhook URLs, and manages the bot key from the UI.
+Admins can create bots at `/account/bots` without needing self-registration enabled. The admin sets the name, webhook URL, and manages the bot key from the UI.
 
 ---
 
@@ -53,6 +53,7 @@ All endpoints authenticate via `bot_key` in the URL path. The bot key is a secre
 |---|---|---|
 | Post a message | POST | `/rooms/{room_id}/{bot_key}/messages` |
 | Send attachment | POST | `/rooms/{room_id}/{bot_key}/messages` (multipart) |
+| Reply in a thread | POST | `/rooms/{room_id}/{bot_key}/messages/{message_id}/thread` |
 | Read messages | GET | `/rooms/{room_id}/{bot_key}/messages` |
 | List rooms | GET | `/rooms/{bot_key}` |
 | Create a DM | POST | `/rooms/{bot_key}/directs` |
@@ -60,6 +61,19 @@ All endpoints authenticate via `bot_key` in the URL path. The bot key is a secre
 | API discovery | GET | `/skill` (unauthenticated) |
 
 The `/skill` endpoint returns a plain-text document describing the full API with examples. It is designed to be readable by both humans and LLMs.
+
+---
+
+## Room Permissions
+
+A bot's access to each room is controlled by its membership involvement:
+
+- **Mentions** — webhook fires when @mentioned or in a DM. Response is auto-posted as a reply.
+- **Muted** — no webhooks. Bot can still post and read via the API.
+
+Admins configure permissions per room from the bot's detail page. Each room has its own permission page at `/account/bots/:id/rooms/:room_id/permission`.
+
+By default, new bots join open rooms with "mentions" involvement.
 
 ---
 
@@ -141,35 +155,52 @@ curl -X POST "$BASE_URL/rooms/$ROOM_ID/$BOT_KEY/messages" \
 
 ## Interactive Bots (Webhook-Driven)
 
-For bots that respond to messages, register a `mentions_url`. Sabha calls it when someone @mentions the bot or DMs it.
+Register a `webhook_url` when creating a bot. Sabha calls it when someone @mentions the bot or DMs it.
 
 ### How it works
 
 1. User sends: "Hey @MyBot, what's the weather?"
-2. Sabha POSTs to the bot's `mentions_url` with the message payload
+2. Sabha POSTs to the bot's `webhook_url` with the message payload
 3. The bot's HTTP response body is automatically posted as a reply
 
 No second API call needed. Just return text.
 
 ### Webhook payload
 
+All URLs in the payload are absolute — you can call them directly.
+
 ```json
 {
   "event": "message_created",
-  "user": { "id": 1, "name": "Alice", "path": "/users/1" },
+  "user": { "id": 1, "name": "Alice", "url": "https://chat.example.com/users/1" },
   "room": {
     "id": 5, "name": "General", "type": "Open",
     "members": 12, "has_bot": true,
-    "path": "/rooms/5/42-AbCdEfGhIjKl/messages"
+    "messages_url": "https://chat.example.com/rooms/5/42-AbCdEfGhIjKl/messages"
   },
   "message": {
     "id": 10,
     "body": { "html": "<p>Hey @MyBot, what's the weather?</p>", "plain": "Hey @MyBot, what's the weather?" },
+    "has_attachment": false,
+    "attachment": null,
     "mentionees": [{ "id": 42, "name": "MyBot" }],
-    "path": "/rooms/5@10"
+    "url": "https://chat.example.com/rooms/5@10"
   }
 }
 ```
+
+Messages with attachments include a signed download URL:
+
+```json
+"attachment": {
+  "url": "https://chat.example.com/rails/active_storage/blobs/...",
+  "filename": "photo.jpg",
+  "content_type": "image/jpeg",
+  "byte_size": 245760
+}
+```
+
+Attachment URLs are signed and expire after 1 hour.
 
 ### Response conventions
 
@@ -179,6 +210,19 @@ No second API call needed. Just return text.
 | `200` with `Content-Type: text/html` | Auto-posted as a rich message |
 | `200` with binary content type | Auto-posted as a file attachment |
 | Timeout (300s) or error | Error message posted to the room |
+
+### Thread replies
+
+To reply to a specific message in a thread instead of the main room:
+
+```
+POST /rooms/{room_id}/{bot_key}/messages/{message_id}/thread
+Content-Type: text/plain
+
+This is a threaded reply!
+```
+
+This creates a thread on the message (or finds an existing one) and posts the reply there.
 
 ### Minimal echo bot (Ruby)
 
@@ -196,10 +240,6 @@ post "/webhook" do
 end
 ```
 
-### Everything webhook
-
-Register an `everything_url` to receive ALL events (message_created, message_updated, boost_created, user_created). Responses are ignored — this is for logging, analytics, or feeding an AI agent's context.
-
 ---
 
 ## OpenClaw Integration
@@ -212,16 +252,16 @@ Register an `everything_url` to receive ALL events (message_created, message_upd
 User @mentions bot in Sabha
         |
         v
-Sabha calls mentions_url webhook ──> OpenClaw gateway receives event
-                                            |
-                                            v
-                                     LLM processes message
-                                            |
-                                            v
-                                     HTTP 200 response body
-                                            |
-                                            v
-                                  Sabha auto-posts reply
+Sabha calls webhook_url ──> OpenClaw gateway receives event
+                                    |
+                                    v
+                             LLM processes message
+                                    |
+                                    v
+                             HTTP 200 response body
+                                    |
+                                    v
+                          Sabha auto-posts reply
 ```
 
 For proactive messages (not in response to a mention), OpenClaw calls Sabha's REST API directly.
@@ -232,8 +272,9 @@ For proactive messages (not in response to a mention), OpenClaw calls Sabha's RE
 |---|---|
 | Channel | Sabha bot API |
 | Bot token | `bot_key` (from self-registration or admin UI) |
-| Inbound messages | `mentions_url` webhook (push, like Telegram webhook mode) |
+| Inbound messages | `webhook_url` webhook (push, like Telegram webhook mode) |
 | Outbound messages | Webhook response body (auto-reply) or `POST /rooms/{room_id}/{bot_key}/messages` |
+| Thread replies | `POST /rooms/{room_id}/{bot_key}/messages/{message_id}/thread` |
 | DM creation | `POST /rooms/{bot_key}/directs` |
 | Room discovery | `GET /rooms/{bot_key}` |
 | Message history | `GET /rooms/{room_id}/{bot_key}/messages` (last 50) |
@@ -245,7 +286,7 @@ For proactive messages (not in response to a mention), OpenClaw calls Sabha's RE
 1. **Enable self-registration** in Sabha admin settings
 2. **Get a join code** from `/account`
 3. **Register via the API** — OpenClaw's Sabha channel plugin calls `POST /join/{code}` to get a `bot_key`
-4. **Configure OpenClaw** to listen for webhooks on the `mentions_url`
+4. **Configure OpenClaw** to listen for webhooks on the `webhook_url`
 5. **Start the gateway** — OpenClaw receives mention webhooks from Sabha and responds
 
 ### OpenClaw configuration (expected)
@@ -268,21 +309,9 @@ For proactive messages (not in response to a mention), OpenClaw calls Sabha's RE
 ### Key differences from other OpenClaw channels
 
 - **Webhook-based (like Telegram webhook mode)**, not WebSocket (like Mattermost/Discord). Sabha pushes events to the bot, the bot doesn't poll.
-- **Reply-by-response** — for mentions webhooks, the HTTP response body IS the reply. No separate API call needed for simple responses. This is unique to Sabha and makes the integration simpler.
-- **No privacy mode concern** — bots in Sabha see messages in rooms they're members of. Use `everything_url` for full event streams.
+- **Reply-by-response** — the HTTP response body IS the reply. No separate API call needed for simple responses. This is unique to Sabha and makes the integration simpler.
+- **Thread support** — POST to `messages/{id}/thread` for threaded replies.
 - **Bot key in URL path** — not a header. OpenClaw's HTTP client needs to embed the key in request URLs rather than using `Authorization` headers.
-
-### Writing a Sabha channel plugin for OpenClaw
-
-A Sabha channel plugin would need to:
-
-1. **Expose an HTTP endpoint** for Sabha's webhook callbacks (mentions_url)
-2. **Parse the webhook payload** — extract `event`, `user`, `room`, `message` fields
-3. **Return text responses** for simple replies (200 + text/plain)
-4. **Call Sabha's REST API** for proactive messages, DM creation, room listing
-5. **Handle registration** — call `/join/{code}` on first setup, store the `bot_key`
-
-The closest existing OpenClaw plugin to reference is **Mattermost** (also a self-hosted chat app with bot tokens and REST API). The main difference is Sabha uses webhooks for inbound messages instead of WebSocket.
 
 ---
 
@@ -291,21 +320,22 @@ The closest existing OpenClaw plugin to reference is **Mattermost** (also a self
 ### Room access
 
 - Bots auto-join open rooms with `auto_join: true` on creation (same as humans)
-- Admins can add/remove bots from rooms via the room members UI
-- Bots cannot join rooms themselves — room membership is managed by admins and auto-join settings
+- Admins manage bot room access from the bot detail page — each room has a dedicated permission page
+- Adding/removing a bot from a room posts a system message visible to all members
 
 ### Managing bots
 
-- **Admin UI** at `/account/bots` — create, view, reset keys, delete bots
-- **Self-update** via `PATCH /bots/{bot_key}` — bot can change its own name and webhook URLs
+- **Admin UI** at `/account/bots` — create, view, configure room permissions, reset keys, delete bots
+- **Per-room permissions** at `/account/bots/:id/rooms/:room_id/permission` — set involvement (mentions/muted), copy message URL, add/remove from room
+- **Self-update** via `PATCH /bots/{bot_key}` — bot can change its own name and webhook URL
 - **Key rotation** — admins can reset a bot's key from the UI. The old key stops working immediately.
 
 ### Webhook reliability
 
 - Webhook delivery timeout is 300 seconds
-- Failed deliveries (timeout or HTTP error) result in an error message posted to the room (mentions webhooks only)
-- Everything webhooks are fire-and-forget — failures are logged but not surfaced to users
+- Failed deliveries (timeout or HTTP error) result in an error message posted to the room
 - SSRF protection: webhook URLs cannot target private/internal networks
+- Unresolvable domains return a validation error
 
 ---
 
@@ -326,58 +356,8 @@ All bot API errors return JSON with two fields:
 | `rate_limited` | 429 | Too many registration attempts (10/hour) |
 | `validation_failed` | 422 | Invalid parameters |
 | `room_not_found` | 404 | Bot is not a member of this room |
+| `not_found` | 404 | Room or message not found |
 | `service_unavailable` | 503 | Storage service unavailable |
 | `internal_error` | 500 | Unexpected server error |
 
 Build your bot to check the `code` field programmatically, not the `error` string.
-
----
-
-## Sabha vs Once Campfire Bot Capabilities
-
-Sabha's bot system builds on Once Campfire's foundation and extends it significantly. Here's what changed.
-
-### What's the same
-
-Both systems share the core design:
-
-- Bots are `User` records with `role: :bot` and a `bot_token`
-- Bot key format: `{id}-{token}` embedded in URL paths
-- `POST /rooms/{room_id}/{bot_key}/messages` for posting text and file attachments
-- Admin UI at `/account/bots` for creating and managing bots
-- Webhook delivery when bots are @mentioned, with reply-by-response (HTTP 200 body auto-posted)
-
-### What Sabha adds
-
-| Capability | Once Campfire | Sabha |
-|---|---|---|
-| **Self-registration** | Admin-only creation | Bots can register via `POST /join/{code}` with JSON |
-| **API discovery** | No docs endpoint | `GET /skill` returns LLM-readable plain-text API docs |
-| **Room listing** | Not available | `GET /rooms/{bot_key}` returns rooms with message URLs |
-| **Message reading** | Not available | `GET /rooms/{room_id}/{bot_key}/messages` returns last 50 |
-| **DM creation** | Not available | `POST /rooms/{bot_key}/directs` creates direct message rooms |
-| **Bot self-update** | Not available | `PATCH /bots/{bot_key}` to change name/webhooks |
-| **Webhook types** | Single webhook per bot | Separate `mentions_url` and `everything_url` per bot |
-| **Everything webhook** | Not available | Receives ALL events (messages, boosts, user joins) |
-| **Webhook timeout** | 7 seconds | 300 seconds (better for LLM-powered bots) |
-| **Webhook payload** | Basic (user, room, message) | Extended (mentionees, member count, has_bot flag) |
-| **Error responses** | HTTP status only | Structured JSON with `error` + `code` fields |
-| **Rate limiting** | None | 10 registrations/hour per IP |
-| **SSRF protection** | None | Webhook URLs validated against private networks |
-| **Multi-tenant (SaaS)** | Not supported | Full tenant-scoped bot isolation |
-
-### Why the differences matter
-
-Once Campfire's bot system is **write-only** — bots can post messages and receive mention webhooks, but they can't discover rooms, read history, or register themselves. This works well for simple task bots (deploy notifiers, CI alerts) that are set up once by an admin.
-
-Sabha's extensions make the bot system **autonomous-agent-ready**. An AI agent like OpenClaw can:
-
-1. Discover the API via `/skill` (no docs needed)
-2. Self-register via join code (no admin intervention)
-3. List rooms to understand the workspace
-4. Read message history for context
-5. Create DMs for private conversations
-6. Respond to mentions with LLM-generated replies (300s timeout accommodates inference)
-7. Receive all events via `everything_url` to maintain awareness
-
-The 300-second webhook timeout is the most impactful change — 7 seconds is too short for any LLM response, making Once Campfire's webhook system impractical for AI agents.

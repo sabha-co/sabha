@@ -16,28 +16,27 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Renamed Bot", @bot.reload.name
   end
 
-  test "updates mentions_url" do
+  test "updates webhook_url" do
     patch bot_profile_url(@bot.bot_key),
-      params: { mentions_url: "http://example.com/new-hook" },
+      params: { webhook_url: "http://example.com/new-hook" },
       as: :json
 
     assert_response :success
     json = response.parsed_body
-    assert_equal "http://example.com/new-hook", json["webhooks"]["mentions_url"]
-    assert_equal "http://example.com/new-hook", @bot.reload.mentions_url
+    assert_equal "http://example.com/new-hook", json["webhook_url"]
+    assert_equal "http://example.com/new-hook", @bot.reload.webhook_url
   end
 
-  test "updates everything_url" do
+  test "updates via legacy mentions_url param" do
     patch bot_profile_url(@bot.bot_key),
-      params: { everything_url: "http://example.com/new-all" },
+      params: { mentions_url: "http://example.com/legacy" },
       as: :json
 
     assert_response :success
-    json = response.parsed_body
-    assert_equal "http://example.com/new-all", json["webhooks"]["everything_url"]
+    assert_equal "http://example.com/legacy", @bot.reload.webhook_url
   end
 
-  test "response includes name and webhooks" do
+  test "response includes name and webhook_url" do
     patch bot_profile_url(@bot.bot_key),
       params: { name: "Check" },
       as: :json
@@ -45,9 +44,7 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     json = response.parsed_body
     assert json.key?("name")
-    assert json.key?("webhooks")
-    assert json["webhooks"].key?("mentions_url")
-    assert json["webhooks"].key?("everything_url")
+    assert json.key?("webhook_url")
   end
 
   test "invalid bot key redirects to sign in" do
@@ -58,9 +55,9 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_url
   end
 
-  test "partial update preserves existing webhooks" do
-    original_mentions_url = @bot.mentions_url
-    assert original_mentions_url.present?
+  test "partial update preserves existing webhook" do
+    original_webhook_url = @bot.webhook_url
+    assert original_webhook_url.present?
 
     patch bot_profile_url(@bot.bot_key),
       params: { name: "Partial" },
@@ -68,7 +65,7 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "Partial", @bot.reload.name
-    assert_equal original_mentions_url, @bot.mentions_url
+    assert_equal original_webhook_url, @bot.webhook_url
   end
 
   test "session-authenticated human cannot update bot profile" do

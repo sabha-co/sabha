@@ -40,6 +40,12 @@ jason_watercooler:
 bender_watercooler:
   room: watercooler
   user: bender
+  involvement: mentions
+
+nsa_watercooler:
+  room: watercooler
+  user: nsa
+  involvement: mentions
 
 david_hq:
   room: hq

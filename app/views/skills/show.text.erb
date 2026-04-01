@@ -12,7 +12,7 @@ To register as a bot, POST JSON to the join URL with a valid join code:
 
     {
       "name": "My Bot",
-      "mentions_url": "https://example.com/webhook"
+      "webhook_url": "https://example.com/webhook"
     }
 
 IMPORTANT: You MUST send the `Accept: application/json` header. Without it, the
@@ -20,16 +20,14 @@ request will be treated as a human signup and fail.
 
 Parameters:
 - name (optional): Display name for the bot (defaults to "New Member" if omitted)
-- mentions_url (optional): Webhook URL called when the bot is @mentioned or DM'd.
-  Your response body (text/plain or text/html, 200 status) is auto-posted as a reply.
-- everything_url (optional): Webhook URL called for ALL events. Responses are ignored.
+- webhook_url (optional): Webhook URL called when events occur.
 
 Response (201 Created):
 
     {
       "bot_key": "42-AbCdEfGhIjKl",
       "name": "My Bot",
-      "webhooks": { "mentions_url": "https://...", "everything_url": null },
+      "webhook_url": "https://example.com/webhook",
       "rooms": [
         { "id": 1, "name": "General", "type": "Open",
           "messages_url": "<%= request.base_url %><%= request.script_name %>/rooms/1/42-AbCdEfGhIjKl/messages" }
@@ -42,6 +40,16 @@ Store the bot_key immediately — it is shown only once.
 
 All bot API requests authenticate via bot_key in the URL path. The bot_key is a
 secret equivalent to a bearer token. Always use HTTPS in production.
+
+## Room Permissions
+
+Your bot's access is controlled per room via the membership involvement level:
+
+- **mentions**: Webhook fires when @mentioned or in a DM. Your response is auto-posted as a reply.
+- **muted**: No webhooks fired. Bot can still post and read via the API.
+
+Admins configure your bot's involvement per room. By default, new bots join
+open rooms with "mentions" involvement.
 
 ## Posting Messages
 
@@ -63,6 +71,29 @@ To send a file attachment:
 
 Response: 201 Created with Location header pointing to the message.
 
+## Replying in a Thread
+
+To reply to a specific message in a thread:
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}/thread
+    Content-Type: text/plain
+
+    This is a threaded reply!
+
+This creates a thread on the message (or finds an existing one), adds the bot to
+the thread, and posts the reply. File attachments work the same as regular messages.
+
+Response (201 Created):
+
+    {
+      "thread": { "id": 42, "parent_message_id": 10 },
+      "message": { "id": 99 }
+    }
+
+Use the thread id to post follow-up messages directly:
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{thread_id}/{bot_key}/messages
+
 ## Creating Direct Messages
 
     POST <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}/directs
@@ -83,36 +114,54 @@ Response: JSON array of rooms the bot is a member of, with message posting URLs.
     GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
 
 Response: JSON array of recent messages (last 50) with sender, body (HTML + plain text),
-mentionees, and created_at.
+mentionees, attachment info, and created_at.
+
+Each message includes:
+- has_attachment (boolean): whether the message has a file attachment
+- attachment (object or null): { url, filename, content_type, byte_size }
+
+Attachment URLs are absolute and signed. Download promptly.
 
 ## Updating Bot Settings
 
     PATCH <%= request.base_url %><%= request.script_name %>/bots/{bot_key}
     Content-Type: application/json
 
-    { "name": "New Name", "mentions_url": "https://new-url.com/webhook" }
+    { "name": "New Name", "webhook_url": "https://new-url.com/webhook" }
 
 ## Webhook Payloads
 
-When your bot receives a webhook, the payload is JSON:
+When your bot receives a webhook, the payload is JSON. All URLs in the payload are
+absolute — you can call them directly without needing to know the server's base URL.
 
 ### message_created / message_updated
 
     {
       "event": "message_created",
-      "user": { "id": 1, "name": "Alice", "path": "/users/1" },
+      "user": { "id": 1, "name": "Alice", "url": "<%= request.base_url %><%= request.script_name %>/users/1" },
       "room": {
         "id": 5, "name": "General", "type": "Open",
         "members": 42, "has_bot": true,
-        "path": "/rooms/5/42-AbCdEfGhIjKl/messages"
+        "messages_url": "<%= request.base_url %><%= request.script_name %>/rooms/5/42-AbCdEfGhIjKl/messages"
       },
       "message": {
         "id": 10,
         "body": { "html": "<p>Hello @MyBot</p>", "plain": "Hello @MyBot" },
+        "has_attachment": true,
+        "attachment": {
+          "url": "<%= request.base_url %><%= request.script_name %>/rails/active_storage/blobs/...",
+          "filename": "photo.jpg",
+          "content_type": "image/jpeg",
+          "byte_size": 245760
+        },
         "mentionees": [{ "id": 99, "name": "MyBot" }],
-        "path": "/rooms/5@10"
+        "url": "<%= request.base_url %><%= request.script_name %>/rooms/5@10"
       }
     }
+
+Messages without attachments have `"has_attachment": false` and `"attachment": null`.
+
+To reply in a thread, POST to: `{room.messages_url}/{message.id}/thread`
 
 ### boost_created
 
@@ -120,16 +169,14 @@ Same structure plus: "boost": { "id": 123, "body": "👍" }
 
 ### user_created
 
-    { "event": "user_created", "user": { "id": 1, "name": "Alice", "path": "/users/1" } }
+    { "event": "user_created", "user": { "id": 1, "name": "Alice", "url": "<%= request.base_url %><%= request.script_name %>/users/1" } }
 
-### Webhook Response Convention (mentions webhooks only)
+### Webhook Response Convention
 
-For mentions webhooks, your HTTP response is automatically posted as a reply:
+Your HTTP response is automatically posted as a reply:
 - Return text/plain or text/html with 200 → auto-posted as a message from the bot
 - Return a binary content type with 200 → auto-posted as an attachment
 - Timeout (300s) or error → error message posted to the room
-
-Everything webhooks: responses are ignored (fire-and-forget).
 
 ## Error Responses
 
@@ -138,4 +185,4 @@ All errors return JSON with `error` (human-readable) and `code` (machine-stable)
     { "error": "Join code has expired", "code": "join_code_expired" }
 
 Common codes: join_code_not_found, join_code_expired, join_code_inactive,
-self_registration_disabled, rate_limited, validation_failed, forbidden.
+self_registration_disabled, rate_limited, validation_failed, forbidden, not_found.

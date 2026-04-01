@@ -62,6 +62,9 @@ Rails.application.routes.draw do
       resources :bots do
         scope module: "bots" do
           resource :key, only: :update
+          resources :rooms, only: [] do
+            resource :permission, only: %i[ show create update destroy ], controller: "room_permissions"
+          end
         end
       end
 
@@ -142,6 +145,7 @@ Rails.application.routes.draw do
 
     post ":bot_key/messages", to: "messages/by_bots#create", as: :bot_messages
     get ":bot_key/messages", to: "messages/reads_by_bots#index", as: :bot_messages_read
+    post ":bot_key/messages/:message_id/thread", to: "rooms/threads/by_bots#create", as: :bot_message_thread
 
     scope module: "rooms" do
       resource :refresh, only: :show
