@@ -3,10 +3,11 @@ module NotifyBots
 
   def deliver_webhooks_to_bots(item, event)
     base_url = request.base_url + request.script_name
+    room = item.try(:room) || item.try(:message)&.room
 
-    if (room = item.try(:room))
+    if room
       room.bot_memberships_for_webhook(item, event).each do |membership|
-        reply = membership.involved_in_mentions? && event == :created
+        reply = membership.receives_mentions? && event == :created
         membership.user.deliver_webhook_later(item, event, reply: reply, base_url: base_url)
       end
     else

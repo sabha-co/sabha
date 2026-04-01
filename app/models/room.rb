@@ -258,9 +258,7 @@ class Room < ApplicationRecord
     post_system_message(event: "room_renamed", body: "renamed the room from #{old_name} to #{name}", actor: actor)
   end
 
-  def bot_memberships_for_webhook(message, event)
-    return [] unless message.is_a?(Message) && event == :created
-
+  def bot_memberships_for_webhook(item, event)
     bot_ids_with_webhook = User.active_bots.joins(:webhook).pluck(:id)
     return [] if bot_ids_with_webhook.empty?
 
@@ -271,8 +269,12 @@ class Room < ApplicationRecord
 
     if direct?
       eligible.to_a
+    elsif item.is_a?(Message) && event == :created
+      eligible.to_a.select { |m| item.mentionees.include?(m.user) || item.mentions_everyone? }
     else
-      eligible.to_a.select { |m| message.mentionees.include?(m.user) || message.mentions_everyone? }
+      # Updates, deletes, boosts: deliver to bots that were already involved
+      # (i.e. bots that would have received the original message_created)
+      eligible.to_a
     end
   end
 

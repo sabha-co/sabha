@@ -312,10 +312,11 @@ class RoomTest < ActiveSupport::TestCase
 
   # bot_memberships_for_webhook
 
-  test "bot_memberships_for_webhook returns empty for non-message events" do
+  test "bot_memberships_for_webhook returns eligible bots for updates and deletes" do
     room = rooms(:watercooler)
-    result = room.bot_memberships_for_webhook(room, :updated)
-    assert_equal [], result
+    message = room.messages.create!(body: "Hey", creator: users(:david), client_message_id: "wh-update-1")
+    result = room.bot_memberships_for_webhook(message, :updated)
+    assert result.any?, "should deliver updates to eligible bots"
   end
 
   test "bot_memberships_for_webhook returns mentioned bots" do
