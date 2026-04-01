@@ -71,13 +71,16 @@
         <% end %>
       <% else %>
         <%# Self-hosted or new SaaS user: full signup form %>
-        <div class="flex align-center gap">
-          <%= translation_button(:user_name) %>
-          <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-            <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
-                  minlength: 2, maxlength: 100, data: { "1p-ignore": true } %>
-            <%= icon_tag "person" %>
-          </label>
+        <div data-controller="name-field">
+          <div class="flex align-center gap">
+            <%= translation_button(:user_name) %>
+            <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+              <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
+                    minlength: 2, maxlength: 100, data: { "1p-ignore": true, action: "input->name-field#validate" } %>
+              <%= icon_tag "person" %>
+            </label>
+          </div>
+          <p class="txt-small txt-negative margin-block-start-half" hidden data-name-field-target="hint">This looks like an email address. Your name goes here!</p>
         </div>
 
         <div class="flex align-center gap">

@@ -22,13 +22,16 @@
 
         <%= render "sessions/flash_messages" %>
 
-        <div class="flex align-center gap">
-          <%= translation_button(:user_name) %>
-          <label class="flex align-center gap input input--actor txt-large">
-            <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
-                  minlength: 2, maxlength: 100, data: { "1p-ignore": true } %>
-            <%= icon_tag "person" %>
-          </label>
+        <div data-controller="name-field">
+          <div class="flex align-center gap">
+            <%= translation_button(:user_name) %>
+            <label class="flex align-center gap input input--actor txt-large">
+              <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
+                    minlength: 2, maxlength: 100, data: { "1p-ignore": true, action: "input->name-field#validate" } %>
+              <%= icon_tag "person" %>
+            </label>
+          </div>
+          <p class="txt-small txt-negative margin-block-start-half" hidden data-name-field-target="hint">This looks like an email address. Your name goes here!</p>
         </div>
 
         <%= render "sessions/email_field", form: form, autofocus: false %>
