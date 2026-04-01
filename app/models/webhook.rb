@@ -21,14 +21,14 @@ class Webhook < ApplicationRecord
     errors.add(:url, "must not target private or internal networks")
   end
 
-  def deliver_later(item, event, reply: false)
-    payload = create_payload(item, event)
+  def deliver_later(item, event, reply: false, base_url: "")
+    payload = create_payload(item, event, base_url: base_url)
 
     Bot::WebhookJob.perform_later(self, payload, item.try(:room), reply)
   end
 
-  def deliver_now(item, event, reply: false)
-    payload = create_payload(item, event)
+  def deliver_now(item, event, reply: false, base_url: "")
+    payload = create_payload(item, event, base_url: base_url)
 
     deliver(payload, item.try(:room), reply: reply)
   end
@@ -80,7 +80,9 @@ class Webhook < ApplicationRecord
       @uri ||= URI(url)
     end
 
-    def create_payload(item, event)
+    def create_payload(item, event, base_url: "")
+      @base_url = base_url
+
       if item.is_a?(Message)
         message_payload(item, event)
       elsif item.is_a?(Boost)
@@ -125,7 +127,7 @@ class Webhook < ApplicationRecord
         type: room.class.name.demodulize,
         members: room.memberships.visible.count,
         has_bot: user.member_of?(room),
-        path: room_bot_messages_path(room)
+        messages_url: absolute_url(routes.room_bot_messages_path(room, user.bot_key))
       }
     end
 
@@ -136,7 +138,7 @@ class Webhook < ApplicationRecord
         has_attachment: message.attachment?,
         attachment: attachment_to_api(message),
         mentionees: message.mentionees.map { |m| { id: m.id, name: m.name } },
-        path: message_path(message)
+        url: absolute_url(routes.room_at_message_path(message.room, message))
       }
     end
 
@@ -145,35 +147,27 @@ class Webhook < ApplicationRecord
 
       blob = message.attachment.blob
       {
-        url: blob_url(blob),
+        url: absolute_url(routes.rails_blob_path(blob, only_path: true)),
         filename: blob.filename.to_s,
         content_type: blob.content_type,
         byte_size: blob.byte_size
       }
     end
 
-    def blob_url(blob)
-      Rails.application.routes.url_helpers.rails_blob_path(blob, only_path: true)
-    end
-
     def user_to_api(user)
       {
         id: user.id,
         name: user.name,
-        path: user_path(user)
+        url: absolute_url(routes.user_path(user))
       }
     end
 
-    def message_path(message)
-      Rails.application.routes.url_helpers.room_at_message_path(message.room, message)
+    def routes
+      Rails.application.routes.url_helpers
     end
 
-    def room_bot_messages_path(room)
-      Rails.application.routes.url_helpers.room_bot_messages_path(room, user.bot_key)
-    end
-
-    def user_path(user)
-      Rails.application.routes.url_helpers.user_path(user)
+    def absolute_url(path)
+      "#{@base_url}#{path}"
     end
 
     def extract_text_from(response)

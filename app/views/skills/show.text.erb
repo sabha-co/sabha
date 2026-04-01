@@ -72,6 +72,29 @@ To send a file attachment:
 
 Response: 201 Created with Location header pointing to the message.
 
+## Replying in a Thread
+
+To reply to a specific message in a thread:
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}/thread
+    Content-Type: text/plain
+
+    This is a threaded reply!
+
+This creates a thread on the message (or finds an existing one), adds the bot to
+the thread, and posts the reply. File attachments work the same as regular messages.
+
+Response (201 Created):
+
+    {
+      "thread": { "id": 42, "parent_message_id": 10 },
+      "message": { "id": 99 }
+    }
+
+Use the thread id to post follow-up messages directly:
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{thread_id}/{bot_key}/messages
+
 ## Creating Direct Messages
 
     POST <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}/directs
@@ -98,7 +121,7 @@ Each message includes:
 - has_attachment (boolean): whether the message has a file attachment
 - attachment (object or null): { url, filename, content_type, byte_size }
 
-Attachment URLs are signed and expire after 1 hour. Download promptly.
+Attachment URLs are absolute and signed. Download promptly.
 
 ## Updating Bot Settings
 
@@ -109,35 +132,37 @@ Attachment URLs are signed and expire after 1 hour. Download promptly.
 
 ## Webhook Payloads
 
-When your bot receives a webhook, the payload is JSON:
+When your bot receives a webhook, the payload is JSON. All URLs in the payload are
+absolute — you can call them directly without needing to know the server's base URL.
 
 ### message_created / message_updated
 
     {
       "event": "message_created",
-      "user": { "id": 1, "name": "Alice", "path": "/users/1" },
+      "user": { "id": 1, "name": "Alice", "url": "<%= request.base_url %><%= request.script_name %>/users/1" },
       "room": {
         "id": 5, "name": "General", "type": "Open",
         "members": 42, "has_bot": true,
-        "path": "/rooms/5/42-AbCdEfGhIjKl/messages"
+        "messages_url": "<%= request.base_url %><%= request.script_name %>/rooms/5/42-AbCdEfGhIjKl/messages"
       },
       "message": {
         "id": 10,
         "body": { "html": "<p>Hello @MyBot</p>", "plain": "Hello @MyBot" },
         "has_attachment": true,
         "attachment": {
-          "url": "https://example.com/rails/active_storage/blobs/...",
+          "url": "<%= request.base_url %><%= request.script_name %>/rails/active_storage/blobs/...",
           "filename": "photo.jpg",
           "content_type": "image/jpeg",
           "byte_size": 245760
         },
         "mentionees": [{ "id": 99, "name": "MyBot" }],
-        "path": "/rooms/5@10"
+        "url": "<%= request.base_url %><%= request.script_name %>/rooms/5@10"
       }
     }
 
 Messages without attachments have `"has_attachment": false` and `"attachment": null`.
-Attachment URLs are signed and expire after 1 hour. Download promptly.
+
+To reply in a thread, POST to: `{room.messages_url}/{message.id}/thread`
 
 ### boost_created
 
@@ -145,7 +170,7 @@ Same structure plus: "boost": { "id": 123, "body": "👍" }
 
 ### user_created
 
-    { "event": "user_created", "user": { "id": 1, "name": "Alice", "path": "/users/1" } }
+    { "event": "user_created", "user": { "id": 1, "name": "Alice", "url": "<%= request.base_url %><%= request.script_name %>/users/1" } }
 
 ### Webhook Response Convention
 
@@ -165,4 +190,4 @@ All errors return JSON with `error` (human-readable) and `code` (machine-stable)
     { "error": "Join code has expired", "code": "join_code_expired" }
 
 Common codes: join_code_not_found, join_code_expired, join_code_inactive,
-self_registration_disabled, rate_limited, validation_failed, forbidden.
+self_registration_disabled, rate_limited, validation_failed, forbidden, not_found.

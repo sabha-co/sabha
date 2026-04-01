@@ -52,8 +52,8 @@ module User::Bot
     webhook&.url
   end
 
-  def deliver_webhook_later(item, event, reply: false)
-    webhook&.deliver_later(item, event, reply: reply)
+  def deliver_webhook_later(item, event, reply: false, base_url: "")
+    webhook&.deliver_later(item, event, reply: reply, base_url: base_url)
   end
 
   private
