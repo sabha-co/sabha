@@ -7,6 +7,7 @@ class Account < ApplicationRecord
   has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true, allow_bot_self_registration: false
 
   after_save :invalidate_personal_invite_links, if: :invite_links_disabled?
+  after_commit :sync_name_to_workspace, if: :saved_change_to_name?
 
   # Auth method is controlled via ENV["AUTH_METHOD"]
   # Valid values: "password" (default), "otp"
@@ -34,6 +35,15 @@ class Account < ApplicationRecord
 
     def invalidate_personal_invite_links
       join_codes.personal.destroy_all
+    end
+
+    def sync_name_to_workspace
+      return unless Sabha.saas?
+      return unless ApplicationRecord.current_tenant.present?
+
+      Workspace
+        .find_by(external_id: ApplicationRecord.current_tenant)
+        &.update_column(:name, name)
     end
 
     def sync_logo_to_workspace
