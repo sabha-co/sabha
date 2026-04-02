@@ -73,7 +73,8 @@
             Permanently delete this workspace and all its data. This cannot be undone.
           </p>
 
-          <%= form_with url: settings_path, method: :delete, class: "flex flex-column gap" do |form| %>
+          <%= form_with url: settings_path, method: :delete, class: "flex flex-column gap",
+                  data: { turbo_confirm: "Are you sure? This will permanently delete the workspace and all its data." } do |form| %>
             <label class="flex flex-column gap-half">
               <span class="txt-small">Type <strong><%= @workspace.name %></strong> to confirm:</span>
               <%= form.text_field :confirmation, class: "input txt-align-center",
