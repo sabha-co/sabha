@@ -15,6 +15,12 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     assert_includes identity.errors[:email_address], "is invalid"
   end
 
+  test "rejects disposable email addresses" do
+    identity = GlobalIdentity.new(email_address: "test@mailinator.com")
+    assert_not identity.valid?
+    assert_includes identity.errors[:email_address], "is invalid"
+  end
+
   test "normalizes email to lowercase" do
     identity = GlobalIdentity.new(email_address: "  TEST@Example.COM  ")
     assert_equal "test@example.com", identity.email_address

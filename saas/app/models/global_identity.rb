@@ -19,13 +19,13 @@ class GlobalIdentity < UntenantedRecord
 
   validates :email_address, presence: true,
                            uniqueness: { case_sensitive: false },
-                           format: { with: URI::MailTo::EMAIL_REGEXP }
+                           'valid_email_2/email': { disposable: true }
 
   normalizes :name, with: ->(name) { name&.strip.presence }
   normalizes :email_address, with: ->(email) { email.strip.downcase }
   normalizes :unconfirmed_email, with: ->(email) { email&.strip&.downcase }
 
-  validates :unconfirmed_email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
+  validates :unconfirmed_email, 'valid_email_2/email': { disposable: true }, allow_blank: true
 
   scope :verified, -> { where.not(verified_at: nil) }
   scope :superadmin, -> { where(superadmin: true) }
