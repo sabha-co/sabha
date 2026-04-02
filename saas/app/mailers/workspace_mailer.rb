@@ -26,4 +26,14 @@ class WorkspaceMailer < ApplicationMailer
       reply_to: Branding.support_email
     )
   end
+
+  def deleted(workspace_name, admin_email)
+    @workspace_name = workspace_name
+
+    mail(
+      to: admin_email,
+      subject: "Your workspace \"#{workspace_name}\" has been deleted",
+      reply_to: Branding.support_email
+    )
+  end
 end

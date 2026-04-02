@@ -20,6 +20,7 @@ class Workspace < UntenantedRecord
 
   before_validation :assign_external_id, on: :create
   after_create_commit :send_welcome_email
+  after_destroy_commit :send_deleted_email
   after_destroy_commit :purge_storage_later
 
   scope :active, -> { where(suspended_at: nil) }
@@ -124,7 +125,7 @@ class Workspace < UntenantedRecord
     false
   end
 
-  # Full cleanup: take a final backup, then destroy everything else
+  # Full cleanup: take a final backup, then destroy
   def destroy_with_database!
     create_final_backup
     destroy!  # Cascades to WorkspaceMemberships via dependent: :destroy
@@ -147,6 +148,11 @@ class Workspace < UntenantedRecord
 
     def assign_external_id
       self.external_id ||= Workspace::ExternalIdSequence.next_id
+    end
+
+    def send_deleted_email
+      return unless creator
+      WorkspaceMailer.deleted(name, creator.email_address).deliver_later
     end
 
     def send_welcome_email

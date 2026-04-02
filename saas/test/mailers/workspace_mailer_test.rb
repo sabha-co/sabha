@@ -49,4 +49,14 @@ class WorkspaceMailerTest < ActionMailer::TestCase
     assert_match "old@example.com", email.text_part.body.to_s
     assert_match "new@example.com", email.text_part.body.to_s
   end
+
+  test "deleted sends to admin with workspace name" do
+    email = WorkspaceMailer.deleted("My Workspace", "admin@example.com")
+
+    assert_equal 2, email.parts.size
+    assert_equal [ "admin@example.com" ], email.to
+    assert_equal "Your workspace \"My Workspace\" has been deleted", email.subject
+    assert_match "My Workspace", email.text_part.body.to_s
+    assert_match "My Workspace", email.html_part.body.to_s
+  end
 end
