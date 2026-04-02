@@ -21,5 +21,8 @@ gem "aws-sdk-sesv2"
 # S3-compatible storage for workspace backups (Cloudflare R2)
 gem "aws-sdk-s3"
 
+# Email validation with disposable domain blocking
+gem "valid_email2"
+
 # SaaS engine
 gem "sabha-saas", path: "saas"
