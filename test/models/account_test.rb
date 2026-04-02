@@ -99,6 +99,18 @@ class AccountTest < ActiveSupport::TestCase
     assert @account.reload.settings.allow_users_to_create_invite_links?
   end
 
+  test "rejects SVG logo uploads" do
+    assert_raises(Account::InvalidLogoType) do
+      @account.attach_logo({ io: file_fixture("logo.svg").open, filename: "logo.svg", content_type: "image/svg+xml" })
+    end
+    assert_not @account.logo.attached?
+  end
+
+  test "accepts JPEG logo uploads" do
+    @account.attach_logo({ io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg" })
+    assert @account.logo.attached?
+  end
+
   test "disabling invite links destroys all personal invite links" do
     personal_link = account_join_codes(:signal_personal)
     global_link = account_join_codes(:signal)

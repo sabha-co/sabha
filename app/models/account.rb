@@ -2,6 +2,9 @@ class Account < ApplicationRecord
   include Joinable, Account::Storage
 
   VALID_AUTH_METHODS = %w[password otp].freeze
+  ALLOWED_LOGO_CONTENT_TYPES = %w[ image/jpeg image/png image/gif image/webp ].freeze
+
+  InvalidLogoType = Class.new(StandardError)
 
   has_one_attached :logo
   has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true, allow_bot_self_registration: false
@@ -16,8 +19,11 @@ class Account < ApplicationRecord
     value.in?(VALID_AUTH_METHODS) ? value : "password"
   end
 
-  def attach_logo(blob)
-    logo.attach(blob)
+  def attach_logo(attachable)
+    content_type = attachable.try(:content_type) || attachable[:content_type]
+    raise InvalidLogoType unless content_type.in?(ALLOWED_LOGO_CONTENT_TYPES)
+
+    logo.attach(attachable)
     touch
     sync_logo_to_workspace
   end
