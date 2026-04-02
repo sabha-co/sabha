@@ -88,10 +88,10 @@ class WorkspaceMembership < UntenantedRecord
 
       if user
         # Reactivate if deactivated (rejoining after leaving)
-        # Use reactivate to restore room memberships, then update workspace_membership_id
+        # Use reactivate to restore room memberships, then update workspace_membership_id and role
         if user.deactivated?
           user.reactivate
-          user.update!(workspace_membership_id: id) unless user.workspace_membership_id == id
+          user.update!(workspace_membership_id: id, role: role)
         end
       else
         # Create new user
