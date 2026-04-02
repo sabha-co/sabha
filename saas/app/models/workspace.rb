@@ -132,9 +132,12 @@ class Workspace < UntenantedRecord
 
   private
 
-    # Take a final backup and detach all backup records from this workspace
+    # Take a final backup, purge old daily backups, and detach the final record
     def create_final_backup!
-      Workspace::Backup.create_from_database!(self, key_prefix: "final") if Workspace::Backup.r2_configured?
+      if Workspace::Backup.r2_configured?
+        backups.find_each(&:purge!)
+        Workspace::Backup.create_from_database!(self, key_prefix: "final")
+      end
       backups.update_all(workspace_id: nil)
     end
 
