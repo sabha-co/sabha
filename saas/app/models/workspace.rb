@@ -20,7 +20,6 @@ class Workspace < UntenantedRecord
 
   before_validation :assign_external_id, on: :create
   after_create_commit :send_welcome_email
-  after_destroy_commit :send_deleted_email
   after_destroy_commit :purge_storage_later
 
   scope :active, -> { where(suspended_at: nil) }
@@ -127,8 +126,10 @@ class Workspace < UntenantedRecord
 
   # Full cleanup: take a final backup, then destroy
   def destroy_with_database!
+    admin_emails = fetch_admin_emails
     create_final_backup
     destroy!  # Cascades to WorkspaceMemberships via dependent: :destroy
+    admin_emails.each { |email| WorkspaceMailer.deleted(name, email).deliver_later }
   end
 
   private
@@ -150,9 +151,12 @@ class Workspace < UntenantedRecord
       self.external_id ||= Workspace::ExternalIdSequence.next_id
     end
 
-    def send_deleted_email
-      return unless creator
-      WorkspaceMailer.deleted(name, creator.email_address).deliver_later
+    def fetch_admin_emails
+      ApplicationRecord.with_tenant(external_id.to_s) do
+        User.active.administrator.pluck(:email_address)
+      end
+    rescue ActiveRecord::Tenanted::TenantDoesNotExistError
+      []
     end
 
     def send_welcome_email

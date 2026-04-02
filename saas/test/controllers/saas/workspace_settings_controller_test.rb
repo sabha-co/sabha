@@ -103,5 +103,28 @@ module Saas
 
       @workspace = nil  # Prevent teardown from trying to destroy
     end
+
+    test "destroy emails all admins" do
+      # Add a second admin
+      bob_membership = WorkspaceMembership.create!(
+        global_identity: global_identities(:bob),
+        tenant: @workspace.external_id.to_s
+      )
+      bob_membership.create_user!(role: :administrator)
+
+      perform_enqueued_jobs do
+        workspace_delete "/settings", workspace: @workspace, params: { confirmation: @workspace.name }
+      end
+
+      alice_email = global_identities(:alice).email_address
+      bob_email = global_identities(:bob).email_address
+      deletion_emails = ActionMailer::Base.deliveries.select { |m| m.subject.include?("deleted") }
+
+      assert_equal 2, deletion_emails.size
+      assert_equal [ alice_email ], deletion_emails.find { |m| m.to.include?(alice_email) }.to
+      assert_equal [ bob_email ], deletion_emails.find { |m| m.to.include?(bob_email) }.to
+
+      @workspace = nil
+    end
   end
 end
