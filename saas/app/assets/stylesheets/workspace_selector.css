@@ -418,6 +418,13 @@
   font-size: 1rem;
   color: var(--color-lch-white);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.workspace-initial__logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* Workspace banner - Discord-style thin top bar showing workspace name */

@@ -15,9 +15,16 @@
             <%= link_to settings_path(script_name: workspace.slug),
                   class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated" do %>
               <div class="flex align-center gap">
-                <div class="workspace-initial" style="<%= workspace_gradient_style(workspace) %>">
+                <div class="workspace-initial"
+                <% unless workspace.has_logo? %>
+                  style="<%= workspace_gradient_style(workspace) %>"
+                <% end %>>
+                <% if workspace.has_logo? %>
+                  <%= image_tag workspace_logo_url(workspace), alt: "", class: "workspace-initial__logo" %>
+                <% else %>
                   <%= workspace.name.first.upcase %>
-                </div>
+                <% end %>
+              </div>
                 <div class="flex flex-column">
                   <strong><%= workspace.name %></strong>
                   <span class="txt-small txt-muted"><%= user&.role&.capitalize || "Member" %></span>
