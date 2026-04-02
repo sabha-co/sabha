@@ -1,1 +1,7 @@
-# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+User-agent: *
+Allow: /$
+Allow: /about
+Allow: /changelog
+Disallow: /
+
+Sitemap: https://sabha.co/sitemap.xml
