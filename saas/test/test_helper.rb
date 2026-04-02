@@ -95,11 +95,10 @@ class ActiveSupport::TestCase
     ActionCable.server.pubsub.clear if defined?(ActionCable.server.pubsub)
     ActionController::Base.send(:cache_store).clear
     WebMock.disable_net_connect!(allow: "localhost:8080")
-    @original_r2_access_key_id = ENV.delete("R2_ACCESS_KEY_ID")
+    ENV.delete("R2_ACCESS_KEY_ID")
   end
 
   teardown do
-    ENV["R2_ACCESS_KEY_ID"] = @original_r2_access_key_id if @original_r2_access_key_id
     WebMock.reset!
     Current.reset
   end

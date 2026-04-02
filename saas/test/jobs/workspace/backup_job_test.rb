@@ -16,7 +16,7 @@ class Workspace::BackupJobTest < ActiveSupport::TestCase
 
       assert_equal 1, workspace.backups.count
       backup = workspace.backups.first
-      assert backup.key.start_with?("backups/#{workspace.external_id}/")
+      assert_match /\Abackups\/#{workspace.external_id}\/\d{14}-[0-9a-f]{8}\.sqlite3\z/, backup.key
       assert backup.size > 0
     end
   end

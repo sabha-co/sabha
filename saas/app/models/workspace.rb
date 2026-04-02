@@ -126,14 +126,14 @@ class Workspace < UntenantedRecord
 
   # Full cleanup: take a final backup, then destroy everything else
   def destroy_with_database!
-    create_final_backup!
+    create_final_backup
     destroy!  # Cascades to WorkspaceMemberships via dependent: :destroy
   end
 
   private
 
     # Take a final backup, purge old daily backups, and detach the final record
-    def create_final_backup!
+    def create_final_backup
       if Workspace::Backup.r2_configured?
         backups.find_each(&:purge!)
         Workspace::Backup.create_from_database!(self, key_prefix: "final")
