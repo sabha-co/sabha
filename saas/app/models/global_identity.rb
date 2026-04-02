@@ -19,13 +19,15 @@ class GlobalIdentity < UntenantedRecord
 
   validates :email_address, presence: true,
                            uniqueness: { case_sensitive: false },
-                           'valid_email_2/email': { disposable: true }
+                           'valid_email_2/email': true
+  validates :email_address, 'valid_email_2/email': { disposable: true, message: "looks like a temporary email address. We discourage use of disposable emails — please use a permanent one instead." }, if: -> { email_address.present? }
 
   normalizes :name, with: ->(name) { name&.strip.presence }
   normalizes :email_address, with: ->(email) { email.strip.downcase }
   normalizes :unconfirmed_email, with: ->(email) { email&.strip&.downcase }
 
-  validates :unconfirmed_email, 'valid_email_2/email': { disposable: true }, allow_blank: true
+  validates :unconfirmed_email, 'valid_email_2/email': true, allow_blank: true
+  validates :unconfirmed_email, 'valid_email_2/email': { disposable: true, message: "looks like a temporary email address. We discourage use of disposable emails — please use a permanent one instead." }, allow_blank: true
 
   scope :verified, -> { where.not(verified_at: nil) }
   scope :superadmin, -> { where(superadmin: true) }
