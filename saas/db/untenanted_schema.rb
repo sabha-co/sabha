@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_03_20_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_02_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -57,7 +57,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_03_20_000001) do
     t.datetime "created_at", null: false
     t.string "key", null: false
     t.bigint "size", null: false
-    t.bigint "workspace_id", null: false
+    t.bigint "workspace_id"
     t.index ["key"], name: "index_workspace_backups_on_key", unique: true
     t.index ["workspace_id", "created_at"], name: "index_workspace_backups_on_workspace_id_and_created_at"
     t.index ["workspace_id"], name: "index_workspace_backups_on_workspace_id"
@@ -99,7 +99,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_03_20_000001) do
 
   add_foreign_key "auth_codes", "global_identities"
   add_foreign_key "global_sessions", "global_identities"
-  add_foreign_key "workspace_backups", "workspaces"
   add_foreign_key "workspace_memberships", "global_identities"
   add_foreign_key "workspaces", "global_identities", column: "creator_id"
 end
