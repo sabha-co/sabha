@@ -124,11 +124,18 @@ class Workspace < UntenantedRecord
     false
   end
 
-  # Full cleanup: take a final backup, then destroy
+  # Workspace deletion sequence:
+  #
+  # 1. Capture admin emails from tenanted DB (before it's destroyed)
+  # 2. Purge old daily R2 backups, create a final backup, detach backup records
+  # 3. Destroy workspace record (cascades to WorkspaceMemberships)
+  # 4. Email all admins that the workspace has been deleted
+  # 5. (async) Purge ActiveStorage blobs and delete the tenant SQLite database
+  #    via Workspace::PurgeStorageJob (after_destroy_commit)
   def destroy_with_database!
     admin_emails = fetch_admin_emails
     create_final_backup
-    destroy!  # Cascades to WorkspaceMemberships via dependent: :destroy
+    destroy!
     admin_emails.each { |email| WorkspaceMailer.deleted(name, email).deliver_later }
   end
 
