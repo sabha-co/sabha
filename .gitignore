@@ -43,6 +43,8 @@ node_modules
 Caddyfile
 
 .worktrees
+.agents/
+.claude/
 
 # Claude Code local settings (user-specific paths and permissions)
 .claude/settings.local.json

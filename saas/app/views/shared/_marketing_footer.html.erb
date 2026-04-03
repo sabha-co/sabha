@@ -1,0 +1,34 @@
+<footer class="landing-footer">
+  <div class="landing-inner">
+    <div class="landing-footer-top">
+      <div class="landing-footer-brand">
+        <div class="landing-logo" style="pointer-events: none;">
+          <%= image_tag "logos/sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg landing-logo-svg--small" %>
+        </div>
+        <p>Simple, intentional chat for communities.</p>
+      </div>
+      <div class="landing-footer-cols">
+        <div class="landing-footer-col">
+          <h4>Product</h4>
+          <a href="<%= local_assigns[:homepage] ? "#features" : "/#features" %>">Features</a>
+          <a href="<%= local_assigns[:homepage] ? "#pricing" : "/#pricing" %>">Pricing</a>
+          <a href="/changelog">Changelog</a>
+          <% if local_assigns[:homepage] %>
+            <a href="<%= new_session_path %>">Log in</a>
+            <a href="<%= new_registration_path %>">Create account</a>
+          <% end %>
+        </div>
+        <div class="landing-footer-col">
+          <h4>Company</h4>
+          <a href="/about">About</a>
+          <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+        </div>
+      </div>
+    </div>
+    <div class="landing-footer-divider"></div>
+    <div class="landing-footer-bottom">
+      <span>&copy; <%= Time.current.year %> Sabha LLC. All rights reserved.</span>
+      <span>Open source under MIT.</span>
+    </div>
+  </div>
+</footer>

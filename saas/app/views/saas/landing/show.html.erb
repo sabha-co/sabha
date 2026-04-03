@@ -398,48 +398,82 @@
 
 <div class="landing-divider"></div>
 
-<%# ═══════════════════════════════════ FOOTER ═══════════════════════════════════ %>
-<footer class="landing-footer">
-  <div class="landing-inner">
-    <div class="landing-footer-top">
-      <div class="landing-footer-brand">
-        <div class="landing-logo" style="pointer-events: none;">
-          <%= image_tag "logos/sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg landing-logo-svg--small" %>
-        </div>
-        <p>Simple, intentional chat for communities.</p>
-      </div>
-      <div class="landing-footer-cols">
-        <div class="landing-footer-col">
-          <h4>Product</h4>
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <a href="/changelog">Changelog</a>
-
-          <a href="<%= new_session_path %>">Log in</a>
-          <a href="<%= new_registration_path %>">Create account</a>
-        </div>
-        <div class="landing-footer-col">
-          <h4>Company</h4>
-          <a href="/about">About</a>
-          <a href="#">Blog</a>
-          <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
-        </div>
-        <div class="landing-footer-col">
-          <h4>Legal</h4>
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-        </div>
-      </div>
-    </div>
-    <div class="landing-footer-divider"></div>
-    <div class="landing-footer-bottom">
-      <span>&copy; <%= Time.current.year %> Sabha LLC. All rights reserved.</span>
-      <span>Open source under MIT.</span>
-    </div>
-  </div>
-</footer>
+<%= render "shared/marketing_footer", homepage: true %>
 
 </div>
+
+<%# ═══════════════════════════════════ STRUCTURED DATA ═══════════════════════════════════ %>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is Sabha different from Discord?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Discord buries conversations in an unindexed void. Sabha makes every message searchable, keeps threads organized, and skips the noise — no bots marketplace, no Nitro upsells, no server boosting. Text-first chat that does fewer things, on purpose."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Sabha really free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The self-hosted version is MIT licensed and always free. On sabha.co, creating a workspace is free with unlimited members and message history. We offer Sabha Cloud for teams that want a dedicated managed server."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I self-host Sabha?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Sabha runs on Rails, Hotwire, and SQLite — one server, no external dependencies. Deploy with Docker or bare metal on a $5 VPS. No Redis, no managed database, no Kubernetes. You own every byte of data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What's the difference between sabha.co and Sabha Cloud?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "sabha.co is shared multi-tenant hosting — free, instant setup. Sabha Cloud gives you a dedicated server with continuous backups, custom domain support, and no storage limits. Same app, different infrastructure."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Sabha built on?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sabha is built on Campfire by 37signals — the company behind Basecamp, HEY, and Ruby on Rails. Battle-tested foundations, not a weekend project."
+      }
+    }
+  ]
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Sabha",
+  "description": "Simple, intentional chat for communities that value conversation over noise. Open source Discord alternative with rooms, threads, DMs, and full-text search.",
+  "url": "https://sabha.co",
+  "applicationCategory": "CommunicationApplication",
+  "operatingSystem": "Web, iOS, Android",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "Sabha LLC",
+    "url": "https://sabha.co"
+  },
+  "license": "https://opensource.org/licenses/MIT"
+}
+</script>
 
 <script>
   (function() {

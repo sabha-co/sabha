@@ -1,3 +1,6 @@
+<% content_for :title, "About Sabha — Open Source Community Chat Built on Campfire" %>
+<% content_for :meta_description, "Sabha is an open source, self-hostable alternative to Discord and Slack for communities. Built on Campfire by 37signals. Created by Ashwin M." %>
+
 <div class="landing">
 
 <%# ═══════════════════════════════════ HEADER ═══════════════════════════════════ %>
@@ -15,7 +18,6 @@
       <div class="landing-nav-links">
         <a href="/#features">Features</a>
         <a href="/#pricing">Pricing</a>
-        <a href="#">Docs</a>
         <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
       </div>
       <div class="landing-header-right">
@@ -25,7 +27,6 @@
       <div class="landing-mobile-menu">
         <a href="/#features">Features</a>
         <a href="/#pricing">Pricing</a>
-        <a href="#">Docs</a>
         <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
         <div class="landing-mobile-menu-divider"></div>
         <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
@@ -63,44 +64,7 @@
 
 <div class="landing-divider"></div>
 
-<%# ═══════════════════════════════════ FOOTER ═══════════════════════════════════ %>
-<footer class="landing-footer">
-  <div class="landing-inner">
-    <div class="landing-footer-top">
-      <div class="landing-footer-brand">
-        <div class="landing-logo" style="pointer-events: none;">
-          <%= image_tag "logos/sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg landing-logo-svg--small" %>
-        </div>
-        <p>Simple, intentional chat for communities.</p>
-      </div>
-      <div class="landing-footer-cols">
-        <div class="landing-footer-col">
-          <h4>Product</h4>
-          <a href="/#features">Features</a>
-          <a href="/#pricing">Pricing</a>
-          <a href="/changelog">Changelog</a>
-          <a href="#">Docs</a>
-        </div>
-        <div class="landing-footer-col">
-          <h4>Company</h4>
-          <a href="/about">About</a>
-          <a href="#">Blog</a>
-          <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
-        </div>
-        <div class="landing-footer-col">
-          <h4>Legal</h4>
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-        </div>
-      </div>
-    </div>
-    <div class="landing-footer-divider"></div>
-    <div class="landing-footer-bottom">
-      <span>&copy; <%= Time.current.year %> Sabha LLC. All rights reserved.</span>
-      <span>Open source under MIT.</span>
-    </div>
-  </div>
-</footer>
+<%= render "shared/marketing_footer" %>
 
 </div>
 
