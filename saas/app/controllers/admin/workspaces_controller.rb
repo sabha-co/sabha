@@ -17,7 +17,7 @@ module Admin
 
       def workspace_scope
         return Workspace.all if @query.blank?
-        Workspace.where("name ILIKE ?", "%#{@query}%")
+        Workspace.where("name ILIKE ?", "%#{Workspace.sanitize_sql_like(@query)}%")
       end
   end
 end

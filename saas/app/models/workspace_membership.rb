@@ -32,7 +32,7 @@ class WorkspaceMembership < UntenantedRecord
 
   scope :search, ->(query) {
     if query.present?
-      where("global_identities.email_address ILIKE :q OR global_identities.name ILIKE :q", q: "%#{query}%")
+      where("global_identities.email_address ILIKE :q OR global_identities.name ILIKE :q", q: "%#{sanitize_sql_like(query)}%")
     else
       all
     end
