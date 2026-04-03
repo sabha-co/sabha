@@ -357,7 +357,9 @@ class UserTest < ActiveSupport::TestCase
     user = users(:rachel) # rachel has no fixture messages
     user.update_column(:current_streak, 0)
 
-    create_message(user: user, room: rooms(:hq))
+    perform_enqueued_jobs only: UpdateStreakJob do
+      create_message(user: user, room: rooms(:hq))
+    end
 
     assert_equal 1, user.reload.current_streak
   end
@@ -366,13 +368,19 @@ class UserTest < ActiveSupport::TestCase
     user = users(:rachel)
     user.update_column(:current_streak, 0)
 
-    create_message(user: user, room: rooms(:hq))
+    perform_enqueued_jobs only: UpdateStreakJob do
+      create_message(user: user, room: rooms(:hq))
+    end
     assert_equal 1, user.reload.current_streak
 
-    create_message(user: user, room: rooms(:hq))
+    perform_enqueued_jobs only: UpdateStreakJob do
+      create_message(user: user, room: rooms(:hq))
+    end
     assert_equal 1, user.reload.current_streak
 
-    create_message(user: user, room: rooms(:pets))
+    perform_enqueued_jobs only: UpdateStreakJob do
+      create_message(user: user, room: rooms(:pets))
+    end
     assert_equal 1, user.reload.current_streak
   end
 
@@ -404,13 +412,17 @@ class UserTest < ActiveSupport::TestCase
 
     # Post yesterday
     travel_to 1.day.ago do
-      create_message(user: user, room: rooms(:hq))
+      perform_enqueued_jobs only: UpdateStreakJob do
+        create_message(user: user, room: rooms(:hq))
+      end
     end
     assert_equal 1, user.reload.current_streak
 
     # Post today - should increment
     travel_to Time.current do
-      create_message(user: user, room: rooms(:hq))
+      perform_enqueued_jobs only: UpdateStreakJob do
+        create_message(user: user, room: rooms(:hq))
+      end
     end
 
     assert_equal 2, user.reload.current_streak
@@ -421,12 +433,16 @@ class UserTest < ActiveSupport::TestCase
 
     # Post 3 days ago
     travel_to 3.days.ago do
-      create_message(user: user, room: rooms(:hq))
+      perform_enqueued_jobs only: UpdateStreakJob do
+        create_message(user: user, room: rooms(:hq))
+      end
     end
     assert_equal 1, user.reload.current_streak
 
     # Post today (skipping yesterday) - should reset to 1
-    create_message(user: user, room: rooms(:hq))
+    perform_enqueued_jobs only: UpdateStreakJob do
+      create_message(user: user, room: rooms(:hq))
+    end
 
     assert_equal 1, user.reload.current_streak
   end
@@ -458,7 +474,9 @@ class UserTest < ActiveSupport::TestCase
     rooms(:hq).post_welcome_message(user: user)
     assert_equal 0, user.reload.current_streak
 
-    create_message(user: user, room: rooms(:hq))
+    perform_enqueued_jobs only: UpdateStreakJob do
+      create_message(user: user, room: rooms(:hq))
+    end
     assert_equal 1, user.reload.current_streak
   end
 

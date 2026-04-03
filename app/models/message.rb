@@ -120,7 +120,7 @@ class Message < ApplicationRecord
 
     def update_creator_streak
       return if room.direct? || room.parent_room&.direct? || welcome?
-      creator.recalculate_streak!(excluding_message: self)
+      UpdateStreakJob.perform_later(user_id: creator_id, excluding_message_id: id)
     end
 
     def broadcast_reactivation_if_restored
