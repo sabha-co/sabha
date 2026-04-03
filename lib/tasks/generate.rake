@@ -1162,15 +1162,15 @@ namespace :generate do
     end
   end
 
-  desc "Generate messages in a specific room (default: Lobby)"
+  desc "Generate messages in a specific room (default: General)"
   task lines: :environment do
-    room = Room.find_by(name: "Lobby")
+    room = Room.find_by(name: "General")
     users = User.all
 
     1.upto(500) do |i|
       room.messages.create! \
         body: "Message #{i}",
-        user: users.sample,
+        creator: users.sample,
         created_at: 1.day.ago + i.minutes
     end
   end
