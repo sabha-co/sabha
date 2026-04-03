@@ -1008,6 +1008,9 @@
   .landing-campfire-divider-v { width: 40px; height: 1px; }
   .landing-campfire-body { font-size: 16px; }
 
+  /* Hero rotate — remove min-width so centered text isn't pulled left */
+  .landing-hero-rotate { min-width: 0; text-align: center; }
+
   /* Feature text */
   .landing-feature-text h3 { font-size: 22px; }
 
