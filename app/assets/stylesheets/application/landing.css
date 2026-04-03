@@ -70,7 +70,8 @@
   text-align: center;
 }
 
-.landing h2 {
+.landing h2,
+.landing h1.landing-section-title {
   font-family: var(--font-display);
   font-size: 40px;
   font-weight: 600;
@@ -924,7 +925,7 @@
 
 @media (max-width: 768px) {
   .landing h1 { font-size: 36px; letter-spacing: -1px; }
-  .landing h2 { font-size: 28px; }
+  .landing h2, .landing h1.landing-section-title { font-size: 28px; }
   .landing-hero-sub { font-size: 16px; }
 
   .landing-inner { padding: 0 24px; }

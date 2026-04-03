@@ -10,6 +10,8 @@
     <meta name="theme-color" content="<%= Branding.theme_color %>">
     <meta name="mobile-web-app-capable" content="yes">
 
+    <link rel="canonical" href="<%= request.original_url.split('?').first.chomp('/') %>">
+
     <%# Open Graph %>
     <meta property="og:type" content="website">
     <meta property="og:title" content="<%= content_for?(:title) ? "#{content_for(:title)} | Sabha" : "Sabha — Open Source Discord Alternative for Communities" %>">
