@@ -73,7 +73,9 @@ module Sabha
             # Platform admin area (superadmin only)
             namespace :admin do
               root to: "stats#show"
+              resources :identities, only: [ :index, :show ]
               resources :workspaces, only: [ :index, :show ] do
+                resource :snapshot, only: [ :create ], controller: "workspace_snapshots"
                 resource :suspension, only: [ :create, :destroy ],
                          controller: "workspace_suspensions"
                 resources :members, only: [ :index ], controller: "workspace_members"

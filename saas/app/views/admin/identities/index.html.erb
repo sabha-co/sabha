@@ -1,0 +1,58 @@
+<% content_for :title, "Identities" %>
+
+<div class="flex flex-column gap">
+  <div class="flex align-center justify-space-between">
+    <h1 class="txt-large" style="font-weight: 600;">Identities</h1>
+    <%= form_with url: admin_identities_path, method: :get, class: "flex gap-half" do |f| %>
+      <%= f.text_field :query, value: @query, placeholder: "Search by email or name\u2026", class: "input" %>
+      <%= f.submit "Search", class: "btn" %>
+      <% if @query.present? %>
+        <%= link_to "Clear", admin_identities_path, class: "btn" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="border" style="border-radius: 0.5em; overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr class="txt-small txt-muted" style="border-bottom: 1px solid var(--color-border);">
+          <th class="pad-block-half pad-inline txt-align-start"><%= sort_link "Email", "email_address" %></th>
+          <th class="pad-block-half pad-inline txt-align-start"><%= sort_link "Name", "name" %></th>
+          <th class="pad-block-half pad-inline txt-align-end"><%= sort_link "Workspaces", "workspaces_count" %></th>
+          <th class="pad-block-half pad-inline txt-align-start">Verified</th>
+          <th class="pad-block-half pad-inline txt-align-start"><%= sort_link "Signed up", "created_at" %></th>
+          <th class="pad-block-half pad-inline txt-align-start"><%= sort_link "Last active", "last_active" %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @identities.each do |identity| %>
+          <tr style="border-bottom: 1px solid var(--color-border);">
+            <td class="pad-block-half pad-inline txt-small">
+              <%= link_to identity.email_address, admin_identity_path(identity), class: "txt-undecorated", style: "font-weight: 600;" %>
+            </td>
+            <td class="pad-block-half pad-inline txt-small txt-muted"><%= identity.name.presence || "\u2014" %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted txt-align-end"><%= identity.workspaces_count %></td>
+            <td class="pad-block-half pad-inline txt-small">
+              <% if identity.verified? %>
+                <span style="color: var(--color-positive);">Yes</span>
+              <% else %>
+                <span class="txt-muted">No</span>
+              <% end %>
+            </td>
+            <td class="pad-block-half pad-inline txt-small txt-muted"><%= identity.created_at.to_fs(:date) %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted">
+              <%= identity.last_active_at ? time_ago_in_words(identity.last_active_at) + " ago" : "\u2014" %>
+            </td>
+          </tr>
+        <% end %>
+        <% if @identities.empty? %>
+          <tr>
+            <td colspan="6" class="pad txt-muted txt-align-center">No identities found.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%= render "admin/shared/pagination" %>
+</div>

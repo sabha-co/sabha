@@ -41,6 +41,8 @@
             class: "txt-small txt-undecorated #{current_page?(admin_root_path) ? "" : "txt-muted"}" %>
       <%= link_to "Workspaces", admin_workspaces_path,
             class: "txt-small txt-undecorated #{request.path.start_with?(admin_workspaces_path) ? "" : "txt-muted"}" %>
+      <%= link_to "Identities", admin_identities_path,
+            class: "txt-small txt-undecorated #{request.path.start_with?(admin_identities_path) ? "" : "txt-muted"}" %>
     </nav>
     </header>
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_02_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_05_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -82,6 +82,18 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_02_000001) do
     t.index ["tenant"], name: "index_workspace_memberships_on_tenant"
   end
 
+  create_table "workspace_snapshots", force: :cascade do |t|
+    t.integer "active_users", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.bigint "database_size", default: 0, null: false
+    t.integer "messages_24h", default: 0, null: false
+    t.integer "messages_7d", default: 0, null: false
+    t.bigint "storage_bytes", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "workspace_id", null: false
+    t.index ["workspace_id"], name: "index_workspace_snapshots_on_workspace_id", unique: true
+  end
+
   create_table "workspaces", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "creator_id", null: false
@@ -100,5 +112,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_02_000001) do
   add_foreign_key "auth_codes", "global_identities"
   add_foreign_key "global_sessions", "global_identities"
   add_foreign_key "workspace_memberships", "global_identities"
+  add_foreign_key "workspace_snapshots", "workspaces"
   add_foreign_key "workspaces", "global_identities", column: "creator_id"
 end

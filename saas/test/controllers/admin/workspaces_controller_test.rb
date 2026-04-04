@@ -46,4 +46,29 @@ class Admin::WorkspacesControllerTest < ActionDispatch::IntegrationTest
     get admin_workspace_path(workspaces(:acme))
     assert_response :forbidden
   end
+
+  test "index sorts by name ascending" do
+    get admin_workspaces_path, params: { sort: "name", direction: "asc" }
+    assert_response :success
+  end
+
+  test "index sorts by last active" do
+    get admin_workspaces_path, params: { sort: "last_active", direction: "desc" }
+    assert_response :success
+  end
+
+  test "index sorts by members count" do
+    get admin_workspaces_path, params: { sort: "members_count", direction: "desc" }
+    assert_response :success
+  end
+
+  test "index sorts by db size" do
+    get admin_workspaces_path, params: { sort: "db_size", direction: "desc" }
+    assert_response :success
+  end
+
+  test "index ignores invalid sort column" do
+    get admin_workspaces_path, params: { sort: "drop_table", direction: "asc" }
+    assert_response :success
+  end
 end

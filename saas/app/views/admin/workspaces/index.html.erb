@@ -16,11 +16,15 @@
     <table style="width: 100%; border-collapse: collapse;">
       <thead>
         <tr class="txt-small txt-muted" style="border-bottom: 1px solid var(--color-border);">
-          <th class="pad-block-half pad-inline txt-align-start">Name</th>
-          <th class="pad-block-half pad-inline txt-align-start">ID</th>
+          <th class="pad-block-half pad-inline txt-align-start"><%= sort_link "Name", "name" %></th>
           <th class="pad-block-half pad-inline txt-align-start">Creator</th>
-          <th class="pad-block-half pad-inline txt-align-start">Members</th>
-          <th class="pad-block-half pad-inline txt-align-start">Created</th>
+          <th class="pad-block-half pad-inline txt-align-start"><%= sort_link "Members", "members_count" %></th>
+          <th class="pad-block-half pad-inline txt-align-end">Msgs (7d)</th>
+          <th class="pad-block-half pad-inline txt-align-end">Users</th>
+          <th class="pad-block-half pad-inline txt-align-end"><%= sort_link "Storage", "storage" %></th>
+          <th class="pad-block-half pad-inline txt-align-end"><%= sort_link "DB Size", "db_size" %></th>
+          <th class="pad-block-half pad-inline txt-align-start"><%= sort_link "Last active", "last_active" %></th>
+          <th class="pad-block-half pad-inline txt-align-start"><%= sort_link "Created", "created_at" %></th>
           <th class="pad-block-half pad-inline txt-align-start">Status</th>
         </tr>
       </thead>
@@ -30,9 +34,13 @@
             <td class="pad-block-half pad-inline">
               <%= link_to workspace.name, admin_workspace_path(workspace), class: "txt-undecorated", style: "font-weight: 600;" %>
             </td>
-            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.external_id %></td>
             <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.creator.email_address %></td>
-            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.workspace_memberships.count %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.members_count %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted txt-align-end"><%= workspace[:messages_7d] || "—" %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted txt-align-end"><%= workspace[:active_users] || "—" %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted txt-align-end"><%= workspace[:storage_bytes] ? number_to_human_size(workspace[:storage_bytes]) : "—" %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted txt-align-end"><%= workspace[:snapshot_database_size] ? number_to_human_size(workspace[:snapshot_database_size]) : "—" %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace[:last_active_at] ? time_ago_in_words(workspace[:last_active_at]) + " ago" : "\u2014" %></td>
             <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.created_at.to_fs(:date) %></td>
             <td class="pad-block-half pad-inline txt-small">
               <% if workspace.suspended? %>
@@ -45,10 +53,14 @@
         <% end %>
         <% if @workspaces.empty? %>
           <tr>
-            <td colspan="6" class="pad txt-muted txt-align-center">No workspaces found.</td>
+            <td colspan="10" class="pad txt-muted txt-align-center">No workspaces found.</td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
+
+  <%= render "admin/shared/pagination" %>
+
+  <p class="txt-x-small txt-muted txt-align-center">Activity data refreshes hourly. Open a workspace to refresh manually.</p>
 </div>
