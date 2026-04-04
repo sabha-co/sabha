@@ -41,7 +41,7 @@
             <td class="pad-block-half pad-inline txt-small txt-muted txt-align-end"><%= activity[:active_users] || "—" %></td>
             <td class="pad-block-half pad-inline txt-small txt-muted txt-align-end"><%= activity[:storage_bytes] ? number_to_human_size(activity[:storage_bytes]) : "—" %></td>
             <td class="pad-block-half pad-inline txt-small txt-muted txt-align-end"><%= workspace.database_size ? number_to_human_size(workspace.database_size) : "—" %></td>
-            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.last_active_at ? time_ago_in_words(workspace.last_active_at) + " ago" : "\u2014" %></td>
+            <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace[:last_active_at] ? time_ago_in_words(workspace[:last_active_at]) + " ago" : "\u2014" %></td>
             <td class="pad-block-half pad-inline txt-small txt-muted"><%= workspace.created_at.to_fs(:date) %></td>
             <td class="pad-block-half pad-inline txt-small">
               <% if workspace.suspended? %>

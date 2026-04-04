@@ -27,7 +27,7 @@ module Admin
 
         (0..29).map do |days_ago|
           date = days_ago.days.ago.to_date
-          [ date, raw[date.to_s] || 0 ]
+          [ date, raw[date] || raw[date.to_s] || 0 ]
         end.reverse
       end
   end
