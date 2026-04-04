@@ -8,6 +8,8 @@ module Admin
   # databases. To query tenanted data in the future, wrap calls in
   # ApplicationRecord.with_tenant(workspace.external_id.to_s).
   class BaseController < Saas::BaseController
+    PER_PAGE = 25
+
     before_action :ensure_superadmin
 
     layout "admin"
@@ -30,8 +32,6 @@ module Admin
       def sort_direction
         params[:direction] == "asc" ? "asc" : "desc"
       end
-
-      PER_PAGE = 25
 
       helper_method :sort_column, :sort_direction
   end

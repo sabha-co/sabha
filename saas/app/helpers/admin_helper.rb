@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module AdminHelper
-  def sort_link(label, column, align: "start")
+  def sort_link(label, column)
     current = sort_column == column
     dir = current && sort_direction == "asc" ? "desc" : "asc"
     arrow = current ? (sort_direction == "asc" ? " \u2191" : " \u2193") : ""
