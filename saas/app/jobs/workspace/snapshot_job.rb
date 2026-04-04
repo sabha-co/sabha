@@ -4,7 +4,7 @@ class Workspace
   class SnapshotJob < ApplicationJob
     queue_as :default
 
-    discard_on ActiveRecord::RecordNotFound
+    discard_on ActiveJob::DeserializationError
 
     def perform(workspace)
       workspace.refresh_snapshot!
