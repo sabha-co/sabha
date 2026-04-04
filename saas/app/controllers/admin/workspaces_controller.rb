@@ -18,44 +18,24 @@ module Admin
         .group(:tenant).to_sql
 
       @workspaces = workspace_scope
+        .left_joins(:snapshot)
         .joins("LEFT JOIN (#{last_active_sql}) ws_activity ON ws_activity.tenant = CAST(workspaces.external_id AS TEXT)")
         .joins("LEFT JOIN (#{members_count_sql}) ws_members ON ws_members.tenant = CAST(workspaces.external_id AS TEXT)")
-        .select("workspaces.*, ws_activity.last_active_at AS last_active_at, COALESCE(ws_members.cnt, 0) AS members_count")
+        .select("workspaces.*, ws_activity.last_active_at AS last_active_at, COALESCE(ws_members.cnt, 0) AS members_count,
+                 workspace_snapshots.messages_24h, workspace_snapshots.messages_7d,
+                 workspace_snapshots.active_users, workspace_snapshots.storage_bytes,
+                 workspace_snapshots.database_size AS snapshot_database_size")
         .includes(:creator)
-        .then { |scope| sort_column.in?(%w[db_size storage]) ? scope : scope.order(sort_sql) }
+        .order(sort_sql)
 
-      # Ruby-sorted columns need all records loaded, sorted, then paginated manually
-      if sort_column.in?(%w[db_size storage])
-        all_workspaces = @workspaces.to_a
-
-        case sort_column
-        when "db_size"
-          all_workspaces.sort_by! { |w| w.database_size || 0 }
-        when "storage"
-          all_workspaces.sort_by! { |w| w.activity_snapshot[:storage_bytes] || 0 }
-        end
-        all_workspaces.reverse! if sort_direction == "desc"
-
-        @current_page = [ params[:page].to_i, 1 ].max
-        @total_pages = (all_workspaces.size.to_f / PER_PAGE).ceil
-        @workspaces = all_workspaces.slice((@current_page - 1) * PER_PAGE, PER_PAGE) || []
-      else
-        set_page_and_extract_portion_from @workspaces, per_page: PER_PAGE
-        @workspaces = @page.records
-      end
-
-      # Preload activity snapshots for the current page only
-      @activity_by_workspace_id = @workspaces.each_with_object({}) do |w, hash|
-        hash[w.id] = w.activity_snapshot
-      end
+      set_page_and_extract_portion_from @workspaces, per_page: PER_PAGE
+      @workspaces = @page.records
     end
 
     def show
-      @workspace = Workspace.find(params[:id])
+      @workspace = Workspace.includes(:snapshot).find(params[:id])
       @members_count = WorkspaceMembership.where(tenant: @workspace.external_id.to_s).count
       @backups_count = @workspace.backups.count
-      @activity = @workspace.activity_snapshot
-      @database_size = @workspace.database_size
     end
 
     private
@@ -70,6 +50,8 @@ module Admin
         when "name"          then "workspaces.name"
         when "last_active"   then "ws_activity.last_active_at"
         when "members_count" then "ws_members.cnt"
+        when "db_size"       then "workspace_snapshots.database_size"
+        when "storage"       then "workspace_snapshots.storage_bytes"
         else                      "workspaces.created_at"
         end
         nulls = sort_direction == "desc" ? "NULLS LAST" : "NULLS FIRST"

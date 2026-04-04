@@ -14,6 +14,7 @@ class Workspace < UntenantedRecord
   belongs_to :creator, class_name: "GlobalIdentity"
   has_many :workspace_memberships, primary_key: :external_id, foreign_key: :tenant, dependent: :destroy
   has_many :backups, class_name: "Workspace::Backup"
+  has_one :snapshot, class_name: "Workspace::Snapshot", dependent: :destroy
 
   validates :name, presence: true, length: { maximum: 100 }
   validates :external_id, presence: true, uniqueness: true
@@ -38,20 +39,26 @@ class Workspace < UntenantedRecord
     !suspended?
   end
 
-  # Per-workspace activity metrics, cached to avoid hitting tenant DBs on every request
-  def activity_snapshot
-    Rails.cache.fetch("workspace/#{id}/activity", expires_in: 15.minutes) do
-      ApplicationRecord.with_tenant(external_id.to_s) do
-        {
-          messages_24h: Message.active.user_authored.since(24.hours.ago).count,
-          messages_7d: Message.active.user_authored.since(7.days.ago).count,
-          active_users: User.active.count,
-          storage_bytes: Account.sole.bytes_used
-        }
-      end
+  # Collect activity metrics from tenant DB and upsert into workspace_snapshots
+  def refresh_snapshot!
+    metrics = ApplicationRecord.with_tenant(external_id.to_s) do
+      {
+        messages_24h: Message.active.user_authored.since(24.hours.ago).count,
+        messages_7d: Message.active.user_authored.since(7.days.ago).count,
+        active_users: User.active.count,
+        storage_bytes: Account.sole.bytes_used
+      }
     end
-  rescue ActiveRecord::Tenanted::TenantDoesNotExistError, ActiveRecord::RecordNotFound
-    { messages_24h: nil, messages_7d: nil, active_users: nil, storage_bytes: nil }
+
+    db_path = Rails.root.join("storage/workspaces/#{Rails.env}/#{external_id}/db/main.sqlite3")
+    metrics[:database_size] = File.exist?(db_path) ? File.size(db_path) : 0
+
+    Workspace::Snapshot.upsert(
+      { workspace_id: id, **metrics, created_at: Time.current, updated_at: Time.current },
+      unique_by: :workspace_id
+    )
+
+    reload_snapshot
   end
 
   # Most recent activity across all workspace members (via GlobalSession)
@@ -60,12 +67,6 @@ class Workspace < UntenantedRecord
       .joins("INNER JOIN workspace_memberships ON workspace_memberships.global_identity_id = global_sessions.global_identity_id")
       .where(workspace_memberships: { tenant: external_id.to_s })
       .maximum(:last_active_at)
-  end
-
-  # Size of the workspace's SQLite database file in bytes
-  def database_size
-    path = Rails.root.join("storage/workspaces/#{Rails.env}/#{external_id}/db/main.sqlite3")
-    File.size(path) if File.exist?(path)
   end
 
   def current?

@@ -24,5 +24,9 @@ production:
   backup_workspaces:
     command: "Workspace.active.find_each { |w| Workspace::BackupJob.perform_later(w) }"
     schedule: every day at 2am
+
+  snapshot_workspaces:
+    command: "Workspace.active.find_each { |w| Workspace::SnapshotJob.perform_later(w) }"
+    schedule: every 15 minutes
 <% end %>
 

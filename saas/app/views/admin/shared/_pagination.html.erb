@@ -1,4 +1,3 @@
-<%# Supports both @page (geared_pagination) and @current_page/@total_pages (manual fallback) %>
 <% if @page && !@page.only? %>
   <nav class="flex align-center justify-center gap txt-small" style="margin-top: 0.5em;">
     <% unless @page.first? %>
@@ -9,18 +8,6 @@
 
     <% unless @page.last? %>
       <%= link_to "Next \u2192", url_for(**request.query_parameters.symbolize_keys, page: @page.next_param), class: "txt-undecorated" %>
-    <% end %>
-  </nav>
-<% elsif @total_pages && @total_pages > 1 %>
-  <nav class="flex align-center justify-center gap txt-small" style="margin-top: 0.5em;">
-    <% if @current_page > 1 %>
-      <%= link_to "\u2190 Prev", url_for(**request.query_parameters.symbolize_keys, page: @current_page - 1), class: "txt-undecorated" %>
-    <% end %>
-
-    <span class="txt-muted">Page <%= @current_page %> of <%= @total_pages %></span>
-
-    <% if @current_page < @total_pages %>
-      <%= link_to "Next \u2192", url_for(**request.query_parameters.symbolize_keys, page: @current_page + 1), class: "txt-undecorated" %>
     <% end %>
   </nav>
 <% end %>
