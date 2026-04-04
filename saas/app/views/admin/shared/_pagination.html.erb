@@ -1,13 +1,13 @@
 <% if @page && !@page.only? %>
   <nav class="flex align-center justify-center gap txt-small" style="margin-top: 0.5em;">
     <% unless @page.first? %>
-      <%= link_to "\u2190 Prev", url_for(**request.query_parameters.symbolize_keys, page: @page.number - 1), class: "txt-undecorated" %>
+      <%= link_to "\u2190 Prev", request.path + "?" + request.query_parameters.merge(page: @page.number - 1).to_query, class: "txt-undecorated" %>
     <% end %>
 
     <span class="txt-muted">Page <%= @page.number %> of <%= @page.recordset.page_count %></span>
 
     <% unless @page.last? %>
-      <%= link_to "Next \u2192", url_for(**request.query_parameters.symbolize_keys, page: @page.next_param), class: "txt-undecorated" %>
+      <%= link_to "Next \u2192", request.path + "?" + request.query_parameters.merge(page: @page.next_param).to_query, class: "txt-undecorated" %>
     <% end %>
   </nav>
 <% end %>

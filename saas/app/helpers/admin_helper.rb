@@ -7,7 +7,7 @@ module AdminHelper
     arrow = current ? (sort_direction == "asc" ? " \u2191" : " \u2193") : ""
 
     link_to "#{label}#{arrow}",
-      url_for(request.query_parameters.merge(sort: column, direction: dir)),
+      request.path + "?" + request.query_parameters.merge(sort: column, direction: dir).to_query,
       class: "txt-undecorated #{current ? '' : 'txt-muted'}",
       style: "white-space: nowrap;"
   end

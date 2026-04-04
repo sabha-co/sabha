@@ -49,8 +49,8 @@ module Admin
         when "last_active"      then "last_sessions.last_active_at"
         else                         "global_identities.created_at"
         end
-        nulls = sort_direction == "desc" ? "NULLS LAST" : "NULLS FIRST"
-        Arel.sql("#{col} #{sort_direction} #{nulls}")
+        dir = sort_direction == "asc" ? "ASC NULLS FIRST" : "DESC NULLS LAST" # brakeman:ignore
+        Arel.sql("#{col} #{dir}")
       end
   end
 end

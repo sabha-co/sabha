@@ -54,8 +54,8 @@ module Admin
         when "storage"       then "workspace_snapshots.storage_bytes"
         else                      "workspaces.created_at"
         end
-        nulls = sort_direction == "desc" ? "NULLS LAST" : "NULLS FIRST"
-        Arel.sql("#{col} #{sort_direction} #{nulls}")
+        dir = sort_direction == "asc" ? "ASC NULLS FIRST" : "DESC NULLS LAST" # brakeman:ignore
+        Arel.sql("#{col} #{dir}")
       end
   end
 end
