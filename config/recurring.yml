@@ -27,6 +27,6 @@ production:
 
   snapshot_workspaces:
     command: "Workspace.active.find_each { |w| Workspace::SnapshotJob.perform_later(w) }"
-    schedule: every 15 minutes
+    schedule: every hour
 <% end %>
 
