@@ -46,7 +46,7 @@ class Workspace < UntenantedRecord
         messages_24h: Message.active.user_authored.since(24.hours.ago).count,
         messages_7d: Message.active.user_authored.since(7.days.ago).count,
         active_users: User.active.count,
-        storage_bytes: Account.sole.bytes_used
+        storage_bytes: (Account.sole.bytes_used rescue 0)
       }
     end
 
