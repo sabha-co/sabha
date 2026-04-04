@@ -1,5 +1,7 @@
-<fieldset class="flex flex-column gap pad">
-  <legend class="<%= legend_class %> txt-align-center"><strong><%= legend_text %></strong></legend>
+<section class="settings__section">
+  <header>
+    <h2 class="divider"><%= legend_text %></h2>
+  </header>
 
   <% if is_last_admin %>
     <p class="txt-small txt-muted">
@@ -22,4 +24,4 @@
       <% end %>
     </div>
   <% end %>
-</fieldset>
+</section>

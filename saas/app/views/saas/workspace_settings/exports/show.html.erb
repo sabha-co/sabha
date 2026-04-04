@@ -1,9 +1,11 @@
 <% content_for :title, "Export workspace database" %>
 
-<div class="panel center" style="view-transition-name: workspace-export;">
+<div class="saas-settings panel center" style="view-transition-name: workspace-export;">
   <div class="flex flex-column gap">
-    <fieldset class="flex flex-column gap pad">
-      <legend class="txt-large txt-align-center"><strong>Export workspace database</strong></legend>
+    <section class="settings__section">
+      <header>
+        <h2 class="divider">Export workspace database</h2>
+      </header>
 
       <% if Current.workspace.recently_exported? %>
         <p class="txt-small txt-muted">
@@ -22,7 +24,7 @@
           The link expires 24 hours after the email is sent. Files aren't included in the export, and members will need to sign in again via email on the self-hosted instance.
         </p>
       <% end %>
-    </fieldset>
+    </section>
   </div>
 </div>
 

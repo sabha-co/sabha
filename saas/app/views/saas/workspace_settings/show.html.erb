@@ -1,51 +1,54 @@
 <% content_for :title, "Workspace settings" %>
 
-<div class="<%= Current.user.administrator? ? "settings-layout" : "panel center" %>" style="view-transition-name: workspace-settings;">
+<div class="saas-settings <%= Current.user.administrator? ? "settings-layout" : "panel center" %>" style="view-transition-name: saas-settings;">
   <% if Current.user.administrator? %>
-    <%# Admin: two-column layout %>
+    <%# Admin: two-column layout, with shared title spanning both columns %>
+    <header class="saas-settings__title">
+      <h1 class="txt-large"><strong><%= @workspace.name %></strong></h1>
+      <p class="txt-small txt-muted">
+        <%= pluralize(@member_count, "member") %>
+        <span class="txt-muted">&middot;</span>
+        <%= Current.user.role.capitalize %>
+      </p>
+    </header>
+
     <div class="panel">
       <div class="flex flex-column gap">
-        <fieldset class="flex flex-column gap pad">
-          <legend class="txt-large txt-align-center"><strong><%= @workspace.name %></strong></legend>
-
-          <p class="txt-small txt-muted txt-align-center">
-            <%= pluralize(@member_count, "member") %>
-            <span class="txt-muted">&middot;</span>
-            <%= Current.user.role.capitalize %>
-          </p>
-        </fieldset>
-
         <% account = Current.account %>
-        <fieldset class="flex flex-column gap pad">
-          <legend class="txt-medium txt-align-center"><strong>Storage</strong></legend>
+        <section class="settings__section">
+          <header>
+            <h2 class="divider">Storage</h2>
+          </header>
 
           <div class="flex flex-column gap-half">
             <div style="background: var(--color-surface-alt); border-radius: 4px; height: 8px; overflow: hidden;">
               <div style="background: <%= account.exceeding_storage_limit? ? 'var(--color-negative)' : account.nearing_storage_limit? ? 'var(--color-warning)' : 'var(--color-accent)' %>; height: 100%; width: <%= account.storage_percentage_used %>%; transition: width 0.3s;"></div>
             </div>
-            <p class="txt-small txt-muted txt-align-center">
+            <p class="txt-small txt-muted">
               <%= number_to_human_size(account.bytes_used) %> of <%= number_to_human_size(Storage::WORKSPACE_LIMIT) %> used
             </p>
             <% if account.exceeding_storage_limit? %>
-              <p class="txt-small txt-negative txt-align-center">
+              <p class="txt-small txt-negative">
                 Storage limit reached. File uploads are disabled.
               </p>
-              <p class="txt-small txt-muted txt-align-center">
+              <p class="txt-small txt-muted">
                 <a href="https://cloud.sabha.co" target="_blank" class="txt-underlined">Sabha Cloud</a> gives you a dedicated server with no storage limits.
               </p>
             <% elsif account.nearing_storage_limit? %>
-              <p class="txt-small txt-warning txt-align-center">
+              <p class="txt-small txt-warning">
                 Approaching storage limit.
               </p>
-              <p class="txt-small txt-muted txt-align-center">
+              <p class="txt-small txt-muted">
                 <a href="https://cloud.sabha.co" target="_blank" class="txt-underlined">Sabha Cloud</a> gives you a dedicated server with no storage limits.
               </p>
             <% end %>
           </div>
-        </fieldset>
+        </section>
 
-        <fieldset class="flex flex-column gap pad">
-          <legend class="txt-medium txt-align-center"><strong>Your data</strong></legend>
+        <section class="settings__section">
+          <header>
+            <h2 class="divider">Your data</h2>
+          </header>
 
           <p class="txt-small txt-muted">
             You can always take out workspace data using <%= link_to "Export", settings_export_path, class: "txt-underlined" %>.
@@ -58,7 +61,7 @@
               <a href="https://cloud.sabha.co" target="_blank" class="txt-underlined">Sabha Cloud</a>.
             </p>
           <% end %>
-        </fieldset>
+        </section>
       </div>
     </div>
 
@@ -67,11 +70,12 @@
         <%= render "saas/workspace_settings/leave_workspace",
               workspace: @workspace,
               is_last_admin: @is_last_admin,
-              legend_class: "txt-large",
               legend_text: "Membership" %>
 
-        <fieldset class="flex flex-column gap pad" data-controller="confirm-delete">
-          <legend class="txt-medium txt-align-center txt-negative"><strong>Delete workspace</strong></legend>
+        <section class="settings__section settings__section--negative" data-controller="confirm-delete">
+          <header>
+            <h2 class="divider">Delete workspace</h2>
+          </header>
 
           <p class="txt-small txt-muted">
             Permanently delete this workspace and all its data. This cannot be undone.
@@ -97,37 +101,37 @@
               <% end %>
             </div>
           <% end %>
-        </fieldset>
+        </section>
       </div>
     </div>
 
   <% else %>
     <%# Non-admin: single panel %>
     <div class="flex flex-column gap">
-      <fieldset class="flex flex-column gap pad">
-        <legend class="txt-large txt-align-center"><strong><%= @workspace.name %></strong></legend>
-
-        <p class="txt-small txt-muted txt-align-center">
+      <header class="saas-settings__title">
+        <h1 class="txt-large"><strong><%= @workspace.name %></strong></h1>
+        <p class="txt-small txt-muted">
           <%= pluralize(@member_count, "member") %>
           <span class="txt-muted">&middot;</span>
           <%= Current.user.role.capitalize %>
         </p>
-      </fieldset>
+      </header>
 
-      <fieldset class="flex flex-column gap pad">
-        <legend class="txt-medium txt-align-center"><strong>Your data</strong></legend>
+      <section class="settings__section">
+        <header>
+          <h2 class="divider">Your data</h2>
+        </header>
 
         <p class="txt-small txt-muted">
           Workspaces on sabha.co run on shared infrastructure. We do our best, but we cannot guarantee backups or uptime.
           For a dedicated server with continuous backups, custom domain, and managed updates, see
           <a href="https://cloud.sabha.co" target="_blank" class="txt-underlined">Sabha Cloud</a>.
         </p>
-      </fieldset>
+      </section>
 
       <%= render "saas/workspace_settings/leave_workspace",
             workspace: @workspace,
             is_last_admin: false,
-            legend_class: "txt-medium",
             legend_text: "Leave workspace" %>
     </div>
   <% end %>

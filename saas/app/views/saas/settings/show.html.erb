@@ -1,10 +1,12 @@
 <% content_for :title, "Settings" %>
 
-<div class="settings-layout">
+<div class="saas-settings settings-layout">
   <%# Workspaces Section %>
   <div class="panel">
-    <fieldset class="flex flex-column gap pad">
-      <legend class="txt-large txt-align-center"><strong>Your Workspaces</strong></legend>
+    <section class="settings__section">
+      <header>
+        <h2 class="divider">Your Workspaces</h2>
+      </header>
 
       <% if @workspace_memberships.any? %>
         <div class="flex flex-column gap-half">
@@ -32,50 +34,62 @@
           <% end %>
         </div>
       <% else %>
-        <p class="txt-small txt-muted txt-align-center">Start by creating your first workspace.</p>
+        <p class="txt-small txt-muted">Start by creating your first workspace.</p>
       <% end %>
 
-      <%= link_to new_workspace_path, class: "btn btn--reversed center" do %>
-        <%= icon_tag "add" %>
-        <span>Create workspace</span>
-      <% end %>
-    </fieldset>
+      <div class="flex justify-center">
+        <%= link_to new_workspace_path, class: "btn btn--reversed" do %>
+          <%= icon_tag "add" %>
+          <span>Create workspace</span>
+        <% end %>
+      </div>
+    </section>
   </div>
 
   <%# Account Section %>
   <div class="panel">
-    <fieldset class="flex flex-column gap pad">
-      <legend class="txt-large txt-align-center"><strong>Account</strong></legend>
-
-      <p class="txt-small txt-muted txt-align-center">
-        <%= current_global_identity.email_address %>
-      </p>
-
-      <%= link_to session_path, data: { turbo_method: :delete }, class: "btn center txt-small" do %>
-        Sign out
-      <% end %>
-    </fieldset>
-
-    <%= form_with model: @global_identity, url: settings_path, method: :patch, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
-      <fieldset class="flex flex-column gap pad">
-        <legend class="txt-medium txt-align-center"><strong>Change email</strong></legend>
-
-        <% if @global_identity.errors[:email_address].any? %>
-          <p class="txt-small txt-negative txt-align-center"><%= @global_identity.errors[:email_address].first %></p>
-        <% end %>
-
-        <label class="flex align-center gap input input--actor">
-          <%= form.email_field :email_address, required: true, class: "input", placeholder: "your.email@example.com", autocomplete: "email" %>
-        </label>
+    <div class="flex flex-column gap">
+      <section class="settings__section">
+        <header>
+          <h2 class="divider">Account</h2>
+        </header>
 
         <p class="txt-small txt-muted">
-          Changing your email will require re-verification.
+          <%= current_global_identity.email_address %>
         </p>
 
-        <%= form.button class: "btn center", type: "submit" do %>
-          Save changes
-        <% end %>
-      </fieldset>
-    <% end %>
+        <div class="flex justify-center">
+          <%= link_to session_path, data: { turbo_method: :delete }, class: "btn txt-small" do %>
+            Sign out
+          <% end %>
+        </div>
+      </section>
+
+      <%= form_with model: @global_identity, url: settings_path, method: :patch, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
+        <section class="settings__section">
+          <header>
+            <h2 class="divider">Change email</h2>
+          </header>
+
+          <% if @global_identity.errors[:email_address].any? %>
+            <p class="txt-small txt-negative"><%= @global_identity.errors[:email_address].first %></p>
+          <% end %>
+
+          <label class="flex align-center gap input input--actor">
+            <%= form.email_field :email_address, required: true, class: "input", placeholder: "your.email@example.com", autocomplete: "email" %>
+          </label>
+
+          <p class="txt-small txt-muted">
+            Changing your email will require re-verification.
+          </p>
+
+          <div class="flex justify-center">
+            <%= form.button class: "btn", type: "submit" do %>
+              Save changes
+            <% end %>
+          </div>
+        </section>
+      <% end %>
+    </div>
   </div>
 </div>

@@ -1,0 +1,71 @@
+/* SaaS settings pages: saas/app/views/saas/settings/show.html.erb,
+   saas/app/views/saas/workspace_settings/show.html.erb, and
+   saas/app/views/saas/workspace_settings/exports/show.html.erb.
+
+   Scoped under .saas-settings so the divider/section pattern doesn't leak to
+   pages that still use Sabha's fieldset/legend convention. */
+
+.saas-settings {
+  --divider-color: var(--color-border-darker);
+
+  /* Centered title block. Acts as the page identity header — workspace name
+     and member count, or any analogous label. When the wrapper is also
+     `.settings-layout` (admin two-column view), the title spans both grid
+     columns so it sits above the panels symmetrically. */
+  .saas-settings__title {
+    display: flex;
+    flex-direction: column;
+    gap: var(--inline-space-half);
+    text-align: center;
+
+    h1 {
+      margin: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+  }
+
+  &.settings-layout > .saas-settings__title {
+    grid-column: 1 / -1;
+  }
+
+  /* Section wrapper. Children stack with consistent vertical rhythm. */
+  .settings__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--block-space);
+
+    h2 {
+      margin: 0;
+      font-size: var(--font-size-medium);
+    }
+  }
+
+  /* Divider treatment: heading text with a 1px line on each side. The flanking
+     lines make the centered heading read as a section separator rather than a
+     manually-centered label floating above left-aligned body text. */
+  .divider {
+    align-items: center;
+    display: flex;
+    gap: var(--inline-space);
+
+    &::before,
+    &::after {
+      background: var(--divider-color);
+      block-size: 1px;
+      content: "";
+      flex: 1;
+    }
+  }
+
+  /* Negative variant for destructive sections (delete workspace).
+     Divider line stays the same gray as every other section so the visual
+     rhythm of the page doesn't fragment; the red heading is the destructive cue. */
+  .settings__section--negative {
+    h2 {
+      color: var(--color-negative);
+    }
+  }
+}
