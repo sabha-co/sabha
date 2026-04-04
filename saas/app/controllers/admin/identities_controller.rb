@@ -7,16 +7,23 @@ module Admin
 
     def index
       @query = params[:query]
+
       last_active_sql = GlobalSession
         .select("global_identity_id, MAX(last_active_at) AS last_active_at")
         .group(:global_identity_id).to_sql
 
+      workspace_counts_sql = WorkspaceMembership
+        .select("global_identity_id, COUNT(*) AS cnt")
+        .group(:global_identity_id).to_sql
+
       @identities = identity_scope
-        .left_joins(:workspace_memberships)
         .joins("LEFT JOIN (#{last_active_sql}) last_sessions ON last_sessions.global_identity_id = global_identities.id")
-        .select("global_identities.*, COUNT(workspace_memberships.id) AS workspaces_count, last_sessions.last_active_at AS last_active_at")
-        .group("global_identities.id, last_sessions.last_active_at")
+        .joins("LEFT JOIN (#{workspace_counts_sql}) ws_counts ON ws_counts.global_identity_id = global_identities.id")
+        .select("global_identities.*, COALESCE(ws_counts.cnt, 0) AS workspaces_count, last_sessions.last_active_at AS last_active_at")
         .order(sort_sql)
+
+      set_page_and_extract_portion_from @identities, per_page: PER_PAGE
+      @identities = @page.records
     end
 
     def show
@@ -38,7 +45,7 @@ module Admin
         col = case sort_column
         when "email_address"    then "global_identities.email_address"
         when "name"             then "global_identities.name"
-        when "workspaces_count" then "workspaces_count"
+        when "workspaces_count" then "ws_counts.cnt"
         when "last_active"      then "last_sessions.last_active_at"
         else                         "global_identities.created_at"
         end

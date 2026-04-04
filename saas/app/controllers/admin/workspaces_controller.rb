@@ -24,18 +24,29 @@ module Admin
         .includes(:creator)
         .then { |scope| sort_column.in?(%w[db_size storage]) ? scope : scope.order(sort_sql) }
 
-      # Preload activity snapshots to avoid N+1 tenant DB hits in the view
-      @activity_by_workspace_id = @workspaces.each_with_object({}) do |w, hash|
-        hash[w.id] = w.activity_snapshot
+      # Ruby-sorted columns need all records loaded, sorted, then paginated manually
+      if sort_column.in?(%w[db_size storage])
+        all_workspaces = @workspaces.to_a
+
+        case sort_column
+        when "db_size"
+          all_workspaces.sort_by! { |w| w.database_size || 0 }
+        when "storage"
+          all_workspaces.sort_by! { |w| w.activity_snapshot[:storage_bytes] || 0 }
+        end
+        all_workspaces.reverse! if sort_direction == "desc"
+
+        @current_page = [ params[:page].to_i, 1 ].max
+        @total_pages = (all_workspaces.size.to_f / PER_PAGE).ceil
+        @workspaces = all_workspaces.slice((@current_page - 1) * PER_PAGE, PER_PAGE) || []
+      else
+        set_page_and_extract_portion_from @workspaces, per_page: PER_PAGE
+        @workspaces = @page.records
       end
 
-      case sort_column
-      when "db_size"
-        @workspaces = @workspaces.sort_by { |w| w.database_size || 0 }
-        @workspaces.reverse! if sort_direction == "desc"
-      when "storage"
-        @workspaces = @workspaces.sort_by { |w| @activity_by_workspace_id[w.id][:storage_bytes] || 0 }
-        @workspaces.reverse! if sort_direction == "desc"
+      # Preload activity snapshots for the current page only
+      @activity_by_workspace_id = @workspaces.each_with_object({}) do |w, hash|
+        hash[w.id] = w.activity_snapshot
       end
     end
 

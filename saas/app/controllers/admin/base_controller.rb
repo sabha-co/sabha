@@ -31,6 +31,8 @@ module Admin
         params[:direction] == "asc" ? "asc" : "desc"
       end
 
+      PER_PAGE = 25
+
       helper_method :sort_column, :sort_direction
   end
 end
