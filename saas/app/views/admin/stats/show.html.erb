@@ -1,5 +1,27 @@
 <% content_for :title, "Stats" %>
 
+<%# SVG sparkline helper — plots daily counts as a filled area chart %>
+<%
+  sparkline = ->(data, color: "var(--color-accent)") {
+    values = data.map(&:last)
+    max = [values.max || 0, 1].max
+    width = 300
+    height = 40
+    padding = 2
+    step = (width - padding * 2).to_f / [values.size - 1, 1].max
+    points = values.each_with_index.map { |v, i| [padding + i * step, height - padding - (v.to_f / max * (height - padding * 2))] }
+    polyline_points = points.map { |x, y| "#{x.round(1)},#{y.round(1)}" }.join(" ")
+    area_points = "#{padding},#{height - padding} #{polyline_points} #{(padding + (values.size - 1) * step).round(1)},#{height - padding}"
+
+    tag.svg(width: width, height: height, style: "display: block;") do
+      safe_join([
+        tag.polygon(points: area_points, fill: color, opacity: "0.15"),
+        tag.polyline(points: polyline_points, fill: "none", stroke: color, "stroke-width": "1.5", "stroke-linejoin": "round")
+      ])
+    end
+  }
+%>
+
 <div class="flex flex-column gap">
   <h1 class="txt-large" style="font-weight: 600;">Overview</h1>
 
@@ -19,6 +41,10 @@
         </div>
       <% end %>
     </div>
+    <div class="border pad" style="border-radius: 0.5em;">
+      <div class="txt-x-small txt-muted" style="margin-bottom: 0.25em;">New workspaces per day (30d)</div>
+      <%= sparkline.call(@workspace_growth) %>
+    </div>
   </section>
 
   <%# Identity stats %>
@@ -35,6 +61,10 @@
           <div class="txt-small txt-muted"><%= label %></div>
         </div>
       <% end %>
+    </div>
+    <div class="border pad" style="border-radius: 0.5em;">
+      <div class="txt-x-small txt-muted" style="margin-bottom: 0.25em;">New signups per day (30d)</div>
+      <%= sparkline.call(@identity_growth, color: "var(--color-positive)") %>
     </div>
   </section>
 

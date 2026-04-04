@@ -11,6 +11,7 @@ module Admin
     before_action :ensure_superadmin
 
     layout "admin"
+    helper AdminHelper
 
     skip_before_action :load_workspaces_for_sidebar
 
@@ -19,5 +20,17 @@ module Admin
       def ensure_superadmin
         head :forbidden unless current_global_identity&.superadmin?
       end
+
+      # Sorting support — subclasses define SORTABLE_COLUMNS and DEFAULT_SORT
+      def sort_column
+        col = params[:sort]
+        self.class::SORTABLE_COLUMNS.include?(col) ? col : self.class::DEFAULT_SORT
+      end
+
+      def sort_direction
+        params[:direction] == "asc" ? "asc" : "desc"
+      end
+
+      helper_method :sort_column, :sort_direction
   end
 end

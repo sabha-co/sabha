@@ -14,7 +14,10 @@
         <span>&middot;</span>
         <span>Created <%= @workspace.created_at.to_fs(:date) %></span>
         <span>&middot;</span>
-        <span>Creator: <%= @workspace.creator.email_address %></span>
+        <span>Creator: <%= link_to @workspace.creator.email_address, admin_identity_path(@workspace.creator), class: "txt-muted" %></span>
+        <span>&middot;</span>
+        <% ws_last_active = @workspace.last_active_at %>
+        <span>Last active: <%= ws_last_active ? time_ago_in_words(ws_last_active) + " ago" : "\u2014" %></span>
       </div>
     </div>
 
@@ -35,6 +38,25 @@
       <% end %>
     </div>
   </div>
+
+  <%# Activity stats %>
+  <section class="flex flex-column gap-half">
+    <h2 class="txt-small txt-muted txt-label">Activity</h2>
+    <div class="flex gap">
+      <% [
+        ["Messages (24h)", @activity[:messages_24h]],
+        ["Messages (7d)", @activity[:messages_7d]],
+        ["Active Users", @activity[:active_users]],
+        ["Storage", @activity[:storage_bytes] ? number_to_human_size(@activity[:storage_bytes]) : nil],
+        ["DB Size", @database_size ? number_to_human_size(@database_size) : nil]
+      ].each do |label, value| %>
+        <div class="pad border" style="border-radius: 0.5em; min-width: 8ch;">
+          <div class="txt-large" style="font-weight: 600;"><%= value || "—" %></div>
+          <div class="txt-small txt-muted"><%= label %></div>
+        </div>
+      <% end %>
+    </div>
+  </section>
 
   <%# Quick links %>
   <div class="flex gap" style="margin-top: 0.5em;">

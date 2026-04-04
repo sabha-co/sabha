@@ -1,0 +1,76 @@
+<% content_for :title, @identity.email_address %>
+
+<div class="flex flex-column gap">
+  <div>
+    <%= link_to "\u2190 Identities", admin_identities_path, class: "txt-muted txt-small txt-undecorated" %>
+  </div>
+
+  <%# Identity header %>
+  <div class="flex flex-column gap-half">
+    <h1 class="txt-large" style="font-weight: 600;"><%= @identity.email_address %></h1>
+    <div class="flex gap txt-small txt-muted">
+      <% if @identity.name.present? %>
+        <span><%= @identity.name %></span>
+        <span>&middot;</span>
+      <% end %>
+      <span>Signed up <%= @identity.created_at.to_fs(:date) %></span>
+      <span>&middot;</span>
+      <% last_session = @identity.global_sessions.order(last_active_at: :desc).pick(:last_active_at) %>
+      <span>Last active: <%= last_session ? time_ago_in_words(last_session) + " ago" : "\u2014" %></span>
+      <span>&middot;</span>
+      <% if @identity.verified? %>
+        <span style="color: var(--color-positive);">Verified</span>
+      <% else %>
+        <span class="txt-muted">Unverified</span>
+      <% end %>
+      <% if @identity.superadmin? %>
+        <span>&middot;</span>
+        <span style="font-weight: 600;">Superadmin</span>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Workspaces %>
+  <section class="flex flex-column gap-half">
+    <h2 class="txt-small txt-muted txt-label">Workspaces (<%= @memberships.size %>)</h2>
+    <% if @memberships.any? %>
+      <div class="border" style="border-radius: 0.5em; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr class="txt-small txt-muted" style="border-bottom: 1px solid var(--color-border);">
+              <th class="pad-block-half pad-inline txt-align-start">Workspace</th>
+              <th class="pad-block-half pad-inline txt-align-start">Joined</th>
+              <th class="pad-block-half pad-inline txt-align-start">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @memberships.each do |membership| %>
+              <% workspace = membership.workspace %>
+              <tr style="border-bottom: 1px solid var(--color-border);">
+                <td class="pad-block-half pad-inline txt-small">
+                  <% if workspace %>
+                    <%= link_to workspace.name, admin_workspace_path(workspace), class: "txt-undecorated", style: "font-weight: 600;" %>
+                  <% else %>
+                    <span class="txt-muted">Deleted workspace</span>
+                  <% end %>
+                </td>
+                <td class="pad-block-half pad-inline txt-small txt-muted"><%= membership.created_at.to_fs(:date) %></td>
+                <td class="pad-block-half pad-inline txt-small">
+                  <% if workspace&.suspended? %>
+                    <span class="txt-negative">Suspended</span>
+                  <% elsif workspace %>
+                    <span style="color: var(--color-positive);">Active</span>
+                  <% else %>
+                    <span class="txt-muted">&mdash;</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="txt-small txt-muted">No workspaces.</p>
+    <% end %>
+  </section>
+</div>

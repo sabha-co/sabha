@@ -23,6 +23,7 @@
           <tr class="txt-small txt-muted" style="border-bottom: 1px solid var(--color-border);">
             <th class="pad-block-half pad-inline txt-align-start">Email</th>
             <th class="pad-block-half pad-inline txt-align-start">Name</th>
+            <th class="pad-block-half pad-inline txt-align-start">Role</th>
             <th class="pad-block-half pad-inline txt-align-start">Joined</th>
             <th class="pad-block-half pad-inline txt-align-start">Last active</th>
           </tr>
@@ -31,15 +32,18 @@
           <% @memberships.each do |membership| %>
             <% identity = membership.global_identity %>
             <tr style="border-bottom: 1px solid var(--color-border);">
-              <td class="pad-block-half pad-inline txt-small"><%= identity.email_address %></td>
+              <td class="pad-block-half pad-inline txt-small">
+                <%= link_to identity.email_address, admin_identity_path(identity), class: "txt-undecorated", style: "font-weight: 600;" %>
+              </td>
               <td class="pad-block-half pad-inline txt-small txt-muted"><%= identity.name.presence || "—" %></td>
+              <td class="pad-block-half pad-inline txt-small txt-muted"><%= @roles_by_user_id[membership.user_id]&.capitalize || "—" %></td>
               <td class="pad-block-half pad-inline txt-small txt-muted"><%= membership.created_at.to_fs(:date) %></td>
               <td class="pad-block-half pad-inline txt-small txt-muted"><%= membership[:last_active_at] ? time_ago_in_words(membership[:last_active_at]) + " ago" : "—" %></td>
             </tr>
           <% end %>
           <% if @memberships.empty? %>
             <tr>
-              <td colspan="4" class="pad txt-muted txt-align-center">
+              <td colspan="5" class="pad txt-muted txt-align-center">
                 <% if @query.present? %>
                   No members matching "<%= @query %>".
                 <% else %>

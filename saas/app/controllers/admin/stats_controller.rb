@@ -12,8 +12,23 @@ module Admin
       @verified_identities = GlobalIdentity.verified.count
       @new_identities_last_30_days = GlobalIdentity.where(created_at: 30.days.ago..).count
 
+      @workspace_growth = daily_counts_for(Workspace)
+      @identity_growth = daily_counts_for(GlobalIdentity)
+
       @recent_workspaces = Workspace.order(created_at: :desc).limit(5).includes(:creator)
       @recent_signups = GlobalIdentity.order(created_at: :desc).limit(5)
     end
+
+    private
+
+      def daily_counts_for(model)
+        raw = model.where(created_at: 30.days.ago.beginning_of_day..)
+          .group("DATE(created_at)").count
+
+        (0..29).map do |days_ago|
+          date = days_ago.days.ago.to_date
+          [ date, raw[date.to_s] || 0 ]
+        end.reverse
+      end
   end
 end
