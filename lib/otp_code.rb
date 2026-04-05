@@ -28,7 +28,7 @@ module OtpCode
     # Generate a random code of given length
     # Default length of 6 provides ~30 bits of entropy
     def generate(length = 6)
-      length.times.map { ALPHABET.sample }.join
+      length.times.map { ALPHABET[SecureRandom.random_number(ALPHABET.size)] }.join
     end
 
     # Sanitize user input:
