@@ -661,6 +661,8 @@ Documentation outline:
 - explain why we need to be careful
 - explain how it works (global IDs)
 
+> **Note (added by Sabha team):** The gem automatically scopes Turbo Stream names when you pass a tenanted model instance (e.g., `turbo_stream_from @room, :messages`), because tenanted models include `?tenant=` in their GlobalID via `to_global_id` / `to_signed_global_id`. However, bare symbol streams like `turbo_stream_from :inbox` produce identical stream names across all tenants — there is no model GlobalID to differentiate them. Always include a tenanted model as the first argument to scope the stream: `turbo_stream_from Current.account, :inbox`. The same applies to broadcasts: use `broadcast_replace_to Current.account, :inbox` instead of `broadcast_replace_to :inbox`.
+
 TODO:
 
 - [x] extend `to_global_id` and friends for Base

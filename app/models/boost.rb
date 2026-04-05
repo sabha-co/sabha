@@ -18,7 +18,7 @@ class Boost < ApplicationRecord
       rendering = { partial: "messages/boosts/boost", locals: { boost: self } }
 
       Turbo::StreamsChannel.broadcast_action_to(message.room, :messages, action: :append, targets: targets, **rendering)
-      Turbo::StreamsChannel.broadcast_action_to(:inbox, action: :append, targets: targets, **rendering)
+      Turbo::StreamsChannel.broadcast_action_to(Current.account, :inbox, action: :append, targets: targets, **rendering)
     end
 
     def create_boost_notification
@@ -72,7 +72,7 @@ class Boost < ApplicationRecord
       targets = "[id='boost_#{id}']"
 
       Turbo::StreamsChannel.broadcast_action_to(message.room, :messages, action: :remove, targets: targets)
-      Turbo::StreamsChannel.broadcast_action_to(:inbox, action: :remove, targets: targets)
+      Turbo::StreamsChannel.broadcast_action_to(Current.account, :inbox, action: :remove, targets: targets)
     end
 
     def boosts_target
