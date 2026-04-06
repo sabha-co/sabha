@@ -1,5 +1,5 @@
 <%= sidebar_turbo_frame_tag do %>
-  <%= turbo_stream_from :rooms %>
+  <%= turbo_stream_from Current.account, :rooms %>
   <%= turbo_stream_from Current.user, :rooms %>
 
   <div data-controller="unread-indicator"

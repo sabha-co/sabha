@@ -22,7 +22,7 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy" do
     # 2 broadcasts: one for :starred_rooms and one for :shared_rooms
-    assert_turbo_stream_broadcasts :rooms, count: 2 do
+    assert_turbo_stream_broadcasts [ accounts(:signal), :rooms ], count: 2 do
       assert_difference -> { Room.active.count }, -1 do
         delete room_url(rooms(:designers))
       end

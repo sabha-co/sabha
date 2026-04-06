@@ -53,7 +53,7 @@
   </div>
 
   <%= yield :messages %>
-  <%= turbo_stream_from :inbox %>
+  <%= turbo_stream_from Current.account, :inbox %>
   <%= turbo_stream_from Current.user, :inbox %>
 </div>
 

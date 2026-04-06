@@ -46,7 +46,7 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
   test "only admins or creators can update" do
     sign_in :jz
 
-    assert_turbo_stream_broadcasts :rooms, count: 0 do
+    assert_turbo_stream_broadcasts [ accounts(:signal), :rooms ], count: 0 do
       put rooms_open_url(rooms(:hq)), params: { room: { name: "New Name" } }
     end
 

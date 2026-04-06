@@ -1,5 +1,6 @@
 # Kamal deployment configuration for sabha.co (SaaS mode)
 # Deploy with: kamal deploy -d multitenant
+# Follow logs: set -a && source .env.multitenant && set +a && kamal logs -f -d multitenant
 
 service: sabha
 
@@ -109,5 +110,5 @@ accessories:
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
   shell: app exec --interactive --reuse "bash"
-  logs: app logs -f
+  logs: app logs
   dbc: app exec --interactive --reuse "bin/rails dbconsole"
