@@ -122,6 +122,58 @@ Each message includes:
 
 Attachment URLs are absolute and signed. Download promptly.
 
+## Editing Messages
+
+Bots can edit their own messages by sending the new body as plain text:
+
+    PATCH <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}
+    Content-Type: text/plain
+
+    Updated message content here
+
+Response (200): { "id": 10, "body": { "html": "...", "plain": "Updated message content here" } }
+
+Only messages created by the bot can be edited. Returns 403 for others' messages.
+
+## Deleting Messages
+
+Bots can delete their own messages:
+
+    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}
+
+Response: 204 No Content. Only own messages can be deleted. Returns 403 for others' messages.
+
+## Reactions (Boosts)
+
+Add a reaction by sending the emoji as plain text:
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}/boosts
+    Content-Type: text/plain
+
+    🎉
+
+Response (201): { "id": 5, "content": "🎉" }
+
+Remove a reaction:
+
+    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}/boosts/{boost_id}
+
+Response: 204 No Content.
+
+## Listing Room Members
+
+    GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/members
+
+Response: JSON array of members with id, name, and role (member, moderator, administrator, or bot).
+
+## Searching Messages
+
+Search across all rooms the bot is a member of:
+
+    GET <%= request.base_url %><%= request.script_name %>/{bot_key}/search?q=deploy
+
+Response: JSON array of up to 50 matching messages, each with id, creator, body, room (id + name), and created_at.
+
 ## Updating Bot Settings
 
     PATCH <%= request.base_url %><%= request.script_name %>/bots/{bot_key}
@@ -138,7 +190,7 @@ absolute — you can call them directly without needing to know the server's bas
 
     {
       "event": "message_created",
-      "user": { "id": 1, "name": "Alice", "url": "<%= request.base_url %><%= request.script_name %>/users/1" },
+      "user": { "id": 1, "name": "Alice", "role": "member", "url": "<%= request.base_url %><%= request.script_name %>/users/1" },
       "room": {
         "id": 5, "name": "General", "type": "Open",
         "members": 42, "has_bot": true,
@@ -155,7 +207,10 @@ absolute — you can call them directly without needing to know the server's bas
           "byte_size": 245760
         },
         "mentionees": [{ "id": 99, "name": "MyBot" }],
-        "url": "<%= request.base_url %><%= request.script_name %>/rooms/5@10"
+        "url": "<%= request.base_url %><%= request.script_name %>/rooms/5@10",
+        "created_at": "2026-04-07T12:00:00Z",
+        "updated_at": "2026-04-07T12:00:00Z",
+        "thread": null
       }
     }
 
@@ -169,7 +224,7 @@ Same structure plus: "boost": { "id": 123, "body": "👍" }
 
 ### user_created
 
-    { "event": "user_created", "user": { "id": 1, "name": "Alice", "url": "<%= request.base_url %><%= request.script_name %>/users/1" } }
+    { "event": "user_created", "user": { "id": 1, "name": "Alice", "role": "member", "url": "<%= request.base_url %><%= request.script_name %>/users/1" } }
 
 ### Webhook Response Convention
 

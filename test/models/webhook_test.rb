@@ -11,9 +11,9 @@ class WebhookTest < ActiveSupport::TestCase
     WebMock.stub_request(:post, webhooks(:bender).url).
       with(
         body: hash_including(
-        user: { id: message.creator.id, name: message.creator.name, url: user_url },
+        user: { id: message.creator.id, name: message.creator.name, role: message.creator.role, url: user_url },
         room: { id: message.room.id, name: message.room.name, type: "Closed", members: 4, has_bot: false, messages_url: messages_url },
-        message: { id: message.id, body: { html: "First post!", plain: "First post!" }, has_attachment: false, attachment: nil, mentionees: [], url: message_url },
+        message: hash_including(id: message.id, body: { html: "First post!", plain: "First post!" }, has_attachment: false, attachment: nil, mentionees: [], url: message_url, thread: nil),
       ))
 
     response = webhooks(:bender).deliver_now(messages(:first), :created, base_url: base_url)

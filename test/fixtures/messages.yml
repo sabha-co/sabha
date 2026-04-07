@@ -75,3 +75,9 @@ thirteenth:
   creator: jz
   client_message_id: "0013"
   created_at: <%= 5.minutes.ago %>
+
+bender_message:
+  room: watercooler
+  creator: bender
+  client_message_id: "0014"
+  created_at: <%= 3.minutes.ago %>
