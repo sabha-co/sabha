@@ -135,7 +135,8 @@ Rails.application.routes.draw do
     resources :threads, only: %i[ create show edit update destroy ]
 
     post ":bot_key/directs", to: "directs/by_bots#create", as: :bot_directs
-    get ":bot_key", to: "/bots/rooms#index", as: :bot_rooms, constraints: { bot_key: /\d+-.+/ }
+    post ":bot_key", to: "/bots/rooms#create", as: :bot_create_room, constraints: { bot_key: /\d+-.+/ }
+    get  ":bot_key", to: "/bots/rooms#index", as: :bot_rooms, constraints: { bot_key: /\d+-.+/ }
   end
 
   resources :rooms do
@@ -150,7 +151,14 @@ Rails.application.routes.draw do
     post   ":bot_key/messages/:message_id/thread",     to: "rooms/threads/by_bots#create",     as: :bot_message_thread
     post   ":bot_key/messages/:message_id/boosts",     to: "messages/boosts/by_bots#create",   as: :bot_message_boost
     delete ":bot_key/messages/:message_id/boosts/:id", to: "messages/boosts/by_bots#destroy",  as: :bot_message_unboost
+    get    ":bot_key/messages/:id",                     to: "messages/reads_by_bots#show",      as: :bot_message_read
     get    ":bot_key/members",                         to: "bots/members#index",               as: :bot_members
+    post   ":bot_key/members",                         to: "bots/members#create",              as: :bot_add_member
+    delete ":bot_key/members/:user_id",                to: "bots/members#destroy",             as: :bot_remove_member
+    post   ":bot_key/membership",                      to: "bots/memberships#create",          as: :bot_join_room
+    delete ":bot_key/membership",                      to: "bots/memberships#destroy",         as: :bot_leave_room
+    patch  ":bot_key",                                 to: "bots/rooms#update",                as: :bot_update_room, constraints: { bot_key: /\d+-.+/ }
+    delete ":bot_key",                                 to: "bots/rooms#destroy",               as: :bot_archive_room, constraints: { bot_key: /\d+-.+/ }
 
     scope module: "rooms" do
       resource :refresh, only: :show

@@ -44,4 +44,39 @@ class Messages::ReadsByBotsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_url
   end
+
+  # Single message read
+
+  test "returns a single message by id" do
+    message = messages(:bender_message)
+
+    get room_bot_message_read_url(@room, @bot.bot_key, message)
+
+    assert_response :success
+    json = response.parsed_body
+    assert_equal message.id, json["id"]
+    assert json["creator"].is_a?(Hash)
+    assert json["body"].is_a?(Hash)
+    assert json["created_at"].present?
+  end
+
+  test "returns 404 for message in room bot is not in" do
+    other_room = rooms(:designers)
+    # Create a message in the other room to look up
+    message = other_room.messages.create!(
+      creator: users(:david),
+      body: "test",
+      client_message_id: Random.uuid
+    )
+
+    get room_bot_message_read_url(other_room, @bot.bot_key, message)
+
+    assert_response :not_found
+  end
+
+  test "returns 404 for nonexistent message" do
+    get room_bot_message_read_url(@room, @bot.bot_key, 999999)
+
+    assert_response :not_found
+  end
 end
