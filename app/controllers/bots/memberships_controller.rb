@@ -1,7 +1,4 @@
 class Bots::MembershipsController < Bots::BaseController
-  before_action :require_bot_authentication
-  rescue_from ActiveRecord::RecordNotFound, with: :not_found
-
   def create
     room = Room.active.find(params[:room_id])
 
@@ -27,13 +24,4 @@ class Bots::MembershipsController < Bots::BaseController
   rescue Membership::LastVisibleMemberError
     render json: { error: "You're the last member", code: "validation_failed" }, status: :unprocessable_entity
   end
-
-  private
-    def require_bot_authentication
-      head :forbidden unless authenticated_by.bot_key?
-    end
-
-    def not_found
-      render json: { error: "Room not found", code: "not_found" }, status: :not_found
-    end
 end

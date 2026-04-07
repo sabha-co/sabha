@@ -1,8 +1,6 @@
 class Bots::SearchesController < Bots::BaseController
   include ActiveStorage::SetCurrent
 
-  before_action :require_bot_authentication
-
   def index
     query = params[:q].to_s.gsub(/[^[:word:]]/, " ").strip
     return render(json: { error: "Query parameter 'q' is required", code: "validation_failed" }, status: :unprocessable_entity) if query.blank?
@@ -24,9 +22,4 @@ class Bots::SearchesController < Bots::BaseController
       }
     }
   end
-
-  private
-    def require_bot_authentication
-      head :forbidden unless authenticated_by.bot_key?
-    end
 end

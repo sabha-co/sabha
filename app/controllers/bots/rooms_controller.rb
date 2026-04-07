@@ -1,21 +1,17 @@
 class Bots::RoomsController < Bots::BaseController
-  before_action :require_bot_authentication
   before_action :set_room, only: %i[update destroy]
   before_action :require_creator, only: %i[update destroy]
-  rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
   def index
     rooms = if params[:joinable].present?
-      Rooms::Open.browsable_by(Current.user).map { |room|
-        room.as_bot_json(bot_key: Current.user.bot_key, url_helper: method(:room_bot_messages_url))
-      }
+      Rooms::Open.browsable_by(Current.user)
     else
-      Current.user.rooms.without_threads.map { |room|
-        room.as_bot_json(bot_key: Current.user.bot_key, url_helper: method(:room_bot_messages_url))
-      }
+      Current.user.rooms.without_threads
     end
 
-    render json: rooms
+    render json: rooms.map { |room|
+      room.as_bot_json(bot_key: Current.user.bot_key, url_helper: method(:room_bot_messages_url))
+    }
   end
 
   def create
@@ -61,17 +57,5 @@ class Bots::RoomsController < Bots::BaseController
   private
     def set_room
       @room = Current.user.rooms.find(params[:room_id])
-    end
-
-    def require_creator
-      head :forbidden unless @room.creator_id == Current.user.id
-    end
-
-    def require_bot_authentication
-      head :forbidden unless authenticated_by.bot_key?
-    end
-
-    def not_found
-      render json: { error: "Room not found", code: "not_found" }, status: :not_found
     end
 end

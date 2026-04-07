@@ -1,6 +1,7 @@
 class Bots::RegistrationsController < Bots::BaseController
   include BlockBannedRequests
 
+  skip_before_action :require_bot_authentication
   allow_unauthenticated_access only: :create
 
   rate_limit to: 10, within: 1.hour, only: :create,
