@@ -42,12 +42,14 @@ class Bots::RoomsController < Bots::BaseController
 
     @room.update!(name: name)
     @room.announce_rename(old_name, actor: Current.user) if @room.name != old_name
+    RoomUpdateBroadcastJob.perform_later(@room)
 
     render json: @room.as_bot_json(bot_key: Current.user.bot_key, url_helper: method(:room_bot_messages_url))
   end
 
   def destroy
     @room.deactivate
+    broadcast_remove_room
 
     head :no_content
   rescue Room::CannotDeleteOriginalError
@@ -57,5 +59,11 @@ class Bots::RoomsController < Bots::BaseController
   private
     def set_room
       @room = Current.user.rooms.find(params[:room_id])
+    end
+
+    def broadcast_remove_room
+      Sidebar::SIDEBAR_SECTIONS.each do |list_name|
+        broadcast_remove_to Current.account, :rooms, target: [ @room, helpers.dom_prefix(list_name, :list_node) ]
+      end
     end
 end

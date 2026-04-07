@@ -14,6 +14,7 @@ class Bots::MembersController < Bots::BaseController
   def create
     user = User.active.find(params[:user_id])
     @room.add_member!(user, actor: Current.user)
+    broadcast_sidebar_room_added(user, @room)
 
     render json: { id: user.id, name: user.name }, status: :created
   end
@@ -21,6 +22,7 @@ class Bots::MembersController < Bots::BaseController
   def destroy
     user = @room.users.find(params[:user_id])
     @room.remove_member!(user, actor: Current.user)
+    broadcast_sidebar_room_removed(user, @room)
 
     head :no_content
   rescue Membership::LastVisibleMemberError
