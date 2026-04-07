@@ -437,7 +437,7 @@ class UserTest < ActiveSupport::TestCase
         create_message(user: user, room: rooms(:hq))
       end
     end
-    assert_equal 1, user.reload.current_streak
+    assert_equal 0, user.reload.current_streak, "streak should have decayed since last post was 3 days ago"
 
     # Post today (skipping yesterday) - should reset to 1
     perform_enqueued_jobs only: UpdateStreakJob do

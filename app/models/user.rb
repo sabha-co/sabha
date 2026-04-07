@@ -235,12 +235,22 @@ class User < ApplicationRecord
            .count
   end
 
+  def current_streak
+    if streak_updated_on.nil?
+      super # Pre-existing rows: preserve until next recalculation
+    elsif streak_updated_on < Date.yesterday
+      0
+    else
+      super
+    end
+  end
+
   def recalculate_streak!(excluding_message: nil)
     # Skip if user already posted today (excluding the message that triggered this callback)
     return if posted_on?(Date.current, excluding: excluding_message)
 
     new_streak = posted_on?(Date.yesterday) ? current_streak + 1 : 1
-    update_column(:current_streak, new_streak)
+    update_columns(current_streak: new_streak, streak_updated_on: Date.current)
   end
 
   def posted_on?(date, excluding: nil)
