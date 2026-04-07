@@ -2,7 +2,7 @@ class Messages::ReadsByBotsController < ApplicationController
   include ActiveStorage::SetCurrent
 
   skip_forgery_protection
-  allow_bot_access only: :index
+  allow_bot_access only: %i[index show]
   rescue_from ActiveRecord::RecordNotFound, with: :room_not_found
 
   def index
@@ -10,7 +10,18 @@ class Messages::ReadsByBotsController < ApplicationController
     # last(50) generates LIMIT SQL; reverse restores chronological order
     messages = @room.messages.active.with_creator.with_attached_attachment.ordered.last(50).reverse
 
-    render json: messages.map { |msg|
+    render json: messages.map { |msg| message_json(msg) }
+  end
+
+  def show
+    @room = Current.user.rooms.find(params[:room_id])
+    message = @room.messages.active.with_creator.with_attached_attachment.find(params[:id])
+
+    render json: message_json(message)
+  end
+
+  private
+    def message_json(msg)
       { id: msg.id,
         creator: { id: msg.creator.id, name: msg.creator.name },
         body: { html: msg.body.body.to_s, plain: msg.plain_text_body },
@@ -18,10 +29,8 @@ class Messages::ReadsByBotsController < ApplicationController
         attachment: msg.attachment? ? attachment_json(msg) : nil,
         mentionees: msg.mentionees.map { |m| { id: m.id, name: m.name } },
         created_at: msg.created_at.iso8601 }
-    }
-  end
+    end
 
-  private
     def attachment_json(message)
       blob = message.attachment.blob
       {

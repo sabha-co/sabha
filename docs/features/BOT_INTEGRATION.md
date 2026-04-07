@@ -55,13 +55,22 @@ All endpoints authenticate via `bot_key` in the URL path. The bot key is a secre
 | Send attachment | POST | `/rooms/{room_id}/{bot_key}/messages` (multipart) |
 | Edit own message | PATCH | `/rooms/{room_id}/{bot_key}/messages/{id}` |
 | Delete own message | DELETE | `/rooms/{room_id}/{bot_key}/messages/{id}` |
+| Read single message | GET | `/rooms/{room_id}/{bot_key}/messages/{id}` |
 | Reply in a thread | POST | `/rooms/{room_id}/{bot_key}/messages/{message_id}/thread` |
 | Read messages | GET | `/rooms/{room_id}/{bot_key}/messages` |
 | Add reaction | POST | `/rooms/{room_id}/{bot_key}/messages/{message_id}/boosts` |
 | Remove reaction | DELETE | `/rooms/{room_id}/{bot_key}/messages/{message_id}/boosts/{boost_id}` |
 | List room members | GET | `/rooms/{room_id}/{bot_key}/members` |
+| Add member to room | POST | `/rooms/{room_id}/{bot_key}/members` |
+| Remove member from room | DELETE | `/rooms/{room_id}/{bot_key}/members/{user_id}` |
+| Bot joins room | POST | `/rooms/{room_id}/{bot_key}/membership` |
+| Bot leaves room | DELETE | `/rooms/{room_id}/{bot_key}/membership` |
 | Search messages | GET | `/{bot_key}/search?q=query` |
 | List rooms | GET | `/rooms/{bot_key}` |
+| List joinable rooms | GET | `/rooms/{bot_key}?joinable=true` |
+| Create room | POST | `/rooms/{bot_key}` |
+| Update room | PATCH | `/rooms/{room_id}/{bot_key}` |
+| Archive room | DELETE | `/rooms/{room_id}/{bot_key}` |
 | Create a DM | POST | `/rooms/{bot_key}/directs` |
 | Update bot settings | PATCH | `/bots/{bot_key}` |
 | API discovery | GET | `/skill` (unauthenticated) |
@@ -212,6 +221,88 @@ curl "$BASE_URL/$BOT_KEY/search?q=deploy"
 ```
 
 Returns up to 50 matching messages with room context.
+
+### Reading a single message
+
+```bash
+curl "$BASE_URL/rooms/$ROOM_ID/$BOT_KEY/messages/$MESSAGE_ID"
+```
+
+Returns the message with creator, body, attachment, and mentionees.
+
+### Discovering joinable rooms
+
+List open rooms the bot can join (rooms it's not already in).
+
+```bash
+curl "$BASE_URL/rooms/$BOT_KEY?joinable=true"
+```
+
+### Joining a room
+
+Bots can join any open room.
+
+```bash
+curl -X POST "$BASE_URL/rooms/$ROOM_ID/$BOT_KEY/membership"
+```
+
+Returns the room object on success (201).
+
+### Leaving a room
+
+```bash
+curl -X DELETE "$BASE_URL/rooms/$ROOM_ID/$BOT_KEY/membership"
+```
+
+Returns `204 No Content`. Cannot leave direct message rooms.
+
+### Creating a room
+
+Bots can create open or closed rooms. The bot is auto-joined and recorded as the creator.
+
+```bash
+curl -X POST "$BASE_URL/rooms/$BOT_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Bot Room", "type": "open"}'
+```
+
+### Updating a room
+
+Only the bot that created the room can update it.
+
+```bash
+curl -X PATCH "$BASE_URL/rooms/$ROOM_ID/$BOT_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "New Name"}'
+```
+
+### Archiving a room
+
+Only the bot that created the room can archive it (soft-delete).
+
+```bash
+curl -X DELETE "$BASE_URL/rooms/$ROOM_ID/$BOT_KEY"
+```
+
+Returns `204 No Content`.
+
+### Adding a member to a room
+
+Only the bot that created the room can manage members.
+
+```bash
+curl -X POST "$BASE_URL/rooms/$ROOM_ID/$BOT_KEY/members" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 42}'
+```
+
+### Removing a member from a room
+
+```bash
+curl -X DELETE "$BASE_URL/rooms/$ROOM_ID/$BOT_KEY/members/$USER_ID"
+```
+
+Returns `204 No Content`.
 
 ---
 

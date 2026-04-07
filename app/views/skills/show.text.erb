@@ -109,12 +109,68 @@ Response: { "room": { "id": 5 } } with status 201 (new) or 200 (existing).
 
 Response: JSON array of rooms the bot is a member of, with message posting URLs.
 
+## Discovering Joinable Rooms
+
+    GET <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}?joinable=true
+
+Response: JSON array of open rooms the bot is NOT already a member of.
+
+## Joining a Room
+
+Bots can join any open room:
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/membership
+
+Response (201): room object with id, name, type, messages_url.
+
+## Leaving a Room
+
+    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/membership
+
+Response: 204 No Content. Cannot leave direct message rooms.
+
+## Creating a Room
+
+Bots can create open or closed rooms. The bot is auto-joined and recorded as creator.
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}
+    Content-Type: application/json
+
+    { "name": "My Room", "type": "open" }
+
+Response (201): room object. Type must be "open" or "closed".
+
+## Updating a Room
+
+Only the bot that created the room can update it:
+
+    PATCH <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}
+    Content-Type: application/json
+
+    { "name": "New Name" }
+
+Response: updated room object. Returns 403 if the bot is not the creator.
+
+## Archiving a Room
+
+Only the bot that created the room can archive (soft-delete) it:
+
+    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}
+
+Response: 204 No Content. Returns 403 if the bot is not the creator.
+
 ## Reading Messages
 
     GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
 
 Response: JSON array of recent messages (last 50) with sender, body (HTML + plain text),
 mentionees, attachment info, and created_at.
+
+## Reading a Single Message
+
+    GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}
+
+Response: single message object with the same fields as the list endpoint.
 
 Each message includes:
 - has_attachment (boolean): whether the message has a file attachment
@@ -165,6 +221,25 @@ Response: 204 No Content.
     GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/members
 
 Response: JSON array of members with id, name, and role (member, moderator, administrator, or bot).
+
+## Adding a Member to a Room
+
+Only the bot that created the room can add members:
+
+    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/members
+    Content-Type: application/json
+
+    { "user_id": 42 }
+
+Response (201): { "id": 42, "name": "Alice" }. Returns 403 if the bot is not the creator.
+
+## Removing a Member from a Room
+
+Only the bot that created the room can remove members:
+
+    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/members/{user_id}
+
+Response: 204 No Content. Returns 403 if the bot is not the creator.
 
 ## Searching Messages
 
