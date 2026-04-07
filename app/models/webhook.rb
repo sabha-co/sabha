@@ -144,7 +144,10 @@ class Webhook < ApplicationRecord
           has_attachment: message.attachment?,
           attachment: attachment_to_api(message),
           mentionees: message.mentionees.map { |m| { id: m.id, name: m.name } },
-          url: absolute_url(routes.room_at_message_path(message.room, message))
+          url: absolute_url(routes.room_at_message_path(message.room, message)),
+          created_at: message.created_at.iso8601,
+          updated_at: message.updated_at.iso8601,
+          thread: thread_to_api(message)
         }
       end
 
@@ -152,11 +155,17 @@ class Webhook < ApplicationRecord
         {
           id: user.id,
           name: user.name,
+          role: user.role,
           url: absolute_url(routes.user_path(user))
         }
       end
 
       private
+        def thread_to_api(message)
+          return nil unless message.room.thread?
+          { id: message.room.id, parent_message_id: message.room.parent_message_id }
+        end
+
         def attachment_to_api(message)
           return nil unless message.attachment?
 

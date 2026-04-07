@@ -38,7 +38,7 @@ test:
     tenanted: true
   untenanted:
     <<: *untenanted
-    url: <%= ENV.fetch("UNTENANTED_DATABASE_URL", "postgres://localhost/sabha_untenanted_test") %>
+    url: <%= ENV.fetch("UNTENANTED_TEST_DATABASE_URL", "postgres://localhost/sabha_untenanted_test") %>
   queue:
     <<: *sqlite
     database: storage/db/test_queue.sqlite3

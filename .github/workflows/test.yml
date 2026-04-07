@@ -117,7 +117,7 @@ jobs:
           RAILS_ENV: test
           SAAS: "true"
           BUNDLE_GEMFILE: Gemfile.saas
-          UNTENANTED_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test
+          UNTENANTED_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test
 
       - name: Build Tailwind CSS
         run: pnpm run build:css
@@ -129,4 +129,4 @@ jobs:
           SAAS: "true"
           SECRET_KEY_BASE: test_secret_key_base_for_ci
           BUNDLE_GEMFILE: Gemfile.saas
-          UNTENANTED_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test
+          UNTENANTED_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test

@@ -4,12 +4,12 @@ class Messages::ByBotsControlleTest < ActionDispatch::IntegrationTest
   setup do
     skip "libvips is not available" unless defined?(::Vips)
 
-    @room = rooms(:designers)
-    sign_in :david
+    @bot = users(:bender)
+    @room = rooms(:watercooler)
   end
 
   test "create file" do
-    post room_bot_messages_url(@room, "example"), params: {
+    post room_bot_messages_url(@room, @bot.bot_key), params: {
       attachment: fixture_file_upload("moon.jpg", "image/jpeg")
     }
 
