@@ -7,6 +7,9 @@ class Workspace::SnapshotJobTest < ActiveSupport::TestCase
     creator = global_identities(:admin)
 
     with_provisioned_workspace(name: "Snapshot Test", creator: creator) do |workspace|
+      # Clean up any stale messages from tenant DB reuse
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) { Message.delete_all }
+
       Workspace::SnapshotJob.perform_now(workspace)
 
       snapshot = workspace.reload.snapshot
