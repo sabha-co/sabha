@@ -62,7 +62,7 @@ class Bots::RegistrationsController < Bots::BaseController
     end
 
     def websocket_url_for_bot
-      base = ActionCable.server.config.url || "#{request.base_url}/cable"
+      base = ActionCable.server.config.url || "#{request.base_url}#{request.script_name}/cable"
       base = base.sub(%r{\Ahttps://}, "wss://").sub(%r{\Ahttp://}, "ws://")
       query = { bot_key: @bot.bot_key }
       query[:wid] = ApplicationRecord.current_tenant if Sabha.saas?

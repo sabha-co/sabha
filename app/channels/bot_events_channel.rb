@@ -5,7 +5,7 @@ class BotEventsChannel < ApplicationCable::Channel
       return
     end
 
-    stream_from self.class.stream_name_for(current_user, tenant: try(:current_tenant))
+    stream_from self.class.stream_name_for(current_user, tenant: connection.try(:current_tenant))
   end
 
   def self.stream_name_for(bot, tenant: nil)
