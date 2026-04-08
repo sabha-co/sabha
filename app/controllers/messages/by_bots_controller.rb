@@ -23,7 +23,7 @@ class Messages::ByBotsController < MessagesController
 
     @message.broadcast_update
     @message.broadcast_mentionee_sidebar_updates
-    deliver_webhooks_to_bots(@message, :updated)
+    notify_bots(@message, :updated)
 
     render json: { id: @message.id, body: { html: @message.body.body.to_s, plain: @message.plain_text_body } }
   end
@@ -31,7 +31,7 @@ class Messages::ByBotsController < MessagesController
   def destroy
     @message.deactivate
     @message.broadcast_remove
-    deliver_webhooks_to_bots(@message, :deleted)
+    notify_bots(@message, :deleted)
 
     head :no_content
   end

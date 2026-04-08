@@ -1,7 +1,7 @@
 module NotifyBots
   extend ActiveSupport::Concern
 
-  def deliver_webhooks_to_bots(item, event)
+  def notify_bots(item, event)
     base_url = request.base_url + request.script_name
     room = item.try(:room) || item.try(:message)&.room
 
@@ -30,6 +30,6 @@ module NotifyBots
     payload = Webhook.build_event_payload(item, event, bot: bot, base_url: base_url)
     tenant = Sabha.saas? ? ApplicationRecord.current_tenant : nil
     stream = BotEventsChannel.stream_name_for(bot, tenant: tenant)
-    ActionCable.server.broadcast(stream, JSON.parse(payload))
+    ActionCable.server.broadcast(stream, payload)
   end
 end

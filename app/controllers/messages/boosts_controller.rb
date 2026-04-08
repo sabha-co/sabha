@@ -13,7 +13,7 @@ class Messages::BoostsController < ApplicationController
     @boost = @message.boosts.create(boost_params)
     return head :ok unless @boost.persisted?
 
-    deliver_webhooks_to_bots(@boost, :created)
+    notify_bots(@boost, :created)
   rescue ActiveRecord::RecordNotUnique
     head :ok
   end
@@ -22,7 +22,7 @@ class Messages::BoostsController < ApplicationController
     @boost = Current.user.boosts.find(params[:id])
     @boost.destroy!
 
-    deliver_webhooks_to_bots(@boost, :deleted)
+    notify_bots(@boost, :deleted)
   end
 
   private

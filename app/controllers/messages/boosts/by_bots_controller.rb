@@ -13,7 +13,7 @@ class Messages::Boosts::ByBotsController < ApplicationController
     content = request.body.tap(&:rewind).read.force_encoding("UTF-8").strip
     @boost = @message.boosts.create!(content: content, booster: Current.user)
 
-    deliver_webhooks_to_bots(@boost, :created)
+    notify_bots(@boost, :created)
 
     render json: { id: @boost.id, content: @boost.content }, status: :created
   rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
@@ -26,7 +26,7 @@ class Messages::Boosts::ByBotsController < ApplicationController
     @boost = @message.boosts.where(booster: Current.user).find(params[:id])
 
     @boost.destroy!
-    deliver_webhooks_to_bots(@boost, :deleted)
+    notify_bots(@boost, :deleted)
 
     head :no_content
   end

@@ -36,7 +36,7 @@ class Webhook < ApplicationRecord
       {}
     end
 
-    payload.to_json
+    payload
   end
 
   private def url_not_targeting_private_network
@@ -111,7 +111,7 @@ class Webhook < ApplicationRecord
     end
 
     def create_payload(item, event, base_url: "")
-      self.class.build_event_payload(item, event, bot: user, base_url: base_url)
+      self.class.build_event_payload(item, event, bot: user, base_url: base_url).to_json
     end
 
     class UrlBuilder

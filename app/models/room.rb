@@ -258,10 +258,6 @@ class Room < ApplicationRecord
     post_system_message(event: "room_renamed", body: "renamed the room from #{old_name} to #{name}", actor: actor)
   end
 
-  def bot_memberships_for_webhook(item, event)
-    bot_memberships_for_events(item, event).select { |m| m.user.webhook.present? }
-  end
-
   def bot_memberships_for_events(item, event)
     bot_ids = User.active_bots.pluck(:id)
     return [] if bot_ids.empty?

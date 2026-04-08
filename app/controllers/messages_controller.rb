@@ -22,7 +22,7 @@ class MessagesController < ApplicationController
     if @message.persisted?
       @message.broadcast_create
       @message.broadcast_mentionee_sidebar_updates
-      deliver_webhooks_to_bots(@message, :created)
+      notify_bots(@message, :created)
     else
       render action: :not_allowed
     end
@@ -41,7 +41,7 @@ class MessagesController < ApplicationController
 
     @message.broadcast_update
     @message.broadcast_mentionee_sidebar_updates
-    deliver_webhooks_to_bots(@message, :updated)
+    notify_bots(@message, :updated)
 
     redirect_to @room ? room_message_url(@room, @message) : @message
   end
@@ -49,7 +49,7 @@ class MessagesController < ApplicationController
   def destroy
     @message.deactivate
     @message.broadcast_remove
-    deliver_webhooks_to_bots(@message, :deleted)
+    notify_bots(@message, :deleted)
   end
 
   private
