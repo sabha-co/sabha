@@ -9,6 +9,36 @@ class Webhook < ApplicationRecord
   validates :url, presence: true, format: { with: /\Ahttps?:\/\/.+\z/i, message: "must be a valid HTTP(S) URL" }
   validate :url_not_targeting_private_network
 
+  def self.build_event_payload(item, event, bot:, base_url: "")
+    urls = UrlBuilder.new(base_url, bot.bot_key)
+
+    payload = if item.is_a?(Message)
+      {
+        event:   "message_#{event}",
+        user:    urls.user_to_api(item.creator),
+        room:    urls.room_to_api(item.room, bot_is_member: bot.member_of?(item.room)),
+        message: urls.message_to_api(item)
+      }
+    elsif item.is_a?(Boost)
+      {
+        event:   "boost_#{event}",
+        user:    urls.user_to_api(item.booster),
+        room:    urls.room_to_api(item.message.room, bot_is_member: bot.member_of?(item.message.room)),
+        message: urls.message_to_api(item.message),
+        boost:   { id: item.id, body: item.content }
+      }
+    elsif item.is_a?(User)
+      {
+        event:   "user_#{event}",
+        user:    urls.user_to_api(item)
+      }
+    else
+      {}
+    end
+
+    payload.to_json
+  end
+
   private def url_not_targeting_private_network
     return if url.blank?
 
@@ -81,43 +111,7 @@ class Webhook < ApplicationRecord
     end
 
     def create_payload(item, event, base_url: "")
-      urls = UrlBuilder.new(base_url, user.bot_key)
-
-      if item.is_a?(Message)
-        message_payload(item, event, urls)
-      elsif item.is_a?(Boost)
-        boost_payload(item, event, urls)
-      elsif item.is_a?(User)
-        user_payload(item, event, urls)
-      else
-        {}.to_json
-      end
-    end
-
-    def message_payload(message, event, urls)
-      {
-        event:   "message_#{event}",
-        user:    urls.user_to_api(message.creator),
-        room:    urls.room_to_api(message.room, bot_is_member: user.member_of?(message.room)),
-        message: urls.message_to_api(message)
-      }.to_json
-    end
-
-    def boost_payload(boost, event, urls)
-      {
-        event:   "boost_#{event}",
-        user:    urls.user_to_api(boost.booster),
-        room:    urls.room_to_api(boost.message.room, bot_is_member: user.member_of?(boost.message.room)),
-        message: urls.message_to_api(boost.message),
-        boost:   { id: boost.id, body: boost.content }
-      }.to_json
-    end
-
-    def user_payload(user, event, urls)
-      {
-        event:   "user_#{event}",
-        user:    urls.user_to_api(user)
-      }.to_json
+      self.class.build_event_payload(item, event, bot: user, base_url: base_url)
     end
 
     class UrlBuilder

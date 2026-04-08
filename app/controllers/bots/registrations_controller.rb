@@ -54,9 +54,18 @@ class Bots::RegistrationsController < Bots::BaseController
         bot_key: @bot.bot_key,
         name: @bot.name,
         webhook_url: @bot.webhook_url,
+        websocket_url: websocket_url_for_bot,
         rooms: @bot.rooms.without_threads.map { |room|
           room.as_bot_json(bot_key: @bot.bot_key, url_helper: method(:room_bot_messages_url))
         }
       }
+    end
+
+    def websocket_url_for_bot
+      base = ActionCable.server.config.url || "#{request.base_url}/cable"
+      base = base.sub(%r{\Ahttps://}, "wss://").sub(%r{\Ahttp://}, "ws://")
+      query = { bot_key: @bot.bot_key }
+      query[:wid] = ApplicationRecord.current_tenant if Sabha.saas?
+      "#{base}?#{query.to_query}"
     end
 end

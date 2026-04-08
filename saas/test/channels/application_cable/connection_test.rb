@@ -181,4 +181,55 @@ class ApplicationCable::SaasConnectionTest < ActionCable::Connection::TestCase
       end
     end
   end
+
+  test "bot connects with bot_key and wid params" do
+    with_provisioned_workspace(name: "Bot WS Test", creator: global_identities(:alice)) do |workspace|
+      tenant_id = workspace.external_id.to_s
+
+      bot = ApplicationRecord.with_tenant(tenant_id) do
+        User.create_bot!(name: "TestBot")
+      end
+
+      connect params: { bot_key: bot.bot_key, wid: tenant_id },
+        env: { "sabha.workspace_id" => tenant_id }
+
+      assert_equal bot, connection.current_user
+      assert_equal tenant_id, connection.current_tenant
+    end
+  end
+
+  test "bot rejected with invalid bot_key in SaaS mode" do
+    workspace = workspaces(:acme)
+
+    assert_reject_connection do
+      connect params: { bot_key: "999-invalidtoken", wid: workspace.external_id.to_s },
+        env: { "sabha.workspace_id" => workspace.external_id.to_s }
+    end
+  end
+
+  test "bot rejected without tenant context in SaaS mode" do
+    # bot_key present but no wid/workspace — should reject
+    assert_reject_connection do
+      connect params: { bot_key: "1-sometoken" },
+        env: { "SCRIPT_NAME" => "" }
+    end
+  end
+
+  test "bot from one workspace cannot connect to another workspace" do
+    with_provisioned_workspace(name: "Bot Cross Tenant A", creator: global_identities(:alice)) do |workspace_a|
+      with_provisioned_workspace(name: "Bot Cross Tenant B", creator: global_identities(:bob)) do |workspace_b|
+        tenant_a = workspace_a.external_id.to_s
+
+        bot = ApplicationRecord.with_tenant(tenant_a) do
+          User.create_bot!(name: "BotA")
+        end
+
+        # Try to connect bot from workspace A to workspace B
+        assert_reject_connection do
+          connect params: { bot_key: bot.bot_key, wid: workspace_b.external_id.to_s },
+            env: { "sabha.workspace_id" => workspace_b.external_id.to_s }
+        end
+      end
+    end
+  end
 end

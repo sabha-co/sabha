@@ -259,21 +259,23 @@ class Room < ApplicationRecord
   end
 
   def bot_memberships_for_webhook(item, event)
-    bot_ids_with_webhook = User.active_bots.joins(:webhook).pluck(:id)
-    return [] if bot_ids_with_webhook.empty?
+    bot_memberships_for_events(item, event).select { |m| m.user.webhook.present? }
+  end
+
+  def bot_memberships_for_events(item, event)
+    bot_ids = User.active_bots.pluck(:id)
+    return [] if bot_ids.empty?
 
     eligible = memberships.active
       .where(involvement: [ :mentions, :everything ])
-      .where(user_id: bot_ids_with_webhook)
-      .includes(user: :webhook)
+      .where(user_id: bot_ids)
+      .includes(:user)
 
     if direct?
       eligible.to_a
     elsif item.is_a?(Message) && event == :created
       eligible.to_a.select { |m| item.mentionees.include?(m.user) || item.mentions_everyone? }
     else
-      # Updates, deletes, boosts: deliver to bots that were already involved
-      # (i.e. bots that would have received the original message_created)
       eligible.to_a
     end
   end
