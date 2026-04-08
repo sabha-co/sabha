@@ -17,7 +17,7 @@ module NotifyBots
         end
       end
     else
-      User.active_bots.each do |bot|
+      User.active_bots.includes(:webhook).each do |bot|
         broadcast_to_bot_channel(bot, item, event, base_url: base_url)
         bot.deliver_webhook_later(item, event, base_url: base_url) if bot.webhook_url.present?
       end
@@ -27,9 +27,8 @@ module NotifyBots
   private
 
   def broadcast_to_bot_channel(bot, item, event, base_url:)
-    payload = Webhook.build_event_payload(item, event, bot: bot, base_url: base_url)
-    tenant = Sabha.saas? ? ApplicationRecord.current_tenant : nil
-    stream = BotEventsChannel.stream_name_for(bot, tenant: tenant)
+    payload = Bot::EventPayload.build(item, event, bot: bot, base_url: base_url)
+    stream = BotEventsChannel.stream_name_for(bot, tenant: ApplicationRecord.try(:current_tenant))
     ActionCable.server.broadcast(stream, payload)
   end
 end

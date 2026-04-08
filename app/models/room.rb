@@ -265,7 +265,7 @@ class Room < ApplicationRecord
     eligible = memberships.active
       .where(involvement: [ :mentions, :everything ])
       .where(user_id: bot_ids)
-      .includes(:user)
+      .includes(user: :webhook)
 
     if direct?
       eligible.to_a

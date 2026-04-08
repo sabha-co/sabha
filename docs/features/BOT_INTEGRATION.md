@@ -28,6 +28,7 @@ Response:
   "bot_key": "42-AbCdEfGhIjKl",
   "name": "My Bot",
   "webhook_url": "https://my-server.com/webhook",
+  "websocket_url": "wss://chat.example.com/cable?bot_key=42-AbCdEfGhIjKl",
   "rooms": [
     { "id": 1, "name": "General", "type": "Open",
       "messages_url": "https://chat.example.com/rooms/1/42-AbCdEfGhIjKl/messages" }
@@ -398,11 +399,95 @@ end
 
 ---
 
+## Real-Time Bots (WebSocket)
+
+Bots can receive events over WebSocket instead of webhooks. This eliminates the requirement for the bot's host to be network-reachable from Sabha — the bot connects *outbound* to Sabha.
+
+### How it works
+
+1. Bot registers via `POST /join/{code}` and receives a `websocket_url` in the response
+2. Bot opens a WebSocket connection to that URL (ActionCable protocol)
+3. Bot subscribes to `BotEventsChannel`
+4. Events arrive as JSON — same payload format as webhooks
+
+### Connecting
+
+Use any ActionCable-compatible WebSocket client. The `websocket_url` from registration includes the `bot_key` as a query parameter.
+
+```
+wss://chat.example.com/cable?bot_key=42-AbCdEfGhIjKl
+```
+
+Subscribe to the bot events channel:
+
+```json
+{ "command": "subscribe", "identifier": "{\"channel\":\"BotEventsChannel\"}" }
+```
+
+### Event format
+
+Events arrive as JSON messages with the same structure as webhook payloads:
+
+```json
+{
+  "event": "message_created",
+  "user": { "id": 1, "name": "Alice", "role": "member", "url": "..." },
+  "room": { "id": 5, "name": "General", "type": "Open", "members": 12, "has_bot": true, "messages_url": "..." },
+  "message": { "id": 10, "body": { "html": "...", "plain": "..." }, "mentionees": [...], "created_at": "...", "updated_at": "..." }
+}
+```
+
+All event types are supported: `message_created`, `message_updated`, `message_deleted`, `boost_created`, `boost_deleted`, `user_created`, `user_deleted`.
+
+### Sending replies
+
+WebSocket is receive-only. To reply, use the REST API:
+
+```bash
+curl -X POST "https://chat.example.com/rooms/$ROOM_ID/$BOT_KEY/messages" \
+  -H "Content-Type: text/plain" \
+  -d "Got your message!"
+```
+
+### Webhooks as fallback
+
+Bots can use both connection modes simultaneously. If a `webhook_url` is configured, Sabha delivers events via both WebSocket and webhook. The bot client is responsible for deduplication.
+
+To use webhooks only, ignore the `websocket_url` from registration. To use WebSocket only, register without a `webhook_url`.
+
+### Reconnection
+
+Bots should implement reconnection with exponential backoff. Sabha's AnyCable server supports connection state caching — brief disconnects (under 5 minutes) restore cleanly.
+
+---
+
 ## OpenClaw Integration
 
 [OpenClaw](https://openclaw.ai) is an AI agent platform that connects to chat services. Sabha's bot API maps naturally to OpenClaw's channel plugin architecture.
 
 ### Architecture
+
+Sabha supports two connection modes. WebSocket is preferred — it matches the Mattermost plugin experience where the bot connects outbound, requiring no tunnel or reverse proxy.
+
+**WebSocket mode (recommended):**
+
+```
+User @mentions bot in Sabha
+        |
+        v
+Sabha pushes event via WebSocket ──> OpenClaw gateway receives event
+                                              |
+                                              v
+                                       LLM processes message
+                                              |
+                                              v
+                                       REST API POST
+                                              |
+                                              v
+                                    Sabha receives reply
+```
+
+**Webhook mode (fallback):**
 
 ```
 User @mentions bot in Sabha
@@ -428,8 +513,8 @@ For proactive messages (not in response to a mention), OpenClaw calls Sabha's RE
 |---|---|
 | Channel | Sabha bot API |
 | Bot token | `bot_key` (from self-registration or admin UI) |
-| Inbound messages | `webhook_url` webhook (push, like Telegram webhook mode) |
-| Outbound messages | Webhook response body (auto-reply) or `POST /rooms/{room_id}/{bot_key}/messages` |
+| Inbound messages | WebSocket (`websocket_url`) or webhook (`webhook_url`) |
+| Outbound messages | `POST /rooms/{room_id}/{bot_key}/messages` (or webhook response body in webhook mode) |
 | Thread replies | `POST /rooms/{room_id}/{bot_key}/messages/{message_id}/thread` |
 | DM creation | `POST /rooms/{bot_key}/directs` |
 | Room discovery | `GET /rooms/{bot_key}` |
@@ -441,9 +526,9 @@ For proactive messages (not in response to a mention), OpenClaw calls Sabha's RE
 
 1. **Enable self-registration** in Sabha admin settings
 2. **Get a join code** from `/account`
-3. **Register via the API** — OpenClaw's Sabha channel plugin calls `POST /join/{code}` to get a `bot_key`
-4. **Configure OpenClaw** to listen for webhooks on the `webhook_url`
-5. **Start the gateway** — OpenClaw receives mention webhooks from Sabha and responds
+3. **Register via the API** — OpenClaw's Sabha channel plugin calls `POST /join/{code}` to get a `bot_key` and `websocket_url`
+4. **Connect** — plugin opens a WebSocket to the `websocket_url` and subscribes to `BotEventsChannel`
+5. **Start the gateway** — OpenClaw receives events via WebSocket and responds via REST API
 
 ### OpenClaw configuration (expected)
 
@@ -464,8 +549,8 @@ For proactive messages (not in response to a mention), OpenClaw calls Sabha's RE
 
 ### Key differences from other OpenClaw channels
 
-- **Webhook-based (like Telegram webhook mode)**, not WebSocket (like Mattermost/Discord). Sabha pushes events to the bot, the bot doesn't poll.
-- **Reply-by-response** — the HTTP response body IS the reply. No separate API call needed for simple responses. This is unique to Sabha and makes the integration simpler.
+- **WebSocket and webhook** — Sabha supports both. WebSocket mode (like Mattermost) lets the bot connect outbound with no tunnel needed. Webhook mode (like Telegram) is available as a fallback.
+- **Reply-by-response** — in webhook mode, the HTTP response body IS the reply. In WebSocket mode, replies go through the REST API.
 - **Thread support** — POST to `messages/{id}/thread` for threaded replies.
 - **Bot key in URL path** — not a header. OpenClaw's HTTP client needs to embed the key in request URLs rather than using `Authorization` headers.
 
