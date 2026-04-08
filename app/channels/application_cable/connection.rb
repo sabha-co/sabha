@@ -10,7 +10,9 @@ module ApplicationCable
       # Call super first to let the gem set current_tenant from tenant_resolver
       super if Sabha.saas?
 
-      if Sabha.saas?
+      if request.params["bot_key"].present?
+        connect_bot
+      elsif Sabha.saas?
         connect_saas
       else
         connect_single_tenant
@@ -18,6 +20,18 @@ module ApplicationCable
     end
 
     private
+      def connect_bot
+        bot = if Sabha.saas?
+          return reject_unauthorized_connection unless current_tenant
+          ApplicationRecord.with_tenant(current_tenant) { User.authenticate_bot(request.params["bot_key"]) }
+        else
+          User.authenticate_bot(request.params["bot_key"])
+        end
+
+        reject_unauthorized_connection unless bot
+        self.current_user = bot
+      end
+
       def connect_single_tenant
         verified_session = find_session_by_cookie
         return reject_unauthorized_connection unless verified_session

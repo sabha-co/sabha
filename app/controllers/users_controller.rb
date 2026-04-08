@@ -55,7 +55,7 @@ class UsersController < ApplicationController
 
       @user = membership.create_user!
       @join_code.redeem!
-      deliver_webhooks_to_bots(@user, :created)
+      notify_bots(@user, :created)
       Current.workspace_membership = membership
 
       redirect_to root_url, notice: "Welcome to #{Current.account.name}!"
@@ -87,7 +87,7 @@ class UsersController < ApplicationController
     def create_for_new_user
       @user = User.create!(user_params)
       @join_code.redeem!
-      deliver_webhooks_to_bots(@user, :created)
+      notify_bots(@user, :created)
       redirect_after_signup
     rescue Account::JoinCode::InactiveCodeError
       @user.destroy!

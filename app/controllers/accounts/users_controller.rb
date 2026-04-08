@@ -31,7 +31,7 @@ class Accounts::UsersController < ApplicationController
 
   def destroy
     @user.deactivate
-    deliver_webhooks_to_bots(@user, :deleted)
+    notify_bots(@user, :deleted)
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.remove(@user) }

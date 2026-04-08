@@ -109,6 +109,20 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "html"
   end
 
+  test "registration response includes websocket_url" do
+    post join_bot_url(@join_code.code),
+      params: { name: "WsBot", webhook_url: "https://example.com/hook" },
+      as: :json
+
+    assert_response :created
+    json = response.parsed_body
+
+    assert json["websocket_url"].present?
+    assert_match %r{\Awss?://}, json["websocket_url"], "websocket_url must use ws:// or wss:// scheme"
+    assert_includes json["websocket_url"], "bot_key="
+    assert_includes json["websocket_url"], "/cable"
+  end
+
   test "rooms in response exclude threads" do
     post join_bot_url(@join_code.code),
       params: { name: "ThreadBot" },
