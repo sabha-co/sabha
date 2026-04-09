@@ -28,6 +28,7 @@ Response (201 Created):
       "bot_key": "42-AbCdEfGhIjKl",
       "name": "My Bot",
       "webhook_url": "https://example.com/webhook",
+      "websocket_url": "wss://<%= request.host %><%= request.script_name %>/cable?bot_key=42-AbCdEfGhIjKl",
       "rooms": [
         { "id": 1, "name": "General", "type": "Open",
           "messages_url": "<%= request.base_url %><%= request.script_name %>/rooms/1/42-AbCdEfGhIjKl/messages" }
@@ -307,6 +308,46 @@ Your HTTP response is automatically posted as a reply:
 - Return text/plain or text/html with 200 → auto-posted as a message from the bot
 - Return a binary content type with 200 → auto-posted as an attachment
 - Timeout (300s) or error → error message posted to the room
+
+## Real-Time Events via WebSocket
+
+Bots can receive events over WebSocket instead of webhooks. This is the preferred
+connection mode — the bot connects outbound to Sabha, so no tunnel or reverse proxy
+is needed.
+
+### Connecting
+
+Use the websocket_url from the registration response. It uses the ActionCable protocol.
+
+    wss://<%= request.host %><%= request.script_name %>/cable?bot_key={bot_key}
+
+Subscribe to BotEventsChannel after connecting:
+
+    { "command": "subscribe", "identifier": "{\"channel\":\"BotEventsChannel\"}" }
+
+### Event Format
+
+Events arrive as JSON with the same structure as webhook payloads:
+
+    {
+      "event": "message_created",
+      "user": { ... },
+      "room": { ... },
+      "message": { ... }
+    }
+
+Supported events: message_created, message_updated, message_deleted,
+boost_created, boost_deleted, user_created, user_deleted.
+
+### Sending Replies
+
+WebSocket is receive-only. To reply, use the REST API (POST messages endpoint above).
+
+### Webhooks as Fallback
+
+Both modes can be used simultaneously. If a webhook_url is configured, Sabha delivers
+events via both WebSocket and webhook. To use WebSocket only, register without a
+webhook_url.
 
 ## Error Responses
 
