@@ -2,18 +2,21 @@ class Account::JoinCode < ApplicationRecord
   CODE_LENGTH = 12
   DEFAULT_EXPIRATION = 7.days
 
+  enum :kind, human: "human", bot: "bot"
+
   belongs_to :account
   belongs_to :user, optional: true
 
   validates :code, uniqueness: true
 
   scope :active, -> { where("(usage_limit IS NULL OR usage_count < usage_limit) AND (expires_at IS NULL OR expires_at > ?)", Time.current) }
-  scope :global, -> { where(user_id: nil) }
+  scope :global, -> { human.where(user_id: nil) }
   scope :personal, -> { where.not(user_id: nil) }
 
   before_validation :generate_code, on: :create, if: -> { code.blank? }
   before_validation :set_default_expiration, on: :create, if: :personal?
   before_validation :set_default_account, on: :create, if: -> { account_id.blank? }
+  before_validation :set_bot_defaults, on: :create, if: :bot?
 
   class InactiveCodeError < StandardError; end
 
@@ -77,5 +80,9 @@ class Account::JoinCode < ApplicationRecord
 
     def set_default_account
       self.account = Account.sole
+    end
+
+    def set_bot_defaults
+      self.usage_limit = 1
     end
 end

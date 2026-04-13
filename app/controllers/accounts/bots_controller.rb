@@ -4,6 +4,7 @@ class Accounts::BotsController < ApplicationController
 
   def index
     @bots = User.active_bots.ordered
+    @bot_invite_code = Current.account.active_bot_invite_code
   end
 
   def new

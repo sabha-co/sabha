@@ -49,12 +49,14 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "creating a bot does not post a welcome message" do
+  test "creating a bot posts a welcome message" do
     original_room = Room.original
 
-    assert_no_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
+    assert_difference -> { Message.unscoped.where(room: original_room, welcome: true).count }, 1 do
       User.create!(name: "Test Bot", bot_token: User.generate_bot_token, role: :bot)
     end
+
+    assert_equal "has been added as a bot.", Message.unscoped.where(room: original_room, welcome: true).last.body.to_plain_text
   end
 
   test "deactivating a user deletes push subscriptions, searches, and deactivates all memberships including direct rooms" do

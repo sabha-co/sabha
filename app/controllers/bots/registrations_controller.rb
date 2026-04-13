@@ -8,7 +8,6 @@ class Bots::RegistrationsController < Bots::BaseController
     with: -> { render json: { error: "Too many attempts", code: "rate_limited" }, status: :too_many_requests }
 
   before_action :reject_banned_ip, only: :create
-  before_action :verify_self_registration_enabled
   before_action :set_join_code!
   before_action :verify_join_code_active
 
@@ -29,14 +28,8 @@ class Bots::RegistrationsController < Bots::BaseController
   end
 
   private
-    def verify_self_registration_enabled
-      unless Current.account.settings.allow_bot_self_registration?
-        render json: { error: "Bot self-registration is not enabled", code: "self_registration_disabled" }, status: :forbidden
-      end
-    end
-
     def set_join_code!
-      @join_code = Current.account.join_codes.find_by!(code: params[:join_code])
+      @join_code = Current.account.join_codes.bot.find_by!(code: params[:join_code])
     end
 
     def verify_join_code_active

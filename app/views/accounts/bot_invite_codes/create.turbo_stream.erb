@@ -1,0 +1,3 @@
+<%= turbo_stream.replace "bot_invite_code" do %>
+  <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code, regenerated: @regenerated %>
+<% end %>

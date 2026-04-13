@@ -1,8 +1,20 @@
 signal:
   account_id: <%= ActiveRecord::FixtureSet.identify(:signal) %>
   code: CRMu-l8Ge-KB9B
+  kind: human
   usage_count: 0
   usage_limit:
+  user_id:
+  expires_at:
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+signal_bot:
+  account_id: <%= ActiveRecord::FixtureSet.identify(:signal) %>
+  code: BOT1-INVT-CODE
+  kind: bot
+  usage_count: 0
+  usage_limit: 1
   user_id:
   expires_at:
   created_at: <%= Time.current %>
@@ -12,6 +24,7 @@ signal_personal:
   account_id: <%= ActiveRecord::FixtureSet.identify(:signal) %>
   user_id: <%= ActiveRecord::FixtureSet.identify(:david) %>
   code: PERS-ONAL-CODE
+  kind: human
   usage_count: 0
   usage_limit:
   expires_at: <%= 7.days.from_now %>

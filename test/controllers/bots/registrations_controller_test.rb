@@ -2,9 +2,8 @@ require "test_helper"
 
 class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @join_code = account_join_codes(:signal)
+    @join_code = account_join_codes(:signal_bot)
     @account = accounts(:signal)
-    @account.update!(settings: { "allow_bot_self_registration" => "true" })
   end
 
   test "successful bot registration returns 201 with bot_key and rooms" do
@@ -37,16 +36,14 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
   end
 
-  test "returns 403 when bot self-registration is disabled" do
-    @account.update!(settings: { "allow_bot_self_registration" => "false" })
+  test "returns 404 for human join code" do
+    human_code = account_join_codes(:signal)
 
-    post join_bot_url(@join_code.code),
-      params: { name: "Blocked" },
+    post join_bot_url(human_code.code),
+      params: { name: "Sneaky" },
       as: :json
 
-    assert_response :forbidden
-    json = response.parsed_body
-    assert_equal "self_registration_disabled", json["code"]
+    assert_response :not_found
   end
 
   test "returns 404 for invalid join code" do
@@ -104,7 +101,8 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "HTML request falls through to UsersController" do
-    get join_url(@join_code.code)
+    human_code = account_join_codes(:signal)
+    get join_url(human_code.code)
     assert_response :success
     assert_includes response.body, "html"
   end
@@ -135,13 +133,6 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "all error responses include code field" do
-    @account.update!(settings: { "allow_bot_self_registration" => "false" })
-
-    post join_bot_url(@join_code.code), params: { name: "X" }, as: :json
-    assert response.parsed_body["code"].present?
-
-    @account.update!(settings: { "allow_bot_self_registration" => "true" })
-
     post join_bot_url("BAD-CODE"), params: { name: "X" }, as: :json
     assert response.parsed_body["code"].present?
   end

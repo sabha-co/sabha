@@ -14,7 +14,7 @@
 
     <div class="min-width flex-item-grow">
       <h1 class="margin-none txt-x-large"><%= @bot.name %></h1>
-      <p class="txt-small txt-muted margin-none">Post messages to rooms via the API, receive webhooks when mentioned.</p>
+      <p class="txt-small txt-muted margin-none">Post messages to rooms via the API, receive events in real-time.</p>
     </div>
 
     <%= link_to edit_account_bot_path(@bot), class: "btn", aria: { label: "Edit #{@bot.name}" } do %>
@@ -22,30 +22,43 @@
     <% end %>
   </div>
 
-  <% if @bot.webhook_url.present? %>
-    <div class="pad-inline flex flex-column gap-half">
-      <label class="txt-small txt-muted">Webhook URL — Sabha sends events here when the bot is mentioned</label>
+  <hr class="separator full-width" style="--border-style: solid">
+
+  <div class="pad-inline flex flex-column gap-half">
+    <h2 class="txt-small txt-muted margin-none">Credentials</h2>
+
+    <label class="flex flex-column gap-half">
+      <span class="txt-x-small txt-muted">Base URL</span>
       <div class="flex align-center gap">
         <div class="flex-item-grow min-width">
-          <input type="text" class="input full-width fill-white txt-small" value="<%= @bot.webhook_url %>" readonly>
+          <input type="text" class="input input--small full-width fill-white txt-small" value="<%= request.base_url %><%= request.script_name %>" readonly>
         </div>
-        <%= button_to_copy_to_clipboard(@bot.webhook_url) do %>
+        <%= button_to_copy_to_clipboard("#{request.base_url}#{request.script_name}") do %>
           <%= icon_tag "copy-paste" %>
-          <span class="for-screen-reader">Copy webhook URL</span>
+          <span class="for-screen-reader">Copy base URL</span>
         <% end %>
       </div>
-    </div>
-  <% else %>
-    <div class="pad-inline">
-      <p class="txt-small txt-muted margin-none">No webhook URL set. <%= link_to "Add one", edit_account_bot_path(@bot), class: "txt-underlined" %> to receive events when the bot is mentioned.</p>
-    </div>
-  <% end %>
+    </label>
+
+    <label class="flex flex-column gap-half">
+      <span class="txt-x-small txt-muted">Bot key</span>
+      <div class="flex align-center gap">
+        <div class="flex-item-grow min-width">
+          <input type="text" class="input input--small full-width fill-white txt-small" value="<%= @bot.bot_key %>" readonly>
+        </div>
+        <%= button_to_copy_to_clipboard(@bot.bot_key) do %>
+          <%= icon_tag "copy-paste" %>
+          <span class="for-screen-reader">Copy bot key</span>
+        <% end %>
+      </div>
+    </label>
+  </div>
 
   <hr class="separator full-width" style="--border-style: solid">
 
   <div class="pad-inline flex flex-column gap-half">
     <h2 class="txt-small txt-muted margin-none">Rooms</h2>
-    <p class="txt-small txt-muted margin-none">Select a room to configure webhook delivery and copy its message URL.</p>
+    <p class="txt-small txt-muted margin-none">Select a room to configure event delivery and copy its message URL.</p>
 
     <% if @bot_memberships.any? %>
       <menu class="flex flex-column gap-half margin-none pad-none">
@@ -92,16 +105,16 @@
   <hr class="separator full-width" style="--border-style: solid">
 
   <div class="pad-inline">
-    <p class="txt-small txt-muted margin-none"><%= link_to "API docs", skill_path, target: "_blank", class: "txt-underlined" %> — full reference for posting messages, reading history, and webhook payloads.</p>
+    <p class="txt-small txt-muted margin-none"><%= link_to "API docs", skill_path, target: "_blank", class: "txt-underlined" %> — full reference for posting messages, reading history, and event payloads.</p>
   </div>
 
   <hr class="separator full-width" style="--border-style: solid">
 
   <div class="pad-inline flex flex-column gap-half">
     <%= button_to account_bot_key_path(@bot), method: :put, class: "btn full-width txt-small btn--negative",
-          data: { turbo_confirm: "Are you sure you want to rotate the API key? All integrations using this bot must be updated." } do %>
+          data: { turbo_confirm: "Are you sure you want to rotate the bot key? All integrations using this bot must be updated." } do %>
       <%= icon_tag "refresh" %>
-      <span>Rotate API key</span>
+      <span>Rotate bot key</span>
     <% end %>
 
     <%= button_to account_bot_path(@bot), method: :delete, class: "btn full-width txt-small btn--negative",

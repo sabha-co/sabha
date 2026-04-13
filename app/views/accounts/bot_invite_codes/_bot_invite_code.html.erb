@@ -1,0 +1,25 @@
+<%# locals: (bot_invite_code: nil, regenerated: false) %>
+<div id="bot_invite_code">
+  <% if bot_invite_code %>
+    <div class="flex align-center gap">
+      <input type="text" class="input input--small flex-item-grow fill-white txt-small" value="<%= join_bot_url(bot_invite_code.code) %>" readonly>
+      <%= button_to_copy_to_clipboard(join_bot_url(bot_invite_code.code)) do %>
+        <%= icon_tag "copy-paste" %>
+        <span class="for-screen-reader">Copy bot invite URL</span>
+      <% end %>
+      <%= button_to account_bot_invite_code_path, class: "btn", aria: { label: "Generate new bot invite URL" } do %>
+        <%= icon_tag "refresh" %>
+        <span class="for-screen-reader">Generate new bot invite URL</span>
+      <% end %>
+    </div>
+
+    <% if regenerated %>
+      <p class="txt-x-small txt-muted margin-none">Previous URL expired. Share this new one.</p>
+    <% end %>
+  <% else %>
+    <%= button_to account_bot_invite_code_path, class: "btn btn--reversed btn--small" do %>
+      <%= icon_tag "add" %>
+      <span>Generate</span>
+    <% end %>
+  <% end %>
+</div>
