@@ -385,8 +385,7 @@ class User < ApplicationRecord
     end
 
     def post_welcome_message
-      return if bot?
-      return unless verified?
+      return unless bot? || verified?
       return unless room = Room.original
 
       room.post_welcome_message(user: self)

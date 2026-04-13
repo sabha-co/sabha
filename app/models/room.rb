@@ -226,10 +226,12 @@ class Room < ApplicationRecord
   end
 
   def post_welcome_message(user:)
+    body = user.bot? ? "has been added as a bot." : "joined the community. Say hello!"
+
     messages.create!(
       creator: user,
       welcome: true,
-      body: "joined the community. Say hello!",
+      body: body,
       client_message_id: Random.uuid
     )
   end
