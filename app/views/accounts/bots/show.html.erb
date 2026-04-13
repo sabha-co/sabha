@@ -13,7 +13,7 @@
     </figure>
 
     <div class="min-width flex-item-grow">
-      <h1 class="margin-none txt-x-large"><%= @bot.name %></h1>
+      <h1 class="margin-none txt-x-large"><%= @bot.name %> <span class="txt-small txt-muted" title="Bot"><%= icon_tag "bot" %></span></h1>
       <p class="txt-small txt-muted margin-none">Post messages to rooms via the API, receive events in real-time.</p>
     </div>
 
@@ -25,7 +25,7 @@
   <hr class="separator full-width" style="--border-style: solid">
 
   <div class="pad-inline flex flex-column gap-half">
-    <h2 class="txt-small txt-muted margin-none">Credentials</h2>
+    <h2 class="txt-small txt-muted margin-none"><strong>Credentials</strong></h2>
 
     <label class="flex flex-column gap-half">
       <span class="txt-x-small txt-muted">Base URL</span>
@@ -57,7 +57,7 @@
   <hr class="separator full-width" style="--border-style: solid">
 
   <div class="pad-inline flex flex-column gap-half">
-    <h2 class="txt-small txt-muted margin-none">Rooms</h2>
+    <h2 class="txt-small txt-muted margin-none"><strong>Rooms</strong></h2>
     <p class="txt-small txt-muted margin-none">Select a room to configure event delivery and copy its message URL.</p>
 
     <% if @bot_memberships.any? %>

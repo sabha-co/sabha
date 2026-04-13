@@ -5,7 +5,7 @@
     </figure>
 
     <div class="min-width flex-item-grow">
-      <div class="overflow-ellipsis txt-small"><strong><%= bot.name %></strong></div>
+      <div class="overflow-ellipsis txt-small"><strong><%= bot.name %></strong> <span class="txt-x-small txt-muted" title="Bot"><%= icon_tag "bot" %></span></div>
       <div class="txt-x-small txt-muted"><%= pluralize(bot.rooms.without_directs.count, "room") %></div>
     </div>
 
