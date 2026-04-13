@@ -20,23 +20,25 @@
 
   <% if @membership %>
     <div class="pad-inline flex flex-column gap">
-      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch,
-            data: { controller: "form" } do %>
-        <label class="txt-small txt-muted" for="involvement">Webhook delivery</label>
-        <%= select_tag :involvement,
-              options_for_select([
-                ["Mentions only", "mentions"],
-                ["Muted", "nothing"]
-              ], @membership.involvement),
-              id: "involvement", class: "input full-width",
-              data: { action: "change->form#submit" } %>
-      <% end %>
+      <% if @bot.webhook.present? %>
+        <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch,
+              data: { controller: "form" } do %>
+          <label class="txt-small txt-muted" for="involvement">Webhook delivery</label>
+          <%= select_tag :involvement,
+                options_for_select([
+                  ["Mentions only", "mentions"],
+                  ["Muted", "nothing"]
+                ], @membership.involvement),
+                id: "involvement", class: "input full-width",
+                data: { action: "change->form#submit" } %>
+        <% end %>
 
-      <p class="txt-small txt-muted margin-none">
-        <% case @membership.involvement
-        when "mentions" %>Webhook fires when @mentioned or in a DM. Your response is auto-posted as a reply.
-        <% when "nothing" %>No webhooks fired. Bot can still post and read messages via the API.<% end %>
-      </p>
+        <p class="txt-small txt-muted margin-none">
+          <% case @membership.involvement
+          when "mentions" %>Webhook fires when @mentioned or in a DM. Your response is auto-posted as a reply.
+          <% when "nothing" %>No webhooks fired. Bot can still post and read messages via the API.<% end %>
+        </p>
+      <% end %>
 
       <% message_url = room_bot_messages_url(@room, @bot.bot_key) %>
       <label class="txt-small txt-muted">Message URL — POST to this URL to send messages to this room</label>
