@@ -10,16 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_07_043859) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_13_052010) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
     t.datetime "created_at", null: false
     t.datetime "expires_at"
+    t.string "kind", default: "human", null: false
     t.datetime "updated_at", null: false
     t.integer "usage_count", default: 0, null: false
     t.integer "usage_limit"
     t.integer "user_id"
+    t.index ["account_id", "kind"], name: "index_account_join_codes_on_account_id_and_kind"
     t.index ["account_id"], name: "index_account_join_codes_on_account_id"
     t.index ["code"], name: "index_account_join_codes_on_code", unique: true
     t.index ["user_id"], name: "index_account_join_codes_on_user_id"

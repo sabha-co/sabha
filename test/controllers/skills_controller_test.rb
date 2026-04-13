@@ -12,7 +12,7 @@ class SkillsControllerTest < ActionDispatch::IntegrationTest
     get skill_url
 
     assert_includes response.body, "Bot API"
-    assert_includes response.body, "Self-Registration"
+    assert_includes response.body, "Registration via Invite URL"
     assert_includes response.body, "Authentication"
     assert_includes response.body, "Posting Messages"
     assert_includes response.body, "Creating Direct Messages"

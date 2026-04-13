@@ -7,7 +7,7 @@ class Account < ApplicationRecord
   InvalidLogoType = Class.new(StandardError)
 
   has_one_attached :logo
-  has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true, allow_bot_self_registration: false
+  has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true
 
   after_save :invalidate_personal_invite_links, if: :invite_links_disabled?
   after_commit :sync_name_to_workspace, if: :saved_change_to_name?

@@ -68,6 +68,8 @@ Rails.application.routes.draw do
         end
       end
 
+      resource :bot_invite_code, only: :create, controller: "bot_invite_codes"
+
       resource :join_code, only: :create
       resource :logo, only: %i[ show destroy ]
       resource :custom_styles, only: %i[ edit update ]
@@ -121,7 +123,7 @@ Rails.application.routes.draw do
   resource :skill, only: :show, controller: "skills"
 
   # Join routes for signup via invite link
-  # Bot self-registration (JSON) must come before human signup route
+  # Bot registration via invite URL (JSON) must come before human signup route
   post "join/:join_code", to: "bots/registrations#create", constraints: ->(req) { req.format.json? }, as: :join_bot
 
   get "join/:join_code", to: "users#new", as: :join

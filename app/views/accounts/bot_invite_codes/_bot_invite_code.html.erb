@@ -1,0 +1,32 @@
+<%# locals: (bot_invite_code: nil, regenerated: false) %>
+<div id="bot_invite_code" class="flex flex-column gap">
+  <div class="flex align-center gap">
+    <div class="flex-item-grow">
+      <div class="txt-small"><strong>Bot invite URL</strong></div>
+      <div class="txt-small txt-muted">Generate a one-time URL to let a bot register via the API. <%= link_to "Install a bot", "https://github.com/sabha-co/openclaw-sabha?tab=readme-ov-file#install", target: "_blank", class: "txt-underlined" %></div>
+    </div>
+  </div>
+
+  <% if bot_invite_code %>
+    <div class="flex align-center gap">
+      <input type="text" class="input input--small flex-item-grow fill-white txt-small" value="<%= join_bot_url(bot_invite_code.code) %>" readonly>
+      <%= button_to_copy_to_clipboard(join_bot_url(bot_invite_code.code)) do %>
+        <%= icon_tag "copy-paste" %>
+        <span class="for-screen-reader">Copy bot invite URL</span>
+      <% end %>
+      <%= button_to account_bot_invite_code_path, class: "btn", aria: { label: "Generate new bot invite URL" } do %>
+        <%= icon_tag "refresh" %>
+        <span class="for-screen-reader">Generate new bot invite URL</span>
+      <% end %>
+    </div>
+
+    <% if regenerated %>
+      <p class="txt-small txt-muted margin-none">Previous invite URL has been expired. Use this regenerated invite URL.</p>
+    <% end %>
+  <% else %>
+    <%= button_to account_bot_invite_code_path, class: "btn btn--reversed btn--small" do %>
+      <%= icon_tag "add" %>
+      <span>Generate</span>
+    <% end %>
+  <% end %>
+</div>

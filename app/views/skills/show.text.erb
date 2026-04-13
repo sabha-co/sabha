@@ -2,9 +2,9 @@
 
 This document describes how to interact with <%= Current.account.name %> as a bot.
 
-## Self-Registration
+## Registration via Invite URL
 
-To register as a bot, POST JSON to the join URL with a valid join code:
+To register a bot, ask an admin to generate a bot invite URL, then POST JSON to it:
 
     POST <%= request.base_url %><%= request.script_name %>/join/JOIN_CODE
     Accept: application/json
@@ -356,4 +356,4 @@ All errors return JSON with `error` (human-readable) and `code` (machine-stable)
     { "error": "Join code has expired", "code": "join_code_expired" }
 
 Common codes: join_code_not_found, join_code_expired, join_code_inactive,
-self_registration_disabled, rate_limited, validation_failed, forbidden, not_found.
+rate_limited, validation_failed, forbidden, not_found.

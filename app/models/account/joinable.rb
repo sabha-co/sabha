@@ -16,6 +16,12 @@ module Account::Joinable
     join_code.regenerate_code
   end
 
+  def generate_bot_invite_code!
+    regenerated = join_codes.bot.active.delete_all > 0
+    code = join_codes.create!(kind: :bot)
+    [ code, regenerated ]
+  end
+
   private
     def create_global_join_code
       join_codes.create!

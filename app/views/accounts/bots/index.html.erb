@@ -29,23 +29,5 @@
 
   <hr class="separator full-width" style="--border-style: solid">
 
-  <div class="flex align-center gap">
-    <%= form_with model: Current.account, url: account_path, method: :put, data: { controller: "form" }, class: "flex align-center gap flex-item-grow" do |form| %>
-      <%= form.fields_for :settings, Current.account.settings do |settings_form| %>
-        <%= settings_form.hidden_field :allow_bot_self_registration,
-            value: !Current.account.settings.allow_bot_self_registration? %>
-      <% end %>
-      <label class="switch flex-item-no-shrink">
-        <input type="checkbox"
-              class="switch__input"
-              <%= "checked" if Current.account.settings.allow_bot_self_registration? %>
-              data-action="change->form#submit">
-        <span class="switch__btn"></span>
-      </label>
-      <div>
-        <div class="txt-small"><strong>Allow bot self-registration</strong></div>
-        <div class="txt-small txt-muted">Bots can join automatically when you share join code.</div>
-      </div>
-    <% end %>
-  </div>
+  <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code %>
 </section>

@@ -107,7 +107,7 @@ class UsersController < ApplicationController
     end
 
     def set_join_code
-      @join_code = Current.account.join_codes.find_by(code: params[:join_code])
+      @join_code = Current.account.join_codes.human.find_by(code: params[:join_code])
       redirect_to root_url, alert: "This invite link is not valid. Please request a new one." unless @join_code
     end
 
