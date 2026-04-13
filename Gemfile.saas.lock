@@ -328,6 +328,8 @@ GEM
       racc (~> 1.4)
     nokogiri (1.19.2-x86_64-linux-gnu)
       racc (~> 1.4)
+    online_migrations (0.33.2)
+      activerecord (>= 7.1)
     openssl (4.0.1)
     parallel (1.27.0)
     parser (3.3.10.2)
@@ -528,6 +530,7 @@ DEPENDENCIES
   mocha
   msgpack (>= 1.8.0)
   net-http-persistent
+  online_migrations
   pg
   platform_agent
   propshaft
@@ -660,6 +663,7 @@ CHECKSUMS
   nokogiri (1.19.2-arm-linux-musl) sha256=61114d44f6742ff72194a1b3020967201e2eb982814778d130f6471c11f9828c
   nokogiri (1.19.2-arm64-darwin) sha256=58d8ea2e31a967b843b70487a44c14c8ba1866daa1b9da9be9dbdf1b43dee205
   nokogiri (1.19.2-x86_64-linux-gnu) sha256=fa8feca882b73e871a9845f3817a72e9734c8e974bdc4fbad6e4bc6e8076b94f
+  online_migrations (0.33.2) sha256=03e085b954493452bfb4c12d3b0ea2c309118f16e48716ce997b4dd19b12a643
   openssl (4.0.1) sha256=e27974136b7b02894a1bce46c5397ee889afafe704a839446b54dc81cb9c5f7d
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.10.2) sha256=6f60c84aa4bdcedb6d1a2434b738fe8a8136807b6adc8f7f53b97da9bc4e9357

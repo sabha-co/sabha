@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_05_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_13_161000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -60,7 +60,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_05_000001) do
     t.bigint "workspace_id"
     t.index ["key"], name: "index_workspace_backups_on_key", unique: true
     t.index ["workspace_id", "created_at"], name: "index_workspace_backups_on_workspace_id_and_created_at"
-    t.index ["workspace_id"], name: "index_workspace_backups_on_workspace_id"
   end
 
   create_table "workspace_external_id_sequences", force: :cascade do |t|
@@ -78,7 +77,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_05_000001) do
     t.bigint "user_id"
     t.index ["global_identity_id", "position"], name: "index_workspace_memberships_on_global_identity_id_and_position"
     t.index ["global_identity_id", "tenant"], name: "index_workspace_memberships_on_global_identity_id_and_tenant", unique: true
-    t.index ["global_identity_id"], name: "index_workspace_memberships_on_global_identity_id"
     t.index ["tenant"], name: "index_workspace_memberships_on_tenant"
   end
 

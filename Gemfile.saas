@@ -24,5 +24,8 @@ gem "aws-sdk-s3"
 # Email validation with disposable domain blocking
 gem "valid_email2"
 
+# Safe PostgreSQL migrations — catches dangerous operations at development time
+gem "online_migrations"
+
 # SaaS engine
 gem "sabha-saas", path: "saas"
