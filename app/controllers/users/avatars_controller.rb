@@ -53,11 +53,11 @@ class Users::AvatarsController < ApplicationController
     end
 
     def render_bot
-      render_default_bot
-    end
-
-    def render_default_bot
-      send_file Rails.root.join("app/assets/images/default-bot-avatar.svg"), content_type: "image/svg+xml", disposition: :inline
+      if Dicebear.enabled?
+        serve_dicebear_avatar
+      else
+        send_file Rails.root.join("app/assets/images/default-bot-avatar.svg"), content_type: "image/svg+xml", disposition: :inline
+      end
     end
 
     def render_initials

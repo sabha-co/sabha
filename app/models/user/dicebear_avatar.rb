@@ -9,8 +9,10 @@ module User::DicebearAvatar
     before_create :set_random_avatar_seed, unless: -> { avatar_seed.present? }
   end
 
+  BOT_STYLE = "bottts"
+
   def dicebear_url
-    "#{Dicebear.host}/9.x/#{Dicebear.style}/svg?seed=#{avatar_seed || id}"
+    "#{Dicebear.host}/9.x/#{dicebear_style}/svg?seed=#{avatar_seed || id}"
   end
 
   def dicebear_svg
@@ -28,8 +30,12 @@ module User::DicebearAvatar
 
   private
 
+  def dicebear_style
+    bot? ? BOT_STYLE : Dicebear.style
+  end
+
   def dicebear_cache_key
-    "dicebear/#{Dicebear.style}/#{avatar_seed || id}"
+    "dicebear/#{dicebear_style}/#{avatar_seed || id}"
   end
 
   def set_random_avatar_seed
