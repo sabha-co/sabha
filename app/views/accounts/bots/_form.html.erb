@@ -1,16 +1,30 @@
 <h1 class="for-screen-reader">Chat Bot Setup</h1>
-<label class="align-center center avatar__form gap" data-controller="upload-preview">
-  <div class="btn input--file">
+<div class="align-center center avatar__form gap" data-controller="upload-preview">
+  <label class="btn input--file">
     <%= icon_tag "camera" %>
     <%= form.file_field :avatar, class: "input", accept: "image/*",
           data: { upload_preview_target: "input", action: "upload-preview#previewImage" } %>
     <span class="for-screen-reader">Upload bot avatar</span>
-  </div>
+  </label>
 
   <div class="avatar input--file txt-xx-large" style="--avatar-size: var(--btn-size);">
-    <%= image_tag bot.avatar.attached? ? bot.avatar : "default-bot-avatar.svg", alt: "Bot avatar", size: 48, data: { upload_preview_target: "image" } %>
+    <%= image_tag bot.persisted? ? user_image_path(bot) : "default-bot-avatar.svg", alt: "Bot avatar", size: 48, data: { upload_preview_target: "image" } %>
   </div>
-</label>
+
+  <% if bot.persisted? %>
+    <% if bot.avatar.attached? %>
+      <%= link_to account_bot_avatar_path(bot), data: { turbo_method: :delete }, class: "btn txt-small", aria: { label: "Delete avatar" } do %>
+        <%= icon_tag "minus" %>
+        <span class="for-screen-reader">Delete avatar</span>
+      <% end %>
+    <% elsif Dicebear.enabled? %>
+      <%= link_to shuffle_account_bot_avatar_path(bot), data: { turbo_method: :post }, class: "btn txt-small", aria: { label: "Shuffle avatar" } do %>
+        <%= icon_tag "refresh" %>
+        <span class="for-screen-reader">Shuffle avatar</span>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>
 
 <div class="flex align-center gap">
   <%= translation_button(:bot_name) %>

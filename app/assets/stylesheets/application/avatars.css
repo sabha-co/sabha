@@ -6,6 +6,7 @@
   display: grid;
   inline-size: var(--avatar-size, 5ch);
   margin: 0;
+  overflow: hidden;
   place-items: center;
   position: relative;
 
