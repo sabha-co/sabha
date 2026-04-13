@@ -70,10 +70,17 @@ class Accounts::UsersController < ApplicationController
       User.without_bots.includes(:badge, avatar_attachment: :blob).ordered
     end
 
+    def bots_scope
+      User.active_bots.includes(avatar_attachment: :blob)
+    end
+
     def search_users
       @searching = true
       query = params[:query].to_s.strip
-      @users = users_scope.active.where("name LIKE ?", "%#{User.sanitize_sql_like(query)}%").limit(50)
+      pattern = "%#{User.sanitize_sql_like(query)}%"
+      people = users_scope.active.where("name LIKE ?", pattern)
+      bots = bots_scope.where("name LIKE ?", pattern)
+      @users = (people + bots).first(50)
       preload_activity(@users)
       @users = sort_by_activity(@users)
     end
@@ -104,6 +111,8 @@ class Accounts::UsersController < ApplicationController
       @administrators = sort_by_activity(@administrators)
       @moderators = sort_by_activity(@moderators)
       @members = sort_by_activity(@members)
+
+      @bots = bots_scope.ordered.to_a
 
       if Current.user.staff?
         @deactivated_count = User.without_bots.deactivated.count

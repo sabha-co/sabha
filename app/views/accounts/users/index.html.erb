@@ -89,6 +89,13 @@
           <%= render "accounts/users/next_page_container", page: @page.next_param unless @page.last? %>
         </div>
 
+        <% if @bots&.any? %>
+          <div id="bots_section" class="role-section">
+            <p class="txt-small txt-muted margin-block-half role-section__heading">Bots</p>
+            <%= render partial: "accounts/users/user", collection: @bots, as: :user %>
+          </div>
+        <% end %>
+
         <% if Current.user.staff? %>
           <% if @deactivated_count > 0 %>
             <div class="flex align-center justify-between margin-block-half">
