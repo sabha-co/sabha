@@ -7,21 +7,12 @@
 <% end %>
 
 <section class="panel flex flex-column gap" style="view-transition-name: chat-bots">
-  <div class="flex align-center gap">
-    <div class="flex flex-column gap-half flex-item-grow">
-      <h1 class="txt-large margin-none"><strong>Chat bots</strong></h1>
-      <p class="txt-small txt-muted margin-none">Other sites and services can post updates directly to Sabha via bots. <%= link_to "API docs", skill_path, target: "_blank", class: "txt-underlined" %></p>
-    </div>
-
-    <%= link_to new_account_bot_path, class: "btn btn--reversed flex-item-no-shrink", aria: { label: "Add a chat bot" } do %>
-      <%= icon_tag "add" %>
-      <span>Add bot</span>
-    <% end %>
+  <div class="flex flex-column gap-half">
+    <h1 class="txt-large margin-none"><strong>Chat bots</strong></h1>
+    <p class="txt-small txt-muted margin-none">Bots post messages and respond to mentions via the API. <%= link_to "API docs", skill_path, target: "_blank", class: "txt-underlined" %></p>
   </div>
 
   <% if @bots.any? %>
-    <hr class="separator full-width" style="--border-style: solid">
-
     <menu class="flex flex-column gap-half margin-none pad-none">
       <%= render partial: "accounts/bots/bot", collection: @bots %>
     </menu>
@@ -29,5 +20,24 @@
 
   <hr class="separator full-width" style="--border-style: solid">
 
-  <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code %>
+  <div class="flex flex-column gap">
+    <h2 class="txt-small txt-muted margin-none"><strong>Add a bot</strong></h2>
+
+    <div class="fill-shade border-radius pad flex flex-column gap-half">
+      <div class="txt-small"><strong>Invite URL</strong></div>
+      <div class="txt-x-small txt-muted">Generate a one-time URL to register a bot via the API. <%= link_to "Install a bot", "https://github.com/sabha-co/openclaw-sabha?tab=readme-ov-file#install", target: "_blank", class: "txt-underlined" %></div>
+      <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code %>
+    </div>
+
+    <div class="fill-shade border-radius pad flex align-center gap">
+      <div class="flex-item-grow min-width">
+        <div class="txt-small"><strong>Create manually</strong></div>
+        <div class="txt-x-small txt-muted">Set up a bot yourself with a name and optional webhook URL.</div>
+      </div>
+      <%= link_to new_account_bot_path, class: "btn btn--small flex-item-no-shrink", aria: { label: "Create a bot manually" } do %>
+        <%= icon_tag "add" %>
+        <span>Create bot</span>
+      <% end %>
+    </div>
+  </div>
 </section>

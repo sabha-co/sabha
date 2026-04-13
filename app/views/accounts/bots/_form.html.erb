@@ -21,14 +21,16 @@
   </label>
 </div>
 
-<div class="flex align-center gap">
-  <%= translation_button(:webhook_url) %>
-  <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-    <%= form.url_field :webhook_url, class: "input", placeholder: "Webhook URL" %>
-    <%= icon_tag "web" %>
-  </label>
-</div>
-
-<p class="txt-x-small txt-muted margin-none">Sabha will POST events to this URL when the bot is mentioned.</p>
+<details <%= "open" if bot.webhook_url.present? %>>
+  <summary class="txt-small txt-muted txt-underlined" style="cursor: pointer;">Add a webhook URL</summary>
+  <div class="flex align-center gap pad-block-half">
+    <%= translation_button(:webhook_url) %>
+    <label class="flex align-center gap flex-item-grow txt-large input input--actor">
+      <%= form.url_field :webhook_url, class: "input", placeholder: "https://example.com/webhook" %>
+      <%= icon_tag "web" %>
+    </label>
+  </div>
+  <p class="txt-x-small txt-muted margin-none">Sabha will POST events here as a fallback when WebSocket is unavailable.</p>
+</details>
 
 <%= profile_form_submit_button %>

@@ -10,7 +10,7 @@ class Account::JoinCode < ApplicationRecord
   validates :code, uniqueness: true
 
   scope :active, -> { where("(usage_limit IS NULL OR usage_count < usage_limit) AND (expires_at IS NULL OR expires_at > ?)", Time.current) }
-  scope :global, -> { where(user_id: nil) }
+  scope :global, -> { human.where(user_id: nil) }
   scope :personal, -> { where.not(user_id: nil) }
 
   before_validation :generate_code, on: :create, if: -> { code.blank? }

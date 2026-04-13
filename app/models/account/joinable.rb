@@ -7,7 +7,6 @@ module Account::Joinable
     after_create :create_global_join_code
   end
 
-  # Returns the global (admin) join code for backward compatibility
   def join_code
     join_codes.global.first
   end
@@ -16,8 +15,12 @@ module Account::Joinable
     join_code.regenerate_code
   end
 
+  def active_bot_invite_code
+    join_codes.bot.active.order(created_at: :desc).first
+  end
+
   def generate_bot_invite_code!
-    regenerated = join_codes.bot.active.delete_all > 0
+    regenerated = join_codes.bot.active.destroy_all.any?
     code = join_codes.create!(kind: :bot)
     [ code, regenerated ]
   end
