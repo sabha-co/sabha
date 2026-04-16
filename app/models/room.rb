@@ -269,7 +269,7 @@ class Room < ApplicationRecord
       .where(user_id: bot_ids)
       .includes(user: :webhook)
 
-    if direct?
+    if direct? || thread?
       eligible.to_a
     elsif item.is_a?(Message) && event == :created
       eligible.to_a.select { |m| item.mentionees.include?(m.user) || item.mentions_everyone? }

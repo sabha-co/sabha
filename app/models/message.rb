@@ -84,6 +84,11 @@ class Message < ApplicationRecord
     body.to_plain_text.presence || attachment&.filename&.to_s || ""
   end
 
+  def thread_fingerprint
+    threads.loaded? ? threads.map { |t| [ t.id, t.messages_count, t.active ] }
+                    : threads.pluck(:id, :messages_count, :active)
+  end
+
   def to_key
     [ client_message_id ]
   end

@@ -134,7 +134,8 @@ module MessagesHelper
       is_unread,
       is_parent,
       show_room_name,
-      composer_id
+      composer_id,
+      message.thread_fingerprint
     ]
   end
 

@@ -30,7 +30,7 @@ class SearchesController < ApplicationController
     end
 
     def find_paged_messages
-      base = messages.with_creator.with_bookmark_status_for(Current.user)
+      base = messages.with_creator.with_thread_summary.with_bookmark_status_for(Current.user)
       case
       when params[:before].present?
         base.page_before(messages.find(params[:before]))

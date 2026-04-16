@@ -328,6 +328,19 @@ class MessageTest < ActiveSupport::TestCase
     assert_not room.memberships.exists?(user: jz), "Non-member should not be added to room via mention"
   end
 
+  test "thread_fingerprint rotates when a thread is created on the message" do
+    message = rooms(:watercooler).messages.create!(creator: users(:david), body: "Hello", client_message_id: "fp-1")
+
+    before = message.thread_fingerprint
+
+    Current.set(user: users(:david)) do
+      Rooms::Thread.find_or_create_for(message, users: rooms(:watercooler).users)
+        .messages.create!(body: "Reply", creator: users(:david), client_message_id: "fp-2")
+    end
+
+    assert_not_equal before, message.reload.thread_fingerprint
+  end
+
   private
     def create_new_message_in(room)
       room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "123")

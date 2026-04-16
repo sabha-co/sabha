@@ -352,4 +352,21 @@ class RoomTest < ActiveSupport::TestCase
     result = room.bot_memberships_for_events(message, :created)
     assert_includes result.map(&:user_id), bender.id
   end
+
+  test "bot_memberships_for_events notifies thread bot members without requiring a mention" do
+    parent_room = rooms(:watercooler)
+    bender = users(:bender)
+    parent_message = parent_room.messages.create!(body: "Starting a thread", creator: bender, client_message_id: "wh-thread-1")
+
+    thread = Current.set(user: bender) do
+      Rooms::Thread.find_or_create_for(parent_message, users: parent_room.users)
+    end
+    thread.involve_user(bender, unread: false)
+
+    message = thread.messages.create!(body: "Follow-up from user", creator: users(:david), client_message_id: "wh-thread-2")
+    message.stubs(:mentionees).returns(User.none)
+
+    result = thread.bot_memberships_for_events(message, :created)
+    assert_includes result.map(&:user_id), bender.id, "bot in a thread should receive message events even without a mention"
+  end
 end
