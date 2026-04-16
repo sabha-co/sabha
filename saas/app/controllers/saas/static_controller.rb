@@ -37,12 +37,19 @@ module Saas
             end
           elsif line.start_with?("- ") && current_section && !skip_section
             if line =~ /\A- \*\*(.+?)\*\*\s*[—–-]\s*(.+)\z/
-              current_section[:items] << { title: $1, description: $2 }
+              current_section[:items] << { title: $1, description: render_links($2) }
             end
           end
         end
 
         sections.reverse
+      end
+
+      def render_links(text)
+        escaped = ERB::Util.html_escape(text)
+        escaped.gsub(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/) do
+          %(<a href="#{$2}" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">#{$1}</a>)
+        end.html_safe
       end
   end
 end

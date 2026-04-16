@@ -4,15 +4,11 @@ Sabha's bot API lets external programs post messages, read conversations, and re
 
 ## Quick Start
 
-### 1. Enable bot self-registration
+### 1. Generate a bot invite URL
 
-An admin toggles **"Allow bots to self-register via join code"** in account settings (`/account`). This is off by default.
+An admin visits `/account/bots` and clicks **Generate** under "Invite URL". This produces a single-use URL of the form `https://chat.example.com/join/JOIN_CODE`. Generating a new URL invalidates any previously generated one — only the most recent URL is active.
 
-### 2. Get a join code
-
-Admins always have a global join code at `/account`. If "Allow users to create invite links" is enabled, any user can generate one from their profile.
-
-### 3. Register a bot
+### 2. Register a bot
 
 ```bash
 curl -X POST https://chat.example.com/join/JOIN_CODE \
@@ -38,11 +34,11 @@ Response:
 
 Store the `bot_key` — it is shown only once. It authenticates all subsequent API calls.
 
-The bot is automatically added to all open rooms marked as auto-join, just like a human user.
+The invite URL is consumed on success. The bot is automatically added to all open rooms marked as auto-join, just like a human user.
 
-### 4. Alternatively: create a bot via admin UI
+### 3. Alternatively: create a bot via admin UI
 
-Admins can create bots at `/account/bots` without needing self-registration enabled. The admin sets the name, webhook URL, and manages the bot key from the UI.
+Admins can create bots directly at `/account/bots` without issuing an invite URL. The admin sets the name, webhook URL, and manages the bot key from the UI.
 
 ---
 
@@ -90,6 +86,10 @@ A bot's access to each room is controlled by its membership involvement:
 Admins configure permissions per room from the bot's detail page. Each room has its own permission page at `/account/bots/:id/rooms/:room_id/permission`.
 
 By default, new bots join open rooms with "mentions" involvement.
+
+### Thread and DM delivery
+
+Inside a thread or direct message, a bot member receives **every** message — no mention required — matching how notifications work for human members of the same conversation. The "mentions" gate only applies to open and closed rooms.
 
 ---
 
@@ -524,11 +524,10 @@ For proactive messages (not in response to a mention), OpenClaw calls Sabha's RE
 
 ### Setting up OpenClaw with Sabha
 
-1. **Enable self-registration** in Sabha admin settings
-2. **Get a join code** from `/account`
-3. **Register via the API** — OpenClaw's Sabha channel plugin calls `POST /join/{code}` to get a `bot_key` and `websocket_url`
-4. **Connect** — plugin opens a WebSocket to the `websocket_url` and subscribes to `BotEventsChannel`
-5. **Start the gateway** — OpenClaw receives events via WebSocket and responds via REST API
+1. **Generate an invite URL** — an admin clicks **Generate** at `/account/bots` to mint a single-use invite URL
+2. **Register via the API** — OpenClaw's Sabha channel plugin calls `POST /join/{code}` to get a `bot_key` and `websocket_url`
+3. **Connect** — plugin opens a WebSocket to the `websocket_url` and subscribes to `BotEventsChannel`
+4. **Start the gateway** — OpenClaw receives events via WebSocket and responds via REST API
 
 ### OpenClaw configuration (expected)
 
@@ -593,7 +592,6 @@ All bot API errors return JSON with two fields:
 | `join_code_not_found` | 404 | Invalid join code |
 | `join_code_inactive` | 410 | Code is inactive |
 | `join_code_expired` | 410 | Code expired or usage exhausted |
-| `self_registration_disabled` | 403 | Account setting is off |
 | `rate_limited` | 429 | Too many registration attempts (10/hour) |
 | `validation_failed` | 422 | Invalid parameters |
 | `room_not_found` | 404 | Bot is not a member of this room |

@@ -77,6 +77,14 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 - **Badge management** — dedicated admin page for managing user badges
 - **Inline DM compose** — start new direct messages directly from the DM index page
 
+### Apr 2026
+
+- **More things bots can do** — edit and delete their own messages, react with emoji, manage room members, create and archive rooms, and search across conversations
+- **Real-time bots** — bots connect to Sabha directly and receive messages instantly using websockets, no public webhook URL required
+- **OpenClaw plugin** — new [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) for Sabha integration
+- **Bots in threads and DMs** — bots added to a thread or DM now receive every message, just like human members
+- **Bot avatars and management** — cleaner bot admin page, auto-generated robot avatars, bots shown in the members list
+
 ### Multi-tenant SaaS features
 
 > The `saas/` directory is under the [Sabha SaaS License](https://github.com/sabha-co/sabha/blob/main/saas/LICENSE), not MIT.
@@ -92,3 +100,4 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 - **Welcome email** — sent to workspace creator after provisioning
 - **Tenant-aware jobs and channels** — Solid Queue and ActionCable auto-propagate tenant context
 - **Workspace backups** — automated backups to R2 cloud storage with restore support
+- Disposable email addresses blocked on SaaS signup
