@@ -63,6 +63,8 @@ module Sabha
             # Static pages
             get "about", to: "saas/static#about"
             get "changelog", to: "saas/static#changelog"
+            get "terms", to: "saas/static#terms"
+            get "privacy", to: "saas/static#privacy"
 
             # Workspace management
             resources :workspaces, only: [ :index, :new, :create, :show ], controller: "saas/workspaces"

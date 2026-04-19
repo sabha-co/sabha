@@ -13,6 +13,12 @@ module Saas
       @changelog = parse_changelog
     end
 
+    def terms
+    end
+
+    def privacy
+    end
+
     private
 
       def parse_changelog

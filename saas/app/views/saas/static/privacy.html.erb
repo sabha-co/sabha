@@ -1,0 +1,149 @@
+<% content_for :title, "Privacy Policy — Sabha" %>
+<% content_for :meta_description, "How Sabha collects, uses, and protects your data on sabha.co." %>
+
+<div class="landing">
+
+<%# ═══════════════════════════════════ HEADER ═══════════════════════════════════ %>
+<header class="landing-header">
+  <div class="landing-inner">
+    <nav class="landing-nav">
+      <div class="landing-logo">
+        <a href="/">
+          <%= image_tag "logos/sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg" %>
+        </a>
+      </div>
+      <button class="landing-menu-toggle" id="landing-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+      </button>
+      <div class="landing-nav-links">
+        <a href="/#features">Features</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+      </div>
+      <div class="landing-header-right">
+        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
+        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
+      </div>
+      <div class="landing-mobile-menu">
+        <a href="/#features">Features</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+        <div class="landing-mobile-menu-divider"></div>
+        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
+        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<section class="landing-section" style="padding-top: 6rem;">
+  <div class="landing-inner" style="max-width: 680px;">
+    <div class="landing-section-header">
+      <span class="landing-label">LEGAL</span>
+      <h1 class="landing-section-title">Privacy Policy</h1>
+      <p class="landing-section-sub" style="margin-top: 0.5rem;">Last updated: April 18, 2026</p>
+    </div>
+
+    <div style="font-size: 1.0625rem; line-height: 1.8; color: var(--color-text-secondary, #555);">
+      <p>This policy explains what information Sabha LLC ("Sabha", "we", "us") collects when you use <a href="https://sabha.co" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">sabha.co</a>, how we use it, and the choices you have. Sabha LLC is the data controller for sabha.co and is a Delaware limited liability company.</p>
+
+      <p style="margin-top: 1rem;">If you self-host the open source Sabha software, this policy does not apply to your deployment — you are the controller of your own data.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">What we collect</h2>
+
+      <h3 style="margin-top: 1.25rem; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary, #111);">Account information</h3>
+      <p style="margin-top: 0.5rem;">When you sign up, we collect your email address and display name. If you set a password, we store only a bcrypt hash of it — we never store or can recover the plain-text password. You may optionally add a profile photo, a LinkedIn or X handle, and a short bio.</p>
+
+      <h3 style="margin-top: 1.25rem; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary, #111);">Workspace content</h3>
+      <p style="margin-top: 0.5rem;">We store the messages, files, reactions, bookmarks, thread participation, and room memberships that make up your workspace. Each workspace runs on its own SQLite database, isolated from every other workspace on sabha.co.</p>
+
+      <h3 style="margin-top: 1.25rem; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary, #111);">Usage data</h3>
+      <p style="margin-top: 0.5rem;">We log IP addresses, user-agent strings, and timestamps for sessions, sign-ins, and security events (including bans and rate-limiting). These are used to keep accounts secure and prevent abuse.</p>
+
+      <h3 style="margin-top: 1.25rem; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary, #111);">Push notifications</h3>
+      <p style="margin-top: 0.5rem;">If you enable push notifications, we store the push subscription endpoint and keys provided by your browser or device. You can revoke this at any time from your browser settings or your Sabha profile.</p>
+
+      <h3 style="margin-top: 1.25rem; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary, #111);">Cookies</h3>
+      <p style="margin-top: 0.5rem;">We use a first-party session cookie to keep you signed in. We do not use analytics, advertising, or cross-site tracking cookies. Cloudflare Turnstile may set short-lived cookies during signup to verify you are not a bot.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">How we use it</h2>
+      <p style="margin-top: 0.75rem;">We use your information to operate sabha.co — deliver messages, authenticate sessions, send transactional emails (OTP codes, password resets, workspace notifications), prevent abuse, and diagnose errors. We do not sell your personal data, and we do not use it to train machine-learning models.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">Service providers we use</h2>
+      <p style="margin-top: 0.75rem;">We rely on a small set of third-party infrastructure providers to operate sabha.co. They act as processors under our instructions, and we share only the minimum data required for each purpose:</p>
+      <ul style="margin-top: 0.75rem; padding-left: 1.5rem;">
+        <li style="margin-bottom: 0.5rem;"><strong>Transactional email</strong> — delivers sign-in codes, password resets, and workspace notifications. Receives your email address, name, and the email body.</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Bot-prevention</strong> — verifies you are not an automated script during signup. Receives your IP, user-agent, and challenge tokens.</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Backup storage</strong> — stores encrypted workspace backups for disaster recovery.</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Error monitoring</strong> — receives application error traces when something goes wrong on the server. Message content and credentials are not sent.</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Avatar generation</strong> — generates default avatars when you don't upload one. Receives a seed string derived from your name or user ID.</li>
+      </ul>
+      <p style="margin-top: 0.75rem;">The specific vendors in each category may change over time; a current list is available on request. Other than these, we do not share personal data with third parties, except when required by law (valid subpoena, court order) or to protect the rights, safety, or property of Sabha, our users, or the public.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">How long we keep it</h2>
+      <p style="margin-top: 0.75rem;">Account and workspace data is retained as long as your workspace is active. When you delete a message or a room, it is soft-deleted and removed from view; it may persist briefly in backups before being purged.</p>
+      <p style="margin-top: 0.75rem;">When you delete a workspace, its active database is removed and a final backup is retained for a limited period (typically 30 days) for disaster recovery, after which it is purged. Security and access logs are retained for up to 12 months.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">Your rights</h2>
+      <p style="margin-top: 0.75rem;">You can:</p>
+      <ul style="margin-top: 0.75rem; padding-left: 1.5rem;">
+        <li style="margin-bottom: 0.5rem;"><strong>Access and export</strong> your workspace data at any time from inside the workspace.</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Correct</strong> your profile information from the settings page.</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Delete</strong> your account or any workspace you administer.</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Revoke</strong> push notification permissions and active sessions.</li>
+      </ul>
+      <p style="margin-top: 0.75rem;">If you are in the EEA, UK, or California, you may have additional rights (access, portability, erasure, objection, restriction of processing). To exercise any of these, email us at the address below and we will respond within 30 days.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">Security</h2>
+      <p style="margin-top: 0.75rem;">All traffic is served over HTTPS. Passwords are hashed with bcrypt. OTP codes use a cryptographically secure random generator and expire quickly. Workspace databases are isolated from each other. File attachments are served only to authenticated users. Despite these measures, no internet service can guarantee perfect security.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">Children</h2>
+      <p style="margin-top: 0.75rem;">sabha.co is not directed at children under 13. We do not knowingly collect information from children under 13. If you believe a child has created an account, contact us and we will delete it.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">International users</h2>
+      <p style="margin-top: 0.75rem;">Our servers and backups are operated in the United States and through Cloudflare's global network. By using sabha.co you consent to the transfer and processing of your data in the US and in other jurisdictions where our service providers operate.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">Changes</h2>
+      <p style="margin-top: 0.75rem;">We may update this policy from time to time. Material changes will be announced on the service or via email. The "Last updated" date at the top always reflects the current version.</p>
+
+      <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">Contact</h2>
+      <p style="margin-top: 0.75rem;">Questions, requests, or privacy concerns? Email <strong>ashwin[at]sabha.co</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%= render "shared/marketing_footer" %>
+
+</div>
+
+<script>
+  (function() {
+    var toggle = document.getElementById('landing-menu-toggle');
+    var nav = toggle && toggle.closest('.landing-nav');
+    if (!toggle || !nav) return;
+
+    function openMenu() { nav.classList.add('nav-open'); toggle.setAttribute('aria-expanded', 'true'); }
+    function closeMenu() { nav.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); }
+
+    toggle.addEventListener('click', function() {
+      nav.classList.contains('nav-open') ? closeMenu() : openMenu();
+    });
+
+    var menu = nav.querySelector('.landing-mobile-menu');
+    if (menu) {
+      menu.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') closeMenu();
+      });
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!nav.contains(e.target)) closeMenu();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+  })();
+</script>
