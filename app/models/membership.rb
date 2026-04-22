@@ -204,12 +204,11 @@ class Membership < ApplicationRecord
     def broadcast_star_change
       return if involved_in_invisible? || room.direct? || room.thread?
 
-      helpers = ApplicationController.helpers
       old_list = starred_before_last_save ? :starred_rooms : :shared_rooms
 
       Turbo::StreamsChannel.broadcast_remove_to(
         user, :rooms,
-        target: [ room, helpers.dom_prefix(old_list, :list_node) ]
+        target: [ room, "#{old_list}_list_node" ]
       )
 
       Turbo::StreamsChannel.broadcast_append_to(

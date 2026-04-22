@@ -25,13 +25,9 @@ class RoomUpdateBroadcastJob < ApplicationJob
     list_name = membership.sidebar_list_name
     Turbo::StreamsChannel.broadcast_replace_to(
       membership.user, :rooms,
-      target: [ room, helpers.dom_prefix(list_name, :list_node) ],
+      target: [ room, "#{list_name}_list_node" ],
       partial: "users/sidebars/rooms/shared",
       locals: { membership: membership, list_name: list_name, room: room }
     )
-  end
-
-  def helpers
-    ApplicationController.helpers
   end
 end
