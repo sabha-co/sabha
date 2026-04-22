@@ -30,7 +30,7 @@ jobs:
           bundler-cache: true
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
         with:
           version: 10.28.0
 
@@ -98,7 +98,7 @@ jobs:
           BUNDLE_GEMFILE: Gemfile.saas
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
         with:
           version: 10.28.0
 
