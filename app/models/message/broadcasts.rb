@@ -65,17 +65,8 @@ module Message::Broadcasts
                         attributes: { maintain_scroll: true }
   end
 
-  def broadcast_mention_notifications(recipient_ids)
-    Notification.where(message_id: id, activity_type: "mention", user_id: recipient_ids)
-                .with_message_and_creator
-                .each do |notification|
-      Turbo::StreamsChannel.broadcast_append_to(
-        [ notification.user, :inbox_activity ],
-        target: "inbox",
-        partial: "notifications/notification",
-        locals: { notification: notification, timestamp_style: :long_datetime }
-      )
-    end
+  def broadcast_mention_notifications
+    BroadcastMentionNotificationsJob.perform_later(message_id: id)
   end
 
   def broadcast_remove
@@ -101,17 +92,6 @@ module Message::Broadcasts
   end
 
   def broadcast_mentionee_sidebar_updates
-    mentionees.each do |user|
-      all = user.memberships.shared.visible.with_has_unread_notifications.with_room_by_last_active_newest_first.to_a
-      starred, unstarred = all.partition(&:starred?)
-
-      { starred_rooms: starred, shared_rooms: unstarred }.each do |list_name, memberships|
-        user.broadcast_replace_to user, :rooms,
-          target: list_name,
-          partial: "users/sidebars/rooms/shared_rooms_list",
-          locals: { list_name:, memberships: },
-          attributes: { maintain_scroll: true }
-      end
-    end
+    BroadcastMentioneeSidebarUpdatesJob.perform_later(message_id: id)
   end
 end

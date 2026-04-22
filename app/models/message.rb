@@ -218,7 +218,7 @@ class Message < ApplicationRecord
         unique_by: "index_notifications_on_message_user_type"
       )
 
-      broadcast_mention_notifications(recipient_ids)
+      broadcast_mention_notifications
     end
 
     def create_thread_reply_notifications
