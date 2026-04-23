@@ -25,16 +25,6 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "david@37signals.com", @user.email_address # Original email unchanged
   end
 
-  test "cancel email change" do
-    @user.update!(unconfirmed_email: "pending@example.com")
-
-    delete cancel_email_change_user_profile_url
-
-    assert_redirected_to user_profile_url
-    assert_equal "Email change cancelled.", flash[:notice]
-    assert_nil @user.reload.unconfirmed_email
-  end
-
   test "show displays pending email change" do
     @user.update!(unconfirmed_email: "pending@example.com")
 

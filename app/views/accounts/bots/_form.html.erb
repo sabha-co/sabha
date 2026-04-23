@@ -18,7 +18,7 @@
         <span class="for-screen-reader">Delete avatar</span>
       <% end %>
     <% elsif Dicebear.enabled? %>
-      <%= link_to shuffle_account_bot_avatar_path(bot), data: { turbo_method: :post }, class: "btn txt-small", aria: { label: "Shuffle avatar" } do %>
+      <%= link_to account_bot_avatar_shuffle_path(bot), data: { turbo_method: :post }, class: "btn txt-small", aria: { label: "Shuffle avatar" } do %>
         <%= icon_tag "refresh" %>
         <span class="for-screen-reader">Shuffle avatar</span>
       <% end %>

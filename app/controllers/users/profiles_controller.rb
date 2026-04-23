@@ -15,16 +15,6 @@ class Users::ProfilesController < ApplicationController
     end
   end
 
-  def cancel_email_change
-    @user.cancel_email_change!
-    redirect_to user_profile_url, notice: "Email change cancelled."
-  end
-
-  def shuffle_avatar
-    @user.shuffle_avatar_seed!
-    redirect_to user_profile_url
-  end
-
   private
     def set_user
       @user = Current.user

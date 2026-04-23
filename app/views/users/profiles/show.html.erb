@@ -45,7 +45,7 @@
         <span class="for-screen-reader">Delete avatar</span>
       <% end %>
     <% elsif Dicebear.enabled? %>
-      <%= button_to shuffle_avatar_user_profile_path, method: :post, class: "btn txt-small" do %>
+      <%= button_to user_avatar_shuffle_path, method: :post, class: "btn txt-small" do %>
         <%= icon_tag "refresh" %>
         <span class="for-screen-reader">Shuffle avatar</span>
       <% end %>
@@ -91,7 +91,7 @@
           <div class="btn" style="visibility: hidden;"></div>
           <p class="txt-small txt-muted margin-none">
             Pending: <strong><%= @user.unconfirmed_email %></strong> ·
-            <%= link_to "Cancel", cancel_email_change_user_profile_path, data: { turbo_method: :delete } %>
+            <%= link_to "Cancel", user_email_change_path, data: { turbo_method: :delete } %>
           </p>
         </div>
       <% end %>

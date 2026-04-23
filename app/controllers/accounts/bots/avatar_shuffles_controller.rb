@@ -1,9 +1,9 @@
-class Accounts::Bots::AvatarsController < ApplicationController
+class Accounts::Bots::AvatarShufflesController < ApplicationController
   before_action :ensure_can_administer
   before_action :set_bot
 
-  def destroy
-    @bot.avatar.purge
+  def create
+    @bot.shuffle_avatar_seed!
     redirect_to edit_account_bot_path(@bot)
   end
 

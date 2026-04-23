@@ -62,9 +62,8 @@ Rails.application.routes.draw do
       resources :bots do
         scope module: "bots" do
           resource :key, only: :update
-          resource :avatar, only: :destroy do
-            post :shuffle, on: :member
-          end
+          resource :avatar, only: :destroy
+          resource :avatar_shuffle, only: :create
           resources :rooms, only: [] do
             resource :permission, only: %i[ show create update destroy ], controller: "room_permissions"
           end
@@ -97,13 +96,11 @@ Rails.application.routes.draw do
       end
 
       scope defaults: { user_id: "me" } do
-        resource :sidebar, only: :show do
-          get :hidden_rooms, on: :member
-        end
-        resource :profile do
-          post :shuffle_avatar, on: :member
-          delete :cancel_email_change, on: :member
-        end
+        resource :sidebar, only: :show
+        resources :hidden_rooms, only: :index
+        resource :profile
+        resource :avatar_shuffle, only: :create
+        resource :email_change, only: :destroy
         resource :invite_link, only: :create
         resources :push_subscriptions do
           scope module: "push_subscriptions" do
