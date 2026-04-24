@@ -36,7 +36,7 @@
 </div>
 
 <details <%= "open" if bot.webhook_url.present? %>>
-  <summary class="txt-small txt-muted txt-underlined" style="cursor: pointer;">Add a webhook URL</summary>
+  <summary class="txt-small txt-muted txt-underlined" style="cursor: pointer;">Add a fallback webhook URL (optional)</summary>
   <div class="flex align-center gap pad-block-half">
     <%= translation_button(:webhook_url) %>
     <label class="flex align-center gap flex-item-grow txt-large input input--actor">
