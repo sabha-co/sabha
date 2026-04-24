@@ -11,9 +11,10 @@ module User::Bot
     def create_bot!(attributes)
       attributes = attributes.to_h.symbolize_keys
       bot_token = generate_bot_token
+      webhook_secret = generate_webhook_secret
       webhook_url = attributes.delete(:webhook_url).presence || attributes.delete(:mentions_url).presence || attributes.delete(:everything_url).presence
 
-      User.create!(**attributes, bot_token: bot_token, role: :bot).tap do |user|
+      User.create!(**attributes, bot_token: bot_token, webhook_secret: webhook_secret, role: :bot).tap do |user|
         user.create_webhook!(url: webhook_url) if webhook_url.present?
       end
     end
@@ -26,6 +27,10 @@ module User::Bot
 
     def generate_bot_token
       SecureRandom.alphanumeric(12)
+    end
+
+    def generate_webhook_secret
+      "whsec_#{SecureRandom.alphanumeric(40)}"
     end
   end
 

@@ -52,6 +52,37 @@
         <% end %>
       </div>
     </label>
+
+    <% if @bot.webhook_secret.present? %>
+      <label class="flex flex-column gap-half">
+        <span class="txt-x-small txt-muted">Webhook secret</span>
+        <div class="flex align-center gap">
+          <div class="flex-item-grow min-width">
+            <input type="text" class="input input--small full-width fill-white txt-small" value="<%= @bot.webhook_secret %>" readonly>
+          </div>
+          <%= button_to_copy_to_clipboard(@bot.webhook_secret) do %>
+            <%= icon_tag "copy-paste" %>
+            <span class="for-screen-reader">Copy webhook secret</span>
+          <% end %>
+        </div>
+      </label>
+    <% end %>
+
+    <div class="flex flex-column gap-half">
+      <span class="txt-x-small txt-muted">Delivery</span>
+      <p class="txt-small margin-none">
+        WebSocket — enabled by default.
+      </p>
+      <p class="txt-small margin-none">
+        <% if @bot.webhook_url.present? %>
+          Webhook — <span class="txt-muted"><%= @bot.webhook_url %></span>
+          <%= link_to "Edit", edit_account_bot_path(@bot), class: "txt-underlined txt-muted txt-x-small" %>
+        <% else %>
+          Webhook — <span class="txt-muted">not configured.</span>
+          <%= link_to "Add one", edit_account_bot_path(@bot), class: "txt-underlined txt-muted txt-x-small" %>
+        <% end %>
+      </p>
+    </div>
   </div>
 
   <hr class="separator full-width" style="--border-style: solid">

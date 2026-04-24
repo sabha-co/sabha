@@ -1,0 +1,31 @@
+class API::Bots::Messages::BoostsController < API::Bots::BaseController
+  include NotifyBots
+
+  before_action :set_room_and_message
+
+  def create
+    content = request.body.tap(&:rewind).read.force_encoding("UTF-8").strip
+    @boost = @message.boosts.create!(content: content, booster: Current.user)
+
+    notify_bots(@boost, :created)
+
+    render json: { id: @boost.id, content: @boost.content }, status: :created
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+    render json: { error: "Boost already exists or is invalid", code: "validation_failed" }, status: :unprocessable_entity
+  end
+
+  def destroy
+    @boost = @message.boosts.where(booster: Current.user).find(params[:id])
+
+    @boost.destroy!
+    notify_bots(@boost, :deleted)
+
+    head :no_content
+  end
+
+  private
+    def set_room_and_message
+      @room = Current.user.rooms.find(params[:room_id])
+      @message = @room.messages.active.find(params[:message_id])
+    end
+end

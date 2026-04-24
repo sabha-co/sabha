@@ -3,7 +3,7 @@
     <strong class="overflow-ellipsis">Direct message</strong>
   </legend>
 
-  <% curl_text_line = %[curl -H "Content-Type: application/json" #{rooms_bot_directs_url(bot.bot_key)} -d '{ "user_ids": [ "#{Current.user.id}" ] }'] %>
+  <% curl_text_line = %[curl -H "Authorization: Bearer #{bot.bot_key}" -H "Content-Type: application/json" #{api_bots_direct_messages_url} -d '{ "user_ids": [ "#{Current.user.id}" ] }'] %>
   <div class="flex align-center gap">
     <%= icon_tag "add" %>
 

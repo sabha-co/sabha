@@ -13,6 +13,7 @@ require_relative "test_helpers/mention_test_helper"
 require_relative "test_helpers/turbo_test_helper"
 require_relative "test_helpers/turnstile_test_helper"
 require_relative "test_helpers/dns_test_helper"
+require_relative "test_helpers/bot_api_test_helper"
 
 WebMock.enable!
 
@@ -25,7 +26,7 @@ class ActiveSupport::TestCase
   # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
   fixtures :all
 
-  include SessionTestHelper, MentionTestHelper, TurboTestHelper, DnsTestHelper
+  include SessionTestHelper, MentionTestHelper, TurboTestHelper, DnsTestHelper, BotApiTestHelper
 
   setup do
     # Default to password auth in tests (sign_in helper uses password)

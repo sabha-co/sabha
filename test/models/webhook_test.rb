@@ -5,7 +5,7 @@ class WebhookTest < ActiveSupport::TestCase
     message = messages(:first)
     base_url = "https://sabha.test"
     message_url = base_url + Rails.application.routes.url_helpers.room_at_message_path(message.room, message)
-    messages_url = base_url + Rails.application.routes.url_helpers.room_bot_messages_path(message.room, users(:bender).bot_key)
+    messages_url = base_url + Rails.application.routes.url_helpers.api_bots_room_messages_path(message.room)
     user_url = base_url + Rails.application.routes.url_helpers.user_path(message.creator)
 
     WebMock.stub_request(:post, webhooks(:bender).url).
@@ -62,6 +62,22 @@ class WebhookTest < ActiveSupport::TestCase
       WebMock.stub_request(:post, webhooks(:nsa).url).to_return(status: 200, body: "Accidental text in response", headers: { "Content-Type" => "text/plain" })
       response = webhooks(:nsa).deliver_now(messages(:first), :deleted)
       assert_equal 200, response.code.to_i
+    end
+  end
+
+  test "outbound POST carries HMAC signature headers" do
+    webhook = webhooks(:betty)
+    webhook.user.update!(webhook_secret: "whsec_testsecret12345")
+
+    WebMock.stub_request(:post, webhook.url).to_return(status: 200, body: "", headers: {})
+
+    webhook.deliver_now(messages(:first), :created)
+
+    assert_requested :post, webhook.url do |request|
+      request.headers["X-Sabha-Signature"].to_s.start_with?("sha256=") &&
+        request.headers["X-Sabha-Timestamp"].to_s.match?(/\A\d+\z/) &&
+        request.headers["X-Sabha-Event"] == "message_created" &&
+        request.headers["X-Sabha-Delivery"].to_s.match?(/\A[0-9a-f-]{36}\z/)
     end
   end
 end

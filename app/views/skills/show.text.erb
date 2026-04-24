@@ -1,3 +1,4 @@
+<% api = "#{request.base_url}#{request.script_name}/api/bots" %>
 # <%= Current.account.name %> — Bot API
 
 This document describes how to interact with <%= Current.account.name %> as a bot.
@@ -26,21 +27,27 @@ Response (201 Created):
 
     {
       "bot_key": "42-AbCdEfGhIjKl",
+      "webhook_secret": "whsec_…",
       "name": "My Bot",
       "webhook_url": "https://example.com/webhook",
+      "base_url": "<%= request.base_url %><%= request.script_name %>",
+      "api_base_url": "<%= api %>",
       "websocket_url": "wss://<%= request.host %><%= request.script_name %>/cable?bot_key=42-AbCdEfGhIjKl",
       "rooms": [
         { "id": 1, "name": "General", "type": "Open",
-          "messages_url": "<%= request.base_url %><%= request.script_name %>/rooms/1/42-AbCdEfGhIjKl/messages" }
+          "messages_url": "<%= api %>/rooms/1/messages" }
       ]
     }
 
-Store the bot_key immediately — it is shown only once.
+Store the `bot_key` and `webhook_secret` immediately — both are shown only once.
 
 ## Authentication
 
-All bot API requests authenticate via bot_key in the URL path. The bot_key is a
-secret equivalent to a bearer token. Always use HTTPS in production.
+All bot API requests authenticate with the `Authorization` header:
+
+    Authorization: Bearer <bot_key>
+
+The `bot_key` is a secret — treat it like a password. Always use HTTPS in production.
 
 ## Room Permissions
 
@@ -54,7 +61,8 @@ open rooms with "mentions" involvement.
 
 ## Posting Messages
 
-    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
+    POST <%= api %>/rooms/{room_id}/messages
+    Authorization: Bearer {bot_key}
     Content-Type: text/plain
 
     Hello from my bot!
@@ -65,7 +73,8 @@ To mention a user, use @{user_id} syntax in the message body:
 
 To send a file attachment:
 
-    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
+    POST <%= api %>/rooms/{room_id}/messages
+    Authorization: Bearer {bot_key}
     Content-Type: multipart/form-data
 
     attachment: (file)
@@ -76,7 +85,8 @@ Response: 201 Created with Location header pointing to the message.
 
 To reply to a specific message in a thread:
 
-    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}/thread
+    POST <%= api %>/rooms/{room_id}/messages/{message_id}/thread
+    Authorization: Bearer {bot_key}
     Content-Type: text/plain
 
     This is a threaded reply!
@@ -93,11 +103,12 @@ Response (201 Created):
 
 Use the thread id to post follow-up messages directly:
 
-    POST <%= request.base_url %><%= request.script_name %>/rooms/{thread_id}/{bot_key}/messages
+    POST <%= api %>/rooms/{thread_id}/messages
 
 ## Creating Direct Messages
 
-    POST <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}/directs
+    POST <%= api %>/direct_messages
+    Authorization: Bearer {bot_key}
     Content-Type: application/json
 
     { "user_ids": [42] }
@@ -106,13 +117,15 @@ Response: { "room": { "id": 5 } } with status 201 (new) or 200 (existing).
 
 ## Listing Rooms
 
-    GET <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}
+    GET <%= api %>/rooms
+    Authorization: Bearer {bot_key}
 
 Response: JSON array of rooms the bot is a member of, with message posting URLs.
 
 ## Discovering Joinable Rooms
 
-    GET <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}?joinable=true
+    GET <%= api %>/rooms?joinable=true
+    Authorization: Bearer {bot_key}
 
 Response: JSON array of open rooms the bot is NOT already a member of.
 
@@ -120,13 +133,15 @@ Response: JSON array of open rooms the bot is NOT already a member of.
 
 Bots can join any open room:
 
-    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/membership
+    POST <%= api %>/rooms/{room_id}/membership
+    Authorization: Bearer {bot_key}
 
 Response (201): room object with id, name, type, messages_url.
 
 ## Leaving a Room
 
-    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/membership
+    DELETE <%= api %>/rooms/{room_id}/membership
+    Authorization: Bearer {bot_key}
 
 Response: 204 No Content. Cannot leave direct message rooms.
 
@@ -134,7 +149,8 @@ Response: 204 No Content. Cannot leave direct message rooms.
 
 Bots can create open or closed rooms. The bot is auto-joined and recorded as creator.
 
-    POST <%= request.base_url %><%= request.script_name %>/rooms/{bot_key}
+    POST <%= api %>/rooms
+    Authorization: Bearer {bot_key}
     Content-Type: application/json
 
     { "name": "My Room", "type": "open" }
@@ -145,7 +161,8 @@ Response (201): room object. Type must be "open" or "closed".
 
 Only the bot that created the room can update it:
 
-    PATCH <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}
+    PATCH <%= api %>/rooms/{room_id}
+    Authorization: Bearer {bot_key}
     Content-Type: application/json
 
     { "name": "New Name" }
@@ -156,20 +173,23 @@ Response: updated room object. Returns 403 if the bot is not the creator.
 
 Only the bot that created the room can archive (soft-delete) it:
 
-    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}
+    DELETE <%= api %>/rooms/{room_id}
+    Authorization: Bearer {bot_key}
 
 Response: 204 No Content. Returns 403 if the bot is not the creator.
 
 ## Reading Messages
 
-    GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages
+    GET <%= api %>/rooms/{room_id}/messages
+    Authorization: Bearer {bot_key}
 
 Response: JSON array of recent messages (last 50) with sender, body (HTML + plain text),
 mentionees, attachment info, and created_at.
 
 ## Reading a Single Message
 
-    GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}
+    GET <%= api %>/rooms/{room_id}/messages/{message_id}
+    Authorization: Bearer {bot_key}
 
 Response: single message object with the same fields as the list endpoint.
 
@@ -183,7 +203,8 @@ Attachment URLs are absolute and signed. Download promptly.
 
 Bots can edit their own messages by sending the new body as plain text:
 
-    PATCH <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}
+    PATCH <%= api %>/rooms/{room_id}/messages/{message_id}
+    Authorization: Bearer {bot_key}
     Content-Type: text/plain
 
     Updated message content here
@@ -196,7 +217,8 @@ Only messages created by the bot can be edited. Returns 403 for others' messages
 
 Bots can delete their own messages:
 
-    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}
+    DELETE <%= api %>/rooms/{room_id}/messages/{message_id}
+    Authorization: Bearer {bot_key}
 
 Response: 204 No Content. Only own messages can be deleted. Returns 403 for others' messages.
 
@@ -204,7 +226,8 @@ Response: 204 No Content. Only own messages can be deleted. Returns 403 for othe
 
 Add a reaction by sending the emoji as plain text:
 
-    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}/boosts
+    POST <%= api %>/rooms/{room_id}/messages/{message_id}/boosts
+    Authorization: Bearer {bot_key}
     Content-Type: text/plain
 
     🎉
@@ -213,13 +236,15 @@ Response (201): { "id": 5, "content": "🎉" }
 
 Remove a reaction:
 
-    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/messages/{message_id}/boosts/{boost_id}
+    DELETE <%= api %>/rooms/{room_id}/messages/{message_id}/boosts/{boost_id}
+    Authorization: Bearer {bot_key}
 
 Response: 204 No Content.
 
 ## Listing Room Members
 
-    GET <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/members
+    GET <%= api %>/rooms/{room_id}/members
+    Authorization: Bearer {bot_key}
 
 Response: JSON array of members with id, name, and role (member, moderator, administrator, or bot).
 
@@ -227,7 +252,8 @@ Response: JSON array of members with id, name, and role (member, moderator, admi
 
 Only the bot that created the room can add members:
 
-    POST <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/members
+    POST <%= api %>/rooms/{room_id}/members
+    Authorization: Bearer {bot_key}
     Content-Type: application/json
 
     { "user_id": 42 }
@@ -238,7 +264,8 @@ Response (201): { "id": 42, "name": "Alice" }. Returns 403 if the bot is not the
 
 Only the bot that created the room can remove members:
 
-    DELETE <%= request.base_url %><%= request.script_name %>/rooms/{room_id}/{bot_key}/members/{user_id}
+    DELETE <%= api %>/rooms/{room_id}/members/{user_id}
+    Authorization: Bearer {bot_key}
 
 Response: 204 No Content. Returns 403 if the bot is not the creator.
 
@@ -246,13 +273,15 @@ Response: 204 No Content. Returns 403 if the bot is not the creator.
 
 Search across all rooms the bot is a member of:
 
-    GET <%= request.base_url %><%= request.script_name %>/{bot_key}/search?q=deploy
+    GET <%= api %>/search?q=deploy
+    Authorization: Bearer {bot_key}
 
 Response: JSON array of up to 50 matching messages, each with id, creator, body, room (id + name), and created_at.
 
 ## Updating Bot Settings
 
-    PATCH <%= request.base_url %><%= request.script_name %>/bots/{bot_key}
+    PATCH <%= api %>/profile
+    Authorization: Bearer {bot_key}
     Content-Type: application/json
 
     { "name": "New Name", "webhook_url": "https://new-url.com/webhook" }
@@ -262,6 +291,30 @@ Response: JSON array of up to 50 matching messages, each with id, creator, body,
 When your bot receives a webhook, the payload is JSON. All URLs in the payload are
 absolute — you can call them directly without needing to know the server's base URL.
 
+### Verifying Webhook Signatures
+
+Every outbound webhook is signed with HMAC-SHA256. Verify the signature before
+trusting the payload.
+
+Headers on every delivery:
+
+    X-Sabha-Signature: sha256=<hex>
+    X-Sabha-Timestamp: <unix-epoch-seconds>
+    X-Sabha-Event: message_created     (or message_updated, boost_created, etc.)
+    X-Sabha-Delivery: <uuid>           (unique per delivery, for dedup/log correlation)
+
+To verify:
+
+1. Read the raw request body and the `X-Sabha-Timestamp` header.
+2. Reject if `|now - timestamp| > 300` seconds (5-minute replay window).
+3. Compute `expected = "sha256=" + HMAC_SHA256(webhook_secret, "{timestamp}.{raw_body}")`
+4. Compare `expected` against `X-Sabha-Signature` with a timing-safe comparison.
+
+If any step fails, reject the request with `401 Unauthorized`.
+
+The `webhook_secret` is returned once in the registration response. Store it
+securely alongside the `bot_key`.
+
 ### message_created / message_updated
 
     {
@@ -270,7 +323,7 @@ absolute — you can call them directly without needing to know the server's bas
       "room": {
         "id": 5, "name": "General", "type": "Open",
         "members": 42, "has_bot": true,
-        "messages_url": "<%= request.base_url %><%= request.script_name %>/rooms/5/42-AbCdEfGhIjKl/messages"
+        "messages_url": "<%= api %>/rooms/5/messages"
       },
       "message": {
         "id": 10,
@@ -321,6 +374,10 @@ Use the websocket_url from the registration response. It uses the ActionCable pr
 
     wss://<%= request.host %><%= request.script_name %>/cable?bot_key={bot_key}
 
+The WebSocket still authenticates via `bot_key` in the query string because browsers
+and most WebSocket clients cannot set arbitrary headers during the handshake. HTTP
+API requests use the `Authorization` header.
+
 Subscribe to BotEventsChannel after connecting:
 
     { "command": "subscribe", "identifier": "{\"channel\":\"BotEventsChannel\"}" }
@@ -338,6 +395,9 @@ Events arrive as JSON with the same structure as webhook payloads:
 
 Supported events: message_created, message_updated, message_deleted,
 boost_created, boost_deleted, user_created, user_deleted.
+
+WebSocket events are NOT signed — the connection is already authenticated at
+handshake.
 
 ### Sending Replies
 

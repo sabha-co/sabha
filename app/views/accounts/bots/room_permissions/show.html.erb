@@ -20,28 +20,26 @@
 
   <% if @membership %>
     <div class="pad-inline flex flex-column gap">
-      <% if @bot.webhook.present? %>
-        <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch,
-              data: { controller: "form" } do %>
-          <label class="txt-small txt-muted" for="involvement">Webhook delivery</label>
-          <%= select_tag :involvement,
-                options_for_select([
-                  ["Mentions only", "mentions"],
-                  ["Muted", "nothing"]
-                ], @membership.involvement),
-                id: "involvement", class: "input full-width",
-                data: { action: "change->form#submit" } %>
-        <% end %>
-
-        <p class="txt-small txt-muted margin-none">
-          <% case @membership.involvement
-          when "mentions" %>Webhook fires when @mentioned or in a DM. Your response is auto-posted as a reply.
-          <% when "nothing" %>No webhooks fired. Bot can still post and read messages via the API.<% end %>
-        </p>
+      <%= form_with url: account_bot_room_permission_path(@bot, @room), method: :patch,
+            data: { controller: "form" } do %>
+        <label class="txt-small txt-muted" for="involvement">Event delivery</label>
+        <%= select_tag :involvement,
+              options_for_select([
+                ["Mentions only", "mentions"],
+                ["Muted", "nothing"]
+              ], @membership.involvement),
+              id: "involvement", class: "input full-width",
+              data: { action: "change->form#submit" } %>
       <% end %>
 
-      <% message_url = room_bot_messages_url(@room, @bot.bot_key) %>
-      <label class="txt-small txt-muted">Message URL — POST to this URL to send messages to this room</label>
+      <p class="txt-small txt-muted margin-none">
+        <% case @membership.involvement
+        when "mentions" %>Bot receives events when @mentioned or in a DM. Applies to WebSocket and webhook delivery.
+        <% when "nothing" %>Bot receives no events from this room. It can still post and read via the API.<% end %>
+      </p>
+
+      <% message_url = api_bots_room_messages_url(@room) %>
+      <label class="txt-small txt-muted">Message URL — POST to this URL with <code>Authorization: Bearer &lt;bot_key&gt;</code> to send messages to this room</label>
       <div class="flex align-center gap">
         <div class="flex-item-grow min-width">
           <input type="text" class="input full-width fill-white txt-small" value="<%= message_url %>" aria-label="Message URL" readonly>
@@ -64,7 +62,7 @@
   <% else %>
     <div class="pad-inline flex flex-column gap">
       <p class="txt-small txt-muted"><%= @bot.name %> does not have access to this room.</p>
-      <p class="txt-small txt-muted margin-none">Adding the bot will grant it permission to post and read messages. Webhook delivery defaults to mentions only — you can change this after adding.</p>
+      <p class="txt-small txt-muted margin-none">Adding the bot will grant it permission to post and read messages. Event delivery defaults to mentions only — you can change this after adding.</p>
 
       <%= button_to account_bot_room_permission_path(@bot, @room), method: :post,
             class: "btn btn--primary full-width" do %>

@@ -1,6 +1,15 @@
 module Bot::EventPayload
+  def self.event_name_for(item, event)
+    prefix = case item
+    when Message then "message"
+    when Boost   then "boost"
+    when User    then "user"
+    end
+    "#{prefix}_#{event}" if prefix
+  end
+
   def self.build(item, event, bot:, base_url: "")
-    urls = UrlBuilder.new(base_url, bot.bot_key)
+    urls = UrlBuilder.new(base_url)
 
     if item.is_a?(Message)
       {
@@ -28,9 +37,8 @@ module Bot::EventPayload
   end
 
   class UrlBuilder
-    def initialize(base_url, bot_key)
+    def initialize(base_url)
       @base_url = base_url
-      @bot_key = bot_key
     end
 
     def room_to_api(room, bot_is_member: false)
@@ -40,7 +48,7 @@ module Bot::EventPayload
         type: room.class.name.demodulize,
         members: room.memberships.visible.count,
         has_bot: bot_is_member,
-        messages_url: absolute_url(routes.room_bot_messages_path(room, @bot_key))
+        messages_url: absolute_url(routes.api_bots_room_messages_path(room))
       }
     end
 

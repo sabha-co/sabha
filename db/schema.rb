@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_13_052010) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_24_100000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -295,6 +295,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_13_052010) do
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
     t.datetime "verified_at"
+    t.string "webhook_secret"
     t.bigint "workspace_membership_id"
     t.index ["badge_id"], name: "index_users_on_badge_id"
     t.index ["bot_token"], name: "index_users_on_bot_token", unique: true
