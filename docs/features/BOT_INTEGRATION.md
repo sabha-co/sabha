@@ -61,6 +61,8 @@ The WebSocket endpoint keeps `bot_key` in the query string (`wss://.../cable?bot
 
 All endpoints are rooted at the `api_base_url` returned from registration (e.g. `https://chat.example.com/api/bots`).
 
+> **Per-room URLs — server is the source of truth.** Every webhook payload and the registration response include a `messages_url` on each `room` object. Clients **should** consume that field directly rather than deriving URLs from `api_base_url` + `room_id`. Derivation works today but will silently break if the server's URL shape ever changes (versioning, subdomain split, new `script_name` mount). Treat string concatenation as a compatibility fallback only.
+
 | Action | Method | Endpoint |
 |---|---|---|
 | Post a message | POST | `/rooms/{room_id}/messages` |

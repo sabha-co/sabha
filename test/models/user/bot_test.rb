@@ -12,6 +12,18 @@ class User::BotTest < ActiveSupport::TestCase
     assert_equal "#{bot.id}-#{token}", bot.bot_key
   end
 
+  test "create_bot! always generates webhook_secret even without webhook_url" do
+    bot = User.create_bot!(name: "NoWebhook")
+    assert_nil bot.webhook_url
+    assert_match(/\Awhsec_/, bot.webhook_secret)
+  end
+
+  test "create_bot! generates webhook_secret when webhook_url is present" do
+    bot = User.create_bot!(name: "WithWebhook", webhook_url: "https://example.com/hook")
+    assert_equal "https://example.com/hook", bot.webhook_url
+    assert_match(/\Awhsec_/, bot.webhook_secret)
+  end
+
   test "reset bot key" do
     first_token = "5M0aLYwQyBXOXa5Wsz6NZb11EE4tW2"
     SecureRandom.stubs(:alphanumeric).returns(first_token)
