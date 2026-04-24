@@ -158,7 +158,7 @@ Rails.application.routes.draw do
   end
 
   # Bot API — authenticate with `Authorization: Bearer <bot_key>`.
-  namespace :api do
+  namespace :api, defaults: { format: :json } do
     namespace :bots do
       resources :rooms, only: %i[ index create update destroy ] do
         resources :messages, only: %i[ index show create update destroy ] do

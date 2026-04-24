@@ -2,16 +2,11 @@ class API::Bots::BaseController < ApplicationController
   skip_forgery_protection
   allow_bot_access
 
-  before_action :force_json_format
   before_action :require_bot_authentication
 
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
   private
-    def force_json_format
-      request.format = :json
-    end
-
     def require_bot_authentication
       head :forbidden unless authenticated_by.bot_key?
     end

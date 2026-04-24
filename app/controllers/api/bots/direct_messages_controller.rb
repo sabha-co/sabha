@@ -1,4 +1,6 @@
 class API::Bots::DirectMessagesController < API::Bots::BaseController
+  before_action :ensure_permission_to_create_direct_messages
+
   def create
     @room = Rooms::Direct.find_or_create_for(selected_users)
     render json: { room: { id: @room.id } }, status: (@room.previously_new_record? ? :created : :ok)
@@ -8,6 +10,10 @@ class API::Bots::DirectMessagesController < API::Bots::BaseController
   end
 
   private
+    def ensure_permission_to_create_direct_messages
+      head :forbidden unless Current.user.can_create_direct_messages?
+    end
+
     def selected_users
       User.where(id: params.fetch(:user_ids, []).including(Current.user.id))
     end

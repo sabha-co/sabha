@@ -69,4 +69,14 @@ class API::Bots::DirectMessagesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, room.users.count
     assert room.users.include?(bot)
   end
+
+  test "bot cannot create DM when account restricts DMs to administrators" do
+    Account.sole.update!(settings: { "restrict_direct_messages_to_administrators" => "true" })
+    bot = users(:bender)
+    assert_not bot.administrator?
+
+    post api_bots_direct_messages_url, params: { user_ids: [ users(:jz).id ] }, headers: bot_headers(bot.bot_key)
+
+    assert_response :forbidden
+  end
 end
