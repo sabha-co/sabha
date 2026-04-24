@@ -124,7 +124,7 @@ Rails.application.routes.draw do
 
   # Join routes for signup via invite link
   # Bot registration via invite URL (JSON) must come before human signup route
-  post "join/:join_code", to: "bots/registrations#create", constraints: ->(req) { req.format.json? }, as: :join_bot
+  post "join/:join_code", to: "api/bots/registrations#create", constraints: ->(req) { req.format.json? }, as: :join_bot
 
   get "join/:join_code", to: "users#new", as: :join
   post "join/:join_code", to: "users#create"
@@ -158,29 +158,23 @@ Rails.application.routes.draw do
   end
 
   # Bot API — authenticate with `Authorization: Bearer <bot_key>`.
-  scope "/api/bots", as: :api_bots do
-    resources :rooms, only: %i[ index create update destroy ], controller: "bots/rooms" do
-      get    "messages",                        to: "messages/reads_by_bots#index",    as: :messages
-      get    "messages/:id",                    to: "messages/reads_by_bots#show",     as: :message
-      post   "messages",                        to: "messages/by_bots#create"
-      patch  "messages/:id",                    to: "messages/by_bots#update"
-      delete "messages/:id",                    to: "messages/by_bots#destroy"
+  namespace :api do
+    namespace :bots do
+      resources :rooms, only: %i[ index create update destroy ] do
+        resources :messages, only: %i[ index show create update destroy ] do
+          scope module: :messages do
+            resource  :thread, only: :create
+            resources :boosts, only: %i[ create destroy ]
+          end
+        end
+        resources :members, only: %i[ index create destroy ]
+        resource  :membership, only: %i[ create destroy ]
+      end
 
-      post   "messages/:message_id/thread",     to: "rooms/threads/by_bots#create",    as: :message_thread
-      post   "messages/:message_id/boosts",     to: "messages/boosts/by_bots#create",  as: :message_boosts
-      delete "messages/:message_id/boosts/:id", to: "messages/boosts/by_bots#destroy", as: :message_boost
-
-      get    "members",                         to: "bots/members#index",              as: :members
-      post   "members",                         to: "bots/members#create"
-      delete "members/:user_id",                to: "bots/members#destroy",            as: :member
-
-      post   "membership",                      to: "bots/memberships#create",         as: :membership
-      delete "membership",                      to: "bots/memberships#destroy"
+      resources :direct_messages, only: :create
+      resource  :search,  only: :show
+      resource  :profile, only: :update
     end
-
-    post  "direct_messages", to: "rooms/directs/by_bots#create", as: :direct_messages
-    get   "search",          to: "bots/searches#index",          as: :search
-    patch "profile",         to: "bots/profiles#update",         as: :profile
   end
 
   resources :messages do
