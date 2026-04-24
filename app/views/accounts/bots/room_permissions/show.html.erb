@@ -40,8 +40,8 @@
         </p>
       <% end %>
 
-      <% message_url = room_bot_messages_url(@room, @bot.bot_key) %>
-      <label class="txt-small txt-muted">Message URL — POST to this URL to send messages to this room</label>
+      <% message_url = api_bots_room_messages_url(@room) %>
+      <label class="txt-small txt-muted">Message URL — POST to this URL with <code>Authorization: Bearer &lt;bot_key&gt;</code> to send messages to this room</label>
       <div class="flex align-center gap">
         <div class="flex-item-grow min-width">
           <input type="text" class="input full-width fill-white txt-small" value="<%= message_url %>" aria-label="Message URL" readonly>

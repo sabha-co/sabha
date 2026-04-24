@@ -7,7 +7,7 @@ class Bots::MembersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "list room members" do
-    get room_bot_members_url(@room, @bot.bot_key)
+    get api_bots_room_members_url(@room), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     json = response.parsed_body
@@ -21,13 +21,13 @@ class Bots::MembersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns 404 for room bot is not a member of" do
-    get room_bot_members_url(rooms(:designers), @bot.bot_key)
+    get api_bots_room_members_url(rooms(:designers)), headers: bot_headers(@bot.bot_key)
 
     assert_response :not_found
   end
 
   test "invalid bot key redirects to sign in" do
-    get room_bot_members_url(@room, "999-invalid")
+    get api_bots_room_members_url(@room), headers: bot_headers("999-invalid")
 
     assert_redirected_to new_session_url
   end
@@ -39,9 +39,9 @@ class Bots::MembersControllerTest < ActionDispatch::IntegrationTest
     room = Rooms::Closed.create_for({ name: "Bot's Room" }, users: @bot)
     Current.reset
 
-    post room_bot_add_member_url(room, @bot.bot_key),
+    post api_bots_room_members_url(room),
       params: { user_id: users(:david).id },
-      as: :json
+      as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :created
     assert_equal users(:david).id, response.parsed_body["id"]
@@ -49,9 +49,9 @@ class Bots::MembersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "non-creator bot cannot add members" do
-    post room_bot_add_member_url(@room, @bot.bot_key),
+    post api_bots_room_members_url(@room),
       params: { user_id: users(:kevin).id },
-      as: :json
+      as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :forbidden
   end
@@ -61,9 +61,9 @@ class Bots::MembersControllerTest < ActionDispatch::IntegrationTest
     room = Rooms::Closed.create_for({ name: "Bot's Room" }, users: @bot)
     Current.reset
 
-    post room_bot_add_member_url(room, @bot.bot_key),
+    post api_bots_room_members_url(room),
       params: { user_id: 999999 },
-      as: :json
+      as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :not_found
   end
@@ -76,14 +76,14 @@ class Bots::MembersControllerTest < ActionDispatch::IntegrationTest
     Current.reset
     room.add_member!(users(:david), actor: @bot)
 
-    delete room_bot_remove_member_url(room, @bot.bot_key, users(:david))
+    delete api_bots_room_member_url(room, users(:david)), headers: bot_headers(@bot)
 
     assert_response :no_content
     assert_not room.reload.users.include?(users(:david))
   end
 
   test "non-creator bot cannot remove members" do
-    delete room_bot_remove_member_url(@room, @bot.bot_key, users(:david))
+    delete api_bots_room_member_url(@room, users(:david)), headers: bot_headers(@bot)
 
     assert_response :forbidden
   end
@@ -93,7 +93,7 @@ class Bots::MembersControllerTest < ActionDispatch::IntegrationTest
     room = Rooms::Closed.create_for({ name: "Solo Bot" }, users: @bot)
     Current.reset
 
-    delete room_bot_remove_member_url(room, @bot.bot_key, @bot)
+    delete api_bots_room_member_url(room, @bot), headers: bot_headers(@bot)
 
     assert_response :unprocessable_entity
     assert_equal "validation_failed", response.parsed_body["code"]

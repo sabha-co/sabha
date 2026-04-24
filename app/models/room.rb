@@ -76,8 +76,8 @@ class Room < ApplicationRecord
     end
   end
 
-  def as_bot_json(bot_key:, url_helper:)
-    { id: id, name: name, type: type.demodulize, messages_url: url_helper.call(self, bot_key) }
+  def as_bot_json(url_helper:)
+    { id: id, name: name, type: type.demodulize, messages_url: url_helper.call(self) }
   end
 
   def receive(message)

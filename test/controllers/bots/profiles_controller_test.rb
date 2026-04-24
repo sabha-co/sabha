@@ -6,9 +6,9 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "updates bot name" do
-    patch bot_profile_url(@bot.bot_key),
+    patch api_bots_profile_url,
       params: { name: "Renamed Bot" },
-      as: :json
+      as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     json = response.parsed_body
@@ -17,9 +17,9 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "updates webhook_url" do
-    patch bot_profile_url(@bot.bot_key),
+    patch api_bots_profile_url,
       params: { webhook_url: "http://example.com/new-hook" },
-      as: :json
+      as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     json = response.parsed_body
@@ -28,18 +28,18 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "updates via legacy mentions_url param" do
-    patch bot_profile_url(@bot.bot_key),
+    patch api_bots_profile_url,
       params: { mentions_url: "http://example.com/legacy" },
-      as: :json
+      as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     assert_equal "http://example.com/legacy", @bot.reload.webhook_url
   end
 
   test "response includes name and webhook_url" do
-    patch bot_profile_url(@bot.bot_key),
+    patch api_bots_profile_url,
       params: { name: "Check" },
-      as: :json
+      as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     json = response.parsed_body
@@ -48,9 +48,9 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "invalid bot key redirects to sign in" do
-    patch bot_profile_url("999-invalidtoken"),
+    patch api_bots_profile_url,
       params: { name: "Nope" },
-      as: :json
+      as: :json, headers: bot_headers("999-invalidtoken")
 
     assert_redirected_to new_session_url
   end
@@ -59,9 +59,9 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
     original_webhook_url = @bot.webhook_url
     assert original_webhook_url.present?
 
-    patch bot_profile_url(@bot.bot_key),
+    patch api_bots_profile_url,
       params: { name: "Partial" },
-      as: :json
+      as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     assert_equal "Partial", @bot.reload.name
@@ -72,9 +72,9 @@ class Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
     user = users(:david)
     post session_url, params: { email_address: user.email_address, password: "secret123456" }
 
-    patch bot_profile_url(@bot.bot_key),
+    patch api_bots_profile_url,
       params: { name: "Hijacked" },
-      as: :json
+      as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :forbidden
     assert_not_equal "Hijacked", @bot.reload.name

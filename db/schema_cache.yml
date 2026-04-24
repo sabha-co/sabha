@@ -1255,6 +1255,16 @@ columns:
     comment:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
+    name: webhook_secret
+    cast_type: *5
+    sql_type_metadata: *6
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
     name: workspace_membership_id
     cast_type: *13
     sql_type_metadata: *14
@@ -1384,6 +1394,23 @@ indexes:
     unique: false
     columns:
     - account_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: account_join_codes
+    name: index_account_join_codes_on_account_id_and_kind
+    unique: false
+    columns:
+    - account_id
+    - kind
     lengths: {}
     orders: {}
     opclasses: {}
@@ -2392,4 +2419,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260413052010
+version: 20260424100000

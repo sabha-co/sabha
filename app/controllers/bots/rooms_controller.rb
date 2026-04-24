@@ -10,7 +10,7 @@ class Bots::RoomsController < Bots::BaseController
     end
 
     render json: rooms.map { |room|
-      room.as_bot_json(bot_key: Current.user.bot_key, url_helper: method(:room_bot_messages_url))
+      room.as_bot_json(url_helper: method(:api_bots_room_messages_url))
     }
   end
 
@@ -29,7 +29,7 @@ class Bots::RoomsController < Bots::BaseController
     room_class = type == "open" ? Rooms::Open : Rooms::Closed
     room = room_class.create_for({ name: name }, users: Current.user)
 
-    render json: room.as_bot_json(bot_key: Current.user.bot_key, url_helper: method(:room_bot_messages_url)), status: :created
+    render json: room.as_bot_json(url_helper: method(:api_bots_room_messages_url)), status: :created
   end
 
   def update
@@ -44,7 +44,7 @@ class Bots::RoomsController < Bots::BaseController
     @room.announce_rename(old_name, actor: Current.user) if @room.name != old_name
     RoomUpdateBroadcastJob.perform_later(@room)
 
-    render json: @room.as_bot_json(bot_key: Current.user.bot_key, url_helper: method(:room_bot_messages_url))
+    render json: @room.as_bot_json(url_helper: method(:api_bots_room_messages_url))
   end
 
   def destroy
@@ -58,7 +58,7 @@ class Bots::RoomsController < Bots::BaseController
 
   private
     def set_room
-      @room = Current.user.rooms.find(params[:room_id])
+      @room = Current.user.rooms.find(params[:id])
     end
 
     def broadcast_remove_room

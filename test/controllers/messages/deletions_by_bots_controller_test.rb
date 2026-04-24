@@ -9,7 +9,7 @@ class Messages::DeletionsByBotsControllerTest < ActionDispatch::IntegrationTest
 
   test "delete own message" do
     assert_difference -> { Message.active.count }, -1 do
-      delete room_bot_message_delete_url(@room, @bot.bot_key, @message)
+      delete api_bots_room_message_url(@room, @message), headers: bot_headers(@bot.bot_key)
     end
 
     assert_response :no_content
@@ -20,14 +20,14 @@ class Messages::DeletionsByBotsControllerTest < ActionDispatch::IntegrationTest
     other_message = messages(:fourth)
 
     assert_no_difference -> { Message.active.count } do
-      delete room_bot_message_delete_url(@room, @bot.bot_key, other_message)
+      delete api_bots_room_message_url(@room, other_message), headers: bot_headers(@bot.bot_key)
     end
 
     assert_response :forbidden
   end
 
   test "returns 404 for room bot is not a member of" do
-    delete room_bot_message_delete_url(rooms(:designers), @bot.bot_key, messages(:first))
+    delete api_bots_room_message_url(rooms(:designers), messages(:first)), headers: bot_headers(@bot.bot_key)
 
     assert_response :not_found
   end

@@ -10,7 +10,7 @@ class Bots::MembershipsControllerTest < ActionDispatch::IntegrationTest
   test "bot can join an open room" do
     room = rooms(:hq) # open room, bot is not a member
 
-    post room_bot_join_room_url(room, @bot.bot_key)
+    post api_bots_room_membership_url(room), headers: bot_headers(@bot.bot_key)
 
     assert_response :created
     json = response.parsed_body
@@ -21,14 +21,14 @@ class Bots::MembershipsControllerTest < ActionDispatch::IntegrationTest
   test "bot cannot join a closed room" do
     room = rooms(:designers) # closed room
 
-    post room_bot_join_room_url(room, @bot.bot_key)
+    post api_bots_room_membership_url(room), headers: bot_headers(@bot.bot_key)
 
     assert_response :unprocessable_entity
     assert_equal "validation_failed", response.parsed_body["code"]
   end
 
   test "returns 404 for nonexistent room" do
-    post room_bot_join_room_url(999999, @bot.bot_key)
+    post api_bots_room_membership_url(999999), headers: bot_headers(@bot.bot_key)
 
     assert_response :not_found
   end
@@ -38,7 +38,7 @@ class Bots::MembershipsControllerTest < ActionDispatch::IntegrationTest
   test "bot can leave a room" do
     room = rooms(:watercooler) # bot is a member
 
-    delete room_bot_leave_room_url(room, @bot.bot_key)
+    delete api_bots_room_membership_url(room), headers: bot_headers(@bot.bot_key)
 
     assert_response :no_content
   end
@@ -48,14 +48,14 @@ class Bots::MembershipsControllerTest < ActionDispatch::IntegrationTest
     dm = Rooms::Direct.find_or_create_for([ @bot, users(:david) ])
     Current.reset
 
-    delete room_bot_leave_room_url(dm, @bot.bot_key)
+    delete api_bots_room_membership_url(dm), headers: bot_headers(@bot.bot_key)
 
     assert_response :unprocessable_entity
     assert_equal "validation_failed", response.parsed_body["code"]
   end
 
   test "returns 404 when leaving room bot is not in" do
-    delete room_bot_leave_room_url(rooms(:designers), @bot.bot_key)
+    delete api_bots_room_membership_url(rooms(:designers)), headers: bot_headers(@bot.bot_key)
 
     assert_response :not_found
   end
@@ -63,7 +63,7 @@ class Bots::MembershipsControllerTest < ActionDispatch::IntegrationTest
   # Auth
 
   test "invalid bot key redirects to sign in" do
-    post room_bot_join_room_url(rooms(:hq), "999-invalid")
+    post api_bots_room_membership_url(rooms(:hq)), headers: bot_headers("999-invalid")
 
     assert_redirected_to new_session_url
   end
@@ -71,7 +71,7 @@ class Bots::MembershipsControllerTest < ActionDispatch::IntegrationTest
   test "session-authenticated user cannot use bot join" do
     sign_in users(:david)
 
-    post room_bot_join_room_url(rooms(:hq), @bot.bot_key)
+    post api_bots_room_membership_url(rooms(:hq)), headers: bot_headers(@bot.bot_key)
 
     assert_response :forbidden
   end

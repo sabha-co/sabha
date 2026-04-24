@@ -6,7 +6,7 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     @account = accounts(:signal)
   end
 
-  test "successful bot registration returns 201 with bot_key and rooms" do
+  test "successful bot registration returns 201 with bot_key, webhook_secret, api_base_url, and rooms" do
     assert_difference "User.count", 1 do
       post join_bot_url(@join_code.code),
         params: { name: "TestBot", webhook_url: "https://example.com/hook" },
@@ -17,6 +17,11 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     json = response.parsed_body
 
     assert json["bot_key"].present?
+    assert json["webhook_secret"].present?
+    assert_match %r{\Awhsec_}, json["webhook_secret"]
+    assert_match %r{\Ahttps?://}, json["base_url"]
+    assert_match %r{/api/bots\z}, json["api_base_url"]
+    assert json["api_base_url"].start_with?(json["base_url"])
     assert_equal "TestBot", json["name"]
     assert_equal "https://example.com/hook", json["webhook_url"]
     assert json["rooms"].is_a?(Array)
@@ -24,6 +29,7 @@ class Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     bot = User.find_by(name: "TestBot")
     assert bot.bot?
     assert_equal "https://example.com/hook", bot.webhook_url
+    assert bot.webhook_secret.present?
   end
 
   test "registration redeems join code" do

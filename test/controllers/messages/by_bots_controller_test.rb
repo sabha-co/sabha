@@ -9,9 +9,9 @@ class Messages::ByBotsControlleTest < ActionDispatch::IntegrationTest
   end
 
   test "create file" do
-    post room_bot_messages_url(@room, @bot.bot_key), params: {
+    post api_bots_room_messages_url(@room), params: {
       attachment: fixture_file_upload("moon.jpg", "image/jpeg")
-    }
+    }, headers: bot_headers(@bot.bot_key)
 
     assert_response :created
   end

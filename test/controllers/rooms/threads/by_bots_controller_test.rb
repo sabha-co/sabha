@@ -9,8 +9,8 @@ class Rooms::Threads::ByBotsControllerTest < ActionDispatch::IntegrationTest
 
   test "creates thread and posts reply" do
     assert_difference -> { Rooms::Thread.count } do
-      post room_bot_message_thread_url(@room, @bot.bot_key, @message),
-        headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "Here is my reply" }
+      post api_bots_room_message_thread_url(@room, @message),
+        headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "Here is my reply" }.merge(bot_headers(@bot.bot_key))
     end
 
     assert_response :created
@@ -31,13 +31,13 @@ class Rooms::Threads::ByBotsControllerTest < ActionDispatch::IntegrationTest
 
   test "reuses existing thread" do
     # Create thread first
-    post room_bot_message_thread_url(@room, @bot.bot_key, @message),
-      headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "First reply" }
+    post api_bots_room_message_thread_url(@room, @message),
+      headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "First reply" }.merge(bot_headers(@bot.bot_key))
     thread_id = response.parsed_body["thread"]["id"]
 
     assert_no_difference -> { Rooms::Thread.count } do
-      post room_bot_message_thread_url(@room, @bot.bot_key, @message),
-        headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "Second reply" }
+      post api_bots_room_message_thread_url(@room, @message),
+        headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "Second reply" }.merge(bot_headers(@bot.bot_key))
     end
 
     assert_response :created
@@ -47,8 +47,8 @@ class Rooms::Threads::ByBotsControllerTest < ActionDispatch::IntegrationTest
   test "returns 404 for message not in room" do
     other_message = messages(:first) # in designers, not watercooler
 
-    post room_bot_message_thread_url(@room, @bot.bot_key, other_message),
-      headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "Reply" }
+    post api_bots_room_message_thread_url(@room, other_message),
+      headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "Reply" }.merge(bot_headers(@bot.bot_key))
 
     assert_response :not_found
   end
@@ -56,8 +56,8 @@ class Rooms::Threads::ByBotsControllerTest < ActionDispatch::IntegrationTest
   test "returns 404 for room bot is not in" do
     room = rooms(:designers) # bender has no membership
 
-    post room_bot_message_thread_url(room, @bot.bot_key, messages(:first)),
-      headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "Reply" }
+    post api_bots_room_message_thread_url(room, messages(:first)),
+      headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "Reply" }.merge(bot_headers(@bot.bot_key))
 
     assert_response :not_found
   end

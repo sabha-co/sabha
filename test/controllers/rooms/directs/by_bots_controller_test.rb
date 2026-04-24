@@ -5,7 +5,7 @@ class Rooms::Directs::ByBotsControllerTest < ActionDispatch::IntegrationTest
     bot = users(:bender)
 
     # bot_key is a path parameter, not a query param
-    post rooms_bot_directs_url(bot.bot_key), params: { user_ids: [ users(:jz).id ] }
+    post api_bots_direct_messages_url, params: { user_ids: [ users(:jz).id ] }, headers: bot_headers(bot.bot_key)
 
     assert_response :created
     json = JSON.parse(response.body)
@@ -21,12 +21,12 @@ class Rooms::Directs::ByBotsControllerTest < ActionDispatch::IntegrationTest
     bot = users(:bender)
 
     # Create the room first
-    post rooms_bot_directs_url(bot.bot_key), params: { user_ids: [ users(:jz).id ] }
+    post api_bots_direct_messages_url, params: { user_ids: [ users(:jz).id ] }, headers: bot_headers(bot.bot_key)
     assert_response :created
     first_room_id = JSON.parse(response.body)["room"]["id"]
 
     # Creating again returns existing room with :ok status
-    post rooms_bot_directs_url(bot.bot_key), params: { user_ids: [ users(:jz).id ] }
+    post api_bots_direct_messages_url, params: { user_ids: [ users(:jz).id ] }, headers: bot_headers(bot.bot_key)
     assert_response :ok
     second_room_id = JSON.parse(response.body)["room"]["id"]
 
@@ -36,7 +36,7 @@ class Rooms::Directs::ByBotsControllerTest < ActionDispatch::IntegrationTest
   test "bot can create group DM" do
     bot = users(:bender)
 
-    post rooms_bot_directs_url(bot.bot_key), params: { user_ids: [ users(:jz).id, users(:kevin).id ] }
+    post api_bots_direct_messages_url, params: { user_ids: [ users(:jz).id, users(:kevin).id ] }, headers: bot_headers(bot.bot_key)
 
     assert_response :created
     json = JSON.parse(response.body)
@@ -50,7 +50,7 @@ class Rooms::Directs::ByBotsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "invalid bot token redirects to sign in" do
-    post rooms_bot_directs_url("invalid_token"), params: { user_ids: [ users(:david).id ] }
+    post api_bots_direct_messages_url, params: { user_ids: [ users(:david).id ] }, headers: bot_headers("invalid_token")
 
     assert_redirected_to new_session_url
   end
@@ -59,7 +59,7 @@ class Rooms::Directs::ByBotsControllerTest < ActionDispatch::IntegrationTest
     bot = users(:bender)
 
     # Non-existent user ID is filtered out, bot creates DM with just itself
-    post rooms_bot_directs_url(bot.bot_key), params: { user_ids: [ 999999 ] }
+    post api_bots_direct_messages_url, params: { user_ids: [ 999999 ] }, headers: bot_headers(bot.bot_key)
 
     assert_response :created
     json = JSON.parse(response.body)

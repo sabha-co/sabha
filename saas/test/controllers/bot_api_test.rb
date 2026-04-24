@@ -16,38 +16,40 @@ class BotApiTest < ActionDispatch::IntegrationTest
         [ bot, room, message ]
       end
 
+      headers = { "Authorization" => "Bearer #{bot.bot_key}" }
+
       # Post message
-      workspace_post "/rooms/#{room.id}/#{bot.bot_key}/messages", workspace: workspace,
-        params: "New message", headers: { "CONTENT_TYPE" => "text/plain" }
+      workspace_post "/api/bots/rooms/#{room.id}/messages", workspace: workspace,
+        params: "New message", headers: headers.merge("CONTENT_TYPE" => "text/plain")
       assert_response :created
 
       # Edit message
-      workspace_patch "/rooms/#{room.id}/#{bot.bot_key}/messages/#{message.id}", workspace: workspace,
-        params: "Edited", headers: { "CONTENT_TYPE" => "text/plain" }
+      workspace_patch "/api/bots/rooms/#{room.id}/messages/#{message.id}", workspace: workspace,
+        params: "Edited", headers: headers.merge("CONTENT_TYPE" => "text/plain")
       assert_response :success
       assert_equal "Edited", response.parsed_body["body"]["plain"]
 
       # Add boost
-      workspace_post "/rooms/#{room.id}/#{bot.bot_key}/messages/#{message.id}/boosts", workspace: workspace,
-        params: "\u{1f389}", headers: { "CONTENT_TYPE" => "text/plain" }
+      workspace_post "/api/bots/rooms/#{room.id}/messages/#{message.id}/boosts", workspace: workspace,
+        params: "\u{1f389}", headers: headers.merge("CONTENT_TYPE" => "text/plain")
       assert_response :created
       boost_id = response.parsed_body["id"]
 
       # Remove boost
-      workspace_delete "/rooms/#{room.id}/#{bot.bot_key}/messages/#{message.id}/boosts/#{boost_id}", workspace: workspace
+      workspace_delete "/api/bots/rooms/#{room.id}/messages/#{message.id}/boosts/#{boost_id}", workspace: workspace, headers: headers
       assert_response :no_content
 
       # List members
-      get "/#{workspace.external_id}/rooms/#{room.id}/#{bot.bot_key}/members"
+      get "/#{workspace.external_id}/api/bots/rooms/#{room.id}/members", headers: headers
       assert_response :success
       assert response.parsed_body.any? { |m| m["role"] == "bot" }
 
       # Search
-      get "/#{workspace.external_id}/#{bot.bot_key}/search?q=Hello"
+      get "/#{workspace.external_id}/api/bots/search?q=Hello", headers: headers
       assert_response :success
 
       # Delete message
-      workspace_delete "/rooms/#{room.id}/#{bot.bot_key}/messages/#{message.id}", workspace: workspace
+      workspace_delete "/api/bots/rooms/#{room.id}/messages/#{message.id}", workspace: workspace, headers: headers
       assert_response :no_content
     end
   end
@@ -67,8 +69,9 @@ class BotApiTest < ActionDispatch::IntegrationTest
 
         next unless room_b
 
-        # Bot A's key used against workspace B
-        get "/#{ws_b.external_id}/rooms/#{room_b.id}/#{bot.bot_key}/members"
+        # Bot A's key used against workspace B via bearer header
+        get "/#{ws_b.external_id}/api/bots/rooms/#{room_b.id}/members",
+          headers: { "Authorization" => "Bearer #{bot.bot_key}" }
         assert_response :redirect
       end
     end

@@ -43,13 +43,18 @@ class Bots::RegistrationsController < Bots::BaseController
     def registration_response
       @bot.reload
 
+      base_url = "#{request.base_url}#{request.script_name}"
+
       {
         bot_key: @bot.bot_key,
+        webhook_secret: @bot.webhook_secret,
         name: @bot.name,
         webhook_url: @bot.webhook_url,
+        base_url: base_url,
+        api_base_url: "#{base_url}/api/bots",
         websocket_url: websocket_url_for_bot,
         rooms: @bot.rooms.without_threads.map { |room|
-          room.as_bot_json(bot_key: @bot.bot_key, url_helper: method(:room_bot_messages_url))
+          room.as_bot_json(url_helper: method(:api_bots_room_messages_url))
         }
       }
     end

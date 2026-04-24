@@ -6,7 +6,7 @@ class Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "search returns matching messages" do
-    get bot_search_url(@bot.bot_key, q: "post")
+    get api_bots_search_url(q: "post"), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     json = response.parsed_body
@@ -23,19 +23,19 @@ class Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "search requires q param" do
-    get bot_search_url(@bot.bot_key)
+    get api_bots_search_url(), headers: bot_headers(@bot.bot_key)
 
     assert_response :unprocessable_entity
   end
 
   test "search with blank q returns error" do
-    get bot_search_url(@bot.bot_key, q: "")
+    get api_bots_search_url(q: ""), headers: bot_headers(@bot.bot_key)
 
     assert_response :unprocessable_entity
   end
 
   test "invalid bot key redirects to sign in" do
-    get bot_search_url("999-invalid", q: "test")
+    get api_bots_search_url(q: "test"), headers: bot_headers("999-invalid")
 
     assert_redirected_to new_session_url
   end

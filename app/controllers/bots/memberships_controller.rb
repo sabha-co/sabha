@@ -8,7 +8,7 @@ class Bots::MembershipsController < Bots::BaseController
 
     room.accept_join!(Current.user)
 
-    render json: room.as_bot_json(bot_key: Current.user.bot_key, url_helper: method(:room_bot_messages_url)), status: :created
+    render json: room.as_bot_json(url_helper: method(:api_bots_room_messages_url)), status: :created
   end
 
   def destroy
