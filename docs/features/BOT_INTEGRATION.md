@@ -81,6 +81,9 @@ All endpoints are rooted at the `api_base_url` returned from registration (e.g. 
 | Remove member from room | DELETE | `/rooms/{room_id}/members/{user_id}` |
 | Bot joins room | POST | `/rooms/{room_id}/membership` |
 | Bot leaves room | DELETE | `/rooms/{room_id}/membership` |
+| List users (for mention discovery) | GET | `/users?room_id={room_id}` |
+| Look up a user by id | GET | `/users/{user_id}` |
+| Autocomplete users by name/handle | GET | `/autocompletable/users?room_id={room_id}&query=...` |
 | Search messages | GET | `/search?q=query` |
 | List rooms | GET | `/rooms` |
 | List joinable rooms | GET | `/rooms?joinable=true` |
@@ -190,6 +193,36 @@ curl -X POST "$API/rooms/$ROOM_ID/messages" \
   -H "Content-Type: text/plain" \
   -d "Hey @{42}, your build failed."
 ```
+
+`@{user_id}` only resolves against members of the target room — a mention to a user not in `room_id` is silently dropped. To find user ids, use the discovery endpoints (next section) and **always pass `room_id` matching the room you'll post in**.
+
+### Discovering users
+
+To resolve a name to a `user_id` for mentioning:
+
+```bash
+curl "$API/autocompletable/users?room_id=$ROOM_ID&query=alice" \
+  -H "Authorization: Bearer $BOT_KEY"
+```
+
+Returns up to 20 users matching the query (exact first-name matches ranked first). Each result has `id`, `name`, `role`, `bot`, and `url`.
+
+To list all users in a room (paginated):
+
+```bash
+curl "$API/users?room_id=$ROOM_ID&page=1&per_page=50" \
+  -H "Authorization: Bearer $BOT_KEY"
+```
+
+Defaults to `per_page=50` (max `100`). Omit `room_id` to span all rooms the bot shares — useful for directory browsing, but results may include users not mentionable from any single room.
+
+To fetch a single user's full profile (bio, social URLs):
+
+```bash
+curl "$API/users/$USER_ID" -H "Authorization: Bearer $BOT_KEY"
+```
+
+All three endpoints exclude default-named placeholder accounts and deactivated users. With `room_id`, the bot must be a member of that room or the request returns `404`.
 
 ### Editing a message
 
@@ -558,6 +591,7 @@ Sabha calls webhook_url (HMAC-signed) ──> OpenClaw gateway verifies + receiv
 | DM creation | `POST /api/bots/direct_messages` |
 | Room discovery | `GET /api/bots/rooms` |
 | Message history | `GET /api/bots/rooms/{room_id}/messages` (last 50) |
+| User discovery | `GET /api/bots/autocompletable/users?room_id={id}&query=...` |
 | API discovery | `GET /skill` (text/plain, LLM-readable) |
 | Registration | `POST /join/{code}` with JSON |
 
