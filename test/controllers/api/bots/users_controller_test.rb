@@ -3,6 +3,10 @@ require "test_helper"
 class API::Bots::UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @bot = users(:bender)
+    @room = rooms(:watercooler)
+    [ users(:rachel), users(:kevin) ].each do |user|
+      Membership.create!(user: user, room: @room, involvement: :everything) unless @room.users.include?(user)
+    end
   end
 
   # Index
@@ -124,5 +128,35 @@ class API::Bots::UsersControllerTest < ActionDispatch::IntegrationTest
     get api_bots_user_url(placeholder), headers: bot_headers(@bot)
 
     assert_response :not_found
+  end
+
+  # Visibility scoping
+
+  test "index excludes users from rooms the bot is not in" do
+    stranger = users(:jz)
+    assert_not @room.users.include?(stranger), "fixture sanity: jz should not share watercooler with the bot"
+
+    get api_bots_users_url, params: { per_page: 100 }, headers: bot_headers(@bot)
+
+    json = response.parsed_body
+    assert_not json.any? { |u| u["id"] == stranger.id }
+  end
+
+  test "show returns 404 for a user the bot does not share a room with" do
+    stranger = users(:jz)
+    assert_not @room.users.include?(stranger)
+
+    get api_bots_user_url(stranger), headers: bot_headers(@bot)
+
+    assert_response :not_found
+  end
+
+  test "bot in zero rooms sees no users" do
+    @bot.memberships.destroy_all
+
+    get api_bots_users_url, headers: bot_headers(@bot)
+
+    assert_response :success
+    assert_equal [], response.parsed_body
   end
 end

@@ -167,6 +167,10 @@ class User < ApplicationRecord
     (by_first_name(query).limit(limit) + filtered_by(query).limit(limit)).uniq.first(limit)
   end
 
+  scope :sharing_rooms_with, ->(user) {
+    joins(:memberships).where(memberships: { room_id: user.rooms.select(:id) }).distinct
+  }
+
 
   def ever_authenticated?
     last_authenticated_at.present?

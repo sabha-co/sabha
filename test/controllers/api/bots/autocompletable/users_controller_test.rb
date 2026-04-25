@@ -3,6 +3,10 @@ require "test_helper"
 class API::Bots::Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @bot = users(:bender)
+    @room = rooms(:watercooler)
+    [ users(:rachel), users(:kevin) ].each do |user|
+      Membership.create!(user: user, room: @room, involvement: :everything) unless @room.users.include?(user)
+    end
   end
 
   test "matches by first name" do
@@ -22,7 +26,8 @@ class API::Bots::Autocompletable::UsersControllerTest < ActionDispatch::Integrat
   end
 
   test "exact first-name match ranks before partial matches" do
-    User.create!(name: "Davidson", email_address: "davidson@example.com", verified_at: 1.day.ago)
+    davidson = User.create!(name: "Davidson", email_address: "davidson@example.com", verified_at: 1.day.ago)
+    Membership.create!(user: davidson, room: @room, involvement: :everything)
 
     get api_bots_autocompletable_users_url, params: { query: "David" }, headers: bot_headers(@bot)
 
@@ -69,5 +74,15 @@ class API::Bots::Autocompletable::UsersControllerTest < ActionDispatch::Integrat
     get api_bots_autocompletable_users_url, headers: bot_headers("999-invalid")
 
     assert_redirected_to new_session_url
+  end
+
+  test "excludes users from rooms the bot is not in" do
+    stranger = users(:jz)
+    assert_not @room.users.include?(stranger)
+
+    get api_bots_autocompletable_users_url, params: { query: stranger.name }, headers: bot_headers(@bot)
+
+    json = response.parsed_body
+    assert_not json.any? { |u| u["id"] == stranger.id }
   end
 end
