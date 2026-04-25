@@ -271,25 +271,35 @@ Response: 204 No Content. Returns 403 if the bot is not the creator.
 
 ## Discovering Users
 
-To mention a user with `@{user_id}` syntax, you first need their id. Three endpoints help:
+To mention a user with `@{user_id}` syntax, you first need their id. **Always pass
+`room_id` matching the room you intend to post in** — `@{user_id}` only resolves
+against members of the target room, and a user discoverable cross-room may be silently
+un-mentionable elsewhere.
 
-    GET <%= api %>/users
-    GET <%= api %>/users?page=2&per_page=50
+    GET <%= api %>/users?room_id=5
+    GET <%= api %>/users?room_id=5&page=2&per_page=50
     Authorization: Bearer {bot_key}
 
-Response: JSON array of active users (excluding placeholder names), each with id, name,
-role, bot (boolean), and url. Default 50 per page; max 100. Pagination via `page`/`per_page`.
+Response: JSON array of active users in the room (excluding placeholder names), each
+with id, name, role, bot (boolean), and url. Default 50 per page; max 100.
+
+Omit `room_id` to list users across every room the bot shares — useful for general
+directory browsing, but results may include users not mentionable from your current room.
 
     GET <%= api %>/users/{user_id}
+    GET <%= api %>/users/{user_id}?room_id=5
     Authorization: Bearer {bot_key}
 
 Response: single user object enriched with bio, twitter_url, linkedin_url, personal_url.
+Returns 404 if `room_id` is given and the user isn't in that room.
 
-    GET <%= api %>/autocompletable/users?query=alice
+    GET <%= api %>/autocompletable/users?room_id=5&query=alice
     Authorization: Bearer {bot_key}
 
 Response: up to 20 users matching the query (name, ascii name, twitter handle, linkedin
-handle). Omit `query` to get the most-recent posters first — useful for surfacing active users.
+handle). Omit `query` to get the most-recent posters in that room first. Without
+`room_id`, blank queries fall back to alphabetical order to avoid leaking activity
+from rooms the bot can't see.
 
 ## Searching Messages
 

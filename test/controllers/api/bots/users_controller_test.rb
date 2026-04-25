@@ -156,4 +156,34 @@ class API::Bots::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal [], response.parsed_body
   end
+
+  # room_id scoping (mention-resolution parity)
+
+  test "index with room_id scopes to that room's members" do
+    other_room = Rooms::Open.create!(name: "Side Room", creator: users(:david))
+    Membership.create!(user: @bot, room: other_room, involvement: :everything)
+    Membership.create!(user: users(:jz), room: other_room, involvement: :everything)
+
+    get api_bots_users_url, params: { room_id: @room.id, per_page: 100 }, headers: bot_headers(@bot)
+
+    json = response.parsed_body
+    assert json.any? { |u| u["id"] == users(:david).id }, "watercooler member should be present"
+    assert_not json.any? { |u| u["id"] == users(:jz).id }, "user from other room must not leak"
+  end
+
+  test "index with room_id 404s when bot is not a member of that room" do
+    get api_bots_users_url, params: { room_id: rooms(:designers).id }, headers: bot_headers(@bot)
+
+    assert_response :not_found
+  end
+
+  test "show with room_id 404s for users not in that room" do
+    other_room = Rooms::Open.create!(name: "Side Room", creator: users(:david))
+    Membership.create!(user: @bot, room: other_room, involvement: :everything)
+    Membership.create!(user: users(:jz), room: other_room, involvement: :everything)
+
+    get api_bots_user_url(users(:jz), room_id: @room.id), headers: bot_headers(@bot)
+
+    assert_response :not_found
+  end
 end

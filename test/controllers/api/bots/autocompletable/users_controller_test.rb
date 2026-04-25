@@ -82,4 +82,23 @@ class API::Bots::Autocompletable::UsersControllerTest < ActionDispatch::Integrat
     json = response.parsed_body
     assert_not json.any? { |u| u["id"] == stranger.id }
   end
+
+  # room_id scoping (mention-resolution parity)
+
+  test "with room_id, scopes to that room's members" do
+    other_room = Rooms::Open.create!(name: "Side Room", creator: users(:david))
+    Membership.create!(user: @bot, room: other_room, involvement: :everything)
+    Membership.create!(user: users(:jz), room: other_room, involvement: :everything)
+
+    get api_bots_autocompletable_users_url, params: { room_id: @room.id }, headers: bot_headers(@bot)
+
+    json = response.parsed_body
+    assert_not json.any? { |u| u["id"] == users(:jz).id }, "cross-room user must not surface"
+  end
+
+  test "with room_id, 404s when bot is not a member of that room" do
+    get api_bots_autocompletable_users_url, params: { room_id: rooms(:designers).id }, headers: bot_headers(@bot)
+
+    assert_response :not_found
+  end
 end
