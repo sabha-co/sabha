@@ -11,6 +11,9 @@ class API::Bots::UsersController < API::Bots::BaseController
   end
 
   private
+    # Bots only see users from rooms they share — narrower than the human-side
+    # Autocompletable::UsersController, which falls back to User.all. Bots are
+    # typically invited to a single room and shouldn't double as workspace people search.
     def visible_users
       User.active.without_default_names.sharing_rooms_with(Current.user)
     end
