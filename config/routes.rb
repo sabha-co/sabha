@@ -174,6 +174,10 @@ Rails.application.routes.draw do
       resources :direct_messages, only: :create
       resource  :search,  only: :show
       resource  :profile, only: :update
+      resources :users, only: %i[ index show ]
+      namespace :autocompletable do
+        resources :users, only: :index
+      end
     end
   end
 

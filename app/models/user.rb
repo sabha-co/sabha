@@ -161,6 +161,12 @@ class User < ApplicationRecord
     where("name LIKE :q OR ascii_name LIKE :q OR twitter_username LIKE :q OR linkedin_username LIKE :q", q: pattern)
   }
 
+  # Exact first-name matches ranked above partial matches. Both legs capped at limit.
+  def self.matching(query, limit: 20)
+    return [] if query.blank?
+    (by_first_name(query).limit(limit) + filtered_by(query).limit(limit)).uniq.first(limit)
+  end
+
 
   def ever_authenticated?
     last_authenticated_at.present?

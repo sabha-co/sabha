@@ -38,6 +38,14 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "blank query returns recent users (mention picker default)" do
+    get autocompletable_users_url(format: :json), params: { query: "" }
+
+    assert_response :success
+    assert response.parsed_body.is_a?(Array)
+    assert response.parsed_body.size > 0, "blank query should populate the @-mention picker"
+  end
+
   test "exact first name matches appear before partial matches" do
     davidson = User.create!(name: "Davidson Smith", email_address: "davidson@example.com", password: "secret123456", verified_at: 1.day.ago)
 

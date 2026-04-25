@@ -269,6 +269,28 @@ Only the bot that created the room can remove members:
 
 Response: 204 No Content. Returns 403 if the bot is not the creator.
 
+## Discovering Users
+
+To mention a user with `@{user_id}` syntax, you first need their id. Three endpoints help:
+
+    GET <%= api %>/users
+    GET <%= api %>/users?page=2&per_page=50
+    Authorization: Bearer {bot_key}
+
+Response: JSON array of active users (excluding placeholder names), each with id, name,
+role, bot (boolean), and url. Default 50 per page; max 100. Pagination via `page`/`per_page`.
+
+    GET <%= api %>/users/{user_id}
+    Authorization: Bearer {bot_key}
+
+Response: single user object enriched with bio, twitter_url, linkedin_url, personal_url.
+
+    GET <%= api %>/autocompletable/users?query=alice
+    Authorization: Bearer {bot_key}
+
+Response: up to 20 users matching the query (name, ascii name, twitter handle, linkedin
+handle). Omit `query` to get the most-recent posters first — useful for surfacing active users.
+
 ## Searching Messages
 
 Search across all rooms the bot is a member of:
