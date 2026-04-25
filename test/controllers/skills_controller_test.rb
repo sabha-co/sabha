@@ -12,15 +12,18 @@ class SkillsControllerTest < ActionDispatch::IntegrationTest
     get skill_url
 
     assert_includes response.body, "Bot API"
-    assert_includes response.body, "Registration via Invite URL"
+    assert_includes response.body, "What Sabha Is"
+    assert_includes response.body, "Vocabulary"
+    assert_includes response.body, "Quick Reference"
+    assert_includes response.body, "Registration"
     assert_includes response.body, "Authentication"
+    assert_includes response.body, "Receiving Events"
     assert_includes response.body, "Posting Messages"
-    assert_includes response.body, "Creating Direct Messages"
-    assert_includes response.body, "Listing Rooms"
+    assert_includes response.body, "Direct Messages"
     assert_includes response.body, "Reading Messages"
-    assert_includes response.body, "Updating Bot Settings"
-    assert_includes response.body, "Webhook Payloads"
+    assert_includes response.body, "Bot Profile"
     assert_includes response.body, "Error Responses"
+    assert_includes response.body, "Common Recipes"
   end
 
   test "includes base URL in examples" do
