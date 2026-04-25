@@ -1,4 +1,7 @@
 class BroadcastMentioneeSidebarUpdatesJob < ApplicationJob
+  include ActionView::RecordIdentifier
+  include DomHelper
+
   queue_as :default
 
   rescue_from ActiveJob::DeserializationError do
@@ -7,24 +10,30 @@ class BroadcastMentioneeSidebarUpdatesJob < ApplicationJob
   def perform(message_id:)
     message = Message.find_by(id: message_id)
     return unless message
+    return unless message.room.sidebar_room?
 
-    message.mentionees.each do |user|
-      memberships = user.memberships.shared.visible
-        .with_has_unread_notifications
-        .with_room_by_last_active_newest_first
-        .to_a
-
-      starred, unstarred = memberships.partition(&:starred?)
-
-      { starred_rooms: starred, shared_rooms: unstarred }.each do |list_name, list|
-        Turbo::StreamsChannel.broadcast_replace_to(
-          user, :rooms,
-          target: list_name,
-          partial: "users/sidebars/rooms/shared_rooms_list",
-          locals: { list_name: list_name, memberships: list },
-          attributes: { maintain_scroll: true }
-        )
-      end
+    affected_memberships(message).each do |membership|
+      list_name = membership.sidebar_list_name
+      Turbo::StreamsChannel.broadcast_replace_to(
+        membership.user, :rooms,
+        target: dom_id(membership.room, dom_prefix(list_name, :list_node)),
+        partial: "users/sidebars/rooms/shared",
+        locals: { list_name:, membership: }
+      )
     end
   end
+
+  private
+    def affected_memberships(message)
+      scope = if message.mentions_everyone?
+        message.room.memberships
+      else
+        message.room.memberships.where(user_id: message.mentionee_ids)
+      end
+
+      scope.visible
+           .where.not(user_id: message.creator_id)
+           .with_has_unread_notifications
+           .includes(:user)
+    end
 end

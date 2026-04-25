@@ -7,14 +7,46 @@ class BroadcastMentioneeSidebarUpdatesJobTest < ActiveJob::TestCase
     @room = rooms(:pets)
   end
 
-  test "broadcasts starred_rooms and shared_rooms lists to each mentionee" do
+  test "broadcasts a single row replace to each mentionee" do
     message = @room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
       creator: @david,
       client_message_id: "mentionee_sidebar_job_1"
     )
 
-    assert_turbo_stream_broadcasts [ @jason, :rooms ], count: 2 do
+    assert_turbo_stream_broadcasts [ @jason, :rooms ], count: 1 do
+      BroadcastMentioneeSidebarUpdatesJob.perform_now(message_id: message.id)
+    end
+  end
+
+  test "broadcasts to every room member except the creator on @everyone" do
+    everyone_sgid = Everyone.new.attachable_sgid
+    body_html = "<div>Hey <action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
+
+    message = @room.messages.create!(
+      body: body_html,
+      creator: @david,
+      client_message_id: "mentionee_sidebar_job_everyone"
+    )
+
+    assert message.mentions_everyone?
+
+    assert_turbo_stream_broadcasts [ @jason, :rooms ], count: 1 do
+      assert_no_turbo_stream_broadcasts [ @david, :rooms ] do
+        BroadcastMentioneeSidebarUpdatesJob.perform_now(message_id: message.id)
+      end
+    end
+  end
+
+  test "does nothing for messages in direct rooms" do
+    direct = rooms(:david_and_jason)
+    message = direct.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+      creator: @david,
+      client_message_id: "mentionee_sidebar_job_direct"
+    )
+
+    assert_no_turbo_stream_broadcasts [ @jason, :rooms ] do
       BroadcastMentioneeSidebarUpdatesJob.perform_now(message_id: message.id)
     end
   end
