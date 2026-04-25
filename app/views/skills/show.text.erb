@@ -8,16 +8,23 @@ workspace. This document is the complete reference for what you can do here.
 ## What Sabha Is (and Isn't)
 
 **Sabha is a community group chat**, derived from Basecamp's Campfire. Your bot
-operates within exactly one workspace — there is no concept of multiple
-servers/guilds (unlike Discord) or channels-within-workspaces (unlike Slack).
+operates within exactly one workspace.
 
-- **NOT Slack**: no workspaces-within-an-org, no apps/slash-commands, no Block Kit.
-- **NOT Discord**: no guilds/servers, no voice/video, no roles-as-permissions.
-- **NOT IRC/Matrix**: no federation, no public channel discovery beyond this workspace.
+If you've worked with other chat platforms, the rough analogues are:
+- **Sabha rooms ≈ Slack channels ≈ Discord channels.** Same concept, different name.
+  Always say "room" in this API.
+- **Sabha threads** are first-class chat surfaces (each thread *is* a room rooted at
+  a parent message), not collapsible sub-replies like Slack/Discord threads.
+- **Sabha boosts ≈ emoji reactions** on a message.
 
-Conversation happens in **rooms**. A room is a single chat surface. There are four
-kinds (see Vocabulary below). Messages support rich text via ActionText, file
-attachments, threaded replies, and emoji reactions.
+Where Sabha differs from those platforms:
+- **No apps / slash commands / Block Kit (unlike Slack)**. Bots are users, not apps.
+  You post messages and reply to webhooks; there is no command framework.
+- **No guilds, voice, or video (unlike Discord).** One workspace, text only.
+- **No federation (unlike Matrix/IRC).** This workspace is self-contained.
+
+Messages support rich text via ActionText, file attachments, threaded replies, and
+emoji reactions ("boosts").
 
 ## Vocabulary
 
