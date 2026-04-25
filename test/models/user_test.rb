@@ -679,4 +679,39 @@ class UserTest < ActiveSupport::TestCase
 
     assert_equal 10, User.matching("David", limit: 10).size
   end
+
+  # User.sharing_rooms_with
+
+  test "sharing_rooms_with returns members of rooms the bot shares" do
+    bender = users(:bender)
+    visible = User.sharing_rooms_with(bender)
+
+    # bender is in watercooler with david, jason, nsa, rachel, kevin (and itself)
+    assert_includes visible, users(:david)
+    assert_includes visible, users(:rachel)
+    assert_includes visible, bender
+  end
+
+  test "sharing_rooms_with excludes users from rooms the bot does not share" do
+    bender = users(:bender)
+    assert_not bender.rooms.include?(rooms(:designers))
+
+    refute_includes User.sharing_rooms_with(bender), users(:jz)
+  end
+
+  test "sharing_rooms_with returns empty when the bot is in zero rooms" do
+    bender = users(:bender)
+    bender.memberships.destroy_all
+
+    assert_equal [], User.sharing_rooms_with(bender).to_a
+  end
+
+  test "sharing_rooms_with dedupes users present in multiple shared rooms" do
+    bender = users(:bender)
+    Membership.create!(user: bender, room: rooms(:hq), involvement: :everything)
+    # david is in both watercooler and hq with bender now
+
+    results = User.sharing_rooms_with(bender).to_a
+    assert_equal 1, results.count { |u| u.id == users(:david).id }
+  end
 end

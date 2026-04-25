@@ -4,9 +4,6 @@ class API::Bots::UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @bot = users(:bender)
     @room = rooms(:watercooler)
-    [ users(:rachel), users(:kevin) ].each do |user|
-      Membership.create!(user: user, room: @room, involvement: :everything) unless @room.users.include?(user)
-    end
   end
 
   # Index

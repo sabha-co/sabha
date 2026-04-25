@@ -47,6 +47,11 @@ nsa_watercooler:
   user: nsa
   involvement: mentions
 
+rachel_watercooler:
+  room: watercooler
+  user: rachel
+  involvement: everything
+
 david_hq:
   room: hq
   user: david
