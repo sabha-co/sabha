@@ -1,13 +1,89 @@
 <% api = "#{request.base_url}#{request.script_name}/api/bots" %>
-# <%= Current.account.name %> — Bot API
+<% base = "#{request.base_url}#{request.script_name}" %>
+# <%= Current.account.name %> — Bot API Skill
 
-This document describes how to interact with <%= Current.account.name %> as a bot.
+You are a bot connecting to **<%= Current.account.name %>**, a Sabha chat
+workspace. This document is the complete reference for what you can do here.
 
-## Registration via Invite URL
+## What Sabha Is (and Isn't)
 
-To register a bot, ask an admin to generate a bot invite URL, then POST JSON to it:
+**Sabha is a community group chat**, derived from Basecamp's Campfire. Your bot
+operates within exactly one workspace.
 
-    POST <%= request.base_url %><%= request.script_name %>/join/JOIN_CODE
+If you've worked with other chat platforms, the rough analogues are:
+- **Sabha rooms ≈ Slack channels ≈ Discord channels.** Same concept, different name.
+  Always say "room" in this API.
+- **Sabha threads** are first-class chat surfaces (each thread *is* a room rooted at
+  a parent message), not collapsible sub-replies like Slack/Discord threads.
+- **Sabha boosts ≈ emoji reactions** on a message.
+
+Where Sabha differs from those platforms:
+- **No apps / slash commands / Block Kit (unlike Slack)**. Bots are users, not apps.
+  You post messages and reply to webhooks; there is no command framework.
+- **No guilds, voice, or video (unlike Discord).** One workspace, text only.
+- **No federation (unlike Matrix/IRC).** This workspace is self-contained.
+
+Messages support rich text via ActionText, file attachments, threaded replies, and
+emoji reactions ("boosts").
+
+## Vocabulary
+
+These terms appear throughout the API. Use them precisely:
+
+- **Room** — a chat surface. Comes in four flavors:
+  - **Open** room: anyone in the workspace can join freely, see history, post.
+  - **Closed** room: invite-only; only members see the room exists.
+  - **Direct** room (DM): a private 1:1 or small-group chat between specific users.
+    Created on first message, never deleted, can't be left.
+  - **Thread** room: a side-conversation rooted at a specific parent message in
+    another room. Has its own id and acts like a regular room for posting.
+- **Message** — a single post in a room. Has a body (HTML + plain text), optional
+  attachment, optional mentions, optional reactions ("boosts").
+- **Mention** — `@{user_id}` syntax in a message body resolves to a user in the
+  same room and triggers their mention webhook + notification.
+- **Boost** — Sabha's term for an emoji reaction on a message. (NOT a payment,
+  NOT a "super-like" — just a reaction.)
+- **Bookmark** — a personal save-for-later flag on a message. Not visible to others.
+- **Membership** — the link between a user and a room. Carries an **involvement**
+  level (see below) and a starred flag.
+- **Involvement** — per-room notification level for a membership:
+  - `everything` — webhook fires on every message in the room.
+  - `mentions` — webhook fires only when @mentioned, in a DM, or in a thread the
+    bot is part of. **Default for bots.**
+  - `nothing` — receive nothing from this room.
+  - `invisible` — additionally hides the room from sidebar listings.
+- **Role** — workspace-level permission. One of: `member` (default human),
+  `moderator`, `administrator`, `bot`. Bots are a separate role and are NOT
+  promotable to administrator.
+- **Activity** / **Inbox** — the user-facing aggregation of mentions, DMs, and
+  thread replies. There is currently no bot API to read this; bots receive these
+  via webhooks/WebSocket as they happen.
+
+## Quick Reference
+
+The base URL for all bot API calls is `<%= api %>`. Authenticate with
+`Authorization: Bearer {bot_key}`.
+
+| Want to...                          | Endpoint                                                     |
+|-------------------------------------|--------------------------------------------------------------|
+| Register a new bot                  | `POST <%= base %>/join/{join_code}` (no auth)                |
+| Receive events                      | WebSocket to `wss://<%= request.host %><%= request.script_name %>/cable` or webhook URL |
+| Post a message                      | `POST /rooms/{id}/messages`                                  |
+| Reply in a thread                   | `POST /rooms/{id}/messages/{id}/thread`                      |
+| Read recent messages                | `GET /rooms/{id}/messages`                                   |
+| React to a message                  | `POST /rooms/{id}/messages/{id}/boosts`                      |
+| Find a user's id (for mentions)     | `GET /autocompletable/users?room_id=X&query=...`             |
+| List rooms you're in                | `GET /rooms`                                                 |
+| Browse open rooms you can join      | `GET /rooms?joinable=true`                                   |
+| Send a DM                           | `POST /direct_messages` with `{user_ids: [...]}`             |
+| Search messages                     | `GET /search?q=...`                                          |
+| Update your bot profile             | `PATCH /profile`                                             |
+
+## Registration
+
+Ask a workspace admin for a **bot invite URL** containing a `JOIN_CODE`. To register:
+
+    POST <%= base %>/join/JOIN_CODE
     Accept: application/json
     Content-Type: application/json
 
@@ -16,21 +92,22 @@ To register a bot, ask an admin to generate a bot invite URL, then POST JSON to 
       "webhook_url": "https://example.com/webhook"
     }
 
-IMPORTANT: You MUST send the `Accept: application/json` header. Without it, the
-request will be treated as a human signup and fail.
+**IMPORTANT**: `Accept: application/json` is required — without it the request is
+treated as a human signup and fails.
 
 Parameters:
-- name (optional): Display name for the bot (defaults to "New Member" if omitted)
-- webhook_url (optional): Webhook URL called when events occur.
+- `name` (optional) — display name. Defaults to "New Member" if omitted.
+- `webhook_url` (optional) — HTTPS endpoint Sabha will POST events to. If omitted,
+  use WebSocket only.
 
-Response (201 Created):
+Response (`201 Created`):
 
     {
       "bot_key": "42-AbCdEfGhIjKl",
       "webhook_secret": "whsec_…",
       "name": "My Bot",
       "webhook_url": "https://example.com/webhook",
-      "base_url": "<%= request.base_url %><%= request.script_name %>",
+      "base_url": "<%= base %>",
       "api_base_url": "<%= api %>",
       "websocket_url": "wss://<%= request.host %><%= request.script_name %>/cable?bot_key=42-AbCdEfGhIjKl",
       "rooms": [
@@ -39,287 +116,72 @@ Response (201 Created):
       ]
     }
 
-Store the `bot_key` and `webhook_secret` immediately — both are shown only once.
+**Store `bot_key` and `webhook_secret` immediately — they are shown only once.**
+
+By default, new bots are auto-joined to all open rooms with `mentions` involvement.
+Workspace admins can later change involvement per room (see Vocabulary above).
 
 ## Authentication
 
-All bot API requests authenticate with the `Authorization` header:
+Every bot API request:
 
-    Authorization: Bearer <bot_key>
-
-The `bot_key` is a secret — treat it like a password. Always use HTTPS in production.
-
-## Room Permissions
-
-Your bot's access is controlled per room via the membership involvement level:
-
-- **mentions**: Webhook fires when @mentioned or in a DM. Your response is auto-posted as a reply.
-- **muted**: No webhooks fired. Bot can still post and read via the API.
-
-Admins configure your bot's involvement per room. By default, new bots join
-open rooms with "mentions" involvement.
-
-## Posting Messages
-
-    POST <%= api %>/rooms/{room_id}/messages
-    Authorization: Bearer {bot_key}
-    Content-Type: text/plain
-
-    Hello from my bot!
-
-To mention a user, use @{user_id} syntax in the message body:
-
-    Hello @{42}, welcome!
-
-To send a file attachment:
-
-    POST <%= api %>/rooms/{room_id}/messages
-    Authorization: Bearer {bot_key}
-    Content-Type: multipart/form-data
-
-    attachment: (file)
-
-Response: 201 Created with Location header pointing to the message.
-
-## Replying in a Thread
-
-To reply to a specific message in a thread:
-
-    POST <%= api %>/rooms/{room_id}/messages/{message_id}/thread
-    Authorization: Bearer {bot_key}
-    Content-Type: text/plain
-
-    This is a threaded reply!
-
-This creates a thread on the message (or finds an existing one), adds the bot to
-the thread, and posts the reply. File attachments work the same as regular messages.
-
-Response (201 Created):
-
-    {
-      "thread": { "id": 42, "parent_message_id": 10 },
-      "message": { "id": 99 }
-    }
-
-Use the thread id to post follow-up messages directly:
-
-    POST <%= api %>/rooms/{thread_id}/messages
-
-## Creating Direct Messages
-
-    POST <%= api %>/direct_messages
-    Authorization: Bearer {bot_key}
-    Content-Type: application/json
-
-    { "user_ids": [42] }
-
-Response: { "room": { "id": 5 } } with status 201 (new) or 200 (existing).
-
-## Listing Rooms
-
-    GET <%= api %>/rooms
     Authorization: Bearer {bot_key}
 
-Response: JSON array of rooms the bot is a member of, with message posting URLs.
+The `bot_key` is a long-lived secret. Treat it like a password. Always use HTTPS.
+WebSocket connections use the same key as a query string parameter (`?bot_key=...`)
+because WebSocket clients can't set headers during the handshake.
 
-## Discovering Joinable Rooms
+## Receiving Events
 
-    GET <%= api %>/rooms?joinable=true
-    Authorization: Bearer {bot_key}
+There are two delivery modes — you can use either or both:
 
-Response: JSON array of open rooms the bot is NOT already a member of.
+### WebSocket (recommended)
 
-## Joining a Room
+The bot opens an outbound connection to Sabha. No public webhook endpoint needed.
 
-Bots can join any open room:
+    wss://<%= request.host %><%= request.script_name %>/cable?bot_key={bot_key}
 
-    POST <%= api %>/rooms/{room_id}/membership
-    Authorization: Bearer {bot_key}
+After connecting, subscribe:
 
-Response (201): room object with id, name, type, messages_url.
+    { "command": "subscribe", "identifier": "{\"channel\":\"BotEventsChannel\"}" }
 
-## Leaving a Room
+Events arrive as JSON. WebSocket events are NOT signed — the connection is already
+authenticated. WebSocket is **receive-only**; reply via the REST API.
 
-    DELETE <%= api %>/rooms/{room_id}/membership
-    Authorization: Bearer {bot_key}
+### Webhook
 
-Response: 204 No Content. Cannot leave direct message rooms.
-
-## Creating a Room
-
-Bots can create open or closed rooms. The bot is auto-joined and recorded as creator.
-
-    POST <%= api %>/rooms
-    Authorization: Bearer {bot_key}
-    Content-Type: application/json
-
-    { "name": "My Room", "type": "open" }
-
-Response (201): room object. Type must be "open" or "closed".
-
-## Updating a Room
-
-Only the bot that created the room can update it:
-
-    PATCH <%= api %>/rooms/{room_id}
-    Authorization: Bearer {bot_key}
-    Content-Type: application/json
-
-    { "name": "New Name" }
-
-Response: updated room object. Returns 403 if the bot is not the creator.
-
-## Archiving a Room
-
-Only the bot that created the room can archive (soft-delete) it:
-
-    DELETE <%= api %>/rooms/{room_id}
-    Authorization: Bearer {bot_key}
-
-Response: 204 No Content. Returns 403 if the bot is not the creator.
-
-## Reading Messages
-
-    GET <%= api %>/rooms/{room_id}/messages
-    Authorization: Bearer {bot_key}
-
-Response: JSON array of recent messages (last 50) with sender, body (HTML + plain text),
-mentionees, attachment info, and created_at.
-
-## Reading a Single Message
-
-    GET <%= api %>/rooms/{room_id}/messages/{message_id}
-    Authorization: Bearer {bot_key}
-
-Response: single message object with the same fields as the list endpoint.
-
-Each message includes:
-- has_attachment (boolean): whether the message has a file attachment
-- attachment (object or null): { url, filename, content_type, byte_size }
-
-Attachment URLs are absolute and signed. Download promptly.
-
-## Editing Messages
-
-Bots can edit their own messages by sending the new body as plain text:
-
-    PATCH <%= api %>/rooms/{room_id}/messages/{message_id}
-    Authorization: Bearer {bot_key}
-    Content-Type: text/plain
-
-    Updated message content here
-
-Response (200): { "id": 10, "body": { "html": "...", "plain": "Updated message content here" } }
-
-Only messages created by the bot can be edited. Returns 403 for others' messages.
-
-## Deleting Messages
-
-Bots can delete their own messages:
-
-    DELETE <%= api %>/rooms/{room_id}/messages/{message_id}
-    Authorization: Bearer {bot_key}
-
-Response: 204 No Content. Only own messages can be deleted. Returns 403 for others' messages.
-
-## Reactions (Boosts)
-
-Add a reaction by sending the emoji as plain text:
-
-    POST <%= api %>/rooms/{room_id}/messages/{message_id}/boosts
-    Authorization: Bearer {bot_key}
-    Content-Type: text/plain
-
-    🎉
-
-Response (201): { "id": 5, "content": "🎉" }
-
-Remove a reaction:
-
-    DELETE <%= api %>/rooms/{room_id}/messages/{message_id}/boosts/{boost_id}
-    Authorization: Bearer {bot_key}
-
-Response: 204 No Content.
-
-## Listing Room Members
-
-    GET <%= api %>/rooms/{room_id}/members
-    Authorization: Bearer {bot_key}
-
-Response: JSON array of members with id, name, and role (member, moderator, administrator, or bot).
-
-## Adding a Member to a Room
-
-Only the bot that created the room can add members:
-
-    POST <%= api %>/rooms/{room_id}/members
-    Authorization: Bearer {bot_key}
-    Content-Type: application/json
-
-    { "user_id": 42 }
-
-Response (201): { "id": 42, "name": "Alice" }. Returns 403 if the bot is not the creator.
-
-## Removing a Member from a Room
-
-Only the bot that created the room can remove members:
-
-    DELETE <%= api %>/rooms/{room_id}/members/{user_id}
-    Authorization: Bearer {bot_key}
-
-Response: 204 No Content. Returns 403 if the bot is not the creator.
-
-## Searching Messages
-
-Search across all rooms the bot is a member of:
-
-    GET <%= api %>/search?q=deploy
-    Authorization: Bearer {bot_key}
-
-Response: JSON array of up to 50 matching messages, each with id, creator, body, room (id + name), and created_at.
-
-## Updating Bot Settings
-
-    PATCH <%= api %>/profile
-    Authorization: Bearer {bot_key}
-    Content-Type: application/json
-
-    { "name": "New Name", "webhook_url": "https://new-url.com/webhook" }
-
-## Webhook Payloads
-
-When your bot receives a webhook, the payload is JSON. All URLs in the payload are
-absolute — you can call them directly without needing to know the server's base URL.
-
-### Verifying Webhook Signatures
-
-Every outbound webhook is signed with HMAC-SHA256. Verify the signature before
-trusting the payload.
-
-Headers on every delivery:
+Sabha POSTs JSON to your `webhook_url`. The body is the event payload (same shape
+as WebSocket). Each delivery includes:
 
     X-Sabha-Signature: sha256=<hex>
     X-Sabha-Timestamp: <unix-epoch-seconds>
-    X-Sabha-Event: message_created     (or message_updated, boost_created, etc.)
-    X-Sabha-Delivery: <uuid>           (unique per delivery, for dedup/log correlation)
+    X-Sabha-Event: message_created     # or message_updated, boost_created, etc.
+    X-Sabha-Delivery: <uuid>           # unique per delivery; use for dedup
 
-To verify:
+**Always verify the signature** before trusting the payload:
 
-1. Read the raw request body and the `X-Sabha-Timestamp` header.
-2. Reject if `|now - timestamp| > 300` seconds (5-minute replay window).
-3. Compute `expected = "sha256=" + HMAC_SHA256(webhook_secret, "{timestamp}.{raw_body}")`
-4. Compare `expected` against `X-Sabha-Signature` with a timing-safe comparison.
+1. Read raw request body and the `X-Sabha-Timestamp` header.
+2. Reject if `|now - timestamp| > 300` seconds (replay window).
+3. Compute `expected = "sha256=" + HMAC_SHA256(webhook_secret, "{timestamp}.{raw_body}")`.
+4. Compare against `X-Sabha-Signature` with a timing-safe equality.
+5. Reject with `401` on any failure.
 
-If any step fails, reject the request with `401 Unauthorized`.
+Webhook deliveries retry up to 10 times with polynomial backoff. If your endpoint
+is down longer than that, those events are lost (there is no replay API today).
 
-The `webhook_secret` is returned once in the registration response. Store it
-securely alongside the `bot_key`.
+### Event Types
 
-### message_created / message_updated
+Supported events: `message_created`, `message_updated`, `message_deleted`,
+`boost_created`, `boost_deleted`, `user_created`, `user_deleted`.
+
+Example `message_created` payload (most common):
 
     {
       "event": "message_created",
-      "user": { "id": 1, "name": "Alice", "role": "member", "url": "<%= request.base_url %><%= request.script_name %>/users/1" },
+      "user": {
+        "id": 1, "name": "Alice", "role": "member",
+        "url": "<%= base %>/users/1"
+      },
       "room": {
         "id": 5, "name": "General", "type": "Open",
         "members": 42, "has_bot": true,
@@ -330,90 +192,295 @@ securely alongside the `bot_key`.
         "body": { "html": "<p>Hello @MyBot</p>", "plain": "Hello @MyBot" },
         "has_attachment": true,
         "attachment": {
-          "url": "<%= request.base_url %><%= request.script_name %>/rails/active_storage/blobs/...",
-          "filename": "photo.jpg",
-          "content_type": "image/jpeg",
+          "url": "<%= base %>/rails/active_storage/blobs/...",
+          "filename": "photo.jpg", "content_type": "image/jpeg",
           "byte_size": 245760
         },
         "mentionees": [{ "id": 99, "name": "MyBot" }],
-        "url": "<%= request.base_url %><%= request.script_name %>/rooms/5@10",
+        "url": "<%= base %>/rooms/5@10",
         "created_at": "2026-04-07T12:00:00Z",
         "updated_at": "2026-04-07T12:00:00Z",
         "thread": null
       }
     }
 
-Messages without attachments have `"has_attachment": false` and `"attachment": null`.
+Notes:
+- `room.type` is one of `"Open"`, `"Closed"`, `"Direct"`, `"Thread"`. For a
+  `Thread`, `message.thread.parent_message_id` points back to the originating
+  message in the parent room.
+- `message.body.plain` strips HTML and is what you usually want to read.
+- `message.mentionees` lists users mentioned in this message; check whether your
+  bot's id is in there to detect mentions.
+- Attachment URLs are absolute, signed, and time-limited — download promptly.
 
-To reply in a thread, POST to: `{room.messages_url}/{message.id}/thread`
+### Webhook Auto-Reply Convention
 
-### boost_created
+If you respond to a webhook with HTTP 200:
+- `text/plain` or `text/html` body → auto-posted as your bot's reply in the source room.
+- Binary content type → auto-posted as an attachment.
+- Non-200 or timeout (300s max) → an error message is posted to the room.
 
-Same structure plus: "boost": { "id": 123, "body": "👍" }
+This lets simple bots be a single HTTP handler with no API calls. For anything
+non-trivial, return 200 with empty body and use the REST API explicitly.
 
-### user_created
+## Posting Messages
 
-    { "event": "user_created", "user": { "id": 1, "name": "Alice", "role": "member", "url": "<%= request.base_url %><%= request.script_name %>/users/1" } }
+    POST <%= api %>/rooms/{room_id}/messages
+    Content-Type: text/plain
 
-### Webhook Response Convention
+    Hello world!
 
-Your HTTP response is automatically posted as a reply:
-- Return text/plain or text/html with 200 → auto-posted as a message from the bot
-- Return a binary content type with 200 → auto-posted as an attachment
-- Timeout (300s) or error → error message posted to the room
+The body is plain text and gets formatted as a message paragraph. To post HTML
+(rich formatting), send the same endpoint with HTML in the body.
 
-## Real-Time Events via WebSocket
+For file attachments:
 
-Bots can receive events over WebSocket instead of webhooks. This is the preferred
-connection mode — the bot connects outbound to Sabha, so no tunnel or reverse proxy
-is needed.
+    POST <%= api %>/rooms/{room_id}/messages
+    Content-Type: multipart/form-data
 
-### Connecting
+    attachment: <file>
 
-Use the websocket_url from the registration response. It uses the ActionCable protocol.
+Response: `201 Created` with `Location` header pointing to the new message.
 
-    wss://<%= request.host %><%= request.script_name %>/cable?bot_key={bot_key}
+### Mentioning Users
 
-The WebSocket still authenticates via `bot_key` in the query string because browsers
-and most WebSocket clients cannot set arbitrary headers during the handshake. HTTP
-API requests use the `Authorization` header.
+Use `@{user_id}` syntax in the message body:
 
-Subscribe to BotEventsChannel after connecting:
+    Welcome @{42}!
 
-    { "command": "subscribe", "identifier": "{\"channel\":\"BotEventsChannel\"}" }
+The mention only resolves if user `42` is a member of `room_id`. To find user ids
+**always include `room_id` matching where you'll post**:
 
-### Event Format
+    GET <%= api %>/autocompletable/users?room_id=5&query=alice
+    GET <%= api %>/users?room_id=5
 
-Events arrive as JSON with the same structure as webhook payloads:
+Without `room_id`, results may include users from other shared rooms who can't be
+mentioned in your target room.
 
-    {
-      "event": "message_created",
-      "user": { ... },
-      "room": { ... },
-      "message": { ... }
-    }
+`@everyone` exists in the human UI but is **not available to bots** — bots can't
+mention everyone in a room.
 
-Supported events: message_created, message_updated, message_deleted,
-boost_created, boost_deleted, user_created, user_deleted.
+### Editing & Deleting Your Own Messages
 
-WebSocket events are NOT signed — the connection is already authenticated at
-handshake.
+    PATCH <%= api %>/rooms/{room_id}/messages/{message_id}
+    Content-Type: text/plain
 
-### Sending Replies
+    Updated body
 
-WebSocket is receive-only. To reply, use the REST API (POST messages endpoint above).
+    DELETE <%= api %>/rooms/{room_id}/messages/{message_id}
 
-### Webhooks as Fallback
+Both return `403` for messages not authored by your bot.
 
-Both modes can be used simultaneously. If a webhook_url is configured, Sabha delivers
-events via both WebSocket and webhook. To use WebSocket only, register without a
-webhook_url.
+## Reading Messages
+
+    GET <%= api %>/rooms/{room_id}/messages
+
+Returns the most recent 50 messages in the room (oldest first). Each message
+includes id, creator (`{id, name}`), body (`{html, plain}`), `has_attachment`,
+`attachment` object or null, `mentionees`, and `created_at`.
+
+Single message:
+
+    GET <%= api %>/rooms/{room_id}/messages/{message_id}
+
+Currently there is no pagination beyond the last 50 — backfilling deep history is
+not yet supported.
+
+## Threads
+
+A **thread** in Sabha is a separate room rooted at a specific parent message.
+Replying creates the thread (or finds the existing one), adds you as a member,
+and posts your reply:
+
+    POST <%= api %>/rooms/{room_id}/messages/{message_id}/thread
+    Content-Type: text/plain
+
+    My threaded reply
+
+Response (`201 Created`):
+
+    { "thread": { "id": 42, "parent_message_id": 10 },
+      "message": { "id": 99 } }
+
+The returned `thread.id` is itself a room id. To post follow-up messages to the
+same thread, just post to `/rooms/{thread_id}/messages` directly.
+
+## Reactions (Boosts)
+
+Add a reaction by posting the emoji as plain text:
+
+    POST <%= api %>/rooms/{room_id}/messages/{message_id}/boosts
+    Content-Type: text/plain
+
+    🎉
+
+Response: `201 Created` with `{ "id": 5, "content": "🎉" }`.
+
+Remove your boost:
+
+    DELETE <%= api %>/rooms/{room_id}/messages/{message_id}/boosts/{boost_id}
+
+You can only delete your own boosts.
+
+## Direct Messages
+
+Start (or resume) a DM with one or more users:
+
+    POST <%= api %>/direct_messages
+    Content-Type: application/json
+
+    { "user_ids": [42, 17] }
+
+Response: `{ "room": { "id": 5 } }` with status `201` for new or `200` for
+existing. Once you have the DM's `room.id`, post to it like any other room.
+
+DM rooms cannot be left or deleted.
+
+## Rooms
+
+### Listing
+
+    GET <%= api %>/rooms                       # rooms you're in
+    GET <%= api %>/rooms?joinable=true         # open rooms you could join
+
+### Joining and Leaving Open Rooms
+
+    POST <%= api %>/rooms/{room_id}/membership     # join (open rooms only)
+    DELETE <%= api %>/rooms/{room_id}/membership   # leave
+
+DMs can't be left. To join a closed room, an existing member must add you (see
+Members below).
+
+### Creating
+
+    POST <%= api %>/rooms
+    Content-Type: application/json
+
+    { "name": "My Room", "type": "open" }
+
+`type` must be `"open"` or `"closed"`. The bot is auto-joined and recorded as
+the creator. The creator is the only bot that can later edit, archive, or
+manage members of that room.
+
+### Updating, Archiving
+
+    PATCH <%= api %>/rooms/{room_id}    { "name": "New Name" }
+    DELETE <%= api %>/rooms/{room_id}   # archive (soft-delete)
+
+Both return `403` if your bot is not the creator.
+
+## Room Members
+
+Listing works for any room your bot is in:
+
+    GET <%= api %>/rooms/{room_id}/members
+
+Returns `{id, name, role}` for each member.
+
+Add or remove members (creator-bot only):
+
+    POST <%= api %>/rooms/{room_id}/members         { "user_id": 42 }
+    DELETE <%= api %>/rooms/{room_id}/members/{user_id}
+
+## User Directory
+
+For mention discovery, **always pass `room_id` matching the room you'll post in**.
+Without `room_id`, results span all rooms the bot shares.
+
+    GET <%= api %>/users?room_id=5
+    GET <%= api %>/users?room_id=5&page=2&per_page=50
+    GET <%= api %>/users/{user_id}?room_id=5
+    GET <%= api %>/autocompletable/users?room_id=5&query=alice
+
+Returns `{id, name, role, bot, url}` for each user; the single-user `show`
+endpoint additionally includes `bio`, `twitter_url`, `linkedin_url`,
+`personal_url`. `autocomplete` returns up to 20 users (exact-name matches first).
+With blank `query`, returns recent posters in the room (or alphabetical when
+`room_id` is omitted).
+
+Defaults: `per_page=50`, max `100`. Placeholder accounts (default-named, not
+yet onboarded) are excluded from all three endpoints.
+
+## Searching Messages
+
+    GET <%= api %>/search?q=deploy
+
+Returns up to 50 matching messages across rooms your bot is in. Each result
+includes id, creator, body, `room` (`{id, name}`), and `created_at`.
+
+Search uses SQLite FTS5 — supports phrase queries (`"exact phrase"`) and prefix
+matches (`deploy*`).
+
+## Bot Profile
+
+    PATCH <%= api %>/profile
+    Content-Type: application/json
+
+    { "name": "New Name", "webhook_url": "https://new-url.com/webhook" }
+
+Both fields are optional; pass only what you want to change.
 
 ## Error Responses
 
-All errors return JSON with `error` (human-readable) and `code` (machine-stable):
+All 4xx/5xx responses are JSON:
 
     { "error": "Join code has expired", "code": "join_code_expired" }
 
-Common codes: join_code_not_found, join_code_expired, join_code_inactive,
-rate_limited, validation_failed, forbidden, not_found.
+`code` is machine-stable; `error` is human-readable. Common codes:
+`join_code_not_found`, `join_code_expired`, `join_code_inactive`, `rate_limited`,
+`validation_failed`, `forbidden`, `not_found`, `service_unavailable`.
+
+A few endpoints return `403` with no body when authorization fails (e.g.,
+non-creator bot trying to update a room) — treat any 403 as a permission error
+regardless of body.
+
+## Common Recipes
+
+### "Reply when mentioned"
+
+1. Receive a `message_created` event (webhook or WebSocket).
+2. Check whether your bot's id is in `message.mentionees`.
+3. POST your reply to `room.messages_url` (an absolute URL provided in the payload).
+
+If you're using webhooks, you can also just return your reply text with HTTP 200
+— Sabha will auto-post it for you.
+
+### "Resolve a name to a user_id for mentioning"
+
+1. Note the `room_id` you're about to post in.
+2. Call `GET /api/bots/autocompletable/users?room_id={id}&query={name}`.
+3. Use the first result's `id` in `@{id}` syntax.
+
+### "Catch up after a disconnect"
+
+1. Reconnect to the WebSocket.
+2. Sabha does not currently replay missed events — for any room you care about,
+   call `GET /api/bots/rooms/{id}/messages` to fetch the last 50 messages and
+   reconcile against your last-seen state.
+
+### "Start a thread on someone else's message"
+
+1. POST to `/api/bots/rooms/{room_id}/messages/{message_id}/thread` with your
+   reply body.
+2. The response's `thread.id` is a room id you can post follow-up messages to.
+
+### "Send a DM after seeing someone post in a public room"
+
+1. Note `user.id` from the incoming message event.
+2. `POST /api/bots/direct_messages` with `{ user_ids: [user_id] }`.
+3. POST messages to the returned `room.id`.
+
+## Limits & Gotchas
+
+- **Mentions only resolve in the target room.** Always scope user discovery with
+  `room_id`. A user discoverable cross-room may be silently un-mentionable elsewhere.
+- **Bots cannot use `@everyone`.** That capability is admin-only in the human UI.
+- **Bots are not administrators.** Most administrative actions (renaming a room
+  the bot didn't create, removing arbitrary members, banning users) are not
+  available to bots regardless of role inheritance.
+- **No replay for missed events.** Webhook retries cap at ~10 attempts; WebSocket
+  reconnects don't replay backlog. Reconcile by re-reading message history.
+- **Message history is capped at 50** per fetch with no pagination today.
+- **Attachment URLs expire.** Download promptly when you receive an event.
+- **`bot_key` and `webhook_secret`** are returned exactly once at registration —
+  storing them is the bot's responsibility.

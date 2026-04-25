@@ -625,4 +625,93 @@ class UserTest < ActiveSupport::TestCase
 
     assert_includes david.mentioning_messages, msg_in_room
   end
+
+  # User.matching
+
+  test "matching returns empty array for blank query" do
+    assert_equal [], User.matching("")
+    assert_equal [], User.matching(nil)
+    assert_equal [], User.matching("   ")
+  end
+
+  test "matching returns Array (not Relation)" do
+    assert_kind_of Array, User.matching("David")
+    assert_kind_of Array, User.matching("")
+  end
+
+  test "matching caps the by_first_name leg at the SQL layer" do
+    queries = []
+    callback = ->(*, payload) { queries << payload[:sql] if payload[:name] == "User Load" }
+    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+      User.matching("David", limit: 5)
+    end
+
+    by_first_name_sql = queries.find { |q| q.include?("CASE WHEN instr(name") }
+    assert by_first_name_sql.present?, "expected by_first_name query, got: #{queries.inspect}"
+    assert_match(/LIMIT/, by_first_name_sql, "by_first_name leg must apply LIMIT in SQL, not slice in Ruby")
+  end
+
+  test "matching ranks exact first-name hits before partial matches" do
+    User.create!(name: "Davidson", email_address: "davidson@example.com", verified_at: 1.day.ago)
+
+    results = User.matching("David")
+    david_pos = results.index { |u| u.id == users(:david).id }
+    davidson_pos = results.index { |u| u.name == "Davidson" }
+
+    assert david_pos.present? && davidson_pos.present?
+    assert david_pos < davidson_pos
+  end
+
+  test "matching dedupes a user that matches both legs" do
+    results = User.matching("David")
+    assert_equal 1, results.count { |u| u.id == users(:david).id }
+  end
+
+  test "matching honors limit across both legs" do
+    25.times { |i| User.create!(name: "Davidson #{i}", email_address: "d#{i}@example.com", verified_at: 1.day.ago) }
+
+    assert_equal 5,  User.matching("Davidson", limit: 5).size
+    assert_equal 20, User.matching("Davidson").size
+  end
+
+  test "matching caps even when exact-name hits exceed limit" do
+    25.times { |i| User.create!(name: "David #{i}", email_address: "david#{i}@example.com", verified_at: 1.day.ago) }
+
+    assert_equal 10, User.matching("David", limit: 10).size
+  end
+
+  # User.sharing_rooms_with
+
+  test "sharing_rooms_with returns members of rooms the bot shares" do
+    bender = users(:bender)
+    visible = User.sharing_rooms_with(bender)
+
+    # bender is in watercooler with david, jason, nsa, rachel, kevin (and itself)
+    assert_includes visible, users(:david)
+    assert_includes visible, users(:rachel)
+    assert_includes visible, bender
+  end
+
+  test "sharing_rooms_with excludes users from rooms the bot does not share" do
+    bender = users(:bender)
+    assert_not bender.rooms.include?(rooms(:designers))
+
+    refute_includes User.sharing_rooms_with(bender), users(:jz)
+  end
+
+  test "sharing_rooms_with returns empty when the bot is in zero rooms" do
+    bender = users(:bender)
+    bender.memberships.destroy_all
+
+    assert_equal [], User.sharing_rooms_with(bender).to_a
+  end
+
+  test "sharing_rooms_with dedupes users present in multiple shared rooms" do
+    bender = users(:bender)
+    Membership.create!(user: bender, room: rooms(:hq), involvement: :everything)
+    # david is in both watercooler and hq with bender now
+
+    results = User.sharing_rooms_with(bender).to_a
+    assert_equal 1, results.count { |u| u.id == users(:david).id }
+  end
 end
