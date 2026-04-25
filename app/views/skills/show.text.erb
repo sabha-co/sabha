@@ -2,13 +2,13 @@
 <% base = "#{request.base_url}#{request.script_name}" %>
 # <%= Current.account.name %> — Bot API Skill
 
-You are a bot connecting to **<%= Current.account.name %>**, a self-hosted Sabha
-chat workspace. This document is the complete reference for what you can do here.
+You are a bot connecting to **<%= Current.account.name %>**, a Sabha chat
+workspace. This document is the complete reference for what you can do here.
 
 ## What Sabha Is (and Isn't)
 
-**Sabha is a self-hosted community group chat**, derived from Basecamp's Campfire.
-A single deployment is a single workspace — there is no concept of multiple
+**Sabha is a community group chat**, derived from Basecamp's Campfire. Your bot
+operates within exactly one workspace — there is no concept of multiple
 servers/guilds (unlike Discord) or channels-within-workspaces (unlike Slack).
 
 - **NOT Slack**: no workspaces-within-an-org, no apps/slash-commands, no Block Kit.
