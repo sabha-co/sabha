@@ -24,6 +24,11 @@ class Current < ActiveSupport::CurrentAttributes
     end
   end
 
+  def workspace_membership=(value)
+    super
+    @user = nil
+  end
+
   # Delegate to global_identity from global_session (SaaS mode)
   def global_identity
     global_session&.global_identity
@@ -33,7 +38,7 @@ class Current < ActiveSupport::CurrentAttributes
   # In single-tenant mode, user is set directly from session
   def user
     if Sabha.saas? && workspace_membership.present?
-      workspace_membership.user
+      @user ||= workspace_membership.user
     else
       super
     end
@@ -66,5 +71,6 @@ class Current < ActiveSupport::CurrentAttributes
     super
     @workspace = nil
     @account = nil
+    @user = nil
   end
 end
