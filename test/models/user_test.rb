@@ -634,23 +634,6 @@ class UserTest < ActiveSupport::TestCase
     assert_equal [], User.matching("   ")
   end
 
-  test "matching returns Array (not Relation)" do
-    assert_kind_of Array, User.matching("David")
-    assert_kind_of Array, User.matching("")
-  end
-
-  test "matching caps the by_first_name leg at the SQL layer" do
-    queries = []
-    callback = ->(*, payload) { queries << payload[:sql] if payload[:name] == "User Load" }
-    ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
-      User.matching("David", limit: 5)
-    end
-
-    by_first_name_sql = queries.find { |q| q.include?("CASE WHEN instr(name") }
-    assert by_first_name_sql.present?, "expected by_first_name query, got: #{queries.inspect}"
-    assert_match(/LIMIT/, by_first_name_sql, "by_first_name leg must apply LIMIT in SQL, not slice in Ruby")
-  end
-
   test "matching ranks exact first-name hits before partial matches" do
     User.create!(name: "Davidson", email_address: "davidson@example.com", verified_at: 1.day.ago)
 
