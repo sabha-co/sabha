@@ -105,6 +105,7 @@ class WorkspaceMembership < UntenantedRecord
       end
 
       cache_user_id!(user.id) unless user_id == user.id
+      Current.user = user if Current.workspace_membership == self
       user
     end
   end

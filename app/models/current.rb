@@ -6,10 +6,9 @@ class Current < ActiveSupport::CurrentAttributes
 
   delegate :host, :protocol, to: :request, prefix: true, allow_nil: true
 
-  # Single-tenant mode: session sets user directly
   def session=(value)
     super
-    self.user = value&.user unless Sabha.saas?
+    self.user = value&.user
   end
 
   # SaaS mode: global_session sets workspace_membership

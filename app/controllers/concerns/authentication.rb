@@ -120,15 +120,14 @@ module Authentication
       end
     end
 
-    # In SaaS mode, create the workspace User if it doesn't exist yet.
-    # Current.workspace_membership= eagerly assigns Current.user; if that
-    # was nil we create the user now and re-assign so the request sees it.
+    # In SaaS mode, create the workspace User on first visit.
+    # WorkspaceMembership#create_user! updates Current.user when the membership
+    # is the active one, so the request sees the freshly-created user.
     def ensure_workspace_user_exists
       return unless Current.workspace_membership.present?
       return if Current.user.present?
 
       Current.workspace_membership.create_user!
-      Current.user = Current.workspace_membership.user
     end
 
     def terminate_current_session
