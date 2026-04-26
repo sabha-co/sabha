@@ -152,13 +152,14 @@ body.library-collapsed:has(#sidebar.open) {
   }
 }
 
-/* Thread panel: three-column grid when open (desktop only) */
+/* Thread panel: three-column grid when open (desktop only).
+   Split the non-sidebar space 50/50 between main and thread (was ~2:1). */
 @media (min-width: 120ch) {
   body:has(#thread-panel:not([hidden])) {
     grid-template-areas:
       "nav nav sidebar"
       "main thread sidebar";
-    grid-template-columns: 1fr clamp(300px, 25vw, 420px) var(--sidebar-width);
+    grid-template-columns: 1fr 1fr var(--sidebar-width);
   }
 
   body.sidebar:has(#thread-panel:not([hidden])) {
