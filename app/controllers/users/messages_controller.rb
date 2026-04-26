@@ -21,7 +21,7 @@ class Users::MessagesController < ApplicationController
     end
 
     def set_messages
-      @messages = find_paged_messages
+      @messages = Message.with_thread_participants(find_paged_messages)
     end
 
     def find_paged_messages

@@ -57,13 +57,25 @@ class Message < ApplicationRecord
   }
 
   # Used by bookmarks inbox where all messages are known to be bookmarked
-  attr_writer :bookmarked
+  attr_writer :bookmarked, :thread_participants
 
   validate :ensure_can_message_recipient, on: :create
   validate :ensure_everyone_mention_allowed, on: :create
 
   def event?
     event.present?
+  end
+
+  # Callers should preload :threads before invoking this to avoid per-message
+  # association loads. The shared message scopes that render message lists
+  # already do this via with_thread_summary / for_display.
+  def self.with_thread_participants(messages, limit: 5)
+    messages = messages.to_a
+    return messages if messages.empty?
+
+    thread_participants = Rooms::Thread.preload_participant_creators(messages.flat_map(&:threads).uniq, limit:)
+    messages.each { |message| message.thread_participants = thread_participants }
+    messages
   end
 
   def repliable?
@@ -82,6 +94,10 @@ class Message < ApplicationRecord
 
   def plain_text_body
     body.to_plain_text.presence || attachment&.filename&.to_s || ""
+  end
+
+  def thread_participants_for(thread)
+    @thread_participants&.fetch(thread.id, nil)
   end
 
   def thread_fingerprint

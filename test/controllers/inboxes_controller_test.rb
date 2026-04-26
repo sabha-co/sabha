@@ -304,6 +304,19 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Designer thread parent marker", response.body
   end
 
+  test "threads loads thread associations in at most one query as threaded parent count grows" do
+    room = rooms(:pets)
+    room.memberships.find_by(user: @david).update!(involvement: :everything)
+    create_accessible_thread_parents(room, count: 5, prefix: "five")
+
+    thread_preload_queries = count_thread_association_queries do
+      get threads_inbox_url
+      assert_response :success
+    end
+
+    assert_operator thread_preload_queries, :<=, 1
+  end
+
   # ===================
   # Bookmarks tests
   # ===================
@@ -552,4 +565,42 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     get activity_inbox_url, params: { after: first_notification.id }
     assert_response :success
   end
+
+  private
+    def create_accessible_thread_parents(room, count:, prefix:)
+      count.times do |i|
+        parent = room.messages.create!(
+          body: "#{prefix} parent #{i}",
+          creator: @jason,
+          client_message_id: "#{prefix}_parent_#{i}"
+        )
+
+        thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
+        thread.memberships.grant_to(@jason)
+        thread.messages.create!(
+          body: "#{prefix} reply #{i}",
+          creator: @jason,
+          client_message_id: "#{prefix}_reply_#{i}"
+        )
+      end
+    end
+
+    def count_thread_association_queries
+      callback = lambda do |_name, _started, _finished, _unique_id, payload|
+        sql = payload[:sql]
+        name = payload[:name]
+        next if payload[:cached]
+        next if name == "SCHEMA"
+        next if sql.match?(/\A(?:BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i)
+        next unless sql.match?(/FROM "rooms".*"parent_message_id"/)
+
+        @query_count += 1
+      end
+
+      @query_count = 0
+      ActiveRecord::Base.uncached do
+        ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { yield }
+      end
+      @query_count
+    end
 end

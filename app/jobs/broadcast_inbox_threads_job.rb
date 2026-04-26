@@ -20,6 +20,7 @@ class BroadcastInboxThreadsJob < ApplicationJob
 
     # Preload parent_message with threads only - participant_creators fetches users efficiently
     parent_message_with_threads = Message.includes(:threads).find(parent_message.id)
+    Message.with_thread_participants([ parent_message_with_threads ])
 
     # Check current count at execution time to avoid race conditions when multiple
     # messages are posted quickly.
