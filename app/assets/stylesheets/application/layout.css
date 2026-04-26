@@ -153,13 +153,17 @@ body.library-collapsed:has(#sidebar.open) {
 }
 
 /* Thread panel: three-column grid when open (desktop only).
-   Split the non-sidebar space 50/50 between main and thread (was ~2:1). */
+   Split the non-sidebar space 50/50 between main and thread (was ~2:1).
+   --thread-width is the single source of truth so anything else that needs
+   to know the thread column's width (e.g. fixed nav offset) stays in sync. */
 @media (min-width: 120ch) {
   body:has(#thread-panel:not([hidden])) {
+    --thread-width: calc((100vw - var(--sidebar-width)) / 2);
+
     grid-template-areas:
       "nav nav sidebar"
       "main thread sidebar";
-    grid-template-columns: 1fr 1fr var(--sidebar-width);
+    grid-template-columns: 1fr var(--thread-width) var(--sidebar-width);
   }
 
   body.sidebar:has(#thread-panel:not([hidden])) {

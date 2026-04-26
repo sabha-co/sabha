@@ -30,7 +30,7 @@
 
   @media (min-width: 120ch) {
     .thread-panel-open & {
-      inset-inline-end: calc(var(--sidebar-width) + clamp(300px, 25vw, 420px));
+      inset-inline-end: calc(var(--sidebar-width) + var(--thread-width));
     }
   }
 
