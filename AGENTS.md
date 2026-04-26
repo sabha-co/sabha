@@ -28,6 +28,7 @@
 - Frameworks: Minitest, mocha, webmock; system tests via capybara/cuprite.
 - Test files end in `_test.rb`.
 - SaaS tests live in `saas/test/` and run only with SaaS mode enabled.
+- After every major change, run both `bin/rails test` and `SAAS=true bin/rails test saas/test/`.
 - Prefer tenant-safe fixtures and ensure `Current.reset` is called in test teardowns.
 - Test data strategy: real database, fixtures loaded once (`fixtures :all` or explicit fixture lists), and per-test transactional rollback (default Rails `use_transactional_tests`).
 
