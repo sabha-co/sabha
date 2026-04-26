@@ -1,6 +1,8 @@
 <% content_for :footer do %>
   <div class="composer flex align-end gap position-relative"
-      data-controller="typing-notifications" data-typing-notifications-active-class="typing-indicator--active">
+      data-controller="typing-notifications"
+      data-typing-notifications-active-class="typing-indicator--active"
+      data-typing-notifications-room-id-value="<%= room.id %>">
     <%= link_to searches_path, class: "btn flex-item-no-shrink margin-block-end composer__context-btn", style: "view-transition-name: input-switcher" do %>
       <%= icon_tag "search" %>
       <span class="for-screen-reader">Search</span>
