@@ -1,9 +1,5 @@
 <% room = local_assigns[:room] || local_assigns[:membership].room %>
 <% starred = local_assigns[:membership]&.starred? %>
-<% muted = local_assigns[:membership]&.involved_in_nothing? %>
-<% unread = local_assigns[:membership]&.unread? %>
-<% notifications_count = local_assigns[:membership]&.unread_notifications_count.to_i %>
-<% has_notifications = notifications_count > 0 %>
 
 <div id="<%= dom_id(room, dom_prefix(list_name, :list_node)) %>"
      data-sorted-list-target="item"
@@ -12,12 +8,7 @@
      data-updated-at="<%= room.last_active_at.iso8601 %>"
      data-type="list_node"
      class="room-row flex align-center gap-half">
-  <%= link_to_room room,
-        class: [ "room btn txt-nowrap flex-item-grow", "unread": unread, "badge": has_notifications ] do %>
-    <span class="overflow-ellipsis"><%= room_type_indicator(room) %> <%= room_display_name(room) %></span>
-    <% if notifications_count > 0 %><span class="notification-badge"><%= notifications_count %></span><% end %>
-    <% if muted %><span class="muted-indicator"><%= icon_tag "bell-off" %></span><% end %>
-  <% end %>
+  <%= render "users/sidebars/rooms/shared_link", list_name: list_name, membership: local_assigns[:membership] %>
 
   <% if local_assigns[:membership] %>
     <% if starred %>

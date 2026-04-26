@@ -68,6 +68,27 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "mentioning a user in a room they're not viewing refreshes their sidebar sort metadata" do
+    # Regression: BroadcastMentioneeSidebarUpdatesJob now replaces only the inner link partial,
+    # not the full row. The cross-room mention case (user disconnected from the mentioned room)
+    # must still receive roomSize/roomUpdatedAt via UserUnreadRoomsChannel through
+    # Room#broadcast_unread_to_disconnected_users, otherwise the sidebar sort goes stale.
+    jason_membership = @room.memberships.find_by(user: users(:jason))
+    jason_membership.update!(unread_at: nil, connected_at: nil)
+
+    stream_name = UserUnreadRoomsChannel.broadcasting_for(users(:jason))
+    payloads = capture_broadcasts(stream_name) do
+      post room_messages_url(@room, format: :turbo_stream),
+        params: { message: { body: "<div>Hey #{mention_attachment_for(:jason)}</div>", client_message_id: SecureRandom.uuid } }
+    end
+
+    sort_payload = payloads.find { |p| p["forceUnread"] == true }
+    assert sort_payload, "expected a UserUnreadRoomsChannel payload with forceUnread for the disconnected mentionee"
+    assert_equal @room.id, sort_payload["roomId"]
+    assert_equal @room.reload.messages_count, sort_payload["roomSize"]
+    assert_equal @room.last_active_at.iso8601, sort_payload["roomUpdatedAt"]
+  end
+
   test "creating a message never broadcasts to global unread_rooms channel" do
     # CRIT-3: Regression test to ensure thundering herd fix stays in place
     other_member = @room.memberships.visible.where.not(user: users(:david)).first
