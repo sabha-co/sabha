@@ -16,8 +16,8 @@ class BroadcastMentioneeSidebarUpdatesJob < ApplicationJob
       list_name = membership.sidebar_list_name
       Turbo::StreamsChannel.broadcast_replace_to(
         membership.user, :rooms,
-        target: dom_id(membership.room, dom_prefix(list_name, :list_node)),
-        partial: "users/sidebars/rooms/shared",
+        target: dom_id(membership.room, dom_prefix(list_name, :list_node_link)),
+        partial: "users/sidebars/rooms/shared_link",
         locals: { list_name:, membership: }
       )
     end
