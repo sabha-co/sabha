@@ -33,7 +33,6 @@ class BroadcastMentioneeSidebarUpdatesJob < ApplicationJob
 
       scope.visible
            .where.not(user_id: message.creator_id)
-           .with_has_unread_notifications
            .includes(:user)
     end
 end

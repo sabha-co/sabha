@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_24_100000) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_26_133120) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -146,6 +146,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_24_100000) do
     t.integer "room_id", null: false
     t.boolean "starred", default: false, null: false
     t.datetime "unread_at"
+    t.integer "unread_notifications_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["room_id", "created_at"], name: "index_memberships_on_room_id_and_created_at"
