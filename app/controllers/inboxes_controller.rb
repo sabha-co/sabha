@@ -88,8 +88,18 @@ class InboxesController < ApplicationController
 
     def find_notifications
       paginate(Inbox::ActivityQuery.new(Current.user).call).tap do |notifications|
-        Message.with_thread_participants(notifications.map(&:message))
+        messages = notifications.filter_map(&:message)
+        Message.with_thread_participants(messages)
+        preload_bookmark_status(messages)
       end
+    end
+
+    def preload_bookmark_status(messages)
+      return if messages.empty?
+
+      bookmarked_ids = Bookmark.where(user: Current.user, message_id: messages.map(&:id))
+                               .pluck(:message_id).to_set
+      messages.each { |m| m.bookmarked = bookmarked_ids.include?(m.id) }
     end
 
     def set_notification_pagination_anchors

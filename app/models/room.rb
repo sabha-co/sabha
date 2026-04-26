@@ -72,7 +72,9 @@ class Room < ApplicationRecord
     end
 
     def original
-      unscoped.order(:created_at).first
+      Rails.cache.fetch([ "rooms", "original", ApplicationRecord.try(:current_tenant) ], skip_nil: true) do
+        unscoped.order(:created_at).first
+      end
     end
   end
 
