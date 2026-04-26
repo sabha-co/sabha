@@ -93,6 +93,32 @@ module Saas
       assert_equal "/workspaces", session[:return_to_after_authenticating]
     end
 
+    test "first-time visitor with blank membership user_id has User created and Current.user set" do
+      workspace = Workspace.create_with_database!(name: "First Visit Test", creator: global_identities(:alice))
+
+      # Bob is a member but has never visited — workspace_membership.user_id is blank
+      bob_membership = WorkspaceMembership.create!(
+        global_identity: global_identities(:bob),
+        tenant: workspace.external_id.to_s
+      )
+      assert_nil bob_membership.user_id
+
+      sign_in_global_identity(global_identities(:bob))
+      workspace_get "/", workspace: workspace
+
+      # Auth flow must populate Current.user after create_user!, otherwise
+      # require_workspace_membership bounces to /workspaces.
+      assert_not_equal "/workspaces", URI(response.location || "").path
+
+      bob_membership.reload
+      assert_not_nil bob_membership.user_id
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        assert User.exists?(id: bob_membership.user_id)
+      end
+    ensure
+      workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+    end
+
     test "user whose tenant User was deleted gets it recreated on next visit" do
       workspace = Workspace.create_with_database!(name: "Orphan Test", creator: global_identities(:alice))
       sign_in_global_identity(global_identities(:alice))

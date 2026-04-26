@@ -120,12 +120,13 @@ module Authentication
       end
     end
 
-    # In SaaS mode, create the workspace User if it doesn't exist yet
+    # In SaaS mode, create the workspace User on first visit.
+    # WorkspaceMembership#create_user! updates Current.user when the membership
+    # is the active one, so the request sees the freshly-created user.
     def ensure_workspace_user_exists
       return unless Current.workspace_membership.present?
-      return if Current.workspace_membership.user_id.present? && Current.workspace_membership.user.present?
+      return if Current.user.present?
 
-      # Create User in this workspace from GlobalIdentity
       Current.workspace_membership.create_user!
     end
 
