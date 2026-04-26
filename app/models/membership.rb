@@ -28,40 +28,6 @@ class Membership < ApplicationRecord
     end
   }, through: :room, source: :messages
 
-  scope :with_has_unread_notifications, -> {
-    select(
-      "memberships.*",
-
-      <<~SQL.squish
-      (
-        SELECT COUNT(DISTINCT messages.id)
-        FROM messages
-        WHERE messages.room_id = memberships.room_id
-          AND messages.created_at >= COALESCE(
-            memberships.unread_at,
-            '#{Time.current.utc.iso8601}'
-          )
-          AND (
-            EXISTS (
-              SELECT 1
-              FROM rooms
-              WHERE rooms.id = memberships.room_id
-                AND rooms.type = 'Rooms::Direct'
-            )
-            OR EXISTS (
-              SELECT 1
-              FROM notifications
-              WHERE notifications.message_id = messages.id
-                AND notifications.user_id = memberships.user_id
-                AND notifications.activity_type = 'mention'
-            )
-            OR messages.mentions_everyone = true
-          )
-      ) AS preloaded_unread_notifications_count
-    SQL
-    )
-  }
-
   after_update_commit :reset_user_connections_if_deactivated
   after_destroy_commit :reset_user_connections
   after_commit :invalidate_room_member_count_cache
@@ -110,17 +76,18 @@ class Membership < ApplicationRecord
   def read_until(time)
     return if read? || time < unread_at
 
-    update!(unread_at: room.messages.without_events.ordered.where("created_at > ?", time).first&.created_at)
+    new_unread_at = room.messages.without_events.ordered.where("created_at > ?", time).first&.created_at
+    update!(unread_at: new_unread_at, unread_notifications_count: count_unread_notifications_from(new_unread_at))
     broadcast_read if read?
   end
 
   def mark_unread_at(message)
-    update!(unread_at: message.created_at)
+    update!(unread_at: message.created_at, unread_notifications_count: count_unread_notifications_from(message.created_at))
     broadcast_unread
   end
 
   def read
-    update!(unread_at: nil)
+    update!(unread_at: nil, unread_notifications_count: 0)
     broadcast_read
   end
 
@@ -133,19 +100,7 @@ class Membership < ApplicationRecord
   end
 
   def has_unread_notifications?
-    if attributes.has_key?("preloaded_unread_notifications_count")
-      self[:preloaded_unread_notifications_count].to_i > 0
-    else
-      unread? && unread_notifications.any?
-    end
-  end
-
-  def unread_notifications_count
-    if attributes.has_key?("preloaded_unread_notifications_count")
-      self[:preloaded_unread_notifications_count].to_i
-    else
-      unread? ? unread_notifications.count : 0
-    end
+    unread_notifications_count > 0
   end
 
   def sidebar_list_name
@@ -158,6 +113,25 @@ class Membership < ApplicationRecord
 
   def ensure_receives_mentions!
     update(involvement: :mentions) unless receives_mentions?
+  end
+
+  # Recompute the count of notification-worthy unread messages from a given anchor.
+  # Returns 0 when the anchor is nil (membership is read).
+  def count_unread_notifications_from(anchor_time)
+    return 0 if anchor_time.nil?
+
+    base = room.messages.where("created_at >= ?", anchor_time)
+
+    if room.direct?
+      base.count
+    else
+      base.where(
+        "messages.mentions_everyone = ? OR EXISTS (" \
+          "SELECT 1 FROM notifications WHERE notifications.message_id = messages.id " \
+          "AND notifications.user_id = ? AND notifications.activity_type = 'mention')",
+        true, user_id
+      ).count
+    end
   end
 
   private

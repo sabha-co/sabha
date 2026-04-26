@@ -330,7 +330,7 @@ class MembershipTest < ActiveSupport::TestCase
       client_message_id: "has_unread_1"
     )
 
-    assert membership.has_unread_notifications?
+    assert membership.reload.has_unread_notifications?
   end
 
   test "has_unread_notifications? false when no mentions in unread messages" do
@@ -344,7 +344,7 @@ class MembershipTest < ActiveSupport::TestCase
       client_message_id: "no_unread_1"
     )
 
-    assert_not membership.has_unread_notifications?
+    assert_not membership.reload.has_unread_notifications?
   end
 
   test "has_unread_notifications? false when read" do
@@ -355,37 +355,7 @@ class MembershipTest < ActiveSupport::TestCase
     assert_not membership.has_unread_notifications?
   end
 
-  test "with_has_unread_notifications preloads mention-based unread status" do
-    room = rooms(:pets)
-    david_membership = room.memberships.find_by(user: users(:david))
-    david_membership.update!(unread_at: 1.day.ago)
-
-    room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
-      creator: users(:jason),
-      client_message_id: "preload_1"
-    )
-
-    preloaded = Membership.where(id: david_membership.id).with_has_unread_notifications.first
-    assert preloaded.has_unread_notifications?
-  end
-
-  test "with_has_unread_notifications false for non-mentioned unread messages" do
-    room = rooms(:pets)
-    david_membership = room.memberships.find_by(user: users(:david))
-    david_membership.update!(unread_at: 1.day.ago)
-
-    room.messages.create!(
-      body: "<div>General message</div>",
-      creator: users(:jason),
-      client_message_id: "preload_no_mention"
-    )
-
-    preloaded = Membership.where(id: david_membership.id).with_has_unread_notifications.first
-    assert_not preloaded.has_unread_notifications?
-  end
-
-  test "unread_notifications_count returns count of mentioned unread messages" do
+  test "unread_notifications_count tracks mentioned unread messages" do
     room = rooms(:pets)
     david_membership = room.memberships.find_by(user: users(:david))
     david_membership.update!(unread_at: 1.day.ago)
@@ -401,11 +371,10 @@ class MembershipTest < ActiveSupport::TestCase
       client_message_id: "count_2"
     )
 
-    preloaded = Membership.where(id: david_membership.id).with_has_unread_notifications.first
-    assert_equal 2, preloaded.unread_notifications_count
+    assert_equal 2, david_membership.reload.unread_notifications_count
   end
 
-  test "unread_notifications_count zero when no mentions" do
+  test "unread_notifications_count not bumped by non-mentioning messages" do
     room = rooms(:pets)
     david_membership = room.memberships.find_by(user: users(:david))
     david_membership.update!(unread_at: 1.day.ago)
@@ -416,8 +385,7 @@ class MembershipTest < ActiveSupport::TestCase
       client_message_id: "count_none"
     )
 
-    preloaded = Membership.where(id: david_membership.id).with_has_unread_notifications.first
-    assert_equal 0, preloaded.unread_notifications_count
+    assert_equal 0, david_membership.reload.unread_notifications_count
   end
 
   test "unread_notifications_count zero when read" do
@@ -426,6 +394,175 @@ class MembershipTest < ActiveSupport::TestCase
     membership.update!(unread_at: nil)
 
     assert_equal 0, membership.unread_notifications_count
+  end
+
+  test "unread_notifications_count drops when a mention message is soft-deleted" do
+    room = rooms(:pets)
+    david_membership = room.memberships.find_by(user: users(:david))
+    david_membership.update!(unread_at: 1.day.ago)
+
+    message = room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "decrement_mention_1"
+    )
+
+    assert_equal 1, david_membership.reload.unread_notifications_count
+
+    message.deactivate
+
+    assert_equal 0, david_membership.reload.unread_notifications_count
+  end
+
+  test "unread_notifications_count drops when a DM message is soft-deleted" do
+    dm_room = rooms(:david_and_jason)
+    membership = dm_room.memberships.find_by(user: users(:david))
+    membership.update!(unread_at: 1.day.ago)
+
+    earlier = dm_room.messages.create!(
+      body: "first",
+      creator: users(:jason),
+      client_message_id: "dm_decrement_1"
+    )
+    later = dm_room.messages.create!(
+      body: "second",
+      creator: users(:jason),
+      client_message_id: "dm_decrement_2"
+    )
+
+    assert_equal 2, membership.reload.unread_notifications_count
+
+    later.deactivate
+
+    assert_equal 1, membership.reload.unread_notifications_count
+
+    earlier.deactivate
+
+    assert_equal 0, membership.reload.unread_notifications_count
+  end
+
+  test "unread_notifications_count drops when a mention message is hard-destroyed" do
+    room = rooms(:pets)
+    david_membership = room.memberships.find_by(user: users(:david))
+    david_membership.update!(unread_at: 1.day.ago)
+
+    message = room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "destroy_mention_1"
+    )
+
+    assert_equal 1, david_membership.reload.unread_notifications_count
+
+    message.destroy!
+
+    assert_equal 0, david_membership.reload.unread_notifications_count
+  end
+
+  test "unread_notifications_count drops when a DM message is hard-destroyed" do
+    dm_room = rooms(:david_and_jason)
+    membership = dm_room.memberships.find_by(user: users(:david))
+    membership.update!(unread_at: 1.day.ago)
+
+    earlier = dm_room.messages.create!(
+      body: "first",
+      creator: users(:jason),
+      client_message_id: "dm_destroy_1"
+    )
+    later = dm_room.messages.create!(
+      body: "second",
+      creator: users(:jason),
+      client_message_id: "dm_destroy_2"
+    )
+
+    assert_equal 2, membership.reload.unread_notifications_count
+
+    later.destroy!
+    assert_equal 1, membership.reload.unread_notifications_count
+
+    earlier.destroy!
+    assert_equal 0, membership.reload.unread_notifications_count
+  end
+
+  test "unread_notifications_count restores when a soft-deleted DM message is reactivated" do
+    dm_room = rooms(:david_and_jason)
+    membership = dm_room.memberships.find_by(user: users(:david))
+    membership.update!(unread_at: 1.day.ago)
+
+    message = dm_room.messages.create!(
+      body: "hello",
+      creator: users(:jason),
+      client_message_id: "dm_reactivate_1"
+    )
+
+    assert_equal 1, membership.reload.unread_notifications_count
+
+    message.deactivate
+    assert_equal 0, membership.reload.unread_notifications_count
+
+    message.activate
+    assert_equal 1, membership.reload.unread_notifications_count
+  end
+
+  test "unread_notifications_count restores when a soft-deleted @everyone message is reactivated" do
+    room = rooms(:pets)
+    membership = room.memberships.find_by(user: users(:david))
+    membership.update!(unread_at: 1.day.ago)
+
+    everyone_sgid = Everyone.new.attachable_sgid
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
+    message = Message.create!(
+      room: room,
+      body: body_html,
+      creator: users(:jason),
+      client_message_id: "everyone_reactivate_1"
+    )
+
+    assert_equal 1, membership.reload.unread_notifications_count
+
+    message.deactivate
+    assert_equal 0, membership.reload.unread_notifications_count
+
+    message.activate
+    assert_equal 1, membership.reload.unread_notifications_count
+  end
+
+  test "unread_notifications_count bumps the DM sender when their unread window includes the message" do
+    dm_room = rooms(:david_and_jason)
+    sender_membership = dm_room.memberships.find_by(user: users(:jason))
+    sender_membership.update!(unread_at: 1.day.ago)
+
+    dm_room.messages.create!(
+      body: "self-aware",
+      creator: users(:jason),
+      client_message_id: "dm_sender_in_window"
+    )
+
+    assert_equal 1, sender_membership.reload.unread_notifications_count
+  end
+
+  test "unread_notifications_count recomputes when DM message at the unread anchor is soft-deleted" do
+    dm_room = rooms(:david_and_jason)
+    membership = dm_room.memberships.find_by(user: users(:david))
+
+    anchor = dm_room.messages.create!(
+      body: "anchor",
+      creator: users(:jason),
+      client_message_id: "dm_anchor"
+    )
+    follow_up = dm_room.messages.create!(
+      body: "follow up",
+      creator: users(:jason),
+      client_message_id: "dm_follow_up"
+    )
+
+    membership.update!(unread_at: anchor.created_at, unread_notifications_count: 2)
+
+    anchor.deactivate
+
+    membership.reload
+    assert_equal follow_up.created_at, membership.unread_at
+    assert_equal 1, membership.unread_notifications_count
   end
 
   test "receives_mentions? true for mentions and everything involvement" do

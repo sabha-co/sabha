@@ -14,7 +14,7 @@ class RoomUpdateBroadcastJob < ApplicationJob
     lock_key = "room_update_broadcast_job_lock:#{room.id}"
     return unless Kredis.redis.set(lock_key, "1", nx: true, ex: 5)
 
-    room.memberships.visible.includes(:user).with_has_unread_notifications.find_each do |membership|
+    room.memberships.visible.includes(:user).find_each do |membership|
       broadcast_membership_update(membership, room)
     end
   end

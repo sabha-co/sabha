@@ -25,7 +25,6 @@ class SidebarMemberships
       .direct_rooms
       .active_rooms
       .recently_active_or_unread
-      .with_has_unread_notifications
       .includes(:room)
       .with_room_by_last_active_newest_first
       .limit(10)
@@ -77,7 +76,6 @@ class SidebarMemberships
       .without_thread_rooms
       .without_direct_rooms
       .active_rooms
-      .with_has_unread_notifications
       .includes(:room)
   end
 

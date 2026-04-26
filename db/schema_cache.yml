@@ -594,6 +594,16 @@ columns:
     default_function:
     collation:
     comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: unread_notifications_count
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': false
+    default: 0
+    default_function:
+    collation:
+    comment:
   - *9
   - *20
   messages:
@@ -2419,4 +2429,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260424100000
+version: 20260426133120

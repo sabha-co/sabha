@@ -19,7 +19,6 @@ class Inbox::DirectMessagesQuery
         .direct_rooms
         .joins(:room)
         .merge(Room.active)
-        .with_has_unread_notifications
         .includes(room: [
           { memberships: { user: { avatar_attachment: { blob: :variant_records } } } },
           { last_message: [ :rich_text_body, { creator: { avatar_attachment: { blob: :variant_records } } } ] }

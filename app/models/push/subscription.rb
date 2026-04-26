@@ -15,7 +15,7 @@ class Push::Subscription < ApplicationRecord
   def notification(**params)
     WebPush::Notification.new(
       **params,
-      badge: user.memberships.unread.with_has_unread_notifications.count { |m| m.has_unread_notifications? },
+      badge: user.memberships.unread.where("unread_notifications_count > 0").count,
       endpoint: endpoint,
       endpoint_ip: resolved_endpoint_ip,
       p256dh_key: p256dh_key,
