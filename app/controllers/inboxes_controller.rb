@@ -144,8 +144,5 @@ class InboxesController < ApplicationController
       # Load members for both inbox and sidebar lists
       room_ids = (@memberships.map(&:room_id) + @direct_memberships.map(&:room_id)).uniq
       @direct_room_members = Rooms::Direct.members_for_display_by_room(room_ids, excluding: Current.user)
-
-      # Shared rooms still loaded normally
-      @shared_memberships = sidebar.shared
     end
 end
