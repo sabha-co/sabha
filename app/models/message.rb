@@ -29,6 +29,7 @@ class Message < ApplicationRecord
   after_update_commit :clear_unread_timestamps_if_deactivated
   after_update_commit :destroy_notifications_if_deactivated
   after_update_commit :destroy_stale_mention_notifications
+  after_update_commit :restore_unread_notifications_counters_if_reactivated
   after_update_commit :broadcast_parent_message_to_threads
 
   scope :ordered, -> { order(:created_at) }
@@ -246,19 +247,39 @@ class Message < ApplicationRecord
 
     # Bumps unread_notifications_count for memberships affected by this message.
     # Mirrors the with_has_unread_notifications semantics: DM rooms count every
-    # unread message; other rooms only count mentions and @everyone.
-    # Connected users (unread_at IS NULL) are skipped — they see the message live.
+    # unread message (including the sender's, matching the old scope which made
+    # no creator distinction in DMs); other rooms only count mentions and
+    # @everyone. Connected users (unread_at IS NULL) are skipped — they see
+    # the message live, and senders almost always fall in this bucket.
     def increment_unread_notifications_counters
       return if event?
 
       recipient_ids = if room.direct?
-        room.user_ids - [ creator_id ]
+        room.user_ids
       elsif mentions_everyone?
         room.user_ids - [ creator_id ]
       else
         mentionee_ids - [ creator_id ]
       end
 
+      return if recipient_ids.empty?
+
+      Membership.where(room_id: room_id, user_id: recipient_ids)
+                .where("unread_at IS NOT NULL AND unread_at <= ?", created_at)
+                .update_all("unread_notifications_count = unread_notifications_count + 1")
+    end
+
+    # When a soft-deleted message is reactivated (a console/admin path),
+    # restore the counter bumps that clear_unread_timestamps_if_deactivated
+    # took away. Only DM and @everyone messages are restored — named mentions
+    # need their Notification rows back to count under either the old scope
+    # or the new column, and we don't recreate those on reactivation.
+    def restore_unread_notifications_counters_if_reactivated
+      return unless saved_change_to_attribute?(:active) && active?
+      return if event?
+      return unless room.direct? || mentions_everyone?
+
+      recipient_ids = room.direct? ? room.user_ids : room.user_ids - [ creator_id ]
       return if recipient_ids.empty?
 
       Membership.where(room_id: room_id, user_id: recipient_ids)

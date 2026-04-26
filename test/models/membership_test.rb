@@ -484,6 +484,63 @@ class MembershipTest < ActiveSupport::TestCase
     assert_equal 0, membership.reload.unread_notifications_count
   end
 
+  test "unread_notifications_count restores when a soft-deleted DM message is reactivated" do
+    dm_room = rooms(:david_and_jason)
+    membership = dm_room.memberships.find_by(user: users(:david))
+    membership.update!(unread_at: 1.day.ago)
+
+    message = dm_room.messages.create!(
+      body: "hello",
+      creator: users(:jason),
+      client_message_id: "dm_reactivate_1"
+    )
+
+    assert_equal 1, membership.reload.unread_notifications_count
+
+    message.deactivate
+    assert_equal 0, membership.reload.unread_notifications_count
+
+    message.activate
+    assert_equal 1, membership.reload.unread_notifications_count
+  end
+
+  test "unread_notifications_count restores when a soft-deleted @everyone message is reactivated" do
+    room = rooms(:pets)
+    membership = room.memberships.find_by(user: users(:david))
+    membership.update!(unread_at: 1.day.ago)
+
+    everyone_sgid = Everyone.new.attachable_sgid
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
+    message = Message.create!(
+      room: room,
+      body: body_html,
+      creator: users(:jason),
+      client_message_id: "everyone_reactivate_1"
+    )
+
+    assert_equal 1, membership.reload.unread_notifications_count
+
+    message.deactivate
+    assert_equal 0, membership.reload.unread_notifications_count
+
+    message.activate
+    assert_equal 1, membership.reload.unread_notifications_count
+  end
+
+  test "unread_notifications_count bumps the DM sender when their unread window includes the message" do
+    dm_room = rooms(:david_and_jason)
+    sender_membership = dm_room.memberships.find_by(user: users(:jason))
+    sender_membership.update!(unread_at: 1.day.ago)
+
+    dm_room.messages.create!(
+      body: "self-aware",
+      creator: users(:jason),
+      client_message_id: "dm_sender_in_window"
+    )
+
+    assert_equal 1, sender_membership.reload.unread_notifications_count
+  end
+
   test "unread_notifications_count recomputes when DM message at the unread anchor is soft-deleted" do
     dm_room = rooms(:david_and_jason)
     membership = dm_room.memberships.find_by(user: users(:david))
