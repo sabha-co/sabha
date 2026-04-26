@@ -24,9 +24,13 @@ class Current < ActiveSupport::CurrentAttributes
     end
   end
 
+  # Mirror session=: derive Current.user from the canonical input.
+  # Caller must ensure ApplicationRecord.current_tenant is set first —
+  # WorkspaceMembership#user wraps its own with_tenant block, but value
+  # must be the membership for the active tenant.
   def workspace_membership=(value)
     super
-    @user = nil
+    self.user = value&.user
   end
 
   # Delegate to global_identity from global_session (SaaS mode)
@@ -34,29 +38,16 @@ class Current < ActiveSupport::CurrentAttributes
     global_session&.global_identity
   end
 
-  # In SaaS mode, user can be derived from workspace_membership
-  # In single-tenant mode, user is set directly from session
-  def user
-    if Sabha.saas? && workspace_membership.present?
-      @user ||= workspace_membership.user
-    else
-      super
-    end
-  end
-
-  # Current workspace (SaaS mode only)
-  # Returns the Workspace record for the current tenant
-  # Logs a warning if tenant is set but workspace record doesn't exist (data inconsistency)
+  # workspace and account are 1:1 derivations of ApplicationRecord.current_tenant,
+  # not independent inputs — see docs/multi-tenant/activerecord-tenanted-guide.md.
+  # The gem guarantees current_tenant is set in every tenant-aware context (HTTP,
+  # ActiveJob#perform_now, ActionCable around_command, with_tenant blocks), so
+  # lazy resolution from current_tenant is always correct. Modeling them as
+  # `attribute :…` would force assignment plumbing at every entrypoint with no
+  # added correctness — the gem already centralizes that.
   def workspace
     return nil unless Sabha.saas? && ApplicationRecord.current_tenant.present?
-
-    @workspace ||= begin
-      ws = Workspace.find_by(external_id: ApplicationRecord.current_tenant)
-      if ws.nil?
-        Rails.logger.warn "[Current.workspace] Tenant #{ApplicationRecord.current_tenant} has no Workspace record"
-      end
-      ws
-    end
+    @workspace ||= Workspace.find_by(external_id: ApplicationRecord.current_tenant)
   end
 
   def account
@@ -66,11 +57,9 @@ class Current < ActiveSupport::CurrentAttributes
     nil
   end
 
-  # Reset cached values when attributes change
   def reset
     super
     @workspace = nil
     @account = nil
-    @user = nil
   end
 end
