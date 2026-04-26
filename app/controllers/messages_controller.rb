@@ -82,7 +82,7 @@ class MessagesController < ApplicationController
         scope.last_page
       end
 
-      prepend_thread_parent(messages)
+      Message.with_thread_participants(prepend_thread_parent(messages))
     end
 
     def prepend_thread_parent(messages)

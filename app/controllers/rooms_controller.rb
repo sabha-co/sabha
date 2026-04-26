@@ -64,7 +64,7 @@ class RoomsController < ApplicationController
       anchor = target_message(messages) || @first_unread_message
       result = anchor ? messages.page_around(anchor) : messages.last_page
 
-      with_thread_parent(result)
+      Message.with_thread_participants(with_thread_parent(result))
     end
 
     def first_unread_from(messages)

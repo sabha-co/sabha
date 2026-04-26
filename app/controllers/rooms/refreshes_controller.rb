@@ -7,8 +7,10 @@ class Rooms::RefreshesController < ApplicationController
   def show
     respond_to do |format|
       format.turbo_stream do
-        @new_messages = @room.messages.for_display.with_bookmark_status_for(Current.user).page_created_since(@last_updated_at)
-        @updated_messages = @room.messages.for_display.with_bookmark_status_for(Current.user).without(@new_messages).page_updated_since(@last_updated_at)
+        @new_messages = @room.messages.for_display.with_bookmark_status_for(Current.user).page_created_since(@last_updated_at).to_a
+        @updated_messages = @room.messages.for_display.with_bookmark_status_for(Current.user).without(@new_messages).page_updated_since(@last_updated_at).to_a
+
+        Message.with_thread_participants(@new_messages + @updated_messages)
       end
       format.html { redirect_to @room }
     end

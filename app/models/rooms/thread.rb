@@ -2,6 +2,37 @@
 class Rooms::Thread < Room
   validates_presence_of :parent_message
 
+  class << self
+    def preload_participant_creators(threads, limit: 5)
+      threads = threads.to_a.uniq
+      return {} if threads.empty?
+
+      ordered_creator_ids_by_thread = grouped_creator_ids_for(threads, limit:)
+      users_by_id = User.where(id: ordered_creator_ids_by_thread.values.flatten.uniq)
+                        .includes(:badge, avatar_attachment: { blob: :variant_records })
+                        .index_by(&:id)
+
+      ordered_creator_ids_by_thread.transform_values do |creator_ids|
+        creator_ids.filter_map { |creator_id| users_by_id[creator_id] }
+      end
+    end
+
+    private
+      def grouped_creator_ids_for(threads, limit:)
+        thread_ids = threads.map(&:id)
+        first_message_times = Message.active.where(room_id: thread_ids)
+                                            .group(:room_id, :creator_id)
+                                            .minimum(:created_at)
+
+        first_message_times.sort_by { |(thread_id, creator_id), first_message_at| [ thread_id, first_message_at, creator_id ] }
+                           .each_with_object(Hash.new { |hash, thread_id| hash[thread_id] = [] }) do |((thread_id, creator_id), _first_message_at), grouped_ids|
+          next if grouped_ids[thread_id].size >= limit
+
+          grouped_ids[thread_id] << creator_id
+        end
+      end
+  end
+
   def self.find_or_create_for(parent_message, users:)
     parent_message.threads.active.find_by(type: "Rooms::Thread") ||
       create_for({ parent_message_id: parent_message.id }, users: users)

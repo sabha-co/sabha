@@ -65,14 +65,14 @@ class InboxesController < ApplicationController
     # Unified method for fetching paginated messages from any query object
     def find_messages_with(query_class, **options)
       query = query_class.new(Current.user, **options)
-      paginate(query.call.with_bookmark_status_for(Current.user))
+      Message.with_thread_participants(paginate(query.call.with_bookmark_status_for(Current.user)))
     end
 
     # Bookmarks require special handling: pagination is on bookmarks, but we return messages
     # All returned messages are bookmarked by definition
     def find_bookmarked_messages
       bookmarks = paginate Inbox::BookmarksQuery.new(Current.user).call
-      bookmarks.map(&:message).each { |m| m.bookmarked = true }
+      Message.with_thread_participants(bookmarks.map(&:message)).each { |m| m.bookmarked = true }
     end
 
     def paginate(records)
@@ -87,7 +87,9 @@ class InboxesController < ApplicationController
     end
 
     def find_notifications
-      paginate Inbox::ActivityQuery.new(Current.user).call
+      paginate(Inbox::ActivityQuery.new(Current.user).call).tap do |notifications|
+        Message.with_thread_participants(notifications.map(&:message))
+      end
     end
 
     def set_notification_pagination_anchors
