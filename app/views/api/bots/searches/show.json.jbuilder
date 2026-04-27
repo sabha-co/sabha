@@ -15,3 +15,4 @@ json.results @messages do |message|
   json.created_at message.created_at.iso8601
 end
 json.has_more @has_more
+json.next_cursor @next_cursor

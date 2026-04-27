@@ -3,7 +3,6 @@ class API::Bots::SearchesController < API::Bots::BaseController
 
   MAX_LIMIT = 200
   DEFAULT_LIMIT = 50
-  MAX_PAGE = 50
 
   def show
     query = sanitize_query(params[:q])
@@ -16,23 +15,22 @@ class API::Bots::SearchesController < API::Bots::BaseController
     return render_validation_error("'after' must be an ISO8601 timestamp") if params[:after].present? && after_time.nil?
 
     @limit = (params[:limit].presence || DEFAULT_LIMIT).to_i.clamp(1, MAX_LIMIT)
-    page = (params[:page].presence || 1).to_i.clamp(1, MAX_PAGE)
 
     room_ids = Array(params[:room_ids])
     author_ids = Array(params[:author_ids])
 
     scope = Current.user.reachable_messages.active.search(query)
+              .reorder(created_at: :desc, id: :desc)
     scope = scope.in_rooms(room_ids) if room_ids.any?
     scope = scope.created_by(author_ids) if author_ids.any?
     scope = scope.since(after_time) if after_time
     scope = scope.created_before(before_time) if before_time
-    scope = scope.with_rich_text_body_and_embeds.with_creator.includes(:room)
-                 .offset((page - 1) * @limit)
-                 .limit(@limit + 1)
+    scope = scope.with_rich_text_body_and_embeds.with_creator.includes(:room).limit(@limit + 1)
 
     messages = scope.to_a
     @has_more = messages.size > @limit
     @messages = messages.first(@limit)
+    @next_cursor = @has_more ? @messages.last.created_at.iso8601 : nil
   end
 
   private

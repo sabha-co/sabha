@@ -9,15 +9,16 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
 
   # Envelope shape
 
-  test "search returns results array and has_more flag" do
+  test "search returns results, has_more, and next_cursor envelope keys" do
     create_searchable_messages(@room, count: 1)
 
     get api_bots_search_url(q: "findme"), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     json = response.parsed_body
-    assert json.key?("results"), "expected envelope with 'results' key, got #{json.inspect}"
-    assert json.key?("has_more"), "expected envelope with 'has_more' key, got #{json.inspect}"
+    assert json.key?("results"), "expected 'results' key, got #{json.inspect}"
+    assert json.key?("has_more"), "expected 'has_more' key, got #{json.inspect}"
+    assert json.key?("next_cursor"), "expected 'next_cursor' key, got #{json.inspect}"
     assert json["results"].is_a?(Array)
     assert_includes [ true, false ], json["has_more"]
   end
@@ -57,7 +58,7 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
 
   # has_more truncation signal
 
-  test "has_more is false when results fit within limit" do
+  test "has_more is false and next_cursor is nil when results fit within limit" do
     create_searchable_messages(@room, count: 2)
 
     get api_bots_search_url(q: "findme", limit: 10), headers: bot_headers(@bot.bot_key)
@@ -65,10 +66,11 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     json = response.parsed_body
     assert_equal false, json["has_more"]
+    assert_nil json["next_cursor"]
     assert_equal 2, json["results"].size
   end
 
-  test "has_more is true and exactly limit results returned when more exist" do
+  test "has_more is true and next_cursor is set when more results exist" do
     create_searchable_messages(@room, count: 5)
 
     get api_bots_search_url(q: "findme", limit: 2), headers: bot_headers(@bot.bot_key)
@@ -77,6 +79,10 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
     json = response.parsed_body
     assert_equal true, json["has_more"]
     assert_equal 2, json["results"].size
+
+    # next_cursor is the created_at of the oldest (last) result in newest-first ordering
+    expected_cursor = Time.iso8601(json["results"].last["created_at"]).iso8601
+    assert_equal expected_cursor, json["next_cursor"]
   end
 
   # Limit cap
@@ -198,47 +204,46 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
     assert_match(/after/i, response.parsed_body["error"])
   end
 
-  # Pagination
+  # Ordering and cursor pagination
 
-  test "page advances past previously seen results" do
-    create_searchable_messages(@room, count: 4)
+  test "results come back newest-first" do
+    older = create_searchable_messages(@room, count: 1).first
+    older.update_columns(created_at: 2.hours.ago)
+    middle = create_searchable_messages(@room, count: 1).first
+    middle.update_columns(created_at: 1.hour.ago)
+    newest = create_searchable_messages(@room, count: 1).first
 
-    get api_bots_search_url(q: "findme", limit: 2, page: 1), headers: bot_headers(@bot.bot_key)
-    first_page_ids = response.parsed_body["results"].map { |r| r["id"] }
+    get api_bots_search_url(q: "findme"), headers: bot_headers(@bot.bot_key)
 
-    get api_bots_search_url(q: "findme", limit: 2, page: 2), headers: bot_headers(@bot.bot_key)
-    second_page_ids = response.parsed_body["results"].map { |r| r["id"] }
-
-    assert_equal 2, first_page_ids.size
-    assert_equal 2, second_page_ids.size
-    assert_empty (first_page_ids & second_page_ids)
+    ids = response.parsed_body["results"].map { |r| r["id"] }
+    assert_equal [ newest.id, middle.id, older.id ], ids
   end
 
-  test "non-positive page values clamp to first page" do
-    create_searchable_messages(@room, count: 3)
+  test "passing next_cursor as before continues pagination without overlap" do
+    # Create 4 messages with distinct timestamps so cursor is unambiguous
+    msgs = Array.new(4) do |i|
+      m = create_searchable_messages(@room, count: 1).first
+      m.update_columns(created_at: (4 - i).hours.ago)
+      m
+    end
+    expected_order_newest_first = msgs.reverse.map(&:id)
 
-    get api_bots_search_url(q: "findme", limit: 1, page: 1), headers: bot_headers(@bot.bot_key)
-    expected = response.parsed_body["results"]
+    get api_bots_search_url(q: "findme", limit: 2), headers: bot_headers(@bot.bot_key)
+    page_one = response.parsed_body
+    cursor = page_one["next_cursor"]
+    assert_not_nil cursor
 
-    get api_bots_search_url(q: "findme", limit: 1, page: 0), headers: bot_headers(@bot.bot_key)
-    assert_equal expected, response.parsed_body["results"]
-
-    get api_bots_search_url(q: "findme", limit: 1, page: -3), headers: bot_headers(@bot.bot_key)
-    assert_equal expected, response.parsed_body["results"]
-  end
-
-  test "page clamps to MAX_PAGE to bound deep-offset work" do
-    create_searchable_messages(@room, count: 1)
-
-    over_max = API::Bots::SearchesController::MAX_PAGE + 100
-    get api_bots_search_url(q: "findme", limit: 1, page: over_max), headers: bot_headers(@bot.bot_key)
-    over_response = response.parsed_body
-
-    get api_bots_search_url(q: "findme", limit: 1, page: API::Bots::SearchesController::MAX_PAGE),
+    get api_bots_search_url(q: "findme", limit: 2, before: cursor),
         headers: bot_headers(@bot.bot_key)
-    capped_response = response.parsed_body
+    page_two = response.parsed_body
 
-    assert_equal capped_response, over_response
+    page_one_ids = page_one["results"].map { |r| r["id"] }
+    page_two_ids = page_two["results"].map { |r| r["id"] }
+
+    assert_empty (page_one_ids & page_two_ids), "pages must not overlap"
+    assert_equal expected_order_newest_first, page_one_ids + page_two_ids
+    assert_equal false, page_two["has_more"]
+    assert_nil page_two["next_cursor"]
   end
 
   # N+1 prevention
