@@ -52,6 +52,15 @@ class Message < ApplicationRecord
   scope :since, ->(time) { where(created_at: time..) }
   scope :created_before, ->(time) { where(created_at: ..time) }
   scope :in_rooms, ->(ids) { where(room_id: ids) }
+
+  # Composite cursor for stable pagination across timestamp ties.
+  # Pairs with an ORDER BY (created_at DESC, id DESC) — emit cursor from the
+  # last row of a page, pass it back to skip past that exact (time, id) point.
+  scope :before_cursor, ->(time, id) {
+    table = arel_table
+    where(table[:created_at].lt(time))
+      .or(where(table[:created_at].eq(time)).where(table[:id].lt(id)))
+  }
   scope :with_bookmark_status_for, ->(user) {
     joins(sanitize_sql_array([ <<~SQL.squish, user.id ])).select("messages.*, (bookmarks.id IS NOT NULL) AS is_bookmarked")
       LEFT JOIN bookmarks

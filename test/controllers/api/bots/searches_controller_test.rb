@@ -70,7 +70,7 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 2, json["results"].size
   end
 
-  test "has_more is true and next_cursor is set when more results exist" do
+  test "has_more is true and next_cursor is composite (iso|id) when more results exist" do
     create_searchable_messages(@room, count: 5)
 
     get api_bots_search_url(q: "findme", limit: 2), headers: bot_headers(@bot.bot_key)
@@ -80,9 +80,9 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
     assert_equal true, json["has_more"]
     assert_equal 2, json["results"].size
 
-    # next_cursor is the created_at of the oldest (last) result in newest-first ordering
-    expected_cursor = Time.iso8601(json["results"].last["created_at"]).iso8601
-    assert_equal expected_cursor, json["next_cursor"]
+    last = json["results"].last
+    expected = "#{Time.iso8601(last["created_at"]).iso8601}|#{last["id"]}"
+    assert_equal expected, json["next_cursor"]
   end
 
   # Limit cap
@@ -217,6 +217,71 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
 
     ids = response.parsed_body["results"].map { |r| r["id"] }
     assert_equal [ newest.id, middle.id, older.id ], ids
+  end
+
+  test "composite cursor is stable across same-second timestamp ties" do
+    # Three messages share the exact same created_at — without a composite
+    # cursor, the page-2 query (`created_at < cursor_time`) drops the siblings.
+    shared_time = 1.hour.ago.change(usec: 0)
+    msgs = Array.new(3) { create_searchable_messages(@room, count: 1).first }
+    msgs.each { |m| m.update_columns(created_at: shared_time) }
+    expected_ids = msgs.map(&:id).sort.reverse # id DESC tiebreaker
+
+    get api_bots_search_url(q: "findme", limit: 2), headers: bot_headers(@bot.bot_key)
+    page_one = response.parsed_body
+    cursor = page_one["next_cursor"]
+    assert_not_nil cursor
+
+    get api_bots_search_url(q: "findme", limit: 2, before: cursor),
+        headers: bot_headers(@bot.bot_key)
+    page_two = response.parsed_body
+
+    page_one_ids = page_one["results"].map { |r| r["id"] }
+    page_two_ids = page_two["results"].map { |r| r["id"] }
+    assert_empty (page_one_ids & page_two_ids), "tied-timestamp rows must not overlap"
+    assert_equal expected_ids, page_one_ids + page_two_ids,
+      "every tied-timestamp row must appear exactly once across pages"
+  end
+
+  test "plain ISO timestamp before still works as a filter (back-compat)" do
+    older = create_searchable_messages(@room, count: 1).first
+    older.update_columns(created_at: 2.days.ago)
+    create_searchable_messages(@room, count: 1) # newer
+
+    get api_bots_search_url(q: "findme", before: 1.day.ago.iso8601),
+        headers: bot_headers(@bot.bot_key)
+
+    assert_response :success
+    ids = response.parsed_body["results"].map { |r| r["id"] }
+    assert_equal [ older.id ], ids
+  end
+
+  test "after lower-bound composes with cursor across pages" do
+    # Out-of-window message (older than the lower bound) — must never appear.
+    out_of_window = create_searchable_messages(@room, count: 1).first
+    out_of_window.update_columns(created_at: 10.days.ago)
+
+    in_window = Array.new(4) do |i|
+      m = create_searchable_messages(@room, count: 1).first
+      m.update_columns(created_at: (4 - i).hours.ago)
+      m
+    end
+    expected_order = in_window.reverse.map(&:id)
+
+    lower_bound = 1.day.ago.iso8601
+
+    get api_bots_search_url(q: "findme", after: lower_bound, limit: 2),
+        headers: bot_headers(@bot.bot_key)
+    page_one = response.parsed_body
+    cursor = page_one["next_cursor"]
+
+    get api_bots_search_url(q: "findme", after: lower_bound, limit: 2, before: cursor),
+        headers: bot_headers(@bot.bot_key)
+    page_two = response.parsed_body
+
+    seen = page_one["results"].map { |r| r["id"] } + page_two["results"].map { |r| r["id"] }
+    assert_equal expected_order, seen
+    assert_not_includes seen, out_of_window.id, "after must clamp the page-2 query too"
   end
 
   test "passing next_cursor as before continues pagination without overlap" do
