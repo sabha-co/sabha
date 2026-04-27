@@ -46,10 +46,12 @@ class Message < ApplicationRecord
       .includes(boosts: { booster: { avatar_attachment: { blob: :variant_records } } })
       .with_thread_summary
   }
-  scope :created_by, ->(user) { where(creator_id: user.id) }
+  scope :created_by, ->(users) { where(creator_id: Array.wrap(users).map { |u| u.is_a?(User) ? u.id : u }) }
   scope :without_created_by, ->(user) { where.not(creator_id: user.id) }
   scope :between, ->(from, to) { where(created_at: from..to) }
   scope :since, ->(time) { where(created_at: time..) }
+  scope :created_before, ->(time) { where(created_at: ..time) }
+  scope :in_rooms, ->(ids) { where(room_id: ids) }
   scope :with_bookmark_status_for, ->(user) {
     joins(sanitize_sql_array([ <<~SQL.squish, user.id ])).select("messages.*, (bookmarks.id IS NOT NULL) AS is_bookmarked")
       LEFT JOIN bookmarks
