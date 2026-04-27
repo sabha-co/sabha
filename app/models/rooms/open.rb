@@ -3,7 +3,6 @@
 class Rooms::Open < Room
   scope :browsable_by, ->(user) {
     active.where.not(id: user.memberships.visible.select(:room_id))
-          .order(:sortable_name)
   }
 
   after_save_commit :grant_access_to_all_users, if: :auto_join?

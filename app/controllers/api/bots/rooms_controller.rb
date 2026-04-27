@@ -3,11 +3,10 @@ class API::Bots::RoomsController < API::Bots::BaseController
   before_action :require_creator, only: %i[update destroy]
 
   def index
-    @rooms = if params[:joinable].present?
-      Rooms::Open.browsable_by(Current.user)
-    else
-      Current.user.rooms.without_threads
-    end
+    per_page = (params[:per_page].presence || 50).to_i.clamp(1, 100)
+    page = [ (params[:page].presence || 1).to_i, 1 ].max
+
+    @rooms = base_rooms.matching(params[:query]).ordered.offset((page - 1) * per_page).limit(per_page)
   end
 
   def create
@@ -50,6 +49,10 @@ class API::Bots::RoomsController < API::Bots::BaseController
   end
 
   private
+    def base_rooms
+      params[:joinable].present? ? Rooms::Open.browsable_by(Current.user) : Current.user.rooms.without_threads
+    end
+
     def set_room
       @room = Current.user.rooms.find(params[:id])
     end
