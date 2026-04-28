@@ -109,6 +109,37 @@ class Message < ApplicationRecord
     body.to_plain_text.presence || attachment&.filename&.to_s || ""
   end
 
+  # Aggregates this message's boosts into emoji-content groups.
+  # Groups are sorted count DESC, then earliest reaction ASC. Boosters
+  # within a group are sorted oldest-first ("who started this 🚀?").
+  #
+  # Caps are applied in SQL (GROUP BY + per-group LIMIT) so a heavily-reacted
+  # message never materializes more than ~limit × boosters_limit rows in Ruby.
+  def boost_summary(limit:, boosters_limit:)
+    ranked = boosts.group(:content)
+                   .reorder(Arel.sql("COUNT(*) DESC, MIN(created_at) ASC"))
+                   .limit(limit + 1)
+                   .pluck(:content, Arel.sql("COUNT(*)"), Arel.sql("MIN(created_at)"))
+
+    truncated = ranked.size > limit
+    visible = ranked.first(limit)
+
+    groups = visible.map do |content, count, _earliest|
+      sample = boosts.where(content: content)
+                     .reorder(:created_at)
+                     .limit(boosters_limit)
+                     .includes(:booster)
+      Boost::Group.new(
+        content: content,
+        count: count,
+        boosters: sample.map(&:booster),
+        truncated: count > boosters_limit
+      )
+    end
+
+    Boost::Group::Summary.new(groups: groups, total: boosts.count, truncated: truncated)
+  end
+
   def thread_participants_for(thread)
     @thread_participants&.fetch(thread.id, nil)
   end

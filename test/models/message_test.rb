@@ -341,6 +341,84 @@ class MessageTest < ActiveSupport::TestCase
     assert_not_equal before, message.reload.thread_fingerprint
   end
 
+  # boost_summary
+
+  test "boost_summary aggregates boosts by content with counts and boosters" do
+    message = messages(:bender_message)
+    message.boosts.create!(content: "🚀", booster: users(:jason))
+    message.boosts.create!(content: "🚀", booster: users(:david))
+    message.boosts.create!(content: "❤️", booster: users(:jz))
+
+    summary = message.boost_summary(limit: 50, boosters_limit: 100)
+
+    assert_equal 3, summary.total
+    assert_equal false, summary.truncated
+    assert_equal [ "🚀", "❤️" ], summary.groups.map(&:content)
+
+    rocket = summary.groups.first
+    assert_equal 2, rocket.count
+    assert_equal false, rocket.truncated
+    assert_equal [ users(:jason), users(:david) ], rocket.boosters
+  end
+
+  test "boost_summary sorts groups by count DESC then earliest reaction ASC" do
+    message = messages(:bender_message)
+    Boost.create!(message: message, booster: users(:jz),     content: "❤️", created_at: 1.hour.ago)
+    Boost.create!(message: message, booster: users(:david),  content: "👍", created_at: 30.minutes.ago)
+    Boost.create!(message: message, booster: users(:jason),  content: "👍", created_at: 5.minutes.ago)
+    Boost.create!(message: message, booster: users(:rachel), content: "🚀", created_at: 20.minutes.ago)
+    Boost.create!(message: message, booster: users(:nsa),    content: "🚀", created_at: 10.minutes.ago)
+
+    summary = message.boost_summary(limit: 50, boosters_limit: 100)
+    assert_equal [ "👍", "🚀", "❤️" ], summary.groups.map(&:content)
+  end
+
+  test "boost_summary sorts boosters within a group oldest-first" do
+    message = messages(:bender_message)
+    Boost.create!(message: message, booster: users(:jason), content: "🚀", created_at: 30.minutes.ago)
+    Boost.create!(message: message, booster: users(:david), content: "🚀", created_at: 20.minutes.ago)
+    Boost.create!(message: message, booster: users(:jz),    content: "🚀", created_at: 10.minutes.ago)
+
+    summary = message.boost_summary(limit: 50, boosters_limit: 100)
+    assert_equal [ users(:jason), users(:david), users(:jz) ], summary.groups.first.boosters
+  end
+
+  test "boost_summary truncates boosters past boosters_limit and sets per-group truncated flag" do
+    message = messages(:bender_message)
+    %i[ jason david jz rachel ].each do |handle|
+      message.boosts.create!(booster: users(handle), content: "🚀")
+    end
+
+    summary = message.boost_summary(limit: 10, boosters_limit: 2)
+    rocket = summary.groups.first
+    assert_equal 4, rocket.count
+    assert_equal 2, rocket.boosters.size
+    assert rocket.truncated
+    assert_equal 4, summary.total
+    assert_equal false, summary.truncated, "top-level truncated tracks groups cap, not boosters cap"
+  end
+
+  test "boost_summary truncates groups past limit and sets top-level truncated flag" do
+    message = messages(:bender_message)
+    %w[ 🚀 ❤️ 👍 🎉 ].each do |emoji|
+      message.boosts.create!(booster: users(:jason), content: emoji)
+    end
+
+    summary = message.boost_summary(limit: 2, boosters_limit: 100)
+    assert_equal 2, summary.groups.size
+    assert summary.truncated
+    assert_equal 4, summary.total
+  end
+
+  test "boost_summary returns empty summary when no boosts exist" do
+    message = messages(:bender_message)
+
+    summary = message.boost_summary(limit: 50, boosters_limit: 100)
+    assert_equal [], summary.groups
+    assert_equal 0, summary.total
+    assert_equal false, summary.truncated
+  end
+
   private
     def create_new_message_in(room)
       room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "123")

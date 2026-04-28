@@ -164,7 +164,7 @@ Rails.application.routes.draw do
         resources :messages, only: %i[ index show create update destroy ] do
           scope module: :messages do
             resource  :thread, only: :create
-            resources :boosts, only: %i[ create destroy ]
+            resources :boosts, only: %i[ index create destroy ]
           end
         end
         resources :members, only: %i[ index create destroy ]
