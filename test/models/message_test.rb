@@ -349,13 +349,13 @@ class MessageTest < ActiveSupport::TestCase
     message.boosts.create!(content: "🚀", booster: users(:david))
     message.boosts.create!(content: "❤️", booster: users(:jz))
 
-    summary = message.boost_summary(limit: 50, boosters_limit: 100)
+    groups, total, truncated = message.boost_summary
 
-    assert_equal 3, summary.total
-    assert_equal false, summary.truncated
-    assert_equal [ "🚀", "❤️" ], summary.groups.map(&:content)
+    assert_equal 3, total
+    assert_equal false, truncated
+    assert_equal [ "🚀", "❤️" ], groups.map(&:content)
 
-    rocket = summary.groups.first
+    rocket = groups.first
     assert_equal 2, rocket.count
     assert_equal false, rocket.truncated
     assert_equal [ users(:jason), users(:david) ], rocket.boosters
@@ -369,8 +369,8 @@ class MessageTest < ActiveSupport::TestCase
     Boost.create!(message: message, booster: users(:rachel), content: "🚀", created_at: 20.minutes.ago)
     Boost.create!(message: message, booster: users(:nsa),    content: "🚀", created_at: 10.minutes.ago)
 
-    summary = message.boost_summary(limit: 50, boosters_limit: 100)
-    assert_equal [ "👍", "🚀", "❤️" ], summary.groups.map(&:content)
+    groups, _total, _truncated = message.boost_summary
+    assert_equal [ "👍", "🚀", "❤️" ], groups.map(&:content)
   end
 
   test "boost_summary sorts boosters within a group oldest-first" do
@@ -379,8 +379,8 @@ class MessageTest < ActiveSupport::TestCase
     Boost.create!(message: message, booster: users(:david), content: "🚀", created_at: 20.minutes.ago)
     Boost.create!(message: message, booster: users(:jz),    content: "🚀", created_at: 10.minutes.ago)
 
-    summary = message.boost_summary(limit: 50, boosters_limit: 100)
-    assert_equal [ users(:jason), users(:david), users(:jz) ], summary.groups.first.boosters
+    groups, _total, _truncated = message.boost_summary
+    assert_equal [ users(:jason), users(:david), users(:jz) ], groups.first.boosters
   end
 
   test "boost_summary truncates boosters past boosters_limit and sets per-group truncated flag" do
@@ -389,13 +389,13 @@ class MessageTest < ActiveSupport::TestCase
       message.boosts.create!(booster: users(handle), content: "🚀")
     end
 
-    summary = message.boost_summary(limit: 10, boosters_limit: 2)
-    rocket = summary.groups.first
+    groups, total, truncated = message.boost_summary(limit: 10, boosters_limit: 2)
+    rocket = groups.first
     assert_equal 4, rocket.count
     assert_equal 2, rocket.boosters.size
     assert rocket.truncated
-    assert_equal 4, summary.total
-    assert_equal false, summary.truncated, "top-level truncated tracks groups cap, not boosters cap"
+    assert_equal 4, total
+    assert_equal false, truncated, "top-level truncated tracks groups cap, not boosters cap"
   end
 
   test "boost_summary truncates groups past limit and sets top-level truncated flag" do
@@ -404,19 +404,19 @@ class MessageTest < ActiveSupport::TestCase
       message.boosts.create!(booster: users(:jason), content: emoji)
     end
 
-    summary = message.boost_summary(limit: 2, boosters_limit: 100)
-    assert_equal 2, summary.groups.size
-    assert summary.truncated
-    assert_equal 4, summary.total
+    groups, total, truncated = message.boost_summary(limit: 2, boosters_limit: 100)
+    assert_equal 2, groups.size
+    assert truncated
+    assert_equal 4, total
   end
 
-  test "boost_summary returns empty summary when no boosts exist" do
+  test "boost_summary returns empty result when no boosts exist" do
     message = messages(:bender_message)
 
-    summary = message.boost_summary(limit: 50, boosters_limit: 100)
-    assert_equal [], summary.groups
-    assert_equal 0, summary.total
-    assert_equal false, summary.truncated
+    groups, total, truncated = message.boost_summary
+    assert_equal [], groups
+    assert_equal 0, total
+    assert_equal false, truncated
   end
 
   private

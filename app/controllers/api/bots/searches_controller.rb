@@ -1,17 +1,11 @@
 class API::Bots::SearchesController < API::Bots::BaseController
   include ActiveStorage::SetCurrent, CursorPaginated
 
+  before_action :parse_pagination_params, only: :show
+
   def show
     query = sanitize_query(params[:q])
     return render_validation_error("Query parameter 'q' is required") if query.blank?
-
-    before_time, before_id = parse_before(params[:before])
-    return render_validation_error("'before' must be ISO8601 timestamp or composite cursor") if params[:before].present? && before_time.nil?
-
-    after_time = parse_time(params[:after])
-    return render_validation_error("'after' must be an ISO8601 timestamp") if params[:after].present? && after_time.nil?
-
-    @limit = (params[:limit].presence || DEFAULT_LIMIT).to_i.clamp(1, MAX_LIMIT)
 
     room_ids = Array(params[:room_ids])
     author_ids = Array(params[:author_ids])
@@ -20,11 +14,11 @@ class API::Bots::SearchesController < API::Bots::BaseController
               .reorder(created_at: :desc, id: :desc)
     scope = scope.in_rooms(room_ids) if room_ids.any?
     scope = scope.created_by(author_ids) if author_ids.any?
-    scope = scope.since(after_time) if after_time
-    scope = if before_id
-      scope.before_cursor(before_time, before_id)
-    elsif before_time
-      scope.created_before(before_time)
+    scope = scope.since(@after_time) if @after_time
+    scope = if @before_id
+      scope.before_cursor(@before_time, @before_id)
+    elsif @before_time
+      scope.created_before(@before_time)
     else
       scope
     end

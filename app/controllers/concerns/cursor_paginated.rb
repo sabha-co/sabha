@@ -5,6 +5,20 @@ module CursorPaginated
   DEFAULT_LIMIT = 50
 
   private
+    # Reads `before`, `after`, and `limit` from params and exposes them as
+    # `@before_time`, `@before_id`, `@after_time`, `@limit`. Renders 422 and
+    # halts the action chain on unparseable timestamps. Wire this in via
+    # `before_action :parse_pagination_params, only: [...]`.
+    def parse_pagination_params
+      @before_time, @before_id = parse_before(params[:before])
+      return render_validation_error("'before' must be ISO8601 timestamp or composite cursor") if params[:before].present? && @before_time.nil?
+
+      @after_time = parse_time(params[:after])
+      return render_validation_error("'after' must be an ISO8601 timestamp") if params[:after].present? && @after_time.nil?
+
+      @limit = (params[:limit].presence || DEFAULT_LIMIT).to_i.clamp(1, MAX_LIMIT)
+    end
+
     # Accepts either a plain ISO8601 timestamp (filter intent) or
     # a composite "<iso>|<id>" cursor (pagination intent).
     def parse_before(value)

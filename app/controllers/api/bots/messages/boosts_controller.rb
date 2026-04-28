@@ -7,7 +7,7 @@ class API::Bots::Messages::BoostsController < API::Bots::BaseController
   before_action :set_room_and_message
 
   def index
-    @summary = @message.boost_summary(limit: REACTIONS_CAP, boosters_limit: BOOSTERS_CAP)
+    @groups, @total, @truncated = @message.boost_summary(limit: REACTIONS_CAP, boosters_limit: BOOSTERS_CAP)
   end
 
   def create
