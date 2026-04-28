@@ -58,6 +58,9 @@ class Room < ApplicationRecord
   scope :without_threads, -> { where.not(type: "Rooms::Thread") }
 
   scope :ordered, -> { order(:sortable_name) }
+  scope :matching, ->(query) {
+    query.present? ? where("name LIKE ?", "%#{sanitize_sql_like(query)}%") : all
+  }
 
   after_update_commit :broadcast_reactivation_if_restored
   after_create_commit :announce_creation
