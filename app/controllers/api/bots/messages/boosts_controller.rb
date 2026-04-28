@@ -1,7 +1,14 @@
 class API::Bots::Messages::BoostsController < API::Bots::BaseController
   include NotifyBots
 
+  REACTIONS_CAP = 50
+  BOOSTERS_CAP = 100
+
   before_action :set_room_and_message
+
+  def index
+    @groups, @total, @truncated = @message.boost_summary(limit: REACTIONS_CAP, boosters_limit: BOOSTERS_CAP)
+  end
 
   def create
     content = request.body.tap(&:rewind).read.force_encoding("UTF-8").strip

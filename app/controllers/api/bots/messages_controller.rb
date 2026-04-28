@@ -1,17 +1,38 @@
 class API::Bots::MessagesController < API::Bots::BaseController
-  include ActiveStorage::SetCurrent, NotifyBots
+  include ActiveStorage::SetCurrent, NotifyBots, CursorPaginated
 
   before_action :set_room
+  before_action :parse_pagination_params, only: :index
   before_action :set_own_message, only: %i[update destroy]
 
   def index
-    messages = @room.messages.active.with_creator.with_attached_attachment.ordered.last(50).reverse
-    render json: messages.map { |msg| message_json(msg) }
+    scope = @room.messages.active
+                 .with_rich_text_body_and_embeds
+                 .with_creator
+                 .with_attached_attachment
+                 .reorder(created_at: :desc, id: :desc)
+    scope = scope.since(@after_time) if @after_time
+    scope = if @before_id
+      scope.before_cursor(@before_time, @before_id)
+    elsif @before_time
+      scope.created_before(@before_time)
+    else
+      scope
+    end
+    scope = scope.limit(@limit + 1)
+
+    messages = scope.to_a
+    @has_more = messages.size > @limit
+    @messages = messages.first(@limit)
+    @next_cursor = build_cursor(@messages.last) if @has_more
   end
 
   def show
-    message = @room.messages.active.with_creator.with_attached_attachment.find(params[:id])
-    render json: message_json(message)
+    @message = @room.messages.active
+                    .with_rich_text_body_and_embeds
+                    .with_creator
+                    .with_attached_attachment
+                    .find(params[:id])
   end
 
   def create
@@ -83,26 +104,6 @@ class API::Bots::MessagesController < API::Bots::BaseController
       yield io.read.force_encoding("UTF-8")
     ensure
       io.rewind
-    end
-
-    def message_json(msg)
-      { id: msg.id,
-        creator: { id: msg.creator.id, name: msg.creator.name },
-        body: { html: msg.body.body.to_s, plain: msg.plain_text_body },
-        has_attachment: msg.attachment?,
-        attachment: msg.attachment? ? attachment_json(msg) : nil,
-        mentionees: msg.mentionees.map { |m| { id: m.id, name: m.name } },
-        created_at: msg.created_at.iso8601 }
-    end
-
-    def attachment_json(message)
-      blob = message.attachment.blob
-      {
-        url: blob.url(expires_in: 1.hour),
-        filename: blob.filename.to_s,
-        content_type: blob.content_type,
-        byte_size: blob.byte_size
-      }
     end
 
     def not_found

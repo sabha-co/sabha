@@ -1,4 +1,6 @@
 class Boost < ApplicationRecord
+  Group = Data.define(:content, :count, :boosters, :truncated)
+
   belongs_to :message, touch: true
   belongs_to :booster, class_name: "User", default: -> { Current.user }
 

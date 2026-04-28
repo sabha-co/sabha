@@ -109,6 +109,39 @@ class Message < ApplicationRecord
     body.to_plain_text.presence || attachment&.filename&.to_s || ""
   end
 
+  # Aggregates this message's boosts into emoji-content groups, returning
+  # `[groups, total, truncated]`. Groups are sorted count DESC, then earliest
+  # reaction ASC. Boosters within a group are sorted oldest-first.
+  #
+  # Caps are applied in SQL (GROUP BY + per-group LIMIT) so a heavily-reacted
+  # message never materializes more than ~limit × boosters_limit rows in Ruby.
+  # Issues O(distinct_emoji) queries by design — bounded by `limit + 1` —
+  # SQLite portability rules out a single `array_agg`.
+  def boost_summary(limit: 50, boosters_limit: 100)
+    ranked = boosts.group(:content)
+                   .reorder(Arel.sql("COUNT(*) DESC, MIN(created_at) ASC"))
+                   .limit(limit + 1)
+                   .pluck(:content, Arel.sql("COUNT(*)"), Arel.sql("MIN(created_at)"))
+
+    truncated = ranked.size > limit
+    visible = ranked.first(limit)
+
+    groups = visible.map do |content, count, _earliest|
+      sample = boosts.where(content: content)
+                     .reorder(:created_at)
+                     .limit(boosters_limit)
+                     .includes(:booster)
+      Boost::Group.new(
+        content: content,
+        count: count,
+        boosters: sample.map(&:booster),
+        truncated: count > boosters_limit
+      )
+    end
+
+    [ groups, boosts.count, truncated ]
+  end
+
   def thread_participants_for(thread)
     @thread_participants&.fetch(thread.id, nil)
   end

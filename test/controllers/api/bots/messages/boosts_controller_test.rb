@@ -51,4 +51,81 @@ class API::Bots::Messages::BoostsControllerTest < ActionDispatch::IntegrationTes
 
     assert_response :not_found
   end
+
+  # index — aggregated reactions
+  # Cap-edge and sort-order behavior is exercised at the model level
+  # (Message#reaction_summary). These tests cover the wire contract,
+  # permissions, and N+1 prevention only.
+
+  test "index returns the aggregated reactions wire shape" do
+    @message.boosts.create!(content: "🚀", booster: users(:jason))
+    @message.boosts.create!(content: "🚀", booster: users(:david))
+    @message.boosts.create!(content: "❤️", booster: users(:jz))
+
+    get api_bots_room_message_boosts_url(@room, @message), headers: bot_headers(@bot.bot_key)
+
+    assert_response :success
+    json = response.parsed_body
+    assert_equal %w[reactions total truncated], json.keys
+    assert_equal 3, json["total"]
+    assert_equal false, json["truncated"]
+
+    rocket = json["reactions"].find { |r| r["content"] == "🚀" }
+    assert_equal %w[boosters content count truncated], rocket.keys.sort
+    assert_equal 2, rocket["count"]
+    assert_equal false, rocket["truncated"]
+    assert_equal %w[id name], rocket["boosters"].first.keys.sort
+    assert_equal [ users(:jason).id, users(:david).id ], rocket["boosters"].map { |b| b["id"] }
+  end
+
+  test "index returns empty envelope when no reactions exist" do
+    get api_bots_room_message_boosts_url(@room, @message), headers: bot_headers(@bot.bot_key)
+
+    assert_response :success
+    json = response.parsed_body
+    assert_equal [], json["reactions"]
+    assert_equal 0, json["total"]
+    assert_equal false, json["truncated"]
+  end
+
+  test "index does not N+1 on booster lookups as boost count grows" do
+    %i[ jason david ].each { |h| @message.boosts.create!(content: "🚀", booster: users(h)) }
+    baseline = count_sql_queries do
+      get api_bots_room_message_boosts_url(@room, @message), headers: bot_headers(@bot.bot_key)
+    end
+    assert_response :success
+
+    %i[ jz rachel ].each { |h| @message.boosts.create!(content: "🚀", booster: users(h)) }
+    doubled = count_sql_queries do
+      get api_bots_room_message_boosts_url(@room, @message), headers: bot_headers(@bot.bot_key)
+    end
+    assert_response :success
+
+    assert_operator doubled, :<=, baseline + 1,
+      "doubling boosts added #{doubled - baseline} queries — likely a per-booster N+1"
+  end
+
+  test "index 404s when bot cannot see the room" do
+    get api_bots_room_message_boosts_url(rooms(:designers), messages(:first)),
+        headers: bot_headers(@bot.bot_key)
+
+    assert_response :not_found
+  end
+
+  test "index 404s when message is inactive" do
+    @message.deactivate
+    get api_bots_room_message_boosts_url(@room, @message), headers: bot_headers(@bot.bot_key)
+
+    assert_response :not_found
+  end
+
+  private
+    def count_sql_queries
+      count = 0
+      callback = ->(_, _, _, _, payload) {
+        count += 1 unless payload[:name] == "SCHEMA" || payload[:sql].start_with?("BEGIN", "COMMIT", "RELEASE", "SAVEPOINT", "ROLLBACK")
+      }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { yield }
+      count
+    end
 end
