@@ -36,13 +36,23 @@ class API::Bots::MessagesController < API::Bots::BaseController
   end
 
   def create
-    @message = @room.messages.create_with_attachment(message_params)
+    target_room = resolve_target_room
+    return if performed?
+
+    @message = target_room.messages.create_with_attachment(message_params)
 
     if @message.persisted?
       @message.broadcast_create
       @message.broadcast_mentionee_sidebar_updates
       notify_bots(@message, :created)
-      head :created, location: room_message_url(@room, @message)
+
+      if params[:parent_message_id].present?
+        render json: { id: @message.id, room_id: target_room.id },
+               status: :created,
+               location: room_message_url(target_room, @message)
+      else
+        head :created, location: room_message_url(target_room, @message)
+      end
     else
       render json: { error: @message.errors.full_messages.to_sentence, code: "validation_failed" }, status: :unprocessable_entity
     end
@@ -72,6 +82,21 @@ class API::Bots::MessagesController < API::Bots::BaseController
   private
     def set_room
       @room = Current.user.rooms.find(params[:room_id])
+    end
+
+    def resolve_target_room
+      return @room if params[:parent_message_id].blank?
+
+      parent = @room.messages.active.find(params[:parent_message_id])
+      if parent.room.thread?
+        render json: { error: "parent_message_id cannot point at a message inside an existing thread", code: "validation_failed" },
+               status: :unprocessable_entity
+        return nil
+      end
+
+      Rooms::Thread.find_or_create_for(parent, users: @room.users).tap do |thread|
+        thread.involve_user(Current.user, unread: false)
+      end
     end
 
     def set_own_message

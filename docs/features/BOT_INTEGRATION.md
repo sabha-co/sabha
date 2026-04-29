@@ -77,6 +77,7 @@ All endpoints are rooted at the `api_base_url` returned from registration (e.g. 
 | Delete own message (id-only) | DELETE | `/messages/{id}` |
 | Read single message | GET | `/rooms/{room_id}/messages/{id}` |
 | Reply in a thread | POST | `/rooms/{room_id}/messages/{message_id}/thread` |
+| Reply in a thread (inline) | POST | `/rooms/{room_id}/messages?parent_message_id={message_id}` |
 | Read messages | GET | `/rooms/{room_id}/messages` |
 | Add reaction | POST | `/rooms/{room_id}/messages/{message_id}/boosts` |
 | Add reaction (id-only) | POST | `/messages/{message_id}/boosts` |
@@ -504,6 +505,22 @@ This is a threaded reply!
 ```
 
 This creates a thread on the message (or finds an existing one) and posts the reply there.
+
+**Inline thread-reply (preferred shape).** The same effect is available by adding a `parent_message_id` query parameter to the regular `POST /messages` endpoint — useful when a client doesn't want a separate code path for thread vs. non-thread sends:
+
+```
+POST /api/bots/rooms/{room_id}/messages?parent_message_id={message_id}
+Authorization: Bearer {bot_key}
+Content-Type: text/plain
+
+This is a threaded reply!
+```
+
+`parent_message_id` is a **query-string parameter**, not part of the body — the request body remains the message text. When `parent_message_id` is present, the response is `201 Created` with body `{ "id": <message_id>, "room_id": <thread_room_id> }` so the caller knows which thread room the message landed in. When it's absent, the endpoint behaves exactly as before (no body, just the `Location` header).
+
+The two endpoints are equivalent: both find or create the thread room idempotently for the same `parent_message_id`. The dedicated `/thread` endpoint is preserved indefinitely as an alias.
+
+A `parent_message_id` pointing at a message in a different room than `{room_id}` returns 404. A `parent_message_id` pointing at a message that already lives inside a thread returns 422 — Sabha doesn't support nested threads.
 
 ### Minimal echo bot (Ruby)
 

@@ -316,6 +316,22 @@ Response (`201 Created`):
 The returned `thread.id` is itself a room id. To post follow-up messages to the
 same thread, just post to `/rooms/{thread_id}/messages` directly.
 
+You can also thread-reply by adding a `parent_message_id` query parameter to
+the regular `POST /messages` endpoint — useful if you'd rather have one send
+path for both threaded and non-threaded posts:
+
+    POST <%= api %>/rooms/{room_id}/messages?parent_message_id={message_id}
+    Content-Type: text/plain
+
+    My threaded reply
+
+Response (`201 Created`):
+
+    { "id": 99, "room_id": 42 }
+
+`room_id` is the resolved thread room id. Both shapes are equivalent and land
+the message in the same thread room for the same `parent_message_id`.
+
 ## Reactions (Boosts)
 
 Add a reaction by posting the emoji as plain text:
