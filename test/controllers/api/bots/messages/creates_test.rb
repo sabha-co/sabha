@@ -16,7 +16,7 @@ class API::Bots::Messages::CreatesTest < ActionDispatch::IntegrationTest
     assert_response :created
   end
 
-  # POST with `parent_message_id` — inline thread-reply (Phase 2).
+  # POST with `parent_message_id` — inline thread-reply.
 
   test "create with parent_message_id creates the message in a new thread room" do
     parent = messages(:fourth) # in watercooler, top-level
@@ -106,8 +106,6 @@ class API::Bots::Messages::CreatesTest < ActionDispatch::IntegrationTest
   end
 
   test "create with parent_message_id fires the regular-create side effects (broadcast_mentionee_sidebar_updates)" do
-    # Regression pin: we go through the regular `create` flow (not the legacy /thread controller)
-    # specifically so thread messages get the same broadcast surface as non-thread messages.
     parent = messages(:fourth)
     Message.any_instance.expects(:broadcast_mentionee_sidebar_updates).at_least_once
 
@@ -118,13 +116,15 @@ class API::Bots::Messages::CreatesTest < ActionDispatch::IntegrationTest
     assert_response :created
   end
 
-  test "create without parent_message_id keeps the no-body 201 response (regression-pin)" do
+  test "create without parent_message_id returns { id, room_id } and Location header" do
     post api_bots_room_messages_url(@room),
       params: "Plain post",
       headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
 
     assert_response :created
-    assert_empty response.body, "regular create should keep returning an empty body"
-    assert response.location.present?, "regular create should still set Location"
+    json = response.parsed_body
+    assert json["id"].present?
+    assert_equal @room.id, json["room_id"]
+    assert response.location.present?, "Location header still set so plugins on the no-parent path keep working"
   end
 end

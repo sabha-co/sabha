@@ -1,7 +1,7 @@
 class API::Bots::MessagesController < API::Bots::BaseController
   include ActiveStorage::SetCurrent, NotifyBots, CursorPaginated
 
-  before_action :set_room, if: -> { request.path_parameters[:room_id].present? }
+  before_action :set_room, only: %i[index create]
   before_action :parse_pagination_params, only: :index
   before_action :set_own_message, only: %i[update destroy]
 
@@ -28,11 +28,12 @@ class API::Bots::MessagesController < API::Bots::BaseController
   end
 
   def show
-    @message = @room.messages.active
-                    .with_rich_text_body_and_embeds
-                    .with_creator
-                    .with_attached_attachment
-                    .find(params[:id])
+    @message = Message.active
+                      .where(room_id: Current.user.rooms.select(:id))
+                      .with_rich_text_body_and_embeds
+                      .with_creator
+                      .with_attached_attachment
+                      .find(params[:id])
   end
 
   def create
@@ -46,13 +47,9 @@ class API::Bots::MessagesController < API::Bots::BaseController
       @message.broadcast_mentionee_sidebar_updates
       notify_bots(@message, :created)
 
-      if target_room == @room
-        head :created, location: room_message_url(target_room, @message)
-      else
-        render json: { id: @message.id, room_id: target_room.id },
-               status: :created,
-               location: room_message_url(target_room, @message)
-      end
+      render json: { id: @message.id, room_id: target_room.id },
+             status: :created,
+             location: room_message_url(target_room, @message)
     else
       render json: { error: @message.errors.full_messages.to_sentence, code: "validation_failed" }, status: :unprocessable_entity
     end
@@ -98,11 +95,8 @@ class API::Bots::MessagesController < API::Bots::BaseController
     end
 
     def set_own_message
-      @message = if @room
-        @room.messages.active.find(params[:id])
-      else
-        Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:id]).tap { |m| @room = m.room }
-      end
+      @message = Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:id])
+      @room = @message.room
       head :forbidden unless @message.creator_id == Current.user.id
     end
 

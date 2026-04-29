@@ -23,20 +23,20 @@ class BotApiTest < ActionDispatch::IntegrationTest
         params: "New message", headers: headers.merge("CONTENT_TYPE" => "text/plain")
       assert_response :created
 
-      # Edit message
-      workspace_patch "/api/bots/rooms/#{room.id}/messages/#{message.id}", workspace: workspace,
+      # Edit message (id-only)
+      workspace_patch "/api/bots/messages/#{message.id}", workspace: workspace,
         params: "Edited", headers: headers.merge("CONTENT_TYPE" => "text/plain")
       assert_response :success
       assert_equal "Edited", response.parsed_body["body"]["plain"]
 
-      # Add boost
-      workspace_post "/api/bots/rooms/#{room.id}/messages/#{message.id}/boosts", workspace: workspace,
+      # Add boost (id-only)
+      workspace_post "/api/bots/messages/#{message.id}/boosts", workspace: workspace,
         params: "\u{1f389}", headers: headers.merge("CONTENT_TYPE" => "text/plain")
       assert_response :created
       boost_id = response.parsed_body["id"]
 
-      # Remove boost
-      workspace_delete "/api/bots/rooms/#{room.id}/messages/#{message.id}/boosts/#{boost_id}", workspace: workspace, headers: headers
+      # Remove boost (id-only)
+      workspace_delete "/api/bots/messages/#{message.id}/boosts/#{boost_id}", workspace: workspace, headers: headers
       assert_response :no_content
 
       # List members
@@ -48,8 +48,8 @@ class BotApiTest < ActionDispatch::IntegrationTest
       get "/#{workspace.external_id}/api/bots/search?q=Hello", headers: headers
       assert_response :success
 
-      # Delete message
-      workspace_delete "/api/bots/rooms/#{room.id}/messages/#{message.id}", workspace: workspace, headers: headers
+      # Delete message (id-only)
+      workspace_delete "/api/bots/messages/#{message.id}", workspace: workspace, headers: headers
       assert_response :no_content
     end
   end

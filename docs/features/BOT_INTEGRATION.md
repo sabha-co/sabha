@@ -63,26 +63,22 @@ The WebSocket endpoint keeps `bot_key` in the query string (`wss://.../cable?bot
 
 All endpoints are rooted at the `api_base_url` returned from registration (e.g. `https://chat.example.com/api/bots`).
 
-> **Per-room URLs — server is the source of truth.** Every webhook payload and the registration response include a `messages_url` on each `room` object. Clients **should** consume that field directly rather than deriving URLs from `api_base_url` + `room_id`. Derivation works today but will silently break if the server's URL shape ever changes (versioning, subdomain split, new `script_name` mount). Treat string concatenation as a compatibility fallback only.
+> **URL shape principle.** URLs encode the minimum context the server can't infer. *Creating* a message needs a target room, so it's `POST /rooms/{room_id}/messages`. *Listing* is inherently per-room, so it's `GET /rooms/{room_id}/messages`. *Mutating, reading, or aggregating* an existing record can resolve the room from the record itself, so they're id-only: `/messages/{id}`, `/messages/{message_id}/boosts/...`. The id-only endpoints are stable across rooms and tenants — a bot streaming partial edits never has to track room rebinds across thread creates.
 >
-> **Id-only message URLs are derived from `api_base_url`.** The id-only mutation endpoints (`/messages/{id}`, `/messages/{message_id}/boosts/...`) have no per-room context to encode, so they're stable across rooms and tenants and there's no equivalent server-provided URL on message envelopes. Both shapes are part of the bot-API contract; the asymmetry is intentional. Streaming clients that PATCH the same message many times should prefer the id-only form so they don't have to track room rebinds across thread creates.
+> **Per-room URLs — server is the source of truth.** Every webhook payload and the registration response include a `messages_url` on each `room` object pointing at the room-scoped messages collection (used for posting and listing). Clients **should** consume that field directly rather than deriving URLs from `api_base_url` + `room_id`. Derivation works today but will silently break if the server's URL shape ever changes (versioning, subdomain split, new `script_name` mount). Treat string concatenation as a compatibility fallback only. Id-only URLs (`/messages/{id}`, `/messages/{message_id}/boosts/...`) have no per-room context to encode and so are not surfaced as discovery fields — derive them from `api_base_url`.
 
 | Action | Method | Endpoint |
 |---|---|---|
 | Post a message | POST | `/rooms/{room_id}/messages` |
 | Send attachment | POST | `/rooms/{room_id}/messages` (multipart) |
-| Edit own message | PATCH | `/rooms/{room_id}/messages/{id}` |
-| Edit own message (id-only) | PATCH | `/messages/{id}` |
-| Delete own message | DELETE | `/rooms/{room_id}/messages/{id}` |
-| Delete own message (id-only) | DELETE | `/messages/{id}` |
-| Read single message | GET | `/rooms/{room_id}/messages/{id}` |
-| Reply in a thread | POST | `/rooms/{room_id}/messages/{message_id}/thread` |
-| Reply in a thread (inline) | POST | `/rooms/{room_id}/messages?parent_message_id={message_id}` |
+| Reply in a thread | POST | `/rooms/{room_id}/messages?parent_message_id={message_id}` |
+| Edit own message | PATCH | `/messages/{id}` |
+| Delete own message | DELETE | `/messages/{id}` |
+| Read single message | GET | `/messages/{id}` |
 | Read messages | GET | `/rooms/{room_id}/messages` |
-| Add reaction | POST | `/rooms/{room_id}/messages/{message_id}/boosts` |
-| Add reaction (id-only) | POST | `/messages/{message_id}/boosts` |
-| Remove reaction | DELETE | `/rooms/{room_id}/messages/{message_id}/boosts/{id}` |
-| Remove reaction (id-only) | DELETE | `/messages/{message_id}/boosts/{id}` |
+| Add reaction | POST | `/messages/{message_id}/boosts` |
+| Remove reaction | DELETE | `/messages/{message_id}/boosts/{id}` |
+| List reactions | GET | `/messages/{message_id}/boosts` |
 | List room members | GET | `/rooms/{room_id}/members` |
 | Add member to room | POST | `/rooms/{room_id}/members` |
 | Remove member from room | DELETE | `/rooms/{room_id}/members/{user_id}` |
@@ -236,16 +232,6 @@ All three endpoints exclude default-named placeholder accounts and deactivated u
 Bots can edit their own messages. The request body replaces the message content.
 
 ```bash
-curl -X PATCH "$API/rooms/$ROOM_ID/messages/$MESSAGE_ID" \
-  -H "Authorization: Bearer $BOT_KEY" \
-  -H "Content-Type: text/plain" \
-  -d "Updated: deploy complete (v2.1.0)"
-```
-
-The id-only form drops the `room_id` segment and is preferred for streaming
-clients that edit the same message repeatedly across thread boundaries:
-
-```bash
 curl -X PATCH "$API/messages/$MESSAGE_ID" \
   -H "Authorization: Bearer $BOT_KEY" \
   -H "Content-Type: text/plain" \
@@ -255,13 +241,6 @@ curl -X PATCH "$API/messages/$MESSAGE_ID" \
 ### Deleting a message
 
 Bots can delete their own messages (soft-delete).
-
-```bash
-curl -X DELETE "$API/rooms/$ROOM_ID/messages/$MESSAGE_ID" \
-  -H "Authorization: Bearer $BOT_KEY"
-```
-
-Or via the id-only form:
 
 ```bash
 curl -X DELETE "$API/messages/$MESSAGE_ID" \
@@ -275,15 +254,6 @@ Returns `204 No Content` on success.
 Send the emoji as plain text in the request body.
 
 ```bash
-curl -X POST "$API/rooms/$ROOM_ID/messages/$MESSAGE_ID/boosts" \
-  -H "Authorization: Bearer $BOT_KEY" \
-  -H "Content-Type: text/plain" \
-  -d "🎉"
-```
-
-Or via the id-only form:
-
-```bash
 curl -X POST "$API/messages/$MESSAGE_ID/boosts" \
   -H "Authorization: Bearer $BOT_KEY" \
   -H "Content-Type: text/plain" \
@@ -293,13 +263,6 @@ curl -X POST "$API/messages/$MESSAGE_ID/boosts" \
 Returns the boost ID which you can use to remove it later.
 
 ### Removing a reaction
-
-```bash
-curl -X DELETE "$API/rooms/$ROOM_ID/messages/$MESSAGE_ID/boosts/$BOOST_ID" \
-  -H "Authorization: Bearer $BOT_KEY"
-```
-
-Or via the id-only form:
 
 ```bash
 curl -X DELETE "$API/messages/$MESSAGE_ID/boosts/$BOOST_ID" \
@@ -325,7 +288,7 @@ Returns up to 50 matching messages with room context.
 ### Reading a single message
 
 ```bash
-curl "$API/rooms/$ROOM_ID/messages/$MESSAGE_ID" -H "Authorization: Bearer $BOT_KEY"
+curl "$API/messages/$MESSAGE_ID" -H "Authorization: Bearer $BOT_KEY"
 ```
 
 ### Discovering joinable rooms
@@ -494,19 +457,7 @@ Attachment URLs are signed and expire after 1 hour.
 
 ### Thread replies
 
-To reply to a specific message in a thread instead of the main room:
-
-```
-POST /api/bots/rooms/{room_id}/messages/{message_id}/thread
-Authorization: Bearer {bot_key}
-Content-Type: text/plain
-
-This is a threaded reply!
-```
-
-This creates a thread on the message (or finds an existing one) and posts the reply there.
-
-**Inline thread-reply (preferred shape).** The same effect is available by adding a `parent_message_id` query parameter to the regular `POST /messages` endpoint — useful when a client doesn't want a separate code path for thread vs. non-thread sends:
+Reply in a thread by adding a `parent_message_id` query parameter to the regular `POST /messages` endpoint:
 
 ```
 POST /api/bots/rooms/{room_id}/messages?parent_message_id={message_id}
@@ -516,9 +467,7 @@ Content-Type: text/plain
 This is a threaded reply!
 ```
 
-`parent_message_id` is a **query-string parameter**, not part of the body — the request body remains the message text. When `parent_message_id` is present, the response is `201 Created` with body `{ "id": <message_id>, "room_id": <thread_room_id> }` so the caller knows which thread room the message landed in. When it's absent, the endpoint behaves exactly as before (no body, just the `Location` header).
-
-The two endpoints are equivalent: both find or create the thread room idempotently for the same `parent_message_id`. The dedicated `/thread` endpoint is preserved indefinitely as an alias.
+`parent_message_id` is a **query-string parameter**, not part of the body — the request body remains the message text. The server creates the thread room (or finds the existing one), adds the bot as a member, and posts the reply there. The response is `201 Created` with body `{ "id": <message_id>, "room_id": <thread_room_id> }` and a `Location` header pointing at the new message. The `room_id` in the body is the resolved thread room id.
 
 A `parent_message_id` pointing at a message in a different room than `{room_id}` returns 404. A `parent_message_id` pointing at a message that already lives inside a thread returns 422 — Sabha doesn't support nested threads.
 
@@ -643,7 +592,7 @@ Sabha calls webhook_url (HMAC-signed) ──> OpenClaw gateway verifies + receiv
 | Bot token | `bot_key` + `webhook_secret` (from self-registration or admin UI) |
 | Inbound messages | WebSocket (`websocket_url`) or signed webhook (`webhook_url`) |
 | Outbound messages | `POST /api/bots/rooms/{room_id}/messages` with `Authorization: Bearer` |
-| Thread replies | `POST /api/bots/rooms/{room_id}/messages/{message_id}/thread` |
+| Thread replies | `POST /api/bots/rooms/{room_id}/messages?parent_message_id={message_id}` |
 | DM creation | `POST /api/bots/direct_messages` |
 | Room discovery | `GET /api/bots/rooms` |
 | Message history | `GET /api/bots/rooms/{room_id}/messages` (last 50) |
@@ -711,7 +660,7 @@ Accounts can restrict which users (humans or bots) can create direct messages vi
 
 ## Error Handling
 
-All bot API errors return JSON with two fields:
+All bot API errors from existing endpoints return JSON with two fields:
 
 ```json
 { "error": "Human-readable message", "code": "machine_stable_code" }
@@ -730,3 +679,5 @@ All bot API errors return JSON with two fields:
 | `internal_error` | 500 | Unexpected server error |
 
 Build your bot to check the `code` field programmatically, not the `error` string.
+
+**Carve-out: requests to retired URLs.** A request to a path that does not match any current bot API route (e.g. older shapes that have been removed) is 404'd by the Rails router *before* reaching a bot controller, so the response body is the framework default (HTML), not the JSON envelope above. Treat any 404 with a non-JSON body as "URL no longer exists" and update your client.
