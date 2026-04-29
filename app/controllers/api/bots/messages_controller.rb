@@ -40,6 +40,8 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
   def create
     target_room = resolve_target_room
+    target_room.involve_user(Current.user, unread: false) if target_room != @room
+
     @message = target_room.messages.create_with_attachment(message_params)
 
     if @message.persisted?

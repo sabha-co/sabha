@@ -105,6 +105,32 @@ class API::Bots::Messages::CreatesTest < ActionDispatch::IntegrationTest
     assert_equal "validation_failed", response.parsed_body["code"]
   end
 
+  test "create with parent_message_id involves the bot in an existing thread it wasn't yet a member of" do
+    # Regression: when the thread was created before the bot joined the parent
+    # room (or any case where the bot isn't yet a thread member), the inline
+    # reply must re-add the bot — otherwise follow-up id-only ops on the reply
+    # 404 because Current.user.rooms scopes through active memberships.
+    parent = messages(:fourth)
+    thread = Rooms::Thread.create_for(
+      { parent_message_id: parent.id, creator: users(:david) },
+      users: [ users(:david) ]
+    )
+    refute_includes thread.reload.users, @bot
+
+    post api_bots_room_messages_url(@room, parent_message_id: parent.id),
+      params: "Late reply",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+    assert_response :created
+    assert_includes thread.reload.users, @bot
+
+    # Follow-up id-only ops on the reply must succeed — proves the membership repair stuck.
+    reply_id = response.parsed_body["id"]
+    patch api_bots_message_url(reply_id),
+      params: "Edited",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+    assert_response :success
+  end
+
   test "create with parent_message_id fires the regular-create side effects (broadcast_mentionee_sidebar_updates)" do
     parent = messages(:fourth)
     Message.any_instance.expects(:broadcast_mentionee_sidebar_updates).at_least_once
