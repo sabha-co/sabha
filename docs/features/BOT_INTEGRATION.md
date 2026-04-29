@@ -64,18 +64,24 @@ The WebSocket endpoint keeps `bot_key` in the query string (`wss://.../cable?bot
 All endpoints are rooted at the `api_base_url` returned from registration (e.g. `https://chat.example.com/api/bots`).
 
 > **Per-room URLs — server is the source of truth.** Every webhook payload and the registration response include a `messages_url` on each `room` object. Clients **should** consume that field directly rather than deriving URLs from `api_base_url` + `room_id`. Derivation works today but will silently break if the server's URL shape ever changes (versioning, subdomain split, new `script_name` mount). Treat string concatenation as a compatibility fallback only.
+>
+> **Id-only message URLs are derived from `api_base_url`.** The id-only mutation endpoints (`/messages/{id}`, `/messages/{message_id}/boosts/...`) have no per-room context to encode, so they're stable across rooms and tenants and there's no equivalent server-provided URL on message envelopes. Both shapes are part of the bot-API contract; the asymmetry is intentional. Streaming clients that PATCH the same message many times should prefer the id-only form so they don't have to track room rebinds across thread creates.
 
 | Action | Method | Endpoint |
 |---|---|---|
 | Post a message | POST | `/rooms/{room_id}/messages` |
 | Send attachment | POST | `/rooms/{room_id}/messages` (multipart) |
 | Edit own message | PATCH | `/rooms/{room_id}/messages/{id}` |
+| Edit own message (id-only) | PATCH | `/messages/{id}` |
 | Delete own message | DELETE | `/rooms/{room_id}/messages/{id}` |
+| Delete own message (id-only) | DELETE | `/messages/{id}` |
 | Read single message | GET | `/rooms/{room_id}/messages/{id}` |
 | Reply in a thread | POST | `/rooms/{room_id}/messages/{message_id}/thread` |
 | Read messages | GET | `/rooms/{room_id}/messages` |
 | Add reaction | POST | `/rooms/{room_id}/messages/{message_id}/boosts` |
-| Remove reaction | DELETE | `/rooms/{room_id}/messages/{message_id}/boosts/{boost_id}` |
+| Add reaction (id-only) | POST | `/messages/{message_id}/boosts` |
+| Remove reaction | DELETE | `/rooms/{room_id}/messages/{message_id}/boosts/{id}` |
+| Remove reaction (id-only) | DELETE | `/messages/{message_id}/boosts/{id}` |
 | List room members | GET | `/rooms/{room_id}/members` |
 | Add member to room | POST | `/rooms/{room_id}/members` |
 | Remove member from room | DELETE | `/rooms/{room_id}/members/{user_id}` |
@@ -235,12 +241,29 @@ curl -X PATCH "$API/rooms/$ROOM_ID/messages/$MESSAGE_ID" \
   -d "Updated: deploy complete (v2.1.0)"
 ```
 
+The id-only form drops the `room_id` segment and is preferred for streaming
+clients that edit the same message repeatedly across thread boundaries:
+
+```bash
+curl -X PATCH "$API/messages/$MESSAGE_ID" \
+  -H "Authorization: Bearer $BOT_KEY" \
+  -H "Content-Type: text/plain" \
+  -d "Updated: deploy complete (v2.1.0)"
+```
+
 ### Deleting a message
 
 Bots can delete their own messages (soft-delete).
 
 ```bash
 curl -X DELETE "$API/rooms/$ROOM_ID/messages/$MESSAGE_ID" \
+  -H "Authorization: Bearer $BOT_KEY"
+```
+
+Or via the id-only form:
+
+```bash
+curl -X DELETE "$API/messages/$MESSAGE_ID" \
   -H "Authorization: Bearer $BOT_KEY"
 ```
 
@@ -257,12 +280,28 @@ curl -X POST "$API/rooms/$ROOM_ID/messages/$MESSAGE_ID/boosts" \
   -d "🎉"
 ```
 
+Or via the id-only form:
+
+```bash
+curl -X POST "$API/messages/$MESSAGE_ID/boosts" \
+  -H "Authorization: Bearer $BOT_KEY" \
+  -H "Content-Type: text/plain" \
+  -d "🎉"
+```
+
 Returns the boost ID which you can use to remove it later.
 
 ### Removing a reaction
 
 ```bash
 curl -X DELETE "$API/rooms/$ROOM_ID/messages/$MESSAGE_ID/boosts/$BOOST_ID" \
+  -H "Authorization: Bearer $BOT_KEY"
+```
+
+Or via the id-only form:
+
+```bash
+curl -X DELETE "$API/messages/$MESSAGE_ID/boosts/$BOOST_ID" \
   -H "Authorization: Bearer $BOT_KEY"
 ```
 
