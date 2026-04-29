@@ -11,7 +11,7 @@ gem "sqlite3", ">= 2.9"
 gem "redis", "~> 5.4"
 
 # Deployment
-gem "puma", "~> 7.2"
+gem "puma", "~> 8.0"
 gem "thruster"
 
 # Jobs
