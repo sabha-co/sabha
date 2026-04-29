@@ -18,31 +18,19 @@ return unless Sabha.saas?
 # which maintains the tenant context for file serving.
 Rails.application.config.active_storage.resolve_model_to_route = :rails_storage_proxy
 
-Rails.application.config.to_prepare do
-  # Helper method for setting ActiveStorage URL options with workspace prefix
-  set_active_storage_url_options_method = lambda do |controller|
-    controller.class_eval do
-      before_action :set_active_storage_url_options, if: -> { Sabha.saas? }
+# Install on ActionController::Base via load hook so the controller is patched
+# at its natural load time (covers ApplicationController + ActiveStorage::BaseController
+# via inheritance, and avoids triggering the load hook prematurely during boot).
+ActiveSupport.on_load(:action_controller_base) do
+  before_action :set_active_storage_url_options
 
-      private
-
-      def set_active_storage_url_options
-        ActiveStorage::Current.url_options = {
-          protocol: request.protocol,
-          host: request.host,
-          port: request.port,
-          script_name: request.script_name
-        }
-      end
+  private
+    def set_active_storage_url_options
+      ActiveStorage::Current.url_options = {
+        protocol: request.protocol,
+        host: request.host,
+        port: request.port,
+        script_name: request.script_name
+      }
     end
-  end
-
-  # Apply to ApplicationController (for app controllers)
-  set_active_storage_url_options_method.call(ApplicationController)
-
-  # Apply to ActiveStorage controllers so redirect URLs include workspace prefix
-  # These don't inherit from ApplicationController, so need separate patching
-  if defined?(ActiveStorage::BaseController)
-    set_active_storage_url_options_method.call(ActiveStorage::BaseController)
-  end
 end
