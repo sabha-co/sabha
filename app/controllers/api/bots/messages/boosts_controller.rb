@@ -32,7 +32,12 @@ class API::Bots::Messages::BoostsController < API::Bots::BaseController
 
   private
     def set_room_and_message
-      @room = Current.user.rooms.find(params[:room_id])
-      @message = @room.messages.active.find(params[:message_id])
+      if request.path_parameters[:room_id]
+        @room = Current.user.rooms.find(params[:room_id])
+        @message = @room.messages.active.find(params[:message_id])
+      else
+        @message = Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:message_id])
+        @room = @message.room
+      end
     end
 end

@@ -1,7 +1,7 @@
 class API::Bots::MessagesController < API::Bots::BaseController
   include ActiveStorage::SetCurrent, NotifyBots, CursorPaginated
 
-  before_action :set_room
+  before_action :set_room, if: -> { request.path_parameters[:room_id].present? }
   before_action :parse_pagination_params, only: :index
   before_action :set_own_message, only: %i[update destroy]
 
@@ -36,13 +36,23 @@ class API::Bots::MessagesController < API::Bots::BaseController
   end
 
   def create
-    @message = @room.messages.create_with_attachment(message_params)
+    target_room = resolve_target_room
+    return if performed?
+
+    @message = target_room.messages.create_with_attachment(message_params)
 
     if @message.persisted?
       @message.broadcast_create
       @message.broadcast_mentionee_sidebar_updates
       notify_bots(@message, :created)
-      head :created, location: room_message_url(@room, @message)
+
+      if target_room == @room
+        head :created, location: room_message_url(target_room, @message)
+      else
+        render json: { id: @message.id, room_id: target_room.id },
+               status: :created,
+               location: room_message_url(target_room, @message)
+      end
     else
       render json: { error: @message.errors.full_messages.to_sentence, code: "validation_failed" }, status: :unprocessable_entity
     end
@@ -74,8 +84,25 @@ class API::Bots::MessagesController < API::Bots::BaseController
       @room = Current.user.rooms.find(params[:room_id])
     end
 
+    def resolve_target_room
+      return @room if params[:parent_message_id].blank?
+
+      parent = @room.messages.active.find(params[:parent_message_id])
+      if parent.room.thread?
+        render json: { error: "parent_message_id cannot point at a message inside an existing thread", code: "validation_failed" },
+               status: :unprocessable_entity
+        return nil
+      end
+
+      Rooms::Thread.find_or_create_for(parent, users: @room.users)
+    end
+
     def set_own_message
-      @message = @room.messages.active.find(params[:id])
+      @message = if @room
+        @room.messages.active.find(params[:id])
+      else
+        Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:id]).tap { |m| @room = m.room }
+      end
       head :forbidden unless @message.creator_id == Current.user.id
     end
 
@@ -104,9 +131,5 @@ class API::Bots::MessagesController < API::Bots::BaseController
       yield io.read.force_encoding("UTF-8")
     ensure
       io.rewind
-    end
-
-    def not_found
-      render json: { error: "Room or message not found", code: "not_found" }, status: :not_found
     end
 end

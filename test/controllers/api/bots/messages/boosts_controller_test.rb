@@ -119,6 +119,67 @@ class API::Bots::Messages::BoostsControllerTest < ActionDispatch::IntegrationTes
     assert_response :not_found
   end
 
+  # Id-only boost ops (no room_id in URL).
+
+  test "id-only create boost on any message the bot can see" do
+    other_message = messages(:fourth) # creator: jz, room: watercooler — not bender's, but visible
+
+    assert_difference -> { Boost.count }, 1 do
+      post api_bots_message_boosts_url(other_message),
+        params: "\u{1f389}",
+        headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+    end
+
+    assert_response :created
+    assert_equal "\u{1f389}", response.parsed_body["content"]
+  end
+
+  test "id-only create returns 404 with canonical envelope when bot can't see the room" do
+    post api_bots_message_boosts_url(messages(:first)), # designers; bender has no membership
+      params: "\u{1f389}",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+
+    assert_response :not_found
+    assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
+  end
+
+  test "id-only destroy own boost" do
+    post api_bots_message_boosts_url(@message),
+      params: "\u{2764}",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+    boost_id = response.parsed_body["id"]
+
+    assert_difference -> { Boost.count }, -1 do
+      delete api_bots_message_boost_url(@message, boost_id), headers: bot_headers(@bot.bot_key)
+    end
+
+    assert_response :no_content
+  end
+
+  test "id-only boost create ignores a stray room_id query parameter from a stale client" do
+    # Migration scenario: client mid-rebind still passes the stale parent room_id as a query
+    # param. The path-params gate must ignore it, otherwise we'd 404 on thread messages.
+    post api_bots_room_message_thread_url(@room, @message),
+      headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "First reply" }.merge(bot_headers(@bot.bot_key))
+    assert_response :created
+    reply_id = response.parsed_body.dig("message", "id")
+
+    post api_bots_message_boosts_url(message_id: reply_id, room_id: @room.id), # stale room_id
+      params: "\u{1f389}",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+
+    assert_response :created
+  end
+
+  test "id-only destroy returns 404 with canonical envelope for someone else's boost" do
+    other_boost = @message.boosts.create!(content: "\u{1f44d}", booster: users(:jason))
+
+    delete api_bots_message_boost_url(@message, other_boost), headers: bot_headers(@bot.bot_key)
+
+    assert_response :not_found
+    assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
+  end
+
   private
     def count_sql_queries
       count = 0

@@ -171,6 +171,10 @@ Rails.application.routes.draw do
         resource  :membership, only: %i[ create destroy ]
       end
 
+      resources :messages, only: %i[ update destroy ] do
+        resources :boosts, only: %i[ create destroy ], module: :messages
+      end
+
       resources :direct_messages, only: :create
       resource  :search,  only: :show
       resource  :profile, only: :update

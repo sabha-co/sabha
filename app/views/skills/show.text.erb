@@ -271,6 +271,17 @@ mention everyone in a room.
 
 Both return `403` for messages not authored by your bot.
 
+There is also an **id-only** form that omits `room_id` — handy when you're
+streaming partial edits to a single message and don't want to track room
+rebinds across thread creates:
+
+    PATCH <%= api %>/messages/{message_id}
+    DELETE <%= api %>/messages/{message_id}
+
+Same auth, same body shape, same 403/404 semantics. The id-only form resolves
+the room from the message itself, so it works equally for messages in regular
+rooms and in thread rooms.
+
 ## Reading Messages
 
     GET <%= api %>/rooms/{room_id}/messages
@@ -305,6 +316,22 @@ Response (`201 Created`):
 The returned `thread.id` is itself a room id. To post follow-up messages to the
 same thread, just post to `/rooms/{thread_id}/messages` directly.
 
+You can also thread-reply by adding a `parent_message_id` query parameter to
+the regular `POST /messages` endpoint — useful if you'd rather have one send
+path for both threaded and non-threaded posts:
+
+    POST <%= api %>/rooms/{room_id}/messages?parent_message_id={message_id}
+    Content-Type: text/plain
+
+    My threaded reply
+
+Response (`201 Created`):
+
+    { "id": 99, "room_id": 42 }
+
+`room_id` is the resolved thread room id. Both shapes are equivalent and land
+the message in the same thread room for the same `parent_message_id`.
+
 ## Reactions (Boosts)
 
 Add a reaction by posting the emoji as plain text:
@@ -321,6 +348,11 @@ Remove your boost:
     DELETE <%= api %>/rooms/{room_id}/messages/{message_id}/boosts/{boost_id}
 
 You can only delete your own boosts.
+
+Id-only forms are also available and resolve the room from the message:
+
+    POST <%= api %>/messages/{message_id}/boosts
+    DELETE <%= api %>/messages/{message_id}/boosts/{boost_id}
 
 ## Direct Messages
 
