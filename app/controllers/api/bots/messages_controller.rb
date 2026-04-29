@@ -46,12 +46,12 @@ class API::Bots::MessagesController < API::Bots::BaseController
       @message.broadcast_mentionee_sidebar_updates
       notify_bots(@message, :created)
 
-      if params[:parent_message_id].present?
+      if target_room == @room
+        head :created, location: room_message_url(target_room, @message)
+      else
         render json: { id: @message.id, room_id: target_room.id },
                status: :created,
                location: room_message_url(target_room, @message)
-      else
-        head :created, location: room_message_url(target_room, @message)
       end
     else
       render json: { error: @message.errors.full_messages.to_sentence, code: "validation_failed" }, status: :unprocessable_entity
@@ -94,9 +94,7 @@ class API::Bots::MessagesController < API::Bots::BaseController
         return nil
       end
 
-      Rooms::Thread.find_or_create_for(parent, users: @room.users).tap do |thread|
-        thread.involve_user(Current.user, unread: false)
-      end
+      Rooms::Thread.find_or_create_for(parent, users: @room.users)
     end
 
     def set_own_message

@@ -105,6 +105,19 @@ class API::Bots::Messages::CreatesTest < ActionDispatch::IntegrationTest
     assert_equal "validation_failed", response.parsed_body["code"]
   end
 
+  test "create with parent_message_id fires the regular-create side effects (broadcast_mentionee_sidebar_updates)" do
+    # Regression pin: we go through the regular `create` flow (not the legacy /thread controller)
+    # specifically so thread messages get the same broadcast surface as non-thread messages.
+    parent = messages(:fourth)
+    Message.any_instance.expects(:broadcast_mentionee_sidebar_updates).at_least_once
+
+    post api_bots_room_messages_url(@room, parent_message_id: parent.id),
+      params: "Threaded reply",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+
+    assert_response :created
+  end
+
   test "create without parent_message_id keeps the no-body 201 response (regression-pin)" do
     post api_bots_room_messages_url(@room),
       params: "Plain post",
