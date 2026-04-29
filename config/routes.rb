@@ -171,8 +171,8 @@ Rails.application.routes.draw do
         resource  :membership, only: %i[ create destroy ]
       end
 
-      resources :messages, only: %i[ update destroy ], controller: "messages_by_id" do
-        resources :boosts, only: %i[ create destroy ], controller: "messages_by_id/boosts"
+      resources :messages, only: %i[ update destroy ] do
+        resources :boosts, only: %i[ create destroy ], module: :messages
       end
 
       resources :direct_messages, only: :create

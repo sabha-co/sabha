@@ -1,7 +1,7 @@
 class API::Bots::MessagesController < API::Bots::BaseController
   include ActiveStorage::SetCurrent, NotifyBots, CursorPaginated
 
-  before_action :set_room
+  before_action :set_room, if: -> { params[:room_id].present? }
   before_action :parse_pagination_params, only: :index
   before_action :set_own_message, only: %i[update destroy]
 
@@ -75,7 +75,11 @@ class API::Bots::MessagesController < API::Bots::BaseController
     end
 
     def set_own_message
-      @message = @room.messages.active.find(params[:id])
+      @message = if @room
+        @room.messages.active.find(params[:id])
+      else
+        Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:id]).tap { |m| @room = m.room }
+      end
       head :forbidden unless @message.creator_id == Current.user.id
     end
 
@@ -104,9 +108,5 @@ class API::Bots::MessagesController < API::Bots::BaseController
       yield io.read.force_encoding("UTF-8")
     ensure
       io.rewind
-    end
-
-    def not_found
-      render json: { error: "Room or message not found", code: "not_found" }, status: :not_found
     end
 end
