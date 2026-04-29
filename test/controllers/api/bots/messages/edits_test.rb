@@ -94,6 +94,23 @@ class API::Bots::Messages::EditsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "id-only edit ignores a stray room_id query parameter from a stale client" do
+    # Migration scenario: a client carrying over an old `room_id` from before the thread rebind
+    # still hits the id-only route path. The path-params gate must ignore query-string room_id,
+    # otherwise the request flips back onto the room-scoped lookup and 404s on thread messages.
+    post api_bots_room_message_thread_url(@room, @message),
+      headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "First reply" }.merge(bot_headers(@bot.bot_key))
+    assert_response :created
+    reply_id = response.parsed_body.dig("message", "id")
+
+    patch api_bots_message_url(id: reply_id, room_id: @room.id), # stale room_id in query
+      params: "Updated reply",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+
+    assert_response :success
+    assert_equal "Updated reply", Message.find(reply_id).plain_text_body
+  end
+
   test "id-only edit resolves into thread rooms without the caller passing the thread room id" do
     # Bot creates a thread off its own message; the first reply lives in a brand-new thread room.
     post api_bots_room_message_thread_url(@room, @message),

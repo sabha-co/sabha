@@ -156,6 +156,21 @@ class API::Bots::Messages::BoostsControllerTest < ActionDispatch::IntegrationTes
     assert_response :no_content
   end
 
+  test "id-only boost create ignores a stray room_id query parameter from a stale client" do
+    # Migration scenario: client mid-rebind still passes the stale parent room_id as a query
+    # param. The path-params gate must ignore it, otherwise we'd 404 on thread messages.
+    post api_bots_room_message_thread_url(@room, @message),
+      headers: { "CONTENT_TYPE" => "text/plain", "RAW_POST_DATA" => "First reply" }.merge(bot_headers(@bot.bot_key))
+    assert_response :created
+    reply_id = response.parsed_body.dig("message", "id")
+
+    post api_bots_message_boosts_url(message_id: reply_id, room_id: @room.id), # stale room_id
+      params: "\u{1f389}",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+
+    assert_response :created
+  end
+
   test "id-only destroy returns 404 with canonical envelope for someone else's boost" do
     other_boost = @message.boosts.create!(content: "\u{1f44d}", booster: users(:jason))
 

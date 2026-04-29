@@ -1,7 +1,7 @@
 class API::Bots::MessagesController < API::Bots::BaseController
   include ActiveStorage::SetCurrent, NotifyBots, CursorPaginated
 
-  before_action :set_room, if: -> { params[:room_id].present? }
+  before_action :set_room, if: -> { request.path_parameters[:room_id].present? }
   before_action :parse_pagination_params, only: :index
   before_action :set_own_message, only: %i[update destroy]
 
