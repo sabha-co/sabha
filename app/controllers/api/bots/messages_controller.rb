@@ -3,7 +3,9 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
   before_action :set_room, only: %i[index create]
   before_action :parse_pagination_params, only: :index
-  before_action :set_own_message, only: %i[update destroy]
+  before_action :set_message, :require_message_creator, only: %i[update destroy]
+
+  rescue_from Rooms::Thread::NestedThreadError, with: :nested_thread_invalid
 
   def index
     scope = @room.messages.active
@@ -38,8 +40,6 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
   def create
     target_room = resolve_target_room
-    return if performed?
-
     @message = target_room.messages.create_with_attachment(message_params)
 
     if @message.persisted?
@@ -83,20 +83,27 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
     def resolve_target_room
       return @room if params[:parent_message_id].blank?
-
-      parent = @room.messages.active.find(params[:parent_message_id])
-      if parent.room.thread?
-        render json: { error: "parent_message_id cannot point at a message inside an existing thread", code: "validation_failed" },
-               status: :unprocessable_entity
-        return nil
-      end
-
-      Rooms::Thread.find_or_create_for(parent, users: @room.users)
+      Rooms::Thread.find_or_create_for(parent_message_in_room, users: @room.users)
     end
 
-    def set_own_message
+    # Scoping through @room.messages enforces the API contract that
+    # parent_message_id must reference a message in the URL room — cross-room
+    # references 404 here.
+    def parent_message_in_room
+      @room.messages.active.find(params[:parent_message_id])
+    end
+
+    def nested_thread_invalid
+      render json: { error: "parent_message_id cannot point at a message inside an existing thread", code: "validation_failed" },
+             status: :unprocessable_entity
+    end
+
+    def set_message
       @message = Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:id])
       @room = @message.room
+    end
+
+    def require_message_creator
       head :forbidden unless @message.creator_id == Current.user.id
     end
 

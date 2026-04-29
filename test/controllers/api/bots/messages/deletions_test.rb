@@ -31,4 +31,20 @@ class API::Bots::Messages::DeletionsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
   end
+
+  test "id-only delete resolves into thread rooms without the caller passing the thread room id" do
+    # Bot creates a thread off its own message via inline parent_message_id;
+    # the first reply lives in a brand-new thread room.
+    post api_bots_room_messages_url(@message.room, parent_message_id: @message.id),
+      params: "First reply",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+    assert_response :created
+    reply_id = response.parsed_body["id"]
+
+    assert_difference -> { Message.active.count }, -1 do
+      delete api_bots_message_url(reply_id), headers: bot_headers(@bot.bot_key)
+    end
+
+    assert_response :no_content
+  end
 end

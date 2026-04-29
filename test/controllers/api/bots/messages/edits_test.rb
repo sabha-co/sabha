@@ -62,6 +62,20 @@ class API::Bots::Messages::EditsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "returns 404 for own message in a room the bot is no longer a member of" do
+    # Visibility is checked before authorship: even on the bot's own message,
+    # losing room access should 404 (set_message scopes through Current.user.rooms),
+    # not 403 (require_message_creator never runs).
+    Membership.find_by!(user: @bot, room: @message.room).deactivate
+
+    patch api_bots_message_url(@message),
+      params: "Nope",
+      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+
+    assert_response :not_found
+    assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
+  end
+
   test "id-only edit resolves into thread rooms without the caller passing the thread room id" do
     # Bot creates a thread off its own message via inline parent_message_id;
     # the first reply lives in a brand-new thread room.

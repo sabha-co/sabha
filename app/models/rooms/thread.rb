@@ -1,5 +1,7 @@
 # Rooms that start off from a parent message and inherit permissions from that message's room.
 class Rooms::Thread < Room
+  class NestedThreadError < StandardError; end
+
   validates_presence_of :parent_message
 
   class << self
@@ -34,6 +36,8 @@ class Rooms::Thread < Room
   end
 
   def self.find_or_create_for(parent_message, users:)
+    raise NestedThreadError if parent_message.room.thread?
+
     parent_message.threads.active.find_by(type: "Rooms::Thread") ||
       create_for({ parent_message_id: parent_message.id }, users: users)
   end
