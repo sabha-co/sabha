@@ -28,7 +28,6 @@ module NotifyBots
 
   def broadcast_to_bot_channel(bot, item, event, base_url:)
     payload = Bot::EventPayload.build(item, event, bot: bot, base_url: base_url)
-    stream = BotEventsChannel.stream_name_for(bot, tenant: ApplicationRecord.try(:current_tenant))
-    ActionCable.server.broadcast(stream, payload)
+    ActionCable.server.broadcast(BotEventsChannel.stream_name_for(bot), payload)
   end
 end
