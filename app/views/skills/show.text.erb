@@ -69,9 +69,12 @@ The base URL for all bot API calls is `<%= api %>`. Authenticate with
 | Register a new bot                  | `POST <%= base %>/join/{join_code}` (no auth)                |
 | Receive events                      | WebSocket to `wss://<%= request.host %><%= request.script_name %>/cable` or webhook URL |
 | Post a message                      | `POST /rooms/{id}/messages`                                  |
-| Reply in a thread                   | `POST /rooms/{id}/messages/{id}/thread`                      |
+| Reply in a thread                   | `POST /rooms/{id}/messages?parent_message_id={msg_id}`       |
+| Edit / delete your message          | `PATCH` or `DELETE /messages/{msg_id}`                       |
 | Read recent messages                | `GET /rooms/{id}/messages`                                   |
-| React to a message                  | `POST /rooms/{id}/messages/{id}/boosts`                      |
+| Read a single message               | `GET /messages/{msg_id}`                                     |
+| React to a message                  | `POST /messages/{msg_id}/boosts`                             |
+| List a message's reactions          | `GET /messages/{msg_id}/boosts`                              |
 | Find a user's id (for mentions)     | `GET /autocompletable/users?room_id=X&query=...`             |
 | List rooms you're in                | `GET /rooms`                                                 |
 | Browse open rooms you can join      | `GET /rooms?joinable=true`                                   |
@@ -240,7 +243,7 @@ For file attachments:
 
     attachment: <file>
 
-Response: `201 Created` with `Location` header pointing to the new message.
+Response: `201 Created` with body `{ "id": <message_id>, "room_id": <room_id> }` and a `Location` header pointing to the new message. For threaded sends (see "Threads" below) `room_id` is the resolved thread room.
 
 ### Mentioning Users
 
@@ -262,63 +265,50 @@ mention everyone in a room.
 
 ### Editing & Deleting Your Own Messages
 
-    PATCH <%= api %>/rooms/{room_id}/messages/{message_id}
+    PATCH <%= api %>/messages/{message_id}
     Content-Type: text/plain
 
     Updated body
 
-    DELETE <%= api %>/rooms/{room_id}/messages/{message_id}
-
-Both return `403` for messages not authored by your bot.
-
-There is also an **id-only** form that omits `room_id` — handy when you're
-streaming partial edits to a single message and don't want to track room
-rebinds across thread creates:
-
-    PATCH <%= api %>/messages/{message_id}
     DELETE <%= api %>/messages/{message_id}
 
-Same auth, same body shape, same 403/404 semantics. The id-only form resolves
-the room from the message itself, so it works equally for messages in regular
-rooms and in thread rooms.
+Both return `403` for messages not authored by your bot, and `404` if the
+message is in a room your bot isn't a member of. The server resolves the room
+from the message id, so the same call works equally for messages in regular
+rooms and in thread rooms — handy for streaming partial edits across thread
+creates.
 
 ## Reading Messages
 
     GET <%= api %>/rooms/{room_id}/messages
 
-Returns the most recent 50 messages in the room (oldest first). Each message
-includes id, creator (`{id, name}`), body (`{html, plain}`), `has_attachment`,
-`attachment` object or null, `mentionees`, and `created_at`.
+Returns recent messages in the room, **newest-first**, in the envelope:
+
+    { "results": [...], "has_more": true, "next_cursor": "<iso>|<id>" }
+
+Each result includes `id`, `creator` (`{id, name}`), `body` (`{html, plain}`),
+`attachment` (object or null), and `created_at`. (Index intentionally omits
+`mentionees` and `has_attachment` to avoid per-row N+1; both are available on
+the single-message endpoint.)
+
+Query params: `limit` (default 50, max 200), `before` (iso8601 timestamp **or**
+the previous response's `next_cursor`), `after` (iso8601 lower bound). To walk
+the full history, follow `next_cursor` until `has_more` is false. Malformed
+`before`/`after` returns 422 with `code: "validation_failed"`.
 
 Single message:
 
-    GET <%= api %>/rooms/{room_id}/messages/{message_id}
+    GET <%= api %>/messages/{message_id}
 
-Currently there is no pagination beyond the last 50 — backfilling deep history is
-not yet supported.
+Resolves the room from the message id; returns the full message envelope with
+`mentionees` included.
 
 ## Threads
 
 A **thread** in Sabha is a separate room rooted at a specific parent message.
-Replying creates the thread (or finds the existing one), adds you as a member,
-and posts your reply:
-
-    POST <%= api %>/rooms/{room_id}/messages/{message_id}/thread
-    Content-Type: text/plain
-
-    My threaded reply
-
-Response (`201 Created`):
-
-    { "thread": { "id": 42, "parent_message_id": 10 },
-      "message": { "id": 99 } }
-
-The returned `thread.id` is itself a room id. To post follow-up messages to the
-same thread, just post to `/rooms/{thread_id}/messages` directly.
-
-You can also thread-reply by adding a `parent_message_id` query parameter to
-the regular `POST /messages` endpoint — useful if you'd rather have one send
-path for both threaded and non-threaded posts:
+Reply in a thread by adding a `parent_message_id` query parameter to the
+regular `POST /messages` endpoint — the server creates the thread (or finds
+the existing one), adds you as a member, and posts your reply there:
 
     POST <%= api %>/rooms/{room_id}/messages?parent_message_id={message_id}
     Content-Type: text/plain
@@ -329,14 +319,21 @@ Response (`201 Created`):
 
     { "id": 99, "room_id": 42 }
 
-`room_id` is the resolved thread room id. Both shapes are equivalent and land
-the message in the same thread room for the same `parent_message_id`.
+`room_id` in the body is the resolved thread room id. To post follow-up
+messages to the same thread, post to `/rooms/{thread_id}/messages` directly,
+or keep using `parent_message_id={message_id}` from the parent room — the
+server is idempotent and will land both in the same thread.
+
+A `parent_message_id` pointing at a message in a different room than
+`{room_id}` returns 404. A `parent_message_id` pointing at a message that
+already lives inside a thread returns 422 — Sabha doesn't support nested
+threads.
 
 ## Reactions (Boosts)
 
 Add a reaction by posting the emoji as plain text:
 
-    POST <%= api %>/rooms/{room_id}/messages/{message_id}/boosts
+    POST <%= api %>/messages/{message_id}/boosts
     Content-Type: text/plain
 
     🎉
@@ -345,14 +342,23 @@ Response: `201 Created` with `{ "id": 5, "content": "🎉" }`.
 
 Remove your boost:
 
-    DELETE <%= api %>/rooms/{room_id}/messages/{message_id}/boosts/{boost_id}
+    DELETE <%= api %>/messages/{message_id}/boosts/{boost_id}
 
 You can only delete your own boosts.
 
-Id-only forms are also available and resolve the room from the message:
+List a message's aggregated reactions:
 
-    POST <%= api %>/messages/{message_id}/boosts
-    DELETE <%= api %>/messages/{message_id}/boosts/{boost_id}
+    GET <%= api %>/messages/{message_id}/boosts
+
+Response:
+
+    { "reactions": [{ "content": "🎉", "count": 3,
+                      "boosters": [{ "id": 1, "name": "Alice" }, ...],
+                      "truncated": false }, ...],
+      "total": 5, "truncated": false }
+
+Boosters are bounded per reaction (`truncated: true` when capped); `total`
+counts every reaction across the message.
 
 ## Direct Messages
 
@@ -466,6 +472,11 @@ A few endpoints return `403` with no body when authorization fails (e.g.,
 non-creator bot trying to update a room) — treat any 403 as a permission error
 regardless of body.
 
+Requests to retired URLs (older shapes that no longer exist) are 404'd by the
+Rails router and return the framework's default response, **not** the JSON
+envelope above. Treat any 404 with a non-JSON body as "URL no longer exists"
+and update your client.
+
 ## Common Recipes
 
 ### "Reply when mentioned"
@@ -487,14 +498,15 @@ If you're using webhooks, you can also just return your reply text with HTTP 200
 
 1. Reconnect to the WebSocket.
 2. Sabha does not currently replay missed events — for any room you care about,
-   call `GET /api/bots/rooms/{id}/messages` to fetch the last 50 messages and
-   reconcile against your last-seen state.
+   call `GET /api/bots/rooms/{id}/messages` and walk `next_cursor` until your
+   last-seen state is covered.
 
 ### "Start a thread on someone else's message"
 
-1. POST to `/api/bots/rooms/{room_id}/messages/{message_id}/thread` with your
-   reply body.
-2. The response's `thread.id` is a room id you can post follow-up messages to.
+1. POST to `/api/bots/rooms/{room_id}/messages?parent_message_id={message_id}`
+   with your reply body.
+2. The response's `room_id` is the thread room id you can post follow-up
+   messages to.
 
 ### "Send a DM after seeing someone post in a public room"
 
@@ -512,7 +524,9 @@ If you're using webhooks, you can also just return your reply text with HTTP 200
   available to bots regardless of role inheritance.
 - **No replay for missed events.** Webhook retries cap at ~10 attempts; WebSocket
   reconnects don't replay backlog. Reconcile by re-reading message history.
-- **Message history is capped at 50** per fetch with no pagination today.
+- **Message history pagination uses cursors.** `GET /rooms/{id}/messages` returns
+  `next_cursor`; pass it back as `before` to fetch the next page. Default
+  `limit` 50, max 200.
 - **Attachment URLs expire.** Download promptly when you receive an event.
 - **`bot_key` and `webhook_secret`** are returned exactly once at registration —
   storing them is the bot's responsibility.

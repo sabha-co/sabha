@@ -54,7 +54,7 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   test "show response includes mentionees field" do
     message = messages(:bender_message)
 
-    get api_bots_room_message_url(@room, message), headers: bot_headers(@bot.bot_key)
+    get api_bots_message_url(message), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     json = response.parsed_body
@@ -76,14 +76,16 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   end
 
   test "show 404s for nonexistent message" do
-    get api_bots_room_message_url(@room, 999999), headers: bot_headers(@bot.bot_key)
+    get api_bots_message_url(999999), headers: bot_headers(@bot.bot_key)
     assert_response :not_found
+    assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
   end
 
   test "show 404s for message in room bot is not in" do
     message = @other_room.messages.create!(creator: users(:david), body: "test")
-    get api_bots_room_message_url(@other_room, message), headers: bot_headers(@bot.bot_key)
+    get api_bots_message_url(message), headers: bot_headers(@bot.bot_key)
     assert_response :not_found
+    assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
   end
 
   # has_more truncation signal

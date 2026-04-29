@@ -1,9 +1,11 @@
 class API::Bots::MessagesController < API::Bots::BaseController
   include ActiveStorage::SetCurrent, NotifyBots, CursorPaginated
 
-  before_action :set_room, if: -> { request.path_parameters[:room_id].present? }
+  before_action :set_room, only: %i[index create]
   before_action :parse_pagination_params, only: :index
-  before_action :set_own_message, only: %i[update destroy]
+  before_action :set_message, :require_message_creator, only: %i[update destroy]
+
+  rescue_from Rooms::Thread::NestedThreadError, with: :nested_thread_invalid
 
   def index
     scope = @room.messages.active
@@ -28,16 +30,17 @@ class API::Bots::MessagesController < API::Bots::BaseController
   end
 
   def show
-    @message = @room.messages.active
-                    .with_rich_text_body_and_embeds
-                    .with_creator
-                    .with_attached_attachment
-                    .find(params[:id])
+    @message = Message.active
+                      .where(room_id: Current.user.rooms.select(:id))
+                      .with_rich_text_body_and_embeds
+                      .with_creator
+                      .with_attached_attachment
+                      .find(params[:id])
   end
 
   def create
     target_room = resolve_target_room
-    return if performed?
+    target_room.involve_user(Current.user, unread: false) if target_room != @room
 
     @message = target_room.messages.create_with_attachment(message_params)
 
@@ -46,13 +49,9 @@ class API::Bots::MessagesController < API::Bots::BaseController
       @message.broadcast_mentionee_sidebar_updates
       notify_bots(@message, :created)
 
-      if target_room == @room
-        head :created, location: room_message_url(target_room, @message)
-      else
-        render json: { id: @message.id, room_id: target_room.id },
-               status: :created,
-               location: room_message_url(target_room, @message)
-      end
+      render json: { id: @message.id, room_id: target_room.id },
+             status: :created,
+             location: room_message_url(target_room, @message)
     else
       render json: { error: @message.errors.full_messages.to_sentence, code: "validation_failed" }, status: :unprocessable_entity
     end
@@ -86,23 +85,27 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
     def resolve_target_room
       return @room if params[:parent_message_id].blank?
-
-      parent = @room.messages.active.find(params[:parent_message_id])
-      if parent.room.thread?
-        render json: { error: "parent_message_id cannot point at a message inside an existing thread", code: "validation_failed" },
-               status: :unprocessable_entity
-        return nil
-      end
-
-      Rooms::Thread.find_or_create_for(parent, users: @room.users)
+      Rooms::Thread.find_or_create_for(parent_message_in_room, users: @room.users)
     end
 
-    def set_own_message
-      @message = if @room
-        @room.messages.active.find(params[:id])
-      else
-        Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:id]).tap { |m| @room = m.room }
-      end
+    # Scoping through @room.messages enforces the API contract that
+    # parent_message_id must reference a message in the URL room — cross-room
+    # references 404 here.
+    def parent_message_in_room
+      @room.messages.active.find(params[:parent_message_id])
+    end
+
+    def nested_thread_invalid
+      render json: { error: "parent_message_id cannot point at a message inside an existing thread", code: "validation_failed" },
+             status: :unprocessable_entity
+    end
+
+    def set_message
+      @message = Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:id])
+      @room = @message.room
+    end
+
+    def require_message_creator
       head :forbidden unless @message.creator_id == Current.user.id
     end
 

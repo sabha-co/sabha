@@ -161,18 +161,13 @@ Rails.application.routes.draw do
   namespace :api, defaults: { format: :json } do
     namespace :bots do
       resources :rooms, only: %i[ index create update destroy ] do
-        resources :messages, only: %i[ index show create update destroy ] do
-          scope module: :messages do
-            resource  :thread, only: :create
-            resources :boosts, only: %i[ index create destroy ]
-          end
-        end
+        resources :messages, only: %i[ index create ]
         resources :members, only: %i[ index create destroy ]
         resource  :membership, only: %i[ create destroy ]
       end
 
-      resources :messages, only: %i[ update destroy ] do
-        resources :boosts, only: %i[ create destroy ], module: :messages
+      resources :messages, only: %i[ show update destroy ] do
+        resources :boosts, only: %i[ index create destroy ], module: :messages
       end
 
       resources :direct_messages, only: :create
