@@ -114,16 +114,28 @@ class Workspace < UntenantedRecord
 
   # Cached marker of the most recent export request, or nil. Returns
   # { email:, at: } when a request is still inside the cooldown window.
+  # Read-only — view layer uses this to decide whether to render the button.
   def recent_export_request
     Rails.cache.read(export_request_cache_key)
   end
 
-  def record_export_request!(email)
-    Rails.cache.write(
-      export_request_cache_key,
-      { email: email, at: Time.current },
-      expires_in: EXPORT_COOLDOWN
-    )
+  # Atomic "claim a cooldown slot and enqueue an export" — the read-then-write
+  # alternative would let two concurrent admins both observe nil and both
+  # enqueue. Returns nil when this caller successfully claimed and enqueued, or
+  # the existing { email:, at: } hash if the cooldown was already active.
+  #
+  # Claim is rolled back if perform_later raises so a queue outage doesn't
+  # leave a phantom request blocking the next hour.
+  def request_export(email)
+    return recent_export_request unless claim_export_request(email)
+
+    begin
+      Workspace::ExportJob.perform_later(self, email)
+      nil
+    rescue StandardError
+      Rails.cache.delete(export_request_cache_key)
+      raise
+    end
   end
 
   # Snapshot + scrub cross-database references so the file is portable to a
@@ -253,6 +265,17 @@ class Workspace < UntenantedRecord
       end
     rescue ActiveRecord::Tenanted::TenantDoesNotExistError
       []
+    end
+
+    # Atomic compare-and-set against the cache. Returns true if this caller
+    # claimed the cooldown slot, false if a value was already present.
+    def claim_export_request(email)
+      Rails.cache.write(
+        export_request_cache_key,
+        { email: email, at: Time.current },
+        expires_in: EXPORT_COOLDOWN,
+        unless_exist: true
+      )
     end
 
     def export_request_cache_key

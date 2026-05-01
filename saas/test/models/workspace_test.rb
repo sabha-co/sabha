@@ -294,22 +294,50 @@ class WorkspaceTest < ActiveSupport::TestCase
     assert_nil workspace.recent_export_request
   end
 
-  test "record_export_request! stores email and timestamp readable via recent_export_request" do
+  test "request_export claims the cooldown slot, enqueues, and returns nil" do
     workspace = workspaces(:acme)
     freeze_time = Time.current
 
-    travel_to(freeze_time) do
-      workspace.record_export_request!("admin@example.com")
+    result = nil
+    assert_enqueued_with(job: Workspace::ExportJob, args: [ workspace, "admin@example.com" ]) do
+      travel_to(freeze_time) do
+        result = workspace.request_export("admin@example.com")
+      end
     end
 
+    assert_nil result
     recent = workspace.recent_export_request
     assert_equal "admin@example.com", recent[:email]
     assert_in_delta freeze_time.to_f, recent[:at].to_f, 1.0
   end
 
+  test "request_export returns the existing claim and does not enqueue when cooldown is active" do
+    workspace = workspaces(:acme)
+    workspace.request_export("first@example.com")
+
+    second_result = nil
+    assert_no_enqueued_jobs only: Workspace::ExportJob do
+      second_result = workspace.request_export("second@example.com")
+    end
+
+    assert_equal "first@example.com", second_result[:email]
+  end
+
+  test "request_export rolls back the cooldown if perform_later raises" do
+    workspace = workspaces(:acme)
+    Workspace::ExportJob.stubs(:perform_later).raises(StandardError, "queue down")
+
+    assert_raises(StandardError) do
+      workspace.request_export("admin@example.com")
+    end
+
+    assert_nil workspace.recent_export_request,
+      "claim should be released so the next attempt isn't blocked by a phantom request"
+  end
+
   test "recent_export_request expires after EXPORT_COOLDOWN" do
     workspace = workspaces(:acme)
-    workspace.record_export_request!("admin@example.com")
+    workspace.request_export("admin@example.com")
 
     travel_to(Time.current + Workspace::EXPORT_COOLDOWN + 1.minute) do
       assert_nil workspace.recent_export_request
