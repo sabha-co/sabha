@@ -18,7 +18,7 @@ module Saas
           notice: "We're preparing your export. We'll email a download link to #{Current.user.email_address} when it's ready."
       rescue Workspace::ExportThrottled
         redirect_to settings_export_path,
-          notice: "We've already sent an export to your email. Check your inbox, or wait an hour to request another."
+          notice: "An export was already requested. Check your inbox for the download link, or try again shortly."
       end
     end
   end

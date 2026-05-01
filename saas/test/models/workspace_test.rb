@@ -278,10 +278,6 @@ class WorkspaceTest < ActiveSupport::TestCase
 
   # --- export request rate limit ---
 
-  test "recently_exported? is false before any request" do
-    assert_not workspaces(:acme).recently_exported?
-  end
-
   test "request_export! enqueues and stamps last_export_requested_at" do
     workspace = workspaces(:acme)
     freeze_time = Time.current

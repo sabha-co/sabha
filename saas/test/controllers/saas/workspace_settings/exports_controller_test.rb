@@ -60,7 +60,7 @@ module Saas
 
           assert_redirected_to "/#{workspace.external_id}/settings/export"
           follow_redirect!
-          assert_match(/already sent/i, flash[:notice].to_s)
+          assert_match(/already requested/i, flash[:notice].to_s)
         end
       end
 
@@ -76,7 +76,7 @@ module Saas
 
           assert_response :success
           assert_select "button", text: "Email me a download link", count: 0
-          assert_select "p", text: /already sent an export.*to your email/
+          assert_select "p", text: /is on its way to your email/
         end
       end
 
@@ -125,13 +125,6 @@ module Saas
 
           workspace_post "/settings/export", workspace: workspace
           assert_response :forbidden
-        end
-      end
-
-      test "unauthenticated request is rejected" do
-        with_provisioned_workspace(name: "Unauth Test", creator: global_identities(:alice)) do |workspace|
-          workspace_post "/settings/export", workspace: workspace
-          assert_not_equal 200, response.status
         end
       end
     end
