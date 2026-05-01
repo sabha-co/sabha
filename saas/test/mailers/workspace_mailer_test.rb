@@ -59,4 +59,23 @@ class WorkspaceMailerTest < ActionMailer::TestCase
     assert_match "My Workspace", email.text_part.body.to_s
     assert_match "My Workspace", email.html_part.body.to_s
   end
+
+  test "export_ready sends signed download URL to recipient" do
+    workspace = workspaces(:acme)
+    export = stub(
+      signed_url: "https://r2.example/signed",
+      filename: "sabha-workspace-1000001-20260502120000.sqlite3.gz",
+      size: 1_500_000
+    )
+
+    email = WorkspaceMailer.export_ready(workspace, "admin@example.com", export)
+
+    assert_equal [ "admin@example.com" ], email.to
+    assert_equal "Your \"#{workspace.name}\" export is ready", email.subject
+    assert_equal 2, email.parts.size
+    assert_match "https://r2.example/signed", email.text_part.body.to_s
+    assert_match "https://r2.example/signed", email.html_part.body.to_s
+    assert_match "gunzip", email.text_part.body.to_s
+    assert_match workspace.name, email.text_part.body.to_s
+  end
 end

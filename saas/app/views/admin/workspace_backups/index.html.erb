@@ -8,7 +8,7 @@
   <div class="flex align-center justify-space-between">
     <h1 class="txt-large" style="font-weight: 600;">Backups</h1>
 
-    <% if Workspace::Backup.r2_configured? %>
+    <% if Workspace::R2.configured? %>
       <%= button_to "Back up now", admin_workspace_backups_path(@workspace),
             method: :post,
             class: "btn" %>

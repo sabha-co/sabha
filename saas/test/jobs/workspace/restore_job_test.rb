@@ -41,7 +41,7 @@ class Workspace::RestoreJobTest < ActiveSupport::TestCase
         end
         def delete_object(...) = nil
       end.new
-      Workspace::Backup.stubs(:s3_client).returns(fake_s3)
+      Workspace::R2.stubs(:client).returns(fake_s3)
 
       Workspace::RestoreJob.perform_now(workspace, backup)
 
@@ -70,7 +70,7 @@ class Workspace::RestoreJobTest < ActiveSupport::TestCase
       s3_client = stub
       s3_client.stubs(:get_object).raises(Aws::S3::Errors::NoSuchKey.new(nil, "not found"))
       s3_client.stubs(:delete_object)
-      Workspace::Backup.stubs(:s3_client).returns(s3_client)
+      Workspace::R2.stubs(:client).returns(s3_client)
 
       assert_raises(Aws::S3::Errors::NoSuchKey) do
         Workspace::RestoreJob.perform_now(workspace, backup)

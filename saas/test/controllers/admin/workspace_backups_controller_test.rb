@@ -22,7 +22,7 @@ class Admin::WorkspaceBackupsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create enqueues backup job" do
-    Workspace::Backup.stubs(:r2_configured?).returns(true)
+    Workspace::R2.stubs(:configured?).returns(true)
 
     assert_enqueued_with(job: Workspace::BackupJob, args: [ @workspace ]) do
       post admin_workspace_backups_path(@workspace)
@@ -31,7 +31,7 @@ class Admin::WorkspaceBackupsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create returns alert when R2 is not configured" do
-    Workspace::Backup.stubs(:r2_configured?).returns(false)
+    Workspace::R2.stubs(:configured?).returns(false)
 
     assert_no_enqueued_jobs do
       post admin_workspace_backups_path(@workspace)

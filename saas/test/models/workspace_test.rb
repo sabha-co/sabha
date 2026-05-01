@@ -164,4 +164,130 @@ class WorkspaceTest < ActiveSupport::TestCase
     assert_not Workspace.exists?(external_id: external_id)
     assert_not WorkspaceMembership.exists?(tenant: external_id.to_s)
   end
+
+  # --- snapshot_database_to ---
+
+  test "snapshot_database_to includes recent writes after a WAL checkpoint" do
+    with_provisioned_workspace(name: "Snapshot Test", creator: global_identities(:alice)) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      ApplicationRecord.with_tenant(tenant) do
+        room = Rooms::Open.find_by!(name: "General")
+        admin = User.find_by!(email_address: global_identities(:alice).email_address)
+        room.messages.create!(creator: admin, body: ActionText::Content.new("hello world"))
+      end
+
+      live_message_count = ApplicationRecord.with_tenant(tenant) { Message.unscoped.count }
+
+      Tempfile.create([ "snapshot", ".sqlite3" ]) do |tempfile|
+        workspace.snapshot_database_to(tempfile.path)
+
+        snapshot = SQLite3::Database.new(tempfile.path)
+        begin
+          assert_equal live_message_count, snapshot.execute("SELECT COUNT(*) FROM messages").first.first
+          assert_equal 1, snapshot.execute("SELECT COUNT(*) FROM accounts").first.first
+          assert_equal 1, snapshot.execute("SELECT COUNT(*) FROM rooms WHERE name = 'General'").first.first
+        ensure
+          snapshot.close
+        end
+      end
+    end
+  end
+
+  test "snapshot_database_to preserves users.workspace_membership_id (sanitization is the caller's job)" do
+    with_provisioned_workspace(name: "FK Preserve Test", creator: global_identities(:alice)) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      live_ids = ApplicationRecord.with_tenant(tenant) do
+        User.unscoped.order(:id).pluck(:workspace_membership_id)
+      end
+      assert live_ids.any?(&:present?), "test fixture must have at least one non-null workspace_membership_id"
+
+      Tempfile.create([ "snapshot", ".sqlite3" ]) do |tempfile|
+        workspace.snapshot_database_to(tempfile.path)
+
+        snapshot = SQLite3::Database.new(tempfile.path)
+        begin
+          snapshot_ids = snapshot.execute("SELECT workspace_membership_id FROM users ORDER BY id").map(&:first)
+          assert_equal live_ids, snapshot_ids
+        ensure
+          snapshot.close
+        end
+      end
+    end
+  end
+
+  test "snapshot_database_to mirrors the live tenant schema and row counts" do
+    with_provisioned_workspace(name: "Mirror Snapshot", creator: global_identities(:alice)) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      live_counts, live_migrations = ApplicationRecord.with_tenant(tenant) do
+        [
+          {
+            users: User.unscoped.count,
+            rooms: Room.unscoped.count,
+            messages: Message.unscoped.count
+          },
+          ApplicationRecord.connection.select_values("SELECT version FROM schema_migrations ORDER BY version")
+        ]
+      end
+
+      Tempfile.create([ "snapshot", ".sqlite3" ]) do |tempfile|
+        workspace.snapshot_database_to(tempfile.path)
+
+        snapshot = SQLite3::Database.new(tempfile.path)
+        begin
+          assert_equal live_counts[:users], snapshot.execute("SELECT COUNT(*) FROM users").first.first
+          assert_equal live_counts[:rooms], snapshot.execute("SELECT COUNT(*) FROM rooms").first.first
+          assert_equal live_counts[:messages], snapshot.execute("SELECT COUNT(*) FROM messages").first.first
+
+          snapshot_migrations = snapshot.execute("SELECT version FROM schema_migrations ORDER BY version").map(&:first)
+          assert_equal live_migrations, snapshot_migrations
+        ensure
+          snapshot.close
+        end
+      end
+    end
+  end
+
+  # --- export_for_self_host ---
+
+  test "export_for_self_host clears users.workspace_membership_id on the snapshot" do
+    with_provisioned_workspace(name: "Self-host Export Test", creator: global_identities(:alice)) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      live_count = ApplicationRecord.with_tenant(tenant) do
+        User.unscoped.where.not(workspace_membership_id: nil).count
+      end
+      assert_operator live_count, :>, 0, "fixture should have at least one user with workspace_membership_id set"
+
+      Tempfile.create([ "export", ".sqlite3" ]) do |tempfile|
+        workspace.export_for_self_host(tempfile.path)
+
+        snapshot = SQLite3::Database.new(tempfile.path)
+        begin
+          non_null = snapshot.execute("SELECT COUNT(*) FROM users WHERE workspace_membership_id IS NOT NULL").first.first
+          assert_equal 0, non_null
+        ensure
+          snapshot.close
+        end
+      end
+    end
+  end
+
+  test "export_for_self_host does not mutate the live tenant database" do
+    with_provisioned_workspace(name: "Self-host Non-mutate Test", creator: global_identities(:alice)) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      before_ids = ApplicationRecord.with_tenant(tenant) { User.unscoped.order(:id).pluck(:workspace_membership_id) }
+      assert before_ids.any?(&:present?)
+
+      Tempfile.create([ "export", ".sqlite3" ]) do |tempfile|
+        workspace.export_for_self_host(tempfile.path)
+      end
+
+      after_ids = ApplicationRecord.with_tenant(tenant) { User.unscoped.order(:id).pluck(:workspace_membership_id) }
+      assert_equal before_ids, after_ids
+    end
+  end
 end

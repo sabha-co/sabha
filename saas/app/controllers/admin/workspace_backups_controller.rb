@@ -9,7 +9,7 @@ module Admin
     end
 
     def create
-      unless Workspace::Backup.r2_configured?
+      unless Workspace::R2.configured?
         return redirect_to admin_workspace_backups_path(@workspace), alert: "Backups are not configured. Set R2 credentials to enable."
       end
 
