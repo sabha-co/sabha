@@ -294,7 +294,7 @@ class WorkspaceTest < ActiveSupport::TestCase
     assert_nil workspace.recent_export_request
   end
 
-  test "request_export claims the cooldown slot, enqueues, and returns nil" do
+  test "request_export enqueues, stamps the cooldown, and returns nil" do
     workspace = workspaces(:acme)
     freeze_time = Time.current
 
@@ -311,7 +311,7 @@ class WorkspaceTest < ActiveSupport::TestCase
     assert_in_delta freeze_time.to_f, recent[:at].to_f, 1.0
   end
 
-  test "request_export returns the existing claim and does not enqueue when cooldown is active" do
+  test "request_export returns the existing request and does not enqueue when cooldown is active" do
     workspace = workspaces(:acme)
     workspace.request_export("first@example.com")
 
@@ -323,7 +323,7 @@ class WorkspaceTest < ActiveSupport::TestCase
     assert_equal "first@example.com", second_result[:email]
   end
 
-  test "request_export rolls back the cooldown if perform_later raises" do
+  test "request_export does not stamp the cooldown if perform_later raises" do
     workspace = workspaces(:acme)
     Workspace::ExportJob.stubs(:perform_later).raises(StandardError, "queue down")
 
@@ -332,7 +332,7 @@ class WorkspaceTest < ActiveSupport::TestCase
     end
 
     assert_nil workspace.recent_export_request,
-      "claim should be released so the next attempt isn't blocked by a phantom request"
+      "no marker should be written so the next attempt isn't blocked by a phantom request"
   end
 
   test "recent_export_request expires after EXPORT_COOLDOWN" do
