@@ -45,6 +45,10 @@ class Workspace::ExportTest < ActiveSupport::TestCase
   end
 
   test "signed_url presigns against the export's key with a default 24h TTL" do
+    # Stub R2.client so AWS SDK doesn't try real credential resolution
+    # (IMDS lookup) when we instantiate the presigner.
+    Workspace::R2.stubs(:client).returns(mock)
+
     presigner = mock
     presigner.expects(:presigned_url).with do |verb, **opts|
       assert_equal :get_object, verb
