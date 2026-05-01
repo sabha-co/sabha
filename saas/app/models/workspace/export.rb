@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "zlib"
+
 class Workspace
   # Builds a sanitized, gzipped snapshot of a workspace's tenant SQLite,
   # uploads it to R2, and exposes a presigned download URL with a TTL.
