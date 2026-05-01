@@ -3,6 +3,7 @@ class Users::AvatarsController < ApplicationController
   allow_unauthenticated_access only: :show
 
   rescue_from(ActiveSupport::MessageVerifier::InvalidSignature) { head :not_found }
+  rescue_from("ActiveRecord::Tenanted::NoTenantError") { head :not_found } if Sabha.saas?
 
   def show
     # Skip session cookies for avatar requests
