@@ -10,6 +10,8 @@
 
 return unless Sabha.saas?
 
+require_relative "../../../lib/sabha/saas/tenanted_rendering"
+
 module TurboStreamsChannelExtensions
   extend ActiveSupport::Concern
 
@@ -17,7 +19,7 @@ module TurboStreamsChannelExtensions
     def render_format(format, **rendering)
       script_name = resolve_tenant_script_name
       if script_name.present?
-        ApplicationController.renderer.new(script_name: script_name).render(formats: [ format ], **rendering)
+        Sabha::Saas::TenantedRendering.render(script_name, format, **rendering)
       else
         super
       end
@@ -50,7 +52,7 @@ Rails.application.config.to_prepare do
 
     def render_format(format, **rendering)
       if request.script_name.present?
-        ApplicationController.renderer.new(script_name: request.script_name).render(formats: [ format ], **rendering)
+        Sabha::Saas::TenantedRendering.render(request.script_name, format, **rendering)
       else
         ApplicationController.render(formats: [ format ], **rendering)
       end
