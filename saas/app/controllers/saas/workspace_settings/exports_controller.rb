@@ -13,13 +13,12 @@ module Saas
           return redirect_to settings_export_path, alert: "Exports aren't configured. Ask the operator to set R2 credentials."
         end
 
-        if (already_sent = Current.workspace.request_export(Current.user.email_address))
-          redirect_to settings_export_path,
-            notice: "We've already sent an export to #{already_sent[:email]}. Check your inbox, or wait an hour to request another."
-        else
-          redirect_to settings_export_path,
-            notice: "We're preparing your export. We'll email a download link to #{Current.user.email_address} when it's ready."
-        end
+        Current.workspace.request_export!(Current.user.email_address)
+        redirect_to settings_export_path,
+          notice: "We're preparing your export. We'll email a download link to #{Current.user.email_address} when it's ready."
+      rescue Workspace::ExportThrottled
+        redirect_to settings_export_path,
+          notice: "We've already sent an export to your email. Check your inbox, or wait an hour to request another."
       end
     end
   end

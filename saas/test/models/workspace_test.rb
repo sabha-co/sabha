@@ -5,17 +5,6 @@ require_relative "../test_helper"
 class WorkspaceTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
 
-  # Swap Rails.cache for an in-memory store so the export-cooldown helpers
-  # actually round-trip in tests (the global test config keeps Rails.cache as
-  # :null_store to surface accidental cache-state assumptions elsewhere).
-  setup do
-    @original_cache = Rails.cache
-    Rails.cache = ActiveSupport::Cache::MemoryStore.new
-  end
-
-  teardown do
-    Rails.cache = @original_cache if @original_cache
-  end
   test "requires name" do
     workspace = Workspace.new(external_id: 9999999, creator: global_identities(:alice))
     assert_not workspace.valid?
@@ -289,58 +278,53 @@ class WorkspaceTest < ActiveSupport::TestCase
 
   # --- export request rate limit ---
 
-  test "recent_export_request is nil before a request is recorded" do
-    workspace = workspaces(:acme)
-    assert_nil workspace.recent_export_request
+  test "recently_exported? is false before any request" do
+    assert_not workspaces(:acme).recently_exported?
   end
 
-  test "request_export enqueues, stamps the cooldown, and returns nil" do
+  test "request_export! enqueues and stamps last_export_requested_at" do
     workspace = workspaces(:acme)
     freeze_time = Time.current
 
-    result = nil
     assert_enqueued_with(job: Workspace::ExportJob, args: [ workspace, "admin@example.com" ]) do
       travel_to(freeze_time) do
-        result = workspace.request_export("admin@example.com")
+        workspace.request_export!("admin@example.com")
       end
     end
 
-    assert_nil result
-    recent = workspace.recent_export_request
-    assert_equal "admin@example.com", recent[:email]
-    assert_in_delta freeze_time.to_f, recent[:at].to_f, 1.0
+    assert workspace.recently_exported?
+    assert_in_delta freeze_time.to_f, workspace.last_export_requested_at.to_f, 1.0
   end
 
-  test "request_export returns the existing request and does not enqueue when cooldown is active" do
+  test "request_export! raises ExportThrottled and does not enqueue when cooldown is active" do
     workspace = workspaces(:acme)
-    workspace.request_export("first@example.com")
+    workspace.request_export!("first@example.com")
 
-    second_result = nil
     assert_no_enqueued_jobs only: Workspace::ExportJob do
-      second_result = workspace.request_export("second@example.com")
+      assert_raises(Workspace::ExportThrottled) do
+        workspace.request_export!("second@example.com")
+      end
     end
-
-    assert_equal "first@example.com", second_result[:email]
   end
 
-  test "request_export does not stamp the cooldown if perform_later raises" do
+  test "request_export! does not stamp last_export_requested_at if perform_later raises" do
     workspace = workspaces(:acme)
     Workspace::ExportJob.stubs(:perform_later).raises(StandardError, "queue down")
 
     assert_raises(StandardError) do
-      workspace.request_export("admin@example.com")
+      workspace.request_export!("admin@example.com")
     end
 
-    assert_nil workspace.recent_export_request,
+    assert_nil workspace.reload.last_export_requested_at,
       "no marker should be written so the next attempt isn't blocked by a phantom request"
   end
 
-  test "recent_export_request expires after EXPORT_COOLDOWN" do
+  test "recently_exported? returns false after EXPORT_COOLDOWN elapses" do
     workspace = workspaces(:acme)
-    workspace.request_export("admin@example.com")
+    workspace.request_export!("admin@example.com")
 
     travel_to(Time.current + Workspace::EXPORT_COOLDOWN + 1.minute) do
-      assert_nil workspace.recent_export_request
+      assert_not workspace.recently_exported?
     end
   end
 

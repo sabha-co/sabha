@@ -5,9 +5,9 @@
     <fieldset class="flex flex-column gap pad">
       <legend class="txt-large txt-align-center"><strong>Export workspace database</strong></legend>
 
-      <% if (recent = Current.workspace.recent_export_request) %>
+      <% if Current.workspace.recently_exported? %>
         <p class="txt-small txt-muted">
-          We've already sent an export of <strong><%= Current.workspace.name %></strong> to <strong><%= recent[:email] %></strong>. Check your inbox — the link is good for 24 hours. You can request another in an hour.
+          We've already sent an export of <strong><%= Current.workspace.name %></strong> to your email. Check your inbox — the link is good for 24 hours. You can request another in an hour.
         </p>
       <% else %>
         <p class="txt-small txt-muted">

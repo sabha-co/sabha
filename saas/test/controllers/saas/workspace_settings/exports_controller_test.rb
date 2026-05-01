@@ -10,15 +10,6 @@ module Saas
         # via destroy_with_database! when R2 is configured. Stub it to a no-op so these
         # tests don't reach S3 during teardown.
         Workspace::Backup.stubs(:create_from_database!)
-
-        # Swap Rails.cache for an in-memory store so the export-cooldown helpers
-        # actually round-trip in tests.
-        @original_cache = Rails.cache
-        Rails.cache = ActiveSupport::Cache::MemoryStore.new
-      end
-
-      teardown do
-        Rails.cache = @original_cache if @original_cache
       end
 
       test "administrator sees the export page" do
@@ -69,7 +60,6 @@ module Saas
 
           assert_redirected_to "/#{workspace.external_id}/settings/export"
           follow_redirect!
-          assert_match identity.email_address, flash[:notice].to_s
           assert_match(/already sent/i, flash[:notice].to_s)
         end
       end
@@ -86,7 +76,7 @@ module Saas
 
           assert_response :success
           assert_select "button", text: "Email me a download link", count: 0
-          assert_select "p", text: /already sent an export/
+          assert_select "p", text: /already sent an export.*to your email/
         end
       end
 

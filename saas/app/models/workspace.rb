@@ -112,25 +112,20 @@ class Workspace < UntenantedRecord
   # short-lived dumps in R2.
   EXPORT_COOLDOWN = 1.hour
 
-  # Cached marker of the most recent export request, or nil. Returns
-  # { email:, at: } when a request is still inside the cooldown window.
-  # Read-only — view layer uses this to decide whether to render the button.
-  def recent_export_request
-    Rails.cache.read(export_request_cache_key)
+  class ExportThrottled < StandardError; end
+
+  def recently_exported?
+    last_export_requested_at.present? && last_export_requested_at > EXPORT_COOLDOWN.ago
   end
 
-  # Enqueue an export and stamp the cooldown marker. Returns nil when this
-  # caller enqueued, or the existing { email:, at: } hash if the cooldown is
-  # active. The marker is written *after* a successful enqueue so a queue
-  # outage doesn't leave a phantom request blocking the next hour.
-  def request_export(email)
-    if (existing = recent_export_request)
-      return existing
-    end
+  # Enqueue an export and stamp the cooldown. Raises ExportThrottled if a
+  # request is already in flight within the cooldown. Stamping happens after
+  # a successful enqueue so a queue outage doesn't block the next attempt.
+  def request_export!(email)
+    raise ExportThrottled if recently_exported?
 
     Workspace::ExportJob.perform_later(self, email)
-    Rails.cache.write(export_request_cache_key, { email: email, at: Time.current }, expires_in: EXPORT_COOLDOWN)
-    nil
+    update!(last_export_requested_at: Time.current)
   end
 
   # Snapshot + scrub cross-database references so the file is portable to a
@@ -260,10 +255,6 @@ class Workspace < UntenantedRecord
       end
     rescue ActiveRecord::Tenanted::TenantDoesNotExistError
       []
-    end
-
-    def export_request_cache_key
-      "workspace/#{external_id}/export_request"
     end
 
     def send_welcome_email
