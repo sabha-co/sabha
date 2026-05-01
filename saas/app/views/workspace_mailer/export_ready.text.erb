@@ -1,0 +1,7 @@
+Your "<%= @workspace.name %>" workspace export is ready.
+
+Download (<%= number_to_human_size(@size) %>): <%= @download_url %>
+
+The link expires in <%= @expires_in_hours %> hours. The file is gzipped — run `gunzip <%= @filename %>` to get the SQLite database.
+
+File attachments aren't included in the export, and members will need to sign in again via email on the self-hosted instance.

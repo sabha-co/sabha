@@ -26,8 +26,8 @@ class Workspace::BackupTest < ActiveSupport::TestCase
     recent_backup = Workspace::Backup.create!(workspace: @workspace, key: "backups/recent.sqlite3", size: 1024, created_at: 1.day.ago)
 
     s3_client = mock
-    s3_client.expects(:delete_object).with(bucket: Workspace::Backup.bucket, key: "backups/old.sqlite3")
-    Workspace::Backup.stubs(:s3_client).returns(s3_client)
+    s3_client.expects(:delete_object).with(bucket: Workspace::R2.bucket, key: "backups/old.sqlite3")
+    Workspace::R2.stubs(:client).returns(s3_client)
 
     Workspace::Backup.purge_expired!
 
@@ -40,7 +40,7 @@ class Workspace::BackupTest < ActiveSupport::TestCase
 
     s3_client = mock
     s3_client.expects(:delete_object).raises(Aws::S3::Errors::NoSuchKey.new(nil, "not found"))
-    Workspace::Backup.stubs(:s3_client).returns(s3_client)
+    Workspace::R2.stubs(:client).returns(s3_client)
 
     backup.purge!
 

@@ -36,4 +36,18 @@ class WorkspaceMailer < ApplicationMailer
       reply_to: Branding.support_email
     )
   end
+
+  def export_ready(workspace, recipient_email, export)
+    @workspace = workspace
+    @download_url = export.signed_url
+    @filename = export.filename
+    @size = export.size
+    @expires_in_hours = (Workspace::Export::DEFAULT_URL_TTL / 1.hour).to_i
+
+    mail(
+      to: recipient_email,
+      subject: "Your \"#{workspace.name}\" export is ready",
+      reply_to: Branding.support_email
+    )
+  end
 end

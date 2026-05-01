@@ -100,4 +100,5 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 - **Welcome email** — sent to workspace creator after provisioning
 - **Tenant-aware jobs and channels** — Solid Queue and ActionCable auto-propagate tenant context
 - **Workspace backups** — automated backups to R2 cloud storage with restore support
+- **Self-host export** — admins can download their workspace database to migrate to a self-hosted Sabha install
 - Disposable email addresses blocked on SaaS signup

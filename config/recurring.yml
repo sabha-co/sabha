@@ -22,7 +22,7 @@ production:
     schedule: every day at 3am
 
   backup_workspaces:
-    command: "Workspace.active.find_each { |w| Workspace::BackupJob.perform_later(w) }"
+    command: "Workspace.active.find_each { |w| Workspace::BackupJob.perform_later(w) } if Workspace::R2.configured?"
     schedule: every day at 2am
 
   snapshot_workspaces:

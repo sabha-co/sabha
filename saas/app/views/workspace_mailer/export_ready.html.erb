@@ -1,0 +1,9 @@
+<p>Your <strong><%= @workspace.name %></strong> workspace export is ready.</p>
+
+<p style="text-align: center; margin: 28px 0;">
+  <%= link_to "Download #{@filename} (#{number_to_human_size(@size)})", @download_url, style: "display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;" %>
+</p>
+
+<p>The link expires in <%= @expires_in_hours %> hours. The file is gzipped — run <code>gunzip <%= @filename %></code> to get the SQLite database.</p>
+
+<p>File attachments aren't included in the export, and members will need to sign in again via email on the self-hosted instance.</p>

@@ -13,7 +13,10 @@ Rails.application.routes.draw do
       root to: "welcome#show"
 
       # Workspace settings page (view settings, delete workspace)
-      resource :settings, only: [ :show, :destroy ], controller: "saas/workspace_settings"
+      resource :settings, only: [ :show, :destroy ], controller: "saas/workspace_settings" do
+        # Workspace database export (admin-only — for migrating to self-hosted)
+        resource :export, only: [ :show, :create ], controller: "saas/workspace_settings/exports"
+      end
 
       # Leave workspace (RESTful destroy on membership)
       resource :membership, only: [ :destroy ], controller: "saas/workspace_memberships"

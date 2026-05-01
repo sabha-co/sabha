@@ -81,6 +81,66 @@ class Workspace < UntenantedRecord
     update!(suspended_at: nil)
   end
 
+  # Path to this workspace's SQLite database file
+  def database_path
+    Rails.root.join("storage/workspaces/#{Rails.env}/#{external_id}/db/main.sqlite3")
+  end
+
+  # Write a clean SQLite copy of the tenant database to dest_path. Runs a WAL
+  # checkpoint first so the snapshot includes all committed writes.
+  #
+  # Pure copy — never mutates the snapshot. Workspace::Backup uses this directly
+  # because backups are restored back into the same SaaS instance and the
+  # cross-database FKs (e.g. users.workspace_membership_id) must remain intact.
+  def snapshot_database_to(dest_path)
+    ApplicationRecord.with_tenant(external_id.to_s) do
+      ApplicationRecord.connection.execute("PRAGMA wal_checkpoint(PASSIVE)")
+    end
+
+    source_db = SQLite3::Database.new(database_path.to_s)
+    dest_db = SQLite3::Database.new(dest_path.to_s)
+    sqlite_backup = SQLite3::Backup.new(dest_db, "main", source_db, "main")
+    sqlite_backup.step(-1)
+    sqlite_backup.finish
+  ensure
+    source_db&.close
+    dest_db&.close
+  end
+
+  # Cooldown window between admin-triggered self-host exports per workspace.
+  # Stops accidental double-clicks from spawning duplicate jobs and accumulating
+  # short-lived dumps in R2.
+  EXPORT_COOLDOWN = 1.hour
+
+  class ExportThrottled < StandardError; end
+
+  def recently_exported?
+    last_export_requested_at.present? && last_export_requested_at > EXPORT_COOLDOWN.ago
+  end
+
+  # Enqueue an export and stamp the cooldown. Raises ExportThrottled if a
+  # request is already in flight within the cooldown. Stamping happens after
+  # a successful enqueue so a queue outage doesn't block the next attempt.
+  def request_export!(email)
+    raise ExportThrottled if recently_exported?
+
+    Workspace::ExportJob.perform_later(self, email)
+    update!(last_export_requested_at: Time.current)
+  end
+
+  # Snapshot + scrub cross-database references so the file is portable to a
+  # self-hosted Sabha install. users.workspace_membership_id points at the
+  # SaaS-only untenanted workspace_memberships table; clearing it leaves no
+  # dangling references once the SQLite is detached from SaaS.
+  def export_for_self_host(dest_path)
+    snapshot_database_to(dest_path)
+
+    db = SQLite3::Database.new(dest_path.to_s)
+    db.execute("UPDATE users SET workspace_membership_id = NULL")
+  ensure
+    db&.close
+  end
+
   # Create workspace with its database
   def self.create_with_database!(name:, creator:)
     transaction do
@@ -174,7 +234,7 @@ class Workspace < UntenantedRecord
 
     # Take a final backup, purge old daily backups, and detach the final record
     def create_final_backup
-      if Workspace::Backup.r2_configured?
+      if Workspace::R2.configured?
         backups.find_each(&:purge!)
         Workspace::Backup.create_from_database!(self, key_prefix: "final")
       end
