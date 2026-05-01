@@ -10,6 +10,15 @@ module Saas
         # via destroy_with_database! when R2 is configured. Stub it to a no-op so these
         # tests don't reach S3 during teardown.
         Workspace::Backup.stubs(:create_from_database!)
+
+        # Swap Rails.cache for an in-memory store so the export-cooldown helpers
+        # actually round-trip in tests.
+        @original_cache = Rails.cache
+        Rails.cache = ActiveSupport::Cache::MemoryStore.new
+      end
+
+      teardown do
+        Rails.cache = @original_cache if @original_cache
       end
 
       test "administrator sees the export page" do
@@ -40,6 +49,44 @@ module Saas
           assert_redirected_to "/#{workspace.external_id}/settings/export"
           follow_redirect!
           assert_match identity.email_address, flash[:notice].to_s
+        end
+      end
+
+      test "second create within the cooldown window does not enqueue another job" do
+        identity = global_identities(:alice)
+        Workspace::R2.stubs(:configured?).returns(true)
+
+        with_provisioned_workspace(name: "Rate Limit Test", creator: identity) do |workspace|
+          sign_in_global_identity(identity)
+
+          assert_enqueued_with(job: Workspace::ExportJob) do
+            workspace_post "/settings/export", workspace: workspace
+          end
+
+          assert_no_enqueued_jobs only: Workspace::ExportJob do
+            workspace_post "/settings/export", workspace: workspace
+          end
+
+          assert_redirected_to "/#{workspace.external_id}/settings/export"
+          follow_redirect!
+          assert_match identity.email_address, flash[:notice].to_s
+          assert_match(/already sent/i, flash[:notice].to_s)
+        end
+      end
+
+      test "show page hides the button after a request and explains the cooldown" do
+        identity = global_identities(:alice)
+        Workspace::R2.stubs(:configured?).returns(true)
+
+        with_provisioned_workspace(name: "Cooldown View Test", creator: identity) do |workspace|
+          sign_in_global_identity(identity)
+
+          workspace_post "/settings/export", workspace: workspace
+          workspace_get "/settings/export", workspace: workspace
+
+          assert_response :success
+          assert_select "button", text: "Email me a download link", count: 0
+          assert_select "p", text: /already sent an export/
         end
       end
 

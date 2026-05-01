@@ -4,6 +4,18 @@ require_relative "../test_helper"
 
 class WorkspaceTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
+
+  # Swap Rails.cache for an in-memory store so the export-cooldown helpers
+  # actually round-trip in tests (the global test config keeps Rails.cache as
+  # :null_store to surface accidental cache-state assumptions elsewhere).
+  setup do
+    @original_cache = Rails.cache
+    Rails.cache = ActiveSupport::Cache::MemoryStore.new
+  end
+
+  teardown do
+    Rails.cache = @original_cache if @original_cache
+  end
   test "requires name" do
     workspace = Workspace.new(external_id: 9999999, creator: global_identities(:alice))
     assert_not workspace.valid?
@@ -272,6 +284,35 @@ class WorkspaceTest < ActiveSupport::TestCase
           snapshot.close
         end
       end
+    end
+  end
+
+  # --- export request rate limit ---
+
+  test "recent_export_request is nil before a request is recorded" do
+    workspace = workspaces(:acme)
+    assert_nil workspace.recent_export_request
+  end
+
+  test "record_export_request! stores email and timestamp readable via recent_export_request" do
+    workspace = workspaces(:acme)
+    freeze_time = Time.current
+
+    travel_to(freeze_time) do
+      workspace.record_export_request!("admin@example.com")
+    end
+
+    recent = workspace.recent_export_request
+    assert_equal "admin@example.com", recent[:email]
+    assert_in_delta freeze_time.to_f, recent[:at].to_f, 1.0
+  end
+
+  test "recent_export_request expires after EXPORT_COOLDOWN" do
+    workspace = workspaces(:acme)
+    workspace.record_export_request!("admin@example.com")
+
+    travel_to(Time.current + Workspace::EXPORT_COOLDOWN + 1.minute) do
+      assert_nil workspace.recent_export_request
     end
   end
 

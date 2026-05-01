@@ -107,6 +107,25 @@ class Workspace < UntenantedRecord
     dest_db&.close
   end
 
+  # Cooldown window between admin-triggered self-host exports per workspace.
+  # Stops accidental double-clicks from spawning duplicate jobs and accumulating
+  # short-lived dumps in R2.
+  EXPORT_COOLDOWN = 1.hour
+
+  # Cached marker of the most recent export request, or nil. Returns
+  # { email:, at: } when a request is still inside the cooldown window.
+  def recent_export_request
+    Rails.cache.read(export_request_cache_key)
+  end
+
+  def record_export_request!(email)
+    Rails.cache.write(
+      export_request_cache_key,
+      { email: email, at: Time.current },
+      expires_in: EXPORT_COOLDOWN
+    )
+  end
+
   # Snapshot + scrub cross-database references so the file is portable to a
   # self-hosted Sabha install. users.workspace_membership_id points at the
   # SaaS-only untenanted workspace_memberships table; clearing it leaves no
@@ -234,6 +253,10 @@ class Workspace < UntenantedRecord
       end
     rescue ActiveRecord::Tenanted::TenantDoesNotExistError
       []
+    end
+
+    def export_request_cache_key
+      "workspace/#{external_id}/export_request"
     end
 
     def send_welcome_email

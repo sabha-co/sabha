@@ -5,17 +5,23 @@
     <fieldset class="flex flex-column gap pad">
       <legend class="txt-large txt-align-center"><strong>Export workspace database</strong></legend>
 
-      <p class="txt-small txt-muted">
-        We'll prepare a gzipped SQLite snapshot of <strong><%= Current.workspace.name %></strong> and email a download link to <strong><%= Current.user.email_address %></strong>. Drop the file into a self-hosted Sabha install to take your data with you.
-      </p>
+      <% if (recent = Current.workspace.recent_export_request) %>
+        <p class="txt-small txt-muted">
+          We've already sent an export of <strong><%= Current.workspace.name %></strong> to <strong><%= recent[:email] %></strong>. Check your inbox — the link is good for 24 hours. You can request another in an hour.
+        </p>
+      <% else %>
+        <p class="txt-small txt-muted">
+          We'll prepare a gzipped SQLite snapshot of <strong><%= Current.workspace.name %></strong> and email a download link to <strong><%= Current.user.email_address %></strong>. Drop the file into a self-hosted Sabha install to take your data with you.
+        </p>
 
-      <div class="flex justify-center">
-        <%= button_to "Email me a download link", settings_export_path, method: :post, class: "btn" %>
-      </div>
+        <div class="flex justify-center">
+          <%= button_to "Email me a download link", settings_export_path, method: :post, class: "btn" %>
+        </div>
 
-      <p class="txt-small txt-muted">
-        The link expires 24 hours after the email is sent. Files aren't included in the export, and members will need to sign in again via email on the self-hosted instance.
-      </p>
+        <p class="txt-small txt-muted">
+          The link expires 24 hours after the email is sent. Files aren't included in the export, and members will need to sign in again via email on the self-hosted instance.
+        </p>
+      <% end %>
     </fieldset>
   </div>
 </div>
