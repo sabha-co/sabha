@@ -1,0 +1,50 @@
+<% content_for :title, "OpenClaw on Sabha — Run an Open Source AI Assistant in Your Community" %>
+<% content_for :meta_description, "Run an AI assistant powered by your choice of LLM — OpenAI, Anthropic, local models — inside Sabha rooms and DMs. Open source, self-hosted, no webhook URL needed." %>
+
+<div class="landing">
+
+<%= render "shared/marketing_header" %>
+
+<%# ═══════════════════════════════════ OPENCLAW ═══════════════════════════════════ %>
+<section class="landing-section" style="padding-top: 6rem;">
+  <div class="landing-inner" style="max-width: 680px;">
+    <div class="landing-section-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 1.25rem;">
+      <%= image_tag "logos/openclaw-lobster.svg", alt: "OpenClaw", width: 56, height: 56, style: "image-rendering: pixelated;" %>
+      <span class="landing-label">INTEGRATION</span>
+      <h1 class="landing-section-title" style="margin: 0;">OpenClaw on Sabha</h1>
+    </div>
+
+    <div style="font-size: 1.125rem; line-height: 1.8; color: var(--color-text-secondary, #555);">
+      <p>Sabha provides first-class <a href="https://openclaw.ai" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">OpenClaw</a> support over WebSockets. The AI bot connects outbound to your workspace — no webhook URL to configure, no public IP to expose, no tunnels. Self-hosted Sabha and Sabha Cloud both work.</p>
+
+      <p style="margin-top: 1.5rem;">@mention it in any room, or DM it directly, and it replies — powered by the LLM of your choice (OpenAI, Anthropic, or a local model).</p>
+
+      <p style="margin-top: 1.5rem;">No third-party chat dependency, no third-party AI dependency. OpenClaw runs on Discord, Telegram, Slack, and a dozen other channels — but with Sabha you can self-host the entire stack. Your community, your bot, your data, your servers.</p>
+
+      <h3 style="margin-top: 3rem; font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary, #111);">How it works</h3>
+
+      <ol style="margin-top: 1rem; padding-left: 1.25rem;">
+        <li style="margin-bottom: 0.75rem;">Install the plugin: <code style="background: var(--color-bg-subtle, #f4f4f4); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.95em;">openclaw plugins install @sabha-co/openclaw-sabha</code></li>
+        <li style="margin-bottom: 0.75rem;">Run <code style="background: var(--color-bg-subtle, #f4f4f4); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.95em;">openclaw configure --section channels</code> and paste a Sabha join URL.</li>
+        <li style="margin-bottom: 0.75rem;">@mention the bot in any room, or DM it directly. It's that quiet.</li>
+      </ol>
+
+      <h3 style="margin-top: 3rem; font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary, #111);">What the AI can do</h3>
+
+      <p style="margin-top: 1rem;">Rooms, threads, DMs, reactions, attachments, search — the AI speaks Sabha natively. Give it MCP tools, RAG over your community's docs, vision on uploaded images, voice — anything OpenClaw skills support. In rooms it only replies when @mentioned, so it stays out of the way. In DMs it's always listening.</p>
+
+      <h3 style="margin-top: 3rem; font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary, #111);">Get started</h3>
+
+      <ul style="margin-top: 1rem; list-style: none; padding: 0;">
+        <li style="margin-bottom: 0.5rem;"><a href="https://github.com/sabha-co/openclaw-sabha" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Sabha plugin on GitHub</a></li>
+        <li style="margin-bottom: 0.5rem;"><a href="https://openclaw.ai" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">OpenClaw homepage</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%= render "shared/marketing_footer" %>
+
+</div>

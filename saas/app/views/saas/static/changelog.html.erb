@@ -3,38 +3,7 @@
 
 <div class="landing">
 
-<%# ═══════════════════════════════════ HEADER ═══════════════════════════════════ %>
-<header class="landing-header">
-  <div class="landing-inner">
-    <nav class="landing-nav">
-      <div class="landing-logo">
-        <a href="/">
-          <%= image_tag "logos/sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg" %>
-        </a>
-      </div>
-      <button class="landing-menu-toggle" id="landing-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
-      </button>
-      <div class="landing-nav-links">
-        <a href="/#features">Features</a>
-        <a href="/#pricing">Pricing</a>
-        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
-      </div>
-      <div class="landing-header-right">
-        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
-        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
-      </div>
-      <div class="landing-mobile-menu">
-        <a href="/#features">Features</a>
-        <a href="/#pricing">Pricing</a>
-        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
-        <div class="landing-mobile-menu-divider"></div>
-        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
-        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
-      </div>
-    </nav>
-  </div>
-</header>
+<%= render "shared/marketing_header" %>
 
 <%# ═══════════════════════════════════ CHANGELOG ═══════════════════════════════════ %>
 <section class="landing-section" style="padding-top: 6rem;">
@@ -69,40 +38,3 @@
 <%= render "shared/marketing_footer" %>
 
 </div>
-
-<script>
-  (function() {
-    var toggle = document.getElementById('landing-menu-toggle');
-    var nav = toggle && toggle.closest('.landing-nav');
-    if (!toggle || !nav) return;
-
-    function openMenu() {
-      nav.classList.add('nav-open');
-      toggle.setAttribute('aria-expanded', 'true');
-    }
-
-    function closeMenu() {
-      nav.classList.remove('nav-open');
-      toggle.setAttribute('aria-expanded', 'false');
-    }
-
-    toggle.addEventListener('click', function() {
-      nav.classList.contains('nav-open') ? closeMenu() : openMenu();
-    });
-
-    var menu = nav.querySelector('.landing-mobile-menu');
-    if (menu) {
-      menu.addEventListener('click', function(e) {
-        if (e.target.tagName === 'A') closeMenu();
-      });
-    }
-
-    document.addEventListener('click', function(e) {
-      if (!nav.contains(e.target)) closeMenu();
-    });
-
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') closeMenu();
-    });
-  })();
-</script>

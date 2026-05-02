@@ -65,6 +65,7 @@ module Sabha
             get "changelog", to: "saas/static#changelog"
             get "terms", to: "saas/static#terms"
             get "privacy", to: "saas/static#privacy"
+            get "openclaw", to: "saas/static#openclaw"
 
             # Workspace management
             resources :workspaces, only: [ :index, :new, :create, :show ], controller: "saas/workspaces"

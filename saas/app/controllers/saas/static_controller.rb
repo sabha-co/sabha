@@ -19,6 +19,9 @@ module Saas
     def privacy
     end
 
+    def openclaw
+    end
+
     private
 
       def parse_changelog

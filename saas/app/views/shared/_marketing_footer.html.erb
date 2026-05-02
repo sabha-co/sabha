@@ -10,10 +10,11 @@
       <div class="landing-footer-cols">
         <div class="landing-footer-col">
           <h4>Product</h4>
-          <a href="<%= local_assigns[:homepage] ? "#features" : "/#features" %>">Features</a>
-          <a href="<%= local_assigns[:homepage] ? "#pricing" : "/#pricing" %>">Pricing</a>
+          <a href="<%= root_path %>#features">Features</a>
+          <a href="<%= root_path %>#pricing">Pricing</a>
+          <a href="/openclaw">OpenClaw</a>
           <a href="/changelog">Changelog</a>
-          <% if local_assigns[:homepage] %>
+          <% if current_page?(root_path) %>
             <a href="<%= new_session_path %>">Log in</a>
             <a href="<%= new_registration_path %>">Create account</a>
           <% end %>

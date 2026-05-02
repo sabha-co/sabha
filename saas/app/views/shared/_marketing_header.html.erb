@@ -1,0 +1,40 @@
+<header class="landing-header">
+  <div class="landing-inner">
+    <nav class="landing-nav"
+         data-controller="marketing-menu"
+         data-action="click->marketing-menu#closeOnLinkClick">
+      <div class="landing-logo">
+        <a href="<%= root_path %>">
+          <%= image_tag "logos/sabha-logo.svg", alt: "Sabha", class: "landing-logo-svg" %>
+        </a>
+      </div>
+      <button class="landing-menu-toggle"
+              aria-label="Toggle menu"
+              aria-expanded="false"
+              data-marketing-menu-target="toggle"
+              data-action="marketing-menu#toggle">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+      </button>
+      <div class="landing-nav-links">
+        <a href="<%= root_path %>#features">Features</a>
+        <a href="<%= root_path %>#pricing">Pricing</a>
+        <a href="/openclaw">OpenClaw</a>
+        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+      </div>
+      <div class="landing-header-right">
+        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
+        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
+      </div>
+      <%# Mobile-only dropdown — combines nav links + auth buttons in one panel %>
+      <div class="landing-mobile-menu" data-marketing-menu-target="menu">
+        <a href="<%= root_path %>#features">Features</a>
+        <a href="<%= root_path %>#pricing">Pricing</a>
+        <a href="/openclaw">OpenClaw</a>
+        <a href="https://github.com/sabha-co/sabha" target="_blank">GitHub</a>
+        <div class="landing-mobile-menu-divider"></div>
+        <a href="<%= new_session_path %>" class="landing-login-btn">Log in</a>
+        <a href="<%= new_registration_path %>" class="landing-signup-btn">Create your community</a>
+      </div>
+    </nav>
+  </div>
+</header>
