@@ -154,4 +154,24 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     # Excluding self works
     assert GlobalIdentity.email_available?(alice.email_address, excluding_id: alice.id)
   end
+
+  test "rejects signup when terms checkbox is unchecked" do
+    identity = GlobalIdentity.new(name: "Alice", email_address: "newalice@example.com", terms_of_service: "0")
+    assert_not identity.valid?(:create)
+    assert_includes identity.errors[:terms_of_service], "must be accepted"
+  end
+
+  test "stamps accepted_terms_at when terms checkbox is checked" do
+    identity = GlobalIdentity.create!(name: "Alice", email_address: "newalice@example.com", terms_of_service: "1")
+    assert_not_nil identity.accepted_terms_at
+  end
+
+  test "accepted_terms_at is preserved across subsequent updates" do
+    identity = GlobalIdentity.create!(name: "Alice", email_address: "newalice@example.com", terms_of_service: "1")
+    original_acceptance = identity.accepted_terms_at
+    travel 1.day do
+      identity.update!(name: "Renamed Alice")
+    end
+    assert_equal original_acceptance, identity.reload.accepted_terms_at
+  end
 end
