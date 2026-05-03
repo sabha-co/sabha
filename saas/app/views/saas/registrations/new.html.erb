@@ -35,13 +35,15 @@
         </div>
 
         <%= render "sessions/email_field", form: form, autofocus: false %>
-
-        <label class="flex align-start gap-half txt-medium txt-muted txt-align-left">
-          <%= form.check_box :terms_of_service, { required: true, class: "margin-block-start-quarter" }, "1", "0" %>
-          <span>I agree to the <%= link_to "Terms", "/terms", target: "_blank" %> and <%= link_to "Privacy Policy", "/privacy", target: "_blank" %>.</span>
-        </label>
-
         <div class="flex justify-center"><%= cloudflare_turnstile %></div>
+
+        <div class="flex justify-center">
+          <label class="flex align-center gap-half txt-medium txt-muted">
+            <%= form.check_box :terms_of_service, { required: true }, "1", "0" %>
+            <span>I agree to the <%= link_to "Terms", "/terms", target: "_blank" %> and <%= link_to "Privacy Policy", "/privacy", target: "_blank" %>.</span>
+          </label>
+        </div>
+
         <%= render "sessions/submit_button", form: form, label: "Create account" %>
       </fieldset>
     <% end %>
