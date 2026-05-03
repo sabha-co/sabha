@@ -34,7 +34,7 @@ module Saas
         auth_code.deliver_later
       else
         # New account - create and send verification code
-        global_identity = GlobalIdentity.create!(name: params[:name], email_address: params[:email_address])
+        global_identity = GlobalIdentity.create!(name: params[:name], email_address: params[:email_address], terms_of_service: params[:terms_of_service])
         auth_code = global_identity.auth_codes.create!(purpose: :sign_up)
         auth_code.deliver_later
       end

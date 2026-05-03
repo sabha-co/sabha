@@ -19,12 +19,21 @@ module Saas
 
     test "create with blank name still succeeds (name is optional, fallback to email prefix)" do
       assert_difference "GlobalIdentity.count", 1 do
-        post registration_path, params: with_turnstile_response(name: "", email_address: "noname@example.com")
+        post registration_path, params: with_turnstile_response(name: "", email_address: "noname@example.com", terms_of_service: "1")
       end
 
       assert_redirected_to auth_code_path
       identity = GlobalIdentity.find_by(email_address: "noname@example.com")
       assert_nil identity.name
+    end
+
+    test "create rejects when terms checkbox is unchecked" do
+      assert_no_difference "GlobalIdentity.count" do
+        post registration_path, params: with_turnstile_response(name: "Test", email_address: "rejecttest@example.com", terms_of_service: "0")
+      end
+
+      assert_redirected_to new_registration_path
+      assert_match /Terms of service/, flash[:alert]
     end
 
     test "create with existing email sends sign_in auth code (same message as new)" do
@@ -52,7 +61,7 @@ module Saas
       assert_difference "GlobalIdentity.count", 1 do
         assert_difference "AuthCode.count", 1 do
           assert_enqueued_emails 1 do
-            post registration_path, params: with_turnstile_response(name: "New User", email_address: new_email)
+            post registration_path, params: with_turnstile_response(name: "New User", email_address: new_email, terms_of_service: "1")
           end
         end
       end
@@ -73,7 +82,7 @@ module Saas
     end
 
     test "create normalizes email to lowercase" do
-      post registration_path, params: with_turnstile_response(name: "New User", email_address: "  NewUser@Example.COM  ")
+      post registration_path, params: with_turnstile_response(name: "New User", email_address: "  NewUser@Example.COM  ", terms_of_service: "1")
       assert_redirected_to auth_code_path
 
       identity = GlobalIdentity.find_by(email_address: "newuser@example.com")
