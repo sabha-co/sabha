@@ -112,8 +112,7 @@ accessories:
   beszel-agent:
     image: henrygd/beszel-agent:latest
     host: <%= ENV.fetch("SERVER_IP") %>
-    options:
-      network: "host"
+    network: host
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "beszel_agent_data:/var/lib/beszel-agent"
