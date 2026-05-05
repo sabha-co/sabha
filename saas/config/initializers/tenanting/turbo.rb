@@ -45,7 +45,21 @@ end
 
 # Also override the instance-level render_format used when controllers call
 # broadcast_replace_to etc. (Turbo::Streams::Broadcasts is included as instance
-# methods in ApplicationController, separate from the class-method path above).
+# methods in ApplicationController, separate from the class-method path above.)
+#
+# DO NOT replace this with `ActiveSupport.on_load(:action_controller_base)` to
+# silence the premature-load-hook warning in Rails 8.2+. Turbo::Streams::Broadcasts
+# is `include`d in ApplicationController (see app/controllers/application_controller.rb)
+# and defines its own private `render_format` (turbo-rails/app/channels/turbo/streams/
+# broadcasts.rb). Attaching the override to ActionController::Base via on_load
+# would place it BELOW the included module in MRO — Turbo's default would silently
+# win, and tenant-aware rendering would be bypassed for controller-originated
+# broadcasts (e.g. broadcast_replace_to in Messages::BookmarksController and
+# Rooms::InvolvementsController), producing Turbo Stream URLs without the
+# workspace prefix. Tests do not catch this because they don't assert on rendered
+# Turbo Stream URL contents under script_name. Defining on ApplicationController
+# itself keeps the override above included modules in the lookup chain. The
+# trade-off is the one-time boot warning, accepted in exchange for correctness.
 Rails.application.config.to_prepare do
   ApplicationController.class_eval do
     private
