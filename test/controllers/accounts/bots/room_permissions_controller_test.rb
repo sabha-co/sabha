@@ -7,6 +7,17 @@ class Accounts::Bots::RoomPermissionsControllerTest < ActionDispatch::Integratio
     @room = rooms(:designers)
   end
 
+  test "index lists bot memberships and available rooms" do
+    get account_bot_rooms_url(@bot)
+    assert_response :ok
+  end
+
+  test "index requires admin" do
+    sign_in :kevin
+    get account_bot_rooms_url(@bot)
+    assert_redirected_to root_url
+  end
+
   test "show for room bot is in" do
     room = rooms(:watercooler) # bender has membership here
     get account_bot_room_permission_url(@bot, room)

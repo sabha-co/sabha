@@ -57,6 +57,18 @@ module User::Bot
     webhook&.url
   end
 
+  def webhook_configured?
+    webhook_url.present? && webhook_secret.present?
+  end
+
+  def room_memberships
+    memberships.visible.without_direct_rooms.without_thread_rooms.where(rooms: { active: true })
+  end
+
+  def rooms_available_to_add
+    Room.active.without_directs.without_threads.where.not(id: room_memberships.select(:room_id)).ordered
+  end
+
   def deliver_webhook_later(item, event, reply: false, base_url: "")
     webhook&.deliver_later(item, event, reply: reply, base_url: base_url)
   end

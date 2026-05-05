@@ -6,7 +6,14 @@
   </div>
 <% end %>
 
-<section class="panel">
+<section class="panel flex flex-column gap">
+  <div class="pad-inline flex flex-column gap-half">
+    <h1 class="margin-none txt-large"><strong>Create a chat bot</strong></h1>
+    <p class="txt-small txt-muted margin-none">Post messages to rooms via the API, receive events in real-time.</p>
+  </div>
+
+  <hr class="separator full-width" style="--border-style: solid">
+
   <%= form_with model: @bot, url: account_bots_path, class: "flex flex-column gap" do |form| %>
     <%= render "accounts/bots/form", form: form, bot: @bot %>
   <% end %>

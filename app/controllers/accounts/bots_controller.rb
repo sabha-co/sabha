@@ -17,10 +17,7 @@ class Accounts::BotsController < ApplicationController
   end
 
   def show
-    @bot_memberships = @bot.memberships.visible.without_direct_rooms.without_thread_rooms
-      .includes(:room).where(rooms: { active: true }).order("rooms.sortable_name")
-    bot_room_ids = @bot_memberships.map(&:room_id)
-    @available_rooms = Room.active.without_directs.without_threads.where.not(id: bot_room_ids).ordered
+    @rooms_count = @bot.room_memberships.count
   end
 
   def edit

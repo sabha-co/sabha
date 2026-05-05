@@ -23,21 +23,21 @@
   <div class="flex flex-column gap">
     <h2 class="txt-small txt-muted margin-none"><strong>Add a bot</strong></h2>
 
-    <div class="fill-shade border-radius pad flex flex-column gap-half">
-      <div class="txt-small"><strong>Invite URL</strong></div>
-      <div class="txt-x-small txt-muted">Generate a one-time URL to register a bot via the API. <%= link_to "Install a bot", "https://github.com/sabha-co/openclaw-sabha?tab=readme-ov-file#install", target: "_blank", class: "txt-underlined" %></div>
-      <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code %>
-    </div>
-
     <div class="fill-shade border-radius pad flex align-center gap">
       <div class="flex-item-grow min-width">
         <div class="txt-small"><strong>Create manually</strong></div>
         <div class="txt-x-small txt-muted">Set up a bot yourself with a name. Add a webhook URL later if you need HTTP delivery.</div>
       </div>
-      <%= link_to new_account_bot_path, class: "btn btn--small flex-item-no-shrink", aria: { label: "Create a bot manually" } do %>
+      <%= link_to new_account_bot_path, class: "btn btn--primary btn--small flex-item-no-shrink", aria: { label: "Create a bot manually" } do %>
         <%= icon_tag "add" %>
         <span>Create bot</span>
       <% end %>
+    </div>
+
+    <div class="fill-shade border-radius pad flex flex-column gap-half">
+      <div class="txt-small"><strong>Invite URL</strong></div>
+      <div class="txt-x-small txt-muted">Generate a one-time URL to register a bot via the API using <%= link_to "Openclaw plugin.", "https://github.com/sabha-co/openclaw-sabha?tab=readme-ov-file#install", target: "_blank", class: "txt-underlined" %></div>
+      <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code %>
     </div>
   </div>
 </section>

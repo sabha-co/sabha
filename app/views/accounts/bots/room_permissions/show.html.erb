@@ -50,6 +50,9 @@
         <% end %>
       </div>
 
+      <label class="txt-small txt-muted">Example — send a message into this room from your code or CI.</label>
+      <%= render "accounts/bots/curl_example", bot: @bot, url: message_url, body: "Hello from #{@room.name}" %>
+
       <hr class="separator full-width" style="--border-style: solid">
 
       <%= button_to account_bot_room_permission_path(@bot, @room), method: :delete,

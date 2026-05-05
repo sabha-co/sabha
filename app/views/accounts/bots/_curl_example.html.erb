@@ -1,0 +1,17 @@
+<%# locals: (bot:, url:, body:) %>
+<% curl = <<~CURL.chomp
+  curl -H "Authorization: Bearer #{bot.bot_key}" \\
+       -H "Content-Type: text/plain" \\
+       #{url} \\
+       -d #{body.to_json}
+CURL
+%>
+<div style="position: relative;">
+  <pre class="fill-shade border-radius pad"><code><%= curl %></code></pre>
+  <div style="position: absolute; top: 0.5em; right: 0.5em;">
+    <%= button_to_copy_to_clipboard(curl) do %>
+      <%= icon_tag "copy-paste" %>
+      <span class="for-screen-reader">Copy curl example</span>
+    <% end %>
+  </div>
+</div>
