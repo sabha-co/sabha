@@ -19,7 +19,7 @@ module Saas
       sign_in_global_identity(global_identities(:alice))
       get settings_path
       assert_response :success
-      assert_select "legend", /Your Workspaces/i
+      assert_select "h2", /Your Workspaces/i
     end
 
     test "update requires authentication" do

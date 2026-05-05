@@ -36,7 +36,7 @@ module Saas
       workspace_get "/settings", workspace: @workspace
 
       assert_response :success
-      assert_select "legend", @workspace.name
+      assert_select "h1", @workspace.name
     end
 
     test "leave as last admin returns error" do
