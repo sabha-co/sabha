@@ -58,4 +58,17 @@ class Sessions::TransfersControllerTest < ActionDispatch::IntegrationTest
     assert_equal "That sign-in link is invalid or has expired.", flash[:alert]
     assert_nil parsed_cookies.signed[:session_token]
   end
+
+  test "update rejects a transfer link issued before a password change" do
+    user = users(:david)
+    transfer_id = user.transfer_id
+
+    user.update!(password: "rotated_password_123")
+
+    put session_transfer_url(transfer_id)
+
+    assert_redirected_to new_session_url
+    assert_equal "That sign-in link is invalid or has expired.", flash[:alert]
+    assert_nil parsed_cookies.signed[:session_token]
+  end
 end
