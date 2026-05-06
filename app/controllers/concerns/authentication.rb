@@ -113,11 +113,18 @@ module Authentication
         session.resume(user_agent: request.user_agent, ip_address: request.remote_ip)
         Current.global_session = session
         ensure_workspace_user_exists if ApplicationRecord.current_tenant.present?
+        deny_inactive_workspace_user
         set_authenticated_by(:session)
       else
         session.resume user_agent: request.user_agent, ip_address: request.remote_ip
         authenticated_as session
       end
+    end
+
+    def deny_inactive_workspace_user
+      return unless Current.user&.banned? || Current.user&.deactivated?
+
+      redirect_to "/workspaces"
     end
 
     # In SaaS mode, create the workspace User on first visit.

@@ -78,6 +78,20 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
     assert_response :redirect
   end
 
+  test "join page redirects banned member to workspace selector instead of guest join flow" do
+    sign_in_global_identity(@alice)
+    membership = workspace_memberships(:alice_acme)
+    setup_user_for_membership(membership)
+
+    ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
+      User.find(membership.user_id).ban
+    end
+
+    workspace_get "/join/#{@join_code.code}", workspace: @workspace
+
+    assert_redirected_to "/workspaces"
+  end
+
   # ============================================================================
   # POST /workspace_id/join/:join_code (signed out)
   # ============================================================================

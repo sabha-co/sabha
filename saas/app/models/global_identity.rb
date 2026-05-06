@@ -68,8 +68,7 @@ class GlobalIdentity < UntenantedRecord
     workspace_memberships
       .includes(:workspace)
       .order(updated_at: :desc)
-      .filter_map(&:workspace)
-      .select(&:active?)
+      .filter_map { |m| m.workspace if m.workspace&.active? && m.user_active? }
   end
 
   # Get workspace memberships in user-defined order (for workspace selector)

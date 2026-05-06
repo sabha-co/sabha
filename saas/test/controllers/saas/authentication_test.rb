@@ -145,6 +145,48 @@ module Saas
       workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
     end
 
+    test "banned workspace user is redirected and selector does not loop back into the banned workspace" do
+      workspace = Workspace.create_with_database!(name: "Ban Test", creator: global_identities(:alice))
+      sign_in_global_identity(global_identities(:alice))
+      membership = global_identities(:alice).workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).ban
+      end
+
+      workspace_get "/", workspace: workspace
+
+      assert_redirected_to "/workspaces"
+      follow_redirect!
+      assert_no_match %r{/#{workspace.external_id}(/|$)}, response.location.to_s,
+        "selector must not bounce a banned user back into their banned workspace"
+      assert WorkspaceMembership.exists?(membership.id),
+        "membership must be preserved for staff admin visibility"
+    ensure
+      workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+    end
+
+    test "deactivated workspace user is redirected and selector does not loop back" do
+      workspace = Workspace.create_with_database!(name: "Deactivate Test", creator: global_identities(:alice))
+      sign_in_global_identity(global_identities(:alice))
+      membership = global_identities(:alice).workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).deactivate
+      end
+
+      workspace_get "/", workspace: workspace
+
+      assert_redirected_to "/workspaces"
+      follow_redirect!
+      assert_no_match %r{/#{workspace.external_id}(/|$)}, response.location.to_s,
+        "selector must not bounce a deactivated user back into their workspace"
+      assert WorkspaceMembership.exists?(membership.id),
+        "membership must be preserved for staff admin visibility"
+    ensure
+      workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+    end
+
     test "authenticated user accessing workspace they are not a member of is redirected to workspace selector" do
       # Bob is NOT a member of acme workspace
       sign_in_global_identity(global_identities(:bob))
