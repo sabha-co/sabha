@@ -114,6 +114,28 @@ class PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     assert_match /Invalid or expired/, flash[:alert]
   end
 
+  test "token is invalidated after a successful password reset" do
+    user = users(:david)
+    token = user.generate_token_for(:password_reset)
+
+    patch password_reset_url(token), params: {
+      password: "new_secure_password_123",
+      password_confirmation: "new_secure_password_123"
+    }
+    assert_redirected_to root_url
+
+    delete session_url
+    cookies.delete(:session_token)
+
+    patch password_reset_url(token), params: {
+      password: "attacker_password_123",
+      password_confirmation: "attacker_password_123"
+    }
+    assert_redirected_to new_session_url
+    assert_match /Invalid or expired/, flash[:alert]
+    assert user.reload.authenticate("new_secure_password_123")
+  end
+
   test "update fails with short password" do
     user = users(:david)
     token = user.generate_token_for(:password_reset)

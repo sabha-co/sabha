@@ -126,7 +126,9 @@ class User < ApplicationRecord
 
   generates_token_for :email_verification, expires_in: 24.hours
   generates_token_for :email_change, expires_in: 24.hours
-  generates_token_for :password_reset, expires_in: 1.hour
+  generates_token_for :password_reset, expires_in: 1.hour do
+    password_salt&.last(10)
+  end
 
   after_update :send_email_change_notification, if: :saved_change_to_email_address?
   after_update :sync_name_to_global_identity, if: -> { Sabha.saas? && saved_change_to_name? }
