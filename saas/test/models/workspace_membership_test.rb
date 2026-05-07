@@ -158,6 +158,39 @@ class WorkspaceMembershipTest < ActiveSupport::TestCase
     end
   end
 
+  test "User hard-destroy flips workspace_memberships.user_active to false so the workspace selector hides the orphan" do
+    with_provisioned_workspace(name: "Hard Destroy Test", creator: global_identities(:alice)) do |workspace|
+      membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)
+      assert membership.user_active, "precondition: membership starts active"
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).destroy!
+      end
+
+      membership.reload
+      assert_nil membership.user_id, "destroy must clear cached user_id"
+      assert_not membership.user_active, "destroy must drop the user_active mirror"
+      assert_not_includes global_identities(:alice).active_workspaces_recent_first, workspace,
+        "workspace selector must not surface the orphaned membership"
+    end
+  end
+
+  test "create_user! after a hard-destroy restores user_active so the workspace becomes reachable again" do
+    with_provisioned_workspace(name: "Recreate After Destroy", creator: global_identities(:alice)) do |workspace|
+      membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).destroy!
+      end
+      assert_not membership.reload.user_active
+
+      membership.create_user!
+
+      assert membership.reload.user_active,
+        "after_create_commit must re-flip user_active=true when a new User is provisioned"
+    end
+  end
+
   test "mirror write failure logs and does not roll back the User#deactivate transaction" do
     with_provisioned_workspace(name: "Mirror Failure Test", creator: global_identities(:alice)) do |workspace|
       membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)

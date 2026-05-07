@@ -21,7 +21,7 @@ module Authentication
 
     def require_unauthenticated_access(**options)
       skip_before_action :require_authentication, **options
-      before_action :restore_authentication, :redirect_signed_in_user_to_root, **options
+      before_action :restore_authentication, :deny_inactive_workspace_user, :redirect_signed_in_user_to_root, **options
     end
   end
 
@@ -32,6 +32,9 @@ module Authentication
 
     def require_authentication
       restore_authentication || bot_authentication || request_authentication
+      return if performed?
+
+      deny_inactive_workspace_user
       require_workspace_membership unless performed?
     end
 
@@ -113,7 +116,6 @@ module Authentication
         session.resume(user_agent: request.user_agent, ip_address: request.remote_ip)
         Current.global_session = session
         ensure_workspace_user_exists if ApplicationRecord.current_tenant.present?
-        deny_inactive_workspace_user
         set_authenticated_by(:session)
       else
         session.resume user_agent: request.user_agent, ip_address: request.remote_ip
@@ -121,10 +123,25 @@ module Authentication
       end
     end
 
+    # Banned/deactivated workspace users get bounced to their next available
+    # workspace (or the new-workspace page) with an alert. Picks the destination
+    # itself so callers don't have to launder the flash through a transit redirect.
     def deny_inactive_workspace_user
-      return unless Current.user&.banned? || Current.user&.deactivated?
+      return unless Sabha.saas? && Current.user
+      return unless Current.user.banned? || Current.user.deactivated?
 
-      redirect_to "/workspaces", alert: "You no longer have access to this workspace."
+      redirect_to next_workspace_path_for_inactive_user,
+        alert: "You no longer have access to this workspace."
+    end
+
+    def next_workspace_path_for_inactive_user
+      current_external_id = ApplicationRecord.current_tenant
+      next_workspace = Current.global_session
+        &.global_identity
+        &.active_workspaces_recent_first
+        &.reject { |workspace| workspace.external_id.to_s == current_external_id }
+        &.first
+      next_workspace ? "/#{next_workspace.external_id}" : "/workspaces/new"
     end
 
     # In SaaS mode, create the workspace User on first visit.

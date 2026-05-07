@@ -83,9 +83,11 @@ class WorkspaceMembership < UntenantedRecord
     nil
   end
 
-  # Update the cached user_id
+  # Update the cached user_id and reset the user_active mirror. Linking a new
+  # User to a membership implies the user is active — necessary for the rejoin
+  # path after a hard destroy, which left user_active=false on the orphan row.
   def cache_user_id!(user_id)
-    update_column(:user_id, user_id)
+    update_columns(user_id: user_id, user_active: true)
   end
 
   # Create or find the User record in the workspace database

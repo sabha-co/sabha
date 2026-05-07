@@ -6,9 +6,6 @@ module Saas
 
     def index
       # Always redirect — workspace selection happens via sidebar, not this page.
-      # flash.keep so flashes set by callers (e.g. the deny-inactive-user guard
-      # in Authentication) survive this transit hop and reach the rendered destination.
-      flash.keep
       workspaces = current_global_identity.active_workspaces_recent_first
 
       if workspaces.any?

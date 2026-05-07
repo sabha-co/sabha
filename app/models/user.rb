@@ -132,6 +132,7 @@ class User < ApplicationRecord
 
   after_update :send_email_change_notification, if: :saved_change_to_email_address?
   after_update :sync_name_to_global_identity, if: -> { Sabha.saas? && saved_change_to_name? }
+  after_update_commit :sync_workspace_membership_active, if: -> { Sabha.saas? && saved_change_to_status? }
 
   before_validation :set_default_name
   before_validation :normalize_social_urls
@@ -199,7 +200,6 @@ class User < ApplicationRecord
       update! status: :active
       reset_remote_connections
     end
-    sync_workspace_membership_active(true)
   end
 
   def deactivate
@@ -217,7 +217,6 @@ class User < ApplicationRecord
     push_subscriptions.delete_all
     sessions.delete_all
     auth_tokens.delete_all
-    sync_workspace_membership_active(false)
   end
 
   def reset_remote_connections
@@ -363,25 +362,22 @@ class User < ApplicationRecord
     unconfirmed_email.present?
   end
 
-  # Mirror the per-tenant User#active? onto the untenanted WorkspaceMembership row
-  # so the workspace selector can filter without cross-tenant queries. No-op in
-  # self-hosted mode where WorkspaceMembership isn't loaded. The two writes
-  # (User.status + WorkspaceMembership.user_active) live in different databases
-  # and aren't transactional — log and continue on failure rather than rolling
-  # back the calling lifecycle method, since the auth-time guard in Authentication
-  # reads the tenanted User row and keeps access blocked even if the mirror is
-  # stale. The mirror is a hint for the selector, not a security control.
-  def sync_workspace_membership_active(value)
-    return unless Sabha.saas?
-    return unless workspace_membership
-
-    workspace_membership.update(user_active: value) ||
-      Rails.logger.error("[User#sync_workspace_membership_active] failed to mirror user_active=#{value} for membership=#{workspace_membership.id}: #{workspace_membership.errors.full_messages.to_sentence}")
-  rescue ActiveRecord::ActiveRecordError => e
-    Rails.logger.error("[User#sync_workspace_membership_active] error mirroring user_active=#{value} for user=#{id}: #{e.class}: #{e.message}")
-  end
-
   private
+    # Mirror User#active? onto the untenanted WorkspaceMembership row so the
+    # workspace selector can filter without cross-tenant queries. Runs after
+    # the tenanted transaction commits, so a Postgres failure here cannot roll
+    # back the SQLite write. The auth-time guard reads the tenanted User row,
+    # so a stale mirror cannot let a banned user through — it can only hide a
+    # workspace the user should still see, and the rake backfill repairs that.
+    def sync_workspace_membership_active
+      return unless workspace_membership
+
+      workspace_membership.update(user_active: active?) ||
+        Rails.logger.error("[User#sync_workspace_membership_active] failed to mirror user_active=#{active?} for membership=#{workspace_membership.id}: #{workspace_membership.errors.full_messages.to_sentence}")
+    rescue ActiveRecord::ActiveRecordError => e
+      Rails.logger.error("[User#sync_workspace_membership_active] error mirroring user_active=#{active?} for user=#{id}: #{e.class}: #{e.message}")
+    end
+
     def deactivate_direct_rooms
       Membership.where(user_id: id).direct_rooms.each do |membership|
         membership.room.deactivate
@@ -445,10 +441,13 @@ class User < ApplicationRecord
     # `dependent: :destroy` only finds active records. We need to delete all
     # records regardless, hence the explicit queries.
     def destroy_all_associated_records
-      # Clear cached user_id on WorkspaceMembership (SaaS mode)
+      # Clear cached user_id and flip user_active on WorkspaceMembership (SaaS mode).
+      # user_active mirrors User#active? but the after_*_commit callback only fires on
+      # status changes — a hard destroy must explicitly drop the mirror or the
+      # workspace selector keeps surfacing an orphaned membership row.
       if Sabha.saas? && workspace_membership_id.present?
         WorkspaceMembership.where(id: workspace_membership_id, user_id: id)
-                           .update_all(user_id: nil)
+                           .update_all(user_id: nil, user_active: false)
       end
 
       # Delete messages first (they have FKs to boosts, bookmarks, notifications)
