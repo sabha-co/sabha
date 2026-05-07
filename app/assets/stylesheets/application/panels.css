@@ -140,6 +140,39 @@
   opacity: 0.6;
 }
 
+.member-status-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-block-end: var(--block-space);
+}
+
+.member-status-tab {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  position: relative;
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  & + & {
+    padding-inline-start: 0.875rem;
+
+    &::before {
+      content: "·";
+      color: var(--color-text-muted);
+      position: absolute;
+      inset-inline-start: -0.125rem;
+    }
+  }
+}
+
+.member-status-tab--active {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
 /* Member management responsive styles */
 .panel--members {
   --panel-width: 60ch;
