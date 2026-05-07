@@ -123,4 +123,30 @@ class Users::BansControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_path
   end
+
+  test "create enqueues a ban notification email to the user" do
+    user = users(:kevin)
+
+    assert_enqueued_email_with(UserMailer, :banned, args: [ user ]) do
+      post user_ban_url(user)
+    end
+  end
+
+  test "destroy enqueues an unban notification email to the user" do
+    user = users(:kevin)
+    user.ban
+
+    assert_enqueued_email_with(UserMailer, :unbanned, args: [ user ]) do
+      delete user_ban_url(user)
+    end
+  end
+
+  test "deactivate and reactivate do not enqueue ban or unban emails" do
+    user = users(:kevin)
+
+    assert_no_enqueued_emails do
+      user.deactivate
+      user.reactivate
+    end
+  end
 end

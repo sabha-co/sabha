@@ -132,6 +132,7 @@ class User < ApplicationRecord
 
   after_update :send_email_change_notification, if: :saved_change_to_email_address?
   after_update :sync_name_to_global_identity, if: -> { Sabha.saas? && saved_change_to_name? }
+  after_update_commit :sync_workspace_membership_active, if: -> { Sabha.saas? && saved_change_to_status? }
 
   before_validation :set_default_name
   before_validation :normalize_social_urls
@@ -362,6 +363,18 @@ class User < ApplicationRecord
   end
 
   private
+    # Mirror User#active? onto the untenanted WorkspaceMembership row so the
+    # workspace selector can filter without cross-tenant queries. Runs post-
+    # commit, so a Postgres failure here cannot roll back the SQLite write.
+    # The auth-time guard reads the tenanted User row, so a stale mirror can
+    # only hide a workspace the user should still see — repaired by the
+    # workspace_membership:backfill_user_active rake task.
+    def sync_workspace_membership_active
+      workspace_membership&.update_column(:user_active, active?)
+    rescue ActiveRecord::ActiveRecordError => e
+      Rails.logger.error("Failed to mirror user_active for workspace_membership=#{workspace_membership_id}: #{e.message}")
+    end
+
     def deactivate_direct_rooms
       Membership.where(user_id: id).direct_rooms.each do |membership|
         membership.room.deactivate
@@ -425,10 +438,13 @@ class User < ApplicationRecord
     # `dependent: :destroy` only finds active records. We need to delete all
     # records regardless, hence the explicit queries.
     def destroy_all_associated_records
-      # Clear cached user_id on WorkspaceMembership (SaaS mode)
+      # Clear cached user_id and flip user_active on WorkspaceMembership (SaaS mode).
+      # user_active mirrors User#active? but the after_*_commit callback only fires on
+      # status changes — a hard destroy must explicitly drop the mirror or the
+      # workspace selector keeps surfacing an orphaned membership row.
       if Sabha.saas? && workspace_membership_id.present?
         WorkspaceMembership.where(id: workspace_membership_id, user_id: id)
-                           .update_all(user_id: nil)
+                           .update_all(user_id: nil, user_active: false)
       end
 
       # Delete messages first (they have FKs to boosts, bookmarks, notifications)

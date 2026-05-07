@@ -1,14 +1,14 @@
 <% if user.active? %>
   <%= button_to user_ban_path(user), method: :post,
         class: "btn",
-        data: { turbo_confirm: "Are you sure you want to ban this user? This will log them out, delete their messages, and block their IP addresses." } do %>
+        data: { turbo_confirm: "Ban #{user.name}? This logs them out, permanently deletes their messages, removes them from rooms, and blocks their IP addresses." } do %>
     <%= icon_tag "cancel" %>
     <span>Ban</span>
   <% end %>
 <% else %>
   <%= button_to user_ban_path(user), method: :delete,
         class: "btn btn--negative",
-        data: { turbo_confirm: "Are you sure you want to remove the ban on this user?" } do %>
+        data: { turbo_confirm: "Remove the ban on #{user.name}? They can sign in again. Deleted messages and room memberships are not restored — they'll need to rejoin rooms." } do %>
     <%= icon_tag "cancel" %>
     <span>Remove ban</span>
   <% end %>

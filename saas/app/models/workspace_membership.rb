@@ -64,6 +64,16 @@ class WorkspaceMembership < UntenantedRecord
     nil
   end
 
+  # Mirror of the per-workspace User's :active status. Source of truth lives on
+  # the tenanted User row; the `user_active` column is a denormalized cache
+  # updated by User#revoke_access / User#unban / User#reactivate so the workspace
+  # selector can filter without cross-tenant queries (activerecord-tenanted
+  # prohibits shard swapping inside an active tenant context). NOTE: this is
+  # NOT the Deactivatable soft-delete pattern — the membership row is preserved
+  # for staff visibility (Admin::WorkspaceMembersController etc.) regardless of
+  # this flag.
+  scope :user_active, -> { where(user_active: true) }
+
   # Get the Account name for this workspace
   def account_name
     ApplicationRecord.with_tenant(tenant) do
@@ -73,9 +83,17 @@ class WorkspaceMembership < UntenantedRecord
     nil
   end
 
-  # Update the cached user_id
-  def cache_user_id!(user_id)
-    update_column(:user_id, user_id)
+  # Update the cached user_id and reset the user_active mirror. Linking a new
+  # User to a membership implies the user is active — necessary for the rejoin
+  # path after a hard destroy, which left user_active=false on the orphan row.
+  def cache_user_id!(id)
+    update_columns(user_id: id, user_active: true)
+  end
+
+  # True when the per-workspace User has been banned or deactivated. Mirrors
+  # User#active?'s inverse via the user_active cache column — see scope above.
+  def inactive?
+    !user_active
   end
 
   # Create or find the User record in the workspace database

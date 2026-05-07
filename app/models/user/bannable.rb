@@ -1,6 +1,11 @@
 module User::Bannable
   extend ActiveSupport::Concern
 
+  included do
+    after_update_commit :send_ban_email,   if: :ban_just_happened?
+    after_update_commit :send_unban_email, if: :unban_just_happened?
+  end
+
   def ban
     transaction do
       create_bans_from_sessions
@@ -41,5 +46,26 @@ module User::Bannable
     def apply_ban
       revoke_access
       remove_banned_content_later
+    end
+
+    def send_ban_email
+      UserMailer.banned(self).deliver_later
+    end
+
+    def send_unban_email
+      UserMailer.unbanned(self).deliver_later
+    end
+
+    def ban_just_happened?
+      saved_change_to_status? && banned? && notifiable_about_status?
+    end
+
+    def unban_just_happened?
+      return false unless saved_change_to_status? && notifiable_about_status?
+      saved_change_to_status.first == "banned" && active?
+    end
+
+    def notifiable_about_status?
+      !bot? && email_address.present?
     end
 end

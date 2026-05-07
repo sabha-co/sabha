@@ -1,5 +1,13 @@
 <% content_for :title, "Settings" %>
 
+<% if @workspace_access_denied %>
+  <div role="alert" class="settings-banner">
+    <div class="settings-banner__inner">
+      You no longer have access to that workspace.
+    </div>
+  </div>
+<% end %>
+
 <div class="saas-settings settings-layout">
   <%# Workspaces Section %>
   <div class="panel">
@@ -12,7 +20,6 @@
         <div class="flex flex-column gap-half">
           <% @workspace_memberships.each do |membership| %>
             <% workspace = membership.workspace %>
-            <% user = membership.user %>
 
             <%= link_to settings_path(script_name: workspace.slug),
                   class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated" do %>
@@ -26,7 +33,7 @@
                 </div>
                 <div class="flex flex-column">
                   <strong><%= workspace.name %></strong>
-                  <span class="txt-small txt-muted"><%= user&.role&.capitalize || "Member" %></span>
+                  <span class="txt-small txt-muted"><%= workspace_role_label(membership) %></span>
                 </div>
               </div>
               <%= icon_tag "arrow-right", class: "txt-muted" %>

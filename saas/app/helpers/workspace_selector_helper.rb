@@ -34,7 +34,8 @@ module WorkspaceSelectorHelper
   def workspace_selector_workspaces
     return [] unless Current.global_identity
 
-    Current.global_identity.workspace_memberships_ordered.filter_map(&:workspace).select(&:active?)
+    Current.global_identity.workspace_memberships_ordered.user_active
+      .filter_map { |m| m.workspace if m.workspace&.active? }
   end
 
   def workspace_url(workspace)
@@ -43,5 +44,13 @@ module WorkspaceSelectorHelper
 
   def workspace_logo_url(workspace)
     account_logo_path(script_name: workspace.slug, size: "small")
+  end
+
+  # "Inactive" hides the specific reason (banned vs. deactivated) from the
+  # member's own settings list. Falls back to "Member" when the User row
+  # exists but has no role (legacy/edge case).
+  def workspace_role_label(membership)
+    return "Inactive" if membership.inactive?
+    membership.user&.role&.capitalize || "Member"
   end
 end

@@ -26,4 +26,18 @@ class UserMailer < ApplicationMailer
 
     mail(to: [ old_email, user.email_address ].compact.uniq, subject: "Your email address has been changed for #{Branding.contextual_app_name}")
   end
+
+  def banned(user)
+    @user = user
+    @account_name = Account.sole&.name || Branding.contextual_app_name
+
+    mail(to: user.email_address, subject: "Your access to #{@account_name} has been suspended")
+  end
+
+  def unbanned(user)
+    @user = user
+    @account_name = Account.sole&.name || Branding.contextual_app_name
+
+    mail(to: user.email_address, subject: "Your access to #{@account_name} has been restored")
+  end
 end

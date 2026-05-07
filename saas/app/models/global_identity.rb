@@ -65,11 +65,10 @@ class GlobalIdentity < UntenantedRecord
   end
 
   def active_workspaces_recent_first
-    workspace_memberships
+    workspace_memberships.user_active
       .includes(:workspace)
       .order(updated_at: :desc)
-      .filter_map(&:workspace)
-      .select(&:active?)
+      .filter_map { |m| m.workspace if m.workspace&.active? }
   end
 
   # Get workspace memberships in user-defined order (for workspace selector)

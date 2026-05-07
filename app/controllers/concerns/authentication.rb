@@ -21,7 +21,7 @@ module Authentication
 
     def require_unauthenticated_access(**options)
       skip_before_action :require_authentication, **options
-      before_action :restore_authentication, :redirect_signed_in_user_to_root, **options
+      before_action :restore_authentication, :deny_inactive_workspace_user, :redirect_signed_in_user_to_root, **options
     end
   end
 
@@ -32,6 +32,9 @@ module Authentication
 
     def require_authentication
       restore_authentication || bot_authentication || request_authentication
+      return if performed?
+
+      deny_inactive_workspace_user
       require_workspace_membership unless performed?
     end
 
@@ -118,6 +121,17 @@ module Authentication
         session.resume user_agent: request.user_agent, ip_address: request.remote_ip
         authenticated_as session
       end
+    end
+
+    # Banned/deactivated workspace users get bounced to /settings, which lists
+    # their other workspaces. The ?denied=workspace query param tells the page
+    # to render a persistent banner — flash gets clobbered by Turbo refetches
+    # and auto-fades after 3s, so it's unreliable for this kind of message.
+    def deny_inactive_workspace_user
+      return unless Sabha.saas? && Current.user
+      return unless Current.user.banned? || Current.user.deactivated?
+
+      redirect_to settings_path(script_name: "", denied: "workspace")
     end
 
     # In SaaS mode, create the workspace User on first visit.

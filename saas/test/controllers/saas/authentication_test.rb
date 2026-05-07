@@ -145,6 +145,85 @@ module Saas
       workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
     end
 
+    test "banned workspace user is redirected to /settings with an alert" do
+      identity = GlobalIdentity.create!(email_address: "ban-tester@example.com", name: "Ban Tester")
+      workspace = Workspace.create_with_database!(name: "Ban Test", creator: identity)
+      sign_in_global_identity(identity)
+      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).ban
+      end
+
+      workspace_get "/", workspace: workspace
+
+      assert_redirected_to "/settings?denied=workspace"
+      assert WorkspaceMembership.exists?(membership.id),
+        "membership must be preserved so the user can leave it from /settings"
+    ensure
+      workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+      identity&.destroy
+    end
+
+    test "banned user with multiple workspaces is also redirected to /settings (not into another workspace)" do
+      identity = GlobalIdentity.create!(email_address: "multi-ban@example.com", name: "Multi Ban")
+      banned_workspace = Workspace.create_with_database!(name: "Banned WS", creator: identity)
+      other_workspace = Workspace.create_with_database!(name: "Other WS", creator: identity)
+      sign_in_global_identity(identity)
+      banned_membership = identity.workspace_memberships.find_by(tenant: banned_workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(banned_workspace.external_id.to_s) do
+        User.find(banned_membership.user_id).ban
+      end
+
+      workspace_get "/", workspace: banned_workspace
+
+      assert_redirected_to "/settings?denied=workspace"
+    ensure
+      banned_workspace&.destroy_with_database! if banned_workspace && Workspace.exists?(id: banned_workspace.id)
+      other_workspace&.destroy_with_database! if other_workspace && Workspace.exists?(id: other_workspace.id)
+      identity&.destroy
+    end
+
+    test "auth guard fail-closes when workspace_memberships.user_active is stale (drift case)" do
+      identity = GlobalIdentity.create!(email_address: "drift@example.com", name: "Drift")
+      workspace = Workspace.create_with_database!(name: "Drift Test", creator: identity)
+      sign_in_global_identity(identity)
+      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).update!(status: :banned)
+      end
+      membership.update_column(:user_active, true)
+
+      workspace_get "/", workspace: workspace
+
+      assert_redirected_to "/settings?denied=workspace"
+    ensure
+      workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+      identity&.destroy
+    end
+
+    test "deactivated workspace user is redirected to /settings with an alert" do
+      identity = GlobalIdentity.create!(email_address: "deactivate-tester@example.com", name: "Deactivate Tester")
+      workspace = Workspace.create_with_database!(name: "Deactivate Test", creator: identity)
+      sign_in_global_identity(identity)
+      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).deactivate
+      end
+
+      workspace_get "/", workspace: workspace
+
+      assert_redirected_to "/settings?denied=workspace"
+      assert WorkspaceMembership.exists?(membership.id),
+        "membership must be preserved so the user can leave it from /settings"
+    ensure
+      workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+      identity&.destroy
+    end
+
     test "authenticated user accessing workspace they are not a member of is redirected to workspace selector" do
       # Bob is NOT a member of acme workspace
       sign_in_global_identity(global_identities(:bob))

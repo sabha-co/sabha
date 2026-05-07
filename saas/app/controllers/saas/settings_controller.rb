@@ -13,6 +13,7 @@ module Saas
     def show
       @global_identity = current_global_identity
       @workspace_memberships = current_global_identity.workspace_memberships_with_workspaces
+      @workspace_access_denied = params[:denied] == "workspace"
     end
 
     def update

@@ -69,3 +69,19 @@
     }
   }
 }
+
+/* Persistent alert above the settings grid. Used when the deny guard bounces
+   a banned/deactivated user here — flash auto-fades after 3s and Turbo
+   refetches eat it, so this is rendered as page content from a query param. */
+.settings-banner {
+  margin: var(--block-space) auto 0;
+  max-inline-size: 100ch;
+  padding: 0 var(--block-space);
+}
+
+.settings-banner__inner {
+  background: var(--color-negative);
+  border-radius: 0.5rem;
+  color: white;
+  padding: 0.875rem 1.25rem;
+}
