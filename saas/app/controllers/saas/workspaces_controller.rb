@@ -5,7 +5,7 @@ module Saas
     # Workspace management (outside workspace context)
 
     def index
-      # Always redirect — workspace selection happens via sidebar, not this page.
+      # Always redirect - workspace selection happens via sidebar, not this page
       workspaces = current_global_identity.active_workspaces_recent_first
 
       if workspaces.any?
