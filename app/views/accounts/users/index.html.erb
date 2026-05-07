@@ -40,16 +40,16 @@
     <% end %>
   </div>
 
-  <% if Current.user.staff? && (@deactivated_count.to_i > 0 || @banned_count.to_i > 0) %>
+  <% if Current.user.staff? && (@deactivated_count.to_i > 0 || @banned_count.to_i > 0 || @filtering_deactivated || @filtering_banned) %>
     <nav class="member-status-tabs txt-small" aria-label="Member status">
       <%= link_to "All", account_users_path,
             class: class_names("member-status-tab", "member-status-tab--active": !@filtering_deactivated && !@filtering_banned) %>
-      <% if @deactivated_count.to_i > 0 %>
-        <%= link_to "Deactivated (#{@deactivated_count})", account_users_path(status: "deactivated"),
+      <% if @deactivated_count.to_i > 0 || @filtering_deactivated %>
+        <%= link_to "Deactivated (#{@deactivated_count.to_i})", account_users_path(status: "deactivated"),
               class: class_names("member-status-tab", "member-status-tab--active": @filtering_deactivated) %>
       <% end %>
-      <% if @banned_count.to_i > 0 %>
-        <%= link_to "Banned (#{@banned_count})", account_users_path(status: "banned"),
+      <% if @banned_count.to_i > 0 || @filtering_banned %>
+        <%= link_to "Banned (#{@banned_count.to_i})", account_users_path(status: "banned"),
               class: class_names("member-status-tab", "member-status-tab--active": @filtering_banned) %>
       <% end %>
     </nav>

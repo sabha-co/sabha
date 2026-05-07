@@ -37,6 +37,26 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#user_#{banned.id}"
   end
 
+  test "empty deactivated filter still shows All chip so staff can navigate back" do
+    assert_equal 0, User.without_bots.deactivated.count
+
+    get account_users_url(status: "deactivated")
+
+    assert_response :success
+    assert_select ".member-status-tab", text: "All"
+    assert_select ".member-status-tab--active", text: "Deactivated (0)"
+  end
+
+  test "empty banned filter still shows All chip so staff can navigate back" do
+    assert_equal 0, User.without_bots.banned.count
+
+    get account_users_url(status: "banned")
+
+    assert_response :success
+    assert_select ".member-status-tab", text: "All"
+    assert_select ".member-status-tab--active", text: "Banned (0)"
+  end
+
   test "non-staff search hides deactivated and banned users" do
     deactivated = users(:jz)
     deactivated.deactivate
