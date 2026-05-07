@@ -78,7 +78,8 @@ class Accounts::UsersController < ApplicationController
       @searching = true
       query = params[:query].to_s.strip
       pattern = "%#{User.sanitize_sql_like(query)}%"
-      people = users_scope.active.where("name LIKE ?", pattern)
+      people_scope = Current.user.staff? ? users_scope : users_scope.active
+      people = people_scope.where("name LIKE ?", pattern)
       bots = bots_scope.where("name LIKE ?", pattern)
       @users = (people + bots).first(50)
       preload_activity(@users)
