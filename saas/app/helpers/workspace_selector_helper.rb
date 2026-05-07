@@ -45,4 +45,12 @@ module WorkspaceSelectorHelper
   def workspace_logo_url(workspace)
     account_logo_path(script_name: workspace.slug, size: "small")
   end
+
+  # "Inactive" hides the specific reason (banned vs. deactivated) from the
+  # member's own settings list. Falls back to "Member" when the User row
+  # exists but has no role (legacy/edge case).
+  def workspace_role_label(membership)
+    return "Inactive" if membership.inactive?
+    membership.user&.role&.capitalize || "Member"
+  end
 end
