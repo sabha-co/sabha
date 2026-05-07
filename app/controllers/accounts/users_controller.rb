@@ -3,6 +3,7 @@ class Accounts::UsersController < ApplicationController
 
   before_action :ensure_can_administer, only: %i[update destroy]
   before_action :set_user, only: %i[update destroy]
+  before_action :load_status_counts, only: :index, if: -> { Current.user.staff? }
 
   def index
     @badges = Badge.ordered.to_a if Current.user.can_administer?
@@ -78,7 +79,8 @@ class Accounts::UsersController < ApplicationController
       @searching = true
       query = params[:query].to_s.strip
       pattern = "%#{User.sanitize_sql_like(query)}%"
-      people = users_scope.active.where("name LIKE ?", pattern)
+      people_scope = Current.user.staff? ? users_scope : users_scope.active
+      people = people_scope.where("name LIKE ?", pattern)
       bots = bots_scope.where("name LIKE ?", pattern)
       @users = (people + bots).first(50)
       preload_activity(@users)
@@ -113,11 +115,11 @@ class Accounts::UsersController < ApplicationController
       @members = sort_by_activity(@members)
 
       @bots = bots_scope.ordered.to_a
+    end
 
-      if Current.user.staff?
-        @deactivated_count = User.without_bots.deactivated.count
-        @banned_count = User.without_bots.banned.count
-      end
+    def load_status_counts
+      @deactivated_count = User.without_bots.deactivated.count
+      @banned_count = User.without_bots.banned.count
     end
 
     ACTIVITY_SORT_ORDER = { active: 0, away: 1, offline: 2 }.freeze

@@ -40,6 +40,21 @@
     <% end %>
   </div>
 
+  <% if Current.user.staff? && (@deactivated_count.to_i > 0 || @banned_count.to_i > 0 || @filtering_deactivated || @filtering_banned) %>
+    <nav class="member-status-tabs txt-small" aria-label="Member status">
+      <%= link_to "All", account_users_path,
+            class: class_names("member-status-tab", "member-status-tab--active": !@filtering_deactivated && !@filtering_banned) %>
+      <% if @deactivated_count.to_i > 0 || @filtering_deactivated %>
+        <%= link_to "Deactivated (#{@deactivated_count.to_i})", account_users_path(status: "deactivated"),
+              class: class_names("member-status-tab", "member-status-tab--active": @filtering_deactivated) %>
+      <% end %>
+      <% if @banned_count.to_i > 0 || @filtering_banned %>
+        <%= link_to "Banned (#{@banned_count.to_i})", account_users_path(status: "banned"),
+              class: class_names("member-status-tab", "member-status-tab--active": @filtering_banned) %>
+      <% end %>
+    </nav>
+  <% end %>
+
   <div class="flex flex-column gap members-list">
     <turbo-frame id="account_users">
       <% if @searching %>
@@ -50,20 +65,12 @@
           <p class="txt-small txt-muted">No members found</p>
         <% end %>
       <% elsif @filtering_deactivated %>
-        <div class="flex align-center justify-between margin-block-half">
-          <p class="txt-small txt-muted margin-none role-section__heading">Deactivated</p>
-          <%= link_to "Back to all users", account_users_path, class: "btn txt-small" %>
-        </div>
         <% if @users.any? %>
           <%= render partial: "accounts/users/user", collection: @users, as: :user %>
         <% else %>
           <p class="txt-small txt-muted">No deactivated members</p>
         <% end %>
       <% elsif @filtering_banned %>
-        <div class="flex align-center justify-between margin-block-half">
-          <p class="txt-small txt-muted margin-none role-section__heading">Banned</p>
-          <%= link_to "Back to all users", account_users_path, class: "btn txt-small" %>
-        </div>
         <% if @users.any? %>
           <%= render partial: "accounts/users/user", collection: @users, as: :user %>
         <% else %>
@@ -94,22 +101,6 @@
             <p class="txt-small txt-muted margin-block-half role-section__heading">Bots</p>
             <%= render partial: "accounts/users/user", collection: @bots, as: :user %>
           </div>
-        <% end %>
-
-        <% if Current.user.staff? %>
-          <% if @deactivated_count > 0 %>
-            <div class="flex align-center justify-between margin-block-half">
-              <p class="txt-small txt-muted margin-none role-section__heading">Deactivated</p>
-              <%= link_to "View", account_users_path(status: "deactivated"), class: "btn txt-small" %>
-            </div>
-          <% end %>
-
-          <% if @banned_count > 0 %>
-            <div class="flex align-center justify-between margin-block-half">
-              <p class="txt-small txt-muted margin-none role-section__heading">Banned</p>
-              <%= link_to "View", account_users_path(status: "banned"), class: "btn txt-small" %>
-            </div>
-          <% end %>
         <% end %>
       <% end %>
     </turbo-frame>

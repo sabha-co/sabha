@@ -23,6 +23,56 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", text: "No members found"
   end
 
+  test "staff search finds deactivated and banned users" do
+    deactivated = users(:jz)
+    deactivated.deactivate
+    banned = users(:rachel)
+    banned.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")
+    banned.ban
+
+    get account_users_url, params: { query: "JZ" }
+    assert_select "turbo-frame#user_#{deactivated.id}"
+
+    get account_users_url, params: { query: "Rachel" }
+    assert_select "turbo-frame#user_#{banned.id}"
+  end
+
+  test "empty deactivated filter still shows All chip so staff can navigate back" do
+    assert_equal 0, User.without_bots.deactivated.count
+
+    get account_users_url(status: "deactivated")
+
+    assert_response :success
+    assert_select ".member-status-tab", text: "All"
+    assert_select ".member-status-tab--active", text: "Deactivated (0)"
+  end
+
+  test "empty banned filter still shows All chip so staff can navigate back" do
+    assert_equal 0, User.without_bots.banned.count
+
+    get account_users_url(status: "banned")
+
+    assert_response :success
+    assert_select ".member-status-tab", text: "All"
+    assert_select ".member-status-tab--active", text: "Banned (0)"
+  end
+
+  test "non-staff search hides deactivated and banned users" do
+    deactivated = users(:jz)
+    deactivated.deactivate
+    banned = users(:rachel)
+    banned.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")
+    banned.ban
+
+    sign_in :kevin
+
+    get account_users_url, params: { query: "JZ" }
+    assert_select "turbo-frame#user_#{deactivated.id}", count: 0
+
+    get account_users_url, params: { query: "Rachel" }
+    assert_select "turbo-frame#user_#{banned.id}", count: 0
+  end
+
   test "update role" do
     user = users(:kevin)
     assert user.member?
