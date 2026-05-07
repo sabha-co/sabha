@@ -2,7 +2,7 @@ class Ban < ApplicationRecord
   belongs_to :user
 
   validates :ip_address, presence: true
-  validate :ip_address_is_public, if: -> { ip_address.present? }
+  validate :ip_address_is_public, if: -> { ip_address.present? && !Rails.env.development? }
 
   after_save_commit    :bust_cache
   after_destroy_commit :bust_cache
