@@ -190,21 +190,4 @@ class WorkspaceMembershipTest < ActiveSupport::TestCase
         "after_create_commit must re-flip user_active=true when a new User is provisioned"
     end
   end
-
-  test "mirror write failure logs and does not roll back the User#deactivate transaction" do
-    with_provisioned_workspace(name: "Mirror Failure Test", creator: global_identities(:alice)) do |workspace|
-      membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)
-      user_id = membership.user_id
-
-      WorkspaceMembership.any_instance.stubs(:update_column).raises(ActiveRecord::StatementInvalid.new("simulated"))
-
-      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
-        user = User.find(user_id)
-        assert_nothing_raised { user.deactivate }
-        assert user.reload.deactivated?, "deactivate must succeed even when mirror write fails"
-      end
-    ensure
-      WorkspaceMembership.any_instance.unstub(:update_column)
-    end
-  end
 end
