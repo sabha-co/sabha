@@ -123,25 +123,15 @@ module Authentication
       end
     end
 
-    # Banned/deactivated workspace users get bounced to their next available
-    # workspace (or the new-workspace page) with an alert. Picks the destination
-    # itself so callers don't have to launder the flash through a transit redirect.
+    # Banned/deactivated workspace users get bounced to /settings, which lists
+    # their other workspaces. The ?denied=workspace query param tells the page
+    # to render a persistent banner — flash gets clobbered by Turbo refetches
+    # and auto-fades after 3s, so it's unreliable for this kind of message.
     def deny_inactive_workspace_user
       return unless Sabha.saas? && Current.user
       return unless Current.user.banned? || Current.user.deactivated?
 
-      redirect_to next_workspace_path_for_inactive_user,
-        alert: "You no longer have access to this workspace."
-    end
-
-    def next_workspace_path_for_inactive_user
-      current_external_id = ApplicationRecord.current_tenant
-      next_workspace = Current.global_session
-        &.global_identity
-        &.active_workspaces_recent_first
-        &.reject { |workspace| workspace.external_id.to_s == current_external_id }
-        &.first
-      next_workspace ? "/#{next_workspace.external_id}" : "/workspaces/new"
+      redirect_to "/settings?denied=workspace"
     end
 
     # In SaaS mode, create the workspace User on first visit.

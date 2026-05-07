@@ -145,7 +145,7 @@ module Saas
       workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
     end
 
-    test "banned workspace user with no other workspaces lands on new-workspace page without sidebar link to the banned workspace" do
+    test "banned workspace user is redirected to /settings with an alert" do
       identity = GlobalIdentity.create!(email_address: "ban-tester@example.com", name: "Ban Tester")
       workspace = Workspace.create_with_database!(name: "Ban Test", creator: identity)
       sign_in_global_identity(identity)
@@ -157,21 +157,15 @@ module Saas
 
       workspace_get "/", workspace: workspace
 
-      assert_redirected_to "/workspaces/new"
-      assert_equal "You no longer have access to this workspace.", flash[:alert]
-      follow_redirect!
-      assert_response :success
-      assert_no_match %r{href=["']/#{workspace.external_id}(/|["'])},
-        response.body,
-        "rendered page must not link back to the banned workspace (sidebar would bounce the user)"
+      assert_redirected_to "/settings?denied=workspace"
       assert WorkspaceMembership.exists?(membership.id),
-        "membership must be preserved for staff admin visibility"
+        "membership must be preserved so the user can leave it from /settings"
     ensure
       workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
       identity&.destroy
     end
 
-    test "banned user with multiple workspaces is redirected directly to the next available workspace" do
+    test "banned user with multiple workspaces is also redirected to /settings (not into another workspace)" do
       identity = GlobalIdentity.create!(email_address: "multi-ban@example.com", name: "Multi Ban")
       banned_workspace = Workspace.create_with_database!(name: "Banned WS", creator: identity)
       other_workspace = Workspace.create_with_database!(name: "Other WS", creator: identity)
@@ -184,15 +178,7 @@ module Saas
 
       workspace_get "/", workspace: banned_workspace
 
-      assert_redirected_to "/#{other_workspace.external_id}"
-      follow_redirect! while response.redirect?
-      assert_response :success
-      assert_no_match %r{href=["']/#{banned_workspace.external_id}(/|["'])},
-        response.body,
-        "destination workspace's sidebar must not link to the banned workspace"
-      assert_match %r{href=["']/#{other_workspace.external_id}(/|["'])},
-        response.body,
-        "destination workspace itself should be reachable in the sidebar"
+      assert_redirected_to "/settings?denied=workspace"
     ensure
       banned_workspace&.destroy_with_database! if banned_workspace && Workspace.exists?(id: banned_workspace.id)
       other_workspace&.destroy_with_database! if other_workspace && Workspace.exists?(id: other_workspace.id)
@@ -212,14 +198,13 @@ module Saas
 
       workspace_get "/", workspace: workspace
 
-      assert_redirected_to "/workspaces/new"
-      assert_equal "You no longer have access to this workspace.", flash[:alert]
+      assert_redirected_to "/settings?denied=workspace"
     ensure
       workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
       identity&.destroy
     end
 
-    test "deactivated workspace user with no other workspaces lands on new-workspace page without sidebar link" do
+    test "deactivated workspace user is redirected to /settings with an alert" do
       identity = GlobalIdentity.create!(email_address: "deactivate-tester@example.com", name: "Deactivate Tester")
       workspace = Workspace.create_with_database!(name: "Deactivate Test", creator: identity)
       sign_in_global_identity(identity)
@@ -231,15 +216,9 @@ module Saas
 
       workspace_get "/", workspace: workspace
 
-      assert_redirected_to "/workspaces/new"
-      assert_equal "You no longer have access to this workspace.", flash[:alert]
-      follow_redirect!
-      assert_response :success
-      assert_no_match %r{href=["']/#{workspace.external_id}(/|["'])},
-        response.body,
-        "rendered page must not link back to the deactivated workspace (sidebar would bounce the user)"
+      assert_redirected_to "/settings?denied=workspace"
       assert WorkspaceMembership.exists?(membership.id),
-        "membership must be preserved for staff admin visibility"
+        "membership must be preserved so the user can leave it from /settings"
     ensure
       workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
       identity&.destroy

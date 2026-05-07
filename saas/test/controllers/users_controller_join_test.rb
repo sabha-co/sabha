@@ -89,10 +89,7 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
 
     workspace_get "/join/#{@join_code.code}", workspace: @workspace
 
-    assert_response :redirect
-    assert_no_match %r{/#{@workspace.external_id}(/|$)}, URI(response.location).path,
-      "banned member must not be redirected back into the workspace they were banned from"
-    assert_equal "You no longer have access to this workspace.", flash[:alert]
+    assert_redirected_to "/settings?denied=workspace"
   end
 
   # ============================================================================
