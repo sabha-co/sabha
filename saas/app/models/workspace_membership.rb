@@ -90,6 +90,14 @@ class WorkspaceMembership < UntenantedRecord
     update_columns(user_id: user_id, user_active: true)
   end
 
+  # Display label for the workspace selector / settings list. Reads "Inactive"
+  # for banned/deactivated users so the row reflects the reason it's there
+  # without leaking the specific reason.
+  def role_label
+    return "Inactive" unless user_active
+    user&.role&.capitalize || "Member"
+  end
+
   # Create or find the User record in the workspace database
   # Uses find_or_create pattern to be idempotent
   # Reactivates deactivated users on rejoin

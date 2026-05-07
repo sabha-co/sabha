@@ -1,8 +1,8 @@
 <% content_for :title, "Settings" %>
 
 <% if @workspace_access_denied %>
-  <div role="alert" style="max-inline-size: 100ch; margin: var(--block-space) auto 0; padding: 0 var(--block-space);">
-    <div style="background: var(--color-negative); color: white; padding: 0.875rem 1.25rem; border-radius: 0.5rem;">
+  <div role="alert" class="settings-banner">
+    <div class="settings-banner__inner">
       You no longer have access to that workspace.
     </div>
   </div>
@@ -20,7 +20,6 @@
         <div class="flex flex-column gap-half">
           <% @workspace_memberships.each do |membership| %>
             <% workspace = membership.workspace %>
-            <% user = membership.user %>
 
             <%= link_to settings_path(script_name: workspace.slug),
                   class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated" do %>
@@ -34,9 +33,7 @@
                 </div>
                 <div class="flex flex-column">
                   <strong><%= workspace.name %></strong>
-                  <span class="txt-small txt-muted">
-                    <%= membership.user_active ? (user&.role&.capitalize || "Member") : "Inactive" %>
-                  </span>
+                  <span class="txt-small txt-muted"><%= membership.role_label %></span>
                 </div>
               </div>
               <%= icon_tag "arrow-right", class: "txt-muted" %>
