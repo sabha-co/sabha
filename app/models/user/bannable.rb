@@ -14,6 +14,7 @@ module User::Bannable
       bans.delete_all
       active!
     end
+    sync_workspace_membership_active(true)
   end
 
   def remove_banned_content_later

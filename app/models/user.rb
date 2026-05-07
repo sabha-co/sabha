@@ -199,6 +199,7 @@ class User < ApplicationRecord
       update! status: :active
       reset_remote_connections
     end
+    sync_workspace_membership_active(true)
   end
 
   def deactivate
@@ -216,6 +217,7 @@ class User < ApplicationRecord
     push_subscriptions.delete_all
     sessions.delete_all
     auth_tokens.delete_all
+    sync_workspace_membership_active(false)
   end
 
   def reset_remote_connections
@@ -359,6 +361,24 @@ class User < ApplicationRecord
 
   def pending_email_change?
     unconfirmed_email.present?
+  end
+
+  # Mirror the per-tenant User#active? onto the untenanted WorkspaceMembership row
+  # so the workspace selector can filter without cross-tenant queries. No-op in
+  # self-hosted mode where WorkspaceMembership isn't loaded. The two writes
+  # (User.status + WorkspaceMembership.user_active) live in different databases
+  # and aren't transactional — log and continue on failure rather than rolling
+  # back the calling lifecycle method, since the auth-time guard in Authentication
+  # reads the tenanted User row and keeps access blocked even if the mirror is
+  # stale. The mirror is a hint for the selector, not a security control.
+  def sync_workspace_membership_active(value)
+    return unless Sabha.saas?
+    return unless workspace_membership
+
+    workspace_membership.update(user_active: value) ||
+      Rails.logger.error("[User#sync_workspace_membership_active] failed to mirror user_active=#{value} for membership=#{workspace_membership.id}: #{workspace_membership.errors.full_messages.to_sentence}")
+  rescue ActiveRecord::ActiveRecordError => e
+    Rails.logger.error("[User#sync_workspace_membership_active] error mirroring user_active=#{value} for user=#{id}: #{e.class}: #{e.message}")
   end
 
   private

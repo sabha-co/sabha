@@ -125,4 +125,55 @@ class WorkspaceMembershipTest < ActiveSupport::TestCase
       assert rejoined_user.active?, "User should have active status"
     end
   end
+
+  test "User#unban flips workspace_memberships.user_active back to true" do
+    with_provisioned_workspace(name: "Unban Mirror Test", creator: global_identities(:alice)) do |workspace|
+      membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).ban
+      end
+      assert_not membership.reload.user_active, "ban must mirror to user_active=false"
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).unban
+      end
+      assert membership.reload.user_active, "unban must mirror to user_active=true"
+    end
+  end
+
+  test "User#reactivate flips workspace_memberships.user_active back to true" do
+    with_provisioned_workspace(name: "Reactivate Mirror Test", creator: global_identities(:alice)) do |workspace|
+      membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).deactivate
+      end
+      assert_not membership.reload.user_active, "deactivate must mirror to user_active=false"
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).reactivate
+      end
+      assert membership.reload.user_active, "reactivate must mirror to user_active=true"
+    end
+  end
+
+  test "mirror write failure logs and does not roll back the User#deactivate transaction" do
+    with_provisioned_workspace(name: "Mirror Failure Test", creator: global_identities(:alice)) do |workspace|
+      membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)
+      user_id = membership.user_id
+
+      WorkspaceMembership.any_instance.stubs(:update).returns(false).then.returns(true)
+      WorkspaceMembership.any_instance.stubs(:errors).returns(stub(full_messages: [ "Simulated" ]))
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        user = User.find(user_id)
+        assert_nothing_raised { user.deactivate }
+        assert user.reload.deactivated?, "ban must succeed even when mirror write fails"
+      end
+    ensure
+      WorkspaceMembership.any_instance.unstub(:update)
+      WorkspaceMembership.any_instance.unstub(:errors)
+    end
+  end
 end

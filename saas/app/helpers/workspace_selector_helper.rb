@@ -34,7 +34,8 @@ module WorkspaceSelectorHelper
   def workspace_selector_workspaces
     return [] unless Current.global_identity
 
-    Current.global_identity.workspace_memberships_ordered.filter_map(&:workspace).select(&:active?)
+    Current.global_identity.workspace_memberships_ordered.user_active
+      .filter_map { |m| m.workspace if m.workspace&.active? }
   end
 
   def workspace_url(workspace)

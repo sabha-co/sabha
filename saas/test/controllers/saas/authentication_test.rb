@@ -145,10 +145,11 @@ module Saas
       workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
     end
 
-    test "banned workspace user is redirected and selector does not loop back into the banned workspace" do
-      workspace = Workspace.create_with_database!(name: "Ban Test", creator: global_identities(:alice))
-      sign_in_global_identity(global_identities(:alice))
-      membership = global_identities(:alice).workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+    test "banned workspace user with no other workspaces lands on workspace selector without sidebar link to the banned workspace" do
+      identity = GlobalIdentity.create!(email_address: "ban-tester@example.com", name: "Ban Tester")
+      workspace = Workspace.create_with_database!(name: "Ban Test", creator: identity)
+      sign_in_global_identity(identity)
+      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
 
       ApplicationRecord.with_tenant(workspace.external_id.to_s) do
         User.find(membership.user_id).ban
@@ -157,19 +158,74 @@ module Saas
       workspace_get "/", workspace: workspace
 
       assert_redirected_to "/workspaces"
-      follow_redirect!
-      assert_no_match %r{/#{workspace.external_id}(/|$)}, response.location.to_s,
-        "selector must not bounce a banned user back into their banned workspace"
+      assert_equal "You no longer have access to this workspace.", flash[:alert]
+      follow_redirect! while response.redirect?
+      assert_response :success
+      assert_match "You no longer have access to this workspace.", response.body,
+        "flash must survive the redirect chain and be rendered to the user"
+      assert_no_match %r{href=["']/#{workspace.external_id}(/|["'])},
+        response.body,
+        "rendered page must not link back to the banned workspace (sidebar would bounce the user)"
       assert WorkspaceMembership.exists?(membership.id),
         "membership must be preserved for staff admin visibility"
     ensure
       workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+      identity&.destroy
     end
 
-    test "deactivated workspace user is redirected and selector does not loop back" do
-      workspace = Workspace.create_with_database!(name: "Deactivate Test", creator: global_identities(:alice))
-      sign_in_global_identity(global_identities(:alice))
-      membership = global_identities(:alice).workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+    test "banned user with multiple workspaces sees no link to the banned workspace from the destination workspace's sidebar" do
+      identity = GlobalIdentity.create!(email_address: "multi-ban@example.com", name: "Multi Ban")
+      banned_workspace = Workspace.create_with_database!(name: "Banned WS", creator: identity)
+      other_workspace = Workspace.create_with_database!(name: "Other WS", creator: identity)
+      sign_in_global_identity(identity)
+      banned_membership = identity.workspace_memberships.find_by(tenant: banned_workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(banned_workspace.external_id.to_s) do
+        User.find(banned_membership.user_id).ban
+      end
+
+      workspace_get "/", workspace: banned_workspace
+
+      assert_redirected_to "/workspaces"
+      follow_redirect! while response.redirect?
+      assert_response :success
+      assert_no_match %r{href=["']/#{banned_workspace.external_id}(/|["'])},
+        response.body,
+        "destination workspace's sidebar must not link to the banned workspace"
+      assert_match %r{href=["']/#{other_workspace.external_id}(/|["'])},
+        response.body,
+        "destination workspace itself should be reachable in the sidebar"
+    ensure
+      banned_workspace&.destroy_with_database! if banned_workspace && Workspace.exists?(id: banned_workspace.id)
+      other_workspace&.destroy_with_database! if other_workspace && Workspace.exists?(id: other_workspace.id)
+      identity&.destroy
+    end
+
+    test "auth guard fail-closes when workspace_memberships.user_active is stale (drift case)" do
+      identity = GlobalIdentity.create!(email_address: "drift@example.com", name: "Drift")
+      workspace = Workspace.create_with_database!(name: "Drift Test", creator: identity)
+      sign_in_global_identity(identity)
+      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
+
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        User.find(membership.user_id).update!(status: :banned)
+      end
+      membership.update_column(:user_active, true)
+
+      workspace_get "/", workspace: workspace
+
+      assert_redirected_to "/workspaces"
+      assert_equal "You no longer have access to this workspace.", flash[:alert]
+    ensure
+      workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+      identity&.destroy
+    end
+
+    test "deactivated workspace user with no other workspaces lands on workspace selector without sidebar link" do
+      identity = GlobalIdentity.create!(email_address: "deactivate-tester@example.com", name: "Deactivate Tester")
+      workspace = Workspace.create_with_database!(name: "Deactivate Test", creator: identity)
+      sign_in_global_identity(identity)
+      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
 
       ApplicationRecord.with_tenant(workspace.external_id.to_s) do
         User.find(membership.user_id).deactivate
@@ -178,13 +234,19 @@ module Saas
       workspace_get "/", workspace: workspace
 
       assert_redirected_to "/workspaces"
-      follow_redirect!
-      assert_no_match %r{/#{workspace.external_id}(/|$)}, response.location.to_s,
-        "selector must not bounce a deactivated user back into their workspace"
+      assert_equal "You no longer have access to this workspace.", flash[:alert]
+      follow_redirect! while response.redirect?
+      assert_response :success
+      assert_match "You no longer have access to this workspace.", response.body,
+        "flash must survive the redirect chain and be rendered to the user"
+      assert_no_match %r{href=["']/#{workspace.external_id}(/|["'])},
+        response.body,
+        "rendered page must not link back to the deactivated workspace (sidebar would bounce the user)"
       assert WorkspaceMembership.exists?(membership.id),
         "membership must be preserved for staff admin visibility"
     ensure
       workspace&.destroy_with_database! if workspace && Workspace.exists?(id: workspace.id)
+      identity&.destroy
     end
 
     test "authenticated user accessing workspace they are not a member of is redirected to workspace selector" do

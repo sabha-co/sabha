@@ -124,7 +124,7 @@ module Authentication
     def deny_inactive_workspace_user
       return unless Current.user&.banned? || Current.user&.deactivated?
 
-      redirect_to "/workspaces"
+      redirect_to "/workspaces", alert: "You no longer have access to this workspace."
     end
 
     # In SaaS mode, create the workspace User on first visit.

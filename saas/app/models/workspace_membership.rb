@@ -64,19 +64,15 @@ class WorkspaceMembership < UntenantedRecord
     nil
   end
 
-  # Whether the workspace user is in :active status. Used to filter the workspace
-  # selector so banned/deactivated members don't get bounced back into a workspace
-  # they can't access. Returns true for first-time visitors (user_id blank) and
-  # when the tenant DB is unreachable, to avoid hiding workspaces on infra hiccups.
-  def user_active?
-    return true if user_id.blank?
-
-    ApplicationRecord.with_tenant(tenant) do
-      User.active.where(id: user_id).exists?
-    end
-  rescue ActiveRecord::Tenanted::TenantDoesNotExistError
-    true
-  end
+  # Mirror of the per-workspace User's :active status. Source of truth lives on
+  # the tenanted User row; the `user_active` column is a denormalized cache
+  # updated by User#revoke_access / User#unban / User#reactivate so the workspace
+  # selector can filter without cross-tenant queries (activerecord-tenanted
+  # prohibits shard swapping inside an active tenant context). NOTE: this is
+  # NOT the Deactivatable soft-delete pattern — the membership row is preserved
+  # for staff visibility (Admin::WorkspaceMembersController etc.) regardless of
+  # this flag.
+  scope :user_active, -> { where(user_active: true) }
 
   # Get the Account name for this workspace
   def account_name
