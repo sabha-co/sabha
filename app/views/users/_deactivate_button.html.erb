@@ -1,0 +1,15 @@
+<% if user.active? %>
+  <%= button_to account_user_path(user), method: :delete,
+        class: "btn",
+        data: { turbo_confirm: "Deactivate #{user.name}? They will be logged out and can't sign in again. Their messages stay visible. You can reactivate them from the member list." } do %>
+    <%= icon_tag "minus" %>
+    <span>Deactivate</span>
+  <% end %>
+<% elsif user.deactivated? %>
+  <%= button_to account_user_reactivation_path(user), method: :post,
+        class: "btn btn--reversed",
+        data: { turbo_confirm: "Reactivate #{user.name}? They will be able to sign in again." } do %>
+    <%= icon_tag "add" %>
+    <span>Reactivate</span>
+  <% end %>
+<% end %>

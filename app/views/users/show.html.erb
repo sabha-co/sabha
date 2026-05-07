@@ -125,12 +125,31 @@
 
     <% if Current.user != @user && !@user.bot? %>
       <hr class="margin-block-start borderless">
-      <div class="flex justify-center gap">
-        <%= render "blocks/button", user: @user, compact: false %>
+
+      <div class="flex flex-column align-center gap-half">
         <% if Current.user.staff? %>
-          <%= render "users/ban_button", user: @user %>
+          <p class="txt-x-small txt-muted txt-label margin-none">For you</p>
         <% end %>
+        <%= render "blocks/button", user: @user, compact: false %>
+        <p class="txt-x-small txt-muted txt-align-center margin-none">
+          Block stops the user from messaging or mentioning you.
+        </p>
       </div>
+
+      <% if Current.user.staff? %>
+        <div class="flex flex-column align-center gap-half margin-block-start">
+          <p class="txt-x-small txt-muted txt-label margin-none">Moderation</p>
+          <div class="flex justify-center gap">
+            <% if @user.removable_by?(Current.user) %>
+              <%= render "users/deactivate_button", user: @user %>
+            <% end %>
+            <%= render "users/ban_button", user: @user %>
+          </div>
+          <p class="txt-x-small txt-muted txt-align-center margin-none">
+            Deactivate revokes the user's access. Ban also deletes their messages and blocks their IPs.
+          </p>
+        </div>
+      <% end %>
     <% end %>
 
   <% elsif @user.banned? %>
@@ -161,7 +180,14 @@
 
     <div class="flex flex-column align-center gap-half">
       <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
-      <span class="txt-small txt-muted">No longer active</span>
+      <span class="txt-small txt-muted">Deactivated</span>
     </div>
+
+    <% if @user.reactivatable_by?(Current.user) %>
+      <hr class="margin-block-start borderless">
+      <div class="flex justify-center">
+        <%= render "users/deactivate_button", user: @user %>
+      </div>
+    <% end %>
   <% end %>
 </section>
