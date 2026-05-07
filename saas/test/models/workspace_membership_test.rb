@@ -196,17 +196,15 @@ class WorkspaceMembershipTest < ActiveSupport::TestCase
       membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)
       user_id = membership.user_id
 
-      WorkspaceMembership.any_instance.stubs(:update).returns(false).then.returns(true)
-      WorkspaceMembership.any_instance.stubs(:errors).returns(stub(full_messages: [ "Simulated" ]))
+      WorkspaceMembership.any_instance.stubs(:update_column).raises(ActiveRecord::StatementInvalid.new("simulated"))
 
       ApplicationRecord.with_tenant(workspace.external_id.to_s) do
         user = User.find(user_id)
         assert_nothing_raised { user.deactivate }
-        assert user.reload.deactivated?, "ban must succeed even when mirror write fails"
+        assert user.reload.deactivated?, "deactivate must succeed even when mirror write fails"
       end
     ensure
-      WorkspaceMembership.any_instance.unstub(:update)
-      WorkspaceMembership.any_instance.unstub(:errors)
+      WorkspaceMembership.any_instance.unstub(:update_column)
     end
   end
 end

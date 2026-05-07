@@ -131,7 +131,7 @@ module Authentication
       return unless Sabha.saas? && Current.user
       return unless Current.user.banned? || Current.user.deactivated?
 
-      redirect_to "/settings?denied=workspace"
+      redirect_to settings_path(script_name: "", denied: "workspace")
     end
 
     # In SaaS mode, create the workspace User on first visit.

@@ -364,18 +364,15 @@ class User < ApplicationRecord
 
   private
     # Mirror User#active? onto the untenanted WorkspaceMembership row so the
-    # workspace selector can filter without cross-tenant queries. Runs after
-    # the tenanted transaction commits, so a Postgres failure here cannot roll
-    # back the SQLite write. The auth-time guard reads the tenanted User row,
-    # so a stale mirror cannot let a banned user through — it can only hide a
-    # workspace the user should still see, and the rake backfill repairs that.
+    # workspace selector can filter without cross-tenant queries. Runs post-
+    # commit, so a Postgres failure here cannot roll back the SQLite write.
+    # The auth-time guard reads the tenanted User row, so a stale mirror can
+    # only hide a workspace the user should still see — repaired by the
+    # workspace_membership:backfill_user_active rake task.
     def sync_workspace_membership_active
-      return unless workspace_membership
-
-      workspace_membership.update(user_active: active?) ||
-        Rails.logger.error("[User#sync_workspace_membership_active] failed to mirror user_active=#{active?} for membership=#{workspace_membership.id}: #{workspace_membership.errors.full_messages.to_sentence}")
+      workspace_membership&.update_column(:user_active, active?)
     rescue ActiveRecord::ActiveRecordError => e
-      Rails.logger.error("[User#sync_workspace_membership_active] error mirroring user_active=#{active?} for user=#{id}: #{e.class}: #{e.message}")
+      Rails.logger.error("Failed to mirror user_active for workspace_membership=#{workspace_membership_id}: #{e.message}")
     end
 
     def deactivate_direct_rooms

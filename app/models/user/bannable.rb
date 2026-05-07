@@ -2,7 +2,8 @@ module User::Bannable
   extend ActiveSupport::Concern
 
   included do
-    after_update_commit :notify_of_ban_or_unban, if: :saved_change_to_status?
+    after_update_commit :send_ban_email,   if: :ban_just_happened?
+    after_update_commit :send_unban_email, if: :unban_just_happened?
   end
 
   def ban
@@ -47,14 +48,24 @@ module User::Bannable
       remove_banned_content_later
     end
 
-    def notify_of_ban_or_unban
-      return if bot? || email_address.blank?
+    def send_ban_email
+      UserMailer.banned(self).deliver_later
+    end
 
-      from, to = saved_change_to_status
-      if to == "banned"
-        UserMailer.banned(self).deliver_later
-      elsif from == "banned" && to == "active"
-        UserMailer.unbanned(self).deliver_later
-      end
+    def send_unban_email
+      UserMailer.unbanned(self).deliver_later
+    end
+
+    def ban_just_happened?
+      saved_change_to_status? && banned? && notifiable_about_status?
+    end
+
+    def unban_just_happened?
+      return false unless saved_change_to_status? && notifiable_about_status?
+      saved_change_to_status.first == "banned" && active?
+    end
+
+    def notifiable_about_status?
+      !bot? && email_address.present?
     end
 end
