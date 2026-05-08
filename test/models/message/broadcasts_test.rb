@@ -67,4 +67,30 @@ class Message::BroadcastsTest < ActiveSupport::TestCase
       assert expected_channel.match?(/^user_\d+_notifications$/), "Channel should match pattern"
     end
   end
+
+  test "broadcast_notifications broadcasts unread badge updates for mentions" do
+    message = @room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+      client_message_id: "badge_broadcast_mention",
+      creator: @user
+    )
+
+    stream_name = UnreadNotificationsChannel.broadcasting_for(users(:jason))
+    assert_broadcasts stream_name, 1 do
+      message.broadcast_notifications
+    end
+  end
+
+  test "broadcast_notifications does not broadcast unread badge updates for regular messages" do
+    message = @room.messages.create!(
+      body: "Plain regular update",
+      client_message_id: "badge_broadcast_regular",
+      creator: @user
+    )
+
+    stream_name = UnreadNotificationsChannel.broadcasting_for(users(:jason))
+    assert_no_broadcasts stream_name do
+      message.broadcast_notifications
+    end
+  end
 end
