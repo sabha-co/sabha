@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_07_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_08_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -102,12 +102,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_07_000001) do
     t.boolean "has_logo", default: false, null: false
     t.datetime "last_export_requested_at"
     t.string "name", null: false
-    t.string "slug"
     t.datetime "suspended_at"
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_workspaces_on_creator_id"
     t.index ["external_id"], name: "index_workspaces_on_external_id", unique: true
-    t.index ["slug"], name: "index_workspaces_on_slug", unique: true
     t.index ["suspended_at"], name: "index_workspaces_on_suspended_at"
   end
 
