@@ -37,8 +37,12 @@ module User::Role
     admin.can_administer? && active? && admin != self
   end
 
+  def bannable_by?(admin)
+    admin.can_administer? && admin != self && !banned?
+  end
+
   def unbannable_by?(admin)
-    admin.can_administer? && banned?
+    admin.can_administer? && admin != self && banned?
   end
 
   def reactivatable_by?(admin)

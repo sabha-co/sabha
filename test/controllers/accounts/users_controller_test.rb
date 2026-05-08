@@ -141,6 +141,17 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_nil user.reload.badge
   end
 
+  test "destroy rejects an admin trying to deactivate themselves" do
+    sign_in :david
+    me = users(:david)
+
+    delete account_user_url(me)
+
+    assert_redirected_to account_users_url
+    assert_equal "You can't deactivate yourself.", flash[:alert]
+    assert me.reload.active?
+  end
+
   test "destroy deactivates user" do
     user = users(:kevin)
 

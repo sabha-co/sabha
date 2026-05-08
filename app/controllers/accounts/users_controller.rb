@@ -31,6 +31,8 @@ class Accounts::UsersController < ApplicationController
   end
 
   def destroy
+    return redirect_to account_users_url, alert: "You can't deactivate yourself." unless @user.removable_by?(Current.user)
+
     @user.deactivate
     notify_bots(@user, :deleted)
 

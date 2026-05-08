@@ -149,4 +149,17 @@ class Users::BansControllerTest < ActionDispatch::IntegrationTest
       user.reactivate
     end
   end
+
+  test "create rejects an admin trying to ban themselves" do
+    sign_in :david
+    me = users(:david)
+
+    assert_no_difference -> { Ban.count } do
+      post user_ban_url(me)
+    end
+
+    assert_redirected_to user_url(me)
+    assert_equal "You can't ban yourself.", flash[:alert]
+    assert_not me.reload.banned?
+  end
 end
