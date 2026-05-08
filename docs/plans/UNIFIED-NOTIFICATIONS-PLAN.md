@@ -39,14 +39,14 @@ Room#receive(message)
 
 `activity_type` is a symbol — `:mention`, `:direct_message`, `:everyone_room_message`, `:thread_reply`, `:boost`. **Two of these are dispatcher-only** event types and never produce a `Notification` row: `:direct_message` (push + email channels only — DMs don't create in-app notifications) and `:everyone_room_message` (push channel only). The other three (`:mention`, `:thread_reply`, `:boost`) match the values already stored on `notifications.activity_type` and already in `Notification`'s inclusion validator at `app/models/notification.rb:25`. So **`Notification#validates :activity_type` does NOT change in v1** — the persisted vocabulary stays `%w[mention boost thread_reply]`. The dispatcher's symbol vocabulary is a strict superset used only at routing time. The dispatcher and channels case-switch on the symbol; no parallel class hierarchy.
 
-This matches Fizzy's shape: Fizzy's `Notification::Pushable` does not have an Event class hierarchy either. Its `payload_type` resolves via `source_type.presence_in(%w[ Event Mention ]) || "Default"` — a string lookup at the boundary, not subclass dispatch. Earlier drafts of this plan proposed `Notification::Event::{Mention,DirectMessage,EveryoneRoomMessage,ThreadReply,Boost}` subclasses; dropped because every "subclass override" reduced to either a constant lookup (`IN_APP_TYPES`, `EMAIL_TYPES`) or a one-line recipient query that already exists on `Message`.
+This matches Fizzy's shape: Fizzy's `Notification::Pushable` does not have an Event class hierarchy either. Its `payload_type` resolves via `source_type.presence_in(%w[ Event Mention ]) || "Default"` — a string lookup at the boundary, not subclass dispatch. Earlier drafts of this plan proposed `Notification::Event::{Mention,DirectMessage,EveryoneRoomMessage,ThreadReply,Boost}` subclasses; dropped because every "subclass override" reduced to either a constant lookup (`IN_APP_ROW_TYPES`, `BUMP_COUNTER_TYPES`, `EMAIL_TYPES`) or a one-line recipient query that already exists on `Message`.
 
 | `activity_type` | Recipients (one-line query) | Channels (v1) |
 |---|---|---|
 | `:mention` | mentionees scoped to `Membership.involved_in_mentions` for the room | in-app, push, email |
 | `:direct_message` | `message.room.user_ids` (room is `Rooms::Direct`) | push, email |
 | `:everyone_room_message` | `message.room.memberships.involved_in_everything.pluck(:user_id)` | push |
-| `:thread_reply` | thread participants (delegated to existing `CreateThreadReplyNotificationsJob`) | in-app, push |
+| `:thread_reply` | `(thread.memberships.active.visible.pluck(:user_id) + parent_room.memberships.active.involved_in_everything.pluck(:user_id)).uniq - [creator_id] - already_mentioned_user_ids`, skip when `parent_room.direct?` (recipient logic ported verbatim from today's `CreateThreadReplyNotificationsJob`) | in-app, push |
 | `:boost` | `[message.boosts.last.message.creator_id]` | in-app |
 
 **Mention recipient query, expanded** — preserves today's disjointness with the everyone-room set:
@@ -65,15 +65,28 @@ end
 
 If we ever want a user with `:everything` to also receive `:mention`-channel email/in-app on top of push, that's a deliberate channel-routing decision, not an accident of recipient overlap. Today's behavior is "one signal per (user, message)"; v1 preserves that.
 
+**Per-channel recipient resolution** — the table above shows each activity_type's *push* recipient set (matches today's `Room::MessagePusher` queries). Today's *row creation* and *counter bump* recipient sets diverge from push for some types: `Message#create_mention_notifications` creates rows for **all** mentionees (regardless of involvement), and `Message#increment_unread_notifications_counters` bumps counters for **all** room members on `@everyone` and **all** mentionees on named mentions. v1 preserves these recipient sets verbatim — the dispatcher delegates recipient resolution to the channel, then applies the shared per-recipient `decision_for` gate to each candidate. Concretely:
+
+| activity_type | Push recipients | Row recipients | Counter recipients |
+|---|---|---|---|
+| `:mention` | `mentionees ∩ involved_in_mentions` | `mentionees - creator` (broader) | `mentionees - creator` |
+| `:everyone_room_message` | `involved_in_everything` | none | `room.user_ids - creator` (broader) |
+| `:direct_message` | `room.user_ids - creator` | none | `room.user_ids` (no creator subtraction — matches today) |
+| `:thread_reply` | `(thread + parent_everything).uniq - creator - mentioned` | same as push | none |
+| `:boost` | none | `[boosts.last.message.creator_id]` | none |
+
+This is the single most load-bearing correction over earlier drafts: collapsing all three recipient sets into one would silently shrink today's badge and Activity-tab coverage (e.g. an `:everything`-involvement user @mentioned in a non-`@everyone` message bumps their counter today via `mentionee_ids`, but would not under a single shared recipient set since they route to `:everyone_room_message`).
+
 Constants on `Notification::Dispatcher`:
 
 ```ruby
-ACTIVITY_TYPES = %i[mention direct_message everyone_room_message thread_reply boost].freeze
-IN_APP_TYPES   = %i[mention thread_reply boost].freeze
-EMAIL_TYPES    = %i[mention direct_message].freeze
+ACTIVITY_TYPES      = %i[mention direct_message everyone_room_message thread_reply boost].freeze
+IN_APP_ROW_TYPES    = %i[mention thread_reply boost].freeze                       # creates Notification rows + broadcasts
+BUMP_COUNTER_TYPES  = %i[mention direct_message everyone_room_message].freeze     # bumps Membership#unread_notifications_count
+EMAIL_TYPES         = %i[mention direct_message].freeze
 ```
 
-`records_in_app?(activity_type)` and `email_eligible?(activity_type)` become constant lookups, not method calls on a polymorphic Event.
+`records_in_app_row?`, `bumps_counter?`, `email_eligible?` become constant lookups, not method calls on a polymorphic Event. Note that `IN_APP_ROW_TYPES` and `BUMP_COUNTER_TYPES` are **distinct sets** that overlap on `:mention`, diverge on `:direct_message`/`:everyone_room_message` (counter only), and diverge on `:thread_reply`/`:boost` (row only). This matches today's behavior exactly.
 
 **Push payload formatting** stays as-is in `Room::MessagePusher#build_payload` (today's `room.direct?` two-branch shape). Fizzy has a `Notification::DefaultPayload` / `EventPayload` / `MentionPayload` hierarchy because each type has substantively divergent rendering (`EventPayload` has a 60-line `case event.action` switch). Sabha's push copy doesn't diverge per activity type today — only by `room.direct?`. **Defer the Payload hierarchy until copy actually diverges per type**; when it does, mirror Fizzy's `Notification::*Payload` shape.
 
@@ -112,23 +125,28 @@ When a user changes mode in the settings panel, the form offers **"Apply to all 
 
 ### Unread counter consistency
 
-`Message#increment_unread_notifications_counters` (`app/models/message.rb:298`) is a separate `after_create_commit` callback that bumps `Membership#unread_notifications_count` for DMs, `@everyone` messages, and named mentions. **Today it bypasses block checks and `Membership#receives?`** — so a blocked user mentioning me bumps my unread badge even though no `Notification` row, push, or email fires. v1 closes this gap by **moving counter increments into `Notification::Channel::InApp`**, where they share the dispatcher's gate (block, banned, deactivated, room/message active, `membership.receives?`). The `Channel::InApp` step that creates the `Notification` row also bumps the membership counter in the same DB transaction, using the same recipient set. `Message#increment_unread_notifications_counters` is deleted and the `after_create_commit` callback removed from `Message`. This makes "blocked user mention → no in-app" a single invariant rather than a fragile collection of consistent-but-independent checks.
+`Message#increment_unread_notifications_counters` (`app/models/message.rb:298`) is a separate `after_create_commit` callback that bumps `Membership#unread_notifications_count` for DMs, `@everyone` messages, and named mentions. **Today it bypasses block checks and `Membership#receives?`** — so a blocked user mentioning me bumps my unread badge even though no `Notification` row, push, or email fires. v1 closes this gap by **moving counter increments into `Notification::Channel::InApp`** as a distinct phase from row creation, where they share the dispatcher's gate (block, banned, deactivated, room/message active, `membership.receives?`).
 
-DMs and `@everyone` messages still drive counter bumps even though they don't create `Notification` rows: `Channel::InApp` runs the bump phase for **all** dispatcher recipients, and the row-creation phase only for the subset where `IN_APP_TYPES.include?(activity_type)`. Counter logic is the same as today's: skip senders for non-DM, skip already-connected memberships (`unread_at IS NULL`), only bump rows where `unread_at <= message.created_at`. Verified against the existing implementation; no behavior change for the common path.
+`Channel::InApp` runs **two phases per dispatch**, each with its own recipient query (see Per-channel recipient resolution table above) and each filtered through the same per-recipient `Dispatcher.decision_for(...)` gate:
+
+- **Row phase** — runs only for `IN_APP_ROW_TYPES = %i[mention thread_reply boost]`. Recipient query mirrors today's `Message#create_mention_notifications` for `:mention` (all mentionees, broader than push). Creates `Notification` rows + broadcasts to `[user, :inbox_activity]` streams.
+- **Counter phase** — runs only for `BUMP_COUNTER_TYPES = %i[mention direct_message everyone_room_message]`. Recipient query mirrors today's `Message#increment_unread_notifications_counters` exactly: `room.user_ids` for DMs, `room.user_ids - creator` for `@everyone`, `mentionee_ids - creator` for named mentions. Skips already-connected memberships (`unread_at IS NULL`), only bumps rows where `unread_at <= message.created_at`.
+
+The two phases share the per-recipient gate but **not** the recipient set — collapsing them would silently shrink today's badge coverage. `Message#increment_unread_notifications_counters` and its `after_create_commit` callback are deleted; the recipient logic is ported verbatim into the counter phase. This makes "blocked user mention → no in-app row, no badge bump, no push, no email" a single invariant.
 
 ### Per-recipient decision tree
 
-`Notification::Dispatcher.decision_for(user:, message:, activity_type:)` is a single class method that returns a `Decision` triple — `EmailJob`'s slim job (via `User#send_notification_email`) calls it again at fire time for revalidation, so the rules can't drift between initial dispatch and delayed delivery.
+`Notification::Dispatcher.decision_for(user:, message:, activity_type:)` is a single class method that returns a `Decision` record — `EmailJob`'s slim job (via `User#send_notification_email`) calls it again at fire time for revalidation, so the rules can't drift between initial dispatch and delayed delivery.
 
-The return type is a `Data.define` declared inline at the top of the dispatcher class — no separate `recipient_decision.rb` file. A 3-tuple of booleans doesn't earn its own file (Fizzy has no equivalent value object; `Data.define` is the Rails primitive for this exact case):
+The return type is a `Data.define` declared inline at the top of the dispatcher class — no separate `recipient_decision.rb` file. A 4-field flag set doesn't earn its own file (Fizzy has no equivalent value object; `Data.define` is the Rails primitive for this exact case):
 
 ```ruby
 class Notification::Dispatcher
-  Decision = Data.define(:in_app, :push, :send_email)
-  SKIP     = Decision.new(in_app: false, push: false, send_email: false)
+  Decision = Data.define(:in_app_row, :bump_counter, :push, :send_email)
+  SKIP     = Decision.new(in_app_row: false, bump_counter: false, push: false, send_email: false)
 
   def self.decision_for(user:, message:, activity_type:)
-    return SKIP if user.id == message.creator_id
+    return SKIP if user.id == message.creator_id && activity_type != :direct_message
     return SKIP if user.bot? || !user.active?
     return SKIP if blocked_either_way?(user, message.creator)
     return SKIP unless message.room.active? && message.active?
@@ -139,9 +157,14 @@ class Notification::Dispatcher
 
     prefs = user.notification_settings
 
-    # In-app fires whenever the room delivers it. Snooze and global "nothing"
-    # do NOT suppress in-app — user gets a record on return.
-    in_app = IN_APP_TYPES.include?(activity_type)
+    # In-app row + counter both fire whenever delivery is permitted. Snooze and
+    # global "nothing" do NOT suppress them — user gets the truth-on-return surface.
+    # Each flag is gated by its own type set; the channel runs the corresponding phase
+    # only when its flag is true. Counter recipient queries differ from row queries
+    # (see Per-channel recipient resolution table) — this gate is per-recipient,
+    # but the recipient sets are computed independently per phase.
+    in_app_row   = IN_APP_ROW_TYPES.include?(activity_type)
+    bump_counter = BUMP_COUNTER_TYPES.include?(activity_type)
 
     push  = !prefs.snoozed? && prefs.push_enabled? && prefs.mode != "nothing" &&
             !membership.connected?
@@ -153,14 +176,28 @@ class Notification::Dispatcher
             user_globally_away?(user) &&   # MUST be away at event time
             Sabha.email_notifications?
 
-    Decision.new(in_app: in_app, push: push, send_email: email)
+    Decision.new(in_app_row: in_app_row, bump_counter: bump_counter, push: push, send_email: email)
   end
 end
 ```
 
-Callers read `decision.in_app`, `decision.push`, `decision.send_email` — same shape a separate `RecipientDecision` class would have exposed, without the file.
+Callers read `decision.in_app_row`, `decision.bump_counter`, `decision.push`, `decision.send_email` — same shape a separate `RecipientDecision` class would have exposed, without the file.
+
+(The first SKIP condition's `&& activity_type != :direct_message` carve-out preserves today's DM counter-bump behavior, where `Message#increment_unread_notifications_counters` uses `room.user_ids` without subtracting the creator. Senders are filtered out anyway by the `unread_at IS NULL` check on connected memberships — they're connected at send time. The carve-out keeps the disconnected-DM-sender case working: rare, but correct.)
 
 Note that `membership.receives?(activity_type)` is the only delivery-time gate that distinguishes mention events from everyone-room-message events — it's the today's-behavior gate, preserved verbatim. Global `mode` only suppresses when set to `nothing`; mentions/DMs/everyone-messages are not gated by mode otherwise.
+
+**`Membership#receives?(activity_type)` truth table** — defensive second-line gate, consistent with the recipient queries above:
+
+| activity_type | returns true when |
+|---|---|
+| `:mention` | `involvement.in?(%w[mentions everything])` (matches existing `receives_mentions?` at `app/models/membership.rb:110`) |
+| `:direct_message` | `true` (DMs auto-seed `:everything`; `:nothing`/`:invisible` are never set on DM memberships) |
+| `:everyone_room_message` | `involvement == "everything"` |
+| `:thread_reply` | `involvement != "nothing" && involvement != "invisible"` (thread participants only — non-thread members are filtered upstream by the recipient query) |
+| `:boost` | `true` (boost recipient is always the original creator) |
+
+For `:mention`, `receives?` returning true for `:everything` members is **not a routing collision** — the `:mention` recipient queries (push, row, counter) all subset to mentionees and `:involved_in_mentions` where appropriate, so `:everything` users are routed to `:everyone_room_message` push and never enter the `:mention` push set. `receives?` is the second-line-of-defense gate; the recipient queries are the primary disjointness mechanism.
 
 Two presence checks:
 
@@ -279,8 +316,8 @@ add_column :memberships, :last_email_notified_at, :datetime
 add_column :accounts,    :email_notifications_enabled, :boolean, default: false, null: false
 ```
 
-- `user_notification_settings` — one row per user, built on user creation. Real columns get real Rails affordances: `enum :mode` with bang methods, dirty tracking, AR callbacks, `saved_change_to_*?`, query scopes. **Backfill on deploy**: a small data migration (or `User.find_each(&:create_notification_settings!)`) seeds existing users with a settings row using the column defaults — `mode: "mentions_and_dms"`, `email_when_away: false`, `push_enabled: true`. Zero behavior change because the defaults reproduce today's gates.
-- `memberships.last_email_notified_at` — per-user-per-room cooldown anchor. Read on every event, written on every email send. 5-minute cooldown enforced via `Membership#recently_emailed?` (`Membership::EMAIL_COOLDOWN = 5.minutes`); the bang verb `Membership#record_email_delivery!` writes the timestamp. Cooldown logic lives on the model where the column lives, not on the job. Composite `(user_id, room_id)` index already exists; no new index needed.
+- `user_notification_settings` — one row per user, built on user creation. Real columns get real Rails affordances: `enum :mode` with bang methods, dirty tracking, AR callbacks, `saved_change_to_*?`, query scopes. **Backfill on deploy** (idempotent — safe to re-run after a partial failure or in seeded test environments): `User.where.missing(:notification_settings).find_each(&:create_notification_settings!)`. The `where.missing` filter is essential — `User.find_each(&:create_notification_settings!)` would raise `RecordNotUnique` against the unique `user_id` index if any rows already exist. Defaults — `mode: "mentions_and_dms"`, `email_when_away: false`, `push_enabled: true` — reproduce today's gates exactly, so deploy is zero-behavior-change.
+- `memberships.last_email_notified_at` — per-user-per-room cooldown anchor. 5-minute cooldown enforced atomically via `Membership#claim_email_cooldown!` (`Membership::EMAIL_COOLDOWN = 5.minutes`) — a single conditional `UPDATE ... WHERE last_email_notified_at IS NULL OR last_email_notified_at <= ?` that both checks freshness and stamps the timestamp, returning true only if this caller won the slot. Race-safe under concurrent jobs (5 simultaneous mention dispatches → exactly 1 email). Cooldown logic lives on the model where the column lives, not on the job. Composite `(user_id, room_id)` index already exists; no new index needed.
 - `accounts.email_notifications_enabled` — per-account feature flag, default off. Read via `Sabha.email_notifications?` (top-level predicate added to `lib/sabha.rb`, parallel to the existing `Sabha.saas?`): `ENV["SABHA_EMAIL_NOTIFICATIONS"] == "1" || Account.sole.email_notifications_enabled?`. Lets us ship dark and turn email on per workspace before flipping the env default.
 
 `destroy_all_associated_records` on `User` must be updated to include `notification_settings` (per `CLAUDE.md`'s reminder about associations and active-scoped `dependent: :destroy`).
@@ -354,28 +391,31 @@ def send_notification_email(message, activity_type)
   ).send_email
 
   membership = memberships.find_by(room_id: message.room_id)
-  return if membership.nil? || membership.recently_emailed?
+  return unless membership && membership.claim_email_cooldown!
 
   case activity_type
   when :mention        then UserMailer.mention_notification(self, message).deliver_now
   when :direct_message then UserMailer.direct_message_notification(self, message).deliver_now
   end
-  membership.record_email_delivery!
 end
 
 # app/models/membership.rb (added)
 EMAIL_COOLDOWN = 5.minutes
 
-def recently_emailed?
-  last_email_notified_at.present? && last_email_notified_at > EMAIL_COOLDOWN.ago
-end
-
-def record_email_delivery!
-  update_column(:last_email_notified_at, Time.current)
+# Atomic claim: a single conditional UPDATE that both checks freshness and
+# stamps the timestamp. Returns true if this caller won the slot, false if
+# another concurrent dispatch claimed it first. Race-safe under SQLite's
+# write serialization and Postgres row-level locks — eliminates the
+# read-then-write window that would let "5 fast mentions" send 5 emails.
+def claim_email_cooldown!
+  rows = self.class.where(id: id).where(
+    "last_email_notified_at IS NULL OR last_email_notified_at <= ?", EMAIL_COOLDOWN.ago
+  ).update_all(last_email_notified_at: Time.current)
+  rows > 0
 end
 ```
 
-`return unless user && message` is dropped — `discard_on ActiveJob::DeserializationError` already handles the missing-record case, matching `Room::PushMessageJob` exactly. The `EMAIL_GRACE_WINDOW` constant stays on the job (it controls `wait:`, a job-runtime concern); `EMAIL_COOLDOWN` lives on `Membership` because the cooldown is a business policy on the room-level relationship, not job runtime. Cooldown read/write are predicate + bang verb on `Membership` — `recently_emailed?` and `record_email_delivery!`.
+`return unless user && message` is dropped — `discard_on ActiveJob::DeserializationError` already handles the missing-record case, matching `Room::PushMessageJob` exactly. The `EMAIL_GRACE_WINDOW` constant stays on the job (it controls `wait:`, a job-runtime concern); `EMAIL_COOLDOWN` lives on `Membership` because the cooldown is a business policy on the room-level relationship, not job runtime. Cooldown is **atomic** on `Membership` — `claim_email_cooldown!` does the check-and-stamp in one SQL roundtrip; a separate `recently_emailed?` predicate is intentionally not exposed because using it as a gate would reintroduce the read-then-write race.
 
 The `Notification::DispatchJob` follows the same shape and adds the standard `_later`/`_now` symmetry from `architecture.md`:
 
@@ -434,7 +474,7 @@ end
 
 Public surface is `message.notify_recipients_later(activity_type)` — same shape as Campfire's `notify_watchers_later`. The N-jobs-per-message design keeps the dispatcher's per-call work narrow (one decision tree pass per (recipient, activity_type)) and lets us schedule per-channel work independently.
 
-Test surface moves with the logic: `User#send_notification_email`, `Membership#recently_emailed?`/`#record_email_delivery!`, and `Message#notify_recipients` get tested where they live; the job tests collapse to "do I delegate?" — minimal coverage, since substance is tested on the models.
+Test surface moves with the logic: `User#send_notification_email`, `Membership#claim_email_cooldown!` (with an explicit concurrent-jobs test that asserts exactly one of N parallel claims wins), and `Message#notify_recipients` get tested where they live; the job tests collapse to "do I delegate?" — minimal coverage, since substance is tested on the models.
 
 **Email-at-event-time semantics**: `EmailJob` is scheduled **only if the user is already globally away when the event fires** (`user_globally_away?` returns true at dispatch). A user actively reading the chat at the moment of mention sees the message live and gets no email queued — they didn't miss it. The grace window is purely a *cancellation* mechanism for the case "user was away at event time but came back during the 5 minutes before delivery", not a *capture-on-departure* mechanism for "user was online but might drift offline soon". Without the at-dispatch check, a live reader who closes their laptop 4 minutes after seeing a mention would still get an email about it — wrong product behavior, and inconsistent with Slack / Google Chat / every other chat app.
 
@@ -516,7 +556,7 @@ The signed payload binds user-id and tenant together — a token from workspace 
 
 ## Snooze UX
 
-Single `snooze_until` `datetime` column on `user_notification_settings`. `INDEFINITE_SENTINEL` (a far-past timestamp like `Time.at(0)`, checked explicitly in `snoozed?`) marks indefinite snooze — keeps the column type consistent and avoids `null`-as-special-value confusion.
+Single `snooze_until` `datetime` column on `user_notification_settings`. `INDEFINITE_SNOOZE_SENTINEL = Time.utc(2099, 1, 1)` (the same far-future value declared on `User::NotificationSettings` — see Data model § `User::NotificationSettings`) marks indefinite snooze — checked explicitly in `snoozed?`, keeps the column type a real `datetime`, and avoids `null`-as-special-value confusion.
 
 Quick toggle in the sidebar bell icon (`app/views/users/sidebars/_bell.html.erb`) opens a popover with presets. Stimulus controller `app/javascript/controllers/snooze_controller.js` posts to `users/notification_snoozes` (new singular resource).
 
@@ -556,8 +596,9 @@ All new classes hang off the existing `Notification` model — `Notification::Di
 ### New
 
 - `app/models/user/notification_settings.rb` — real AR record on the new `user_notification_settings` table. Direct Fizzy parity with `User::Settings`. `enum :mode`, three boolean/datetime columns, `belongs_to :user`. AR callbacks (`saved_change_to_*?`) replace hand-rolled mutators.
-- `app/models/notification/dispatcher.rb` — routing brain. Class methods `dispatch(message:, activity_type:)` and `decision_for(user:, message:, activity_type:)`. Constants `ACTIVITY_TYPES`, `IN_APP_TYPES`, `EMAIL_TYPES`. **No Event class hierarchy** — `activity_type` is a symbol that matches the existing `notifications.activity_type` column. Recipient queries are case-switched on the symbol; each case is a one-liner using existing scopes/methods on `Message` and `Membership`. (Earlier draft proposed `Notification::Event::{Mention,DirectMessage,EveryoneRoomMessage,ThreadReply,Boost}` subclasses — dropped because Fizzy's `Notification::Pushable` uses string lookup at the boundary, not subclass dispatch, and every "subclass override" in the draft reduced to a constant lookup or an existing one-line query.)
-- `app/models/notification/channel/email.rb`, `app/models/notification/channel/in_app.rb`.
+- `app/models/notification/dispatcher.rb` — routing brain. Class methods `dispatch(message:, activity_type:)` and `decision_for(user:, message:, activity_type:)`. Constants `ACTIVITY_TYPES`, `IN_APP_ROW_TYPES`, `BUMP_COUNTER_TYPES`, `EMAIL_TYPES`. **No Event class hierarchy** — `activity_type` is a symbol that matches the existing `notifications.activity_type` column. Recipient queries are case-switched on the symbol *per channel* (push/row/counter/email each compute their own recipient set when they diverge — see Architecture § Per-channel recipient resolution); each case is a one-liner using existing scopes/methods on `Message` and `Membership`. (Earlier draft proposed `Notification::Event::{Mention,DirectMessage,EveryoneRoomMessage,ThreadReply,Boost}` subclasses — dropped because Fizzy's `Notification::Pushable` uses string lookup at the boundary, not subclass dispatch, and every "subclass override" in the draft reduced to a constant lookup or an existing one-line query.)
+- `app/models/notification/channel/email.rb`.
+- `app/models/notification/channel/in_app.rb` — runs **two phases per dispatch**: (a) `create_rows!` (only when `IN_APP_ROW_TYPES.include?(activity_type)`, recipient query mirrors today's `Message#create_mention_notifications` — all mentionees regardless of involvement), (b) `bump_counters!` (only when `BUMP_COUNTER_TYPES.include?(activity_type)`, recipient query mirrors today's `Message#increment_unread_notifications_counters` — `room.user_ids` for DMs, `room.user_ids - creator` for `@everyone`, `mentionee_ids - creator` for named mentions). Each phase filters its candidates through `Dispatcher.decision_for(...)` to apply the shared block/banned/active gates.
 - `app/models/notification/channel/push.rb` — facade that fans out to registered push targets. **Direct parity with Fizzy's shipped `Notification::Pushable` concern** (`fizzy/app/models/notification/pushable.rb`), which exposes `register_push_target(:web)` and iterates `push_targets.each { |target| push_to(target) }`. This is not a speculative abstraction — it's the same registration shape Fizzy runs in production today, ported to Sabha's namespace.
 - `app/models/notification/channel/push/web.rb` — WebPush delivery, mirroring Fizzy's `Notification::PushTarget::Web` (`fizzy/app/models/notification/push_target/web.rb`) which queues to `Rails.configuration.x.web_push_pool`. The base class shape (`Notification::PushTarget` with `self.process(notification)` + instance `process`) is also lifted directly. **Native APNs and FCM are roadmap items for Sabha mobile**, and Fizzy's structure is what we'll plug `::Apns` / `::Fcm` siblings into when we ship — same as Fizzy will. Naming the v1 implementation `::Web` is required for that registration to make sense, not future-proofing for its own sake.
 - `app/mailers/concerns/mailers/unsubscribable.rb` — RFC 8058 header concern (lifted verbatim from Fizzy at `fizzy/app/mailers/concerns/mailers/unsubscribable.rb` — 6 lines of body, identical shape). v1 has one caller (`UserMailer`'s mention/DM methods), matching Fizzy's current single-caller setup. v1.1's deferred `Notification::BundleMailer` (digests, see Out of scope § Deferred) becomes the second caller, mirroring Fizzy's `Notification::BundleMailer` exactly. Keeps `CLAUDE.md`'s "don't extract small chunks" rule satisfied once the second caller lands and avoids re-extracting then.
@@ -569,19 +610,19 @@ All new classes hang off the existing `Notification` model — `Notification::Di
 - `app/controllers/users/notification_snoozes_controller.rb`.
 - `app/controllers/email_unsubscribes_controller.rb`.
 - `app/javascript/controllers/snooze_controller.js`.
-- `db/migrate/YYYYMMDDHHMMSS_create_user_notification_settings.rb` (+ a follow-up backfill migration that runs `User.find_each(&:create_notification_settings!)` to seed existing users with column defaults).
+- `db/migrate/YYYYMMDDHHMMSS_create_user_notification_settings.rb` (+ a follow-up backfill migration that runs `User.where.missing(:notification_settings).find_each(&:create_notification_settings!)` to seed existing users with column defaults — idempotent, safe to re-run).
 - `db/migrate/YYYYMMDDHHMMSS_add_last_email_notified_at_to_memberships.rb`.
 - `db/migrate/YYYYMMDDHHMMSS_add_email_notifications_enabled_to_accounts.rb`.
 
 ### Modify
 
 - `app/mailers/user_mailer.rb` — add `mention_notification`, `direct_message_notification`.
-- `app/models/user.rb` — `has_one :notification_settings` association, `after_create_commit` default-build hook (`create_notification_settings!`), snooze/mode delegates, `apply_notification_mode_to_all_rooms!` instance method. **Add `send_notification_email(message, activity_type)` instance method** that re-runs `Notification::Dispatcher.decision_for`, gates on `Membership#recently_emailed?`, and dispatches to the right `UserMailer` method (logic moved off `Notification::EmailJob` for shallow-job parity). Update `destroy_all_associated_records` to include the new `notification_settings` association.
+- `app/models/user.rb` — `has_one :notification_settings` association, `after_create_commit` default-build hook (`create_notification_settings!`), snooze/mode delegates, `apply_notification_mode_to_all_rooms!` instance method. **Add `send_notification_email(message, activity_type)` instance method** that re-runs `Notification::Dispatcher.decision_for`, atomically claims the cooldown via `Membership#claim_email_cooldown!`, and dispatches to the right `UserMailer` method (logic moved off `Notification::EmailJob` for shallow-job parity). Update `destroy_all_associated_records` to include the new `notification_settings` association.
 - `app/models/room.rb` — (1) `#push_later` → `#notify_later`. `#notify_later` enqueues **one `Notification::DispatchJob` per applicable activity_type** (a single message can fire both `:everyone_room_message` and `:mention`; STI subclasses override `#applicable_activity_types` to narrow the set). (2) Add `#applicable_activity_types(message)` returning `[:everyone_room_message]` plus `:mention` when the message has mentions — base behavior for open/closed rooms. (3) `Room#default_involvement(user:)` reads from `user&.notification_settings&.default_involvement_for_new_membership` with `"mentions"` fallback.
 - `app/models/rooms/direct.rb` — override `#applicable_activity_types(_message) = [:direct_message]`. `#default_involvement` stays unchanged so DMs always seed as `"everything"`.
 - `app/models/rooms/thread.rb` — override `#applicable_activity_types(_message) = [:thread_reply]`.
-- `app/models/message.rb` — remove `create_mention_notifications` body; logic moves to `Notification::Channel::InApp`. **Also remove `increment_unread_notifications_counters` and its `after_create_commit` callback** — counter bumps move into `Channel::InApp` so they share the dispatcher's block/receives? gates (see Architecture § Unread counter consistency). The reactivation path (`restore_unread_notifications_counters_if_reactivated`) stays where it is for now — it's a console/admin path that doesn't go through the dispatcher. **Add `notify_recipients(activity_type)` and `notify_recipients_later(activity_type)` instance methods** — the public API for dispatching notifications about a message; `Notification::DispatchJob` is a shallow wrapper that calls `message.notify_recipients(activity_type)`. **Preserve the `[user, :inbox_activity]` stream-key form** in all `broadcast_*_to` calls — bare symbol streams collide across tenants per the activerecord-tenanted gem's GlobalID guarantees (Sabha team note in `docs/multi-tenant/activerecord-tenanted-guide.md` line 664).
-- `app/models/membership.rb` — (1) Add `receives?(activity_type)` that wraps `receives_mentions?` + `:everything` semantics. (2) **Add `EMAIL_COOLDOWN = 5.minutes` constant + `recently_emailed?` predicate + `record_email_delivery!` bang method** — the email-cooldown business policy lives where `last_email_notified_at` lives, off the job per DHH "jobs are shallow wrappers" pattern.
+- `app/models/message.rb` — (1) Remove `create_mention_notifications` body; logic moves to `Notification::Channel::InApp` row phase. (2) **Remove `increment_unread_notifications_counters` and its `after_create_commit` callback** — counter bumps move into `Channel::InApp` counter phase so they share the dispatcher's block/receives? gates while preserving today's broader counter-recipient sets verbatim (see Architecture § Unread counter consistency and § Per-channel recipient resolution). The reactivation path (`restore_unread_notifications_counters_if_reactivated`) stays where it is for now — it's a console/admin path that doesn't go through the dispatcher. (3) **Remove `create_thread_reply_notifications` and its `after_create_commit` callback** — `:thread_reply` is now Dispatcher-owned via `Rooms::Thread#applicable_activity_types`, sharing the same block/`receives?` gates as the other activity_types. (4) **Add `notify_recipients(activity_type)` and `notify_recipients_later(activity_type)` instance methods** — the public API for dispatching notifications about a message; `Notification::DispatchJob` is a shallow wrapper that calls `message.notify_recipients(activity_type)`. **Preserve the `[user, :inbox_activity]` stream-key form** in all `broadcast_*_to` calls — bare symbol streams collide across tenants per the activerecord-tenanted gem's GlobalID guarantees (Sabha team note in `docs/multi-tenant/activerecord-tenanted-guide.md` line 664).
+- `app/models/membership.rb` — (1) Add `receives?(activity_type)` per the truth table at Architecture § Per-recipient decision tree — for `:mention` it reuses today's `receives_mentions?` (`involvement.in?(%w[mentions everything])`) verbatim; for `:everyone_room_message` it requires `involvement == "everything"`; for `:direct_message`/`:boost` it returns true; for `:thread_reply` it requires non-`:nothing`/non-`:invisible`. (2) **Add `EMAIL_COOLDOWN = 5.minutes` constant + `claim_email_cooldown!` atomic-claim method** — single conditional `update_all` that both checks freshness and stamps the timestamp, returning rows-affected. The non-atomic read/write split (`recently_emailed?` predicate + `record_email_delivery!` bang verb) was rejected because concurrent jobs for fast mentions would all pass the read before any write, defeating the cooldown.
 - `app/views/users/profiles/show.html.erb` — render new partial; move per-room loop under it.
 - `app/views/users/sidebars/_bell.html.erb` — snooze quick toggle.
 - `config/routes.rb` — new resources.
@@ -599,6 +640,7 @@ All new classes hang off the existing `Notification` model — `Notification::Di
 
 - `app/models/room/message_pusher.rb` — folded into `Notification::Channel::Push`.
 - `app/jobs/room/push_message_job.rb` — replaced by `Notification::DispatchJob`.
+- `app/jobs/create_thread_reply_notifications_job.rb` — replaced by Dispatcher's `:thread_reply` route. Recipient resolution (thread memberships ∪ parent-room `:everything` members − creator − already-mentioned, skip when parent room is a DM) is ported into the `:thread_reply` recipient query.
 
 ## Rollout
 
@@ -641,11 +683,11 @@ Existing-user defaults at deploy: the backfill migration creates one `user_notif
 
 ## Verification
 
-1. **Unit** — `bin/rails test test/models/user/notification_settings_test.rb test/models/notification/dispatcher_test.rb test/jobs/notification/email_job_test.rb test/mailers/user_mailer_test.rb`. Dispatcher test is a parameterized matrix over `mode × involvement × push_enabled × email_when_away × snoozed × connected_membership × global_active × event_type × blocked` — about 30 representative rows asserting the `(in_app, push, email)` triple. Must explicitly cover: user with `mode: mentions_and_dms` + room `involvement: :everything` → all-message push fires (regression case from initial review).
+1. **Unit** — `bin/rails test test/models/user/notification_settings_test.rb test/models/notification/dispatcher_test.rb test/jobs/notification/email_job_test.rb test/mailers/user_mailer_test.rb`. Dispatcher test is a parameterized matrix over `mode × involvement × push_enabled × email_when_away × snoozed × connected_membership × global_active × event_type × blocked` — about 30 representative rows asserting the `(in_app_row, bump_counter, push, email)` 4-tuple. Must explicitly cover: (a) user with `mode: mentions_and_dms` + room `involvement: :everything` → all-message push fires (regression case from initial review); (b) user with `:everything` involvement who is @mentioned in a non-`@everyone` message → counter bumps via the `:mention` counter recipient set even though they route to `:everyone_room_message` push (regression case from finding 2); (c) user with `:mentions` involvement on an `@everyone` message → counter bumps via the `:everyone_room_message` counter recipient set (`room.user_ids - creator`, broader than the push set).
 2. **Integration**:
    - `test/integration/notification/mention_email_flow_test.rb` — mention → DispatchJob → grace window → EmailJob → mail delivered when offline; no mail when connected anywhere.
    - `test/integration/notification/snooze_flow_test.rb` — snooze suppresses push and email; in-app row still created.
-   - `test/integration/notification/cooldown_test.rb` — 5 fast mentions → 1 email; second email after 5 min.
+   - `test/integration/notification/cooldown_test.rb` — 5 fast mentions → 1 email; second email after 5 min. **Concurrent-jobs case**: enqueue 5 `EmailJob`s in parallel for the same membership and assert exactly one delivery — guards `claim_email_cooldown!`'s atomic-update contract against the read-then-write race.
    - `test/integration/notification/unsubscribe_test.rb` — GET shows confirm page; POST flips `email_when_away` to false; subsequent EmailJob no-ops. SaaS variant: token from workspace A is rejected when used against workspace B; tenant in the signed payload is the only authoritative source.
    - `test/integration/notification/grace_window_revalidation_test.rb` — block toggled mid-window cancels email; message deleted mid-window cancels email; membership revoked mid-window cancels email; account flag flipped mid-window cancels email. Each asserts via the shared `Notification::Dispatcher.decision_for` path, no duplicate logic in the job.
    - `test/integration/notification/block_suppression_test.rb` — blocked user mention → no in-app, no push, no email.
