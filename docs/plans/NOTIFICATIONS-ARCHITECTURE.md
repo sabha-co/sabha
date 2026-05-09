@@ -97,7 +97,7 @@ Channel-specific gates:
 
 `workspace_locally_away?` returns true when the user's most recent connection in any of this workspace's memberships is more than `Membership::Connectable::ACTIVITY_TIERS[:away]` (1 hour) ago, or never. The `:away` tier is chosen over the tighter `:active` tier (10 minutes) because email is asking a different question than UI presence: not "should we show a green dot" but "has the user been gone long enough that an email is the right way to reach them?" A brief mid-window visit (e.g. user pops in for 2 minutes during an hourly bundle) means the user could plausibly have seen the message live, so the bundle should drop at delivery time. Using the 10-minute tier would email those users; using the 1-hour tier does not.
 
-**Snooze / DND is not a v1 feature** (per `EMAIL-NOTIFICATIONS-PRD.md` § Confirmed decisions #7). All "user is unavailable" suppression rides on `workspace_locally_away?` (passive presence) and the per-channel master switches (`missed_email_enabled`, `push_enabled`).
+**Snooze / DND is not a v1 feature, in any form** (per `EMAIL-NOTIFICATIONS-PRD.md` § Confirmed decisions #7). No `snooze_until` column, no `snooze_indefinite` flag, no presence-as-snooze fallback beyond `workspace_locally_away?`. Implementers should not reach for V0's snooze columns (Appendix A.1) or add new snooze hooks. All "user is unavailable" suppression rides on `workspace_locally_away?` (passive presence) and the per-channel master switches (`missed_email_enabled`, `push_enabled`).
 
 ## 5. Routing dispatcher
 
@@ -150,7 +150,7 @@ For each activity_type in Room#applicable_activity_types(message):
 | `mode` | string enum | `nothing` / `mentions_and_dms` (default) / `all`. Default involvement for new memberships + soft suppressor for outbound channels. |
 | `missed_email_enabled` | boolean, default `false` | Master switch for missed-notification email. |
 | `email_frequency` | string enum, default `hourly` | `hourly` / `daily`. Bundle window length. |
-| `weekly_digest_subscribed` | boolean, default `false` | Member-level digest opt-in. Independent of `missed_email_enabled`. |
+| `weekly_digest_subscribed` | boolean, default `true` | Member-level digest opt-out. Defaults to subscribed so an admin enabling the digest reaches existing members immediately (PRD § Product principles #6: weekly general activity is "a workspace/admin choice with member opt-out"). Independent of `missed_email_enabled`. Aggregate exposure is gated by `account.weekly_digest_enabled` (default `false`). |
 | `push_enabled` | boolean, default `true` | Master switch for WebPush. |
 | `last_digest_sent_at` | datetime, nullable | Dedup guard for the weekly digest job. |
 
@@ -425,7 +425,7 @@ Subject privacy (PRD § Email content): generic subjects, no sender or room name
 
 ## 12. User and account defaults summary
 
-- Existing users: `missed_email_enabled: false`, `weekly_digest_subscribed: false`, `mode: mentions_and_dms`, `push_enabled: true`, `email_frequency: hourly`.
+- Existing users: `missed_email_enabled: false`, `weekly_digest_subscribed: true`, `mode: mentions_and_dms`, `push_enabled: true`, `email_frequency: hourly`. Digest defaults subscribed because the digest is admin-enabled with member opt-out (PRD § Product principles #6); aggregate exposure is gated by `account.weekly_digest_enabled` defaulting `false`.
 - New users: same.
 - Account: `email_notifications_enabled: false`, `weekly_digest_enabled: false`. Admins flip both on.
 
