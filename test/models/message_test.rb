@@ -14,8 +14,8 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal "custom-id", message.client_message_id
   end
 
-  test "creating a message enqueues to push later" do
-    assert_enqueued_jobs 1, only: [ Room::PushMessageJob ] do
+  test "creating a message enqueues a single Notification::DispatchJob" do
+    assert_enqueued_jobs 1, only: [ Notification::DispatchJob ] do
       create_new_message_in rooms(:designers)
     end
   end

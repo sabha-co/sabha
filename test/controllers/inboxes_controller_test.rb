@@ -90,7 +90,9 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       creator: @david,
       client_message_id: "boost_activity_test"
     )
-    boost = message.boosts.create!(content: "🔥", booster: @jason)
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      boost = message.boosts.create!(content: "🔥", booster: @jason)
+    end
 
     get activity_inbox_url
     assert_response :success
@@ -519,7 +521,10 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "boost_removal_broadcast"
     )
 
-    boost = message.boosts.create!(content: "🔥", booster: @jason)
+    boost = nil
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      boost = message.boosts.create!(content: "🔥", booster: @jason)
+    end
     notification = Notification.find_by(boost_id: boost.id)
     assert notification
 

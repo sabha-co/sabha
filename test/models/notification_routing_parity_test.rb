@@ -240,8 +240,11 @@ class NotificationRoutingParityTest < ActiveSupport::TestCase
       client_message_id: "routing_boost_target"
     )
 
-    boost = message.boosts.create!(content: "Yes", booster: users(:jason))
-    message.boosts.create!(content: "Self", booster: users(:david))
+    boost = nil
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      boost = message.boosts.create!(content: "Yes", booster: users(:jason))
+      message.boosts.create!(content: "Self", booster: users(:david))
+    end
 
     assert_equal user_ids(:david), notification_user_ids(message, "boost")
     assert_equal users(:jason).id, Notification.find_by(boost_id: boost.id).actor_id
@@ -255,7 +258,9 @@ class NotificationRoutingParityTest < ActiveSupport::TestCase
     )
 
     assert_turbo_stream_broadcasts [ users(:david), :inbox_activity ], count: 1 do
-      message.boosts.create!(content: "Broadcast boost", booster: users(:jason))
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        message.boosts.create!(content: "Broadcast boost", booster: users(:jason))
+      end
     end
   end
 
@@ -322,14 +327,17 @@ class NotificationRoutingParityTest < ActiveSupport::TestCase
         queued_user_ids.concat(subscriptions.map(&:user_id))
         true
       end
-      Room::MessagePusher.new(room: message.room, message: message).push
 
-      queued_user_ids.sort
+      message.room.applicable_activity_types(message).each do |activity_type|
+        next unless Notification::Routing::PUSH_TYPES.include?(activity_type)
+        message.deliver_push_for(activity_type)
+      end
+
+      queued_user_ids.uniq.sort
     end
 
     def push_payload_for(message)
-      Rails.configuration.x.web_push_pool.stubs(:queue)
-      Room::MessagePusher.new(room: message.room, message: message).push
+      Room::MessagePusher.payload_for(room: message.room, message: message)
     end
 
     def notification_user_ids(message, activity_type)

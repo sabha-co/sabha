@@ -7,6 +7,12 @@ class Rooms::Open < Room
 
   after_save_commit :grant_access_to_all_users, if: :auto_join?
 
+  def applicable_activity_types(message)
+    types = [ :everyone_room_message ]
+    types << :mention if message.mentions_everyone? || message.mentionees.any?
+    types
+  end
+
   private
     def grant_access_to_all_users
       return unless type_previously_changed?(to: "Rooms::Open") || saved_change_to_auto_join?(to: true)

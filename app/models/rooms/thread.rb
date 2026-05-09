@@ -67,6 +67,13 @@ class Rooms::Thread < Room
     end
   end
 
+  def applicable_activity_types(message)
+    types = [ :thread_reply ]
+    return types if parent_room&.direct?
+    types << :mention if message.mentionees.any?
+    types
+  end
+
   # Deactivates the thread. Called either when:
   # 1. An admin deletes this thread directly from the UI
   # 2. The parent room is deactivated (cascades to all its threads)

@@ -24,6 +24,7 @@ class Message < ApplicationRecord
   after_create_commit :create_mention_notifications
   after_create_commit :create_thread_reply_notifications
   after_create_commit :increment_unread_notifications_counters
+  after_create_commit :dispatch_notifications
 
   after_update_commit :broadcast_reactivation_if_restored
   after_update_commit :clear_unread_timestamps_if_deactivated
@@ -175,6 +176,92 @@ class Message < ApplicationRecord
 
   def storage_tracked_record = self
 
+  # Single dispatch entry point invoked by Notification::DispatchJob. Iterates
+  # the activity types applicable to this message in this room and runs each
+  # channel branch. In U4 the in-app row branch is a no-op pass-through —
+  # legacy `create_mention_notifications` and `create_thread_reply_notifications`
+  # callbacks still write rows. Email branch is a no-op stub until U5.
+  #
+  # Boost is the lone special case: passes `only: :boost, actor: booster`.
+  #
+  # See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 5.
+  def notify_recipients(only: nil, actor: nil)
+    return if event?
+
+    types = only ? Array(only).map(&:to_sym) : room.applicable_activity_types(self)
+
+    types.each do |activity_type|
+      deliver_in_app_row_for(activity_type, actor: actor) if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
+      deliver_push_for(activity_type)                    if Notification::Routing::PUSH_TYPES.include?(activity_type)
+      # Email candidates are wired in U5.
+    end
+  end
+
+  # Returns the candidate user-id set for a push activity type. Filtering by
+  # connection / block / health happens at delivery time via Membership::Notifiable
+  # predicates and the existing Push::Subscription scope on `relevant_subscriptions`.
+  #
+  # See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 5.1.
+  def push_recipient_user_ids_for(activity_type)
+    case activity_type.to_sym
+    when :everyone_room_message, :direct_message, :thread_reply
+      room.memberships.visible.disconnected.where.not(user_id: creator_id).involved_in_everything.pluck(:user_id)
+    when :mention
+      mentionee_ids_for_push = mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
+      room.memberships.visible.disconnected.where(user_id: mentionee_ids_for_push).involved_in_mentions.pluck(:user_id)
+    else
+      []
+    end
+  end
+
+  # Builds the payload once, resolves push subscriptions for the activity type,
+  # and queues delivery through the existing web_push_pool — payload shape
+  # preserved verbatim from `Room::MessagePusher#build_payload`.
+  def deliver_push_for(activity_type)
+    user_ids = push_recipient_user_ids_for(activity_type)
+    return if user_ids.empty?
+
+    subscriptions = Push::Subscription.where(user_id: user_ids)
+    return if subscriptions.empty?
+
+    payload = Room::MessagePusher.payload_for(room: room, message: self)
+    Rails.configuration.x.web_push_pool.queue(payload, subscriptions)
+  end
+
+  private
+    def deliver_in_app_row_for(activity_type, actor: nil)
+      case activity_type
+      when :mention, :thread_reply
+        # Legacy `create_mention_notifications` / `create_thread_reply_notifications`
+        # callbacks still own row creation in U4. The dispatch job no-ops here;
+        # the partial unique index `index_notifications_on_message_user_type`
+        # is the safety net if both paths ever fire.
+      when :boost
+        create_boost_notification_row(actor: actor)
+      end
+    end
+
+    def create_boost_notification_row(actor:)
+      return unless actor
+      boost = boosts.find_by(booster_id: actor.id)
+      return unless boost
+
+      notification = Notification.create!(
+        user_id: creator_id,
+        message_id: id,
+        actor_id: actor.id,
+        activity_type: "boost",
+        boost_id: boost.id
+      )
+
+      Turbo::StreamsChannel.broadcast_append_to(
+        [ notification.user, :inbox_activity ],
+        target: "inbox",
+        partial: "notifications/notification",
+        locals: { notification: notification, timestamp_style: :long_datetime }
+      )
+    end
+
   private
     # Bots and API consumers don't generate client-side IDs for Turbo dedup
     def set_default_client_message_id
@@ -287,6 +374,12 @@ class Message < ApplicationRecord
       return unless room.thread? && room.parent_message
 
       CreateThreadReplyNotificationsJob.perform_later(message_id: id, thread_id: room.id, creator_id: creator_id)
+    end
+
+    def dispatch_notifications
+      return if event?
+
+      Notification::DispatchJob.perform_later(self)
     end
 
     # Bumps unread_notifications_count for memberships affected by this message.

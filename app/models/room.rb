@@ -83,7 +83,14 @@ class Room < ApplicationRecord
 
   def receive(message)
     unread_memberships(message)
-    push_later(message)
+  end
+
+  # Routing-vocabulary symbols that apply to a message in this room.
+  # Returns a subset of `Notification::Routing::ACTIVITY_TYPES`.
+  # Subclasses override to encode room-type fan-out so callers don't branch on
+  # `room.is_a?(Rooms::Direct)`. See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 5.
+  def applicable_activity_types(_message)
+    []
   end
 
   def involve_user(user, unread: false)
@@ -352,10 +359,6 @@ class Room < ApplicationRecord
       users.each do |user|
         UserUnreadRoomsChannel.broadcast_to(user, payload)
       end
-    end
-
-    def push_later(message)
-      Room::PushMessageJob.perform_later(self, message)
     end
 
     def broadcast_updates

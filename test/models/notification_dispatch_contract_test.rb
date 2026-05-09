@@ -23,6 +23,7 @@ class NotificationDispatchContractTest < ActiveSupport::TestCase
       create_mention_notifications
       create_thread_reply_notifications
       increment_unread_notifications_counters
+      dispatch_notifications
     ]
 
     # `_commit_callbacks.to_a` returns storage order (reverse of execution).

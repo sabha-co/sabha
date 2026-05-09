@@ -5,7 +5,7 @@ class Room::PushTest < ActiveSupport::TestCase
 
   test "deliver new message to other room users with push subscriptions" do
     task_count = Push::Subscription.count - users(:david).push_subscriptions.count
-    perform_enqueued_jobs only: Room::PushMessageJob do
+    perform_enqueued_jobs only: Notification::DispatchJob do
       WebPush.expects(:payload_send).times(task_count)
       rooms(:hq).messages.create! body: "This is from earth", client_message_id: "earth", creator: users(:david)
     end
@@ -13,13 +13,13 @@ class Room::PushTest < ActiveSupport::TestCase
   end
 
   test "notifies subscribed users" do
-    perform_enqueued_jobs only: Room::PushMessageJob do
+    perform_enqueued_jobs only: Notification::DispatchJob do
       WebPush.expects(:payload_send).times(2)
       rooms(:designers).messages.create! body: "This is from earth", client_message_id: "earth", creator: users(:david)
     end
     wait_for_web_push_delivery_pool_tasks(2)
 
-    perform_enqueued_jobs only: Room::PushMessageJob do
+    perform_enqueued_jobs only: Notification::DispatchJob do
       WebPush.expects(:payload_send).times(3)
       rooms(:designers).messages.create! body: "Hey #{mention_attachment_for(:kevin)}", client_message_id: "earth", creator: users(:david)
     end
@@ -29,7 +29,7 @@ class Room::PushTest < ActiveSupport::TestCase
   test "does not notify for connected rooms" do
     memberships(:kevin_designers).connected
 
-    perform_enqueued_jobs only: Room::PushMessageJob do
+    perform_enqueued_jobs only: Notification::DispatchJob do
       WebPush.expects(:payload_send).times(2)
       rooms(:designers).messages.create! body: "Hey @kevin", client_message_id: "earth", creator: users(:david)
     end
@@ -39,7 +39,7 @@ class Room::PushTest < ActiveSupport::TestCase
   test "does not notify for invisible rooms" do
     memberships(:kevin_designers).update! involvement: "invisible"
 
-    perform_enqueued_jobs only: Room::PushMessageJob do
+    perform_enqueued_jobs only: Notification::DispatchJob do
       WebPush.expects(:payload_send).times(2)
       rooms(:designers).messages.create! body: "Hey @kevin", client_message_id: "earth", creator: users(:david)
     end
@@ -50,7 +50,7 @@ class Room::PushTest < ActiveSupport::TestCase
     memberships(:kevin_designers).update! involvement: "invisible"
 
     assert_difference -> { Push::Subscription.count }, -2 do
-      perform_enqueued_jobs only: Room::PushMessageJob do
+      perform_enqueued_jobs only: Notification::DispatchJob do
         WebPush.expects(:payload_send).times(2).raises(WebPush::ExpiredSubscription.new(Struct.new(:body).new, "example.com"))
         rooms(:designers).messages.create! body: "Hey @kevin", client_message_id: "earth", creator: users(:david)
       end

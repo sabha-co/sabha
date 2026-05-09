@@ -10,8 +10,10 @@ class NotificationsHelperTest < ActionView::TestCase
 
   test "groups consecutive boost notifications on the same message" do
     message = @room.messages.create!(body: "Boost me", creator: @david, client_message_id: "group_test_1")
-    b1 = message.boosts.create!(content: "🔥", booster: @jason)
-    b2 = message.boosts.create!(content: "💯", booster: @jz)
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      b1 = message.boosts.create!(content: "🔥", booster: @jason)
+      b2 = message.boosts.create!(content: "💯", booster: @jz)
+    end
 
     notifications = Notification.where(message: message, activity_type: "boost").with_message_and_creator.ordered.to_a
     grouped = group_boost_notifications(notifications)
@@ -25,8 +27,10 @@ class NotificationsHelperTest < ActionView::TestCase
   test "does not group boost notifications on different messages" do
     m1 = @room.messages.create!(body: "First", creator: @david, client_message_id: "group_diff_1")
     m2 = @room.messages.create!(body: "Second", creator: @david, client_message_id: "group_diff_2")
-    m1.boosts.create!(content: "🔥", booster: @jason)
-    m2.boosts.create!(content: "💯", booster: @jason)
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      m1.boosts.create!(content: "🔥", booster: @jason)
+      m2.boosts.create!(content: "💯", booster: @jason)
+    end
 
     notifications = Notification.where(activity_type: "boost", message_id: [ m1.id, m2.id ]).with_message_and_creator.ordered.to_a
     grouped = group_boost_notifications(notifications)
@@ -37,7 +41,9 @@ class NotificationsHelperTest < ActionView::TestCase
 
   test "does not group boosts separated by a mention" do
     message = @room.messages.create!(body: "Boost me", creator: @david, client_message_id: "group_split_1")
-    b1 = message.boosts.create!(content: "🔥", booster: @jason)
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      b1 = message.boosts.create!(content: "🔥", booster: @jason)
+    end
 
     # Create a mention notification between the two boosts
     mention_msg = @room.messages.create!(
@@ -46,7 +52,9 @@ class NotificationsHelperTest < ActionView::TestCase
       client_message_id: "group_split_mention"
     )
 
-    b2 = message.boosts.create!(content: "💯", booster: @jz)
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      b2 = message.boosts.create!(content: "💯", booster: @jz)
+    end
 
     notifications = Notification.where(user: @david).with_message_and_creator.ordered.to_a
     grouped = group_boost_notifications(notifications)
