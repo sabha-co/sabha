@@ -1,5 +1,5 @@
 class Membership < ApplicationRecord
-  include Connectable, Deactivatable
+  include Connectable, Deactivatable, Notifiable
 
   class LastVisibleMemberError < StandardError; end
 
@@ -109,6 +109,20 @@ class Membership < ApplicationRecord
 
   def receives_mentions?
     involved_in_mentions? || involved_in_everything?
+  end
+
+  # Single source of truth for "what is this membership's true involvement after
+  # applying the global mode override?" Predicates ask effective_involvement only;
+  # they do not read mode and involvement independently. Three rules, in order:
+  # 1. per-room :everything wins (per-room opt-in beats global mute)
+  # 2. global mode :nothing applies (global mute)
+  # 3. otherwise, fall back to per-room involvement
+  #
+  # See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 4.
+  def effective_involvement
+    return :everything if involved_in_everything?
+    return :nothing if user.try(:notification_settings)&.mode == "nothing"
+    involvement.to_sym
   end
 
   def ensure_receives_mentions!

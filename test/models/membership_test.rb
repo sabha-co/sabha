@@ -602,4 +602,46 @@ class MembershipTest < ActiveSupport::TestCase
 
     assert_equal "everything", membership.reload.involvement
   end
+
+  # ---------- effective_involvement ----------
+
+  test "effective_involvement returns :everything for per-room everything" do
+    membership = memberships(:david_watercooler)
+    membership.update!(involvement: :everything)
+
+    assert_equal :everything, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :mentions for per-room mentions when no settings exist" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :mentions)
+
+    assert_nil membership.user.try(:notification_settings),
+      "U2 has not landed yet — settings association should not exist"
+    assert_equal :mentions, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :nothing for per-room nothing when no settings exist" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :nothing)
+
+    assert_equal :nothing, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :invisible for per-room invisible" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :invisible)
+
+    assert_equal :invisible, membership.effective_involvement
+  end
+
+  test "effective_involvement falls back to per-room value when notification_settings is missing (rule 3)" do
+    # U1 ships before U2 lands the User::NotificationSettings model. Until then
+    # `user.try(:notification_settings)` returns nil, the global mode rule cannot
+    # fire, and the predicate must default to the per-room involvement value.
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :mentions)
+
+    assert_equal :mentions, membership.effective_involvement
+  end
 end
