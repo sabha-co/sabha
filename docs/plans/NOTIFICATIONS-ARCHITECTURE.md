@@ -45,7 +45,7 @@ Dispatcher symbol vocabulary (used at routing time only — does not all map 1:1
 
 `:direct_message` and `:everyone_room_message` are dispatcher-only — they never produce `Notification` rows. The persisted `Notification#activity_type` vocabulary stays `%w[mention boost thread_reply]`. The dispatcher's symbol set is a strict superset used only at routing time.
 
-Out of scope for email: `:thread_reply`, `:boost`, regular room messages. (See § 13.)
+Out of scope for email in v1: `:thread_reply` (deferred — see § 13), `:boost` (no precedent in Slack/Discord; not planned), regular room messages. Encoded by `Notification::Routing::EMAIL_TYPES = %i[mention direct_message]`.
 
 **Routing vocabulary lives on `Notification::Routing`**, not on `Membership::Notifiable`. The matrix above is encoded as constants on a small module:
 
@@ -431,10 +431,10 @@ Subject privacy (PRD § Email content): generic subjects, no sender or room name
 
 ## 13. Out of scope (v1)
 
-- Thread-reply email.
-- Boost email.
+- **Thread-reply email.** Deferred to v1.1+. Slack supports it for followed threads. Sabha has the equivalent recipient set today (thread members + parent room `involved_in_everything`, minus already-mentioned users — see `app/jobs/create_thread_reply_notifications_job.rb`), so the addressing is solved; what's deferred is the volume question. A single active thread can produce 20 replies in a window, which would push past the PRD's "calm timing" target. Revisit once v1 bundle-volume telemetry shows headroom; the path is to add `:thread_reply` to `Notification::Routing::EMAIL_TYPES` and `notification_bundle_items.kind`.
+- Boost email. Neither Slack nor Discord email reactions; not planned.
 - Per-room email controls.
-- Keyword alerts / custom triggers.
+- Keyword alerts / custom triggers. Slack has "My keywords"; Sabha treats this as a v2 product question, not a v1.1 implementation question — keyword alerts are explicitly the *ambient* surface, outside v1's "personal beats ambient" frame.
 - Marketing/news email subscriptions (separate surface).
 - Reply-from-email.
 - Cross-workspace bundle consolidation (a user in 3 workspaces gets up to 3 bundles).

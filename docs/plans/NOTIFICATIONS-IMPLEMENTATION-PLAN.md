@@ -14,7 +14,7 @@ architecture: docs/plans/NOTIFICATIONS-ARCHITECTURE.md
 Implement the unified notification dispatcher and the two email surfaces (bundled missed-notification email + weekly activity digest) described in `docs/plans/NOTIFICATIONS-ARCHITECTURE.md`. The plan is phased so each unit is independently mergeable, `main` stays green throughout, and the user-visible behavior changes are gated by the account-level `email_notifications_enabled` flag (default off) until rollout.
 
 Source of truth for **product scope**: `docs/plans/EMAIL-NOTIFICATIONS-PRD.md`.
-Source of truth for **structure, components, data shapes**: `docs/plans/NOTIFICATIONS-ARCHITECTURE.md`. This plan never relitigates decisions made there — when a question reduces to "what should the data shape be" or "what is the routing matrix", look at the architecture doc. The architecture doc was refreshed alongside this plan to reflect the digest opt-out default and to sharpen the snooze "not in v1, in any form" framing — see arch § 6.1, § 12, § 4.
+Source of truth for **structure, components, data shapes**: `docs/plans/NOTIFICATIONS-ARCHITECTURE.md`. This plan never relitigates decisions made there — when a question reduces to "what should the data shape be" or "what is the routing matrix", look at the architecture doc. Two decisions worth flagging because they have load-bearing implications below: digest defaults to opt-out per member (arch § 6.1, § 12) and snooze is not a v1 feature in any form (arch § 4).
 
 ---
 
@@ -609,7 +609,7 @@ The plan unfolds in six phases. Each unit ends in a mergeable state with `main` 
 
 - U8. **`Notification::WeeklyDigestJob` + `WeeklyDigestMailer` + content selection + bundle GC**
 
-**Goal:** Recurring weekly per-workspace job emails opted-in members a calm recap. Bundles older than 90 days are pruned at the top of each digest run.
+**Goal:** Recurring weekly per-workspace job emails subscribed members (member opt-out model — `weekly_digest_subscribed: true` by default) a calm recap. Bundles older than 90 days are pruned at the top of each digest run.
 
 **Requirements:** R4, R6, R10, R11.
 
@@ -682,7 +682,7 @@ The plan unfolds in six phases. Each unit ends in a mergeable state with `main` 
 
 - **Interaction graph (callbacks):** The new `dispatch_notifications` callback joins eight existing `after_create_commit` callbacks on `Message` and is order-sensitive (must run after `create_mention_notifications` and `create_thread_reply_notifications`). The dispatch contract test pins the order. Boost moves from inline to async dispatch — the existing `broadcast_notification_removal` on Boost destroy stays untouched.
 - **Error propagation:** Dispatch job failures discard on `DeserializationError` and propagate other errors so Solid Queue retries. Bundle delivery rescues a documented set of terminal provider errors and sets `canceled_at` to break the partial-unique-index trap (arch § 14.1). Mailer failures inside the job propagate. Nothing in the dispatch path can roll back the originating message create — all delivery work runs after the message is committed.
-- **State lifecycle risks:** The bundle's `(user_id) WHERE delivered_at IS NULL AND canceled_at IS NULL` partial unique index is the load-bearing invariant. If a bundle gets stuck (terminal error not in the rescue list, or the rescue list misses a new provider error class), no further bundles are created for that user. Mitigations: terminal-error rescue list (arch § 14.1), bundle GC at 90 days (will eventually delete a stuck bundle even if never canceled — note: only terminal bundles are GC'd; an actively-stuck `delivered_at IS NULL AND canceled_at IS NULL` bundle is **not** pruned, so the rescue list must be comprehensive).
+- **State lifecycle risks:** The bundle's `(user_id) WHERE delivered_at IS NULL AND canceled_at IS NULL` partial unique index is the load-bearing invariant. If a bundle gets stuck (terminal error not in the rescue list, or the rescue list misses a new provider error class), no further bundles are created for that user. Bundle GC does **not** mitigate this — only terminal bundles (`delivered_at IS NOT NULL OR canceled_at IS NOT NULL`) are pruned at 90 days; an actively-stuck active bundle is never deleted by GC. The single mitigation is the terminal-error rescue list (arch § 14.1), which must be comprehensive enough to catch any error that should terminate the bundle. See the corresponding risk-table row below.
 - **API surface parity:** The plan does not change any external API (bot API, push subscription API, ActionCable channels). The Activity tab broadcast remains unchanged — `Notification` row creation still drives it. The `notification_recipient_ids` private method on `Message::Broadcasts` (touched by `test/models/message/broadcasts_test.rb`) is unrelated to the dispatch job and stays unchanged.
 - **Integration coverage:** Cross-layer scenarios that mocks alone won't prove:
   - Callback ordering is integration-tested via the dispatch contract test (pinning behavior at the Rails callback chain level).
