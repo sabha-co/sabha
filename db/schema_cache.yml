@@ -1039,7 +1039,82 @@ columns:
     collation:
     comment:
   - *9
+  user_notification_settings:
+  - *7
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: email_frequency
+    cast_type: *5
+    sql_type_metadata: *6
+    'null': false
+    default: hourly
+    default_function:
+    collation:
+    comment:
+  - *8
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: last_digest_sent_at
+    cast_type: *1
+    sql_type_metadata: *2
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: missed_email_enabled
+    cast_type: *23
+    sql_type_metadata: *24
+    'null': false
+    default: false
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: mode
+    cast_type: *5
+    sql_type_metadata: *6
+    'null': false
+    default: mentions_and_dms
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: push_enabled
+    cast_type: *23
+    sql_type_metadata: *24
+    'null': false
+    default: true
+    default_function:
+    collation:
+    comment:
+  - *9
+  - *20
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: weekly_digest_subscribed
+    cast_type: *23
+    sql_type_metadata: *24
+    'null': false
+    default: true
+    default_function:
+    collation:
+    comment:
   users:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: accepted_terms_at
+    cast_type: *1
+    sql_type_metadata: *2
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: ascii_name
@@ -1366,6 +1441,7 @@ primary_keys:
   sessions: id
   storage_entries: id
   storage_totals: id
+  user_notification_settings: id
   users: id
   webhook_events: id
   webhooks: id
@@ -1393,6 +1469,7 @@ data_sources:
   sessions: true
   storage_entries: true
   storage_totals: true
+  user_notification_settings: true
   users: true
   webhook_events: true
   webhooks: true
@@ -2346,6 +2423,23 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
+  user_notification_settings:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: user_notification_settings
+    name: index_user_notification_settings_on_user_id
+    unique: true
+    columns:
+    - user_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
   users:
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: users
@@ -2429,4 +2523,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260426133120
+version: 20260509180101

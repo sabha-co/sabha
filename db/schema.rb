@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_26_133120) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_09_180101) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -271,7 +271,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_26_133120) do
     t.index ["owner_type", "owner_id"], name: "index_storage_totals_on_owner", unique: true
   end
 
+  create_table "user_notification_settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email_frequency", default: "hourly", null: false
+    t.datetime "last_digest_sent_at"
+    t.boolean "missed_email_enabled", default: false, null: false
+    t.string "mode", default: "mentions_and_dms", null: false
+    t.boolean "push_enabled", default: true, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.boolean "weekly_digest_subscribed", default: true, null: false
+    t.index ["user_id"], name: "index_user_notification_settings_on_user_id", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
+    t.datetime "accepted_terms_at"
     t.string "ascii_name"
     t.integer "avatar_seed"
     t.string "avatar_url"
@@ -342,6 +356,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_26_133120) do
   add_foreign_key "searches", "users"
   add_foreign_key "searches", "users", column: "creator_id"
   add_foreign_key "sessions", "users"
+  add_foreign_key "user_notification_settings", "users"
   add_foreign_key "users", "badges"
   add_foreign_key "webhooks", "users"
 

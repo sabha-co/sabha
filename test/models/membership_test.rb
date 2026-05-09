@@ -636,12 +636,29 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "effective_involvement falls back to per-room value when notification_settings is missing (rule 3)" do
-    # U1 ships before U2 lands the User::NotificationSettings model. Until then
-    # `user.try(:notification_settings)` returns nil, the global mode rule cannot
-    # fire, and the predicate must default to the per-room involvement value.
     membership = memberships(:kevin_designers)
     membership.update!(involvement: :mentions)
+    membership.user.notification_settings&.destroy
 
+    assert_nil membership.user.reload.notification_settings
     assert_equal :mentions, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :everything when per-room is :everything even if global mode is :nothing (rule 1 — per-room beats global mute)" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :everything)
+    membership.user.notification_settings&.update!(mode: :nothing) ||
+      membership.user.create_notification_settings!(mode: :nothing)
+
+    assert_equal :everything, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :nothing when global mode is :nothing and per-room is :mentions (rule 2 — global mute applies)" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :mentions)
+    membership.user.notification_settings&.update!(mode: :nothing) ||
+      membership.user.create_notification_settings!(mode: :nothing)
+
+    assert_equal :nothing, membership.effective_involvement
   end
 end

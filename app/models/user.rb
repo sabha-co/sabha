@@ -30,6 +30,9 @@ class User < ApplicationRecord
   has_many :notifications
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
 
+  has_one :notification_settings, class_name: "User::NotificationSettings", dependent: :destroy
+  after_create_commit :ensure_notification_settings
+
   def active_invite_link
     join_codes.active.first
   end
@@ -465,6 +468,11 @@ class User < ApplicationRecord
       Block.where(blocked_id: id).delete_all
       Push::Subscription.where(user_id: id).delete_all
       Webhook.where(user_id: id).delete_all
+      User::NotificationSettings.where(user_id: id).delete_all
+    end
+
+    def ensure_notification_settings
+      create_notification_settings! unless notification_settings
     end
 
     def set_default_name

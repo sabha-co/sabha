@@ -697,4 +697,20 @@ class UserTest < ActiveSupport::TestCase
     results = User.sharing_rooms_with(bender).to_a
     assert_equal 1, results.count { |u| u.id == users(:david).id }
   end
+
+  test "User.create! seeds a notification_settings row via after_create_commit" do
+    user = User.create!(name: "Settings Seed", email_address: "settings_seed@example.com")
+
+    assert_not_nil user.notification_settings, "after_create_commit must seed settings"
+    assert_equal "mentions_and_dms", user.notification_settings.mode
+  end
+
+  test "destroy_all_associated_records removes notification_settings" do
+    user = User.create!(name: "Settings Destroy", email_address: "settings_destroy@example.com")
+    settings_id = user.notification_settings.id
+
+    user.destroy
+
+    assert_nil User::NotificationSettings.find_by(id: settings_id)
+  end
 end
