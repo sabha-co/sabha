@@ -111,6 +111,23 @@ class AccountTest < ActiveSupport::TestCase
     assert @account.logo.attached?
   end
 
+  test "email_notifications_enabled defaults to false (arch § 6.4, § 12)" do
+    assert_equal false, @account.email_notifications_enabled
+    assert_not @account.email_notifications_enabled?
+  end
+
+  test "weekly_digest_enabled defaults to false (arch § 6.4, § 12)" do
+    assert_equal false, @account.weekly_digest_enabled
+    assert_not @account.weekly_digest_enabled?
+  end
+
+  test "email flags are queryable as boolean columns, not JSON extraction" do
+    @account.update!(email_notifications_enabled: true, weekly_digest_enabled: true)
+
+    found = Account.where(email_notifications_enabled: true, weekly_digest_enabled: true).first
+    assert_equal @account.id, found.id
+  end
+
   test "disabling invite links destroys all personal invite links" do
     personal_link = account_join_codes(:signal_personal)
     global_link = account_join_codes(:signal)

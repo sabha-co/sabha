@@ -52,5 +52,41 @@
 
       </div>
     </div>
+
+    <!-- Email -->
+    <div class="flex flex-column gap align-center" style="--row-gap: 0.5rem">
+      <strong>Email</strong>
+      <% unless Sabha.saas? %>
+        <p class="txt-small txt-secondary" style="max-width: 36ch">
+          Outbound email needs a verified Resend sending domain. Until that's configured, leave these off.
+        </p>
+      <% end %>
+      <div class="flex flex-column gap">
+        <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
+          <%= form.hidden_field :email_notifications_enabled, value: !Current.account.email_notifications_enabled? %>
+          <label class="switch">
+            <input type="checkbox"
+                  class="switch__input"
+                  <%= "checked" if Current.account.email_notifications_enabled? %>
+                  data-action="change->form#submit">
+            <span class="switch__btn"></span>
+          </label>
+          <span>Send missed-notification emails (members opt in individually)</span>
+        <% end %>
+
+        <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
+          <%= form.hidden_field :weekly_digest_enabled, value: !Current.account.weekly_digest_enabled? %>
+          <label class="switch">
+            <input type="checkbox"
+                  class="switch__input"
+                  <%= "checked" if Current.account.weekly_digest_enabled? %>
+                  data-action="change->form#submit">
+            <span class="switch__btn"></span>
+          </label>
+          <span>Send a weekly community digest (members can unsubscribe)</span>
+        <% end %>
+      </div>
+    </div>
+
   </div>
 </div>

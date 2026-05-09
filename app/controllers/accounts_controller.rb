@@ -23,7 +23,7 @@ class AccountsController < ApplicationController
     end
 
     def account_params
-      params.require(:account).permit(:name, :logo, settings: {})
+      params.require(:account).permit(:name, :logo, :email_notifications_enabled, :weekly_digest_enabled, settings: {})
     end
 
     def merged_account_params

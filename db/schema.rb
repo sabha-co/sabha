@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_09_180101) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_09_180200) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -31,10 +31,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_09_180101) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.text "custom_styles"
+    t.boolean "email_notifications_enabled", default: false, null: false
     t.string "name", null: false
     t.json "settings"
     t.integer "singleton_guard", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.boolean "weekly_digest_enabled", default: false, null: false
     t.index ["singleton_guard"], name: "index_accounts_on_singleton_guard", unique: true
   end
 
