@@ -23,8 +23,8 @@ class WeeklyDigestMailer < ApplicationMailer
     @everyone_mentions = content.everyone_mentions
     @active_rooms      = content.active_rooms
     @excerpts          = content.excerpts
-    @activity_url      = activity_inbox_url
-    @settings_url      = edit_user_notification_settings_url(user_id: "me")
+    @activity_url      = activity_inbox_url(script_name: tenant_script_name)
+    @settings_url      = edit_user_notification_settings_url(user_id: "me", script_name: tenant_script_name)
     @unsubscribe_url   = unsubscribe_url_for(@user, :weekly_digest)
 
     unsubscribe_headers(@user, :weekly_digest).each { |key, value| headers[key] = value }

@@ -102,11 +102,23 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
     assert_nil @bundle.delivered_at
   end
 
-  test "transient errors propagate (Solid Queue retries)" do
+  test "transient provider errors are retried, not canceled" do
     create_item!(create_message!)
     MissedNotificationsMailer.expects(:bundle).raises(Resend::Error::InternalServerError.new("oops", 500))
 
-    assert_raises(Resend::Error::InternalServerError) do
+    assert_enqueued_with(job: Notification::BundleDeliveryJob) do
+      Notification::BundleDeliveryJob.perform_now(@bundle)
+    end
+
+    assert_nil @bundle.reload.delivered_at, "transient errors must not mark the bundle delivered"
+    assert_nil @bundle.canceled_at,           "transient errors must not cancel the bundle"
+  end
+
+  test "transient network timeouts are retried, not canceled" do
+    create_item!(create_message!)
+    MissedNotificationsMailer.expects(:bundle).raises(Net::OpenTimeout)
+
+    assert_enqueued_with(job: Notification::BundleDeliveryJob) do
       Notification::BundleDeliveryJob.perform_now(@bundle)
     end
 

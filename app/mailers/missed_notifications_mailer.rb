@@ -33,8 +33,8 @@ class MissedNotificationsMailer < ApplicationMailer
     @items           = items
     @workspace_name  = workspace_name
     @grouped_items   = items.group_by { |item| item.message.room }
-    @activity_url    = activity_inbox_url
-    @settings_url    = edit_user_notification_settings_url(user_id: "me")
+    @activity_url    = activity_inbox_url(script_name: tenant_script_name)
+    @settings_url    = edit_user_notification_settings_url(user_id: "me", script_name: tenant_script_name)
     @unsubscribe_url = unsubscribe_url_for(@user, :missed_notifications)
 
     headers["X-Idempotency-Key"] = "bundle-#{bundle.id}"

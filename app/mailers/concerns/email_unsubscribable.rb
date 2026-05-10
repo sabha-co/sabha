@@ -40,4 +40,13 @@ module EmailUnsubscribable
     def current_tenant_for_token
       ApplicationRecord.current_tenant if defined?(ActiveRecord::Tenanted) && Sabha.saas?
     end
+
+    # Path prefix for in-workspace links (Activity, settings). SaaS tenant
+    # routing is path-based — without this, mailer URL helpers produce
+    # "https://host/inbox/activity" and the click misses the tenant resolver.
+    # The unsubscribe URL is intentionally exempt: its token is the tenant
+    # carrier, and the route lives at the global path.
+    def tenant_script_name
+      "/#{current_tenant_for_token}" if current_tenant_for_token.present?
+    end
 end

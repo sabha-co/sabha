@@ -70,12 +70,18 @@ class SesDeliveryMethod
     @settings = settings
   end
 
+  # Internal headers consumed before send so they don't leak to recipients.
+  # X-Idempotency-Key is the dispatcher's retry-dedup signal; SES has no
+  # per-call idempotency parameter on send_email, so we just drop the header.
+  INTERNAL_HEADERS = %w[ X-Idempotency-Key X-SES-CONFIGURATION-SET ].freeze
+
   def deliver!(mail)
     raise "aws-sdk-sesv2 gem is required for SES delivery. Add it to your Gemfile." unless SES_AVAILABLE
 
-    params = { content: { raw: { data: mail.to_s } } }
-
     config_set = configuration_set_for(mail)
+    INTERNAL_HEADERS.each { |name| mail[name] = nil }
+
+    params = { content: { raw: { data: mail.to_s } } }
     params[:configuration_set_name] = config_set if config_set.present?
 
     client.send_email(**params)

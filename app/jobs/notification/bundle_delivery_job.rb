@@ -8,6 +8,18 @@ class Notification::BundleDeliveryJob < ApplicationJob
 
   discard_on ActiveJob::DeserializationError
 
+  # Transient errors propagate via Active Job's retry_on so Solid Queue
+  # re-runs the job. Provider-side idempotency makes a duplicate API call on
+  # retry safe — Resend/SES dedup the second send.
+  retry_on Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ECONNREFUSED,
+           wait: :polynomially_longer, attempts: 5
+  retry_on Resend::Error::RateLimitExceededError, Resend::Error::InternalServerError,
+           wait: :polynomially_longer, attempts: 5
+  if defined?(Aws::SESV2::Errors)
+    retry_on Aws::SESV2::Errors::ThrottlingException, Aws::SESV2::Errors::TooManyRequestsException,
+             wait: :polynomially_longer, attempts: 5
+  end
+
   def perform(bundle)
     return if DemoMode.enabled?
     return if bundle.terminal?

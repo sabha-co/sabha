@@ -137,4 +137,28 @@ class SesDeliveryMethodTest < ActiveSupport::TestCase
 
     assert_raises(RuntimeError) { @dm.deliver!(@mail) }
   end
+
+  test "strips internal X-Idempotency-Key header before sending the raw mail" do
+    skip "SES SDK not available" unless SES_AVAILABLE
+
+    @mail.header["X-Idempotency-Key"] = "bundle-99"
+    fake_client = Object.new
+    @dm.stubs(:client).returns(fake_client)
+    fake_client.expects(:send_email).with do |params|
+      !params[:content][:raw][:data].include?("X-Idempotency-Key")
+    end
+
+    @dm.deliver!(@mail)
+  end
+
+  test "still resolves configuration_set when the X-SES-CONFIGURATION-SET header is set" do
+    skip "SES SDK not available" unless SES_AVAILABLE
+
+    @mail.header["X-SES-CONFIGURATION-SET"] = "header-set"
+    fake_client = Object.new
+    @dm.stubs(:client).returns(fake_client)
+    fake_client.expects(:send_email).with { |params| params[:configuration_set_name] == "header-set" }
+
+    @dm.deliver!(@mail)
+  end
 end
