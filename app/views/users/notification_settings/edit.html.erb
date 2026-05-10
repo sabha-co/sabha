@@ -1,0 +1,45 @@
+<% @page_title = "Notification preferences" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to_last_room_visited %>
+  </div>
+<% end %>
+
+<section class="panel panel--wide flex flex-column gap">
+  <h1 class="txt-align-center txt-large margin-none">Notification preferences</h1>
+
+  <%= form_with model: @settings, url: user_notification_settings_path(user_id: "me"), method: :patch, scope: :user_notification_settings, class: "flex flex-column gap" do |form| %>
+    <fieldset class="pad-inline fill-shade border-radius pad flex flex-column gap">
+      <legend class="txt-medium"><strong>Email</strong></legend>
+
+      <label class="flex align-center gap">
+        <%= form.check_box :missed_email_enabled %>
+        <span>Email me when I'm mentioned or sent a DM while I'm away</span>
+      </label>
+
+      <label class="flex flex-column gap-small">
+        <span>Bundle frequency</span>
+        <%= form.select :email_frequency, [["Hourly", "hourly"], ["Daily", "daily"]] %>
+      </label>
+
+      <label class="flex align-center gap">
+        <%= form.check_box :weekly_digest_subscribed %>
+        <span>Receive the weekly community digest</span>
+      </label>
+    </fieldset>
+
+    <fieldset class="pad-inline fill-shade border-radius pad flex flex-column gap">
+      <legend class="txt-medium"><strong>Push</strong></legend>
+
+      <label class="flex align-center gap">
+        <%= form.check_box :push_enabled %>
+        <span>Send push notifications to my subscribed devices</span>
+      </label>
+    </fieldset>
+
+    <div class="flex justify-end">
+      <%= form.submit "Save", class: "btn btn--primary" %>
+    </div>
+  <% end %>
+</section>

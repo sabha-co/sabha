@@ -1,0 +1,65 @@
+# Public, token-authenticated unsubscribe surface for notification emails.
+# The token is the tenant carrier — no path-based workspace prefix is needed
+# or accepted (arch § 9, plan U7).
+#
+# Two surfaces share one route:
+# - :missed_notifications → flips missed_email_enabled
+# - :weekly_digest        → flips weekly_digest_subscribed
+#
+# POST is the RFC 8058 one-click target invoked by mail clients without the
+# user opening the page; GET shows a confirmation. Both are idempotent —
+# re-clicking after the flag is already false is a no-op success.
+class EmailUnsubscribesController < ApplicationController
+  allow_unauthenticated_access
+  skip_forgery_protection only: :create
+  rate_limit to: 30, within: 1.minute, with: -> { render :invalid, status: :too_many_requests }
+
+  def show
+    @payload = decode_token(params[:token]) or return render(:invalid, status: :not_found)
+  end
+
+  def create
+    payload = decode_token(params[:token]) or return render(:invalid, status: :not_found)
+    @surface = payload[:surface]
+    apply_unsubscribe(payload)
+  end
+
+  private
+    def decode_token(token)
+      payload = Rails.application.message_verifier(:email_unsubscribe).verify(token).symbolize_keys
+      return nil unless EmailUnsubscribable::VALID_SURFACES.include?(payload[:surface]&.to_sym)
+      payload[:surface] = payload[:surface].to_sym
+      payload
+    rescue ActiveSupport::MessageVerifier::InvalidSignature, ActiveSupport::MessageEncryptor::InvalidMessage, NoMethodError, TypeError
+      nil
+    end
+
+    def apply_unsubscribe(payload)
+      with_tenant_from(payload[:tenant]) do
+        user = User.find_by(id: payload[:user_id])
+        return unless user
+
+        settings = user.notification_settings || user.create_notification_settings!
+
+        case payload[:surface]
+        when :missed_notifications
+          settings.update!(missed_email_enabled: false)
+        when :weekly_digest
+          settings.update!(weekly_digest_subscribed: false)
+        end
+      end
+    end
+
+    # In SaaS, the request enters with no tenant (PathRewriter doesn't match
+    # /email/unsubscribe/...) so `with_tenant` lands cleanly on the token's
+    # tenant. `prohibit_shard_swapping: false` covers the unlikely case of a
+    # request that did somehow land in a tenant context — the token, not the
+    # path, is authoritative.
+    def with_tenant_from(tenant, &block)
+      if defined?(ActiveRecord::Tenanted) && Sabha.saas? && tenant.present?
+        ApplicationRecord.with_tenant(tenant, prohibit_shard_swapping: false, &block)
+      else
+        block.call
+      end
+    end
+end

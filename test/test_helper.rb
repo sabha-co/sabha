@@ -41,6 +41,14 @@ class ActiveSupport::TestCase
         invalid_subscription_handler: config.x.web_push_pool.invalid_subscription_handler
     end
 
+    # Tests that don't explicitly stub WebPush.payload_send would otherwise make
+    # real HTTP calls to fcm.googleapis.com from the web_push_pool's worker
+    # thread. WebMock blocks the call but the resulting error path can race
+    # with the next test's transaction rollback and destroy push subscriptions
+    # outside the test's transaction (via invalid_subscription_handler). Default
+    # to a no-op; tests that care use `WebPush.expects(:payload_send)` to override.
+    WebPush.stubs(:payload_send).returns(nil)
+
     # Allow localhost:8080 for AnyCable HTTP broadcasts (background threads may persist across tests)
     WebMock.disable_net_connect!(allow: "localhost:8080")
   end

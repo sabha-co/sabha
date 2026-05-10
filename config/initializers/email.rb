@@ -7,6 +7,8 @@ class ResendDeliveryMethod
     @settings = settings
   end
 
+  PASSTHROUGH_HEADERS = %w[ List-Unsubscribe List-Unsubscribe-Post ].freeze
+
   def deliver!(mail)
     api_key = @settings[:api_key] || ENV["RESEND_API_KEY"]
 
@@ -35,6 +37,20 @@ class ResendDeliveryMethod
         params[:text] = body_content
       end
     end
+
+    # Provider-side idempotency: stable across Solid Queue retries so a
+    # double-deliver hits Resend's dedup, not the recipient's inbox.
+    if (idempotency_key = mail.header["X-Idempotency-Key"]&.value).present?
+      params[:idempotency_key] = idempotency_key
+    end
+
+    # Forward RFC 8058 unsubscribe headers — Resend doesn't read them off the
+    # raw mail object, only the explicit `headers` param.
+    forwarded = PASSTHROUGH_HEADERS.each_with_object({}) do |name, memo|
+      value = mail.header[name]&.value
+      memo[name] = value if value.present?
+    end
+    params[:headers] = forwarded if forwarded.any?
 
     Resend::Emails.send(params)
   end

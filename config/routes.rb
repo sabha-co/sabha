@@ -53,6 +53,11 @@ Rails.application.routes.draw do
   post "resend_verification", to: "email_verifications#resend", as: :resend_verification
   get "confirm_email_change/:token", to: "email_verifications#confirm_email_change", as: :confirm_email_change
 
+  # Notification email unsubscribe — token is the tenant carrier, so no workspace prefix.
+  # POST is the RFC 8058 one-click target; GET shows the confirmation page.
+  get  "email/unsubscribe/:token", to: "email_unsubscribes#show",   as: :email_unsubscribe
+  post "email/unsubscribe/:token", to: "email_unsubscribes#create"
+
   resources :password_resets, only: [ :new, :create, :edit, :update ], param: :token
 
   resource :account do
@@ -110,6 +115,7 @@ Rails.application.routes.draw do
             resources :test_notifications, only: :create
           end
         end
+        resource :notification_settings, only: %i[ edit update ]
       end
     end
     resource :block, only: [ :create, :destroy ]

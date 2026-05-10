@@ -1,0 +1,13 @@
+You have new activity in <%= @workspace_name %>.
+
+<% @grouped_items.each do |room, items| %>
+<%= room_label_for(room) %>
+<% items.each do |item| -%>
+  - <%= sender_for(item) %>: <%= preview_for(item) %>
+<% end -%>
+
+<% end -%>
+Open Activity: <%= @activity_url %>
+
+Manage notification settings: <%= @settings_url %>
+Unsubscribe: <%= @unsubscribe_url %>

@@ -1,0 +1,55 @@
+# Renders the bundled missed-notification email handed to it by
+# Notification::BundleDeliveryJob. The mailer trusts the job's revalidation
+# pass — it does not re-check eligibility — and emits a stable provider-side
+# idempotency key so retries deduplicate at Resend/SES rather than at our DB.
+#
+# Subject is intentionally generic (workspace + activity-type only); sender
+# and room names live in the body. PRD § Email content / R11.
+class MissedNotificationsMailer < ApplicationMailer
+  include EmailUnsubscribable
+
+  PREVIEW_TRUNCATION = 140
+
+  helper do
+    def preview_for(item)
+      item.message.plain_text_body.to_s.truncate(MissedNotificationsMailer::PREVIEW_TRUNCATION)
+    end
+
+    def sender_for(item)
+      item.actor&.name.presence || "Someone"
+    end
+
+    def room_label_for(room)
+      case room
+      when Rooms::Direct then "Direct message"
+      when Rooms::Thread then "Thread in #{room.parent_message&.room&.name || "a room"}"
+      else room.name
+      end
+    end
+  end
+
+  def bundle(bundle, items)
+    @bundle          = bundle
+    @user            = bundle.user
+    @items           = items
+    @workspace_name  = workspace_name
+    @grouped_items   = items.group_by { |item| item.message.room }
+    @activity_url    = activity_inbox_url
+    @settings_url    = edit_user_notification_settings_url(user_id: "me")
+    @unsubscribe_url = unsubscribe_url_for(@user, :missed_notifications)
+
+    headers["X-Idempotency-Key"] = "bundle-#{bundle.id}"
+    unsubscribe_headers(@user, :missed_notifications).each { |key, value| headers[key] = value }
+
+    mail to: @user.email_address, subject: subject_for(items)
+  end
+
+  private
+    def subject_for(items)
+      if items.any? { |item| item.kind == "mention" }
+        "New mentions in #{@workspace_name}"
+      else
+        "You have new messages in #{@workspace_name}"
+      end
+    end
+end
