@@ -20,6 +20,18 @@ class Notification::Bundle < ApplicationRecord
 
   scope :active,   -> { where(delivered_at: nil, canceled_at: nil) }
   scope :pending,  -> { active }
+  scope :terminal, -> { where("delivered_at IS NOT NULL OR canceled_at IS NOT NULL") }
+
+  # Pruner invoked at the top of each weekly digest run (arch § 7.6). Deletes
+  # delivered or canceled bundles older than the retention window; items
+  # cascade via dependent: :delete_all on the association. Active bundles are
+  # never pruned — the partial unique index keeps that set bounded to one per
+  # user.
+  GC_RETENTION = 90.days
+
+  def self.gc_terminal!(retention: GC_RETENTION)
+    terminal.where("updated_at < ?", retention.ago).delete_all
+  end
 
   # Returns the user's active bundle, creating one if none exists. The race-
   # safe insert relies on the partial unique index — two concurrent Message
