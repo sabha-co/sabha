@@ -180,7 +180,7 @@ class Message < ApplicationRecord
   # the activity types applicable to this message in this room and runs each
   # channel branch. In U4 the in-app row branch is a no-op pass-through —
   # legacy `create_mention_notifications` and `create_thread_reply_notifications`
-  # callbacks still write rows. Email branch is a no-op stub until U5.
+  # callbacks still write rows.
   #
   # Boost is the lone special case: passes `only: :boost, actor: booster`.
   #
@@ -191,9 +191,9 @@ class Message < ApplicationRecord
     types = only ? Array(only).map(&:to_sym) : room.applicable_activity_types(self)
 
     types.each do |activity_type|
-      deliver_in_app_row_for(activity_type, actor: actor) if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
-      deliver_push_for(activity_type)                    if Notification::Routing::PUSH_TYPES.include?(activity_type)
-      # Email candidates are wired in U5.
+      deliver_in_app_row_for(activity_type, actor: actor)         if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
+      deliver_push_for(activity_type)                             if Notification::Routing::PUSH_TYPES.include?(activity_type)
+      enqueue_missed_email_candidates_for(activity_type)          if Notification::Routing::EMAIL_TYPES.include?(activity_type)
     end
   end
 
@@ -228,7 +228,53 @@ class Message < ApplicationRecord
     Rails.configuration.x.web_push_pool.queue(payload, subscriptions)
   end
 
+  # Walks the candidate recipient set for `activity_type`, runs the
+  # `receives_missed_email_for?` predicate per membership, and appends a
+  # BundleItem to the user's active bundle on a hit. The predicate filters
+  # for global mode, account flag, missed_email_enabled, away presence, and
+  # blocks — see Membership::Notifiable.
+  #
+  # See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 7.1.
+  def enqueue_missed_email_candidates_for(activity_type)
+    activity_type = activity_type.to_sym
+    return unless Notification::Routing::EMAIL_TYPES.include?(activity_type)
+
+    candidate_user_ids = email_candidate_user_ids_for(activity_type)
+    return if candidate_user_ids.empty?
+
+    kind = activity_type.to_s
+    now  = Time.current
+
+    room.memberships.where(user_id: candidate_user_ids).includes(:user).find_each do |membership|
+      next unless membership.receives_missed_email_for?(self, activity_type)
+
+      bundle = Notification::Bundle.find_or_create_active_for(membership.user)
+      Notification::BundleItem.insert_all(
+        [ {
+          bundle_id:  bundle.id,
+          message_id: id,
+          actor_id:   creator_id,
+          kind:       kind,
+          created_at: now,
+          updated_at: now
+        } ],
+        unique_by: %i[bundle_id message_id kind]
+      )
+    end
+  end
+
   private
+    def email_candidate_user_ids_for(activity_type)
+      case activity_type
+      when :mention
+        mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
+      when :direct_message
+        room.user_ids - [ creator_id ]
+      else
+        []
+      end
+    end
+
     def deliver_in_app_row_for(activity_type, actor: nil)
       case activity_type
       when :mention, :thread_reply

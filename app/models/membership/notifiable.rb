@@ -1,10 +1,6 @@
 # Per-channel eligibility predicates. The same predicates run at dispatch time
 # and at delivery time, so state changes flow through one gate.
 #
-# v1 implementation note: receives_missed_email_for? and receives_digest? return
-# false until U2 (User::NotificationSettings) and U3 (Account flags) supply the
-# data. The seam is structural in U1 — no call sites yet (U4 wires it in).
-#
 # See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 4.
 module Membership::Notifiable
   extend ActiveSupport::Concern
@@ -40,8 +36,23 @@ module Membership::Notifiable
     end
   end
 
-  def receives_missed_email_for?(_message, _activity_type)
-    false
+  # Email candidate gate. Runs both at dispatch time (to write a BundleItem)
+  # and at delivery time (to revalidate before send). Same predicate, same
+  # gates — preference flips, blocks, and deactivations all flow through here.
+  def receives_missed_email_for?(message, activity_type)
+    activity_type = activity_type.to_sym
+    return false unless Notification::Routing::EMAIL_TYPES.include?(activity_type)
+    return false unless common_gates_pass?(message)
+    return false unless account_email_notifications_enabled?
+    return false unless user.notification_settings&.missed_email_enabled?
+    return false unless user.workspace_locally_away?
+
+    case activity_type
+    when :mention
+      effective_involvement.in?(%i[mentions everything])
+    when :direct_message
+      effective_involvement != :nothing
+    end
   end
 
   def receives_digest?
@@ -57,5 +68,9 @@ module Membership::Notifiable
       return false unless user.active? && user.verified? && !user.bot?
       return false unless user.can_ping?(message.creator)
       true
+    end
+
+    def account_email_notifications_enabled?
+      Current.account&.email_notifications_enabled?
     end
 end

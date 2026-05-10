@@ -419,8 +419,222 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal false, truncated
   end
 
+  # ----- Email bundle candidates (U5) -----
+
+  test "mention to an away user with all flags on creates a kind=mention BundleItem" do
+    enable_email_path!(users(:jason))
+
+    assert_difference -> { Notification::BundleItem.count }, 1 do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        rooms(:designers).messages.create!(
+          body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+          creator: users(:david),
+          client_message_id: "u5_mention_happy"
+        )
+      end
+    end
+
+    item = Notification::BundleItem.last
+    assert_equal "mention",        item.kind
+    assert_equal users(:jason).id, item.bundle.user_id
+    assert_equal users(:david).id, item.actor_id
+  end
+
+  test "@everyone in an open room creates kind=mention BundleItems for every away room member who would receive an in-app row" do
+    rooms(:pets).user_ids.each do |uid|
+      next if uid == users(:david).id
+      User.find(uid).create_notification_settings!(missed_email_enabled: true) unless User.find(uid).notification_settings
+    end
+    Account.sole.update!(email_notifications_enabled: true)
+
+    everyone_sgid = Everyone.new.attachable_sgid
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
+
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      Message.create!(
+        room: rooms(:pets),
+        body: body_html,
+        creator: users(:david),
+        client_message_id: "u5_everyone"
+      )
+    end
+
+    eligible_user_ids = (rooms(:pets).user_ids - [ users(:david).id ]).sort
+    assert_equal eligible_user_ids,
+      Notification::BundleItem.where(kind: "mention").joins(:bundle).pluck("notification_bundles.user_id").sort
+  end
+
+  test "DM to an away user creates a kind=direct_message BundleItem" do
+    enable_email_path!(users(:david))
+
+    assert_difference -> { Notification::BundleItem.count }, 1 do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        rooms(:david_and_jason).messages.create!(
+          body: "Hey",
+          creator: users(:jason),
+          client_message_id: "u5_dm_happy"
+        )
+      end
+    end
+
+    item = Notification::BundleItem.last
+    assert_equal "direct_message", item.kind
+    assert_equal users(:david).id, item.bundle.user_id
+  end
+
+  test "multiple mentions in the same window land in the same bundle" do
+    enable_email_path!(users(:jason))
+
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      rooms(:designers).messages.create!(
+        body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+        creator: users(:david),
+        client_message_id: "u5_same_window_1"
+      )
+      rooms(:designers).messages.create!(
+        body: "<div>Again #{mention_attachment_for(:jason)}</div>",
+        creator: users(:david),
+        client_message_id: "u5_same_window_2"
+      )
+    end
+
+    bundles = Notification::Bundle.where(user_id: users(:jason).id)
+    assert_equal 1, bundles.count
+    assert_equal 2, Notification::BundleItem.where(bundle_id: bundles.first.id).count
+  end
+
+  test "bundle frequency reflects the user's preference at creation; later flips don't move the bundle" do
+    enable_email_path!(users(:jason))
+    users(:jason).notification_settings.update!(email_frequency: :hourly)
+
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      rooms(:designers).messages.create!(
+        body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+        creator: users(:david),
+        client_message_id: "u5_freq_snapshot_1"
+      )
+    end
+
+    bundle = Notification::Bundle.find_by!(user_id: users(:jason).id)
+    assert_equal "hourly", bundle.frequency
+    original_ends_at = bundle.ends_at
+
+    users(:jason).notification_settings.update!(email_frequency: :daily)
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      rooms(:designers).messages.create!(
+        body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+        creator: users(:david),
+        client_message_id: "u5_freq_snapshot_2"
+      )
+    end
+
+    bundle.reload
+    assert_equal "hourly", bundle.frequency
+    assert_in_delta original_ends_at, bundle.ends_at, 1.second
+  end
+
+  test "mention to a non-away user creates no bundle item" do
+    enable_email_path!(users(:jason))
+    memberships(:jason_designers).update!(connected_at: Time.current)
+
+    assert_no_difference -> { Notification::BundleItem.count } do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        rooms(:designers).messages.create!(
+          body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+          creator: users(:david),
+          client_message_id: "u5_not_away"
+        )
+      end
+    end
+  end
+
+  test "mention with account.email_notifications_enabled = false creates no bundle item" do
+    users(:jason).create_notification_settings!(missed_email_enabled: true)
+    Account.sole.update!(email_notifications_enabled: false)
+
+    assert_no_difference -> { Notification::BundleItem.count } do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        rooms(:designers).messages.create!(
+          body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+          creator: users(:david),
+          client_message_id: "u5_account_off"
+        )
+      end
+    end
+  end
+
+  test "mention with user's missed_email_enabled = false creates no bundle item" do
+    Account.sole.update!(email_notifications_enabled: true)
+    users(:jason).create_notification_settings!(missed_email_enabled: false)
+
+    assert_no_difference -> { Notification::BundleItem.count } do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        rooms(:designers).messages.create!(
+          body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+          creator: users(:david),
+          client_message_id: "u5_user_off"
+        )
+      end
+    end
+  end
+
+  test "blocked-sender mention creates no bundle item" do
+    enable_email_path!(users(:jason))
+    users(:jason).block!(users(:david))
+
+    assert_no_difference -> { Notification::BundleItem.count } do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        rooms(:designers).messages.create!(
+          body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+          creator: users(:david),
+          client_message_id: "u5_blocked"
+        )
+      end
+    end
+  end
+
+  test "everyone_room_message without a mention produces no bundle items (not in EMAIL_TYPES)" do
+    enable_email_path!(users(:jason))
+    enable_email_path!(users(:jz))
+
+    assert_no_difference -> { Notification::BundleItem.count } do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        rooms(:designers).messages.create!(
+          body: "no mentions, just a regular open-room broadcast",
+          creator: users(:david),
+          client_message_id: "u5_everyone_room"
+        )
+      end
+    end
+  end
+
+  test "thread_reply produces no bundle items (not in EMAIL_TYPES)" do
+    enable_email_path!(users(:jason))
+
+    parent = rooms(:designers).messages.create!(
+      body: "thread root", creator: users(:david), client_message_id: "u5_thread_root"
+    )
+    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    thread.memberships.grant_to([ users(:david), users(:jason) ])
+
+    assert_no_difference -> { Notification::BundleItem.count } do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        thread.messages.create!(
+          body: "reply", creator: users(:david), client_message_id: "u5_thread_reply"
+        )
+      end
+    end
+  end
+
   private
     def create_new_message_in(room)
       room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "123")
+    end
+
+    def enable_email_path!(user)
+      Account.sole.update!(email_notifications_enabled: true)
+      user.notification_settings&.update!(missed_email_enabled: true) ||
+        user.create_notification_settings!(missed_email_enabled: true)
+      # Fixtures default connected_at to nil → workspace_locally_away? is true.
     end
 end

@@ -79,12 +79,106 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
 
   # ---------- receives_missed_email_for? / receives_digest? ----------
 
-  test "receives_missed_email_for? returns false in v1 — settings table not yet present" do
+  test "receives_missed_email_for? returns false when activity_type is not in EMAIL_TYPES" do
+    enable_email_path!
+
+    refute @recipient_membership.receives_missed_email_for?(@message, :everyone_room_message)
+    refute @recipient_membership.receives_missed_email_for?(@message, :thread_reply)
+    refute @recipient_membership.receives_missed_email_for?(@message, :boost)
+  end
+
+  test "receives_missed_email_for? returns true for mention with all gates open" do
+    enable_email_path!
+
+    assert @recipient_membership.receives_missed_email_for?(@message, :mention)
+  end
+
+  test "receives_missed_email_for? returns true for direct_message with all gates open" do
+    enable_email_path!
+
+    assert @recipient_membership.receives_missed_email_for?(@message, :direct_message)
+  end
+
+  test "receives_missed_email_for? returns false when account email_notifications_enabled is off" do
+    enable_email_path!
+    Current.account.update!(email_notifications_enabled: false)
+
     refute @recipient_membership.receives_missed_email_for?(@message, :mention)
     refute @recipient_membership.receives_missed_email_for?(@message, :direct_message)
   end
 
-  test "receives_digest? returns false in v1 — settings table not yet present" do
+  test "receives_missed_email_for? returns false when user's missed_email_enabled is off" do
+    enable_email_path!
+    @recipient_membership.user.notification_settings.update!(missed_email_enabled: false)
+
+    refute @recipient_membership.receives_missed_email_for?(@message, :mention)
+    refute @recipient_membership.receives_missed_email_for?(@message, :direct_message)
+  end
+
+  test "receives_missed_email_for? returns false when user is not workspace_locally_away" do
+    enable_email_path!
+    @recipient_membership.update!(connected_at: Time.current)
+
+    refute @recipient_membership.receives_missed_email_for?(@message, :mention)
+    refute @recipient_membership.receives_missed_email_for?(@message, :direct_message)
+  end
+
+  test "receives_missed_email_for? returns false when sender is blocked" do
+    enable_email_path!
+    @recipient_membership.user.block!(@creator)
+
+    refute @recipient_membership.receives_missed_email_for?(@message, :mention)
+  end
+
+  test "receives_missed_email_for? returns false when message is deactivated" do
+    enable_email_path!
+    @message.deactivate!
+
+    refute @recipient_membership.receives_missed_email_for?(@message, :mention)
+  end
+
+  test "receives_missed_email_for? returns false for the message creator" do
+    enable_email_path!
+    creator_membership = memberships(:david_designers)
+
+    refute creator_membership.receives_missed_email_for?(@message, :mention)
+  end
+
+  test "receives_missed_email_for? returns false for :mention when involvement is :nothing" do
+    enable_email_path!
+    @recipient_membership.update!(involvement: :nothing)
+
+    refute @recipient_membership.receives_missed_email_for?(@message, :mention)
+  end
+
+  test "receives_missed_email_for? returns false for :direct_message when global mode is :nothing" do
+    enable_email_path!
+    # Per-room :everything beats global mute (effective_involvement rule 1),
+    # so we set per-room :mentions to test that the global :nothing kills the DM email.
+    @recipient_membership.update!(involvement: :mentions)
+    @recipient_membership.user.notification_settings.update!(mode: :nothing)
+
+    refute @recipient_membership.receives_missed_email_for?(@message, :direct_message)
+  end
+
+  test "receives_missed_email_for? returns false when membership is invisible" do
+    enable_email_path!
+    @recipient_membership.update!(involvement: :invisible)
+
+    refute @recipient_membership.receives_missed_email_for?(@message, :mention)
+    refute @recipient_membership.receives_missed_email_for?(@message, :direct_message)
+  end
+
+  test "receives_digest? returns false in v1 — wired in U8" do
     refute @recipient_membership.receives_digest?
   end
+
+  private
+    def enable_email_path!
+      Current.account.update!(email_notifications_enabled: true)
+      user = @recipient_membership.user
+      user.notification_settings&.update!(missed_email_enabled: true) ||
+        user.create_notification_settings!(missed_email_enabled: true)
+      # Fixtures default connected_at to nil → workspace_locally_away? is true.
+    end
 end

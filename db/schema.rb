@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_09_180200) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_09_190101) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -179,6 +179,33 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_09_180200) do
     t.index ["room_id"], name: "index_messages_on_room_id"
   end
 
+  create_table "notification_bundle_items", force: :cascade do |t|
+    t.integer "actor_id", null: false
+    t.integer "bundle_id", null: false
+    t.datetime "created_at", null: false
+    t.string "kind", null: false
+    t.integer "message_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_notification_bundle_items_on_actor_id"
+    t.index ["bundle_id", "message_id", "kind"], name: "index_notification_bundle_items_unique_per_bundle", unique: true
+    t.index ["bundle_id"], name: "index_notification_bundle_items_on_bundle_id"
+    t.index ["message_id"], name: "index_notification_bundle_items_on_message_id"
+  end
+
+  create_table "notification_bundles", force: :cascade do |t|
+    t.datetime "canceled_at"
+    t.datetime "created_at", null: false
+    t.datetime "delivered_at"
+    t.datetime "ends_at", null: false
+    t.string "frequency", null: false
+    t.datetime "starts_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "ends_at"], name: "index_notification_bundles_on_user_ends_at"
+    t.index ["user_id"], name: "index_notification_bundles_active_per_user", unique: true, where: "delivered_at IS NULL AND canceled_at IS NULL"
+    t.index ["user_id"], name: "index_notification_bundles_on_user_id"
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.string "activity_type", null: false
     t.integer "actor_id", null: false
@@ -287,7 +314,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_09_180200) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.datetime "accepted_terms_at"
     t.string "ascii_name"
     t.integer "avatar_seed"
     t.string "avatar_url"
@@ -350,6 +376,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_09_180200) do
   add_foreign_key "boosts", "messages"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users", column: "creator_id"
+  add_foreign_key "notification_bundle_items", "messages"
+  add_foreign_key "notification_bundle_items", "notification_bundles", column: "bundle_id"
+  add_foreign_key "notification_bundle_items", "users", column: "actor_id"
+  add_foreign_key "notification_bundles", "users"
   add_foreign_key "notifications", "boosts"
   add_foreign_key "notifications", "messages"
   add_foreign_key "notifications", "users"

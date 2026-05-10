@@ -230,6 +230,13 @@ class User < ApplicationRecord
     Membership.active.visible.exists?(room_id: room.id, user_id: id)
   end
 
+  # Email-only presence check — true when no membership in this workspace has
+  # been connected within the away tier (1 hour). Push uses the 60-second
+  # `connected?` instead. See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 4.
+  def workspace_locally_away?
+    Membership.workspace_locally_away?(id)
+  end
+
   def default_name?
     name == DEFAULT_NAME
   end
