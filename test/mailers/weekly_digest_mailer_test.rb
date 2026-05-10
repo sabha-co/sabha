@@ -14,11 +14,11 @@ class WeeklyDigestMailerTest < ActionMailer::TestCase
       mentions_everyone: true
     )
 
-    @content = {
-      everyone_mentions: [ @everyone_message ],
-      active_rooms:      [ [ @room, 7 ] ],
-      excerpts:          [ @everyone_message ]
-    }
+    @content = Struct.new(:everyone_mentions, :active_rooms, :excerpts).new(
+      [ @everyone_message ],
+      [ [ @room, 7 ] ],
+      [ @everyone_message ]
+    )
   end
 
   test "subject is workspace-recap framed (no sender, no room)" do

@@ -16,7 +16,9 @@ class EmailUnsubscribesController < ApplicationController
   def create
     payload = decode_token(params[:token]) or return render(:invalid, status: :not_found)
     @surface = payload[:surface]
-    apply_unsubscribe(payload)
+    with_tenant_from(payload[:tenant]) do
+      User.find_by(id: payload[:user_id])&.unsubscribe_from_email!(@surface)
+    end
   end
 
   private
@@ -27,22 +29,6 @@ class EmailUnsubscribesController < ApplicationController
       payload
     rescue ActiveSupport::MessageVerifier::InvalidSignature, ActiveSupport::MessageEncryptor::InvalidMessage, NoMethodError, TypeError
       nil
-    end
-
-    def apply_unsubscribe(payload)
-      with_tenant_from(payload[:tenant]) do
-        user = User.find_by(id: payload[:user_id])
-        return unless user
-
-        settings = user.notification_settings || user.create_notification_settings!
-
-        case payload[:surface]
-        when :missed_notifications
-          settings.update!(missed_email_enabled: false)
-        when :weekly_digest
-          settings.update!(weekly_digest_subscribed: false)
-        end
-      end
     end
 
     # The token, not the request path, is authoritative for tenant resolution.

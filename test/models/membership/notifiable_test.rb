@@ -77,7 +77,7 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
     assert @recipient_membership.receives_push_for?(@message, :everyone_room_message)
   end
 
-  # ---------- receives_missed_email_for? / receives_digest? ----------
+  # ---------- receives_missed_email_for? ----------
 
   test "receives_missed_email_for? returns false when activity_type is not in EMAIL_TYPES" do
     enable_email_path!
@@ -167,10 +167,6 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
 
     refute @recipient_membership.receives_missed_email_for?(@message, :mention)
     refute @recipient_membership.receives_missed_email_for?(@message, :direct_message)
-  end
-
-  test "receives_digest? always returns false — digest gating lives on the runner job" do
-    refute @recipient_membership.receives_digest?
   end
 
   private

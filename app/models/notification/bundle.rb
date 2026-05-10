@@ -9,10 +9,9 @@ class Notification::Bundle < ApplicationRecord
   belongs_to :user
   has_many   :items, class_name: "Notification::BundleItem", foreign_key: :bundle_id, dependent: :delete_all
 
-  enum :frequency, %w[ hourly daily ].index_by(&:itself), prefix: :frequency
+  enum :frequency, %w[ hourly daily ].index_by(&:itself)
 
   scope :active,   -> { where(delivered_at: nil, canceled_at: nil) }
-  scope :pending,  -> { active }
   scope :terminal, -> { where("delivered_at IS NOT NULL OR canceled_at IS NOT NULL") }
 
   # Active bundles are never pruned — the partial unique index keeps that set
@@ -21,26 +20,6 @@ class Notification::Bundle < ApplicationRecord
 
   def self.gc_terminal!(retention: GC_RETENTION)
     terminal.where("updated_at < ?", retention.ago).delete_all
-  end
-
-  # Race-safe insert via the partial unique index: two concurrent Message
-  # creates in the same second cannot both insert; the loser raises
-  # RecordNotUnique and falls through to a second read.
-  #
-  # `frequency` and `ends_at` are snapshotted at creation — later preference
-  # flips don't move an in-flight bundle.
-  def self.find_or_create_active_for(user)
-    if existing = active.find_by(user_id: user.id)
-      return existing
-    end
-
-    frequency = user.notification_settings&.email_frequency || "hourly"
-    starts_at = Time.current
-    ends_at   = starts_at + FREQUENCY_WINDOWS.fetch(frequency)
-
-    create!(user: user, frequency: frequency, starts_at: starts_at, ends_at: ends_at)
-  rescue ActiveRecord::RecordNotUnique
-    active.find_by!(user_id: user.id)
   end
 
   def active?

@@ -17,14 +17,15 @@ class WeeklyDigestMailer < ApplicationMailer
   end
 
   def digest(user, content)
-    @user            = user
-    @workspace_name  = workspace_name
-    @everyone_mentions = content[:everyone_mentions]
-    @active_rooms      = content[:active_rooms]
-    @excerpts          = content[:excerpts]
-    @activity_url    = activity_inbox_url
-    @settings_url    = edit_user_notification_settings_url(user_id: "me")
-    @unsubscribe_url = unsubscribe_url_for(@user, :weekly_digest)
+    @user              = user
+    @content           = content
+    @workspace_name    = workspace_name
+    @everyone_mentions = content.everyone_mentions
+    @active_rooms      = content.active_rooms
+    @excerpts          = content.excerpts
+    @activity_url      = activity_inbox_url
+    @settings_url      = edit_user_notification_settings_url(user_id: "me")
+    @unsubscribe_url   = unsubscribe_url_for(@user, :weekly_digest)
 
     unsubscribe_headers(@user, :weekly_digest).each { |key, value| headers[key] = value }
 

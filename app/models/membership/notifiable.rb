@@ -51,10 +51,6 @@ module Membership::Notifiable
     end
   end
 
-  def receives_digest?
-    false
-  end
-
   private
     def common_gates_pass?(message)
       return false if user_id == message.creator_id

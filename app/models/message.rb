@@ -237,7 +237,7 @@ class Message < ApplicationRecord
     room.memberships.where(user_id: candidate_user_ids).includes(:user).find_each do |membership|
       next unless membership.receives_missed_email_for?(self, activity_type)
 
-      bundle = Notification::Bundle.find_or_create_active_for(membership.user)
+      bundle = membership.user.active_notification_bundle
       Notification::BundleItem.insert_all(
         [ {
           bundle_id:  bundle.id,
