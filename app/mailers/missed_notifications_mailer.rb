@@ -1,10 +1,9 @@
-# Renders the bundled missed-notification email handed to it by
-# Notification::BundleDeliveryJob. The mailer trusts the job's revalidation
-# pass — it does not re-check eligibility — and emits a stable provider-side
-# idempotency key so retries deduplicate at Resend/SES rather than at our DB.
+# Renders the bundled missed-notification email. Trusts the caller's
+# eligibility check — does not re-validate. Emits a stable idempotency key so
+# Solid Queue retries dedup at the provider rather than the DB.
 #
-# Subject is intentionally generic (workspace + activity-type only); sender
-# and room names live in the body. PRD § Email content / R11.
+# Subject stays generic (workspace + activity-type only) for inbox privacy;
+# sender and room names live in the body.
 class MissedNotificationsMailer < ApplicationMailer
   include EmailUnsubscribable
 

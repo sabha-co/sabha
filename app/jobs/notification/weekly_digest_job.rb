@@ -1,14 +1,3 @@
-# Per-tenant weekly digest job. Enqueued by Notification::WeeklyDigestRunnerJob
-# inside `with_each_tenant` so the gem auto-carries the tenant on the
-# serialized job.
-#
-# Top of run: GC delivered/canceled bundles older than 90 days (arch § 7.6).
-# Then, if the account opted in (Account#weekly_digest_enabled?), iterate
-# subscribed members and send the digest. Empty content skips without
-# bumping `last_digest_sent_at` (arch § 14.1).
-#
-# See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 8 and
-# docs/plans/NOTIFICATIONS-IMPLEMENTATION-PLAN.md U8.
 class Notification::WeeklyDigestJob < ApplicationJob
   ACTIVE_ROOM_MIN_MESSAGES = 3
   EXCERPT_LIMIT            = 5
@@ -24,6 +13,8 @@ class Notification::WeeklyDigestJob < ApplicationJob
 
     eligible_users.find_each do |user|
       content = build_content_for(user)
+      # Skip without stamping last_digest_sent_at — quiet-week members get
+      # re-evaluated next run instead of being dedup-locked.
       next if content.values.all?(&:empty?)
 
       WeeklyDigestMailer.digest(user, content).deliver_now

@@ -169,7 +169,7 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
     refute @recipient_membership.receives_missed_email_for?(@message, :direct_message)
   end
 
-  test "receives_digest? returns false in v1 — wired in U8" do
+  test "receives_digest? always returns false — digest gating lives on the runner job" do
     refute @recipient_membership.receives_digest?
   end
 

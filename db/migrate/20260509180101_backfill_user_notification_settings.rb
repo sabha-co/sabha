@@ -1,11 +1,11 @@
 class BackfillUserNotificationSettings < ActiveRecord::Migration[7.2]
-  # Idempotent backfill so the deploy migration is safe to rerun and so the
-  # SaaS per-tenant runner (with_temporary_connection) doesn't need to instantiate
-  # AR models — see migration 20260426133120 for the same SaaS-friendly raw-SQL
-  # pattern.
+  # Idempotent backfill so the deploy migration is safe to rerun, and so the
+  # SaaS per-tenant runner (with_temporary_connection) doesn't need to
+  # instantiate AR models — see migration 20260426133120 for the same
+  # SaaS-friendly raw-SQL pattern.
   #
-  # Defaults match arch § 12: missed email off, push on, mode mentions_and_dms,
-  # frequency hourly, digest subscribed (admin-enabled with member opt-out).
+  # Defaults: missed email off, push on, mode mentions_and_dms, frequency
+  # hourly, weekly digest subscribed (admin-enabled with member opt-out).
   def up
     execute <<~SQL.squish
       INSERT INTO user_notification_settings

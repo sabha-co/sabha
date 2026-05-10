@@ -1,14 +1,8 @@
-# Delivers a Notification::Bundle when its window closes. Walks bundle items,
-# re-runs the receives_missed_email_for? predicate at delivery time so state
-# changes (block, deactivation, settings flip, return-from-away) drop items
-# that were eligible at dispatch time. If all items drop, cancels the bundle
-# without sending. Otherwise, hands off to MissedNotificationsMailer with a
-# stable provider-side idempotency key.
-#
-# See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 7.3 and § 7.5.
+# Re-runs eligibility at delivery time so state changes during the bundle
+# window (block, deactivation, settings flip, return-from-away) drop items
+# that were eligible at dispatch time. Empty bundles cancel without sending.
 class Notification::BundleDeliveryJob < ApplicationJob
-  # Re-raised on terminal provider errors (arch § 14.1) so observability tools
-  # can distinguish "bundle canceled because the address is unreachable" from
+  # Distinguishes "bundle canceled because the address is unreachable" from
   # transient infrastructure flakes that Solid Queue should retry.
   TerminalError = Class.new(StandardError)
 
@@ -29,9 +23,8 @@ class Notification::BundleDeliveryJob < ApplicationJob
   end
 
   private
-    # Reload items eagerly with the rows we need for revalidation and
-    # rendering. Memberships are looked up per (room_id, user_id) pair —
-    # bundles span multiple rooms but always one user, so the user is fixed.
+    # Bundles span multiple rooms but always one user, so memberships are
+    # looked up per (room_id, user_id) pair with the user fixed.
     def revalidate(bundle)
       items = bundle.items.includes(:message, :actor).to_a
       return items if items.empty?

@@ -111,12 +111,12 @@ class AccountTest < ActiveSupport::TestCase
     assert @account.logo.attached?
   end
 
-  test "email_notifications_enabled defaults to false (arch § 6.4, § 12)" do
+  test "email_notifications_enabled defaults to false" do
     assert_equal false, @account.email_notifications_enabled
     assert_not @account.email_notifications_enabled?
   end
 
-  test "weekly_digest_enabled defaults to false (arch § 6.4, § 12)" do
+  test "weekly_digest_enabled defaults to false" do
     assert_equal false, @account.weekly_digest_enabled
     assert_not @account.weekly_digest_enabled?
   end

@@ -178,13 +178,11 @@ class Message < ApplicationRecord
 
   # Single dispatch entry point invoked by Notification::DispatchJob. Iterates
   # the activity types applicable to this message in this room and runs each
-  # channel branch. In U4 the in-app row branch is a no-op pass-through —
-  # legacy `create_mention_notifications` and `create_thread_reply_notifications`
-  # callbacks still write rows.
+  # channel branch. The in-app row branch is currently a no-op pass-through —
+  # the legacy `create_mention_notifications` and
+  # `create_thread_reply_notifications` callbacks still write rows.
   #
   # Boost is the lone special case: passes `only: :boost, actor: booster`.
-  #
-  # See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 5.
   def notify_recipients(only: nil, actor: nil)
     return if event?
 
@@ -197,11 +195,9 @@ class Message < ApplicationRecord
     end
   end
 
-  # Returns the candidate user-id set for a push activity type. Filtering by
-  # connection / block / health happens at delivery time via Membership::Notifiable
-  # predicates and the existing Push::Subscription scope on `relevant_subscriptions`.
-  #
-  # See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 5.1.
+  # Returns the candidate user-id set for a push activity type. Connection /
+  # block / health filtering happens at delivery time via
+  # Membership::Notifiable predicates and Push::Subscription scopes.
   def push_recipient_user_ids_for(activity_type)
     case activity_type.to_sym
     when :everyone_room_message, :direct_message, :thread_reply
@@ -214,9 +210,6 @@ class Message < ApplicationRecord
     end
   end
 
-  # Builds the payload once, resolves push subscriptions for the activity type,
-  # and queues delivery through the existing web_push_pool — payload shape
-  # preserved verbatim from `Room::MessagePusher#build_payload`.
   def deliver_push_for(activity_type)
     user_ids = push_recipient_user_ids_for(activity_type)
     return if user_ids.empty?
@@ -228,13 +221,9 @@ class Message < ApplicationRecord
     Rails.configuration.x.web_push_pool.queue(payload, subscriptions)
   end
 
-  # Walks the candidate recipient set for `activity_type`, runs the
-  # `receives_missed_email_for?` predicate per membership, and appends a
-  # BundleItem to the user's active bundle on a hit. The predicate filters
-  # for global mode, account flag, missed_email_enabled, away presence, and
-  # blocks — see Membership::Notifiable.
-  #
-  # See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 7.1.
+  # Walks the candidate recipient set for `activity_type`, runs
+  # `Membership::Notifiable#receives_missed_email_for?` per membership, and
+  # appends a BundleItem to the user's active bundle on a hit.
   def enqueue_missed_email_candidates_for(activity_type)
     activity_type = activity_type.to_sym
     return unless Notification::Routing::EMAIL_TYPES.include?(activity_type)
@@ -261,8 +250,8 @@ class Message < ApplicationRecord
         unique_by: %i[bundle_id message_id kind]
       )
 
-      # Schedule delivery exactly once per bundle, on first item insert.
-      # Subsequent adds find the existing active bundle and skip scheduling.
+      # Schedule delivery once per bundle, on first item insert. Subsequent
+      # adds find the existing active bundle and skip scheduling.
       bundle.schedule_delivery if bundle.previously_new_record?
     end
   end
@@ -282,10 +271,11 @@ class Message < ApplicationRecord
     def deliver_in_app_row_for(activity_type, actor: nil)
       case activity_type
       when :mention, :thread_reply
-        # Legacy `create_mention_notifications` / `create_thread_reply_notifications`
-        # callbacks still own row creation in U4. The dispatch job no-ops here;
-        # the partial unique index `index_notifications_on_message_user_type`
-        # is the safety net if both paths ever fire.
+        # Legacy `create_mention_notifications` and
+        # `create_thread_reply_notifications` callbacks still own row creation;
+        # the dispatch job no-ops here. The partial unique index
+        # `index_notifications_on_message_user_type` is the safety net if both
+        # paths ever fire.
       when :boost
         create_boost_notification_row(actor: actor)
       end

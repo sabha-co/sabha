@@ -1,8 +1,5 @@
 # Builds the WebPush payload shape (title / body / path) for a message in a
-# room. Routing now lives on `Message` (push_recipient_user_ids_for / deliver_push_for);
-# this class is intentionally payload-only.
-#
-# See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 5.1.
+# room. Routing lives on `Message`; this class is payload-only.
 class Room::MessagePusher
   attr_reader :room, :message
 

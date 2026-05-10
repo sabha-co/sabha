@@ -1,14 +1,7 @@
 # Mints unsubscribe tokens and emits RFC 8058 List-Unsubscribe headers for
-# notification emails. The token is the tenant carrier — the unsubscribe URL
-# itself never includes a workspace prefix, which is what lets a click from
-# any inbox land on the right workspace's settings (arch § 9, plan U7).
-#
-# Two surfaces share one verifier and one route:
-# - :missed_notifications → flips user.notification_settings.missed_email_enabled
-# - :weekly_digest        → flips user.notification_settings.weekly_digest_subscribed
-#
-# Tokens are signed with Rails.application.message_verifier(:email_unsubscribe);
-# tampered or expired tokens raise InvalidSignature in the controller.
+# notification emails. The token carries the tenant — the unsubscribe URL
+# never includes a workspace prefix, which is what lets a click from any
+# inbox land on the right workspace's settings.
 module EmailUnsubscribable
   extend ActiveSupport::Concern
 

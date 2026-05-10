@@ -1,9 +1,6 @@
-# Renders the weekly activity digest handed to it by Notification::WeeklyDigestJob.
-# Independent unsubscribe scope from missed-notification mail (R10) — token surface
-# is :weekly_digest. The mailer trusts the job's selection rules; it does not
-# re-check eligibility.
-#
-# See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 8.3, § 8.4.
+# Renders the weekly activity digest. Trusts the caller's selection rules —
+# does not re-validate. Independent unsubscribe scope from missed-notification
+# mail: clicking unsubscribe here only flips weekly_digest_subscribed.
 class WeeklyDigestMailer < ApplicationMailer
   include EmailUnsubscribable
 

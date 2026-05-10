@@ -1,12 +1,11 @@
 class CreateNotificationBundleItems < ActiveRecord::Migration[7.2]
   # Items appended to a bundle as eligible mention/DM messages occur.
-  # Schema matches docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 6.3.
   #
   # `kind` is a separate vocabulary from Notification.activity_type — bundle
   # items track email-routing reasons ("mention" / "direct_message") which do
-  # not 1:1 the persisted activity_type enum (no `direct_message` Notification
-  # row in v1). Sharing the column name across two non-equal vocabularies
-  # would breed bugs, so it stays distinct.
+  # not map 1:1 to the persisted activity_type enum (there is no
+  # `direct_message` Notification row). Sharing the column name across two
+  # non-equal vocabularies would breed bugs, so it stays distinct.
   #
   # The (bundle_id, message_id, kind) unique index handles within-bundle
   # dedup so the dispatcher can call insert_all with unique_by: ... safely.

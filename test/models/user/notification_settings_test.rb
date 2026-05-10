@@ -2,7 +2,7 @@ require "test_helper"
 require Rails.root.join("db/migrate/20260509180101_backfill_user_notification_settings")
 
 class User::NotificationSettingsTest < ActiveSupport::TestCase
-  test "User.create! synchronously creates a notification_settings row with arch § 12 defaults" do
+  test "User.create! synchronously creates a notification_settings row with the documented defaults" do
     user = User.create!(name: "Settings Default", email_address: "settings_default@example.com")
 
     settings = user.notification_settings
@@ -15,7 +15,7 @@ class User::NotificationSettingsTest < ActiveSupport::TestCase
     assert_nil settings.last_digest_sent_at
   end
 
-  test "weekly_digest_subscribed defaults to true (member opt-out per PRD § Product principles #6)" do
+  test "weekly_digest_subscribed defaults to true (member opt-out)" do
     user = User.create!(name: "Digest Default", email_address: "digest_default@example.com")
 
     assert_equal true, user.notification_settings.weekly_digest_subscribed,

@@ -1,7 +1,6 @@
-# Per-channel eligibility predicates. The same predicates run at dispatch time
-# and at delivery time, so state changes flow through one gate.
-#
-# See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 4.
+# Per-channel notification eligibility predicates. The same predicates run at
+# dispatch time and at delivery time, so state changes (block, deactivation,
+# settings flip) flow through one gate.
 module Membership::Notifiable
   extend ActiveSupport::Concern
 
@@ -36,9 +35,6 @@ module Membership::Notifiable
     end
   end
 
-  # Email candidate gate. Runs both at dispatch time (to write a BundleItem)
-  # and at delivery time (to revalidate before send). Same predicate, same
-  # gates — preference flips, blocks, and deactivations all flow through here.
   def receives_missed_email_for?(message, activity_type)
     activity_type = activity_type.to_sym
     return false unless Notification::Routing::EMAIL_TYPES.include?(activity_type)

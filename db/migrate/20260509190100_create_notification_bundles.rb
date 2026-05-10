@@ -1,10 +1,9 @@
 class CreateNotificationBundles < ActiveRecord::Migration[7.2]
   # Per-user windows of accumulated missed-notification candidates.
-  # Schema matches docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 6.2.
   #
   # The partial unique index makes "at most one active bundle per user" a DB
-  # invariant. find_or_create_active_for relies on it to make the race-retry
-  # path correct: simultaneous Message creates that both miss the find_by
+  # invariant. Notification::Bundle.find_or_create_active_for relies on it for
+  # race safety: simultaneous Message creates that both miss the find_by
   # cannot both insert — one raises ActiveRecord::RecordNotUnique and falls
   # through to the second read.
   def change

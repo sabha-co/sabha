@@ -231,8 +231,8 @@ class User < ApplicationRecord
   end
 
   # Email-only presence check — true when no membership in this workspace has
-  # been connected within the away tier (1 hour). Push uses the 60-second
-  # `connected?` instead. See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 4.
+  # been connected within the away tier (1 hour). Push uses the tighter
+  # 60-second `connected?` instead.
   def workspace_locally_away?
     Membership.workspace_locally_away?(id)
   end

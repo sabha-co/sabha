@@ -7,18 +7,18 @@ class Notification::RoutingTest < ActiveSupport::TestCase
     assert Notification::Routing::ACTIVITY_TYPES.frozen?
   end
 
-  test "IN_APP_ROW_TYPES matches arch § 3" do
+  test "IN_APP_ROW_TYPES contains the three persisted activity types" do
     assert_equal %i[mention thread_reply boost], Notification::Routing::IN_APP_ROW_TYPES
     assert Notification::Routing::IN_APP_ROW_TYPES.frozen?
   end
 
-  test "PUSH_TYPES matches arch § 3" do
+  test "PUSH_TYPES excludes :boost (push routes the underlying message instead)" do
     assert_equal %i[mention direct_message everyone_room_message thread_reply],
       Notification::Routing::PUSH_TYPES
     assert Notification::Routing::PUSH_TYPES.frozen?
   end
 
-  test "EMAIL_TYPES matches arch § 3" do
+  test "EMAIL_TYPES is mention + direct_message only" do
     assert_equal %i[mention direct_message], Notification::Routing::EMAIL_TYPES
     assert Notification::Routing::EMAIL_TYPES.frozen?
   end

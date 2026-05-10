@@ -1,14 +1,9 @@
-# Public, token-authenticated unsubscribe surface for notification emails.
-# The token is the tenant carrier — no path-based workspace prefix is needed
-# or accepted (arch § 9, plan U7).
-#
-# Two surfaces share one route:
-# - :missed_notifications → flips missed_email_enabled
-# - :weekly_digest        → flips weekly_digest_subscribed
+# Public, token-authenticated unsubscribe. The signed token carries the
+# tenant — there is no path-based workspace prefix, so a click from any inbox
+# lands on the right workspace's settings.
 #
 # POST is the RFC 8058 one-click target invoked by mail clients without the
-# user opening the page; GET shows a confirmation. Both are idempotent —
-# re-clicking after the flag is already false is a no-op success.
+# user opening the page; GET shows a confirmation. Both are idempotent.
 class EmailUnsubscribesController < ApplicationController
   allow_unauthenticated_access
   skip_forgery_protection only: :create
@@ -50,11 +45,9 @@ class EmailUnsubscribesController < ApplicationController
       end
     end
 
-    # In SaaS, the request enters with no tenant (PathRewriter doesn't match
-    # /email/unsubscribe/...) so `with_tenant` lands cleanly on the token's
-    # tenant. `prohibit_shard_swapping: false` covers the unlikely case of a
-    # request that did somehow land in a tenant context — the token, not the
-    # path, is authoritative.
+    # The token, not the request path, is authoritative for tenant resolution.
+    # `prohibit_shard_swapping: false` allows entering the token's tenant even
+    # if the request somehow already had a tenant context.
     def with_tenant_from(tenant, &block)
       if defined?(ActiveRecord::Tenanted) && Sabha.saas? && tenant.present?
         ApplicationRecord.with_tenant(tenant, prohibit_shard_swapping: false, &block)

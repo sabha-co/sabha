@@ -1,16 +1,5 @@
 require "test_helper"
 
-# Stub mailer until U7 lands. The job calls MissedNotificationsMailer.bundle(...)
-# and the tests stub the call chain via Mocha; the real mailer with templates,
-# headers, and delivery wiring lands in U7.
-unless defined?(::MissedNotificationsMailer)
-  class ::MissedNotificationsMailer
-    def self.bundle(_bundle, _items)
-      raise "U6 tests must stub MissedNotificationsMailer.bundle"
-    end
-  end
-end
-
 class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
   setup do
     @user    = users(:jason)

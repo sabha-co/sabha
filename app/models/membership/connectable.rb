@@ -43,10 +43,10 @@ module Membership::Connectable
       where(connected_at: since.ago..).select(:user_id).distinct.count
     end
 
-    # Email-only presence check: a user is "workspace-locally away" when no
-    # membership in the current tenant has been connected within the away
-    # tier (1 hour). This is deliberately distinct from `connected?` (60s),
-    # which gates push. See docs/plans/NOTIFICATIONS-ARCHITECTURE.md § 4.
+    # Email-only presence check: a user is away when no membership in this
+    # tenant has been connected within the away tier (1 hour). Distinct from
+    # `connected?` (60s) which gates push — email asks "has the user been gone
+    # long enough that an email is the right way to reach them?"
     def workspace_locally_away?(user_id)
       last_seen = last_connected_at_for([ user_id ])[user_id]
       return true if last_seen.nil?

@@ -81,7 +81,7 @@ class NotificationDispatchContractTest < ActiveSupport::TestCase
     assert_equal [ "mentions" ],   Membership.involved_in_mentions.distinct.pluck(:involvement)
   end
 
-  # The `Notification::Routing` vocabulary the architecture doc introduces
+  # The `Notification::Routing` vocabulary
   # (`%i[mention direct_message everyone_room_message thread_reply boost]`)
   # is broader than the persisted `Notification.activity_type` enum and must
   # stay that way — the dispatcher routes those symbols, but only three of
