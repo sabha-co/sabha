@@ -100,6 +100,50 @@ class Notification::BundleTest < ActiveSupport::TestCase
     refute bundle.active?
   end
 
+  test "terminal? is true when delivered_at is set" do
+    bundle = Notification::Bundle.find_or_create_active_for(@user)
+    bundle.update!(delivered_at: Time.current)
+
+    assert bundle.terminal?
+  end
+
+  test "terminal? is true when canceled_at is set" do
+    bundle = Notification::Bundle.find_or_create_active_for(@user)
+    bundle.update!(canceled_at: Time.current)
+
+    assert bundle.terminal?
+  end
+
+  test "terminal? is false for an active bundle" do
+    bundle = Notification::Bundle.find_or_create_active_for(@user)
+
+    refute bundle.terminal?
+  end
+
+  test "cancel! sets canceled_at to a recent timestamp" do
+    bundle = Notification::Bundle.find_or_create_active_for(@user)
+    bundle.cancel!
+
+    assert bundle.terminal?
+    assert_in_delta Time.current, bundle.reload.canceled_at, 5.seconds
+  end
+
+  test "mark_delivered! sets delivered_at to a recent timestamp" do
+    bundle = Notification::Bundle.find_or_create_active_for(@user)
+    bundle.mark_delivered!
+
+    assert bundle.terminal?
+    assert_in_delta Time.current, bundle.reload.delivered_at, 5.seconds
+  end
+
+  test "schedule_delivery enqueues a BundleDeliveryJob with wait_until ends_at" do
+    bundle = Notification::Bundle.find_or_create_active_for(@user)
+
+    assert_enqueued_with(job: Notification::BundleDeliveryJob, args: [ bundle ]) do
+      bundle.schedule_delivery
+    end
+  end
+
   test "destroying the bundle deletes its items" do
     bundle  = Notification::Bundle.find_or_create_active_for(@user)
     message = rooms(:designers).messages.create!(body: "hi", creator: users(:david), client_message_id: "bundle_dep_#{SecureRandom.hex(4)}")

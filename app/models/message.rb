@@ -260,6 +260,10 @@ class Message < ApplicationRecord
         } ],
         unique_by: %i[bundle_id message_id kind]
       )
+
+      # Schedule delivery exactly once per bundle, on first item insert.
+      # Subsequent adds find the existing active bundle and skip scheduling.
+      bundle.schedule_delivery if bundle.previously_new_record?
     end
   end
 

@@ -45,4 +45,24 @@ class Notification::Bundle < ApplicationRecord
   def active?
     delivered_at.nil? && canceled_at.nil?
   end
+
+  def terminal?
+    delivered_at.present? || canceled_at.present?
+  end
+
+  def cancel!(time = Time.current)
+    update!(canceled_at: time)
+  end
+
+  def mark_delivered!(time = Time.current)
+    update!(delivered_at: time)
+  end
+
+  # Schedules BundleDeliveryJob to run when this bundle's window closes.
+  # Called once at bundle creation by the dispatcher; per-item adds do not
+  # re-schedule. Idempotent at the job level: BundleDeliveryJob skips
+  # bundles that are already terminal.
+  def schedule_delivery
+    Notification::BundleDeliveryJob.set(wait_until: ends_at).perform_later(self)
+  end
 end
