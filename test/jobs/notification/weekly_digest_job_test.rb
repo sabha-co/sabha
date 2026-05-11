@@ -83,6 +83,29 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
     end
   end
 
+  test "rescues per-user delivery failure so later eligible users still get processed" do
+    seed_active_room_messages
+
+    # Make a second user eligible alongside @user (jason)
+    david = users(:david)
+    (david.notification_settings || david.create_notification_settings!).update!(
+      weekly_digest_subscribed: true, last_digest_sent_at: nil
+    )
+
+    # First call into deliver_weekly_digest_now raises (e.g. transient mailer
+    # error); second succeeds. The job's rescue must absorb the failure and
+    # continue iterating — `expects.twice` fails the test if the loop bails
+    # after the first user.
+    User.any_instance.expects(:deliver_weekly_digest_now)
+        .twice
+        .raises(StandardError, "boom")
+        .then.returns(nil)
+
+    assert_nothing_raised do
+      Notification::WeeklyDigestJob.perform_now
+    end
+  end
+
   test "GC deletes terminal bundles older than 90 days at the top of the run" do
     Account.sole.update!(weekly_digest_enabled: false) # isolate GC behavior
     old_delivered = Notification::Bundle.create!(
