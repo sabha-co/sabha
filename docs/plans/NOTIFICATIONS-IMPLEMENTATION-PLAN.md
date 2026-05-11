@@ -94,7 +94,6 @@ Carried verbatim from `docs/plans/EMAIL-NOTIFICATIONS-PRD.md` § Non-goals and `
 - **Tenant entry from non-request paths** — `saas/app/models/workspace.rb:43-51`. `ApplicationRecord.with_tenant(external_id.to_s) { ... }` is the canonical wrap. Reused by the unsubscribe controller (which decodes a tenant from the token before flipping a setting) and the bundle delivery / weekly digest jobs.
 - **Tenanted model setup** — `app/models/application_record.rb`. The `tenanted` macro is conditionally applied when `Sabha.saas?`. New tenanted models inherit `ApplicationRecord` directly with no extra setup.
 - **Rich-text-to-plain helper** — `Message#plain_text_body` (`app/models/message.rb:108-110`). Used today by push payload formatting; reused by bundle item rendering.
-- **Existing regression net** — `test/models/notification_routing_parity_test.rb` and `test/models/notification_dispatch_contract_test.rb` (added 2026-05-09). These pin recipient routing, callback ordering, scope disjointness, the `Notification.activity_type` vocabulary boundary, and the thread+mention combo case. **Both must stay green at every merge point in this plan.**
 - **Fizzy prior art** — `fizzy/app/models/notification/bundle.rb`, `fizzy/app/models/notification/pushable.rb`. Reference for bundle shape and (eventually) push target hierarchy. Do not copy verbatim — Sabha's dispatcher sits at the `Message` level, not the `Notification` level (arch § 5.1).
 
 ### Institutional Learnings
@@ -218,7 +217,7 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 
 **Requirements:** R1, R8, R9.
 
-**Dependencies:** None. Builds directly on the existing regression net (`test/models/notification_routing_parity_test.rb`, `test/models/notification_dispatch_contract_test.rb`).
+**Dependencies:** None.
 
 **Files:**
 - Create: `app/models/notification/routing.rb`
@@ -233,8 +232,6 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 - `Membership::Notifiable` is an `ActiveSupport::Concern`. v1 predicates: `receives_in_app_row_for?(message, activity_type)`, `receives_push_for?(message, activity_type)`, `receives_missed_email_for?(message, activity_type)`, `receives_digest?`. The email and digest predicates can return false unconditionally for now (account flag is off, user setting defaults off, no settings table yet) — this unit is structural; U2/U3 supply the data.
 - `Membership#effective_involvement` returns `:everything` if per-room `involvement == "everything"`; `:nothing` if global `mode == "nothing"` (read from `user.notification_settings&.mode`, falls back to `:mentions_and_dms` when the settings row doesn't exist yet); else the per-room `involvement`. Settings row absence is fine — falls back to default mode behavior, which preserves current semantics.
 - Predicate bodies reference the existing `Membership` state plus `Notification::Routing` constants. No call-site changes in this unit — `Room::MessagePusher` and `Message#create_mention_notifications` keep their inline checks. The seam exists, but isn't yet load-bearing.
-
-**Execution note:** Characterization-first. The two existing parity/contract test files already lock the behavior we must preserve. Run them after every step in this unit to confirm nothing has shifted.
 
 **Patterns to follow:**
 - `app/models/message/mentionee.rb` — concern shape and naming.
@@ -251,7 +248,6 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 - *Edge case:* `effective_involvement` returns the per-room value when no `notification_settings` row exists yet (rule 3 default-fallback).
 
 **Verification:**
-- `bin/rails test test/models/notification_routing_parity_test.rb test/models/notification_dispatch_contract_test.rb` is green.
 - `bin/rails test test/models/notification/routing_test.rb test/models/membership/notifiable_test.rb` is green.
 - `Notification::Routing` and `Membership::Notifiable` are reachable via Rails autoload (`bin/rails runner 'puts Notification::Routing::EMAIL_TYPES'`).
 - `SAAS=true bin/rails test saas/test/` is green.
@@ -354,7 +350,7 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 
 - U4. **`Notification::DispatchJob` + `Message#notify_recipients` + push routing relocation + boost dispatch via job**
 
-**Goal:** Single dispatch job orchestrates in-app rows, push, and (in U5) bundle candidates per message. Push recipient resolution moves from `Room::MessagePusher` to `Message`. Boost dispatch enters the same job with `only: :boost, actor: booster`. **No user-visible behavior change** — same recipients, same payloads, same Notification rows. The existing parity tests are the contract.
+**Goal:** Single dispatch job orchestrates in-app rows, push, and (in U5) bundle candidates per message. Push recipient resolution moves from `Room::MessagePusher` to `Message`. Boost dispatch enters the same job with `only: :boost, actor: booster`. **No user-visible behavior change** — same recipients, same payloads, same Notification rows.
 
 **Requirements:** R1, R8, R9.
 
@@ -378,11 +374,9 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 - `Room#applicable_activity_types(message)` returns the routing-vocabulary symbols that apply to this message in this room. For example, `Rooms::Direct` returns `[:direct_message]` plus `[:mention]` iff the message has named mentions; `Rooms::Open` returns `[:mention]` if `mentions_everyone?` is true OR `mentionees.any?`, plus `[:everyone_room_message]` if `mentions_everyone?`. Encapsulates the room-type fan-out so `Message#notify_recipients` doesn't branch on `room.is_a?(Rooms::Direct)`.
 - `Message#push_recipient_user_ids_for(activity_type)` returns the candidate user IDs per arch § 5.1. The existing `Membership.involved_in_everything` and `Membership.involved_in_mentions` scopes still drive the disjoint subsets — invocation moves from `Room::MessagePusher` to `Message`. `Membership::Notifiable#receives_push_for?` filters per recipient.
 - `Message#deliver_push_for(activity_type)` builds the payload via `Room::MessagePusher.new(room:, message:).build_payload` (or a class-method `Room::MessagePusher.payload_for(room:, message:)` if the class-method shape feels cleaner) and queues delivery through `Rails.configuration.x.web_push_pool` exactly as today. Payload shape is unchanged (R8).
-- `dispatch_notifications` is a new `after_create_commit` callback on `Message`, **declared after** `create_thread_reply_notifications` (line 25 of `app/models/message.rb`). The dispatch contract test in `test/models/notification_dispatch_contract_test.rb` enforces this ordering — if the test fails, the callback is in the wrong place.
+- `dispatch_notifications` is a new `after_create_commit` callback on `Message`, **declared after** `create_thread_reply_notifications` (line 25 of `app/models/message.rb`).
 - The legacy `create_mention_notifications` callback is **kept intact for U4**. The job's `create_notification_rows_for(:mention)` is a no-op pass-through that delegates to the existing `create_mention_notifications` results — until U5 makes the dispatcher fully responsible. Avoiding double-write of mention rows here is critical: the dispatch job sees that mention rows already exist (via the partial unique index `index_notifications_on_message_user_type` referenced at `app/models/message.rb:280`) and skips. Documented in code comments inside `notify_recipients`.
 - Boost path: `Boost#create_boost_notification` becomes `Boost#dispatch_notification` and calls `Notification::DispatchJob.perform_later(message, only: :boost, actor: booster)`. The DM/thread suppression check stays on `Boost` (early return — the dispatch job never gets called). The job's boost branch creates the same `Notification` row + Turbo broadcast that the inline path did.
-
-**Execution note:** Characterization-first. The existing parity tests (`notification_routing_parity_test.rb`, `notification_dispatch_contract_test.rb`) are the contract. Every commit in this unit must keep them green. The new tests in this unit are about the *new seam* (dispatch job, `notify_recipients`, payload-only `MessagePusher`); they don't replace the parity tests.
 
 **Patterns to follow:**
 - `app/jobs/create_thread_reply_notifications_job.rb` — async-notification job shape, including `discard_on` and explicit error rescue.
@@ -390,20 +384,17 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 - `Notification::DispatchJob` boost path mirrors today's `Boost#create_boost_notification` (`app/models/boost.rb:26-44`).
 
 **Test scenarios:**
-- *Happy path (parity):* All scenarios in `test/models/notification_routing_parity_test.rb` stay green. This is the contract.
 - *Happy path:* Sending a message in `Rooms::Designers` enqueues `Notification::DispatchJob` exactly once (no per-activity-type duplication).
 - *Happy path:* The dispatch job's push delivery for a regular message reaches the same user IDs as today's `Room::MessagePusher#push` (`user_ids(:jason, :jz)` for the existing fixture).
 - *Happy path:* The dispatch job's boost branch (`only: :boost`) creates a `Notification` with `activity_type: "boost"`, `actor_id: booster.id`, `user_id: message.creator_id` — matching today's inline path.
 - *Edge case:* A message that is both a mention and `@everyone` (mentions_everyone + named mention) does not double-push the named mentioned user.
 - *Edge case:* A boost on a DM or DM-thread message creates no `Notification` row (suppression preserved on `Boost` before job enqueue).
 - *Error path:* The dispatch job discards when given a deleted message (`ActiveJob::DeserializationError`).
-- *Integration:* The new `dispatch_notifications` callback fires after `create_thread_reply_notifications` (locked by `notification_dispatch_contract_test.rb`).
 - *Integration:* `Room::MessagePusher` exposes only payload formatting; calling `push` on it is no longer the routing entry point. (Optional belt-and-suspenders test: assert the routing methods are gone.)
 - *Integration (SaaS):* every Turbo broadcast emitted by the dispatch job uses a tenanted model as its first argument (e.g. `[user, :inbox_activity]`, `Current.account`), never a bare symbol. Per the Sabha addendum to the activerecord-tenanted guide, bare-symbol streams produce identical names across tenants and would leak. Test asserts a broadcast in tenant A is not received by a stream subscriber in tenant B.
 
 **Verification:**
-- `bin/rails test test/models/notification_routing_parity_test.rb test/models/notification_dispatch_contract_test.rb test/models/notification_test.rb` is green.
-- `bin/rails test test/jobs/notification/dispatch_job_test.rb test/models/message_test.rb test/models/room/message_pusher_test.rb` is green.
+- `bin/rails test test/models/notification_test.rb test/jobs/notification/dispatch_job_test.rb test/models/message_test.rb test/models/room/message_pusher_test.rb` is green.
 - `bin/rails test` and `SAAS=true bin/rails test saas/test/` both green. SaaS run includes the cross-tenant Turbo broadcast scoping test.
 - Manual smoke: send a message in dev, see it broadcast + push exactly as before; no duplicate Notification rows; no missing rows.
 
@@ -467,7 +458,7 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 **Verification:**
 - `bin/rails db:migrate` runs cleanly; partial unique indexes are present (verify in `db/schema.rb`).
 - All bundle/item tests green.
-- Existing parity + dispatch contract tests stay green.
+- Existing focused notification tests stay green.
 - `SAAS=true bin/rails test saas/test/` is green — bundle creation respects per-tenant DB.
 - Manual smoke: send a message to an "away" user (set `connected_at` to 2 hours ago), enable both flags, observe a `notification_bundle_items` row appears.
 
@@ -731,17 +722,16 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 
 ## System-Wide Impact
 
-- **Interaction graph (callbacks):** The new `dispatch_notifications` callback joins eight existing `after_create_commit` callbacks on `Message` and is order-sensitive (must run after `create_mention_notifications` and `create_thread_reply_notifications`). The dispatch contract test pins the order. Boost moves from inline to async dispatch — the existing `broadcast_notification_removal` on Boost destroy stays untouched.
+- **Interaction graph (callbacks):** The new `dispatch_notifications` callback joins eight existing `after_create_commit` callbacks on `Message` and is order-sensitive (must run after `create_mention_notifications` and `create_thread_reply_notifications`). Boost moves from inline to async dispatch — the existing `broadcast_notification_removal` on Boost destroy stays untouched.
 - **Error propagation:** Dispatch job failures discard on `DeserializationError`. Bundle delivery rescues a documented set of terminal provider errors and sets `canceled_at` to break the partial-unique-index trap (arch § 14.1); commit `3593396` makes transient delivery retries explicit via `retry_on`. Weekly digest delivery isolates per-recipient failures so one bad address does not block the rest of the workspace. Nothing in the dispatch path can roll back the originating message create — all delivery work runs after the message is committed.
 - **State lifecycle risks:** The bundle's `(user_id) WHERE delivered_at IS NULL AND canceled_at IS NULL` partial unique index is the load-bearing invariant. If a bundle gets stuck (terminal error not in the rescue list, or the rescue list misses a new provider error class), no further bundles are created for that user. Bundle GC does **not** mitigate this — only terminal bundles (`delivered_at IS NOT NULL OR canceled_at IS NOT NULL`) are pruned at 90 days; an actively-stuck active bundle is never deleted by GC. The single mitigation is the terminal-error rescue list (arch § 14.1), which must be comprehensive enough to catch any error that should terminate the bundle. See the corresponding risk-table row below.
 - **API surface parity:** The plan does not change any external API (bot API, push subscription API, ActionCable channels). The Activity tab broadcast remains unchanged — `Notification` row creation still drives it. The `notification_recipient_ids` private method on `Message::Broadcasts` (touched by `test/models/message/broadcasts_test.rb`) is unrelated to the dispatch job and stays unchanged.
 - **Integration coverage:** Cross-layer scenarios that mocks alone won't prove:
-  - Callback ordering is integration-tested via the dispatch contract test (pinning behavior at the Rails callback chain level).
   - Multi-tenant unsubscribe from a token-only request requires a full SaaS test (in `saas/test/`) that crosses the controller, the verifier, and `with_tenant`.
   - SaaS notification email links require full mailer rendering under a tenant and assertions for `/workspace_id/...` path prefixes.
   - Bundle delivery's partial unique index race requires a full ActiveRecord transaction interleaving test, not just a mocked retry.
 - **Unchanged invariants:**
-  - `Notification.activity_type` enum stays `%w[mention boost thread_reply]` (R9, locked by `notification_dispatch_contract_test.rb`).
+  - `Notification.activity_type` enum stays `%w[mention boost thread_reply]`.
   - `Membership::Connectable::ACTIVITY_TIERS` constants are unchanged. Push still uses the 60-second `connected?` (arch § 4).
   - `Room::MessagePusher#build_payload` direct/shared two-branch shape is preserved verbatim (R8).
   - Existing `Notification` row creation paths for boost/mention/thread_reply produce the same rows; the dispatcher is a relocation, not a rewrite.
@@ -753,8 +743,6 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 
 | Risk | Mitigation |
 |------|------------|
-| Callback ordering regression breaks the dispatcher | `test/models/notification_dispatch_contract_test.rb` pins the order. Any reorder fails CI loudly with a precise diff. |
-| Recipient routing drifts during the `Room::MessagePusher` → `Message` move | `test/models/notification_routing_parity_test.rb` already locks recipients with exact-set assertions. Stays green at every commit in U4. |
 | Bundle race-create produces two active bundles for one user | DB-enforced via partial unique index; `find_or_create_active_for` rescues `RecordNotUnique` and re-reads. Test simulates the race. |
 | Bundle stuck after a terminal provider error not in the rescue list | The rescue list is documented at U6 with explicit class names per provider. New provider errors trigger a follow-up to expand the list. v1.1 webhook-driven suppression provides a richer signal stream but is out of scope. Active bundles are not GC'd, so stuck bundles persist — accepted in v1 and bounded by account-flag rollout gating. |
 | SES `MessageDeduplicationId` plumbing turns out not to work without a FIFO configuration set | Tested at integration time. If the SDK's send_email doesn't expose a per-call dedup parameter, the operator-side requirement (configuration set named in `SES_CONFIGURATION_SET` must be FIFO-configured) is documented in the deploy runbook. Worst case, retries within the configuration set's dedup window do not duplicate; outside the window they could — bounded by Solid Queue's retry envelope (typically minutes, not hours). |
@@ -787,7 +775,6 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 - **Origin (architecture):** [docs/plans/NOTIFICATIONS-ARCHITECTURE.md](NOTIFICATIONS-ARCHITECTURE.md)
 - **Competitive framing:** [docs/plans/NOTIFICATIONS-SLACK-COMPARISON.md](NOTIFICATIONS-SLACK-COMPARISON.md)
 - **Superseded V0 reference:** [docs/plans/UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md](UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md). Kept for routing/eligibility background; do not implement from it.
-- **Regression net:** `test/models/notification_routing_parity_test.rb`, `test/models/notification_dispatch_contract_test.rb`
 - **Fizzy prior art (reference only):** `fizzy/app/models/notification/bundle.rb`, `fizzy/app/models/notification/pushable.rb`
 - **Delivery wiring (existing):** `config/initializers/email.rb`
 - **Solid Queue recurring schema:** `db/queue_schema.rb`
