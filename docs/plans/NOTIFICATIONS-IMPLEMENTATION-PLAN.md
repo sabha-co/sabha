@@ -208,7 +208,7 @@ The `Notification::Routing` module gates which channel each `activity_type` ente
 
 ## Implementation Units
 
-The plan unfolds in six phases. Each unit ends in a mergeable state with `main` green. Behavior changes are gated by the account-level flags introduced in U3 (default off) until rollout.
+The plan unfolds in seven phases. Each unit ends in a mergeable state with `main` green. Behavior changes are gated by the account-level flags introduced in U3 (default off) until rollout.
 
 ### Phase 1: Foundation (no behavior change)
 
@@ -678,15 +678,67 @@ The plan unfolds in six phases. Each unit ends in a mergeable state with `main` 
 
 ---
 
+### Phase 7: Product integration and remaining coverage
+
+- U9. **Notification preferences entry point + remaining SaaS/reliability tests**
+
+**Goal:** Close the remaining integration gaps before rollout: make the preferences page discoverable inside the app, clarify how the new push preference relates to push device management, and add tests for the SaaS mail-link and digest failure-isolation behavior that already exists in code.
+
+**Requirements:** R5, R7, R10, R12.
+
+**Dependencies:** U7, U8.
+
+**Files:**
+- Remaining modify: `app/views/accounts/edit.html.erb` or the user profile/settings view that already acts as the user's account/preferences hub (add a visible link to notification preferences)
+- Remaining modify: `app/views/users/notification_settings/edit.html.erb` (make the relationship to push device management explicit)
+- Possible modify: `app/views/users/sidebars/show.html.erb` only if the sidebar is the established entry point for personal settings; do not create duplicate navigation if account/profile already covers it
+- Test: `test/controllers/users/notification_settings_controller_test.rb` or an integration test covering the in-app link
+- Test: `test/controllers/users/notification_settings_controller_test.rb` or a view/integration test covering the push-management link/copy
+- Test: `test/mailers/missed_notifications_mailer_test.rb`
+- Test: `test/mailers/weekly_digest_mailer_test.rb`
+- Test: `test/jobs/notification/weekly_digest_job_test.rb`
+- Test: SaaS-specific mailer/integration tests under `saas/test/` for workspace-prefixed links
+
+**Approach:**
+- **Add an in-app entry point.** The `Users::NotificationSettingsController` route is not enough by itself. Add a normal, discoverable link from the user's existing settings/profile/account surface to `edit_user_notification_settings_path(user_id: "me")`. The link text should match the page title ("Notification preferences") and should sit near existing profile/push/account controls. Email links are a secondary recovery path, not the primary navigation.
+- **Resolve the push-settings overlap.** The new notification preferences page has a `push_enabled` checkbox, while `users/push_subscriptions#index` remains the device-management surface. Make the relationship explicit in UI: either link from notification preferences to the push subscription/device page, or keep device management on the existing page and label `push_enabled` as the global push switch. Do not leave users with two unrelated push settings pages that appear to conflict.
+- **Add SaaS assertions for email links.** A SaaS test should render both missed-notification and weekly-digest emails inside a tenant and assert that Activity/settings links include `/1000001/...` while unsubscribe links do not. This is the regression test for the activerecord-tenanted guide's path-based routing nuance.
+- **Add weekly digest failure-isolation coverage.** Add a focused job test proving a delivery failure for one eligible user does not block later eligible users.
+
+**Execution note:** Treat this as the last gate before rollout. It is not optional polish: it covers discoverability, tenant correctness, and delivery semantics that users/admins will experience once flags are enabled.
+
+**Patterns to follow:**
+- `saas/app/mailers/workspace_mailer.rb` — explicit `script_name: workspace.slug` in path-based SaaS mailer links.
+- `saas/lib/sabha/saas/path_rewriter.rb` — explains why workspace prefixes live in `SCRIPT_NAME`.
+- `app/views/users/push_subscriptions/index.html.erb` — existing push-device management surface.
+- `app/jobs/storage/reconcile_job.rb` and `app/jobs/room_update_broadcast_job.rb` — examples of explicit retry policy shape.
+
+**Test scenarios:**
+- *Happy path:* A signed-in user can reach Notification preferences from normal in-app navigation without coming from an email.
+- *Happy path:* Notification preferences links to push device management, or clearly labels `push_enabled` as the global push switch.
+- *Integration (SaaS, remaining test):* Missed-notification email Activity/settings links include the workspace path prefix.
+- *Integration (SaaS, remaining test):* Weekly digest email Activity/settings links include the workspace path prefix.
+- *Integration (SaaS):* Unsubscribe links remain global and still flip only the encoded tenant's settings.
+- *Error path:* One weekly-digest recipient delivery failure does not prevent later eligible recipients from receiving the digest.
+
+**Verification:**
+- `bin/rails test test/controllers/users/notification_settings_controller_test.rb test/mailers/missed_notifications_mailer_test.rb test/mailers/weekly_digest_mailer_test.rb test/jobs/notification/weekly_digest_job_test.rb` green.
+- `SAAS=true bin/rails test saas/test/` green, including explicit workspace-prefix assertions for notification email links.
+- Manual smoke (dev): open the normal account/profile/settings UI, navigate to Notification preferences, toggle settings, return to push device management if needed.
+- Manual smoke (SaaS dev): render both emails in tenant `1000001`, click Activity/settings links, and land inside `/1000001/...`; click unsubscribe and confirm the global token route still updates the tenant-scoped settings row.
+
+---
+
 ## System-Wide Impact
 
 - **Interaction graph (callbacks):** The new `dispatch_notifications` callback joins eight existing `after_create_commit` callbacks on `Message` and is order-sensitive (must run after `create_mention_notifications` and `create_thread_reply_notifications`). The dispatch contract test pins the order. Boost moves from inline to async dispatch — the existing `broadcast_notification_removal` on Boost destroy stays untouched.
-- **Error propagation:** Dispatch job failures discard on `DeserializationError` and propagate other errors so Solid Queue retries. Bundle delivery rescues a documented set of terminal provider errors and sets `canceled_at` to break the partial-unique-index trap (arch § 14.1). Mailer failures inside the job propagate. Nothing in the dispatch path can roll back the originating message create — all delivery work runs after the message is committed.
+- **Error propagation:** Dispatch job failures discard on `DeserializationError`. Bundle delivery rescues a documented set of terminal provider errors and sets `canceled_at` to break the partial-unique-index trap (arch § 14.1); commit `3593396` makes transient delivery retries explicit via `retry_on`. Weekly digest delivery isolates per-recipient failures so one bad address does not block the rest of the workspace. Nothing in the dispatch path can roll back the originating message create — all delivery work runs after the message is committed.
 - **State lifecycle risks:** The bundle's `(user_id) WHERE delivered_at IS NULL AND canceled_at IS NULL` partial unique index is the load-bearing invariant. If a bundle gets stuck (terminal error not in the rescue list, or the rescue list misses a new provider error class), no further bundles are created for that user. Bundle GC does **not** mitigate this — only terminal bundles (`delivered_at IS NOT NULL OR canceled_at IS NOT NULL`) are pruned at 90 days; an actively-stuck active bundle is never deleted by GC. The single mitigation is the terminal-error rescue list (arch § 14.1), which must be comprehensive enough to catch any error that should terminate the bundle. See the corresponding risk-table row below.
 - **API surface parity:** The plan does not change any external API (bot API, push subscription API, ActionCable channels). The Activity tab broadcast remains unchanged — `Notification` row creation still drives it. The `notification_recipient_ids` private method on `Message::Broadcasts` (touched by `test/models/message/broadcasts_test.rb`) is unrelated to the dispatch job and stays unchanged.
 - **Integration coverage:** Cross-layer scenarios that mocks alone won't prove:
   - Callback ordering is integration-tested via the dispatch contract test (pinning behavior at the Rails callback chain level).
   - Multi-tenant unsubscribe from a token-only request requires a full SaaS test (in `saas/test/`) that crosses the controller, the verifier, and `with_tenant`.
+  - SaaS notification email links require full mailer rendering under a tenant and assertions for `/workspace_id/...` path prefixes.
   - Bundle delivery's partial unique index race requires a full ActiveRecord transaction interleaving test, not just a mocked retry.
 - **Unchanged invariants:**
   - `Notification.activity_type` enum stays `%w[mention boost thread_reply]` (R9, locked by `notification_dispatch_contract_test.rb`).
@@ -713,6 +765,9 @@ The plan unfolds in six phases. Each unit ends in a mergeable state with `main` 
 | Solid Queue recurring task config doesn't trigger the digest in production | Verified at deploy by reading `SolidQueue::RecurringTask` after migration. Manual `perform_now` tested in dev. |
 | Weekly digest fan-out misconfigured — `WeeklyDigestJob.perform_later` enqueued without a tenant context, raising `NoTenantError`, no tenant ever receives a digest | The plan splits runner (untenanted, registered) from digest (per-tenant, enqueued inside `with_each_tenant` so the gem auto-carries tenant). U8 has explicit fan-out tests. The recurring-task class name in `config/recurring.yml` is the runner, not the digest. |
 | Unsubscribe controller route resolves to wrong tenant — leaks across workspaces | The token is the tenant carrier; controller wraps token decode in `without_tenant`, then `with_tenant(payload[:tenant])`. Route opts out of `TenantSelector`'s shard-swap prohibition (gem § 2.5). U7 has a SaaS test asserting workspace A's token does not flip workspace B's settings. |
+| Notification preferences page exists but users cannot find it | U9 adds an in-app entry point from the existing personal settings/profile/account surface and tests the link. Email links are not treated as sufficient navigation. |
+| SaaS email app links regress and lose the workspace prefix | U9 adds SaaS tests asserting `/1000001/...` links for Activity/settings while keeping unsubscribe global because the token carries tenant context. |
+| Weekly-digest recipient failure isolation regresses | U9 adds a focused job test that later eligible users still receive a digest after one recipient delivery fails. |
 
 ---
 
@@ -722,7 +777,7 @@ The plan unfolds in six phases. Each unit ends in a mergeable state with `main` 
 - **Self-hosted setup doc:** A short separate doc covers DKIM/SPF/DMARC + Resend domain verification. Out of plan scope but called out so it doesn't get forgotten.
 - **Observability hooks:** The dispatch job and bundle delivery job emit Rails logger lines on each branch (delivered, canceled, terminal error). v1.1 may add a structured metrics layer; v1 logs are sufficient for hand investigation.
 - **Migration order:** U2's two migrations (schema + backfill) ship in one PR. U3's migration ships in U3's PR. U5's two migrations ship in U5's PR. Do not run schema and backfill in separate deploys — the dispatcher's predicates assume settings exist.
-- **Rollout sequencing:** All eight units land green before any account flag flips on. The flag flip is a separate operational step, not part of the implementation PRs.
+- **Rollout sequencing:** All nine units land green before any account flag flips on. The flag flip is a separate operational step, not part of the implementation PRs.
 
 ---
 

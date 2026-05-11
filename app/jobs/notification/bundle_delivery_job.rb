@@ -38,7 +38,7 @@ class Notification::BundleDeliveryJob < ApplicationJob
     # Bundles span multiple rooms but always one user, so memberships are
     # looked up per (room_id, user_id) pair with the user fixed.
     def revalidate(bundle)
-      items = bundle.items.includes(:message, :actor).to_a
+      items = bundle.items.includes(:actor, message: [ :room, :rich_text_body ]).to_a
       return items if items.empty?
 
       room_ids = items.map { |i| i.message.room_id }.uniq

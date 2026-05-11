@@ -14,6 +14,7 @@ class Notification::Digest::Content
   def everyone_mentions
     @everyone_mentions ||= room_ids.empty? ? [] : Message
       .active
+      .includes(:creator, :room, :rich_text_body)
       .where(room_id: room_ids, mentions_everyone: true)
       .where("messages.created_at > ?", LOOKBACK.ago)
       .order(created_at: :desc)
@@ -31,6 +32,7 @@ class Notification::Digest::Content
   def excerpts
     @excerpts ||= qualifying_room_ids.empty? ? [] : Message
       .active
+      .includes(:creator, :room, :rich_text_body)
       .where(room_id: qualifying_room_ids)
       .where("messages.created_at > ?", LOOKBACK.ago)
       .order(created_at: :desc)

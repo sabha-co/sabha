@@ -153,6 +153,7 @@ class User < ApplicationRecord
       .where(status: statuses[:active])
       .where.not(role: roles[:bot])
       .joins(:notification_settings)
+      .includes(:notification_settings)
       .where(user_notification_settings: { weekly_digest_subscribed: true })
       .merge(User::NotificationSettings.due_for_weekly_digest)
   }

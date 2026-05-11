@@ -161,6 +161,12 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
       MissedNotificationsMailer.expects(:bundle).with do |b, items|
         assert_equal bundle.id, b.id
         assert_equal expected_items.map(&:id).sort, items.map(&:id).sort
+        items.each do |item|
+          assert item.association(:actor).loaded?, "actor should be preloaded for mail rendering"
+          assert item.association(:message).loaded?, "message should be preloaded for mail rendering"
+          assert item.message.association(:room).loaded?, "message room should be preloaded for mail rendering"
+          assert item.message.association(:rich_text_body).loaded?, "message body should be preloaded for previews"
+        end
         true
       end.returns(mail)
     end
