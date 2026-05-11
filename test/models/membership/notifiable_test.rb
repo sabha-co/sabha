@@ -77,6 +77,20 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
     assert @recipient_membership.receives_push_for?(@message, :everyone_room_message)
   end
 
+  test "receives_push_for? returns false when user's push_enabled is off" do
+    @recipient_membership.disconnected
+    (@recipient_membership.user.notification_settings || @recipient_membership.user.create_notification_settings!).update!(push_enabled: false)
+
+    refute @recipient_membership.receives_push_for?(@message, :mention)
+  end
+
+  test "receives_push_for? returns false when sender is blocked by recipient" do
+    @recipient_membership.disconnected
+    @recipient_membership.user.block!(@creator)
+
+    refute @recipient_membership.receives_push_for?(@message, :mention)
+  end
+
   # ---------- receives_missed_email_for? ----------
 
   test "receives_missed_email_for? returns false when activity_type is not in EMAIL_TYPES" do

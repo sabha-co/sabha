@@ -113,6 +113,11 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
       starts_at: 100.days.ago, ends_at: 100.days.ago + 1.hour,
       delivered_at: 95.days.ago
     )
+    # Real delivered bundles always carry at least one item — the FK from
+    # notification_bundle_items.bundle_id is non-cascading, so GC must
+    # drop items before bundles or the DELETE raises InvalidForeignKey.
+    item_message = @room.messages.create!(body: "<div>gc item</div>", creator: @actor, client_message_id: "gc_item_#{SecureRandom.hex(4)}")
+    old_item = Notification::BundleItem.create!(bundle: old_delivered, message: item_message, actor: @actor, kind: "mention")
     old_delivered.update_column(:updated_at, 95.days.ago)
 
     fresh_delivered = Notification::Bundle.create!(
@@ -121,9 +126,10 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
       delivered_at: 1.day.ago
     )
 
-    Notification::WeeklyDigestJob.perform_now
+    assert_nothing_raised { Notification::WeeklyDigestJob.perform_now }
 
     refute Notification::Bundle.exists?(old_delivered.id), "old terminal bundle should be pruned"
+    refute Notification::BundleItem.exists?(old_item.id),  "child items of pruned bundles must go with them"
     assert Notification::Bundle.exists?(fresh_delivered.id), "fresh terminal bundle should remain"
   end
 

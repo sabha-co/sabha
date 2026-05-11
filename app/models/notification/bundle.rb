@@ -19,7 +19,14 @@ class Notification::Bundle < ApplicationRecord
   GC_RETENTION = 90.days
 
   def self.gc_terminal!(retention: GC_RETENTION)
-    terminal.where("updated_at < ?", retention.ago).delete_all
+    # delete_all skips dependent: :delete_all, so children would orphan and FK
+    # would fire. Pluck → delete items → delete bundles keeps it one round trip
+    # per table without instantiation cost.
+    ids = terminal.where("updated_at < ?", retention.ago).pluck(:id)
+    return if ids.empty?
+
+    Notification::BundleItem.where(bundle_id: ids).delete_all
+    Notification::Bundle.where(id: ids).delete_all
   end
 
   def active?

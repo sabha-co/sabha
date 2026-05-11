@@ -195,19 +195,19 @@ class Message < ApplicationRecord
     end
   end
 
-  # Returns the candidate user-id set for a push activity type. Connection /
-  # block / health filtering happens at delivery time via
-  # Membership::Notifiable predicates and Push::Subscription scopes.
+  # Returns the candidate user-id set for a push activity type. The membership
+  # scopes pre-filter for speed (involvement, connection, creator exclusion),
+  # then Membership::Notifiable#receives_push_for? applies the full gate so
+  # block checks, user health, message/room state, and the push_enabled
+  # setting all participate — same predicates run at dispatch time and at
+  # delivery time, per arch § 4–5.
   def push_recipient_user_ids_for(activity_type)
-    case activity_type.to_sym
-    when :everyone_room_message, :direct_message, :thread_reply
-      room.memberships.visible.disconnected.where.not(user_id: creator_id).involved_in_everything.pluck(:user_id)
-    when :mention
-      mentionee_ids_for_push = mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
-      room.memberships.visible.disconnected.where(user_id: mentionee_ids_for_push).involved_in_mentions.pluck(:user_id)
-    else
-      []
-    end
+    activity_type = activity_type.to_sym
+    return [] unless Notification::Routing::PUSH_TYPES.include?(activity_type)
+
+    push_candidate_memberships_for(activity_type)
+      .select { |membership| membership.receives_push_for?(self, activity_type) }
+      .map(&:user_id)
   end
 
   def deliver_push_for(activity_type)
@@ -257,6 +257,26 @@ class Message < ApplicationRecord
   end
 
   private
+    def push_candidate_memberships_for(activity_type)
+      eager_load = { user: :notification_settings }
+
+      case activity_type
+      when :everyone_room_message, :direct_message, :thread_reply
+        room.memberships.visible.disconnected
+            .where.not(user_id: creator_id)
+            .involved_in_everything
+            .includes(eager_load)
+      when :mention
+        candidate_user_ids = mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
+        room.memberships.visible.disconnected
+            .where(user_id: candidate_user_ids)
+            .involved_in_mentions
+            .includes(eager_load)
+      else
+        Membership.none
+      end
+    end
+
     def email_candidate_user_ids_for(activity_type)
       case activity_type
       when :mention
@@ -473,6 +493,7 @@ class Message < ApplicationRecord
       rebalance_unread_counters
       Boost.where(message_id: id).delete_all
       Bookmark.where(message_id: id).delete_all
+      Notification::BundleItem.where(message_id: id).delete_all
     end
 
     def destroy_notifications_if_deactivated

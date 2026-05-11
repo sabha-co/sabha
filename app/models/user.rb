@@ -509,6 +509,15 @@ class User < ApplicationRecord
       Block.where(blocked_id: id).delete_all
       Push::Subscription.where(user_id: id).delete_all
       Webhook.where(user_id: id).delete_all
+
+      # Bundle items where this user was the actor (in any user's bundle).
+      Notification::BundleItem.where(actor_id: id).delete_all
+
+      # Bundles this user owns — items must go first to satisfy the FK.
+      owned_bundle_ids = Notification::Bundle.where(user_id: id).pluck(:id)
+      Notification::BundleItem.where(bundle_id: owned_bundle_ids).delete_all
+      Notification::Bundle.where(user_id: id).delete_all
+
       User::NotificationSettings.where(user_id: id).delete_all
     end
 

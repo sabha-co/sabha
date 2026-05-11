@@ -218,6 +218,20 @@ class MessageTest < ActiveSupport::TestCase
     assert_includes mentioning_messages, message
   end
 
+  test "destroying a message also deletes any notification bundle items referencing it" do
+    sender   = users(:david)
+    receiver = users(:jason)
+    receiver.notification_settings || receiver.create_notification_settings!
+    msg = rooms(:designers).messages.create!(body: "<div>bundled</div>", creator: sender, client_message_id: "msg_destroy_bundle_#{SecureRandom.hex(4)}")
+
+    bundle = Notification::Bundle.create!(user: receiver, frequency: :hourly, starts_at: Time.current, ends_at: 1.hour.from_now)
+    item   = Notification::BundleItem.create!(bundle: bundle, message: msg, actor: sender, kind: "mention")
+
+    assert_nothing_raised { msg.destroy }
+    assert_nil Notification::BundleItem.find_by(id: item.id)
+    assert Notification::Bundle.exists?(bundle.id), "the bundle itself stays — only the item referencing the deleted message goes"
+  end
+
   test "destroying a parent message destroys its thread rooms" do
     room = rooms(:pets)
 

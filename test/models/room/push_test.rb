@@ -46,6 +46,31 @@ class Room::PushTest < ActiveSupport::TestCase
     wait_for_web_push_delivery_pool_tasks(2)
   end
 
+  test "does not push to a recipient who has blocked the sender" do
+    # Baseline: david @-mentions kevin in designers — jason (everything),
+    # jz (everything), and kevin (mentions, named) all push → 3. With kevin
+    # blocking david, kevin's mention push is suppressed → 2.
+    users(:kevin).block!(users(:david))
+
+    perform_enqueued_jobs only: Notification::DispatchJob do
+      WebPush.expects(:payload_send).times(2)
+      rooms(:designers).messages.create! body: "Hey #{mention_attachment_for(:kevin)}", client_message_id: "blocked_push_#{SecureRandom.hex(4)}", creator: users(:david)
+    end
+    wait_for_web_push_delivery_pool_tasks(2)
+  end
+
+  test "does not push when the recipient's push_enabled setting is off" do
+    (users(:kevin).notification_settings || users(:kevin).create_notification_settings!).update!(push_enabled: false)
+
+    # Same baseline as above: 3 pushes for a kevin-mention from david. With
+    # kevin's push_enabled flipped off → 2.
+    perform_enqueued_jobs only: Notification::DispatchJob do
+      WebPush.expects(:payload_send).times(2)
+      rooms(:designers).messages.create! body: "Hi #{mention_attachment_for(:kevin)}", client_message_id: "push_off_#{SecureRandom.hex(4)}", creator: users(:david)
+    end
+    wait_for_web_push_delivery_pool_tasks(2)
+  end
+
   test "destroys invalid subscriptions" do
     memberships(:kevin_designers).update! involvement: "invisible"
 

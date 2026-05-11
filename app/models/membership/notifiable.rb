@@ -22,6 +22,11 @@ module Membership::Notifiable
     return false unless Notification::Routing::PUSH_TYPES.include?(activity_type)
     return false unless common_gates_pass?(message)
     return false if connected?
+    # Settings-missing means "default" (push_enabled defaults to true), so only
+    # suppress when an explicit false is on file. Mirrors how missed-email is
+    # opt-in (settings-missing → false) by aligning the guard with the column
+    # default rather than the present-or-absent state.
+    return false if user.notification_settings && !user.notification_settings.push_enabled?
 
     case activity_type
     when :mention
