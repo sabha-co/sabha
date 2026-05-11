@@ -71,6 +71,32 @@ class Room::PushTest < ActiveSupport::TestCase
     wait_for_web_push_delivery_pool_tasks(2)
   end
 
+  test "block check stays O(1) in candidate count — at most two block queries per dispatch" do
+    # Without memoization, each candidate triggers two `Block.exists?` calls via
+    # User#can_ping?. For an @everyone push in a large room that would be 2×N
+    # queries. The cache on Message#blocked_user_ids_with_creator caps it at 2.
+    sender    = users(:david)
+    room      = rooms(:designers)
+    activity  = :everyone_room_message
+
+    message = room.messages.new(body: "<div>perf</div>", creator: sender, client_message_id: "perf_#{SecureRandom.hex(4)}")
+    # Materialize without firing dispatch callbacks — we only care about the
+    # predicate hot path, not delivery.
+    message.save!(validate: false)
+
+    block_query_count = 0
+    counter = ->(_name, _start, _finish, _id, payload) {
+      block_query_count += 1 if payload[:sql].to_s.match?(/FROM\s+"blocks"/i)
+    }
+
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+      message.push_recipient_user_ids_for(activity)
+    end
+
+    assert_operator block_query_count, :<=, 2,
+      "expected at most 2 block queries per dispatch regardless of candidate count, got #{block_query_count}"
+  end
+
   test "destroys invalid subscriptions" do
     memberships(:kevin_designers).update! involvement: "invisible"
 

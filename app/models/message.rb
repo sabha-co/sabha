@@ -195,6 +195,19 @@ class Message < ApplicationRecord
     end
   end
 
+  # Block ids touching this message's creator — memoized so per-recipient
+  # predicates can do a Set lookup instead of two `exists?` queries each.
+  # An @everyone push in a 500-member room would otherwise issue 1000 block
+  # queries through `User#can_ping?`; with this cache it's two, total.
+  def blocked_user_ids_with_creator
+    @blocked_user_ids_with_creator ||= begin
+      return [].to_set unless creator_id
+
+      (Block.where(blocker_id: creator_id).pluck(:blocked_id) +
+       Block.where(blocked_id: creator_id).pluck(:blocker_id)).to_set
+    end
+  end
+
   # Returns the candidate user-id set for a push activity type. The membership
   # scopes pre-filter for speed (involvement, connection, creator exclusion),
   # then Membership::Notifiable#receives_push_for? applies the full gate so
