@@ -6,27 +6,53 @@
   </div>
 <% end %>
 
-<section class="panel panel--wide flex flex-column gap">
+<section class="panel flex flex-column gap">
   <h1 class="txt-align-center txt-large margin-none">Notification preferences</h1>
 
   <%= form_with model: @settings, url: user_notification_settings_path(user_id: "me"), method: :patch, scope: :user_notification_settings, class: "flex flex-column gap" do |form| %>
     <fieldset class="pad-inline fill-shade border-radius pad flex flex-column gap">
       <legend class="txt-medium"><strong>Email</strong></legend>
 
-      <label class="flex align-center gap">
-        <%= form.check_box :missed_email_enabled %>
-        <span>Email me when I'm mentioned or sent a DM while I'm away</span>
-      </label>
+      <% if Current.account.email_notifications_enabled? %>
+        <label class="flex align-center gap">
+          <%= form.check_box :missed_email_enabled %>
+          <span>Email me when I'm mentioned or sent a DM while I'm away</span>
+        </label>
 
-      <label class="flex flex-column gap-small">
-        <span>Bundle frequency</span>
-        <%= form.select :email_frequency, [["Hourly", "hourly"], ["Daily", "daily"]] %>
-      </label>
+        <div class="flex align-center gap" style="padding-inline-start: 1.75rem;">
+          <span class="txt-small txt-muted">Bundle into</span>
+          <%= form.select :email_frequency, [["one hourly email", "hourly"], ["one daily email", "daily"]], {}, class: "input txt-small", style: "width: auto;" %>
+        </div>
+      <% else %>
+        <p class="txt-small txt-muted margin-none">
+          Missed-notification email is turned off for this workspace.
+          <% if Current.user.administrator? %>
+            <%= link_to "Enable in workspace settings", edit_account_path %>.
+          <% else %>
+            Ask an administrator to enable it.
+          <% end %>
+        </p>
+      <% end %>
 
-      <label class="flex align-center gap">
-        <%= form.check_box :weekly_digest_subscribed %>
-        <span>Receive the weekly community digest</span>
-      </label>
+      <% if Current.account.email_notifications_enabled? && Current.account.weekly_digest_enabled? %>
+        <hr class="separator" aria-hidden="true">
+      <% end %>
+
+      <% if Current.account.weekly_digest_enabled? %>
+        <label class="flex align-center gap">
+          <%= form.check_box :weekly_digest_subscribed %>
+          <span>Receive the weekly community digest</span>
+        </label>
+      <% else %>
+        <p class="txt-small txt-muted margin-none">
+          The weekly community digest is turned off for this workspace.
+          <% if Current.user.administrator? %>
+            <%= link_to "Enable in workspace settings", edit_account_path %>.
+          <% else %>
+            Ask an administrator to enable it.
+          <% end %>
+        </p>
+      <% end %>
     </fieldset>
 
     <fieldset class="pad-inline fill-shade border-radius pad flex flex-column gap">
@@ -36,10 +62,13 @@
         <%= form.check_box :push_enabled %>
         <span>Send push notifications to my subscribed devices</span>
       </label>
+
+      <p class="txt-small txt-muted margin-none" style="padding-inline-start: 1.75rem;">
+        Master switch for push. Manage individual devices in
+        <%= link_to "push subscriptions", user_push_subscriptions_path %>.
+      </p>
     </fieldset>
 
-    <div class="flex justify-end">
-      <%= form.submit "Save", class: "btn btn--primary" %>
-    </div>
+    <%= form.submit "Save", class: "btn btn--reversed center txt-large" %>
   <% end %>
 </section>

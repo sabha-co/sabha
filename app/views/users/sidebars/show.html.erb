@@ -125,7 +125,13 @@
       <% end %>
       
       <%= render "users/sidebars/bell" %>
-      
+
+      <%= link_to edit_user_notification_settings_path, class: "btn sidebar__tool" do %>
+        <%= icon_tag "sliders" %>
+        <span class="for-screen-reader">Notification preferences</span>
+        <span class="sidebar__tool-label">Notifications</span>
+      <% end %>
+
       <%= link_to user_profile_path, class: "btn avatar sidebar__tool" do %>
         <%= avatar_image_tag(Current.user, size: 40, style: "view-transition-name: avatar-#{Current.user.id}", loading: :lazy) %>
         <span class="for-screen-reader"><%= Current.user.name %></span>

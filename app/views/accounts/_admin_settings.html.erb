@@ -71,7 +71,7 @@
                   data-action="change->form#submit">
             <span class="switch__btn"></span>
           </label>
-          <span>Send missed-notification emails (members opt in individually)</span>
+          <span>Send missed-notification emails</span>
         <% end %>
 
         <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
@@ -83,7 +83,7 @@
                   data-action="change->form#submit">
             <span class="switch__btn"></span>
           </label>
-          <span>Send a weekly community digest (members can unsubscribe)</span>
+          <span>Send the weekly community digest</span>
         <% end %>
       </div>
     </div>

@@ -42,6 +42,12 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".unread", count: unread_count
   end
 
+  test "renders a notification preferences link in the sidebar tools" do
+    get user_sidebar_url
+
+    assert_select ".sidebar__tools a[href=?]", edit_user_notification_settings_path, count: 1
+  end
+
   test "direct room members are preloaded to avoid N+1 queries" do
     # Create messages in direct rooms so they appear in sidebar
     rooms(:david_and_jason).messages.create! client_message_id: 901, body: "Hello", creator: users(:jason)

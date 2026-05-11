@@ -12,6 +12,58 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     assert_select "form"
   end
 
+  test "edit links to push subscription device management" do
+    get edit_user_notification_settings_url(user_id: "me")
+    assert_select "a[href=?]", user_push_subscriptions_path, count: 1
+  end
+
+  test "edit hides missed-email controls when account email_notifications_enabled is off" do
+    Account.sole.update!(email_notifications_enabled: false)
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "input[type=checkbox][name='user_notification_settings[missed_email_enabled]']", count: 0
+    assert_select "select[name='user_notification_settings[email_frequency]']", count: 0
+    assert_match(/Missed-notification email is turned off for this workspace/, @response.body)
+  end
+
+  test "edit hides weekly-digest control when account weekly_digest_enabled is off" do
+    Account.sole.update!(weekly_digest_enabled: false)
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "input[type=checkbox][name='user_notification_settings[weekly_digest_subscribed]']", count: 0
+    assert_match(/weekly community digest is turned off for this workspace/, @response.body)
+  end
+
+  test "edit shows admin link when account flags are off and current user is administrator" do
+    Account.sole.update!(email_notifications_enabled: false, weekly_digest_enabled: false)
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "a[href=?]", edit_account_path, minimum: 1
+  end
+
+  test "edit prompts non-admins to ask an administrator when account flags are off" do
+    Account.sole.update!(email_notifications_enabled: false, weekly_digest_enabled: false)
+    sign_in :jz
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "a[href=?]", edit_account_path, count: 0
+    assert_match(/Ask an administrator to enable it/, @response.body)
+  end
+
+  test "edit shows missed-email and digest controls when both account flags are on" do
+    Account.sole.update!(email_notifications_enabled: true, weekly_digest_enabled: true)
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "input[type=checkbox][name='user_notification_settings[missed_email_enabled]']", count: 1
+    assert_select "select[name='user_notification_settings[email_frequency]']", count: 1
+    assert_select "input[type=checkbox][name='user_notification_settings[weekly_digest_subscribed]']", count: 1
+  end
+
   test "update flips missed_email_enabled" do
     @settings.update!(missed_email_enabled: false)
 
