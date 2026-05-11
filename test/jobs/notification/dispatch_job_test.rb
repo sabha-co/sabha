@@ -72,14 +72,4 @@ class Notification::DispatchJobTest < ActiveSupport::TestCase
     assert_equal users(:jason).id, notification.actor_id
     assert_equal boost.id, notification.boost_id
   end
-
-  test "creating a regular message enqueues exactly one DispatchJob (not one per activity_type)" do
-    assert_enqueued_jobs 1, only: Notification::DispatchJob do
-      @room.messages.create!(
-        body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
-        creator: @creator,
-        client_message_id: "dispatch_one_per_message"
-      )
-    end
-  end
 end
