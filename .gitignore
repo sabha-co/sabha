@@ -48,3 +48,6 @@ Caddyfile
 
 # Claude Code local settings (user-specific paths and permissions)
 .claude/settings.local.json
+
+# Load-test cookies; regenerate with `bundle exec ruby test/performance/create_dummy_cookies.rb > test/performance/cookies.txt`
+/test/performance/cookies.txt

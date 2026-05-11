@@ -1,3 +1,5 @@
+require "active_support/all"
+
 key_generator = ActiveSupport::KeyGenerator.new("dummy", iterations: 1000)
 signed_cookie_secret = key_generator.generate_key("signed cookie")
 signed_cookie_verifier = ActiveSupport::MessageVerifier.new(signed_cookie_secret, digest: "SHA1", serializer: ActiveSupport::MessageEncryptor::NullSerializer)
