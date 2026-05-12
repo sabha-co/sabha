@@ -66,14 +66,15 @@ class EmailUnsubscribesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "unknown user_id is a no-op success" do
+  test "unknown user_id renders invalid without claiming success" do
     payload = { user_id: -1, tenant: nil, surface: :missed_notifications }
     token = Rails.application.message_verifier(:email_unsubscribe).generate(payload)
 
     post email_unsubscribe_url(token: token)
 
-    assert_response :success
-    assert @user.reload.notification_settings.missed_email_enabled
+    assert_response :not_found
+    assert @user.reload.notification_settings.missed_email_enabled,
+      "no setting may flip when the token's user no longer exists"
   end
 
   test "skips CSRF protection on POST" do

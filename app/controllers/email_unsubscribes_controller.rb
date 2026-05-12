@@ -16,9 +16,12 @@ class EmailUnsubscribesController < ApplicationController
   def create
     payload = decode_token(params[:token]) or return render(:invalid, status: :not_found)
     @surface = payload[:surface]
-    with_tenant_from(payload[:tenant]) do
-      User.find_by(id: payload[:user_id])&.unsubscribe_from_email!(@surface)
+    found = with_tenant_from(payload[:tenant]) do
+      user = User.find_by(id: payload[:user_id]) or next false
+      user.unsubscribe_from_email!(@surface)
+      true
     end
+    render :invalid, status: :not_found unless found
   end
 
   private
