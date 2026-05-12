@@ -274,10 +274,14 @@ class Message < ApplicationRecord
       eager_load = { user: :notification_settings }
 
       case activity_type
-      when :everyone_room_message, :direct_message, :thread_reply
+      when :everyone_room_message, :thread_reply
         room.memberships.visible.disconnected
             .where.not(user_id: creator_id)
             .involved_in_everything
+            .includes(eager_load)
+      when :direct_message
+        room.memberships.visible.disconnected
+            .where.not(user_id: creator_id)
             .includes(eager_load)
       when :mention
         candidate_user_ids = mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]

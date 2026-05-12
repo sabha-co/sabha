@@ -110,6 +110,47 @@ class Room::PushTest < ActiveSupport::TestCase
     end
   end
 
+  test "direct message pushes via the :direct_message activity_type to the other DM member" do
+    memberships(:jason_david_and_jason).update!(involvement: :nothing)
+
+    perform_enqueued_jobs only: Notification::DispatchJob do
+      WebPush.expects(:payload_send).times(1)
+      rooms(:david_and_jason).messages.create! body: "Just you", client_message_id: "dm_push_#{SecureRandom.hex(4)}", creator: users(:david)
+    end
+    wait_for_web_push_delivery_pool_tasks(1)
+  end
+
+  test "thread reply pushes via the :thread_reply activity_type to involved_in_everything members regardless of mention" do
+    parent = rooms(:designers).messages.create!(body: "Parent", creator: users(:david), client_message_id: "tr_push_parent_#{SecureRandom.hex(4)}")
+    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    thread.memberships.grant_to([ users(:jason), users(:jz) ])
+    # Threads default non-creator/non-parent-author members to :invisible — force :everything
+    # so the :thread_reply bucket has someone to push to.
+    thread.memberships.where(user_id: [ users(:jason).id, users(:jz).id ]).update_all(involvement: "everything")
+    clear_enqueued_jobs
+
+    perform_enqueued_jobs only: Notification::DispatchJob do
+      WebPush.expects(:payload_send).times(2)
+      thread.messages.create! body: "Reply", client_message_id: "tr_push_reply_#{SecureRandom.hex(4)}", creator: users(:david)
+    end
+    wait_for_web_push_delivery_pool_tasks(2)
+  end
+
+  test "@everyone in an open room pushes involved_in_mentions members via the :mention bucket" do
+    # hq is Open; david is admin (required for @everyone). Flip jason to :mentions so the
+    # only path that can reach them is the :mention bucket's mentions_everyone? expansion;
+    # jz + kevin stay :everything and get pushed via :everyone_room_message.
+    memberships(:jason_hq).update!(involvement: :mentions)
+    everyone_sgid = Everyone.new.attachable_sgid
+    body = %(<div>Heads up <action-text-attachment sgid="#{everyone_sgid}" content-type="application/vnd.sabha.mention"></action-text-attachment></div>)
+
+    perform_enqueued_jobs only: Notification::DispatchJob do
+      WebPush.expects(:payload_send).times(3)
+      rooms(:hq).messages.create! body: body, client_message_id: "everyone_push_#{SecureRandom.hex(4)}", creator: users(:david)
+    end
+    wait_for_web_push_delivery_pool_tasks(3)
+  end
+
   private
     def wait_for_web_push_delivery_pool_tasks(count)
       wait_for_pool_tasks(Rails.configuration.x.web_push_pool.delivery_pool, count)
