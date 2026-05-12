@@ -8,7 +8,7 @@ class CreateNotificationBundles < ActiveRecord::Migration[7.2]
   # through to the second read.
   def change
     create_table :notification_bundles do |t|
-      t.references :user,         null: false, foreign_key: true
+      t.references :user,         null: false, foreign_key: { on_delete: :cascade }
       t.string     :frequency,    null: false
       t.datetime   :starts_at,    null: false
       t.datetime   :ends_at,      null: false

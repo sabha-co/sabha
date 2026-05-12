@@ -11,9 +11,9 @@ class CreateNotificationBundleItems < ActiveRecord::Migration[7.2]
   # dedup so the dispatcher can call insert_all with unique_by: ... safely.
   def change
     create_table :notification_bundle_items do |t|
-      t.references :bundle,  null: false, foreign_key: { to_table: :notification_bundles }
-      t.references :message, null: false, foreign_key: true
-      t.references :actor,   null: false, foreign_key: { to_table: :users }
+      t.references :bundle,  null: false, foreign_key: { to_table: :notification_bundles, on_delete: :cascade }
+      t.references :message, null: false, foreign_key: { on_delete: :cascade }
+      t.references :actor,   null: false, foreign_key: { to_table: :users, on_delete: :cascade }
       t.string     :kind,    null: false
       t.timestamps
     end

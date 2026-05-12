@@ -376,10 +376,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_09_190101) do
   add_foreign_key "boosts", "messages"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users", column: "creator_id"
-  add_foreign_key "notification_bundle_items", "messages"
-  add_foreign_key "notification_bundle_items", "notification_bundles", column: "bundle_id"
-  add_foreign_key "notification_bundle_items", "users", column: "actor_id"
-  add_foreign_key "notification_bundles", "users"
+  add_foreign_key "notification_bundle_items", "messages", on_delete: :cascade
+  add_foreign_key "notification_bundle_items", "notification_bundles", column: "bundle_id", on_delete: :cascade
+  add_foreign_key "notification_bundle_items", "users", column: "actor_id", on_delete: :cascade
+  add_foreign_key "notification_bundles", "users", on_delete: :cascade
   add_foreign_key "notifications", "boosts"
   add_foreign_key "notifications", "messages"
   add_foreign_key "notifications", "users"
