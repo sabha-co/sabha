@@ -42,6 +42,20 @@ class User < ApplicationRecord
     notification_bundles.active.first || open_notification_bundle!
   end
 
+  # Public so batch dispatch can open bundles for users not in a pre-fetched
+  # active set without re-running `active.first` for each miss.
+  def open_notification_bundle!
+    frequency = notification_settings&.email_frequency || "hourly"
+    starts_at = Time.current
+    notification_bundles.create!(
+      frequency: frequency,
+      starts_at: starts_at,
+      ends_at:   starts_at + Notification::Bundle::FREQUENCY_WINDOWS.fetch(frequency)
+    )
+  rescue ActiveRecord::RecordNotUnique
+    notification_bundles.active.first!
+  end
+
   def unsubscribe_from_email!(surface)
     (notification_settings || create_notification_settings!).unsubscribe_from!(surface)
   end
@@ -523,18 +537,6 @@ class User < ApplicationRecord
 
     def ensure_notification_settings
       create_notification_settings! unless notification_settings
-    end
-
-    def open_notification_bundle!
-      frequency = notification_settings&.email_frequency || "hourly"
-      starts_at = Time.current
-      notification_bundles.create!(
-        frequency: frequency,
-        starts_at: starts_at,
-        ends_at:   starts_at + Notification::Bundle::FREQUENCY_WINDOWS.fetch(frequency)
-      )
-    rescue ActiveRecord::RecordNotUnique
-      notification_bundles.active.first!
     end
 
     def set_default_name

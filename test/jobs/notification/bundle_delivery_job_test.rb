@@ -78,14 +78,15 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
       "BundleDeliveryJob must discard so deleted-bundle races are tolerated"
   end
 
-  test "cancels the bundle and re-raises TerminalError on a Resend 4xx error" do
+  test "cancels the bundle and discards on a Resend 4xx error" do
     create_item!(create_message!)
     MissedNotificationsMailer.expects(:bundle).raises(Resend::Error::InvalidRequestError.new("bad address", 422))
 
-    error = assert_raises(Notification::BundleDeliveryJob::TerminalError) do
+    # TerminalError is discarded so Solid Queue closes cleanly; the cancellation
+    # is what operators see, not a failed execution.
+    assert_nothing_raised do
       Notification::BundleDeliveryJob.perform_now(@bundle)
     end
-    assert_match(/Bundle ##{@bundle.id} canceled/, error.message)
     assert @bundle.reload.canceled_at.present?
     assert_nil @bundle.delivered_at
   end

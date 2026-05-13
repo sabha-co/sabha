@@ -120,13 +120,15 @@ class Room::PushTest < ActiveSupport::TestCase
     wait_for_web_push_delivery_pool_tasks(1)
   end
 
-  test "thread reply pushes via the :thread_reply activity_type to involved_in_everything members regardless of mention" do
+  test "thread reply pushes to all non-invisible members regardless of mention" do
     parent = rooms(:designers).messages.create!(body: "Parent", creator: users(:david), client_message_id: "tr_push_parent_#{SecureRandom.hex(4)}")
     thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
     thread.memberships.grant_to([ users(:jason), users(:jz) ])
-    # Threads default non-creator/non-parent-author members to :invisible — force :everything
-    # so the :thread_reply bucket has someone to push to.
-    thread.memberships.where(user_id: [ users(:jason).id, users(:jz).id ]).update_all(involvement: "everything")
+    # Threads default non-creator/non-parent-author members to :invisible; involve_user
+    # then upgrades repliers to :mentions. Both involvements must receive the push,
+    # since receives_push_for?(:thread_reply) qualifies anyone !involved_in_invisible?.
+    thread.memberships.where(user_id: users(:jason).id).update_all(involvement: "mentions")
+    thread.memberships.where(user_id: users(:jz).id).update_all(involvement: "everything")
     clear_enqueued_jobs
 
     perform_enqueued_jobs only: Notification::DispatchJob do

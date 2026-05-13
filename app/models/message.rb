@@ -236,7 +236,7 @@ class Message < ApplicationRecord
 
   # Walks the candidate recipient set for `activity_type`, runs
   # `Membership::Notifiable#receives_missed_email_for?` per membership, and
-  # appends a BundleItem to the user's active bundle on a hit.
+  # appends a BundleItem to each eligible user's active bundle.
   def enqueue_missed_email_candidates_for(activity_type)
     activity_type = activity_type.to_sym
     return unless Notification::Routing::EMAIL_TYPES.include?(activity_type)
@@ -244,27 +244,34 @@ class Message < ApplicationRecord
     candidate_user_ids = email_candidate_user_ids_for(activity_type)
     return if candidate_user_ids.empty?
 
+    # Preload notification_settings: receives_missed_email_for? reads it for the
+    # account/user gate, so without this include each predicate call is N+1.
+    eligible_memberships = room.memberships
+      .where(user_id: candidate_user_ids)
+      .includes(user: :notification_settings)
+      .select { |membership| membership.receives_missed_email_for?(self, activity_type) }
+    return if eligible_memberships.empty?
+
+    bundles_by_user_id = bundles_for(eligible_memberships.map(&:user))
+
     kind = activity_type.to_s
     now  = Time.current
+    item_attrs = eligible_memberships.map do |membership|
+      {
+        bundle_id:  bundles_by_user_id.fetch(membership.user_id).id,
+        message_id: id,
+        actor_id:   creator_id,
+        kind:       kind,
+        created_at: now,
+        updated_at: now
+      }
+    end
 
-    room.memberships.where(user_id: candidate_user_ids).includes(:user).find_each do |membership|
-      next unless membership.receives_missed_email_for?(self, activity_type)
+    Notification::BundleItem.insert_all(item_attrs, unique_by: %i[bundle_id message_id kind])
 
-      bundle = membership.user.active_notification_bundle
-      Notification::BundleItem.insert_all(
-        [ {
-          bundle_id:  bundle.id,
-          message_id: id,
-          actor_id:   creator_id,
-          kind:       kind,
-          created_at: now,
-          updated_at: now
-        } ],
-        unique_by: %i[bundle_id message_id kind]
-      )
-
-      # Schedule delivery once per bundle, on first item insert. Subsequent
-      # adds find the existing active bundle and skip scheduling.
+    # Schedule delivery once per freshly-opened bundle. Bundles already open from
+    # a prior message already have a delivery scheduled.
+    bundles_by_user_id.each_value do |bundle|
       bundle.schedule_delivery if bundle.previously_new_record?
     end
   end
@@ -274,10 +281,19 @@ class Message < ApplicationRecord
       eager_load = { user: :notification_settings }
 
       case activity_type
-      when :everyone_room_message, :thread_reply
+      when :everyone_room_message
         room.memberships.visible.disconnected
             .where.not(user_id: creator_id)
             .involved_in_everything
+            .includes(eager_load)
+      when :thread_reply
+        # Thread members upgraded via Room#involve_user have involvement: :mentions
+        # by default. receives_push_for?(:thread_reply) qualifies anyone
+        # !involved_in_invisible?, so the `.visible` scope already does all the
+        # filtering needed here. Pre-filtering further to :everything would drop
+        # the typical replier.
+        room.memberships.visible.disconnected
+            .where.not(user_id: creator_id)
             .includes(eager_load)
       when :direct_message
         room.memberships.visible.disconnected
@@ -291,6 +307,17 @@ class Message < ApplicationRecord
             .includes(eager_load)
       else
         Membership.none
+      end
+    end
+
+    # Single batched lookup of each user's active bundle, opening new ones for
+    # users without one. Avoids the per-recipient SELECT (+ INSERT on miss) that
+    # User#active_notification_bundle would otherwise issue inside the dispatch
+    # loop on a hot @everyone path.
+    def bundles_for(users)
+      existing = Notification::Bundle.active.where(user_id: users.map(&:id)).index_by(&:user_id)
+      users.each_with_object(existing) do |user, by_id|
+        by_id[user.id] ||= user.open_notification_bundle!
       end
     end
 
