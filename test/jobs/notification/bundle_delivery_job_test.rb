@@ -72,18 +72,6 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
     Notification::BundleDeliveryJob.perform_now(@bundle)
   end
 
-  test "skips delivery in DemoMode" do
-    create_item!(create_message!)
-    DemoMode.stubs(:enabled?).returns(true)
-
-    MissedNotificationsMailer.expects(:bundle).never
-
-    Notification::BundleDeliveryJob.perform_now(@bundle)
-
-    assert_nil @bundle.reload.delivered_at
-    assert_nil @bundle.reload.canceled_at
-  end
-
   test "discards on DeserializationError when the bundle has been deleted" do
     assert_includes Notification::BundleDeliveryJob.rescue_handlers.map(&:first),
       "ActiveJob::DeserializationError",

@@ -21,7 +21,6 @@ class Notification::BundleDeliveryJob < ApplicationJob
   end
 
   def perform(bundle)
-    return if DemoMode.enabled?
     return if bundle.terminal?
 
     eligible_items = revalidate(bundle)
