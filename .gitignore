@@ -2,10 +2,6 @@ log/
 /storage/
 tmp/
 
-# Schema cache drifts whenever SaaS provisioning regenerates it from a
-# tenant DB. Regenerate locally with `bin/rails db:schema:cache:dump`.
-db/schema_cache.yml
-
 # SaaS mode marker file (use SAAS=true env var in production)
 tmp/saas.txt
 
