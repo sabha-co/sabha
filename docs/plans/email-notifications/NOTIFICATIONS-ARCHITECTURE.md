@@ -5,9 +5,9 @@
 **Source of truth for:** structure, components, and data shapes. Detailed implementation steps live in a separate plan to be authored against this doc.
 **Related:**
 
-- `docs/plans/EMAIL-NOTIFICATIONS-PRD.md` — product scope this doc serves.
-- `docs/plans/NOTIFICATIONS-SLACK-COMPARISON.md` — competitive framing.
-- `docs/plans/UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md` — superseded V0 draft. Kept for routing/eligibility background; do not implement from it.
+- `docs/plans/email-notifications/EMAIL-NOTIFICATIONS-PRD.md` — product scope this doc serves.
+- `docs/plans/email-notifications/NOTIFICATIONS-SLACK-COMPARISON.md` — competitive framing.
+- `docs/plans/email-notifications/UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md` — superseded V0 draft. Kept for routing/eligibility background; do not implement from it.
 
 ---
 

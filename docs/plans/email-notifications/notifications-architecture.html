@@ -770,7 +770,7 @@ end</code></pre>
       <div class="fanout">
         <div class="node row">
           <span class="label">In-app</span>
-          <code>create_notification_rows_for(activity_type)</code>
+          <code>deliver_in_app_row_for(activity_type)</code>
         </div>
         <div class="node push">
           <span class="label">Push</span>
@@ -783,6 +783,8 @@ end</code></pre>
       </div>
     </div>
   </div>
+
+  <p class="note"><strong>In-app row creation is a pass-through for <code>:mention</code> and <code>:thread_reply</code>.</strong> The legacy <code>create_mention_notifications</code> and <code>create_thread_reply_notifications</code> callbacks still own row creation; <code>deliver_in_app_row_for</code> only writes a row for <code>:boost</code>. The partial unique index <code>index_notifications_on_message_user_type</code> is the safety net if both paths ever fire.</p>
 
   <p class="note"><strong>Boost is the lone exception.</strong> Triggered after a <code>Boost</code> create, not a <code>Message</code>. Uses <code>Notification::DispatchJob.perform_later(message, only: :boost, actor: booster)</code>. Only call site that uses <code>only:</code>.</p>
 
@@ -950,7 +952,7 @@ end</code></pre>
       </div>
       <div class="step">
         <div class="marker">2</div>
-        <div class="body"><strong>Find-or-create active bundle</strong><p><code>Notification::Bundle.find_or_create_active_for(user)</code>. Window = 1h or 24h, snapshotted from <code>email_frequency</code>. <code>BundleDeliveryJob</code> scheduled with <code>wait_until: ends_at</code>.</p></div>
+        <div class="body"><strong>Find-or-create active bundle</strong><p><code>User#active_notification_bundle</code> returns the open bundle or creates one via private <code>open_notification_bundle!</code>. Window = 1h or 24h, snapshotted from <code>email_frequency</code>. Race-safe via partial unique index <code>index_notification_bundles_active_per_user</code>. <code>BundleDeliveryJob</code> scheduled with <code>wait_until: ends_at</code> on first item insert (<code>bundle.previously_new_record?</code>).</p></div>
       </div>
       <div class="step">
         <div class="marker">3</div>
@@ -979,7 +981,7 @@ end</code></pre>
   <p>No active job cancellation, no per-item bookkeeping. State changes during the window — user reconnects, opts out, blocks sender, account flag flips — drop items at delivery. If all items drop, the bundle is canceled.</p>
 
   <h3>Idempotent retry via provider-side dedup</h3>
-  <p>Every send passes <code>idempotency_key: "bundle-#{bundle.id}"</code>. <strong>Resend</strong>: <code>idempotency_key:</code> on <code>Resend::Emails.send</code>, 24-hour server-side dedup. <strong>SES</strong>: <code>MessageDeduplicationId</code> via Configuration Set FIFO dedup. Provider-side dedup fails open (always sends if provider hasn't seen the key) rather than failing closed like a "claim before deliver" pattern would.</p>
+  <p>Every send sets the header <code>X-Idempotency-Key: bundle-#{bundle.id}</code>. <strong>Resend</strong>: the delivery method forwards this as the <code>idempotency_key:</code> param on <code>Resend::Emails.send</code> — 24-hour server-side dedup. <strong>SES</strong>: no per-call idempotency parameter on <code>send_email</code>, so the header is stripped before the raw mail is sent and the only retry safety net is the job's own <code>retry_on</code> / terminal-error rescue policy. Provider-side dedup (where it exists) fails open rather than failing closed like a "claim before deliver" pattern would.</p>
 
   <h3>Cooldown</h3>
   <p>Bundle window <em>is</em> the cooldown. There is no separate per-membership cooldown column. A second mention 30 seconds after the first lands in the same bundle and produces a single email at delivery time.</p>
@@ -1192,7 +1194,7 @@ end</code></pre>
 </section>
 
 <footer>
-  <p>Source: <a href="NOTIFICATIONS-ARCHITECTURE.md">docs/plans/NOTIFICATIONS-ARCHITECTURE.md</a> · PRD: <a href="EMAIL-NOTIFICATIONS-PRD.md">docs/plans/EMAIL-NOTIFICATIONS-PRD.md</a> · Implementation plan: <a href="NOTIFICATIONS-IMPLEMENTATION-PLAN.md">docs/plans/NOTIFICATIONS-IMPLEMENTATION-PLAN.md</a></p>
+  <p>Source: <a href="NOTIFICATIONS-ARCHITECTURE.md">docs/plans/email-notifications/NOTIFICATIONS-ARCHITECTURE.md</a> · PRD: <a href="EMAIL-NOTIFICATIONS-PRD.md">docs/plans/email-notifications/EMAIL-NOTIFICATIONS-PRD.md</a> · Implementation plan: <a href="NOTIFICATIONS-IMPLEMENTATION-PLAN.md">docs/plans/email-notifications/NOTIFICATIONS-IMPLEMENTATION-PLAN.md</a></p>
   <p>Self-contained HTML rendering of the architecture doc. Open directly in a browser; no network requests, no external assets.</p>
 </footer>
 

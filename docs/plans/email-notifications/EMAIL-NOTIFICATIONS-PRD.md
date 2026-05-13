@@ -2,7 +2,7 @@
 
 **Status:** Draft.
 **Date:** 2026-05-09.
-**Related docs:** `docs/plans/NOTIFICATIONS-ARCHITECTURE.md` (current), `docs/plans/UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md` (superseded reference), `docs/plans/NOTIFICATIONS-SLACK-COMPARISON.md`.
+**Related docs:** `docs/plans/email-notifications/NOTIFICATIONS-ARCHITECTURE.md` (current), `docs/plans/email-notifications/UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md` (superseded reference), `docs/plans/email-notifications/NOTIFICATIONS-SLACK-COMPARISON.md`.
 
 ## Product thesis
 

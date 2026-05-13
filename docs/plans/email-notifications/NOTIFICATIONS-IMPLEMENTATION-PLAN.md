@@ -3,18 +3,18 @@ title: Sabha notifications v1 implementation
 type: feat
 status: active
 date: 2026-05-09
-origin: docs/plans/EMAIL-NOTIFICATIONS-PRD.md
-architecture: docs/plans/NOTIFICATIONS-ARCHITECTURE.md
+origin: docs/plans/email-notifications/EMAIL-NOTIFICATIONS-PRD.md
+architecture: docs/plans/email-notifications/NOTIFICATIONS-ARCHITECTURE.md
 ---
 
 # Sabha notifications v1 implementation
 
 ## Overview
 
-Implement the unified notification dispatcher and the two email surfaces (bundled missed-notification email + weekly activity digest) described in `docs/plans/NOTIFICATIONS-ARCHITECTURE.md`. The plan is phased so each unit is independently mergeable, `main` stays green throughout, and the user-visible behavior changes are gated by the account-level `email_notifications_enabled` flag (default off) until rollout.
+Implement the unified notification dispatcher and the two email surfaces (bundled missed-notification email + weekly activity digest) described in `docs/plans/email-notifications/NOTIFICATIONS-ARCHITECTURE.md`. The plan is phased so each unit is independently mergeable, `main` stays green throughout, and the user-visible behavior changes are gated by the account-level `email_notifications_enabled` flag (default off) until rollout.
 
-Source of truth for **product scope**: `docs/plans/EMAIL-NOTIFICATIONS-PRD.md`.
-Source of truth for **structure, components, data shapes**: `docs/plans/NOTIFICATIONS-ARCHITECTURE.md`. This plan never relitigates decisions made there — when a question reduces to "what should the data shape be" or "what is the routing matrix", look at the architecture doc. Two decisions worth flagging because they have load-bearing implications below: digest defaults to opt-out per member (arch § 6.1, § 12) and snooze is not a v1 feature in any form (arch § 4).
+Source of truth for **product scope**: `docs/plans/email-notifications/EMAIL-NOTIFICATIONS-PRD.md`.
+Source of truth for **structure, components, data shapes**: `docs/plans/email-notifications/NOTIFICATIONS-ARCHITECTURE.md`. This plan never relitigates decisions made there — when a question reduces to "what should the data shape be" or "what is the routing matrix", look at the architecture doc. Two decisions worth flagging because they have load-bearing implications below: digest defaults to opt-out per member (arch § 6.1, § 12) and snooze is not a v1 feature in any form (arch § 4).
 
 ---
 
@@ -35,7 +35,7 @@ The architecture doc's V0 → v1 deltas (Appendix A) are load-bearing — the v1
 
 ## Requirements Trace
 
-Carried forward from `docs/plans/EMAIL-NOTIFICATIONS-PRD.md` § Goals + § Confirmed decisions and `docs/plans/NOTIFICATIONS-ARCHITECTURE.md` § 1 Goals:
+Carried forward from `docs/plans/email-notifications/EMAIL-NOTIFICATIONS-PRD.md` § Goals + § Confirmed decisions and `docs/plans/email-notifications/NOTIFICATIONS-ARCHITECTURE.md` § 1 Goals:
 
 - R1. **One dispatcher decides per recipient per event** across all channels (in-app, push, missed email, digest). No more split decision trees. *(arch § 1.1, § 5)*
 - R2. **Bundled missed-notification email** delivered hourly or daily, user-selectable. Single email per window, not per event. *(prd § Delivery shape, § Delivery timing; arch § 7)*
@@ -56,7 +56,7 @@ Non-software origin sub-blocks (Actors / Flows / Acceptance Examples) are not pr
 
 ## Scope Boundaries
 
-Carried verbatim from `docs/plans/EMAIL-NOTIFICATIONS-PRD.md` § Non-goals and `docs/plans/NOTIFICATIONS-ARCHITECTURE.md` § 13:
+Carried verbatim from `docs/plans/email-notifications/EMAIL-NOTIFICATIONS-PRD.md` § Non-goals and `docs/plans/email-notifications/NOTIFICATIONS-ARCHITECTURE.md` § 13:
 
 - No thread-reply email. No boost email. No regular-room-message email.
 - No per-room email controls in v1.
@@ -771,10 +771,10 @@ The plan unfolds in seven phases. Each unit ends in a mergeable state with `main
 
 ## Sources & References
 
-- **Origin (product):** [docs/plans/EMAIL-NOTIFICATIONS-PRD.md](EMAIL-NOTIFICATIONS-PRD.md)
-- **Origin (architecture):** [docs/plans/NOTIFICATIONS-ARCHITECTURE.md](NOTIFICATIONS-ARCHITECTURE.md)
-- **Competitive framing:** [docs/plans/NOTIFICATIONS-SLACK-COMPARISON.md](NOTIFICATIONS-SLACK-COMPARISON.md)
-- **Superseded V0 reference:** [docs/plans/UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md](UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md). Kept for routing/eligibility background; do not implement from it.
+- **Origin (product):** [docs/plans/email-notifications/EMAIL-NOTIFICATIONS-PRD.md](EMAIL-NOTIFICATIONS-PRD.md)
+- **Origin (architecture):** [docs/plans/email-notifications/NOTIFICATIONS-ARCHITECTURE.md](NOTIFICATIONS-ARCHITECTURE.md)
+- **Competitive framing:** [docs/plans/email-notifications/NOTIFICATIONS-SLACK-COMPARISON.md](NOTIFICATIONS-SLACK-COMPARISON.md)
+- **Superseded V0 reference:** [docs/plans/email-notifications/UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md](UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md). Kept for routing/eligibility background; do not implement from it.
 - **Fizzy prior art (reference only):** `fizzy/app/models/notification/bundle.rb`, `fizzy/app/models/notification/pushable.rb`
 - **Delivery wiring (existing):** `config/initializers/email.rb`
 - **Solid Queue recurring schema:** `db/queue_schema.rb`
