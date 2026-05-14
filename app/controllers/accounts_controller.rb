@@ -23,7 +23,14 @@ class AccountsController < ApplicationController
     end
 
     def account_params
-      params.require(:account).permit(:name, :logo, :email_notifications_enabled, :weekly_digest_enabled, settings: {})
+      params.require(:account).permit(
+        :name, :logo, :email_notifications_enabled, :weekly_digest_enabled,
+        settings: %i[
+          restrict_room_creation_to_administrators
+          restrict_direct_messages_to_administrators
+          allow_users_to_create_invite_links
+        ]
+      )
     end
 
     def merged_account_params
