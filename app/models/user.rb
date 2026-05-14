@@ -28,7 +28,48 @@ class User < ApplicationRecord
   has_many :messages, -> { active }, foreign_key: :creator_id, class_name: "Message"
 
   has_many :notifications
+  has_many :notification_bundles, class_name: "Notification::Bundle", dependent: :destroy
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
+
+  has_one :notification_settings, class_name: "User::NotificationSettings", dependent: :destroy
+  after_create_commit :ensure_notification_settings
+
+  # Returns the user's open accumulator for missed-notification email candidates,
+  # opening one if none is active. Race-safe via the partial unique index — a
+  # concurrent open by a parallel writer raises RecordNotUnique on the loser
+  # and falls through to a second read.
+  def active_notification_bundle
+    notification_bundles.active.first || open_notification_bundle!
+  end
+
+  # Public so batch dispatch can open bundles for users not in a pre-fetched
+  # active set without re-running `active.first` for each miss.
+  def open_notification_bundle!
+    frequency = notification_settings&.email_frequency || "hourly"
+    starts_at = Time.current
+    notification_bundles.create!(
+      frequency: frequency,
+      starts_at: starts_at,
+      ends_at:   starts_at + Notification::Bundle::FREQUENCY_WINDOWS.fetch(frequency)
+    )
+  rescue ActiveRecord::RecordNotUnique
+    notification_bundles.active.first!
+  end
+
+  def unsubscribe_from_email!(surface)
+    (notification_settings || create_notification_settings!).unsubscribe_from!(surface)
+  end
+
+  # Builds this user's weekly digest content and mails it if non-empty.
+  # `last_digest_sent_at` only advances on actual delivery so quiet weeks
+  # don't dedup-lock subsequent runs.
+  def deliver_weekly_digest_now
+    content = Notification::Digest::Content.new(self)
+    return if content.empty?
+
+    WeeklyDigestMailer.digest(self, content).deliver_now
+    notification_settings.update!(last_digest_sent_at: Time.current)
+  end
 
   def active_invite_link
     join_codes.active.first
@@ -120,6 +161,16 @@ class User < ApplicationRecord
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }
   scope :verified, -> { where.not(verified_at: nil) }
   scope :unverified, -> { where(verified_at: nil) }
+
+  scope :weekly_digest_eligible, -> {
+    verified
+      .where(status: statuses[:active])
+      .where.not(role: roles[:bot])
+      .joins(:notification_settings)
+      .includes(:notification_settings)
+      .where(user_notification_settings: { weekly_digest_subscribed: true })
+      .merge(User::NotificationSettings.due_for_weekly_digest)
+  }
 
   has_secure_password validations: false
   validates :password, length: { minimum: MINIMUM_PASSWORD_LENGTH }, if: -> { password.present? }
@@ -225,6 +276,13 @@ class User < ApplicationRecord
 
   def member_of?(room)
     Membership.active.visible.exists?(room_id: room.id, user_id: id)
+  end
+
+  # Email-only presence check — true when no membership in this workspace has
+  # been connected within the away tier (1 hour). Push uses the tighter
+  # 60-second `connected?` instead.
+  def workspace_locally_away?
+    Membership.workspace_locally_away?(id)
   end
 
   def default_name?
@@ -465,6 +523,20 @@ class User < ApplicationRecord
       Block.where(blocked_id: id).delete_all
       Push::Subscription.where(user_id: id).delete_all
       Webhook.where(user_id: id).delete_all
+
+      # Bundle items where this user was the actor (in any user's bundle).
+      Notification::BundleItem.where(actor_id: id).delete_all
+
+      # Bundles this user owns — items must go first to satisfy the FK.
+      owned_bundle_ids = Notification::Bundle.where(user_id: id).pluck(:id)
+      Notification::BundleItem.where(bundle_id: owned_bundle_ids).delete_all
+      Notification::Bundle.where(user_id: id).delete_all
+
+      User::NotificationSettings.where(user_id: id).delete_all
+    end
+
+    def ensure_notification_settings
+      create_notification_settings! unless notification_settings
     end
 
     def set_default_name

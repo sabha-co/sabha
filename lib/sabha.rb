@@ -31,5 +31,38 @@ module Sabha
     def reset_saas_detection!
       remove_instance_variable(:@saas) if defined?(@saas)
     end
+
+    # Is an outbound-mail provider wired up? Self-hosted admins shouldn't see
+    # email-toggle UI (and we shouldn't try to send) until provider creds are
+    # actually configured. SaaS always returns true — the platform operator
+    # owns delivery centrally. Dev/test always return true so letter_opener
+    # and :test delivery work without needing a real API key.
+    #
+    # Platform kill switch: setting EMAIL_GLOBALLY_DISABLED=true short-circuits
+    # everything to false regardless of mode or env, so a SaaS operator can
+    # halt all outbound notification mail across every tenant with a single
+    # env-var flip + restart.
+    def email_configured?
+      return false if email_globally_disabled?
+      return true if saas?
+      return true if Rails.env.development? || Rails.env.test?
+
+      case (ENV["EMAIL_PROVIDER"].presence || "resend")
+      when "resend"
+        ENV["RESEND_API_KEY"].present?
+      when "ses"
+        # aws-sdk-sesv2 only ships in Gemfile.saas, so SES_AVAILABLE is false on
+        # self-hosted. Treat the EMAIL_PROVIDER=ses branch as truly available
+        # only when the gem loaded — anything else would boot to "configured"
+        # but raise at first send.
+        defined?(SES_AVAILABLE) && SES_AVAILABLE
+      else false
+      end
+    end
+
+    private
+      def email_globally_disabled?
+        ENV["EMAIL_GLOBALLY_DISABLED"] == "true"
+      end
   end
 end

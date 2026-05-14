@@ -14,8 +14,8 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal "custom-id", message.client_message_id
   end
 
-  test "creating a message enqueues to push later" do
-    assert_enqueued_jobs 1, only: [ Room::PushMessageJob ] do
+  test "creating a message enqueues a single Notification::DispatchJob" do
+    assert_enqueued_jobs 1, only: [ Notification::DispatchJob ] do
       create_new_message_in rooms(:designers)
     end
   end
@@ -216,6 +216,20 @@ class MessageTest < ActiveSupport::TestCase
     mentioning_messages = Message.where(room: room).mentioning(user.id)
 
     assert_includes mentioning_messages, message
+  end
+
+  test "destroying a message also deletes any notification bundle items referencing it" do
+    sender   = users(:david)
+    receiver = users(:jason)
+    receiver.notification_settings || receiver.create_notification_settings!
+    msg = rooms(:designers).messages.create!(body: "<div>bundled</div>", creator: sender, client_message_id: "msg_destroy_bundle_#{SecureRandom.hex(4)}")
+
+    bundle = Notification::Bundle.create!(user: receiver, frequency: :hourly, starts_at: Time.current, ends_at: 1.hour.from_now)
+    item   = Notification::BundleItem.create!(bundle: bundle, message: msg, actor: sender, kind: "mention")
+
+    assert_nothing_raised { msg.destroy }
+    assert_nil Notification::BundleItem.find_by(id: item.id)
+    assert Notification::Bundle.exists?(bundle.id), "the bundle itself stays — only the item referencing the deleted message goes"
   end
 
   test "destroying a parent message destroys its thread rooms" do
@@ -419,8 +433,78 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal false, truncated
   end
 
+  # ----- Email bundle candidates (U5) -----
+
+  test "mention to an away user with all flags on creates a kind=mention BundleItem" do
+    enable_email_path!(users(:jason))
+
+    assert_difference -> { Notification::BundleItem.count }, 1 do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        rooms(:designers).messages.create!(
+          body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+          creator: users(:david),
+          client_message_id: "u5_mention_happy"
+        )
+      end
+    end
+
+    item = Notification::BundleItem.last
+    assert_equal "mention",        item.kind
+    assert_equal users(:jason).id, item.bundle.user_id
+    assert_equal users(:david).id, item.actor_id
+  end
+
+  test "@everyone in an open room creates kind=mention BundleItems for every away room member who would receive an in-app row" do
+    rooms(:pets).user_ids.each do |uid|
+      next if uid == users(:david).id
+      User.find(uid).create_notification_settings!(missed_email_enabled: true) unless User.find(uid).notification_settings
+    end
+    Account.sole.update!(email_notifications_enabled: true)
+
+    everyone_sgid = Everyone.new.attachable_sgid
+    body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
+
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      Message.create!(
+        room: rooms(:pets),
+        body: body_html,
+        creator: users(:david),
+        client_message_id: "u5_everyone"
+      )
+    end
+
+    eligible_user_ids = (rooms(:pets).user_ids - [ users(:david).id ]).sort
+    assert_equal eligible_user_ids,
+      Notification::BundleItem.where(kind: "mention").joins(:bundle).pluck("notification_bundles.user_id").sort
+  end
+
+  test "DM to an away user creates a kind=direct_message BundleItem" do
+    enable_email_path!(users(:david))
+
+    assert_difference -> { Notification::BundleItem.count }, 1 do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        rooms(:david_and_jason).messages.create!(
+          body: "Hey",
+          creator: users(:jason),
+          client_message_id: "u5_dm_happy"
+        )
+      end
+    end
+
+    item = Notification::BundleItem.last
+    assert_equal "direct_message", item.kind
+    assert_equal users(:david).id, item.bundle.user_id
+  end
+
   private
     def create_new_message_in(room)
       room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "123")
+    end
+
+    def enable_email_path!(user)
+      Account.sole.update!(email_notifications_enabled: true)
+      user.notification_settings&.update!(missed_email_enabled: true) ||
+        user.create_notification_settings!(missed_email_enabled: true)
+      # Fixtures default connected_at to nil → workspace_locally_away? is true.
     end
 end

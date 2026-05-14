@@ -697,4 +697,47 @@ class UserTest < ActiveSupport::TestCase
     results = User.sharing_rooms_with(bender).to_a
     assert_equal 1, results.count { |u| u.id == users(:david).id }
   end
+
+  test "User.create! seeds a notification_settings row via after_create_commit" do
+    user = User.create!(name: "Settings Seed", email_address: "settings_seed@example.com")
+
+    assert_not_nil user.notification_settings, "after_create_commit must seed settings"
+    assert_equal "mentions_and_dms", user.notification_settings.mode
+  end
+
+  test "destroy_all_associated_records removes notification_settings" do
+    user = User.create!(name: "Settings Destroy", email_address: "settings_destroy@example.com")
+    settings_id = user.notification_settings.id
+
+    user.destroy
+
+    assert_nil User::NotificationSettings.find_by(id: settings_id)
+  end
+
+  test "destroy_all_associated_records cleans up owned notification bundles + items (FK safe)" do
+    user  = User.create!(name: "Bundle Owner", email_address: "bundle_owner@example.com")
+    actor = users(:david)
+    msg   = rooms(:designers).messages.create!(body: "<div>bundled</div>", creator: actor, client_message_id: "user_destroy_bundle_#{SecureRandom.hex(4)}")
+
+    bundle = Notification::Bundle.create!(user: user, frequency: :hourly, starts_at: Time.current, ends_at: 1.hour.from_now)
+    item   = Notification::BundleItem.create!(bundle: bundle, message: msg, actor: actor, kind: "mention")
+
+    assert_nothing_raised { user.destroy }
+    assert_nil Notification::Bundle.find_by(id: bundle.id)
+    assert_nil Notification::BundleItem.find_by(id: item.id)
+  end
+
+  test "destroy_all_associated_records cleans up bundle items where this user was the actor" do
+    actor   = User.create!(name: "Actor User", email_address: "bundle_actor@example.com")
+    owner   = users(:jason)
+    owner.notification_settings || owner.create_notification_settings!
+    msg     = rooms(:designers).messages.create!(body: "<div>actor msg</div>", creator: actor, client_message_id: "user_destroy_actor_#{SecureRandom.hex(4)}")
+
+    bundle = Notification::Bundle.create!(user: owner, frequency: :hourly, starts_at: Time.current, ends_at: 1.hour.from_now)
+    item   = Notification::BundleItem.create!(bundle: bundle, message: msg, actor: actor, kind: "mention")
+
+    assert_nothing_raised { actor.destroy }
+    assert_nil Notification::BundleItem.find_by(id: item.id)
+    assert Notification::Bundle.exists?(bundle.id), "the owner's bundle itself must remain — only the actor's row goes"
+  end
 end

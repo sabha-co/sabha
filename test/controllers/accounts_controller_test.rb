@@ -35,6 +35,34 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "admin can flip email_notifications_enabled" do
+    assert_not accounts(:signal).email_notifications_enabled?
+
+    put account_url, params: { account: { email_notifications_enabled: true } }
+
+    assert_redirected_to edit_account_url
+    assert accounts(:signal).reload.email_notifications_enabled?
+  end
+
+  test "admin can flip weekly_digest_enabled" do
+    assert_not accounts(:signal).weekly_digest_enabled?
+
+    put account_url, params: { account: { weekly_digest_enabled: true } }
+
+    assert_redirected_to edit_account_url
+    assert accounts(:signal).reload.weekly_digest_enabled?
+  end
+
+  test "non-admin cannot flip email_notifications_enabled" do
+    sign_in :kevin
+    assert users(:kevin).member?
+
+    put account_url, params: { account: { email_notifications_enabled: true } }
+
+    assert_redirected_to root_path
+    assert_not accounts(:signal).reload.email_notifications_enabled?
+  end
+
   test "updating one setting does not overwrite other settings" do
     # First, enable room creation restriction
     accounts(:signal).settings.restrict_room_creation_to_administrators = true

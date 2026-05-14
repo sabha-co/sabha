@@ -1,0 +1,120 @@
+require "test_helper"
+
+class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    sign_in :david
+    @settings = users(:david).notification_settings || users(:david).create_notification_settings!
+  end
+
+  test "edit renders the form" do
+    get edit_user_notification_settings_url(user_id: "me")
+    assert_response :success
+    assert_select "form"
+  end
+
+  test "edit links to push subscription device management" do
+    get edit_user_notification_settings_url(user_id: "me")
+    assert_select "a[href=?]", user_push_subscriptions_path, count: 1
+  end
+
+  test "edit hides missed-email controls when account email_notifications_enabled is off" do
+    Account.sole.update!(email_notifications_enabled: false)
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "input[type=checkbox][name='user_notification_settings[missed_email_enabled]']", count: 0
+    assert_select "select[name='user_notification_settings[email_frequency]']", count: 0
+    assert_match(/Missed-notification email is turned off for this workspace/, @response.body)
+  end
+
+  test "edit hides weekly-digest control when account weekly_digest_enabled is off" do
+    Account.sole.update!(weekly_digest_enabled: false)
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "input[type=checkbox][name='user_notification_settings[weekly_digest_subscribed]']", count: 0
+    assert_match(/weekly community digest is turned off for this workspace/, @response.body)
+  end
+
+  test "edit shows admin link when account flags are off and current user is administrator" do
+    Account.sole.update!(email_notifications_enabled: false, weekly_digest_enabled: false)
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "a[href=?]", edit_account_path, minimum: 1
+  end
+
+  test "edit prompts non-admins to ask an administrator when account flags are off" do
+    Account.sole.update!(email_notifications_enabled: false, weekly_digest_enabled: false)
+    sign_in :jz
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "a[href=?]", edit_account_path, count: 0
+    assert_match(/Ask an administrator to enable it/, @response.body)
+  end
+
+  test "edit shows missed-email and digest controls when both account flags are on" do
+    Account.sole.update!(email_notifications_enabled: true, weekly_digest_enabled: true)
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "input[type=checkbox][name='user_notification_settings[missed_email_enabled]']", count: 1
+    assert_select "select[name='user_notification_settings[email_frequency]']", count: 1
+    assert_select "input[type=checkbox][name='user_notification_settings[weekly_digest_subscribed]']", count: 1
+  end
+
+  test "update flips missed_email_enabled" do
+    @settings.update!(missed_email_enabled: false)
+
+    patch user_notification_settings_url(user_id: "me"),
+      params: { user_notification_settings: { missed_email_enabled: "1" } }
+
+    assert_redirected_to edit_user_notification_settings_url(user_id: "me")
+    assert @settings.reload.missed_email_enabled
+  end
+
+  test "update changes email_frequency" do
+    patch user_notification_settings_url(user_id: "me"),
+      params: { user_notification_settings: { email_frequency: "daily" } }
+
+    assert_equal "daily", @settings.reload.email_frequency
+  end
+
+  test "update flips weekly_digest_subscribed off" do
+    @settings.update!(weekly_digest_subscribed: true)
+
+    patch user_notification_settings_url(user_id: "me"),
+      params: { user_notification_settings: { weekly_digest_subscribed: "0" } }
+
+    refute @settings.reload.weekly_digest_subscribed
+  end
+
+  test "update rejects unknown attributes" do
+    @settings.update!(missed_email_enabled: false)
+    last_digest = @settings.last_digest_sent_at
+
+    patch user_notification_settings_url(user_id: "me"),
+      params: { user_notification_settings: { missed_email_enabled: "1", last_digest_sent_at: 1.year.ago } }
+
+    if last_digest.nil?
+      assert_nil @settings.reload.last_digest_sent_at
+    else
+      assert_equal last_digest, @settings.reload.last_digest_sent_at
+    end
+  end
+
+  test "creates the settings row lazily if missing" do
+    @settings.destroy
+
+    get edit_user_notification_settings_url(user_id: "me")
+    assert_response :success
+    refute_nil users(:david).reload.notification_settings
+  end
+
+  test "requires authentication" do
+    delete session_url
+    get edit_user_notification_settings_url(user_id: "me")
+    assert_response :redirect
+  end
+end

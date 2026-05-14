@@ -7,6 +7,8 @@ class ResendDeliveryMethod
     @settings = settings
   end
 
+  PASSTHROUGH_HEADERS = %w[ List-Unsubscribe List-Unsubscribe-Post ].freeze
+
   def deliver!(mail)
     api_key = @settings[:api_key] || ENV["RESEND_API_KEY"]
 
@@ -36,6 +38,20 @@ class ResendDeliveryMethod
       end
     end
 
+    # Provider-side idempotency: stable across Solid Queue retries so a
+    # double-deliver hits Resend's dedup, not the recipient's inbox.
+    if (idempotency_key = mail.header["X-Idempotency-Key"]&.value).present?
+      params[:idempotency_key] = idempotency_key
+    end
+
+    # Forward RFC 8058 unsubscribe headers — Resend doesn't read them off the
+    # raw mail object, only the explicit `headers` param.
+    forwarded = PASSTHROUGH_HEADERS.each_with_object({}) do |name, memo|
+      value = mail.header[name]&.value
+      memo[name] = value if value.present?
+    end
+    params[:headers] = forwarded if forwarded.any?
+
     Resend::Emails.send(params)
   end
 end
@@ -54,12 +70,18 @@ class SesDeliveryMethod
     @settings = settings
   end
 
+  # Internal headers consumed before send so they don't leak to recipients.
+  # X-Idempotency-Key is the dispatcher's retry-dedup signal; SES has no
+  # per-call idempotency parameter on send_email, so we just drop the header.
+  INTERNAL_HEADERS = %w[ X-Idempotency-Key X-SES-CONFIGURATION-SET ].freeze
+
   def deliver!(mail)
     raise "aws-sdk-sesv2 gem is required for SES delivery. Add it to your Gemfile." unless SES_AVAILABLE
 
-    params = { content: { raw: { data: mail.to_s } } }
-
     config_set = configuration_set_for(mail)
+    INTERNAL_HEADERS.each { |name| mail[name] = nil }
+
+    params = { content: { raw: { data: mail.to_s } } }
     params[:configuration_set_name] = config_set if config_set.present?
 
     client.send_email(**params)

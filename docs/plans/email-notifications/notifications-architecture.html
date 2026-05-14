@@ -1,0 +1,1203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sabha notifications architecture</title>
+<style>
+  :root {
+    --bg: oklch(99% 0.005 95);
+    --surface: oklch(98% 0.005 95);
+    --surface-2: oklch(96% 0.008 95);
+    --border: oklch(90% 0.01 95);
+    --border-strong: oklch(82% 0.015 95);
+    --ink: oklch(22% 0.02 260);
+    --ink-soft: oklch(45% 0.02 260);
+    --ink-faint: oklch(60% 0.015 260);
+    --blue: oklch(55% 0.16 250);
+    --blue-soft: oklch(94% 0.04 250);
+    --blue-ink: oklch(38% 0.18 250);
+    --purple: oklch(55% 0.16 300);
+    --purple-soft: oklch(94% 0.04 300);
+    --purple-ink: oklch(38% 0.18 300);
+    --warm: oklch(64% 0.13 60);
+    --warm-soft: oklch(95% 0.04 60);
+    --warm-ink: oklch(45% 0.16 60);
+    --green: oklch(60% 0.14 155);
+    --green-soft: oklch(94% 0.04 155);
+    --green-ink: oklch(40% 0.16 155);
+    --red: oklch(60% 0.18 27);
+    --red-soft: oklch(95% 0.04 27);
+    --red-ink: oklch(45% 0.18 27);
+    --gray: oklch(70% 0.01 260);
+    --gray-soft: oklch(96% 0.005 260);
+
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow-sm: 0 1px 2px oklch(0% 0 0 / 4%);
+    --shadow: 0 1px 3px oklch(0% 0 0 / 5%), 0 4px 12px oklch(0% 0 0 / 4%);
+
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: oklch(17% 0.01 260);
+      --surface: oklch(20% 0.01 260);
+      --surface-2: oklch(23% 0.012 260);
+      --border: oklch(28% 0.015 260);
+      --border-strong: oklch(38% 0.02 260);
+      --ink: oklch(94% 0.005 95);
+      --ink-soft: oklch(74% 0.01 95);
+      --ink-faint: oklch(58% 0.012 95);
+      --blue: oklch(72% 0.14 250);
+      --blue-soft: oklch(28% 0.06 250);
+      --blue-ink: oklch(82% 0.13 250);
+      --purple: oklch(72% 0.14 300);
+      --purple-soft: oklch(28% 0.06 300);
+      --purple-ink: oklch(82% 0.13 300);
+      --warm: oklch(72% 0.12 60);
+      --warm-soft: oklch(28% 0.06 60);
+      --warm-ink: oklch(82% 0.12 60);
+      --green: oklch(72% 0.13 155);
+      --green-soft: oklch(28% 0.06 155);
+      --green-ink: oklch(82% 0.13 155);
+      --red: oklch(72% 0.16 27);
+      --red-soft: oklch(28% 0.07 27);
+      --red-ink: oklch(82% 0.15 27);
+      --gray: oklch(55% 0.01 260);
+      --gray-soft: oklch(25% 0.008 260);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .page { max-width: 1080px; margin: 0 auto; padding: 56px 32px 96px; }
+  @media (max-width: 720px) { .page { padding: 32px 20px 64px; } }
+
+  /* Header */
+  .hero { margin-bottom: 56px; }
+  .hero .eyebrow {
+    font-size: 13px;
+    color: var(--ink-faint);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 40px;
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 16px;
+  }
+  .hero .lede {
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 64ch;
+    margin: 0 0 20px;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+  .meta .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--ink-soft);
+  }
+  .meta .pill .dot {
+    width: 6px; height: 6px; border-radius: 999px; background: var(--blue);
+  }
+
+  /* TOC */
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 48px;
+  }
+  nav.toc h2 {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 12px;
+  }
+  nav.toc ol {
+    list-style: none; padding: 0; margin: 0;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 6px 24px;
+    counter-reset: toc;
+  }
+  nav.toc li { counter-increment: toc; }
+  nav.toc a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 14px;
+    display: flex; gap: 10px;
+    padding: 4px 0;
+  }
+  nav.toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+    font-family: var(--mono);
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  nav.toc a:hover { color: var(--blue); }
+
+  /* Sections */
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  section h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 8px;
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  section h2 .num {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-faint);
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  section .section-lede {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin: 0 0 24px;
+    max-width: 70ch;
+  }
+  section h3 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 28px 0 10px;
+    letter-spacing: -0.01em;
+  }
+  p { margin: 0 0 14px; color: var(--ink); }
+  p.note {
+    color: var(--ink-soft);
+    font-size: 14px;
+    background: var(--surface);
+    border-left: 2px solid var(--blue);
+    padding: 12px 16px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin: 16px 0;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    overflow-x: auto;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  pre code { background: none; border: none; padding: 0; }
+
+  /* Goals grid */
+  .goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .goal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .goal .num {
+    font-family: var(--mono);
+    color: var(--blue);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .goal h4 { font-size: 15px; margin: 0 0 6px; font-weight: 600; }
+  .goal p { font-size: 14px; color: var(--ink-soft); margin: 0; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    background: var(--surface);
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  tr:last-child td { border-bottom: none; }
+  td code, th code { font-size: 13px; }
+
+  /* Channel cards */
+  .channels { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .channel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    position: relative;
+  }
+  .channel .icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  .channel.row .icon { background: var(--purple-soft); color: var(--purple-ink); }
+  .channel.push .icon { background: var(--blue-soft); color: var(--blue-ink); }
+  .channel.email .icon { background: var(--warm-soft); color: var(--warm-ink); }
+  .channel.digest .icon { background: var(--green-soft); color: var(--green-ink); }
+  .channel h4 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+  .channel p { font-size: 13px; color: var(--ink-soft); margin: 0; }
+  .channel .store {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-family: var(--mono);
+  }
+
+  /* Routing matrix */
+  .matrix th:first-child, .matrix td:first-child { width: 220px; }
+  .matrix .cell-yes {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    background: var(--blue-soft); color: var(--blue-ink);
+    font-weight: 600; font-size: 13px;
+  }
+  .matrix .cell-no { color: var(--ink-faint); font-size: 14px; }
+  .matrix .activity-cell {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .matrix .activity-cell .swatch {
+    width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0;
+  }
+  .swatch.mention { background: var(--purple); }
+  .swatch.dm { background: var(--blue); }
+  .swatch.everyone { background: var(--warm); }
+  .swatch.thread { background: var(--green); }
+  .swatch.boost { background: var(--gray); }
+
+  /* Dispatch diagram */
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    overflow-x: auto;
+  }
+  .flow {
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+  .flow .node {
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-size: 14px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    min-width: 280px;
+  }
+  .flow .node code { background: var(--surface-2); }
+  .flow .node.entry { border-color: var(--blue); }
+  .flow .node.entry .label { color: var(--blue-ink); }
+  .flow .node .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .flow .arrow {
+    width: 2px; height: 20px;
+    background: var(--border-strong);
+    margin: 0;
+    position: relative;
+  }
+  .flow .arrow::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: -3px;
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--border-strong);
+  }
+  .fanout {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    width: 100%; max-width: 720px; margin-top: 4px;
+  }
+  @media (max-width: 720px) { .fanout { grid-template-columns: 1fr; } }
+  .fanout .node {
+    min-width: 0;
+    text-align: left;
+  }
+  .fanout .node.row { border-color: var(--purple); }
+  .fanout .node.row .label { color: var(--purple-ink); }
+  .fanout .node.push { border-color: var(--blue); }
+  .fanout .node.push .label { color: var(--blue-ink); }
+  .fanout .node.email { border-color: var(--warm); }
+  .fanout .node.email .label { color: var(--warm-ink); }
+
+  /* Pipeline diagram */
+  .pipeline {
+    display: flex; flex-direction: column; gap: 0;
+    padding: 4px 0;
+  }
+  .pipeline .step {
+    display: grid; grid-template-columns: 36px 1fr;
+    gap: 14px;
+    align-items: start;
+    padding: 8px 0;
+  }
+  .pipeline .step .marker {
+    width: 28px; height: 28px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    position: relative;
+  }
+  .pipeline .step:not(:last-child) .marker::after {
+    content: '';
+    position: absolute;
+    top: 28px; bottom: -16px; left: 50%;
+    width: 1px;
+    background: var(--border-strong);
+    transform: translateX(-50%);
+  }
+  .pipeline .step.terminal .marker { background: var(--green-soft); border-color: var(--green); color: var(--green-ink); }
+  .pipeline .step.gate .marker { background: var(--warm-soft); border-color: var(--warm); color: var(--warm-ink); }
+  .pipeline .step.cancel .marker { background: var(--red-soft); border-color: var(--red); color: var(--red-ink); }
+  .pipeline .body { padding-top: 4px; }
+  .pipeline .body strong { font-weight: 600; }
+  .pipeline .body p {
+    font-size: 13px; color: var(--ink-soft);
+    margin: 4px 0 0;
+  }
+
+  /* Data model */
+  .schema { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .model {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .model header {
+    background: var(--surface-2);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .model header .name {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .model header .tag {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+  .tag.new { background: var(--blue-soft); color: var(--blue-ink); }
+  .tag.touched { background: var(--warm-soft); color: var(--warm-ink); }
+  .tag.unchanged { background: var(--gray-soft); color: var(--ink-faint); }
+  .model .fields {
+    list-style: none; margin: 0; padding: 4px 0;
+  }
+  .model .fields li {
+    padding: 6px 16px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 12px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  .model .fields li:last-child { border-bottom: none; }
+  .model .fields .col { font-family: var(--mono); color: var(--ink); font-weight: 500; }
+  .model .fields .type { color: var(--ink-faint); font-size: 12px; }
+
+  /* Eligibility blocks */
+  .gates { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .gate {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .gate h4 {
+    margin: 0 0 10px;
+    font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .gate h4 .badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--surface-2);
+    color: var(--ink-faint);
+  }
+  .gate ul {
+    list-style: none; margin: 0; padding: 0;
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .gate ul li {
+    padding: 4px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+  .gate ul li::before {
+    content: '';
+    position: absolute; left: 0; top: 12px;
+    width: 6px; height: 1px;
+    background: var(--border-strong);
+  }
+
+  /* Tenancy table */
+  .tenancy td:first-child { font-family: var(--mono); font-size: 13px; }
+
+  /* Defaults summary */
+  .defaults {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .defaults .row {
+    display: grid; grid-template-columns: 200px 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .defaults .row:last-child { border-bottom: none; }
+  .defaults .row > div {
+    padding: 14px 18px;
+  }
+  .defaults .row > div:first-child {
+    background: var(--surface-2);
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .defaults .row .vals { display: flex; flex-wrap: wrap; gap: 6px; }
+  .kv {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .kv .v.true { color: var(--green-ink); font-weight: 600; }
+  .kv .v.false { color: var(--red-ink); font-weight: 600; }
+  .kv .v.enum { color: var(--blue-ink); font-weight: 600; }
+
+  /* Out of scope */
+  .scope { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .scope { grid-template-columns: 1fr; } }
+  .scope .col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .scope .col h4 { margin: 0 0 10px; font-size: 14px; font-weight: 600; }
+  .scope ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-soft); }
+  .scope ul li { margin-bottom: 4px; }
+  .scope .col.in h4 { color: var(--green-ink); }
+  .scope .col.out h4 { color: var(--red-ink); }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+  footer a { color: var(--ink-soft); text-decoration: none; }
+  footer a:hover { color: var(--blue); }
+
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<main class="page">
+
+<header class="hero">
+  <div class="eyebrow">Architecture · Draft · 2026-05-09</div>
+  <h1>Sabha notifications architecture</h1>
+  <p class="lede">One dispatcher decides what fires per recipient per event across all channels — in-app rows, push, missed-notification email bundles, and the weekly activity digest. Bundled email replaces V0's per-event delayed sends. Tenant-safe by construction; defaults safe.</p>
+  <div class="meta">
+    <span class="pill"><span class="dot"></span> Status: Draft</span>
+    <span class="pill">Source of truth for structure, components, data shapes</span>
+    <span class="pill">PRD · NOTIFICATIONS-ARCHITECTURE.md</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#goals">Goals</a></li>
+    <li><a href="#channels">Channels</a></li>
+    <li><a href="#routing">Routing matrix</a></li>
+    <li><a href="#dispatcher">Dispatcher</a></li>
+    <li><a href="#eligibility">Eligibility predicates</a></li>
+    <li><a href="#models">Data models</a></li>
+    <li><a href="#email-pipeline">Missed-email pipeline</a></li>
+    <li><a href="#digest-pipeline">Weekly digest</a></li>
+    <li><a href="#tenancy">Multi-tenant boundaries</a></li>
+    <li><a href="#defaults">Defaults</a></li>
+    <li><a href="#scope">Scope</a></li>
+  </ol>
+</nav>
+
+<section id="goals">
+  <h2><span class="num">01</span> Architectural goals</h2>
+  <p class="section-lede">Six load-bearing principles. Everything else in this document is downstream of these.</p>
+  <div class="goals">
+    <div class="goal">
+      <div class="num">01</div>
+      <h4>One dispatcher</h4>
+      <p>Decides what fires per recipient per event across all channels. No more split decision trees in <code>Room::MessagePusher</code>, <code>Message</code> callbacks, and "email nowhere."</p>
+    </div>
+    <div class="goal">
+      <div class="num">02</div>
+      <h4>Bundled missed-email</h4>
+      <p>Hourly or daily bundles, user-selectable, instead of per-event delayed sends.</p>
+    </div>
+    <div class="goal">
+      <div class="num">03</div>
+      <h4>Separate digest pipeline</h4>
+      <p>Different copy, different cadence, different opt-out, different gates. It is not a degenerate bundle.</p>
+    </div>
+    <div class="goal">
+      <div class="num">04</div>
+      <h4>Send-time revalidation</h4>
+      <p>State changes during the bundle window — return, block, delete, opt-out — drop items at delivery time. Single cancellation path.</p>
+    </div>
+    <div class="goal">
+      <div class="num">05</div>
+      <h4>Tenant-safe by construction</h4>
+      <p>Per-workspace settings, bundles, digest. Identity and email address are the only untenanted touchpoints.</p>
+    </div>
+    <div class="goal">
+      <div class="num">06</div>
+      <h4>Default safe</h4>
+      <p>Email feature-flagged off at the workspace level. Both email surfaces default off for users.</p>
+    </div>
+  </div>
+</section>
+
+<section id="channels">
+  <h2><span class="num">02</span> Channels</h2>
+  <p class="section-lede">Four output targets. Independent — a user can be a row recipient and not a push recipient; a bundle item and not a digest recipient.</p>
+  <div class="channels">
+    <div class="channel row">
+      <div class="icon">●</div>
+      <h4>In-app row</h4>
+      <p>Per-message, when activity_type creates a Notification row.</p>
+      <div class="store">notifications (existing)</div>
+    </div>
+    <div class="channel push">
+      <div class="icon">↗</div>
+      <h4>Push (WebPush)</h4>
+      <p>Per-message, when membership is push-eligible and disconnected.</p>
+      <div class="store">push_subscriptions (existing)</div>
+    </div>
+    <div class="channel email">
+      <div class="icon">✉</div>
+      <h4>Missed-notification email</h4>
+      <p>Eligible items accumulate into a per-user bundle and deliver hourly or daily.</p>
+      <div class="store">notification_bundles + notification_bundle_items (new)</div>
+    </div>
+    <div class="channel digest">
+      <div class="icon">∎</div>
+      <h4>Weekly activity digest</h4>
+      <p>Recurring per-workspace job, generated content for opted-in members.</p>
+      <div class="store">last_digest_sent_at (per user)</div>
+    </div>
+  </div>
+</section>
+
+<section id="routing">
+  <h2><span class="num">03</span> Activity types &amp; routing</h2>
+  <p class="section-lede">The dispatcher's symbol vocabulary is broader than the persisted <code>Notification.activity_type</code> enum. <code>:direct_message</code> and <code>:everyone_room_message</code> route but never land in the table.</p>
+
+  <div class="table-wrap" style="margin-bottom: 20px;">
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th>Activity type</th>
+          <th>In-app row</th>
+          <th>Push</th>
+          <th>Missed email</th>
+          <th>Persisted?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="activity-cell"><span class="swatch mention"></span><code>:mention</code></div></td>
+          <td><span class="cell-yes">✓</span></td>
+          <td><span class="cell-yes">✓</span></td>
+          <td><span class="cell-yes">✓</span></td>
+          <td>yes</td>
+        </tr>
+        <tr>
+          <td><div class="activity-cell"><span class="swatch dm"></span><code>:direct_message</code></div></td>
+          <td><span class="cell-no">—</span></td>
+          <td><span class="cell-yes">✓</span></td>
+          <td><span class="cell-yes">✓</span></td>
+          <td>routing only</td>
+        </tr>
+        <tr>
+          <td><div class="activity-cell"><span class="swatch everyone"></span><code>:everyone_room_message</code></div></td>
+          <td><span class="cell-no">—</span></td>
+          <td><span class="cell-yes">✓</span></td>
+          <td><span class="cell-no">—</span></td>
+          <td>routing only</td>
+        </tr>
+        <tr>
+          <td><div class="activity-cell"><span class="swatch thread"></span><code>:thread_reply</code></div></td>
+          <td><span class="cell-yes">✓</span></td>
+          <td><span class="cell-yes">✓</span></td>
+          <td><span class="cell-no">—</span></td>
+          <td>yes</td>
+        </tr>
+        <tr>
+          <td><div class="activity-cell"><span class="swatch boost"></span><code>:boost</code></div></td>
+          <td><span class="cell-yes">✓</span></td>
+          <td><span class="cell-no">—</span></td>
+          <td><span class="cell-no">—</span></td>
+          <td>yes</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Routing vocabulary lives on <code>Notification::Routing</code></h3>
+  <p><code>Membership::Notifiable</code> predicates <em>reference</em> these constants — they don't own them. Adding a fifth channel or new activity type edits <code>Notification::Routing</code> first.</p>
+<pre><code>module Notification::Routing
+  ACTIVITY_TYPES   = %i[mention direct_message everyone_room_message thread_reply boost].freeze
+  IN_APP_ROW_TYPES = %i[mention thread_reply boost].freeze
+  PUSH_TYPES       = %i[mention direct_message everyone_room_message thread_reply].freeze
+  EMAIL_TYPES      = %i[mention direct_message].freeze
+end</code></pre>
+</section>
+
+<section id="dispatcher">
+  <h2><span class="num">04</span> Routing dispatcher</h2>
+  <p class="section-lede">One job per message, not one job per <code>(message, activity_type)</code>. Substance lives on the model — the job is a shallow wrapper.</p>
+
+  <div class="diagram">
+    <div class="flow">
+      <div class="node entry">
+        <span class="label">Trigger</span>
+        Message create / thread reply
+      </div>
+      <div class="arrow"></div>
+      <div class="node">
+        <span class="label">Job</span>
+        <code>Notification::DispatchJob.perform_later(message)</code>
+      </div>
+      <div class="arrow"></div>
+      <div class="node">
+        <span class="label">Model</span>
+        <code>Message#notify_recipients</code>
+      </div>
+      <div class="arrow"></div>
+      <div class="node">
+        <span class="label">Iterate</span>
+        For each <code>activity_type</code> in <code>Room#applicable_activity_types(message)</code>
+      </div>
+      <div class="arrow"></div>
+      <div class="fanout">
+        <div class="node row">
+          <span class="label">In-app</span>
+          <code>deliver_in_app_row_for(activity_type)</code>
+        </div>
+        <div class="node push">
+          <span class="label">Push</span>
+          <code>deliver_push_for(activity_type)</code>
+        </div>
+        <div class="node email">
+          <span class="label">Bundle</span>
+          <code>enqueue_missed_email_candidates_for(activity_type)</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><strong>In-app row creation is a pass-through for <code>:mention</code> and <code>:thread_reply</code>.</strong> The legacy <code>create_mention_notifications</code> and <code>create_thread_reply_notifications</code> callbacks still own row creation; <code>deliver_in_app_row_for</code> only writes a row for <code>:boost</code>. The partial unique index <code>index_notifications_on_message_user_type</code> is the safety net if both paths ever fire.</p>
+
+  <p class="note"><strong>Boost is the lone exception.</strong> Triggered after a <code>Boost</code> create, not a <code>Message</code>. Uses <code>Notification::DispatchJob.perform_later(message, only: :boost, actor: booster)</code>. Only call site that uses <code>only:</code>.</p>
+
+  <h3>After-commit ordering matters</h3>
+  <p><code>Message</code> already has eight <code>after_create_commit</code> callbacks. The new dispatch callback must fire <strong>after</strong> <code>create_mention_notifications</code> and <code>update_thread_reply_count</code>, because the dispatcher reads mention notifications and thread-count state.</p>
+</section>
+
+<section id="eligibility">
+  <h2><span class="num">05</span> Eligibility — <code>Membership::Notifiable</code></h2>
+  <p class="section-lede">A single concern on <code>Membership</code> answers per-channel eligibility. The same predicates run at dispatch time and delivery time, so state changes flow through one gate.</p>
+
+  <div class="gates">
+    <div class="gate">
+      <h4>Common gates <span class="badge">all channels</span></h4>
+      <ul>
+        <li>Recipient is not the message creator (except for <code>:direct_message</code> accounting)</li>
+        <li>Recipient is active, verified, not banned, not deactivated, not a bot</li>
+        <li>Recipient and sender are not blocked in either direction</li>
+        <li>Message and room are active</li>
+        <li>Membership is active and <code>effective_involvement</code> authorizes this <code>activity_type</code></li>
+      </ul>
+    </div>
+    <div class="gate">
+      <h4>Push <span class="badge">disconnected</span></h4>
+      <ul>
+        <li><code>user.push_enabled?</code></li>
+        <li>Membership not currently <code>connected?</code> (60-second WebSocket TTL, room-scoped)</li>
+      </ul>
+    </div>
+    <div class="gate">
+      <h4>Missed-notification email <span class="badge">workspace-locally away</span></h4>
+      <ul>
+        <li><code>user.missed_email_enabled?</code></li>
+        <li>Account email flag on</li>
+        <li><code>user.workspace_locally_away?</code> — last connection &gt; 1 hour ago in this workspace</li>
+        <li><code>activity_type.in?(EMAIL_TYPES)</code></li>
+      </ul>
+    </div>
+    <div class="gate">
+      <h4>Weekly digest <span class="badge">no message arg</span></h4>
+      <ul>
+        <li><code>user.weekly_digest_subscribed?</code></li>
+        <li>Account <code>weekly_digest_enabled?</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Two distinct presence checks</h3>
+  <p>Push uses per-membership <code>connected?</code> (room-scoped, 60-second TTL). Email uses <code>workspace_locally_away?</code> (queries <code>Membership.last_connected_at_for([id])</code> against the <code>:away</code> activity tier — 1 hour — workspace-local, not cross-workspace). The 1-hour tier is chosen over the tighter 10-minute <code>:active</code> tier because email asks "has the user been gone long enough that an email is the right way to reach them?", not "should we show a green dot?"</p>
+
+  <h3><code>effective_involvement</code> folds the two-source rule</h3>
+  <p>Predicates ask <code>effective_involvement</code> only — they don't read <code>mode</code> and <code>involvement</code> independently. Rule:</p>
+  <div class="pipeline">
+    <div class="step">
+      <div class="marker">1</div>
+      <div class="body"><strong>Per-room <code>involvement == "everything"</code></strong><p>Effective is "everything" — per-room opt-in beats global mute.</p></div>
+    </div>
+    <div class="step">
+      <div class="marker">2</div>
+      <div class="body"><strong>Else if global <code>mode == "nothing"</code></strong><p>Effective is "nothing" — global mute applies.</p></div>
+    </div>
+    <div class="step">
+      <div class="marker">3</div>
+      <div class="body"><strong>Else use per-room <code>involvement</code></strong><p>(<code>mentions</code> / <code>nothing</code> / <code>invisible</code>)</p></div>
+    </div>
+  </div>
+
+  <p class="note"><strong>Snooze / DND is not a v1 feature, in any form.</strong> No <code>snooze_until</code> column, no <code>snooze_indefinite</code> flag, no presence-as-snooze fallback beyond <code>workspace_locally_away?</code>. All "user is unavailable" suppression rides on passive presence and the per-channel master switches.</p>
+</section>
+
+<section id="models">
+  <h2><span class="num">06</span> Data models</h2>
+  <p class="section-lede">Two new tables for the bundle pipeline; one new tenanted table for per-user notification settings; two new boolean columns on <code>accounts</code>. No schema change to <code>notifications</code>.</p>
+
+  <div class="schema">
+    <div class="model">
+      <header>
+        <span class="name">user_notification_settings</span>
+        <span class="tag new">new · tenanted</span>
+      </header>
+      <ul class="fields">
+        <li><span class="col">user_id</span><span class="type">references, unique</span></li>
+        <li><span class="col">mode</span><span class="type">enum · mentions_and_dms</span></li>
+        <li><span class="col">missed_email_enabled</span><span class="type">bool · false</span></li>
+        <li><span class="col">email_frequency</span><span class="type">enum · hourly</span></li>
+        <li><span class="col">weekly_digest_subscribed</span><span class="type">bool · true</span></li>
+        <li><span class="col">push_enabled</span><span class="type">bool · true</span></li>
+        <li><span class="col">last_digest_sent_at</span><span class="type">datetime, null</span></li>
+      </ul>
+    </div>
+
+    <div class="model">
+      <header>
+        <span class="name">notification_bundles</span>
+        <span class="tag new">new · tenanted</span>
+      </header>
+      <ul class="fields">
+        <li><span class="col">user_id</span><span class="type">references</span></li>
+        <li><span class="col">frequency</span><span class="type">enum · snapshot</span></li>
+        <li><span class="col">starts_at</span><span class="type">datetime</span></li>
+        <li><span class="col">ends_at</span><span class="type">datetime</span></li>
+        <li><span class="col">delivered_at</span><span class="type">datetime, null</span></li>
+        <li><span class="col">canceled_at</span><span class="type">datetime, null</span></li>
+      </ul>
+    </div>
+
+    <div class="model">
+      <header>
+        <span class="name">notification_bundle_items</span>
+        <span class="tag new">new · tenanted</span>
+      </header>
+      <ul class="fields">
+        <li><span class="col">bundle_id</span><span class="type">references</span></li>
+        <li><span class="col">message_id</span><span class="type">references</span></li>
+        <li><span class="col">actor_id</span><span class="type">references (user)</span></li>
+        <li><span class="col">kind</span><span class="type">mention / direct_message</span></li>
+        <li><span class="col">created_at</span><span class="type">datetime</span></li>
+      </ul>
+    </div>
+
+    <div class="model">
+      <header>
+        <span class="name">accounts</span>
+        <span class="tag touched">touched</span>
+      </header>
+      <ul class="fields">
+        <li><span class="col">+ email_notifications_enabled</span><span class="type">bool · false</span></li>
+        <li><span class="col">+ weekly_digest_enabled</span><span class="type">bool · false</span></li>
+      </ul>
+    </div>
+
+    <div class="model">
+      <header>
+        <span class="name">notifications</span>
+        <span class="tag unchanged">unchanged</span>
+      </header>
+      <ul class="fields">
+        <li><span class="col">activity_type</span><span class="type">mention / boost / thread_reply</span></li>
+      </ul>
+    </div>
+
+    <div class="model">
+      <header>
+        <span class="name">memberships</span>
+        <span class="tag unchanged">unchanged</span>
+      </header>
+      <ul class="fields">
+        <li><span class="col">no new columns</span><span class="type">—</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="note"><strong>Partial unique index</strong> on <code>notification_bundles(user_id) WHERE delivered_at IS NULL AND canceled_at IS NULL</code> — makes "at most one active bundle per user" a database invariant. Two simultaneous Message creates for the same user can't race-create two bundles; the second insert raises <code>RecordNotUnique</code>, which the find-or-create retries.</p>
+</section>
+
+<section id="email-pipeline">
+  <h2><span class="num">07</span> Missed-notification email pipeline</h2>
+  <p class="section-lede">Eligible event lands in the active bundle. Bundle's <code>ends_at</code> fires <code>BundleDeliveryJob</code>. Each item is re-evaluated at delivery; survivors get a single email.</p>
+
+  <div class="diagram">
+    <div class="pipeline">
+      <div class="step">
+        <div class="marker">1</div>
+        <div class="body"><strong>Eligible (message, activity_type, recipient)</strong><p>Dispatcher determines per-channel eligibility via <code>Membership::Notifiable</code> at message creation.</p></div>
+      </div>
+      <div class="step">
+        <div class="marker">2</div>
+        <div class="body"><strong>Find-or-create active bundle</strong><p><code>User#active_notification_bundle</code> returns the open bundle or creates one via private <code>open_notification_bundle!</code>. Window = 1h or 24h, snapshotted from <code>email_frequency</code>. Race-safe via partial unique index <code>index_notification_bundles_active_per_user</code>. <code>BundleDeliveryJob</code> scheduled with <code>wait_until: ends_at</code> on first item insert (<code>bundle.previously_new_record?</code>).</p></div>
+      </div>
+      <div class="step">
+        <div class="marker">3</div>
+        <div class="body"><strong>Insert <code>NotificationBundleItem</code></strong><p><code>(bundle_id, message_id, kind, actor_id)</code>. Unique index on <code>(bundle_id, message_id, kind)</code> dedups within a window.</p></div>
+      </div>
+      <div class="step gate">
+        <div class="marker">⏱</div>
+        <div class="body"><strong>Bundle window passes</strong><p>1 hour or 24 hours, depending on frequency. New eligible items keep landing in the same bundle.</p></div>
+      </div>
+      <div class="step">
+        <div class="marker">4</div>
+        <div class="body"><strong><code>BundleDeliveryJob</code> fires</strong><p>Walks <code>bundle.items</code>, asks <code>membership.receives_missed_email_for?(item.message, item.kind)</code> for each.</p></div>
+      </div>
+      <div class="step cancel">
+        <div class="marker">⊘</div>
+        <div class="body"><strong>All items dropped</strong><p>User returned, blocked sender, opted out, message deleted, account flag flipped. Bundle marked <code>canceled_at</code>; no email.</p></div>
+      </div>
+      <div class="step terminal">
+        <div class="marker">✓</div>
+        <div class="body"><strong>Items remain → deliver</strong><p><code>MissedNotificationsMailer.bundle(user, items)</code> sends with <code>X-Idempotency-Key: bundle-#{bundle.id}</code>. <code>delivered_at</code> set on success.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Send-time revalidation is the cancellation path</h3>
+  <p>No active job cancellation, no per-item bookkeeping. State changes during the window — user reconnects, opts out, blocks sender, account flag flips — drop items at delivery. If all items drop, the bundle is canceled.</p>
+
+  <h3>Idempotent retry via provider-side dedup</h3>
+  <p>Every send sets the header <code>X-Idempotency-Key: bundle-#{bundle.id}</code>. <strong>Resend</strong>: the delivery method forwards this as the <code>idempotency_key:</code> param on <code>Resend::Emails.send</code> — 24-hour server-side dedup. <strong>SES</strong>: no per-call idempotency parameter on <code>send_email</code>, so the header is stripped before the raw mail is sent and the only retry safety net is the job's own <code>retry_on</code> / terminal-error rescue policy. Provider-side dedup (where it exists) fails open rather than failing closed like a "claim before deliver" pattern would.</p>
+
+  <h3>Cooldown</h3>
+  <p>Bundle window <em>is</em> the cooldown. There is no separate per-membership cooldown column. A second mention 30 seconds after the first lands in the same bundle and produces a single email at delivery time.</p>
+
+  <h3>Bundle GC</h3>
+  <p>Folded into the weekly digest job's per-workspace loop — no separate cron. Delivered or canceled bundles &gt; 90 days old are <code>delete_all</code>'d. Active bundles never pruned (bounded to one per user via the partial unique index).</p>
+</section>
+
+<section id="digest-pipeline">
+  <h2><span class="num">08</span> Weekly activity digest</h2>
+  <p class="section-lede">Independent pipeline. Different copy, different cadence, different opt-out, different gates. Generated content per send — no persistent bundle.</p>
+
+  <div class="diagram">
+    <div class="pipeline">
+      <div class="step">
+        <div class="marker">1</div>
+        <div class="body"><strong>Cron fires <code>WeeklyDigestJob</code></strong><p>Weekly per workspace. Two-job fan-out: <code>WeeklyDigestRunnerJob</code> (untenanted, iterates accounts) → <code>WeeklyDigestJob</code> (per-tenant via <code>with_each_tenant</code>).</p></div>
+      </div>
+      <div class="step gate">
+        <div class="marker">?</div>
+        <div class="body"><strong><code>account.weekly_digest_enabled?</code></strong><p>If false, exit early. Admin-controlled per workspace, default off.</p></div>
+      </div>
+      <div class="step">
+        <div class="marker">2</div>
+        <div class="body"><strong>For each subscribed, healthy member</strong><p><code>weekly_digest_subscribed</code>, verified, active, not banned, not deactivated, not bot, no digest in last 6 days.</p></div>
+      </div>
+      <div class="step">
+        <div class="marker">3</div>
+        <div class="body"><strong>Generate content from accessible activity</strong><p>(1) <code>@everyone</code> mentions in last week the user would have received a row for but didn't view. (2) Recently active rooms with N+ messages. (3) Small set of public excerpts. No DMs, no inaccessible rooms.</p></div>
+      </div>
+      <div class="step cancel">
+        <div class="marker">⊘</div>
+        <div class="body"><strong>No qualifying content</strong><p>Skip user. Do not send empty digest. <code>last_digest_sent_at</code> is <em>not</em> updated — re-evaluated next week.</p></div>
+      </div>
+      <div class="step terminal">
+        <div class="marker">✓</div>
+        <div class="body"><strong>Content available → deliver</strong><p><code>WeeklyDigestMailer.digest(user, content)</code>. Set <code>last_digest_sent_at</code>. Surface-scoped unsubscribe token (<code>:weekly_digest</code>) — independent of missed-notification opt-out.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note"><strong>Sends regardless of recipient activity.</strong> A subscribed member who was active every day this week still receives the digest. The on/off subscription is the only gate, plus 6-day dedup. A presence-aware "only-if-inactive" gate was rejected — it weakens the simple opt-in mental model and creates "I subscribed but didn't get one" confusion.</p>
+</section>
+
+<section id="tenancy">
+  <h2><span class="num">09</span> Multi-tenant boundaries</h2>
+  <p class="section-lede">Identity and email address are the only untenanted touchpoints. Everything else is per-workspace.</p>
+
+  <div class="table-wrap">
+    <table class="tenancy">
+      <thead>
+        <tr>
+          <th>Lives on</th>
+          <th>Storage</th>
+          <th>Effect</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>User::NotificationSettings</td>
+          <td>Tenanted DB</td>
+          <td>Per-workspace. A user in workspaces A and B has independent settings in each.</td>
+        </tr>
+        <tr>
+          <td>Notification::Bundle + Item</td>
+          <td>Tenanted DB</td>
+          <td>Bundles are per-workspace. Cross-workspace consolidation is out of scope.</td>
+        </tr>
+        <tr>
+          <td>Account email flags</td>
+          <td>Tenanted DB</td>
+          <td>Per-workspace admin toggles (<code>email_notifications_enabled</code>, <code>weekly_digest_enabled</code>).</td>
+        </tr>
+        <tr>
+          <td>Push::Subscription</td>
+          <td>Tenanted DB</td>
+          <td>Existing — already per-workspace.</td>
+        </tr>
+        <tr>
+          <td>last_digest_sent_at</td>
+          <td>Tenanted DB</td>
+          <td>Per-workspace dedup. A user gets one digest per workspace per week.</td>
+        </tr>
+        <tr>
+          <td>Email address</td>
+          <td>Untenanted (GlobalIdentity in SaaS)</td>
+          <td>One outbound address regardless of which workspace fired the email. Subject/From line carries the workspace name.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note"><strong>Unsubscribe tokens carry <code>{ user_id, tenant, surface }</code>.</strong> The unsubscribe controller decodes the token, enters the encoded tenant via <code>ApplicationRecord.with_tenant(...)</code>, then flips the appropriate column based on <code>surface</code>. A click from workspace A's missed-notification email does not affect workspace B or A's digest subscription. Self-hosted: <code>tenant: nil</code>, <code>with_tenant</code> is a no-op.</p>
+</section>
+
+<section id="defaults">
+  <h2><span class="num">10</span> User &amp; account defaults</h2>
+  <p class="section-lede">Default-safe rollout. Email gated off at the account level until deliverability is proven; both email surfaces default off for users — except weekly digest, which defaults <em>subscribed</em> because the digest is admin-enabled with member opt-out (PRD § Product principles #6).</p>
+
+  <div class="defaults">
+    <div class="row">
+      <div>Existing &amp; new users</div>
+      <div class="vals">
+        <span class="kv"><span class="k">missed_email_enabled</span> <span class="v false">false</span></span>
+        <span class="kv"><span class="k">weekly_digest_subscribed</span> <span class="v true">true</span></span>
+        <span class="kv"><span class="k">push_enabled</span> <span class="v true">true</span></span>
+        <span class="kv"><span class="k">mode</span> <span class="v enum">mentions_and_dms</span></span>
+        <span class="kv"><span class="k">email_frequency</span> <span class="v enum">hourly</span></span>
+      </div>
+    </div>
+    <div class="row">
+      <div>Account (admin)</div>
+      <div class="vals">
+        <span class="kv"><span class="k">email_notifications_enabled</span> <span class="v false">false</span></span>
+        <span class="kv"><span class="k">weekly_digest_enabled</span> <span class="v false">false</span></span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Two-layer reconciliation: global mode × per-room involvement</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>State</th>
+          <th>Push</th>
+          <th>Missed email</th>
+          <th>Digest</th>
+          <th>In-app row</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>mode: nothing</code> (no per-room override)</td>
+          <td>suppressed</td>
+          <td>suppressed</td>
+          <td>unaffected</td>
+          <td>created</td>
+        </tr>
+        <tr>
+          <td><code>mode: nothing</code> + <code>involvement: everything</code></td>
+          <td>fires (per-room override)</td>
+          <td>fires</td>
+          <td>unaffected</td>
+          <td>created</td>
+        </tr>
+        <tr>
+          <td><code>missed_email_enabled: false</code></td>
+          <td>unaffected</td>
+          <td>suppressed</td>
+          <td>unaffected</td>
+          <td>created</td>
+        </tr>
+        <tr>
+          <td><code>weekly_digest_subscribed: false</code></td>
+          <td>unaffected</td>
+          <td>unaffected</td>
+          <td>suppressed</td>
+          <td>created</td>
+        </tr>
+        <tr>
+          <td><code>push_enabled: false</code></td>
+          <td>suppressed</td>
+          <td>unaffected</td>
+          <td>unaffected</td>
+          <td>created</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>In-app rows are created regardless of <code>mode</code> — the Activity tab is the truth-on-return surface.</p>
+</section>
+
+<section id="scope">
+  <h2><span class="num">11</span> Scope</h2>
+  <p class="section-lede">v1 is bounded. Bounce handling, snooze, thread-reply email, and per-room email controls all defer.</p>
+
+  <div class="scope">
+    <div class="col in">
+      <h4>In v1</h4>
+      <ul>
+        <li>Mention &amp; DM bundled email</li>
+        <li><code>@everyone</code> bundled email (only for recipients who'd get an in-app row)</li>
+        <li>Hourly / daily user-selectable bundle window</li>
+        <li>Send-time revalidation</li>
+        <li>Provider-side idempotency for retry safety</li>
+        <li>Weekly activity digest (admin-enabled, member opt-out)</li>
+        <li>RFC 8058 List-Unsubscribe headers</li>
+        <li>Surface-scoped unsubscribe (digest vs missed)</li>
+        <li>SaaS = SES, self-hosted = Resend</li>
+        <li>Two-layer reconciliation (global mode × per-room involvement)</li>
+      </ul>
+    </div>
+    <div class="col out">
+      <h4>Deferred to v1.1+</h4>
+      <ul>
+        <li>Thread-reply email (recipient set already wired; gated on v1 bundle-volume telemetry)</li>
+        <li>Per-room email controls</li>
+        <li>Reply-from-email</li>
+        <li>Cross-workspace bundle consolidation</li>
+        <li>Snooze / DND / pause notifications (<em>not in any form</em>)</li>
+        <li>Bounce / complaint / suppression handling (webhooks land in v1.1)</li>
+        <li>Personalized digest ranking (Discord Highlights-style)</li>
+        <li>Admin-authored digest content</li>
+        <li>Per-user timezone digest send time</li>
+        <li>Per-workspace BYO sending domain</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Source: <a href="NOTIFICATIONS-ARCHITECTURE.md">docs/plans/email-notifications/NOTIFICATIONS-ARCHITECTURE.md</a> · PRD: <a href="EMAIL-NOTIFICATIONS-PRD.md">docs/plans/email-notifications/EMAIL-NOTIFICATIONS-PRD.md</a> · Implementation plan: <a href="NOTIFICATIONS-IMPLEMENTATION-PLAN.md">docs/plans/email-notifications/NOTIFICATIONS-IMPLEMENTATION-PLAN.md</a></p>
+  <p>Self-contained HTML rendering of the architecture doc. Open directly in a browser; no network requests, no external assets.</p>
+</footer>
+
+</main>
+</body>
+</html>

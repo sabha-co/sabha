@@ -1,4 +1,5 @@
 require "test_helper"
+require "mail"
 require "mocha/minitest"
 
 class ResendDeliveryMethodTest < ActiveSupport::TestCase
@@ -57,6 +58,43 @@ class ResendDeliveryMethodTest < ActiveSupport::TestCase
 
     assert_equal "re_from_settings", Resend.api_key
   end
+
+  test "passes X-Idempotency-Key header through as Resend's idempotency_key param" do
+    dm = ResendDeliveryMethod.new(api_key: "re_test")
+    mail = Mail.new(from: "a@b.co", to: "c@d.co", subject: "X", body: "Y")
+    mail.header["X-Idempotency-Key"] = "bundle-42"
+
+    Resend::Emails.expects(:send).once.with do |params|
+      params[:idempotency_key] == "bundle-42"
+    end
+
+    dm.deliver!(mail)
+  end
+
+  test "forwards List-Unsubscribe headers via Resend's headers param" do
+    dm = ResendDeliveryMethod.new(api_key: "re_test")
+    mail = Mail.new(from: "a@b.co", to: "c@d.co", subject: "X", body: "Y")
+    mail.header["List-Unsubscribe"] = "<https://example.com/u/abc>"
+    mail.header["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
+
+    Resend::Emails.expects(:send).once.with do |params|
+      params[:headers]["List-Unsubscribe"] == "<https://example.com/u/abc>" &&
+        params[:headers]["List-Unsubscribe-Post"] == "List-Unsubscribe=One-Click"
+    end
+
+    dm.deliver!(mail)
+  end
+
+  test "omits idempotency_key when no header is present" do
+    dm = ResendDeliveryMethod.new(api_key: "re_test")
+    mail = Mail.new(from: "a@b.co", to: "c@d.co", subject: "X", body: "Y")
+
+    Resend::Emails.expects(:send).once.with do |params|
+      !params.key?(:idempotency_key)
+    end
+
+    dm.deliver!(mail)
+  end
 end
 
 class SesDeliveryMethodTest < ActiveSupport::TestCase
@@ -98,5 +136,29 @@ class SesDeliveryMethodTest < ActiveSupport::TestCase
     skip "gem is available in this environment" if SES_AVAILABLE
 
     assert_raises(RuntimeError) { @dm.deliver!(@mail) }
+  end
+
+  test "strips internal X-Idempotency-Key header before sending the raw mail" do
+    skip "SES SDK not available" unless SES_AVAILABLE
+
+    @mail.header["X-Idempotency-Key"] = "bundle-99"
+    fake_client = Object.new
+    @dm.stubs(:client).returns(fake_client)
+    fake_client.expects(:send_email).with do |params|
+      !params[:content][:raw][:data].include?("X-Idempotency-Key")
+    end
+
+    @dm.deliver!(@mail)
+  end
+
+  test "still resolves configuration_set when the X-SES-CONFIGURATION-SET header is set" do
+    skip "SES SDK not available" unless SES_AVAILABLE
+
+    @mail.header["X-SES-CONFIGURATION-SET"] = "header-set"
+    fake_client = Object.new
+    @dm.stubs(:client).returns(fake_client)
+    fake_client.expects(:send_email).with { |params| params[:configuration_set_name] == "header-set" }
+
+    @dm.deliver!(@mail)
   end
 end

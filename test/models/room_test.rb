@@ -151,7 +151,7 @@ class RoomTest < ActiveSupport::TestCase
     room = rooms(:pets)
     actor = users(:david)
 
-    assert_no_enqueued_jobs only: Room::PushMessageJob do
+    assert_no_enqueued_jobs only: Notification::DispatchJob do
       message = room.post_system_message(event: "room_renamed", body: "renamed the room from X to Y", actor: actor)
 
       assert message.persisted?

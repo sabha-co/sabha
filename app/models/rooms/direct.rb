@@ -53,6 +53,12 @@ class Rooms::Direct < Room
     self.class.members_hash_for(users)
   end
 
+  def applicable_activity_types(message)
+    types = [ :direct_message ]
+    types << :mention if message.mentionees.any?
+    types
+  end
+
   private
     def broadcast_to_sidebar
       memberships.each do |membership|

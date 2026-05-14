@@ -9,7 +9,7 @@ class Boost < ApplicationRecord
   scope :ordered, -> { order(:created_at) }
 
   after_create_commit :broadcast_create
-  after_create_commit :create_boost_notification
+  after_create_commit :dispatch_boost_notification
   before_destroy :delete_notification
   after_destroy_commit :broadcast_removal
   after_destroy_commit :broadcast_notification_removal
@@ -23,24 +23,11 @@ class Boost < ApplicationRecord
       Turbo::StreamsChannel.broadcast_action_to(Current.account, :inbox, action: :append, targets: targets, **rendering)
     end
 
-    def create_boost_notification
+    def dispatch_boost_notification
       return if message.creator_id == booster_id
       return if message.room.direct? || message.room.parent_room&.direct?
 
-      notification = Notification.create!(
-        user_id: message.creator_id,
-        message_id: message_id,
-        actor_id: booster_id,
-        activity_type: "boost",
-        boost_id: id
-      )
-
-      Turbo::StreamsChannel.broadcast_append_to(
-        [ notification.user, :inbox_activity ],
-        target: "inbox",
-        partial: "notifications/notification",
-        locals: { notification: notification, timestamp_style: :long_datetime }
-      )
+      Notification::DispatchJob.perform_later(message, only: :boost, actor: booster)
     end
 
     def delete_notification

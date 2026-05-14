@@ -602,4 +602,63 @@ class MembershipTest < ActiveSupport::TestCase
 
     assert_equal "everything", membership.reload.involvement
   end
+
+  # ---------- effective_involvement ----------
+
+  test "effective_involvement returns :everything for per-room everything" do
+    membership = memberships(:david_watercooler)
+    membership.update!(involvement: :everything)
+
+    assert_equal :everything, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :mentions for per-room mentions when no settings exist" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :mentions)
+
+    assert_nil membership.user.try(:notification_settings),
+      "U2 has not landed yet — settings association should not exist"
+    assert_equal :mentions, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :nothing for per-room nothing when no settings exist" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :nothing)
+
+    assert_equal :nothing, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :invisible for per-room invisible" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :invisible)
+
+    assert_equal :invisible, membership.effective_involvement
+  end
+
+  test "effective_involvement falls back to per-room value when notification_settings is missing (rule 3)" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :mentions)
+    membership.user.notification_settings&.destroy
+
+    assert_nil membership.user.reload.notification_settings
+    assert_equal :mentions, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :everything when per-room is :everything even if global mode is :nothing (rule 1 — per-room beats global mute)" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :everything)
+    membership.user.notification_settings&.update!(mode: :nothing) ||
+      membership.user.create_notification_settings!(mode: :nothing)
+
+    assert_equal :everything, membership.effective_involvement
+  end
+
+  test "effective_involvement returns :nothing when global mode is :nothing and per-room is :mentions (rule 2 — global mute applies)" do
+    membership = memberships(:kevin_designers)
+    membership.update!(involvement: :mentions)
+    membership.user.notification_settings&.update!(mode: :nothing) ||
+      membership.user.create_notification_settings!(mode: :nothing)
+
+    assert_equal :nothing, membership.effective_involvement
+  end
 end

@@ -88,7 +88,10 @@ class NotificationTest < ActiveSupport::TestCase
       client_message_id: "boost_notif_test"
     )
 
-    boost = message.boosts.create!(content: "🔥", booster: @jason)
+    boost = nil
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      boost = message.boosts.create!(content: "🔥", booster: @jason)
+    end
 
     notification = Notification.find_by(user: @david, activity_type: "boost", boost_id: boost.id)
     assert notification, "Boost notification should be created"
@@ -115,7 +118,10 @@ class NotificationTest < ActiveSupport::TestCase
       client_message_id: "boost_deactivate_test"
     )
 
-    boost = message.boosts.create!(content: "🔥", booster: @jason)
+    boost = nil
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      boost = message.boosts.create!(content: "🔥", booster: @jason)
+    end
     assert Notification.exists?(boost_id: boost.id)
 
     boost.destroy!

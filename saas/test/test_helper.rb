@@ -10,6 +10,9 @@
 
 ENV["RAILS_ENV"] ||= "test"
 ENV["SAAS"] ||= "true" # Reminder only - must also be set when invoking Rails
+# Clear COOKIE_DOMAIN before boot so the session store isn't scoped to a
+# production domain (the dev shell may have it set from .env.multitenant).
+ENV.delete("COOKIE_DOMAIN")
 
 require_relative "../../config/environment"
 require "rails/test_help"

@@ -24,6 +24,7 @@ class Message < ApplicationRecord
   after_create_commit :create_mention_notifications
   after_create_commit :create_thread_reply_notifications
   after_create_commit :increment_unread_notifications_counters
+  after_create_commit :dispatch_notifications
 
   after_update_commit :broadcast_reactivation_if_restored
   after_update_commit :clear_unread_timestamps_if_deactivated
@@ -175,6 +176,196 @@ class Message < ApplicationRecord
 
   def storage_tracked_record = self
 
+  # Single dispatch entry point invoked by Notification::DispatchJob. Iterates
+  # the activity types applicable to this message in this room and runs each
+  # channel branch. The in-app row branch is currently a no-op pass-through —
+  # the legacy `create_mention_notifications` and
+  # `create_thread_reply_notifications` callbacks still write rows.
+  #
+  # Boost is the lone special case: passes `only: :boost, actor: booster`.
+  def notify_recipients(only: nil, actor: nil)
+    return if event?
+
+    types = only ? Array(only).map(&:to_sym) : room.applicable_activity_types(self)
+
+    types.each do |activity_type|
+      deliver_in_app_row_for(activity_type, actor: actor)         if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
+      deliver_push_for(activity_type)                             if Notification::Routing::PUSH_TYPES.include?(activity_type)
+      enqueue_missed_email_candidates_for(activity_type)          if Notification::Routing::EMAIL_TYPES.include?(activity_type)
+    end
+  end
+
+  # Block ids touching this message's creator — memoized so per-recipient
+  # predicates can do a Set lookup instead of two `exists?` queries each.
+  # An @everyone push in a 500-member room would otherwise issue 1000 block
+  # queries through `User#can_ping?`; with this cache it's two, total.
+  def blocked_user_ids_with_creator
+    @blocked_user_ids_with_creator ||= begin
+      return [].to_set unless creator_id
+
+      (Block.where(blocker_id: creator_id).pluck(:blocked_id) +
+       Block.where(blocked_id: creator_id).pluck(:blocker_id)).to_set
+    end
+  end
+
+  # Returns the candidate user-id set for a push activity type. The membership
+  # scopes pre-filter for speed (involvement, connection, creator exclusion),
+  # then Membership::Notifiable#receives_push_for? applies the full gate so
+  # block checks, user health, message/room state, and the push_enabled
+  # setting all participate — same predicates run at dispatch time and at
+  # delivery time, per arch § 4–5.
+  def push_recipient_user_ids_for(activity_type)
+    activity_type = activity_type.to_sym
+    return [] unless Notification::Routing::PUSH_TYPES.include?(activity_type)
+
+    push_candidate_memberships_for(activity_type)
+      .select { |membership| membership.receives_push_for?(self, activity_type) }
+      .map(&:user_id)
+  end
+
+  def deliver_push_for(activity_type)
+    user_ids = push_recipient_user_ids_for(activity_type)
+    return if user_ids.empty?
+
+    subscriptions = Push::Subscription.where(user_id: user_ids)
+    return if subscriptions.empty?
+
+    payload = Room::MessagePusher.payload_for(room: room, message: self)
+    Rails.configuration.x.web_push_pool.queue(payload, subscriptions)
+  end
+
+  # Walks the candidate recipient set for `activity_type`, runs
+  # `Membership::Notifiable#receives_missed_email_for?` per membership, and
+  # appends a BundleItem to each eligible user's active bundle.
+  def enqueue_missed_email_candidates_for(activity_type)
+    activity_type = activity_type.to_sym
+    return unless Notification::Routing::EMAIL_TYPES.include?(activity_type)
+
+    candidate_user_ids = email_candidate_user_ids_for(activity_type)
+    return if candidate_user_ids.empty?
+
+    # Preload notification_settings: receives_missed_email_for? reads it for the
+    # account/user gate, so without this include each predicate call is N+1.
+    eligible_memberships = room.memberships
+      .where(user_id: candidate_user_ids)
+      .includes(user: :notification_settings)
+      .select { |membership| membership.receives_missed_email_for?(self, activity_type) }
+    return if eligible_memberships.empty?
+
+    bundles_by_user_id = bundles_for(eligible_memberships.map(&:user))
+
+    kind = activity_type.to_s
+    now  = Time.current
+    item_attrs = eligible_memberships.map do |membership|
+      {
+        bundle_id:  bundles_by_user_id.fetch(membership.user_id).id,
+        message_id: id,
+        actor_id:   creator_id,
+        kind:       kind,
+        created_at: now,
+        updated_at: now
+      }
+    end
+
+    Notification::BundleItem.insert_all(item_attrs, unique_by: %i[bundle_id message_id kind])
+
+    # Schedule delivery once per freshly-opened bundle. Bundles already open from
+    # a prior message already have a delivery scheduled.
+    bundles_by_user_id.each_value do |bundle|
+      bundle.schedule_delivery if bundle.previously_new_record?
+    end
+  end
+
+  private
+    def push_candidate_memberships_for(activity_type)
+      eager_load = { user: :notification_settings }
+
+      case activity_type
+      when :everyone_room_message
+        room.memberships.visible.disconnected
+            .where.not(user_id: creator_id)
+            .involved_in_everything
+            .includes(eager_load)
+      when :thread_reply
+        # Thread members upgraded via Room#involve_user have involvement: :mentions
+        # by default. receives_push_for?(:thread_reply) qualifies anyone
+        # !involved_in_invisible?, so the `.visible` scope already does all the
+        # filtering needed here. Pre-filtering further to :everything would drop
+        # the typical replier.
+        room.memberships.visible.disconnected
+            .where.not(user_id: creator_id)
+            .includes(eager_load)
+      when :direct_message
+        room.memberships.visible.disconnected
+            .where.not(user_id: creator_id)
+            .includes(eager_load)
+      when :mention
+        candidate_user_ids = mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
+        room.memberships.visible.disconnected
+            .where(user_id: candidate_user_ids)
+            .involved_in_mentions
+            .includes(eager_load)
+      else
+        Membership.none
+      end
+    end
+
+    # Single batched lookup of each user's active bundle, opening new ones for
+    # users without one. Avoids the per-recipient SELECT (+ INSERT on miss) that
+    # User#active_notification_bundle would otherwise issue inside the dispatch
+    # loop on a hot @everyone path.
+    def bundles_for(users)
+      existing = Notification::Bundle.active.where(user_id: users.map(&:id)).index_by(&:user_id)
+      users.each_with_object(existing) do |user, by_id|
+        by_id[user.id] ||= user.open_notification_bundle!
+      end
+    end
+
+    def email_candidate_user_ids_for(activity_type)
+      case activity_type
+      when :mention
+        mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
+      when :direct_message
+        room.user_ids - [ creator_id ]
+      else
+        []
+      end
+    end
+
+    def deliver_in_app_row_for(activity_type, actor: nil)
+      case activity_type
+      when :mention, :thread_reply
+        # Legacy `create_mention_notifications` and
+        # `create_thread_reply_notifications` callbacks still own row creation;
+        # the dispatch job no-ops here. The partial unique index
+        # `index_notifications_on_message_user_type` is the safety net if both
+        # paths ever fire.
+      when :boost
+        create_boost_notification_row(actor: actor)
+      end
+    end
+
+    def create_boost_notification_row(actor:)
+      return unless actor
+      boost = boosts.find_by(booster_id: actor.id)
+      return unless boost
+
+      notification = Notification.create!(
+        user_id: creator_id,
+        message_id: id,
+        actor_id: actor.id,
+        activity_type: "boost",
+        boost_id: boost.id
+      )
+
+      Turbo::StreamsChannel.broadcast_append_to(
+        [ notification.user, :inbox_activity ],
+        target: "inbox",
+        partial: "notifications/notification",
+        locals: { notification: notification, timestamp_style: :long_datetime }
+      )
+    end
+
   private
     # Bots and API consumers don't generate client-side IDs for Turbo dedup
     def set_default_client_message_id
@@ -289,6 +480,12 @@ class Message < ApplicationRecord
       CreateThreadReplyNotificationsJob.perform_later(message_id: id, thread_id: room.id, creator_id: creator_id)
     end
 
+    def dispatch_notifications
+      return if event?
+
+      Notification::DispatchJob.perform_later(self)
+    end
+
     # Bumps unread_notifications_count for memberships affected by this message.
     # Mirrors the with_has_unread_notifications semantics: DM rooms count every
     # unread message (including the sender's, matching the old scope which made
@@ -340,6 +537,7 @@ class Message < ApplicationRecord
       rebalance_unread_counters
       Boost.where(message_id: id).delete_all
       Bookmark.where(message_id: id).delete_all
+      Notification::BundleItem.where(message_id: id).delete_all
     end
 
     def destroy_notifications_if_deactivated

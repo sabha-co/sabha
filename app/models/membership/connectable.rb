@@ -42,6 +42,16 @@ module Membership::Connectable
     def online_user_count(since: ACTIVITY_TIERS[:active])
       where(connected_at: since.ago..).select(:user_id).distinct.count
     end
+
+    # Email-only presence check: a user is away when no membership in this
+    # tenant has been connected within the away tier (1 hour). Distinct from
+    # `connected?` (60s) which gates push — email asks "has the user been gone
+    # long enough that an email is the right way to reach them?"
+    def workspace_locally_away?(user_id)
+      last_seen = last_connected_at_for([ user_id ])[user_id]
+      return true if last_seen.nil?
+      last_seen < ACTIVITY_TIERS[:away].ago
+    end
   end
 
   def connected?

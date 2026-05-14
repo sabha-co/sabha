@@ -1,0 +1,17 @@
+<% content_for :title, "Unsubscribe" %>
+
+<section class="txt-align-center">
+  <div class="panel panel--centered">
+    <h1 class="txt-large"><strong>Unsubscribe</strong></h1>
+    <p>
+      <% if @payload[:surface] == :weekly_digest %>
+        Stop receiving the weekly digest from <%= Branding.contextual_app_name %>.
+      <% else %>
+        Stop receiving missed-notification emails from <%= Branding.contextual_app_name %>.
+      <% end %>
+    </p>
+    <%= form_with url: email_unsubscribe_path(token: params[:token]), method: :post, local: true do |form| %>
+      <%= form.submit "Unsubscribe", class: "btn btn--primary" %>
+    <% end %>
+  </div>
+</section>

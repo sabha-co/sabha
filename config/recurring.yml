@@ -16,6 +16,11 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
+  weekly_digest:
+    class: Notification::WeeklyDigestRunnerJob
+    queue: default
+    schedule: "0 10 * * 2"
+
 <% if Sabha.saas? %>
   reconcile_storage:
     command: "Workspace.find_each { |w| ApplicationRecord.with_tenant(w.external_id.to_s) { Storage::ReconcileJob.perform_later(Account.sole) } }"

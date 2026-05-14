@@ -1,0 +1,14 @@
+<% content_for :title, "Unsubscribed" %>
+
+<section class="txt-align-center">
+  <div class="panel panel--centered">
+    <h1 class="txt-large"><strong>Unsubscribed</strong></h1>
+    <p>
+      <% if @surface == :weekly_digest %>
+        You'll no longer receive the weekly digest. You can re-enable it in your notification settings any time.
+      <% else %>
+        You'll no longer receive missed-notification emails. You can re-enable them in your notification settings any time.
+      <% end %>
+    </p>
+  </div>
+</section>

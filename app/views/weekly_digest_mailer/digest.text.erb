@@ -1,0 +1,27 @@
+Here's what happened this week in <%= @workspace_name %>.
+
+<% if @everyone_mentions.any? -%>
+Announcements you missed:
+<% @everyone_mentions.each do |message| -%>
+  - <%= sender_for(message) %> in <%= message.room.name %>: <%= preview_for(message) %>
+<% end -%>
+
+<% end -%>
+<% if @active_rooms.any? -%>
+Rooms with activity:
+<% @active_rooms.each do |room, count| -%>
+  - <%= room.name %> — <%= pluralize(count, "message") %>
+<% end -%>
+
+<% end -%>
+<% if @excerpts.any? -%>
+Recent discussion:
+<% @excerpts.each do |message| -%>
+  - <%= sender_for(message) %> in <%= message.room.name %>: <%= preview_for(message) %>
+<% end -%>
+
+<% end -%>
+Open Activity: <%= @activity_url %>
+
+Manage notification settings: <%= @settings_url %>
+Unsubscribe from the weekly digest: <%= @unsubscribe_url %>
