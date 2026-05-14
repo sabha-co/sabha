@@ -72,6 +72,9 @@ module Membership::Notifiable
     end
 
     def account_email_notifications_enabled?
-      Current.account&.email_notifications_enabled?
+      # Belt-and-braces gate: if the operator removes the provider key after
+      # toggling the account flag on, dispatch stops trying to deliver instead
+      # of trusting a stale `true` value in the DB.
+      Sabha.email_configured? && Current.account&.email_notifications_enabled?
     end
 end

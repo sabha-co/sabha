@@ -2,6 +2,7 @@ class Notification::WeeklyDigestJob < ApplicationJob
   def perform
     Notification::Bundle.gc_terminal!
 
+    return unless Sabha.email_configured?
     return unless Account.sole&.weekly_digest_enabled?
 
     User.weekly_digest_eligible.find_each do |user|
