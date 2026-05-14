@@ -75,6 +75,15 @@ RESEND_API_KEY=your_resend_api_key
 # AWS_SES_ACCESS_KEY_ID=
 # AWS_SES_SECRET_ACCESS_KEY=
 
+# Platform-wide kill switch for outbound notification mail. Setting this to the
+# literal string "true" makes Sabha.email_configured? return false everywhere:
+# the Email admin section disappears from every workspace, missed-notification
+# bundles stop being created, and the weekly digest job short-circuits before
+# any per-user iteration. Per-workspace toggles in the DB stay untouched, so
+# flipping it back off restores each workspace's prior preference. Requires a
+# restart to take effect.
+# EMAIL_GLOBALLY_DISABLED=true
+
 # Web Push (generate with: npx web-push generate-vapid-keys)
 VAPID_PUBLIC_KEY=your_public_key
 VAPID_PRIVATE_KEY=your_private_key

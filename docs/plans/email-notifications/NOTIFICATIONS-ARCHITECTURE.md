@@ -409,6 +409,15 @@ Email delivery uses provider-specific gems wired through standard `ActionMailer:
 
 **No provider abstraction in v1.** The doc names each provider directly. A `Notification::EmailProvider` interface that abstracts SES vs Resend would be premature — both providers already conform to the ActionMailer delivery_method API, so the abstraction is built into Rails. If a third provider arrives, then revisit.
 
+**Two operator-level gates above the per-workspace toggles** keep the dormant-by-default rollout honest and give the platform an emergency stop:
+
+| Gate | Lives in | Returns false when… | Consequence |
+|---|---|---|---|
+| `Sabha.email_configured?` | `lib/sabha.rb` | Self-hosted production with no provider creds (no `RESEND_API_KEY`, or `EMAIL_PROVIDER=ses` without `aws-sdk-sesv2`); or `EMAIL_GLOBALLY_DISABLED=true` regardless of mode | Admin email section hidden; dispatch and digest job no-op |
+| `account.email_notifications_enabled?` / `weekly_digest_enabled?` | DB (tenanted) | Per-workspace admin hasn't flipped them on | Per-workspace opt-in still applies |
+
+`EMAIL_GLOBALLY_DISABLED=true` is the SaaS-side **kill switch**: a single env-var flip + restart halts all outbound notification mail across every tenant without touching any per-workspace state, so flipping it back off restores each workspace's prior preference. The gate is consulted at three sites (the admin partial, `Membership::Notifiable#account_email_notifications_enabled?`, and `Notification::WeeklyDigestJob`) so a stale `true` value in the DB can't trigger sends once the kill switch is armed. Documented in `docs/multi-tenant/DEPLOYMENT.md`.
+
 ### 11.2 Bounce, complaint, and suppression handling — deferred to v1.1
 
 v1 ships **without** webhook-driven bounce/complaint suppression and **without** any SMTP-failure-rescue fallback. There is no `EmailDeliveryObserver`. Hard-bouncing addresses continue to receive mail until v1.1.
