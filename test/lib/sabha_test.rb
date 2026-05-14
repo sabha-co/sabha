@@ -3,6 +3,30 @@
 require "test_helper"
 
 class SabhaTest < ActiveSupport::TestCase
+  test "email_configured? is false when EMAIL_GLOBALLY_DISABLED is set, regardless of mode or env" do
+    with_env("EMAIL_GLOBALLY_DISABLED" => "true", "RESEND_API_KEY" => "rsnd_test") do
+      assert_not Sabha.email_configured?, "kill switch must override the test-env default"
+
+      with_rails_env("development") do
+        assert_not Sabha.email_configured?, "kill switch must override the dev-env default"
+      end
+
+      with_rails_env("production") do
+        assert_not Sabha.email_configured?, "kill switch must override an otherwise-valid prod config"
+      end
+    end
+  end
+
+  test "email_configured? ignores EMAIL_GLOBALLY_DISABLED when not exactly 'true'" do
+    with_env("EMAIL_GLOBALLY_DISABLED" => "1") do
+      assert Sabha.email_configured?, "only the literal string 'true' arms the kill switch"
+    end
+
+    with_env("EMAIL_GLOBALLY_DISABLED" => "false") do
+      assert Sabha.email_configured?, "'false' must not arm the kill switch"
+    end
+  end
+
   test "email_configured? is true in development without a provider key" do
     with_env("EMAIL_PROVIDER" => nil, "RESEND_API_KEY" => nil) do
       with_rails_env("development") do

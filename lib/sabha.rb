@@ -37,7 +37,13 @@ module Sabha
     # actually configured. SaaS always returns true — the platform operator
     # owns delivery centrally. Dev/test always return true so letter_opener
     # and :test delivery work without needing a real API key.
+    #
+    # Platform kill switch: setting EMAIL_GLOBALLY_DISABLED=true short-circuits
+    # everything to false regardless of mode or env, so a SaaS operator can
+    # halt all outbound notification mail across every tenant with a single
+    # env-var flip + restart.
     def email_configured?
+      return false if email_globally_disabled?
       return true if saas?
       return true if Rails.env.development? || Rails.env.test?
 
@@ -53,5 +59,10 @@ module Sabha
       else false
       end
     end
+
+    private
+      def email_globally_disabled?
+        ENV["EMAIL_GLOBALLY_DISABLED"] == "true"
+      end
   end
 end
