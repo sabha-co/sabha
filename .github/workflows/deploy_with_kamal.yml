@@ -89,6 +89,7 @@ jobs:
           AWS_SES_ACCESS_KEY_ID=${{ secrets.AWS_SES_ACCESS_KEY_ID }}
           AWS_SES_SECRET_ACCESS_KEY=${{ secrets.AWS_SES_SECRET_ACCESS_KEY }}
           SES_CONFIGURATION_SET=${{ secrets.SES_CONFIGURATION_SET }}
+          EMAIL_GLOBALLY_DISABLED=${{ secrets.EMAIL_GLOBALLY_DISABLED }}
           COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
 
           APP_NAME=${{ secrets.APP_NAME }}
