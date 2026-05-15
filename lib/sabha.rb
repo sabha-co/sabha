@@ -63,9 +63,8 @@ module Sabha
       end
     end
 
-    private
-      def email_globally_disabled?
-        ENV["EMAIL_GLOBALLY_DISABLED"] == "true"
-      end
+    def email_globally_disabled?
+      ENV["EMAIL_GLOBALLY_DISABLED"] == "true"
+    end
   end
 end

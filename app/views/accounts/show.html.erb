@@ -17,12 +17,12 @@
 
 <section class="panel txt-align-center flex flex-column gap" style="view-transition-name: account-settings">
   <%= account_logo_tag style: "account-logo--display txt-xx-large center" %>
-  <h1 class="flex-item-grow txt-x-large"><%= @account.name %></h1>
+  <h1 class="txt-x-large margin-none"><%= @account.name %></h1>
 
   <div class="flex justify-center gap txt-small txt-muted">
     <span><%= pluralize(@member_count, "member") %></span>
     <span>&middot;</span>
-    <span><%= pluralize(online_users_count, "online") %></span>
+    <span><%= online_users_count %> online</span>
     <span>&middot;</span>
     <span><%= pluralize(@room_count, "room") %></span>
   </div>

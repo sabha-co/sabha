@@ -22,32 +22,34 @@
           hint:      "Off means only admins can generate invite URLs." %>
   </section>
 
-  <hr class="separator separator--row margin-block">
+  <% unless Sabha.email_globally_disabled? %>
+    <hr class="separator separator--row margin-block">
 
-  <section>
-    <p class="txt-small txt-muted txt-label margin-block-end-half">Email</p>
+    <section>
+      <p class="txt-small txt-muted txt-label margin-block-end-half">Email</p>
 
-    <% unless email_configured %>
-      <div class="callout callout--alert margin-block-end-half">
-        <%= icon_tag "alert", class: "flex-item-no-shrink" %>
-        <div class="txt-small">
-          <strong>Email isn't set up yet.</strong>
-          Add a verified Resend sending domain and set <code>RESEND_API_KEY</code> to turn these on.
+      <% unless email_configured %>
+        <div class="callout callout--alert margin-block-end-half">
+          <%= icon_tag "alert", class: "flex-item-no-shrink" %>
+          <div class="txt-small">
+            <strong>Email isn't set up yet.</strong>
+            Add a verified Resend sending domain and set <code>RESEND_API_KEY</code> to turn these on.
+          </div>
         </div>
-      </div>
-    <% end %>
+      <% end %>
 
-    <%= render "accounts/setting_toggle", account: @account,
-          attribute: :email_notifications_enabled,
-          title:     "Send missed-notification emails",
-          hint:      "Emails users a recap when they miss a mention or DM while offline.",
-          disabled:  !email_configured %>
-    <hr class="separator separator--row separator--soft">
+      <%= render "accounts/setting_toggle", account: @account,
+            attribute: :email_notifications_enabled,
+            title:     "Send missed-notification emails",
+            hint:      "Emails users a recap when they miss a mention or DM while offline.",
+            disabled:  !email_configured %>
+      <hr class="separator separator--row separator--soft">
 
-    <%= render "accounts/setting_toggle", account: @account,
-          attribute: :weekly_digest_enabled,
-          title:     "Send the weekly community digest",
-          hint:      "A Monday recap of top rooms and threads, sent to everyone who opted in.",
-          disabled:  !email_configured %>
-  </section>
+      <%= render "accounts/setting_toggle", account: @account,
+            attribute: :weekly_digest_enabled,
+            title:     "Send the weekly community digest",
+            hint:      "A Monday recap of top rooms and threads, sent to everyone who opted in.",
+            disabled:  !email_configured %>
+    </section>
+  <% end %>
 </div>
