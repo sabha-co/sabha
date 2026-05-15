@@ -134,11 +134,12 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Thread reply visible in activity", response.body
   end
 
-  test "activity shows all notifications" do
+  test "activity hides notifications cleared in this session and shows newer notifications" do
     room = rooms(:pets)
+    Notification.where(user: @david).delete_all
 
     room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)} all visible</div>",
+      body: "<div>Hey #{mention_attachment_for(:david)} cleared activity marker</div>",
       creator: @jason,
       client_message_id: "all_visible"
     )
@@ -146,17 +147,18 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     get activity_inbox_url
     post clear_inbox_url, params: { scope: "activity", stay: true }
 
-    room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)} also visible</div>",
-      creator: @jason,
-      client_message_id: "also_visible"
-    )
+    travel 1.second do
+      room.messages.create!(
+        body: "<div>Hey #{mention_attachment_for(:david)} newer activity marker</div>",
+        creator: @jason,
+        client_message_id: "also_visible"
+      )
+    end
 
-    # Both should appear
     get activity_inbox_url
     assert_response :success
-    assert_match "all visible", response.body
-    assert_match "also visible", response.body
+    assert_no_match "cleared activity marker", response.body
+    assert_match "newer activity marker", response.body
   end
 
   test "mentioning a non-member does not add them to the room" do
@@ -423,6 +425,32 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
 
     assert membership_with_mention.read?, "Room with mention should be marked as read"
     assert membership_without_mention.unread?, "Room without mention should remain unread"
+  end
+
+  test "clear with scope activity clears notification badge without reading regular messages" do
+    room = rooms(:pets)
+    membership = room.memberships.find_by(user: @david)
+    membership.update!(unread_at: 1.hour.ago)
+
+    room.messages.create!(
+      body: "Regular unread chatter",
+      creator: @jason,
+      client_message_id: "activity_badge_regular"
+    )
+    room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason,
+      client_message_id: "activity_badge_mention"
+    )
+
+    assert membership.reload.unread?
+    assert_equal 1, membership.unread_notifications_count
+
+    get activity_inbox_url
+    post clear_inbox_url, params: { scope: "activity" }
+
+    assert membership.reload.unread?, "Regular unread messages should remain unread"
+    assert_equal 0, membership.unread_notifications_count, "Activity badge should clear"
   end
 
   test "clear with scope direct_messages only clears DM rooms" do
