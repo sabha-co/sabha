@@ -1,0 +1,27 @@
+<%# locals: (account:, attribute:, title:, hint:, scope: nil, disabled: false) %>
+<% current = scope ? account.public_send(scope).public_send("#{attribute}?") : account.public_send("#{attribute}?") %>
+
+<%= form_with model: account, method: :put, data: { controller: "form" } do |form| %>
+  <% if scope %>
+    <%= form.fields_for scope, account.public_send(scope) do |scoped| %>
+      <%= scoped.hidden_field attribute, value: !current %>
+    <% end %>
+  <% else %>
+    <%= form.hidden_field attribute, value: !current %>
+  <% end %>
+
+  <label class="setting-row">
+    <span class="setting-row__text">
+      <span class="setting-row__title"><%= title %></span>
+      <span class="txt-small txt-muted"><%= hint %></span>
+    </span>
+    <span class="switch">
+      <input type="checkbox"
+             class="switch__input"
+             <%= "checked" if current %>
+             <%= "disabled" if disabled %>
+             data-action="change->form#submit">
+      <span class="switch__btn"></span>
+    </span>
+  </label>
+<% end %>

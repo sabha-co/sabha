@@ -262,6 +262,33 @@ input[type="radio"]:disabled::after {
   opacity: 0.1;
 }
 
+/* Settings toggle row: label + hint stack on the left, switch flush-right.
+   Whole row is the click target. */
+.setting-row {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: var(--inline-space);
+  justify-content: space-between;
+  padding-block: var(--block-space-half);
+  text-align: start;
+}
+
+.setting-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.setting-row__title {
+  font-weight: 500;
+}
+
+.setting-row .switch {
+  flex-shrink: 0;
+  margin-inline-start: var(--block-space);
+}
+
 .switch__btn {
   background-color: var(--color-border-darker);
   border-radius: 2em;

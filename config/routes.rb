@@ -60,7 +60,7 @@ Rails.application.routes.draw do
 
   resources :password_resets, only: [ :new, :create, :edit, :update ], param: :token
 
-  resource :account do
+  resource :account, only: %i[ show edit update ] do
     scope module: "accounts" do
       resources :users do
         resource :reactivation, only: :create, module: "users"

@@ -1,94 +1,53 @@
-<div class="margin-block pad fill-shade border-radius txt-align-center">
-  <div class="flex flex-column gap align-center">
+<% email_configured = Sabha.email_configured? %>
 
-    <!-- Permissions -->
-    <div class="flex flex-column gap align-center" style="--row-gap: 0.5rem">
-      <strong>Permissions</strong>
-      <div class="flex flex-column gap">
-        <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
-          <%= form.fields_for :settings, @account.settings do |settings_form| %>
-            <%= settings_form.hidden_field :restrict_room_creation_to_administrators,
-                value: !Current.account.settings.restrict_room_creation_to_administrators? %>
-          <% end %>
-          <label class="switch">
-            <input type="checkbox"
-                  class="switch__input"
-                  <%= "checked" if Current.account.settings.restrict_room_creation_to_administrators? %>
-                  data-action="change->form#submit">
-            <span class="switch__btn"></span>
-          </label>
-          <span>Must be admin to create new rooms</span>
-        <% end %>
+<div class="margin-block pad fill-shade border-radius">
+  <section>
+    <p class="txt-small txt-muted txt-label margin-block-end-half">Permissions</p>
 
-        <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
-          <%= form.fields_for :settings, @account.settings do |settings_form| %>
-            <%= settings_form.hidden_field :restrict_direct_messages_to_administrators,
-                value: !Current.account.settings.restrict_direct_messages_to_administrators? %>
-          <% end %>
-          <label class="switch">
-            <input type="checkbox"
-                  class="switch__input"
-                  <%= "checked" if Current.account.settings.restrict_direct_messages_to_administrators? %>
-                  data-action="change->form#submit">
-            <span class="switch__btn"></span>
-          </label>
-          <span>Must be admin to start DMs</span>
-        <% end %>
+    <%= render "accounts/setting_toggle", account: @account, scope: :settings,
+          attribute: :restrict_room_creation_to_administrators,
+          title:     "Must be admin to create new rooms",
+          hint:      "Members can still join and post in rooms that already exist." %>
+    <hr class="separator separator--row separator--soft">
 
-        <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
-          <%= form.fields_for :settings, @account.settings do |settings_form| %>
-            <%= settings_form.hidden_field :allow_users_to_create_invite_links,
-                value: !Current.account.settings.allow_users_to_create_invite_links? %>
-          <% end %>
-          <label class="switch">
-            <input type="checkbox"
-                  class="switch__input"
-                  <%= "checked" if Current.account.settings.allow_users_to_create_invite_links? %>
-                  data-action="change->form#submit">
-            <span class="switch__btn"></span>
-          </label>
-          <span>Allow everyone to create invite links</span>
-        <% end %>
+    <%= render "accounts/setting_toggle", account: @account, scope: :settings,
+          attribute: :restrict_direct_messages_to_administrators,
+          title:     "Must be admin to start DMs",
+          hint:      "Existing DMs keep working — only new ones are restricted." %>
+    <hr class="separator separator--row separator--soft">
 
-      </div>
-    </div>
+    <%= render "accounts/setting_toggle", account: @account, scope: :settings,
+          attribute: :allow_users_to_create_invite_links,
+          title:     "Allow everyone to create invite links",
+          hint:      "Off means only admins can generate invite URLs." %>
+  </section>
 
-    <!-- Email -->
-    <% if Sabha.email_configured? %>
-      <div class="flex flex-column gap align-center" style="--row-gap: 0.5rem">
-        <strong>Email</strong>
-        <% unless Sabha.saas? %>
-          <p class="txt-small txt-secondary" style="max-width: 36ch">
-            Outbound email needs a verified sending domain. Confirm yours before flipping these on.
-          </p>
-        <% end %>
-        <div class="flex flex-column gap">
-          <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
-            <%= form.hidden_field :email_notifications_enabled, value: !Current.account.email_notifications_enabled? %>
-            <label class="switch">
-              <input type="checkbox"
-                    class="switch__input"
-                    <%= "checked" if Current.account.email_notifications_enabled? %>
-                    data-action="change->form#submit">
-              <span class="switch__btn"></span>
-            </label>
-            <span>Send missed-notification emails</span>
-          <% end %>
+  <hr class="separator separator--row margin-block">
 
-          <%= form_with model: @account, method: :put, data: { controller: "form" }, class: "flex align-center gap" do |form| %>
-            <%= form.hidden_field :weekly_digest_enabled, value: !Current.account.weekly_digest_enabled? %>
-            <label class="switch">
-              <input type="checkbox"
-                    class="switch__input"
-                    <%= "checked" if Current.account.weekly_digest_enabled? %>
-                    data-action="change->form#submit">
-              <span class="switch__btn"></span>
-            </label>
-            <span>Send the weekly community digest</span>
-          <% end %>
+  <section>
+    <p class="txt-small txt-muted txt-label margin-block-end-half">Email</p>
+
+    <% unless email_configured %>
+      <div class="callout callout--alert margin-block-end-half">
+        <%= icon_tag "alert", class: "flex-item-no-shrink" %>
+        <div class="txt-small">
+          <strong>Email isn't set up yet.</strong>
+          Add a verified Resend sending domain and set <code>RESEND_API_KEY</code> to turn these on.
         </div>
       </div>
     <% end %>
 
-  </div>
+    <%= render "accounts/setting_toggle", account: @account,
+          attribute: :email_notifications_enabled,
+          title:     "Send missed-notification emails",
+          hint:      "Emails users a recap when they miss a mention or DM while offline.",
+          disabled:  !email_configured %>
+    <hr class="separator separator--row separator--soft">
+
+    <%= render "accounts/setting_toggle", account: @account,
+          attribute: :weekly_digest_enabled,
+          title:     "Send the weekly community digest",
+          hint:      "A Monday recap of top rooms and threads, sent to everyone who opted in.",
+          disabled:  !email_configured %>
+  </section>
 </div>
