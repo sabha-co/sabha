@@ -91,6 +91,10 @@ class Membership < ApplicationRecord
     broadcast_read
   end
 
+  def clear_unread_notifications_until(time)
+    update!(unread_notifications_count: count_unread_notifications_after(time))
+  end
+
   def read?
     unread_at.blank?
   end
@@ -179,6 +183,16 @@ class Membership < ApplicationRecord
     def broadcast_unread
       UserUnreadRoomsChannel.broadcast_to(user, unread_payload)
       UnreadNotificationsChannel.broadcast_to(user, notification_payload) if has_unread_notifications?
+    end
+
+    def count_unread_notifications_after(time)
+      return 0 if unread_at.nil?
+
+      Notification.joins(:message)
+        .where(user_id: user_id, activity_type: "mention", messages: { room_id: room_id })
+        .where("messages.created_at >= ?", unread_at)
+        .where("notifications.created_at > ?", time)
+        .count
     end
 
     def broadcast_involvement

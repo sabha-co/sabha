@@ -589,7 +589,11 @@ class User < ApplicationRecord
           .where.not(id: notified_message_ids)
           .between(m.unread_at, until_time)
 
-        m.read_until(until_time) if non_notified.none?
+        if non_notified.none?
+          m.read_until(until_time)
+        else
+          m.clear_unread_notifications_until(until_time)
+        end
       end
     end
 

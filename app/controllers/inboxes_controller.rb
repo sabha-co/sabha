@@ -87,7 +87,9 @@ class InboxesController < ApplicationController
     end
 
     def find_notifications
-      paginate(Inbox::ActivityQuery.new(Current.user).call).tap do |notifications|
+      query = Inbox::ActivityQuery.new(Current.user, cleared_at: session[:inbox_activity_cleared_at])
+
+      paginate(query.call).tap do |notifications|
         messages = notifications.filter_map(&:message)
         Message.with_thread_participants(messages)
         preload_bookmark_status(messages)
