@@ -117,6 +117,10 @@
   }
 }
 
+.account-logo--display {
+  --avatar-size: var(--btn-size);
+}
+
 /* Monogram avatars for users without images */
 .avatar-monogram {
   /* Match the same structure as .avatar */

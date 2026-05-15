@@ -1,12 +1,13 @@
 class AccountsController < ApplicationController
-  before_action :ensure_can_administer, only: %i[update]
+  before_action :ensure_can_administer, only: %i[edit update]
   before_action :set_account
 
+  def show
+    @member_count = User.without_bots.active.verified.count
+    @room_count = Room.where(type: %w[Rooms::Open Rooms::Closed]).count
+  end
+
   def edit
-    unless Current.user.can_administer?
-      @member_count = User.without_bots.active.verified.count
-      @room_count = Room.where(type: %w[Rooms::Open Rooms::Closed]).count
-    end
   end
 
   def update

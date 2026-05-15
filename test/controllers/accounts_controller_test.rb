@@ -5,9 +5,30 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     sign_in :david
   end
 
+  test "show is accessible to admins" do
+    get account_url
+    assert_response :ok
+  end
+
+  test "show is accessible to non-admins as the about page" do
+    sign_in :kevin
+    assert users(:kevin).member?
+
+    get account_url
+    assert_response :success
+  end
+
   test "edit" do
     get edit_account_url
     assert_response :ok
+  end
+
+  test "non-admins cannot access edit" do
+    sign_in :kevin
+    assert users(:kevin).member?
+
+    get edit_account_url
+    assert_redirected_to root_path
   end
 
   test "update" do
@@ -25,14 +46,6 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
 
     put account_url, params: { account: { name: "Different" } }
     assert_redirected_to root_path
-  end
-
-  test "non-admins can access edit as read-only about page" do
-    sign_in :kevin
-    assert users(:kevin).member?
-
-    get edit_account_url
-    assert_response :success
   end
 
   test "admin can flip email_notifications_enabled" do

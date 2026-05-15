@@ -1,109 +1,78 @@
-<% @page_title = Current.user.administrator? ? "Account settings" : "About" %>
+<% @page_title = "Account settings" %>
 
 <% content_for :nav do %>
   <div class="flex-item-justify-start">
-    <%= link_back_to_last_room_visited %>
+    <%= link_back_to account_path %>
   </div>
 
-  <% if Current.user.administrator? %>
-    <div class="flex align-center gap flex-item-justify-end">
-      <%= link_to account_users_path, class: "btn" do %>
-        <%= icon_tag "everyone" %>
-        <span class="for-screen-reader">Manage members</span>
-      <% end %>
+  <div class="flex align-center gap flex-item-justify-end">
+    <%= link_to account_users_path, class: "btn" do %>
+      <%= icon_tag "everyone" %>
+      <span class="for-screen-reader">Manage members</span>
+    <% end %>
 
-      <%= link_to account_bots_path, class: "btn", style: "view-transition-name: chat-bots" do %>
-        <%= icon_tag "bot" %>
-        <span class="for-screen-reader">Set up chat bots</span>
-      <% end %>
+    <%= link_to account_bots_path, class: "btn", style: "view-transition-name: chat-bots" do %>
+      <%= icon_tag "bot" %>
+      <span class="for-screen-reader">Set up chat bots</span>
+    <% end %>
 
-      <%= link_to edit_account_custom_styles_path, class: "btn", style: "view-transition-name: custom-styles" do %>
-        <%= icon_tag "art" %>
-        <span class="for-screen-reader">Custom styles</span>
-      <% end %>
-    </div>
-  <% end %>
+    <%= link_to edit_account_custom_styles_path, class: "btn", style: "view-transition-name: custom-styles" do %>
+      <%= icon_tag "art" %>
+      <span class="for-screen-reader">Custom styles</span>
+    <% end %>
+  </div>
 <% end %>
 
 <section class="panel txt-align-center flex flex-column gap" style="view-transition-name: account-settings">
-  <% if Current.user.can_administer? %>
-    <div class="align-center center avatar__form gap" data-controller="upload-preview">
-      <%= form_with model: @account, method: :patch, class: "txt-medium", data: { controller: "form" } do |form| %>
-        <label class="btn input--file">
-          <%= icon_tag "camera" %>
-          <%= form.file_field :logo, class: "input", accept: "image/*",
-                data: { action: "upload-preview#previewImage change->form#submit" } %>
-          <span class="for-screen-reader">Upload logo</span>
-        </label>
-      <% end %>
-
-      <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
-        <label class="btn avatar input--file account-logo txt-xx-large">
-          <%= image_tag fresh_account_logo_path, role: "presentation", size: 48, data: { upload_preview_target: "image" } %>
-          <%= form.file_field :logo, class: "input", accept: "image/*",
-                data: { action: "upload-preview#previewImage change->form#submit" } %>
-          <span class="for-screen-reader">Upload logo</span>
-        </label>
-      <% end %>
-
-      <% if @account.logo.attached? %>
-        <%= button_to fresh_account_logo_path, method: :delete, class: "btn btn--negative txt-small avatar__delete-btn" do %>
-          <%= icon_tag "minus" %>
-          <span class="for-screen-reader">Delete logo</span>
-        <% end %>
-      <% end %>
-    </div>
-
-    <%= form_with model: @account, data: { controller: "form" }, class: "flex flex-column gap" do |form| %>
-      <div class="flex align-center gap">
-        <%= translation_button(:account_name) %>
-
-        <label class="flex align-center gap flex-item-grow">
-          <%= form.text_field :name, class: "input txt-large", autocomplete: "off", placeholder: "Name this account", autofocus: true,
-                data: { action: "keydown.enter->form#submit" } %>
-        </label>
-
-        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-          <%= icon_tag "check" %>
-          <span class="for-screen-reader">Save changes</span>
-        <% end %>
-      </div>
+  <div class="align-center center avatar__form gap" data-controller="upload-preview">
+    <%= form_with model: @account, method: :patch, class: "txt-medium", data: { controller: "form" } do |form| %>
+      <label class="btn input--file">
+        <%= icon_tag "camera" %>
+        <%= form.file_field :logo, class: "input", accept: "image/*",
+              data: { action: "upload-preview#previewImage change->form#submit" } %>
+        <span class="for-screen-reader">Upload logo</span>
+      </label>
     <% end %>
-  <% else %>
-    <%= account_logo_tag style: "txt-xx-large center" %>
-    <h1 class="flex-item-grow txt-x-large"><%= @account.name %></h1>
 
-    <div class="flex justify-center gap txt-small txt-muted">
-      <span><%= pluralize(@member_count, "member") %></span>
-      <span>&middot;</span>
-      <span><%= pluralize(online_users_count, "online") %></span>
-      <span>&middot;</span>
-      <span><%= pluralize(@room_count, "room") %></span>
+    <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
+      <label class="btn avatar input--file account-logo txt-xx-large">
+        <%= image_tag fresh_account_logo_path, role: "presentation", size: 48, data: { upload_preview_target: "image" } %>
+        <%= form.file_field :logo, class: "input", accept: "image/*",
+              data: { action: "upload-preview#previewImage change->form#submit" } %>
+        <span class="for-screen-reader">Upload logo</span>
+      </label>
+    <% end %>
+
+    <% if @account.logo.attached? %>
+      <%= button_to fresh_account_logo_path, method: :delete, class: "btn btn--negative txt-small avatar__delete-btn" do %>
+        <%= icon_tag "minus" %>
+        <span class="for-screen-reader">Delete logo</span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%= form_with model: @account, data: { controller: "form" }, class: "flex flex-column gap" do |form| %>
+    <div class="flex align-center gap">
+      <%= translation_button(:account_name) %>
+
+      <label class="flex align-center gap flex-item-grow">
+        <%= form.text_field :name, class: "input txt-large", autocomplete: "off", placeholder: "Name this account", autofocus: true,
+              data: { action: "keydown.enter->form#submit" } %>
+      </label>
+
+      <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+        <%= icon_tag "check" %>
+        <span class="for-screen-reader">Save changes</span>
+      <% end %>
     </div>
   <% end %>
 
-  <% if Current.user.administrator? %>
-    <%= render "accounts/admin_settings" %>
-
-    <div class="pad-inline pad-block fill-shade border-radius txt-align-center">
-      <%= render "accounts/invite" %>
-    </div>
-  <% elsif Current.account.settings.allow_users_to_create_invite_links? %>
-    <div class="pad-inline pad-block fill-shade border-radius txt-align-center">
-      <%= render "users/profiles/invite_link" %>
-    </div>
-  <% end %>
+  <%= render "accounts/admin_settings" %>
 
   <div class="flex justify-center">
     <%= link_to account_users_path, class: "btn btn--reversed" do %>
       <%= icon_tag "everyone" %>
-      <span><%= Current.user.staff? ? "Manage members" : "Members" %></span>
+      <span>Manage members</span>
     <% end %>
   </div>
 </section>
-
-<% unless Sabha.saas? %>
-  <% content_for :footer do %>
-    <div class="txt-align-center center margin-block-double txt-subtle">Sabha&trade; version <%= version_badge %></div>
-  <% end %>
-<% end %>

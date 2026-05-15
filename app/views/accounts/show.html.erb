@@ -1,0 +1,52 @@
+<% @page_title = "About" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to_last_room_visited %>
+  </div>
+
+  <% if Current.user.can_administer? %>
+    <div class="flex align-center gap flex-item-justify-end">
+      <%= link_to edit_account_path, class: "btn", style: "view-transition-name: account-settings" do %>
+        <%= icon_tag "settings" %>
+        <span class="for-screen-reader">Configure account</span>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<section class="panel txt-align-center flex flex-column gap" style="view-transition-name: account-settings">
+  <%= account_logo_tag style: "account-logo--display txt-xx-large center" %>
+  <h1 class="txt-x-large margin-none"><%= @account.name %></h1>
+
+  <div class="flex justify-center gap txt-small txt-muted">
+    <span><%= pluralize(@member_count, "member") %></span>
+    <span>&middot;</span>
+    <span><%= online_users_count %> online</span>
+    <span>&middot;</span>
+    <span><%= pluralize(@room_count, "room") %></span>
+  </div>
+
+  <% if Current.account.settings.allow_users_to_create_invite_links? || Current.user.can_administer? %>
+    <div class="pad-inline pad-block fill-shade border-radius txt-align-center">
+      <% if Current.user.can_administer? %>
+        <%= render "accounts/invite" %>
+      <% else %>
+        <%= render "users/profiles/invite_link" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex justify-center">
+    <%= link_to account_users_path, class: "btn btn--reversed" do %>
+      <%= icon_tag "everyone" %>
+      <span><%= Current.user.staff? ? "Manage members" : "Members" %></span>
+    <% end %>
+  </div>
+</section>
+
+<% unless Sabha.saas? %>
+  <% content_for :footer do %>
+    <div class="txt-align-center center margin-block-double txt-subtle">Sabha&trade; version <%= version_badge %></div>
+  <% end %>
+<% end %>

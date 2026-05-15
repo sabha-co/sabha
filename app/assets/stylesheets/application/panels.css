@@ -488,3 +488,16 @@
   display: none;
 }
 
+/* Inline message block — sits inside a form or section, not the page-level flash. */
+.callout {
+  align-items: flex-start;
+  border-radius: 1em;
+  display: flex;
+  gap: var(--inline-space);
+  padding: var(--block-space-half) var(--inline-space-half);
+}
+
+.callout--alert {
+  background-color: color-mix(in oklch, var(--color-alert) 12%, transparent);
+}
+

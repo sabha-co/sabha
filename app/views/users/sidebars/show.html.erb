@@ -118,7 +118,7 @@
         <span class="sidebar__tool-label">Bookmarks</span>
       <% end %>
 
-      <%= link_to edit_account_path, class: "btn sidebar__tool" do %>
+      <%= link_to account_path, class: "btn sidebar__tool" do %>
         <%= icon_tag Current.user&.staff? ? "crown" : "world", style: "view-transition-name: account-settings" %>
         <span class="for-screen-reader">About</span>
         <span class="sidebar__tool-label">About</span>

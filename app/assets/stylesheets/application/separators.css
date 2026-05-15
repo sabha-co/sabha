@@ -4,3 +4,15 @@
   flex-grow: 1;
   min-inline-size: var(--inline-space-double);
 }
+
+/* Solid hairline that sits inside a vertical stack — no flex-grow, no min-width. */
+.separator--row {
+  --border-style: solid;
+  flex-grow: 0;
+  min-inline-size: 0;
+}
+
+/* Lighter weight for sub-dividers within a section. */
+.separator--soft {
+  opacity: 0.5;
+}
