@@ -38,10 +38,13 @@ module Sabha
     # owns delivery centrally. Dev/test always return true so letter_opener
     # and :test delivery work without needing a real API key.
     #
-    # Platform kill switch: setting EMAIL_GLOBALLY_DISABLED=true short-circuits
-    # everything to false regardless of mode or env, so a SaaS operator can
-    # halt all outbound notification mail across every tenant with a single
-    # env-var flip + restart.
+    # Platform kill switch for notification mail only: setting
+    # EMAIL_GLOBALLY_DISABLED=true short-circuits this predicate to false,
+    # which suppresses missed-notification bundles and the weekly digest
+    # across every tenant with one env-var flip + restart. Transactional
+    # auth mail (OTP, password reset, email verification) is intentionally
+    # NOT gated by this predicate and keeps sending — locking users out of
+    # sign-in is never the intended kill-switch outcome.
     def email_configured?
       return false if email_globally_disabled?
       return true if saas?
