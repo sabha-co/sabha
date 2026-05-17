@@ -137,4 +137,14 @@ class User::DicebearAvatarTest < ActiveSupport::TestCase
 
     assert_nil @user.dicebear_svg
   end
+
+  test "dicebear_svg returns nil on connection reset" do
+    Rails.configuration.x.dicebear.enabled = true
+    # Use unique seed to avoid cache interference
+    @user.update!(avatar_seed: SecureRandom.random_number(1_000_000))
+
+    stub_request(:get, %r{api\.dicebear\.com}).to_raise(Errno::ECONNRESET)
+
+    assert_nil @user.dicebear_svg
+  end
 end

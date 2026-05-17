@@ -52,7 +52,7 @@ module User::DicebearAvatar
 
     response = http.request(Net::HTTP::Get.new(uri))
     response.body if response.is_a?(Net::HTTPSuccess)
-  rescue Net::OpenTimeout, Net::ReadTimeout, SocketError, Errno::ECONNREFUSED => e
+  rescue Net::OpenTimeout, Net::ReadTimeout, SocketError, Errno::ECONNREFUSED, Errno::ECONNRESET => e
     Rails.logger.warn("DiceBear API unavailable: #{e.class.name}")
     nil
   end
