@@ -12,9 +12,14 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     assert_select "form"
   end
 
-  test "edit links to push subscription device management" do
+  test "edit lists shared and direct memberships with involvement controls" do
     get edit_user_notification_settings_url(user_id: "me")
-    assert_select "a[href=?]", user_push_subscriptions_path, count: 1
+
+    assert_response :success
+    assert_select "menu li.membership-item", minimum: 1
+    users(:david).memberships.shared.each do |membership|
+      assert_select "menu li.membership-item a[href=?]", room_path(membership.room)
+    end
   end
 
   test "edit hides missed-email controls when account email_notifications_enabled is off" do
@@ -22,7 +27,7 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
 
     get edit_user_notification_settings_url(user_id: "me")
 
-    assert_select "input[type=checkbox][name='user_notification_settings[missed_email_enabled]']", count: 0
+    assert_select "input[name='user_notification_settings[missed_email_enabled]']", count: 0
     assert_select "select[name='user_notification_settings[email_frequency]']", count: 0
     assert_match(/Missed-notification email is turned off for this workspace/, @response.body)
   end
@@ -32,7 +37,7 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
 
     get edit_user_notification_settings_url(user_id: "me")
 
-    assert_select "input[type=checkbox][name='user_notification_settings[weekly_digest_subscribed]']", count: 0
+    assert_select "input[name='user_notification_settings[weekly_digest_subscribed]']", count: 0
     assert_match(/weekly community digest is turned off for this workspace/, @response.body)
   end
 
@@ -44,14 +49,28 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     assert_select "a[href=?]", edit_account_path, minimum: 1
   end
 
-  test "edit prompts non-admins to ask an administrator when account flags are off" do
+  test "edit hides the email fieldset from non-admins when both account flags are off" do
     Account.sole.update!(email_notifications_enabled: false, weekly_digest_enabled: false)
     sign_in :jz
 
     get edit_user_notification_settings_url(user_id: "me")
 
     assert_select "a[href=?]", edit_account_path, count: 0
-    assert_match(/Ask an administrator to enable it/, @response.body)
+    assert_select "legend", text: "Email", count: 0
+    assert_no_match(/Missed-notification email is turned off/, @response.body)
+    assert_no_match(/weekly community digest is turned off/, @response.body)
+  end
+
+  test "edit keeps the email fieldset for non-admins when at least one feature is on" do
+    Account.sole.update!(email_notifications_enabled: true, weekly_digest_enabled: false)
+    sign_in :jz
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "legend", text: "Email", count: 1
+    assert_select "input[name='user_notification_settings[missed_email_enabled]']", count: 1
+    assert_select "input[name='user_notification_settings[weekly_digest_subscribed]']", count: 0
+    assert_no_match(/weekly community digest is turned off/, @response.body)
   end
 
   test "edit shows missed-email and digest controls when both account flags are on" do
@@ -59,9 +78,9 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
 
     get edit_user_notification_settings_url(user_id: "me")
 
-    assert_select "input[type=checkbox][name='user_notification_settings[missed_email_enabled]']", count: 1
+    assert_select "input[name='user_notification_settings[missed_email_enabled]']", count: 1
     assert_select "select[name='user_notification_settings[email_frequency]']", count: 1
-    assert_select "input[type=checkbox][name='user_notification_settings[weekly_digest_subscribed]']", count: 1
+    assert_select "input[name='user_notification_settings[weekly_digest_subscribed]']", count: 1
   end
 
   test "update flips missed_email_enabled" do

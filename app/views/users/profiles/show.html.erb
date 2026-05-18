@@ -137,31 +137,6 @@
     </div>
   <% end %>
 
-  <hr class="margin-block-start borderless">
-
-  <fieldset style="padding-bottom: 0;">
-    <legend class="gap">
-      <%= icon_tag "bell", style: "--icon-size: 2.25rem" %>
-    </legend>
-  </fieldset>
-
-  <div class="margin-block pad-inline pad-block fill-shade border-radius" style="margin-top: 0;">
-    <% all_memberships = @shared_memberships + @direct_memberships %>
-    <% all_memberships.each do |membership| %>
-      <%= turbo_stream_from membership %>
-    <% end %>
-
-    <menu class="flex flex-column gap-half margin-none pad">
-      <%= render partial: "users/profiles/membership", collection: @shared_memberships %>
-
-      <% if @direct_memberships.any? && @shared_memberships.any? %>
-        <hr class="separator full-width" style="--border-style: solid">
-      <% end %>
-
-      <%= render partial: "users/profiles/membership", collection: @direct_memberships %>
-    </menu>
-  </div>
-
   <%= render "users/profiles/transfer", user: @user %>
 
   <%= render "users/profiles/theme" %>

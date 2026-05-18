@@ -5,6 +5,7 @@ class Users::NotificationSettingsController < ApplicationController
   before_action :set_settings
 
   def edit
+    @shared_memberships = Current.user.memberships.shared.visible.with_ordered_room
   end
 
   def update
