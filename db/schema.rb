@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_18_143000) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_18_190000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -274,6 +274,17 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_18_143000) do
     t.integer "user_id", null: false
     t.index ["token"], name: "index_sessions_on_token", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
+  create_table "single_sign_on_nonces", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.string "nonce", null: false
+    t.string "return_path", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "used_at"
+    t.index ["expires_at"], name: "index_single_sign_on_nonces_on_expires_at"
+    t.index ["nonce"], name: "index_single_sign_on_nonces_on_nonce", unique: true
   end
 
   create_table "single_sign_on_records", force: :cascade do |t|

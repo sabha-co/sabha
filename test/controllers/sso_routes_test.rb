@@ -6,6 +6,6 @@ class SsoRoutesTest < ActionDispatch::IntegrationTest
   end
 
   test "routes to sso callback" do
-    assert_routing "/session/sso_login", controller: "sso", action: "create"
+    assert_routing "/session/sso/callback", controller: "sso", action: "show"
   end
 end

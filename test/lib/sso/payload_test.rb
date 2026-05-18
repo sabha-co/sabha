@@ -4,12 +4,12 @@ class Sso::PayloadTest < ActiveSupport::TestCase
   SECRET = "super-secret-sso-key"
 
   test "round trips encoded payload" do
-    sso, sig = Sso::Payload.encode({ nonce: "abc123", return_sso_url: "https://chat.example.com/session/sso_login" }, SECRET)
+    sso, sig = Sso::Payload.encode({ nonce: "abc123", return_sso_url: "https://chat.example.com/session/sso/callback" }, SECRET)
 
     payload = Sso::Payload.decode(sso, sig, SECRET)
 
     assert_equal "abc123", payload["nonce"]
-    assert_equal "https://chat.example.com/session/sso_login", payload["return_sso_url"]
+    assert_equal "https://chat.example.com/session/sso/callback", payload["return_sso_url"]
   end
 
   test "decodes supported response fields" do

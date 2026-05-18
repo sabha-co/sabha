@@ -80,9 +80,9 @@ Self-hosted Sabha is often run as the chat surface for another product or commun
 ## Key Technical Decisions
 
 - Use DiscourseConnect wire compatibility, not JWT or OAuth: this matches the origin note and allows existing DiscourseConnect providers to work unchanged.
-- Keep protocol code pure in `lib/sso`: HMAC, base64, query parsing, boolean coercion, and nonce primitives should not depend on `User`, `ApplicationRecord`, or controller state.
-- Keep user resolution in application code: resolving or creating `User` and `SingleSignOnRecord` is Sabha domain behavior and should follow the repo's "business logic outside controllers" standard.
-- Store active nonces in the Rails session and used nonces in a small server-side cache wrapper: active nonces become browser-session-bound for CSRF protection, while used nonce sentinels survive session reset after login and provide precise replay errors.
+- Keep protocol code pure in `lib/sso`: HMAC, base64, query parsing, and boolean coercion should not depend on `User`, `ApplicationRecord`, or controller state.
+- Keep user resolution on `SingleSignOnRecord`: resolving or creating `User` and recording provider audit fields is Sabha domain behavior and should follow the repo's "business logic in models" standard.
+- Store nonces in `SingleSignOnNonce` rows and bind them to the Rails session: the database record gives unique replay protection and auditability, while the session key preserves CSRF protection.
 - Consume the nonce before user resolution after signature validation: a valid callback should be single-use even if user provisioning later fails.
 - Treat `logout=true` as a signed callback branch only, not provider-initiated single sign-out. Sabha should accept it only with a valid `sso`/`sig` pair and a valid Sabha-issued nonce, then terminate the current local session without requiring `email` or `external_id`.
 - Treat `require_activation=true` as a security boundary: do not email-match existing accounts when the provider says its email is unverified.
@@ -114,19 +114,18 @@ This is the expected new-code shape. It is a scope declaration, not a constraint
 ```text
 lib/sso/
   payload.rb
-  nonce.rb
 app/models/
   single_sign_on_record.rb
-  sso/user_resolver.rb
+  single_sign_on_nonce.rb
 app/controllers/
   sso_controller.rb
 app/views/sso/
   failed.html.erb
 test/lib/sso/
   payload_test.rb
-  nonce_test.rb
-test/models/sso/
-  user_resolver_test.rb
+test/models/
+  single_sign_on_record_test.rb
+  single_sign_on_nonce_test.rb
 test/controllers/
   sso_controller_test.rb
 ```
@@ -151,8 +150,8 @@ sequenceDiagram
     Sabha->>Sabha: Build and sign DiscourseConnect request
     Sabha-->>Browser: Redirect to SSO_PROVIDER_URL?sso=...&sig=...
     Browser->>Provider: Authenticate with parent app
-    Provider-->>Browser: Redirect /session/sso_login?sso=...&sig=...
-    Browser->>Sabha: GET /session/sso_login
+    Provider-->>Browser: Redirect /session/sso/callback?sso=...&sig=...
+    Browser->>Sabha: GET /session/sso/callback
     Sabha->>Sabha: Verify signature, consume nonce
     Sabha->>Sabha: Resolve/create user and SSO record
     alt activation required
@@ -196,7 +195,7 @@ flowchart TB
 
 **Approach:**
 - Add `"sso"` to `Account::VALID_AUTH_METHODS` and update comments/docs that currently say password/otp only.
-- Add routes for `GET /session/sso` and `GET /session/sso_login`, using REST-shaped controller actions (`new` and `create`) on `SsoController`.
+- Add routes for `GET /session/sso` and `GET /session/sso/callback`, using REST-shaped controller actions (`new` and `show`) on `SsoController`.
 - Keep SaaS mode guardrails explicit. `AUTH_METHOD=sso` should be accepted for self-hosted mode and rejected at boot in SaaS mode according to the existing boot-mode pattern, because SaaS auth is out of scope.
 - Define required env vars as `SSO_PROVIDER_URL` and `SSO_SECRET`; optional flags are `SSO_OVERRIDES_NAME` and `SSO_OVERRIDES_AVATAR`.
 
@@ -211,7 +210,7 @@ flowchart TB
 - Happy path: `ENV["AUTH_METHOD"]="sso"` -> `Account#auth_method_value` returns `"sso"`.
 - Edge case: invalid `AUTH_METHOD` still falls back to `"password"`.
 - Error path: SaaS boot guard does not allow self-hosted SSO to replace SaaS auth.
-- Integration: route helpers resolve `/session/sso` and `/session/sso_login` to the intended controller actions.
+- Integration: route helpers resolve `/session/sso` and `/session/sso/callback` to the intended controller actions.
 
 **Verification:**
 - The auth method is accepted in self-hosted tests, and route tests prove the endpoint names are stable.
@@ -220,7 +219,7 @@ flowchart TB
 
 ### U2. Protocol Primitives
 
-**Goal:** Add portable DiscourseConnect payload and nonce primitives that can be tested without Rails models.
+**Goal:** Add portable DiscourseConnect payload primitives and database-backed nonce state.
 
 **Requirements:** R2
 
@@ -228,17 +227,17 @@ flowchart TB
 
 **Files:**
 - Create: `lib/sso/payload.rb`
-- Create: `lib/sso/nonce.rb`
+- Create: `app/models/single_sign_on_nonce.rb`
 - Test: `test/lib/sso/payload_test.rb`
-- Test: `test/lib/sso/nonce_test.rb`
+- Test: `test/models/single_sign_on_nonce_test.rb`
 
 **Approach:**
 - `Sso::Payload` owns `encode` and `decode`: query-string construction, `Base64.strict_encode64`, pre-decode Base64 character validation, HMAC-SHA256, constant-time signature comparison, boolean coercion, custom-field collection, and protocol-specific exceptions.
 - Compute signatures over the base64 payload string as received by Rack, not over decoded payload text.
 - Mirror Discourse boolean semantics: `"true"` becomes `true`, `"false"` becomes `false`, and any other value for known booleans becomes `nil`.
 - Reject banned external IDs (`none`, `nil`, `blank`, `null`, case-insensitive) with a specific exception.
-- `Sso::Nonce` owns issue/consume behavior with a minimal `[]`, `[]=`, `delete` store contract.
-- Active nonce keys live in the Rails session store with an issued/expires timestamp in the stored value; used nonce sentinels should be backed by a Rails cache adapter wrapper so replay detection can survive session reset and be shared across requests.
+- `SingleSignOnNonce` owns database-backed issue/consume behavior with a per-session nonce binding and unique nonce replay protection.
+- Active nonce keys also live in the Rails session store so callbacks from another browser session are rejected without consuming the legitimate nonce.
 
 **Patterns to follow:**
 - Existing Rails token use in `AuthToken` and email verification, but keep this layer pure.
@@ -309,12 +308,12 @@ flowchart TB
 **Dependencies:** U2, U3
 
 **Files:**
-- Create: `app/models/sso/user_resolver.rb`
+- Modify: `app/models/single_sign_on_record.rb`
 - Modify: `app/models/user.rb`
-- Test: `test/models/sso/user_resolver_test.rb`
+- Test: `test/models/single_sign_on_record_test.rb`
 
 **Approach:**
-- Add a small application model object responsible for the resolution transaction. Avoid `app/services`; keep it under `app/models/sso`.
+- Put the resolution transaction on `SingleSignOnRecord` so the provider identity record owns lookup, claim, provisioning, and audit updates.
 - Resolution order:
   1. Find `SingleSignOnRecord` by `external_id`; update `external_email`, audit payload, and optional profile fields.
   2. If `require_activation` is not true, find an existing active user by email with no SSO record and claim it by creating the SSO record with `external_email`.
@@ -374,8 +373,8 @@ result.message             # safe controller-facing message
 
 **Approach:**
 - `new` issues a nonce, stores a safe return path, signs a payload containing `nonce` and `return_sso_url`, and redirects to `SSO_PROVIDER_URL`.
-- `create` verifies the signed callback payload, consumes the nonce, handles `failed=true` and the precisely-scoped signed `logout=true` branch, delegates user resolution, and either opens a session or redirects to an email-verification notice.
-- Both actions allow unauthenticated access. `create` should be rate limited, following the OTP validation surface.
+- `show` verifies the signed callback payload, consumes the nonce, handles `failed=true` and the precisely-scoped signed `logout=true` branch, delegates user resolution, and either opens a session or redirects to an email-verification notice.
+- Both actions allow unauthenticated access. `show` should be rate limited, following the OTP validation surface.
 - Missing `SSO_PROVIDER_URL` or `SSO_SECRET` should fail closed with an operator-facing error in logs and a generic user-facing error.
 - Development may include expected signature details for debugging; production must not leak expected signatures.
 - `logout=true` is accepted only when the callback has a valid signature and an unconsumed Sabha-issued nonce. In that branch, `email` and `external_id` are not required; the controller calls `terminate_current_session` if a local session exists and redirects locally without provisioning a user.
@@ -492,7 +491,7 @@ result.message             # safe controller-facing message
 
 ## System-Wide Impact
 
-- **Interaction graph:** The request path crosses `Authentication`, `SsoController`, `Sso::Payload`, `Sso::Nonce`, `Sso::UserResolver`, `SingleSignOnRecord`, `User`, and `Session`.
+- **Interaction graph:** The request path crosses `Authentication`, `SsoController`, `Sso::Payload`, `SingleSignOnNonce`, `SingleSignOnRecord`, `User`, and `Session`.
 - **Error propagation:** Protocol errors should return forbidden from callback endpoints; domain conflicts should log security context and show generic user-facing failure; misconfiguration should log operator detail without leaking secrets.
 - **State lifecycle risks:** Nonce consumption, session reset, SSO record creation, user creation, and verification email delivery can partially succeed. The resolver should make database writes transactional where possible and fail closed on ambiguous identity state.
 - **API surface parity:** Bot API bearer-token authentication must remain independent from browser SSO. Password/OTP browser surfaces must be disabled consistently in SSO mode.
@@ -506,7 +505,7 @@ result.message             # safe controller-facing message
 | Risk | Mitigation |
 |------|------------|
 | Email takeover during migration | Skip email matching when `require_activation=true`; reject email already bound to another `external_id`; document provider verification requirements and pre-seeding. |
-| Replay or CSRF on callback | Session-bound active nonce plus used-nonce sentinel; consume nonce exactly once after signature validation, including failed-auth and logout branches. |
+| Replay or CSRF on callback | Database-backed nonce row plus session binding; consume nonce exactly once after signature validation, including failed-auth and logout branches. |
 | Secret leakage in diagnostics | Include detailed signature diagnostics only outside production; never log `SSO_SECRET`. |
 | Duplicate users on concurrent callbacks | Use a per-`external_id` lock and unique database constraints. |
 | Local login bypass remains active | Add SSO-mode tests for password, OTP, join, and auth chokepoint redirects. |

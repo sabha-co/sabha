@@ -2,12 +2,12 @@ class SsoController < ApplicationController
   layout "session"
 
   allow_unauthenticated_access
-  rate_limit to: 10, within: 1.minute, only: :create, with: -> { head :too_many_requests }
+  rate_limit to: 10, within: 1.minute, only: :show, with: -> { head :too_many_requests }
 
   def new
     if sso_configured?
-      nonce = Sso::Nonce.issue(session, return_path: sso_return_path)
-      sso, sig = Sso::Payload.encode({ nonce: nonce, return_sso_url: sso_login_url }, sso_secret)
+      nonce = SingleSignOnNonce.issue!(session:, return_path: sso_return_path)
+      sso, sig = Sso::Payload.encode({ nonce: nonce, return_sso_url: sso_callback_url }, sso_secret)
 
       redirect_to provider_url(sso:, sig:), allow_other_host: true
     else
@@ -15,15 +15,11 @@ class SsoController < ApplicationController
     end
   end
 
-  def create
+  def show
     return sso_misconfigured unless sso_configured?
 
     payload = Sso::Payload.decode(params[:sso], params[:sig], sso_secret)
-    return_path = Sso::Nonce.consume!(
-      active_store: session,
-      used_store: Sso::Nonce::CacheStore.new(Rails.cache),
-      nonce: payload["nonce"]
-    )
+    return_path = SingleSignOnNonce.consume!(payload["nonce"], session:)
 
     if payload["failed"]
       @message = "Single sign-on failed."
@@ -35,14 +31,14 @@ class SsoController < ApplicationController
     else
       complete_login(payload, return_path)
     end
-  rescue Sso::Payload::Error, Sso::Nonce::Error => error
+  rescue Sso::Payload::Error, SingleSignOnNonce::Error => error
     Rails.logger.warn("[SSO] Rejected callback: #{error.class.name}: #{error.message}")
     head :forbidden
   end
 
   private
     def complete_login(payload, return_path)
-      result = Sso::UserResolver.resolve(payload)
+      result = SingleSignOnRecord.resolve(payload)
 
       if result.failure?
         Rails.logger.warn("[SSO] Resolver failed: #{result.message}")

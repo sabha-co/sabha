@@ -11,7 +11,6 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     ENV["AUTH_METHOD"] = "sso"
     ENV["SSO_PROVIDER_URL"] = "https://parent.example.com/sso"
     ENV["SSO_SECRET"] = "test-sso-secret"
-    Rails.cache.clear
   end
 
   teardown do
@@ -28,7 +27,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
 
     payload = provider_request_payload
     assert payload["nonce"].present?
-    assert_equal sso_login_url, payload["return_sso_url"]
+    assert_equal sso_callback_url, payload["return_sso_url"]
   end
 
   test "new rejects unsafe return path" do
@@ -36,7 +35,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     nonce = provider_request_payload["nonce"]
 
     sso, sig = Sso::Payload.encode(callback_payload(nonce:), ENV["SSO_SECRET"])
-    get sso_login_url, params: { sso:, sig: }
+    get sso_callback_url, params: { sso:, sig: }
 
     assert_redirected_to root_url
   end
@@ -47,7 +46,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: users(:david).email_address, external_id: single_sign_on_records(:david).external_id), ENV["SSO_SECRET"])
 
     assert_difference -> { Session.count }, +1 do
-      get sso_login_url, params: { sso:, sig: }
+      get sso_callback_url, params: { sso:, sig: }
     end
 
     assert_redirected_to "/chat"
@@ -61,7 +60,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
 
     assert_difference -> { User.count }, +1 do
       assert_difference -> { SingleSignOnRecord.count }, +1 do
-        get sso_login_url, params: { sso:, sig: }
+        get sso_callback_url, params: { sso:, sig: }
       end
     end
 
@@ -75,10 +74,10 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode(callback_payload(nonce:), ENV["SSO_SECRET"])
 
-    get sso_login_url, params: { sso:, sig: "bad-signature" }
+    get sso_callback_url, params: { sso:, sig: "bad-signature" }
     assert_response :forbidden
 
-    get sso_login_url, params: { sso:, sig: }
+    get sso_callback_url, params: { sso:, sig: }
     assert_response :redirect
     assert parsed_cookies.signed[:session_token].present?
   end
@@ -88,10 +87,10 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode(callback_payload(nonce:), ENV["SSO_SECRET"])
 
-    get sso_login_url, params: { sso:, sig: }
+    get sso_callback_url, params: { sso:, sig: }
     assert_response :redirect
 
-    get sso_login_url, params: { sso:, sig: }
+    get sso_callback_url, params: { sso:, sig: }
     assert_response :forbidden
   end
 
@@ -101,7 +100,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     sso, sig = Sso::Payload.encode(callback_payload(nonce:), ENV["SSO_SECRET"])
 
     travel 31.minutes do
-      get sso_login_url, params: { sso:, sig: }
+      get sso_callback_url, params: { sso:, sig: }
     end
 
     assert_response :forbidden
@@ -113,7 +112,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     sso, sig = Sso::Payload.encode({ nonce:, failed: "true" }, ENV["SSO_SECRET"])
 
     assert_no_difference -> { Session.count } do
-      get sso_login_url, params: { sso:, sig: }
+      get sso_callback_url, params: { sso:, sig: }
     end
 
     assert_response :unauthorized
@@ -130,7 +129,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode({ nonce:, logout: "true" }, ENV["SSO_SECRET"])
 
-    get sso_login_url, params: { sso:, sig: }
+    get sso_callback_url, params: { sso:, sig: }
 
     assert_response :redirect
     assert_not Session.exists?(session_id)
@@ -147,7 +146,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     nonce = provider_request_payload["nonce"]
     sso, = Sso::Payload.encode({ nonce:, logout: "true" }, ENV["SSO_SECRET"])
 
-    get sso_login_url, params: { sso:, sig: "bad-signature" }
+    get sso_callback_url, params: { sso:, sig: "bad-signature" }
 
     assert_response :forbidden
     assert Session.exists?(session_id)
@@ -159,7 +158,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "verify-sso@example.com", external_id: "verify-sso", require_activation: "true"), ENV["SSO_SECRET"])
 
     assert_enqueued_emails 1 do
-      get sso_login_url, params: { sso:, sig: }
+      get sso_callback_url, params: { sso:, sig: }
     end
 
     assert_response :unauthorized

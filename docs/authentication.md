@@ -71,7 +71,7 @@ Sabha redirects to SSO_PROVIDER_URL?sso=...&sig=...
   ↓
 Parent app authenticates the user
   ↓
-Parent app redirects back to /session/sso_login?sso=...&sig=...
+Parent app redirects back to /session/sso/callback?sso=...&sig=...
   ↓
 Sabha verifies the signature and nonce
   ↓
@@ -460,7 +460,7 @@ generates_token_for :password_reset, expires_in: 1.hour
 # Authentication
 resource :session                              # Password sign-in/out
 get "/session/sso", to: "sso#new"              # SSO provider redirect
-get "/session/sso_login", to: "sso#create"     # SSO callback
+get "/session/sso/callback", to: "sso#show"      # SSO callback
 resources :auth_tokens, only: [:create]        # Request OTP
 namespace :auth_tokens do
   resource :validations, only: [:new, :create] # Validate OTP
@@ -607,8 +607,8 @@ AUTH_METHOD=otp
 | `user.rb` | User authentication, tokens, verification |
 | `session.rb` | Session management |
 | `auth_token.rb` | OTP codes |
-| `single_sign_on_record.rb` | Parent-app identity mapping |
-| `sso/user_resolver.rb` | SSO user lookup, claim, and provisioning |
+| `single_sign_on_record.rb` | Parent-app identity mapping, lookup, claim, and provisioning |
+| `single_sign_on_nonce.rb` | Database-backed SSO nonce issue and replay protection |
 | `account.rb` | Auth method configuration |
 | `first_run.rb` | AutoBootstrap |
 

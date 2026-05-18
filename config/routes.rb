@@ -43,7 +43,7 @@ Rails.application.routes.draw do
     end
   end
   get "/session/sso", to: "sso#new", as: :sso_init
-  get "/session/sso_login", to: "sso#create", as: :sso_login
+  get "/session/sso/callback", to: "sso#show", as: :sso_callback
 
   resources :auth_tokens, only: %i[create]
   namespace :auth_tokens do
