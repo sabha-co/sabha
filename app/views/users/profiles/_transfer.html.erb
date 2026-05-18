@@ -1,26 +1,22 @@
 <% url = session_transfer_url(user.transfer_id) %>
 
-<fieldset>
-  <legend class="gap">
-    <%= icon_tag "laptop", style: "--icon-size: 2.25rem" %>
-    <%= icon_tag "transfer", style: "--icon-size: 2.25rem" %>
-    <%= icon_tag "mobile-phone", style: "--icon-size: 2.25rem" %>
-  </legend>
+<div class="margin-block pad-inline pad-block fill-shade border-radius txt-align-center">
+  <div class="flex flex-column align-center gap">
+    <label class="flex flex-column gap full-width" style="--row-gap: 0.5em">
+      <strong id="session_transfer_label" class="invite-label">
+        <% if Current.user != user %>
+          Share to get them back into their account
+        <% else %>
+          Sign in on another device
+        <% end %>
+      </strong>
+      <span class="flex align-center gap input input--actor fill-white">
+        <%= icon_tag "transfer" %>
+        <input type="text" class="input" id="session_transfer_url" value="<%= url %>" aria-labelledby="session_transfer_label" readonly>
+      </span>
+    </label>
 
-
-  <div class="flex flex-column gap">
-    <% if Current.user != user %>
-      <div class="flex align-center gap justify-center">
-        <%= icon_tag "crown", class: "flex-item-no-shrink" %>
-        <label for="session_transfer_url">Share to get them back into their account</label>
-      </div>
-    <% else %>
-      <label for="session_transfer_url" class="for-screen-reader">Use this link to login automatically on another device</label>
-    <% end %>
-
-    <input type="text" class="input" value="<%= url %>" id="session_transfer_url" readonly>
-
-    <div class="flex align-center center gap">
+    <div class="flex align-center gap">
       <%= link_to_zoom_qr_code(url) do %>
         <span class="for-screen-reader">Show auto-login QR code</span>
         <%= icon_tag "qr-code" %>
@@ -28,13 +24,13 @@
 
       <%= button_to_copy_to_clipboard(url) do %>
         <span class="for-screen-reader">Copy auto-login link</span>
-        <%= icon_tag "copy-paste", class: "flex-item-no-shrink" %>
+        <%= icon_tag "copy-paste" %>
       <% end %>
 
       <%= web_share_session_button(url, "Your sign-in link", "This is your own private sign-in URL, DO NOT SHARE IT. Use it to sign-in on another device or if you get locked out.") do %>
         <span class="for-screen-reader">Share auto-login link</span>
-        <%= icon_tag "share", class: "flex-item-no-shrink" %>
+        <%= icon_tag "share" %>
       <% end %>
     </div>
   </div>
-</fieldset>
+</div>

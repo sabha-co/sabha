@@ -137,16 +137,40 @@
     </div>
   <% end %>
 
+  <div class="margin-block pad fill-shade border-radius">
+    <section>
+      <p class="txt-small txt-muted txt-label margin-block-end">Appearance</p>
+      <%= render "users/profiles/theme" %>
+    </section>
+
+    <hr class="separator separator--row margin-block">
+
+    <section>
+      <p class="txt-small txt-muted txt-label">Notifications</p>
+      <%= link_to edit_user_notification_settings_path, class: "setting-row txt-undecorated" do %>
+        <span class="setting-row__text">
+          <span class="setting-row__title">Notification preferences</span>
+          <span class="txt-small txt-muted">Email, push, and per-room alerts</span>
+        </span>
+        <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
+      <% end %>
+    </section>
+
+    <% if Rails.env.development? %>
+      <hr class="separator separator--row margin-block">
+
+      <section>
+        <p class="txt-small txt-muted txt-label">Developer</p>
+        <%= link_to user_push_subscriptions_url, class: "setting-row txt-undecorated" do %>
+          <span class="setting-row__text">
+            <span class="setting-row__title">Push notifications dev mode</span>
+            <span class="txt-small txt-muted">Test push subscriptions on this device</span>
+          </span>
+          <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
+
   <%= render "users/profiles/transfer", user: @user %>
-
-  <%= render "users/profiles/theme" %>
-
-  <% if Rails.env.development? %>
-    <fieldset>
-      <legend>
-        <%= icon_tag "key", style: "--icon-size: 2.25rem" %>
-      </legend>
-      <%= link_to "Push Notifications Dev Mode", user_push_subscriptions_url, class: "btn txt-small center" %>
-    </fieldset>
-  <% end %>
 </section>
