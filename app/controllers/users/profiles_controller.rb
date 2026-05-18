@@ -2,8 +2,6 @@ class Users::ProfilesController < ApplicationController
   before_action :set_user
 
   def show
-    @shared_memberships = Current.user.memberships.shared.with_ordered_room
-    @direct_memberships = Current.user.memberships.visible.direct_rooms.with_ordered_room
   end
 
   def update

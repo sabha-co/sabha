@@ -12,6 +12,12 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "show links to notification preferences" do
+    get user_profile_url
+
+    assert_select "a[href=?]", edit_user_notification_settings_path, count: 1
+  end
+
   test "email change sends verification email" do
     assert_enqueued_emails 1 do
       patch user_profile_url, params: {
