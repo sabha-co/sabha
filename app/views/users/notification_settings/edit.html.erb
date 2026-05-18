@@ -4,6 +4,13 @@
   <div class="flex-item-justify-start">
     <%= link_back_to_last_room_visited %>
   </div>
+
+  <div class="flex-item-justify-end">
+    <%= link_to user_profile_path, class: "btn avatar" do %>
+      <%= avatar_image_tag(Current.user, size: 40, loading: :lazy) %>
+      <span class="for-screen-reader">Back to profile</span>
+    <% end %>
+  </div>
 <% end %>
 
 <section class="panel flex flex-column gap">

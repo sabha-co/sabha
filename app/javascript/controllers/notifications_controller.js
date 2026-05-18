@@ -88,8 +88,10 @@ export default class extends Controller {
   }
 
   #showNotificationBell() {
-    // Show the bell and the alert icon
-    this.bellTarget.querySelectorAll(".icon").forEach(icon => icon.toggleAttribute("hidden"))
+    // Container starts hidden to avoid the flash of a swapping icon during load.
+    // Reveal it only once we know the user is not subscribed.
+    const container = document.getElementById('notification_bell_container')
+    if (container) container.hidden = false
 
     // Add the pulsing effect if it's the first run
     if (!this.#hasSeenFirstRun) {
