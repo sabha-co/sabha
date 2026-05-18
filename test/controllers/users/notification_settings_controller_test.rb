@@ -4,6 +4,7 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
   setup do
     sign_in :david
     @settings = users(:david).notification_settings || users(:david).create_notification_settings!
+    Sabha.stubs(:email_globally_disabled?).returns(false)
   end
 
   test "edit renders the form" do
@@ -49,6 +50,17 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     assert_match(/Email notifications are turned off for this workspace/, @response.body)
     assert_no_match(/Missed-notification email is turned off/, @response.body)
     assert_no_match(/weekly community digest is turned off/, @response.body)
+  end
+
+  test "edit hides the entire email section when email is globally disabled" do
+    Account.sole.update!(email_notifications_enabled: true, weekly_digest_enabled: true)
+    Sabha.stubs(:email_globally_disabled?).returns(true)
+
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_select "p", text: "Email", count: 0
+    assert_select "input[name='user_notification_settings[missed_email_enabled]']", count: 0
+    assert_select "input[name='user_notification_settings[weekly_digest_subscribed]']", count: 0
   end
 
   test "edit shows admin link when account flags are off and current user is administrator" do

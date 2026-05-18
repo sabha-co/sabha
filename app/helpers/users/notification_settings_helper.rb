@@ -1,5 +1,7 @@
 module Users::NotificationSettingsHelper
   def email_section_visible?
+    return false if Sabha.email_globally_disabled?
+
     missed_email_section_visible? || weekly_digest_section_visible?
   end
 

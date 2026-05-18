@@ -50,11 +50,11 @@
                     title:     "Email me when I'm mentioned or sent a DM while I'm away" %>
 
               <%= form_with model: @settings, url: user_notification_settings_path(user_id: "me"), method: :patch, scope: :user_notification_settings, data: { controller: "form" } do |form| %>
-                <div class="flex align-center gap" style="padding-inline-start: 1.75rem;">
+                <div class="flex align-center flex-wrap gap-half">
                   <span class="txt-small txt-muted">Bundle into</span>
                   <%= form.select :email_frequency,
                         [["one hourly email", "hourly"], ["one daily email", "daily"]], {},
-                        class: "input txt-small", style: "width: auto;",
+                        class: "input txt-small", style: "inline-size: auto; min-inline-size: 12em;",
                         data: { action: "change->form#submit" } %>
                 </div>
               <% end %>
