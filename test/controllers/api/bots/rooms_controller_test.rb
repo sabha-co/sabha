@@ -41,6 +41,17 @@ class API::Bots::RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_url
   end
 
+  test "valid bot key works when SSO auth enabled" do
+    original = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "sso"
+
+    get api_bots_rooms_url, headers: bot_headers(@bot.bot_key)
+
+    assert_response :success
+  ensure
+    original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
+
   # Joinable rooms filter
 
   test "lists joinable open rooms the bot is not in" do

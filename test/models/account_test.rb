@@ -29,6 +29,20 @@ class AccountTest < ActiveSupport::TestCase
     end
   end
 
+  test "auth_method_value returns sso when set" do
+    original_env = ENV["AUTH_METHOD"]
+    begin
+      ENV["AUTH_METHOD"] = "sso"
+      assert_equal "sso", @account.auth_method_value
+    ensure
+      if original_env.nil?
+        ENV.delete("AUTH_METHOD")
+      else
+        ENV["AUTH_METHOD"] = original_env
+      end
+    end
+  end
+
   test "auth_method_value falls back to password for invalid ENV value" do
     original_env = ENV["AUTH_METHOD"]
     begin

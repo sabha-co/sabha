@@ -181,28 +181,29 @@ Models primarily use namespace decomposition, with selective service objects whe
 Configurable via `AUTH_METHOD` environment variable.
 
 ```
-                    ┌─────────────────────┐
-                    │  Sign-In Form       │
-                    │  (email + password   │
-                    │   or email-only OTP) │
-                    └─────────┬───────────┘
-                              │
-              ┌───────────────┴───────────────┐
-              ▼                               ▼
-     Password Auth                     Passwordless (OTP)
-     (bcrypt hash)                     AuthToken → email
-              │                               │
-              ▼                               ▼
-         Session created               6-digit code verified
-         (session_token cookie)        Session created
-              │
-              ▼
-         Current.user set via
-         before_action callback
+                 ┌────────────────────────┐
+                 │ Auth entry point       │
+                 │ (/session/new or SSO)  │
+                 └───────────┬────────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        ▼                    ▼                    ▼
+ Password Auth        Passwordless (OTP)       SSO
+ (bcrypt hash)        AuthToken → email        DiscourseConnect
+        │                    │                    │
+        ▼                    ▼                    ▼
+ Session created      6-digit code verified    Signed callback verified
+ (session_token)      Session created          User resolved/provisioned
+        │                    │                    │
+        └────────────────────┴────────────────────┘
+                             ▼
+                    Current.user set via
+                    before_action callback
 ```
 
 - **Session model** tracks browser, IP, platform for multi-device support
 - Auth method is configured globally via `ENV["AUTH_METHOD"]` (read through `Account#auth_method_value`)
+- SSO mode stores parent-app identity mappings in `SingleSignOnRecord`
 - Email verification required for new users (`verified_at` timestamp)
 - Cloudflare Turnstile bot protection on sign-in forms (production)
 

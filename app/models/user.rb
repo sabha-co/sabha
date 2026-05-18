@@ -142,6 +142,7 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :auth_tokens, dependent: :destroy
   has_many :bans, dependent: :destroy
+  has_one :single_sign_on_record, dependent: :destroy
 
   belongs_to :badge, optional: true
 
@@ -521,6 +522,7 @@ class User < ApplicationRecord
       Ban.where(user_id: id).delete_all
       Block.where(blocker_id: id).delete_all
       Block.where(blocked_id: id).delete_all
+      SingleSignOnRecord.where(user_id: id).delete_all
       Push::Subscription.where(user_id: id).delete_all
       Webhook.where(user_id: id).delete_all
 

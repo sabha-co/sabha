@@ -22,6 +22,30 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
+  test "new redirects to sso when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+
+    get join_url(@join_code)
+
+    assert_redirected_to sso_init_url(return_to: "/join/#{@join_code}")
+  end
+
+  test "create redirects to sso when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: with_turnstile_response(
+        user: {
+          name: "New User",
+          email_address: "newuser@example.com",
+          password: "secure_password_123"
+        }
+      )
+    end
+
+    assert_redirected_to sso_init_url(return_to: "/join/#{@join_code}")
+  end
+
   test "create with password auth requires email verification" do
     ENV["AUTH_METHOD"] = "password"
 

@@ -29,6 +29,11 @@ class AuthTokensController < ApplicationController
   end
 
   def require_otp_auth
+    if Current.account.auth_method_value == "sso"
+      redirect_to sso_init_url
+      return
+    end
+
     if Current.account.auth_method_value != "otp"
       redirect_to new_session_url, alert: "OTP login is not enabled."
     end

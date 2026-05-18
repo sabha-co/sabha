@@ -1,7 +1,7 @@
 class Account < ApplicationRecord
   include Joinable, Account::Storage
 
-  VALID_AUTH_METHODS = %w[password otp].freeze
+  VALID_AUTH_METHODS = %w[password otp sso].freeze
   ALLOWED_LOGO_CONTENT_TYPES = %w[ image/jpeg image/png image/gif image/webp ].freeze
 
   InvalidLogoType = Class.new(StandardError)
@@ -13,7 +13,7 @@ class Account < ApplicationRecord
   after_commit :sync_name_to_workspace, if: :saved_change_to_name?
 
   # Auth method is controlled via ENV["AUTH_METHOD"]
-  # Valid values: "password" (default), "otp"
+  # Valid values: "password" (default), "otp", "sso"
   def auth_method_value
     value = ENV["AUTH_METHOD"] || "password"
     value.in?(VALID_AUTH_METHODS) ? value : "password"

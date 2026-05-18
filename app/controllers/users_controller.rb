@@ -8,6 +8,7 @@ class UsersController < ApplicationController
 
   before_action :set_user, only: :show
   before_action :reject_banned_ip, only: :create
+  before_action :redirect_to_sso_login, only: %i[ new create ], if: -> { sso_auth? }
   before_action :validate_cloudflare_turnstile, only: :create, unless: -> { Sabha.saas? }
   rescue_from RailsCloudflareTurnstile::Forbidden, with: :handle_turnstile_failure
 
@@ -44,6 +45,10 @@ class UsersController < ApplicationController
   private
     def handle_turnstile_failure
       redirect_back fallback_location: root_url, alert: "Please complete the CAPTCHA verification."
+    end
+
+    def redirect_to_sso_login
+      redirect_to sso_init_url(return_to: request.fullpath)
     end
 
     # SaaS mode: user is globally authenticated, just needs to join this workspace
@@ -191,6 +196,10 @@ class UsersController < ApplicationController
     # Check if user is unauthenticated in SaaS mode
     def saas_unauthenticated?
       Sabha.saas? && Current.global_identity.blank?
+    end
+
+    def sso_auth?
+      !Sabha.saas? && !signed_in? && Current.account.auth_method_value == "sso"
     end
 
     # Build return_to URL for auth redirects

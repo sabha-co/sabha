@@ -65,6 +65,24 @@ class AuthTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert parsed_cookies.signed[:session_token].present?
   end
 
+  test "code-based OTP validation redirects to sso when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+
+    post auth_tokens_validations_url, params: { code: "000000" }
+
+    assert_redirected_to sso_init_url
+  end
+
+  test "token-based login still signs in user when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+    auth_token = @user.auth_tokens.create!(expires_at: 24.hours.from_now)
+
+    get sign_in_with_token_url(token: auth_token.token)
+
+    assert_redirected_to root_url
+    assert parsed_cookies.signed[:session_token].present?
+  end
+
   test "OTP validation verifies unverified user email" do
     @user.update!(verified_at: nil)
     auth_token = @user.auth_tokens.create!(expires_at: 15.minutes.from_now)

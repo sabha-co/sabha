@@ -10,7 +10,12 @@
     </div>
 
     <div class="flex flex-column gap">
-      <% if Current.account.auth_method_value == "otp" %>
+      <% if Current.account.auth_method_value == "sso" %>
+        <fieldset class="flex flex-column gap center-block pad">
+          <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.contextual_app_name %></strong></legend>
+          <%= link_to "Continue", sso_init_path(return_to: session[:return_to_after_authenticating]), class: "btn" %>
+        </fieldset>
+      <% elsif Current.account.auth_method_value == "otp" %>
         <%= form_with url: auth_tokens_url, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
           <fieldset class="flex flex-column gap center-block pad">
             <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.contextual_app_name %></strong></legend>

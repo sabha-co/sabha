@@ -159,12 +159,20 @@ VAPID_PRIVATE_KEY=your_private_key
 # WebSockets (uses ActionCable through Puma)
 ANYCABLE_ENABLED=false
 
-# Authentication: "password" (default) or "otp"
+# Authentication: "password" (default), "otp", or "sso"
 AUTH_METHOD=password
+
+# SSO (required when AUTH_METHOD=sso)
+SSO_PROVIDER_URL=https://app.example.com/sso
+SSO_SECRET=shared-32-character-secret
+SSO_OVERRIDES_NAME=false
+SSO_OVERRIDES_AVATAR=false
 
 # Cookie domain
 COOKIE_DOMAIN=chat.yourdomain.com
 ```
+
+When using `AUTH_METHOD=sso`, configure the parent app as a DiscourseConnect-compatible provider. The provider must return a signed payload containing `nonce`, `external_id`, and `email`. If the parent app has not verified the email address, it must send `require_activation=true` so Sabha verifies the address before opening a session.
 
 ### 4. Start
 

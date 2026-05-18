@@ -55,6 +55,16 @@ class AuthTokensControllerTest < ActionDispatch::IntegrationTest
     assert_match /not enabled/, flash[:alert]
   end
 
+  test "OTP request redirects to sso when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+
+    assert_no_difference -> { AuthToken.count } do
+      post auth_tokens_url, params: { email_address: users(:david).email_address }
+    end
+
+    assert_redirected_to sso_init_url
+  end
+
   test "rate limits OTP requests" do
     11.times do
       post auth_tokens_url, params: { email_address: users(:david).email_address }

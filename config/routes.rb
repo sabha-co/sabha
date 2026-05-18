@@ -42,6 +42,8 @@ Rails.application.routes.draw do
       resources :transfers, only: %i[ show update ]
     end
   end
+  get "/session/sso", to: "sso#new", as: :sso_init
+  get "/session/sso_login", to: "sso#create", as: :sso_login
 
   resources :auth_tokens, only: %i[create]
   namespace :auth_tokens do

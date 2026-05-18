@@ -1,0 +1,6 @@
+david:
+  user: david
+  external_id: provider-david
+  external_email: david@37signals.com
+  last_payload: nonce=abc&external_id=provider-david&email=david@37signals.com
+  last_seen_at: <%= 1.hour.ago %>
