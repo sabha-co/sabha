@@ -5,7 +5,10 @@ class Users::NotificationSettingsController < ApplicationController
   before_action :set_settings
 
   def edit
-    @shared_memberships = Current.user.memberships.shared.visible.with_ordered_room
+    memberships = Current.user.memberships.shared.visible.with_ordered_room
+    @starred_memberships, rest             = memberships.partition(&:starred?)
+    @all_notifications_memberships, rest   = rest.partition(&:involved_in_everything?)
+    @muted_memberships, @other_memberships = rest.partition(&:involved_in_nothing?)
   end
 
   def update
