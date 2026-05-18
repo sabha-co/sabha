@@ -5,10 +5,7 @@ class Users::NotificationSettingsController < ApplicationController
   before_action :set_settings
 
   def edit
-    memberships = Current.user.memberships.shared.visible.with_ordered_room
-    @starred_memberships, rest             = memberships.partition(&:starred?)
-    @all_notifications_memberships, rest   = rest.partition(&:involved_in_everything?)
-    @muted_memberships, @other_memberships = rest.partition(&:involved_in_nothing?)
+    @memberships = ordered_memberships_for_notification_preferences
   end
 
   def update
@@ -28,5 +25,15 @@ class Users::NotificationSettingsController < ApplicationController
         :weekly_digest_subscribed,
         :push_enabled
       )
+    end
+
+    # Starred first, then "all notifications" rooms, then mentions-only, then muted.
+    # Alphabetical within each bucket.
+    def ordered_memberships_for_notification_preferences
+      memberships = Current.user.memberships.shared.visible.with_ordered_room
+      starred, rest = memberships.partition(&:starred?)
+      high, rest    = rest.partition(&:involved_in_everything?)
+      muted, low    = rest.partition(&:involved_in_nothing?)
+      starred + high + low + muted
     end
 end

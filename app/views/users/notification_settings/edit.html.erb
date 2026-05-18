@@ -9,11 +9,6 @@
 <section class="panel flex flex-column gap">
   <h1 class="txt-align-center txt-large margin-none">Notification preferences</h1>
 
-  <%
-    show_missed_email = Current.account.email_notifications_enabled? || Current.user.administrator?
-    show_weekly_digest = Current.account.weekly_digest_enabled? || Current.user.administrator?
-  %>
-
   <div class="margin-block pad fill-shade border-radius">
 
     <%# ─── Push ─────────────────────────────────────────────────────── %>
@@ -28,19 +23,19 @@
     </section>
 
     <%# ─── Email ─────────────────────────────────────────────────────── %>
-    <% if show_missed_email || show_weekly_digest %>
+    <% if email_section_visible? %>
       <hr class="separator separator--row margin-block">
 
       <section>
         <p class="txt-small txt-muted txt-label margin-block-end-half">Email</p>
 
-        <% if !Current.account.email_notifications_enabled? && !Current.account.weekly_digest_enabled? %>
+        <% if all_email_features_disabled? %>
           <p class="txt-small txt-muted margin-none">
             Email notifications are turned off for this workspace.
             <%= link_to "Enable in workspace settings", edit_account_path %>.
           </p>
         <% else %>
-          <% if show_missed_email %>
+          <% if missed_email_section_visible? %>
             <% if Current.account.email_notifications_enabled? %>
               <%= render "users/notification_settings/toggle",
                     settings:  @settings,
@@ -64,11 +59,11 @@
             <% end %>
           <% end %>
 
-          <% if show_missed_email && show_weekly_digest %>
+          <% if missed_email_section_visible? && weekly_digest_section_visible? %>
             <hr class="separator separator--row separator--soft">
           <% end %>
 
-          <% if show_weekly_digest %>
+          <% if weekly_digest_section_visible? %>
             <% if Current.account.weekly_digest_enabled? %>
               <%= render "users/notification_settings/toggle",
                     settings:  @settings,
@@ -92,15 +87,12 @@
     <p class="txt-small txt-muted txt-label margin-block-end-half">Per-room notifications</p>
     <p class="txt-small txt-muted margin-block-end-half">Choose how closely you follow each room. Use the bell button to set your involvement level.</p>
 
-    <%
-      grouped_memberships = @starred_memberships + @all_notifications_memberships + @other_memberships + @muted_memberships
-    %>
-    <% grouped_memberships.each do |membership| %>
+    <% @memberships.each do |membership| %>
       <%= turbo_stream_from membership %>
     <% end %>
 
     <menu class="flex flex-column gap-half margin-none pad">
-      <%= render partial: "users/notification_settings/membership", collection: grouped_memberships %>
+      <%= render partial: "users/notification_settings/membership", collection: @memberships %>
     </menu>
   </div>
 </section>
