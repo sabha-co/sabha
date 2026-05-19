@@ -166,6 +166,70 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     assert_not User.find_by(email_address: "verify-sso@example.com").verified?
   end
 
+  test "join code is redeemed after successful sso signup" do
+    join_code = Current.account.join_code
+    code = join_code.code
+
+    get join_url(code)
+    assert_redirected_to sso_handshake_url(return_to: "/join/#{code}")
+    assert_equal code, session[:pending_join_code]
+
+    post sso_handshake_url, params: { return_to: "/join/#{code}" }
+    nonce = provider_request_payload["nonce"]
+
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "joiner@example.com", external_id: "joiner-1"), ENV["SSO_SECRET"])
+
+    assert_difference -> { join_code.reload.usage_count }, +1 do
+      get sso_callback_url, params: { sso:, sig: }
+    end
+
+    assert_redirected_to "/join/#{code}"
+    assert_nil session[:pending_join_code]
+  end
+
+  test "inactive join code aborts new user signup and refuses sign-in" do
+    join_code = Current.account.join_code
+    code = join_code.code
+
+    get join_url(code)
+    post sso_handshake_url, params: { return_to: "/join/#{code}" }
+    nonce = provider_request_payload["nonce"]
+
+    join_code.update!(expires_at: 1.day.ago)
+
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "late-joiner@example.com", external_id: "late-joiner"), ENV["SSO_SECRET"])
+
+    assert_no_difference -> { join_code.reload.usage_count } do
+      assert_no_difference -> { User.count } do
+        get sso_callback_url, params: { sso:, sig: }
+      end
+    end
+
+    assert_response :unauthorized
+    assert_nil parsed_cookies.signed[:session_token]
+    assert_nil User.find_by(email_address: "late-joiner@example.com")
+  end
+
+  test "inactive join code is ignored when an existing sso user signs in" do
+    join_code = Current.account.join_code
+    code = join_code.code
+
+    get join_url(code)
+    post sso_handshake_url, params: { return_to: "/join/#{code}" }
+    nonce = provider_request_payload["nonce"]
+
+    join_code.update!(expires_at: 1.day.ago)
+
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: users(:david).email_address, external_id: single_sign_on_records(:david).external_id), ENV["SSO_SECRET"])
+
+    assert_no_difference -> { join_code.reload.usage_count } do
+      get sso_callback_url, params: { sso:, sig: }
+    end
+
+    assert_redirected_to "/join/#{code}"
+    assert parsed_cookies.signed[:session_token].present?
+  end
+
   test "misconfiguration fails closed" do
     ENV.delete("SSO_SECRET")
 

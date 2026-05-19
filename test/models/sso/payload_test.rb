@@ -82,6 +82,14 @@ class Sso::PayloadTest < ActiveSupport::TestCase
     end
   end
 
+  test "downcases external_id so case-variant providers don't fork records" do
+    sso, sig = Sso::Payload.encode({ nonce: "abc123", external_id: "User-One" }, SECRET)
+
+    payload = Sso::Payload.decode(sso, sig, SECRET)
+
+    assert_equal "user-one", payload["external_id"]
+  end
+
   test "rejects banned external ids" do
     sso, sig = Sso::Payload.encode({ nonce: "abc123", external_id: "null" }, SECRET)
 

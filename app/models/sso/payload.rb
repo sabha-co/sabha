@@ -41,8 +41,8 @@ class Sso::Payload
     decoded_hash = Rack::Utils.parse_query(decoded_payload)
     parsed = parse_fields(decoded_hash)
 
-    external_id = parsed["external_id"].to_s.downcase
-    raise BannedExternalId, "Invalid external_id" if BANNED_EXTERNAL_IDS.include?(external_id)
+    parsed["external_id"] = parsed["external_id"].to_s.downcase
+    raise BannedExternalId, "Invalid external_id" if BANNED_EXTERNAL_IDS.include?(parsed["external_id"])
 
     parsed
   rescue ArgumentError

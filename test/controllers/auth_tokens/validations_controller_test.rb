@@ -73,14 +73,14 @@ class AuthTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to sso_handshake_url
   end
 
-  test "token-based login still signs in user when SSO auth enabled" do
+  test "token-based magic link redirects to sso when SSO auth enabled" do
     ENV["AUTH_METHOD"] = "sso"
     auth_token = @user.auth_tokens.create!(expires_at: 24.hours.from_now)
 
     get sign_in_with_token_url(token: auth_token.token)
 
-    assert_redirected_to root_url
-    assert parsed_cookies.signed[:session_token].present?
+    assert_redirected_to sso_handshake_url
+    assert_nil parsed_cookies.signed[:session_token]
   end
 
   test "OTP validation verifies unverified user email" do

@@ -8,12 +8,12 @@ class UsersController < ApplicationController
 
   before_action :set_user, only: :show
   before_action :reject_banned_ip, only: :create
+  before_action :set_join_code, only: %i[ new create ]
+  before_action :verify_join_code_active, only: %i[ new create ]
   before_action :redirect_to_sso_login, only: %i[ new create ], if: -> { Current.account&.sso_auth? && !signed_in? }
   before_action :validate_cloudflare_turnstile, only: :create, unless: -> { Sabha.saas? }
   rescue_from RailsCloudflareTurnstile::Forbidden, with: :handle_turnstile_failure
 
-  before_action :set_join_code, only: %i[ new create ]
-  before_action :verify_join_code_active, only: %i[ new create ]
   before_action :set_return_to_url, only: %i[ new create ]
   before_action :validate_email_param, only: :create, unless: -> { saas_authenticated? || saas_unauthenticated? }
   before_action :ensure_password_provided, only: :create, unless: -> { saas_authenticated? || saas_unauthenticated? }
@@ -48,6 +48,7 @@ class UsersController < ApplicationController
     end
 
     def redirect_to_sso_login
+      session[:pending_join_code] = @join_code.code
       redirect_to sso_handshake_url(return_to: request.fullpath)
     end
 

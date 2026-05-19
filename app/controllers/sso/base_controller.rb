@@ -1,7 +1,11 @@
 class Sso::BaseController < ApplicationController
+  include BlockBannedRequests
+
   layout "session"
 
   allow_unauthenticated_access
+
+  before_action :reject_banned_ip
 
   private
     def sso_configured?

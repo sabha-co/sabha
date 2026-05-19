@@ -11,8 +11,9 @@ class AuthTokens::ValidationsController < ApplicationController
   before_action :reject_banned_ip, only: :create
   before_action :redirect_to_saas_login, if: -> { Sabha.saas? }
 
-  # Token-based login (magic link) is always allowed for Cloud bootstrap
-  # Code-based OTP is only allowed when AUTH_METHOD=otp
+  # Token-based login (magic link) is allowed for Cloud bootstrap (SaaS only).
+  # Code-based OTP is only allowed when AUTH_METHOD=otp.
+  # SSO mode rejects both — every sign-in must round-trip through the IdP.
   before_action :require_otp_or_token
 
   def new
@@ -43,16 +44,11 @@ class AuthTokens::ValidationsController < ApplicationController
   end
 
   def require_otp_or_token
-    # Token-based login is always allowed (for Cloud bootstrap magic links)
-    return if params[:token].present?
-
     if Current.account.sso_auth?
       redirect_to sso_handshake_url
-      return
-    end
-
-    # Code-based OTP is only allowed when AUTH_METHOD=otp
-    unless Current.account.otp_auth?
+    elsif params[:token].present?
+      # Token-based magic links are reserved for Cloud bootstrap.
+    elsif !Current.account.otp_auth?
       redirect_to new_session_url, alert: "OTP login is not enabled."
     end
   end
