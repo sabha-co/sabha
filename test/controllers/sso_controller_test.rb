@@ -132,6 +132,17 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     assert_nil parsed_cookies.signed[:session_token]
   end
 
+  test "callback rate limits repeated attempts" do
+    10.times do
+      get sso_callback_url
+      assert_response :forbidden
+    end
+
+    get sso_callback_url
+
+    assert_response :too_many_requests
+  end
+
   test "signed logout payload terminates current session" do
     ENV["AUTH_METHOD"] = "password"
     sign_in :david

@@ -45,9 +45,13 @@ class API::Bots::RoomsControllerTest < ActionDispatch::IntegrationTest
     original = ENV["AUTH_METHOD"]
     ENV["AUTH_METHOD"] = "sso"
 
-    get api_bots_rooms_url, headers: bot_headers(@bot.bot_key)
+    assert_no_difference -> { Session.count } do
+      get api_bots_rooms_url, headers: bot_headers(@bot.bot_key)
+    end
 
     assert_response :success
+    assert response.parsed_body.is_a?(Array)
+    assert_nil session[:return_to_after_authenticating]
   ensure
     original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
   end

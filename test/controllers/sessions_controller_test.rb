@@ -121,10 +121,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   test "new redirects to first run before sso when no users exist" do
     original = ENV["AUTH_METHOD"]
     ENV["AUTH_METHOD"] = "sso"
-
-    ActiveRecord::Base.connection.disable_referential_integrity do
-      User.destroy_all
-    end
+    User.stubs(:none?).returns(true)
 
     get new_session_url
 
@@ -142,6 +139,18 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to sso_handshake_url
+  ensure
+    original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
+
+  test "protected page redirects to sso when SSO auth enabled" do
+    original = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "sso"
+
+    get chat_url
+
+    assert_redirected_to sso_handshake_url
+    assert_equal chat_url, session[:return_to_after_authenticating]
   ensure
     original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
   end

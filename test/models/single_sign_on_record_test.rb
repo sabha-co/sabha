@@ -134,6 +134,19 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     end
   end
 
+  test "wraps concurrent claim unique index race as forbidden" do
+    user = users(:jason)
+    active_users = mock("active users")
+    active_users.expects(:find_by).with(email_address: user.email_address).returns(user)
+
+    User.stubs(:active).returns(active_users)
+    user.stubs(:create_single_sign_on_record!).raises(ActiveRecord::RecordNotUnique.new("duplicate"))
+
+    assert_raises Sso::Forbidden do
+      SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: "racing-provider"))
+    end
+  end
+
   test "require activation does not claim existing email" do
     user = users(:jason)
 
