@@ -17,7 +17,9 @@ class User < ApplicationRecord
   end
 
   def self.sign_in_with_sso!(payload)
-    SingleSignOnRecord.find_or_provision!(payload).user
+    record = SingleSignOnRecord.find_or_provision!(payload)
+    record.require_activation!(payload)
+    record.user
   end
 
   # User status enum (replaces active boolean + suspended_at)

@@ -2,7 +2,8 @@ class Sso::HandshakesController < Sso::BaseController
   def new
     return sso_misconfigured unless sso_configured?
 
-    nonce = SingleSignOnNonce.issue!(session:, return_path: sso_return_path)
+    nonce = SingleSignOnNonce.issue!(return_path: sso_return_path)
+    session[SESSION_NONCE_KEY] = nonce
     sso, sig = Sso::Payload.encode({ nonce: nonce, return_sso_url: sso_callback_url }, sso_secret)
 
     redirect_to provider_url(sso:, sig:), allow_other_host: true

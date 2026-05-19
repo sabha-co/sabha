@@ -39,12 +39,12 @@ class Sso::Payload
 
     decoded_payload = Base64.decode64(encoded_payload)
     decoded_hash = Rack::Utils.parse_query(decoded_payload)
-    parsed = parse_fields(decoded_hash)
+    attributes = parse_fields(decoded_hash)
 
-    parsed["external_id"] = parsed["external_id"].to_s.downcase
-    raise BannedExternalId, "Invalid external_id" if BANNED_EXTERNAL_IDS.include?(parsed["external_id"])
+    attributes["external_id"] = attributes["external_id"].to_s.downcase
+    raise BannedExternalId, "Invalid external_id" if BANNED_EXTERNAL_IDS.include?(attributes["external_id"])
 
-    parsed
+    new(attributes)
   rescue ArgumentError
     raise InvalidPayload, "Invalid Base64 payload"
   end
@@ -81,5 +81,31 @@ class Sso::Payload
 
   def self.parse_bool(value)
     %w[true false].include?(value) ? value == "true" : nil
+  end
+
+  attr_reader :attributes
+
+  def initialize(attributes)
+    @attributes = attributes
+  end
+
+  def [](key)
+    attributes[key]
+  end
+
+  def key?(key)
+    attributes.key?(key)
+  end
+
+  def nonce
+    attributes["nonce"]
+  end
+
+  def failed?
+    attributes["failed"] == true
+  end
+
+  def logout?
+    attributes["logout"] == true
   end
 end

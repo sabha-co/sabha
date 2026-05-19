@@ -147,7 +147,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
   test "require activation creates unverified user and sends verification email" do
     assert_enqueued_emails 1 do
       assert_raises Sso::ActivationRequired do
-        SingleSignOnRecord.find_or_provision!(payload(email: "activate@example.com", external_id: "activate-1", require_activation: true))
+        User.sign_in_with_sso!(payload(email: "activate@example.com", external_id: "activate-1", require_activation: true))
       end
     end
 
@@ -162,7 +162,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
 
     assert_enqueued_emails 1 do
       assert_raises Sso::ActivationRequired do
-        SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: single_sign_on_records(:david).external_id, require_activation: true))
+        User.sign_in_with_sso!(payload(email: user.email_address, external_id: single_sign_on_records(:david).external_id, require_activation: true))
       end
     end
   end

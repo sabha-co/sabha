@@ -1,6 +1,8 @@
 class Sso::BaseController < ApplicationController
   include BlockBannedRequests
 
+  SESSION_NONCE_KEY = "single_sign_on_nonce"
+
   layout "session"
 
   allow_unauthenticated_access

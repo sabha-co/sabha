@@ -5,11 +5,11 @@ class Sso::CallbacksController < Sso::BaseController
     return sso_misconfigured unless sso_configured?
 
     payload = Sso::Payload.decode(params[:sso], params[:sig], sso_secret)
-    return_path = SingleSignOnNonce.consume!(payload["nonce"], session:)
+    return_path = verify_and_consume_nonce(payload.nonce)
 
-    if payload["failed"]
+    if payload.failed?
       raise Sso::Failed
-    elsif payload["logout"]
+    elsif payload.logout?
       sign_out_via_sso(return_path)
     else
       sign_in_via_sso(payload, return_path)
@@ -24,6 +24,15 @@ class Sso::CallbacksController < Sso::BaseController
   end
 
   private
+    def verify_and_consume_nonce(nonce)
+      expected = session[SESSION_NONCE_KEY]
+      raise SingleSignOnNonce::Invalid, "SSO nonce expired or invalid" unless expected.present? && expected == nonce
+
+      return_path = SingleSignOnNonce.consume!(nonce)
+      session.delete(SESSION_NONCE_KEY)
+      return_path
+    end
+
     def sign_in_via_sso(payload, return_path)
       pending_join_code = session.delete(:pending_join_code)
       user = User.sign_in_with_sso!(payload)

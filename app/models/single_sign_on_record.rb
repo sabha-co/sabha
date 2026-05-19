@@ -11,8 +11,6 @@ class SingleSignOnRecord < ApplicationRecord
       find_by(external_id: external_id_from(payload))&.apply_sso!(payload) ||
         claim_existing_user!(payload) ||
         provision_user!(payload)
-    end.tap do |record|
-      record.require_activation!(payload)
     end
   rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => error
     Rails.logger.warn("[SSO] Failed to resolve user for external_id=#{external_id_from(payload).inspect}: #{error.message}")

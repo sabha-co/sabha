@@ -82,6 +82,19 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     assert parsed_cookies.signed[:session_token].present?
   end
 
+  test "callback rejects nonce not bound to current browser session" do
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:), ENV["SSO_SECRET"])
+
+    reset!  # simulate a different browser (fresh cookies/session)
+
+    get sso_callback_url, params: { sso:, sig: }
+
+    assert_response :forbidden
+    assert_not SingleSignOnNonce.find_by(nonce:).used?
+  end
+
   test "replayed nonce is forbidden" do
     get sso_handshake_url
     nonce = provider_request_payload["nonce"]

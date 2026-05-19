@@ -4,7 +4,6 @@ class SingleSignOnNonce < ApplicationRecord
   class Replayed < Error; end
 
   ACTIVE_TTL = 30.minutes
-  SESSION_KEY = "single_sign_on_nonce"
 
   before_validation :set_nonce, on: :create
   before_validation :set_expiration, on: :create
@@ -12,13 +11,11 @@ class SingleSignOnNonce < ApplicationRecord
   validates :nonce, presence: true, uniqueness: true
   validates :return_path, :expires_at, presence: true
 
-  def self.issue!(session:, return_path:, now: Time.current)
-    create!(return_path:, expires_at: ACTIVE_TTL.from_now(now)).tap do |record|
-      session[SESSION_KEY] = record.nonce
-    end.nonce
+  def self.issue!(return_path:, now: Time.current)
+    create!(return_path:, expires_at: ACTIVE_TTL.from_now(now)).nonce
   end
 
-  def self.consume!(nonce, session:, now: Time.current)
+  def self.consume!(nonce, now: Time.current)
     raise Invalid, "SSO nonce expired or invalid" if nonce.blank?
 
     transaction do
@@ -26,10 +23,8 @@ class SingleSignOnNonce < ApplicationRecord
       raise Invalid, "SSO nonce expired or invalid" if record.blank?
       raise Replayed, "SSO nonce already used" if record.used?
       raise Invalid, "SSO nonce expired or invalid" if record.expired?(now:)
-      raise Invalid, "SSO nonce expired or invalid" unless session[SESSION_KEY] == nonce
 
       record.use!(now:)
-      session.delete(SESSION_KEY)
       record.return_path
     end
   end
