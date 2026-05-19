@@ -2,30 +2,6 @@ class User < ApplicationRecord
   DEFAULT_NAME = "New Member"
   MINIMUM_PASSWORD_LENGTH = 8
 
-  class SingleSignOnError < StandardError
-    attr_reader :user_message, :status
-
-    def initialize(message = "Unable to sign in with SSO.", user_message: "Single sign-on failed.", status: :unauthorized)
-      super(message)
-      @user_message = user_message
-      @status = status
-    end
-  end
-
-  class SingleSignOnForbidden < SingleSignOnError; end
-
-  class SingleSignOnFailed < SingleSignOnError
-    def initialize(message = "The SSO provider rejected the sign-in.")
-      super(message, user_message: "Single sign-on failed.")
-    end
-  end
-
-  class SingleSignOnActivationRequired < SingleSignOnError
-    def initialize(message = "SSO email verification is required.")
-      super(message, user_message: "Please verify your email address before signing in.")
-    end
-  end
-
   include Avatar, Bannable, Bot, DicebearAvatar, Mentionable, Role, Transferable
 
   serialize :preferences, coder: JSON

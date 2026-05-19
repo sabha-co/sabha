@@ -80,7 +80,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     user = users(:david)
     user.deactivate
 
-    assert_raises User::SingleSignOnForbidden do
+    assert_raises Sso::Forbidden do
       SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: single_sign_on_records(:david).external_id))
     end
   end
@@ -129,7 +129,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
   end
 
   test "rejects email claimed by another external id" do
-    assert_raises User::SingleSignOnForbidden do
+    assert_raises Sso::Forbidden do
       SingleSignOnRecord.find_or_provision!(payload(email: users(:david).email_address, external_id: "attacker"))
     end
   end
@@ -138,7 +138,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     user = users(:jason)
 
     assert_no_difference -> { SingleSignOnRecord.count } do
-      assert_raises User::SingleSignOnActivationRequired do
+      assert_raises Sso::ActivationRequired do
         SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: "jason-provider", require_activation: true))
       end
     end
@@ -146,7 +146,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
 
   test "require activation creates unverified user and sends verification email" do
     assert_enqueued_emails 1 do
-      assert_raises User::SingleSignOnActivationRequired do
+      assert_raises Sso::ActivationRequired do
         SingleSignOnRecord.find_or_provision!(payload(email: "activate@example.com", external_id: "activate-1", require_activation: true))
       end
     end
@@ -161,7 +161,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     user.update!(verified_at: nil)
 
     assert_enqueued_emails 1 do
-      assert_raises User::SingleSignOnActivationRequired do
+      assert_raises Sso::ActivationRequired do
         SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: single_sign_on_records(:david).external_id, require_activation: true))
       end
     end

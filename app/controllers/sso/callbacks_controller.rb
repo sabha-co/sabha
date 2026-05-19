@@ -8,7 +8,7 @@ class Sso::CallbacksController < Sso::BaseController
     return_path = SingleSignOnNonce.consume!(payload["nonce"], session:)
 
     if payload["failed"]
-      raise User::SingleSignOnFailed
+      raise Sso::Failed
     elsif payload["logout"]
       terminate_session_from_cookie
       redirect_to safe_return_path(return_path)
@@ -19,7 +19,7 @@ class Sso::CallbacksController < Sso::BaseController
   rescue Sso::Payload::Error, SingleSignOnNonce::Error => error
     Rails.logger.warn("[SSO] Rejected callback: #{error.class.name}: #{error.message}")
     head :forbidden
-  rescue User::SingleSignOnError => error
+  rescue Sso::Error => error
     Rails.logger.warn("[SSO] Sign-in failed: #{error.class.name}: #{error.message}")
     @message = error.user_message
     render "sso/failed", status: error.status

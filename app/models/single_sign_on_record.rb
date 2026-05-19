@@ -4,8 +4,8 @@ class SingleSignOnRecord < ApplicationRecord
   validates :external_id, presence: true, uniqueness: true
 
   def self.find_or_provision!(payload)
-    raise User::SingleSignOnForbidden, "SSO response is missing an external id." if external_id_from(payload).blank?
-    raise User::SingleSignOnForbidden, "SSO response is missing an email address." if email_address_from(payload).blank?
+    raise Sso::Forbidden, "SSO response is missing an external id." if external_id_from(payload).blank?
+    raise Sso::Forbidden, "SSO response is missing an email address." if email_address_from(payload).blank?
 
     transaction do
       find_by(external_id: external_id_from(payload))&.apply_sso!(payload) ||
@@ -16,7 +16,7 @@ class SingleSignOnRecord < ApplicationRecord
     end
   rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => error
     Rails.logger.warn("[SSO] Failed to resolve user for external_id=#{external_id_from(payload).inspect}: #{error.message}")
-    raise User::SingleSignOnForbidden, "Unable to sign in with SSO."
+    raise Sso::Forbidden, "Unable to sign in with SSO."
   end
 
   def seen!(payload)
@@ -28,7 +28,7 @@ class SingleSignOnRecord < ApplicationRecord
   end
 
   def apply_sso!(payload)
-    raise User::SingleSignOnForbidden, "Unable to sign in with SSO." unless user.active?
+    raise Sso::Forbidden, "Unable to sign in with SSO." unless user.active?
 
     seen!(payload)
     update_user_profile!(payload)
@@ -38,7 +38,7 @@ class SingleSignOnRecord < ApplicationRecord
   def require_activation!(payload)
     if self.class.activation_required?(payload) && !user.verified?
       user.send_verification_email
-      raise User::SingleSignOnActivationRequired
+      raise Sso::ActivationRequired
     end
   end
 
@@ -56,12 +56,12 @@ class SingleSignOnRecord < ApplicationRecord
 
       if activation_required?(payload)
         Rails.logger.warn("[SSO] Refused to claim existing email with require_activation=true: email=#{email_address_from(payload).inspect} external_id=#{external_id_from(payload).inspect}")
-        raise User::SingleSignOnActivationRequired
+        raise Sso::ActivationRequired
       end
 
       if user.single_sign_on_record.present?
         Rails.logger.warn("[SSO] Refused email takeover: email=#{email_address_from(payload).inspect} external_id=#{external_id_from(payload).inspect} existing_external_id=#{user.single_sign_on_record.external_id.inspect}")
-        raise User::SingleSignOnForbidden, "Unable to sign in with SSO."
+        raise Sso::Forbidden, "Unable to sign in with SSO."
       end
 
       user.create_single_sign_on_record!(
