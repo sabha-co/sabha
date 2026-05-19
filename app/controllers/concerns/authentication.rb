@@ -82,8 +82,8 @@ module Authentication
       if Sabha.saas?
         # In SaaS mode, redirect to the global login page
         redirect_to "/session/new"
-      elsif Current.account.auth_method_value == "sso"
-        redirect_to sso_init_url
+      elsif Current.account.sso_auth?
+        redirect_to sso_handshake_url
       else
         redirect_to new_session_url
       end

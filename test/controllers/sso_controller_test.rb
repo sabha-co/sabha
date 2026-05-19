@@ -1,6 +1,6 @@
 require "test_helper"
 
-class SsoControllerTest < ActionDispatch::IntegrationTest
+class SsoFlowTest < ActionDispatch::IntegrationTest
   include ActionMailer::TestHelper
 
   setup do
@@ -20,7 +20,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "new redirects to provider with signed payload" do
-    get sso_init_url, params: { return_to: "/rooms/general" }
+    post sso_handshake_url, params: { return_to: "/rooms/general" }
 
     assert_response :redirect
     assert_match %r{\Ahttps://parent\.example\.com/sso\?}, response.location
@@ -31,7 +31,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "new rejects unsafe return path" do
-    get sso_init_url, params: { return_to: "https://evil.example.com/hijack" }
+    post sso_handshake_url, params: { return_to: "https://evil.example.com/hijack" }
     nonce = provider_request_payload["nonce"]
 
     sso, sig = Sso::Payload.encode(callback_payload(nonce:), ENV["SSO_SECRET"])
@@ -41,7 +41,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "valid callback signs in existing sso user" do
-    get sso_init_url, params: { return_to: "/chat" }
+    post sso_handshake_url, params: { return_to: "/chat" }
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: users(:david).email_address, external_id: single_sign_on_records(:david).external_id), ENV["SSO_SECRET"])
 
@@ -54,7 +54,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "valid callback creates verified user" do
-    get sso_init_url
+    post sso_handshake_url
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "new-sso@example.com", external_id: "new-sso-user"), ENV["SSO_SECRET"])
 
@@ -70,7 +70,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "bad signature is forbidden and does not consume nonce" do
-    get sso_init_url
+    post sso_handshake_url
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode(callback_payload(nonce:), ENV["SSO_SECRET"])
 
@@ -83,7 +83,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "replayed nonce is forbidden" do
-    get sso_init_url
+    post sso_handshake_url
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode(callback_payload(nonce:), ENV["SSO_SECRET"])
 
@@ -95,7 +95,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "expired nonce is forbidden" do
-    get sso_init_url
+    post sso_handshake_url
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode(callback_payload(nonce:), ENV["SSO_SECRET"])
 
@@ -107,7 +107,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "failed payload renders failure without session" do
-    get sso_init_url
+    post sso_handshake_url
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode({ nonce:, failed: "true" }, ENV["SSO_SECRET"])
 
@@ -125,7 +125,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     session_id = users(:david).sessions.last.id
     ENV["AUTH_METHOD"] = "sso"
 
-    get sso_init_url
+    post sso_handshake_url
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode({ nonce:, logout: "true" }, ENV["SSO_SECRET"])
 
@@ -142,7 +142,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
     session_id = users(:david).sessions.last.id
     ENV["AUTH_METHOD"] = "sso"
 
-    get sso_init_url
+    post sso_handshake_url
     nonce = provider_request_payload["nonce"]
     sso, = Sso::Payload.encode({ nonce:, logout: "true" }, ENV["SSO_SECRET"])
 
@@ -153,7 +153,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "require activation sends verification email without session" do
-    get sso_init_url
+    post sso_handshake_url
     nonce = provider_request_payload["nonce"]
     sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "verify-sso@example.com", external_id: "verify-sso", require_activation: "true"), ENV["SSO_SECRET"])
 
@@ -169,7 +169,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   test "misconfiguration fails closed" do
     ENV.delete("SSO_SECRET")
 
-    get sso_init_url
+    post sso_handshake_url
 
     assert_response :service_unavailable
   end
@@ -177,7 +177,7 @@ class SsoControllerTest < ActionDispatch::IntegrationTest
   test "configured sso endpoint fails closed when sso auth is disabled" do
     ENV["AUTH_METHOD"] = "password"
 
-    get sso_init_url
+    post sso_handshake_url
 
     assert_response :service_unavailable
   end

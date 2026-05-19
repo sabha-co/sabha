@@ -46,13 +46,13 @@ class AuthTokens::ValidationsController < ApplicationController
     # Token-based login is always allowed (for Cloud bootstrap magic links)
     return if params[:token].present?
 
-    if Current.account.auth_method_value == "sso"
-      redirect_to sso_init_url
+    if Current.account.sso_auth?
+      redirect_to sso_handshake_url
       return
     end
 
     # Code-based OTP is only allowed when AUTH_METHOD=otp
-    if Current.account.auth_method_value != "otp"
+    unless Current.account.otp_auth?
       redirect_to new_session_url, alert: "OTP login is not enabled."
     end
   end

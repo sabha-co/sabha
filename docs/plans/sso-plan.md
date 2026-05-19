@@ -57,7 +57,7 @@ Self-hosted Sabha is often run as the chat surface for another product or commun
 
 - `app/models/account.rb` owns the `AUTH_METHOD` allowlist and fallback behavior.
 - `app/controllers/concerns/authentication.rb` is the authentication chokepoint. `request_authentication`, `start_new_session_for`, `terminate_current_session`, `post_authenticating_url`, and `safe_redirect_url?` are the key integration points.
-- `app/controllers/sessions_controller.rb`, `app/controllers/auth_tokens_controller.rb`, and `app/controllers/auth_tokens/validations_controller.rb` already gate password and OTP flows by `Current.account.auth_method_value`.
+- `app/controllers/sessions_controller.rb`, `app/controllers/auth_tokens_controller.rb`, and `app/controllers/auth_tokens/validations_controller.rb` gate password and OTP flows through `Current.account` auth predicates.
 - `app/controllers/email_verifications_controller.rb` already verifies email and opens a session after a valid email-verification token.
 - `User#verify_email!` and `User#send_verification_email` provide the required activation behavior.
 - `User` already has `avatar_url`, `email_address`, `name`, `verified_at`, and `last_authenticated_at`, plus a unique email index.
@@ -68,7 +68,7 @@ Self-hosted Sabha is often run as the chat surface for another product or commun
 ### Institutional Learnings
 
 - No `docs/solutions/` directory exists in this repo at plan time.
-- Repo guidance emphasizes RESTful controllers, business logic in models, and avoiding service-layer bloat. The plan keeps protocol primitives in `lib/sso` and user-resolution behavior in model-like application code rather than putting it all in `SsoController`.
+- Repo guidance emphasizes RESTful controllers, business logic in models, and avoiding service-layer bloat. The plan keeps protocol primitives under the SSO model namespace and user-resolution behavior on Rails records rather than putting it all in controllers.
 
 ### External References
 
@@ -80,7 +80,7 @@ Self-hosted Sabha is often run as the chat surface for another product or commun
 ## Key Technical Decisions
 
 - Use DiscourseConnect wire compatibility, not JWT or OAuth: this matches the origin note and allows existing DiscourseConnect providers to work unchanged.
-- Keep protocol code pure in `lib/sso`: HMAC, base64, query parsing, and boolean coercion should not depend on `User`, `ApplicationRecord`, or controller state.
+- Keep protocol code pure in `app/models/sso`: HMAC, base64, query parsing, and boolean coercion should not depend on `User`, `ApplicationRecord`, or controller state.
 - Keep user resolution on `SingleSignOnRecord`: resolving or creating `User` and recording provider audit fields is Sabha domain behavior and should follow the repo's "business logic in models" standard.
 - Store nonces in `SingleSignOnNonce` rows and bind them to the Rails session: the database record gives unique replay protection and auditability, while the session key preserves CSRF protection.
 - Consume the nonce before user resolution after signature validation: a valid callback should be single-use even if user provisioning later fails.
@@ -195,19 +195,19 @@ flowchart TB
 
 **Approach:**
 - Add `"sso"` to `Account::VALID_AUTH_METHODS` and update comments/docs that currently say password/otp only.
-- Add routes for `GET /session/sso` and `GET /session/sso/callback`, using REST-shaped controller actions (`new` and `show`) on `SsoController`.
+- Add routes for `GET /session/sso`, `POST /session/sso`, and `GET /session/sso/callback`, using REST-shaped `Sso::HandshakesController` and `Sso::CallbacksController` actions.
 - Keep SaaS mode guardrails explicit. `AUTH_METHOD=sso` should be accepted for self-hosted mode and rejected at boot in SaaS mode according to the existing boot-mode pattern, because SaaS auth is out of scope.
 - Define required env vars as `SSO_PROVIDER_URL` and `SSO_SECRET`; optional flags are `SSO_OVERRIDES_NAME` and `SSO_OVERRIDES_AVATAR`.
 
 **Execution note:** Implement this test-first so the auth-method allowlist and routes are pinned before controller behavior is added.
 
 **Patterns to follow:**
-- `Account#auth_method_value` fallback behavior in `app/models/account.rb`
+- `Account#auth_method` fallback behavior and auth predicate helpers in `app/models/account.rb`
 - Existing route style around `resource :session` and `auth_tokens`
 - SaaS boot guard in `config/initializers/00_boot_mode.rb`
 
 **Test scenarios:**
-- Happy path: `ENV["AUTH_METHOD"]="sso"` -> `Account#auth_method_value` returns `"sso"`.
+- Happy path: `ENV["AUTH_METHOD"]="sso"` -> `Account#auth_method` returns `"sso"` and `Account#sso_auth?` is true.
 - Edge case: invalid `AUTH_METHOD` still falls back to `"password"`.
 - Error path: SaaS boot guard does not allow self-hosted SSO to replace SaaS auth.
 - Integration: route helpers resolve `/session/sso` and `/session/sso/callback` to the intended controller actions.
@@ -226,9 +226,9 @@ flowchart TB
 **Dependencies:** U1
 
 **Files:**
-- Create: `lib/sso/payload.rb`
+- Create: `app/models/sso/payload.rb`
 - Create: `app/models/single_sign_on_nonce.rb`
-- Test: `test/lib/sso/payload_test.rb`
+- Test: `test/models/sso/payload_test.rb`
 - Test: `test/models/single_sign_on_nonce_test.rb`
 
 **Approach:**
@@ -428,7 +428,7 @@ result.message             # safe controller-facing message
 - Test: `test/controllers/api/bots/registrations_controller_test.rb`
 
 **Approach:**
-- In self-hosted `Authentication#request_authentication`, redirect to `/session/sso` when `Current.account.auth_method_value == "sso"`; keep SaaS behavior unchanged.
+- In self-hosted `Authentication#request_authentication`, redirect to `/session/sso` when `Current.account.sso_auth?`; keep SaaS behavior unchanged.
 - Leave `bot_authentication` before `request_authentication` so bearer-token bot API calls continue to work.
 - Redirect password login, OTP creation, and OTP validation entry points to SSO when SSO mode is active.
 - Decide signup behavior explicitly: unauthenticated human join pages in SSO mode should route through SSO, not local password/OTP signup. After SSO login, existing join-code behavior can continue through normal authenticated paths if applicable.
@@ -441,7 +441,7 @@ result.message             # safe controller-facing message
 - Conditional auth-method rendering in `app/views/users/new.html.erb`.
 
 **Test scenarios:**
-- Happy path: protected self-hosted page redirects to `sso_init_path` when `AUTH_METHOD=sso`.
+- Happy path: protected self-hosted page redirects to `sso_handshake_path` when `AUTH_METHOD=sso`.
 - Integration: JSON bot API request with valid bearer token succeeds in SSO mode.
 - Error path: password `POST /session` in SSO mode redirects to SSO and does not authenticate with password.
 - Error path: OTP request in SSO mode redirects to SSO and does not send an auth token.
@@ -491,7 +491,7 @@ result.message             # safe controller-facing message
 
 ## System-Wide Impact
 
-- **Interaction graph:** The request path crosses `Authentication`, `SsoController`, `Sso::Payload`, `SingleSignOnNonce`, `SingleSignOnRecord`, `User`, and `Session`.
+- **Interaction graph:** The request path crosses `Authentication`, `Sso::HandshakesController`, `Sso::CallbacksController`, `Sso::Payload`, `SingleSignOnNonce`, `SingleSignOnRecord`, `User`, and `Session`.
 - **Error propagation:** Protocol errors should return forbidden from callback endpoints; domain conflicts should log security context and show generic user-facing failure; misconfiguration should log operator detail without leaking secrets.
 - **State lifecycle risks:** Nonce consumption, session reset, SSO record creation, user creation, and verification email delivery can partially succeed. The resolver should make database writes transactional where possible and fail closed on ambiguous identity state.
 - **API surface parity:** Bot API bearer-token authentication must remain independent from browser SSO. Password/OTP browser surfaces must be disabled consistently in SSO mode.

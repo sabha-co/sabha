@@ -36,13 +36,9 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
   end
 
   test "user is unique" do
-    record = SingleSignOnRecord.new(
-      user: users(:david),
-      external_id: "provider-david-2"
-    )
-
-    assert_not record.valid?
-    assert_includes record.errors[:user_id], "has already been taken"
+    assert_raises ActiveRecord::RecordNotUnique do
+      SingleSignOnRecord.insert!({ user_id: users(:david).id, external_id: "provider-david-2" })
+    end
   end
 
   test "destroying user destroys sso record" do
@@ -57,15 +53,13 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
   test "creates verified user and sso record for new verified email" do
     assert_difference -> { User.count }, +1 do
       assert_difference -> { SingleSignOnRecord.count }, +1 do
-        result = SingleSignOnRecord.resolve(payload(email: "new@example.com", external_id: "new-1", name: "New User"))
+        record = SingleSignOnRecord.find_or_provision!(payload(email: "new@example.com", external_id: "new-1", name: "New User"))
 
-        assert result.session_allowed?
-        assert_not result.activation_required?
-        assert result.user.verified?
-        assert_equal "New User", result.user.name
-        assert_equal "new@example.com", result.user.email_address
-        assert_equal "new-1", result.user.single_sign_on_record.external_id
-        assert_equal "new@example.com", result.user.single_sign_on_record.external_email
+        assert record.user.verified?
+        assert_equal "New User", record.user.name
+        assert_equal "new@example.com", record.user.email_address
+        assert_equal "new-1", record.external_id
+        assert_equal "new@example.com", record.external_email
       end
     end
   end
@@ -73,10 +67,10 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
   test "updates audit fields for existing external id" do
     record = single_sign_on_records(:david)
 
-    result = SingleSignOnRecord.resolve(payload(email: "david.changed@example.com", external_id: record.external_id))
+    resolved_record = SingleSignOnRecord.find_or_provision!(payload(email: "david.changed@example.com", external_id: record.external_id))
 
-    assert result.session_allowed?
-    assert_equal users(:david), result.user
+    assert_equal record, resolved_record
+    assert_equal users(:david), resolved_record.user
     assert_equal "david.changed@example.com", record.reload.external_email
     assert record.last_payload.include?("david.changed@example.com")
     assert_in_delta Time.current, record.last_seen_at, 2.seconds
@@ -86,10 +80,9 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     user = users(:david)
     user.deactivate
 
-    result = SingleSignOnRecord.resolve(payload(email: user.email_address, external_id: single_sign_on_records(:david).external_id))
-
-    assert result.failure?
-    assert_not result.session_allowed?
+    assert_raises User::SingleSignOnForbidden do
+      SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: single_sign_on_records(:david).external_id))
+    end
   end
 
   test "claims existing email without sso record when activation is not required" do
@@ -97,10 +90,9 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
 
     assert_difference -> { User.count }, 0 do
       assert_difference -> { SingleSignOnRecord.count }, +1 do
-        result = SingleSignOnRecord.resolve(payload(email: user.email_address, external_id: "jason-provider"))
+        record = SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: "jason-provider"))
 
-        assert result.session_allowed?
-        assert_equal user, result.user
+        assert_equal user, record.user
         assert_equal "jason-provider", user.single_sign_on_record.external_id
       end
     end
@@ -109,7 +101,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
   test "preserves local profile fields without override flags" do
     user = users(:david)
 
-    SingleSignOnRecord.resolve(payload(
+    SingleSignOnRecord.find_or_provision!(payload(
       email: user.email_address,
       external_id: single_sign_on_records(:david).external_id,
       name: "Provider Name",
@@ -125,7 +117,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     ENV["SSO_OVERRIDES_AVATAR"] = "true"
     user = users(:david)
 
-    SingleSignOnRecord.resolve(payload(
+    SingleSignOnRecord.find_or_provision!(payload(
       email: user.email_address,
       external_id: single_sign_on_records(:david).external_id,
       name: "Provider Name",
@@ -137,34 +129,31 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
   end
 
   test "rejects email claimed by another external id" do
-    result = SingleSignOnRecord.resolve(payload(email: users(:david).email_address, external_id: "attacker"))
-
-    assert result.failure?
-    assert_not result.session_allowed?
-    assert_nil result.user
+    assert_raises User::SingleSignOnForbidden do
+      SingleSignOnRecord.find_or_provision!(payload(email: users(:david).email_address, external_id: "attacker"))
+    end
   end
 
   test "require activation does not claim existing email" do
     user = users(:jason)
 
     assert_no_difference -> { SingleSignOnRecord.count } do
-      result = SingleSignOnRecord.resolve(payload(email: user.email_address, external_id: "jason-provider", require_activation: true))
-
-      assert result.failure?
-      assert_not result.session_allowed?
+      assert_raises User::SingleSignOnActivationRequired do
+        SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: "jason-provider", require_activation: true))
+      end
     end
   end
 
   test "require activation creates unverified user and sends verification email" do
     assert_enqueued_emails 1 do
-      result = SingleSignOnRecord.resolve(payload(email: "activate@example.com", external_id: "activate-1", require_activation: true))
-
-      assert_not result.failure?
-      assert_not result.session_allowed?
-      assert result.activation_required?
-      assert_not result.user.verified?
-      assert_equal "activate-1", result.user.single_sign_on_record.external_id
+      assert_raises User::SingleSignOnActivationRequired do
+        SingleSignOnRecord.find_or_provision!(payload(email: "activate@example.com", external_id: "activate-1", require_activation: true))
+      end
     end
+
+    user = User.find_by(email_address: "activate@example.com")
+    assert_not user.verified?
+    assert_equal "activate-1", user.single_sign_on_record.external_id
   end
 
   test "require activation for linked unverified user sends verification email without session" do
@@ -172,12 +161,9 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     user.update!(verified_at: nil)
 
     assert_enqueued_emails 1 do
-      result = SingleSignOnRecord.resolve(payload(email: user.email_address, external_id: single_sign_on_records(:david).external_id, require_activation: true))
-
-      assert_not result.failure?
-      assert_not result.session_allowed?
-      assert result.activation_required?
-      assert_equal user, result.user
+      assert_raises User::SingleSignOnActivationRequired do
+        SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: single_sign_on_records(:david).external_id, require_activation: true))
+      end
     end
   end
 

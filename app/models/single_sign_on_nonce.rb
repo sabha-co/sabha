@@ -36,6 +36,10 @@ class SingleSignOnNonce < ApplicationRecord
     "single_sign_on_nonce_#{nonce}"
   end
 
+  def self.purge_expired
+    where(expires_at: ...Time.current).delete_all
+  end
+
   def use!(now: Time.current)
     update!(used_at: now)
   end

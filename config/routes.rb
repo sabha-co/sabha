@@ -42,8 +42,9 @@ Rails.application.routes.draw do
       resources :transfers, only: %i[ show update ]
     end
   end
-  get "/session/sso", to: "sso#new", as: :sso_init
-  get "/session/sso/callback", to: "sso#show", as: :sso_callback
+  get "/session/sso", to: "sso/handshakes#new", as: :sso_handshake
+  post "/session/sso", to: "sso/handshakes#create"
+  get "/session/sso/callback", to: "sso/callbacks#show", as: :sso_callback
 
   resources :auth_tokens, only: %i[create]
   namespace :auth_tokens do

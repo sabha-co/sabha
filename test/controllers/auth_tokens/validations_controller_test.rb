@@ -70,7 +70,7 @@ class AuthTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
 
     post auth_tokens_validations_url, params: { code: "000000" }
 
-    assert_redirected_to sso_init_url
+    assert_redirected_to sso_handshake_url
   end
 
   test "token-based login still signs in user when SSO auth enabled" do

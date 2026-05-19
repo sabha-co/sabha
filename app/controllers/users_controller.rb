@@ -8,7 +8,7 @@ class UsersController < ApplicationController
 
   before_action :set_user, only: :show
   before_action :reject_banned_ip, only: :create
-  before_action :redirect_to_sso_login, only: %i[ new create ], if: -> { sso_auth? }
+  before_action :redirect_to_sso_login, only: %i[ new create ], if: -> { Current.account&.sso_auth? && !signed_in? }
   before_action :validate_cloudflare_turnstile, only: :create, unless: -> { Sabha.saas? }
   rescue_from RailsCloudflareTurnstile::Forbidden, with: :handle_turnstile_failure
 
@@ -17,7 +17,7 @@ class UsersController < ApplicationController
   before_action :set_return_to_url, only: %i[ new create ]
   before_action :validate_email_param, only: :create, unless: -> { saas_authenticated? || saas_unauthenticated? }
   before_action :ensure_password_provided, only: :create, unless: -> { saas_authenticated? || saas_unauthenticated? }
-  before_action :start_otp_if_user_exists, only: :create, if: -> { !saas_authenticated? && !saas_unauthenticated? && Current.account.auth_method_value == "otp" }
+  before_action :start_otp_if_user_exists, only: :create, if: -> { !saas_authenticated? && !saas_unauthenticated? && Current.account.otp_auth? }
 
   helper_method :saas_authenticated?, :saas_unauthenticated?
 
@@ -48,7 +48,7 @@ class UsersController < ApplicationController
     end
 
     def redirect_to_sso_login
-      redirect_to sso_init_url(return_to: request.fullpath)
+      redirect_to sso_handshake_url(return_to: request.fullpath)
     end
 
     # SaaS mode: user is globally authenticated, just needs to join this workspace
@@ -137,7 +137,7 @@ class UsersController < ApplicationController
     end
 
     def ensure_password_provided
-      return unless Current.account.auth_method_value == "password"
+      return unless Current.account.password_auth?
       return if user_params[:password].present?
 
       @user = User.new
@@ -148,7 +148,7 @@ class UsersController < ApplicationController
 
     def redirect_after_signup
       if @user.person? && !@user.verified?
-        if Current.account.auth_method_value == "otp"
+        if Current.account.otp_auth?
           start_otp_for @user
           redirect_to new_auth_tokens_validations_path, notice: "Please check your email for a verification code.", status: :see_other
         else
@@ -196,10 +196,6 @@ class UsersController < ApplicationController
     # Check if user is unauthenticated in SaaS mode
     def saas_unauthenticated?
       Sabha.saas? && Current.global_identity.blank?
-    end
-
-    def sso_auth?
-      !Sabha.saas? && !signed_in? && Current.account.auth_method_value == "sso"
     end
 
     # Build return_to URL for auth redirects

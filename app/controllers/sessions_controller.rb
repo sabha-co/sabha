@@ -11,7 +11,7 @@ class SessionsController < ApplicationController
   before_action :reject_banned_ip, only: :create
   before_action :redirect_to_saas_login, only: %i[ new create ], if: -> { Sabha.saas? }
   before_action :ensure_user_exists, only: :new
-  before_action :redirect_to_sso_login, only: %i[ new create ], if: -> { sso_auth? }
+  before_action :redirect_to_sso_login, only: %i[ new create ], if: -> { Current.account&.sso_auth? }
   before_action :require_password_auth, only: :create
   before_action :validate_email_param, only: :create
 
@@ -23,7 +23,7 @@ class SessionsController < ApplicationController
     if user = User.active.authenticate_by(email_address: params[:email_address],
                                           password: params[:password])
       # Check if email verification is required
-      if Current.account.auth_method_value == "password" && !user.verified?
+      if Current.account.password_auth? && !user.verified?
         redirect_to new_session_url(email_address: params[:email_address]),
           alert: "Please verify your email address. Check your inbox for the verification link, or use 'Forgot your password?' to resend."
       else
@@ -50,7 +50,7 @@ class SessionsController < ApplicationController
 
     def redirect_to_sso_login
       store_return_to
-      redirect_to sso_init_url
+      redirect_to sso_handshake_url
     end
 
     def ensure_user_exists
@@ -65,13 +65,9 @@ class SessionsController < ApplicationController
     end
 
     def require_password_auth
-      if Current.account.auth_method_value != "password"
+      unless Current.account.password_auth?
         redirect_to new_session_url, alert: "Password login is not enabled."
       end
-    end
-
-    def sso_auth?
-      !Sabha.saas? && Current.account&.auth_method_value == "sso"
     end
 
     def validate_email_param

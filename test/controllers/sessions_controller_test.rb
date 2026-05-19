@@ -112,7 +112,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
     get new_session_url(return_to: "/chat")
 
-    assert_redirected_to sso_init_url
+    assert_redirected_to sso_handshake_url
     assert_equal "/chat", session[:return_to_after_authenticating]
   ensure
     original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
@@ -141,7 +141,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
       post session_url, params: { email_address: "david@37signals.com", password: "secret123456" }
     end
 
-    assert_redirected_to sso_init_url
+    assert_redirected_to sso_handshake_url
   ensure
     original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
   end

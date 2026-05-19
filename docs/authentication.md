@@ -39,16 +39,15 @@ ADMIN_AUTH_TOKEN=<32+-char-token> # For Sabha Cloud only
 
 ### How It Works
 
-The `auth_method_value` is determined by `ENV["AUTH_METHOD"]`:
+The `auth_method` is determined by `ENV["AUTH_METHOD"]`:
 
 - If set to `"password"`, `"otp"`, or `"sso"`: uses that value
 - If not set or invalid: defaults to `"password"`
 
 ```ruby
 # app/models/account.rb
-def auth_method_value
-  value = ENV["AUTH_METHOD"] || "password"
-  value.in?(VALID_AUTH_METHODS) ? value : "password"
+def auth_method
+  ENV["AUTH_METHOD"].presence_in(VALID_AUTH_METHODS) || "password"
 end
 ```
 
@@ -459,8 +458,9 @@ generates_token_for :password_reset, expires_in: 1.hour
 ```ruby
 # Authentication
 resource :session                              # Password sign-in/out
-get "/session/sso", to: "sso#new"              # SSO provider redirect
-get "/session/sso/callback", to: "sso#show"      # SSO callback
+get  "/session/sso", to: "sso/handshakes#new"    # SSO start page
+post "/session/sso", to: "sso/handshakes#create" # SSO provider redirect
+get  "/session/sso/callback", to: "sso/callbacks#show"
 resources :auth_tokens, only: [:create]        # Request OTP
 namespace :auth_tokens do
   resource :validations, only: [:new, :create] # Validate OTP

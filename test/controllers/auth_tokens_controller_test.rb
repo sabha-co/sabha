@@ -62,7 +62,7 @@ class AuthTokensControllerTest < ActionDispatch::IntegrationTest
       post auth_tokens_url, params: { email_address: users(:david).email_address }
     end
 
-    assert_redirected_to sso_init_url
+    assert_redirected_to sso_handshake_url
   end
 
   test "rate limits OTP requests" do

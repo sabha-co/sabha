@@ -27,7 +27,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     get join_url(@join_code)
 
-    assert_redirected_to sso_init_url(return_to: "/join/#{@join_code}")
+    assert_redirected_to sso_handshake_url(return_to: "/join/#{@join_code}")
   end
 
   test "create redirects to sso when SSO auth enabled" do
@@ -43,7 +43,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
       )
     end
 
-    assert_redirected_to sso_init_url(return_to: "/join/#{@join_code}")
+    assert_redirected_to sso_handshake_url(return_to: "/join/#{@join_code}")
   end
 
   test "create with password auth requires email verification" do

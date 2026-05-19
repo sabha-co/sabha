@@ -202,7 +202,7 @@ Configurable via `AUTH_METHOD` environment variable.
 ```
 
 - **Session model** tracks browser, IP, platform for multi-device support
-- Auth method is configured globally via `ENV["AUTH_METHOD"]` (read through `Account#auth_method_value`)
+- Auth method is configured globally via `ENV["AUTH_METHOD"]` (read through `Account#auth_method` and predicate helpers)
 - SSO mode stores parent-app identity mappings in `SingleSignOnRecord`
 - Email verification required for new users (`verified_at` timestamp)
 - Cloudflare Turnstile bot protection on sign-in forms (production)
