@@ -1,8 +1,0 @@
-<% content_for :title, "Single sign-on" %>
-
-<main class="session__main">
-  <section class="session__card">
-    <h1>Single sign-on</h1>
-    <%= button_to "Continue", sso_handshake_path(return_to: params[:return_to]), class: "btn" %>
-  </section>
-</main>

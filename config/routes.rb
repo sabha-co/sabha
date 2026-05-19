@@ -43,7 +43,6 @@ Rails.application.routes.draw do
     end
   end
   get "/session/sso", to: "sso/handshakes#new", as: :sso_handshake
-  post "/session/sso", to: "sso/handshakes#create"
   get "/session/sso/callback", to: "sso/callbacks#show", as: :sso_callback
 
   resources :auth_tokens, only: %i[create]

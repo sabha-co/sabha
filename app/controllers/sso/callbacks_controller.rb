@@ -10,14 +10,9 @@ class Sso::CallbacksController < Sso::BaseController
     if payload["failed"]
       raise Sso::Failed
     elsif payload["logout"]
-      terminate_session_from_cookie
-      redirect_to safe_return_path(return_path)
+      sign_out_via_sso(return_path)
     else
-      pending_join_code = session.delete(:pending_join_code)
-      user = User.sign_in_with_sso!(payload)
-      redeem_pending_join_code!(user, pending_join_code)
-      start_new_session_for user
-      redirect_to safe_return_path(return_path)
+      sign_in_via_sso(payload, return_path)
     end
   rescue Sso::Payload::Error, SingleSignOnNonce::Error => error
     Rails.logger.warn("[SSO] Rejected callback: #{error.class.name}: #{error.message}")
@@ -29,6 +24,19 @@ class Sso::CallbacksController < Sso::BaseController
   end
 
   private
+    def sign_in_via_sso(payload, return_path)
+      pending_join_code = session.delete(:pending_join_code)
+      user = User.sign_in_with_sso!(payload)
+      redeem_pending_join_code!(user, pending_join_code)
+      start_new_session_for user
+      redirect_to safe_return_path(return_path)
+    end
+
+    def sign_out_via_sso(return_path)
+      terminate_session_from_cookie
+      redirect_to safe_return_path(return_path)
+    end
+
     def terminate_session_from_cookie
       find_session_by_cookie&.destroy!
       reset_session

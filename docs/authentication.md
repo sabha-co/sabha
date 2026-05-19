@@ -458,9 +458,8 @@ generates_token_for :password_reset, expires_in: 1.hour
 ```ruby
 # Authentication
 resource :session                              # Password sign-in/out
-get  "/session/sso", to: "sso/handshakes#new"    # SSO start page
-post "/session/sso", to: "sso/handshakes#create" # SSO provider redirect
-get  "/session/sso/callback", to: "sso/callbacks#show"
+get "/session/sso", to: "sso/handshakes#new"          # SSO provider redirect
+get "/session/sso/callback", to: "sso/callbacks#show"
 resources :auth_tokens, only: [:create]        # Request OTP
 namespace :auth_tokens do
   resource :validations, only: [:new, :create] # Validate OTP
