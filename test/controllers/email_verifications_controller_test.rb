@@ -13,6 +13,24 @@ class EmailVerificationsControllerTest < ActionDispatch::IntegrationTest
     assert_match /verified successfully/, flash[:notice]
   end
 
+  test "show verifies email and redirects to sso when SSO auth enabled" do
+    original = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "sso"
+    user = users(:david)
+    user.update!(verified_at: nil)
+    token = user.generate_token_for(:email_verification)
+
+    assert_no_difference -> { Session.count } do
+      get verify_email_url(token)
+    end
+
+    assert_redirected_to sso_handshake_url
+    assert user.reload.verified?
+    assert_nil parsed_cookies.signed[:session_token]
+  ensure
+    original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
+
   test "show rejects invalid token" do
     get verify_email_url("invalid_token")
 
