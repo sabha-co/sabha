@@ -16,6 +16,12 @@ class User < ApplicationRecord
     workspace_membership&.global_identity
   end
 
+  def self.sign_in_with_sso!(payload)
+    record = SingleSignOnRecord.find_or_provision!(payload)
+    record.require_activation!(payload)
+    record.user
+  end
+
   # User status enum (replaces active boolean + suspended_at)
   enum :status, %i[active deactivated banned], default: :active
 
@@ -142,6 +148,7 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :auth_tokens, dependent: :destroy
   has_many :bans, dependent: :destroy
+  has_one :single_sign_on_record, dependent: :destroy
 
   belongs_to :badge, optional: true
 

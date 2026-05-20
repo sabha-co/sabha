@@ -106,6 +106,55 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
   end
 
+  test "new redirects to sso when SSO auth enabled" do
+    original = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "sso"
+
+    get new_session_url(return_to: "/chat")
+
+    assert_redirected_to sso_handshake_url
+    assert_equal "/chat", session[:return_to_after_authenticating]
+  ensure
+    original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
+
+  test "new redirects to first run before sso when no users exist" do
+    original = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "sso"
+    User.stubs(:none?).returns(true)
+
+    get new_session_url
+
+    assert_redirected_to first_run_url
+  ensure
+    original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
+
+  test "password login redirects to sso when SSO auth enabled" do
+    original = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "sso"
+
+    assert_no_difference -> { Session.count } do
+      post session_url, params: { email_address: "david@37signals.com", password: "secret123456" }
+    end
+
+    assert_redirected_to sso_handshake_url
+  ensure
+    original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
+
+  test "protected page redirects to sso when SSO auth enabled" do
+    original = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "sso"
+
+    get chat_url
+
+    assert_redirected_to sso_handshake_url
+    assert_equal chat_url, session[:return_to_after_authenticating]
+  ensure
+    original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
+
   test "rate limits login attempts" do
     11.times do
       post session_url, params: { email_address: "david@37signals.com", password: "wrong" }

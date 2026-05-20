@@ -4,7 +4,7 @@ class ConfigurationsController < ApplicationController
       settings: {},
       rules: [
         {
-          patterns: %w[/ /session/new /auth_tokens/validations/new],
+          patterns: %w[/ /session/new /session/sso /auth_tokens/validations/new],
           properties: {
             presentation: "replace_root"
           }

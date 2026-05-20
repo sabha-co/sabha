@@ -22,6 +22,52 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
+  test "new redirects to sso when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+
+    get join_url(@join_code)
+
+    assert_redirected_to sso_handshake_url(return_to: "/join/#{@join_code}")
+    assert_equal @join_code, session[:pending_join_code]
+  end
+
+  test "new rejects invalid join code before redirecting to sso" do
+    ENV["AUTH_METHOD"] = "sso"
+
+    get join_url("INVALID_CODE_123")
+
+    assert_redirected_to root_url
+    assert_match /not valid/, flash[:alert]
+    assert_nil session[:pending_join_code]
+  end
+
+  test "new rejects expired join code before redirecting to sso" do
+    ENV["AUTH_METHOD"] = "sso"
+    Current.account.join_code.update!(expires_at: 1.day.ago)
+
+    get join_url(@join_code)
+
+    assert_redirected_to root_url
+    assert_match /expired/, flash[:alert]
+    assert_nil session[:pending_join_code]
+  end
+
+  test "create redirects to sso when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+
+    assert_no_difference -> { User.count } do
+      post join_url(@join_code), params: with_turnstile_response(
+        user: {
+          name: "New User",
+          email_address: "newuser@example.com",
+          password: "secure_password_123"
+        }
+      )
+    end
+
+    assert_redirected_to sso_handshake_url(return_to: "/join/#{@join_code}")
+  end
+
   test "create with password auth requires email verification" do
     ENV["AUTH_METHOD"] = "password"
 

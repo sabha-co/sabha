@@ -1,6 +1,18 @@
 require "test_helper"
 
 class PasswordResetsControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    @original_auth_method = ENV["AUTH_METHOD"]
+  end
+
+  teardown do
+    if @original_auth_method.nil?
+      ENV.delete("AUTH_METHOD")
+    else
+      ENV["AUTH_METHOD"] = @original_auth_method
+    end
+  end
+
   test "new displays password reset form" do
     get new_password_reset_url
 
@@ -169,5 +181,42 @@ class PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     post password_resets_url, params: { email_address: "someone@example.com" }
     assert_redirected_to new_session_url
     refute_match /Too many/, flash[:alert].to_s
+  end
+
+  test "password reset form redirects when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+
+    get new_password_reset_url
+
+    assert_redirected_to new_session_url
+    assert_match /not available/, flash[:alert]
+  end
+
+  test "password reset request does not send email when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+
+    assert_no_emails do
+      post password_resets_url, params: { email_address: users(:david).email_address }
+    end
+
+    assert_redirected_to new_session_url
+    assert_match /not available/, flash[:alert]
+  end
+
+  test "password reset update does not create session when SSO auth enabled" do
+    ENV["AUTH_METHOD"] = "sso"
+    user = users(:david)
+    token = user.generate_token_for(:password_reset)
+
+    assert_no_difference -> { Session.count } do
+      patch password_reset_url(token), params: {
+        password: "new_secure_password_123",
+        password_confirmation: "new_secure_password_123"
+      }
+    end
+
+    assert_redirected_to new_session_url
+    assert_nil parsed_cookies.signed[:session_token]
+    assert_not user.reload.authenticate("new_secure_password_123")
   end
 end

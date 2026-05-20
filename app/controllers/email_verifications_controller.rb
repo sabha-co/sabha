@@ -11,8 +11,13 @@ class EmailVerificationsController < ApplicationController
       redirect_to root_url, notice: "Your email is already verified. Please sign in."
     else
       @user.verify_email!
-      start_new_session_for @user
-      redirect_to root_url, notice: "Email verified successfully! Welcome to #{Branding.contextual_app_name}."
+
+      if Current.account.sso_auth?
+        redirect_to sso_handshake_url, notice: "Email verified. Please sign in."
+      else
+        start_new_session_for @user
+        redirect_to root_url, notice: "Email verified successfully! Welcome to #{Branding.contextual_app_name}."
+      end
     end
   end
 

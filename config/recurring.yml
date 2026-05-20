@@ -21,6 +21,12 @@ production:
     queue: default
     schedule: "0 10 * * 2"
 
+<% unless Sabha.saas? %>
+  clear_expired_single_sign_on_nonces:
+    command: "SingleSignOnNonce.purge_expired"
+    schedule: every hour at minute 24
+<% end %>
+
 <% if Sabha.saas? %>
   reconcile_storage:
     command: "Workspace.find_each { |w| ApplicationRecord.with_tenant(w.external_id.to_s) { Storage::ReconcileJob.perform_later(Account.sole) } }"
@@ -34,4 +40,3 @@ production:
     command: "Workspace.active.find_each { |w| Workspace::SnapshotJob.perform_later(w) }"
     schedule: every hour
 <% end %>
-

@@ -5,21 +5,27 @@ class AccountTest < ActiveSupport::TestCase
     @account = accounts(:signal)
   end
 
-  test "auth_method_value defaults to password when ENV not set" do
+  test "auth_method defaults to password when ENV not set" do
     original_env = ENV["AUTH_METHOD"]
     begin
       ENV.delete("AUTH_METHOD")
-      assert_equal "password", @account.auth_method_value
+      assert_equal "password", @account.auth_method
+      assert @account.password_auth?
+      assert_not @account.otp_auth?
+      assert_not @account.sso_auth?
     ensure
       ENV["AUTH_METHOD"] = original_env if original_env
     end
   end
 
-  test "auth_method_value returns ENV value when set" do
+  test "auth_method returns otp when set" do
     original_env = ENV["AUTH_METHOD"]
     begin
       ENV["AUTH_METHOD"] = "otp"
-      assert_equal "otp", @account.auth_method_value
+      assert_equal "otp", @account.auth_method
+      assert @account.otp_auth?
+      assert_not @account.password_auth?
+      assert_not @account.sso_auth?
     ensure
       if original_env.nil?
         ENV.delete("AUTH_METHOD")
@@ -29,11 +35,29 @@ class AccountTest < ActiveSupport::TestCase
     end
   end
 
-  test "auth_method_value falls back to password for invalid ENV value" do
+  test "auth_method returns sso when set" do
+    original_env = ENV["AUTH_METHOD"]
+    begin
+      ENV["AUTH_METHOD"] = "sso"
+      assert_equal "sso", @account.auth_method
+      assert @account.sso_auth?
+      assert_not @account.password_auth?
+      assert_not @account.otp_auth?
+    ensure
+      if original_env.nil?
+        ENV.delete("AUTH_METHOD")
+      else
+        ENV["AUTH_METHOD"] = original_env
+      end
+    end
+  end
+
+  test "auth_method falls back to password for invalid ENV value" do
     original_env = ENV["AUTH_METHOD"]
     begin
       ENV["AUTH_METHOD"] = "invalid"
-      assert_equal "password", @account.auth_method_value
+      assert_equal "password", @account.auth_method
+      assert @account.password_auth?
     ensure
       if original_env.nil?
         ENV.delete("AUTH_METHOD")
