@@ -51,73 +51,6 @@ def auth_method
 end
 ```
 
----
-
-## SSO Authentication (DiscourseConnect)
-
-When `AUTH_METHOD=sso`, Sabha acts as a DiscourseConnect consumer. Local password and OTP entry points redirect to `/session/sso`, which sends the browser to the parent app's SSO provider URL with a signed payload.
-
-### Request Flow
-
-```
-User visits Sabha
-  ↓
-Unauthenticated request redirects to /session/sso
-  ↓
-Sabha creates a session-bound nonce
-  ↓
-Sabha redirects to SSO_PROVIDER_URL?sso=...&sig=...
-  ↓
-Parent app authenticates the user
-  ↓
-Parent app redirects back to /session/sso/callback?sso=...&sig=...
-  ↓
-Sabha verifies the signature and nonce
-  ↓
-User resolved/provisioned → Session created → Redirected to original page
-```
-
-### Provider Contract
-
-The provider response must include:
-
-| Field | Purpose |
-|-------|---------|
-| `nonce` | The nonce Sabha sent in the request |
-| `external_id` | Stable immutable user id from the parent app |
-| `email` | User email address |
-
-Optional v1 fields:
-
-| Field | Purpose |
-|-------|---------|
-| `name` | Used when creating users; can override when `SSO_OVERRIDES_NAME=true` |
-| `avatar_url` | Used when creating users; can override when `SSO_OVERRIDES_AVATAR=true` |
-| `require_activation` | When `true`, Sabha verifies email before opening a session |
-| `failed` | When `true`, Sabha renders an auth failure without opening a session |
-| `logout` | Signed local-session termination callback with a valid Sabha nonce |
-
-### User Resolution
-
-Sabha resolves SSO users in this order:
-
-1. Existing `SingleSignOnRecord.external_id`
-2. Existing user by email, only when `require_activation` is not true and the user has no SSO record
-3. New user auto-provisioning
-
-Roles, groups, usernames, 2FA fields, and custom fields are ignored in v1.
-
-### Email Claiming Risk
-
-Email matching is what makes SSO drop-in for existing installs, but it trusts the parent app's email verification. If the parent app lets someone use `foo@example.com` without verifying that address, that user could claim the existing Sabha account for `foo@example.com`.
-
-Mitigations:
-
-1. The provider must send `require_activation=true` for any unverified email. Sabha will send its own verification email and will not open a session until verification succeeds.
-2. Operators can pre-seed `SingleSignOnRecord` mappings for existing users before enabling SSO.
-
----
-
 ## Password Authentication
 
 ### Sign-Up Flow
@@ -264,6 +197,73 @@ end
 | `app/mailers/auth_token_mailer.rb` | Send OTP email |
 | `app/views/auth_token_mailer/otp.text.erb` | OTP email template |
 | `app/views/auth_tokens/validations/new.html.erb` | Code entry form |
+
+---
+
+## SSO Authentication (DiscourseConnect)
+
+When `AUTH_METHOD=sso`, Sabha acts as a DiscourseConnect consumer. Local password and OTP entry points redirect to `/session/sso`, which sends the browser to the parent app's SSO provider URL with a signed payload.
+
+For setup instructions, provider implementation details, rollout guidance, and troubleshooting, see [Self-Hosted SSO](sso.md).
+
+### Request Flow
+
+```
+User visits Sabha
+  ↓
+Unauthenticated request redirects to /session/sso
+  ↓
+Sabha creates a session-bound nonce
+  ↓
+Sabha redirects to SSO_PROVIDER_URL?sso=...&sig=...
+  ↓
+Parent app authenticates the user
+  ↓
+Parent app redirects back to /session/sso/callback?sso=...&sig=...
+  ↓
+Sabha verifies the signature and nonce
+  ↓
+User resolved/provisioned → Session created → Redirected to original page
+```
+
+### Provider Contract
+
+The provider response must include:
+
+| Field | Purpose |
+|-------|---------|
+| `nonce` | The nonce Sabha sent in the request |
+| `external_id` | Stable immutable user id from the parent app |
+| `email` | User email address |
+
+Optional v1 fields:
+
+| Field | Purpose |
+|-------|---------|
+| `name` | Used when creating users; can override when `SSO_OVERRIDES_NAME=true` |
+| `avatar_url` | Used when creating users; can override when `SSO_OVERRIDES_AVATAR=true` |
+| `require_activation` | When `true`, Sabha verifies email before opening a session |
+| `failed` | When `true`, Sabha renders an auth failure without opening a session |
+| `logout` | Signed local-session termination callback with a valid Sabha nonce |
+
+### User Resolution
+
+Sabha resolves SSO users in this order:
+
+1. Existing `SingleSignOnRecord.external_id`
+2. Existing user by email, only when `require_activation` is not true and the user has no SSO record
+3. New user auto-provisioning
+
+Roles, groups, usernames, 2FA fields, and custom fields are ignored in v1.
+
+### Email Claiming Risk
+
+Email matching is what makes SSO drop-in for existing installs, but it trusts the parent app's email verification. If the parent app lets someone use `foo@example.com` without verifying that address, that user could claim the existing Sabha account for `foo@example.com`.
+
+Mitigations:
+
+1. The provider must send `require_activation=true` for any unverified email. Sabha will send its own verification email and will not open a session until verification succeeds.
+2. Operators can pre-seed `SingleSignOnRecord` mappings for existing users before enabling SSO.
 
 ---
 
