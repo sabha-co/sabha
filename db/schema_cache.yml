@@ -120,7 +120,7 @@ columns:
     default_function:
     collation:
     comment:
-  - &28 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+  - &29 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: user_id
     cast_type: *3
@@ -416,7 +416,7 @@ columns:
     collation:
     comment:
   - *11
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+  - &28 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: used_at
     cast_type: *1
@@ -1032,6 +1032,86 @@ columns:
   - *11
   - *27
   - *22
+  single_sign_on_nonces:
+  - *7
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: expires_at
+    cast_type: *1
+    sql_type_metadata: *2
+    'null': false
+    default:
+    default_function:
+    collation:
+    comment:
+  - *10
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: nonce
+    cast_type: *5
+    sql_type_metadata: *6
+    'null': false
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: return_path
+    cast_type: *5
+    sql_type_metadata: *6
+    'null': false
+    default:
+    default_function:
+    collation:
+    comment:
+  - *11
+  - *28
+  single_sign_on_records:
+  - *7
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: external_email
+    cast_type: *5
+    sql_type_metadata: *6
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: external_id
+    cast_type: *5
+    sql_type_metadata: *6
+    'null': false
+    default:
+    default_function:
+    collation:
+    comment:
+  - *10
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: last_payload
+    cast_type: *12
+    sql_type_metadata: *13
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: last_seen_at
+    cast_type: *1
+    sql_type_metadata: *2
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - *11
+  - *22
   storage_entries:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
@@ -1095,7 +1175,7 @@ columns:
     default_function:
     collation:
     comment:
-  - *28
+  - *29
   storage_totals:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
@@ -1532,6 +1612,8 @@ primary_keys:
   schema_migrations: version
   searches: id
   sessions: id
+  single_sign_on_nonces: id
+  single_sign_on_records: id
   storage_entries: id
   storage_totals: id
   user_notification_settings: id
@@ -1562,6 +1644,8 @@ data_sources:
   schema_migrations: true
   searches: true
   sessions: true
+  single_sign_on_nonces: true
+  single_sign_on_records: true
   storage_entries: true
   storage_totals: true
   user_notification_settings: true
@@ -2567,6 +2651,72 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
+  single_sign_on_nonces:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: single_sign_on_nonces
+    name: index_single_sign_on_nonces_on_expires_at
+    unique: false
+    columns:
+    - expires_at
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: single_sign_on_nonces
+    name: index_single_sign_on_nonces_on_nonce
+    unique: true
+    columns:
+    - nonce
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  single_sign_on_records:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: single_sign_on_records
+    name: index_single_sign_on_records_on_external_id
+    unique: true
+    columns:
+    - external_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: single_sign_on_records
+    name: index_single_sign_on_records_on_user_id
+    unique: true
+    columns:
+    - user_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
   storage_entries:
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: storage_entries
@@ -2735,4 +2885,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260509190101
+version: 20260518190000
