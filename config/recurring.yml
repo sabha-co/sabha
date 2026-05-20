@@ -16,14 +16,16 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
-  clear_expired_single_sign_on_nonces:
-    command: "SingleSignOnNonce.purge_expired"
-    schedule: every hour at minute 24
-
   weekly_digest:
     class: Notification::WeeklyDigestRunnerJob
     queue: default
     schedule: "0 10 * * 2"
+
+<% unless Sabha.saas? %>
+  clear_expired_single_sign_on_nonces:
+    command: "SingleSignOnNonce.purge_expired"
+    schedule: every hour at minute 24
+<% end %>
 
 <% if Sabha.saas? %>
   reconcile_storage:
