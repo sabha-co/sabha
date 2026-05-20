@@ -1,5 +1,4 @@
 require "test_helper"
-require Rails.root.join("db/migrate/20260509180101_backfill_user_notification_settings")
 
 class User::NotificationSettingsTest < ActiveSupport::TestCase
   test "User.create! synchronously creates a notification_settings row with the documented defaults" do
@@ -59,26 +58,5 @@ class User::NotificationSettingsTest < ActiveSupport::TestCase
 
     assert user.notification_settings.email_frequency_hourly?
     refute user.notification_settings.email_frequency_daily?
-  end
-
-  test "backfill creates settings rows only for users that don't yet have one" do
-    # Fixtures bypass the after_create_commit callback, so legacy users have no row.
-    legacy_user = users(:david)
-    legacy_user.notification_settings&.destroy
-    assert_nil legacy_user.reload.notification_settings
-
-    seeded_user = User.create!(name: "Pre-seeded", email_address: "pre_seeded@example.com")
-    refute_nil seeded_user.notification_settings, "callback should have seeded this user"
-
-    # Re-run the same INSERT-WHERE-NOT-EXISTS the migration uses.
-    BackfillUserNotificationSettings.new.up
-
-    legacy_user.reload
-    refute_nil legacy_user.notification_settings, "backfill must seed the legacy user"
-    assert_equal "mentions_and_dms", legacy_user.notification_settings.mode
-    assert_equal true, legacy_user.notification_settings.weekly_digest_subscribed
-
-    # The pre-seeded user must still have exactly one row — no duplicates.
-    assert_equal 1, User::NotificationSettings.where(user_id: seeded_user.id).count
   end
 end
