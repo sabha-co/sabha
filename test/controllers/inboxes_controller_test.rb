@@ -51,6 +51,22 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       "visiting Activity should advance the watermark and clear the dot"
   end
 
+  test "Turbo prefetch on Activity does not clear the dot" do
+    @david.update_column(:activity_seen_at, nil)
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason,
+      client_message_id: "activity_prefetch_test"
+    )
+    assert @david.reload.unseen_activity?
+
+    get activity_inbox_url, headers: { "Sec-Purpose" => "prefetch" }
+    assert_response :success
+
+    assert @david.reload.unseen_activity?,
+      "hovering (prefetch) should not advance the watermark"
+  end
+
   test "activity shows messages mentioning current user" do
     room = rooms(:pets)
 

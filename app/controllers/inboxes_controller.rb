@@ -14,7 +14,7 @@ class InboxesController < ApplicationController
   def activity
     @notifications = find_notifications
     track_last_loaded_notification
-    Current.user.touch_activity_seen_at
+    Current.user.touch_activity_seen_at unless turbo_prefetch?
   end
 
   def direct_messages
