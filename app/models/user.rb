@@ -101,17 +101,7 @@ class User < ApplicationRecord
       )
   end
 
-  # Marks rooms with unread activity (mentions, boosts, thread replies) as read.
-  # DMs are handled separately by mark_direct_messages_as_read.
-  # Only marks as read if there were no non-notified messages in the window
-  # (avoids accidentally marking unread messages as read when user only viewed activity)
-  def mark_activity_as_read(loaded_at)
-    until_time = freshness_checked_time(loaded_at)
-    mark_notified_rooms_as_read(until_time)
-    touch_activity_seen_at(until_time)
-  end
-
-  # Persists the watermark used by has_unseen_activity? to gate the sidebar dot.
+  # Persists the watermark used by unseen_activity? to gate the sidebar dot.
   # Monotonic: only advances forward so stale `loaded_at` values from background
   # tabs can't reopen the dot. Broadcast is fired by after_update_commit below.
   def touch_activity_seen_at(time = Time.current)
@@ -123,7 +113,7 @@ class User < ApplicationRecord
 
   # True when at least one notification row has arrived since the user last
   # opened the Activity tab. Drives the sidebar Activity dot.
-  def has_unseen_activity?
+  def unseen_activity?
     scope = notifications
     scope = scope.where("notifications.created_at > ?", activity_seen_at) if activity_seen_at
     scope.exists?

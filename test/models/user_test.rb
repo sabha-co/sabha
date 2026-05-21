@@ -741,7 +741,7 @@ class UserTest < ActiveSupport::TestCase
     assert Notification::Bundle.exists?(bundle.id), "the owner's bundle itself must remain — only the actor's row goes"
   end
 
-  test "has_unseen_activity? true when a notification exists and the watermark is nil" do
+  test "unseen_activity? true when a notification exists and the watermark is nil" do
     user = users(:david)
     user.update_column(:activity_seen_at, nil)
     rooms(:pets).messages.create!(
@@ -750,10 +750,10 @@ class UserTest < ActiveSupport::TestCase
       client_message_id: "unseen_mention_#{SecureRandom.hex(4)}"
     )
 
-    assert user.reload.has_unseen_activity?
+    assert user.reload.unseen_activity?
   end
 
-  test "has_unseen_activity? false when watermark is newer than all notifications" do
+  test "unseen_activity? false when watermark is newer than all notifications" do
     user = users(:david)
     rooms(:pets).messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
@@ -762,10 +762,10 @@ class UserTest < ActiveSupport::TestCase
     )
 
     user.touch_activity_seen_at(Time.current + 1.second)
-    assert_not user.reload.has_unseen_activity?
+    assert_not user.reload.unseen_activity?
   end
 
-  test "has_unseen_activity? true for boost-only recipients (the bug this fixes)" do
+  test "unseen_activity? true for boost-only recipients (the bug this fixes)" do
     user = users(:david)
     user.update_column(:activity_seen_at, 1.day.ago)
     message = rooms(:pets).messages.create!(body: "boost me", creator: user,
@@ -775,7 +775,7 @@ class UserTest < ActiveSupport::TestCase
       message.boosts.create!(content: "🔥", booster: users(:jason))
     end
 
-    assert user.reload.has_unseen_activity?,
+    assert user.reload.unseen_activity?,
       "boost notifications should light up the Activity dot"
   end
 

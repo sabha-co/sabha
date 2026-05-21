@@ -43,11 +43,11 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       creator: @jason,
       client_message_id: "activity_seen_at_test"
     )
-    assert @david.reload.has_unseen_activity?, "precondition: dot should be on"
+    assert @david.reload.unseen_activity?, "precondition: dot should be on"
 
     get activity_inbox_url
 
-    assert_not @david.reload.has_unseen_activity?,
+    assert_not @david.reload.unseen_activity?,
       "visiting Activity should advance the watermark and clear the dot"
   end
 
@@ -384,7 +384,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     membership = room.memberships.find_by(user: @david)
     membership.update!(unread_at: 1.hour.ago)
 
-    # Create a mention so mark_activity_as_read finds a notified room
+    # Create a mention so mark_inbox_as_read finds a notified room
     room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
