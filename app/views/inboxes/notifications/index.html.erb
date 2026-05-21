@@ -2,7 +2,7 @@
 
 <% content_for :messages do %>
   <%= search_results_tag("inbox", inbox_notifications_url, highlight_mentions: true) do %>
-    <%= render "inboxes/notifications/list", messages: @messages %>
+    <%= render "inboxes/notifications/items", messages: @messages %>
   <% end %>
 <% end %>
 

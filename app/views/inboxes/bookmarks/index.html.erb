@@ -3,7 +3,7 @@
 
 <% content_for :messages do %>
   <%= search_results_tag("inbox", inbox_bookmarks_url, highlight_mentions: true, date_separator: false, thread_messages: false) do %>
-    <%= render "inboxes/bookmarks/list", messages: @messages %>
+    <%= render "inboxes/bookmarks/items", messages: @messages %>
   <% end %>
   <%= turbo_stream_from Current.user, :inbox_bookmarks %>
 <% end %>

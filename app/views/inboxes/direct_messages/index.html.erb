@@ -30,7 +30,7 @@
        data-dm-list-loading-class="dm-conversation--loading"
        data-dm-list-page-url-value="<%= inbox_direct_messages_url %>"
        <%= "hidden" unless @memberships.present? %>>
-    <%= render "inboxes/direct_messages/list" %>
+    <%= render "inboxes/direct_messages/items" %>
   </div>
   <%= turbo_stream_from Current.user, :inbox_direct_messages %>
 <% end %>

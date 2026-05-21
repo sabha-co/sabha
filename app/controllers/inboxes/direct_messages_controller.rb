@@ -9,7 +9,7 @@ class Inboxes::DirectMessagesController < InboxesController
       @direct_room_members = Rooms::Direct.members_for_display_by_room(
         @memberships.map(&:room_id), excluding: Current.user
       )
-      render partial: "list"
+      render partial: "items"
     else
       session[:inbox_last_loaded_dms_created_at] = Time.current.iso8601
       load_dm_sidebar

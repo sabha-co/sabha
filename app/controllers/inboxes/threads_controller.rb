@@ -4,6 +4,6 @@ class Inboxes::ThreadsController < InboxesController
   def index
     @messages = find_messages_with(Inbox::ThreadsQuery)
 
-    render partial: "list" if paginating?
+    render partial: "items" if paginating?
   end
 end

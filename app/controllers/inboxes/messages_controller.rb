@@ -5,7 +5,7 @@ class Inboxes::MessagesController < InboxesController
     @messages = find_messages_with(Inbox::MessagesQuery)
 
     if paginating?
-      render partial: "list"
+      render partial: "items"
     else
       track_last_loaded_message :inbox_last_loaded_message_created_at
     end

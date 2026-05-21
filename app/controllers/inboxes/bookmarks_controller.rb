@@ -4,6 +4,6 @@ class Inboxes::BookmarksController < InboxesController
   def index
     @messages = find_bookmarked_messages
 
-    render partial: "list" if paginating?
+    render partial: "items" if paginating?
   end
 end

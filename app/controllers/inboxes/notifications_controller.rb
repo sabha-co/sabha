@@ -5,7 +5,7 @@ class Inboxes::NotificationsController < InboxesController
     @messages = find_messages_with(Inbox::MessagesQuery, involvement: :notifications_on)
 
     if paginating?
-      render partial: "list"
+      render partial: "items"
     else
       track_last_loaded_message :inbox_last_loaded_notification_created_at
     end

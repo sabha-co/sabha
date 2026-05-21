@@ -5,7 +5,7 @@ class Inboxes::ActivityController < InboxesController
     @notifications = find_notifications
 
     if paginating?
-      render partial: "list"
+      render partial: "items"
     else
       track_last_loaded_notification
       Current.user.touch_activity_seen_at
