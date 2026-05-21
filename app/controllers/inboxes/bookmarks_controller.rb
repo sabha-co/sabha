@@ -1,11 +1,11 @@
-class Inboxes::BookmarksController < InboxesController
-  before_action :set_bookmark_pagination_anchors
+class Inboxes::BookmarksController < ApplicationController
+  include InboxScoped
 
-  layout false
+  before_action :set_bookmark_pagination_anchors, if: :paginating?
 
   def index
     @messages = find_bookmarked_messages
 
-    render "inboxes/messages/index"
+    render partial: "items" if paginating?
   end
 end

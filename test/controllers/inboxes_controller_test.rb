@@ -14,17 +14,17 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
 
   test "show redirects to activity" do
     get inbox_url
-    assert_redirected_to activity_inbox_path
+    assert_redirected_to inbox_activity_index_path
   end
 
   test "show clears last loaded message timestamps" do
     # Set some session values first by visiting activity
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_response :success
 
     # Now visit show - should clear timestamps and redirect
     get inbox_url
-    assert_redirected_to activity_inbox_path
+    assert_redirected_to inbox_activity_index_path
   end
 
   # ===================
@@ -32,7 +32,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # ===================
 
   test "activity returns success" do
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_response :success
   end
 
@@ -45,7 +45,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     )
     assert @david.reload.unseen_activity?, "precondition: dot should be on"
 
-    get activity_inbox_url
+    get inbox_activity_index_url
 
     assert_not @david.reload.unseen_activity?,
       "visiting Activity should advance the watermark and clear the dot"
@@ -62,7 +62,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "mention_test_1"
     )
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_response :success
     # The mention is rendered as HTML, check for the unique marker text
     assert_match "unique marker 12345", response.body
@@ -78,7 +78,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "self_mention_test"
     )
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_response :success
     # Self-created messages should not appear
     assert_no_match "self mention", response.body
@@ -92,7 +92,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "dm_test_1"
     )
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_response :success
     assert_no_match "Hey David direct message excluded!", response.body
   end
@@ -110,7 +110,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       boost = message.boosts.create!(content: "🔥", booster: @jason)
     end
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_response :success
     assert_match "boosted your message", response.body
     assert_match @jason.name, response.body
@@ -145,7 +145,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       creator_id: @jason.id
     )
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_response :success
     assert_match "Thread reply visible in activity", response.body
   end
@@ -160,7 +160,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "older_notification"
     )
 
-    get activity_inbox_url
+    get inbox_activity_index_url
 
     travel 1.second do
       room.messages.create!(
@@ -170,7 +170,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       )
     end
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_response :success
     assert_match "older marker", response.body
     assert_match "newer marker", response.body
@@ -198,14 +198,14 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # ===================
 
   test "direct_messages returns success" do
-    get direct_messages_inbox_url
+    get inbox_direct_messages_url
     assert_response :success
   end
 
   test "direct_messages shows DM rooms for current user" do
     dm_room = rooms(:david_and_jason)
 
-    get direct_messages_inbox_url
+    get inbox_direct_messages_url
     assert_response :success
     assert_select ".dm-conversation"
   end
@@ -214,7 +214,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     dm_room = rooms(:david_and_jason)
     dm_room.update!(active: false)
 
-    get direct_messages_inbox_url
+    get inbox_direct_messages_url
     assert_response :success
     # The deactivated room should not be present
     assert_select "#dm_inbox_room_#{dm_room.id}", count: 0
@@ -223,9 +223,25 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   test "direct_messages shows member names" do
     dm_room = rooms(:david_and_jason)
 
-    get direct_messages_inbox_url
+    get inbox_direct_messages_url
     assert_response :success
     assert_match @jason.name, response.body
+  end
+
+  test "direct_messages with before param returns no content when paginating past the newest DM" do
+    dm = rooms(:david_and_jason)
+    dm.touch(:last_active_at)
+
+    get inbox_direct_messages_url, params: { before: dm.id }
+    assert_response :no_content
+  end
+
+  test "direct_messages with after param returns either success or no content" do
+    dm = rooms(:david_and_jason)
+    dm.touch(:last_active_at)
+
+    get inbox_direct_messages_url, params: { after: dm.id }
+    assert_includes [ 200, 204 ], response.status
   end
 
   # ===================
@@ -233,7 +249,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # ===================
 
   test "threads returns success" do
-    get threads_inbox_url
+    get inbox_threads_url
     assert_response :success
   end
 
@@ -255,7 +271,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     # Add a message to the thread so it has messages_count > 0
     thread.messages.create!(body: "Thread reply", creator: @david, client_message_id: "reply_1")
 
-    get threads_inbox_url
+    get inbox_threads_url
     assert_response :success
     assert_match "Parent message for thread visibility test", response.body
   end
@@ -279,7 +295,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     thread.memberships.grant_to(@jason)
     thread.messages.create!(body: "Thread reply", creator: @jason, client_message_id: "reply_2")
 
-    get threads_inbox_url
+    get inbox_threads_url
     assert_response :success
     assert_match "Parent message everything involvement", response.body
   end
@@ -298,7 +314,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     thread.memberships.grant_to(@david)
     thread.memberships.find_by(user: @david).update!(involvement: :everything)
 
-    get threads_inbox_url
+    get inbox_threads_url
     assert_response :success
     assert_no_match "Parent with empty thread marker", response.body
   end
@@ -318,7 +334,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     thread.memberships.grant_to(@jason)
     thread.messages.create!(body: "Reply", creator: @jason, client_message_id: "designer_reply")
 
-    get threads_inbox_url
+    get inbox_threads_url
     assert_response :success
     assert_no_match "Designer thread parent marker", response.body
   end
@@ -329,7 +345,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     create_accessible_thread_parents(room, count: 5, prefix: "five")
 
     thread_preload_queries = count_thread_association_queries do
-      get threads_inbox_url
+      get inbox_threads_url
       assert_response :success
     end
 
@@ -341,7 +357,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # ===================
 
   test "bookmarks returns success" do
-    get bookmarks_inbox_url
+    get inbox_bookmarks_url
     assert_response :success
   end
 
@@ -350,7 +366,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     message.update!(body: "Bookmarked message marker")
     Bookmark.create!(user: @david, message: message)
 
-    get bookmarks_inbox_url
+    get inbox_bookmarks_url
     assert_response :success
     assert_match "Bookmarked message marker", response.body
   end
@@ -361,7 +377,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     Bookmark.create!(user: @david, message: message)
     message.update!(active: false)
 
-    get bookmarks_inbox_url
+    get inbox_bookmarks_url
     assert_response :success
     assert_no_match "Inactive message marker", response.body
   end
@@ -371,7 +387,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     message.update!(body: "Other user bookmark marker")
     Bookmark.create!(user: @jason, message: message)
 
-    get bookmarks_inbox_url
+    get inbox_bookmarks_url
     assert_response :success
     assert_no_match "Other user bookmark marker", response.body
   end
@@ -393,11 +409,11 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     )
 
     # First visit activity to set the session timestamp
-    get activity_inbox_url
+    get inbox_activity_index_url
 
     # Then clear
-    post clear_inbox_url
-    assert_redirected_to activity_inbox_path
+    post inbox_clearance_url
+    assert_redirected_to inbox_activity_index_path
 
     membership.reload
     assert membership.read?, "Membership should be marked as read"
@@ -408,8 +424,8 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     membership = room.memberships.find_by(user: @david)
     membership.update!(unread_at: 1.hour.ago)
 
-    get activity_inbox_url
-    post clear_inbox_url, params: { stay: true }
+    get inbox_activity_index_url
+    post inbox_clearance_url, params: { stay: true }
     assert_response :success
   end
 
@@ -429,10 +445,10 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     membership_with_mention.update!(unread_at: 1.hour.ago)
 
     # Visit direct_messages page to set session timestamp
-    get direct_messages_inbox_url
+    get inbox_direct_messages_url
 
     # Clear only direct_messages
-    post clear_inbox_url, params: { scope: "direct_messages" }
+    post inbox_clearance_url, params: { scope: "direct_messages" }
 
     dm_membership.reload
     membership_with_mention.reload
@@ -475,12 +491,12 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "room_deactivate_activity"
     )
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_match "room deactivation test", response.body
 
     room.deactivate
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_no_match "room deactivation test", response.body
   end
 
@@ -492,12 +508,12 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       client_message_id: "edit_removal_activity"
     )
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_match "edit removal test", response.body
 
     message.update!(body: "<div>Hey everyone</div>")
 
-    get activity_inbox_url
+    get inbox_activity_index_url
     assert_no_match "edit removal test", response.body
   end
 
@@ -539,7 +555,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     end
 
     last_notification = Notification.where(user: @david, activity_type: "mention").order(:created_at).last
-    get activity_inbox_url, params: { before: last_notification.id }
+    get inbox_activity_index_url, params: { before: last_notification.id }
     assert_response :success
   end
 
@@ -555,7 +571,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     end
 
     first_notification = Notification.where(user: @david, activity_type: "mention").order(:created_at).first
-    get activity_inbox_url, params: { after: first_notification.id }
+    get inbox_activity_index_url, params: { after: first_notification.id }
     assert_response :success
   end
 

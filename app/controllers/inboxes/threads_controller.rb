@@ -1,11 +1,11 @@
-class Inboxes::ThreadsController < InboxesController
-  before_action :set_message_pagination_anchors
+class Inboxes::ThreadsController < ApplicationController
+  include InboxScoped
 
-  layout false
+  before_action :set_message_pagination_anchors, if: :paginating?
 
   def index
     @messages = find_messages_with(Inbox::ThreadsQuery)
 
-    render "inboxes/messages/index"
+    render partial: "items" if paginating?
   end
 end

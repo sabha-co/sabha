@@ -1,0 +1,11 @@
+<% @page_title = "Threads" %>
+<%= render "inboxes/nav", title: "Threads" %>
+
+<% content_for :messages do %>
+  <%= search_results_tag("inbox", inbox_threads_url, highlight_mentions: true, thread_messages: false) do %>
+    <%= render "inboxes/threads/items", messages: @messages %>
+  <% end %>
+  <%= turbo_stream_from Current.user, :inbox_threads %>
+<% end %>
+
+<%= render template: "inboxes/show" %>

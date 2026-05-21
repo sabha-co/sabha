@@ -1,0 +1,3 @@
+<%= render collection: @messages, partial: "/messages/message",
+           cached: -> message { message_cache_key(message, room_id: "inbox_threads_#{Current.user.id}", show_room_name: true) },
+           locals: { timestamp_style: :long_datetime, show_date_separator: false } %>

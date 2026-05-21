@@ -43,6 +43,7 @@ class Message < ApplicationRecord
   scope :for_display, -> {
     with_rich_text_body_and_embeds
       .with_creator
+      .includes(room: { parent_message: :room })
       .includes(attachment_attachment: { blob: :variant_records })
       .includes(boosts: { booster: { avatar_attachment: { blob: :variant_records } } })
       .with_thread_summary

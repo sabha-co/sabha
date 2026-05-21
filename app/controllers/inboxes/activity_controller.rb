@@ -1,11 +1,16 @@
-class Inboxes::ActivityController < InboxesController
-  before_action :set_notification_pagination_anchors
+class Inboxes::ActivityController < ApplicationController
+  include InboxScoped
 
-  layout false
+  before_action :set_notification_pagination_anchors, if: :paginating?
 
   def index
     @notifications = find_notifications
 
-    render "inboxes/activity/index"
+    if paginating?
+      render partial: "items"
+    else
+      track_last_loaded_notification
+      Current.user.touch_activity_seen_at
+    end
   end
 end
