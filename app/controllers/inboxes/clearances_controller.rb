@@ -1,6 +1,4 @@
 class Inboxes::ClearancesController < InboxesController
-  skip_before_action :set_sidebar_memberships
-
   def create
     if params[:scope] == "direct_messages"
       Current.user.mark_direct_messages_as_read(session[:inbox_last_loaded_dms_created_at])

@@ -1,6 +1,4 @@
 class InboxesController < ApplicationController
-  before_action :set_sidebar_memberships, unless: :paginating?
-
   def show
     clear_last_loaded_message_timestamps
 
