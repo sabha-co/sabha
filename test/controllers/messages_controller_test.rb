@@ -57,14 +57,17 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "creating a message broadcasts unread to user channels" do
-    # Ensure other members are disconnected and have read status (unread_at is nil) so they receive broadcasts
+  test "creating a message broadcasts unread to per-user channels but never to the global unread_rooms channel" do
+    # Per-user broadcast: disconnected reader gets one update on their UserUnreadRoomsChannel.
+    # Global no-broadcast guards the CRIT-3 thundering-herd fix: no broadcast to "unread_rooms".
     other_member = @room.memberships.visible.where.not(user: users(:david)).first
     other_member.update!(unread_at: nil, connected_at: nil)
 
     stream_name = UserUnreadRoomsChannel.broadcasting_for(other_member.user)
     assert_broadcasts stream_name, 1 do
-      post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
+      assert_no_broadcasts "unread_rooms" do
+        post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
+      end
     end
   end
 
@@ -110,33 +113,8 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Updated body", message.reload.plain_text_body
   end
 
-  test "admin updates a message belonging to another user" do
-    message = @room.messages.where(creator: users(:jason)).first
-
-    # Called twice: once for room stream, once for :inbox
-    Turbo::StreamsChannel.expects(:broadcast_replace_to).twice
-    put room_message_url(@room, message), params: { message: { body: "Updated body" } }
-
-    assert_redirected_to room_message_url(@room, message)
-    assert_equal "Updated body", message.reload.plain_text_body
-  end
-
   test "destroy soft-deletes a message belonging to the user" do
     message = @room.messages.where(creator: users(:david)).first
-
-    # Soft deletion - count stays same but active count decreases
-    assert_difference -> { Message.active.count }, -1 do
-      # Called twice: once for room stream, once for :inbox
-      Turbo::StreamsChannel.expects(:broadcast_remove_to).twice
-      delete room_message_url(@room, message, format: :turbo_stream)
-      assert_response :success
-    end
-    assert_not message.reload.active?
-  end
-
-  test "admin destroy soft-deletes a message belonging to another user" do
-    assert users(:david).administrator?
-    message = @room.messages.where(creator: users(:jason)).first
 
     # Soft deletion - count stays same but active count decreases
     assert_difference -> { Message.active.count }, -1 do

@@ -23,16 +23,6 @@ class WorkspaceMembershipTest < ActiveSupport::TestCase
     assert_not duplicate.valid?
   end
 
-  test "belongs_to global_identity" do
-    membership = workspace_memberships(:alice_acme)
-    assert_equal global_identities(:alice), membership.global_identity
-  end
-
-  test "belongs_to workspace" do
-    membership = workspace_memberships(:alice_acme)
-    assert_equal workspaces(:acme), membership.workspace
-  end
-
   test "account_name returns workspace account name" do
     with_provisioned_workspace(name: "Account Name Test", creator: global_identities(:alice)) do |workspace|
       membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)

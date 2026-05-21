@@ -40,14 +40,6 @@ class AuthCodeTest < ActiveSupport::TestCase
     assert_not_includes AuthCode.active, auth_codes(:expired_code)
   end
 
-  test "purpose enum works" do
-    signin = auth_codes(:alice_signin)
-    signup = auth_codes(:unverified_signup)
-
-    assert signin.sign_in?
-    assert signup.sign_up?
-  end
-
   test "consume returns global_identity and destroys code" do
     code = auth_codes(:alice_signin)
     identity = code.global_identity

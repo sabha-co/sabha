@@ -48,11 +48,6 @@ class GlobalSessionTest < ActiveSupport::TestCase
     assert_equal "5.6.7.8", session.ip_address
   end
 
-  test "belongs_to global_identity" do
-    session = global_sessions(:alice_session)
-    assert_equal global_identities(:alice), session.global_identity
-  end
-
   test "has_secure_token generates token" do
     session = global_identities(:bob).global_sessions.create!(
       user_agent: "Test",

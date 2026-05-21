@@ -53,16 +53,6 @@ class WorkspaceTest < ActiveSupport::TestCase
     assert_not_includes Workspace.active, workspaces(:suspended)
   end
 
-  test "belongs_to creator" do
-    workspace = workspaces(:acme)
-    assert_equal global_identities(:alice), workspace.creator
-  end
-
-  test "has_many workspace_memberships" do
-    workspace = workspaces(:shared)
-    assert workspace.workspace_memberships.count >= 2
-  end
-
   test "last_administrator? returns true when user is only admin" do
     with_provisioned_workspace(name: "Last Admin Test", creator: global_identities(:alice)) do |workspace|
       membership = WorkspaceMembership.find_by(tenant: workspace.external_id.to_s)

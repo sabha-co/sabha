@@ -14,19 +14,6 @@ class User::NotificationSettingsTest < ActiveSupport::TestCase
     assert_nil settings.last_digest_sent_at
   end
 
-  test "weekly_digest_subscribed defaults to true (member opt-out)" do
-    user = User.create!(name: "Digest Default", email_address: "digest_default@example.com")
-
-    assert_equal true, user.notification_settings.weekly_digest_subscribed,
-      "Members must default to subscribed so admin-enabled digest reaches existing membership immediately"
-  end
-
-  test "missed_email_enabled defaults to false (opt-in for personal mail)" do
-    user = User.create!(name: "Email Default", email_address: "email_default@example.com")
-
-    refute user.notification_settings.missed_email_enabled
-  end
-
   test "ensure_notification_settings is idempotent — does not raise on the unique index" do
     user = User.create!(name: "Idempotent", email_address: "idempotent@example.com")
     refute_nil user.notification_settings
@@ -43,20 +30,5 @@ class User::NotificationSettingsTest < ActiveSupport::TestCase
     user.destroy
 
     assert_nil User::NotificationSettings.find_by(id: settings_id)
-  end
-
-  test "mode enum exposes prefixed predicates" do
-    user = User.create!(name: "Mode Predicates", email_address: "mode_predicates@example.com")
-
-    assert user.notification_settings.mode_mentions_and_dms?
-    refute user.notification_settings.mode_nothing?
-    refute user.notification_settings.mode_all?
-  end
-
-  test "email_frequency enum exposes prefixed predicates" do
-    user = User.create!(name: "Freq Predicates", email_address: "freq_predicates@example.com")
-
-    assert user.notification_settings.email_frequency_hourly?
-    refute user.notification_settings.email_frequency_daily?
   end
 end

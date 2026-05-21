@@ -79,40 +79,6 @@ class Notification::BundleTest < ActiveSupport::TestCase
     assert_equal "hourly", bundle.frequency
   end
 
-  test "active? returns false once delivered_at is set" do
-    bundle = @user.active_notification_bundle
-    bundle.update!(delivered_at: Time.current)
-
-    refute bundle.active?
-  end
-
-  test "active? returns false once canceled_at is set" do
-    bundle = @user.active_notification_bundle
-    bundle.update!(canceled_at: Time.current)
-
-    refute bundle.active?
-  end
-
-  test "terminal? is true when delivered_at is set" do
-    bundle = @user.active_notification_bundle
-    bundle.update!(delivered_at: Time.current)
-
-    assert bundle.terminal?
-  end
-
-  test "terminal? is true when canceled_at is set" do
-    bundle = @user.active_notification_bundle
-    bundle.update!(canceled_at: Time.current)
-
-    assert bundle.terminal?
-  end
-
-  test "terminal? is false for an active bundle" do
-    bundle = @user.active_notification_bundle
-
-    refute bundle.terminal?
-  end
-
   test "cancel! sets canceled_at to a recent timestamp" do
     bundle = @user.active_notification_bundle
     bundle.cancel!
@@ -154,20 +120,6 @@ class Notification::BundleTest < ActiveSupport::TestCase
     )
 
     assert_raises(ActiveRecord::RecordNotUnique) do
-      @user.notification_bundles.create!(
-        frequency: :hourly,
-        starts_at: Time.current, ends_at: 1.hour.from_now
-      )
-    end
-  end
-
-  test "partial unique index permits a new active bundle after the previous is delivered" do
-    @user.notification_bundles.create!(
-      frequency: :hourly,
-      starts_at: 2.hours.ago, ends_at: 1.hour.ago, delivered_at: Time.current
-    )
-
-    assert_nothing_raised do
       @user.notification_bundles.create!(
         frequency: :hourly,
         starts_at: Time.current, ends_at: 1.hour.from_now

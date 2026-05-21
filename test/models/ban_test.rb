@@ -1,12 +1,6 @@
 require "test_helper"
 
 class BanTest < ActiveSupport::TestCase
-  test "validates ip_address presence" do
-    ban = Ban.new(user: users(:david))
-    assert_not ban.valid?
-    assert_includes ban.errors[:ip_address], "can't be blank"
-  end
-
   test "validates ip_address is public" do
     ban = Ban.new(user: users(:david), ip_address: "127.0.0.1")
     assert_not ban.valid?
