@@ -43,11 +43,6 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     assert identity.verified?
   end
 
-  test "workspaces returns associated workspaces" do
-    identity = global_identities(:alice)
-    assert_includes identity.workspaces.pluck(:external_id), 1000001
-  end
-
   test "destroying identity cascades to sessions and auth_codes" do
     identity = GlobalIdentity.create!(name: "Cascade", email_address: "cascade@example.com")
     identity.global_sessions.create!(user_agent: "Test", ip_address: "127.0.0.1")

@@ -33,6 +33,7 @@ module Saas
         session = GlobalSession.find_by(token: token)
         if session&.expired?
           session.destroy
+          cookies.delete(:global_session_token)
         else
           Current.global_session = session
         end
