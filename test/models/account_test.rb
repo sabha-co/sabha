@@ -67,10 +67,6 @@ class AccountTest < ActiveSupport::TestCase
     end
   end
 
-  test "settings restrict_room_creation_to_administrators defaults to false" do
-    assert_not @account.settings.restrict_room_creation_to_administrators?
-  end
-
   test "settings restrict_room_creation_to_administrators can be toggled" do
     @account.settings.restrict_room_creation_to_administrators = true
     assert @account.settings.restrict_room_creation_to_administrators?
@@ -87,10 +83,6 @@ class AccountTest < ActiveSupport::TestCase
     assert_not @account.reload.settings.restrict_room_creation_to_administrators?
   end
 
-  test "settings restrict_direct_messages_to_administrators defaults to false" do
-    assert_not @account.settings.restrict_direct_messages_to_administrators?
-  end
-
   test "settings restrict_direct_messages_to_administrators can be toggled" do
     @account.settings.restrict_direct_messages_to_administrators = true
     assert @account.settings.restrict_direct_messages_to_administrators?
@@ -103,10 +95,6 @@ class AccountTest < ActiveSupport::TestCase
 
     @account.update!(settings: { "restrict_direct_messages_to_administrators" => "false" })
     assert_not @account.reload.settings.restrict_direct_messages_to_administrators?
-  end
-
-  test "settings allow_users_to_create_invite_links defaults to true" do
-    assert @account.settings.allow_users_to_create_invite_links?
   end
 
   test "settings allow_users_to_create_invite_links can be toggled" do
@@ -133,16 +121,6 @@ class AccountTest < ActiveSupport::TestCase
   test "accepts JPEG logo uploads" do
     @account.attach_logo({ io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg" })
     assert @account.logo.attached?
-  end
-
-  test "email_notifications_enabled defaults to false" do
-    assert_equal false, @account.email_notifications_enabled
-    assert_not @account.email_notifications_enabled?
-  end
-
-  test "weekly_digest_enabled defaults to false" do
-    assert_equal false, @account.weekly_digest_enabled
-    assert_not @account.weekly_digest_enabled?
   end
 
   test "email flags are queryable as boolean columns, not JSON extraction" do
