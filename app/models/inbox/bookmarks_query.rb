@@ -8,7 +8,7 @@ class Inbox::BookmarksQuery
     user.bookmarks
         .joins(:message)
         .includes(message: [
-          :room,
+          { room: { parent_message: :room } },
           :rich_text_body,
           :threads,
           { creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ] },
