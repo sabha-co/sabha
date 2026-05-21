@@ -13,8 +13,7 @@ class Inbox::MessagesQuery
     user.reachable_messages
         .without_events
         .without_created_by(user)
-        .with_thread_summary
-        .with_creator
+        .for_display
         .merge(Membership.active.public_send(involvement))
   end
 

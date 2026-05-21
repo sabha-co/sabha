@@ -10,8 +10,7 @@ class Inbox::ThreadsQuery
            .joins(:room)
            .where.not(rooms: { type: "Rooms::Thread" })
            .where("messages.id IN (#{accessible_thread_parent_ids_sql})")
-           .with_thread_summary
-           .with_creator
+           .for_display
            .order(thread_activity_order)
   end
 
