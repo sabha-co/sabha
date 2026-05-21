@@ -55,6 +55,8 @@ class Boost < ApplicationRecord
         user: @destroyed_notification[:user],
         message_id: @destroyed_notification[:message_id]
       )
+
+      @destroyed_notification[:user].broadcast_activity_indicator
     end
 
     def broadcast_removal

@@ -36,6 +36,22 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "activity touches activity_seen_at so the sidebar dot clears" do
+    @david.update_column(:activity_seen_at, nil)
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason,
+      client_message_id: "activity_seen_at_test"
+    )
+    assert @david.reload.unseen_activity?, "precondition: dot should be on"
+
+    get activity_inbox_url
+
+    assert_not @david.reload.unseen_activity?,
+      "visiting Activity should advance the watermark and clear the dot"
+  end
+
+
   test "activity shows messages mentioning current user" do
     room = rooms(:pets)
 
@@ -134,31 +150,30 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Thread reply visible in activity", response.body
   end
 
-  test "activity hides notifications cleared in this session and shows newer notifications" do
+  test "activity feed shows every notification, including ones from before the last visit" do
     room = rooms(:pets)
     Notification.where(user: @david).delete_all
 
     room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)} cleared activity marker</div>",
+      body: "<div>Hey #{mention_attachment_for(:david)} older marker</div>",
       creator: @jason,
-      client_message_id: "all_visible"
+      client_message_id: "older_notification"
     )
 
     get activity_inbox_url
-    post clear_inbox_url, params: { scope: "activity", stay: true }
 
     travel 1.second do
       room.messages.create!(
-        body: "<div>Hey #{mention_attachment_for(:david)} newer activity marker</div>",
+        body: "<div>Hey #{mention_attachment_for(:david)} newer marker</div>",
         creator: @jason,
-        client_message_id: "also_visible"
+        client_message_id: "newer_notification"
       )
     end
 
     get activity_inbox_url
     assert_response :success
-    assert_no_match "cleared activity marker", response.body
-    assert_match "newer activity marker", response.body
+    assert_match "older marker", response.body
+    assert_match "newer marker", response.body
   end
 
   test "mentioning a non-member does not add them to the room" do
@@ -370,7 +385,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     membership = room.memberships.find_by(user: @david)
     membership.update!(unread_at: 1.hour.ago)
 
-    # Create a mention so mark_activity_as_read finds a notified room
+    # Create a mention so mark_inbox_as_read finds a notified room
     room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
@@ -396,61 +411,6 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     get activity_inbox_url
     post clear_inbox_url, params: { stay: true }
     assert_response :success
-  end
-
-  test "clear with scope activity only clears rooms with activity" do
-    # Room with mention
-    room_with_mention = rooms(:pets)
-    room_with_mention.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
-      creator: @jason
-    )
-    membership_with_mention = room_with_mention.memberships.find_by(user: @david)
-    membership_with_mention.update!(unread_at: 1.hour.ago)
-
-    # Room without mention (just a regular unread message)
-    room_without_mention = rooms(:watercooler)
-    room_without_mention.messages.create!(body: "Regular message", creator: @jason)
-    membership_without_mention = room_without_mention.memberships.find_by(user: @david)
-    membership_without_mention.update!(unread_at: 1.hour.ago)
-
-    # Visit activity page to set session timestamp
-    get activity_inbox_url
-
-    # Clear only activity
-    post clear_inbox_url, params: { scope: "activity" }
-
-    membership_with_mention.reload
-    membership_without_mention.reload
-
-    assert membership_with_mention.read?, "Room with mention should be marked as read"
-    assert membership_without_mention.unread?, "Room without mention should remain unread"
-  end
-
-  test "clear with scope activity clears notification badge without reading regular messages" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: @david)
-    membership.update!(unread_at: 1.hour.ago)
-
-    room.messages.create!(
-      body: "Regular unread chatter",
-      creator: @jason,
-      client_message_id: "activity_badge_regular"
-    )
-    room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
-      creator: @jason,
-      client_message_id: "activity_badge_mention"
-    )
-
-    assert membership.reload.unread?
-    assert_equal 1, membership.unread_notifications_count
-
-    get activity_inbox_url
-    post clear_inbox_url, params: { scope: "activity" }
-
-    assert membership.reload.unread?, "Regular unread messages should remain unread"
-    assert_equal 0, membership.unread_notifications_count, "Activity badge should clear"
   end
 
   test "clear with scope direct_messages only clears DM rooms" do

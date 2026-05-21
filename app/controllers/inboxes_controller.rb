@@ -14,6 +14,7 @@ class InboxesController < ApplicationController
   def activity
     @notifications = find_notifications
     track_last_loaded_notification
+    Current.user.touch_activity_seen_at
   end
 
   def direct_messages
@@ -42,14 +43,9 @@ class InboxesController < ApplicationController
   end
 
   def clear
-    case params[:scope]
-    when "activity"
-      session[:inbox_activity_cleared_at] = session[:inbox_last_loaded_activity_created_at]
-      Current.user.mark_activity_as_read(session[:inbox_last_loaded_activity_created_at])
-    when "direct_messages"
+    if params[:scope] == "direct_messages"
       Current.user.mark_direct_messages_as_read(session[:inbox_last_loaded_dms_created_at])
     else
-      session[:inbox_activity_cleared_at] = session[:inbox_last_loaded_activity_created_at]
       Current.user.mark_inbox_as_read(
         messages_loaded_at: session[:inbox_last_loaded_message_created_at],
         notifications_loaded_at: session[:inbox_last_loaded_notification_created_at],
@@ -87,7 +83,7 @@ class InboxesController < ApplicationController
     end
 
     def find_notifications
-      query = Inbox::ActivityQuery.new(Current.user, cleared_at: session[:inbox_activity_cleared_at])
+      query = Inbox::ActivityQuery.new(Current.user)
 
       paginate(query.call).tap do |notifications|
         messages = notifications.filter_map(&:message)
@@ -131,7 +127,6 @@ class InboxesController < ApplicationController
       session.delete :inbox_last_loaded_activity_created_at
       session.delete :inbox_last_loaded_notification_created_at
       session.delete :inbox_last_loaded_message_created_at
-      session.delete :inbox_activity_cleared_at
     end
 
     # Sidebar setup for DMs inbox - loads first page for inbox content

@@ -364,6 +364,8 @@ class Message < ApplicationRecord
         partial: "notifications/notification",
         locals: { notification: notification, timestamp_style: :long_datetime }
       )
+
+      notification.user.broadcast_activity_indicator
     end
 
   private
@@ -471,6 +473,7 @@ class Message < ApplicationRecord
         unique_by: "index_notifications_on_message_user_type"
       )
 
+      User.where(id: recipient_ids).each(&:broadcast_activity_indicator)
       broadcast_mention_notifications
     end
 

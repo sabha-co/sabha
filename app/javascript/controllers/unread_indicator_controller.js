@@ -3,14 +3,15 @@ import { debounce } from "helpers/timing_helpers"
 
 // Generic unread indicator controller that toggles classes on named targets
 // based on whether elements matching their selectors exist in the sidebar.
+// The Activity dot is server-rendered (see users/sidebars/_activity_indicator.html.erb)
+// and broadcast via Turbo Streams, so it's not driven from here.
 //
 // Usage:
 //   data-controller="unread-indicator"
-//   data-unread-indicator-indicators-value='[{"selector":".room.badge","class":"has-unread-activity","target":"activity"},{"selector":".direct.unread","class":"has-unread-dms","target":"dms"}]'
-//   data-unread-indicator-target="activity" (on the activity link)
+//   data-unread-indicator-indicators-value='[{"selector":".direct.unread","class":"has-unread-dms","target":"dms"}]'
 //   data-unread-indicator-target="dms" (on the dms link)
 export default class extends Controller {
-  static targets = ["activity", "dms"]
+  static targets = ["dms"]
   static values = {
     indicators: Array
   }

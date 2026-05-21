@@ -43,6 +43,7 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
         partial: "notifications/notification",
         locals: { notification: notification, timestamp_style: :long_datetime }
       )
+      notification.user.broadcast_activity_indicator
     end
   end
 end
