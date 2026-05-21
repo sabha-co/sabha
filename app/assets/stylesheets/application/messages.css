@@ -554,21 +554,31 @@
     color: inherit;
     gap: 0.5em;
     align-items: center;
-    padding: 0.25em 0.5em;
-    margin: -0.25em -0.5em;
-    border-radius: 0.3em;
+    padding: 0.4em 0.75em;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background-color: var(--color-bg);
     flex-wrap: wrap;
-    transition: background-color 150ms ease-out;
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
 
     @media (any-hover: hover) {
       &:where(:not(:active):hover) {
         background-color: var(--color-message-bg);
-        filter: brightness(0.9);
+        border-color: var(--color-border-darker);
       }
     }
 
     &:active {
       animation: thread-link-highlight 400ms cubic-bezier(0.25, 1, 0.5, 1) both;
+    }
+
+    .thread__count {
+      color: var(--color-link);
+      font-weight: 600;
+    }
+
+    .thread__separator {
+      color: var(--color-text-subtle);
     }
 
     .txt-muted {
