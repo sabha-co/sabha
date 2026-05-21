@@ -37,7 +37,7 @@ class Sso::Payload
     raise InvalidPayload, "Invalid Base64 payload" unless encoded_payload.match?(BASE64_PATTERN)
     raise InvalidSignature, "Bad signature for payload" unless valid_signature?(encoded_payload, signature, secret)
 
-    decoded_payload = Base64.decode64(encoded_payload)
+    decoded_payload = Base64.strict_decode64(encoded_payload)
     decoded_hash = Rack::Utils.parse_query(decoded_payload)
     attributes = parse_fields(decoded_hash)
 

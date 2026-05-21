@@ -73,6 +73,15 @@ class Sso::PayloadTest < ActiveSupport::TestCase
     end
   end
 
+  test "strictly rejects malformed base64 with valid characters" do
+    sso = "abc="
+    sig = Sso::Payload.sign(sso, SECRET)
+
+    assert_raises Sso::Payload::InvalidPayload do
+      Sso::Payload.decode(sso, sig, SECRET)
+    end
+  end
+
   test "raises on malformed payload" do
     sso = Base64.strict_encode64("%")
     sig = Sso::Payload.sign(sso, SECRET)
