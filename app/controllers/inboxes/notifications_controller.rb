@@ -1,5 +1,5 @@
 class Inboxes::NotificationsController < InboxesController
-  before_action :set_message_pagination_anchors
+  before_action :set_message_pagination_anchors, if: :paginating?
 
   def index
     @messages = find_messages_with(Inbox::MessagesQuery, involvement: :notifications_on)

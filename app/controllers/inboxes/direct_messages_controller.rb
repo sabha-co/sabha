@@ -1,5 +1,5 @@
 class Inboxes::DirectMessagesController < InboxesController
-  before_action :set_room_pagination_anchors
+  before_action :set_room_pagination_anchors, if: :paginating?
 
   def index
     if paginating?

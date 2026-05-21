@@ -1,5 +1,5 @@
 class Inboxes::ActivityController < InboxesController
-  before_action :set_notification_pagination_anchors
+  before_action :set_notification_pagination_anchors, if: :paginating?
 
   def index
     @notifications = find_notifications
