@@ -6,6 +6,10 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "mocha/minitest"
 require "webmock/minitest"
+if ENV["EVENT_PROF"]
+  require "minitest/test_prof_plugin"
+  Minitest.extensions << "test_prof"
+end
 
 # Require test helpers
 require_relative "test_helpers/session_test_helper"

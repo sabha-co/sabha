@@ -76,5 +76,6 @@ group :test do
   gem "capybara"
   gem "cuprite"
   gem "mocha"
+  gem "test-prof"
   gem "webmock", require: false
 end
