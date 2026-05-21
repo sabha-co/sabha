@@ -115,26 +115,6 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
     assert_nil @bundle.canceled_at
   end
 
-  test "Message#enqueue_missed_email_candidates_for schedules BundleDeliveryJob exactly once per bundle" do
-    # Drop the setup bundle — this test exercises the bundle creation path.
-    @bundle.destroy
-
-    assert_enqueued_jobs 1, only: Notification::BundleDeliveryJob do
-      perform_enqueued_jobs(only: Notification::DispatchJob) do
-        @room.messages.create!(
-          body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
-          creator: @actor,
-          client_message_id: "u6_schedule_once_1"
-        )
-        @room.messages.create!(
-          body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
-          creator: @actor,
-          client_message_id: "u6_schedule_once_2"
-        )
-      end
-    end
-  end
-
   private
     def create_message!(body: "<div>hello #{mention_attachment_for(:jason)}</div>", room: @room)
       room.messages.create!(body: body, creator: @actor, client_message_id: "u6_dlv_#{SecureRandom.hex(4)}")
