@@ -60,10 +60,6 @@ class GlobalIdentity < UntenantedRecord
     Workspace.where(creator: self).count >= MAX_WORKSPACES
   end
 
-  def workspaces
-    workspace_memberships.includes(:workspace).filter_map(&:workspace)
-  end
-
   def active_workspaces_recent_first
     workspace_memberships.user_active
       .includes(:workspace)

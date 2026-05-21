@@ -4,63 +4,46 @@ require_relative "../../test_helper"
 
 module Saas
   class WorkspaceMembershipsControllerTest < ActionDispatch::IntegrationTest
-    test "reorder requires authentication" do
-      patch "/workspace_memberships/reorder",
-            params: { workspace_ids: [ "1000001" ] },
-            as: :json
-
-      assert_response :redirect
+    setup do
+      @workspace = Workspace.create_with_database!(
+        name: "Test Workspace",
+        creator: global_identities(:alice)
+      )
+      @session = sign_in_global_identity(global_identities(:alice))
     end
 
-    test "reorder updates position for workspace memberships" do
-      identity = global_identities(:alice)
-      sign_in_global_identity(identity)
-
-      # Alice has memberships in fixtures (acme and shared)
-      workspace_acme = workspaces(:acme)
-      workspace_shared = workspaces(:shared)
-
-      # Reorder - put shared before acme
-      patch "/workspace_memberships/reorder",
-            params: { workspace_ids: [ workspace_shared.external_id.to_s, workspace_acme.external_id.to_s ] },
-            as: :json
-
-      assert_response :ok
-
-      # Verify positions are updated
-      membership_acme = identity.workspace_memberships.find_by(tenant: workspace_acme.external_id.to_s)
-      membership_shared = identity.workspace_memberships.find_by(tenant: workspace_shared.external_id.to_s)
-
-      assert_equal 1, membership_acme.position
-      assert_equal 0, membership_shared.position
+    teardown do
+      @workspace&.destroy_with_database! if Workspace.exists?(id: @workspace&.id)
     end
 
-    test "reorder returns unprocessable_entity for empty workspace_ids" do
-      identity = global_identities(:alice)
-      sign_in_global_identity(identity)
+    test "leave as last admin returns error" do
+      workspace_delete "/membership", workspace: @workspace
 
-      patch "/workspace_memberships/reorder",
-            params: { workspace_ids: [] },
-            as: :json
-
-      assert_response :unprocessable_entity
+      assert_redirected_to "/#{@workspace.external_id}/settings"
+      assert_equal "You cannot leave as the last administrator.", flash[:alert]
     end
 
-    test "reorder ignores workspaces user is not a member of" do
-      identity = global_identities(:charlie)
-      sign_in_global_identity(identity)
+    test "leave as non-last-admin succeeds" do
+      # Add a second admin using create_user! for proper setup
+      bob_membership = WorkspaceMembership.create!(
+        global_identity: global_identities(:bob),
+        tenant: @workspace.external_id.to_s
+      )
+      bob_membership.create_user!(role: :administrator)
 
-      # Try to reorder a workspace Charlie isn't a member of (acme belongs to alice)
-      workspace = workspaces(:acme)
+      workspace_delete "/membership", workspace: @workspace
 
-      patch "/workspace_memberships/reorder",
-            params: { workspace_ids: [ workspace.external_id.to_s ] },
-            as: :json
+      assert_redirected_to workspaces_url(script_name: "")
+      assert_match /left/, flash[:notice]
+    end
 
-      assert_response :ok
+    test "leave returns 404 when not a member" do
+      # Sign in as someone who isn't a member of this workspace
+      sign_in_global_identity(global_identities(:bob))
 
-      # Charlie should NOT gain a membership to acme
-      assert_not identity.workspace_memberships.exists?(tenant: workspace.external_id.to_s)
+      workspace_delete "/membership", workspace: @workspace
+
+      assert_response :not_found
     end
   end
 end

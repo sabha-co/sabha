@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { patch } from "@rails/request.js"
 
 // Handles drag-to-reorder for workspace icons in the workspace selector sidebar.
-// Persists order via PATCH to /workspace_memberships/reorder endpoint.
+// Persists order via PATCH to /workspace_membership_order endpoint.
 // Note: Drag-to-reorder is disabled on touch devices as HTML5 drag doesn't work well.
 export default class extends Controller {
   static targets = ["item"]
@@ -89,7 +89,7 @@ export default class extends Controller {
 
     this.isSaving = true
     try {
-      const response = await patch("/workspace_memberships/reorder", {
+      const response = await patch("/workspace_membership_order", {
         body: JSON.stringify({ workspace_ids: workspaceIds }),
         contentType: "application/json"
       })

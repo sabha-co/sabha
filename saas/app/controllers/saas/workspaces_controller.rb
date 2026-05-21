@@ -46,10 +46,6 @@ module Saas
       end
       flash.now[:alert] = error_message
       render :new, status: :unprocessable_entity
-    rescue StandardError => e
-      flash.now[:alert] = "Failed to create workspace. Please try again."
-      Rails.logger.error("Workspace creation failed: #{e.class} - #{e.message}")
-      render :new, status: :unprocessable_entity
     end
   end
 end

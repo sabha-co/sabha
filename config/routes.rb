@@ -12,11 +12,14 @@ Rails.application.routes.draw do
     constraints(->(req) { ApplicationRecord.current_tenant.present? }) do
       root to: "welcome#show"
 
-      # Workspace settings page (view settings, delete workspace)
-      resource :settings, only: [ :show, :destroy ], controller: "saas/workspace_settings" do
+      # Workspace settings page
+      resource :settings, only: [ :show ], controller: "saas/workspace_settings" do
         # Workspace database export (admin-only — for migrating to self-hosted)
         resource :export, only: [ :show, :create ], controller: "saas/workspace_settings/exports"
       end
+
+      # Delete workspace (admin-only, confirmation-gated)
+      resource :destruction, only: [ :create ], controller: "saas/workspace_destructions"
 
       # Leave workspace (RESTful destroy on membership)
       resource :membership, only: [ :destroy ], controller: "saas/workspace_memberships"

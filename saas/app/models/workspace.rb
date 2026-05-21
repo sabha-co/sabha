@@ -70,7 +70,7 @@ class Workspace < UntenantedRecord
   end
 
   def current?
-    external_id == ApplicationRecord.current_tenant&.to_i
+    ApplicationRecord.current_tenant == external_id.to_s
   end
 
   def suspend!
