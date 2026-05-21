@@ -2,16 +2,6 @@
 
 module Saas
   class WorkspaceMembershipsController < BaseController
-    # PATCH /workspace_memberships/reorder (untenanted)
-    # Reorders workspace memberships for the current user based on drag-to-reorder
-    def reorder
-      if WorkspaceMembership.reorder_for_identity(current_global_identity, params[:workspace_ids])
-        head :ok
-      else
-        head :unprocessable_entity
-      end
-    end
-
     # DELETE /membership (tenanted - leave current workspace)
     # Must be called within workspace context
     def destroy

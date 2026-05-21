@@ -70,8 +70,9 @@ module Sabha
             # Workspace management
             resources :workspaces, only: [ :index, :new, :create, :show ], controller: "saas/workspaces"
 
-            # Workspace membership management
-            patch "workspace_memberships/reorder", to: "saas/workspace_memberships#reorder"
+            # Persist drag-to-reorder of workspace icons in the sidebar
+            resource :workspace_membership_order, only: :update,
+                     controller: "saas/workspace_membership_orders"
 
             # Platform admin area (superadmin only)
             namespace :admin do

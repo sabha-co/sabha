@@ -3,16 +3,16 @@
 require_relative "../../test_helper"
 
 module Saas
-  class WorkspaceMembershipsControllerTest < ActionDispatch::IntegrationTest
-    test "reorder requires authentication" do
-      patch "/workspace_memberships/reorder",
+  class WorkspaceMembershipOrdersControllerTest < ActionDispatch::IntegrationTest
+    test "update requires authentication" do
+      patch "/workspace_membership_order",
             params: { workspace_ids: [ "1000001" ] },
             as: :json
 
       assert_response :redirect
     end
 
-    test "reorder updates position for workspace memberships" do
+    test "update persists position for workspace memberships" do
       identity = global_identities(:alice)
       sign_in_global_identity(identity)
 
@@ -21,7 +21,7 @@ module Saas
       workspace_shared = workspaces(:shared)
 
       # Reorder - put shared before acme
-      patch "/workspace_memberships/reorder",
+      patch "/workspace_membership_order",
             params: { workspace_ids: [ workspace_shared.external_id.to_s, workspace_acme.external_id.to_s ] },
             as: :json
 
@@ -35,25 +35,25 @@ module Saas
       assert_equal 0, membership_shared.position
     end
 
-    test "reorder returns unprocessable_entity for empty workspace_ids" do
+    test "update returns unprocessable_entity for empty workspace_ids" do
       identity = global_identities(:alice)
       sign_in_global_identity(identity)
 
-      patch "/workspace_memberships/reorder",
+      patch "/workspace_membership_order",
             params: { workspace_ids: [] },
             as: :json
 
       assert_response :unprocessable_entity
     end
 
-    test "reorder ignores workspaces user is not a member of" do
+    test "update ignores workspaces user is not a member of" do
       identity = global_identities(:charlie)
       sign_in_global_identity(identity)
 
       # Try to reorder a workspace Charlie isn't a member of (acme belongs to alice)
       workspace = workspaces(:acme)
 
-      patch "/workspace_memberships/reorder",
+      patch "/workspace_membership_order",
             params: { workspace_ids: [ workspace.external_id.to_s ] },
             as: :json
 
