@@ -10,6 +10,7 @@ class Notification < ApplicationRecord
   scope :with_message_and_creator, -> {
     includes(
       :boost,
+      :user,
       message: [
         :room,
         :rich_text_body,

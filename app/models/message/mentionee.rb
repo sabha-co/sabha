@@ -3,6 +3,7 @@ module Message::Mentionee
 
   included do
     before_save :set_mentions_everyone_flag
+    after_save :reset_mentionee_memo
 
     scope :mentioning, ->(user_id) {
       where(
@@ -15,18 +16,18 @@ module Message::Mentionee
   end
 
   def mentionees
-    if mentions_everyone?
-      room.users
-    else
-      room.users.where(id: mentioned_users.map(&:id))
-    end
+    @mentionees ||= mentions_everyone? ? room.users.to_a : room.users.where(id: mentioned_users.map(&:id)).to_a
   end
 
   def mentionee_ids
-    mentionees.pluck(:id)
+    @mentionee_ids ||= mentionees.map(&:id)
   end
 
   private
+    def reset_mentionee_memo
+      @mentionees = @mentionee_ids = nil
+    end
+
     def set_mentions_everyone_flag
       self.mentions_everyone = mentions_everyone_in_body?
     end
