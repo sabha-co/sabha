@@ -1,10 +1,5 @@
 <% @page_title = "Activity" %>
-<%= render layout: "inboxes/nav", locals: { title: "Activity" } do %>
-  <%= button_to clear_inbox_path(scope: "activity"), class: "btn", title: "Mark activity as read",
-      data: { turbo_confirm: "Mark all activity as read?" } do %>
-    <%= icon_tag "check-circle" %>
-  <% end %>
-<% end %>
+<%= render "inboxes/nav", title: "Activity" %>
 
 <% content_for :messages do %>
   <%= search_results_tag("inbox", paged_inbox_activity_index_url, highlight_mentions: true, thread_messages: false) do %>
