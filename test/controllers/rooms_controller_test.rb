@@ -71,9 +71,9 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
   test "DM back button links to referrer when coming from activity" do
     dm_room = rooms(:david_and_jason)
 
-    get room_url(dm_room), headers: { "HTTP_REFERER" => activity_inbox_url }
+    get room_url(dm_room), headers: { "HTTP_REFERER" => inbox_activity_index_url }
     assert_response :success
-    assert_select "a[href='#{activity_inbox_path}']"
+    assert_select "a[href='#{inbox_activity_index_path}']"
   end
 
   test "DM back button defaults to DM inbox without referrer" do
@@ -81,15 +81,15 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
 
     get room_url(dm_room)
     assert_response :success
-    assert_select "a[href='#{direct_messages_inbox_path}']"
+    assert_select "a[href='#{inbox_direct_messages_path}']"
   end
 
   test "DM back button prefers from param over referrer" do
     dm_room = rooms(:david_and_jason)
 
-    get room_url(dm_room, from: threads_inbox_path), headers: { "HTTP_REFERER" => activity_inbox_url }
+    get room_url(dm_room, from: inbox_threads_path), headers: { "HTTP_REFERER" => inbox_activity_index_url }
     assert_response :success
-    assert_select "a[href='#{threads_inbox_path}']"
+    assert_select "a[href='#{inbox_threads_path}']"
   end
 
   test "back button ignores non-inbox referrers for DMs" do
@@ -97,7 +97,7 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
 
     get room_url(dm_room), headers: { "HTTP_REFERER" => room_url(rooms(:hq)) }
     assert_response :success
-    assert_select "a[href='#{direct_messages_inbox_path}']"
+    assert_select "a[href='#{inbox_direct_messages_path}']"
   end
 
   test "back button preserves search query string from referrer" do

@@ -1,0 +1,2 @@
+<%= render collection: @messages, partial: "/messages/message",
+           cached: -> message { message_cache_key(message, room_id: "inbox_#{Current.user.id}") } %>

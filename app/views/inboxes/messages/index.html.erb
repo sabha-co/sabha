@@ -1,1 +1,9 @@
-<%= render partial: "messages/message", collection: @messages, cached: -> message { message_cache_key(message, room_id: "inbox_#{Current.user.id}") } %>
+<%= render "inboxes/nav", title: "All Messages" %>
+
+<% content_for :messages do %>
+  <%= search_results_tag("inbox", inbox_messages_url, highlight_mentions: true, thread_messages: false) do %>
+    <%= render "inboxes/messages/list", messages: @messages %>
+  <% end %>
+<% end %>
+
+<%= render template: "inboxes/show" %>

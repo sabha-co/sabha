@@ -1,0 +1,11 @@
+<% @page_title = "Bookmarks" %>
+<%= render "inboxes/nav", title: "Bookmarks" %>
+
+<% content_for :messages do %>
+  <%= search_results_tag("inbox", inbox_bookmarks_url, highlight_mentions: true, date_separator: false, thread_messages: false) do %>
+    <%= render "inboxes/bookmarks/list", messages: @messages %>
+  <% end %>
+  <%= turbo_stream_from Current.user, :inbox_bookmarks %>
+<% end %>
+
+<%= render template: "inboxes/show" %>

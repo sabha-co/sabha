@@ -4,7 +4,7 @@
   <% if room.thread? %>
     <%= link_back_to_or_referrer room_at_message_path(room.parent_message.room, room.parent_message) %>
   <% elsif room.direct? %>
-    <%= link_back_to_or_referrer direct_messages_inbox_path %>
+    <%= link_back_to_or_referrer inbox_direct_messages_path %>
   <% end %>
 
   <%= link_to edit_room_path(room), class: "btn btn--reversed btn--faux room--current" do %>

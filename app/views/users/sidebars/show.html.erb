@@ -97,19 +97,19 @@
       <%= turbo_stream_from Current.user, :sidebar_activity_indicator %>
       <%= render "users/sidebars/activity_indicator", user: Current.user %>
 
-      <%= link_to direct_messages_inbox_path, class: "btn sidebar__tool", data: { unread_indicator_target: "dms" } do %>
+      <%= link_to inbox_direct_messages_path, class: "btn sidebar__tool", data: { unread_indicator_target: "dms" } do %>
         <%= icon_tag "messages" %>
         <span class="for-screen-reader">DMs</span>
         <span class="sidebar__tool-label">DMs</span>
       <% end %>
 
-      <%= link_to threads_inbox_path, class: "btn sidebar__tool" do %>
+      <%= link_to inbox_threads_path, class: "btn sidebar__tool" do %>
         <%= icon_tag "threads" %>
         <span class="for-screen-reader">Threads</span>
         <span class="sidebar__tool-label">Threads</span>
       <% end %>
 
-      <%= link_to bookmarks_inbox_path, class: "btn sidebar__tool" do %>
+      <%= link_to inbox_bookmarks_path, class: "btn sidebar__tool" do %>
         <%= icon_tag "bookmark" %>
         <span class="for-screen-reader">Bookmarks</span>
         <span class="sidebar__tool-label">Bookmarks</span>

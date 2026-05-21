@@ -1,0 +1,9 @@
+<%= render "inboxes/nav", title: "Alerts" %>
+
+<% content_for :messages do %>
+  <%= search_results_tag("inbox", inbox_notifications_url, highlight_mentions: true) do %>
+    <%= render "inboxes/notifications/list", messages: @messages %>
+  <% end %>
+<% end %>
+
+<%= render template: "inboxes/show" %>

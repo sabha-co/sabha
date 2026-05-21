@@ -1,11 +1,14 @@
 class Inboxes::ActivityController < InboxesController
   before_action :set_notification_pagination_anchors
 
-  layout false
-
   def index
     @notifications = find_notifications
 
-    render "inboxes/activity/index"
+    if paginating?
+      render partial: "list"
+    else
+      track_last_loaded_notification
+      Current.user.touch_activity_seen_at
+    end
   end
 end

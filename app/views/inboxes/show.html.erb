@@ -4,7 +4,7 @@
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <%
-  empty_state = case action_name
+  empty_state = case controller_name
   when "activity"
     {
       icon: "mentions",
