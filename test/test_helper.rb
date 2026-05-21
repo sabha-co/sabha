@@ -14,6 +14,7 @@ require_relative "test_helpers/turbo_test_helper"
 require_relative "test_helpers/turnstile_test_helper"
 require_relative "test_helpers/dns_test_helper"
 require_relative "test_helpers/bot_api_test_helper"
+require_relative "test_helpers/web_push_pool_reset"
 
 WebMock.enable!
 
@@ -34,12 +35,6 @@ class ActiveSupport::TestCase
 
     ActionCable.server.pubsub.clear
     ActionController::Base.send(:cache_store).clear  # Clear rate limit store
-
-    Rails.configuration.tap do |config|
-      config.x.web_push_pool.shutdown
-      config.x.web_push_pool = WebPush::Pool.new \
-        invalid_subscription_handler: config.x.web_push_pool.invalid_subscription_handler
-    end
 
     # Tests that don't explicitly stub WebPush.payload_send would otherwise make
     # real HTTP calls to fcm.googleapis.com from the web_push_pool's worker

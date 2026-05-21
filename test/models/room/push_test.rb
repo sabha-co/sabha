@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Room::PushTest < ActiveSupport::TestCase
-  include ActiveJob::TestHelper
+  include ActiveJob::TestHelper, WebPushPoolReset
 
   test "deliver new message to other room users with push subscriptions" do
     task_count = Push::Subscription.count - users(:david).push_subscriptions.count
