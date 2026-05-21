@@ -68,6 +68,11 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#sidebar_activity_indicator.has-unread-activity", count: 0
   end
 
+  test "activity link opts out of Turbo prefetch so hover doesn't clear the dot" do
+    get user_sidebar_url
+    assert_select "#sidebar_activity_indicator[data-turbo-prefetch=?]", "false"
+  end
+
   test "direct room members are preloaded to avoid N+1 queries" do
     # Create messages in direct rooms so they appear in sidebar
     rooms(:david_and_jason).messages.create! client_message_id: 901, body: "Hello", creator: users(:jason)
