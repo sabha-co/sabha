@@ -1,4 +1,6 @@
-class Inboxes::BookmarksController < InboxesController
+class Inboxes::BookmarksController < ApplicationController
+  include InboxScoped
+
   before_action :set_bookmark_pagination_anchors, if: :paginating?
 
   def index

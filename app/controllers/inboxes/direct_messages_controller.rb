@@ -1,4 +1,6 @@
-class Inboxes::DirectMessagesController < InboxesController
+class Inboxes::DirectMessagesController < ApplicationController
+  include InboxScoped
+
   before_action :set_room_pagination_anchors, if: :paginating?
 
   def index

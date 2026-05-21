@@ -1,4 +1,6 @@
-class Inboxes::ThreadsController < InboxesController
+class Inboxes::ThreadsController < ApplicationController
+  include InboxScoped
+
   before_action :set_message_pagination_anchors, if: :paginating?
 
   def index

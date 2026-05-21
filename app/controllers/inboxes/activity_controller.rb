@@ -1,4 +1,6 @@
-class Inboxes::ActivityController < InboxesController
+class Inboxes::ActivityController < ApplicationController
+  include InboxScoped
+
   before_action :set_notification_pagination_anchors, if: :paginating?
 
   def index
