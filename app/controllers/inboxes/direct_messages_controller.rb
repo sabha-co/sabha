@@ -12,7 +12,7 @@ class Inboxes::DirectMessagesController < InboxesController
       render partial: "items"
     else
       session[:inbox_last_loaded_dms_created_at] = Time.current.iso8601
-      load_dm_sidebar
+      load_dm_inbox
     end
   end
 
@@ -22,11 +22,10 @@ class Inboxes::DirectMessagesController < InboxesController
       @after = Room.active.find_by(id: params[:after])
     end
 
-    def load_dm_sidebar
-      sidebar = SidebarMemberships.new(Current.user)
+    def load_dm_inbox
       @memberships = Inbox::DirectMessagesQuery.new(Current.user).call.last_page
-      @direct_memberships = sidebar.direct
-      room_ids = (@memberships.map(&:room_id) + @direct_memberships.map(&:room_id)).uniq
-      @direct_room_members = Rooms::Direct.members_for_display_by_room(room_ids, excluding: Current.user)
+      @direct_room_members = Rooms::Direct.members_for_display_by_room(
+        @memberships.map(&:room_id), excluding: Current.user
+      )
     end
 end
