@@ -40,6 +40,8 @@ class Notification < ApplicationRecord
       )
     end
 
+    notifications.map(&:user).uniq.each(&:broadcast_activity_indicator)
+
     # Boost groups use a stable DOM ID separate from individual notification IDs
     notifications.select(&:boost_notification?).group_by { |n| [ n.user_id, n.message_id ] }.each do |(_, message_id), group|
       Turbo::StreamsChannel.broadcast_remove_to(

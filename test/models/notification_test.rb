@@ -325,4 +325,48 @@ class NotificationTest < ActiveSupport::TestCase
     ordered = Notification.where(user: @david, message: message).ordered
     assert_equal [ n1, n2 ], ordered.to_a
   end
+
+  test "creating a mention notification broadcasts the activity indicator" do
+    assert_turbo_stream_broadcasts [ @david, :sidebar_activity_indicator ], count: 1 do
+      @room.messages.create!(
+        body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+        creator: @jason,
+        client_message_id: "indicator_broadcast_mention"
+      )
+    end
+  end
+
+  test "creating a boost notification broadcasts the activity indicator" do
+    message = @room.messages.create!(body: "boost me", creator: @david, client_message_id: "indicator_broadcast_boost")
+
+    assert_turbo_stream_broadcasts [ @david, :sidebar_activity_indicator ], count: 1 do
+      perform_enqueued_jobs(only: Notification::DispatchJob) do
+        message.boosts.create!(content: "🔥", booster: @jason)
+      end
+    end
+  end
+
+  test "creating a thread reply notification broadcasts the activity indicator" do
+    parent = @room.messages.create!(body: "start", creator: @david, client_message_id: "indicator_broadcast_parent")
+    thread = Rooms::Thread.find_or_create_by!(parent_message: parent, creator: @david)
+    thread.memberships.grant_to([ @david, @jason ])
+
+    assert_turbo_stream_broadcasts [ @david, :sidebar_activity_indicator ], count: 1 do
+      perform_enqueued_jobs(only: CreateThreadReplyNotificationsJob) do
+        thread.messages.create!(body: "reply", creator: @jason, client_message_id: "indicator_broadcast_reply")
+      end
+    end
+  end
+
+  test "delete_all_and_broadcast fires the activity indicator broadcast for affected users" do
+    message = @room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason,
+      client_message_id: "indicator_broadcast_bulk_delete"
+    )
+
+    assert_turbo_stream_broadcasts [ @david, :sidebar_activity_indicator ], count: 1 do
+      Notification.delete_all_and_broadcast(Notification.where(message_id: message.id))
+    end
+  end
 end

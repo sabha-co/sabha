@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_18_190000) do
+ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -337,6 +337,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_18_190000) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.datetime "accepted_terms_at"
+    t.datetime "activity_seen_at"
     t.string "ascii_name"
     t.integer "avatar_seed"
     t.string "avatar_url"
@@ -399,10 +401,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_18_190000) do
   add_foreign_key "boosts", "messages"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users", column: "creator_id"
-  add_foreign_key "notification_bundle_items", "messages", on_delete: :cascade
-  add_foreign_key "notification_bundle_items", "notification_bundles", column: "bundle_id", on_delete: :cascade
-  add_foreign_key "notification_bundle_items", "users", column: "actor_id", on_delete: :cascade
-  add_foreign_key "notification_bundles", "users", on_delete: :cascade
+  add_foreign_key "notification_bundle_items", "messages"
+  add_foreign_key "notification_bundle_items", "notification_bundles", column: "bundle_id"
+  add_foreign_key "notification_bundle_items", "users", column: "actor_id"
+  add_foreign_key "notification_bundles", "users"
   add_foreign_key "notifications", "boosts"
   add_foreign_key "notifications", "messages"
   add_foreign_key "notifications", "users"

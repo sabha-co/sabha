@@ -1,0 +1,6 @@
+<%= link_to inbox_path, id: "sidebar_activity_indicator",
+      class: [ "btn sidebar__tool", "has-unread-activity": user.has_unseen_activity? ] do %>
+  <%= icon_tag "mentions" %>
+  <span class="for-screen-reader">Activity</span>
+  <span class="sidebar__tool-label">Activity</span>
+<% end %>

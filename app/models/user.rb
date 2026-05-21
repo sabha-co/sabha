@@ -106,7 +106,27 @@ class User < ApplicationRecord
   # Only marks as read if there were no non-notified messages in the window
   # (avoids accidentally marking unread messages as read when user only viewed activity)
   def mark_activity_as_read(loaded_at)
-    mark_notified_rooms_as_read(freshness_checked_time(loaded_at))
+    until_time = freshness_checked_time(loaded_at)
+    mark_notified_rooms_as_read(until_time)
+    touch_activity_seen_at(until_time)
+  end
+
+  # Persists the watermark used by has_unseen_activity? to gate the sidebar dot.
+  # Monotonic: only advances forward so stale `loaded_at` values from background
+  # tabs can't reopen the dot. Broadcast is fired by after_update_commit below.
+  def touch_activity_seen_at(time = Time.current)
+    return if time.nil?
+    return if activity_seen_at.present? && activity_seen_at >= time
+
+    update!(activity_seen_at: time)
+  end
+
+  # True when at least one notification row has arrived since the user last
+  # opened the Activity tab. Drives the sidebar Activity dot.
+  def has_unseen_activity?
+    scope = notifications
+    scope = scope.where("notifications.created_at > ?", activity_seen_at) if activity_seen_at
+    scope.exists?
   end
 
   # Marks all direct message rooms as read up to the loaded timestamp.
@@ -138,6 +158,8 @@ class User < ApplicationRecord
 
     # Mark activity rooms as read: DMs always, others only if all unread messages have notifications
     mark_notified_rooms_as_read(activity_until, include_dms: true)
+
+    touch_activity_seen_at(activity_until)
   end
 
   has_many :push_subscriptions, class_name: "Push::Subscription", dependent: :delete_all
@@ -191,6 +213,7 @@ class User < ApplicationRecord
   after_update :send_email_change_notification, if: :saved_change_to_email_address?
   after_update :sync_name_to_global_identity, if: -> { Sabha.saas? && saved_change_to_name? }
   after_update_commit :sync_workspace_membership_active, if: -> { Sabha.saas? && saved_change_to_status? }
+  after_update_commit :broadcast_activity_indicator, if: :saved_change_to_activity_seen_at?
 
   before_validation :set_default_name
   before_validation :normalize_social_urls
@@ -425,6 +448,15 @@ class User < ApplicationRecord
 
   def pending_email_change?
     unconfirmed_email.present?
+  end
+
+  def broadcast_activity_indicator
+    Turbo::StreamsChannel.broadcast_replace_to(
+      self, :sidebar_activity_indicator,
+      target: "sidebar_activity_indicator",
+      partial: "users/sidebars/activity_indicator",
+      locals: { user: self }
+    )
   end
 
   private

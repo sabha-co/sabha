@@ -36,6 +36,21 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "activity touches activity_seen_at so the sidebar dot clears" do
+    @david.update_column(:activity_seen_at, nil)
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason,
+      client_message_id: "activity_seen_at_test"
+    )
+    assert @david.reload.has_unseen_activity?, "precondition: dot should be on"
+
+    get activity_inbox_url
+
+    assert_not @david.reload.has_unseen_activity?,
+      "visiting Activity should advance the watermark and clear the dot"
+  end
+
   test "activity shows messages mentioning current user" do
     room = rooms(:pets)
 

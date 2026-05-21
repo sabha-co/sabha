@@ -48,6 +48,26 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".sidebar__tools a[href=?]", edit_user_notification_settings_path, count: 0
   end
 
+  test "activity link shows has-unread-activity when there are unseen notifications" do
+    users(:david).update_column(:activity_seen_at, nil)
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "sidebar_activity_dot"
+    )
+
+    get user_sidebar_url
+    assert_select "#sidebar_activity_indicator.has-unread-activity", count: 1
+  end
+
+  test "activity link omits has-unread-activity when watermark is current" do
+    users(:david).touch_activity_seen_at(Time.current)
+
+    get user_sidebar_url
+    assert_select "#sidebar_activity_indicator", count: 1
+    assert_select "#sidebar_activity_indicator.has-unread-activity", count: 0
+  end
+
   test "direct room members are preloaded to avoid N+1 queries" do
     # Create messages in direct rooms so they appear in sidebar
     rooms(:david_and_jason).messages.create! client_message_id: 901, body: "Hello", creator: users(:jason)

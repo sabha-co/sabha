@@ -740,4 +740,71 @@ class UserTest < ActiveSupport::TestCase
     assert_nil Notification::BundleItem.find_by(id: item.id)
     assert Notification::Bundle.exists?(bundle.id), "the owner's bundle itself must remain — only the actor's row goes"
   end
+
+  test "has_unseen_activity? true when a notification exists and the watermark is nil" do
+    user = users(:david)
+    user.update_column(:activity_seen_at, nil)
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "unseen_mention_#{SecureRandom.hex(4)}"
+    )
+
+    assert user.reload.has_unseen_activity?
+  end
+
+  test "has_unseen_activity? false when watermark is newer than all notifications" do
+    user = users(:david)
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: users(:jason),
+      client_message_id: "seen_mention_#{SecureRandom.hex(4)}"
+    )
+
+    user.touch_activity_seen_at(Time.current + 1.second)
+    assert_not user.reload.has_unseen_activity?
+  end
+
+  test "has_unseen_activity? true for boost-only recipients (the bug this fixes)" do
+    user = users(:david)
+    user.update_column(:activity_seen_at, 1.day.ago)
+    message = rooms(:pets).messages.create!(body: "boost me", creator: user,
+                                            client_message_id: "boost_only_unseen_#{SecureRandom.hex(4)}")
+
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      message.boosts.create!(content: "🔥", booster: users(:jason))
+    end
+
+    assert user.reload.has_unseen_activity?,
+      "boost notifications should light up the Activity dot"
+  end
+
+  test "touch_activity_seen_at is monotonic" do
+    user = users(:david)
+    later = Time.current
+    earlier = later - 1.hour
+
+    user.touch_activity_seen_at(later)
+    user.touch_activity_seen_at(earlier)
+
+    assert_in_delta later, user.reload.activity_seen_at, 1.second
+  end
+
+  test "advancing activity_seen_at broadcasts the sidebar indicator" do
+    user = users(:david)
+    user.update_column(:activity_seen_at, 1.day.ago)
+
+    assert_turbo_stream_broadcasts [ user, :sidebar_activity_indicator ], count: 1 do
+      user.touch_activity_seen_at(Time.current)
+    end
+  end
+
+  test "touch_activity_seen_at does not broadcast when the watermark would not advance" do
+    user = users(:david)
+    user.touch_activity_seen_at(Time.current)
+
+    assert_turbo_stream_broadcasts [ user, :sidebar_activity_indicator ], count: 0 do
+      user.touch_activity_seen_at(1.hour.ago)
+    end
+  end
 end
