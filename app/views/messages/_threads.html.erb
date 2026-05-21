@@ -12,8 +12,9 @@
           </figure>
         <% end %>
       </div>
-      <%= pluralize(reply_count, 'reply', 'replies') %>
+      <strong class="thread__count"><%= pluralize(reply_count, 'reply', 'replies') %></strong>
       <% if reply_count > 0 && thread.last_active_at.present? %>
+        <span class="thread__separator" aria-hidden="true">·</span>
         <span class="txt-muted">Last reply <%= local_datetime_tag thread.last_active_at, style: :relative %></span>
       <% end %>
     <% end %>
