@@ -16,7 +16,14 @@ module Message::Mentionee
   end
 
   def mentionees
-    @mentionees ||= mentions_everyone? ? room.users.to_a : room.users.where(id: mentioned_users.map(&:id)).to_a
+    @mentionees ||=
+      if mentions_everyone?
+        room.users.to_a
+      elsif (ids = mentioned_users.map(&:id)).any?
+        room.users.where(id: ids).to_a
+      else
+        []
+      end
   end
 
   def mentionee_ids
@@ -47,6 +54,7 @@ module Message::Mentionee
 
     def cited_users
       cited_message_ids = body.body.fragment.find_all("cite a").map { |a| a["href"].to_s[/@([^@]+)$/, 1] }
+      return User.none if cited_message_ids.empty?
       User.joins(:messages).where.not(id: self.creator_id).where(messages: { id: cited_message_ids }).distinct
     end
 end
