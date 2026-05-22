@@ -1,6 +1,9 @@
 require "test_helper"
+require "rails/dom/testing/assertions"
 
 class RoomTest < ActiveSupport::TestCase
+  include ActionCable::TestHelper, Rails::Dom::Testing::Assertions::SelectorAssertions
+
   test "last_active_at is set on room creation" do
     room = Rooms::Open.create!(name: "New Room", creator: users(:david))
     assert room.last_active_at.present?
@@ -368,5 +371,98 @@ class RoomTest < ActiveSupport::TestCase
 
     result = thread.bot_memberships_for_events(message, :created)
     assert_includes result.map(&:user_id), bender.id, "bot in a thread should receive message events even without a mention"
+  end
+
+  # The tests below pin observable Room callback behavior: RoomListChannel
+  # broadcasts on sortable_name change, sidebar appends to each visible member
+  # on reactivation (suppressed for thread rooms), and the room_created event
+  # message posted on creation (suppressed for direct and thread rooms). They
+  # assert what the callbacks emit, not how they're wired, so they survive
+  # moves between the model and concerns.
+
+  test "renaming a room broadcasts to the room list channel" do
+    room = rooms(:pets)
+    ActionCable.server.pubsub.clear
+
+    assert_broadcasts(RoomListChannel.broadcasting_for(Account.sole), 1) do
+      room.update!(name: "Other Pets")
+    end
+  end
+
+  test "updating a room without changing its name does not broadcast to the room list channel" do
+    room = rooms(:pets)
+    room.save!  # ensure sortable_name is materialized (fixtures bypass callbacks)
+    ActionCable.server.pubsub.clear
+
+    assert_no_broadcasts(RoomListChannel.broadcasting_for(Account.sole)) do
+      room.update!(last_active_at: 1.second.from_now)
+    end
+  end
+
+  test "reactivating a sidebar room broadcasts an append to each visible member's sidebar" do
+    room = rooms(:pets)
+    room.update_columns(active: false)
+    visible = room.memberships.visible.includes(:user).to_a
+    assert visible.size >= 2, "fixture should have multiple visible members for this test to be meaningful"
+    ActionCable.server.pubsub.clear
+
+    room.activate!
+
+    visible.each do |membership|
+      assert_rendered_turbo_stream_broadcast membership.user, :rooms,
+        action: "append", target: membership.sidebar_list_name
+    end
+  end
+
+  test "non-active updates do not broadcast a reactivation" do
+    room = rooms(:pets)
+    user = room.memberships.visible.first.user
+    ActionCable.server.pubsub.clear
+
+    room.update!(last_active_at: 1.second.from_now)
+
+    stream_name = "#{user.to_gid_param}:rooms"
+    assert_empty ActionCable.server.pubsub.broadcasts(stream_name),
+      "non-active updates should not emit sidebar reactivation broadcasts"
+  end
+
+  test "reactivating a thread room does not broadcast sidebar appends" do
+    parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent",
+                                            client_message_id: "thread_reactivate_skip_sidebar")
+    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    thread.memberships.grant_to(users(:david))
+    thread.update_columns(active: false)
+    ActionCable.server.pubsub.clear
+
+    thread.activate!
+
+    stream_name = "#{users(:david).to_gid_param}:rooms"
+    assert_empty ActionCable.server.pubsub.broadcasts(stream_name),
+      "thread room reactivation should not emit sidebar broadcasts (sidebar_room? guard)"
+  end
+
+  test "creating a non-direct, non-thread room with an audience posts a room_created event" do
+    assert_difference -> { Message.unscoped.where(event: "room_created").count }, 1 do
+      Rooms::Open.create!(name: "Greenhouse", creator: users(:david))
+    end
+  end
+
+  test "creating a direct room does not post a room_created event" do
+    Current.set(user: users(:david)) do
+      assert_no_difference -> { Message.unscoped.where(event: "room_created").count } do
+        Rooms::Direct.find_or_create_for([ users(:david), users(:bender) ])
+      end
+    end
+  end
+
+  test "creating a thread room does not post a room_created event" do
+    parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent",
+                                            client_message_id: "thread_create_no_event")
+
+    # Don't scope to parent's room — if announce_creation fired on the thread,
+    # the room_created message would have room_id = thread.id, not parent.room_id.
+    assert_no_difference -> { Message.unscoped.where(event: "room_created").count } do
+      Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    end
   end
 end
