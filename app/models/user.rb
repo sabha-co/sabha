@@ -2,7 +2,7 @@ class User < ApplicationRecord
   DEFAULT_NAME = "New Member"
   MINIMUM_PASSWORD_LENGTH = 8
 
-  include Avatar, Bannable, Blockable, Bot, DicebearAvatar, Mentionable, Role, Streakable, Transferable
+  include Avatar, Bannable, Blockable, Bot, DicebearAvatar, Mentionable, PasswordAuthable, Role, Streakable, Transferable
 
   serialize :preferences, coder: JSON
 
@@ -185,14 +185,8 @@ class User < ApplicationRecord
       .merge(User::NotificationSettings.due_for_weekly_digest)
   }
 
-  has_secure_password validations: false
-  validates :password, length: { minimum: MINIMUM_PASSWORD_LENGTH }, if: -> { password.present? }
-
   generates_token_for :email_verification, expires_in: 24.hours
   generates_token_for :email_change, expires_in: 24.hours
-  generates_token_for :password_reset, expires_in: 1.hour do
-    password_salt&.last(10)
-  end
 
   after_update :send_email_change_notification, if: :saved_change_to_email_address?
   after_update :sync_name_to_global_identity, if: -> { Sabha.saas? && saved_change_to_name? }
@@ -331,10 +325,6 @@ class User < ApplicationRecord
 
   def send_verification_email
     UserMailer.email_verification(self).deliver_later
-  end
-
-  def send_password_reset_email
-    UserMailer.password_reset(self).deliver_later
   end
 
   # Email change flow
