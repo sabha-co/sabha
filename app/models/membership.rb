@@ -1,15 +1,6 @@
 class Membership < ApplicationRecord
   include Cacheable, Connectable, Involvable, Starrable, Deactivatable, Notifiable
 
-  class LastVisibleMemberError < StandardError; end
-
-  def leave!
-    with_lock do
-      room.ensure_visible_members_remain!(excluding: user_id)
-      update!(involvement: :invisible)
-    end
-  end
-
   belongs_to :room
   belongs_to :user
 
@@ -57,6 +48,15 @@ class Membership < ApplicationRecord
   scope :read,    -> { where(unread_at: nil) }
   scope :unread,  -> { where.not(unread_at: nil) }
 
+  class LastVisibleMemberError < StandardError; end
+
+  def leave!
+    with_lock do
+      room.ensure_visible_members_remain!(excluding: user_id)
+      update!(involvement: :invisible)
+    end
+  end
+
   def read_until(time)
     return if read? || time < unread_at
 
@@ -89,28 +89,6 @@ class Membership < ApplicationRecord
 
   def has_unread_notifications?
     unread_notifications_count > 0
-  end
-
-  def sidebar_list_name
-    starred? ? :starred_rooms : :shared_rooms
-  end
-
-  def receives_mentions?
-    involved_in_mentions? || involved_in_everything?
-  end
-
-  # Per-room involvement after applying the global mode override. Predicates
-  # ask this only — they don't read mode and involvement independently.
-  # Per-room :everything wins (opt-in beats global mute); otherwise global
-  # :nothing applies; else fall back to per-room involvement.
-  def effective_involvement
-    return :everything if involved_in_everything?
-    return :nothing if user.try(:notification_settings)&.mode == "nothing"
-    involvement.to_sym
-  end
-
-  def ensure_receives_mentions!
-    update(involvement: :mentions) unless receives_mentions?
   end
 
   # Recompute the count of notification-worthy unread messages from a given anchor.
