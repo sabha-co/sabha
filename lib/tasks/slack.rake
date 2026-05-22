@@ -2,7 +2,7 @@ namespace :slack do
   desc "Validate Slack export ZIP file without importing"
   task :validate, [ :zip_path ] => :environment do |_t, args|
     zip_path = validated_zip_path(args[:zip_path], task_name: "slack:validate")
-    result = SlackImporter.validate(zip_path)
+    result = Slack::Importer.validate(zip_path)
 
     print_validation_result(result)
     abort "VALIDATION_FAILED" unless result.valid?
@@ -15,7 +15,7 @@ namespace :slack do
 
     unless ENV["SKIP_VALIDATION"]
       puts "Validating Slack export..."
-      result = SlackImporter.validate(zip_path)
+      result = Slack::Importer.validate(zip_path)
 
       unless result.valid?
         print_validation_result(result)
@@ -30,7 +30,7 @@ namespace :slack do
     puts "Starting import..."
     puts ""
 
-    stats = SlackImporter.new(zip_path).import!
+    stats = Slack::Importer.new(zip_path).import!
 
     puts ""
     puts "IMPORT_COMPLETE"

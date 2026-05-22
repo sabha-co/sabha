@@ -1,7 +1,7 @@
 require "test_helper"
 require "zip"
 
-class SlackImporterTest < ActiveSupport::TestCase
+class Slack::ImporterTest < ActiveSupport::TestCase
   setup do
     @fixtures_path = Rails.root.join("test/fixtures/slack_export")
     @zip_path = Rails.root.join("tmp/test_slack_export.zip")
@@ -15,7 +15,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "imports users from users.json" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
 
     stats = nil
     assert_difference "User.count", 3 do # 3 active, non-bot users
@@ -38,7 +38,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "skips deleted and bot users" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
     # Verify deleted user not imported
@@ -49,7 +49,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "imports channels as Rooms::Open" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
 
     stats = nil
     assert_difference "Rooms::Open.count", 2 do
@@ -68,7 +68,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "assigns channel members from slack export" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
     general = Rooms::Open.find_by(name: "General")
@@ -85,7 +85,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "imports messages with preserved timestamps" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     stats = importer.import!
 
     assert stats[:messages] > 0
@@ -102,7 +102,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "converts user mentions" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
     general = Rooms::Open.find_by(name: "General")
@@ -112,7 +112,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "converts channel mentions to @channel" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
     general = Rooms::Open.find_by(name: "General")
@@ -122,7 +122,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "converts links with display text" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
     general = Rooms::Open.find_by(name: "General")
@@ -132,7 +132,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "skips channel_join and channel_leave messages" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
     general = Rooms::Open.find_by(name: "General")
@@ -143,7 +143,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "skips channel_purpose messages" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
     general = Rooms::Open.find_by(name: "General")
@@ -153,7 +153,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "imports reactions as boosts" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     stats = importer.import!
 
     assert_equal 3, stats[:boosts] # 2 thumbsup + 1 heart
@@ -164,7 +164,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "converts emoji names to unicode" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
     message_with_reactions = Message.find_by("client_message_id LIKE ?", "%1705312980%")
@@ -175,7 +175,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "creates threads from thread_ts" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     stats = importer.import!
 
     assert_equal 1, stats[:threads]
@@ -194,7 +194,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "handles channel references in messages" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
     random = Rooms::Open.find_by(name: "Random")
@@ -204,7 +204,7 @@ class SlackImporterTest < ActiveSupport::TestCase
 
   test "is idempotent - re-importing same data does not create duplicates" do
     # First import
-    importer1 = SlackImporter.new(@zip_path.to_s)
+    importer1 = Slack::Importer.new(@zip_path.to_s)
     stats1 = importer1.import!
 
     room_count_after_first = Room.count
@@ -216,7 +216,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     assert stats1[:users] > 0
 
     # Second import should skip existing records
-    importer2 = SlackImporter.new(@zip_path.to_s)
+    importer2 = Slack::Importer.new(@zip_path.to_s)
     stats2 = importer2.import!
 
     assert_equal room_count_after_first, Room.count, "Room count should not change on re-import"
@@ -227,7 +227,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "returns stats after import" do
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
     stats = importer.import!
 
     assert stats[:users] > 0
@@ -241,7 +241,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     # Force an error during messages import
     Slack::MessagesImporter.any_instance.stubs(:import).raises(StandardError.new("Test error"))
 
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
 
     assert_no_difference [ "User.count", "Room.count", "Message.count" ] do
       assert_raises(StandardError) do
@@ -254,7 +254,7 @@ class SlackImporterTest < ActiveSupport::TestCase
     # Create minimal ZIP without groups.json and dms.json
     create_minimal_test_zip
 
-    importer = SlackImporter.new(@zip_path.to_s)
+    importer = Slack::Importer.new(@zip_path.to_s)
 
     assert_nothing_raised do
       importer.import!
@@ -262,7 +262,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   end
 
   test "validate returns valid result for valid export" do
-    result = SlackImporter.validate(@zip_path.to_s)
+    result = Slack::Importer.validate(@zip_path.to_s)
 
     assert result.valid?
     assert_empty result.errors
@@ -274,7 +274,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   test "validate returns error for missing users.json" do
     create_zip_without("users.json")
 
-    result = SlackImporter.validate(@zip_path.to_s)
+    result = Slack::Importer.validate(@zip_path.to_s)
 
     assert_not result.valid?
     assert result.errors.any? { |e| e.include?("users.json") }
@@ -283,14 +283,14 @@ class SlackImporterTest < ActiveSupport::TestCase
   test "validate returns error for missing channels.json" do
     create_zip_without("channels.json")
 
-    result = SlackImporter.validate(@zip_path.to_s)
+    result = Slack::Importer.validate(@zip_path.to_s)
 
     assert_not result.valid?
     assert result.errors.any? { |e| e.include?("channels.json") }
   end
 
   test "validate returns error for non-existent file" do
-    result = SlackImporter.validate("/nonexistent/path.zip")
+    result = Slack::Importer.validate("/nonexistent/path.zip")
 
     assert_not result.valid?
     assert result.errors.any? { |e| e.include?("File not found") }
@@ -299,7 +299,7 @@ class SlackImporterTest < ActiveSupport::TestCase
   test "validate returns warning for public-only export" do
     create_minimal_test_zip
 
-    result = SlackImporter.validate(@zip_path.to_s)
+    result = Slack::Importer.validate(@zip_path.to_s)
 
     assert result.valid?
     assert result.warnings.any? { |w| w.include?("public channels") }

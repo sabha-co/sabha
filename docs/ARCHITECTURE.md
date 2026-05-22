@@ -137,7 +137,7 @@ Models primarily use namespace decomposition, with selective service objects whe
 
 ### Key Conventions
 
-- **Model-first business logic.** Most behavior lives in models/concerns, with selective service objects (e.g., `SlackImporter`) for isolated workflows.
+- **Model-first business logic.** Most behavior lives in models/concerns. Isolated workflows that need their own namespace (e.g., `Slack::Importer` and friends under `lib/slack/`) sit next to their collaborators rather than in an `app/services/` bucket.
 - **Strictly RESTful controllers.** Only standard CRUD actions (`index`, `show`, `new`, `create`, `edit`, `update`, `destroy`). Custom actions like `leave` or `activate` become `destroy` on a new resource controller (e.g., `MembershipsController#destroy`).
 - **Exceptions over return values.** Model methods raise on failure, controllers rescue with redirects.
 - **`id: false` tables** (like `mentions`) must use `dependent: :delete_all`, never `:destroy`.
