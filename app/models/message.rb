@@ -1,5 +1,5 @@
 class Message < ApplicationRecord
-  include Attachment, Broadcasts, Mentionee, Pagination, Searchable, Deactivatable
+  include Attachment, Broadcasts, Mentionee, Pagination, Searchable, Streakable, Deactivatable
 
   belongs_to :room, counter_cache: true
   belongs_to :creator, class_name: "User", default: -> { Current.user }
@@ -20,7 +20,6 @@ class Message < ApplicationRecord
   after_create_commit :involve_creator_in_thread
   after_create_commit :update_thread_reply_count
   after_create_commit :update_parent_message_threads
-  after_create_commit :update_creator_streak
   after_create_commit :create_mention_notifications
   after_create_commit :create_thread_reply_notifications
   after_create_commit :increment_unread_notifications_counters
@@ -377,11 +376,6 @@ class Message < ApplicationRecord
 
     def deliver_to_room
       room.receive(self)
-    end
-
-    def update_creator_streak
-      return if room.direct? || room.parent_room&.direct? || welcome?
-      UpdateStreakJob.perform_later(user_id: creator_id, excluding_message_id: id)
     end
 
     def broadcast_reactivation_if_restored
