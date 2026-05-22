@@ -129,11 +129,11 @@ Models primarily use namespace decomposition, with selective service objects whe
 | Directory | Purpose |
 |-----------|---------|
 | `app/models/rooms/` | STI subclasses: `Open`, `Closed`, `Direct`, `Thread` |
-| `app/models/user/` | `Avatar`, `Bot`, `DicebearAvatar`, `Mentionable`, `Preferences`, `Role`, `Bannable`, `Transferable` |
-| `app/models/message/` | `Attachment`, `Broadcasts`, `Mentionee`, `Searchable` |
-| `app/models/membership/` | `Connectable` (WebSocket connection state) |
+| `app/models/user/` | `Avatar`, `Bannable`, `Blockable`, `Bot`, `DicebearAvatar`, `EmailChangeable`, `Mentionable`, `Notifiable`, `PasswordAuthable`, `Role`, `SaasBridged`, `Streakable`, `Transferable`, `Verifiable` |
+| `app/models/message/` | `Attachment`, `Broadcasts`, `Mentionee`, `Searchable`, `Streakable`, `Threadable`, `Unreadable` |
+| `app/models/membership/` | `Cacheable`, `Connectable`, `Involvable`, `Notifiable`, `Starrable` |
 | `app/models/inbox/` | Query objects: `ActivityQuery`, `ThreadsQuery`, `BookmarksQuery`, `MessagesQuery`, `DirectMessagesQuery` |
-| `app/models/concerns/` | `Deactivatable` (soft deletion), `Pagination` |
+| `app/models/concerns/` | `Deactivatable` (soft-delete via `active` boolean), `Pagination` |
 
 ### Key Conventions
 
@@ -141,7 +141,7 @@ Models primarily use namespace decomposition, with selective service objects whe
 - **Strictly RESTful controllers.** Only standard CRUD actions (`index`, `show`, `new`, `create`, `edit`, `update`, `destroy`). Custom actions like `leave` or `activate` become `destroy` on a new resource controller (e.g., `MembershipsController#destroy`).
 - **Exceptions over return values.** Model methods raise on failure, controllers rescue with redirects.
 - **`id: false` tables** (like `mentions`) must use `dependent: :delete_all`, never `:destroy`.
-- **Soft deletion via `Deactivatable` concern.** Most models use an `active` boolean with explicit scopes (not a default scope). Users use a `status` enum (`active`/`deactivated`/`banned`) instead.
+- **Soft deletion via `Deactivatable` concern.** Three models (`Message`, `Room`, `Membership`) use an `active` boolean with two named scopes (`active`, `inactive`) — there is no `default_scope`. `User` uses a `status` enum (`active`/`deactivated`/`banned`) instead. Hard-delete cleanup is enforced explicitly in `destroy_all_associated_records` for FK ordering, not for soft-delete bypass.
 - **System event messages bypass callbacks.** Room lifecycle changes (renames, joins, leaves) are recorded via `Message.insert!` to skip push notifications, search indexing, and counter caches. Excluded from inbox queries and search via `without_events` scope.
 
 ### Room Types in Detail
@@ -473,9 +473,9 @@ Multi-stage build:
 
 3. **AnyCable-Go for WebSockets.** Uses HTTP RPC mode (no gRPC dependency). Scales WebSocket connections outside the Ruby process while keeping authentication and channel logic in Rails.
 
-4. **Soft deletion is first-class.** Account/content models use an `active` boolean with scoped queries, while `User` uses a `status` enum (`active`/`deactivated`/`banned`). Hard-delete paths use `unscoped` cleanup where needed.
+4. **Soft deletion is first-class.** `Message`, `Room`, and `Membership` use an `active` boolean with named scopes (`active`/`inactive`); `User` uses a `status` enum (`active`/`deactivated`/`banned`). Hard-delete cascade order is enforced explicitly in `destroy_all_associated_records` for FK satisfaction (notifications before messages, bundle items before bundles), not for soft-delete bypass — see [`docs/plans/deactivatable-refactor.html`](./plans/deactivatable-refactor.html) for the audit that established this.
 
-5. **Namespace decomposition first; services where they help.** User concerns live in `User::Role`, `User::Bot`, etc., while standalone workflows (e.g., imports) can live in `app/services/`.
+5. **Namespace decomposition first; no service layer.** User concerns live in `User::Role`, `User::Bot`, etc. Multi-step workflows live next to their collaborators (e.g., `Slack::Importer` under `lib/slack/`) rather than in a dedicated `app/services/` directory — which doesn't exist in Sabha.
 
 6. **Broadcasts are close to state changes.** Most real-time updates are model/job-driven, with targeted controller broadcasts for user-scoped UI changes.
 
