@@ -227,31 +227,28 @@ class User < ApplicationRecord
       # Delete messages first (they have FKs to boosts, bookmarks, notifications)
       Message.where(creator_id: id).find_each(&:destroy)
 
-      # Then delete other records with FKs to users
+      # Then delete other records with FKs to users.
+      # Tables NOT listed here are covered by `dependent:` declarations elsewhere
+      # (e.g. `searches`, `push_subscriptions`, `sessions`, `auth_tokens`,
+      # `blocks_given`, `blocks_received`, `notification_settings`) and cleaned
+      # up automatically by Rails after this method returns.
       Notification.where(user_id: id).delete_all
       Notification.where(actor_id: id).delete_all
       Membership.where(user_id: id).delete_all
       Bookmark.where(user_id: id).delete_all
       Boost.where(booster_id: id).delete_all
-      Search.where(user_id: id).delete_all
-      Search.where(creator_id: id).delete_all
-      Session.where(user_id: id).delete_all
-      AuthToken.where(user_id: id).delete_all
-      Ban.where(user_id: id).delete_all
-      Block.where(blocker_id: id).delete_all
-      Block.where(blocked_id: id).delete_all
-      Push::Subscription.where(user_id: id).delete_all
+      Search.where(creator_id: id).delete_all          # second FK; user_id side is dependent: :delete_all
+      Ban.where(user_id: id).delete_all                # delete_all skips `bust_cache`; intentional fast path
       Webhook.where(user_id: id).delete_all
 
       # Bundle items where this user was the actor (in any user's bundle).
       Notification::BundleItem.where(actor_id: id).delete_all
 
       # Bundles this user owns — items must go first to satisfy the FK.
+      # delete_all skipped intentionally: bulk delete vs N+1 instantiated destroys.
       owned_bundle_ids = Notification::Bundle.where(user_id: id).pluck(:id)
       Notification::BundleItem.where(bundle_id: owned_bundle_ids).delete_all
       Notification::Bundle.where(user_id: id).delete_all
-
-      User::NotificationSettings.where(user_id: id).delete_all
     end
 
     def set_default_name
