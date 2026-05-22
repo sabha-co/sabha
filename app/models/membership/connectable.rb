@@ -6,6 +6,9 @@ module Membership::Connectable
   included do
     scope :connected,    -> { where(connected_at: CONNECTION_TTL.ago..) }
     scope :disconnected, -> { where(connected_at: [ nil, ...CONNECTION_TTL.ago ]) }
+
+    after_update_commit  :reset_user_connections_if_deactivated
+    after_destroy_commit :reset_user_connections
   end
 
   ACTIVITY_TIERS = { active: 10.minutes, away: 1.hour, recently_active: 24.hours }.freeze
@@ -84,4 +87,13 @@ module Membership::Connectable
   def decrement_connections
     connected? ? decrement!(:connections, touch: true) : update!(connections: 0)
   end
+
+  private
+    def reset_user_connections_if_deactivated
+      user.reset_remote_connections if deactivated?
+    end
+
+    def reset_user_connections
+      user.reset_remote_connections
+    end
 end

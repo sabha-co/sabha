@@ -1,5 +1,5 @@
 class Membership < ApplicationRecord
-  include Connectable, Deactivatable, Notifiable
+  include Cacheable, Connectable, Involvable, Starrable, Deactivatable, Notifiable
 
   class LastVisibleMemberError < StandardError; end
 
@@ -28,18 +28,6 @@ class Membership < ApplicationRecord
     end
   }, through: :room, source: :messages
 
-  after_update_commit :reset_user_connections_if_deactivated
-  after_destroy_commit :reset_user_connections
-  after_commit :invalidate_room_member_count_cache
-
-  enum :involvement, %w[ invisible nothing mentions everything ].index_by(&:itself), prefix: :involved_in
-
-  validate :starred_only_for_shared_visible_rooms, if: :starred?
-  before_validation :unstar_if_invisible
-
-  after_update :broadcast_involvement, if: :saved_change_to_involvement?
-  after_update_commit :broadcast_star_change, if: :saved_change_to_starred?
-
   scope :with_ordered_room, -> { includes(:room).joins(:room).order("rooms.sortable_name") }
   scope :with_room_by_activity, -> { includes(:room).joins(:room).order("rooms.messages_count DESC") }
   scope :with_room_by_last_active_newest_first, -> { includes(:room).joins(:room).order("rooms.last_active_at DESC") }
@@ -66,11 +54,7 @@ class Membership < ApplicationRecord
     joins(:room).where("memberships.unread_at IS NOT NULL OR rooms.updated_at > ?", since)
   }
 
-  scope :starred, -> { where(starred: true) }
-  scope :unstarred, -> { where(starred: false) }
-  scope :notifications_on, -> { where(involvement: :everything) }
-  scope :visible, -> { where.not(involvement: :invisible) }
-  scope :read,  -> { where(unread_at: nil) }
+  scope :read,    -> { where(unread_at: nil) }
   scope :unread,  -> { where.not(unread_at: nil) }
 
   def read_until(time)
@@ -149,33 +133,6 @@ class Membership < ApplicationRecord
   end
 
   private
-    def starred_only_for_shared_visible_rooms
-      if room.direct? || room.thread?
-        errors.add(:starred, "is not allowed for direct or thread rooms")
-      end
-    end
-
-    def unstar_if_invisible
-      self.starred = false if involved_in_invisible? && starred?
-    end
-
-    def reset_user_connections_if_deactivated
-      user.reset_remote_connections if deactivated?
-    end
-
-    def reset_user_connections
-      user.reset_remote_connections
-    end
-
-    def invalidate_room_member_count_cache
-      room&.invalidate_member_count_cache
-
-      # Also invalidate the previous room's cache if room_id changed
-      if saved_change_to_room_id? && room_id_before_last_save
-        Room.find_by(id: room_id_before_last_save)&.invalidate_member_count_cache
-      end
-    end
-
     def broadcast_read
       ReadRoomsChannel.broadcast_to(user, { room_id: room_id })
     end
@@ -193,29 +150,6 @@ class Membership < ApplicationRecord
         .where("messages.created_at >= ?", unread_at)
         .where("notifications.created_at > ?", time)
         .count
-    end
-
-    def broadcast_involvement
-      UserInvolvementsChannel.broadcast_to(user, { roomId: room_id, involvement: involvement })
-    end
-
-    def broadcast_star_change
-      return if involved_in_invisible? || room.direct? || room.thread?
-
-      old_list = starred_before_last_save ? :starred_rooms : :shared_rooms
-
-      Turbo::StreamsChannel.broadcast_remove_to(
-        user, :rooms,
-        target: [ room, "#{old_list}_list_node" ]
-      )
-
-      Turbo::StreamsChannel.broadcast_append_to(
-        user, :rooms,
-        target: sidebar_list_name,
-        partial: "users/sidebars/rooms/shared",
-        locals: { list_name: sidebar_list_name, membership: self },
-        attributes: { maintain_scroll: true }
-      )
     end
 
     def unread_payload
