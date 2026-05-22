@@ -41,7 +41,7 @@ class API::Bots::RoomsController < API::Bots::BaseController
 
   def destroy
     @room.deactivate
-    broadcast_remove_room
+    broadcast_sidebar_room_removed(Current.account, @room)
 
     head :no_content
   rescue Room::CannotDeleteOriginalError
@@ -55,11 +55,5 @@ class API::Bots::RoomsController < API::Bots::BaseController
 
     def set_room
       @room = Current.user.rooms.find(params[:id])
-    end
-
-    def broadcast_remove_room
-      Sidebar::SIDEBAR_SECTIONS.each do |list_name|
-        broadcast_remove_to Current.account, :rooms, target: [ @room, helpers.dom_prefix(list_name, :list_node) ]
-      end
     end
 end

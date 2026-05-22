@@ -21,7 +21,7 @@ class Accounts::UsersController < ApplicationController
   end
 
   def update
-    @user.update(user_params)
+    @user.update!(user_params)
     @notice = role_change_notice if @user.saved_change_to_role?
 
     respond_to do |format|

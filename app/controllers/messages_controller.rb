@@ -17,15 +17,13 @@ class MessagesController < ApplicationController
 
   def create
     set_room
-    @message = @room.messages.create_with_attachment(message_params)
+    @message = @room.messages.create_with_attachment!(message_params)
 
-    if @message.persisted?
-      @message.broadcast_create
-      @message.broadcast_mentionee_sidebar_updates
-      notify_bots(@message, :created)
-    else
-      render action: :not_allowed
-    end
+    @message.broadcast_create
+    @message.broadcast_mentionee_sidebar_updates
+    notify_bots(@message, :created)
+  rescue ActiveRecord::RecordInvalid
+    render action: :not_allowed
   rescue ActiveRecord::RecordNotFound
     render action: :room_not_found
   end

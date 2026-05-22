@@ -33,7 +33,7 @@ class RoomsController < ApplicationController
     def deactivate_room
       @room.deactivate
 
-      broadcast_remove_room
+      broadcast_sidebar_room_removed(Current.account, @room)
     end
 
     def set_room
@@ -105,12 +105,6 @@ class RoomsController < ApplicationController
     def ensure_permission_to_create_rooms
       if Current.account.settings.restrict_room_creation_to_administrators? && !Current.user.administrator?
         head :forbidden
-      end
-    end
-
-    def broadcast_remove_room
-      Sidebar::SIDEBAR_SECTIONS.each do |list_name|
-        broadcast_remove_to Current.account, :rooms, target: [ @room, helpers.dom_prefix(list_name, :list_node) ]
       end
     end
 end

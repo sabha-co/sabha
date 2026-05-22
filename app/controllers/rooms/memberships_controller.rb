@@ -26,8 +26,7 @@ class Rooms::MembershipsController < ApplicationController
 
   private
     def set_joinable_room
-      @room = Room.active.find(params[:room_id])
-      head(:forbidden) and return unless @room.open?
+      @room = Rooms::Open.active.find(params[:room_id])
     end
 
     def ensure_not_direct_room

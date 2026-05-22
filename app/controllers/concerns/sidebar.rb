@@ -21,9 +21,9 @@ module Sidebar
     broadcast_append_to user, :rooms, target: list_name, html: html, attributes: { maintain_scroll: true }
   end
 
-  def broadcast_sidebar_room_removed(user, room)
+  def broadcast_sidebar_room_removed(streamable, room)
     SIDEBAR_SECTIONS.each do |list_name|
-      broadcast_remove_to user, :rooms, target: [ room, helpers.dom_prefix(list_name, :list_node) ]
+      broadcast_remove_to streamable, :rooms, target: [ room, helpers.dom_prefix(list_name, :list_node) ]
     end
   end
 end
