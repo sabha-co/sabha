@@ -6,7 +6,6 @@ class Message < ApplicationRecord
 
   has_many :boosts, -> { order(:created_at) }, class_name: "Boost"
   has_many :bookmarks, class_name: "Bookmark"
-
   has_many :threads, class_name: "Rooms::Thread", foreign_key: :parent_message_id, dependent: :destroy
 
   # Clean up associated records before destroying
@@ -17,7 +16,6 @@ class Message < ApplicationRecord
   before_create :set_default_client_message_id
   before_create :touch_room_activity
   after_create_commit :dispatch_notifications
-
   after_update_commit :broadcast_reactivation_if_restored
 
   scope :ordered, -> { order(:created_at) }
