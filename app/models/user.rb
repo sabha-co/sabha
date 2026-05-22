@@ -2,19 +2,9 @@ class User < ApplicationRecord
   DEFAULT_NAME = "New Member"
   MINIMUM_PASSWORD_LENGTH = 8
 
-  include Avatar, Bannable, Blockable, Bot, DicebearAvatar, EmailChangeable, Mentionable, Notifiable, PasswordAuthable, Role, Streakable, Transferable, Verifiable
+  include Avatar, Bannable, Blockable, Bot, DicebearAvatar, EmailChangeable, Mentionable, Notifiable, PasswordAuthable, Role, SaasBridged, Streakable, Transferable, Verifiable
 
   serialize :preferences, coder: JSON
-
-  # SaaS mode: Link to GlobalIdentity via WorkspaceMembership
-  # In single-tenant mode, workspace_membership_id is nil
-  belongs_to :workspace_membership, optional: true, class_name: "WorkspaceMembership"
-
-  # Access GlobalIdentity through WorkspaceMembership (SaaS mode)
-  def global_identity
-    return nil unless Sabha.saas?
-    workspace_membership&.global_identity
-  end
 
   def self.sign_in_with_sso!(payload)
     record = SingleSignOnRecord.find_or_provision!(payload)
@@ -77,9 +67,6 @@ class User < ApplicationRecord
   normalizes :email_address, with: ->(email_address) { email_address.strip.downcase }
 
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }
-
-  after_update :sync_name_to_global_identity, if: -> { Sabha.saas? && saved_change_to_name? }
-  after_update_commit :sync_workspace_membership_active, if: -> { Sabha.saas? && saved_change_to_status? }
 
   before_validation :set_default_name
   before_validation :normalize_social_urls
@@ -202,18 +189,6 @@ class User < ApplicationRecord
   end
 
   private
-    # Mirror User#active? onto the untenanted WorkspaceMembership row so the
-    # workspace selector can filter without cross-tenant queries. Runs post-
-    # commit, so a Postgres failure here cannot roll back the SQLite write.
-    # The auth-time guard reads the tenanted User row, so a stale mirror can
-    # only hide a workspace the user should still see — repaired by the
-    # workspace_membership:backfill_user_active rake task.
-    def sync_workspace_membership_active
-      workspace_membership&.update_column(:user_active, active?)
-    rescue ActiveRecord::ActiveRecordError => e
-      Rails.logger.error("Failed to mirror user_active for workspace_membership=#{workspace_membership_id}: #{e.message}")
-    end
-
     def deactivate_direct_rooms
       Membership.where(user_id: id).direct_rooms.each do |membership|
         membership.room.deactivate
@@ -226,12 +201,6 @@ class User < ApplicationRecord
       end
     end
 
-    def sync_name_to_global_identity
-      global_identity&.update!(name: name)
-    rescue => error
-      Rails.logger.error "[GlobalIdentity sync] Failed to sync name for User##{id}: #{error.message}"
-    end
-
     def grant_membership_to_open_rooms
       forced_room_ids = Rooms::Open.active.where(auto_join: true).pluck(:id)
       return if forced_room_ids.empty?
@@ -239,17 +208,6 @@ class User < ApplicationRecord
       Membership.insert_all(forced_room_ids.collect { |room_id| { room_id: room_id, user_id: id } })
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
         thread.memberships.grant_to(self)
-      end
-    end
-
-    def close_remote_connections(reconnect: false)
-      if Sabha.saas? && ApplicationRecord.current_tenant.present?
-        ActionCable.server.remote_connections.where(
-          current_tenant: ApplicationRecord.current_tenant,
-          current_user: self
-        ).disconnect reconnect: reconnect
-      else
-        ActionCable.server.remote_connections.where(current_user: self).disconnect reconnect: reconnect
       end
     end
 
