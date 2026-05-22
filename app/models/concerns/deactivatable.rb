@@ -2,9 +2,14 @@
 
 # Soft deletion via an `active` boolean column. Used by Message, Room, and Membership.
 #
-# Note: There is no UI to undo deletion for Rooms or Messages — deactivation is
-# one-way from the user's perspective. This was inherited from the Small Bets fork
-# and is likely intended for manual reversion via Rails console. Keeping as-is for now.
+# Provides two named scopes (`active`, `inactive`) and four lifecycle methods.
+# There is no `default_scope` — `Message.where(...)` returns all rows, active or
+# inactive. The `-> { active }` filter only applies when going through an
+# association (e.g. `user.messages`).
+#
+# Reactivation is programmatic, not console-only: `User#reactivate`,
+# `Room#reactivate`, the admin reactivations route, and the SaaS workspace
+# re-admit flow all rely on it.
 module Deactivatable
   extend ActiveSupport::Concern
 

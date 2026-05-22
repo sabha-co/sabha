@@ -142,7 +142,7 @@ class Room < ApplicationRecord
       # rewhere replaces the default `-> { active }` scope on the association,
       # allowing us to find deactivated memberships
       memberships.rewhere(active: false).update_all(active: true)
-      Message.unscoped.where(room_id: id, active: false).update_all(active: true)
+      Message.where(room_id: id, active: false).update_all(active: true)
       activate!
     end
   end
@@ -168,7 +168,7 @@ class Room < ApplicationRecord
     transaction do
       deactivate_threads
       memberships.update_all(active: false)
-      Message.unscoped.where(room_id: id).update_all(active: false)
+      Message.where(room_id: id).update_all(active: false)
       destroy_notifications_for_messages
       deactivate!
     end
@@ -279,7 +279,7 @@ class Room < ApplicationRecord
 
   private
     def destroy_notifications_for_messages
-      message_ids = Message.unscoped.where(room_id: id).pluck(:id)
+      message_ids = Message.where(room_id: id).pluck(:id)
       return if message_ids.empty?
 
       Notification.delete_all_and_broadcast(Notification.where(message_id: message_ids))
@@ -320,31 +320,28 @@ class Room < ApplicationRecord
     end
 
     def deactivate_threads
-      message_ids = Message.unscoped.where(room_id: id).pluck(:id)
+      message_ids = Message.where(room_id: id).pluck(:id)
       Rooms::Thread.where(parent_message_id: message_ids).find_each(&:deactivate)
     end
 
     def reactivate_threads
-      message_ids = Message.unscoped.where(room_id: id).pluck(:id)
-      Rooms::Thread.unscoped.where(parent_message_id: message_ids, active: false).find_each(&:reactivate)
+      message_ids = Message.where(room_id: id).pluck(:id)
+      Rooms::Thread.where(parent_message_id: message_ids, active: false).find_each(&:reactivate)
     end
 
-    # Clean up ALL associated records (including inactive ones) to satisfy FK constraints.
-    #
-    # Why this exists instead of `dependent: :destroy`:
-    # The `messages` association has `-> { active }` scope for soft deletion, so Rails'
-    # `dependent: :destroy` only finds active records. We need to delete inactive
-    # records too, hence the explicit unscoped queries.
+    # Clean up associated records explicitly because the cascade has to walk
+    # parent_message → thread → messages → memberships in a specific order to
+    # satisfy FK constraints.
     def destroy_all_associated_records
       # First, destroy any thread rooms that were created from messages in this room
       # (threads have parent_message_id pointing to messages in this room)
-      message_ids = Message.unscoped.where(room_id: id).pluck(:id)
-      Rooms::Thread.unscoped.where(parent_message_id: message_ids).find_each(&:destroy)
+      message_ids = Message.where(room_id: id).pluck(:id)
+      Rooms::Thread.where(parent_message_id: message_ids).find_each(&:destroy)
 
       # Then delete messages (they have FKs to boosts, bookmarks, notifications)
-      Message.unscoped.where(room_id: id).find_each(&:destroy)
+      Message.where(room_id: id).find_each(&:destroy)
 
       # Finally delete memberships
-      Membership.unscoped.where(room_id: id).delete_all
+      Membership.where(room_id: id).delete_all
     end
 end

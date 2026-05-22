@@ -196,7 +196,7 @@ class User < ApplicationRecord
     end
 
     def reactivate_direct_rooms
-      Membership.unscoped.where(user_id: id, active: false).direct_rooms.each do |membership|
+      Membership.where(user_id: id, active: false).direct_rooms.each do |membership|
         membership.room.reactivate
       end
     end
@@ -211,12 +211,9 @@ class User < ApplicationRecord
       end
     end
 
-    # Clean up all associated records to satisfy FK constraints.
-    #
-    # Why this exists instead of `dependent: :destroy`:
-    # Some associations have `-> { active }` scopes for soft deletion, so Rails'
-    # `dependent: :destroy` only finds active records. We need to delete all
-    # records regardless, hence the explicit queries.
+    # Clean up associated records explicitly because most `has_many` declarations
+    # on User don't carry `dependent:`, and several FK chains need a specific
+    # deletion order (notifications before messages; bundle items before bundles).
     def destroy_all_associated_records
       # Clear cached user_id and flip user_active on WorkspaceMembership (SaaS mode).
       # user_active mirrors User#active? but the after_*_commit callback only fires on
@@ -228,12 +225,12 @@ class User < ApplicationRecord
       end
 
       # Delete messages first (they have FKs to boosts, bookmarks, notifications)
-      Message.unscoped.where(creator_id: id).find_each(&:destroy)
+      Message.where(creator_id: id).find_each(&:destroy)
 
       # Then delete other records with FKs to users
       Notification.where(user_id: id).delete_all
       Notification.where(actor_id: id).delete_all
-      Membership.unscoped.where(user_id: id).delete_all
+      Membership.where(user_id: id).delete_all
       Bookmark.where(user_id: id).delete_all
       Boost.where(booster_id: id).delete_all
       Search.where(user_id: id).delete_all
