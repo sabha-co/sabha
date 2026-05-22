@@ -17,11 +17,12 @@ class Rooms::MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Joined #{room.name}", flash[:notice]
   end
 
-  test "joining a closed room is forbidden" do
+  test "joining a closed room is not allowed" do
     Membership.where(room: rooms(:designers), user: users(:kevin)).update_all(active: false)
 
-    post room_membership_url(rooms(:designers))
-    assert_response :forbidden
+    assert_raises ActiveRecord::RecordNotFound do
+      post room_membership_url(rooms(:designers))
+    end
   end
 
   test "leaving a room sets involvement to invisible" do
