@@ -1,5 +1,5 @@
 <div id="<%= dom_id(message, :bookmarking) %>">
-  <% if message.bookmarked_by_current_user? %>
+  <% if message.bookmarked_by?(Current.user) %>
     <%= button_to message_bookmark_path(message), method: :delete, class: "btn message__action-btn full-width" do %>
       <span>Remove bookmark</span>
     <% end %>

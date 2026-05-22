@@ -128,7 +128,7 @@ module MessagesHelper
     [
       message,
       room_id,
-      message.bookmarked_by_current_user?,
+      message.bookmarked_by?(Current.user),
       message.creator,
       is_first_unread_message,
       is_unread,

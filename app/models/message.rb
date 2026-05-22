@@ -82,14 +82,14 @@ class Message < ApplicationRecord
     !event?
   end
 
-  def bookmarked_by_current_user?
+  def bookmarked_by?(user)
     # Scope path: with_bookmark_status_for LEFT JOIN sets is_bookmarked
     # Use ActiveRecord::Type::Boolean to handle SQLite's 0/1/"0"/"1" values
     return ActiveRecord::Type::Boolean.new.cast(is_bookmarked) if has_attribute?(:is_bookmarked)
     # Manual path: bookmarks inbox sets @bookmarked = true
     return @bookmarked if instance_variable_defined?(:@bookmarked)
     # Fallback: single message query (e.g., thread parent)
-    bookmarks.exists?(user_id: Current.user&.id)
+    bookmarks.exists?(user_id: user&.id)
   end
 
   def plain_text_body
