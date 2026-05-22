@@ -2,6 +2,11 @@ module Message::Unreadable
   extend ActiveSupport::Concern
 
   included do
+    # Order matters: deliver_to_room sets unread_at for disconnected read
+    # memberships, and increment_unread_notifications_counters then bumps the
+    # counter for memberships with unread_at <= created_at. Swap them and the
+    # counter never bumps for a read → unread transition.
+    after_create_commit :deliver_to_room
     after_create_commit :increment_unread_notifications_counters
     after_update_commit :clear_unread_timestamps_if_deactivated
     after_update_commit :destroy_notifications_if_deactivated
@@ -9,6 +14,10 @@ module Message::Unreadable
   end
 
   private
+    def deliver_to_room
+      room.receive(self)
+    end
+
     # Bumps unread_notifications_count for memberships affected by this message.
     # Mirrors the with_has_unread_notifications semantics: DM rooms count every
     # unread message (including the sender's, matching the old scope which made

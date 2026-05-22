@@ -42,6 +42,23 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal message.created_at, recipient_membership.reload.unread_at
   end
 
+  test "mention to a read disconnected recipient sets unread_at and bumps unread_notifications_count" do
+    room = rooms(:pets)
+    recipient_membership = room.memberships.find_by!(user: users(:david))
+    recipient_membership.update!(unread_at: nil, unread_notifications_count: 0)
+    recipient_membership.update_columns(connected_at: nil, connections: 0)
+
+    message = room.messages.create!(
+      creator: users(:jason),
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      client_message_id: "mention_to_read_disconnected"
+    )
+
+    recipient_membership.reload
+    assert_equal message.created_at, recipient_membership.unread_at
+    assert_equal 1, recipient_membership.unread_notifications_count
+  end
+
   # Event messages
 
   test "event? returns true when event is present" do
