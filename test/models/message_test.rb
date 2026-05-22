@@ -1,7 +1,8 @@
 require "test_helper"
+require "rails/dom/testing/assertions"
 
 class MessageTest < ActiveSupport::TestCase
-  include ActionCable::TestHelper, ActiveJob::TestHelper
+  include ActionCable::TestHelper, ActiveJob::TestHelper, Rails::Dom::Testing::Assertions::SelectorAssertions
 
   test "client_message_id is auto-generated when not provided" do
     message = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello")
@@ -18,6 +19,44 @@ class MessageTest < ActiveSupport::TestCase
     assert_enqueued_jobs 1, only: [ Notification::DispatchJob ] do
       create_new_message_in rooms(:designers)
     end
+  end
+
+  test "creating a message advances room.last_active_at" do
+    room = rooms(:pets)
+    room.update_column(:last_active_at, 1.hour.ago)
+    before = room.last_active_at
+
+    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "last_active_create")
+
+    assert_operator room.reload.last_active_at, :>, before
+  end
+
+  test "creating a message marks disconnected read memberships as unread" do
+    room = rooms(:pets)
+    recipient_membership = room.memberships.find_by!(user: users(:david))
+    recipient_membership.update!(unread_at: nil)
+    recipient_membership.update_columns(connected_at: nil, connections: 0)
+
+    message = room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "deliver_to_room_marks_unread")
+
+    assert_equal message.created_at, recipient_membership.reload.unread_at
+  end
+
+  test "mention to a read disconnected recipient sets unread_at and bumps unread_notifications_count" do
+    room = rooms(:pets)
+    recipient_membership = room.memberships.find_by!(user: users(:david))
+    recipient_membership.update!(unread_at: nil, unread_notifications_count: 0)
+    recipient_membership.update_columns(connected_at: nil, connections: 0)
+
+    message = room.messages.create!(
+      creator: users(:jason),
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      client_message_id: "mention_to_read_disconnected"
+    )
+
+    recipient_membership.reload
+    assert_equal message.created_at, recipient_membership.unread_at
+    assert_equal 1, recipient_membership.unread_notifications_count
   end
 
   # Event messages
@@ -198,6 +237,16 @@ class MessageTest < ActiveSupport::TestCase
     assert_includes message.errors[:base], "@everyone is only allowed in open rooms"
   end
 
+  test "creating a message in a one-on-one DM where users have blocked each other fails validation" do
+    room = Rooms::Direct.find_or_create_for([ users(:david), users(:jason) ])
+    users(:david).block!(users(:jason))
+
+    message = room.messages.build(creator: users(:jason), body: "Hey", client_message_id: "blocked_dm_invalid")
+
+    assert_not message.valid?
+    assert_includes message.errors[:base], "Messaging this user isn't allowed"
+  end
+
   test "Message.mentioning scope includes @everyone messages" do
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
@@ -353,6 +402,50 @@ class MessageTest < ActiveSupport::TestCase
     end
 
     assert_not_equal before, message.reload.thread_fingerprint
+  end
+
+  test "creating a message in a thread broadcasts an update to the reply count target" do
+    parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "thread_reply_count_parent")
+    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    thread.memberships.grant_to(users(:david))
+
+    thread.messages.create!(creator: users(:david), body: "Reply", client_message_id: "thread_reply_count_reply")
+
+    target = "#{ActionView::RecordIdentifier.dom_id(thread, :replies_separator)}_count"
+    assert_rendered_turbo_stream_broadcast thread, :messages, action: "update", target: target
+  end
+
+  test "creating a message in a thread broadcasts a replace of the parent message's threads block" do
+    parent_room = rooms(:pets)
+    parent = parent_room.messages.create!(creator: users(:david), body: "Parent", client_message_id: "parent_threads_partial_parent")
+    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    thread.memberships.grant_to(users(:david))
+
+    thread.messages.create!(creator: users(:david), body: "Reply", client_message_id: "parent_threads_partial_reply")
+
+    assert_rendered_turbo_stream_broadcast parent_room, :messages, action: "replace", target: [ parent, :threads ]
+  end
+
+  test "deactivating a parent message broadcasts a replace of the parent message into each thread room" do
+    parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "deactivate_parent_thread_broadcast")
+    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    thread.memberships.grant_to(users(:david))
+
+    parent.deactivate
+
+    assert_rendered_turbo_stream_broadcast thread, :messages, action: "replace", target: parent
+  end
+
+  test "reactivating a parent message broadcasts a replace of the parent message into each thread room" do
+    parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "reactivate_parent_thread_broadcast")
+    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    thread.memberships.grant_to(users(:david))
+    # Bypass callbacks so the assertion below narrows to the activate! call.
+    parent.update_columns(active: false)
+
+    parent.activate!
+
+    assert_rendered_turbo_stream_broadcast thread, :messages, action: "replace", target: parent
   end
 
   # boost_summary
