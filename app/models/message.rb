@@ -424,30 +424,6 @@ class Message < ApplicationRecord
       Notification::DispatchJob.perform_later(self)
     end
 
-    # Bumps unread_notifications_count for memberships affected by this message.
-    # Mirrors the with_has_unread_notifications semantics: DM rooms count every
-    # unread message (including the sender's, matching the old scope which made
-    # no creator distinction in DMs); other rooms only count mentions and
-    # @everyone. Connected users (unread_at IS NULL) are skipped — they see
-    # the message live, and senders almost always fall in this bucket.
-    def increment_unread_notifications_counters
-      return if event?
-
-      recipient_ids = if room.direct?
-        room.user_ids
-      elsif mentions_everyone?
-        room.user_ids - [ creator_id ]
-      else
-        mentionee_ids - [ creator_id ]
-      end
-
-      return if recipient_ids.empty?
-
-      Membership.where(room_id: room_id, user_id: recipient_ids)
-                .where("unread_at IS NOT NULL AND unread_at <= ?", created_at)
-                .update_all("unread_notifications_count = unread_notifications_count + 1")
-    end
-
     def destroy_all_associated_records
       # Delete all boosts, bookmarks, and notifications to satisfy FK constraints.
       # Storage entries are intentionally preserved as an audit log (recordable is optional).
