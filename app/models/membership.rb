@@ -50,6 +50,11 @@ class Membership < ApplicationRecord
 
   class LastVisibleMemberError < StandardError; end
 
+  # User-initiated leave: clear involvement (cascades to starred via
+  # Membership::Starrable#unstar_if_invisible). The row stays `active = true`.
+  # Distinct from admin-driven User#deactivate / Room#deactivate, which flip
+  # `active` instead and preserve involvement / starred / unread_at for later
+  # reactivation.
   def leave!
     with_lock do
       room.ensure_visible_members_remain!(excluding: user_id)
