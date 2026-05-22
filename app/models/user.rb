@@ -2,7 +2,7 @@ class User < ApplicationRecord
   DEFAULT_NAME = "New Member"
   MINIMUM_PASSWORD_LENGTH = 8
 
-  include Avatar, Bannable, Bot, DicebearAvatar, Mentionable, Role, Streakable, Transferable
+  include Avatar, Bannable, Blockable, Bot, DicebearAvatar, Mentionable, Role, Streakable, Transferable
 
   serialize :preferences, coder: JSON
 
@@ -164,12 +164,6 @@ class User < ApplicationRecord
 
   belongs_to :badge, optional: true
 
-  has_many :blocks_given, class_name: "Block", foreign_key: :blocker_id, dependent: :destroy
-  has_many :blocked_users, through: :blocks_given, source: :blocked
-
-  has_many :blocks_received, class_name: "Block", foreign_key: :blocked_id, dependent: :destroy
-  has_many :blocked_by_users, through: :blocks_received, source: :blocker
-
   validates :name, presence: true, length: { minimum: 2, maximum: 100 }
   validates :email_address, presence: true, if: :person?
   validates :email_address, format: { with: URI::MailTo::EMAIL_REGEXP }, if: -> { email_address.present? }
@@ -326,40 +320,6 @@ class User < ApplicationRecord
            .count
   end
 
-  def blocked_in?(room)
-    return false unless room.one_on_one?
-
-    !can_ping?(room.roommate_to(self))
-  end
-
-  def can_ping?(other_user)
-    !blocked?(other_user) && !blocked_by?(other_user)
-  end
-
-  def can_direct_message?(other_user)
-    other_user&.active? &&
-      can_ping?(other_user) &&
-      can_create_direct_messages?
-  end
-
-  def blocked?(other_user)
-    blocked_users.exists?(other_user&.id)
-  end
-
-  def blocked_by?(other_user)
-    blocked_by_users.exists?(other_user&.id)
-  end
-
-  def block!(other_user)
-    block = blocks_given.find_or_create_by!(blocked: other_user)
-    dm_room_with(other_user)&.post_system_message(event: "user_blocked", body: "blocked #{other_user.name}", actor: self) if block.previously_new_record?
-  end
-
-  def unblock!(other_user)
-    count = blocks_given.where(blocked: other_user).delete_all
-    dm_room_with(other_user)&.post_system_message(event: "user_unblocked", body: "unblocked #{other_user.name}", actor: self) if count > 0
-  end
-
   def verified?
     verified_at.present?
   end
@@ -471,10 +431,6 @@ class User < ApplicationRecord
       return unless room = Room.original
 
       room.post_welcome_message(user: self)
-    end
-
-    def dm_room_with(other_user)
-      Rooms::Direct.find_by(members_hash: Rooms::Direct.members_hash_for(User.where(id: [ id, other_user.id ])))
     end
 
     def close_remote_connections(reconnect: false)
