@@ -7,9 +7,10 @@ class Users::ProfilesController < ApplicationController
   def update
     if email_change_requested?
       handle_email_change
-    else
-      @user.update user_params.except(:email_address)
+    elsif @user.update(user_params.except(:email_address))
       redirect_to after_update_url, notice: update_notice
+    else
+      render :show, status: :unprocessable_entity
     end
   end
 
@@ -31,7 +32,11 @@ class Users::ProfilesController < ApplicationController
 
     def handle_email_change
       new_email = user_params[:email_address]
-      @user.update user_params.except(:email_address)
+
+      unless @user.update(user_params.except(:email_address))
+        render :show, status: :unprocessable_entity
+        return
+      end
 
       if @user.update_email(new_email)
         redirect_to user_profile_url, notice: "A verification email has been sent to #{@user.unconfirmed_email}. Please check your inbox to confirm the change."
