@@ -1288,16 +1288,6 @@ columns:
   users:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
-    name: accepted_terms_at
-    cast_type: *1
-    sql_type_metadata: *2
-    'null': true
-    default:
-    default_function:
-    collation:
-    comment:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
     name: activity_seen_at
     cast_type: *1
     sql_type_metadata: *2
