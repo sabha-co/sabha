@@ -1,5 +1,5 @@
 class Room < ApplicationRecord
-  include Deactivatable
+  include Announceable, Restorable, Sortable, Deactivatable
 
   CannotDeleteOriginalError = Class.new(StandardError)
 
@@ -48,9 +48,6 @@ class Room < ApplicationRecord
 
   before_validation :set_initial_last_active_at, on: :create
 
-  before_save :set_sortable_name
-  after_save_commit :broadcast_updates, if: :saved_change_to_sortable_name?
-
   scope :opens,           -> { where(type: "Rooms::Open") }
   scope :closeds,         -> { where(type: "Rooms::Closed") }
   scope :directs,         -> { where(type: "Rooms::Direct") }
@@ -61,9 +58,6 @@ class Room < ApplicationRecord
   scope :matching, ->(query) {
     query.present? ? where("name LIKE ?", "%#{sanitize_sql_like(query)}%") : all
   }
-
-  after_update_commit :broadcast_reactivation_if_restored
-  after_create_commit :announce_creation
 
   class << self
     def create_for(attributes, users:)
@@ -254,19 +248,6 @@ class Room < ApplicationRecord
     post_system_message(event: "member_left", body: "left", actor: user)
   end
 
-  def announce_membership_changes(granted: [], revoked: [], actor:)
-    if granted.present?
-      post_system_message(event: "member_joined", body: membership_change_text("added", granted), actor: actor)
-    end
-    if revoked.present?
-      post_system_message(event: "member_left", body: membership_change_text("removed", revoked), actor: actor)
-    end
-  end
-
-  def announce_rename(old_name, actor:)
-    post_system_message(event: "room_renamed", body: "renamed the room from #{old_name} to #{name}", actor: actor)
-  end
-
   def bot_memberships_for_events(item, event)
     bot_ids = User.active_bots.pluck(:id)
     return [] if bot_ids.empty?
@@ -309,30 +290,8 @@ class Room < ApplicationRecord
       [ tenant_prefix, "room", id, "active_member_count" ].compact.join(":")
     end
 
-    def membership_change_text(verb, users)
-      if users.size <= 2
-        "#{verb} #{users.map(&:name).to_sentence}"
-      else
-        "#{verb} #{users.size} members"
-      end
-    end
-
     def set_initial_last_active_at
       self.last_active_at = Time.current
-    end
-
-    def broadcast_reactivation_if_restored
-      broadcast_reactivation if saved_change_to_attribute?(:active) && active?
-    end
-
-    def announce_creation
-      return if direct? || thread?
-      return unless User.active.where.not(id: creator_id).exists? # No audience on fresh setup
-      post_system_message(event: "room_created", body: "created the room", actor: creator)
-    end
-
-    def set_sortable_name
-      self.sortable_name = name.to_s.gsub(/[[:^ascii:]\p{So}]/, "").strip.downcase
     end
 
     def unread_memberships(message)
@@ -357,27 +316,6 @@ class Room < ApplicationRecord
       }
       users.each do |user|
         UserUnreadRoomsChannel.broadcast_to(user, payload)
-      end
-    end
-
-    def broadcast_updates
-      RoomListChannel.broadcast_to(Account.sole, { roomId: id, sortableName: sortable_name })
-    rescue ActiveRecord::RecordNotFound
-      # No account yet (e.g., during setup or seed)
-    end
-
-    def broadcast_reactivation
-      return unless sidebar_room?
-
-      memberships.visible.includes(:user).find_each do |membership|
-        list_name = membership.sidebar_list_name
-        Turbo::StreamsChannel.broadcast_append_to(
-          membership.user, :rooms,
-          target: list_name,
-          partial: "users/sidebars/rooms/shared",
-          locals: { list_name:, membership: membership, room: self },
-          attributes: { maintain_scroll: true }
-        )
       end
     end
 

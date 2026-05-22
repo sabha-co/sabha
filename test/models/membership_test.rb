@@ -1,6 +1,9 @@
 require "test_helper"
+require "rails/dom/testing/assertions"
 
 class MembershipTest < ActiveSupport::TestCase
+  include ActionCable::TestHelper, Rails::Dom::Testing::Assertions::SelectorAssertions
+
   setup do
     @membership = memberships(:david_watercooler)
   end
@@ -660,5 +663,118 @@ class MembershipTest < ActiveSupport::TestCase
       membership.user.create_notification_settings!(mode: :nothing)
 
     assert_equal :nothing, membership.effective_involvement
+  end
+
+  # The tests below pin observable Membership callback behavior: room member-count
+  # cache invalidation on save (including room_id moves), involvement broadcasts on
+  # UserInvolvementsChannel, and starred broadcasts to the user's room list — plus
+  # the guards that suppress star broadcasts for direct rooms and invisible
+  # memberships. They assert what the callbacks emit, not how they're wired, so
+  # they survive moves between the model and concerns.
+
+  test "saving a membership invalidates the room's active_member_count cache" do
+    room = @membership.room
+    cache_key = room.send(:active_member_count_cache_key)
+
+    Rails.cache.stubs(:delete)  # let unrelated cache deletes pass through
+    Rails.cache.expects(:delete).with(cache_key).at_least_once
+    @membership.update!(involvement: :mentions)
+  end
+
+  test "moving a membership to a new room invalidates both rooms' caches" do
+    # Use rachel — only in watercooler, not in pets — to avoid UNIQUE collision.
+    membership = memberships(:rachel_watercooler)
+    old_room = membership.room
+    new_room = rooms(:pets)
+    assert_not_equal old_room.id, new_room.id
+
+    old_key = old_room.send(:active_member_count_cache_key)
+    new_key = new_room.send(:active_member_count_cache_key)
+
+    Rails.cache.stubs(:delete)  # let unrelated cache deletes pass through
+    Rails.cache.expects(:delete).with(new_key).at_least_once
+    Rails.cache.expects(:delete).with(old_key).at_least_once
+
+    membership.update!(room: new_room)
+  end
+
+  test "changing involvement broadcasts to UserInvolvementsChannel" do
+    # fixture starts as :everything — move to a different value so the change fires
+    ActionCable.server.pubsub.clear
+
+    assert_broadcasts(UserInvolvementsChannel.broadcasting_for(@membership.user), 1) do
+      @membership.update!(involvement: :mentions)
+    end
+  end
+
+  test "non-involvement updates do not broadcast to UserInvolvementsChannel" do
+    ActionCable.server.pubsub.clear
+
+    assert_no_broadcasts(UserInvolvementsChannel.broadcasting_for(@membership.user)) do
+      @membership.update!(connected_at: Time.current)
+    end
+  end
+
+  test "starring a shared-room membership broadcasts remove from shared list and append to starred list" do
+    # fixture starts starred: true — reset to false without firing callbacks so
+    # the test's update! is the only star transition.
+    @membership.update_columns(starred: false)
+    ActionCable.server.pubsub.clear
+
+    @membership.update!(starred: true)
+
+    assert_rendered_turbo_stream_broadcast @membership.user, :rooms,
+      action: "remove", target: [ @membership.room, "shared_rooms_list_node" ]
+    assert_rendered_turbo_stream_broadcast @membership.user, :rooms,
+      action: "append", target: :starred_rooms
+  end
+
+  test "unstarring a shared-room membership broadcasts remove from starred list and append to shared list" do
+    @membership.update_columns(starred: true)  # ensure starting state
+    ActionCable.server.pubsub.clear
+
+    @membership.update!(starred: false)
+
+    assert_rendered_turbo_stream_broadcast @membership.user, :rooms,
+      action: "remove", target: [ @membership.room, "starred_rooms_list_node" ]
+    assert_rendered_turbo_stream_broadcast @membership.user, :rooms,
+      action: "append", target: :shared_rooms
+  end
+
+  test "non-star updates do not broadcast a star change" do
+    ActionCable.server.pubsub.clear
+
+    @membership.update!(connected_at: Time.current)
+
+    stream_name = "#{@membership.user.to_gid_param}:rooms"
+    assert_empty ActionCable.server.pubsub.broadcasts(stream_name),
+      "non-star updates should not emit star_change broadcasts"
+  end
+
+  test "star change on a direct-room membership does not broadcast" do
+    membership = memberships(:david_david_and_jason)
+    ActionCable.server.pubsub.clear
+
+    # Bypass starred_only_for_shared_visible_rooms validation but keep callbacks
+    # to exercise broadcast_star_change's room.direct? guard.
+    membership.update_attribute(:starred, true)
+
+    stream_name = "#{membership.user.to_gid_param}:rooms"
+    assert_empty ActionCable.server.pubsub.broadcasts(stream_name),
+      "star change on direct-room memberships should be guarded (room.direct?)"
+  end
+
+  test "star change on an invisible membership does not broadcast" do
+    @membership.update!(involvement: :invisible)  # also auto-unstars via unstar_if_invisible
+    ActionCable.server.pubsub.clear
+
+    # Force a starred change while invisible — exercises broadcast_star_change's
+    # involved_in_invisible? guard. Skip validations so unstar_if_invisible
+    # doesn't undo the change before save.
+    @membership.update_attribute(:starred, true)
+
+    stream_name = "#{@membership.user.to_gid_param}:rooms"
+    assert_empty ActionCable.server.pubsub.broadcasts(stream_name),
+      "star change on invisible memberships should be guarded (involved_in_invisible?)"
   end
 end
