@@ -81,7 +81,7 @@ class Rooms::Thread < Room
   def deactivate
     transaction do
       Membership.where(room_id: id).update_all(active: false)
-      Message.unscoped.where(room_id: id).update_all(active: false)
+      Message.where(room_id: id).update_all(active: false)
       deactivate!
     end
   end
@@ -90,7 +90,7 @@ class Rooms::Thread < Room
   def reactivate
     transaction do
       Membership.where(room_id: id, active: false).update_all(active: true)
-      Message.unscoped.where(room_id: id, active: false).update_all(active: true)
+      Message.where(room_id: id, active: false).update_all(active: true)
       activate!
     end
   end

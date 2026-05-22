@@ -22,6 +22,9 @@ module Membership::Starrable
       end
     end
 
+    # Cascade for Membership#leave! — leaving a room sets involvement to
+    # :invisible, which implies the room can't show up in the starred sidebar
+    # list. This callback keeps that invariant on every involvement write.
     def unstar_if_invisible
       self.starred = false if involved_in_invisible? && starred?
     end
