@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "../test_helper"
+require_relative "../../test_helper"
 
-class UserSaasBridgeTest < ActiveSupport::TestCase
+class User::SaasBridgedTest < ActiveSupport::TestCase
   test "global_identity returns the workspace_membership's global identity in SaaS mode" do
     identity = GlobalIdentity.create!(name: "Bridge Reader", email_address: "bridge-reader@example.com", verified_at: Time.current)
 
