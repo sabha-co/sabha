@@ -10,6 +10,7 @@ class Users::ProfilesController < ApplicationController
     elsif @user.update(user_params.except(:email_address))
       redirect_to after_update_url, notice: update_notice
     else
+      flash.now[:alert] = @user.errors.full_messages.to_sentence
       render :show, status: :unprocessable_entity
     end
   end
@@ -34,6 +35,7 @@ class Users::ProfilesController < ApplicationController
       new_email = user_params[:email_address]
 
       unless @user.update(user_params.except(:email_address))
+        flash.now[:alert] = @user.errors.full_messages.to_sentence
         render :show, status: :unprocessable_entity
         return
       end
