@@ -1,7 +1,8 @@
 require "test_helper"
+require "rails/dom/testing/assertions"
 
 class MessageTest < ActiveSupport::TestCase
-  include ActionCable::TestHelper, ActiveJob::TestHelper
+  include ActionCable::TestHelper, ActiveJob::TestHelper, Rails::Dom::Testing::Assertions::SelectorAssertions
 
   test "client_message_id is auto-generated when not provided" do
     message = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello")
@@ -386,46 +387,48 @@ class MessageTest < ActiveSupport::TestCase
     assert_not_equal before, message.reload.thread_fingerprint
   end
 
-  test "creating a message in a thread broadcasts the reply count to the thread room" do
+  test "creating a message in a thread broadcasts an update to the reply count target" do
     parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "thread_reply_count_parent")
     thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
     thread.memberships.grant_to(users(:david))
 
-    assert_turbo_stream_broadcasts [ thread, :messages ], count: 1 do
-      thread.messages.create!(creator: users(:david), body: "Reply", client_message_id: "thread_reply_count_reply")
-    end
+    thread.messages.create!(creator: users(:david), body: "Reply", client_message_id: "thread_reply_count_reply")
+
+    target = "#{ActionView::RecordIdentifier.dom_id(thread, :replies_separator)}_count"
+    assert_rendered_turbo_stream_broadcast thread, :messages, action: "update", target: target
   end
 
-  test "creating a message in a thread broadcasts the threads partial to the parent room" do
+  test "creating a message in a thread broadcasts a replace of the parent message's threads block" do
     parent_room = rooms(:pets)
     parent = parent_room.messages.create!(creator: users(:david), body: "Parent", client_message_id: "parent_threads_partial_parent")
     thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
     thread.memberships.grant_to(users(:david))
 
-    assert_turbo_stream_broadcasts [ parent_room, :messages ], count: 1 do
-      thread.messages.create!(creator: users(:david), body: "Reply", client_message_id: "parent_threads_partial_reply")
-    end
+    thread.messages.create!(creator: users(:david), body: "Reply", client_message_id: "parent_threads_partial_reply")
+
+    assert_rendered_turbo_stream_broadcast parent_room, :messages, action: "replace", target: [ parent, :threads ]
   end
 
-  test "deactivating a parent message broadcasts a replace to each thread room" do
+  test "deactivating a parent message broadcasts a replace of the parent message into each thread room" do
     parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "deactivate_parent_thread_broadcast")
     thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
     thread.memberships.grant_to(users(:david))
 
-    assert_turbo_stream_broadcasts [ thread, :messages ], count: 1 do
-      parent.deactivate
-    end
+    parent.deactivate
+
+    assert_rendered_turbo_stream_broadcast thread, :messages, action: "replace", target: parent
   end
 
-  test "reactivating a parent message broadcasts a replace to each thread room" do
+  test "reactivating a parent message broadcasts a replace of the parent message into each thread room" do
     parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "reactivate_parent_thread_broadcast")
     thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
     thread.memberships.grant_to(users(:david))
-    parent.deactivate
+    # Bypass callbacks so the assertion below narrows to the activate! call.
+    parent.update_columns(active: false)
 
-    assert_turbo_stream_broadcasts [ thread, :messages ], count: 1 do
-      parent.activate!
-    end
+    parent.activate!
+
+    assert_rendered_turbo_stream_broadcast thread, :messages, action: "replace", target: parent
   end
 
   # boost_summary
