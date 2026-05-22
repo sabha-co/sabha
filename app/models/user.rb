@@ -2,7 +2,7 @@ class User < ApplicationRecord
   DEFAULT_NAME = "New Member"
   MINIMUM_PASSWORD_LENGTH = 8
 
-  include Avatar, Bannable, Blockable, Bot, DicebearAvatar, Mentionable, PasswordAuthable, Role, Streakable, Transferable
+  include Avatar, Bannable, Blockable, Bot, DicebearAvatar, Mentionable, PasswordAuthable, Role, Streakable, Transferable, Verifiable
 
   serialize :preferences, coder: JSON
 
@@ -172,8 +172,6 @@ class User < ApplicationRecord
   normalizes :unconfirmed_email, with: ->(email) { email&.strip&.downcase }
 
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }
-  scope :verified, -> { where.not(verified_at: nil) }
-  scope :unverified, -> { where(verified_at: nil) }
 
   scope :weekly_digest_eligible, -> {
     verified
@@ -185,7 +183,6 @@ class User < ApplicationRecord
       .merge(User::NotificationSettings.due_for_weekly_digest)
   }
 
-  generates_token_for :email_verification, expires_in: 24.hours
   generates_token_for :email_change, expires_in: 24.hours
 
   after_update :send_email_change_notification, if: :saved_change_to_email_address?
@@ -197,7 +194,6 @@ class User < ApplicationRecord
   before_validation :normalize_social_urls
   before_save :transliterate_name, if: :name_changed?
   after_create_commit :grant_membership_to_open_rooms
-  after_create_commit :post_welcome_message
 
   scope :ordered, -> { order(arel_table[:role].desc, arel_table[:name].lower) }
   scope :recent_posters_first, ->(room_id = nil) do
@@ -314,19 +310,6 @@ class User < ApplicationRecord
            .count
   end
 
-  def verified?
-    verified_at.present?
-  end
-
-  def verify_email!
-    update!(verified_at: Time.current)
-    post_welcome_message
-  end
-
-  def send_verification_email
-    UserMailer.email_verification(self).deliver_later
-  end
-
   # Email change flow
   def update_email(new_email)
     return true if new_email.blank? || new_email.downcase == email_address
@@ -414,13 +397,6 @@ class User < ApplicationRecord
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
         thread.memberships.grant_to(self)
       end
-    end
-
-    def post_welcome_message
-      return unless bot? || verified?
-      return unless room = Room.original
-
-      room.post_welcome_message(user: self)
     end
 
     def close_remote_connections(reconnect: false)
