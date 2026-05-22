@@ -22,6 +22,18 @@ class UserTest < ActiveSupport::TestCase
     assert user.valid?
   end
 
+  test "password_reset token is invalidated when the password is changed" do
+    user = users(:david)
+    token = user.generate_token_for(:password_reset)
+
+    assert_equal user, User.find_by_token_for(:password_reset, token)
+
+    user.update!(password: "newsecret12345")
+
+    assert_nil User.find_by_token_for(:password_reset, token),
+      "password_reset token must rotate when password_salt changes"
+  end
+
   test "creating users grants membership to auto_join open rooms only" do
     auto_join_room = Rooms::Open.create!(name: "Auto Room", creator: users(:david), auto_join: true)
     non_auto_room = Rooms::Open.create!(name: "Manual Room", creator: users(:david))
@@ -239,6 +251,25 @@ class UserTest < ActiveSupport::TestCase
 
     assert_not user.valid?
     assert_includes user.errors[:unconfirmed_email], "is invalid"
+  end
+
+  test "changing a bot's email does not enqueue an email_changed notification" do
+    bot = users(:bender)
+    bot.update_columns(email_address: "bot-old@example.com")
+
+    UserMailer.expects(:email_changed).never
+
+    bot.update!(email_address: "bot-new@example.com")
+  end
+
+  test "changing a human's email enqueues an email_changed notification to the old address" do
+    user = users(:david)
+    old_email = user.email_address
+
+    mail = mock(deliver_later: true)
+    UserMailer.expects(:email_changed).with(user, old_email).returns(mail)
+
+    user.update!(email_address: "rotated@37signals.com")
   end
 
   test "transliterates name to ascii for search" do
@@ -806,5 +837,76 @@ class UserTest < ActiveSupport::TestCase
     assert_turbo_stream_broadcasts [ user, :sidebar_activity_indicator ], count: 0 do
       user.touch_activity_seen_at(1.hour.ago)
     end
+  end
+
+  test "mark_direct_messages_as_read clears unread on DM memberships up to the given time" do
+    user = users(:david)
+    dm = memberships(:david_david_and_kevin)
+    dm.update_column(:unread_at, 30.minutes.ago)
+
+    user.mark_direct_messages_as_read(Time.current.iso8601)
+
+    assert_nil dm.reload.unread_at, "DM membership must be marked read"
+  end
+
+  test "mark_direct_messages_as_read leaves non-DM memberships untouched" do
+    user = users(:david)
+    non_dm = memberships(:david_designers)
+    non_dm.update_column(:unread_at, 30.minutes.ago)
+
+    user.mark_direct_messages_as_read(Time.current.iso8601)
+
+    assert_not_nil non_dm.reload.unread_at,
+      "non-DM membership must not be touched by mark_direct_messages_as_read"
+  end
+
+  test "mark_inbox_as_read marks unread non-direct memberships read and advances activity_seen_at" do
+    user = users(:david)
+    user.update_column(:activity_seen_at, 1.day.ago)
+    non_dm = memberships(:david_designers)
+    non_dm.update_column(:unread_at, 30.minutes.ago)
+
+    now_iso = Time.current.iso8601
+    user.mark_inbox_as_read(
+      messages_loaded_at: now_iso,
+      notifications_loaded_at: now_iso,
+      activity_loaded_at: now_iso
+    )
+
+    assert_nil non_dm.reload.unread_at, "non-direct unread membership must be marked read"
+    assert user.reload.activity_seen_at > 1.minute.ago,
+      "activity_seen_at must advance to the activity_loaded_at"
+  end
+
+  test "mark_inbox_as_read falls back to Time.current when a loaded_at timestamp is stale (> 1 hour old)" do
+    user = users(:david)
+    membership = memberships(:david_designers)
+    membership.update_column(:unread_at, 5.minutes.ago)
+
+    # A 2-hour-old stamp would leave unread_at untouched (5.minutes.ago > 2.hours.ago).
+    # The freshness check rewrites it to Time.current, so the membership ends up read.
+    user.mark_inbox_as_read(
+      messages_loaded_at: 2.hours.ago.iso8601,
+      notifications_loaded_at: 2.hours.ago.iso8601,
+      activity_loaded_at: 2.hours.ago.iso8601
+    )
+
+    assert_nil membership.reload.unread_at,
+      "stale loaded_at must be clamped to Time.current so unread is marked read"
+  end
+
+  test "mark_inbox_as_read falls back to Time.current when loaded_at is blank" do
+    user = users(:david)
+    membership = memberships(:david_designers)
+    membership.update_column(:unread_at, 30.minutes.ago)
+
+    user.mark_inbox_as_read(
+      messages_loaded_at: nil,
+      notifications_loaded_at: nil,
+      activity_loaded_at: nil
+    )
+
+    assert_nil membership.reload.unread_at,
+      "blank loaded_at must be clamped to Time.current so unread is marked read"
   end
 end
