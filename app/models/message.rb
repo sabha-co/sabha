@@ -1,5 +1,5 @@
 class Message < ApplicationRecord
-  include Attachment, Broadcasts, Mentionee, Pagination, Searchable, Streakable, Deactivatable
+  include Attachment, Broadcasts, Mentionee, Pagination, Searchable, Streakable, Threadable, Deactivatable
 
   belongs_to :room, counter_cache: true
   belongs_to :creator, class_name: "User", default: -> { Current.user }
@@ -17,11 +17,7 @@ class Message < ApplicationRecord
   before_create :set_default_client_message_id
   before_create :touch_room_activity
   after_create_commit :deliver_to_room
-  after_create_commit :involve_creator_in_thread
-  after_create_commit :update_thread_reply_count
-  after_create_commit :update_parent_message_threads
   after_create_commit :create_mention_notifications
-  after_create_commit :create_thread_reply_notifications
   after_create_commit :increment_unread_notifications_counters
   after_create_commit :dispatch_notifications
 
@@ -30,7 +26,6 @@ class Message < ApplicationRecord
   after_update_commit :destroy_notifications_if_deactivated
   after_update_commit :destroy_stale_mention_notifications
   after_update_commit :restore_unread_notifications_counters_if_reactivated
-  after_update_commit :broadcast_parent_message_to_threads
 
   scope :ordered, -> { order(:created_at) }
   scope :without_events, -> { where(event: nil) }
@@ -382,51 +377,6 @@ class Message < ApplicationRecord
       broadcast_reactivation if saved_change_to_attribute?(:active) && active?
     end
 
-    def involve_creator_in_thread
-      # When someone posts in a thread, ensure they have visible membership
-      room.involve_user(creator, unread: false) if room.thread?
-    end
-
-    def update_thread_reply_count
-      # When a message is created in a thread, update the reply count separator
-      if room.thread?
-        broadcast_update_to(
-          room,
-          :messages,
-          target: "#{ActionView::RecordIdentifier.dom_id(room, :replies_separator)}_count",
-          html: ActionController::Base.helpers.pluralize(room.messages_count, "reply", "replies")
-        )
-      end
-    end
-
-    def update_parent_message_threads
-      # When a message is created in a thread, update the parent message's threads display
-      if room.thread? && room.parent_message
-        broadcast_replace_to(
-          room.parent_message.room,
-          :messages,
-          target: ActionView::RecordIdentifier.dom_id(room.parent_message, :threads),
-          partial: "messages/threads",
-          locals: { message: room.parent_message }
-        )
-      end
-    end
-
-    def broadcast_parent_message_to_threads
-      # When a parent message is deleted/updated, broadcast to all threads
-      if saved_change_to_attribute?(:active) && threads.any?
-        threads.each do |thread|
-          broadcast_replace_to(
-            thread,
-            :messages,
-            target: ActionView::RecordIdentifier.dom_id(self),
-            partial: "messages/parent_message",
-            locals: { message: self, thread: thread }
-          )
-        end
-      end
-    end
-
     def touch_room_activity
       room.touch(:last_active_at)
     end
@@ -470,12 +420,6 @@ class Message < ApplicationRecord
 
       User.where(id: recipient_ids).each(&:broadcast_activity_indicator)
       broadcast_mention_notifications
-    end
-
-    def create_thread_reply_notifications
-      return unless room.thread? && room.parent_message
-
-      CreateThreadReplyNotificationsJob.perform_later(message_id: id, thread_id: room.id, creator_id: creator_id)
     end
 
     def dispatch_notifications
