@@ -1,5 +1,5 @@
 class Message < ApplicationRecord
-  include Attachment, Broadcasts, Mentionee, Pagination, Searchable, Streakable, Threadable, Deactivatable
+  include Attachment, Broadcasts, Mentionee, Pagination, Searchable, Streakable, Threadable, Unreadable, Deactivatable
 
   belongs_to :room, counter_cache: true
   belongs_to :creator, class_name: "User", default: -> { Current.user }
@@ -18,14 +18,10 @@ class Message < ApplicationRecord
   before_create :touch_room_activity
   after_create_commit :deliver_to_room
   after_create_commit :create_mention_notifications
-  after_create_commit :increment_unread_notifications_counters
   after_create_commit :dispatch_notifications
 
   after_update_commit :broadcast_reactivation_if_restored
-  after_update_commit :clear_unread_timestamps_if_deactivated
-  after_update_commit :destroy_notifications_if_deactivated
   after_update_commit :destroy_stale_mention_notifications
-  after_update_commit :restore_unread_notifications_counters_if_reactivated
 
   scope :ordered, -> { order(:created_at) }
   scope :without_events, -> { where(event: nil) }
@@ -452,24 +448,6 @@ class Message < ApplicationRecord
                 .update_all("unread_notifications_count = unread_notifications_count + 1")
     end
 
-    # When a soft-deleted message is reactivated (a console/admin path),
-    # restore the counter bumps that clear_unread_timestamps_if_deactivated
-    # took away. Only DM and @everyone messages are restored — named mentions
-    # need their Notification rows back to count under either the old scope
-    # or the new column, and we don't recreate those on reactivation.
-    def restore_unread_notifications_counters_if_reactivated
-      return unless saved_change_to_attribute?(:active) && active?
-      return if event?
-      return unless room.direct? || mentions_everyone?
-
-      recipient_ids = room.direct? ? room.user_ids : room.user_ids - [ creator_id ]
-      return if recipient_ids.empty?
-
-      Membership.where(room_id: room_id, user_id: recipient_ids)
-                .where("unread_at IS NOT NULL AND unread_at <= ?", created_at)
-                .update_all("unread_notifications_count = unread_notifications_count + 1")
-    end
-
     def destroy_all_associated_records
       # Delete all boosts, bookmarks, and notifications to satisfy FK constraints.
       # Storage entries are intentionally preserved as an audit log (recordable is optional).
@@ -480,12 +458,6 @@ class Message < ApplicationRecord
       Boost.where(message_id: id).delete_all
       Bookmark.where(message_id: id).delete_all
       Notification::BundleItem.where(message_id: id).delete_all
-    end
-
-    def destroy_notifications_if_deactivated
-      return unless saved_change_to_attribute?(:active) && !active?
-
-      Notification.delete_all_and_broadcast(Notification.where(message_id: id))
     end
 
     def destroy_stale_mention_notifications
@@ -503,43 +475,5 @@ class Message < ApplicationRecord
         Notification.where(message_id: id, activity_type: "mention")
                     .where.not(user_id: current_recipient_ids)
       )
-    end
-
-    def clear_unread_timestamps_if_deactivated
-      return unless saved_change_to_attribute?(:active) && !active?
-      rebalance_unread_counters
-    end
-
-    # Keeps memberships.unread_notifications_count and unread_at consistent
-    # when this message disappears from the room (soft- or hard-deleted).
-    #
-    # Two effects per call:
-    #   1. DMs only: every membership whose unread window contained this
-    #      message loses one from its count (using < to leave the anchor
-    #      membership for the second pass below).
-    #   2. Any membership anchored exactly at this message's timestamp gets
-    #      its anchor advanced to the next active message (or marked read),
-    #      with its counter recomputed from the new anchor.
-    def rebalance_unread_counters
-      if room.direct?
-        Membership.where(room_id: room_id)
-                  .where("unread_at IS NOT NULL AND unread_at < ?", created_at)
-                  .update_all("unread_notifications_count = MAX(unread_notifications_count - 1, 0)")
-      end
-
-      room.memberships.where(unread_at: created_at).find_each do |membership|
-        next_unread = room.messages.active.ordered
-                         .where("created_at > ?", created_at)
-                         .first
-
-        if next_unread
-          membership.update!(
-            unread_at: next_unread.created_at,
-            unread_notifications_count: membership.count_unread_notifications_from(next_unread.created_at)
-          )
-        else
-          membership.read # This sets unread_at to nil and broadcasts read status
-        end
-      end
     end
 end
