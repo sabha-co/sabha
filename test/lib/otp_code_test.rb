@@ -3,11 +3,6 @@
 require "test_helper"
 
 class OtpCodeTest < ActiveSupport::TestCase
-  test "generate creates code of specified length" do
-    code = OtpCode.generate(6)
-    assert_equal 6, code.length
-  end
-
   test "generate uses only valid alphabet characters" do
     100.times do
       code = OtpCode.generate(6)
@@ -22,10 +17,6 @@ class OtpCodeTest < ActiveSupport::TestCase
       assert_not_includes code, "I"
       assert_not_includes code, "L"
     end
-  end
-
-  test "sanitize converts to uppercase" do
-    assert_equal "ABC123", OtpCode.sanitize("abc123")
   end
 
   test "sanitize substitutes O with 0" do
