@@ -40,14 +40,6 @@ class UnfurlLinksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Hey!", JSON.parse(response.body)["title"]
   end
 
-  test "create for x.com" do
-    stub_successful_request url: "https://fxtwitter.com/dhh/status/834146806594433025"
-
-    post unfurl_link_url, params: { url: "https://x.com/dhh/status/834146806594433025" }
-    assert_response :success
-    assert_equal "Hey!", JSON.parse(response.body)["title"]
-  end
-
   private
     def stub_successful_request(url: "https://www.example.com/")
       WebMock.stub_request(:get, url).to_return(

@@ -72,17 +72,6 @@ class API::Bots::RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes room_ids, rooms(:watercooler).id
   end
 
-  test "joinable rooms excludes rooms bot is already in" do
-    # Join an open room first
-    rooms(:hq).accept_join!(@bot)
-
-    get api_bots_rooms_url, params: { joinable: true }, headers: bot_headers(@bot.bot_key)
-
-    assert_response :success
-    room_ids = response.parsed_body.map { |r| r["id"] }
-    assert_not_includes room_ids, rooms(:hq).id
-  end
-
   test "joinable filter only returns open rooms the bot has not joined" do
     rooms(:hq).accept_join!(@bot)
 

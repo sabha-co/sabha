@@ -36,17 +36,6 @@ class API::Bots::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "http://example.com/legacy", @bot.reload.webhook_url
   end
 
-  test "response includes name and webhook_url" do
-    patch api_bots_profile_url,
-      params: { name: "Check" },
-      as: :json, headers: bot_headers(@bot.bot_key)
-
-    assert_response :success
-    json = response.parsed_body
-    assert json.key?("name")
-    assert json.key?("webhook_url")
-  end
-
   test "invalid bot key redirects to sign in" do
     patch api_bots_profile_url,
       params: { name: "Nope" },

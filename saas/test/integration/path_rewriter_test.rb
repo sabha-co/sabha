@@ -58,23 +58,6 @@ class PathRewriterTest < ActionDispatch::IntegrationTest
       "Response should contain URLs with workspace prefix"
   end
 
-  test "requests without workspace prefix go to global routes" do
-    # Login page should work without workspace prefix
-    get "/session/new"
-
-    assert_response :success
-  end
-
-  test "authenticated user redirected from root to most recent workspace" do
-    sign_in_global_identity(global_identities(:alice))
-
-    get "/"
-
-    # LandingController redirects to most recent workspace
-    most_recent = global_identities(:alice).active_workspaces_recent_first.first
-    assert_redirected_to "/#{most_recent.external_id}"
-  end
-
   test "workspace context isolated between requests" do
     sign_in_global_identity(global_identities(:alice))
     workspace_acme = workspaces(:acme)

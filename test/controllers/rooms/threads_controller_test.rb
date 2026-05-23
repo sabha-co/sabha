@@ -126,19 +126,6 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
   # Show action tests
   # ===================
 
-  test "show renders thread panel content" do
-    parent_message = @room.messages.create!(
-      body: "Parent for show test",
-      creator: @jason,
-      client_message_id: "show_thread_1"
-    )
-
-    thread = Rooms::Thread.create_for({ parent_message_id: parent_message.id, creator: @jason }, users: [ @david, @jason ])
-
-    get rooms_thread_url(thread)
-    assert_response :success
-  end
-
   test "show renders thread panel without layout" do
     parent_message = @room.messages.create!(
       body: "Parent for layout test",
@@ -170,20 +157,6 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
   # ===================
   # Edit action tests
   # ===================
-
-  test "edit shows thread settings" do
-    parent_message = @room.messages.create!(
-      body: "Parent for edit test",
-      creator: @jason,
-      client_message_id: "edit_thread_1"
-    )
-
-    thread = Rooms::Thread.create!(parent_message: parent_message, creator: @david)
-    thread.memberships.grant_to(@david)
-
-    get edit_rooms_thread_url(thread)
-    assert_response :success
-  end
 
   test "edit loads visible users" do
     parent_message = @room.messages.create!(

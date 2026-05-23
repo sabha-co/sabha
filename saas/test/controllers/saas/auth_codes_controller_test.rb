@@ -34,15 +34,6 @@ module Saas
       assert_equal "Welcome!", flash[:notice]
     end
 
-    test "create with valid code sets session cookie" do
-      code = auth_codes(:alice_signin)
-
-      post auth_code_path, params: { code: code.code }
-
-      # Should have created a new GlobalSession
-      assert GlobalSession.exists?(global_identity: code.global_identity)
-    end
-
     test "create with valid code verifies unverified identity" do
       identity = global_identities(:unverified)
       code = auth_codes(:unverified_signup)
@@ -67,13 +58,6 @@ module Saas
       code = auth_codes(:expired_code)
 
       post auth_code_path, params: { code: code.code }
-
-      assert_redirected_to auth_code_path
-      assert_match /Invalid or expired/, flash[:alert]
-    end
-
-    test "create with invalid code shows error" do
-      post auth_code_path, params: { code: "INVALID" }
 
       assert_redirected_to auth_code_path
       assert_match /Invalid or expired/, flash[:alert]

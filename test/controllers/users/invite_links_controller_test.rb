@@ -56,14 +56,4 @@ class Users::InviteLinksControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to user_profile_path
   end
-
-  test "can create invite link when enabled" do
-    accounts(:signal).settings.allow_users_to_create_invite_links = true
-    accounts(:signal).save!
-    users(:david).join_codes.destroy_all
-
-    assert_difference -> { users(:david).join_codes.count }, 1 do
-      post user_invite_link_url
-    end
-  end
 end

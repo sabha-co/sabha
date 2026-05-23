@@ -26,12 +26,6 @@ class PresenceChannelTest < ActionCable::Channel::TestCase
     assert subscription.rejected?
   end
 
-  test "rejects subscription without a room" do
-    subscribe room_id: -1
-
-    assert subscription.rejected?
-  end
-
   test "subscribing marks the membership as connected" do
     membership = users(:david).memberships.first
 

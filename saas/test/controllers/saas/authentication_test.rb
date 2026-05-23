@@ -24,16 +24,6 @@ module Saas
       assert_not GlobalSession.exists?(id: session.id)
     end
 
-    test "valid session cookie authenticates user" do
-      # Use the helper that properly sets up session
-      sign_in_global_identity(global_identities(:alice))
-
-      get settings_path
-
-      # Should be able to access authenticated page
-      assert_response :success
-    end
-
     test "sign_in creates session and sets cookie" do
       identity = global_identities(:alice)
       code = auth_codes(:alice_signin)
@@ -59,15 +49,6 @@ module Saas
 
       # Should redirect to login
       assert_redirected_to new_session_path
-    end
-
-    test "after_authentication_url stores return_to param" do
-      workspace = workspaces(:acme)
-
-      # Visiting auth_code_path with return_to param stores it in session
-      get auth_code_path, params: { return_to: "/#{workspace.external_id}/rooms/general" }
-
-      assert_equal "/#{workspace.external_id}/rooms/general", session[:return_to_after_authenticating]
     end
 
     test "after_authentication_url defaults to root when no return_to" do

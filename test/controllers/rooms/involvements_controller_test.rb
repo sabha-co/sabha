@@ -5,9 +5,11 @@ class Rooms::InvolvementsControllerTest < ActionDispatch::IntegrationTest
     sign_in :david
   end
 
-  test "show" do
+  test "show renders the involvement turbo frame for the room" do
     get room_involvement_url(rooms(:designers))
+
     assert_response :success
+    assert_select "turbo-frame##{dom_id(rooms(:designers), :involvement)}"
   end
 
   test "update involvement sends turbo update when going invisible" do

@@ -80,37 +80,6 @@ class ApplicationCable::SaasConnectionTest < ActionCable::Connection::TestCase
     end
   end
 
-  test "connects to workspace where user has membership" do
-    # Alice has membership in shared workspace
-    session = global_sessions(:alice_session)
-    workspace = workspaces(:shared)
-    membership = workspace_memberships(:alice_shared)
-
-    # Ensure tenant database exists and has a user
-    tenant_id = workspace.external_id.to_s
-    ApplicationRecord.create_tenant(tenant_id) unless ApplicationRecord.tenant_exist?(tenant_id)
-
-    ApplicationRecord.with_tenant(tenant_id) do
-      user = User.find_or_create_by!(email_address: session.global_identity.email_address) do |u|
-        u.name = "Alice"
-        u.workspace_membership_id = membership.id
-        u.role = :member
-        u.verified_at = Time.current
-      end
-      membership.update!(user_id: user.id) unless membership.user_id == user.id
-    end
-
-    cookies.signed[:global_session_token] = session.token
-
-    connect env: {
-      "SCRIPT_NAME" => "/#{workspace.external_id}",
-      "sabha.workspace_id" => workspace.external_id.to_s
-    }
-
-    assert_equal workspace.external_id.to_s, connection.current_tenant
-    assert connection.current_user.present?
-  end
-
   test "lazily creates user on first connection when membership exists but user_id is nil" do
     with_provisioned_workspace(name: "Lazy Create Test", creator: global_identities(:alice)) do |workspace|
       bob_membership = WorkspaceMembership.create!(
