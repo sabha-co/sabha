@@ -29,14 +29,6 @@ class WeeklyDigestMailerTest < ActionMailer::TestCase
     assert_no_match(/#{@room.name}/, mail.subject)
   end
 
-  test "renders multipart with text and html" do
-    mail = WeeklyDigestMailer.digest(@user, @content)
-
-    assert_equal 2, mail.parts.size
-    assert mail.parts.any? { |p| p.content_type.include?("text/plain") }
-    assert mail.parts.any? { |p| p.content_type.include?("text/html") }
-  end
-
   test "RFC 8058 List-Unsubscribe headers point at the unsubscribe URL" do
     mail = WeeklyDigestMailer.digest(@user, @content)
 

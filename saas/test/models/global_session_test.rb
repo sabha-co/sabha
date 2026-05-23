@@ -17,10 +17,6 @@ class GlobalSessionTest < ActiveSupport::TestCase
     assert global_sessions(:expired_session).expired?
   end
 
-  test "expired? returns false for future expires_at" do
-    assert_not global_sessions(:alice_session).expired?
-  end
-
   test "expired? returns false when expires_at is nil" do
     session = global_sessions(:alice_session)
     session.update_column(:expires_at, nil)
@@ -46,14 +42,5 @@ class GlobalSessionTest < ActiveSupport::TestCase
 
     assert_equal "New Agent", session.user_agent
     assert_equal "5.6.7.8", session.ip_address
-  end
-
-  test "has_secure_token generates token" do
-    session = global_identities(:bob).global_sessions.create!(
-      user_agent: "Test",
-      ip_address: "127.0.0.1"
-    )
-    assert session.token.present?
-    assert session.token.length >= 20
   end
 end

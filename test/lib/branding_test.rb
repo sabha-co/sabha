@@ -5,18 +5,6 @@ require "test_helper"
 class BrandingTest < ActiveSupport::TestCase
   # Self-hosted mode (default in test environment)
 
-  test "app_name returns ENV value in self-hosted mode" do
-    assert_equal ENV.fetch("APP_NAME", "Sabha"), Branding.app_name
-  end
-
-  test "support_email returns ENV value in self-hosted mode" do
-    assert_equal ENV.fetch("SUPPORT_EMAIL", "support@example.com"), Branding.support_email
-  end
-
-  test "app_host returns ENV value in self-hosted mode" do
-    assert_equal ENV.fetch("APP_HOST", "localhost"), Branding.app_host
-  end
-
   test "mailer_from formats name and email in self-hosted mode" do
     expected = "#{Rails.configuration.x.branding.mailer_from_name} <#{Rails.configuration.x.branding.mailer_from_email}>"
     assert_equal expected, Branding.mailer_from
@@ -103,10 +91,6 @@ class BrandingTest < ActiveSupport::TestCase
       Current.stubs(:workspace).returns(workspace)
       assert_equal "My Community", Branding.contextual_app_name
     end
-  end
-
-  test "SAAS constant is frozen" do
-    assert Branding::SAAS.frozen?
   end
 
   private

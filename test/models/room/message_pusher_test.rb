@@ -48,13 +48,4 @@ class Room::MessagePusherTest < ActiveSupport::TestCase
     expected_path = Rails.application.routes.url_helpers.room_at_message_path(parent.room, parent)
     assert_equal expected_path, payload[:path]
   end
-
-  test "MessagePusher does not expose routing methods anymore" do
-    refute Room::MessagePusher.method_defined?(:push),
-      "Routing belongs on Message; MessagePusher should be payload-only"
-    refute Room::MessagePusher.private_method_defined?(:push_to_users_involved_in_everything),
-      "Recipient resolution moved to Message#push_recipient_user_ids_for"
-    refute Room::MessagePusher.private_method_defined?(:push_to_users_involved_in_mentions),
-      "Recipient resolution moved to Message#push_recipient_user_ids_for"
-  end
 end

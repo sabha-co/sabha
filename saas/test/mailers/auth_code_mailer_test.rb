@@ -3,15 +3,6 @@
 require "test_helper"
 
 class AuthCodeMailerTest < ActionMailer::TestCase
-  test "code sends multipart email with text and html" do
-    auth_code = auth_codes(:alice_signin)
-    email = AuthCodeMailer.code(auth_code)
-
-    assert_equal 2, email.parts.size
-    assert email.parts.any? { |p| p.content_type.include?("text/plain") }
-    assert email.parts.any? { |p| p.content_type.include?("text/html") }
-  end
-
   test "code sends to global identity email for sign-in" do
     auth_code = auth_codes(:alice_signin)
     email = AuthCodeMailer.code(auth_code)

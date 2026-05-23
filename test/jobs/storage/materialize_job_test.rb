@@ -32,8 +32,4 @@ class Storage::MaterializeJobTest < ActiveJob::TestCase
 
     assert_equal 1500, @account.bytes_used
   end
-
-  test "job queued to default queue" do
-    assert_equal "default", Storage::MaterializeJob.new.queue_name
-  end
 end

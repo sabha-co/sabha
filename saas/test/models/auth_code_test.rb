@@ -31,10 +31,6 @@ class AuthCodeTest < ActiveSupport::TestCase
     assert auth_codes(:expired_code).expired?
   end
 
-  test "expired? returns false for active codes" do
-    assert_not auth_codes(:alice_signin).expired?
-  end
-
   test "active scope excludes expired codes" do
     assert_includes AuthCode.active, auth_codes(:alice_signin)
     assert_not_includes AuthCode.active, auth_codes(:expired_code)

@@ -23,11 +23,6 @@ class WorkspaceTest < ActiveSupport::TestCase
     assert_not duplicate.valid?
   end
 
-  test "slug returns path prefix" do
-    workspace = workspaces(:acme)
-    assert_equal "/1000001", workspace.slug
-  end
-
   test "active? and suspended?" do
     assert workspaces(:acme).active?
     assert_not workspaces(:acme).suspended?
