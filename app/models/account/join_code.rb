@@ -1,6 +1,7 @@
 class Account::JoinCode < ApplicationRecord
   CODE_LENGTH = 12
   DEFAULT_EXPIRATION = 7.days
+  DEFAULT_GLOBAL_EXPIRATION = 30.days
 
   enum :kind, human: "human", bot: "bot"
 
@@ -14,7 +15,7 @@ class Account::JoinCode < ApplicationRecord
   scope :personal, -> { where.not(user_id: nil) }
 
   before_validation :generate_code, on: :create, if: -> { code.blank? }
-  before_validation :set_default_expiration, on: :create, if: :personal?
+  before_validation :set_default_expiration, on: :create
   before_validation :set_default_account, on: :create, if: -> { account_id.blank? }
   before_validation :set_bot_defaults, on: :create, if: :bot?
 
@@ -51,7 +52,7 @@ class Account::JoinCode < ApplicationRecord
   end
 
   def regenerate_code
-    update!(code: generate_new_code, usage_count: 0)
+    update!(code: generate_new_code, usage_count: 0, expires_at: default_lifetime.from_now)
   end
 
   def unlimited?
@@ -59,7 +60,10 @@ class Account::JoinCode < ApplicationRecord
   end
 
   def usage_display
-    unlimited? ? "#{usage_count} uses" : "#{usage_count}/#{usage_limit} uses"
+    return "Never used" if usage_count.zero?
+
+    count_phrase = "#{usage_count} #{"use".pluralize(usage_count)}"
+    unlimited? ? count_phrase : "#{count_phrase} of #{usage_limit}"
   end
 
   private
@@ -75,7 +79,11 @@ class Account::JoinCode < ApplicationRecord
     end
 
     def set_default_expiration
-      self.expires_at ||= DEFAULT_EXPIRATION.from_now
+      self.expires_at ||= default_lifetime.from_now
+    end
+
+    def default_lifetime
+      global? ? DEFAULT_GLOBAL_EXPIRATION : DEFAULT_EXPIRATION
     end
 
     def set_default_account
