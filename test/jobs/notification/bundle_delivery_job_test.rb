@@ -73,9 +73,19 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
   end
 
   test "discards on DeserializationError when the bundle has been deleted" do
-    assert_includes Notification::BundleDeliveryJob.rescue_handlers.map(&:first),
-      "ActiveJob::DeserializationError",
-      "BundleDeliveryJob must discard so deleted-bundle races are tolerated"
+    assert_enqueued_with(job: Notification::BundleDeliveryJob) do
+      Notification::BundleDeliveryJob.perform_later(@bundle)
+    end
+
+    @bundle.destroy!
+
+    # Perform the enqueued job after the underlying record is gone. The
+    # discard_on ActiveJob::DeserializationError declaration must swallow the
+    # GlobalID lookup failure so the queue closes cleanly instead of retrying.
+    MissedNotificationsMailer.expects(:bundle).never
+    assert_nothing_raised do
+      perform_enqueued_jobs(only: Notification::BundleDeliveryJob)
+    end
   end
 
   test "cancels the bundle and discards on a Resend 4xx error" do

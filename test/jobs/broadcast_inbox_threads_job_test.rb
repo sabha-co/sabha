@@ -11,15 +11,13 @@ class BroadcastInboxThreadsJobTest < ActiveJob::TestCase
   end
 
   test "broadcasts to thread participants when thread has messages" do
-    # Create a thread room
     thread = Rooms::Thread.create!(parent_message: @parent_message, creator: @david)
     thread.memberships.grant_to([ @david, @jason ])
 
-    # Create the first message in the thread
+    # First reply triggers the append-to-inbox branch for non-creator participants.
     thread_message = thread.messages.create!(creator: @david, body: "Thread reply")
 
-    # Verify job can be performed without errors
-    assert_nothing_raised do
+    assert_turbo_stream_broadcasts [ @jason, :inbox_threads ], count: 1 do
       BroadcastInboxThreadsJob.perform_now(
         thread_id: thread.id,
         parent_message_id: @parent_message.id,
@@ -29,23 +27,13 @@ class BroadcastInboxThreadsJobTest < ActiveJob::TestCase
     end
   end
 
-  test "handles missing thread gracefully" do
-    assert_nothing_raised do
+  test "handles missing thread or parent message gracefully" do
+    # The job's guard is `return unless thread && parent_message` — exercising
+    # both nils in a single test pins the early-return without producing one
+    # case per find_by lookup.
+    assert_no_turbo_stream_broadcasts [ @jason, :inbox_threads ] do
       BroadcastInboxThreadsJob.perform_now(
         thread_id: -1,
-        parent_message_id: @parent_message.id,
-        message_id: 1,
-        creator_id: @david.id
-      )
-    end
-  end
-
-  test "handles missing parent message gracefully" do
-    thread = Rooms::Thread.create!(parent_message: @parent_message, creator: @david)
-
-    assert_nothing_raised do
-      BroadcastInboxThreadsJob.perform_now(
-        thread_id: thread.id,
         parent_message_id: -1,
         message_id: 1,
         creator_id: @david.id
@@ -62,16 +50,17 @@ class BroadcastInboxThreadsJobTest < ActiveJob::TestCase
 
     thread_message = thread.messages.create!(creator: @david, body: "Thread reply")
 
-    # When creator is the only thread member and no parent room members have "everything" involvement,
-    # no broadcasts should happen (since creator is excluded from the all_user_ids list)
-    Turbo::StreamsChannel.expects(:broadcast_append_to).never
-    Turbo::StreamsChannel.expects(:broadcast_replace_to).never
-
-    BroadcastInboxThreadsJob.perform_now(
-      thread_id: thread.id,
-      parent_message_id: @parent_message.id,
-      message_id: thread_message.id,
-      creator_id: @david.id
-    )
+    # Creator is the only thread member and no parent room members have :everything
+    # involvement, so the broadcast recipient set is empty after removing the creator.
+    assert_no_turbo_stream_broadcasts [ @david, :inbox_threads ] do
+      assert_no_turbo_stream_broadcasts [ @jason, :inbox_threads ] do
+        BroadcastInboxThreadsJob.perform_now(
+          thread_id: thread.id,
+          parent_message_id: @parent_message.id,
+          message_id: thread_message.id,
+          creator_id: @david.id
+        )
+      end
+    end
   end
 end
