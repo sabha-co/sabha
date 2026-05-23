@@ -92,16 +92,20 @@ class EmailVerificationsControllerTest < ActionDispatch::IntegrationTest
     user = users(:david)
     user.update!(verified_at: nil)
 
-    3.times do
+    4.times do
       post resend_verification_url, params: { email_address: user.email_address }
     end
-    assert_redirected_to new_session_url
+    assert_redirected_to root_url
+    assert_match /Too many requests/, flash[:alert]
 
     travel 2.minutes
 
     post resend_verification_url, params: { email_address: user.email_address }
     assert_redirected_to new_session_url
-    refute_match /Too many/, flash[:alert].to_s
+    # Post-travel request takes the success path — assert the success notice positively,
+    # since flash[:alert] from the pre-travel rate-limited request lingers in the
+    # session until the next request consumes it.
+    assert_match /Verification email sent/, flash[:notice]
   end
 
   # Email change confirmation tests

@@ -171,16 +171,21 @@ class PasswordResetsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "rate limit resets after window expires" do
-    3.times do
+    4.times do
       post password_resets_url, params: { email_address: "someone@example.com" }
     end
-    assert_redirected_to new_session_url
+    assert_redirected_to new_password_reset_path
+    assert_match /Too many requests/, flash[:alert]
 
     travel 2.minutes
 
     post password_resets_url, params: { email_address: "someone@example.com" }
     assert_redirected_to new_session_url
-    refute_match /Too many/, flash[:alert].to_s
+    # Post-travel request takes the (enumeration-safe) success path. Assert the
+    # success notice positively rather than the absence of "Too many", because
+    # the pre-travel alert flash lingers in session until the next request
+    # consumes it.
+    assert_match /receive password reset instructions/, flash[:notice]
   end
 
   test "password reset form redirects when SSO auth enabled" do
