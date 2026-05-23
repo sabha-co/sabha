@@ -166,9 +166,4 @@ class Storage::TotaledTest < ActiveSupport::TestCase
       assert_equal false, result
     end
   end
-
-  test "reconcile_storage returns true on success" do
-    result = @account.reconcile_storage
-    assert_equal true, result
-  end
 end

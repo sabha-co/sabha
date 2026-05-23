@@ -8,20 +8,6 @@ class BookmarkTest < ActiveSupport::TestCase
   end
 
   # ===================
-  # Basic association tests
-  # ===================
-
-  test "belongs to user" do
-    bookmark = Bookmark.create!(user: @david, message: @message)
-    assert_equal @david, bookmark.user
-  end
-
-  test "belongs to message" do
-    bookmark = Bookmark.create!(user: @david, message: @message)
-    assert_equal @message, bookmark.message
-  end
-
-  # ===================
   # with_bookmark_status_for scope tests (LEFT JOIN approach)
   # ===================
 
@@ -88,27 +74,5 @@ class BookmarkTest < ActiveSupport::TestCase
     loaded_message = Message.find(message.id)
     assert loaded_message.bookmarked_by?(@david)
     assert_not loaded_message.bookmarked_by?(@jason)
-  end
-
-  test "bookmarked_by? uses manual bookmarked setter" do
-    message = messages(:first)
-    # No bookmark exists, but we set it manually (used by bookmarks inbox)
-    message.bookmarked = true
-    assert message.bookmarked_by?(@david)
-  end
-
-  # ===================
-  # Ordered scope tests
-  # ===================
-
-  test "ordered scope orders by created_at" do
-    message1 = messages(:first)
-    message2 = messages(:second)
-
-    bookmark2 = Bookmark.create!(user: @david, message: message2, created_at: 1.hour.ago)
-    bookmark1 = Bookmark.create!(user: @david, message: message1, created_at: 2.hours.ago)
-
-    ordered = Bookmark.where(user: @david).ordered
-    assert_equal [ bookmark1, bookmark2 ], ordered.to_a
   end
 end

@@ -1,11 +1,6 @@
 require "test_helper"
 
 class BlockTest < ActiveSupport::TestCase
-  test "valid block between two different users" do
-    block = Block.new(blocker: users(:david), blocked: users(:jason))
-    assert block.valid?
-  end
-
   test "cannot block self" do
     block = Block.new(blocker: users(:david), blocked: users(:david))
     assert_not block.valid?

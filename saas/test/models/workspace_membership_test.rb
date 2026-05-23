@@ -41,10 +41,16 @@ class WorkspaceMembershipTest < ActiveSupport::TestCase
     membership&.destroy
   end
 
-  test "cache_user_id! updates user_id column" do
+  test "cache_user_id! updates user_id column and restores user_active mirror" do
     membership = workspace_memberships(:alice_acme)
+    # Start from the orphan-row state (user_active=false) so we can prove the flip
+    membership.update_column(:user_active, false)
+
     membership.cache_user_id!(12345)
-    assert_equal 12345, membership.reload.user_id
+
+    membership.reload
+    assert_equal 12345, membership.user_id
+    assert membership.user_active, "cache_user_id! must reset user_active=true for the rejoin path"
   end
 
   test "leave! raises LastAdministratorError when user is last administrator" do

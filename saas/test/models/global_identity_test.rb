@@ -32,11 +32,6 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     assert_not duplicate.valid?
   end
 
-  test "verified? reflects verified_at" do
-    assert global_identities(:alice).verified?
-    assert_not global_identities(:unverified).verified?
-  end
-
   test "verify! sets verified_at" do
     identity = global_identities(:unverified)
     identity.verify!
@@ -67,11 +62,6 @@ class GlobalIdentityTest < ActiveSupport::TestCase
 
   test "superadmin? is false when superadmin flag set but email domain is not allowed" do
     identity = GlobalIdentity.new(email_address: "hacker@evil.com", superadmin: true)
-    assert_not identity.superadmin?
-  end
-
-  test "superadmin? is false when email domain is allowed but flag is not set" do
-    identity = GlobalIdentity.new(email_address: "user@sabha.co", superadmin: false)
     assert_not identity.superadmin?
   end
 

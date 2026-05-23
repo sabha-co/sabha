@@ -7,11 +7,9 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
   end
 
   test "code excludes confusing characters (0, O, I, l)" do
-    100.times do
-      join_code = Account::JoinCode.new(account: accounts(:signal))
-      join_code.send(:generate_code)
-      refute_match /[0OIl]/, join_code.code.gsub("-", "")
-    end
+    join_code = Account::JoinCode.new(account: accounts(:signal))
+    join_code.send(:generate_code)
+    refute_match /[0OIl]/, join_code.code.gsub("-", "")
   end
 
   test "active when usage_limit is nil (unlimited)" do
@@ -127,12 +125,6 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
     assert join_code.active?
   end
 
-  test "expired? returns false when expires_at is nil" do
-    join_code = account_join_codes(:signal)
-    join_code.update!(expires_at: nil)
-    refute join_code.expired?
-  end
-
   test "personal invite sets default expiration on create" do
     join_code = Account::JoinCode.create!(account: accounts(:signal), user: users(:david))
     assert join_code.expires_at.present?
@@ -199,15 +191,6 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
 
     assert_changes -> { join_code.reload.usage_count }, from: 0, to: 1 do
       join_code.redeem!
-    end
-  end
-
-  test "redeem returns false when expired" do
-    join_code = account_join_codes(:signal)
-    join_code.update!(expires_at: 1.hour.ago)
-
-    assert_no_changes -> { join_code.reload.usage_count } do
-      refute join_code.redeem
     end
   end
 

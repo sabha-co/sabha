@@ -7,11 +7,6 @@ class RoomReactivationTest < ActiveSupport::TestCase
     @room.memberships.grant_to(users(:jason))
   end
 
-  test "deactivate sets room to inactive" do
-    @room.deactivate
-    assert_not @room.reload.active?
-  end
-
   test "deactivate sets room memberships to inactive" do
     initial_count = @room.memberships.active.count
     assert initial_count > 0

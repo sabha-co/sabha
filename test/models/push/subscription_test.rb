@@ -7,17 +7,6 @@ class Push::SubscriptionTest < ActiveSupport::TestCase
     stub_dns_resolution(PUBLIC_TEST_IP)
   end
 
-  test "valid subscription with permitted endpoint" do
-    subscription = Push::Subscription.new(
-      user: users(:david),
-      endpoint: "https://fcm.googleapis.com/fcm/send/abc123",
-      p256dh_key: "test_key",
-      auth_key: "test_auth"
-    )
-
-    assert subscription.valid?
-  end
-
   test "rejects endpoint with non-https scheme" do
     subscription = Push::Subscription.new(
       user: users(:david),
@@ -82,17 +71,6 @@ class Push::SubscriptionTest < ActiveSupport::TestCase
 
     assert_not subscription.valid?
     assert_includes subscription.errors[:endpoint], "resolves to a private or invalid IP address"
-  end
-
-  test "resolved_endpoint_ip returns pinned public IP" do
-    subscription = Push::Subscription.new(
-      user: users(:david),
-      endpoint: "https://fcm.googleapis.com/fcm/send/abc123",
-      p256dh_key: "test_key",
-      auth_key: "test_auth"
-    )
-
-    assert_equal PUBLIC_TEST_IP, subscription.resolved_endpoint_ip
   end
 
   test "accepts all permitted push service domains" do

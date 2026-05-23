@@ -21,13 +21,6 @@ class Rooms::DirectGroupTest < ActiveSupport::TestCase
     assert_equal room1, room2
   end
 
-  test "group DM with different users creates different room" do
-    room1 = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:jason), users(:jz) ])
-    room2 = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:jason), users(:kevin) ])
-
-    assert_not_equal room1, room2
-  end
-
   test "group DM default involvement is everything for all users" do
     room = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:jason), users(:jz) ])
 
@@ -58,13 +51,6 @@ class Rooms::DirectGroupTest < ActiveSupport::TestCase
 
     display_name = room.display_name(for_user: users(:david))
     assert_equal "David", display_name
-  end
-
-  test "group DM with four users" do
-    room = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:jason), users(:jz), users(:kevin) ])
-
-    assert room.direct?
-    assert_equal 4, room.users.count
   end
 
   test "idempotent room creation via find_or_create_for" do

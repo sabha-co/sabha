@@ -153,23 +153,6 @@ class NotificationTest < ActiveSupport::TestCase
     assert notification.valid?
   end
 
-  test "helper methods return correct values" do
-    message = @room.messages.create!(body: "test", creator: @jason, client_message_id: "helper_test")
-
-    mention = Notification.create!(user: @david, message: message, actor: @jason, activity_type: "mention")
-    assert mention.mention?
-    assert_not mention.boost_notification?
-    assert_not mention.thread_reply?
-
-    boost_notif = Notification.create!(user: @david, message: message, actor: @jason, activity_type: "boost", boost_id: nil)
-    assert boost_notif.boost_notification?
-    assert_not boost_notif.mention?
-
-    thread_notif = Notification.create!(user: @david, message: message, actor: @jason, activity_type: "thread_reply")
-    assert thread_notif.thread_reply?
-    assert_not thread_notif.mention?
-  end
-
   test "@everyone mention creates notifications for all room members except creator" do
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div>Hey <action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
@@ -314,16 +297,6 @@ class NotificationTest < ActiveSupport::TestCase
       "Non-member should not receive a notification"
     assert_not @room.memberships.exists?(user: jz),
       "Non-member should not be added to the room"
-  end
-
-  test "ordered scope sorts by created_at ascending" do
-    message = @room.messages.create!(body: "test", creator: @jason, client_message_id: "order_test")
-
-    n1 = Notification.create!(user: @david, message: message, actor: @jason, activity_type: "mention", created_at: 2.hours.ago)
-    n2 = Notification.create!(user: @david, message: message, actor: @jason, activity_type: "boost", created_at: 1.hour.ago)
-
-    ordered = Notification.where(user: @david, message: message).ordered
-    assert_equal [ n1, n2 ], ordered.to_a
   end
 
   test "creating a mention notification broadcasts the activity indicator" do

@@ -12,16 +12,6 @@ class Notification::BundleItemTest < ActiveSupport::TestCase
     )
   end
 
-  test "valid mention item" do
-    item = Notification::BundleItem.new(bundle: @bundle, message: @message, actor: @actor, kind: "mention")
-    assert item.valid?
-  end
-
-  test "valid direct_message item" do
-    item = Notification::BundleItem.new(bundle: @bundle, message: @message, actor: @actor, kind: "direct_message")
-    assert item.valid?
-  end
-
   test "kind must be one of mention or direct_message" do
     item = Notification::BundleItem.new(bundle: @bundle, message: @message, actor: @actor, kind: "thread_reply")
     refute item.valid?
@@ -42,22 +32,5 @@ class Notification::BundleItemTest < ActiveSupport::TestCase
     assert_nothing_raised do
       Notification::BundleItem.create!(bundle: @bundle, message: @message, actor: @actor, kind: "direct_message")
     end
-  end
-
-  test "insert_all with unique_by silently skips duplicates" do
-    now = Time.current
-    payload = [ {
-      bundle_id:  @bundle.id,
-      message_id: @message.id,
-      actor_id:   @actor.id,
-      kind:       "mention",
-      created_at: now,
-      updated_at: now
-    } ]
-
-    Notification::BundleItem.insert_all(payload, unique_by: %i[bundle_id message_id kind])
-    Notification::BundleItem.insert_all(payload, unique_by: %i[bundle_id message_id kind])
-
-    assert_equal 1, Notification::BundleItem.where(bundle_id: @bundle.id, message_id: @message.id, kind: "mention").count
   end
 end

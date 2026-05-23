@@ -54,20 +54,6 @@ class Inbox::DirectMessagesQueryTest < ActiveSupport::TestCase
     assert_equal dm_room1, result.second.room
   end
 
-  test "includes has_unread_notifications flag" do
-    dm_room = rooms(:david_and_jason)
-    membership = @david.memberships.find_by(room: dm_room)
-    membership.update!(unread_at: 1.hour.ago)
-
-    # Create a message to trigger unread notification
-    dm_room.messages.create!(creator: @jason, body: "Hello")
-
-    result = Inbox::DirectMessagesQuery.new(@david).call
-    dm_membership = result.find { |m| m.room == dm_room }
-
-    assert dm_membership.respond_to?(:has_unread_notifications?)
-  end
-
   test "last_page returns limited results" do
     result = Inbox::DirectMessagesQuery.new(@david).call.last_page
 

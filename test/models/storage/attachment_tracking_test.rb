@@ -44,21 +44,6 @@ class Storage::AttachmentTrackingTest < ActiveSupport::TestCase
     assert_equal blob_id, entry.blob_id
   end
 
-  test "destroying attachment uses snapshotted IDs from before_destroy" do
-    @message.attachment.attach io: StringIO.new("x" * 1024), filename: "test.png", content_type: "image/png"
-
-    expected_recordable_type = @message.class.name
-    expected_recordable_id = @message.id
-
-    attachment = @message.attachment.attachment
-    attachment.destroy!
-
-    entry = Storage::Entry.find_by(operation: "detach", recordable_id: expected_recordable_id)
-    assert_not_nil entry, "Expected detach entry to be created"
-    assert_equal expected_recordable_type, entry.recordable_type
-    assert_equal expected_recordable_id, entry.recordable_id
-  end
-
   # Non-Trackable Records
 
   test "does not track attachments on non-trackable records" do

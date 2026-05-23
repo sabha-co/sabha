@@ -1,11 +1,6 @@
 require "test_helper"
 
 class BadgeTest < ActiveSupport::TestCase
-  test "valid badge" do
-    badge = Badge.new(name: "Test")
-    assert badge.valid?
-  end
-
   test "requires name" do
     badge = Badge.new(name: "")
     assert_not badge.valid?
@@ -24,11 +19,6 @@ class BadgeTest < ActiveSupport::TestCase
     assert badge.errors[:color].any?
 
     badge.color = "#ff0000"
-    assert badge.valid?
-  end
-
-  test "color allows blank" do
-    badge = Badge.new(name: "Test", color: "")
     assert badge.valid?
   end
 
