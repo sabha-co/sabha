@@ -3,6 +3,6 @@ class Accounts::JoinCodesController < ApplicationController
 
   def create
     Current.account.reset_join_code
-    redirect_to edit_account_url
+    redirect_to account_url
   end
 end
