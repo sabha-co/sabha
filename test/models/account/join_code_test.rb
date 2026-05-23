@@ -154,4 +154,44 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
       refute join_code.redeem
     end
   end
+
+  test "redeem_if increments and returns the block result when active and block returns truthy" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(usage_limit: nil, usage_count: 0)
+
+    assert_changes -> { join_code.reload.usage_count }, from: 0, to: 1 do
+      assert_equal :ok, join_code.redeem_if { :ok }
+    end
+  end
+
+  test "redeem_if skips increment and returns false when block returns falsy" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(usage_limit: nil, usage_count: 0)
+
+    assert_no_changes -> { join_code.reload.usage_count } do
+      assert_equal false, join_code.redeem_if { false }
+    end
+  end
+
+  test "redeem_if short-circuits and never runs the block when inactive" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(usage_limit: 1, usage_count: 1)
+
+    block_ran = false
+    assert_no_changes -> { join_code.reload.usage_count } do
+      assert_equal false, join_code.redeem_if { block_ran = true }
+    end
+    refute block_ran, "block must not run when the code is inactive"
+  end
+
+  test "redeem_if rolls back the increment when the block raises" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(usage_limit: nil, usage_count: 0)
+
+    assert_no_changes -> { join_code.reload.usage_count } do
+      assert_raises(RuntimeError) do
+        join_code.redeem_if { raise "boom" }
+      end
+    end
+  end
 end

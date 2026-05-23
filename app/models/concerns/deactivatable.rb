@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Soft deletion via an `active` boolean column. Used by Message, Room, and Membership.
 #
 # Provides two named scopes (`active`, `inactive`) and four lifecycle methods.

@@ -120,6 +120,89 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     identity&.destroy
   end
 
+  # join tests
+
+  test "join creates a membership and provisions a tenant user" do
+    identity = GlobalIdentity.create!(name: "Joiner", email_address: "joiner@example.com", verified_at: Time.current)
+
+    with_provisioned_workspace(name: "Join Test", creator: global_identities(:alice)) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      membership = identity.join(tenant)
+
+      assert membership.persisted?
+      assert membership.previously_new_record?, "first join should be a new record"
+
+      ApplicationRecord.with_tenant(tenant) do
+        user = User.find(membership.user_id)
+        assert_equal "joiner@example.com", user.email_address
+      end
+    end
+  ensure
+    identity&.destroy
+  end
+
+  test "join is idempotent on (identity, tenant)" do
+    identity = GlobalIdentity.create!(name: "Rejoiner", email_address: "rejoiner@example.com", verified_at: Time.current)
+
+    with_provisioned_workspace(name: "Idempotent Join", creator: global_identities(:alice)) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      first = identity.join(tenant)
+      second = identity.join(tenant)
+
+      assert_equal first.id, second.id, "second join must return the same membership"
+      refute second.previously_new_record?, "second join must not look like a new record"
+    end
+  ensure
+    identity&.destroy
+  end
+
+  test "join destroys the membership it just created if create_user! raises" do
+    identity = GlobalIdentity.create!(name: "Stuck", email_address: "stuck@example.com", verified_at: Time.current)
+
+    with_provisioned_workspace(name: "Cleanup On Failure", creator: global_identities(:alice)) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      # Simulate a permanent validation failure during user provisioning.
+      WorkspaceMembership.any_instance.stubs(:create_user!).raises(
+        ActiveRecord::RecordInvalid.new(User.new.tap(&:valid?))
+      )
+
+      assert_raises(ActiveRecord::RecordInvalid) do
+        identity.join(tenant)
+      end
+
+      refute identity.workspace_memberships.exists?(tenant: tenant),
+        "membership opened in this call must be destroyed when create_user! raises"
+    end
+  ensure
+    identity&.destroy
+  end
+
+  test "join leaves a pre-existing membership intact when create_user! raises" do
+    identity = GlobalIdentity.create!(name: "Preexisting", email_address: "preexisting@example.com", verified_at: Time.current)
+
+    with_provisioned_workspace(name: "Keep Existing", creator: global_identities(:alice)) do |workspace|
+      tenant = workspace.external_id.to_s
+
+      preexisting = WorkspaceMembership.create!(global_identity: identity, tenant: tenant)
+
+      WorkspaceMembership.any_instance.stubs(:create_user!).raises(
+        ActiveRecord::RecordInvalid.new(User.new.tap(&:valid?))
+      )
+
+      assert_raises(ActiveRecord::RecordInvalid) do
+        identity.join(tenant)
+      end
+
+      assert WorkspaceMembership.exists?(preexisting.id),
+        "pre-existing membership must not be destroyed by a failed retry"
+    end
+  ensure
+    identity&.destroy
+  end
+
   # Workspace limit tests
 
   test "workspace_limit_reached? is false when under limit" do

@@ -8,7 +8,7 @@ class Accounts::JoinCodesControllerTest < ActionDispatch::IntegrationTest
   test "create new join code" do
     assert_changes -> { accounts(:signal).join_code.reload.code } do
       post account_join_code_url
-      assert_redirected_to edit_account_url
+      assert_redirected_to account_url
     end
   end
 
