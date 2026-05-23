@@ -1,5 +1,4 @@
 require "test_helper"
-require "restricted_http/private_network_guard"
 
 class Opengraph::LocationTest < ActiveSupport::TestCase
   test "url validations" do
@@ -14,7 +13,7 @@ class Opengraph::LocationTest < ActiveSupport::TestCase
   end
 
   test "private network urls" do
-    Resolv.stubs(:getaddress).with("www.example.com").returns("172.16.0.0")
+    stub_dns_resolution("172.16.0.0")
 
     location = Opengraph::Location.new("https://www.example.com")
     assert_not location.valid?
@@ -22,7 +21,7 @@ class Opengraph::LocationTest < ActiveSupport::TestCase
   end
 
   test "link-local addresses are blocked" do
-    Resolv.stubs(:getaddress).with("metadata.internal").returns("169.254.169.254")
+    stub_dns_resolution("169.254.169.254")
 
     location = Opengraph::Location.new("https://metadata.internal")
     assert_not location.valid?
@@ -30,13 +29,13 @@ class Opengraph::LocationTest < ActiveSupport::TestCase
   end
 
   test "IPv6 addresses mapped to IPv4 addresses are blocked" do
-    Resolv.stubs(:getaddress).with("metadata.internal").returns("::ffff:192.168.1.1")
+    stub_dns_resolution("::ffff:192.168.1.1")
 
     location = Opengraph::Location.new("https://metadata.internal")
     assert_not location.valid?
     assert_equal [ "is not public" ], location.errors[:url]
 
-    Resolv.stubs(:getaddress).with("metadata.internal").returns("::ffff:c0a8:0101")
+    stub_dns_resolution("::ffff:c0a8:0101")
 
     location = Opengraph::Location.new("https://metadata.internal")
     assert_not location.valid?

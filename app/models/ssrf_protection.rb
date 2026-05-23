@@ -1,6 +1,8 @@
 module SsrfProtection
   extend self
 
+  class Violation < StandardError; end
+
   DNS_RESOLUTION_TIMEOUT = 2
 
   DNS_NAMESERVERS = %w[
@@ -20,6 +22,14 @@ module SsrfProtection
     public_ips.sort_by { |ipaddr| ipaddr.ipv4? ? 0 : 1 }.first&.to_s
   end
 
+  # Same as resolve_public_ip but raises Violation when the host fails to
+  # resolve or only resolves to blocked addresses. Use this in code paths that
+  # need to fail loudly (validation, HTTP setup).
+  def resolve!(hostname)
+    resolve_public_ip(hostname) or
+      raise Violation, "#{hostname} did not resolve to a public address"
+  end
+
   def blocked_address?(ip)
     ip = IPAddr.new(ip.to_s) unless ip.is_a?(IPAddr)
 
@@ -29,6 +39,8 @@ module SsrfProtection
       ip.ipv4_mapped? ||
       ip.ipv4_compat? ||
       in_disallowed_range?(ip)
+  rescue IPAddr::InvalidAddressError
+    true
   end
 
   private

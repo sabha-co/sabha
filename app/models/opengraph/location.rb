@@ -1,5 +1,3 @@
-require "restricted_http/private_network_guard"
-
 class Opengraph::Location
   include ActiveModel::Validations
 
@@ -24,7 +22,7 @@ class Opengraph::Location
 
   def resolved_ip
     return @resolved_ip if defined? @resolved_ip
-    @resolved_ip = RestrictedHTTP::PrivateNetworkGuard.resolve(parsed_url.host) rescue nil
+    @resolved_ip = SsrfProtection.resolve_public_ip(parsed_url.host) rescue nil
   end
 
   private
