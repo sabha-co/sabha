@@ -14,13 +14,16 @@ class Rooms::InvolvementsController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream { head :ok }
-      format.html { redirect_to params[:return_to] || room_involvement_url(@room, from_sidebar:) }
+      format.html { redirect_to safe_return_to || room_involvement_url(@room, from_sidebar:) }
     end
   end
 
   def notifications_ready ; end
 
   private
+    def safe_return_to
+      params[:return_to] if params[:return_to].present? && safe_redirect_url?(params[:return_to])
+    end
 
     def broadcast_involvement_changes
       broadcast_involvement_change_to_room_nav
