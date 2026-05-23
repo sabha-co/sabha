@@ -41,4 +41,31 @@ class GlobalIdTenantingTest < ActiveSupport::TestCase
     assert_includes gid_a, "tenant=#{@tenant_a}"
     assert_includes gid_b, "tenant=#{@tenant_b}"
   end
+
+  test "GlobalID::Locator rejects cross-tenant lookups and resolves to the owning tenant's record" do
+    gid_a = ApplicationRecord.with_tenant(@tenant_a) do
+      User.find_or_create_by!(email_address: "cross-tenant@example.com") do |u|
+        u.name = "User A"
+        u.role = :member
+        u.verified_at = Time.current
+      end.to_global_id
+    end
+
+    ApplicationRecord.with_tenant(@tenant_b) do
+      User.find_or_create_by!(email_address: "cross-tenant@example.com") do |u|
+        u.name = "User B"
+        u.role = :member
+        u.verified_at = Time.current
+      end
+    end
+
+    ApplicationRecord.with_tenant(@tenant_b) do
+      assert_raises(ActiveRecord::Tenanted::WrongTenantError) { GlobalID::Locator.locate(gid_a) }
+    end
+
+    ApplicationRecord.with_tenant(@tenant_a) do
+      located = GlobalID::Locator.locate(gid_a)
+      assert_equal "User A", located.name
+    end
+  end
 end
