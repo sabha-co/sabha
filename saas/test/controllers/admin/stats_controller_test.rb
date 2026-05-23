@@ -18,5 +18,12 @@ class Admin::StatsControllerTest < ActionDispatch::IntegrationTest
     sign_in_global_identity(global_identities(:superadmin))
     get admin_root_path
     assert_response :success
+    # Workspace stat tiles include a Total card with the actual workspace count
+    assert_select "h2", text: /Workspaces/
+    assert_select "div", text: Workspace.count.to_s
+    assert_select "h2", text: /Identities/
+    # Recent workspaces/signups tables render
+    assert_select "section h2", text: /Recent Workspaces/
+    assert_select "section h2", text: /Recent Signups/
   end
 end

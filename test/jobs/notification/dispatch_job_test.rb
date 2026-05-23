@@ -12,10 +12,18 @@ class Notification::DispatchJobTest < ActiveSupport::TestCase
       creator: @creator,
       client_message_id: "dispatch_job_perform"
     )
+    booster = users(:jason)
+    boost = message.boosts.create!(content: "🎉", booster: booster)
+    # `boosts.create!` enqueues its own DispatchJob; clear it so we observe
+    # only the perform_now call under test.
+    clear_enqueued_jobs
+    Notification.where(message: message, activity_type: "boost").destroy_all
 
-    Message.any_instance.expects(:notify_recipients).with(only: nil, actor: nil).once
+    Notification::DispatchJob.perform_now(message, only: :boost, actor: booster)
 
-    Notification::DispatchJob.perform_now(message)
+    notification = Notification.find_by(message: message, activity_type: "boost")
+    refute_nil notification, "perform_now should drive notify_recipients and create the boost row"
+    assert_equal boost.id, notification.boost_id
   end
 
   test "passes only: and actor: through to notify_recipients" do
@@ -25,20 +33,15 @@ class Notification::DispatchJobTest < ActiveSupport::TestCase
       client_message_id: "dispatch_job_only"
     )
     actor = users(:jason)
-
-    Message.any_instance.expects(:notify_recipients).with(only: :boost, actor: actor).once
+    message.boosts.create!(content: "🔥", booster: actor)
+    clear_enqueued_jobs
+    Notification.where(message: message, activity_type: "boost").destroy_all
 
     Notification::DispatchJob.perform_now(message, only: :boost, actor: actor)
-  end
 
-  test "discards the job when the message has been deleted" do
-    deleted_id = -1
-    serialized_job = Notification::DispatchJob.new
-    serialized_job.arguments = [ Message.new(id: deleted_id) ]
-
-    assert_includes Notification::DispatchJob.rescue_handlers.map(&:first),
-      "ActiveJob::DeserializationError",
-      "DispatchJob must discard on DeserializationError so deleted-message races are tolerated"
+    notification = Notification.find_by(message: message, activity_type: "boost")
+    refute_nil notification, "only: :boost should run the boost branch"
+    assert_equal actor.id, notification.actor_id, "actor: should be forwarded to the dispatch branch"
   end
 
   test "skips work in DemoMode" do
@@ -48,10 +51,15 @@ class Notification::DispatchJobTest < ActiveSupport::TestCase
       creator: @creator,
       client_message_id: "dispatch_demo_mode"
     )
+    booster = users(:jason)
+    message.boosts.create!(content: "👍", booster: booster)
+    clear_enqueued_jobs
+    Notification.where(message: message, activity_type: "boost").destroy_all
 
-    Message.any_instance.expects(:notify_recipients).never
+    Notification::DispatchJob.perform_now(message, only: :boost, actor: booster)
 
-    Notification::DispatchJob.perform_now(message)
+    assert_nil Notification.find_by(message: message, activity_type: "boost"),
+      "DemoMode must short-circuit before any notification side effect"
   end
 
   test "boost dispatch via job creates a Notification row matching the inline path" do

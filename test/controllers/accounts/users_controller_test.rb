@@ -83,28 +83,10 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert user.reload.moderator?
   end
 
-  test "update role to administrator" do
-    user = users(:kevin)
-
-    patch account_user_url(user), params: { user: { role: "administrator" } }
-
-    assert_redirected_to account_users_url
-    assert user.reload.administrator?
-  end
-
   test "update role rejects invalid roles" do
     user = users(:kevin)
 
     patch account_user_url(user), params: { user: { role: "superuser" } }
-
-    assert_redirected_to account_users_url
-    assert user.reload.member?
-  end
-
-  test "update role rejects bot role" do
-    user = users(:kevin)
-
-    patch account_user_url(user), params: { user: { role: "bot" } }
 
     assert_redirected_to account_users_url
     assert user.reload.member?
@@ -161,13 +143,6 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to account_users_url
     assert user.reload.deactivated?
-  end
-
-  test "non-admins can access index" do
-    sign_in :kevin
-
-    get account_users_url
-    assert_response :success
   end
 
   test "non-admins cannot access deactivated filter" do

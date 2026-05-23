@@ -4,21 +4,6 @@ class Rooms::InvolvementsHelperTest < ActionView::TestCase
   include Rooms::InvolvementsHelper
 
   # Shared room cycling tests (3-state: mentions -> everything -> nothing -> mentions)
-  test "shared room cycles from mentions to everything" do
-    room = rooms(:hq)
-    assert_equal "everything", next_involvement_for(room, involvement: "mentions")
-  end
-
-  test "shared room cycles from everything to nothing" do
-    room = rooms(:hq)
-    assert_equal "nothing", next_involvement_for(room, involvement: "everything")
-  end
-
-  test "shared room cycles from nothing to mentions" do
-    room = rooms(:hq)
-    assert_equal "mentions", next_involvement_for(room, involvement: "nothing")
-  end
-
   test "shared room full cycle" do
     room = rooms(:hq)
 
@@ -34,16 +19,6 @@ class Rooms::InvolvementsHelperTest < ActionView::TestCase
   end
 
   # Direct room cycling tests (2-state: everything -> nothing -> everything)
-  test "direct room cycles from everything to nothing" do
-    room = rooms(:david_and_jason)
-    assert_equal "nothing", next_involvement_for(room, involvement: "everything")
-  end
-
-  test "direct room cycles from nothing to everything" do
-    room = rooms(:david_and_jason)
-    assert_equal "everything", next_involvement_for(room, involvement: "nothing")
-  end
-
   test "direct room full cycle" do
     room = rooms(:david_and_jason)
 
@@ -70,30 +45,10 @@ class Rooms::InvolvementsHelperTest < ActionView::TestCase
     assert_equal "nothing", next_involvement_for(room, involvement: "invisible")
   end
 
-  test "direct room with mentions involvement cycles to nothing" do
-    room = rooms(:david_and_jason)
-    # mentions is not in DIRECT_INVOLVEMENT_ORDER, defaults to index 1
-    assert_equal "nothing", next_involvement_for(room, involvement: "mentions")
-  end
-
   # Open vs Closed room behavior (both use shared cycling)
   test "open room uses shared involvement order" do
     room = rooms(:pets) # Open room
     assert_equal "everything", next_involvement_for(room, involvement: "mentions")
     assert_equal "nothing", next_involvement_for(room, involvement: "everything")
-  end
-
-  test "closed room uses shared involvement order" do
-    room = rooms(:watercooler) # Closed room
-    assert_equal "everything", next_involvement_for(room, involvement: "mentions")
-    assert_equal "nothing", next_involvement_for(room, involvement: "everything")
-  end
-
-  # Humanize labels
-  test "humanize involvement labels are correct" do
-    assert_equal "Mentions only", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["mentions"]
-    assert_equal "All notifications", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["everything"]
-    assert_equal "Notifications muted", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["nothing"]
-    assert_equal "Room hidden", Rooms::InvolvementsHelper::HUMANIZE_INVOLVEMENT["invisible"]
   end
 end

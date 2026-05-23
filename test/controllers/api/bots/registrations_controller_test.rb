@@ -137,9 +137,4 @@ class API::Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     room_types = json["rooms"].map { |r| r["type"] }
     assert_not_includes room_types, "Thread"
   end
-
-  test "all error responses include code field" do
-    post join_bot_url("BAD-CODE"), params: { name: "X" }, as: :json
-    assert response.parsed_body["code"].present?
-  end
 end

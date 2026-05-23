@@ -17,16 +17,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to first_run_url
   end
 
-  test "new denied with incompatible browser" do
-    get new_session_url
-    assert_response :success
-  end
-
-  test "new allowed with compatible browser" do
-    get new_session_url
-    assert_response :success
-  end
-
   test "create with valid credentials" do
     assert_difference -> { Session.count }, +1 do
       post session_url, params: { email_address: "david@37signals.com", password: "secret123456" }
@@ -165,15 +155,16 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "rate limit resets after window expires" do
-    10.times do
+    11.times do
       post session_url, params: { email_address: "david@37signals.com", password: "wrong" }
     end
-    refute_match /Too many/, flash[:alert].to_s
+    assert_redirected_to new_session_url
+    assert_match /Too many sign in attempts/, flash[:alert]
 
     travel 4.minutes
 
     post session_url, params: { email_address: "david@37signals.com", password: "wrong" }
-    assert_response :redirect
+    assert_redirected_to new_session_url(email_address: "david@37signals.com")
     refute_match /Too many/, flash[:alert].to_s
   end
 

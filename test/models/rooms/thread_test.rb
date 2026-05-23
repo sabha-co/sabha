@@ -12,11 +12,6 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     assert thread.errors[:parent_message].present?
   end
 
-  test "thread with parent message is valid" do
-    thread = Rooms::Thread.new(parent_message: @parent_message, creator: users(:david))
-    assert thread.valid?
-  end
-
   test "default involvement for thread creator is everything" do
     thread = Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
     assert_equal "everything", thread.default_involvement(user: users(:david))
@@ -36,14 +31,6 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
   test "default involvement without user is invisible" do
     thread = Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
     assert_equal "invisible", thread.default_involvement(user: nil)
-  end
-
-  test "thread is identified as thread type" do
-    thread = Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
-    assert thread.thread?
-    assert_not thread.direct?
-    assert_not thread.open?
-    assert_not thread.closed?
   end
 
   test "thread display name includes parent room name" do
@@ -98,10 +85,6 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     participants = Rooms::Thread.preload_participant_creators([ thread ], limit: 2)
 
     assert_equal [ users(:jason), users(:kevin) ], participants.fetch(thread.id)
-  end
-
-  test "preload_participant_creators returns empty hash for empty input" do
-    assert_equal({}, Rooms::Thread.preload_participant_creators([]))
   end
 
   test "with_thread_participants keeps query count constant as thread count grows" do

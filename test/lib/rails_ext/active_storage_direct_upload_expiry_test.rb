@@ -6,15 +6,25 @@ class ActiveStorageDirectUploadExpiryTest < ActiveSupport::TestCase
   end
 
   test "uses 1-hour expiry by default" do
-    @blob.service.expects(:url_for_direct_upload).with(
-      @blob.key,
-      expires_in: 1.hour,
-      content_type: @blob.content_type,
-      content_length: @blob.byte_size,
-      checksum: @blob.checksum,
-      custom_metadata: {}
-    ).returns("https://example.com/upload")
+    # Stub only the inner SDK boundary so the prepended module actually runs.
+    # We capture the kwargs the storage service receives to prove the patch's
+    # 1-hour default flows through to `service.url_for_direct_upload`.
+    #
+    # @blob.service is the process-shared ActiveStorage service singleton, so the
+    # singleton method is removed in `ensure` to keep this stub from leaking into
+    # later tests that exercise real direct uploads.
+    service = @blob.service
+    captured_kwargs = nil
+    service.define_singleton_method(:url_for_direct_upload) do |_key, **kwargs|
+      captured_kwargs = kwargs
+      "https://example.com/upload"
+    end
 
     assert_equal "https://example.com/upload", @blob.service_url_for_direct_upload
+    assert_equal 1.hour, captured_kwargs[:expires_in]
+  ensure
+    if service && service.singleton_class.instance_methods(false).include?(:url_for_direct_upload)
+      service.singleton_class.send(:remove_method, :url_for_direct_upload)
+    end
   end
 end

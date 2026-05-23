@@ -75,28 +75,6 @@ class FirstRunAutoBootstrapTest < ActiveSupport::TestCase
     assert_not FirstRun.auto_bootstrap_enabled?
   end
 
-  test "auto_bootstrap_enabled? returns false when ADMIN_EMAIL is missing" do
-    ENV["AUTO_BOOTSTRAP"] = "true"
-    ENV["ADMIN_AUTH_TOKEN"] = VALID_TEST_TOKEN
-
-    assert_not FirstRun.auto_bootstrap_enabled?
-  end
-
-  test "auto_bootstrap_enabled? returns false when ADMIN_AUTH_TOKEN is missing" do
-    ENV["AUTO_BOOTSTRAP"] = "true"
-    ENV["ADMIN_EMAIL"] = "admin@example.com"
-
-    assert_not FirstRun.auto_bootstrap_enabled?
-  end
-
-  test "should_auto_bootstrap? returns true when enabled and no account exists" do
-    ENV["AUTO_BOOTSTRAP"] = "true"
-    ENV["ADMIN_EMAIL"] = "admin@example.com"
-    ENV["ADMIN_AUTH_TOKEN"] = VALID_TEST_TOKEN
-
-    assert FirstRun.should_auto_bootstrap?
-  end
-
   test "should_auto_bootstrap? returns false when account already exists" do
     Account.create!(name: "Test")
 

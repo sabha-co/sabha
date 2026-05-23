@@ -74,10 +74,10 @@ class AuthTokensControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "rate limit resets after window expires" do
-    10.times do
+    11.times do
       post auth_tokens_url, params: { email_address: users(:david).email_address }
     end
-    assert_redirected_to new_auth_tokens_validations_url
+    assert_response :too_many_requests
 
     travel 2.minutes
 

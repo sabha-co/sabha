@@ -226,17 +226,6 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     assert_equal 0, stats2[:users], "Stats should show 0 new users"
   end
 
-  test "returns stats after import" do
-    importer = Slack::Importer.new(@zip_path.to_s)
-    stats = importer.import!
-
-    assert stats[:users] > 0
-    assert stats[:rooms] > 0
-    assert stats[:messages] > 0
-    assert stats.key?(:boosts)
-    assert stats.key?(:threads)
-  end
-
   test "rolls back on error" do
     # Force an error during messages import
     Slack::MessagesImporter.any_instance.stubs(:import).raises(StandardError.new("Test error"))

@@ -16,11 +16,6 @@ class Users::AvatarsHelperTest < ActionView::TestCase
     assert_match %r{/users/.+/avatar}, path
   end
 
-  test "user_image_path returns controller path for bots" do
-    path = user_image_path(@bot)
-    assert_match %r{/users/.+/avatar}, path
-  end
-
   test "user_image_path returns avatar_url when present" do
     user_with_url = User.new(id: 999, name: "Test", avatar_url: "https://example.com/avatar.png")
     path = user_image_path(user_with_url)

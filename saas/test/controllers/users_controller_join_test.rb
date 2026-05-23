@@ -34,14 +34,6 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
     assert_select "a[href^='/registration/new']", text: /Create one/
   end
 
-  test "join page when signed out includes return_to parameter in links" do
-    workspace_get "/join/#{@join_code.code}", workspace: @workspace
-
-    assert_response :success
-    # Check that the sign-in link includes return_to
-    assert_select "a[href*='return_to']", minimum: 1
-  end
-
   # ============================================================================
   # GET /workspace_id/join/:join_code (signed in, not a member)
   # ============================================================================

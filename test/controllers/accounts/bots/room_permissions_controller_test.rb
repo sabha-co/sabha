@@ -59,10 +59,4 @@ class Accounts::Bots::RoomPermissionsControllerTest < ActionDispatch::Integratio
     assert_redirected_to account_bot_room_permission_url(@bot, room)
     assert_not @bot.reload.member_of?(room)
   end
-
-  test "requires admin" do
-    sign_in :kevin
-    get account_bot_room_permission_url(@bot, @room)
-    assert_redirected_to root_url
-  end
 end

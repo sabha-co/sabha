@@ -30,20 +30,14 @@ module Saas
     test "create does not create identity for unknown email (prevents enumeration)" do
       # Login should NOT create new identities - that's what registration is for
       assert_no_difference "GlobalIdentity.count" do
-        post session_path, params: { email_address: "unknown@example.com" }
+        assert_no_enqueued_emails do
+          post session_path, params: { email_address: "unknown@example.com" }
+        end
       end
 
       assert_redirected_to auth_code_path
       # Same message shown whether email exists or not (prevents email enumeration)
       assert_equal "If this email is registered, you'll receive a sign-in code", flash[:notice]
-    end
-
-    test "create does not send email for unknown address (prevents enumeration)" do
-      assert_no_enqueued_emails do
-        post session_path, params: { email_address: "unknown@example.com" }
-      end
-
-      assert_redirected_to auth_code_path
     end
 
     test "create normalizes email when looking up identity" do

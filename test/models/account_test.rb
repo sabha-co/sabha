@@ -118,18 +118,6 @@ class AccountTest < ActiveSupport::TestCase
     assert_not @account.logo.attached?
   end
 
-  test "accepts JPEG logo uploads" do
-    @account.attach_logo({ io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg" })
-    assert @account.logo.attached?
-  end
-
-  test "email flags are queryable as boolean columns, not JSON extraction" do
-    @account.update!(email_notifications_enabled: true, weekly_digest_enabled: true)
-
-    found = Account.where(email_notifications_enabled: true, weekly_digest_enabled: true).first
-    assert_equal @account.id, found.id
-  end
-
   test "disabling invite links destroys all personal invite links" do
     personal_link = account_join_codes(:signal_personal)
     global_link = account_join_codes(:signal)

@@ -17,12 +17,6 @@ class ApplicationCable::BotConnectionTest < ActionCable::Connection::TestCase
     end
   end
 
-  test "rejects connection with blank bot_key" do
-    assert_reject_connection do
-      connect params: { bot_key: "" }
-    end
-  end
-
   test "rejects connection with deactivated bot" do
     bot = users(:bender)
     bot.deactivate

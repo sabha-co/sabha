@@ -53,13 +53,6 @@ class RoomTest < ActiveSupport::TestCase
     assert room.users.include?(users(:david))
   end
 
-  test "type" do
-    assert Rooms::Open.new.open?
-    assert_not Rooms::Open.new.direct?
-    assert Rooms::Direct.new.direct?
-    assert Rooms::Closed.new.closed?
-  end
-
   test "default involvement for new users" do
     room = Rooms::Closed.create_for({ name: "Hello!", creator: users(:david) }, users: [ users(:kevin), users(:david) ])
     assert room.memberships.all? { |m| m.involved_in_mentions? }

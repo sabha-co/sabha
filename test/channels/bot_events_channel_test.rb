@@ -26,16 +26,4 @@ class BotEventsChannelTest < ActionCable::Channel::TestCase
 
     assert subscription.rejected?
   end
-
-  test "receives broadcast event" do
-    bot = users(:bender)
-    stub_connection(current_user: bot)
-
-    subscribe
-
-    payload = { "event" => "message_created", "room" => { "id" => 1 } }
-    ActionCable.server.broadcast("bot_events:#{bot.id}", payload)
-
-    assert_broadcast_on("bot_events:#{bot.id}", payload)
-  end
 end

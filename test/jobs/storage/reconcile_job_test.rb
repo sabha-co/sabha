@@ -38,12 +38,15 @@ class Storage::ReconcileJobTest < ActiveJob::TestCase
     end
   end
 
-  test "job queued to default queue" do
-    assert_equal "default", Storage::ReconcileJob.new.queue_name
-  end
-
   test "job raises ReconcileAborted when reconcile fails" do
-    @account.define_singleton_method(:reconcile_storage) { false }
+    # Trigger the real cursor-drift failure path: a Storage::Entry written
+    # mid-scan moves the cursor between the before/after snapshots in
+    # Storage::Totaled#reconcile_storage, which then returns false and the
+    # job raises ReconcileAborted.
+    @account.define_singleton_method(:calculate_real_storage_bytes) do
+      Storage::Entry.create!(delta: 1, operation: "attach")
+      0
+    end
 
     assert_raises Storage::ReconcileJob::ReconcileAborted do
       Storage::ReconcileJob.new.perform(@account)

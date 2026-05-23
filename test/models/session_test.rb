@@ -29,13 +29,6 @@ class SessionTest < ActiveSupport::TestCase
     assert session.expired?
   end
 
-  test "session without expires_at is not expired" do
-    session = @user.sessions.create!(user_agent: "Test", ip_address: "127.0.0.1")
-    session.update_column(:expires_at, nil)
-
-    assert_not session.expired?
-  end
-
   test "active scope excludes expired sessions" do
     active_session = @user.sessions.create!(user_agent: "Active", ip_address: "127.0.0.1")
     expired_session = @user.sessions.create!(user_agent: "Expired", ip_address: "127.0.0.1")

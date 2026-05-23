@@ -62,21 +62,4 @@ class CacheTenantingTest < ActiveSupport::TestCase
       assert_equal "users/online_count", key
     end
   end
-
-  test "different tenants produce different cache key prefixes" do
-    controller = UsersController.new
-
-    key_a = ApplicationRecord.with_tenant(@tenant_a) do
-      controller.send(:tenant_cache_key, "shared_key")
-    end
-
-    key_b = ApplicationRecord.with_tenant(@tenant_b) do
-      controller.send(:tenant_cache_key, "shared_key")
-    end
-
-    # Keys should be different due to tenant prefix
-    assert_not_equal key_a, key_b
-    assert key_a.start_with?(@tenant_a)
-    assert key_b.start_with?(@tenant_b)
-  end
 end

@@ -7,11 +7,6 @@ class Workspace::BackupTest < ActiveSupport::TestCase
     @workspace = workspaces(:acme)
   end
 
-  test "belongs to workspace" do
-    backup = Workspace::Backup.new(workspace: @workspace, key: "backups/test/123.sqlite3", size: 1024)
-    assert_equal @workspace, backup.workspace
-  end
-
   test "expired scope returns backups older than retention period" do
     old_backup = Workspace::Backup.create!(workspace: @workspace, key: "backups/old.sqlite3", size: 1024, created_at: 8.days.ago)
     recent_backup = Workspace::Backup.create!(workspace: @workspace, key: "backups/recent.sqlite3", size: 1024, created_at: 1.day.ago)

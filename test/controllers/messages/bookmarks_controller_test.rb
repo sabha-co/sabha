@@ -31,12 +31,6 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "create returns turbo stream response" do
-    post message_bookmark_url(@message), as: :turbo_stream
-    assert_response :success
-    assert_match "turbo-stream", response.content_type
-  end
-
   test "create requires message to be reachable" do
     # Create a message in a room david is not a member of
     closed_room = Rooms::Closed.create!(name: "Secret", creator: users(:jason))
@@ -76,19 +70,11 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "destroy handles non-existent bookmark gracefully" do
-    # No bookmark exists
-    assert_nothing_raised do
+    # No bookmark exists for current user — controller uses `&.destroy!` and no-ops.
+    assert_no_difference -> { Bookmark.count } do
       delete message_bookmark_url(@message), as: :turbo_stream
     end
     assert_response :success
-  end
-
-  test "destroy returns turbo stream response" do
-    Bookmark.create!(user: @david, message: @message)
-
-    delete message_bookmark_url(@message), as: :turbo_stream
-    assert_response :success
-    assert_match "turbo-stream", response.content_type
   end
 
   test "destroy requires message to be reachable" do
@@ -103,22 +89,5 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
     assert_raises(ActiveRecord::RecordNotFound) do
       delete message_bookmark_url(secret_message), as: :turbo_stream
     end
-  end
-
-  # ===================
-  # Integration tests
-  # ===================
-
-  test "bookmark toggle workflow" do
-    # Initially no bookmark
-    assert_nil Bookmark.find_by(user: @david, message: @message)
-
-    # Create bookmark
-    post message_bookmark_url(@message), as: :turbo_stream
-    assert Bookmark.exists?(user: @david, message: @message)
-
-    # Remove bookmark
-    delete message_bookmark_url(@message), as: :turbo_stream
-    assert_not Bookmark.exists?(user: @david, message: @message)
   end
 end

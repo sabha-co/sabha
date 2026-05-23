@@ -23,11 +23,18 @@ class Workspace::SnapshotJobTest < ActiveSupport::TestCase
   end
 
   test "handles missing tenant database gracefully" do
-    workspace = workspaces(:acme)
+    # Create a workspace record and drop any stale tenant DB (the external_id
+    # sequence rolls back between tests, so the on-disk SQLite may already
+    # exist from a prior test). The missing-tenant state is what
+    # `discard_on TenantDoesNotExistError` exists to swallow.
+    workspace = Workspace.create!(name: "No Tenant DB", creator: global_identities(:admin))
+    tenant_id = workspace.external_id.to_s
+    ApplicationRecord.destroy_tenant(tenant_id) if ApplicationRecord.tenant_exist?(tenant_id)
+    assert_not ApplicationRecord.tenant_exist?(tenant_id)
 
-    # Should not raise — tenant DB doesn't exist in test fixtures
-    assert_nothing_raised do
-      Workspace::SnapshotJob.perform_now(workspace)
-    end
+    # discard_on TenantDoesNotExistError → no exception escapes, no snapshot row created.
+    Workspace::SnapshotJob.perform_now(workspace)
+
+    assert_nil workspace.reload.snapshot
   end
 end

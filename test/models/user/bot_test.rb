@@ -43,12 +43,6 @@ class User::BotTest < ActiveSupport::TestCase
     assert User.authenticate_bot(bot.bot_key)
   end
 
-  test "authenticate fails with malformed bot key missing token" do
-    bot = User.create_bot!(name: "Bender")
-    malformed_key = "#{bot.id}-"
-    assert_nil User.authenticate_bot(malformed_key)
-  end
-
   test "authenticate fails with empty token" do
     bot = User.create_bot!(name: "Bender")
     malformed_key = "#{bot.id}-"

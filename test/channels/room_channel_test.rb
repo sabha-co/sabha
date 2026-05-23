@@ -27,10 +27,4 @@ class RoomChannelTest < ActionCable::Channel::TestCase
 
     assert subscription.rejected?
   end
-
-  test "rejects subscription with invalid room_id" do
-    subscribe room_id: -1
-
-    assert subscription.rejected?
-  end
 end

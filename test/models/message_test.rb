@@ -4,15 +4,12 @@ require "rails/dom/testing/assertions"
 class MessageTest < ActiveSupport::TestCase
   include ActionCable::TestHelper, ActiveJob::TestHelper, Rails::Dom::Testing::Assertions::SelectorAssertions
 
-  test "client_message_id is auto-generated when not provided" do
-    message = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello")
-    assert message.client_message_id.present?
-    assert_match(/\A[0-9a-f-]+\z/, message.client_message_id) # UUID format
-  end
+  test "client_message_id defaults to a UUID but preserves an explicit value" do
+    auto = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello")
+    assert_match(/\A[0-9a-f-]+\z/, auto.client_message_id) # UUID format
 
-  test "client_message_id is preserved when explicitly provided" do
-    message = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello", client_message_id: "custom-id")
-    assert_equal "custom-id", message.client_message_id
+    explicit = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello", client_message_id: "custom-id")
+    assert_equal "custom-id", explicit.client_message_id
   end
 
   test "creating a message enqueues a single Notification::DispatchJob" do
@@ -60,16 +57,6 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   # Event messages
-
-  test "event? returns true when event is present" do
-    message = Message.new(event: "room_renamed")
-    assert message.event?
-  end
-
-  test "event? returns false for regular messages" do
-    message = Message.new
-    assert_not message.event?
-  end
 
   test "without_events scope excludes event messages" do
     room = rooms(:pets)
@@ -347,18 +334,6 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   # Welcome messages
-
-  test "welcome? returns true for welcome messages" do
-    message = Message.new(welcome: true)
-    assert message.welcome?
-    assert_not message.event?
-  end
-
-  test "welcome? returns false for events and regular messages" do
-    assert_not Message.new(event: "member_joined").welcome?
-    assert_not Message.new(event: "room_renamed").welcome?
-    assert_not Message.new.welcome?
-  end
 
   test "repliable? is true for regular and welcome messages but false for events" do
     assert Message.new.repliable?

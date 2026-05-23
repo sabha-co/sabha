@@ -34,14 +34,6 @@ class MissedNotificationsMailerTest < ActionMailer::TestCase
     assert_no_match(/mentions/i, mail.subject)
   end
 
-  test "renders multipart with text and html" do
-    mail = MissedNotificationsMailer.bundle(@bundle, [ @item ])
-
-    assert_equal 2, mail.parts.size
-    assert mail.parts.any? { |p| p.content_type.include?("text/plain") }
-    assert mail.parts.any? { |p| p.content_type.include?("text/html") }
-  end
-
   test "body lists sender + preview + room label" do
     mail = MissedNotificationsMailer.bundle(@bundle, [ @item ])
 

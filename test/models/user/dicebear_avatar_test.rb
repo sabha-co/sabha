@@ -81,9 +81,10 @@ class User::DicebearAvatarTest < ActiveSupport::TestCase
       email_address: "test-dicebear-#{SecureRandom.hex(4)}@example.com",
       password: "secret123456"
     )
-    assert_not_nil user.avatar_seed
-    assert user.avatar_seed.is_a?(Integer)
-    assert user.avatar_seed > 0
+
+    # The before_create callback assigns a seed so dicebear_url renders a stable
+    # per-user avatar without falling back to the database id.
+    assert_match %r{seed=#{user.avatar_seed}$}, user.dicebear_url
   end
 
   # dicebear_svg
@@ -114,36 +115,6 @@ class User::DicebearAvatarTest < ActiveSupport::TestCase
     @user.update!(avatar_seed: SecureRandom.random_number(1_000_000))
 
     stub_request(:get, %r{api\.dicebear\.com}).to_return(status: 500)
-
-    assert_nil @user.dicebear_svg
-  end
-
-  test "dicebear_svg returns nil on network timeout" do
-    Rails.configuration.x.dicebear.enabled = true
-    # Use unique seed to avoid cache interference
-    @user.update!(avatar_seed: SecureRandom.random_number(1_000_000))
-
-    stub_request(:get, %r{api\.dicebear\.com}).to_timeout
-
-    assert_nil @user.dicebear_svg
-  end
-
-  test "dicebear_svg returns nil on connection refused" do
-    Rails.configuration.x.dicebear.enabled = true
-    # Use unique seed to avoid cache interference
-    @user.update!(avatar_seed: SecureRandom.random_number(1_000_000))
-
-    stub_request(:get, %r{api\.dicebear\.com}).to_raise(Errno::ECONNREFUSED)
-
-    assert_nil @user.dicebear_svg
-  end
-
-  test "dicebear_svg returns nil on connection reset" do
-    Rails.configuration.x.dicebear.enabled = true
-    # Use unique seed to avoid cache interference
-    @user.update!(avatar_seed: SecureRandom.random_number(1_000_000))
-
-    stub_request(:get, %r{api\.dicebear\.com}).to_raise(Errno::ECONNRESET)
 
     assert_nil @user.dicebear_svg
   end

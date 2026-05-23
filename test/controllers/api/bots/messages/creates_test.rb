@@ -133,11 +133,12 @@ class API::Bots::Messages::CreatesTest < ActionDispatch::IntegrationTest
 
   test "create with parent_message_id fires the regular-create side effects (broadcast_mentionee_sidebar_updates)" do
     parent = messages(:fourth)
-    Message.any_instance.expects(:broadcast_mentionee_sidebar_updates).at_least_once
 
-    post api_bots_room_messages_url(@room, parent_message_id: parent.id),
-      params: "Threaded reply",
-      headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+    assert_enqueued_with(job: BroadcastMentioneeSidebarUpdatesJob) do
+      post api_bots_room_messages_url(@room, parent_message_id: parent.id),
+        params: "Threaded reply",
+        headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+    end
 
     assert_response :created
   end

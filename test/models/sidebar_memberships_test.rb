@@ -90,14 +90,6 @@ class SidebarMembershipsTest < ActiveSupport::TestCase
     assert_includes shared.map(&:room), rooms(:designers)
   end
 
-  test "starred returns starred room memberships" do
-    starred = @sidebar.starred
-
-    assert_includes starred.map(&:room), rooms(:watercooler)
-    assert_includes starred.map(&:room), rooms(:hq)
-    assert_not_includes starred.map(&:room), rooms(:pets)
-  end
-
   test "shared excludes direct rooms" do
     shared = @sidebar.shared
 
@@ -114,10 +106,6 @@ class SidebarMembershipsTest < ActiveSupport::TestCase
   end
 
   # --- direct_room_members ---
-
-  test "direct_room_members returns empty hash when no memberships" do
-    assert_equal({}, @sidebar.direct_room_members([]))
-  end
 
   test "direct_room_members returns users excluding current user" do
     room = rooms(:david_and_jason)

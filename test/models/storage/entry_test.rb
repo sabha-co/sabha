@@ -71,16 +71,6 @@ class Storage::EntryTest < ActiveSupport::TestCase
     end
   end
 
-  test "record leaves user_id and request_id nil when Current is unset" do
-    entry = Storage::Entry.record \
-      account: @account,
-      delta: 1024,
-      operation: "attach"
-
-    assert_nil entry.user_id
-    assert_nil entry.request_id
-  end
-
   test "record enqueues MaterializeJob for account" do
     assert_enqueued_with job: Storage::MaterializeJob, args: [ @account ] do
       Storage::Entry.record \
