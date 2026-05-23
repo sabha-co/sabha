@@ -10,9 +10,12 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to room_url(users(:david).rooms.opens.last)
   end
 
-  test "new" do
+  test "new renders the unified room form posting to rooms_opens" do
     get new_rooms_open_url
+
     assert_response :success
+    assert_select "form[action=?]", rooms_opens_path
+    assert_select "input[name='room[name]']"
   end
 
   test "create without auto_join redirects to room" do
@@ -51,7 +54,7 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :forbidden
-    assert rooms(:hq).reload.name, "HQ"
+    assert_equal "HQ", rooms(:hq).reload.name, "name must not change on forbidden update"
   end
 
   test "update" do
@@ -59,7 +62,7 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     put rooms_open_url(rooms(:pets)), params: { room: { name: "New Name" } }
 
     assert_redirected_to room_url(rooms(:pets))
-    assert rooms(:pets).reload.name, "New Name"
+    assert_equal "New Name", rooms(:pets).reload.name
   end
 
   test "update a closed room to be open does not auto-add all users" do
