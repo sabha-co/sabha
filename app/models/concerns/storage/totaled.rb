@@ -60,6 +60,7 @@ module Storage::Totaled
       if diff.nonzero?
         Rails.logger.info "[Storage] Reconcile #{self.class}##{id}: adjusting by #{diff} bytes"
         Storage::Entry.record \
+          account: self,
           recordable: nil,
           delta: diff,
           operation: "reconcile"

@@ -12,6 +12,7 @@ module Storage::AttachmentTracking
       return unless storage_tracked_record
 
       Storage::Entry.record \
+        account: Account.sole,
         recordable: storage_tracked_record,
         blob: blob,
         delta: blob.byte_size,
@@ -22,6 +23,7 @@ module Storage::AttachmentTracking
       return unless @storage_snapshot
 
       Storage::Entry.record \
+        account: @storage_snapshot[:account],
         recordable: @storage_snapshot[:recordable],
         blob: blob,
         delta: -blob.byte_size,
@@ -31,7 +33,7 @@ module Storage::AttachmentTracking
     def snapshot_storage_context
       return unless storage_tracked_record
 
-      @storage_snapshot = { recordable: storage_tracked_record }
+      @storage_snapshot = { recordable: storage_tracked_record, account: Account.sole }
     end
 
     # Only tracks direct attachments on models that define storage_tracked_record (Message).

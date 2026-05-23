@@ -20,7 +20,7 @@ class Storage::TotaledTest < ActiveSupport::TestCase
 
   test "bytes_used does not include pending entries" do
     @account.create_storage_total!(bytes_stored: 1000)
-    Storage::Entry.record(delta: 500, operation: "attach")
+    Storage::Entry.record(account: @account, delta: 500, operation: "attach")
 
     assert_equal 1000, @account.bytes_used
   end
@@ -34,10 +34,10 @@ class Storage::TotaledTest < ActiveSupport::TestCase
   end
 
   test "bytes_used_exact includes pending entries" do
-    entry = Storage::Entry.record(delta: 500, operation: "attach")
+    entry = Storage::Entry.record(account: @account, delta: 500, operation: "attach")
     @account.create_storage_total!(bytes_stored: 500, last_entry_id: entry.id)
 
-    Storage::Entry.record(delta: 256, operation: "attach")
+    Storage::Entry.record(account: @account, delta: 256, operation: "attach")
 
     assert_equal 756, @account.bytes_used_exact
   end
@@ -51,7 +51,7 @@ class Storage::TotaledTest < ActiveSupport::TestCase
   test "materialize_storage creates storage_total if missing" do
     assert_nil @account.storage_total
 
-    Storage::Entry.record(delta: 1024, operation: "attach")
+    Storage::Entry.record(account: @account, delta: 1024, operation: "attach")
     @account.materialize_storage
 
     total = @account.reload.storage_total
@@ -60,9 +60,9 @@ class Storage::TotaledTest < ActiveSupport::TestCase
   end
 
   test "materialize_storage processes all pending entries" do
-    Storage::Entry.record(delta: 1000, operation: "attach")
-    Storage::Entry.record(delta: 2000, operation: "attach")
-    Storage::Entry.record(delta: -500, operation: "detach")
+    Storage::Entry.record(account: @account, delta: 1000, operation: "attach")
+    Storage::Entry.record(account: @account, delta: 2000, operation: "attach")
+    Storage::Entry.record(account: @account, delta: -500, operation: "detach")
 
     @account.materialize_storage
 
@@ -71,8 +71,8 @@ class Storage::TotaledTest < ActiveSupport::TestCase
   end
 
   test "materialize_storage updates cursor to latest entry" do
-    Storage::Entry.record(delta: 1000, operation: "attach")
-    entry2 = Storage::Entry.record(delta: 500, operation: "attach")
+    Storage::Entry.record(account: @account, delta: 1000, operation: "attach")
+    entry2 = Storage::Entry.record(account: @account, delta: 500, operation: "attach")
 
     @account.materialize_storage
 
@@ -80,7 +80,7 @@ class Storage::TotaledTest < ActiveSupport::TestCase
   end
 
   test "materialize_storage is idempotent when no new entries" do
-    Storage::Entry.record(delta: 1000, operation: "attach")
+    Storage::Entry.record(account: @account, delta: 1000, operation: "attach")
     @account.materialize_storage
 
     initial_bytes = @account.storage_total.bytes_stored
@@ -93,12 +93,12 @@ class Storage::TotaledTest < ActiveSupport::TestCase
   end
 
   test "materialize_storage processes only entries since cursor" do
-    Storage::Entry.record(delta: 1000, operation: "attach")
+    Storage::Entry.record(account: @account, delta: 1000, operation: "attach")
     @account.materialize_storage
 
     assert_equal 1000, @account.storage_total.bytes_stored
 
-    Storage::Entry.record(delta: 500, operation: "attach")
+    Storage::Entry.record(account: @account, delta: 500, operation: "attach")
     @account.materialize_storage
 
     assert_equal 1500, @account.storage_total.bytes_stored
