@@ -66,6 +66,15 @@ class Account::JoinCode < ApplicationRecord
     unlimited? ? count_phrase : "#{count_phrase} of #{usage_limit}"
   end
 
+  def expiry_display
+    return nil unless expires_at
+
+    days = ((expires_at - Time.current) / 1.day).ceil
+    return nil if days <= 0
+
+    "Expires in #{days} #{"day".pluralize(days)}"
+  end
+
   private
     def generate_code
       self.code = generate_new_code

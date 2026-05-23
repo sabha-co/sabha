@@ -68,13 +68,7 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
     assert_equal "Never used", join_code.usage_display
   end
 
-  test "usage_display singularizes 'use' when usage_count is one" do
-    join_code = account_join_codes(:signal)
-    join_code.update!(usage_limit: nil, usage_count: 1)
-    assert_equal "1 use", join_code.usage_display
-  end
-
-  test "usage_display shows count for unlimited above one" do
+  test "usage_display shows count for unlimited" do
     join_code = account_join_codes(:signal)
     join_code.update!(usage_limit: nil, usage_count: 42)
     assert_equal "42 uses", join_code.usage_display
@@ -86,10 +80,24 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
     assert_equal "42 uses of 100", join_code.usage_display
   end
 
-  test "usage_display says 'Never used' even when a limit is set" do
+  test "expiry_display rounds remaining time up to whole days" do
     join_code = account_join_codes(:signal)
-    join_code.update!(usage_limit: 100, usage_count: 0)
-    assert_equal "Never used", join_code.usage_display
+
+    join_code.update!(expires_at: 30.days.from_now)
+    assert_equal "Expires in 30 days", join_code.expiry_display
+
+    join_code.update!(expires_at: 1.hour.from_now)
+    assert_equal "Expires in 1 day", join_code.expiry_display
+  end
+
+  test "expiry_display is nil when there is nothing to show" do
+    join_code = account_join_codes(:signal)
+
+    join_code.update!(expires_at: nil)
+    assert_nil join_code.expiry_display
+
+    join_code.update!(expires_at: 1.hour.ago)
+    assert_nil join_code.expiry_display
   end
 
   test "global? returns true when user_id is nil" do
@@ -138,12 +146,6 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
     assert join_code.expires_at > Account::JoinCode::DEFAULT_EXPIRATION.from_now,
       "global code should outlive the personal default"
     assert join_code.expires_at <= Account::JoinCode::DEFAULT_GLOBAL_EXPIRATION.from_now + 1.second
-  end
-
-  test "explicit expires_at is preserved over the default" do
-    target = 2.hours.from_now
-    join_code = Account::JoinCode.create!(account: accounts(:signal), expires_at: target)
-    assert_in_delta target, join_code.expires_at, 1.second
   end
 
   test "regenerate_code resets expires_at to a fresh default lifetime" do

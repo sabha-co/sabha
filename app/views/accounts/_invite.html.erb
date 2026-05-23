@@ -38,8 +38,8 @@
   <% if show_regenerate && Current.user.can_administer? %>
     <div class="txt-small txt-de-emph txt-align-center">
       <%= join_code.usage_display %>
-      <% if join_code.expires_at %>
-        · Expires in <%= distance_of_time_in_words_to_now(join_code.expires_at) %>
+      <% if join_code.expiry_display %>
+        · <%= join_code.expiry_display %>
       <% end %>
     </div>
   <% end %>
