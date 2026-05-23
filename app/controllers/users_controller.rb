@@ -52,41 +52,29 @@ class UsersController < ApplicationController
       redirect_to sso_handshake_url(return_to: request.fullpath)
     end
 
-    # SaaS mode: user is globally authenticated, just needs to join this workspace
+    # SaaS mode: user is globally authenticated, just needs to join this workspace.
+    # Idempotent on (identity, tenant) so retries collapse into the same membership;
+    # the code is burned only when the join actually creates a new membership.
     def create_for_saas_user
-      membership = WorkspaceMembership.create!(
-        global_identity: Current.global_identity,
-        tenant: ApplicationRecord.current_tenant
-      )
-
-      @user = membership.create_user!
-      @join_code.redeem!
-      notify_bots(@user, :created)
-      Current.workspace_membership = membership
-
-      redirect_to root_url, notice: "Welcome to #{Current.account.name}!"
-    rescue Account::JoinCode::InactiveCodeError
-      cleanup_failed_join(membership, @user)
-      redirect_to root_url, alert: "This invite link is no longer valid.", status: :see_other
-    rescue ActiveRecord::RecordInvalid => e
-      if e.record.is_a?(WorkspaceMembership) && e.record.errors[:global_identity_id].present?
-        redirect_to new_session_url, notice: "An account with this email already exists. Please sign in."
-      else
-        flash.now[:alert] = e.record.errors.full_messages.to_sentence
-        @user = User.new
-        set_member_counts
-        render :new, status: :unprocessable_entity
+      membership = nil
+      redeemed = @join_code.redeem_if do
+        membership = Current.global_identity.join(ApplicationRecord.current_tenant)
+        membership.previously_new_record?
       end
-    end
 
-    # Clean up records if join code redemption fails
-    # Note: Cross-database operations can't be transactional
-    def cleanup_failed_join(membership, user)
-      user&.destroy! if user&.persisted?
-      membership&.destroy! if membership&.persisted?
-    rescue ActiveRecord::RecordNotDestroyed => e
-      # Log but don't raise - orphaned records are preferable to burned invites
-      Rails.logger.error("[JoinCleanup] Failed to cleanup after join failure: #{e.message}")
+      # Lost a race: code went inactive between before_action and the lock.
+      return redirect_to(root_url, alert: "This invite link is no longer valid.", status: :see_other) unless membership
+
+      Current.workspace_membership = membership
+      @user = membership.user
+
+      notify_bots(@user, :created) if redeemed
+      redirect_to root_url, notice: "Welcome to #{Current.account.name}!"
+    rescue ActiveRecord::RecordInvalid => e
+      flash.now[:alert] = e.record.errors.full_messages.to_sentence
+      @user = User.new
+      set_member_counts
+      render :new, status: :unprocessable_entity
     end
 
     # Self-hosted mode or unauthenticated SaaS: full signup flow

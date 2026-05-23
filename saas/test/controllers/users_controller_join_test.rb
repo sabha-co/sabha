@@ -208,6 +208,29 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
   # exists as a safety net for concurrent requests.
 
   # ============================================================================
+  # POST /workspace_id/join/:join_code (code goes inactive between before_action
+  # and the redemption lock — the lost-race window inside create_for_saas_user)
+  # ============================================================================
+
+  test "submit join form when code goes inactive between gating and lock redirects with alert" do
+    sign_in_global_identity(@bob)
+
+    # active? is true at before_action gating, false once redeem_if acquires the lock.
+    # Achieved by stubbing only inside the controller action via the lock callback.
+    Account::JoinCode.any_instance.expects(:active?).at_least_once.returns(true).then.returns(false)
+
+    initial_membership_count = WorkspaceMembership.count
+    initial_usage = @join_code.usage_count
+
+    workspace_post "/join/#{@join_code.code}", workspace: @workspace, params: with_turnstile_response({})
+
+    assert_response :redirect
+    assert_match /no longer valid/, flash[:alert]
+    assert_equal initial_membership_count, WorkspaceMembership.count, "no membership should be created"
+    assert_equal initial_usage, @join_code.reload.usage_count, "code must not be burned"
+  end
+
+  # ============================================================================
   # POST /workspace_id/join/:join_code (invalid join code)
   # ============================================================================
 

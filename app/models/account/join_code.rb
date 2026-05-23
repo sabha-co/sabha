@@ -34,6 +34,18 @@ class Account::JoinCode < ApplicationRecord
     false
   end
 
+  # Atomic check-and-burn: runs `block` only if the code is still active, and
+  # increments usage only if the block returns truthy. The block's return value
+  # is what this method returns, so callers can return `previously_new_record?`
+  # to burn the code only on a real new join.
+  def redeem_if(&block)
+    with_lock do
+      return false unless active?
+
+      block.call.tap { |result| increment!(:usage_count) if result }
+    end
+  end
+
   def active?
     !expired? && (unlimited? || usage_count < usage_limit)
   end
