@@ -26,7 +26,7 @@
       </div>
 
       <div class="txt-small txt-de-emph txt-align-center">
-        Expires in <%= distance_of_time_in_words_to_now(invite_link.expires_at) %>
+        <%= invite_link.expiry_display %>
       </div>
     </div>
   <% else %>

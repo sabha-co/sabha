@@ -8,7 +8,9 @@ module Account::Joinable
   end
 
   def join_code
-    join_codes.global.first
+    join_codes.global.first.tap do |code|
+      code.regenerate_code if code&.expired?
+    end
   end
 
   def reset_join_code
