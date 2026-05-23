@@ -20,6 +20,9 @@ module Saas
       get settings_path
       assert_response :success
       assert_select "h2", /Your Workspaces/i
+      # Alice belongs to Acme Corp and Shared Workspace; both must render as rows
+      assert_select "strong", text: "Acme Corp"
+      assert_select "strong", text: "Shared Workspace"
     end
 
     test "update requires authentication" do

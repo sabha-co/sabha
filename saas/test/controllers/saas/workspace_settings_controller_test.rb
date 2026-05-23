@@ -37,6 +37,11 @@ module Saas
 
       assert_response :success
       assert_select "h1", @workspace.name
+      # Admin view exposes Storage and Delete workspace sections
+      assert_select "h2", text: /Storage/
+      assert_select "h2", text: /Delete workspace/
+      # Header shows member count
+      assert_select "p", text: /1 member/
     end
   end
 end
