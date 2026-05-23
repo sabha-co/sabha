@@ -15,7 +15,7 @@ class Account::JoinCode < ApplicationRecord
   scope :personal, -> { where.not(user_id: nil) }
 
   before_validation :generate_code, on: :create, if: -> { code.blank? }
-  before_validation :set_default_expiration, on: :create
+  before_validation :set_default_expiration, on: :create, unless: :bot?
   before_validation :set_default_account, on: :create, if: -> { account_id.blank? }
   before_validation :set_bot_defaults, on: :create, if: :bot?
 

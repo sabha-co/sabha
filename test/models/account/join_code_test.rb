@@ -140,6 +140,11 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
     assert join_code.expires_at <= Account::JoinCode::DEFAULT_EXPIRATION.from_now + 1.second
   end
 
+  test "bot invites do not get a default expiration (active until consumed or replaced)" do
+    join_code = Account::JoinCode.create!(account: accounts(:signal), kind: :bot)
+    assert_nil join_code.expires_at
+  end
+
   test "global invite gets the longer default expiration on create" do
     join_code = Account::JoinCode.create!(account: accounts(:signal))
     assert join_code.expires_at.present?
