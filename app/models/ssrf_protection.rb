@@ -2,6 +2,8 @@ module SsrfProtection
   extend self
 
   class Violation < StandardError; end
+  class Unresolvable < Violation; end
+  class PrivateAddress < Violation; end
 
   DNS_RESOLUTION_TIMEOUT = 2
 
@@ -24,14 +26,21 @@ module SsrfProtection
 
   # Same as resolve_public_ip but raises Violation when the host fails to
   # resolve or only resolves to blocked addresses. Use this in code paths that
-  # need to fail loudly (validation, HTTP setup).
+  # need to fail loudly (validation, HTTP setup). Callers can rescue
+  # Unresolvable or PrivateAddress separately to give precise feedback.
   def resolve!(hostname)
-    resolve_public_ip(hostname) or
-      raise Violation, "#{hostname} did not resolve to a public address"
+    ip_addresses = resolve_dns(hostname)
+    raise Unresolvable, "#{hostname} could not be resolved" if ip_addresses.empty?
+
+    public_ips = ip_addresses.reject { |ip| blocked_address?(ip) }
+    raise PrivateAddress, "#{hostname} resolves only to private or internal addresses" if public_ips.empty?
+
+    public_ips.sort_by { |ipaddr| ipaddr.ipv4? ? 0 : 1 }.first.to_s
   end
 
   def blocked_address?(ip)
-    ip = IPAddr.new(ip.to_s) unless ip.is_a?(IPAddr)
+    ip = coerce_ipaddr(ip)
+    return true if ip.nil?
 
     ip.private? ||
       ip.loopback? ||
@@ -39,8 +48,6 @@ module SsrfProtection
       ip.ipv4_mapped? ||
       ip.ipv4_compat? ||
       in_disallowed_range?(ip)
-  rescue IPAddr::InvalidAddressError
-    true
   end
 
   private
@@ -54,6 +61,13 @@ module SsrfProtection
       end
 
       ip_addresses
+    end
+
+    def coerce_ipaddr(ip)
+      return ip if ip.is_a?(IPAddr)
+      IPAddr.new(ip.to_s)
+    rescue IPAddr::InvalidAddressError
+      nil
     end
 
     def in_disallowed_range?(ip)

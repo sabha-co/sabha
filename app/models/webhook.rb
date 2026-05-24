@@ -15,7 +15,9 @@ class Webhook < ApplicationRecord
     SsrfProtection.resolve!(URI(url).host)
   rescue URI::InvalidURIError
     errors.add(:url, "is not a valid URL")
-  rescue SsrfProtection::Violation
+  rescue SsrfProtection::Unresolvable
+    errors.add(:url, "could not be resolved")
+  rescue SsrfProtection::PrivateAddress
     errors.add(:url, "must not target private or internal networks")
   end
 

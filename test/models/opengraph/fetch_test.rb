@@ -44,12 +44,14 @@ class Opengraph::FetchTest < ActiveSupport::TestCase
   end
 
   test "#fetch_document resolves hostnames once to avoid DNS rebinding" do
-    # Allow but interrupt a real connection to demonstrate that we connect
-    # to a resolved IP, not a hostname to re-resolve.
+    # Simulate DNS rebinding: validation-time resolve returns a public IP,
+    # any subsequent resolve returns a private IP. The TCP connect should use
+    # the pinned public IP, never call back into DNS.
     WebMock.disable_net_connect! allow: [ @url.host ]
-    stub_dns_resolution("1.2.3.4")
+    stub_dns_resolution_sequence([ "1.2.3.4" ], [ "127.0.0.1" ])
     # Match first two args, allow any additional args (nil, nil, open_timeout: 60)
     TCPSocket.expects(:open).with(@url.host, 443, anything, anything, anything).never
+    TCPSocket.expects(:open).with("127.0.0.1", 443, anything, anything, anything).never
     TCPSocket.expects(:open).with("1.2.3.4", 443, anything, anything, anything).throws(:dns_not_rebound)
 
     assert_throws :dns_not_rebound do
@@ -62,12 +64,14 @@ class Opengraph::FetchTest < ActiveSupport::TestCase
     WebMock.stub_request(:get, "https://www.other.com/")
       .to_return(status: 302, headers: { location: @url.to_s })
 
-    # Allow but interrupt a real connection to demonstrate that we connect
-    # to a resolved IP, not a hostname to re-resolve.
+    # Simulate DNS rebinding on the redirect resolve (the first stub yield is
+    # consumed by Opengraph::Fetch#resolve_redirect; a subsequent re-resolve
+    # would yield 127.0.0.1).
     WebMock.disable_net_connect! allow: [ @url.host ]
-    stub_dns_resolution("1.2.3.4")
+    stub_dns_resolution_sequence([ "1.2.3.4" ], [ "127.0.0.1" ])
     # Match first two args, allow any additional args (nil, nil, open_timeout: 60)
     TCPSocket.expects(:open).with(@url.host, 443, anything, anything, anything).never
+    TCPSocket.expects(:open).with("127.0.0.1", 443, anything, anything, anything).never
     TCPSocket.expects(:open).with("1.2.3.4", 443, anything, anything, anything).throws(:dns_not_rebound)
 
     assert_throws :dns_not_rebound do

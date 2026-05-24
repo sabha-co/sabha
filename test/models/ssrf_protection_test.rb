@@ -81,22 +81,32 @@ class SsrfProtectionTest < ActiveSupport::TestCase
     assert_nil SsrfProtection.resolve_public_ip("compat-public.example.com")
   end
 
-  test "resolve! raises Violation when no address resolves" do
+  test "resolve! raises Unresolvable when no address resolves" do
     stub_dns_resolution
-    assert_raises SsrfProtection::Violation do
+    assert_raises SsrfProtection::Unresolvable do
       SsrfProtection.resolve!("nonexistent.example.com")
     end
   end
 
-  test "resolve! raises Violation when only blocked addresses resolve" do
+  test "resolve! raises PrivateAddress when only blocked addresses resolve" do
     stub_dns_resolution("192.168.1.1")
-    assert_raises SsrfProtection::Violation do
+    assert_raises SsrfProtection::PrivateAddress do
       SsrfProtection.resolve!("private.example.com")
     end
+  end
+
+  test "resolve! Unresolvable and PrivateAddress both descend from Violation" do
+    assert SsrfProtection::Unresolvable < SsrfProtection::Violation
+    assert SsrfProtection::PrivateAddress < SsrfProtection::Violation
   end
 
   test "resolve! returns the IP for public hostnames" do
     stub_dns_resolution("93.184.216.34")
     assert_equal "93.184.216.34", SsrfProtection.resolve!("example.com")
+  end
+
+  test "blocked_address? treats unparseable inputs as blocked" do
+    assert SsrfProtection.blocked_address?("not-an-ip")
+    assert SsrfProtection.blocked_address?("")
   end
 end
