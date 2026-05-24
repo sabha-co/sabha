@@ -11,9 +11,11 @@ module Console
     end
 
     def tenant(external_id)
-      ApplicationRecord.current_tenant = external_id.to_s
       workspace = Workspace.find_by(external_id: external_id)
-      puts "Switched to tenant #{external_id} (#{workspace&.name || 'unknown'})"
+      return puts "No workspace with external_id #{external_id}" unless workspace
+
+      ApplicationRecord.current_tenant = external_id.to_s
+      puts "Switched to tenant #{external_id} (#{workspace.name})"
     end
 
     def current_tenant
