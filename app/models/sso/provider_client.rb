@@ -69,7 +69,7 @@ class Sso::ProviderClient
 
     uri = URI.parse(url)
 
-    unless uri.is_a?(URI::HTTPS) && uri.host == return_host && uri.path == return_path && uri.userinfo.blank?
+    unless valid_scheme?(uri) && uri.host == return_host && uri.path == return_path && uri.userinfo.blank?
       raise InvalidReturnUrl, "Untrusted SSO return URL"
     end
 
@@ -77,4 +77,13 @@ class Sso::ProviderClient
   rescue URI::InvalidURIError
     raise InvalidReturnUrl, "Invalid SSO return URL"
   end
+
+  private
+    # Production requires HTTPS; development allows plain HTTP so the local
+    # cloud.lvh.me ↔ lvh.me SSO loop works without TLS.
+    def valid_scheme?(uri)
+      return true if uri.is_a?(URI::HTTPS)
+
+      Rails.env.development? && uri.is_a?(URI::HTTP)
+    end
 end

@@ -50,7 +50,7 @@ Rails.application.configure do
   config.active_record.verbose_query_logs = true
 
   # Allow the app to be served from any host.
-  config.hosts = []
+  config.hosts << ".lvh.me"
 
   # Append comments with runtime information tags to SQL queries in logs.
   config.active_record.query_log_tags_enabled = true
