@@ -341,20 +341,7 @@ main#main-content:focus {
 
 /* Text size and color utilities are defined in utilities.css (vanilla CSS).
    They load after this Tailwind layer so those definitions always win.
-   Do not duplicate .txt-* classes here. */
-
-/* Spacing utilities */
-.pad {
-  @apply px-[var(--spacing-inline)] py-[var(--spacing-block)];
-}
-
-.margin-block {
-  @apply my-[var(--spacing-block)];
-}
-
-.gap {
-  @apply gap-x-[var(--spacing-inline)] gap-y-[var(--spacing-block)];
-}
+   Do not duplicate .txt-* or spacing classes (.pad/.gap/.margin-block) here. */
 
 /* Input component classes - migrated from inputs.css */
 /* Base input styling maintained in CSS file for complex pseudo-classes and nested selectors */
