@@ -13,6 +13,10 @@
   }
 }
 
+.composer__input-hint {
+  align-self: center;
+}
+
 /* Attachments */
 .composer__attachment-btn {
   --hover-filter: brightness(0.85);
