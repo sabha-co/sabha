@@ -12,7 +12,7 @@ class GlobalSession < UntenantedRecord
 
   validates :token, presence: true, uniqueness: true
 
-  scope :active, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
+  scope :active, -> { where(expires_at: nil).or(where(expires_at: Time.current..)) }
 
   before_create :set_expiration
 

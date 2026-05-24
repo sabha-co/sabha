@@ -20,7 +20,7 @@ class AuthCode < UntenantedRecord
   validates :code, presence: true, uniqueness: true
   validates :purpose, presence: true
 
-  scope :active, -> { where("expires_at > ?", Time.current) }
+  scope :active, -> { where(expires_at: Time.current..) }
 
   before_validation :generate_code, on: :create
   before_validation :set_expiration, on: :create

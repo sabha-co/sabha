@@ -16,7 +16,7 @@ class AuthToken < ApplicationRecord
 
   before_validation :generate_code
 
-  scope :valid, -> { where(used_at: nil).where("expires_at > ?", Time.current) }
+  scope :valid, -> { where(used_at: nil, expires_at: Time.current..) }
 
   def deliver_later
     AuthTokenMailer.otp(self).deliver_later
