@@ -17,7 +17,7 @@ module Message::Attachment
 
   included do
     has_one_attached :attachment do |attachable|
-      attachable.variant :thumb, resize_to_limit: [ THUMBNAIL_MAX_WIDTH, THUMBNAIL_MAX_HEIGHT ]
+      attachable.variant :thumb, resize_to_limit: [ THUMBNAIL_MAX_WIDTH, THUMBNAIL_MAX_HEIGHT ], process: :later
     end
 
     validate :acceptable_attachment, if: :attachment?
