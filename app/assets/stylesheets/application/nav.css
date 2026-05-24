@@ -4,8 +4,8 @@
   display: flex;
   inset: 0 0 auto 0;
   inset-inline-end: var(--sidebar-width);
-  padding-block: var(--block-space);
-  padding-inline: calc(var(--inline-space) * 1.5) var(--inline-space-double);
+  padding-block: calc(var(--block-space) + env(safe-area-inset-top)) var(--block-space);
+  padding-inline: calc(var(--inline-space) * 1.5) calc(var(--inline-space-double) + env(safe-area-inset-right));
   pointer-events: none;
   position: fixed;
   row-gap: var(--block-space);

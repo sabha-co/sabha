@@ -9,7 +9,7 @@ class Session < ApplicationRecord
   before_create :set_defaults
   after_create_commit :update_user_last_authenticated_at
 
-  scope :active, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
+  scope :active, -> { where(expires_at: nil).or(where(expires_at: Time.current..)) }
 
   def self.start!(user_agent:, ip_address:)
     create! user_agent: user_agent, ip_address: ip_address

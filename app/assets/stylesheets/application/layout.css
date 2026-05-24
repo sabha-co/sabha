@@ -38,6 +38,7 @@ body.library-collapsed #sidebar {
   inset: 0;
   position: fixed;
   inline-size: 100vw; /* mobile default: full width */
+  padding-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
   transform: translate(100%);
 
   @media (min-width: 120ch) {
@@ -134,6 +135,7 @@ body.library-collapsed:has(#sidebar.open) {
     @media (max-width: 120ch) {
       inset: 0;
       position: fixed;
+      padding-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
       transform: translate(100%);
     }
   }
