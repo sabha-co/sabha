@@ -49,6 +49,7 @@ module Sabha
             root to: "saas/landing#show", as: :saas_root
 
             # Session (login/logout) - uses GlobalIdentity
+            get "/session/sso", to: "saas/single_sign_ons#show"
             resource :session, only: [ :new, :create, :destroy ], controller: "saas/sessions"
 
             # Auth code OTP verification
