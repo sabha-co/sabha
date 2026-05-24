@@ -208,7 +208,7 @@ trix-editor,
     }
   }
 
-  a {
+  a:not([class]) {
     color: var(--color-link);
   }
 
