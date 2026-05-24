@@ -14,6 +14,10 @@ class Accounts::BotsController < ApplicationController
   def create
     @bot = User.create_bot! bot_params
     redirect_to account_bot_url(@bot)
+  rescue ActiveRecord::RecordInvalid => e
+    @bot = e.record.is_a?(User) ? e.record : User.active_bots.new(bot_params.except(:webhook_url))
+    flash.now[:alert] = e.record.errors.full_messages.to_sentence
+    render :new, status: :unprocessable_entity
   end
 
   def show
@@ -26,6 +30,9 @@ class Accounts::BotsController < ApplicationController
   def update
     @bot.update_bot! bot_params
     redirect_to account_bot_url(@bot)
+  rescue ActiveRecord::RecordInvalid => e
+    flash.now[:alert] = e.record.errors.full_messages.to_sentence
+    render :edit, status: :unprocessable_entity
   end
 
   def destroy
