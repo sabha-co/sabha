@@ -115,7 +115,13 @@ module MessagesHelper
     when "sound"
       message_sound_presentation(message)
     else
-      auto_link h(ContentFilters.text_message_presentation_filters.apply(message.body.body)), html: { target: "_blank" }
+      # sanitize: false because the content already passed through ActionText's
+      # sanitizer (with SabhaActionTextSafelist's extensions). Letting auto_link
+      # re-sanitize with the default Rails safelist strips details/summary/
+      # turbo-frame and our popup data-* attributes from rendered mentions.
+      # When sanitize is disabled rails_autolink doesn't mark the result safe,
+      # so we do it ourselves.
+      auto_link(h(ContentFilters.text_message_presentation_filters.apply(message.body.body)), sanitize: false, html: { target: "_blank" }).html_safe
     end
   rescue Exception => e
     Sentry.capture_exception(e, extra: { message: message })

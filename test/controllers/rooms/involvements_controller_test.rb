@@ -54,4 +54,18 @@ class Rooms::InvolvementsControllerTest < ActionDispatch::IntegrationTest
     end
     end
   end
+
+  test "update honors a same-origin return_to" do
+    put room_involvement_url(rooms(:watercooler)),
+        params: { involvement: "mentions", return_to: "/rooms/#{rooms(:watercooler).id}" }
+
+    assert_redirected_to "/rooms/#{rooms(:watercooler).id}"
+  end
+
+  test "update rejects a cross-origin return_to and falls back to the room involvement" do
+    put room_involvement_url(rooms(:watercooler)),
+        params: { involvement: "mentions", return_to: "https://evil.example.com/steal" }
+
+    assert_redirected_to room_involvement_url(rooms(:watercooler))
+  end
 end

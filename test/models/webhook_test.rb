@@ -80,4 +80,26 @@ class WebhookTest < ActiveSupport::TestCase
         request.headers["X-Sabha-Delivery"].to_s.match?(/\A[0-9a-f-]{36}\z/)
     end
   end
+
+  test "url validation rejects malformed URLs" do
+    webhook = Webhook.new(user: users(:david), url: "not a url")
+    assert_not webhook.valid?
+    assert_includes webhook.errors[:url], "must be a valid HTTP(S) URL"
+  end
+
+  test "url validation distinguishes DNS failure from private addresses" do
+    stub_dns_resolution
+    unresolvable = Webhook.new(user: users(:david), url: "https://nowhere.example.com/hook")
+    assert_not unresolvable.valid?
+    assert_includes unresolvable.errors[:url], "could not be resolved"
+
+    stub_dns_resolution("192.168.1.1")
+    private_target = Webhook.new(user: users(:david), url: "https://internal.example.com/hook")
+    assert_not private_target.valid?
+    assert_includes private_target.errors[:url], "must not target private or internal networks"
+
+    stub_dns_resolution("93.184.216.34")
+    public_target = Webhook.new(user: users(:david), url: "https://example.com/hook")
+    assert public_target.valid?, public_target.errors.full_messages.to_sentence
+  end
 end

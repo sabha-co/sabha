@@ -48,4 +48,35 @@ class Accounts::BotsControllerTest < ActionDispatch::IntegrationTest
       assert_redirected_to account_bot_url(users(:bender))
     end
   end
+
+  test "create re-renders the form with a flash alert when the webhook URL is unresolvable" do
+    stub_dns_resolution
+
+    assert_no_difference [ -> { User.count }, -> { Webhook.count } ] do
+      post account_bots_url, params: { user: { name: "Doomed Bot", webhook_url: "https://nowhere.example.invalid/hook" } }
+    end
+
+    assert_response :unprocessable_entity
+    assert_match(/could not be resolved/i, flash[:alert])
+  end
+
+  test "create re-renders the form with a flash alert when the webhook URL targets a private network" do
+    stub_dns_resolution("192.168.1.1")
+
+    assert_no_difference [ -> { User.count }, -> { Webhook.count } ] do
+      post account_bots_url, params: { user: { name: "Doomed Bot", webhook_url: "https://internal.example.com/hook" } }
+    end
+
+    assert_response :unprocessable_entity
+    assert_match(/must not target private or internal networks/i, flash[:alert])
+  end
+
+  test "update re-renders the form with a flash alert when the new webhook URL is invalid" do
+    stub_dns_resolution("192.168.1.1")
+
+    put account_bot_url(users(:bender)), params: { user: { name: users(:bender).name, webhook_url: "https://internal.example.com/hook" } }
+
+    assert_response :unprocessable_entity
+    assert_match(/must not target private or internal networks/i, flash[:alert])
+  end
 end

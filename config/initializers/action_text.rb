@@ -1,3 +1,21 @@
+# Extend the rendering-time safelist for inline user popups (mentions). We
+# override sanitizer_allowed_tags / _allowed_attributes (rather than setting
+# ActionText::ContentHelper.allowed_tags directly) so ActionText's own
+# additions — action-text-attachment, figure/figcaption, and
+# ActionText::Attachment::ATTRIBUTES — keep flowing through.
+module SabhaActionTextSafelist
+  EXTRA_TAGS = %w[details summary section turbo-frame].freeze
+  EXTRA_ATTRIBUTES = %w[id data-controller data-action data-popup-orientation-top-class data-popup-target style].freeze
+
+  def sanitizer_allowed_tags
+    super + EXTRA_TAGS
+  end
+
+  def sanitizer_allowed_attributes
+    super + EXTRA_ATTRIBUTES
+  end
+end
+
 Rails.application.config.after_initialize do
   # Allow inline SVG images when rendering rich text content
   _original_verbose, $VERBOSE = $VERBOSE, nil
@@ -5,7 +23,5 @@ Rails.application.config.after_initialize do
   $VERBOSE = _original_verbose
   Loofah::HTML5::SafeList::ALLOWED_URI_DATA_MEDIATYPES << "image/svg+xml"
 
-  # Support inline user popups for mentions inside ActionText
-  Rails::HTML4::SafeListSanitizer.allowed_tags += %w[details summary section turbo-frame]
-  Rails::HTML4::SafeListSanitizer.allowed_attributes += %w[id data-controller data-action data-popup-orientation-top-class data-popup-target style]
+  ActionText::ContentHelper.prepend(SabhaActionTextSafelist)
 end

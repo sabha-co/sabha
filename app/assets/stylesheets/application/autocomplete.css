@@ -38,6 +38,7 @@
   margin: 0;
   padding: 0;
   position: relative;
+  vertical-align: middle;
 
   .attachment__toolbar {
     inset-block-start: 0;
@@ -56,46 +57,39 @@
   font-weight: 600;
   line-height: var(--avatar-size);
   margin: 0;
-  padding-inline-start: calc(
-    var(--avatar-size) + var(--inline-space) / 3
-  ) !important;
   position: relative;
+  vertical-align: middle;
+
+  details {
+    overflow: visible;
+  }
+
+  .mention__summary {
+    --hover-size: 0;
+
+    align-items: center;
+    cursor: pointer;
+    display: inline-flex;
+    gap: calc(var(--inline-space) / 3);
+    list-style: none;
+
+    &::-webkit-details-marker { display: none; }
+    &::marker { display: none; }
+  }
 
   .avatar {
     aspect-ratio: 1;
-    block-size: auto;
+    block-size: var(--avatar-size);
     border-radius: var(--avatar-border-radius);
     inline-size: var(--avatar-size);
-    inset-block: 0;
-    inset-inline: 0.1ch 0.3ch;
     letter-spacing: normal;
     margin: 0;
     overflow: clip;
-    position: absolute;
-  }
-
-  details.avatar {
-    overflow: visible;
-    letter-spacing: normal;
-
-    .avatar {
-      inset-inline: 0;
-      position: relative;
-      margin: auto;
-    }
-
-    .btn {
-      padding: var(--btn-padding, 0.5em 1.1em);
-    }
   }
 
   figcaption {
     display: none;
   }
-}
-
-.mention--everyone {
-  padding-inline-start: 0 !important;
 }
 
 blockquote .attachment--preview {

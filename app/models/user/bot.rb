@@ -14,8 +14,10 @@ module User::Bot
       webhook_secret = generate_webhook_secret
       webhook_url = attributes.delete(:webhook_url).presence || attributes.delete(:mentions_url).presence || attributes.delete(:everything_url).presence
 
-      User.create!(**attributes, bot_token: bot_token, webhook_secret: webhook_secret, role: :bot).tap do |user|
-        user.create_webhook!(url: webhook_url) if webhook_url.present?
+      transaction do
+        User.create!(**attributes, bot_token: bot_token, webhook_secret: webhook_secret, role: :bot).tap do |user|
+          user.create_webhook!(url: webhook_url) if webhook_url.present?
+        end
       end
     end
 

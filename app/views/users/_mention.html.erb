@@ -1,10 +1,11 @@
 <div class="mention" sgid="<%= user.attachable_sgid %>">
-  <%= tag.details class: "position-relative avatar",
+  <%= tag.details class: "position-relative",
                   data: { controller: "popup",
                           action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside",
                           popup_orientation_top_class: "popup-orientation-top" } do %>
-    <summary class="btn avatar">
+    <summary class="mention__summary">
       <%= avatar_tag user, loading: :lazy %>
+      <span class="mention__name"><%= user.name %></span>
     </summary>
 
     <div class="popup-menu message__avatar-menu border shadow" data-popup-target="menu">
@@ -13,6 +14,4 @@
       <% end %>
     </div>
   <% end %>
-
-  <%= user.name %>
 </div>

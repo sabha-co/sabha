@@ -12,12 +12,12 @@ class Webhook < ApplicationRecord
   private def url_not_targeting_private_network
     return if url.blank?
 
-    RestrictedHTTP::PrivateNetworkGuard.resolve(URI(url).host)
+    SsrfProtection.resolve!(URI(url).host)
   rescue URI::InvalidURIError
     errors.add(:url, "is not a valid URL")
-  rescue Resolv::ResolvError
+  rescue SsrfProtection::Unresolvable
     errors.add(:url, "could not be resolved")
-  rescue RestrictedHTTP::Violation
+  rescue SsrfProtection::PrivateAddress
     errors.add(:url, "must not target private or internal networks")
   end
 
@@ -72,7 +72,7 @@ class Webhook < ApplicationRecord
     end
 
     def http
-      resolved_ip = RestrictedHTTP::PrivateNetworkGuard.resolve(uri.host)
+      resolved_ip = SsrfProtection.resolve!(uri.host)
 
       Net::HTTP.new(uri.host, uri.port).tap do |http|
         http.use_ssl = (uri.scheme == "https")
