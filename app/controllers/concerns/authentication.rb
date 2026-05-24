@@ -180,7 +180,7 @@ module Authentication
 
     def safe_redirect_url?(url)
       uri = URI.parse(url)
-      uri.host.blank? || uri.host == URI.parse(root_url).hostname
+      uri.host.blank? || uri.host.casecmp?(URI.parse(root_url).hostname)
     rescue URI::InvalidURIError
       false
     end
