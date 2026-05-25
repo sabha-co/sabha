@@ -1,8 +1,10 @@
 # Self-Hosted SSO
 
-Sabha can use a parent application as a DiscourseConnect-compatible single sign-on provider. This is only for self-hosted installs. SaaS mode rejects `AUTH_METHOD=sso` at boot.
+If you already run a product, course site, or company app where users sign in, Sabha can attach to that existing login. Members open Sabha and are signed in automatically — no second account, no extra password, no separate verification email. Their account on your app *is* their account on Sabha.
 
-Use SSO when users should authenticate in another application and enter Sabha without local passwords or email codes.
+Sabha implements the [DiscourseConnect protocol](https://meta.discourse.org/t/setup-discourseconnect-official-single-sign-on-for-discourse-sso/13045) as the consumer side: Sabha redirects unauthenticated visitors to your existing app, your app authenticates the user and signs a small payload describing them, and Sabha trusts that payload to open a session. The protocol is the same one used by Discourse, so a provider you build for Discourse works for Sabha without changes.
+
+This is for self-hosted installs only. SaaS mode rejects `AUTH_METHOD=sso` at boot — multi-tenant Sabha uses its own cross-workspace identity flow instead.
 
 ## Before You Start
 
