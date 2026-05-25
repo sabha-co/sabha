@@ -85,6 +85,12 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 - **Bots in threads and DMs** — bots added to a thread or DM now receive every message, just like human members
 - **Bot avatars and management** — cleaner bot admin page, auto-generated robot avatars, bots shown in the members list
 
+### May 2026
+
+- **Email notifications** — opt in to bundled missed-mention emails (hourly or daily) and a weekly workspace activity digest.
+- **Notification preferences** — dedicated profile area for notification settings: global mode, email frequency, digest opt-in, push toggle
+- **SSO** — self-hosted Sabhas can hand off sign-in to an external identity provider; Sabha SaaS can act as that provider for self-hosted installs
+
 ### Multi-tenant SaaS features
 
 > The `saas/` directory is under the [Sabha SaaS License](https://github.com/sabha-co/sabha/blob/main/saas/LICENSE), not MIT.
@@ -102,3 +108,4 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 - **Workspace backups** — automated backups to R2 cloud storage with restore support
 - **Self-host export** — admins can download their workspace database to migrate to a self-hosted Sabha install
 - Disposable email addresses blocked on SaaS signup
+- **Ban and deactivate flow** — banned or deactivated members are signed out right away and emailed about it; admins can still find them in the member list to undo the action
