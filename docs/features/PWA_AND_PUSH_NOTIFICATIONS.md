@@ -7,27 +7,34 @@ Sabha's Progressive Web App and push notification architecture.
 ### Push Notification Flow
 
 ```
-Subscribe: notifications_controller.js -> PushManager.subscribe(VAPID) -> POST /user_push_subscriptions
-Trigger:   Message created -> room.receive -> Room::PushMessageJob (Solid Queue)
-Build:     Room::MessagePusher builds payload (title, body, path, badge count)
-Filter:    Only disconnected users (60s TTL) with "everything" or "mentions" involvement
-Deliver:   WebPush::Pool (50-thread pool) -> encrypted VAPID payload -> push service
-Display:   Service worker push event -> showNotification() + setAppBadge()
-Click:     notificationclick -> navigate to room path (focus existing or open new window)
+Subscribe:  notifications_controller.js -> PushManager.subscribe(VAPID) -> POST /user_push_subscriptions
+Trigger:    Message after_create_commit -> Notification::DispatchJob
+Route:      Message#notify_recipients -> deliver_push_for(activity_type)
+            (activity_type is one of :mention, :direct_message, :everyone_room_message, :thread_reply)
+Recipients: Message#push_recipient_user_ids_for + Membership::Notifiable#receives_push_for?
+Build:      Room::MessagePusher.payload_for builds the payload (title, body, path, badge count)
+Queue:      WebPush::Pool#queue (one job per (subscription, payload) pair)
+Deliver:    50-thread executor -> WebPush::Notification -> Net::HTTP::Persistent -> push service
+Display:    Service worker push event -> showNotification() + setAppBadge()
+Click:      notificationclick -> navigate to room path (focus existing or open new window)
 ```
+
+Routing decisions (who is eligible for which channel) are the broader notification system's responsibility — see [NOTIFICATIONS.md](NOTIFICATIONS.md). This doc covers the PWA shell and the push transport only.
 
 ### Key Files
 
 | Purpose | Path |
 |---------|------|
 | VAPID config | `config/initializers/vapid.rb` |
-| Pool + error handling | `config/initializers/web_push.rb`, `lib/web_push/pool.rb` |
-| SSRF protection | `app/models/ssrf_protection.rb` |
+| Pool + persistent-HTTP monkey-patch | `config/initializers/web_push.rb`, `lib/web_push/pool.rb` |
+| SSRF protection (allowlist + IP pin) | `app/models/ssrf_protection.rb`, `app/models/push/subscription.rb` |
 | Subscription model | `app/models/push/subscription.rb` |
 | Subscription controller | `app/controllers/users/push_subscriptions_controller.rb` |
-| Who gets notified | `app/models/room/message_pusher.rb` |
-| Job | `app/jobs/room/push_message_job.rb` |
-| Notification payload | `lib/web_push/notification.rb` |
+| Routing vocabulary | `app/models/notification/routing.rb` (`PUSH_TYPES`) |
+| Recipient resolution | `app/models/message.rb` (`push_recipient_user_ids_for`, `deliver_push_for`) |
+| Per-recipient eligibility | `app/models/membership/notifiable.rb` (`receives_push_for?`, `common_gates_pass?`) |
+| Payload builder | `app/models/room/message_pusher.rb` |
+| Notification payload (transport) | `lib/web_push/notification.rb` |
 | Frontend subscription | `app/javascript/controllers/notifications_controller.js` |
 | Service worker | `app/views/pwa/service_worker.js` |
 | Manifest | `app/views/pwa/manifest.json.erb` |
@@ -51,17 +58,19 @@ VAPID (Voluntary Application Server Identification for Web Push) lets the server
 - Private key signs each push delivery in `WebPush::Notification`
 - Subject set to `"mailto:#{Branding.support_email}"` (dynamic)
 
-### Notification Filtering (MessagePusher)
+### Notification Filtering
 
-Two paths for determining recipients:
+Push routing follows `Notification::Routing::PUSH_TYPES`, which currently fires for four activity types: `:mention`, `:direct_message`, `:everyone_room_message`, and `:thread_reply`. For each message, `Message#notify_recipients` resolves the recipient set per type and asks `Membership::Notifiable#receives_push_for?(activity_type)` for each candidate.
 
-1. **Users with `involvement: "everything"`** — all messages in the room
-2. **Users with `involvement: "mentions"`** — only when @mentioned (`@user`, `@everyone`, quoted authors)
+A membership receives a push only when **all** of the following hold (`receives_push_for?` + `common_gates_pass?`):
 
-Both paths additionally filter by:
-- `Membership.visible` (not invisible)
-- `Membership.disconnected` (not currently connected — 60 sec TTL on `connected_at`)
-- Not the message creator
+- The user has `push_enabled` and is not banned/deactivated.
+- The membership's `effective_involvement` (per-room value layered over the user's global mode) matches the activity type — e.g. `:mention` requires at least `:mentions`, room messages require `:everything`.
+- The user is **not currently connected** to that room — `Membership::Connectable#connected?` uses a 60-second TTL on `last_connected_at`.
+- The user is not the message author and is not blocked by the author (or vice versa — block is symmetric for `can_ping?`).
+- The user has at least one valid `Push::Subscription` row.
+
+Direct messages, `@everyone` broadcasts, and thread replies have type-specific recipient resolution but share the same per-recipient gates. See [NOTIFICATIONS.md](NOTIFICATIONS.md#5-routing-dispatcher) for the full dispatcher.
 
 ### Payload Structure
 
@@ -81,15 +90,20 @@ Badge count (unread rooms) included in all payloads.
 
 ### Delivery Infrastructure (WebPush::Pool)
 
-- **Delivery pool:** 50 max threads, 10,000 queue size
-- **Invalidation pool:** 1 thread (serial cleanup of expired subscriptions)
-- **Persistent HTTP:** `Net::HTTP::Persistent` reuses connections
-- **Error handling:** `WebPush::ExpiredSubscription` and `OpenSSL::OpenSSLError` trigger auto-destroy of subscription
-- **SaaS support:** captures and restores tenant context across thread boundaries
+- **Delivery pool:** 50 max threads, 10,000 queue size.
+- **Invalidation pool:** 1 thread (serial cleanup of expired subscriptions).
+- **Persistent HTTP:** `Net::HTTP::Persistent` with a 150-conn pool. The `WebPush` gem doesn't use it natively, so `config/initializers/web_push.rb` monkey-patches a `WebPush::PersistentRequest` adapter onto the gem.
+- **Error handling:** `WebPush::ExpiredSubscription` (HTTP 404/410) and `OpenSSL::OpenSSLError` trigger auto-destroy of the offending subscription on the invalidation pool.
+- **SaaS support:** captures and restores `ActsAsTenant.current_tenant` across thread boundaries so deliveries run with the correct tenant DB connection.
+- **SSRF protection:** `Push::Subscription` validates the endpoint URL against an HTTPS-only allowlist (`PERMITTED_ENDPOINT_HOSTS`) at create time and pins the resolved IP (`resolved_endpoint_ip`) so a later DNS swap can't redirect a delivery to an internal host.
 
 ## Design Decisions
 
-- **Connection-aware delivery**: Sabha tracks `connected_at` on memberships with a 60-second TTL. Users actively viewing a room don't receive push notifications, reducing noise.
+- **Connection-aware delivery**: Sabha tracks `last_connected_at` on memberships with a 60-second TTL. Users actively viewing a room don't receive push notifications, reducing noise.
 - **Room-type payloads**: Notification payloads are built based on room type (direct, shared, thread) rather than event type, keeping the payload logic simple.
 - **PWA install prompt**: `pwa_install_controller.js` intercepts `beforeinstallprompt` with platform-specific install instructions rather than relying on native browser prompts.
 - **Dynamic VAPID subject**: Uses `"mailto:#{Branding.support_email}"` so push service contact info matches your deployment.
+
+## iOS Safari
+
+Web push on iOS requires the site to be installed as a PWA — the user must add Sabha to the home screen first, then grant notification permission from within the installed app. Safari in the standard browser tab cannot subscribe. `pwa_install_controller.js` surfaces the "Add to Home Screen" instructions for iOS users who tap the enable-notifications affordance before installing.

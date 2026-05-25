@@ -23,6 +23,11 @@ Import Slack workspace data into Sabha, enabling teams to migrate their chat his
    bin/rails slack:import[/tmp/slack_export.zip]
    ```
 
+   Set `SKIP_VALIDATION=1` to bypass the pre-import validation pass:
+   ```bash
+   SKIP_VALIDATION=1 bin/rails slack:import[/tmp/slack_export.zip]
+   ```
+
 Example output:
 ```
 Validating Slack export: /tmp/slack_export.zip
@@ -102,38 +107,43 @@ export.zip/
 
 | Slack Entity | Sabha Entity | Notes |
 |--------------|-----------------|-------|
-| User | User | Placeholder (no email, claimable later) |
-| Public Channel | Rooms::Open | Auto-membership for listed members |
-| Private Channel | Rooms::Closed | Explicit membership |
-| DM | Rooms::Direct | 2+ participant matching |
-| Thread (thread_ts) | Rooms::Thread | Linked to parent message |
+| User | User | Placeholder account (no email, no password) |
+| Public Channel | Rooms::Open | All currently-active Sabha users are granted membership (not only the channel's listed members) |
+| Private Channel | Rooms::Closed | Explicit membership for users named in the export |
+| DM | Rooms::Direct | Matched to the original Slack participants via `Rooms::Direct.find_or_create_for` |
+| Thread (`thread_ts`) | Rooms::Thread | Linked to parent message; all members of the parent room are added to the thread |
 | Reaction | Boost | Emoji name → Unicode mapping |
-| `<@U123>` mention | `@username` | Plain text conversion |
+| `<@U123>` mention | `@username` | Plain-text conversion (see below) |
 | `<#C123\|name>` | `#name` | Channel reference |
-| `<!channel>` | `@channel` | Broadcast mention |
+| `<!channel>`, `<!here>`, `<!everyone>` | `@channel`, `@here`, `@everyone` | Broadcast mention |
+
+If the import is run on a workspace with no administrator, the importer creates a synthetic "Slack Import" administrator user as the message author of record (see `Slack::ImportContext`). It is not deleted at the end of the run.
 
 ## User Handling
 
 Imported users are created as **placeholder accounts**:
-- No email address (bypasses validation)
-- No password (cannot log in)
+- No email address (bypasses validation via `validate: false`)
+- No password — they cannot log in
 - Marked with `slack_import: true` in preferences
-- Stores `slack_user_id` and `slack_username` for future claiming
+- Store `slack_user_id` and `slack_username` for future correlation
 
-Users can later claim their imported account by:
-1. Signing up with matching email
-2. Admin manually linking accounts
+**Bot users and deleted Slack users are skipped entirely** — their accounts are not created, and any messages they authored are dropped with a warning at import time.
+
+There is currently no built-in flow for the original Slack user to claim their imported account. Admins who want to associate a real user with imported history can update the placeholder user's `email_address` and `password` via the console or admin UI; that's it. (A signup-time matcher and an admin-side claim flow are not implemented.)
 
 ## Message Conversion
 
 ### Mentions
 ```
-<@U12345ABC>           → @username (first name)
-<@U12345ABC|display>   → @username
+<@U12345ABC>           → @firstname  (lowercased first name from the user's Slack profile)
+<@U12345ABC|display>   → @firstname  (the |display segment is ignored)
+<@UNKNOWN>             → @unknown    (if the user ID isn't in users.json)
 <!channel>             → @channel
 <!here>                → @here
 <!everyone>            → @everyone
 ```
+
+Mentions resolve through the user map built from `users.json` and always use the lowercased first name — display-name overrides are not honored.
 
 ### Links
 ```
@@ -196,7 +206,7 @@ All imports are wrapped in a database transaction - if any step fails, all chang
 Run the test suite:
 
 ```bash
-bin/rails test test/services/slack_importer_test.rb
+bin/rails test test/lib/slack/importer_test.rb
 ```
 
 Test fixtures are in `test/fixtures/slack_export/`:
@@ -207,8 +217,12 @@ Test fixtures are in `test/fixtures/slack_export/`:
 
 ## Limitations
 
-- **No file attachments**: Only message text is imported
-- **No avatar images**: Users get default avatars
-- **No private data without Business+**: Free/Pro exports only include public channels
-- **No real-time sync**: One-time import only
-- **Timestamp precision**: Preserved to the second (Slack uses microseconds)
+- **No file attachments** — only message text is imported.
+- **No avatar images** — users get default avatars.
+- **No private data without Business+** — Free/Pro exports only include public channels.
+- **No real-time sync** — one-time import only.
+- **Timestamp precision** — preserved to the second (Slack uses microseconds).
+- **Bot and deleted users are skipped** — neither the user nor their messages are imported.
+- **Empty post-conversion bodies are dropped silently** — if a Slack message converts to a blank string after mention/link normalization, the message is not created.
+- **Public-channel membership is everyone-wide** — every active Sabha user is added to each imported public channel, not just the users listed as members in the export.
+- **No claim flow** — placeholder users cannot self-claim; admins must edit the placeholder's email/password manually.

@@ -1,18 +1,17 @@
 # Sabha notifications architecture
 
-**Area:** All notification channels — in-app rows, push, missed-notification email (bundled), weekly activity digest email.
-**Source of truth for:** structure, components, and data shapes.
+All notification channels — in-app rows, push, missed-notification email (bundled), weekly activity digest email — flow through one dispatcher. This doc maps the shipped components; it is not a forward plan.
 
 ---
 
-## 1. Goals (architectural)
+## 1. Architectural shape
 
-1. **One dispatcher** decides what fires per recipient per event across all channels. No more split decision trees in `Room::MessagePusher`, `Message` callbacks, and "email nowhere."
-2. **Bundled missed-notification email** instead of per-event delayed sends. Hourly or daily bundles, user-selectable.
-3. **Separate weekly digest pipeline.** Different copy, different cadence, different opt-out, different gates. It is not a degenerate bundle.
+1. **One dispatcher** decides what fires per recipient per event across all channels.
+2. **Missed-notification email is bundled**, not per-event. Hourly or daily windows, user-selectable.
+3. **Weekly digest is a separate pipeline** — different copy, cadence, opt-out, gates.
 4. **Send-time revalidation** is the cancellation path. State changes during a bundle window (return, block, delete, opt-out) drop items at delivery time.
 5. **Tenant-safe by construction.** Per-workspace settings, per-workspace bundles, per-workspace digest. Identity and email address are the only untenanted touchpoints.
-6. **Default safe.** Email feature-flagged off at the workspace level. Both email surfaces default off for users.
+6. **Default safe.** Email is gated off at the workspace level. Both email surfaces default off for users.
 
 ## 2. Channels
 
@@ -29,7 +28,7 @@ Channels are independent. A user can be a row recipient and not a push recipient
 
 Dispatcher symbol vocabulary (used at routing time only — does not all map 1:1 to persisted `Notification.activity_type` values):
 
-| `activity_type` | Channels (v1) |
+| `activity_type` | Channels |
 |---|---|
 | `:mention` (incl. `@everyone`) | in-app row, push, missed-notification email |
 | `:direct_message` | push, missed-notification email |
@@ -39,7 +38,7 @@ Dispatcher symbol vocabulary (used at routing time only — does not all map 1:1
 
 `:direct_message` and `:everyone_room_message` are dispatcher-only — they never produce `Notification` rows. The persisted `Notification#activity_type` vocabulary stays `%w[mention boost thread_reply]`. The dispatcher's symbol set is a strict superset used only at routing time.
 
-Out of scope for email in v1: `:thread_reply` (deferred — see § 13), `:boost` (no precedent in Slack/Discord; not planned), regular room messages. Encoded by `Notification::Routing::EMAIL_TYPES = %i[mention direct_message]`.
+Email is intentionally narrow: `:thread_reply` is currently not emailed (see § 13), `:boost` is not emailed, regular room messages are not emailed. Encoded by `Notification::Routing::EMAIL_TYPES = %i[mention direct_message]`.
 
 **Routing vocabulary lives on `Notification::Routing`**, not on `Membership::Notifiable`. The matrix above is encoded as constants on a small module:
 
@@ -91,7 +90,7 @@ Channel-specific gates:
 
 `workspace_locally_away?` returns true when the user's most recent connection in any of this workspace's memberships is more than `Membership::Connectable::ACTIVITY_TIERS[:away]` (1 hour) ago, or never. The `:away` tier is chosen over the tighter `:active` tier (10 minutes) because email is asking a different question than UI presence: not "should we show a green dot" but "has the user been gone long enough that an email is the right way to reach them?" A brief mid-window visit (e.g. user pops in for 2 minutes during an hourly bundle) means the user could plausibly have seen the message live, so the bundle should drop at delivery time. Using the 10-minute tier would email those users; using the 1-hour tier does not.
 
-**Snooze / DND is not a v1 feature, in any form.** No `snooze_until` column, no `snooze_indefinite` flag, no presence-as-snooze fallback beyond `workspace_locally_away?`. All "user is unavailable" suppression rides on `workspace_locally_away?` (passive presence) and the per-channel master switches (`missed_email_enabled`, `push_enabled`).
+**Snooze / DND is not supported, in any form.** No `snooze_until` column, no `snooze_indefinite` flag, no presence-as-snooze fallback beyond `workspace_locally_away?`. All "user is unavailable" suppression rides on `workspace_locally_away?` (passive presence) and the per-channel master switches (`missed_email_enabled`, `push_enabled`).
 
 ## 5. Routing dispatcher
 
@@ -106,33 +105,31 @@ Message#notify_recipients
        │
        ▼
 For each activity_type in Room#applicable_activity_types(message):
-       ├──▶ create_notification_rows_for(activity_type)        (in-app)
-       ├──▶ deliver_push_for(activity_type)                    (push)
-       └──▶ enqueue_missed_email_candidates_for(activity_type) (bundle add)
+       ├──▶ deliver_in_app_row_for(activity_type, actor:)        (in-app row)
+       ├──▶ deliver_push_for(activity_type)                      (push)
+       └──▶ enqueue_missed_email_candidates_for(activity_type)   (bundle add)
 
-(Weekly digest is independent — see § 9.)
+(Weekly digest is independent — see § 8.)
 ```
 
-**One job per message**, not one job per `(message, activity_type)` pair. The job is a shallow wrapper that calls `message.notify_recipients`. Inside, the message asks `Room#applicable_activity_types(message)` and runs each channel for each applicable type. Substance lives on the model.
+**One job per message**, not one job per `(message, activity_type)` pair. `Notification::DispatchJob` is a shallow wrapper that calls `message.notify_recipients`; the message then asks `Room#applicable_activity_types(message)` and runs each channel for each applicable type.
 
-**Why one job per message:** a single message that is both `:mention` and `:everyone_room_message` would otherwise enqueue two jobs, each loading the same message, room, and memberships. The activity-type vocabulary stays an internal organizing principle inside `notify_recipients`, not a job-interface argument.
+**In-app rows currently flow through legacy callbacks, not the dispatcher.** `deliver_in_app_row_for` is a no-op pass-through — the existing `create_mention_notifications` and `create_thread_reply_notifications` callbacks on `Message` still write the `Notification` rows. The dispatcher branch is wired so a future move of row creation into the dispatcher requires no caller changes. This is intentional: in-app rows are the most-tested path and were not in scope for the dispatcher rewrite.
 
-**Boost dispatch is the one exception** — boost is triggered after a `Boost` is created, not after a `Message`. Boost still uses `Notification::DispatchJob.perform_later(message, only: :boost, actor: booster)` to dispatch the single type with a non-creator actor. This is the only call site that uses `only:`.
+**Boost is the one call site that passes `only:`.** Boost dispatch fires after a `Boost` is created, not after a `Message`, and calls `Notification::DispatchJob.perform_later(message, only: :boost, actor: booster)` to dispatch the single type with a non-creator actor.
 
-**`Message` after-commit callback ordering matters.** `Message` already has eight `after_create_commit` callbacks (see `app/models/message.rb`). The new dispatch callback must fire **after** `create_mention_notifications` and `update_thread_reply_count`, because the dispatcher reads mention notifications and thread-count state. Document the order explicitly when adding the callback; do not rely on declaration order being load-bearing — make it explicit via callback name + optional `if:` checks.
-
-**Recipient sets are channel-specific.** Row recipients can be broader than push recipients (e.g. `@everyone` creates rows for all room members but pushes only to `involved_in_mentions ∩ involved_in_everything`-disjoint sets). Email recipients follow the row set, then narrow via the email gate.
+**Recipient sets are channel-specific.** Row recipients can be broader than push recipients (e.g. `@everyone` creates rows for all room members but pushes only to the involvement-eligible subset). Email recipients follow the row set, then narrow via the email gate.
 
 ### 5.1 Push delivery details
 
-`Room::MessagePusher` survives, but its scope narrows. Today (`app/models/room/message_pusher.rb`) it does both routing (`push_to_users_involved_in_everything` / `push_to_users_involved_in_mentions`) and payload formatting (`build_payload` with the two-branch `room.direct?` shape). After this change:
+Push splits cleanly between recipient resolution and payload formatting:
 
-- **Recipient resolution moves up to `Message`.** `Message#push_recipient_user_ids_for(activity_type)` returns the candidate user-id set per activity type. `Membership::Notifiable#receives_push_for?` filters those candidates per recipient. The `Membership.involved_in_everything` / `Membership.involved_in_mentions` scopes still drive the disjoint subsets but are now invoked from `Message`, not `Room::MessagePusher`.
-- **Payload formatting stays in `Room::MessagePusher#build_payload`.** The two-branch `room.direct?` shape is preserved verbatim — same direct/shared push copy as today. `Message#deliver_push_for(activity_type)` builds the payload via `Room::MessagePusher.new(room:, message:).build_payload` (or a class-method wrapper) and queues delivery through the existing `Rails.configuration.x.web_push_pool`.
-- **No `Notification::PushTarget` plugin hierarchy in v1.** Fizzy's shape (`Notification::PushTarget::Web`, with extension points for APNs / FCM) is the right pattern when a second delivery target lands. Until then, single-target delivery via `web_push_pool` stays inline.
-- **No `Notification::*Payload` class hierarchy in v1.** Push copy does not diverge per activity type today — only by `room.direct?`. When copy *does* diverge per type (e.g. boost push gets a distinct shape, or mention push wants a different title than DM push), mirror Fizzy's `Notification::DefaultPayload` / `EventPayload` / `MentionPayload` shape. Defer until the divergence is real.
+- **Recipient resolution lives on `Message`.** `Message#push_recipient_user_ids_for(activity_type)` returns the candidate user-id set per activity type; `Membership::Notifiable#receives_push_for?` filters those candidates per recipient. The `Membership.involved_in_everything` / `Membership.involved_in_mentions` scopes drive the disjoint subsets and are invoked from `Message`.
+- **Payload formatting lives on `Room::MessagePusher`.** `Room::MessagePusher.payload_for(room:, message:)` returns the push payload, with a two-branch `room.direct?` shape (different copy for DMs vs shared rooms). `Message#deliver_push_for` queues delivery through `Rails.configuration.x.web_push_pool`.
 
-**Why push is not driven by `Notification.after_save_commit` (Fizzy's pattern):** two of Sabha's five dispatcher activity types (`:direct_message`, `:everyone_room_message`) never produce `Notification` rows, so a Notification-driven push trigger would lose those channels entirely. Sabha's push driver must sit at the `Message` level. Fizzy's `Notification::Pushable` concern (`fizzy/app/models/notification/pushable.rb`) is the prior art for the *target* hierarchy and *payload* hierarchy when v1.1 needs them — it is not the right shape for the dispatch trigger.
+The push driver sits at the `Message` level (not on `Notification.after_save_commit`) because two of the five dispatcher activity types — `:direct_message` and `:everyone_room_message` — never produce `Notification` rows. A Notification-driven trigger would lose those channels.
+
+Single-target delivery (browser WebPush) is inline today. If a second delivery target lands (APNs, FCM), the right move is a small `Notification::PushTarget` hierarchy parallel to `Room::MessagePusher`; no such hierarchy exists yet.
 
 ## 6. Data models
 
@@ -144,13 +141,13 @@ For each activity_type in Room#applicable_activity_types(message):
 | `mode` | string enum | `nothing` / `mentions_and_dms` (default) / `all`. Default involvement for new memberships + soft suppressor for outbound channels. |
 | `missed_email_enabled` | boolean, default `false` | Master switch for missed-notification email. |
 | `email_frequency` | string enum, default `hourly` | `hourly` / `daily`. Bundle window length. |
-| `weekly_digest_subscribed` | boolean, default `true` | Member-level digest opt-out. Defaults to subscribed so an admin enabling the digest reaches existing members immediately (PRD § Product principles #6: weekly general activity is "a workspace/admin choice with member opt-out"). Independent of `missed_email_enabled`. Aggregate exposure is gated by `account.weekly_digest_enabled` (default `false`). |
+| `weekly_digest_subscribed` | boolean, default `true` | Member-level digest opt-out. Defaults to subscribed so an admin enabling the digest reaches existing members immediately. Independent of `missed_email_enabled`. Aggregate exposure is gated by `account.weekly_digest_enabled` (default `false`). |
 | `push_enabled` | boolean, default `true` | Master switch for WebPush. |
 | `last_digest_sent_at` | datetime, nullable | Dedup guard for the weekly digest job. |
 
 ### 6.2 `Notification::Bundle` (new, tenanted)
 
-A per-user time window that accumulates eligible missed-notification candidates. Inspired by Fizzy's `Notification::Bundle`.
+A per-user time window that accumulates eligible missed-notification candidates.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -182,7 +179,7 @@ Unique index: `(bundle_id, message_id, kind)` — a single message can produce a
 
 **Why `kind` instead of `activity_type`:** the column is **not** the same vocabulary as `Notification.activity_type`. Bundle items include `:direct_message` (which never produces a `Notification` row); `Notification.activity_type` does not. Sharing the column name across two non-equal vocabularies would breed bugs ("why is there no Notification with `activity_type = 'direct_message'`?"). A different column name makes the split honest.
 
-**Why a separate item table instead of attaching `Notification` rows to bundles:** `:direct_message` does not create `Notification` rows in v1, and we don't want bundling to force a UX change to the Activity tab. Bundle items are an email-only concern and stay isolated.
+**Why a separate item table instead of attaching `Notification` rows to bundles:** `:direct_message` does not create `Notification` rows, and bundling shouldn't force a UX change to the Activity tab. Bundle items are an email-only concern and stay isolated.
 
 ### 6.4 Existing tables — touched columns
 
@@ -250,36 +247,36 @@ Bundle window is the cooldown. There is no separate per-membership cooldown. A s
 
 ### 7.6 Bundle garbage collection
 
-Delivered or canceled bundles are pruned **inside the existing weekly digest job's per-workspace loop** (see § 8.1) — no separate cron entry. At the top of each per-workspace digest run, before iterating subscribed members, the job runs:
+Delivered or canceled bundles are pruned by `Notification::Bundle.gc_terminal!`, called at the top of `Notification::WeeklyDigestJob#perform` once per per-tenant digest run. The class method prunes:
 
 ```ruby
-Notification::Bundle.where("delivered_at IS NOT NULL OR canceled_at IS NOT NULL")
-                    .where("updated_at < ?", 90.days.ago)
-                    .delete_all
+where("delivered_at IS NOT NULL OR canceled_at IS NOT NULL")
+  .where("updated_at < ?", Notification::Bundle::GC_RETENTION.ago)  # 90 days
+  .delete_all
 ```
 
-`Notification::BundleItem belongs_to :bundle, dependent: :delete_all` cascades the items. 90 days is chosen because it covers any reasonable support-investigation horizon ("why did I not get an email three months ago") without leaving terminated bundles around indefinitely.
+`Notification::BundleItem belongs_to :bundle, dependent: :delete_all` cascades the items. The 90-day retention covers any reasonable support-investigation horizon ("why did I not get an email three months ago") without leaving terminated bundles around indefinitely.
 
-Active bundles (`delivered_at IS NULL AND canceled_at IS NULL`) are never pruned by this job. A user who stays away forever continues to accumulate active bundles at the bundle-window cadence; that is acceptable because the active set per user is bounded (one at a time, due to the partial unique index in § 6.2).
+Active bundles (`delivered_at IS NULL AND canceled_at IS NULL`) are never pruned. A user who stays away forever continues to accumulate active bundles at the bundle-window cadence; that is acceptable because the active set per user is bounded to one at a time (partial unique index, § 6.2).
 
-Folding GC into the weekly digest loop avoids introducing a second per-workspace cron concept. If the weekly digest job is later disabled or reshaped, GC needs to find a new home — note this in any future digest-removal proposal.
+GC piggybacks on the weekly digest's per-tenant cadence rather than introducing a second per-workspace cron concept. If the digest job is ever disabled, GC needs to find a new home.
 
 ### 7.7 Idempotent delivery on retry
 
-`BundleDeliveryJob` is retryable by Solid Queue on transient failure (5xx provider errors, network timeouts, rate limits). A naive deliver-then-set-`delivered_at` shape has a race window: if the mailer call succeeds but the subsequent `delivered_at` write fails, the next retry would re-send. The doc commits to one safeguard:
+`BundleDeliveryJob` is retryable by Solid Queue on transient failure (5xx provider errors, network timeouts, rate limits). A naive deliver-then-set-`delivered_at` shape has a race window: if the mailer call succeeds but the subsequent `delivered_at` write fails, the next retry would re-send.
 
-**Provider-side idempotency key, stable per bundle.** Every send passes `idempotency_key: "bundle-#{bundle.id}"` (or equivalent provider-specific parameter):
+**Mitigation: a stable per-bundle idempotency key on the outbound mail.** `MissedNotificationsMailer#bundle` sets a header:
 
-- **Resend** — `idempotency_key:` parameter on `Resend::Emails.send`. Resend deduplicates server-side for 24 hours; second call returns the same `id` without re-sending.
-- **SES** — `MessageDeduplicationId` (FIFO-style dedup) via the SES Configuration Set, OR client-side `idempotency_key` via the v2 SDK if available. Provider deduplicates within the configuration's dedup window.
+```ruby
+headers["X-Idempotency-Key"] = "bundle-#{bundle.id}"
+```
 
-After a successful API response, `bundle.delivered_at` is set. If the DB write then fails, Solid Queue retries the job; the retry's `deliver_now` call hits provider-side dedup and is a no-op for sending purposes; the retry then sets `delivered_at` again (idempotent at the DB level too — same value, same row).
+- **Resend** treats `X-Idempotency-Key` as its idempotency mechanism and dedups duplicate sends server-side for 24 hours. A retry after a worker crash hits Resend's cache and is a no-op for sending purposes; Sabha then sets `delivered_at` again (idempotent at the DB level too — same value, same row).
+- **SES** has no equivalent per-call idempotency parameter. A worker crash between SES accepting the message and Sabha writing `delivered_at` can cause one duplicate send under SES. The accepted tradeoff is that SES users see at most one extra delivery on a rare retry path; the alternative (atomic "claim before deliver") would risk permanent silent loss on transient failure.
 
-**Why provider-side dedup over a "claim before deliver" pattern.** An atomic-claim shape (`UPDATE bundles SET delivered_at = NOW() WHERE id = ? AND delivered_at IS NULL`) has the inverse failure mode: claim succeeds, delivery then fails transiently → retry sees `delivered_at` set → email is permanently lost. The provider-side dedup fails open (always sends if provider hasn't seen the key yet) rather than failing closed.
+**Idempotency key format is stable across retries.** `bundle-#{bundle.id}` is enough — `bundle.id` doesn't change between retries, and the bundle is a singleton per user-window so there's no collision risk across users. Per-attempt values (`Time.current`, retry count) must never be included.
 
-**Idempotency key format must be stable across retries.** `bundle-#{bundle.id}` is enough — `bundle.id` doesn't change between retries, and the bundle is a singleton per user-window so there's no collision risk across users. Do **not** include `Time.current` or any per-attempt value in the key.
-
-v1 does not have a per-membership cooldown column because bundling already coalesces. Provider idempotency is a separate concern about retry safety inside one bundle's delivery.
+Bundling itself supersedes the older per-membership 5-minute email cooldown; the bundle window *is* the cooldown.
 
 ### 7.8 Mailer
 
@@ -291,15 +288,20 @@ v1 does not have a per-membership cooldown column because bundling already coale
 - Token mints via `Rails.application.message_verifier(:email_unsubscribe)` with `{ user_id, tenant, surface: :missed_notifications }`.
 - Passes `idempotency_key: "bundle-#{bundle.id}"` on the underlying provider API call (see § 7.7).
 
-`surface:` field scopes the unsubscribe to this email surface — clicking unsubscribe in a missed-notification email does not unsubscribe from the weekly digest, and vice versa (PRD § Settings).
+`surface:` field scopes the unsubscribe to this email surface — clicking unsubscribe in a missed-notification email does not unsubscribe from the weekly digest, and vice versa.
 
 ## 8. Section B — Weekly activity digest subsystem
 
 ### 8.1 Pipeline
 
 ```
-Notification::WeeklyDigestJob (cron, weekly per workspace)
+Notification::WeeklyDigestRunnerJob   (cron entry point, untenanted queue DB)
         │
+        ▼  SaaS: ApplicationRecord.with_each_tenant { Notification::WeeklyDigestJob.perform_later }
+        ▼  Self-hosted: Notification::WeeklyDigestJob.perform_later
+Notification::WeeklyDigestJob          (per-tenant)
+        │
+        ▼  Notification::Bundle.gc_terminal!  (§ 7.6)
         ▼
 Account.weekly_digest_enabled? ──no──▶ exit
         │ yes
@@ -331,7 +333,7 @@ Content for a member is drawn from rooms the member can access (active membershi
 2. **Recently active rooms:** rooms with N+ messages in the past week that the member is a non-DM member of.
 3. **Excerpts:** small number of public/shared discussion excerpts. No DM content. No private rooms the member cannot access.
 
-The job stays conservative — no algorithmic ranking, no Discord-style Highlights (PRD § Competitive reference takeaway). If a member's accessible rooms are quiet, the digest is skipped, not padded.
+The job stays conservative — no algorithmic ranking, no Discord-style Highlights. If a member's accessible rooms are quiet, the digest is skipped, not padded.
 
 ### 8.4 Mailer
 
@@ -397,11 +399,11 @@ Email delivery uses provider-specific gems wired through standard `ActionMailer:
 | **SaaS** | Amazon SES | `aws-sdk-rails` | AWS-native; Sabha SaaS already runs on AWS infrastructure. Higher throughput ceiling once production access is granted. |
 | **Self-hosted** | Resend | `resend-rails` | Friendlier onboarding for self-hosters who don't want AWS complexity. Self-hosted operators verify their own domain in Resend. |
 
-**SaaS sender domain is shared** across all workspaces — single verified domain (e.g. `notifications@<sabha-domain>`). The workspace name appears in the `From` display and `Subject` (`"[#{Account.sole.name}] "` prefix), not in the domain. Per-workspace BYO sending domains are deferred to v1.1.
+**SaaS sender domain is shared** across all workspaces — single verified domain (e.g. `notifications@<sabha-domain>`). The workspace name appears in the `From` display and `Subject` (`"[#{Account.sole.name}] "` prefix), not in the domain. Per-workspace BYO sending domains are not currently supported.
 
 **Self-hosted operators must verify a sending domain in Resend** before email turns on. This is encoded by the account-level `email_notifications_enabled` flag staying `false` until DNS is configured. The setup itself (DKIM/SPF/DMARC records, Resend domain verification) is operator-side, documented separately from this architecture doc.
 
-**No provider abstraction in v1.** The doc names each provider directly. A `Notification::EmailProvider` interface that abstracts SES vs Resend would be premature — both providers already conform to the ActionMailer delivery_method API, so the abstraction is built into Rails. If a third provider arrives, then revisit.
+**No provider abstraction.** Each provider is named directly; both conform to the standard ActionMailer `delivery_method` API. A `Notification::EmailProvider` interface that abstracts SES vs Resend would be premature — the abstraction is already built into Rails.
 
 **Two operator-level gates above the per-workspace toggles** keep the dormant-by-default rollout honest and give the platform an emergency stop:
 
@@ -412,60 +414,44 @@ Email delivery uses provider-specific gems wired through standard `ActionMailer:
 
 `EMAIL_GLOBALLY_DISABLED=true` is the SaaS-side **kill switch**: a single env-var flip + restart halts all outbound notification mail across every tenant without touching any per-workspace state, so flipping it back off restores each workspace's prior preference. The gate is consulted at three sites (the admin partial, `Membership::Notifiable#account_email_notifications_enabled?`, and `Notification::WeeklyDigestJob`) so a stale `true` value in the DB can't trigger sends once the kill switch is armed. Documented in `docs/multi-tenant/DEPLOYMENT.md`.
 
-### 11.2 Bounce, complaint, and suppression handling — deferred to v1.1
+### 11.2 Bounce and complaint handling (not currently implemented)
 
-v1 ships **without** webhook-driven bounce/complaint suppression and **without** any SMTP-failure-rescue fallback. There is no `EmailDeliveryObserver`. Hard-bouncing addresses continue to receive mail until v1.1.
+Sabha does not currently auto-suppress hard-bouncing or complaining addresses. There is no `EmailDeliveryObserver`, no webhook ingestion, no SMTP-rescue fallback. Exposure is bounded by `account.email_notifications_enabled` defaulting off and by both providers (SES and Resend) maintaining their own server-side suppression lists.
 
-This is acceptable because:
+The intended future path — when this needs to land — is webhook ingestion: `Webhooks::SesController` (SaaS, fed by SNS) and `Webhooks::ResendController` (self-hosted), both with signature verification and a `missed_email_enabled: false` flip on permanent bounces. An in-process SMTP-rescue stopgap is not the right shape — API-based delivery raises provider-specific errors (`Aws::SES::Errors::*`, `Resend::Error`) that don't reliably map to "permanent failure" the way 5xx SMTP responses do.
 
-- **The account-level `email_notifications_enabled` flag defaults off**, gating exposure during rollout. Email volume during the v1 window is bounded to consenting workspaces.
-- **Both providers (SES and Resend) maintain their own provider-side suppression lists.** Persistent hard bounces eventually hit those lists and the providers stop accepting messages to those addresses on our behalf. Sabha won't see worsening sender reputation as fast as it would with raw SMTP.
-- **v1.1 will land webhook ingestion** (`Webhooks::SesController` for SaaS via SNS, `Webhooks::ResendController` for self-hosted) with signature verification, bounce/complaint event parsing, and a `missed_email_enabled: false` flip on permanent bounces. Webhook-driven, not in-process exception handling.
-
-**Why no SMTP-rescue stopgap.** API-based delivery doesn't raise `Net::SMTPFatalError`; it raises provider-specific errors (`Aws::SES::Errors::*`, `Resend::Error`) that don't reliably map to "permanent failure" the way 5xx SMTP responses do. Building a stopgap mapping for two providers in v1 is more code than it saves; deferring to webhooks is cleaner. Worst case in the gap window: a small number of bounces sit on user-account preference state until v1.1, mitigated by rollout gating.
-
-Subject privacy (PRD § Email content): generic subjects, no sender or room names. Sender/room names appear in the body.
+Subject privacy is intentional: generic subjects, no sender or room names. Sender/room names appear in the body only.
 
 ## 12. User and account defaults summary
 
-- Existing users: `missed_email_enabled: false`, `weekly_digest_subscribed: true`, `mode: mentions_and_dms`, `push_enabled: true`, `email_frequency: hourly`. Digest defaults subscribed because the digest is admin-enabled with member opt-out (PRD § Product principles #6); aggregate exposure is gated by `account.weekly_digest_enabled` defaulting `false`.
+- Existing users: `missed_email_enabled: false`, `weekly_digest_subscribed: true`, `mode: mentions_and_dms`, `push_enabled: true`, `email_frequency: hourly`. Digest defaults subscribed because it is admin-enabled with member opt-out; aggregate exposure is gated by `account.weekly_digest_enabled` defaulting `false`.
 - New users: same.
 - Account: `email_notifications_enabled: false`, `weekly_digest_enabled: false`. Admins flip both on.
 
-## 13. Out of scope (v1)
+## 13. Not currently supported
 
-- **Thread-reply email.** Deferred to v1.1+. Slack supports it for followed threads. Sabha has the equivalent recipient set today (thread members + parent room `involved_in_everything`, minus already-mentioned users — see `app/jobs/create_thread_reply_notifications_job.rb`), so the addressing is solved; what's deferred is the volume question. A single active thread can produce 20 replies in a window, which would push past the PRD's "calm timing" target. Revisit once v1 bundle-volume telemetry shows headroom; the path is to add `:thread_reply` to `Notification::Routing::EMAIL_TYPES` and `notification_bundle_items.kind`.
-- Boost email. Neither Slack nor Discord email reactions; not planned.
-- Per-room email controls.
-- Keyword alerts / custom triggers. Slack has "My keywords"; Sabha treats this as a v2 product question, not a v1.1 implementation question — keyword alerts are explicitly the *ambient* surface, outside v1's "personal beats ambient" frame.
-- Marketing/news email subscriptions (separate surface).
-- Reply-from-email.
-- Cross-workspace bundle consolidation (a user in 3 workspaces gets up to 3 bundles).
-- **Snooze / DND / pause notifications.** Out of scope for v1 entirely (PRD § Confirmed decisions #7). Master switches (`missed_email_enabled`, `push_enabled`) and per-room `Membership#involvement: :nothing` are the v1 ways to silence notifications.
-- Bounce / complaint / suppression handling. v1 ships **no** auto-suppression of any kind (no SMTP-rescue, no observer, no webhook ingestion). v1.1 adds webhook-driven suppression via `Webhooks::SesController` (SaaS, fed by SNS) and `Webhooks::ResendController` (self-hosted), both flipping `missed_email_enabled: false` on permanent bounces or complaints. v1's exposure is bounded by the account-level `email_notifications_enabled` flag defaulting off. See § 11.2.
-- Personalized digest ranking (Discord Highlights-style). Digest stays a conservative recap.
-- Admin-authored digest content. Digest is generated from workspace activity, not curated.
-- Per-user timezone digest send time. v1 uses a workspace-default day/time.
+- **Thread-reply email.** Sabha already computes the right recipient set for in-app rows (thread members + parent room `involved_in_everything`, minus already-mentioned users — see `app/jobs/create_thread_reply_notifications_job.rb`); turning email on is a matter of adding `:thread_reply` to `Notification::Routing::EMAIL_TYPES` and `notification_bundle_items.kind`. Held back so a chatty thread doesn't generate one email per reply during the bundle window — needs a per-thread coalescing policy first.
+- **Boost email.** No precedent in Slack or Discord; not on the roadmap.
+- **Per-room email controls.**
+- **Keyword alerts / custom triggers.** Treated as a separate ambient-surface product question, not part of personal notifications.
+- **Marketing/news email subscriptions** (separate surface).
+- **Reply-from-email.**
+- **Cross-workspace bundle consolidation** — a user in three workspaces gets up to three bundles.
+- **Snooze / DND / pause notifications.** Master switches (`missed_email_enabled`, `push_enabled`) and per-room `Membership#involvement: :nothing` are the only ways to silence notifications.
+- **Automatic bounce/complaint suppression.** See § 11.2.
+- **Personalized digest ranking** (Discord Highlights-style). Digest is a conservative recap.
+- **Admin-authored digest content.** Digest is generated from workspace activity, not curated.
+- **Per-user timezone digest send time.** A workspace-default day/time is used.
 
-## 14. Architectural decisions and open questions
+## 14. Notable design decisions
 
-### 14.1 Resolved
-
-- **Email "away" threshold = `:away` tier (1 hour)** *(decided 2026-05-09)*. `workspace_locally_away?` returns true when the user's most recent connection in any of this workspace's memberships is more than `Membership::Connectable::ACTIVITY_TIERS[:away]` (1 hour) ago, or never. The tighter `:active` tier (10 minutes) was rejected because email asks "has the user been gone long enough that an email is the right way to reach them?", not "should we show a green dot?" — a brief mid-window visit means the user could plausibly have seen the message live, so the bundle should drop at delivery time. See § 4 for full rationale.
-- **Bundle GC = 90 days, run inside weekly digest job** *(decided 2026-05-09)*. Delivered or canceled bundles older than 90 days are pruned at the top of each per-workspace weekly digest run. Active bundles are never pruned (they're naturally bounded to one per user via the partial unique index in § 6.2). The two-table bundle shape (parent `Notification::Bundle` + child `BundleItem`) was kept over a single-table reshape because the parent earns its keep — `frequency` snapshot decouples in-flight delivery from preference flips, single `delivered_at`/`canceled_at` makes delivery atomic, and `(user_id) WHERE delivered_at IS NULL AND canceled_at IS NULL` is a clean DB invariant. See § 7.6 for the GC mechanics.
-- **Weekly digest fires regardless of recipient activity** *(decided 2026-05-09)*. A subscribed member who was active every day this week still receives the digest. The only gates are `weekly_digest_subscribed: true`, account-level `weekly_digest_enabled: true`, basic user health (verified/active/not-banned/not-bot), and 6-day dedup via `last_digest_sent_at`. The PRD's stated purpose ("bring less-active members back") suggests presence-aware sending, but a presence gate was rejected for v1: it adds a new threshold (`DIGEST_INACTIVE_WINDOW`), creates subscriber confusion ("I subscribed but didn't get one"), and weakens the simple opt-in mental model. Active members who find the digest noisy can unsubscribe; the unsubscribe scope is digest-specific (§ 11). Revisit in v1.1 if subscribed-active-member complaints surface.
-- **Email provider split: SES for SaaS, Resend for self-hosted** *(decided 2026-05-09)*. SaaS uses Amazon SES via `aws-sdk-rails` (AWS-native, matches deployment infra); self-hosted uses Resend via `resend-rails` (operator-friendly, no AWS prerequisite). Both providers conform to the standard ActionMailer `delivery_method` API, so no provider-abstraction layer is needed in v1. SaaS sender domain is shared across all workspaces; per-workspace BYO sending domain is deferred to v1.1. See § 11.1.
-- **No bounce/complaint suppression in v1; webhooks land in v1.1** *(decided 2026-05-09)*. v1 ships without any auto-suppression — no SMTP-rescue fallback, no observer, no webhook ingestion. API-based delivery (SES, Resend) doesn't raise SMTP errors, so there's no exception path to rescue. v1's bounce-exposure risk is bounded by the account-level `email_notifications_enabled` flag defaulting off. v1.1 adds `Webhooks::SesController` (SaaS via SNS) and `Webhooks::ResendController` (self-hosted) for webhook-driven suppression. See § 11.2.
-- **Empty digest skip does not update `last_digest_sent_at`** *(decided 2026-05-09)*. When `WeeklyDigestJob` finds no qualifying content for a member (per § 8.3 selection rules) and skips them, the dedup column is **not** touched. `last_digest_sent_at` means "last actual delivery," not "last attempt." Pros: cleaner semantics for support/debugging ("did we ever email this user?" answers correctly), and the member is re-evaluated next week instead of being dedup-locked through a quiet stretch. Cons: a member in a perpetually quiet workspace gets re-evaluated every week with no work done — but the work is bounded (single content-selection query per member, exits in milliseconds when no content qualifies). The empty-bundle case stays as written: bundles with no surviving items at delivery time are marked `canceled_at`, distinct from skips.
-- **Stuck bundles on terminal delivery failure are marked `canceled_at` in v1** *(decided 2026-05-09)*. `BundleDeliveryJob` rescues documented terminal provider errors (e.g. `Aws::SES::Errors::MessageRejected`, `Aws::SES::Errors::MailFromDomainNotVerified` for SES; 4xx-except-429 for Resend) and sets `bundle.canceled_at`, breaking the partial-unique-index "still active" trap that would otherwise prevent the user's next bundle from being created. Transient errors (5xx, timeouts, rate limits) propagate so Solid Queue retries the job per its standard policy. This is not the same as v1.1 webhook-driven suppression: it terminates the bundle so the system can keep working, but does **not** flip `missed_email_enabled` — that's a per-user preference change that needs the richer event data webhooks provide. The rescue list lives next to `BundleDeliveryJob` and is short (each provider's terminal error class names); if a new provider arrives the list grows.
-
-### 14.2 Open
-
-- **Bundle frequency change mid-window.** Decision: in-flight bundles keep their original `frequency`; next bundle uses new pref. Confirm this matches PRD intent before plan.
-- **Digest send day/time.** Workspace-default needs a concrete value (e.g. Mondays 09:00 in workspace TZ if known, else UTC). PRD defers to product default. Pick before plan.
-- **Bundle item index vs query cost.** `(bundle_id, message_id, kind)` unique index handles dedup. At delivery time the join `bundle_items × messages × memberships` could be large for very chatty workspaces. Plan needs to confirm query shape stays under acceptable bound.
-- **`@everyone` digest weighting.** PRD says notification-worthy activity comes first in digest. Define "notification-worthy" precisely — `@everyone` mentions only, or `@everyone` + named mentions the user missed?
-- **Backfill behavior on deploy.** Existing `User` rows need `user_notification_settings` with safe defaults. `User.where.missing(:notification_settings).find_each(&:create_notification_settings!)` is idempotent; confirm in plan.
+- **Email "away" threshold = `:away` tier (1 hour).** `workspace_locally_away?` returns true when the user's most recent connection in any of this workspace's memberships is more than `Membership::Connectable::ACTIVITY_TIERS[:away]` (1 hour) ago, or never. The tighter `:active` tier (10 minutes) was rejected: email asks "has the user been gone long enough that an email is the right way to reach them?", not "should we show a green dot?" See § 4.
+- **Bundle GC = 90 days, run inside weekly digest job.** Delivered or canceled bundles older than 90 days are pruned by `Notification::Bundle.gc_terminal!` at the start of each per-tenant digest run. Active bundles are never pruned (bounded to one per user via the partial unique index in § 6.2). See § 7.6.
+- **Weekly digest fires regardless of recipient activity.** A subscribed member who was active every day this week still receives the digest. Gates: `weekly_digest_subscribed: true`, account-level `weekly_digest_enabled: true`, basic user health, and 6-day dedup via `last_digest_sent_at`. A presence gate was rejected because it weakens the opt-in mental model.
+- **Email provider split: SES for SaaS, Resend for self-hosted.** SaaS uses Amazon SES via `aws-sdk-rails`; self-hosted uses Resend via `resend-rails`. Both providers conform to the standard ActionMailer `delivery_method` API, so there is no provider-abstraction layer. SaaS sender domain is shared across all workspaces. See § 11.1.
+- **No automatic bounce/complaint suppression today.** Bounces and complaints are not auto-ingested in the current build — exposure is bounded by `email_notifications_enabled` defaulting off. Webhook-driven suppression is sketched in § 11.2 as future work, not shipped behavior.
+- **Empty digest skip does not update `last_digest_sent_at`.** `last_digest_sent_at` means "last actual delivery," not "last attempt." A member in a quiet workspace is re-evaluated next week rather than being dedup-locked through a silent stretch.
+- **Stuck bundles on terminal delivery failure are marked `canceled_at`.** `BundleDeliveryJob` rescues documented terminal provider errors (e.g. `Aws::SES::Errors::MessageRejected` / `MailFromDomainNotVerified` for SES; 4xx-except-429 for Resend) and cancels the bundle, freeing the partial-unique-index slot so the user's next bundle can be created. Terminal errors do **not** flip `missed_email_enabled` — that's a per-user preference change that requires richer event data.
 
 ## 15. Glossary
 
