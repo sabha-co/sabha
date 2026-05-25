@@ -1,6 +1,6 @@
 # Sabha
 
-Sabha is an open-source, self-hosted chat platform for **friends, groups, and communities** — a calm alternative to Discord and Slack. Run it on your own VPS and own every byte. No per-seat pricing, no message limits, no platform telling you what your community is worth.
+Sabha is an open-source, self-hosted chat platform for **friends, groups, and communities** — a calm alternative to Discord and Slack. Run it on your own server and own every byte. No per-seat pricing, no message limits, no platform telling you what your community is worth.
 
 [![Tests](https://github.com/sabha-co/sabha/actions/workflows/test.yml/badge.svg)](https://github.com/sabha-co/sabha/actions/workflows/test.yml)
 [![MIT License](https://img.shields.io/github/license/sabha-co/sabha?color=%239944ee)](LICENSE.md)
@@ -10,27 +10,31 @@ Sabha is an open-source, self-hosted chat platform for **friends, groups, and co
 
 ## Features
 
-**Real-time chat** — public rooms, private rooms, direct messages, threaded replies, `@mentions`, typing indicators, and presence. All real-time over WebSockets.
+**Real-time chat** — public rooms for the whole community, private rooms for smaller groups, direct messages for one-on-one talks, and threads to keep side conversations tidy. New messages appear the moment they're sent.
 
-**Flexible authentication** — password, passwordless email OTP, or external SSO. All three coexist; pick what fits your community.
+**Flexible sign-in** — members can sign in with a password, with a one-time code sent to their email, or with single sign-on. Use one, two, or all three side by side.
 
-**Activity inbox** — a dedicated sidebar surface for mentions, boosts, and thread replies. Nothing important hides at the bottom of a busy room.
+**Single sign-on** — already have users signing in to your own product, course, or service? They can join your Sabha community with that same login — no second account, no extra sign-up step.
 
-**Email notifications** — Calm by default; every email is opt-in.
+**Activity inbox** — one page that collects every mention, thread reply, and reaction directed at you. Catch up after a busy day in a minute.
 
-**Bot / agent API** — REST + WebSocket surface for LLM agents with HMAC-signed webhooks. First-party [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) drops an LLM into any room with one invite link.
+**Calm email notifications** — get a single summary of what you missed, hourly or daily — your pick. No firehose, no per-message ping.
 
-**Installable PWA** — works on iOS, Android, and desktop with VAPID web push and unread badge counts. No app stores in the loop.
+**Bots and AI** — drop a bot or AI agent into any room with one invite link. The agent reads what's said and replies like a normal member. The [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) is the easy way to put an LLM in a room.
 
-**Your brand** — name, logos, PWA colors, and support email are configurable via environment variables and the admin UI. The community feels like yours.
+**Installable app** — install Sabha on your phone, tablet, or computer like a regular app. Push notifications, badge counts, and offline support — no app store needed.
 
-**Slack migration** — import users, channels, messages, threads, and reactions from a Slack export. Idempotent and safe to re-run.
+**Your branding** — set the name, logo, colors, and support email. Members see your community, not a generic chat app.
 
-**One-command deploy** — Kamal or Docker Compose on a single small VPS. SQLite for app data and full-text search; no managed database to operate.
+**Slack import** — bring your existing Slack workspace over: people, channels, messages, threads, and reactions, all in one go.
+
+**One-command deploy** — run it on a small server with a single command. No external database to set up or pay for.
 
 ## Architecture
 
-Sabha is a Rails 8 monolith. The frontend is Hotwire/Turbo + Importmap + Tailwind CSS v4. Real-time delivery runs through AnyCable. Background jobs run on Solid Queue, backed by SQLite. Storage is split: SQLite3 for app data, jobs, and full-text search; Redis for the cache store and cable pubsub.
+Sabha is a Rails 8 monolith with the added simplicity of sqlite all in one server.
+
+The frontend is Hotwire/Turbo + Importmap + Tailwind CSS v4. Real-time delivery runs through AnyCable. Background jobs run on Solid Queue.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown.
 
@@ -39,11 +43,13 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown.
 <!-- TODO: add screenshots here -->
 _Coming soon._
 
-## Getting started
+## Deployment
 
-The [deployment guide](docs/DEPLOYMENT.md) covers Kamal and Docker Compose with TLS, backups, and upgrades. The full doc index lives in [docs/](docs/).
+**Self-host (free, MIT)** — single-tenant: one community per instance. Kamal or Docker Compose on a small VPS. See the [deployment guide](docs/DEPLOYMENT.md).
 
-The optional multi-tenant SaaS engine is documented under [docs/multi-tenant/](docs/multi-tenant/) and licensed separately — see [saas/LICENSE](saas/LICENSE).
+**Managed hosting** — don't want to run a server? [Sabha Cloud](https://cloud.sabha.co) hosts a dedicated Sabha instance for you with continuous backups, custom domain support, and managed updates. Same open-source app, you manage the community we manage the server.
+
+**Multi-tenant** — Sabha is based on Campfire, which is single-tenant by design and MIT-licensed. We added multi-tenancy on top to power the free communities at [sabha.co](https://sabha.co); that engine lives in `saas/` under the separately-licensed [Sabha SaaS License](saas/LICENSE) rather than MIT. See [docs/multi-tenant/](docs/multi-tenant/) for details.
 
 ## Development
 
