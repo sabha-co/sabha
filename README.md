@@ -22,7 +22,7 @@ Sabha is an open-source, self-hosted chat platform for friends, groups, and comm
 
 **Bots and AI ready** — drop a bot or AI agent into any room with one invite link. The agent reads what's said and replies like a normal member. The [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) is the easy way to put an LLM in a room.
 
-**Installable app** — install Sabha on your phone, tablet, or computer like a regular app. Push notifications, badge counts, and offline support — no app store needed.
+**Installable PWA app** — install Sabha on your phone, tablet, or computer like a regular app. Push notifications, badge counts, and offline support — no app store needed.
 
 **Your branding** — set the name, logo, colors, and support email. Members see your community, not a generic chat app.
 
@@ -32,7 +32,7 @@ Sabha is an open-source, self-hosted chat platform for friends, groups, and comm
 
 ## Architecture
 
-Sabha is a Rails 8 monolith with the added simplicity of sqlite all in one server.
+Sabha is a Rails 8 monolith with the added simplicity of SQLite, all on one server.
 
 The frontend is Hotwire/Turbo + Importmap + Tailwind CSS v4. Real-time delivery runs through AnyCable. Background jobs run on Solid Queue.
 
@@ -58,7 +58,8 @@ _Coming soon._
 - Ruby 4.0.1
 - SQLite3
 - Redis
-- Node.js + pnpm (for Tailwind CSS compilation)
+- Node.js 24+
+- pnpm (for Tailwind CSS compilation)
 
 ### Setup
 

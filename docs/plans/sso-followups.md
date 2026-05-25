@@ -9,7 +9,7 @@ date: 2026-05-25
 
 ## Summary
 
-Findings from a live end-to-end SSO test on a fresh self-hosted Sabha box with Discourse as the DiscourseConnect provider. Core SSO is working — payload signing, callback handling, user provisioning, and SSO record linking all behave as `docs/sso.md` describes. Three product gaps surfaced that are not specific to Discourse and affect every SSO consumer setup. Each is small in scope but materially shapes the first impression a community gets.
+Findings from a live end-to-end SSO test on a fresh self-hosted Sabha box with Discourse as the DiscourseConnect provider. Core SSO is working — payload signing, callback handling, user provisioning, and SSO record linking all behave as `docs/SSO.md` describes. Three product gaps surfaced that are not specific to Discourse and affect every SSO consumer setup. Each is small in scope but materially shapes the first impression a community gets.
 
 ---
 
@@ -81,7 +81,7 @@ Add a public `signed_out` surface that is exempt from the SSO auto-redirect:
 - `SessionsController#destroy` redirects to that page instead of `root_url`.
 - Visiting any other path while logged out still goes through SSO (the existing behavior — that is the "I want in" intent).
 
-This stays inside Sabha's responsibilities — no SLO contract with the provider, no provider-side coordination, no breaking change to `docs/sso.md`. It just gives the local logout a place to land that does not get auto-re-authenticated.
+This stays inside Sabha's responsibilities — no SLO contract with the provider, no provider-side coordination, no breaking change to `docs/SSO.md`. It just gives the local logout a place to land that does not get auto-re-authenticated.
 
 ### Scope
 

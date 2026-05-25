@@ -204,7 +204,7 @@ end
 
 When `AUTH_METHOD=sso`, Sabha acts as a DiscourseConnect consumer. Local password and OTP entry points redirect to `/session/sso`, which sends the browser to the parent app's SSO provider URL with a signed payload.
 
-For setup instructions, provider implementation details, rollout guidance, and troubleshooting, see [Self-Hosted SSO](sso.md).
+For setup instructions, provider implementation details, rollout guidance, and troubleshooting, see [Self-Hosted SSO](SSO.md).
 
 ### Request Flow
 
