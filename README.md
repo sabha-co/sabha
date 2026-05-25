@@ -2,7 +2,7 @@
 
 A self-hosted group chat for communities. Built with Rails, Hotwire, and SQLite.
 
-Sabha is a fork of [Campfire](https://once.com/campfire) by 37signals, adding threads, mentions, DMs, an activity inbox, and everything else needed to run a community without handing your members over to a platform. See [what Sabha adds to Campfire](docs/CAMPFIRE_VS_SABHA.md).
+Sabha is a fork of [Once Campfire](https://once.com/campfire), adding threads, mentions, DMs, an activity inbox, email notifications, SSO, a bot/agent API, and everything else needed to run a community without handing your members over to a platform. See [what Sabha adds to Campfire](docs/CAMPFIRE_VS_SABHA.md).
 
 ![Sabha app — rooms, threads, and community chat](app/assets/images/screenshots/sabha-screenshot.png)
 
@@ -10,10 +10,9 @@ Sabha is a fork of [Campfire](https://once.com/campfire) by 37signals, adding th
 
 - **You own everything** — server, data, domain, branding
 - **No per-seat pricing** — host as many members as your server handles
-- **SQLite in production** — no database server to manage
-- **One-command deploy** — Kamal or Docker Compose on a $10/month VPS
-- **Slack Migration** — Easy migration from Slack to Sabha
-- **OpenClaw Integration ready** — Integration with OpenClaw for AI features
+- **SQLite for app data** — no separate database server to manage
+- **One-command deploy** — Kamal or Docker Compose on a small VPS
+- **Bot / agent API** — REST + WebSocket surface for LLM agents; first-party [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha)
 
 ## Features
 
@@ -24,14 +23,16 @@ Sabha is a fork of [Campfire](https://once.com/campfire) by 37signals, adding th
 - Rich text, file attachments, and sounds
 - Full-text search (SQLite FTS5)
 - Typing indicators and presence
-- Web push notifications
+- Web push notifications + installable PWA
 - Bookmarks and boosts
+- Light / dark / auto themes
 - Customizable branding (name, logos, colors, emails)
-- Password or passwordless email OTP authentication option
+- Password, passwordless email OTP, or external SSO sign-in
+- Bot and agent API (REST + WebSocket, HMAC-signed webhooks)
 
 ## Tech Stack
 
-Rails 8 with Hotwire/Turbo, ActionCable for real-time, Tailwind CSS v4 via `@tailwindcss/cli`, Importmap for JS, Solid Queue for background jobs. SQLite3 everywhere — app, cache, queue.
+Rails 8 with Hotwire/Turbo, [AnyCable](https://docs.anycable.io/) for production WebSockets (ActionCable in development), Tailwind CSS v4 via `@tailwindcss/cli`, Importmap for JS, Solid Queue for background jobs. SQLite3 for app data, jobs, and full-text search; Redis for the cache store and cable pubsub.
 
 Room types via STI (`Rooms::Open`, `Rooms::Closed`, `Rooms::Direct`, `Rooms::Thread`). Soft deletion via `Deactivatable` concern. Stateless mentions parsed from ActionText HTML.
 
@@ -86,22 +87,30 @@ bin/rails test test/models/user_test.rb # Single file
 
 ## Documentation
 
+### Getting started
+
 | Doc | What it covers |
 |-----|---------------|
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker Compose, Kamal, backups, upgrades |
 | [DEVELOPMENT.md](docs/DEVELOPMENT.md) | Dev setup, testing, code structure |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Models, real-time, room system, auth |
 | [BRANDING.md](docs/BRANDING.md) | Environment variables, icons, custom CSS |
+| [authentication.md](docs/authentication.md) | Password, OTP, and email-verification flows |
+| [sso.md](docs/sso.md) | Single Sign-On integration |
 | [CHANGELOG.md](docs/CHANGELOG.md) | Feature history |
 | [CAMPFIRE_VS_SABHA.md](docs/CAMPFIRE_VS_SABHA.md) | What Sabha adds to Campfire |
 
+### Multi-tenant SaaS
+
+The `saas/` directory is licensed separately under the [Sabha SaaS License](saas/LICENSE). See [docs/multi-tenant/](docs/multi-tenant/) for the SaaS-specific architecture, deployment, and PostgreSQL untenanted-DB notes.
+
 ## Contributing
 
-Bug reports and pull requests are welcome. [Open an issue](https://github.com/sabha-co/sabha/issues/new) first to discuss what you'd like to change.
+Bug reports and pull requests are welcome. [Open an issue](https://github.com/sabha-co/sabha/issues/new) first to discuss substantial changes. Please run the test suite before submitting a PR; for SaaS-touching changes, run both the self-hosted and `SAAS=true` test suites.
 
 ## Credits
 
-Built on [Once Campfire](https://github.com/basecamp/once-campfire/) by [37signals](https://37signals.com). Some additional features from [Small Bets](https://github.com/antiwork/smallbets) by Gumroad.
+Built on [Once Campfire](https://github.com/basecamp/once-campfire/). Some additional features inherited from the [Small Bets](https://github.com/antiwork/smallbets) fork by Antiwork.
 
 ## License
 
