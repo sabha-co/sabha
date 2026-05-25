@@ -1,6 +1,6 @@
 # Sabha
 
-A self-hosted group chat for communities. Built with Rails, Hotwire, and SQLite.
+A self-hosted chat application like slack/discord for communities. Built with Rails, Hotwire, and SQLite.
 
 Sabha is a fork of [Once Campfire](https://once.com/campfire), adding threads, mentions, DMs, an activity inbox, email notifications, SSO, a bot/agent API, and everything else needed to run a community without handing your members over to a platform. See [what Sabha adds to Campfire](docs/CAMPFIRE_VS_SABHA.md).
 
@@ -32,7 +32,7 @@ Sabha is a fork of [Once Campfire](https://once.com/campfire), adding threads, m
 
 ## Tech Stack
 
-Rails 8 with Hotwire/Turbo, [AnyCable](https://docs.anycable.io/) for production WebSockets (ActionCable in development), Tailwind CSS v4 via `@tailwindcss/cli`, Importmap for JS, Solid Queue for background jobs. SQLite3 for app data, jobs, and full-text search; Redis for the cache store and cable pubsub.
+Rails 8 with Hotwire/Turbo, ActionCable for real-time, Tailwind CSS v4 via `@tailwindcss/cli`, Importmap for JS, Solid Queue for background jobs. SQLite3 everywhere — app, cache, queue. Redis for the cache store and cable pubsub.
 
 Room types via STI (`Rooms::Open`, `Rooms::Closed`, `Rooms::Direct`, `Rooms::Thread`). Soft deletion via `Deactivatable` concern. Stateless mentions parsed from ActionText HTML.
 
