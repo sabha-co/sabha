@@ -1,6 +1,6 @@
 # Sabha
 
-Sabha is an open-source, self-hosted chat platform for **friends, groups, and communities** — a calm alternative to Discord and Slack. Run it on your own server and own every byte. No per-seat pricing, no message limits, no platform telling you what your community is worth.
+Sabha is an open-source, self-hosted chat platform for friends, groups, and communities — a calm alternative to Discord and Slack. Run it on your own server and own every byte. No per-seat pricing, no message limits, no platform telling you what your community is worth.
 
 [![Tests](https://github.com/sabha-co/sabha/actions/workflows/test.yml/badge.svg)](https://github.com/sabha-co/sabha/actions/workflows/test.yml)
 [![MIT License](https://img.shields.io/github/license/sabha-co/sabha?color=%239944ee)](LICENSE.md)
@@ -20,7 +20,7 @@ Sabha is an open-source, self-hosted chat platform for **friends, groups, and co
 
 **Calm email notifications** — get a single summary of what you missed, hourly or daily — your pick. No firehose, no per-message ping.
 
-**Bots and AI** — drop a bot or AI agent into any room with one invite link. The agent reads what's said and replies like a normal member. The [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) is the easy way to put an LLM in a room.
+**Bots and AI ready** — drop a bot or AI agent into any room with one invite link. The agent reads what's said and replies like a normal member. The [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) is the easy way to put an LLM in a room.
 
 **Installable app** — install Sabha on your phone, tablet, or computer like a regular app. Push notifications, badge counts, and offline support — no app store needed.
 
