@@ -156,24 +156,40 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for the full deployment guide.
 
 ```
 saas/
-├── lib/sabha/saas/engine.rb              # Engine config, routes
-├── lib/sabha/saas/path_rewriter.rb       # Middleware: move workspace prefix into SCRIPT_NAME
+├── lib/sabha/saas/
+│   ├── engine.rb                         # Engine config, routes
+│   ├── path_rewriter.rb                  # Middleware: move workspace prefix into SCRIPT_NAME
+│   └── tenanted_rendering.rb             # Render helper for off-request Turbo broadcasts
 ├── app/models/
+│   ├── untenanted_record.rb              # Base class for PostgreSQL models
 │   ├── global_identity.rb                # Cross-workspace user identity
+│   ├── global_identity/joinable.rb       # Workspaces the identity may join
 │   ├── global_session.rb                 # Cross-workspace session
-│   ├── workspace.rb                      # Workspace record
-│   ├── workspace_membership.rb           # Identity ↔ workspace link
 │   ├── auth_code.rb                      # OTP codes (SaaS equivalent of AuthToken)
-│   └── untenanted_record.rb              # Base class for PostgreSQL models
+│   ├── workspace.rb                      # Workspace record
+│   ├── workspace/backup.rb               # R2-backed tenant DB snapshot
+│   ├── workspace/snapshot.rb             # Point-in-time snapshot metadata
+│   ├── workspace/export.rb               # Tenant data export bundle
+│   ├── workspace/external_id_sequence.rb # Allocator for visible workspace IDs
+│   ├── workspace/r2.rb                   # Cloudflare R2 client wrapper
+│   ├── workspace_membership.rb           # Identity ↔ workspace link
+│   └── workspace_membership/last_administrator_error.rb
 ├── app/controllers/saas/
 │   ├── base_controller.rb                # Base for all SaaS controllers
+│   ├── landing_controller.rb             # Landing page
+│   ├── static_controller.rb              # Static marketing pages
 │   ├── sessions_controller.rb            # Global sign-in
+│   ├── single_sign_ons_controller.rb     # Self-hosted SSO entrypoint
 │   ├── registrations_controller.rb       # Global sign-up
+│   ├── auth_codes_controller.rb          # OTP verification
+│   ├── settings_controller.rb            # Per-identity settings
 │   ├── workspaces_controller.rb          # Workspace selection, creation, joining
 │   ├── workspace_settings_controller.rb  # Workspace settings
-│   ├── workspace_memberships_controller.rb # Leave workspace
-│   ├── landing_controller.rb             # Landing page
-│   └── auth_codes_controller.rb          # OTP verification
+│   ├── workspace_settings/               # Nested settings controllers
+│   ├── workspace_destructions_controller.rb   # Workspace deletion flow
+│   ├── workspace_invites_controller.rb        # Invite links
+│   ├── workspace_memberships_controller.rb    # Leave workspace
+│   └── workspace_membership_orders_controller.rb # Reorder sidebar workspaces
 ├── config/initializers/tenanting/
 │   ├── tenant_resolver.rb                # Load/insert PathRewriter + tenant resolver
 │   ├── application_record.rb             # Connect tenanted models to primary DB
@@ -181,7 +197,9 @@ saas/
 │   ├── turbo.rb                          # Turbo broadcasts include workspace prefix
 │   ├── active_storage.rb                 # Storage URLs include script_name
 │   └── logging.rb                        # Tenant tags in logs
+├── config/database.yml                   # SaaS-specific dual-DB config
 ├── db/untenanted_migrate/                # PostgreSQL migrations
+├── db/untenanted_schema.rb               # PostgreSQL schema dump
 └── test/                                 # SaaS-specific test suite
 ```
 

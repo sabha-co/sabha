@@ -1,13 +1,7 @@
 # Sabha notifications architecture
 
-**Status:** Draft (2026-05-09).
 **Area:** All notification channels — in-app rows, push, missed-notification email (bundled), weekly activity digest email.
-**Source of truth for:** structure, components, and data shapes. Detailed implementation steps live in a separate plan to be authored against this doc.
-**Related:**
-
-- `docs/plans/email-notifications/EMAIL-NOTIFICATIONS-PRD.md` — product scope this doc serves.
-- `docs/plans/email-notifications/NOTIFICATIONS-SLACK-COMPARISON.md` — competitive framing.
-- `docs/plans/email-notifications/UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md` — superseded V0 draft. Kept for routing/eligibility background; do not implement from it.
+**Source of truth for:** structure, components, and data shapes.
 
 ---
 
@@ -97,7 +91,7 @@ Channel-specific gates:
 
 `workspace_locally_away?` returns true when the user's most recent connection in any of this workspace's memberships is more than `Membership::Connectable::ACTIVITY_TIERS[:away]` (1 hour) ago, or never. The `:away` tier is chosen over the tighter `:active` tier (10 minutes) because email is asking a different question than UI presence: not "should we show a green dot" but "has the user been gone long enough that an email is the right way to reach them?" A brief mid-window visit (e.g. user pops in for 2 minutes during an hourly bundle) means the user could plausibly have seen the message live, so the bundle should drop at delivery time. Using the 10-minute tier would email those users; using the 1-hour tier does not.
 
-**Snooze / DND is not a v1 feature, in any form** (per `EMAIL-NOTIFICATIONS-PRD.md` § Confirmed decisions #7). No `snooze_until` column, no `snooze_indefinite` flag, no presence-as-snooze fallback beyond `workspace_locally_away?`. Implementers should not reach for V0's snooze columns (Appendix A.1) or add new snooze hooks. All "user is unavailable" suppression rides on `workspace_locally_away?` (passive presence) and the per-channel master switches (`missed_email_enabled`, `push_enabled`).
+**Snooze / DND is not a v1 feature, in any form.** No `snooze_until` column, no `snooze_indefinite` flag, no presence-as-snooze fallback beyond `workspace_locally_away?`. All "user is unavailable" suppression rides on `workspace_locally_away?` (passive presence) and the per-channel master switches (`missed_email_enabled`, `push_enabled`).
 
 ## 5. Routing dispatcher
 
@@ -481,47 +475,3 @@ Subject privacy (PRD § Email content): generic subjects, no sender or room name
 - **Send-time revalidation** — re-running eligibility predicates at delivery time so state changes during the window cancel correctly.
 - **Workspace-locally away** — user has no connection in *this* workspace's memberships in the last hour (`Membership::Connectable::ACTIVITY_TIERS[:away]`). Does not consider activity in other workspaces.
 - **Surface** — distinct email product (missed-notification vs weekly digest). Each surface has its own opt-out and its own unsubscribe token scope.
-
-## Appendix A. V0 → v1 deltas
-
-The previous notification plan (`UNIFIED-NOTIFICATIONS-PLAN-REFERENCE.md`, superseded 2026-05-09) proposed a per-event delayed-email shape with several columns, methods, and patterns that v1 does not adopt. This appendix is the consolidated "what V0 had that v1 doesn't" so anyone arriving from V0 can find the deltas in one place rather than reading them inline across the doc.
-
-### A.1 Columns dropped
-
-| V0 column | Why dropped |
-|---|---|
-| `memberships.last_email_notified_at` | V0's per-membership cooldown anchor for the 5-minute "don't email twice from the same room within 5 min" rule. Bundling supersedes it — the bundle window is the cooldown, and it operates per-user instead of per-membership (strictly better: no more N emails for N rooms in 5 minutes). |
-| `user_notification_settings.email_when_away` | Renamed to `missed_email_enabled` — column name shouldn't encode the "when away" policy, which is the dispatcher's question. |
-| `user_notification_settings.snooze_until` and `snooze_indefinite` | Snooze is out of scope per `EMAIL-NOTIFICATIONS-PRD.md` § Confirmed decisions #7. |
-
-### A.2 Methods and constants dropped
-
-| V0 method/constant | Why dropped |
-|---|---|
-| `Membership#claim_email_cooldown!` (atomic conditional UPDATE) | Bundling makes per-membership cooldown unnecessary. |
-| `Membership::EMAIL_COOLDOWN = 5.minutes` | Same reason. |
-| `Notification::EmailJob::EMAIL_GRACE_WINDOW = 5.minutes` | Replaced by per-user `email_frequency` (`hourly` / `daily`) for the bundle window. |
-| `User#email_mention_notification`, `User#email_direct_message_notification` per-event verbs | Replaced by `MissedNotificationsMailer#bundle(user, items)` — one delivery per window covers all kinds. |
-
-### A.3 Components dropped or replaced
-
-| V0 component | v1 replacement |
-|---|---|
-| `Notification::EmailJob` (per-event delayed email scheduled with `wait: 5.minutes`) | `Notification::BundleDeliveryJob` (per-bundle delivery scheduled with `wait_until: bundle.ends_at`) |
-| `EmailDeliveryObserver` SMTP-failure auto-suppress | Not in v1; v1.1 replaces with webhook ingestion (`Webhooks::SesController`, `Webhooks::ResendController`) |
-| `Net::SMTPFatalError` / `Net::SMTPSyntaxError` rescue path | Not relevant to API-based delivery (SES, Resend). v1 has no rescue path; v1.1 webhooks handle suppression |
-| `Notification::DispatchJob.perform_later(message, activity_type, actor)` (one job per `(message, activity_type)`) | `Notification::DispatchJob.perform_later(message)` (one job per message) — boost is the lone exception via `only: :boost, actor: booster` |
-
-### A.4 Patterns considered and rejected
-
-| Pattern | Why rejected |
-|---|---|
-| "Claim before deliver" atomic UPDATE on bundles | Fails closed (silent loss on transient delivery failure). Replaced by provider-side idempotency keys (§ 7.7). |
-| Single-table `pending_email_notifications` (no parent bundle row) | Parent table earns its keep — `frequency` snapshot, atomic terminal state, partial-unique-index invariant, GC anchor. Recorded in § 14.1. |
-| `Membership::Notifiable` carrying routing-vocabulary constants (`EMAIL_TYPES`, `IN_APP_ROW_TYPES`, etc.) | Moved to `Notification::Routing` — Membership is recipient context, not routing vocabulary (§ 3). |
-| `NotificationMailer` base class for two subclasses | Two mailers don't earn a base. Concern (`EmailUnsubscribable`) instead (§ 11). |
-| `User#generate_token_for(:email_unsubscribe)` for unsubscribe tokens | Cannot carry tenant identity, which SaaS requires. `Rails.application.message_verifier(:email_unsubscribe)` carries `{ user_id, tenant, surface }` (§ 9). |
-
-### A.5 What V0 got right and v1 keeps
-
-To balance the deltas: most of V0's routing and gating shape carried forward. v1 inherits the dispatcher pattern, `Membership::Notifiable` predicates, the per-recipient decision tree, the workspace-local away check, the per-room override / global mode layering rule, the broad row recipient set for `@everyone`, the unsubscribe-via-`message_verifier` shape, and the `discard_on ActiveJob::DeserializationError` job pattern. The deltas are concentrated in email delivery shape (per-event → bundled), suppression handling (in-process rescue → deferred webhook), and a handful of rename / extract refactors from the DHH-style review. The dispatcher and eligibility cores are largely V0.
