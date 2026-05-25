@@ -1,66 +1,49 @@
 # Sabha
 
-A self-hosted chat application like slack/discord for communities. Built with Rails, Hotwire, and SQLite.
+Sabha is an open-source, self-hosted chat platform for **friends, groups, and communities** — a calm alternative to Discord and Slack. Run it on your own VPS and own every byte. No per-seat pricing, no message limits, no platform telling you what your community is worth.
 
-Sabha is a fork of [Once Campfire](https://once.com/campfire), adding threads, mentions, DMs, an activity inbox, email notifications, SSO, a bot/agent API, and everything else needed to run a community without handing your members over to a platform. See [what Sabha adds to Campfire](docs/CAMPFIRE_VS_SABHA.md).
+[![Tests](https://github.com/sabha-co/sabha/actions/workflows/test.yml/badge.svg)](https://github.com/sabha-co/sabha/actions/workflows/test.yml)
+[![MIT License](https://img.shields.io/github/license/sabha-co/sabha?color=%239944ee)](LICENSE.md)
+[![GitHub Stars](https://img.shields.io/github/stars/sabha-co/sabha?style=flat&logo=github)](https://github.com/sabha-co/sabha/stargazers)
 
 ![Sabha app — rooms, threads, and community chat](app/assets/images/screenshots/sabha-screenshot.png)
 
-## Why Sabha?
-
-- **You own everything** — server, data, domain, branding
-- **No per-seat pricing** — host as many members as your server handles
-- **SQLite for app data** — no separate database server to manage
-- **One-command deploy** — Kamal or Docker Compose on a small VPS
-- **Bot / agent API** — REST + WebSocket surface for LLM agents; first-party [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha)
-
 ## Features
 
-- Rooms (public, private, DMs)
-- Threaded replies on any message
-- @mentions and `@everyone` with notification badges
-- Activity inbox for mentions, boosts, and thread replies
-- Rich text, file attachments, and sounds
-- Full-text search (SQLite FTS5)
-- Typing indicators and presence
-- Web push notifications + installable PWA
-- Bookmarks and boosts
-- Light / dark / auto themes
-- Customizable branding (name, logos, colors, emails)
-- Password, passwordless email OTP, or external SSO sign-in
-- Bot and agent API (REST + WebSocket, HMAC-signed webhooks)
+**Real-time chat** — public rooms, private rooms, direct messages, threaded replies, `@mentions`, typing indicators, and presence. All real-time over WebSockets.
 
-## Tech Stack
+**Flexible authentication** — password, passwordless email OTP, or external SSO. All three coexist; pick what fits your community.
 
-Rails 8 with Hotwire/Turbo, ActionCable for real-time, Tailwind CSS v4 via `@tailwindcss/cli`, Importmap for JS, Solid Queue for background jobs. SQLite3 everywhere — app, cache, queue. Redis for the cache store and cable pubsub.
+**Activity inbox** — a dedicated sidebar surface for mentions, boosts, and thread replies. Nothing important hides at the bottom of a busy room.
 
-Room types via STI (`Rooms::Open`, `Rooms::Closed`, `Rooms::Direct`, `Rooms::Thread`). Soft deletion via `Deactivatable` concern. Stateless mentions parsed from ActionText HTML.
+**Email notifications** — Calm by default; every email is opt-in.
+
+**Bot / agent API** — REST + WebSocket surface for LLM agents with HMAC-signed webhooks. First-party [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) drops an LLM into any room with one invite link.
+
+**Installable PWA** — works on iOS, Android, and desktop with VAPID web push and unread badge counts. No app stores in the loop.
+
+**Your brand** — name, logos, PWA colors, and support email are configurable via environment variables and the admin UI. The community feels like yours.
+
+**Slack migration** — import users, channels, messages, threads, and reactions from a Slack export. Idempotent and safe to re-run.
+
+**One-command deploy** — Kamal or Docker Compose on a single small VPS. SQLite for app data and full-text search; no managed database to operate.
+
+## Architecture
+
+Sabha is a Rails 8 monolith. The frontend is Hotwire/Turbo + Importmap + Tailwind CSS v4. Real-time delivery runs through AnyCable. Background jobs run on Solid Queue, backed by SQLite. Storage is split: SQLite3 for app data, jobs, and full-text search; Redis for the cache store and cable pubsub.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown.
 
-## Self-Hosting
+## Screenshots
 
-### Kamal (recommended)
+<!-- TODO: add screenshots here -->
+_Coming soon._
 
-Zero-downtime Docker deployments with AnyCable (high-performance WebSockets):
+## Getting started
 
-```bash
-kamal setup    # First deploy
-kamal deploy   # Subsequent deploys
-```
+The [deployment guide](docs/DEPLOYMENT.md) covers Kamal and Docker Compose with TLS, backups, and upgrades. The full doc index lives in [docs/](docs/).
 
-### Docker Compose
-
-Pre-built images at `ghcr.io/sabha-co/sabha`. No need to clone the repo.
-
-```bash
-# On your server
-mkdir -p ~/sabha && cd ~/sabha
-# Create docker-compose.yml and .env (see docs/DEPLOYMENT.md)
-docker compose up -d
-```
-
-Requires a VPS with 2GB+ RAM, a domain, and Docker. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full guide including TLS, backups, and upgrades.
+The optional multi-tenant SaaS engine is documented under [docs/multi-tenant/](docs/multi-tenant/) and licensed separately — see [saas/LICENSE](saas/LICENSE).
 
 ## Development
 
@@ -69,7 +52,7 @@ Requires a VPS with 2GB+ RAM, a domain, and Docker. See [docs/DEPLOYMENT.md](doc
 - Ruby 4.0.1
 - SQLite3
 - Redis
-- Node.js + pnpm (Tailwind CSS compilation)
+- Node.js + pnpm (for Tailwind CSS compilation)
 
 ### Setup
 
@@ -81,32 +64,22 @@ bin/dev      # Start dev server
 ### Testing
 
 ```bash
-bin/rails test                         # Full suite
+bin/rails test                          # Full self-hosted suite
 bin/rails test test/models/user_test.rb # Single file
+SAAS=true bin/rails test saas/test/     # SaaS suite
 ```
 
-## Documentation
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full guide.
 
-### Getting started
+## Help and discussion
 
-| Doc | What it covers |
-|-----|---------------|
-| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker Compose, Kamal, backups, upgrades |
-| [DEVELOPMENT.md](docs/DEVELOPMENT.md) | Dev setup, testing, code structure |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Models, real-time, room system, auth |
-| [BRANDING.md](docs/BRANDING.md) | Environment variables, icons, custom CSS |
-| [authentication.md](docs/authentication.md) | Password, OTP, and email-verification flows |
-| [sso.md](docs/sso.md) | Single Sign-On integration |
-| [CHANGELOG.md](docs/CHANGELOG.md) | Feature history |
-| [CAMPFIRE_VS_SABHA.md](docs/CAMPFIRE_VS_SABHA.md) | What Sabha adds to Campfire |
+#### Bug reports and feature requests
 
-### Multi-tenant SaaS
+Bug reports and feature requests can be posted on [GitHub Issues](https://github.com/sabha-co/sabha/issues).
 
-The `saas/` directory is licensed separately under the [Sabha SaaS License](saas/LICENSE). See [docs/multi-tenant/](docs/multi-tenant/) for the SaaS-specific architecture, deployment, and PostgreSQL untenanted-DB notes.
+#### Contributing
 
-## Contributing
-
-Bug reports and pull requests are welcome. [Open an issue](https://github.com/sabha-co/sabha/issues/new) first to discuss substantial changes. Please run the test suite before submitting a PR; for SaaS-touching changes, run both the self-hosted and `SAAS=true` test suites.
+Pull requests are welcome. Please open an issue first to discuss substantial changes. Run the test suite before submitting; for changes that touch the `saas/` engine, run both the self-hosted suite and `SAAS=true bin/rails test saas/test/`.
 
 ## Credits
 
@@ -114,4 +87,4 @@ Built on [Once Campfire](https://github.com/basecamp/once-campfire/). Some addit
 
 ## License
 
-Sabha is available under the [MIT License](LICENSE.md). The multi-tenant SaaS engine (`saas/`) is licensed separately — see [saas/LICENSE](saas/LICENSE).
+Sabha is available under the [MIT License](LICENSE.md). The multi-tenant SaaS engine in `saas/` is licensed separately — see [saas/LICENSE](saas/LICENSE).
