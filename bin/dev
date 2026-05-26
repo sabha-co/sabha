@@ -3,6 +3,14 @@
 # Configure SaaS mode via Gemfile selection
 if [ "$SAAS" = "true" ] || [ -f "tmp/saas.txt" ]; then
   export BUNDLE_GEMFILE="${BUNDLE_GEMFILE:-Gemfile.saas}"
+
+  # Auto-load .env.multitenant if present (SaaS-only env like SSO_*).
+  # Existing exports win; the file fills gaps only.
+  if [ -f .env.multitenant ]; then
+    set -a
+    . ./.env.multitenant
+    set +a
+  fi
 fi
 
 export PORT="${PORT:-3000}"
