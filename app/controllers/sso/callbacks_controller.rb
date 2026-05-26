@@ -34,11 +34,17 @@ class Sso::CallbacksController < Sso::BaseController
     end
 
     def sign_in_via_sso(payload, return_path)
+      newly_bootstrapped = FirstRun.auto_bootstrap_from_sso(payload)
       pending_join_code = session.delete(:pending_join_code)
       user = User.sign_in_with_sso!(payload)
       redeem_pending_join_code!(user, pending_join_code)
       start_new_session_for user
+      flash[:notice] = welcome_message(user) if newly_bootstrapped || user.previously_new_record?
       redirect_to safe_return_path(return_path)
+    end
+
+    def welcome_message(user)
+      "Welcome to #{Branding.contextual_app_name}, #{user.name}."
     end
 
     def sign_out_via_sso(return_path)

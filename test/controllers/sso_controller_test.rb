@@ -254,6 +254,49 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     assert parsed_cookies.signed[:session_token].present?
   end
 
+  test "first sso callback bootstraps account and provisions an administrator" do
+    ActiveRecord::Base.connection.disable_referential_integrity do
+      Account.destroy_all
+      Room.destroy_all
+      User.destroy_all
+    end
+
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "founder@example.com", external_id: "founder-1", name: "Founder"), ENV["SSO_SECRET"])
+
+    assert_difference -> { Account.count }, +1 do
+      assert_difference -> { User.count }, +1 do
+        get sso_callback_url, params: { sso:, sig: }
+      end
+    end
+
+    admin = User.find_by(email_address: "founder@example.com")
+    assert admin.administrator?
+    assert_includes admin.rooms.map(&:name), "General"
+    assert_match /Welcome to/, flash[:notice]
+  end
+
+  test "newly provisioned sso user sees a welcome flash" do
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "newcomer@example.com", external_id: "newcomer-1", name: "Newcomer"), ENV["SSO_SECRET"])
+
+    get sso_callback_url, params: { sso:, sig: }
+
+    assert_match /Welcome to/, flash[:notice]
+  end
+
+  test "returning sso user does not see the welcome flash" do
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: users(:david).email_address, external_id: single_sign_on_records(:david).external_id), ENV["SSO_SECRET"])
+
+    get sso_callback_url, params: { sso:, sig: }
+
+    assert_nil flash[:notice]
+  end
+
   test "misconfiguration fails closed" do
     ENV.delete("SSO_SECRET")
 

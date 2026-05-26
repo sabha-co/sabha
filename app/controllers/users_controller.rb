@@ -10,14 +10,14 @@ class UsersController < ApplicationController
   before_action :reject_banned_ip, only: :create
   before_action :set_join_code, only: %i[ new create ]
   before_action :verify_join_code_active, only: %i[ new create ]
-  before_action :redirect_to_sso_login, only: %i[ new create ], if: -> { Current.account&.sso_auth? && !signed_in? }
+  before_action :redirect_to_sso_login, only: %i[ new create ], if: -> { Account.sso_auth? && !signed_in? }
   before_action :validate_cloudflare_turnstile, only: :create, unless: -> { Sabha.saas? }
   rescue_from RailsCloudflareTurnstile::Forbidden, with: :handle_turnstile_failure
 
   before_action :set_return_to_url, only: %i[ new create ]
   before_action :validate_email_param, only: :create, unless: -> { saas_authenticated? || saas_unauthenticated? }
   before_action :ensure_password_provided, only: :create, unless: -> { saas_authenticated? || saas_unauthenticated? }
-  before_action :start_otp_if_user_exists, only: :create, if: -> { !saas_authenticated? && !saas_unauthenticated? && Current.account.otp_auth? }
+  before_action :start_otp_if_user_exists, only: :create, if: -> { !saas_authenticated? && !saas_unauthenticated? && Account.otp_auth? }
 
   helper_method :saas_authenticated?, :saas_unauthenticated?
 
@@ -126,7 +126,7 @@ class UsersController < ApplicationController
     end
 
     def ensure_password_provided
-      return unless Current.account.password_auth?
+      return unless Account.password_auth?
       return if user_params[:password].present?
 
       @user = User.new
@@ -137,7 +137,7 @@ class UsersController < ApplicationController
 
     def redirect_after_signup
       if @user.person? && !@user.verified?
-        if Current.account.otp_auth?
+        if Account.otp_auth?
           start_otp_for @user
           redirect_to new_auth_tokens_validations_path, notice: "Please check your email for a verification code.", status: :see_other
         else

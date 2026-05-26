@@ -60,7 +60,7 @@ class PasswordResetsController < ApplicationController
   private
 
   def require_password_auth
-    unless Current.account.password_auth?
+    unless Account.password_auth?
       redirect_to new_session_url, alert: "Password reset is not available."
     end
   end

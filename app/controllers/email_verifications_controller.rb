@@ -12,7 +12,7 @@ class EmailVerificationsController < ApplicationController
     else
       @user.verify_email!
 
-      if Current.account.sso_auth?
+      if Account.sso_auth?
         redirect_to sso_handshake_url, notice: "Email verified. Please sign in."
       else
         start_new_session_for @user
