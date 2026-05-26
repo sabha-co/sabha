@@ -6,15 +6,15 @@
 #    First visitor sees a setup form and enters name, email, and password to
 #    become admin. Uses FirstRun.create! from FirstRunsController.
 #
-# 2. SSO AUTO-BOOTSTRAP (Sabha Cloud managed deployments and any operator
-#    fronting Sabha with an SSO provider)
-#    With AUTO_BOOTSTRAP=true plus SSO_PROVIDER_URL and SSO_SECRET set, the
-#    first unauthenticated visit is redirected through the SSO handshake.
-#    The callback runs FirstRun.auto_bootstrap_from_sso! to provision the
-#    Account, admin User, SSO record, and General room from the payload —
-#    no setup form, no emailed magic link.
+# 2. SSO AUTO-BOOTSTRAP (Sabha Cloud managed deployments)
+#    sabha_cloud sets AUTO_BOOTSTRAP=true plus SSO_PROVIDER_URL/SSO_SECRET on
+#    each droplet it provisions. The first unauthenticated visit is redirected
+#    through the SSO handshake against sabha.co; the callback runs
+#    FirstRun.auto_bootstrap_from_sso to provision the Account, admin User,
+#    SSO record, and General room from the payload — no setup form, no
+#    emailed magic link.
 #
-#    After bootstrap the droplet runs under whatever AUTH_METHOD the operator
+#    After bootstrap the droplet runs under whatever AUTH_METHOD the customer
 #    configured (password, otp, or sso). AUTO_BOOTSTRAP is a one-shot ignition
 #    mechanism gated by Account.none?, not a persistent auth mode.
 #

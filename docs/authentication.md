@@ -30,8 +30,8 @@ SSO_SECRET=<shared-32+-char-secret>
 SSO_OVERRIDES_NAME=false
 SSO_OVERRIDES_AVATAR=false
 
-# Auto-bootstrap the first admin via SSO (see "AutoBootstrap" section).
-# Requires SSO_PROVIDER_URL and SSO_SECRET to be set above.
+# Set by sabha_cloud on managed droplets to auto-bootstrap the first admin
+# via SSO against sabha.co. Self-hosted operators should leave this unset.
 AUTO_BOOTSTRAP=true
 ```
 
@@ -285,15 +285,17 @@ Admin account created → signed in → redirected to chat
 
 The first visitor becomes the administrator. Subsequent visitors see the marketing page or login screen.
 
-### AutoBootstrap (SSO-driven)
+### AutoBootstrap (Sabha Cloud only)
 
-**For managed hosting platforms** (Sabha Cloud) and any operator fronting Sabha with an SSO identity provider. AutoBootstrap removes the manual setup form for the first visitor — the customer's identity at the provider becomes the admin.
+AutoBootstrap is the provisioning mechanism Sabha Cloud uses on managed droplets. sabha_cloud sets `AUTO_BOOTSTRAP=true` plus the SSO env vars at droplet-creation time so the customer's sabha.co identity provisions the first admin on first visit — no setup form, no `ADMIN_*` env vars, no emailed magic link.
+
+Self-hosted operators don't use this — they get the manual first-run form.
 
 ```bash
 AUTO_BOOTSTRAP=true
 SSO_PROVIDER_URL=https://sabha.co/session/sso
 SSO_SECRET=<shared-32+-char-secret>
-AUTH_METHOD=password                  # Or otp / sso — what the operator wants post-bootstrap
+AUTH_METHOD=password                  # Or otp / sso — what the customer wants post-bootstrap
 ```
 
 **Flow:**
@@ -302,11 +304,11 @@ First unauthenticated visitor hits any route
   ↓
 Authentication#request_authentication sees should_auto_bootstrap?
   ↓
-Redirect to /session/sso (handshake → provider)
+Redirect to /session/sso (handshake → sabha.co)
   ↓
-Provider signs payload → /session/sso/callback
+sabha.co signs payload → /session/sso/callback
   ↓
-Sso::CallbacksController calls FirstRun.auto_bootstrap_from_sso!(payload):
+Sso::CallbacksController calls FirstRun.auto_bootstrap_from_sso(payload):
   - Creates Account (named via Branding.app_name)
   - Creates admin User (role: administrator, verified) from payload
   - Creates SingleSignOnRecord linking external_id ↔ user
@@ -315,12 +317,7 @@ Sso::CallbacksController calls FirstRun.auto_bootstrap_from_sso!(payload):
 Session opened → redirected to root → welcome flash
 ```
 
-AutoBootstrap is a one-shot ignition gated by `Account.none?`. After the first admin is provisioned, the droplet runs under whatever `AUTH_METHOD` the operator configured — `password`, `otp`, or persistent `sso`. Subsequent users sign in (or invite) per that method.
-
-**When to use AutoBootstrap:**
-- ✅ Sabha Cloud managed deployments (customer is already authenticated on sabha.co)
-- ✅ Any self-hosted install where the operator wants the first admin provisioned via an SSO provider they trust
-- ❌ Vanilla Kamal/self-hosted without an SSO provider — use the manual first-run form instead
+AutoBootstrap is a one-shot ignition gated by `Account.none?`. After the first admin is provisioned, the droplet runs under whatever `AUTH_METHOD` the customer configured — `password`, `otp`, or persistent `sso`. Subsequent users sign in (or invite) per that method.
 
 ### Security Requirements
 
@@ -568,8 +565,10 @@ SSO_SECRET=<shared-32+-char-secret>
 AUTO_BOOTSTRAP=true
 SSO_PROVIDER_URL=https://sabha.co/session/sso
 SSO_SECRET=<shared-32+-char-secret>
-AUTH_METHOD=password    # Or otp / sso — whatever the operator wants post-bootstrap
+AUTH_METHOD=password    # Or otp / sso — whatever the customer wants post-bootstrap
 ```
+
+Set by sabha_cloud on every managed droplet — not a self-hosted option.
 
 - First visit bounces through sabha.co; the customer's sabha.co identity becomes the admin
 - One-shot bootstrap gated by `Account.none?` — no magic-link emails, no `ADMIN_*` env vars
