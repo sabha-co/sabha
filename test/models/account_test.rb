@@ -6,66 +6,48 @@ class AccountTest < ActiveSupport::TestCase
   end
 
   test "auth_method defaults to password when ENV not set" do
-    original_env = ENV["AUTH_METHOD"]
-    begin
-      ENV.delete("AUTH_METHOD")
-      assert_equal "password", @account.auth_method
-      assert @account.password_auth?
-      assert_not @account.otp_auth?
-      assert_not @account.sso_auth?
-    ensure
-      ENV["AUTH_METHOD"] = original_env if original_env
+    with_env "AUTH_METHOD" => nil do
+      assert_equal "password", Account.auth_method
+      assert Account.password_auth?
+      assert_not Account.otp_auth?
+      assert_not Account.sso_auth?
     end
   end
 
   test "auth_method returns otp when set" do
-    original_env = ENV["AUTH_METHOD"]
-    begin
-      ENV["AUTH_METHOD"] = "otp"
-      assert_equal "otp", @account.auth_method
-      assert @account.otp_auth?
-      assert_not @account.password_auth?
-      assert_not @account.sso_auth?
-    ensure
-      if original_env.nil?
-        ENV.delete("AUTH_METHOD")
-      else
-        ENV["AUTH_METHOD"] = original_env
-      end
+    with_env "AUTH_METHOD" => "otp" do
+      assert_equal "otp", Account.auth_method
+      assert Account.otp_auth?
+      assert_not Account.password_auth?
+      assert_not Account.sso_auth?
     end
   end
 
   test "auth_method returns sso when set" do
-    original_env = ENV["AUTH_METHOD"]
-    begin
-      ENV["AUTH_METHOD"] = "sso"
-      assert_equal "sso", @account.auth_method
-      assert @account.sso_auth?
-      assert_not @account.password_auth?
-      assert_not @account.otp_auth?
-    ensure
-      if original_env.nil?
-        ENV.delete("AUTH_METHOD")
-      else
-        ENV["AUTH_METHOD"] = original_env
-      end
+    with_env "AUTH_METHOD" => "sso" do
+      assert_equal "sso", Account.auth_method
+      assert Account.sso_auth?
+      assert_not Account.password_auth?
+      assert_not Account.otp_auth?
     end
   end
 
   test "auth_method falls back to password for invalid ENV value" do
-    original_env = ENV["AUTH_METHOD"]
-    begin
-      ENV["AUTH_METHOD"] = "invalid"
-      assert_equal "password", @account.auth_method
-      assert @account.password_auth?
-    ensure
-      if original_env.nil?
-        ENV.delete("AUTH_METHOD")
-      else
-        ENV["AUTH_METHOD"] = original_env
-      end
+    with_env "AUTH_METHOD" => "invalid" do
+      assert_equal "password", Account.auth_method
+      assert Account.password_auth?
     end
   end
+
+  private
+    def with_env(values)
+      originals = values.transform_values { |_| nil }
+      values.each_key { |key| originals[key] = ENV[key] }
+      values.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+      yield
+    ensure
+      originals.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+    end
 
   test "settings restrict_room_creation_to_administrators can be toggled" do
     @account.settings.restrict_room_creation_to_administrators = true

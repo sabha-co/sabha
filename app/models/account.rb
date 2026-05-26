@@ -12,9 +12,7 @@ class Account < ApplicationRecord
   after_save :invalidate_personal_invite_links, if: :invite_links_disabled?
   after_commit :sync_name_to_workspace, if: :saved_change_to_name?
 
-  # Auth config is ENV-driven and shared across all accounts on a deploy, so
-  # these live as class methods. Instance access stays via delegate for the
-  # many `Current.account.sso_auth?`-style call sites.
+  # Auth config is ENV-driven and shared across all accounts on a deploy.
   class << self
     def auth_method
       ENV["AUTH_METHOD"].presence_in(VALID_AUTH_METHODS) || "password"
@@ -44,9 +42,6 @@ class Account < ApplicationRecord
       ENV["SSO_SECRET"]
     end
   end
-
-  delegate :auth_method, :password_auth?, :otp_auth?, :sso_auth?,
-           :sso_configured?, :sso_provider_url, :sso_secret, to: :class
 
   def attach_logo(attachable)
     content_type = attachable.try(:content_type) || attachable[:content_type]

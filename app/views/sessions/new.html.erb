@@ -10,7 +10,7 @@
     </div>
 
     <div class="flex flex-column gap">
-      <% if Current.account.otp_auth? %>
+      <% if Account.otp_auth? %>
         <%= form_with url: auth_tokens_url, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
           <fieldset class="flex flex-column gap center-block pad">
             <legend class="txt-large txt-align-center"><strong>Sign in to <%= Branding.contextual_app_name %></strong></legend>
