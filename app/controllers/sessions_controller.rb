@@ -38,12 +38,15 @@ class SessionsController < ApplicationController
 
   def destroy
     remove_push_subscription
-    sso_signed_out = Current.account&.sso_auth?
     terminate_current_session
-    redirect_to(sso_signed_out ? signed_out_session_url : root_url)
+    redirect_to post_logout_url
   end
 
   private
+    def post_logout_url
+      Account.sso_auth? ? signed_out_session_url : root_url
+    end
+
     def redirect_to_saas_login
       # In SaaS mode, workspace login pages redirect to the global SaaS login
       redirect_to "/session/new"

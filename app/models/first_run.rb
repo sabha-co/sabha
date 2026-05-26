@@ -55,12 +55,12 @@ class FirstRun
 
   # Provisions the first Account, admin User, SingleSignOnRecord, and the
   # default General room straight from the SSO callback payload. Returns the
-  # admin user; returns false if an Account already exists.
-  def self.auto_bootstrap_from_sso!(payload)
-    return false if Account.any?
+  # admin user; returns nil if an Account already exists.
+  def self.auto_bootstrap_from_sso(payload)
+    return if Account.any?
 
     with_lock do
-      return false if Account.any?
+      return if Account.any?
 
       Account.create!(name: account_name)
       room = Rooms::Open.new(name: FIRST_ROOM_NAME, auto_join: true)

@@ -41,7 +41,7 @@ class FirstRunAutoBootstrapFromSsoTest < ActiveSupport::TestCase
   end
 
   test "creates account, administrator, sso record, and auto-join General room" do
-    admin = FirstRun.auto_bootstrap_from_sso!(payload)
+    admin = FirstRun.auto_bootstrap_from_sso(payload)
 
     assert_equal 1, Account.count
     assert admin.administrator?
@@ -57,10 +57,10 @@ class FirstRunAutoBootstrapFromSsoTest < ActiveSupport::TestCase
     assert_includes admin.rooms, general
   end
 
-  test "returns false when an account already exists" do
+  test "returns nil when an account already exists" do
     Account.create!(name: "Existing")
 
-    assert_equal false, FirstRun.auto_bootstrap_from_sso!(payload)
+    assert_nil FirstRun.auto_bootstrap_from_sso(payload)
   end
 
   private
