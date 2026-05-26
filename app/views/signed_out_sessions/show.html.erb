@@ -1,0 +1,18 @@
+<% content_for :title, "Signed out" %>
+
+<section class="txt-align-center">
+  <div class="panel panel--centered">
+    <div class="flex justify-center mb-6">
+      <%= link_to root_path do %>
+        <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name, class: "w-18 h-auto rounded-lg" %>
+      <% end %>
+    </div>
+
+    <div class="flex flex-column gap center-block pad">
+      <h1 class="txt-large txt-align-center"><strong>You're signed out of <%= Branding.contextual_app_name %></strong></h1>
+      <p class="txt-muted txt-align-center">Sign in again to rejoin the conversation.</p>
+
+      <%= link_to "Sign in", sso_handshake_path, class: "btn btn--reversed", style: "--btn-border-radius: 0.5em; padding: 0.75rem 1.5rem;" %>
+    </div>
+  </div>
+</section>

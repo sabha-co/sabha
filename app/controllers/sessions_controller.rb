@@ -38,8 +38,9 @@ class SessionsController < ApplicationController
 
   def destroy
     remove_push_subscription
+    sso_signed_out = Current.account&.sso_auth?
     terminate_current_session
-    redirect_to root_url
+    redirect_to(sso_signed_out ? signed_out_session_url : root_url)
   end
 
   private
@@ -57,8 +58,7 @@ class SessionsController < ApplicationController
       return if Sabha.saas?  # SaaS mode handles user creation differently
 
       if FirstRun.should_auto_bootstrap?
-        FirstRun.auto_bootstrap!
-        redirect_to new_session_url, notice: "Your admin account has been created. Check your email for the login link."
+        redirect_to sso_handshake_url
       elsif User.none?
         redirect_to first_run_url
       end

@@ -11,15 +11,21 @@ class Sso::BaseController < ApplicationController
 
   private
     def sso_configured?
-      Current.account&.sso_configured?
+      account_for_sso.sso_configured?
     end
 
     def sso_secret
-      Current.account.sso_secret
+      account_for_sso.sso_secret
     end
 
     def sso_provider_url
-      Current.account.sso_provider_url
+      account_for_sso.sso_provider_url
+    end
+
+    # Falls back to an unsaved Account so SSO handshake/callback work on a
+    # fresh install (no Account yet) — the relevant accessors read ENV.
+    def account_for_sso
+      Current.account || Account.new
     end
 
     def sso_return_path

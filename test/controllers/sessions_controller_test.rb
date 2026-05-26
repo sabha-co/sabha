@@ -58,6 +58,20 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_not Session.exists?(session.id)
   end
 
+  test "destroy under SSO redirects to signed out page so logout sticks" do
+    sign_in :david
+
+    original = ENV["AUTH_METHOD"]
+    ENV["AUTH_METHOD"] = "sso"
+
+    delete session_url
+
+    assert_redirected_to signed_out_session_url
+    assert_not cookies[:session_token].present?
+  ensure
+    original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
+
   test "destroy removes the push subscription for the device" do
     sign_in :david
 
@@ -118,6 +132,25 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to first_run_url
   ensure
     original.nil? ? ENV.delete("AUTH_METHOD") : ENV["AUTH_METHOD"] = original
+  end
+
+  test "protected page under AUTO_BOOTSTRAP redirects to sso handshake" do
+    original_bootstrap = ENV["AUTO_BOOTSTRAP"]
+    original_provider = ENV["SSO_PROVIDER_URL"]
+    original_secret = ENV["SSO_SECRET"]
+    ENV["AUTO_BOOTSTRAP"] = "true"
+    ENV["SSO_PROVIDER_URL"] = "https://sabha.co/session/sso"
+    ENV["SSO_SECRET"] = "test-secret"
+
+    Account.stubs(:none?).returns(true)
+
+    get chat_url
+
+    assert_redirected_to sso_handshake_url
+  ensure
+    [ [ "AUTO_BOOTSTRAP", original_bootstrap ], [ "SSO_PROVIDER_URL", original_provider ], [ "SSO_SECRET", original_secret ] ].each do |key, value|
+      value.nil? ? ENV.delete(key) : ENV[key] = value
+    end
   end
 
   test "password login redirects to sso when SSO auth enabled" do

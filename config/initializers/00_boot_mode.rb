@@ -3,7 +3,8 @@
 # Three deployment modes:
 #   Self-hosted (default) — customer runs Sabha via Docker/Kamal
 #   SaaS (SAAS=true)      — multi-tenant sabha.co
-#   Managed               — campfire_cloud deploys for customers (AUTO_BOOTSTRAP=true)
+#   Managed               — sabha_cloud deploys for customers (AUTO_BOOTSTRAP=true,
+#                           bootstraps the first admin via an SSO round-trip)
 #
 # Catches misconfigured deploys at boot instead of silently producing
 # broken WebSocket URLs, mailer configs, etc.
@@ -20,7 +21,7 @@ if Rails.env.production? && !ENV["SECRET_KEY_BASE_DUMMY"].present?
   end
 
   if ENV["AUTO_BOOTSTRAP"] == "true"
-    required += %w[ADMIN_EMAIL ADMIN_AUTH_TOKEN]
+    required += %w[SSO_PROVIDER_URL SSO_SECRET]
   end
 
   missing = required.select { |key| ENV[key].blank? }
