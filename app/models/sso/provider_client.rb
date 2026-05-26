@@ -69,13 +69,20 @@ class Sso::ProviderClient
 
     uri = URI.parse(url)
 
-    unless valid_scheme?(uri) && uri.host == return_host && uri.path == return_path && uri.userinfo.blank?
+    unless valid_scheme?(uri) && host_matches?(uri.host) && uri.path == return_path && uri.userinfo.blank?
       raise InvalidReturnUrl, "Untrusted SSO return URL"
     end
 
     true
   rescue URI::InvalidURIError
     raise InvalidReturnUrl, "Invalid SSO return URL"
+  end
+
+  # True when this client's return_host is a single-label wildcard like
+  # "*.sabha.co" — matching one subdomain level (acme.sabha.co), not the bare
+  # apex (sabha.co) or deeper subdomains (evil.acme.sabha.co).
+  def wildcard?
+    return_host.to_s.start_with?("*.")
   end
 
   private
@@ -85,5 +92,28 @@ class Sso::ProviderClient
       return true if uri.is_a?(URI::HTTPS)
 
       Rails.env.development? && uri.is_a?(URI::HTTP)
+    end
+
+    def host_matches?(host)
+      return false if host.blank?
+      return host == return_host unless wildcard?
+
+      base = return_host.delete_prefix("*.")
+      return false unless host.end_with?(".#{base}")
+
+      remainder = host.delete_suffix(".#{base}")
+      return false if remainder.empty? || remainder.include?(".")
+
+      # A wildcard client must not validate a host that another configured
+      # client claims exactly — keeps managed_sabha (*.sabha.co) out of
+      # cloud.sabha.co even if cloud_sabha's secret leaks and an attacker
+      # tries to swap return URLs.
+      !claimed_exactly_by_other_client?(host)
+    end
+
+    def claimed_exactly_by_other_client?(host)
+      self.class.active.any? do |client|
+        client.name != name && !client.wildcard? && client.return_host == host
+      end
     end
 end
