@@ -30,11 +30,9 @@ SSO_SECRET=<shared-32+-char-secret>
 SSO_OVERRIDES_NAME=false
 SSO_OVERRIDES_AVATAR=false
 
-# Auto-bootstrap for headless deployments (see "AutoBootstrap" section)
+# Auto-bootstrap the first admin via SSO (see "AutoBootstrap" section).
+# Requires SSO_PROVIDER_URL and SSO_SECRET to be set above.
 AUTO_BOOTSTRAP=true
-ADMIN_EMAIL=admin@example.com
-ADMIN_NAME=Administrator
-ADMIN_AUTH_TOKEN=<32+-char-token> # For Sabha Cloud only
 ```
 
 ### How It Works
@@ -287,60 +285,57 @@ Admin account created → signed in → redirected to chat
 
 The first visitor becomes the administrator. Subsequent visitors see the marketing page or login screen.
 
-### AutoBootstrap (Sabha Cloud Only)
+### AutoBootstrap (SSO-driven)
 
-**For managed hosting platforms** where the deployment is controlled programmatically.
-
-AutoBootstrap enables headless account creation without user interaction. The hosting platform:
-1. Generates credentials before deployment
-2. Sets environment variables
-3. Sends welcome email with one-time login link
-4. User clicks link to authenticate (no password needed)
+**For managed hosting platforms** (Sabha Cloud) and any operator fronting Sabha with an SSO identity provider. AutoBootstrap removes the manual setup form for the first visitor — the customer's identity at the provider becomes the admin.
 
 ```bash
 AUTO_BOOTSTRAP=true
-ADMIN_EMAIL=user@example.com
-ADMIN_NAME=Administrator           # Optional, defaults to "Administrator"
-ADMIN_AUTH_TOKEN=<32+-char-token>  # One-time login token
-AUTH_METHOD=otp                    # Recommended for Cloud
+SSO_PROVIDER_URL=https://sabha.co/session/sso
+SSO_SECRET=<shared-32+-char-secret>
+AUTH_METHOD=password                  # Or otp / sso — what the operator wants post-bootstrap
 ```
 
 **Flow:**
 ```
-First visitor hits the site
+First unauthenticated visitor hits any route
   ↓
-AutoBootstrap triggered (no setup form)
+Authentication#request_authentication sees should_auto_bootstrap?
   ↓
-Admin account created with auth token
+Redirect to /session/sso (handshake → provider)
   ↓
-User receives welcome email with login link
+Provider signs payload → /session/sso/callback
   ↓
-Clicks link → /auth_tokens/validate/{token}
+Sso::CallbacksController calls FirstRun.auto_bootstrap_from_sso!(payload):
+  - Creates Account (named via Branding.app_name)
+  - Creates admin User (role: administrator, verified) from payload
+  - Creates SingleSignOnRecord linking external_id ↔ user
+  - Creates "General" room with auto_join: true
   ↓
-Token validated → session created → redirected to chat
-  ↓
-Subsequent logins use OTP (6-digit code via email)
+Session opened → redirected to root → welcome flash
 ```
 
+AutoBootstrap is a one-shot ignition gated by `Account.none?`. After the first admin is provisioned, the droplet runs under whatever `AUTH_METHOD` the operator configured — `password`, `otp`, or persistent `sso`. Subsequent users sign in (or invite) per that method.
+
 **When to use AutoBootstrap:**
-- ✅ Sabha Cloud managed deployments
-- ❌ Kamal/self-hosted (use manual first_run instead)
+- ✅ Sabha Cloud managed deployments (customer is already authenticated on sabha.co)
+- ✅ Any self-hosted install where the operator wants the first admin provisioned via an SSO provider they trust
+- ❌ Vanilla Kamal/self-hosted without an SSO provider — use the manual first-run form instead
 
 ### Security Requirements
 
-- `ADMIN_AUTH_TOKEN` must be at least 32 characters
-- Tokens expire after 24 hours
-- Tokens are single-use (invalidated after login)
-- Default is `false` - must explicitly set `AUTO_BOOTSTRAP=true`
+- `AUTO_BOOTSTRAP=true` requires `SSO_PROVIDER_URL` and `SSO_SECRET` — boot aborts in production otherwise (`config/initializers/00_boot_mode.rb`)
+- The shared secret must match the provider's per-client secret
+- Default is `false` — must explicitly set `AUTO_BOOTSTRAP=true`
 
 ### Files
 
 | File | Purpose |
 |------|---------|
-| `app/models/first_run.rb` | Manual and AutoBootstrap logic |
-| `app/controllers/first_runs_controller.rb` | Manual setup form |
-| `app/controllers/marketing_controller.rb` | Triggers AutoBootstrap |
-| `config/routes.rb` | `sign_in_with_token` route |
+| `app/models/first_run.rb` | Manual first-run + SSO auto-bootstrap logic |
+| `app/controllers/first_runs_controller.rb` | Manual setup form (deflects to SSO under AUTO_BOOTSTRAP) |
+| `app/controllers/sso/callbacks_controller.rb` | Invokes `auto_bootstrap_from_sso!` when `Account.none?` |
+| `config/initializers/00_boot_mode.rb` | Boot-time env var validation |
 
 ---
 
@@ -571,14 +566,14 @@ SSO_SECRET=<shared-32+-char-secret>
 
 ```bash
 AUTO_BOOTSTRAP=true
-ADMIN_EMAIL=user@example.com
-ADMIN_AUTH_TOKEN=<secure-32+-char-token>
-AUTH_METHOD=otp
+SSO_PROVIDER_URL=https://sabha.co/session/sso
+SSO_SECRET=<shared-32+-char-secret>
+AUTH_METHOD=password    # Or otp / sso — whatever the operator wants post-bootstrap
 ```
 
-- Automated account creation
-- One-time login link for initial setup
-- OTP for subsequent logins
+- First visit bounces through sabha.co; the customer's sabha.co identity becomes the admin
+- One-shot bootstrap gated by `Account.none?` — no magic-link emails, no `ADMIN_*` env vars
+- Subsequent users sign in via `AUTH_METHOD`
 
 ---
 
