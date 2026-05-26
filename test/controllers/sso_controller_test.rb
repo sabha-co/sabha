@@ -19,11 +19,12 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     restore_env("SSO_SECRET", @original_secret)
   end
 
-  test "new redirects to provider with signed payload" do
+  test "new renders interstitial that auto-submits to provider with signed payload" do
     get sso_handshake_url, params: { return_to: "/rooms/general" }
 
-    assert_response :redirect
-    assert_match %r{\Ahttps://parent\.example\.com/sso\?}, response.location
+    assert_response :ok
+    assert_equal "https://parent.example.com/sso", provider_form["action"]
+    assert_equal "get", provider_form["method"]
 
     payload = provider_request_payload
     assert payload["nonce"].present?
@@ -339,10 +340,15 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
   end
 
   private
+    def provider_form
+      css_select("form[data-controller~='auto-submit']").first
+    end
+
     def provider_request_payload
-      uri = URI.parse(response.location)
-      query = Rack::Utils.parse_query(uri.query)
-      Sso::Payload.decode(query["sso"], query["sig"], ENV["SSO_SECRET"])
+      form = provider_form
+      sso = form.at_css("input[name='sso']")["value"]
+      sig = form.at_css("input[name='sig']")["value"]
+      Sso::Payload.decode(sso, sig, ENV["SSO_SECRET"])
     end
 
     def callback_payload(attributes = {})
