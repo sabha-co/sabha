@@ -31,7 +31,8 @@ class Account < ApplicationRecord
     end
 
     def sso_configured?
-      sso_auth? && sso_provider_url.present? && sso_secret.present?
+      (sso_auth? || FirstRun.should_auto_bootstrap?) &&
+        sso_provider_url.present? && sso_secret.present?
     end
 
     def sso_provider_url

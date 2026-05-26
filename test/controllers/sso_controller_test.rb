@@ -305,12 +305,37 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     assert_response :service_unavailable
   end
 
-  test "configured sso endpoint fails closed when sso auth is disabled" do
+  test "configured sso endpoint fails closed when sso auth is disabled and not bootstrapping" do
     ENV["AUTH_METHOD"] = "password"
 
     get sso_handshake_url
 
     assert_response :service_unavailable
+  end
+
+  test "sso callback accepts bootstrap traffic and provisions admin when auth_method != sso" do
+    ENV["AUTH_METHOD"] = "password"
+    ENV["AUTO_BOOTSTRAP"] = "true"
+
+    ActiveRecord::Base.connection.disable_referential_integrity do
+      Account.destroy_all
+      Room.destroy_all
+      User.destroy_all
+    end
+
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "boot@example.com", external_id: "boot-1", name: "Boot"), ENV["SSO_SECRET"])
+
+    assert_difference -> { Account.count }, +1 do
+      assert_difference -> { User.count }, +1 do
+        get sso_callback_url, params: { sso:, sig: }
+      end
+    end
+
+    assert User.find_by(email_address: "boot@example.com").administrator?
+  ensure
+    ENV.delete("AUTO_BOOTSTRAP")
   end
 
   private
