@@ -161,29 +161,34 @@ If you did not request this, please ignore this email.
 # app/models/auth_token.rb
 class AuthToken < ApplicationRecord
   belongs_to :user
-  has_secure_token :token  # For Sabha Cloud bootstrap only
+
+  has_secure_token :token
+
+  validates :code, :expires_at, presence: true
 
   before_validation :generate_code
 
-  scope :valid, -> { where(used_at: nil).where("expires_at > ?", Time.current) }
+  scope :valid, -> { where(used_at: nil, expires_at: Time.current..) }
 
   def self.lookup(token: nil, email_address: nil, code: nil)
     if token.present?
-      return valid.find_by(token: token)  # Sabha Cloud bootstrap
+      return valid.find_by(token: token)
     elsif email_address.present? && code.present?
       user = User.find_by(email_address: email_address)
-      return valid.find_by(user: user, code: code)  # Regular OTP
+      sanitized_code = OtpCode.sanitize(code)
+      return valid.find_by(user: user, code: sanitized_code)
     end
     nil
   end
 
   private
-
-  def generate_code
-    self.code = format("%06d", rand(100_000..999_999))
-  end
+    def generate_code
+      self.code ||= OtpCode.generate(6)
+    end
 end
 ```
+
+The `token` field powers direct auto-login links used by campfire_cloud-style direct sign-in; the 6-character `code` is the typo-tolerant alphanumeric OTP entered by users.
 
 ### Files
 
@@ -331,7 +336,7 @@ AutoBootstrap is a one-shot ignition gated by `Account.none?`. After the first a
 |------|---------|
 | `app/models/first_run.rb` | Manual first-run + SSO auto-bootstrap logic |
 | `app/controllers/first_runs_controller.rb` | Manual setup form (deflects to SSO under AUTO_BOOTSTRAP) |
-| `app/controllers/sso/callbacks_controller.rb` | Invokes `auto_bootstrap_from_sso!` when `Account.none?` |
+| `app/controllers/sso/callbacks_controller.rb` | Invokes `auto_bootstrap_from_sso` when `Account.none?` |
 | `config/initializers/00_boot_mode.rb` | Boot-time env var validation |
 
 ---
@@ -465,9 +470,6 @@ post "resend_verification", to: "email_verifications#resend"
 # Password reset
 resources :password_resets, only: [:new, :create, :edit, :update], param: :token
 
-# Force password change (AutoBootstrap)
-resource :change_password, only: [:show, :update]
-
 # User registration
 get "join/:join_code", to: "users#new"
 post "join/:join_code", to: "users#create"
@@ -486,7 +488,6 @@ resource :first_run
 email_address       VARCHAR NOT NULL UNIQUE
 password_digest     VARCHAR          -- BCrypt hash
 verified_at         DATETIME         -- Email verification timestamp
-must_change_password BOOLEAN DEFAULT FALSE
 last_authenticated_at DATETIME       -- Tracks first login
 ```
 
@@ -506,9 +507,9 @@ last_active_at DATETIME NOT NULL
 ```sql
 id         BIGINT PRIMARY KEY
 user_id    BIGINT NOT NULL REFERENCES users(id)
-token      VARCHAR NOT NULL UNIQUE  -- Secure token (Sabha Cloud)
-code       VARCHAR NOT NULL         -- 6-digit OTP code
-expires_at DATETIME NOT NULL        -- 15 minutes from creation
+token      VARCHAR                  -- Secure token (campfire_cloud-style direct sign-in)
+code       VARCHAR                  -- 6-character alphanumeric OTP code
+expires_at DATETIME                 -- 15 minutes from creation
 used_at    DATETIME                 -- When code was used
 ```
 
@@ -583,14 +584,15 @@ Set by sabha_cloud on every managed droplet — not a self-hosted option.
 | File | Purpose |
 |------|---------|
 | `sessions_controller.rb` | Password sign-in/out |
-| `sso_controller.rb` | DiscourseConnect request and callback |
+| `signed_out_sessions_controller.rb` | Post-sign-out landing page |
+| `sso/handshakes_controller.rb` | DiscourseConnect handshake (provider redirect) |
+| `sso/callbacks_controller.rb` | DiscourseConnect callback (provider response) |
 | `auth_tokens_controller.rb` | Request OTP code |
 | `auth_tokens/validations_controller.rb` | Validate OTP code |
 | `users_controller.rb` | User registration |
 | `first_runs_controller.rb` | Initial setup |
 | `email_verifications_controller.rb` | Email verification |
 | `password_resets_controller.rb` | Password reset |
-| `change_passwords_controller.rb` | Force password change |
 | `sessions/transfers_controller.rb` | QR code session transfer |
 
 ### Models
@@ -603,7 +605,7 @@ Set by sabha_cloud on every managed droplet — not a self-hosted option.
 | `single_sign_on_record.rb` | Parent-app identity mapping, lookup, claim, and provisioning |
 | `single_sign_on_nonce.rb` | Database-backed SSO nonce issue and replay protection |
 | `account.rb` | Auth method configuration |
-| `first_run.rb` | AutoBootstrap |
+| `first_run.rb` | Manual first-run + SSO auto-bootstrap logic |
 
 ### Concerns
 
@@ -611,7 +613,6 @@ Set by sabha_cloud on every managed droplet — not a self-hosted option.
 |------|---------|
 | `authentication.rb` | Session handling, authentication flow |
 | `user/transferable.rb` | QR code session transfer |
-| `force_password_change.rb` | Password change enforcement |
 
 ### Mailers
 
