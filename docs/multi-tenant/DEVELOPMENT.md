@@ -4,7 +4,7 @@ Guide for developing Sabha in multi-tenant SaaS mode.
 
 For self-hosted development, see [../DEVELOPMENT.md](../DEVELOPMENT.md).
 
-> **License note:** The multi-tenant SaaS engine (`saas/` directory) is licensed under the [Sabha SaaS License](../../saas/LICENSE), not MIT.
+> **License note:** Sabha is based on Campfire, which is single-tenant by design and MIT-licensed. The multi-tenancy added in `saas/` to power [sabha.co](https://sabha.co) is licensed separately under the [Sabha SaaS License](../../saas/LICENSE), not MIT.
 
 ---
 

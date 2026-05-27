@@ -31,30 +31,43 @@ This gives us the best of both worlds:
 
 ## Tables in the untenanted database
 
+The authoritative list is `saas/db/untenanted_schema.rb`.
+
 | Table | Purpose |
 |-------|---------|
-| `global_identities` | Cross-workspace user identity (email) |
+| `global_identities` | Cross-workspace user identity (email, name) |
 | `global_sessions` | Cross-workspace session management |
 | `auth_codes` | OTP codes for global identity auth |
 | `workspaces` | Workspace registry |
 | `workspace_memberships` | Links identities to workspaces |
-| `workspace_external_id_sequences` | External ID generation |
+| `workspace_external_id_sequences` | Allocator for the URL-visible workspace IDs |
+| `workspace_backups` | R2-backed SQLite snapshots (see [DEPLOYMENT.md](DEPLOYMENT.md#backups)) |
+| `workspace_snapshots` | Point-in-time snapshot metadata |
 
 ## Configuration
 
 ### database.yml
 
-The untenanted database config is only active in SaaS mode (`Sabha.saas?`). It uses a standalone PostgreSQL config block — it does NOT inherit from the `&default` anchor (which has SQLite-specific options like `timeout`, `retries`, `default_transaction_mode`).
+The full SaaS database config is in `saas/config/database.yml` and is selected by `config/database.yml` when `Sabha.saas?` is true. It uses two YAML anchors: `&sqlite` for the per-tenant primary and queue databases, and `&untenanted` for the shared PostgreSQL block. The PostgreSQL block does NOT inherit `&sqlite` because SQLite-specific options (`timeout`, `retries`, `default_transaction_mode`) are not valid for `pg`.
+
+Per-environment shape:
 
 ```yaml
+primary:
+  <<: *sqlite
+  database: "storage/workspaces/<env>/%{tenant}/db/main.sqlite3"
+  tenanted: true
+  max_connection_pools: 50          # 100 in production
 untenanted:
-  adapter: postgresql
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
-  url: <%= ENV.fetch("UNTENANTED_DATABASE_URL", "postgres://localhost/sabha_untenanted_development") %>
-  migrations_paths: saas/db/untenanted_migrate
+  <<: *untenanted
+  url: <%= ENV.fetch("UNTENANTED_DATABASE_URL", "postgres://localhost/sabha_untenanted_<env>") %>
+queue:
+  <<: *sqlite
+  database: storage/db/<env>_queue.sqlite3
+  migrations_paths: db/queue_migrate
 ```
 
-Connection details (host, port, database, credentials, SSL) are all in the URL.
+The `&untenanted` anchor sets `migrations_paths: saas/db/untenanted_migrate` and `schema_dump: saas/db/untenanted_schema.rb`. Connection details (host, port, database, credentials, SSL) are all in the URL.
 
 ### Environment variable
 
@@ -81,14 +94,14 @@ SAAS=true bin/rails db:create db:migrate
 
 ### Production deployment (Kamal)
 
-Production uses a managed PostgreSQL service. No database accessory in Kamal -- the database is external infrastructure.
+Production uses a managed PostgreSQL service. No database accessory in Kamal — the database is external infrastructure.
 
-Set `UNTENANTED_DATABASE_URL` in `.kamal/secrets` with the full connection string from your provider. SSL params are included in the URL (e.g., `?sslmode=require`).
+`UNTENANTED_DATABASE_URL` lives in `.env.multitenant` (gitignored) and is forwarded into the container via `.kamal/secrets.multitenant`. SSL params are included in the URL (e.g., `?sslmode=require`).
 
 ## Migrations
 
-All 9 untenanted migrations use pure ActiveRecord DSL — no SQLite-specific syntax. They run against PostgreSQL without modification.
+Untenanted migrations live in `saas/db/untenanted_migrate/` and use pure ActiveRecord DSL — no SQLite-specific syntax — so they apply against PostgreSQL without modification.
 
 ## Models
 
-All 6 untenanted models inherit from `UntenantedRecord`, which uses `connects_to`. The adapter is determined entirely by `database.yml` — no model changes needed.
+Every model that targets the untenanted database inherits from `UntenantedRecord`, which `connects_to database: { writing: :untenanted, reading: :untenanted }`. The adapter is determined entirely by `database.yml` — no model changes needed. Current subclasses: `GlobalIdentity`, `GlobalSession`, `AuthCode`, `Workspace`, `WorkspaceMembership`, `Workspace::ExternalIdSequence`, `Workspace::Backup`, `Workspace::Snapshot`.

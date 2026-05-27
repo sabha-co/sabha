@@ -12,7 +12,7 @@ Sabha is a fork of [Once Campfire](https://once.com/campfire) by 37signals. This
 |---------|-------------|
 | **User management** | Admins can manage users from the UI. Promote/demote users between member, moderator, and administrator roles. |
 | **User banning** | Admins ban users — terminates sessions, soft-deletes messages, blocks IP addresses. Unbanning restores the account. |
-| **User blocking** | Members block other users from sending DMs. Admins can see who's being blocked. |
+| **User blocking** | Members can block other users from DMing or @-mentioning them. Symmetric — either party blocking stops the contact. |
 | **User badges** | Custom badges (name + color) to highlight member roles or titles. |
 | **User search** | Search members by name or email in the admin panel. |
 | **User reactivation** | Admins can reactivate deactivated users from the UI. |
@@ -47,27 +47,28 @@ Members can generate personal invite links from their profile (if enabled by adm
 
 ### Bot API
 
-Sabha extends Campfire's write-only bot system into an openclaw like autonomous-agent-ready API:
+Sabha extends Campfire's write-only bot system into an agent-ready REST + WebSocket API under `/api/bots/`. See [BOT_INTEGRATION.md](features/BOT_INTEGRATION.md) for the full surface.
 
 | Capability | Campfire | Sabha |
 |---|---|---|
 | Post messages | Yes | Yes |
-| Mention webhooks | Yes (7s timeout) | Yes (300s timeout) |
-| Self-registration | No | `POST /join/{code}` with JSON |
-| API discovery | No | `GET /skill` (LLM-readable) |
-| List rooms | No | `GET /rooms/{bot_key}` |
-| Read messages | No | `GET /rooms/{room_id}/{bot_key}/messages` |
-| Create DMs | No | `POST /rooms/{bot_key}/directs` |
-| Bot self-update | No | `PATCH /bots/{bot_key}` |
-| Everything webhook | No | Receives all events |
-| Structured errors | No | JSON `error` + `code` fields |
-| SSRF protection | No | Webhook URL validation |
+| Mention webhooks | Yes (7s timeout) | Yes (300s timeout, HMAC-signed) |
+| Self-registration | No | `POST /join/{code}` returns `bot_key` + `webhook_secret` |
+| API discovery | No | `GET /skill` (plain-text, LLM-readable) |
+| Read messages | No | `GET /api/bots/rooms/{room_id}/messages` (cursor-paginated) |
+| Edit / delete own messages | No | `PATCH` / `DELETE /api/bots/messages/{id}` |
+| Reactions | No | `POST` / `DELETE /api/bots/messages/{id}/boosts` |
+| Room management | No | Create, archive, join, leave, manage members |
+| Create DMs | No | `POST /api/bots/direct_messages` |
+| Real-time WebSocket | No | `wss://.../cable?bot_key=…` subscribing to `BotEventsChannel` |
+| Structured errors | No | JSON `{ error, code }` envelope |
+| SSRF protection | No | Webhook URL validation, endpoint allowlist |
 
-The 300-second webhook timeout is key — it makes the bot system practical for LLM-powered agents.
+The 300-second webhook timeout plus real-time WebSocket delivery make the bot system practical for LLM-powered agents that connect outbound and don't need a public webhook URL.
 
 ### Slack Import
 
-Full Slack workspace migration including users, channels, messages, threads, and reactions. Placeholder accounts for absent users can be claimed later. Idempotent — safe to re-run. This is an experimental feature and may not work for all workspaces.
+Full Slack workspace migration including users, channels, messages, threads, and reactions. Imported users are created as placeholder accounts (no email, no password); admins can later attach a real email and password to a placeholder via the console or admin UI. Idempotent — safe to re-run. Experimental and may not work for all workspaces.
 
 ### Themes
 
@@ -87,7 +88,19 @@ New members receive an automatic welcome message when they join, with the commun
 
 ### Email Providers
 
-Supports multiple email providers. Resend (default) and AWS SES for SaaS. SES includes HTML email templates with open tracking.
+Supports multiple email providers via the standard ActionMailer delivery interface — Resend (default for self-hosted) and AWS SES (default for SaaS). Sender domain configured per deployment.
+
+### Email Notifications
+
+Bundled missed-notification email and a separate weekly activity digest. Bundles coalesce mentions and DMs into one email per hour or per day (user-selectable) — no spam from chatty rooms. Weekly digest is admin-enabled with per-member opt-out. Both email surfaces default off; opt in via the notification preferences page. See [NOTIFICATIONS.md](features/NOTIFICATIONS.md).
+
+### Notification Preferences
+
+Dedicated profile area for notification settings: global mode (everything / mentions+DMs / nothing), email bundle frequency, weekly digest opt-in, push toggle. Per-room overrides layer on top of the global mode.
+
+### Single Sign-On
+
+Self-hosted Sabhas can hand off sign-in to an external identity provider (HMAC-signed payload over `sso/handshake` and `sso/callback`). Sabha SaaS can act as that provider for self-hosted installs.
 
 ### Other
 
@@ -104,16 +117,16 @@ Supports multiple email providers. Resend (default) and AWS SES for SaaS. SES in
 
 ### AnyCable
 
-[AnyCable](https://docs.anycable.io/) is a high-performance WebSocket server written in Go that replaces Rails' built-in ActionCable, allowing Sabha to handle significantly more concurrent connections with less memory. Enabled by default (HTTP RPC mode). Benchmarks show 10x faster WebSocket connections and 2x message throughput vs ActionCable. This is optional and can be disabled by setting `ENABLE_ANYCABLE=false`.
+[AnyCable](https://docs.anycable.io/) is a high-performance WebSocket server written in Go that replaces Rails' built-in ActionCable, allowing Sabha to handle significantly more concurrent connections with less memory. Enabled by default (HTTP RPC mode). Benchmarks show 10x faster WebSocket connections and 2x message throughput vs ActionCable. Disable by setting `ANYCABLE_ENABLED=false`.
 
 ### Solid Queue
 
-[Solid Queue](https://github.com/solidqueue/solid_queue) is a modern, Redis-backed job processing library for Ruby on Rails. It provides a simple, reliable way to run background jobs, with features like:
+[Solid Queue](https://github.com/solidqueue/solid_queue) is the database-backed background job system now standard in Rails. Sabha runs it on SQLite, so the **job queue** no longer needs Redis (Redis is still used elsewhere — cache store, ActionCable / AnyCable pubsub, Kredis):
 
-- **SQLite-backed** — uses SQLite for job storage, eliminating the need for Redis
-- **Runs inside Puma** — development jobs run inside the Puma process, no separate workers needed
-- **Production workers** — separate workers for production environments
-- **Future-proof** — ensures future support as resque gem is old and solidqueue is rails default now.
+- **SQLite-backed jobs** — job rows live in the same database family as the app
+- **Runs inside Puma in development** — no separate worker process for local development
+- **Separate workers in production** — dedicated processes for throughput and isolation
+- **Future-proof** — Rails default going forward; replaces older Resque-style queues
 
 ### Multi-Tenant SaaS Mode
 
@@ -134,11 +147,11 @@ See [multi-tenant/](./multi-tenant/) docs. The `saas/` directory is under the [S
 
 ### Soft Deletion
 
-Comprehensive soft deletion for messages, rooms, and memberships. Users have a status (active/deactivated/banned). Room deactivation cascades to threads, memberships, and messages. DM memberships are preserved so other participants keep their history.
+Comprehensive soft deletion for messages, rooms, and memberships. Users have a status (`active` / `deactivated` / `banned`). Room deactivation cascades to threads, memberships, and messages. Deactivating a user also cascades to their DM rooms — both participants lose visibility — while leaving Open and Closed memberships untouched. See [SOFT_DELETION_AND_USER_STATES.md](features/SOFT_DELETION_AND_USER_STATES.md).
 
 ### Deployment
 
-Three-container architecture: web (Puma + Redis + Solid Queue), AnyCable-Go, reverse proxy (kamal-proxy or Thruster). Deployed via Kamal or Docker Compose.
+Three-container architecture: web (Puma + Redis + Solid Queue workers), AnyCable-Go, reverse proxy (kamal-proxy or Thruster). Deployed via Kamal or Docker Compose. Redis powers the cache store and ActionCable / AnyCable pubsub; job storage is SQLite via Solid Queue.
 
 ---
 

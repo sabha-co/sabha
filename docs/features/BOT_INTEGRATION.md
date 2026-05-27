@@ -41,6 +41,8 @@ Store the `bot_key` and `webhook_secret` — both are shown only once. The `bot_
 
 A `webhook_secret` is generated for **every** bot at creation, regardless of whether `webhook_url` is set. A bot that starts out WebSocket-only can add a webhook URL later via `PATCH /api/bots/profile` without re-registering — it already holds the secret.
 
+The registration and `PATCH /api/bots/profile` endpoints also accept `mentions_url` and `everything_url` as legacy aliases for `webhook_url`. They map to the same column and are kept for backwards compatibility with older self-hosted bots.
+
 The invite URL is consumed on success. The bot is automatically added to all open rooms marked as auto-join, just like a human user.
 
 ### 3. Alternatively: create a bot via admin UI
@@ -99,6 +101,50 @@ All endpoints are rooted at the `api_base_url` returned from registration (e.g. 
 
 The `/skill` endpoint returns a plain-text document describing the full API with examples. It is designed to be readable by both humans and LLMs.
 
+### Pagination
+
+Endpoints that return collections of messages use **cursor pagination** with a stable envelope:
+
+```json
+{
+  "results":     [ /* message objects */ ],
+  "has_more":    true,
+  "next_cursor": "eyJpZCI6MTIzNDV9"
+}
+```
+
+Pass `next_cursor` back as `cursor=...` on the next request (or use the typed-cursor params below) until `has_more` is `false`.
+
+| Endpoint | Cursor / filter params |
+|---|---|
+| `GET /rooms/{room_id}/messages` | `before_id`, `before_time`, `after_time`, `limit` |
+| `GET /search` | `room_ids[]`, `author_ids[]`, `before_id`, `before_time`, `after_time`, `limit` |
+
+`GET /rooms` and `GET /users` use **page-based** pagination (`page`, `per_page`). `per_page` defaults to 50 and is capped at 100. `GET /rooms` also accepts `query=` for substring matching on room names.
+
+### Response shapes (overview)
+
+| Endpoint | Status | Body |
+|---|---|---|
+| `POST /rooms/{id}/messages` | `201` + `Location` | `{ "id": 10, "room_id": 5 }` |
+| `POST /rooms/{id}/messages?parent_message_id={pid}` | `201` + `Location` | `{ "id": 10, "room_id": <thread_room_id> }` |
+| `PATCH /messages/{id}` | `200` | `{ "id": 10, "body": { "html": "...", "plain": "..." } }` |
+| `DELETE /messages/{id}` | `204` | — |
+| `POST /messages/{id}/boosts` | `201` | `{ "id": 7, "content": "🎉" }` |
+| `GET /messages/{id}/boosts` | `200` | `{ "reactions": [ { "content": "🎉", "count": 3, "boosters": [ {"id":1,"name":"A"}, … ], "truncated": false } ], "total": 5, "truncated": false }` |
+| `POST /direct_messages` | `200` (existing DM) or `201` (new) | `{ "room": { "id": 5 } }` |
+| `PATCH /profile` | `200` | `{ "name": "MyBot", "webhook_url": "https://..." }` |
+| `POST /rooms/{id}/members` | `201` | `{ "id": 42, "name": "Alice" }` |
+| `GET /rooms/{id}/members` | `200` | `[ { "id": 1, "name": "Alice", "role": "member" }, … ]` |
+
+**Multipart upload** (file attachments): post `multipart/form-data` to `POST /rooms/{id}/messages` with the file under the field name `attachment`.
+
+```bash
+curl -X POST "$API/rooms/$ROOM_ID/messages" \
+  -H "Authorization: Bearer $BOT_KEY" \
+  -F "attachment=@photo.jpg"
+```
+
 ---
 
 ## Room Permissions
@@ -108,7 +154,7 @@ A bot's access to each room is controlled by its membership involvement:
 - **Mentions** — bot receives events when @mentioned or in a DM. Applies to both WebSocket and webhook delivery. If `webhook_url` is set, the HTTP response body is auto-posted as a reply.
 - **Muted** — bot receives no events from this room. It can still post and read via the API.
 
-Admins configure permissions per room from the bot's detail page. Each room has its own permission page at `/account/bots/:id/rooms/:room_id/permission`.
+Admins configure permissions per room from the bot's detail page. Each room has its own permission page at `/account/bots/:bot_id/rooms/:room_id/permission`. The `mentions` and `nothing` options surface in the UI as **Mentions** and **Muted**; the membership model also accepts `everything` (set via API or console) — a bot with `involvement: :everything` receives every message in the room.
 
 By default, new bots join open rooms with "mentions" involvement.
 
@@ -283,7 +329,7 @@ Returns an array of members with `id`, `name`, and `role`.
 curl "$API/search?q=deploy" -H "Authorization: Bearer $BOT_KEY"
 ```
 
-Returns up to 50 matching messages with room context.
+Returns a cursor-paginated envelope (see Pagination above) with matching messages and room context. Filter further with `room_ids[]`, `author_ids[]`, `before_id`, `before_time`, `after_time`, and `limit`.
 
 ### Reading a single message
 
@@ -410,6 +456,8 @@ WebSocket events are NOT signed — the WebSocket connection is already authenti
 
 All URLs in the payload are absolute — you can call them directly.
 
+The `role` field is always one of `"member"`, `"moderator"`, `"administrator"`, or `"bot"` — branch on this value if the bot needs to distinguish humans from other bots in the same room. Unlike the autocomplete `users` endpoints (which add a `"bot": true/false` flag for convenience), the webhook payload's `user` object does **not** carry a separate `bot` key — use `role == "bot"` instead.
+
 ```json
 {
   "event": "message_created",
@@ -508,6 +556,14 @@ Use any ActionCable-compatible WebSocket client. The `websocket_url` from regist
 ```
 wss://chat.example.com/cable?bot_key=42-AbCdEfGhIjKl
 ```
+
+In SaaS mode the URL also includes the workspace identifier so the connection lands in the right tenant:
+
+```
+wss://saas.example.com/cable?bot_key=42-AbCdEfGhIjKl&wid=acme
+```
+
+Always use the `websocket_url` returned by the registration response verbatim — don't build it from `base_url`.
 
 Subscribe to the bot events channel:
 

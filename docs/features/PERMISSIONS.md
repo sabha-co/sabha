@@ -31,12 +31,15 @@ Key predicates:
 
 | Room Type | Create | Read | Update | Delete |
 |-----------|--------|------|--------|--------|
-| **Direct** | Any user* | Members | N/A | Any member |
+| **Direct** | Any user* | Members | N/A | Any member of the DM |
 | **Open** | Any user* | Members | Admin/Creator | Admin/Creator |
 | **Closed** | Any user* | Members | Admin/Creator | Admin/Creator |
-| **Thread** | Any user | Members | Admin/Creator | Admin/Creator |
+| **Thread** | Any member of the parent room† | Members | Admin/Creator | Admin/Creator |
 
-*Can be restricted to admins via Account Settings
+\* Can be restricted to admins via Account Settings (see below).
+† Parent must be a message in an Open or Closed room; threads cannot be created on Direct or Thread messages.
+
+Open rooms with `auto_join: true` grant membership to all existing users and to every new signup (`Rooms::Open#auto_join`). The original "All Talk" room cannot be deleted (`Room::CannotDeleteOriginalError`).
 
 ## Message Permission Matrix
 
@@ -66,29 +69,40 @@ Moderators can view banned and deactivated user lists but cannot take action on 
 
 ## Notes
 
-**Direct Messages** have relaxed permissions — any member can delete the conversation (skips `ensure_can_administer`).
+**Direct Messages** have relaxed permissions — any member of the DM can delete the conversation (skips `ensure_can_administer` but is still scoped to `Current.user.rooms`).
+
+**Leaving a room** uses `Membership#leave!`, which sets `involvement: :invisible` and keeps `active: true` — the membership row persists so historical messages still resolve. The last visible member of a Closed room cannot leave (`Membership::LastVisibleMemberError`); the room must be deleted instead.
+
+## Blocks vs bans
+
+Two distinct mechanisms suppress unwanted contact:
+
+- **Blocks** (`User::Blockable`) — peer-to-peer, DM-scoped. Either party blocking the other prevents new DMs and `@`-mentions between them (`can_ping?` / `can_direct_message?`). No admin involvement; reversible from the user's settings.
+- **Bans** (`User::Bannable`) — admin action, account-wide. Collects IPs from the user's sessions, terminates them, soft-deletes their messages via `RemoveBannedContentJob`, and rejects future requests from those IPs with `429 Too Many Requests` (`BlockBannedRequests`). Sends `UserMailer.banned` / `unbanned`.
 
 ## Account Settings
 
 Administrators can restrict permissions via Account Settings (`/account/edit`):
 
-| Setting | Effect |
-|---------|--------|
-| `restrict_room_creation_to_administrators?` | Only admins can create Open/Closed rooms |
-| `restrict_direct_messages_to_administrators?` | Only admins can initiate DMs |
-| `allow_users_to_create_invite_links?` | When false, only admins can create invite links (default: true) |
+| Setting | Effect | Enforced by |
+|---------|--------|-------------|
+| `restrict_room_creation_to_administrators?` | Only admins can create Open/Closed rooms | `RoomsController#ensure_permission_to_create_rooms` |
+| `restrict_direct_messages_to_administrators?` | Only admins can initiate DMs | `User#can_create_direct_messages?` (used in `Rooms::DirectsController`) |
+| `allow_users_to_create_invite_links?` | When false, only admins can create invite links (default: true). Flipping false invalidates personal codes. | `Users::InviteLinksController#ensure_can_create_invite_links` |
 
-These settings are stored in `accounts.settings` JSON column.
+These settings are stored in the `accounts.settings` JSON column.
+
+**Bots** have their own admin-only surface: per-room involvement (`Accounts::Bots::RoomPermissionsController`) and invite codes (`Accounts::BotInviteCodesController`). The bot role itself cannot be granted through the user-role UI (`AccountsController` strips any `role` value outside `member|moderator|administrator`).
 
 ## Membership Involvement Levels
 
-Users can set their involvement level for each room:
+Each membership stores an involvement (`app/models/membership/involvable.rb`). The stored value is one of:
 
-| Level | Description | Available For |
-|-------|-------------|---------------|
-| `everything` | All notifications, appears in "My Rooms" | All room types |
-| `mentions` | Only @mention notifications, appears in "All Rooms" | Open, Closed |
-| `nothing` | No notifications | Direct only |
-| `invisible` | User has left the room — membership persists for history but is hidden from sidebar and room lists | Open, Closed |
+| Level | Behavior |
+|-------|----------|
+| `everything` | All notifications |
+| `mentions` | Only `@`-mention notifications |
+| `nothing` | No notifications |
+| `invisible` | User has left the room — membership persists for history but is hidden from sidebar and room lists |
 
-Note: DMs only cycle between `everything` and `nothing` in the UI.
+The effective involvement is the per-room value layered over the user's global notification mode: a user whose global mode is `nothing` has `effective_involvement == :nothing` for every room regardless of the per-room value. The room-settings UI exposes a subset per room type (DMs cycle `everything`/`nothing`; bot per-room permissions surface `mentions` and `nothing` as "Muted"), but the full enum is accepted on any room type via API or console.

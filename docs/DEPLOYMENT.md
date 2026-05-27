@@ -172,7 +172,7 @@ SSO_OVERRIDES_AVATAR=false
 COOKIE_DOMAIN=chat.yourdomain.com
 ```
 
-When using `AUTH_METHOD=sso`, configure the parent app as a DiscourseConnect-compatible provider. The provider must return a signed payload containing `nonce`, `external_id`, and `email`. If the parent app has not verified the email address, it must send `require_activation=true` so Sabha verifies the address before opening a session. See [Self-Hosted SSO](sso.md) for setup instructions, provider examples, rollout guidance, and troubleshooting.
+When using `AUTH_METHOD=sso`, configure the parent app as a DiscourseConnect-compatible provider. The provider must return a signed payload containing `nonce`, `external_id`, and `email`. If the parent app has not verified the email address, it must send `require_activation=true` so Sabha verifies the address before opening a session. See [Self-Hosted SSO](SSO.md) for setup instructions, provider examples, rollout guidance, and troubleshooting.
 
 ### 4. Start
 

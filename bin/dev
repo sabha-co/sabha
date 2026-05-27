@@ -13,6 +13,14 @@ if [ "$SAAS" = "true" ] || [ -f "tmp/saas.txt" ]; then
   fi
 fi
 
+# Auto-load .env.multitenant if present (used for SaaS-mode env like
+# SSO_PROVIDER_CLIENTS). Existing exports win; the file fills gaps only.
+if [ -f .env.multitenant ]; then
+  set -a
+  . ./.env.multitenant
+  set +a
+fi
+
 export PORT="${PORT:-3000}"
 export RUBY_DEBUG_OPEN="true"
 export RUBY_DEBUG_LAZY="true"
