@@ -49,6 +49,28 @@ class WebhookTest < ActiveSupport::TestCase
     end
   end
 
+  test "delivery with reply posts size-limit message when body exceeds cap" do
+    oversize = "x" * (Webhook::MAX_REPLY_BODY_SIZE + 1)
+    WebMock.stub_request(:post, webhooks(:betty).url).to_return(status: 200, body: oversize, headers: { "Content-Type" => "text/plain" })
+
+    webhooks(:betty).deliver_now(messages(:first), :created, reply: true)
+
+    reply_message = Message.last
+    assert_equal "Bot reply exceeded #{Webhook::MAX_REPLY_BODY_SIZE / 1.megabyte}MB limit", reply_message.body.to_plain_text
+  end
+
+  test "size cap fires before attachment blob is created for oversize image reply" do
+    oversize_image = "x" * (Webhook::MAX_REPLY_BODY_SIZE + 1)
+    WebMock.stub_request(:post, webhooks(:betty).url).to_return(status: 200, body: oversize_image, headers: { "Content-Type" => "image/png" })
+
+    assert_no_difference -> { ActiveStorage::Blob.count } do
+      webhooks(:betty).deliver_now(messages(:first), :created, reply: true)
+    end
+
+    reply_message = Message.last
+    assert_equal "Bot reply exceeded #{Webhook::MAX_REPLY_BODY_SIZE / 1.megabyte}MB limit", reply_message.body.to_plain_text
+  end
+
   test "delivery with reply posts timeout message" do
     Webhook.any_instance.stubs(:post).raises(Net::OpenTimeout)
     response = webhooks(:betty).deliver_now(messages(:first), :created, reply: true)

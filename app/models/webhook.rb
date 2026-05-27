@@ -3,6 +3,21 @@ require "uri"
 
 class Webhook < ApplicationRecord
   ENDPOINT_TIMEOUT = 300.seconds
+  MAX_REPLY_BODY_SIZE = 10.megabytes
+  ALLOWED_REPLY_CONTENT_TYPES = %w[
+    image/jpeg image/png image/gif image/webp
+    video/mp4 video/quicktime video/webm
+    audio/mpeg audio/mp4 audio/ogg audio/webm
+    application/pdf
+  ].freeze
+
+  ResponseTooLarge = Class.new(StandardError)
+
+  Response = Struct.new(:code, :message, :content_type, :body, keyword_init: true) do
+    def success?
+      code.to_i.between?(200, 299)
+    end
+  end
 
   belongs_to :user
 
@@ -54,17 +69,34 @@ class Webhook < ApplicationRecord
       end
     rescue Net::OpenTimeout, Net::ReadTimeout
       receive_text_reply_to room, text: "Failed to respond within #{ENDPOINT_TIMEOUT} seconds"
+    rescue ResponseTooLarge
+      receive_text_reply_to room, text: "Bot reply exceeded #{MAX_REPLY_BODY_SIZE / 1.megabyte}MB limit"
     end
 
     def deliver_without_reply(event_name, payload)
       post(event_name, payload).tap do |response|
-        raise "Failed to deliver webhook to #{url}, response: #{response.code} #{response.message}" unless response.is_a?(Net::HTTPSuccess)
+        raise "Failed to deliver webhook to #{url}, response: #{response.code} #{response.message}" unless response.success?
       end
     end
 
     def post(event_name, payload)
       headers = { "Content-Type" => "application/json" }.merge(signature_headers(event_name, payload))
-      http.request Net::HTTP::Post.new(uri, headers).tap { |request| request.body = payload }
+      request = Net::HTTP::Post.new(uri, headers).tap { |r| r.body = payload }
+
+      body = String.new
+      net_response = http.request(request) do |response|
+        response.read_body do |chunk|
+          body << chunk
+          raise ResponseTooLarge if body.bytesize > MAX_REPLY_BODY_SIZE
+        end
+      end
+
+      Response.new(
+        code: net_response.code,
+        message: net_response.message,
+        content_type: net_response.content_type,
+        body: body
+      )
     end
 
     def signature_headers(event_name, payload)
@@ -99,10 +131,13 @@ class Webhook < ApplicationRecord
     end
 
     def extract_attachment_from(response)
-      if response.content_type && mime_type = Mime::Type.lookup(response.content_type)
-        ActiveStorage::Blob.create_and_upload! \
-          io: StringIO.new(response.body), filename: "attachment.#{mime_type.symbol}", content_type: mime_type.to_s
-      end
+      return unless response.content_type && ALLOWED_REPLY_CONTENT_TYPES.include?(response.content_type)
+
+      mime_type = Mime::Type.lookup(response.content_type)
+      return unless mime_type
+
+      ActiveStorage::Blob.create_and_upload! \
+        io: StringIO.new(response.body), filename: "attachment.#{mime_type.symbol}", content_type: mime_type.to_s
     end
 
     def receive_attachment_reply_to(room, attachment:)

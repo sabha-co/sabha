@@ -2,11 +2,12 @@ module User::Avatar
   extend ActiveSupport::Concern
 
   ALLOWED_AVATAR_CONTENT_TYPES = %w[image/jpeg image/png image/gif image/webp].freeze
+  MAX_AVATAR_SIZE = 5.megabytes
 
   included do
-    has_one_attached :avatar
+    has_one_attached :avatar, dependent: :purge_later
 
-    validate :avatar_content_type_allowed, if: :avatar_attached?
+    validate :acceptable_avatar, if: :avatar_attached?
   end
 
   class_methods do
@@ -24,9 +25,14 @@ module User::Avatar
       avatar.attached?
     end
 
-    def avatar_content_type_allowed
+    def acceptable_avatar
       unless ALLOWED_AVATAR_CONTENT_TYPES.include?(avatar.content_type)
         errors.add(:avatar, "must be a JPEG, PNG, GIF, or WebP image")
+        return
+      end
+
+      if avatar.byte_size > MAX_AVATAR_SIZE
+        errors.add(:avatar, "is too large (max #{MAX_AVATAR_SIZE / 1.megabyte}MB)")
       end
     end
 end

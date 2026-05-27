@@ -16,7 +16,7 @@ module Message::Attachment
   MAX_ATTACHMENT_SIZE = 50.megabytes
 
   included do
-    has_one_attached :attachment do |attachable|
+    has_one_attached :attachment, dependent: :purge_later do |attachable|
       attachable.variant :thumb, resize_to_limit: [ THUMBNAIL_MAX_WIDTH, THUMBNAIL_MAX_HEIGHT ], process: :later
     end
 

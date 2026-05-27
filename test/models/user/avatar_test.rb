@@ -19,4 +19,14 @@ class User::AvatarTest < ActiveSupport::TestCase
     assert_not user.valid?
     assert_includes user.errors[:avatar], "must be a JPEG, PNG, GIF, or WebP image"
   end
+
+  test "oversize avatar is invalid" do
+    user = users(:david)
+    user.avatar.attach(
+      io: StringIO.new("x" * (User::Avatar::MAX_AVATAR_SIZE + 1)), filename: "huge.png", content_type: "image/png"
+    )
+
+    assert_not user.valid?
+    assert_includes user.errors[:avatar], "is too large (max #{User::Avatar::MAX_AVATAR_SIZE / 1.megabyte}MB)"
+  end
 end

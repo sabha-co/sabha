@@ -94,10 +94,17 @@ class AccountTest < ActiveSupport::TestCase
   end
 
   test "rejects SVG logo uploads" do
-    assert_raises(Account::InvalidLogoType) do
-      @account.attach_logo({ io: file_fixture("logo.svg").open, filename: "logo.svg", content_type: "image/svg+xml" })
-    end
-    assert_not @account.logo.attached?
+    @account.logo.attach(io: file_fixture("logo.svg").open, filename: "logo.svg", content_type: "image/svg+xml")
+
+    assert_not @account.valid?
+    assert_includes @account.errors[:logo], "must be a JPEG, PNG, GIF, or WebP image"
+  end
+
+  test "rejects oversize logo uploads" do
+    @account.logo.attach(io: StringIO.new("x" * (Account::MAX_LOGO_SIZE + 1)), filename: "huge.png", content_type: "image/png")
+
+    assert_not @account.valid?
+    assert_includes @account.errors[:logo], "is too large (max #{Account::MAX_LOGO_SIZE / 1.megabyte}MB)"
   end
 
   test "disabling invite links destroys all personal invite links" do
