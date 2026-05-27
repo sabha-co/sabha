@@ -12,7 +12,7 @@ Sabha is a fork of [Campfire](https://once.com/campfire) by 37signals, adding th
 - **No per-seat pricing** — host as many members as your server handles
 - **SQLite in production** — no database server to manage
 - **One-command deploy** — Kamal or Docker Compose on a $10/month VPS
-- **Slack Migration** — Easy migration from Slack to Sabha
+- **Slack Migration** (beta) — Easy migration from Slack to Sabha
 - **OpenClaw Integration ready** — Integration with OpenClaw for AI features
 
 ## Features
