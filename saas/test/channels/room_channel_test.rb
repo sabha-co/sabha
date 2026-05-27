@@ -15,7 +15,7 @@ class SaasRoomChannelTest < ActionCable::Channel::TestCase
 
     ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
       @room = Rooms::Open.find_by(name: "General")
-      @room.memberships.find_or_create_by!(user: @user)
+      @room.memberships.grant_to(@user)
     end
 
     stub_connection(
