@@ -47,6 +47,7 @@ Rails.application.routes.draw do
   end
   get "/session/sso", to: "sso/handshakes#new", as: :sso_handshake
   get "/session/sso/callback", to: "sso/callbacks#show", as: :sso_callback
+  get "/session/signed_out", to: "signed_out_sessions#show", as: :signed_out_session
 
   resources :auth_tokens, only: %i[create]
   namespace :auth_tokens do

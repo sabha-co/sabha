@@ -118,6 +118,12 @@ jobs:
           R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_ENDPOINT=${{ secrets.R2_ENDPOINT }}
           R2_BUCKET=${{ secrets.R2_BUCKET }}
+
+          SSO_PROVIDER_CLIENTS=${{ secrets.SSO_PROVIDER_CLIENTS }}
+          SSO_CLOUD_SABHA_RETURN_HOST=${{ secrets.SSO_CLOUD_SABHA_RETURN_HOST }}
+          SSO_CLOUD_SABHA_SECRET=${{ secrets.SSO_CLOUD_SABHA_SECRET }}
+          SSO_MANAGED_SABHA_RETURN_HOST=${{ secrets.SSO_MANAGED_SABHA_RETURN_HOST }}
+          SSO_MANAGED_SABHA_SECRET=${{ secrets.SSO_MANAGED_SABHA_SECRET }}
           EOF
 
       - name: Run Kamal setup (first-time provisioning)

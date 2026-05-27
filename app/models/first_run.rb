@@ -1,25 +1,22 @@
 # FirstRun handles initial account and admin user creation.
 #
-# There are two ways to set up a new Sabha instance:
+# Two ways to set up a new Sabha instance:
 #
-# 1. MANUAL FIRST-RUN (Default for Kamal/self-hosted deployments)
-#    - First visitor to the site sees a setup form
-#    - They enter their name, email, and password to become admin
-#    - Uses FirstRun.create! directly from FirstRunsController
+# 1. MANUAL FIRST-RUN (default for Kamal/self-hosted deployments)
+#    First visitor sees a setup form and enters name, email, and password to
+#    become admin. Uses FirstRun.create! from FirstRunsController.
 #
-# 2. AUTO-BOOTSTRAP (Sabha Cloud managed deployments only)
-#    - Headless setup without user interaction
-#    - Requires ENV vars: AUTO_BOOTSTRAP=true, ADMIN_EMAIL, ADMIN_AUTH_TOKEN
-#    - Creates admin account automatically on first request
-#    - Sends welcome email with one-time login link
-#    - Admin clicks link to authenticate (no password needed)
-#    - Subsequent logins use OTP (6-digit code via email)
+# 2. SSO AUTO-BOOTSTRAP (Sabha Cloud managed deployments)
+#    sabha_cloud sets AUTO_BOOTSTRAP=true plus SSO_PROVIDER_URL/SSO_SECRET on
+#    each droplet it provisions. The first unauthenticated visit is redirected
+#    through the SSO handshake against sabha.co; the callback runs
+#    FirstRun.auto_bootstrap_from_sso to provision the Account, admin User,
+#    SSO record, and General room from the payload — no setup form, no
+#    emailed magic link.
 #
-# Auto-bootstrap is designed for managed hosting platforms where:
-#    - The hosting platform controls the deployment
-#    - Admin credentials are generated programmatically
-#    - Users receive a welcome email with a magic link to sign in
-#    - No manual setup form is needed
+#    After bootstrap the droplet runs under whatever AUTH_METHOD the customer
+#    configured (password, otp, or sso). AUTO_BOOTSTRAP is a one-shot ignition
+#    mechanism gated by Account.none?, not a persistent auth mode.
 #
 class FirstRun
   FIRST_ROOM_NAME = "General"
@@ -32,7 +29,7 @@ class FirstRun
   # Manual first-run: creates admin from user-submitted form data
   def self.create!(user_params)
     account = Account.create!(name: account_name)
-    room    = Rooms::Open.new(name: FIRST_ROOM_NAME)
+    room    = Rooms::Open.new(name: FIRST_ROOM_NAME, auto_join: true)
 
     administrator = room.creator = User.new(user_params.merge(role: :administrator))
     administrator.validate!
@@ -43,54 +40,51 @@ class FirstRun
     administrator
   end
 
-  # Check if auto-bootstrap is enabled via environment variables.
-  # Requires all three: AUTO_BOOTSTRAP=true, ADMIN_EMAIL, ADMIN_AUTH_TOKEN
+  # SSO auto-bootstrap is wired up when AUTO_BOOTSTRAP=true and the SSO
+  # provider env is set. Sabha Cloud sets all three on each droplet so the
+  # customer's sabha.co identity provisions the first admin on first visit.
   def self.auto_bootstrap_enabled?
     ENV["AUTO_BOOTSTRAP"] == "true" &&
-      ENV["ADMIN_EMAIL"].present? &&
-      ENV["ADMIN_AUTH_TOKEN"].present?
+      ENV["SSO_PROVIDER_URL"].present? &&
+      ENV["SSO_SECRET"].present?
   end
 
-  # Should we run auto-bootstrap? Only if enabled AND no account exists yet.
   def self.should_auto_bootstrap?
     auto_bootstrap_enabled? && Account.none?
   end
 
-  # Perform auto-bootstrap: create admin account with one-time login token.
-  # Called from SessionsController when first visitor hits the sign-in page.
-  # Returns the admin user if successful, false if already bootstrapped.
-  def self.auto_bootstrap!
-    return false unless should_auto_bootstrap?
+  # Provisions the first Account, admin User, SingleSignOnRecord, and the
+  # default General room straight from the SSO callback payload. Returns the
+  # admin user; returns nil if an Account already exists.
+  def self.auto_bootstrap_from_sso(payload)
+    return if Account.any?
 
     with_lock do
-      return false if Account.any?
+      return if Account.any?
 
-      token_value = ENV["ADMIN_AUTH_TOKEN"]
-      if token_value.length < 32
-        raise ArgumentError, "ADMIN_AUTH_TOKEN must be at least 32 characters for security"
-      end
+      Account.create!(name: account_name)
+      room = Rooms::Open.new(name: FIRST_ROOM_NAME, auto_join: true)
 
-      Rails.logger.info "[AutoBootstrap] Creating admin account for Sabha Cloud..."
-
-      admin = create!(
-        name: ENV.fetch("ADMIN_NAME", "Administrator"),
-        email_address: ENV["ADMIN_EMAIL"],
-        password: SecureRandom.hex(32)  # Random password, never used
+      admin = room.creator = User.new(
+        name: SingleSignOnRecord.name_from(payload),
+        email_address: SingleSignOnRecord.email_address_from(payload),
+        avatar_url: payload["avatar_url"],
+        role: :administrator,
+        verified_at: Time.current
       )
-      admin.update!(verified_at: Time.current)
+      admin.validate!
+      room.save!
+      room.memberships.grant_to(admin)
 
-      # Create AuthToken for one-time login link
-      admin.auth_tokens.create!(
-        token: token_value,
-        expires_at: 24.hours.from_now
+      admin.create_single_sign_on_record!(
+        external_id: SingleSignOnRecord.external_id_from(payload),
+        external_email: SingleSignOnRecord.email_address_from(payload),
+        last_payload: payload.to_json,
+        last_seen_at: Time.current
       )
 
-      Rails.logger.info "[AutoBootstrap] Admin account created for #{admin.email_address}"
       admin
     end
-  rescue => e
-    Rails.logger.error "[AutoBootstrap] Failed to create admin: #{e.message}"
-    raise
   end
 
   def self.with_lock(&block)

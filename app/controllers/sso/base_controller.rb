@@ -11,15 +11,15 @@ class Sso::BaseController < ApplicationController
 
   private
     def sso_configured?
-      Current.account&.sso_configured?
+      Account.sso_configured?
     end
 
     def sso_secret
-      Current.account.sso_secret
+      Account.sso_secret
     end
 
     def sso_provider_url
-      Current.account.sso_provider_url
+      Account.sso_provider_url
     end
 
     def sso_return_path

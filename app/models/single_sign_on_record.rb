@@ -47,6 +47,23 @@ class SingleSignOnRecord < ApplicationRecord
     user.update!(attributes) if attributes.any?
   end
 
+  def self.external_id_from(payload)
+    payload["external_id"].to_s
+  end
+
+  def self.email_address_from(payload)
+    payload["email"].to_s.downcase
+  end
+
+  def self.name_from(payload)
+    candidate = payload["name"].presence || email_address_from(payload).split("@").first
+    candidate.to_s.length >= 2 ? candidate : User::DEFAULT_NAME
+  end
+
+  def self.activation_required?(payload)
+    payload["require_activation"] == true
+  end
+
   private
     def self.claim_existing_user!(payload)
       user = User.active.find_by(email_address: email_address_from(payload))
@@ -86,23 +103,6 @@ class SingleSignOnRecord < ApplicationRecord
         last_payload: payload.to_json,
         last_seen_at: Time.current
       )
-    end
-
-    def self.external_id_from(payload)
-      payload["external_id"].to_s
-    end
-
-    def self.email_address_from(payload)
-      payload["email"].to_s.downcase
-    end
-
-    def self.name_from(payload)
-      candidate = payload["name"].presence || email_address_from(payload).split("@").first
-      candidate.to_s.length >= 2 ? candidate : User::DEFAULT_NAME
-    end
-
-    def self.activation_required?(payload)
-      payload["require_activation"] == true
     end
 
     def overrides_name?

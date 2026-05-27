@@ -44,11 +44,11 @@ class AuthTokens::ValidationsController < ApplicationController
   end
 
   def require_otp_or_token
-    if Current.account.sso_auth?
+    if Account.sso_auth?
       redirect_to sso_handshake_url
     elsif params[:token].present?
       # Token-based magic links are reserved for Cloud bootstrap.
-    elsif !Current.account.otp_auth?
+    elsif !Account.otp_auth?
       redirect_to new_session_url, alert: "OTP login is not enabled."
     end
   end

@@ -19,11 +19,12 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     restore_env("SSO_SECRET", @original_secret)
   end
 
-  test "new redirects to provider with signed payload" do
+  test "new renders interstitial that auto-submits to provider with signed payload" do
     get sso_handshake_url, params: { return_to: "/rooms/general" }
 
-    assert_response :redirect
-    assert_match %r{\Ahttps://parent\.example\.com/sso\?}, response.location
+    assert_response :ok
+    assert_equal "https://parent.example.com/sso", provider_form["action"]
+    assert_equal "get", provider_form["method"]
 
     payload = provider_request_payload
     assert payload["nonce"].present?
@@ -254,6 +255,49 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     assert parsed_cookies.signed[:session_token].present?
   end
 
+  test "first sso callback bootstraps account and provisions an administrator" do
+    ActiveRecord::Base.connection.disable_referential_integrity do
+      Account.destroy_all
+      Room.destroy_all
+      User.destroy_all
+    end
+
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "founder@example.com", external_id: "founder-1", name: "Founder"), ENV["SSO_SECRET"])
+
+    assert_difference -> { Account.count }, +1 do
+      assert_difference -> { User.count }, +1 do
+        get sso_callback_url, params: { sso:, sig: }
+      end
+    end
+
+    admin = User.find_by(email_address: "founder@example.com")
+    assert admin.administrator?
+    assert_includes admin.rooms.map(&:name), "General"
+    assert_match /Welcome to/, flash[:notice]
+  end
+
+  test "newly provisioned sso user sees a welcome flash" do
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "newcomer@example.com", external_id: "newcomer-1", name: "Newcomer"), ENV["SSO_SECRET"])
+
+    get sso_callback_url, params: { sso:, sig: }
+
+    assert_match /Welcome to/, flash[:notice]
+  end
+
+  test "returning sso user does not see the welcome flash" do
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: users(:david).email_address, external_id: single_sign_on_records(:david).external_id), ENV["SSO_SECRET"])
+
+    get sso_callback_url, params: { sso:, sig: }
+
+    assert_nil flash[:notice]
+  end
+
   test "misconfiguration fails closed" do
     ENV.delete("SSO_SECRET")
 
@@ -262,7 +306,7 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     assert_response :service_unavailable
   end
 
-  test "configured sso endpoint fails closed when sso auth is disabled" do
+  test "configured sso endpoint fails closed when sso auth is disabled and not bootstrapping" do
     ENV["AUTH_METHOD"] = "password"
 
     get sso_handshake_url
@@ -270,11 +314,41 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     assert_response :service_unavailable
   end
 
+  test "sso callback accepts bootstrap traffic and provisions admin when auth_method != sso" do
+    ENV["AUTH_METHOD"] = "password"
+    ENV["AUTO_BOOTSTRAP"] = "true"
+
+    ActiveRecord::Base.connection.disable_referential_integrity do
+      Account.destroy_all
+      Room.destroy_all
+      User.destroy_all
+    end
+
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode(callback_payload(nonce:, email: "boot@example.com", external_id: "boot-1", name: "Boot"), ENV["SSO_SECRET"])
+
+    assert_difference -> { Account.count }, +1 do
+      assert_difference -> { User.count }, +1 do
+        get sso_callback_url, params: { sso:, sig: }
+      end
+    end
+
+    assert User.find_by(email_address: "boot@example.com").administrator?
+  ensure
+    ENV.delete("AUTO_BOOTSTRAP")
+  end
+
   private
+    def provider_form
+      css_select("form[data-controller~='auto-submit']").first
+    end
+
     def provider_request_payload
-      uri = URI.parse(response.location)
-      query = Rack::Utils.parse_query(uri.query)
-      Sso::Payload.decode(query["sso"], query["sig"], ENV["SSO_SECRET"])
+      form = provider_form
+      sso = form.at_css("input[name='sso']")["value"]
+      sig = form.at_css("input[name='sig']")["value"]
+      Sso::Payload.decode(sso, sig, ENV["SSO_SECRET"])
     end
 
     def callback_payload(attributes = {})

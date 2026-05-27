@@ -12,34 +12,36 @@ class Account < ApplicationRecord
   after_save :invalidate_personal_invite_links, if: :invite_links_disabled?
   after_commit :sync_name_to_workspace, if: :saved_change_to_name?
 
-  # Auth method is controlled via ENV["AUTH_METHOD"]
-  # Valid values: "password" (default), "otp", "sso"
-  def auth_method
-    ENV["AUTH_METHOD"].presence_in(VALID_AUTH_METHODS) || "password"
-  end
+  # Auth config is ENV-driven and shared across all accounts on a deploy.
+  class << self
+    def auth_method
+      ENV["AUTH_METHOD"].presence_in(VALID_AUTH_METHODS) || "password"
+    end
 
-  def password_auth?
-    auth_method == "password"
-  end
+    def password_auth?
+      auth_method == "password"
+    end
 
-  def otp_auth?
-    auth_method == "otp"
-  end
+    def otp_auth?
+      auth_method == "otp"
+    end
 
-  def sso_auth?
-    !Sabha.saas? && auth_method == "sso"
-  end
+    def sso_auth?
+      !Sabha.saas? && auth_method == "sso"
+    end
 
-  def sso_configured?
-    sso_auth? && sso_provider_url.present? && sso_secret.present?
-  end
+    def sso_configured?
+      (sso_auth? || FirstRun.should_auto_bootstrap?) &&
+        sso_provider_url.present? && sso_secret.present?
+    end
 
-  def sso_provider_url
-    ENV["SSO_PROVIDER_URL"]
-  end
+    def sso_provider_url
+      ENV["SSO_PROVIDER_URL"]
+    end
 
-  def sso_secret
-    ENV["SSO_SECRET"]
+    def sso_secret
+      ENV["SSO_SECRET"]
+    end
   end
 
   def attach_logo(attachable)

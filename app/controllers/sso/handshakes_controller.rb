@@ -6,14 +6,14 @@ class Sso::HandshakesController < Sso::BaseController
     session[SESSION_NONCE_KEY] = nonce
     sso, sig = Sso::Payload.encode({ nonce: nonce, return_sso_url: sso_callback_url }, sso_secret)
 
-    redirect_to provider_url(sso:, sig:), allow_other_host: true
+    @provider_action, @provider_params = provider_form_parts(sso:, sig:)
   end
 
   private
-    def provider_url(sso:, sig:)
+    def provider_form_parts(sso:, sig:)
       uri = URI.parse(sso_provider_url)
-      query = Rack::Utils.parse_query(uri.query).merge("sso" => sso, "sig" => sig)
-      uri.query = Rack::Utils.build_query(query)
-      uri.to_s
+      params = Rack::Utils.parse_query(uri.query).merge("sso" => sso, "sig" => sig)
+      uri.query = nil
+      [ uri.to_s, params ]
     end
 end
