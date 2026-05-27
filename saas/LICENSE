@@ -1,5 +1,5 @@
 The Sabha SaaS License (the "SaaS License")
-Copyright (c) 2025 Sabha LLC
+Copyright (c) 2026 Sabha LLC
 
 With regard to the Sabha Software:
 
@@ -24,6 +24,14 @@ interest in and to all such modifications.
 You are not granted any other rights beyond what is expressly stated herein.
 Subject to the foregoing, it is forbidden to copy, merge, publish, distribute,
 sublicense, and/or sell the Software.
+
+This SaaS License applies only to the part of this Software that is not
+distributed as part of the MIT-licensed Sabha core. Any part of this Software
+distributed as part of the Sabha core or served client-side as an image, font,
+cascading stylesheet (CSS), or file which produces or is compiled, arranged,
+augmented, or combined into client-side JavaScript, in whole or in part, is
+copyrighted under the MIT Expat license. The full text of this SaaS License
+shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
