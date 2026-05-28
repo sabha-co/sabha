@@ -563,6 +563,51 @@
   margin: 0;
 }
 
+/* ═══════════════════════════ USE CASES ═══════════════════════════ */
+
+.landing-use-cases {
+  background: var(--bg-white);
+}
+
+.landing-use-cases-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 48px 64px;
+}
+
+.landing-use-case {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 18px;
+  position: relative;
+}
+
+.landing-use-case::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 2px;
+  background: var(--accent-red);
+}
+
+.landing-use-case h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.landing-use-case p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin: 0;
+}
+
 /* ═══════════════════════════ PRICING ═══════════════════════════ */
 
 .landing-pricing-section {
@@ -982,6 +1027,7 @@
 
   /* Grid 1 col */
   .landing-details .landing-grid { grid-template-columns: 1fr; }
+  .landing-use-cases-grid { grid-template-columns: 1fr; gap: 32px; }
 
   /* Screenshot */
   .landing-screenshot { height: auto; }
