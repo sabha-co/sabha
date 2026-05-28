@@ -6,7 +6,7 @@
     <title><%= content_for?(:title) ? "#{content_for(:title)} | Sabha" : "Sabha — Open Source Discord Alternative for Communities" %></title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
-    <meta name="description" content="<%= content_for?(:meta_description) ? content_for(:meta_description) : "Simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. Free to use, open source, self-hostable." %>">
+    <meta name="description" content="<%= content_for?(:meta_description) ? content_for(:meta_description) : "Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to host, free to leave." %>">
     <meta name="theme-color" content="<%= Branding.theme_color %>">
     <meta name="mobile-web-app-capable" content="yes">
 
@@ -15,7 +15,7 @@
     <%# Open Graph %>
     <meta property="og:type" content="website">
     <meta property="og:title" content="<%= content_for?(:title) ? "#{content_for(:title)} | Sabha" : "Sabha — Open Source Discord Alternative for Communities" %>">
-    <meta property="og:description" content="<%= content_for?(:meta_description) ? content_for(:meta_description) : "Simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. Free to use, open source, self-hostable." %>">
+    <meta property="og:description" content="<%= content_for?(:meta_description) ? content_for(:meta_description) : "Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to host, free to leave." %>">
     <meta property="og:image" content="<%= image_url("sabha-og.png") %>">
     <meta property="og:url" content="<%= request.original_url %>">
     <meta property="og:site_name" content="Sabha">
@@ -23,7 +23,7 @@
     <%# Twitter Card %>
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<%= content_for?(:title) ? "#{content_for(:title)} | Sabha" : "Sabha — Open Source Discord Alternative for Communities" %>">
-    <meta name="twitter:description" content="<%= content_for?(:meta_description) ? content_for(:meta_description) : "Simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search." %>">
+    <meta name="twitter:description" content="<%= content_for?(:meta_description) ? content_for(:meta_description) : "Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to host, free to leave." %>">
     <meta name="twitter:image" content="<%= image_url("sabha-og.png") %>">
 
     <%= csrf_meta_tags %>

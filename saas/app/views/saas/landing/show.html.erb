@@ -14,7 +14,7 @@
         data-controller="word-rotate"
         data-word-rotate-words-value='["Discord", "Slack"]'
         data-word-rotate-interval-value="3000">Discord</span> alternative for communities.</h1>
-      <p class="landing-hero-sub">Sabha is simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. That's the product.</p>
+      <p class="landing-hero-sub">Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to host, free to leave.</p>
     </div>
     <div class="landing-cta-row">
       <a href="<%= new_registration_path %>" class="landing-btn-primary">
@@ -27,7 +27,7 @@
       </a>
     </div>
     <div class="landing-screenshot">
-      <%= image_tag "screenshots/sabha-screenshot.png", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img", width: 2872, height: 1362, loading: "lazy" %>
+      <%= image_tag "screenshots/sabha-screenshot.png", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img", width: 2872, height: 1362, loading: "eager", fetchpriority: "high" %>
     </div>
   </div>
 </section>
@@ -431,7 +431,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Sabha",
-  "description": "Simple, intentional chat for communities that value conversation over noise. Open source Discord alternative with rooms, threads, DMs, and full-text search.",
+  "description": "Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to host, free to leave.",
   "url": "https://sabha.co",
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Web, iOS, Android",
