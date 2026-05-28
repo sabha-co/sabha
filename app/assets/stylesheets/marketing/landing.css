@@ -766,6 +766,11 @@
 .landing-faq-item,
 .landing-faq-item summary { outline: none; }
 
+.landing-faq-item summary:hover {
+  box-shadow: none;
+  filter: none;
+}
+
 .landing-faq-item summary::after {
   content: "+";
   font-size: 1.25rem;
