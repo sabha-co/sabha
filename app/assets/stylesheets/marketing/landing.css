@@ -684,6 +684,29 @@
   font-size: 14px;
   color: var(--text-primary);
   line-height: 1.5;
+  padding-left: 26px;
+  position: relative;
+}
+
+.landing-pricing-features li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--accent-green);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.landing-pricing-features li.caveat {
+  color: var(--text-secondary);
+}
+
+.landing-pricing-features li.caveat::before {
+  content: "—";
+  color: var(--text-secondary);
+  font-weight: 400;
 }
 
 .landing a.landing-pricing-btn {
