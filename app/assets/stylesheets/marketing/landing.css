@@ -819,7 +819,7 @@
 
 .landing-final-cta-trust {
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -891,7 +891,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 /* ═══════════════════════════ MOBILE ═══════════════════════════ */

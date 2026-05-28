@@ -150,7 +150,7 @@
       <div class="landing-card">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         <h3>Simple invites</h3>
-        <p>Share a link. People join. Simple email and join the community. No friction.</p>
+        <p>Share an invite link. New members sign up with email and they're in. No approval queues, no role setup.</p>
       </div>
       <div class="landing-card">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><path d="m2 14 6-6 6 6"/><path d="M22 18H2"/><path d="M22 22H2"/><path d="m16 8 6 6H10"/></svg>
@@ -306,31 +306,31 @@
     <div class="landing-faq-list">
       <details class="landing-faq-item">
         <summary>How is Sabha different from Discord?</summary>
-        <p>Sabha is a minimal, chat-first alternative to Discord — rooms, threads, and search, nothing else. Customize the branding, self-host it, or bring your own domain. Your community feels like yours, not a tenant on someone else's platform.</p>
+        <p>It's chat-first. Rooms, threads, search — that's the product. No Nitro, no boosts, no marketplace of bots and emoji upsells getting in the way of the conversation. And if you don't like how we run it, take the code and host it yourself. Try that with Discord.</p>
       </details>
       <details class="landing-faq-item">
         <summary>Is Sabha really free?</summary>
-        <p>Yes. Create a community on sabha.co for free — unlimited members, unlimited message history, no credit card. It's possible because every community runs on its own separate SQLite database, so hosting one is cheap and we can keep the free tier generous. <a href="https://cloud.sabha.co" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Sabha Cloud</a> is the paid version where we take care of hosting and maintaining the server for you.</p>
+        <p>Yep. Create a workspace on sabha.co — unlimited members, unlimited history, no credit card. Every workspace gets its own SQLite database, so running one costs us almost nothing and we can keep the free tier generous. (<a href="https://cloud.sabha.co" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Sabha Cloud</a> is the paid tier where we run a dedicated server for you.)</p>
       </details>
       <details class="landing-faq-item">
         <summary>Can I self-host Sabha?</summary>
-        <p>Yes. Sabha runs on Ruby on Rails, Hotwire, and SQLite — one server, no external dependencies. Deploy with Docker or bare metal on a $10 VPS. No managed database, no Kubernetes. You own every byte of data.</p>
+        <p>Yep. Sabha runs on Rails, Hotwire, and SQLite — one server, no external dependencies. Drop it on a $10 VPS with Docker or bare metal. No managed Postgres, no Redis cluster, no Kubernetes. Your server, your data, your bytes.</p>
       </details>
       <details class="landing-faq-item">
         <summary>Is there a mobile app?</summary>
-        <p>Sabha is a PWA — install it from your phone's browser on iOS or Android and you get an app icon, push notifications, and badge counts. No App Store queue, no separate download. Same URL, same app, every device.</p>
+        <p>Not in the App Store — and you don't need one. Sabha is a PWA. Open it on iPhone or Android, hit "Add to Home Screen", and you get an app icon, push notifications, and badge counts. Same URL, same app, every device.</p>
       </details>
       <details class="landing-faq-item">
         <summary>How do I add AI bots to my community?</summary>
-        <p>Every workspace ships with a full bot API — real-time events over WebSocket or webhooks, message reading, reactions, search, and thread replies. Drop in the <a href="https://openclaw.org" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">OpenClaw</a> plugin to put an LLM agent in any room with a single invite URL, or write your own. Bots are a first-class feature, not a marketplace.</p>
+        <p>Every workspace ships with a full bot API — real-time events over WebSocket or webhooks, reading messages, posting replies, reacting, searching. Drop in the <a href="https://openclaw.org" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">OpenClaw</a> plugin and you've got an LLM agent in any room with a single invite URL. Or write your own. Bots are a feature, not a marketplace.</p>
       </details>
       <details class="landing-faq-item">
         <summary>What's the difference between sabha.co and Sabha Cloud?</summary>
-        <p>sabha.co is shared multi-tenant hosting — free, instant setup. <a href="https://cloud.sabha.co" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Sabha Cloud</a> gives you a dedicated server with continuous backups, custom domain support, and no storage limits. Think of sabha.co as shared hosting and Sabha Cloud as your own private server — same Sabha, different walls.</p>
+        <p>sabha.co is shared multi-tenant — free, instant, your workspace sits next door to thousands of others. <a href="https://cloud.sabha.co" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Sabha Cloud</a> is your own dedicated server with continuous backups, custom domain support, and no storage limits. Same app, different walls.</p>
       </details>
       <details class="landing-faq-item">
         <summary>Can I use a custom domain on sabha.co?</summary>
-        <p>No — sabha.co workspaces live at <code>sabha.co/workspace_id</code> on shared infrastructure. If you want your community on <code>chat.yourdomain.com</code>, <a href="https://cloud.sabha.co" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Sabha Cloud</a> adds custom domain support, or you can self-host for full control over DNS and TLS.</p>
+        <p>Nope. sabha.co workspaces live at <code>sabha.co/workspace_id</code> on shared infrastructure. If you want <code>chat.yourdomain.com</code>, <a href="https://cloud.sabha.co" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Sabha Cloud</a> adds custom domain support — or you can self-host and run whatever DNS and TLS setup you want.</p>
       </details>
     </div>
   </div>
@@ -371,7 +371,7 @@
       "name": "How is Sabha different from Discord?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Sabha is a minimal, chat-first alternative to Discord — rooms, threads, and search, nothing else. Customize the branding, self-host it, or bring your own domain. Your community feels like yours, not a tenant on someone else's platform."
+        "text": "It's chat-first. Rooms, threads, search — that's the product. No Nitro, no boosts, no marketplace of bots and emoji upsells getting in the way of the conversation. And if you don't like how we run it, take the code and host it yourself. Try that with Discord."
       }
     },
     {
@@ -379,7 +379,7 @@
       "name": "Is Sabha really free?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Create a community on sabha.co for free — unlimited members, unlimited message history, no credit card. It's possible because every community runs on its own separate SQLite database, so hosting one is cheap and we can keep the free tier generous. Sabha Cloud is the paid version where we take care of hosting and maintaining the server for you."
+        "text": "Yep. Create a workspace on sabha.co — unlimited members, unlimited history, no credit card. Every workspace gets its own SQLite database, so running one costs us almost nothing and we can keep the free tier generous. (Sabha Cloud is the paid tier where we run a dedicated server for you.)"
       }
     },
     {
@@ -387,7 +387,7 @@
       "name": "Can I self-host Sabha?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Sabha runs on Ruby on Rails, Hotwire, and SQLite — one server, no external dependencies. Deploy with Docker or bare metal on a $5 VPS. No managed database, no Kubernetes. You own every byte of data."
+        "text": "Yep. Sabha runs on Rails, Hotwire, and SQLite — one server, no external dependencies. Drop it on a $10 VPS with Docker or bare metal. No managed Postgres, no Redis cluster, no Kubernetes. Your server, your data, your bytes."
       }
     },
     {
@@ -395,7 +395,7 @@
       "name": "Is there a mobile app?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Sabha is a PWA — install it from your phone's browser on iOS or Android and you get an app icon, push notifications, and badge counts. No App Store queue, no separate download. Same URL, same app, every device."
+        "text": "Not in the App Store — and you don't need one. Sabha is a PWA. Open it on iPhone or Android, hit \"Add to Home Screen\", and you get an app icon, push notifications, and badge counts. Same URL, same app, every device."
       }
     },
     {
@@ -403,7 +403,7 @@
       "name": "How do I add AI bots to my community?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Every workspace ships with a full bot API — real-time events over WebSocket or webhooks, message reading, reactions, search, and thread replies. Drop in the OpenClaw plugin to put an LLM agent in any room with a single invite URL, or write your own. Bots are a first-class feature, not a marketplace."
+        "text": "Every workspace ships with a full bot API — real-time events over WebSocket or webhooks, reading messages, posting replies, reacting, searching. Drop in the OpenClaw plugin and you've got an LLM agent in any room with a single invite URL. Or write your own. Bots are a feature, not a marketplace."
       }
     },
     {
@@ -411,7 +411,7 @@
       "name": "What's the difference between sabha.co and Sabha Cloud?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "sabha.co is shared multi-tenant hosting — free, instant setup. Sabha Cloud gives you a dedicated server with continuous backups, custom domain support, and no storage limits. Think of sabha.co as shared hosting and Sabha Cloud as your own private server — same Sabha, different walls."
+        "text": "sabha.co is shared multi-tenant — free, instant, your workspace sits next door to thousands of others. Sabha Cloud is your own dedicated server with continuous backups, custom domain support, and no storage limits. Same app, different walls."
       }
     },
     {
@@ -419,7 +419,7 @@
       "name": "Can I use a custom domain on sabha.co?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No — sabha.co workspaces live at sabha.co/yourname on shared infrastructure. If you want your community on chat.yourdomain.com, Sabha Cloud adds custom domain support, or you can self-host for full control over DNS and TLS."
+        "text": "Nope. sabha.co workspaces live at sabha.co/workspace_id on shared infrastructure. If you want chat.yourdomain.com, Sabha Cloud adds custom domain support — or you can self-host and run whatever DNS and TLS setup you want."
       }
     }
   ]
