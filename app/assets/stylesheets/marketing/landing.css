@@ -511,74 +511,56 @@
   flex-shrink: 0;
 }
 
-/* ═══════════════════════════ SOCIAL PROOF ═══════════════════════════ */
+/* ═══════════════════════════ MANIFESTO ═══════════════════════════ */
 
-.landing-social-proof {
+.landing-manifesto {
   background: var(--bg-dark);
 }
 
-.landing-social-proof .landing-inner {
+.landing-manifesto .landing-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.landing-social-proof h2 {
+.landing-manifesto h2 {
   color: var(--text-white);
+  max-width: 720px;
 }
 
-.landing-testimonials {
+.landing-principles {
   display: flex;
   gap: 24px;
 }
 
-.landing-testimonial {
+.landing-principle {
   flex: 1;
   border: 1px solid #333333;
   border-radius: 12px;
   padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   transition: border-color 0.15s ease;
 }
 
-.landing-testimonial:hover {
+.landing-principle:hover {
   border-color: #555555;
 }
 
-.landing-testimonial p {
+.landing-principle h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-white);
+  margin: 0;
+}
+
+.landing-principle p {
   font-size: 15px;
   color: #CCCCCC;
   line-height: 1.7;
   margin: 0;
-}
-
-.landing-testimonial-author {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.landing-testimonial-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 100px;
-  background: #333333;
-  flex-shrink: 0;
-}
-
-.landing-testimonial-name {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-white);
-}
-
-.landing-testimonial-role {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 2px;
 }
 
 /* ═══════════════════════════ PRICING ═══════════════════════════ */
@@ -990,7 +972,7 @@
 
   /* Cards stack */
   .landing-problem-cards,
-  .landing-testimonials,
+  .landing-principles,
   .landing-pricing-cards { flex-direction: column; }
 
   /* Grid 1 col */
