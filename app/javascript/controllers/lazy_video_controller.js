@@ -10,6 +10,10 @@ export default class extends Controller {
   }
 
   connect() {
+    // Respect a visitor's reduced-motion preference: leave the eager poster
+    // in place and never autoplay the looping demo.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+
     if (!("IntersectionObserver" in window)) return this.#load()
 
     this.observer = new IntersectionObserver(
