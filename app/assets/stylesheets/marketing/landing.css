@@ -13,7 +13,7 @@
   --bg-white: #FFFFFF;
   --border-gray: #E8E8E8;
   --text-primary: #0D0D0D;
-  --text-secondary: #7A7A7A;
+  --text-secondary: #666666;
   --text-muted: #B0B0B0;
   --text-white: #FFFFFF;
   background: var(--bg-white);
@@ -551,36 +551,32 @@
 
 .landing-principles {
   display: flex;
-  gap: 24px;
+  gap: 64px;
+  width: 100%;
 }
 
 .landing-principle {
   flex: 1;
-  border: 1px solid #333333;
-  border-radius: 12px;
-  padding: 32px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: border-color 0.15s ease;
-}
-
-.landing-principle:hover {
-  border-color: #555555;
+  padding-top: 24px;
+  border-top: 1px solid #333333;
 }
 
 .landing-principle h3 {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-white);
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
 .landing-principle p {
-  font-size: 15px;
-  color: #CCCCCC;
-  line-height: 1.7;
+  font-size: 16px;
+  color: #BBBBBB;
+  line-height: 1.75;
   margin: 0;
 }
 
@@ -600,18 +596,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 18px;
-  position: relative;
-}
-
-.landing-use-case::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 28px;
-  height: 2px;
-  background: var(--accent-red);
 }
 
 .landing-use-case h3 {
@@ -1069,6 +1053,9 @@
   .landing-problem-cards,
   .landing-principles,
   .landing-pricing-cards { flex-direction: column; }
+  .landing-principles { gap: 0; }
+  .landing-principle { padding-bottom: 32px; margin-bottom: 32px; border-top: none; border-bottom: 1px solid #333333; }
+  .landing-principle:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
 
   /* Grid 1 col */
   .landing-details .landing-grid { grid-template-columns: 1fr; }
