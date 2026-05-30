@@ -10,14 +10,15 @@
     <meta name="theme-color" content="<%= Branding.theme_color %>">
     <meta name="mobile-web-app-capable" content="yes">
 
-    <link rel="canonical" href="<%= request.original_url.split('?').first.chomp('/') %>">
+    <% canonical_url = request.original_url.split('?').first.chomp('/') %>
+    <link rel="canonical" href="<%= canonical_url %>">
 
     <%# Open Graph %>
     <meta property="og:type" content="website">
     <meta property="og:title" content="<%= content_for?(:title) ? "#{content_for(:title)} | Sabha" : "Sabha — Open Source Discord Alternative for Communities" %>">
     <meta property="og:description" content="<%= content_for?(:meta_description) ? content_for(:meta_description) : "Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to use, free to leave." %>">
     <meta property="og:image" content="<%= image_url("sabha-og.png") %>">
-    <meta property="og:url" content="<%= request.original_url %>">
+    <meta property="og:url" content="<%= canonical_url %>">
     <meta property="og:site_name" content="Sabha">
 
     <%# Twitter Card %>

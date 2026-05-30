@@ -2,6 +2,7 @@ User-agent: *
 Allow: /$
 Allow: /about
 Allow: /changelog
+Allow: /openclaw
 Disallow: /
 
 Sitemap: https://sabha.co/sitemap.xml

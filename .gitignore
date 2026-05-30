@@ -51,3 +51,6 @@ Caddyfile
 
 # Load-test cookies; regenerate with `bundle exec ruby test/performance/create_dummy_cookies.rb > test/performance/cookies.txt`
 /test/performance/cookies.txt
+
+PRODUCT.md
+.impeccable/
