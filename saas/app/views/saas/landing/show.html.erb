@@ -1,3 +1,7 @@
+<% content_for :head do %>
+  <link rel="preload" as="image" href="<%= image_path("screenshots/sabha-screenshot.avif") %>" type="image/avif" fetchpriority="high">
+<% end %>
+
 <div class="landing">
 
 <%= render "shared/marketing_header" %>
@@ -14,7 +18,7 @@
         data-controller="word-rotate"
         data-word-rotate-words-value='["Discord", "Slack"]'
         data-word-rotate-interval-value="3000">Discord</span> alternative for communities.</h1>
-      <p class="landing-hero-sub">Sabha is simple, intentional chat for communities that value conversation over noise. Rooms, threads, DMs, search. That's the product.</p>
+      <p class="landing-hero-sub">Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to use, free to leave.</p>
     </div>
     <div class="landing-cta-row">
       <a href="<%= new_registration_path %>" class="landing-btn-primary">
@@ -27,7 +31,10 @@
       </a>
     </div>
     <div class="landing-screenshot">
-      <%= image_tag "screenshots/sabha-screenshot.png", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img", width: 2872, height: 1362, loading: "lazy" %>
+      <picture>
+        <source type="image/avif" srcset="<%= image_path("screenshots/sabha-screenshot.avif") %>">
+        <%= image_tag "screenshots/sabha-screenshot.webp", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img", width: 2000, height: 939, loading: "eager", fetchpriority: "high" %>
+      </picture>
     </div>
   </div>
 </section>
@@ -62,7 +69,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
         <h3>Mattermost / Rocket.Chat</h3>
-        <p>Enterprise tools cosplaying as community platforms. Kubernetes deployments. Twelve environment variables. Overkill.</p>
+        <p>Enterprise tools cosplaying as community platforms. Kubernetes deployments. Overkill.</p>
       </div>
     </div>
   </div>
@@ -86,39 +93,31 @@
         <h3>Rooms for every topic</h3>
         <p>Create rooms for announcements, help, introductions, or anything your community talks about. Each room is a focused space — not a firehose.</p>
       </div>
-      <div class="landing-feature-screenshot">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-        <span>Rooms view</span>
-      </div>
+      <%= render "feature_video", src: "screenshots/room-sabha.mp4", poster: "screenshots/room-sabha-poster.webp", width: 1280, height: 720, label: "Browsing rooms in Sabha" %>
     </div>
 
     <div class="landing-feature-row landing-feature-row--reverse">
-      <div class="landing-feature-screenshot">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-        <span>Threads view</span>
-      </div>
+      <%= render "feature_video", src: "screenshots/threads-sabha.mp4", poster: "screenshots/threads-sabha-poster.webp", width: 646, height: 360, label: "Following a thread in Sabha" %>
       <div class="landing-feature-text">
         <div class="landing-feature-icon-box">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
         <h3>Threads by default</h3>
-        <p>Every conversation can become a thread. Side discussions stay organized, not scattered. Your main room stays clean. Depth without chaos.</p>
+        <p>Every conversation can become a thread. Side discussions stay organized, not scattered.</p>
       </div>
     </div>
 
     <div class="landing-feature-row">
       <div class="landing-feature-text">
         <div class="landing-feature-icon-box">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
         </div>
-        <h3>Full-text search across everything</h3>
-        <p>Every message, every thread, every room — fully indexed and searchable. Find that conversation from three months ago in seconds. Your community's knowledge doesn't disappear.</p>
+        <h3>Bot & AI ready</h3>
+        <p>Built-in bot API with webhooks and real-time events. Bots read messages, post replies, react, manage rooms, and search — over WebSocket, no public endpoint required. Drop in <a href="/openclaw" class="landing-link">OpenClaw</a> to put an LLM agent in any room with a single invite URL, or write your own. Bots are a first-class feature, not a paid marketplace.</p>
       </div>
-      <div class="landing-feature-screenshot">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-        <span>Search results</span>
-      </div>
+      <%= render "feature_video", src: "screenshots/bot-sabha.mp4", poster: "screenshots/bot-sabha-poster.webp", width: 1280, height: 720, label: "An OpenClaw AI agent in a Sabha room" %>
     </div>
+
   </div>
 </section>
 
@@ -133,9 +132,14 @@
     </div>
     <div class="landing-grid">
       <div class="landing-card">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-        <h3>Mobile-first</h3>
-        <p>PWA with push notifications. Works on every device. No app store required.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="0.5" fill="#E42313"/><circle cx="17.5" cy="10.5" r="0.5" fill="#E42313"/><circle cx="8.5" cy="7.5" r="0.5" fill="#E42313"/><circle cx="6.5" cy="12.5" r="0.5" fill="#E42313"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+        <h3>Your brand</h3>
+        <p>Custom name, logo, theme colors, and custom domain. Your community feels like yours, not a generic chat app.</p>
+      </div>
+      <div class="landing-card">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <h3>Full-text search</h3>
+        <p>Every message, every thread, fully indexed. Find a conversation from three months ago in seconds.</p>
       </div>
       <div class="landing-card">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
@@ -143,24 +147,19 @@
         <p>Images, PDFs, and videos inline. Share files without leaving the conversation.</p>
       </div>
       <div class="landing-card">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="0.5" fill="#E42313"/><circle cx="17.5" cy="10.5" r="0.5" fill="#E42313"/><circle cx="8.5" cy="7.5" r="0.5" fill="#E42313"/><circle cx="6.5" cy="12.5" r="0.5" fill="#E42313"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-        <h3>Your brand</h3>
-        <p>Custom name, logo, and theme colors. Your community feels like yours, not a generic chat app.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+        <h3>Built-in moderation</h3>
+        <p>Moderator roles, user bans with IP blocks, and reversible soft-delete on messages and rooms. Real moderation, not retrofitted.</p>
+      </div>
+      <div class="landing-card">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+        <h3>Mobile-first by design</h3>
+        <p>Sabha is a PWA — install from any browser for an app icon, push notifications, and badge counts. Same URL on every device, no App Store.</p>
       </div>
       <div class="landing-card">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         <h3>Simple invites</h3>
-        <p>Share a link. People join. Simple email and join the community. No friction.</p>
-      </div>
-      <div class="landing-card">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><path d="m2 14 6-6 6 6"/><path d="M22 18H2"/><path d="M22 22H2"/><path d="m16 8 6 6H10"/></svg>
-        <h3>Bot & AI ready</h3>
-        <p>Built-in bot API with webhooks and room access. Compatible with <a href="https://openclaw.org" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 3px;">OpenClaw</a> agents out of the box. Add AI to your community, not complexity.</p>
-      </div>
-      <div class="landing-card">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        <h3>Open source</h3>
-        <p>Read the code, fix bugs, contribute back. Export your data anytime. No lock-in, ever.</p>
+        <p>Share an invite link or a QR code.</p>
       </div>
     </div>
   </div>
@@ -168,43 +167,63 @@
 
 <div class="landing-divider"></div>
 
-<%# ═══════════════════════════════════ SOCIAL PROOF ═══════════════════════════════════ %>
-<section class="landing-section landing-social-proof">
+<%# ═══════════════════════════════════ MANIFESTO ═══════════════════════════════════ %>
+<section class="landing-section landing-manifesto">
   <div class="landing-inner">
     <div class="landing-section-header">
-      <span class="landing-label">WHAT PEOPLE SAY</span>
-      <h2>Communities that chose simplicity.</h2>
+      <span class="landing-label">WHAT WE BELIEVE</span>
+      <h2>A place to talk, not a product to use.</h2>
     </div>
-    <div class="landing-testimonials">
-      <div class="landing-testimonial">
-        <p>&ldquo;We moved our open source community from Discord to Sabha. Every conversation is now searchable. Our contributors can actually find answers.&rdquo;</p>
-        <div class="landing-testimonial-author">
-          <div class="landing-testimonial-avatar"></div>
-          <div>
-            <div class="landing-testimonial-name">Sarah Chen</div>
-            <div class="landing-testimonial-role">OSS Maintainer</div>
-          </div>
-        </div>
+    <div class="landing-principles">
+      <div class="landing-principle">
+        <h3>Familiar by design</h3>
+        <p>You shouldn't have to teach your community a new app. Sabha works the way they already chat — rooms for topics, threads for tangents, search for memory. The interface stays out of the way so the conversation can be the thing.</p>
       </div>
-      <div class="landing-testimonial">
-        <p>&ldquo;My course community finally has a home that feels intentional. No bots, no boost prompts, no overwhelm. People actually talk here.&rdquo;</p>
-        <div class="landing-testimonial-author">
-          <div class="landing-testimonial-avatar"></div>
-          <div>
-            <div class="landing-testimonial-name">James Okoro</div>
-            <div class="landing-testimonial-role">Course Creator</div>
-          </div>
-        </div>
+      <div class="landing-principle">
+        <h3>Small on purpose</h3>
+        <p>Sabha does one thing — community chat — and refuses to do more. No marketplaces, no boost economies, no constant new features clamoring for attention. If it doesn't earn its place in your community, it doesn't ship.</p>
       </div>
-      <div class="landing-testimonial">
-        <p>&ldquo;Docker compose up and we were running. SQLite, no Redis, no managed database. It just works. The simplest deploy I've done in years.&rdquo;</p>
-        <div class="landing-testimonial-author">
-          <div class="landing-testimonial-avatar"></div>
-          <div>
-            <div class="landing-testimonial-name">Priya Sharma</div>
-            <div class="landing-testimonial-role">DevOps Engineer</div>
-          </div>
-        </div>
+      <div class="landing-principle">
+        <h3>Yours, not ours</h3>
+        <p>Your community runs on code you can read, on a server you can move, with data you can take. Sabha is yours from the first message. If we ever stop being useful, you walk away with everything — no negotiation, no rescue mission.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="landing-divider"></div>
+
+<%# ═══════════════════════════════════ USE CASES ═══════════════════════════════════ %>
+<section class="landing-section landing-use-cases">
+  <div class="landing-inner">
+    <div class="landing-section-header">
+      <span class="landing-label">WHERE IT FITS</span>
+      <h2>It fits in a lot of places.</h2>
+    </div>
+    <div class="landing-use-cases-grid">
+      <div class="landing-use-case">
+        <h3>Hobby and interest communities.</h3>
+        <p>A place that's yours, not someone else's product.</p>
+      </div>
+      <div class="landing-use-case">
+        <h3>Open-source projects.</h3>
+        <p>Replace your Discord with self-hosted chat under your domain and brand.</p>
+      </div>
+      <div class="landing-use-case">
+        <h3>Online classrooms and cohorts.</h3>
+        <p>Rooms per cohort, threads per assignment, history that doesn't expire. Hook SSO into your LMS so students land in chat already signed in.</p>
+      </div>
+      <div class="landing-use-case">
+        <h3>Conferences and meetups.</h3>
+        <p>Share a QR code on the big screen, people are in.</p>
+      </div>
+      <div class="landing-use-case">
+        <h3>Alumni groups and private circles.</h3>
+        <p>Invite-only, no public discovery, no SEO accidents.</p>
+      </div>
+      <div class="landing-use-case">
+        <h3>Newsletter and creator communities.</h3>
+        <p>Give your audience somewhere to talk that isn't a Substack comment section.</p>
       </div>
     </div>
   </div>
@@ -217,45 +236,48 @@
   <div class="landing-inner">
     <div class="landing-section-header">
       <span class="landing-label">PRICING</span>
-      <h2>Pick how you want to run Sabha.</h2>
-      <p class="landing-section-sub">Same app, different wrappers. The difference is who handles the infrastructure.</p>
+      <h2>Start free. Grow when you're ready.</h2>
+      <p class="landing-section-sub">sabha.co is where you try Sabha. Sabha Cloud is managed hosting for your own server, not a SaaS subscription. Self-host whenever you want.</p>
     </div>
     <div class="landing-pricing-cards">
       <div class="landing-pricing-card">
         <div class="landing-pricing-top">
           <span class="landing-pricing-label">SABHA.CO</span>
-          <span class="landing-pricing-title">Free</span>
-          <p>Sign up and start talking. We handle everything.</p>
+          <span class="landing-pricing-title">Shared</span>
+          <p>Free shared workspace. Try every feature, switch between communities, no credit card.</p>
         </div>
         <div class="landing-pricing-divider"></div>
         <ul class="landing-pricing-features">
+          <li>Free, no credit card</li>
           <li>Setup your community in minutes</li>
-          <li>Switch between communities like Slack or Discord</li>
+          <li>One login, switch between every community you joined like in Discord/Slack</li>
           <li>Unlimited members</li>
           <li>Unlimited message history</li>
           <li>1 GB file storage</li>
-          <li>Shared infrastructure</li>
-          <li>No backups guaranteed</li>
-          <li>No custom domain</li>
           <li>Slack import (beta)</li>
-          <li>Data export anytime</li>
+          <li>Download your workspace database to self-host anytime</li>
+          <li class="caveat">Shared infrastructure</li>
+          <li class="caveat">No backups guaranteed</li>
+          <li class="caveat">No custom domain</li>
         </ul>
-        <a href="<%= new_registration_path %>" class="landing-pricing-btn">Create Workspace</a>
+        <a href="<%= new_registration_path %>" class="landing-pricing-btn">Create your community</a>
       </div>
       <div class="landing-pricing-card">
         <div class="landing-pricing-top">
           <span class="landing-pricing-label">SABHA CLOUD</span>
-          <span class="landing-pricing-title">Managed</span>
-          <p>Your own dedicated server. We run it for you.</p>
+          <span class="landing-pricing-title">Dedicated</span>
+          <p>Your own dedicated server, fully managed. Not a SaaS subscription — managed hosting for your community.</p>
         </div>
         <div class="landing-pricing-divider"></div>
         <ul class="landing-pricing-features">
+          <li>Your dedicated server, we manage it</li>
           <li>Everything from sabha.co</li>
-          <li>Dedicated server</li>
-          <li>No storage limits</li>
+          <li>Storage scales with your plan</li>
           <li>Continuous backups</li>
           <li>Custom domain</li>
           <li>Your brand, your identity</li>
+          <li>Multitenancy</li>
+          <li>SSO with your existing login</li>
           <li>Managed updates & monitoring</li>
           <li>No ops required</li>
         </ul>
@@ -264,18 +286,20 @@
       <div class="landing-pricing-card">
         <div class="landing-pricing-top">
           <span class="landing-pricing-label">SELF-HOSTED</span>
-          <span class="landing-pricing-title">Open Source</span>
-          <p>Deploy on your own server. You own every byte. Your responsibility.</p>
+          <span class="landing-pricing-title">Yours</span>
+          <p>MIT-licensed source. Your server, your data, your risk. Walk away with everything, anytime.</p>
         </div>
         <div class="landing-pricing-divider"></div>
         <ul class="landing-pricing-features">
-          <li>MIT Licensed</li>
+          <li>MIT licensed, free forever</li>
           <li>Your server, your data</li>
           <li>Custom domain</li>
+          <li>SSO with your existing login</li>
           <li>SQLite, no dependencies</li>
           <li>Docker or bare metal</li>
-          <li>You pay for your server</li>
-          <li>You are responsible for backups, security, and maintenance</li>
+          <li class="caveat">Single workspace per install</li>
+          <li class="caveat">You pay for your server</li>
+          <li class="caveat">You are responsible for backups, security, and maintenance</li>
         </ul>
         <a href="https://github.com/sabha-co/sabha" target="_blank" class="landing-pricing-btn">View on GitHub</a>
       </div>
@@ -292,7 +316,7 @@
       <%= image_tag "logos/campfire-logo.png", alt: "Campfire by 37signals", class: "landing-campfire-logo" %>
     </a>
     <h2><a href="https://once.com/campfire" target="_blank" class="landing-campfire-heading-link">Built on Campfire,<br>By 37signals.</a></h2>
-    <p class="landing-campfire-body">Sabha isn't built from scratch. It's built on <a href="https://once.com/campfire" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Campfire</a>, the team chat created by 37signals — the company behind Basecamp, HEY, and Ruby on Rails. That means you get a decade of opinionated product thinking baked into every interaction: simplicity over feature bloat, speed over spectacle, calm over chaos.</p>
+    <p class="landing-campfire-body">Sabha isn't built from scratch. It's built on <a href="https://once.com/campfire" target="_blank" class="landing-link">Campfire</a>, the team chat created by 37signals — the company behind Basecamp, HEY, and Ruby on Rails. That means you get a decade of opinionated product thinking baked into every interaction: simplicity over feature bloat, speed over spectacle, calm over chaos.</p>
     <div class="landing-campfire-strip">
       <div class="landing-campfire-col">
         <span class="landing-campfire-label">FOUNDATION</span>
@@ -324,31 +348,35 @@
     <div class="landing-faq-list">
       <details class="landing-faq-item">
         <summary>How is Sabha different from Discord?</summary>
-        <p>Sabha is a minimal, chat-first alternative to Discord — rooms, threads, and search, nothing else. Customize the branding, self-host it, or bring your own domain. Your community feels like yours, not a tenant on someone else's platform.</p>
+        <p>It's chat-first. Rooms, threads, search — that's the product. No Nitro, no boosts, no marketplace of bots and emoji upsells getting in the way of the conversation. And if you don't like how we run it, take the code and host it yourself. Try that with Discord.</p>
       </details>
       <details class="landing-faq-item">
         <summary>Is Sabha really free?</summary>
-        <p>Yes. Create a community on sabha.co for free — unlimited members, unlimited message history, no credit card. It's possible because every community runs on its own separate SQLite database, so hosting one is cheap and we can keep the free tier generous. Sabha Cloud is the paid version where we take care of hosting and maintaining the server for you.</p>
+        <p>Yep. Create a workspace on sabha.co — unlimited members, unlimited history, no credit card. Every workspace gets its own SQLite database, so running one costs us almost nothing and we can keep the free tier generous. (<a href="https://cloud.sabha.co" target="_blank" class="landing-link">Sabha Cloud</a> is the paid tier where we run a dedicated server for you.)</p>
       </details>
       <details class="landing-faq-item">
         <summary>Can I self-host Sabha?</summary>
-        <p>Yes. Sabha runs on Ruby on Rails, Hotwire, and SQLite — one server, no external dependencies. Deploy with Docker or bare metal on a $5 VPS. No managed database, no Kubernetes. You own every byte of data.</p>
+        <p>Yep. Sabha runs on Rails, Hotwire, and SQLite — one server, no external dependencies. Drop it on a $10 VPS with Docker or bare metal. No managed Postgres, no Redis cluster, no Kubernetes. Your server, your data, your bytes.</p>
+      </details>
+      <details class="landing-faq-item">
+        <summary>What if I want to leave sabha.co?</summary>
+        <p>Easy. Admins can download the entire workspace as a SQLite database from settings and migrate it to a self-hosted Sabha install. Same app, your server. No migration consultant, no vendor lock-in, no rescue mission.</p>
       </details>
       <details class="landing-faq-item">
         <summary>Is there a mobile app?</summary>
-        <p>Sabha is a PWA — install it from your phone's browser on iOS or Android and you get an app icon, push notifications, and badge counts. No App Store queue, no separate download. Same URL, same app, every device.</p>
+        <p>Not in the App Store — and you don't need one. Sabha is a PWA. Open it on iPhone or Android, hit "Add to Home Screen", and you get an app icon, push notifications, and badge counts. Same URL, same app, every device.</p>
       </details>
       <details class="landing-faq-item">
         <summary>How do I add AI bots to my community?</summary>
-        <p>Every workspace ships with a full bot API — real-time events over WebSocket or webhooks, message reading, reactions, search, and thread replies. Drop in the <a href="https://openclaw.org" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">OpenClaw</a> plugin to put an LLM agent in any room with a single invite URL, or write your own. Bots are a first-class feature, not a marketplace.</p>
+        <p>Every workspace ships with a full bot API — real-time events over WebSocket or webhooks, reading messages, posting replies, reacting, searching. Drop in the <a href="/openclaw" class="landing-link">OpenClaw</a> plugin and you've got an LLM agent in any room with a single invite URL. Or write your own. Bots are a feature, not a marketplace.</p>
       </details>
       <details class="landing-faq-item">
         <summary>What's the difference between sabha.co and Sabha Cloud?</summary>
-        <p>sabha.co is shared multi-tenant hosting — free, instant setup. Sabha Cloud gives you a dedicated server with continuous backups, custom domain support, and no storage limits. Think of sabha.co as shared hosting and Sabha Cloud as your own private server — same Sabha, different walls.</p>
+        <p>sabha.co is shared multi-tenant — free, instant, your workspace sits next door to thousands of others. <a href="https://cloud.sabha.co" target="_blank" class="landing-link">Sabha Cloud</a> is your own dedicated server with continuous backups, custom domain support, and no storage limits. Same app, different walls.</p>
       </details>
       <details class="landing-faq-item">
         <summary>Can I use a custom domain on sabha.co?</summary>
-        <p>No — sabha.co workspaces live at <code>sabha.co/yourname</code> on shared infrastructure. If you want your community on <code>chat.yourdomain.com</code>, Sabha Cloud adds custom domain support, or you can self-host for full control over DNS and TLS.</p>
+        <p>Nope. sabha.co workspaces live at <code>sabha.co/workspace_id</code> on shared infrastructure. If you want <code>chat.yourdomain.com</code>, <a href="https://cloud.sabha.co" target="_blank" class="landing-link">Sabha Cloud</a> adds custom domain support — or you can self-host and run whatever DNS and TLS setup you want.</p>
       </details>
     </div>
   </div>
@@ -372,8 +400,6 @@
   </div>
 </section>
 
-<div class="landing-divider"></div>
-
 <%= render "shared/marketing_footer" %>
 
 </div>
@@ -389,7 +415,7 @@
       "name": "How is Sabha different from Discord?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Sabha is a minimal, chat-first alternative to Discord — rooms, threads, and search, nothing else. Customize the branding, self-host it, or bring your own domain. Your community feels like yours, not a tenant on someone else's platform."
+        "text": "It's chat-first. Rooms, threads, search — that's the product. No Nitro, no boosts, no marketplace of bots and emoji upsells getting in the way of the conversation. And if you don't like how we run it, take the code and host it yourself. Try that with Discord."
       }
     },
     {
@@ -397,7 +423,7 @@
       "name": "Is Sabha really free?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Create a community on sabha.co for free — unlimited members, unlimited message history, no credit card. It's possible because every community runs on its own separate SQLite database, so hosting one is cheap and we can keep the free tier generous. Sabha Cloud is the paid version where we take care of hosting and maintaining the server for you."
+        "text": "Yep. Create a workspace on sabha.co — unlimited members, unlimited history, no credit card. Every workspace gets its own SQLite database, so running one costs us almost nothing and we can keep the free tier generous. (Sabha Cloud is the paid tier where we run a dedicated server for you.)"
       }
     },
     {
@@ -405,7 +431,15 @@
       "name": "Can I self-host Sabha?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Sabha runs on Ruby on Rails, Hotwire, and SQLite — one server, no external dependencies. Deploy with Docker or bare metal on a $5 VPS. No managed database, no Kubernetes. You own every byte of data."
+        "text": "Yep. Sabha runs on Rails, Hotwire, and SQLite — one server, no external dependencies. Drop it on a $10 VPS with Docker or bare metal. No managed Postgres, no Redis cluster, no Kubernetes. Your server, your data, your bytes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What if I want to leave sabha.co?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Easy. Admins can download the entire workspace as a SQLite database from settings and migrate it to a self-hosted Sabha install. Same app, your server. No migration consultant, no vendor lock-in, no rescue mission."
       }
     },
     {
@@ -413,7 +447,7 @@
       "name": "Is there a mobile app?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Sabha is a PWA — install it from your phone's browser on iOS or Android and you get an app icon, push notifications, and badge counts. No App Store queue, no separate download. Same URL, same app, every device."
+        "text": "Not in the App Store — and you don't need one. Sabha is a PWA. Open it on iPhone or Android, hit \"Add to Home Screen\", and you get an app icon, push notifications, and badge counts. Same URL, same app, every device."
       }
     },
     {
@@ -421,7 +455,7 @@
       "name": "How do I add AI bots to my community?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Every workspace ships with a full bot API — real-time events over WebSocket or webhooks, message reading, reactions, search, and thread replies. Drop in the OpenClaw plugin to put an LLM agent in any room with a single invite URL, or write your own. Bots are a first-class feature, not a marketplace."
+        "text": "Every workspace ships with a full bot API — real-time events over WebSocket or webhooks, reading messages, posting replies, reacting, searching. Drop in the OpenClaw plugin and you've got an LLM agent in any room with a single invite URL. Or write your own. Bots are a feature, not a marketplace."
       }
     },
     {
@@ -429,7 +463,7 @@
       "name": "What's the difference between sabha.co and Sabha Cloud?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "sabha.co is shared multi-tenant hosting — free, instant setup. Sabha Cloud gives you a dedicated server with continuous backups, custom domain support, and no storage limits. Think of sabha.co as shared hosting and Sabha Cloud as your own private server — same Sabha, different walls."
+        "text": "sabha.co is shared multi-tenant — free, instant, your workspace sits next door to thousands of others. Sabha Cloud is your own dedicated server with continuous backups, custom domain support, and no storage limits. Same app, different walls."
       }
     },
     {
@@ -437,7 +471,7 @@
       "name": "Can I use a custom domain on sabha.co?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No — sabha.co workspaces live at sabha.co/yourname on shared infrastructure. If you want your community on chat.yourdomain.com, Sabha Cloud adds custom domain support, or you can self-host for full control over DNS and TLS."
+        "text": "Nope. sabha.co workspaces live at sabha.co/workspace_id on shared infrastructure. If you want chat.yourdomain.com, Sabha Cloud adds custom domain support — or you can self-host and run whatever DNS and TLS setup you want."
       }
     }
   ]
@@ -449,7 +483,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Sabha",
-  "description": "Simple, intentional chat for communities that value conversation over noise. Open source Discord alternative with rooms, threads, DMs, and full-text search.",
+  "description": "Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to use, free to leave.",
   "url": "https://sabha.co",
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Web, iOS, Android",

@@ -3,12 +3,13 @@ name: RuboCop
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
   rubocop:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - name: Checkout code

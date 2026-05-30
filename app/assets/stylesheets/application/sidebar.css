@@ -569,6 +569,12 @@
     }
   }
 
+  &:active:not(:disabled) {
+    background-color: var(--color-border-dark);
+    transform: none;
+    transition: none;
+  }
+
   time {
     opacity: 0.4;
     font-weight: 400;

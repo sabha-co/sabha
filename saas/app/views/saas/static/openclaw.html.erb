@@ -14,8 +14,12 @@
       <h1 class="landing-section-title" style="margin: 0;">OpenClaw on Sabha</h1>
     </div>
 
+    <div style="margin: 2.5rem 0;">
+      <%= render "saas/landing/feature_video", src: "screenshots/bot-sabha.mp4", poster: "screenshots/bot-sabha-poster.webp", width: 1280, height: 720, label: "An OpenClaw AI agent in a Sabha room" %>
+    </div>
+
     <div style="font-size: 1.125rem; line-height: 1.8; color: var(--color-text-secondary, #555);">
-      <p>Sabha provides first-class <a href="https://openclaw.ai" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">OpenClaw</a> support over WebSockets. The AI bot connects outbound to your workspace — no webhook URL to configure, no public IP to expose, no tunnels. Self-hosted Sabha and Sabha Cloud both work.</p>
+      <p>Sabha provides first-class <a href="https://openclaw.ai" target="_blank" class="landing-link">OpenClaw</a> support over WebSockets. The AI bot connects outbound to your workspace — no webhook URL to configure, no public IP to expose, no tunnels. Self-hosted Sabha and Sabha Cloud both work.</p>
 
       <p style="margin-top: 1.5rem;">@mention it in any room, or DM it directly, and it replies — powered by the LLM of your choice (OpenAI, Anthropic, or a local model).</p>
 
@@ -36,8 +40,8 @@
       <h3 style="margin-top: 3rem; font-size: 1.25rem; font-weight: 600; color: var(--color-text-primary, #111);">Get started</h3>
 
       <ul style="margin-top: 1rem; list-style: none; padding: 0;">
-        <li style="margin-bottom: 0.5rem;"><a href="https://github.com/sabha-co/openclaw-sabha" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">Sabha plugin on GitHub</a></li>
-        <li style="margin-bottom: 0.5rem;"><a href="https://openclaw.ai" target="_blank" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">OpenClaw homepage</a></li>
+        <li style="margin-bottom: 0.5rem;"><a href="https://github.com/sabha-co/openclaw-sabha" target="_blank" class="landing-link">Sabha plugin on GitHub</a></li>
+        <li style="margin-bottom: 0.5rem;"><a href="https://openclaw.ai" target="_blank" class="landing-link">OpenClaw homepage</a></li>
       </ul>
     </div>
   </div>

@@ -22,6 +22,14 @@
 
 .landing a { text-decoration: none; color: inherit; }
 
+/* Inline links inside running copy (FAQ answers, about/legal prose, etc.) */
+.landing-link,
+.landing a.landing-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 /* ═══════════════════════════ SHARED ═══════════════════════════ */
 
 .landing-divider {
@@ -499,6 +507,19 @@
   flex-direction: row-reverse;
 }
 
+.landing-feature-screenshot--media {
+  height: auto;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+
+.landing-feature-media {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* ═══════════════════════════ SECONDARY FEATURES GRID ═══════════════════════════ */
 
 .landing-details .landing-grid {
@@ -511,74 +532,101 @@
   flex-shrink: 0;
 }
 
-/* ═══════════════════════════ SOCIAL PROOF ═══════════════════════════ */
+/* ═══════════════════════════ MANIFESTO ═══════════════════════════ */
 
-.landing-social-proof {
+.landing-manifesto {
   background: var(--bg-dark);
 }
 
-.landing-social-proof .landing-inner {
+.landing-manifesto .landing-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.landing-social-proof h2 {
+.landing-manifesto h2 {
   color: var(--text-white);
+  max-width: 720px;
 }
 
-.landing-testimonials {
+.landing-principles {
   display: flex;
   gap: 24px;
 }
 
-.landing-testimonial {
+.landing-principle {
   flex: 1;
   border: 1px solid #333333;
   border-radius: 12px;
   padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   transition: border-color 0.15s ease;
 }
 
-.landing-testimonial:hover {
+.landing-principle:hover {
   border-color: #555555;
 }
 
-.landing-testimonial p {
+.landing-principle h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-white);
+  margin: 0;
+}
+
+.landing-principle p {
   font-size: 15px;
   color: #CCCCCC;
   line-height: 1.7;
   margin: 0;
 }
 
-.landing-testimonial-author {
+/* ═══════════════════════════ USE CASES ═══════════════════════════ */
+
+.landing-use-cases {
+  background: var(--bg-white);
+}
+
+.landing-use-cases-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 48px 64px;
+}
+
+.landing-use-case {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 18px;
+  position: relative;
 }
 
-.landing-testimonial-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 100px;
-  background: #333333;
-  flex-shrink: 0;
+.landing-use-case::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 2px;
+  background: var(--accent-red);
 }
 
-.landing-testimonial-name {
+.landing-use-case h3 {
   font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-white);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
 }
 
-.landing-testimonial-role {
-  font-size: 12px;
+.landing-use-case p {
+  font-size: 15px;
   color: var(--text-secondary);
-  margin-top: 2px;
+  line-height: 1.65;
+  margin: 0;
 }
 
 /* ═══════════════════════════ PRICING ═══════════════════════════ */
@@ -657,6 +705,29 @@
   font-size: 14px;
   color: var(--text-primary);
   line-height: 1.5;
+  padding-left: 26px;
+  position: relative;
+}
+
+.landing-pricing-features li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--accent-green);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.landing-pricing-features li.caveat {
+  color: var(--text-secondary);
+}
+
+.landing-pricing-features li.caveat::before {
+  content: "—";
+  color: var(--text-secondary);
+  font-weight: 400;
 }
 
 .landing a.landing-pricing-btn {
@@ -784,6 +855,11 @@
 .landing-faq-item,
 .landing-faq-item summary { outline: none; }
 
+.landing-faq-item summary:hover {
+  box-shadow: none;
+  filter: none;
+}
+
 .landing-faq-item summary::after {
   content: "+";
   font-size: 1.25rem;
@@ -832,7 +908,7 @@
 
 .landing-final-cta-trust {
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -904,7 +980,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 /* ═══════════════════════════ MOBILE ═══════════════════════════ */
@@ -919,6 +995,7 @@
   .landing-feature-row { flex-direction: column; gap: 32px; }
   .landing-feature-row--reverse { flex-direction: column-reverse; }
   .landing-feature-screenshot { width: 100%; height: 260px; }
+  .landing-feature-screenshot--media { height: auto; }
 
   .landing-footer-cols { gap: 40px; }
 }
@@ -990,11 +1067,12 @@
 
   /* Cards stack */
   .landing-problem-cards,
-  .landing-testimonials,
+  .landing-principles,
   .landing-pricing-cards { flex-direction: column; }
 
   /* Grid 1 col */
   .landing-details .landing-grid { grid-template-columns: 1fr; }
+  .landing-use-cases-grid { grid-template-columns: 1fr; gap: 32px; }
 
   /* Screenshot */
   .landing-screenshot { height: auto; }
