@@ -1,15 +1,6 @@
 <% @page_title = "Sign up" %>
 <% @body_class = "signup" %>
 
-<% content_for :nav do %>
-  <div class="flex-item-justify-end">
-    <%= link_to new_session_path(return_to: request.fullpath), class: "btn flex-item-justify-end" do %>
-      <%= icon_tag "login-keys" %>
-      <span class="for-screen-reader">Sign in</span>
-    <% end %>
-  </div>
-<% end %>
-
 <%= form_with model: @user, url: request.fullpath, class: "center" do |form| %>
   <section class="nametag u-relative">
     <div class="flex justify-center align-center pad-block">
@@ -50,15 +41,15 @@
       <% end %>
 
       <% if saas_unauthenticated? %>
-        <%# SaaS: User is not logged in - show sign in/sign up options %>
+        <%# SaaS: User is not logged in - show sign up/sign in options %>
         <div class="flex flex-column gap">
-          <%= link_to untenanted_path(:new_session, return_to: @return_to_url), class: "btn btn--reversed center txt-large" do %>
-            Sign in to join
+          <%= link_to untenanted_path(:new_registration, return_to: @return_to_url), class: "btn btn--reversed center txt-large" do %>
+            Create an account to join
           <% end %>
         </div>
 
         <div class="txt-medium txt-align-center">
-          Don't have an account? <%= link_to "Create one", untenanted_path(:new_registration, return_to: @return_to_url) %>
+          Already have an account? <%= link_to "Sign in", untenanted_path(:new_session, return_to: @return_to_url) %>
         </div>
       <% elsif saas_authenticated? %>
         <%# SaaS: User is globally authenticated, one-click join %>
