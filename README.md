@@ -1,3 +1,14 @@
+### Rooms for every topic
+
+https://github.com/user-attachments/assets/1125d6c8-2b49-443c-adad-eb7fdf023ff3
+
+### Threads keep tangents tidy
+
+https://github.com/user-attachments/assets/5b4b78ed-5c6e-47b2-8fb7-490af0cf6bf8
+
+### Bots & AI in any room
+https://github.com/user-attachments/assets/ee9ac732-7f6c-495f-8438-bf3c52511dd9
+
 # Sabha
 
 Sabha is an open-source, self-hosted chat platform for friends, groups, and communities — a calm alternative to Discord and Slack. Run it on your own server and own every byte. No per-seat pricing, no message limits, no platform telling you what your community is worth.
