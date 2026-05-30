@@ -6,7 +6,7 @@ Sabha is an open-source, self-hosted chat platform for friends, groups, and comm
 [![MIT License](https://img.shields.io/github/license/sabha-co/sabha?color=%239944ee)](LICENSE.md)
 [![GitHub Stars](https://img.shields.io/github/stars/sabha-co/sabha?style=flat&logo=github)](https://github.com/sabha-co/sabha/stargazers)
 
-![Sabha app — rooms, threads, and community chat](app/assets/images/screenshots/sabha-screenshot.png)
+![Sabha app — rooms, threads, and community chat](app/assets/images/screenshots/sabha-screenshot.webp)
 
 ## Features
 
