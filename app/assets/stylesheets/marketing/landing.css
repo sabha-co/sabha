@@ -21,6 +21,7 @@
 }
 
 .landing a { text-decoration: none; color: inherit; }
+.landing p { text-wrap: pretty; }
 
 /* Inline links inside running copy (FAQ answers, about/legal prose, etc.) */
 .landing-link,
@@ -68,27 +69,29 @@
 
 .landing h1 {
   font-family: var(--font-display);
-  font-size: 56px;
+  font-size: clamp(36px, 5vw, 56px);
   font-weight: 600;
-  letter-spacing: -2px;
+  letter-spacing: -0.04em;
   line-height: 1.1;
   color: var(--text-primary);
   margin: 0;
   max-width: 900px;
   text-align: center;
+  text-wrap: balance;
 }
 
 .landing h2,
 .landing h1.landing-section-title {
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: clamp(26px, 3.5vw, 40px);
   font-weight: 600;
-  letter-spacing: -1px;
+  letter-spacing: -0.025em;
   line-height: 1.15;
   color: var(--text-primary);
   margin: 0;
   max-width: 700px;
   text-align: center;
+  text-wrap: balance;
 }
 
 .landing h3 {
@@ -97,6 +100,7 @@
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+  text-wrap: balance;
 }
 
 .landing-section-sub {
@@ -434,6 +438,7 @@
 
 .landing-features-section {
   background: var(--bg-surface);
+  padding: 120px 0;
 }
 
 .landing-features-section .landing-inner .landing-section-header {
@@ -617,6 +622,7 @@
 
 .landing-pricing-section {
   background: var(--bg-white);
+  padding: 120px 0;
 }
 
 .landing-pricing-cards {
@@ -810,8 +816,16 @@
 
 /* ═══════════════════════════ FAQ ═══════════════════════════ */
 
+.landing-faq {
+  padding: 80px 0;
+}
+
+.landing-faq .landing-section-header {
+  margin-bottom: 40px;
+}
+
 .landing-faq-list {
-  margin-top: 3rem;
+  margin-top: 0;
 }
 
 .landing-faq-item {
@@ -972,6 +986,8 @@
 @media (max-width: 1024px) {
   .landing-inner { padding: 0 40px; }
   .landing-section { padding: 80px 0; }
+  .landing-features-section,
+  .landing-pricing-section { padding: 80px 0; }
   .landing-hero { padding: 80px 0 60px; }
   .landing-final-cta { padding: 80px 0; }
   .landing-footer { padding: 48px 0; }
@@ -985,12 +1001,15 @@
 }
 
 @media (max-width: 768px) {
-  .landing h1 { font-size: 36px; letter-spacing: -1px; }
+  .landing h1 { font-size: 36px; }
   .landing h2, .landing h1.landing-section-title { font-size: 28px; }
   .landing-hero-sub { font-size: 16px; }
 
   .landing-inner { padding: 0 24px; }
   .landing-section { padding: 60px 0; }
+  .landing-features-section,
+  .landing-pricing-section,
+  .landing-faq { padding: 60px 0; }
   .landing-hero { padding: 60px 0 48px; }
   .landing-hero-inner { gap: 28px; }
   .landing-final-cta { padding: 60px 0; }
