@@ -22,6 +22,14 @@
 
 .landing a { text-decoration: none; color: inherit; }
 
+/* Inline links inside running copy (FAQ answers, about/legal prose, etc.) */
+.landing-link,
+.landing a.landing-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 /* ═══════════════════════════ SHARED ═══════════════════════════ */
 
 .landing-divider {

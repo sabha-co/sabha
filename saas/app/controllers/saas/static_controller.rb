@@ -57,7 +57,7 @@ module Saas
       def render_links(text)
         escaped = ERB::Util.html_escape(text)
         escaped.gsub(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/) do
-          %(<a href="#{$2}" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">#{$1}</a>)
+          %(<a href="#{$2}" target="_blank" rel="noopener" class="landing-link">#{$1}</a>)
         end.html_safe
       end
   end
