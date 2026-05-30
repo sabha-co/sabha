@@ -1,14 +1,3 @@
-### Rooms for every topic
-
-https://github.com/user-attachments/assets/1125d6c8-2b49-443c-adad-eb7fdf023ff3
-
-### Threads keep tangents tidy
-
-https://github.com/user-attachments/assets/5b4b78ed-5c6e-47b2-8fb7-490af0cf6bf8
-
-### Bots & AI in any room
-https://github.com/user-attachments/assets/ee9ac732-7f6c-495f-8438-bf3c52511dd9
-
 # Sabha
 
 Sabha is an open-source, self-hosted chat platform for friends, groups, and communities — a calm alternative to Discord and Slack. Run it on your own server and own every byte. No per-seat pricing, no message limits, no platform telling you what your community is worth.
@@ -41,6 +30,22 @@ Sabha is an open-source, self-hosted chat platform for friends, groups, and comm
 
 **One-command deploy** — run it on a small server with a single command. No external database to set up or pay for.
 
+## Screenshots
+
+Short clips of Sabha in action — rooms, threads, and an AI agent answering in a room.
+
+### Rooms for every topic
+
+https://github.com/user-attachments/assets/1125d6c8-2b49-443c-adad-eb7fdf023ff3
+
+### Threads keep tangents tidy
+
+https://github.com/user-attachments/assets/5b4b78ed-5c6e-47b2-8fb7-490af0cf6bf8
+
+### Bots & AI in any room
+
+https://github.com/user-attachments/assets/ee9ac732-7f6c-495f-8438-bf3c52511dd9
+
 ## Architecture
 
 Sabha is a Rails 8 monolith with the added simplicity of SQLite, all on one server.
@@ -48,11 +53,6 @@ Sabha is a Rails 8 monolith with the added simplicity of SQLite, all on one serv
 The frontend is Hotwire/Turbo + Importmap + Tailwind CSS v4. Real-time delivery runs through AnyCable. Background jobs run on Solid Queue.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown.
-
-## Screenshots
-
-<!-- TODO: add screenshots here -->
-_Coming soon._
 
 ## Deployment
 
