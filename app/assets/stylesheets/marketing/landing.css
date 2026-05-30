@@ -499,6 +499,19 @@
   flex-direction: row-reverse;
 }
 
+.landing-feature-screenshot--media {
+  height: auto;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+
+.landing-feature-media {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* ═══════════════════════════ SECONDARY FEATURES GRID ═══════════════════════════ */
 
 .landing-details .landing-grid {
@@ -974,6 +987,7 @@
   .landing-feature-row { flex-direction: column; gap: 32px; }
   .landing-feature-row--reverse { flex-direction: column-reverse; }
   .landing-feature-screenshot { width: 100%; height: 260px; }
+  .landing-feature-screenshot--media { height: auto; }
 
   .landing-footer-cols { gap: 40px; }
 }

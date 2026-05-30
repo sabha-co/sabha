@@ -1,3 +1,7 @@
+<% content_for :head do %>
+  <link rel="preload" as="image" href="<%= image_path("screenshots/sabha-screenshot.avif") %>" type="image/avif" fetchpriority="high">
+<% end %>
+
 <div class="landing">
 
 <%= render "shared/marketing_header" %>
@@ -27,7 +31,10 @@
       </a>
     </div>
     <div class="landing-screenshot">
-      <%= image_tag "screenshots/sabha-screenshot.png", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img", width: 2872, height: 1362, loading: "eager", fetchpriority: "high" %>
+      <picture>
+        <source type="image/avif" srcset="<%= image_path("screenshots/sabha-screenshot.avif") %>">
+        <%= image_tag "screenshots/sabha-screenshot.webp", alt: "Sabha app — rooms, threads, and community chat", class: "landing-screenshot-img", width: 2000, height: 939, loading: "eager", fetchpriority: "high" %>
+      </picture>
     </div>
   </div>
 </section>
@@ -86,17 +93,21 @@
         <h3>Rooms for every topic</h3>
         <p>Create rooms for announcements, help, introductions, or anything your community talks about. Each room is a focused space — not a firehose.</p>
       </div>
-      <div class="landing-feature-screenshot">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-        <span>Rooms view</span>
-      </div>
+      <%= render "feature_video", src: "screenshots/room-sabha.mp4", poster: "screenshots/room-sabha-poster.webp", width: 1280, height: 720, label: "Browsing rooms in Sabha" %>
     </div>
 
     <div class="landing-feature-row landing-feature-row--reverse">
-      <div class="landing-feature-screenshot">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-        <span>Bots & agents</span>
+      <%= render "feature_video", src: "screenshots/threads-sabha.mp4", poster: "screenshots/threads-sabha-poster.webp", width: 646, height: 360, label: "Following a thread in Sabha" %>
+      <div class="landing-feature-text">
+        <div class="landing-feature-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3>Threads by default</h3>
+        <p>Every conversation can become a thread. Side discussions stay organized, not scattered.</p>
       </div>
+    </div>
+
+    <div class="landing-feature-row">
       <div class="landing-feature-text">
         <div class="landing-feature-icon-box">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
@@ -104,21 +115,9 @@
         <h3>Bot & AI ready</h3>
         <p>Built-in bot API with webhooks and real-time events. Bots read messages, post replies, react, manage rooms, and search — over WebSocket, no public endpoint required. Drop in <a href="/openclaw" style="color: inherit; text-decoration: underline; text-underline-offset: 4px;">OpenClaw</a> to put an LLM agent in any room with a single invite URL, or write your own. Bots are a first-class feature, not a paid marketplace.</p>
       </div>
+      <%= render "feature_video", src: "screenshots/bot-sabha.mp4", poster: "screenshots/bot-sabha-poster.webp", width: 1280, height: 720, label: "An OpenClaw AI agent in a Sabha room" %>
     </div>
 
-    <div class="landing-feature-row">
-      <div class="landing-feature-text">
-        <div class="landing-feature-icon-box">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-        </div>
-        <h3>Mobile-first by design</h3>
-        <p>Sabha is a PWA — chat that lives on your phone like a native app. Install from any browser to get an app icon, push notifications, and badge counts. No App Store queue, no separate download, same URL on every device.</p>
-      </div>
-      <div class="landing-feature-screenshot">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D0D0D0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-        <span>Mobile view</span>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -153,9 +152,9 @@
         <p>Moderator roles, user bans with IP blocks, and reversible soft-delete on messages and rooms. Real moderation, not retrofitted.</p>
       </div>
       <div class="landing-card">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        <h3>Threads by default</h3>
-        <p>Every conversation can become a thread. Side discussions stay organized, not scattered.</p>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+        <h3>Mobile-first by design</h3>
+        <p>Sabha is a PWA — install from any browser for an app icon, push notifications, and badge counts. Same URL on every device, no App Store.</p>
       </div>
       <div class="landing-card">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>

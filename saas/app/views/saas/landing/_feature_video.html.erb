@@ -1,0 +1,8 @@
+<%# locals: (src:, poster:, width:, height:, label:) %>
+<div class="landing-feature-screenshot landing-feature-screenshot--media">
+  <%= tag.video class: "landing-feature-media",
+        width: width, height: height, poster: asset_path(poster),
+        autoplay: true, loop: true, muted: true, playsinline: true, preload: "none",
+        "aria-label": label,
+        data: { controller: "lazy-video", lazy_video_src_value: asset_path(src) } %>
+</div>
