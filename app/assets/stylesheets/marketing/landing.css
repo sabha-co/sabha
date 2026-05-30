@@ -176,7 +176,8 @@
 .landing-hero-badge:focus-visible,
 .landing-nav-links a:focus-visible,
 .landing-footer-col a:focus-visible,
-.landing-menu-toggle:focus-visible {
+.landing-menu-toggle:focus-visible,
+.landing-faq-item summary:focus-visible {
   outline: 2px solid var(--accent-red);
   outline-offset: 2px;
 }
@@ -278,7 +279,7 @@
   background: none;
   border: 1px solid var(--border-gray);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 12px;
   cursor: pointer;
   color: var(--text-primary);
 }
@@ -862,7 +863,7 @@
   content: "+";
   font-size: 1.25rem;
   font-weight: 400;
-  color: var(--text-secondary);
+  color: var(--accent-red);
   flex-shrink: 0;
   transition: transform 0.2s ease;
 }
@@ -1038,6 +1039,7 @@
   .nav-open .landing-mobile-menu a {
     font-size: 15px;
     color: var(--text-secondary);
+    padding: 10px 0;
   }
   .nav-open .landing-mobile-menu .landing-mobile-menu-divider {
     height: 1px;
