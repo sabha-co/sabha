@@ -234,5 +234,7 @@ Rails.application.routes.draw do
   get "webmanifest"    => "pwa#manifest"
   get "service-worker" => "pwa#service_worker"
 
+  get "/.well-known/change-password" => redirect(Sabha.saas? ? "/session/new" : "/password_resets/new")
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

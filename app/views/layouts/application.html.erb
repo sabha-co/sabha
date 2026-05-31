@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="utf-8">
     <%= render "layouts/theme_preference" %>
 
     <%= page_title_tag %>
+    <meta name="description" content="<%= Branding.app_description %>">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="view-transition" content="same-origin">
     <meta name="theme-color" content="<%= Branding.theme_color %>">
     <meta name="mobile-web-app-capable" content="yes">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="<%= page_title %>">
+    <meta property="og:description" content="<%= Branding.app_description %>">
+    <meta property="og:image" content="<%= request.base_url %>/icon.png">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= Sabha.saas? ? tenanted_action_cable_meta_tag : action_cable_meta_tag %>
@@ -20,6 +27,7 @@
     <%= tag.meta name: "turbo-prefetch", content: "true" %>
 
     <%= tag.link rel: "manifest", href: webmanifest_path(format: :json) %>
+    <%= tag.link rel: "icon", href: "/icon.svg", type: "image/svg+xml" %>
     <%= tag.link rel: "icon", href: fresh_account_logo_path, type: "image/png" %>
     <%= tag.link rel: "apple-touch-icon", href: fresh_account_logo_path %>
 
