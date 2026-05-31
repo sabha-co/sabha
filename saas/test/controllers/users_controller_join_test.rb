@@ -30,8 +30,8 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     # Links should be untenanted (no workspace prefix)
-    assert_select "a[href^='/session/new']", text: /Sign in to join/
-    assert_select "a[href^='/registration/new']", text: /Create one/
+    assert_select "a[href^='/registration/new']", text: /Create an account to join/
+    assert_select "a[href^='/session/new']", text: /Sign in/
   end
 
   # ============================================================================
