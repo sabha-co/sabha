@@ -69,35 +69,41 @@ CSP_FRAME_ANCESTORS="https://yourdomain.com, https://*.yourdomain.com"
 
 ## Visual Assets
 
-### Favicons & Icons
+Sabha resolves icons from a small set of specific files. Replacing the files below is what actually changes what users see — other image files in the repo are not wired to the favicon or app icons.
 
-Replace files in `app/assets/images/icons/`:
+### Browser favicon (SVG)
 
-| File | Size | Purpose |
-|------|------|---------|
-| `favicon.ico` | 16x16 | Browser tab icon (ICO format) |
-| `favicon-16x16.png` | 16x16 | Small browser icon |
-| `favicon-32x32.png` | 32x32 | Standard browser icon |
-| `apple-touch-icon.png` | 180x180 | iOS home screen icon |
-| `android-chrome-192x192.png` | 192x192 | Android home screen icon |
-| `android-chrome-512x512.png` | 512x512 | Android splash screen |
+Modern browsers prefer the SVG favicon. Replace:
 
-### Logo Files
+| File | Purpose |
+|------|---------|
+| `public/icon.svg` | Browser tab favicon (modern browsers) |
 
-Replace files in `app/assets/images/logos/`:
+### App icon (PNG fallback, Apple touch icon, PWA)
+
+These cover browsers without SVG support, the iOS home-screen icon, and the installable PWA. Replace both:
 
 | File | Size | Purpose |
 |------|------|---------|
-| `app-icon.png` | 512x512 | Primary app logo |
-| `app-icon-192.png` | 192x192 | Smaller app logo variant |
+| `app/assets/images/logos/app-icon.png` | 512x512 | PNG favicon fallback, `apple-touch-icon`, PWA icon |
+| `app/assets/images/logos/app-icon-192.png` | 192x192 | Smaller PWA icon |
 
-These are also the fallback when no custom logo is uploaded via the admin panel (see below).
+These are also the default when no custom logo is uploaded via the admin panel (see Logo Upload below).
 
-**Quick method:** Start with a 1024x1024px square logo, run it through [RealFaviconGenerator](https://realfavicongenerator.net/), and drop the generated files into the directories above.
+### Social / link previews (Open Graph)
+
+Shown when your URL is shared on social media or chat apps. Replace:
+
+| File | Recommended | Purpose |
+|------|-------------|---------|
+| `public/sabha-og.jpg` | 1200x630 | `og:image` preview card |
+| `public/icon.png` | 512x512 | `og:logo` |
+
+Files in `public/` are served directly and need no recompilation. After replacing files under `app/assets/`, recompile assets in production (see [Icons Not Updating](#icons-not-updating)).
 
 ### Logo Upload
 
-Administrators can upload a custom logo at `/accounts/edit` — it replaces the default `app-icon` files in the UI.
+Administrators can upload a custom logo at `/accounts/edit`. It overrides the `app-icon` PNGs for the in-app logo, the PNG favicon, the Apple touch icon, and the PWA icons — without redeploying. It does **not** change the SVG favicon (`public/icon.svg`) or the Open Graph images, so replace those files directly if you need them branded.
 
 ## Custom Styles
 
