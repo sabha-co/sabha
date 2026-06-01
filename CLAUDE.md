@@ -34,12 +34,14 @@ class SettingsController < ApplicationController
 end
 
 # GOOD — RESTful, thin controller, exception-based
-class MembershipsController < ApplicationController
+# (real code: app/controllers/rooms/memberships_controller.rb)
+class Rooms::MembershipsController < ApplicationController
   def destroy
-    Current.membership.leave!
-    redirect_to root_path
-  rescue Membership::LastAdministratorError
-    redirect_back alert: "Can't leave as last admin"
+    @room.accept_leave!(Current.user)
+    redirect_to root_url, notice: "You left #{@room.name}"
+  rescue Membership::LastVisibleMemberError
+    redirect_back fallback_location: room_url(@room),
+                  alert: "You're the last member. Delete the room instead."
   end
 end
 ```
@@ -91,7 +93,7 @@ After implementing changes, run the relevant test suite to verify. For SaaS chan
 
 ### SaaS Dual Database Setup
 - **Untenanted (PostgreSQL):** `GlobalIdentity`, `Workspace`, `WorkspaceMembership`, `GlobalSession`. Models inherit from `UntenantedRecord`. Migrations in `saas/db/untenanted_migrate/`, schema in `saas/db/untenanted_schema.rb`.
-- **Tenanted (SQLite per workspace):** All app models (`User`, `Room`, `Message`, etc.) inherit from `ApplicationRecord`. Each workspace gets its own SQLite database at `storage/{env}/workspaces/{tenant_id}/main.sqlite3`. Standard migrations in `db/migrate/`.
+- **Tenanted (SQLite per workspace):** All app models (`User`, `Room`, `Message`, etc.) inherit from `ApplicationRecord`. Each workspace gets its own SQLite database at `storage/workspaces/{env}/{tenant}/db/main.sqlite3`. Standard migrations in `db/migrate/`.
 
 ### Database Migrations
 ```bash
