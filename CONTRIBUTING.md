@@ -4,25 +4,24 @@ Thanks for your interest in improving Sabha. This guide covers the basics.
 
 ## Getting started
 
-```bash
-bin/setup   # Install dependencies, prepare the database, build CSS
-bin/dev     # Start the development server
-```
-
-You'll need Ruby (see `.ruby-version`), Node (see `.node-version`), and pnpm.
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for setup and running the app locally.
 
 ## Making changes
 
 1. Fork the repo and create a branch off `main`.
 2. Make your change. Keep it focused — one concern per pull request.
-3. Add or update tests for anything you change.
+3. Add or update tests for anything you change. Give tests descriptive names,
+   and make sure each one actually fails when the change it covers is reverted —
+   a test that passes either way isn't testing anything.
 4. Run the test suite and make sure it passes:
 
    ```bash
    bin/rails test
    ```
 
-5. Open a pull request with a clear description of what changed and why.
+5. Open a pull request. Describe what changed and, more importantly, **why** —
+   explain the reasoning behind any non-obvious decisions, not just the diff.
+   For UI changes, include before/after screenshots or a short GIF.
 
 RuboCop runs automatically on commit and Brakeman on push (via lefthook), so style
 and basic security checks are handled for you.
