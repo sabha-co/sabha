@@ -11,6 +11,16 @@ module Saas
       assert_response :success
     end
 
+    test "new clears stale return_to when none is supplied" do
+      # An earlier, abandoned SSO flow stored a cross-origin return_to.
+      get new_registration_path, params: { return_to: "/session/sso?sso=abc&sig=def" }
+      assert_equal "/session/sso?sso=abc&sig=def", session[:return_to_after_authenticating]
+
+      # A later plain signup with no return_to must not inherit the stale value.
+      get new_registration_path
+      assert_nil session[:return_to_after_authenticating]
+    end
+
     test "create with blank email redirects with validation errors" do
       post registration_path, params: with_turnstile_response(name: "Test", email_address: "")
       assert_redirected_to new_registration_path
