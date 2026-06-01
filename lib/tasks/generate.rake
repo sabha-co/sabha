@@ -23,10 +23,31 @@ module DemoHelpers
       creator: creator,
       body: body,
       created_at: created_at,
+      updated_at: created_at,
       client_message_id: SecureRandom.uuid
     )
   rescue ActiveRecord::RecordInvalid
     nil
+  end
+
+  # Seed data is inserted "now" while messages carry a backdated created_at.
+  # That leaves updated_at in the future (so Message#edited? is true for every
+  # row) and posts each room's system events (created the room, member joins)
+  # after the backdated chat, sorting them to the bottom. Fix both: align
+  # updated_at, and pull each room's events to just before its first message.
+  def normalize_seed_timestamps!
+    Message.update_all("updated_at = created_at")
+
+    Room.where.not(type: %w[Rooms::Direct Rooms::Thread]).find_each do |room|
+      earliest = room.messages.without_events.minimum(:created_at)
+      next unless earliest
+
+      base = earliest - 10.minutes
+      room.messages.where.not(event: nil).order(:id).each_with_index do |event, index|
+        timestamp = base + index.seconds
+        event.update_columns(created_at: timestamp, updated_at: timestamp)
+      end
+    end
   end
 
   # Shared database cleanup (order matters due to foreign keys)
@@ -150,6 +171,8 @@ namespace :generate do
 
       puts "🔥 Setting streaks..."
       MaxDemo.set_streaks
+
+      DemoHelpers.normalize_seed_timestamps!
 
       puts ""
       puts "✅ MAX demo environment ready!"
@@ -1082,6 +1105,8 @@ namespace :generate do
 
     puts "🔖 Adding bookmarks..."
     create_bookmarks(users)
+
+    DemoHelpers.normalize_seed_timestamps!
 
     puts "✅ Demo environment ready!"
     puts ""
