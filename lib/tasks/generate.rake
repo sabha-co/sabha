@@ -23,6 +23,7 @@ module DemoHelpers
       creator: creator,
       body: body,
       created_at: created_at,
+      updated_at: created_at,
       client_message_id: SecureRandom.uuid
     )
   rescue ActiveRecord::RecordInvalid
@@ -150,6 +151,11 @@ namespace :generate do
 
       puts "🔥 Setting streaks..."
       MaxDemo.set_streaks
+
+      # Messages are inserted with a backdated created_at but a present-time
+      # updated_at, which makes Message#edited? true for every row. Align them
+      # so seeded messages don't all render as "(edited)".
+      Message.update_all("updated_at = created_at")
 
       puts ""
       puts "✅ MAX demo environment ready!"
@@ -1082,6 +1088,11 @@ namespace :generate do
 
     puts "🔖 Adding bookmarks..."
     create_bookmarks(users)
+
+    # Some messages are inserted directly (e.g. group DMs) with a present-time
+    # updated_at against a backdated created_at, which makes Message#edited? true.
+    # Align them so seeded messages don't render as "(edited)".
+    Message.update_all("updated_at = created_at")
 
     puts "✅ Demo environment ready!"
     puts ""
