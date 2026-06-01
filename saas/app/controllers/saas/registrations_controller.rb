@@ -18,10 +18,7 @@ module Saas
     rescue_from RailsCloudflareTurnstile::Forbidden, with: :handle_turnstile_failure
 
     def new
-      # Store return_to param for redirect after authentication
-      if params[:return_to].present?
-        session[:return_to_after_authenticating] = params[:return_to]
-      end
+      capture_return_to
     end
 
     def create

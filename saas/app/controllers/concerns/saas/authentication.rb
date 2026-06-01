@@ -100,6 +100,14 @@ module Saas
         session[:return_to_after_authenticating] = request.fullpath if request.get? || request.head?
       end
 
+      # Capture the post-authentication redirect target from params, clearing any
+      # previously stored value when none is supplied. Clearing matters because an
+      # abandoned flow (e.g. SSO arriving with a return_to) would otherwise leave a
+      # stale, cross-origin target that hijacks the next unrelated plain login.
+      def capture_return_to
+        session[:return_to_after_authenticating] = params[:return_to].presence
+      end
+
       # URL to redirect to after successful authentication
       def after_authentication_url
         stored_url = session.delete(:return_to_after_authenticating)

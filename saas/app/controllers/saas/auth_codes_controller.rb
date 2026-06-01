@@ -15,7 +15,9 @@ module Saas
     def show
       @auth_code_email = session.delete(:auth_code_email)
 
-      # Store return_to param for redirect after authentication
+      # Store-only (not capture_return_to): this page is reached via a paramless
+      # redirect from session/registration create, so clearing on a blank param
+      # would wipe the return_to those steps legitimately stored.
       if params[:return_to].present?
         session[:return_to_after_authenticating] = params[:return_to]
       end
