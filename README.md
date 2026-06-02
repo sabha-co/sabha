@@ -89,16 +89,6 @@ SAAS=true bin/rails test saas/test/     # SaaS suite
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full guide.
 
-## Help and discussion
-
-#### Bug reports and feature requests
-
-Bug reports and feature requests can be posted on [GitHub Issues](https://github.com/sabha-co/sabha/issues).
-
-#### Contributing
-
-Pull requests are welcome. Please open an issue first to discuss substantial changes. Run the test suite before submitting; for changes that touch the `saas/` engine, run both the self-hosted suite and `SAAS=true bin/rails test saas/test/`.
-
 ## Credits
 
 Built on [Once Campfire](https://github.com/basecamp/once-campfire/). Some additional features inherited from the [Small Bets](https://github.com/antiwork/smallbets) fork by Antiwork.
