@@ -1,9 +1,10 @@
-<%# locals: (user:) -%>
-<% cache [user, "popup", user.updated_at] do %>
+<%# locals: (user:, boundary: nil) -%>
+<% cache [user, "popup", boundary, user.updated_at] do %>
   <%= tag.details class: "position-relative avatar",
-                  data: { controller: "popup", 
-                          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside", 
-                          popup_orientation_top_class: "popup-orientation-top" } do %>
+                  data: { controller: "popup",
+                          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside",
+                          popup_orientation_top_class: "popup-orientation-top",
+                          popup_boundary_value: boundary } do %>
     <summary class="btn avatar">
       <%= avatar_tag user, loading: :lazy %>
     </summary>

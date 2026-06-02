@@ -713,6 +713,7 @@ img.message__attachment {
   --boost-border-color: var(--color-selected-dark);
   --border-color: var(--color-border-darker);
   --border-size: 1px;
+  --popup-close-dur: 150ms;
 
   background-color: var(--color-bg);
   border-radius: calc(var(--arrow-size) / 2);
@@ -722,7 +723,11 @@ img.message__attachment {
 
   [open] > & {
     display: block;
-    animation: popup-in 150ms cubic-bezier(0.25, 1, 0.5, 1) both;
+    animation: popup-in 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  [open] > &.is-closing {
+    animation: popup-out var(--popup-close-dur) cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   &::before {
