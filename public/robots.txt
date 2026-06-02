@@ -3,6 +3,9 @@ Allow: /$
 Allow: /about
 Allow: /changelog
 Allow: /openclaw
+Allow: /assets/
+Allow: /icon.png
+Allow: /icon.svg
 Disallow: /
 
 Sitemap: https://sabha.co/sitemap.xml
