@@ -80,7 +80,14 @@
 @keyframes popup-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    scale: 0.97;
+  }
+}
+
+@keyframes popup-out {
+  to {
+    opacity: 0;
+    scale: 0.99;
   }
 }
 
