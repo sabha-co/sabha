@@ -55,9 +55,4 @@
       }
     }
   }
-
-  /* A non-interactive info trigger that only exists to host a tooltip. */
-  .btn--info {
-    cursor: help;
-  }
 }

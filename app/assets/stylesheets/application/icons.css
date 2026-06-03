@@ -78,7 +78,6 @@ img.icon {
 .icon--home { --svg: url("../home.svg"); }
 .icon--inbox { --svg: url("../inbox.svg"); }
 .icon--install-edge { --svg: url("../install-edge.svg"); }
-.icon--info { --svg: url("../info.svg"); }
 .icon--key { --svg: url("../key.svg"); }
 .icon--lanyard { --svg: url("../lanyard.svg"); }
 .icon--laptop { --svg: url("../laptop.svg"); }
