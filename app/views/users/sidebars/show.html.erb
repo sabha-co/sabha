@@ -115,10 +115,11 @@
         <span class="sidebar__tool-label">Bookmarks</span>
       <% end %>
 
+      <% account_tool_label = Current.user&.staff? ? "Settings" : "About" %>
       <%= link_to account_path, class: "btn sidebar__tool" do %>
         <%= icon_tag Current.user&.staff? ? "crown" : "world" %>
-        <span class="for-screen-reader">About</span>
-        <span class="sidebar__tool-label">About</span>
+        <span class="for-screen-reader"><%= account_tool_label %></span>
+        <span class="sidebar__tool-label"><%= account_tool_label %></span>
       <% end %>
       
       <%= render "users/sidebars/bell" %>

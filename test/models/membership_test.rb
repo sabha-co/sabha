@@ -146,6 +146,19 @@ class MembershipTest < ActiveSupport::TestCase
     assert_equal :away, Membership.activity_status(result[jason.id])
   end
 
+  test "online? is true only when the user has a membership connected within the active tier" do
+    david = users(:david)
+    Membership.unscoped.where(user_id: david.id).update_all(connected_at: nil)
+
+    refute Membership.online?(david)
+
+    memberships(:david_watercooler).update_column(:connected_at, 1.minute.ago)
+    assert Membership.online?(david)
+
+    memberships(:david_watercooler).update_column(:connected_at, 30.minutes.ago)
+    refute Membership.online?(david)
+  end
+
   # Starred tests
 
   test "starred scope returns starred memberships" do
