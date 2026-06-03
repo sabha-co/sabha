@@ -8,7 +8,7 @@ class Accounts::JoinCodesController < ApplicationController
 
   def update
     join_code = Current.account.toggle_join_code_expiration
-    notice = join_code.expires? ? "Join link now #{join_code.expiry_display.downcase}" : "Join link will never expire"
+    notice = join_code.expires? ? "This join link will #{join_code.expiry_display.sub("Expires", "expire")}" : "This join link will never expire"
     redirect_to account_url, notice: notice
   end
 end

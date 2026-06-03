@@ -27,11 +27,11 @@ class Accounts::JoinCodesControllerTest < ActionDispatch::IntegrationTest
     patch account_join_code_url
     assert_redirected_to account_url
     refute join_code.reload.expires?
-    assert_equal "Join link will never expire", flash[:notice]
+    assert_equal "This join link will never expire", flash[:notice]
 
     patch account_join_code_url
     assert join_code.reload.expires?
-    assert_match(/Join link now expires in \d+ days?/, flash[:notice])
+    assert_match(/This join link will expire in \d+ days?/, flash[:notice])
   end
 
   test "only administrators can toggle join code expiration" do
