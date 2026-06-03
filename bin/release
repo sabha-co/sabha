@@ -7,9 +7,12 @@
 #
 
 def get_latest_version
-  tags = `git tag --list 'v*' | sort -V`.strip.split("\n")
-  return nil if tags.empty?
-  tags.last.sub(/^v/, "")
+  # Use the most recent tag reachable from HEAD (the active release line),
+  # not the highest tag by sort order — an orphaned higher tag from an
+  # abandoned numbering scheme must not hijack the bump suggestions.
+  version = `git describe --tags --abbrev=0 2>/dev/null`.strip
+  return nil if version.empty?
+  version.sub(/^v/, "")
 end
 
 def parse_version(version)
