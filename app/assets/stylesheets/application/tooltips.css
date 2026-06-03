@@ -1,9 +1,9 @@
 /* Hover tooltips. An element opts in with `data-tooltip` and holds its label in
    a child `<span class="for-screen-reader">`. That span is the visually-hidden
-   accessible name by default (utilities.css); on hover we un-clip it into a dark
-   pill above the element. Pure CSS, no JS. Living in @layer components lets the
-   unlayered .for-screen-reader base win until the hover !important reveal fires,
-   so the label stays hidden for non-hover users. */
+   accessible name by default (utilities.css); on hover or keyboard focus we
+   un-clip it into a dark pill above the element. Pure CSS, no JS. Living in
+   @layer components lets the unlayered .for-screen-reader base win until the
+   !important reveal fires, so the label stays hidden until hovered or focused. */
 @layer components {
   [data-tooltip] {
     --tooltip-delay: 400ms;
@@ -25,6 +25,18 @@
       transition-property: opacity;
       translate: -50% -100%;
       text-overflow: ellipsis;
+    }
+
+    /* Keyboard focus reveals the label everywhere; hover only where the device
+       actually hovers, so touch taps don't leave a sticky tooltip behind. */
+    &:focus-visible .for-screen-reader {
+      block-size: auto !important;
+      clip-path: none !important;
+      inline-size: auto !important;
+      opacity: 1;
+      transform: translate3d(0, 0, 0); /* Fixes Safari overflow rendering bug */
+      translate: -50% -100%;
+      z-index: 110;
     }
 
     @media (any-hover: hover) {
