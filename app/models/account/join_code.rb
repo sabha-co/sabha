@@ -55,6 +55,10 @@ class Account::JoinCode < ApplicationRecord
     expires_at.present? && expires_at <= Time.current
   end
 
+  def expiring?
+    expires_at.present?
+  end
+
   def global?
     user_id.nil?
   end
@@ -64,11 +68,19 @@ class Account::JoinCode < ApplicationRecord
   end
 
   def regenerate_code
-    update!(code: generate_new_code, usage_count: 0, expires_at: default_lifetime.from_now)
+    update!(code: generate_new_code, usage_count: 0, expires_at: expiring? ? default_lifetime.from_now : nil)
+  end
+
+  def toggle_expiration
+    update!(expires_at: expiring? ? nil : default_lifetime.from_now)
   end
 
   def unlimited?
     usage_limit.nil?
+  end
+
+  def used?
+    usage_count.positive?
   end
 
   def usage_display

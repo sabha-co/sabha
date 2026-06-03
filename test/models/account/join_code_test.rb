@@ -60,6 +60,16 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
     assert_equal 0, join_code.usage_count
   end
 
+  test "used? reflects whether the code has any usage" do
+    join_code = account_join_codes(:signal)
+
+    join_code.update!(usage_count: 0)
+    refute join_code.used?
+
+    join_code.update!(usage_count: 1)
+    assert join_code.used?
+  end
+
   test "usage_display says 'Never used' when usage_count is zero" do
     join_code = account_join_codes(:signal)
     join_code.update!(usage_limit: nil, usage_count: 0)
@@ -165,6 +175,47 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
     assert join_code.expires_at > Time.current
     assert join_code.expires_at <= Account::JoinCode::DEFAULT_EXPIRATION.from_now + 1.second,
       "personal regenerate must not stretch to the longer global lifetime"
+  end
+
+  test "expiring? reflects whether expires_at is set" do
+    join_code = account_join_codes(:signal)
+
+    join_code.update!(expires_at: 1.hour.from_now)
+    assert join_code.expiring?
+
+    join_code.update!(expires_at: nil)
+    refute join_code.expiring?
+  end
+
+  test "toggle_expiration clears the expiry when the code is expiring" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(expires_at: 30.days.from_now)
+
+    join_code.toggle_expiration
+
+    assert_nil join_code.expires_at
+    refute join_code.expired?
+  end
+
+  test "toggle_expiration sets a fresh default expiry when the code never expires" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(expires_at: nil)
+
+    join_code.toggle_expiration
+
+    assert join_code.expires_at.present?
+    assert join_code.expires_at <= Account::JoinCode::DEFAULT_GLOBAL_EXPIRATION.from_now + 1.second
+  end
+
+  test "regenerate_code keeps a never-expires code permanent" do
+    join_code = account_join_codes(:signal)
+    join_code.update!(expires_at: nil)
+    old_code = join_code.code
+
+    join_code.regenerate_code
+
+    assert_not_equal old_code, join_code.code
+    assert_nil join_code.expires_at, "regenerate must preserve the never-expires setting"
   end
 
   test "redeem! raises InactiveCodeError when exhausted" do

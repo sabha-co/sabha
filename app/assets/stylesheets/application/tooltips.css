@@ -1,0 +1,63 @@
+/* Hover tooltips. An element opts in with `data-controller="tooltip"` and holds
+   its label in a child `<span class="for-screen-reader">`. That span is the
+   visually-hidden accessible name by default (utilities.css); on hover we
+   un-clip it into a dark pill above the element. Living in @layer components
+   lets the unlayered .for-screen-reader base win until the hover !important
+   reveal fires, so the label stays hidden for non-hover users. */
+@layer components {
+  [data-controller~="tooltip"] {
+    --tooltip-delay: 400ms;
+    --tooltip-duration: 150ms;
+
+    position: relative;
+
+    .for-screen-reader {
+      background: var(--color-text);
+      border-radius: 0.4em;
+      color: var(--color-text-reversed);
+      font-size: 0.75rem;
+      font-weight: normal;
+      inset: -0.5em auto auto 50%;
+      max-inline-size: min(40ch, calc(100vw - (var(--inline-space) * 2)));
+      opacity: 0;
+      padding: 0.35em 0.7em;
+      transition: var(--tooltip-duration) ease-out allow-discrete;
+      transition-property: opacity;
+      translate: -50% -100%;
+      text-overflow: ellipsis;
+
+      &.orient-right {
+        inset-inline: 0 auto;
+        translate: var(--orient-offset, 0px) -100%;
+      }
+
+      &.orient-left {
+        inset-inline: auto 0;
+        translate: var(--orient-offset, 0px) -100%;
+      }
+    }
+
+    @media (any-hover: hover) {
+      &:hover .for-screen-reader {
+        block-size: auto !important;
+        clip-path: none !important;
+        inline-size: auto !important;
+        opacity: 1;
+        transform: translate3d(0, 0, 0); /* Fixes Safari overflow rendering bug */
+        transition-delay: var(--tooltip-delay);
+        translate: -50% -100%;
+        z-index: 110;
+
+        &.orient-left,
+        &.orient-right {
+          translate: 0 -100%;
+        }
+      }
+    }
+  }
+
+  /* A non-interactive info trigger that only exists to host a tooltip. */
+  .btn--info {
+    cursor: help;
+  }
+}

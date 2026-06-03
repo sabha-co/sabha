@@ -32,15 +32,18 @@
         <%= icon_tag "refresh" %>
         <span class="for-screen-reader">Regenerate join link</span>
       <% end %>
+
+      <%= button_to account_join_code_path, method: :patch, class: "btn", aria: { pressed: join_code.expiring? } do %>
+        <%= icon_tag "history" %>
+        <span class="for-screen-reader">
+          <%= join_code.expiring? ? "Make join link never expire" : "Make join link expire after 30 days" %>
+        </span>
+      <% end %>
+
+      <%= tag.span class: "btn btn--info", data: { controller: "tooltip" } do %>
+        <%= icon_tag "info" %>
+        <span class="for-screen-reader"><% if join_code.used? %><%= join_code.usage_display %> · <% end %><%= join_code.expiring? ? join_code.expiry_display : "Never expires" %></span>
+      <% end %>
     <% end %>
   </div>
-
-  <% if show_regenerate && Current.user.can_administer? %>
-    <div class="txt-small txt-de-emph txt-align-center">
-      <%= join_code.usage_display %>
-      <% if join_code.expiry_display %>
-        · <%= join_code.expiry_display %>
-      <% end %>
-    </div>
-  <% end %>
 </div>

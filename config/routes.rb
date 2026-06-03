@@ -86,7 +86,7 @@ Rails.application.routes.draw do
 
       resource :bot_invite_code, only: :create, controller: "bot_invite_codes"
 
-      resource :join_code, only: :create
+      resource :join_code, only: %i[ create update ]
       resource :logo, only: %i[ show destroy ]
       resource :custom_styles, only: %i[ edit update ]
     end
