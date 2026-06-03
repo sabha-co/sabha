@@ -116,7 +116,7 @@
       <% end %>
 
       <%= link_to account_path, class: "btn sidebar__tool" do %>
-        <%= icon_tag Current.user&.staff? ? "crown" : "world", style: "view-transition-name: account-settings" %>
+        <%= icon_tag Current.user&.staff? ? "crown" : "world" %>
         <span class="for-screen-reader">About</span>
         <span class="sidebar__tool-label">About</span>
       <% end %>
