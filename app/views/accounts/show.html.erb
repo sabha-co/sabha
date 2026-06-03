@@ -7,7 +7,7 @@
 
   <% if Current.user.can_administer? %>
     <div class="flex align-center gap flex-item-justify-end">
-      <%= link_to edit_account_path, class: "btn", style: "view-transition-name: account-settings" do %>
+      <%= link_to edit_account_path, class: "btn" do %>
         <%= icon_tag "settings" %>
         <span class="for-screen-reader">Configure account</span>
       <% end %>

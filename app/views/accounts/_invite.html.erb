@@ -28,19 +28,15 @@
     <% end %>
 
     <% if show_regenerate && Current.user.can_administer? %>
-      <%= button_to account_join_code_path, class: "btn btn--regenerate" do %>
+      <%= button_to account_join_code_path, class: "btn btn--regenerate", data: { tooltip: true } do %>
         <%= icon_tag "refresh" %>
-        <span class="for-screen-reader">Regenerate join link</span>
+        <span class="for-screen-reader"><% if join_code.used? %><%= join_code.usage_display %> · <% end %>Regenerate join link</span>
+      <% end %>
+
+      <%= button_to account_join_code_path, method: :patch, class: "btn", aria: { pressed: join_code.expires? }, data: { tooltip: true } do %>
+        <%= icon_tag "history" %>
+        <span class="for-screen-reader"><%= join_code.expires? ? "#{join_code.expiry_display} · Make permanent" : "Never expires · Set to expire" %></span>
       <% end %>
     <% end %>
   </div>
-
-  <% if show_regenerate && Current.user.can_administer? %>
-    <div class="txt-small txt-de-emph txt-align-center">
-      <%= join_code.usage_display %>
-      <% if join_code.expiry_display %>
-        · <%= join_code.expiry_display %>
-      <% end %>
-    </div>
-  <% end %>
 </div>

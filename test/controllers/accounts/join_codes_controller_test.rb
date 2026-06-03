@@ -10,11 +10,33 @@ class Accounts::JoinCodesControllerTest < ActionDispatch::IntegrationTest
       post account_join_code_url
       assert_redirected_to account_url
     end
+    assert_equal "New join link generated", flash[:notice]
   end
 
   test "only administrators can create new join codes" do
     sign_in :jz
     post account_join_code_url
+    assert_redirected_to root_path
+  end
+
+  test "update toggles join code expiration off and back on" do
+    join_code = accounts(:signal).join_code
+    join_code.update!(expires_at: 30.days.from_now)
+    assert join_code.expires?
+
+    patch account_join_code_url
+    assert_redirected_to account_url
+    refute join_code.reload.expires?
+    assert_equal "This join link will never expire", flash[:notice]
+
+    patch account_join_code_url
+    assert join_code.reload.expires?
+    assert_match(/This join link will expire in \d+ days?/, flash[:notice])
+  end
+
+  test "only administrators can toggle join code expiration" do
+    sign_in :jz
+    patch account_join_code_url
     assert_redirected_to root_path
   end
 end

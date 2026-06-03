@@ -21,6 +21,10 @@ class Account::JoinCode < ApplicationRecord
 
   class InactiveCodeError < StandardError; end
 
+  # Atomic check-and-burn. Relies on SQLite's IMMEDIATE transaction mode
+  # (config/database.sqlite.yml) — with_lock acquires the single database-wide
+  # write lock at BEGIN, before active? reads, so concurrent redemptions of a
+  # single-use code serialize and only the first succeeds.
   def redeem!
     with_lock do
       raise InactiveCodeError unless active?
@@ -55,6 +59,10 @@ class Account::JoinCode < ApplicationRecord
     expires_at.present? && expires_at <= Time.current
   end
 
+  def expires?
+    expires_at.present?
+  end
+
   def global?
     user_id.nil?
   end
@@ -64,11 +72,19 @@ class Account::JoinCode < ApplicationRecord
   end
 
   def regenerate_code
-    update!(code: generate_new_code, usage_count: 0, expires_at: default_lifetime.from_now)
+    update!(code: generate_new_code, usage_count: 0, expires_at: expires? ? default_lifetime.from_now : nil)
+  end
+
+  def toggle_expiration
+    update!(expires_at: expires? ? nil : default_lifetime.from_now)
   end
 
   def unlimited?
     usage_limit.nil?
+  end
+
+  def used?
+    usage_count.positive?
   end
 
   def usage_display

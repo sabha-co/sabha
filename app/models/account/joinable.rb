@@ -17,6 +17,10 @@ module Account::Joinable
     join_code.regenerate_code
   end
 
+  def toggle_join_code_expiration
+    join_code.tap(&:toggle_expiration)
+  end
+
   def active_bot_invite_code
     join_codes.bot.active.order(created_at: :desc).first
   end
