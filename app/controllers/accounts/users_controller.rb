@@ -128,6 +128,7 @@ class Accounts::UsersController < ApplicationController
 
     def preload_activity(users)
       @activity_statuses = Membership.activity_statuses_for(users.map(&:id))
+      @activity_statuses[Current.user.id] = :active # You're viewing the page, so you're online
     end
 
     def sort_by_activity(users)

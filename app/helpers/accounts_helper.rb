@@ -6,7 +6,8 @@ module AccountsHelper
   end
 
   def online_users_count
-    Membership.online_user_count
+    count = Membership.online_user_count
+    Membership.online?(Current.user) ? count : count + 1 # You're viewing the page, so you're online
   end
 
   STATUS_CSS_CLASSES = { active: "status--active", away: "status--away", offline: "status--offline" }.freeze
