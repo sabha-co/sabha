@@ -177,14 +177,14 @@ class Account::JoinCodeTest < ActiveSupport::TestCase
       "personal regenerate must not stretch to the longer global lifetime"
   end
 
-  test "expiring? reflects whether expires_at is set" do
+  test "expires? reflects whether expires_at is set" do
     join_code = account_join_codes(:signal)
 
     join_code.update!(expires_at: 1.hour.from_now)
-    assert join_code.expiring?
+    assert join_code.expires?
 
     join_code.update!(expires_at: nil)
-    refute join_code.expiring?
+    refute join_code.expires?
   end
 
   test "toggle_expiration clears the expiry when the code is expiring" do

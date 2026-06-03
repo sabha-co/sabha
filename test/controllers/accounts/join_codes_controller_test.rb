@@ -21,14 +21,14 @@ class Accounts::JoinCodesControllerTest < ActionDispatch::IntegrationTest
   test "update toggles join code expiration off and back on" do
     join_code = accounts(:signal).join_code
     join_code.update!(expires_at: 30.days.from_now)
-    assert join_code.expiring?
+    assert join_code.expires?
 
     patch account_join_code_url
     assert_redirected_to account_url
-    refute join_code.reload.expiring?
+    refute join_code.reload.expires?
 
     patch account_join_code_url
-    assert join_code.reload.expiring?
+    assert join_code.reload.expires?
   end
 
   test "only administrators can toggle join code expiration" do
