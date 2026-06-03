@@ -18,7 +18,7 @@ module Account::Joinable
   end
 
   def toggle_join_code_expiration
-    join_code.toggle_expiration
+    join_code.tap(&:toggle_expiration)
   end
 
   def active_bot_invite_code
