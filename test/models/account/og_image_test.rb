@@ -28,6 +28,15 @@ class Account::OgImageTest < ActiveSupport::TestCase
     assert_equal 630, image.height
   end
 
+  test "renders names containing pango markup characters without raising" do
+    accounts(:signal).update!(name: "ACME & Co <chat>")
+
+    image = render(accounts(:signal))
+
+    assert_equal 1200, image.width
+    assert_equal 630, image.height
+  end
+
   test "falls back to the app name when the account name is blank" do
     account = accounts(:signal)
 

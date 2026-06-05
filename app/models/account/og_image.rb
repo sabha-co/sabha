@@ -64,8 +64,10 @@ class Account::OgImage
 
     # libvips renders text as a single-band coverage mask; colorize it by using
     # the mask as the alpha channel over a solid fill, so it composites cleanly.
+    # The string is escaped first because libvips parses it as Pango markup, so a
+    # raw "&" or "<" in an account name would otherwise raise an invalid-markup error.
     def text(string, font, color)
-      mask = Vips::Image.text(string, font: font, width: WIDTH - 160, align: :centre)
+      mask = Vips::Image.text(CGI.escapeHTML(string), font: font, width: WIDTH - 160, align: :centre)
       mask.new_from_image(color).bandjoin(mask).copy(interpretation: "srgb")
     end
 
