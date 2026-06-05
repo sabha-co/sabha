@@ -21,6 +21,18 @@ class Accounts::OgImagesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 630, image.height
   end
 
+  test "composites an uploaded logo end to end without raising" do
+    accounts(:signal).update! logo: fixture_file_upload("moon.jpg", "image/jpeg")
+
+    get account_og_image_url
+
+    assert_equal "image/png", @response.headers["content-type"]
+
+    image = ::Vips::Image.new_from_buffer(@response.body, "")
+    assert_equal 1200, image.width
+    assert_equal 630, image.height
+  end
+
   test "is publicly cacheable" do
     get account_og_image_url
 

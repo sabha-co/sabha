@@ -46,15 +46,33 @@ class Account::OgImage
       canvas.flatten(background: BACKGROUND)
     end
 
-    # The operator's uploaded logo when present (fitted into the mark box,
-    # aspect preserved), otherwise the stock Sabha mark.
+    # The operator's uploaded logo when present, otherwise the stock Sabha mark,
+    # always centered inside a fixed square so the card's layout stays put.
     def mark
-      if @account&.logo&.attached?
-        Vips::Image.thumbnail_buffer(@account.logo.download, MARK_SIZE, height: MARK_SIZE, size: :down)
-                   .copy(interpretation: "srgb")
-      else
-        Vips::Image.thumbnail(MARK.to_s, MARK_SIZE)
-      end
+      frame(logo_mark || stock_mark)
+    end
+
+    # A corrupt or empty logo blob must degrade to the stock mark rather than
+    # 500 the public card endpoint, so swallow vips' decode failures here.
+    def logo_mark
+      return unless @account&.logo&.attached?
+      Vips::Image.thumbnail_buffer(@account.logo.download, MARK_SIZE, height: MARK_SIZE, size: :down)
+    rescue Vips::Error, FFI::NullPointerError
+      nil
+    end
+
+    def stock_mark
+      Vips::Image.thumbnail(MARK.to_s, MARK_SIZE)
+    end
+
+    # Aspect-preserving thumbnails aren't square, so center the mark inside a
+    # MARK_SIZE box with transparent padding — otherwise a wide or tall logo
+    # shifts the whole composition off-center.
+    def frame(image)
+      image = image.bandjoin(255) if image.bands < 4
+      image.embed((MARK_SIZE - image.width) / 2, (MARK_SIZE - image.height) / 2,
+                  MARK_SIZE, MARK_SIZE, extend: :background, background: [ 0, 0, 0, 0 ])
+           .copy(interpretation: "srgb")
     end
 
     def background

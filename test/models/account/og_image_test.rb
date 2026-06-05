@@ -28,6 +28,27 @@ class Account::OgImageTest < ActiveSupport::TestCase
     assert_equal 630, image.height
   end
 
+  test "degrades to the stock mark when the logo blob is unreadable" do
+    accounts(:signal).logo.attach(
+      io: StringIO.new("this is not an image"), filename: "broken.png", content_type: "image/png")
+
+    image = render(accounts(:signal))
+
+    assert_equal 1200, image.width
+    assert_equal 630, image.height
+  end
+
+  test "frames a non-square logo without raising or resizing the card" do
+    wide = (::Vips::Image.black(400, 100) + [ 60, 90, 200 ]).cast("uchar")
+    accounts(:signal).logo.attach(
+      io: StringIO.new(wide.write_to_buffer(".png")), filename: "wide.png", content_type: "image/png")
+
+    image = render(accounts(:signal))
+
+    assert_equal 1200, image.width
+    assert_equal 630, image.height
+  end
+
   test "renders names containing pango markup characters without raising" do
     accounts(:signal).update!(name: "ACME & Co <chat>")
 
