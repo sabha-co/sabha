@@ -1,5 +1,8 @@
 # Sabha
 
+> [!NOTE]
+> Sabha began as a fork of [Campfire](https://github.com/basecamp/once-campfire) by 37signals and grew into its own project, adding multi-tenancy and more.
+
 Sabha is an open-source, self-hosted chat platform for friends, groups, and communities — a calm alternative to Discord and Slack. Run it on your own server and own every byte. No per-seat pricing, no message limits, no platform telling you what your community is worth.
 
 [![Tests](https://github.com/sabha-co/sabha/actions/workflows/test.yml/badge.svg)](https://github.com/sabha-co/sabha/actions/workflows/test.yml)
