@@ -13,8 +13,8 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="<%= [content_for(:title), Branding.contextual_app_name].compact.uniq.join(" | ") %>">
     <meta property="og:description" content="<%= Branding.app_description %>">
-    <meta property="og:image" content="<%= request.base_url %>/sabha-og.jpg">
-    <meta property="og:logo" content="<%= request.base_url %>/icon.png">
+    <meta property="og:image" content="<%= fresh_account_og_image_url %>">
+    <meta property="og:logo" content="<%= fresh_account_logo_url %>">
 
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>

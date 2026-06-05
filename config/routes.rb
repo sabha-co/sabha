@@ -88,12 +88,17 @@ Rails.application.routes.draw do
 
       resource :join_code, only: %i[ create update ]
       resource :logo, only: %i[ show destroy ]
+      resource :og_image, only: :show
       resource :custom_styles, only: %i[ edit update ]
     end
   end
 
   direct :fresh_account_logo do |options|
     route_for :account_logo, v: Current.account&.updated_at&.to_fs(:number), size: options[:size]
+  end
+
+  direct :fresh_account_og_image do
+    route_for :account_og_image, v: Current.account&.updated_at&.to_fs(:number)
   end
 
   resources :qr_code, only: :show
