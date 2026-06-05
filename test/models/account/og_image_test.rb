@@ -29,9 +29,15 @@ class Account::OgImageTest < ActiveSupport::TestCase
   end
 
   test "falls back to the app name when the account name is blank" do
-    accounts(:signal).update_column(:name, "")
+    account = accounts(:signal)
 
-    assert_nothing_raised { render(accounts(:signal)) }
+    account.update_column(:name, "")
+    blank = Account::OgImage.new(account).png
+
+    account.update_column(:name, Branding.app_name)
+    named = Account::OgImage.new(account).png
+
+    assert_equal named, blank
   end
 
   private
