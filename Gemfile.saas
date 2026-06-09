@@ -8,9 +8,7 @@
 eval_gemfile "Gemfile"
 
 # Multi-tenancy infrastructure
-# TODO: Switch back to basecamp/activerecord-tenanted once Rails 8.2 fix is merged
-# Fork fixes: rails/rails#54333 changed type_for_column signature, gem needs version check
-gem "activerecord-tenanted", github: "ashwin47/activerecord-tenanted", branch: "fix-rails-82-type-for-column-signature"
+gem "activerecord-tenanted", "0.7.0"
 
 # PostgreSQL for the shared untenanted database (global identities, workspaces, sessions)
 gem "pg"

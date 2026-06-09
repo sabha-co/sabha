@@ -1,14 +1,4 @@
 GIT
-  remote: https://github.com/ashwin47/activerecord-tenanted.git
-  revision: 45d3547ea06961afb563b6fcd8106c4406af8c54
-  branch: fix-rails-82-type-for-column-signature
-  specs:
-    activerecord-tenanted (0.6.0)
-      activerecord (>= 8.1.beta)
-      railties (>= 8.1.beta)
-      zeitwerk
-
-GIT
   remote: https://github.com/rails/rails.git
   revision: cfa4e1b475472c7980a42dd810f237951db5108a
   ref: cfa4e1b475472c7980a42dd810f237951db5108a
@@ -122,6 +112,10 @@ GEM
   specs:
     action_text-trix (2.1.19)
       railties
+    activerecord-tenanted (0.7.0)
+      activerecord (>= 8.1.2.1)
+      railties (>= 8.1.2.1)
+      zeitwerk
     addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
     anycable-core (1.6.4)
@@ -507,7 +501,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  activerecord-tenanted!
+  activerecord-tenanted (= 0.7.0)
   anycable-rails-core (~> 1.6)
   aws-sdk-s3
   aws-sdk-sesv2
@@ -571,7 +565,7 @@ CHECKSUMS
   activejob (8.2.0.alpha)
   activemodel (8.2.0.alpha)
   activerecord (8.2.0.alpha)
-  activerecord-tenanted (0.6.0)
+  activerecord-tenanted (0.7.0) sha256=ec4f6ea40b0df80be43fac7712c5322fbcdde56da11583695779856571b1d4b0
   activestorage (8.2.0.alpha)
   activesupport (8.2.0.alpha)
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
