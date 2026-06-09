@@ -18,4 +18,13 @@ class WelcomeControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to room_url(Room.opens.order(:created_at).first)
   end
+
+  test "falls back to the last visited room when no active open room exists" do
+    Room.opens.update_all(active: false)
+    cookies[:last_room] = rooms(:watercooler).id
+
+    get root_url
+
+    assert_redirected_to room_url(rooms(:watercooler))
+  end
 end
