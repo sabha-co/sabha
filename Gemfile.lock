@@ -393,10 +393,10 @@ GEM
     ruby2_keywords (0.0.5)
     rubyzip (3.3.0)
     securerandom (0.4.1)
-    sentry-rails (6.5.0)
+    sentry-rails (6.6.0)
       railties (>= 5.2.0)
-      sentry-ruby (~> 6.5.0)
-    sentry-ruby (6.5.0)
+      sentry-ruby (~> 6.6.0)
+    sentry-ruby (6.6.0)
       bigdecimal
       concurrent-ruby (~> 1.0, >= 1.0.2)
       logger
@@ -504,7 +504,6 @@ DEPENDENCIES
   web-push
   webmock
 
-CHECKSUMS
   action_text-trix (2.1.19) sha256=7012f59421009cf284aa651294896414d653a61a2417c9b8714c8476d2f74009
   actioncable (8.2.0.alpha)
   actionmailbox (8.2.0.alpha)
@@ -647,8 +646,8 @@ CHECKSUMS
   ruby2_keywords (0.0.5) sha256=ffd13740c573b7301cf7a2e61fc857b2a8e3d3aff32545d6f8300d8bae10e3ef
   rubyzip (3.3.0) sha256=a372fc67892a4f8c0bc8ec906b720353d8e48807a64b2e63adf99b1e3583a034
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
-  sentry-rails (6.5.0) sha256=ebf9d4d82c740c3e0e4a0840f11f7bbd0cf648a30afd9c67e5b50bb07018a0e4
-  sentry-ruby (6.5.0) sha256=3c57ae0d6a017aafcd9ac37114e38149a58534679dec5d4e9e8fc010b85f3a6b
+  sentry-rails (6.6.0) sha256=d9c0b353ccf12c82dc17eafe788acafc587472c2d442905f71f9e5c5fb24bb10
+  sentry-ruby (6.6.0) sha256=05ecaaefa177745cffa4f4228364cdddd766372f564fc0709d29df96c4c2887a
   solid_queue (1.4.0) sha256=e6a18d196f0b27cb6e3c77c5b31258b05fb634f8ed64fb1866ed164047216c2a
   sqlite3 (2.9.4-aarch64-linux-gnu) sha256=ecabed721e6eaad54601d2685f09029d90025efc8d931040dc89cb3f8a2080ec
   sqlite3 (2.9.4-arm-linux-gnu) sha256=9ee2008b9fbec984c3c165b0d7eedd2bd2a415100b761bfa3a4c6fbec9208bf6
