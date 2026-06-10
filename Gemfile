@@ -69,7 +69,7 @@ end
 
 group :development do
   gem "letter_opener"
-  gem "lefthook", "~> 2.0"
+  gem "lefthook", "~> 2.1"
 end
 
 group :test do
