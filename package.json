@@ -12,7 +12,7 @@
   "dependencies": {
     "@tailwindcss/cli": "^4.2.4",
     "@tailwindcss/forms": "^0.5.11",
-    "@tailwindcss/typography": "^0.5.19"
+    "@tailwindcss/typography": "^0.5.20"
   },
   "scripts": {
     "build:css": "pnpm exec tailwindcss -i app/javascript/entrypoints/application.css -o app/assets/builds/tailwind.css --minify",
