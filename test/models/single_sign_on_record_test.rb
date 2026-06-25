@@ -128,10 +128,18 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     assert_equal "https://example.com/provider.png", user.avatar_url
   end
 
-  test "rejects email claimed by another external id" do
-    assert_raises Sso::Forbidden do
-      SingleSignOnRecord.find_or_provision!(payload(email: users(:david).email_address, external_id: "attacker"))
+  test "refuses takeover when the email is already linked to a different external id" do
+    user = users(:david)
+
+    error = assert_raises Sso::AlreadyLinked do
+      SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: "attacker"))
     end
+
+    assert_equal :forbidden, error.status
+    assert_match(/admin must re-link/i, error.user_message)
+
+    # The existing mapping is untouched — proves no silent takeover.
+    assert_equal single_sign_on_records(:david).external_id, user.reload.single_sign_on_record.external_id
   end
 
   test "wraps concurrent claim unique index race as forbidden" do

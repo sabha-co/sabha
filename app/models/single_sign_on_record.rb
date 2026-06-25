@@ -74,9 +74,11 @@ class SingleSignOnRecord < ApplicationRecord
         raise Sso::ActivationRequired
       end
 
-      if user.single_sign_on_record.present?
-        Rails.logger.warn("[SSO] Refused email takeover: email=#{email_address_from(payload).inspect} external_id=#{external_id_from(payload).inspect} existing_external_id=#{user.single_sign_on_record.external_id.inspect}")
-        raise Sso::Forbidden, "Unable to sign in with SSO."
+      if (existing = user.single_sign_on_record)
+        Rails.logger.warn("[SSO] Refused email takeover: email=#{email_address_from(payload).inspect} " \
+          "incoming_external_id=#{external_id_from(payload).inspect} " \
+          "existing_external_id=#{existing.external_id.inspect} user=#{user.id}")
+        raise Sso::AlreadyLinked
       end
 
       user.create_single_sign_on_record!(
