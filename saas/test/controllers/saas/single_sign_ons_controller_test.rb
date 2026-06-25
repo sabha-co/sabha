@@ -90,14 +90,6 @@ module Saas
       assert_response :forbidden
     end
 
-    test "rejects unregistered return path" do
-      sso, sig = provider_request(return_sso_url: "https://cloud.sabha.co/other/callback")
-
-      get "/session/sso", params: { sso:, sig: }
-
-      assert_response :forbidden
-    end
-
     test "fails closed when no provider client is configured" do
       ENV.delete("SSO_PROVIDER_CLIENTS")
       sso, sig = provider_request

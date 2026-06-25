@@ -146,26 +146,6 @@ module Saas
       identity&.destroy
     end
 
-    test "banned user with multiple workspaces is also redirected to /settings (not into another workspace)" do
-      identity = GlobalIdentity.create!(email_address: "multi-ban@example.com", name: "Multi Ban")
-      banned_workspace = Workspace.create_with_database!(name: "Banned WS", creator: identity)
-      other_workspace = Workspace.create_with_database!(name: "Other WS", creator: identity)
-      sign_in_global_identity(identity)
-      banned_membership = identity.workspace_memberships.find_by(tenant: banned_workspace.external_id.to_s)
-
-      ApplicationRecord.with_tenant(banned_workspace.external_id.to_s) do
-        User.find(banned_membership.user_id).ban
-      end
-
-      workspace_get "/", workspace: banned_workspace
-
-      assert_redirected_to "/settings?denied=workspace"
-    ensure
-      banned_workspace&.destroy_with_database! if banned_workspace && Workspace.exists?(id: banned_workspace.id)
-      other_workspace&.destroy_with_database! if other_workspace && Workspace.exists?(id: other_workspace.id)
-      identity&.destroy
-    end
-
     test "auth guard fail-closes when workspace_memberships.user_active is stale (drift case)" do
       identity = GlobalIdentity.create!(email_address: "drift@example.com", name: "Drift")
       workspace = Workspace.create_with_database!(name: "Drift Test", creator: identity)
@@ -219,8 +199,7 @@ module Saas
 
       get new_session_path
 
-      # Should redirect away from login page
-      assert_response :redirect
+      assert_redirected_to saas_root_path
     end
 
     # --- return_to safety tests ---

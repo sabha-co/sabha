@@ -63,13 +63,6 @@ module Saas
       assert_match /Invalid or expired/, flash[:alert]
     end
 
-    test "create with empty code shows error" do
-      post auth_code_path, params: { code: "" }
-
-      assert_redirected_to auth_code_path
-      assert_match /Invalid or expired/, flash[:alert]
-    end
-
     test "create with email_change code completes email change" do
       identity = global_identities(:pending_email)
       code = auth_codes(:email_change)

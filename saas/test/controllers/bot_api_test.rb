@@ -66,13 +66,15 @@ class BotApiTest < ActionDispatch::IntegrationTest
         room_b = ApplicationRecord.with_tenant(ws_b.external_id.to_s) do
           Rooms::Open.first
         end
-
-        next unless room_b
+        assert room_b, "expected workspace B to have a room to probe"
 
         # Bot A's key used against workspace B via bearer header
         get "/#{ws_b.external_id}/api/bots/rooms/#{room_b.id}/members",
           headers: { "Authorization" => "Bearer #{bot.bot_key}" }
-        assert_response :redirect
+
+        # Foreign bot key does not authenticate in workspace B: bounced to the
+        # untenanted login, never served the member list.
+        assert_redirected_to new_session_path(script_name: "")
       end
     end
   end

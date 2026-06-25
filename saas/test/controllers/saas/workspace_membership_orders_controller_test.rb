@@ -9,7 +9,7 @@ module Saas
             params: { workspace_ids: [ "1000001" ] },
             as: :json
 
-      assert_response :redirect
+      assert_redirected_to new_session_path
     end
 
     test "update persists position for workspace memberships" do

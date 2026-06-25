@@ -51,13 +51,10 @@ class GlobalIdentityTest < ActiveSupport::TestCase
   # Superadmin domain restriction tests
 
   test "superadmin? is true when superadmin flag set and email domain is allowed" do
-    identity = GlobalIdentity.new(email_address: "admin@sabha.co", superadmin: true)
-    assert identity.superadmin?
-  end
-
-  test "superadmin? is true for superforum.io domain" do
-    identity = GlobalIdentity.new(email_address: "admin@superforum.io", superadmin: true)
-    assert identity.superadmin?
+    GlobalIdentity::SUPERADMIN_DOMAINS.each do |domain|
+      identity = GlobalIdentity.new(email_address: "admin@#{domain}", superadmin: true)
+      assert identity.superadmin?, "expected superadmin? for allowed domain #{domain}"
+    end
   end
 
   test "superadmin? is false when superadmin flag set but email domain is not allowed" do
@@ -94,16 +91,23 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     identity&.destroy
   end
 
-  test "sync_email_to_workspaces skips memberships without user_id" do
+  test "sync_email_to_workspaces skips memberships without a user but still syncs the rest" do
     # Use a throwaway identity to avoid mutating shared fixture tenant Users
     identity = GlobalIdentity.create!(name: "Sync Skip", email_address: "syncskip@example.com", verified_at: Time.current)
 
-    with_provisioned_workspace(name: "Sync Skip Test", creator: identity) do |workspace|
-      membership = identity.workspace_memberships.find_by(tenant: workspace.external_id.to_s)
-      membership.update_column(:user_id, nil)
+    with_provisioned_workspace(name: "Sync Skip A", creator: identity) do |skipped_ws|
+      with_provisioned_workspace(name: "Sync Skip B", creator: identity) do |synced_ws|
+        skipped = identity.workspace_memberships.find_by(tenant: skipped_ws.external_id.to_s)
+        synced  = identity.workspace_memberships.find_by(tenant: synced_ws.external_id.to_s)
+        skipped.update_column(:user_id, nil)
 
-      assert_nothing_raised do
-        identity.sync_email_to_workspaces("skipped@example.com")
+        identity.sync_email_to_workspaces("synced@example.com")
+
+        # The user-less membership is skipped without aborting the loop, so the
+        # membership that does have a user is still synced.
+        ApplicationRecord.with_tenant(synced_ws.external_id.to_s) do
+          assert_equal "synced@example.com", User.find(synced.user_id).email_address
+        end
       end
     end
   ensure

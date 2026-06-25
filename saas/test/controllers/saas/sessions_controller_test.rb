@@ -98,14 +98,5 @@ module Saas
       assert_redirected_to new_session_path
       assert_equal "You have been signed out", flash[:notice]
     end
-
-    test "new redirects authenticated user" do
-      sign_in_global_identity(global_identities(:alice))
-
-      get new_session_path
-
-      # Should redirect away from login page
-      assert_response :redirect
-    end
   end
 end

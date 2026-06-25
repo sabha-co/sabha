@@ -66,8 +66,9 @@ class SaasUsersControllerJoinTest < ActionDispatch::IntegrationTest
 
     workspace_get "/join/#{@join_code.code}", workspace: @workspace
 
-    # Should redirect to root (redirect_signed_in_user_to_root)
+    # Should redirect to workspace root (redirect_signed_in_user_to_root)
     assert_response :redirect
+    assert_match %r{/#{@workspace.external_id}/?$}, response.location
   end
 
   test "join page redirects banned member away from the guest join flow" do

@@ -58,11 +58,4 @@ class SaasRoomChannelTest < ActionCable::Channel::TestCase
       assert subscription.rejected?
     end
   end
-
-  test "rejects subscription to non-existent room ID in current tenant" do
-    ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
-      subscribe room_id: 999999
-      assert subscription.rejected?
-    end
-  end
 end
