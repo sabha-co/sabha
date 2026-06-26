@@ -7,8 +7,8 @@
 # - Shows demo banner in footer
 # - Shows login credentials on sign-in page
 #
-# For hourly resets, add to crontab:
-#   0 * * * * cd /app && bin/demo-reset
+# For resets every 3 hours, add to crontab:
+#   0 */3 * * * cd /app && bin/demo-reset
 
 module DemoMode
   def self.enabled?
@@ -23,6 +23,6 @@ module DemoMode
   end
 
   def self.reset_interval
-    "hourly"
+    "every 3 hours"
   end
 end

@@ -4,7 +4,7 @@ set -euo pipefail
 # Demo reset script for the HOST machine (outside container)
 # Copy this to /opt/sabha/demo-reset.sh on the demo server
 #
-# Cron: 0 * * * * /opt/sabha/demo-reset.sh >> /var/log/demo-reset.log 2>&1
+# Cron: 0 */3 * * * /opt/sabha/demo-reset.sh >> /var/log/demo-reset.log 2>&1
 #
 # Note: Demo servers don't have litestream (backups disabled), so we only
 # need to stop/start the web container.
