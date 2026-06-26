@@ -30,6 +30,9 @@ gem "anycable-rails-core", "~> 1.6"
 
 # Media handling
 gem "image_processing", ">= 1.2"
+# image_processing 2.0 made the libvips backend a soft dependency; ActiveStorage's
+# default :vips variant processor needs it declared explicitly.
+gem "ruby-vips", "~> 2.0"
 
 # Email
 gem "resend"
