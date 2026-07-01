@@ -106,10 +106,6 @@ Self-hosted Sabhas can hand off sign-in to an external identity provider (HMAC-s
 
 - **User streaks** — consecutive days of posting with tiered icons
 - **System event messages** — room renames, member joins/leaves recorded as special messages
-- **Sound effects** — `/play name` syntax with ~50 built-in sounds
-- **Bookmark indicators** — icon on bookmarked messages
-- **@everyone mentions** — broadcast mentions to all room members
-- **Push notifications and PWA** — VAPID web push with connection-aware delivery
 
 ---
 
