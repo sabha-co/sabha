@@ -57,6 +57,27 @@ class ActiveStorageAuthorizationTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/workspaces"
   end
 
+  test "direct upload round-trips through the workspace-prefixed disk URL" do
+    sign_in_global_identity(global_identities(:alice))
+    data = "fake-png-bytes"
+    checksum = OpenSSL::Digest::MD5.base64digest(data)
+
+    post "/#{@workspace.external_id}/rails/active_storage/direct_uploads", params: {
+      blob: { filename: "test.png", byte_size: data.bytesize, checksum: checksum, content_type: "image/png" }
+    }, as: :json
+    assert_response :success
+
+    upload_url = response.parsed_body.dig("direct_upload", "url")
+    assert_includes upload_url, "/#{@workspace.external_id}/rails/active_storage/disk/",
+      "direct-upload URL is missing the workspace prefix; the browser's PUT would hit the tenant-less apex path"
+
+    # The browser PUTs the bytes to that URL. Without the prefix it lands on the
+    # tenant-less apex path and DiskService raises NoTenantError (HTTP 500); with
+    # the prefix the tenant resolves and the upload succeeds.
+    put URI.parse(upload_url).request_uri, params: data, headers: { "Content-Type" => "image/png" }
+    assert_response :no_content
+  end
+
   private
     def create_blob_in_workspace
       ApplicationRecord.with_tenant(@tenant_id) do

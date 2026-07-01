@@ -34,3 +34,17 @@ ActiveSupport.on_load(:action_controller_base) do
       }
     end
 end
+
+# Active Storage's own controllers include ActiveStorage::SetCurrent, whose
+# before_action resets ActiveStorage::Current.url_options to just protocol/host/port
+# — dropping the workspace script_name. Because it's declared on the subclass, it runs
+# AFTER the ActionController::Base callback above and clobbers the prefix. Without the
+# prefix, direct-upload URLs point at the tenant-less apex path, so the browser's PUT
+# to ActiveStorage::DiskController#update resolves no tenant and DiskService raises
+# NoTenantError. Re-apply the options after SetCurrent so the prefix survives.
+Rails.application.config.to_prepare do
+  unless ActiveStorage::BaseController.instance_variable_defined?(:@sabha_url_options_patched)
+    ActiveStorage::BaseController.instance_variable_set(:@sabha_url_options_patched, true)
+    ActiveStorage::BaseController.append_before_action :set_active_storage_url_options
+  end
+end

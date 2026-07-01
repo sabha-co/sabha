@@ -701,6 +701,27 @@ Documentation outline:
     - and the disk service will include the tenant in the path on disk in the root location, like: 'foobar/ab/cd/abcd12345678abcd'
 - Disk Service can also have a tenanted root path, but it's optional
 
+> **Note (added by Sabha team):** Direct uploads need care when the tenant is
+> resolved from the request **path** rather than the subdomain. With subdomain
+> tenanting the tenant lives in the host, so every Active Storage URL is
+> naturally tenant-scoped. With path-based tenanting, the tenant lives in a path
+> prefix (`request.script_name`, e.g. `/1000121`), and that prefix must survive
+> into the direct-upload URL returned by `DirectUploadsController#create`.
+>
+> It doesn't survive by default. `ActiveStorage::BaseController` includes
+> `ActiveStorage::SetCurrent`, whose `before_action` resets
+> `ActiveStorage::Current.url_options` to just `{ protocol:, host:, port: }` —
+> dropping `script_name`. Since that callback is declared on the subclass, it
+> runs *after* any `script_name`-aware callback installed on
+> `ActionController::Base` and clobbers it. The result: the disk service
+> generates a prefix-less `PUT` URL (`/rails/active_storage/disk/…`), the browser
+> uploads to the tenant-less path, `TenantSelector` resolves no tenant, and
+> `DiskService#root` raises `NoTenantError`.
+>
+> The fix is to re-apply `url_options` (including `script_name`) in a
+> `before_action` that runs *after* `SetCurrent` — e.g. `append_before_action`
+> on `ActiveStorage::BaseController`, so it wins over the concern's reset.
+
 TODO:
 
 - [x] extend Disk Service to change the path on disk
