@@ -4,6 +4,14 @@ class Rooms::Thread < Room
 
   validates_presence_of :parent_message
 
+  # Forum posts are Rooms::Thread instances whose parent message lives in a
+  # forum. They carry a title (stored in `name`), a permanent slug, a Solved
+  # state, and tags; ordinary chat threads leave all of these unused.
+  before_save :assign_forum_post_slug
+
+  has_many :taggings, foreign_key: :room_id, inverse_of: :post, dependent: :delete_all
+  has_many :tags, through: :taggings
+
   class << self
     def preload_participant_creators(threads, limit: 5)
       threads = threads.to_a.uniq
@@ -67,6 +75,35 @@ class Rooms::Thread < Room
     end
   end
 
+  # --- Forum post attributes -------------------------------------------------
+
+  # A forum post's title is stored in the otherwise-unused `name` column.
+  def title
+    name
+  end
+
+  def title=(value)
+    self.name = value
+  end
+
+  # True when this thread is a forum post (its parent message lives in a forum),
+  # as opposed to a chat thread branched off a message in a normal room.
+  def forum_post?
+    parent_message&.room&.forum?
+  end
+
+  def solved?
+    solved_at.present?
+  end
+
+  def mark_solved!
+    update!(solved_at: Time.current)
+  end
+
+  def reopen!
+    update!(solved_at: nil)
+  end
+
   def applicable_activity_types(message)
     types = [ :thread_reply ]
     return types if parent_room&.direct?
@@ -78,10 +115,15 @@ class Rooms::Thread < Room
   # 1. An admin deletes this thread directly from the UI
   # 2. The parent room is deactivated (cascades to all its threads)
   # Note: Deleting the parent message does NOT deactivate the thread.
-  def deactivate
+  # `cascade: true` records that this thread was deactivated *because its parent
+  # room was* — as opposed to an individual delete. Only cascade-deactivated
+  # threads are restored when the parent room is reactivated, so a post deleted
+  # on its own stays deleted across a forum delete/restore (R15).
+  def deactivate(cascade: false)
     transaction do
       Membership.where(room_id: id).update_all(active: false)
       Message.where(room_id: id).update_all(active: false)
+      self.cascade_deactivated = cascade
       deactivate!
     end
   end
@@ -91,7 +133,31 @@ class Rooms::Thread < Room
     transaction do
       Membership.where(room_id: id, active: false).update_all(active: true)
       Message.where(room_id: id, active: false).update_all(active: true)
+      self.cascade_deactivated = false
       activate!
     end
   end
+
+  private
+    # Generate a permanent, URL-safe slug the first time a forum post is given a
+    # title. It is never regenerated on later renames, so shared links stay valid.
+    def assign_forum_post_slug
+      return unless forum_post? && name.present? && slug.blank?
+
+      self.slug = unique_slug_from_title
+    end
+
+    def unique_slug_from_title
+      base = name.parameterize.presence || "post"
+      candidate = base
+      suffix = 2
+      # The rooms.slug unique index is the hard guarantee; this loop just avoids
+      # the common collision. Concurrent creates of the same title can still race
+      # the index (the loser retries at the controller) — acceptable for v1.
+      while Room.where.not(id: id).exists?(slug: candidate)
+        candidate = "#{base}-#{suffix}"
+        suffix += 1
+      end
+      candidate
+    end
 end

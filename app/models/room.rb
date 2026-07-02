@@ -50,6 +50,7 @@ class Room < ApplicationRecord
 
   scope :opens,           -> { where(type: "Rooms::Open") }
   scope :closeds,         -> { where(type: "Rooms::Closed") }
+  scope :forums,          -> { where(type: "Rooms::Forum") }
   scope :directs,         -> { where(type: "Rooms::Direct") }
   scope :without_directs, -> { where.not(type: "Rooms::Direct") }
   scope :without_threads, -> { where.not(type: "Rooms::Thread") }
@@ -118,8 +119,12 @@ class Room < ApplicationRecord
     is_a?(Rooms::Thread)
   end
 
+  def forum?
+    is_a?(Rooms::Forum)
+  end
+
   def sidebar_room?
-    open? || closed?
+    open? || closed? || forum?
   end
 
   def default_involvement(user: nil)
@@ -238,7 +243,7 @@ class Room < ApplicationRecord
   end
 
   def ensure_visible_members_remain!(excluding:)
-    return if open?
+    return if open? || forum?
     remaining = memberships.visible.where.not(user_id: Array(excluding)).count
     raise Membership::LastVisibleMemberError if remaining <= 0
   end
@@ -271,7 +276,9 @@ class Room < ApplicationRecord
       # Use Ruby select/map instead of pluck to leverage preloaded users
       users.reject { |u| u == for_user }.map(&:name).to_sentence.presence || for_user&.name
     elsif thread?
-      "🧵 #{parent_message&.room&.name}"
+      # Forum post-threads carry the post title in `name`; chat threads have no
+      # name and fall back to the thread glyph plus their parent room's name.
+      name.presence || "🧵 #{parent_message&.room&.name}"
     else
       name
     end
@@ -321,21 +328,40 @@ class Room < ApplicationRecord
 
     def deactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
-      Rooms::Thread.where(parent_message_id: message_ids).find_each(&:deactivate)
+      # Only cascade-deactivate posts that are still active. Posts already
+      # deleted on their own keep their non-cascade marker, so reactivation
+      # leaves them deleted (R15).
+      Rooms::Thread.active.where(parent_message_id: message_ids)
+        .find_each { |thread| thread.deactivate(cascade: true) }
     end
 
     def reactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
-      Rooms::Thread.where(parent_message_id: message_ids, active: false).find_each(&:reactivate)
+      # Restore only posts this room's cascade deactivated — never ones deleted
+      # individually beforehand (R15).
+      Rooms::Thread.where(parent_message_id: message_ids, active: false, cascade_deactivated: true)
+        .find_each(&:reactivate)
     end
 
     # Clean up associated records explicitly because the cascade has to walk
     # parent_message → thread → messages → memberships in a specific order to
     # satisfy FK constraints.
     def destroy_all_associated_records
+      message_ids = Message.where(room_id: id).pluck(:id)
+      post_ids = Rooms::Thread.where(parent_message_id: message_ids).pluck(:id)
+
+      # Taggings reference posts (room_id) and tags (tag_id), and tags reference
+      # this forum (room_id) — all RESTRICT FKs, so clear them before the rows
+      # they point at. No-ops for non-forum rooms, which own no tags/taggings.
+      Tagging.where(room_id: post_ids).delete_all if post_ids.any?
+      forum_tag_ids = Tag.where(room_id: id).pluck(:id)
+      if forum_tag_ids.any?
+        Tagging.where(tag_id: forum_tag_ids).delete_all
+        Tag.where(id: forum_tag_ids).delete_all
+      end
+
       # First, destroy any thread rooms that were created from messages in this room
       # (threads have parent_message_id pointing to messages in this room)
-      message_ids = Message.where(room_id: id).pluck(:id)
       Rooms::Thread.where(parent_message_id: message_ids).find_each(&:destroy)
 
       # Then delete messages (they have FKs to boosts, bookmarks, notifications)

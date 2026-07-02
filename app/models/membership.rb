@@ -33,7 +33,7 @@ class Membership < ApplicationRecord
       with_room_by_last_active_newest_first
     end
   }
-  scope :shared, -> { joins(:room).where(rooms: { type: %w[Rooms::Open Rooms::Closed] }) }
+  scope :shared, -> { joins(:room).where(rooms: { type: %w[Rooms::Open Rooms::Closed Rooms::Forum] }) }
   scope :direct_rooms, -> { joins(:room).where(rooms: { type: "Rooms::Direct" }) }
   scope :without_direct_rooms, -> { joins(:room).where.not(rooms: { type: "Rooms::Direct" }) }
   scope :without_thread_rooms, -> { joins(:room).where.not(rooms: { type: "Rooms::Thread" }) }

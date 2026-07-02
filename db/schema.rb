@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_03_000636) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -236,6 +236,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
   create_table "rooms", force: :cascade do |t|
     t.boolean "active", default: true
     t.boolean "auto_join", default: false, null: false
+    t.boolean "cascade_deactivated", default: false, null: false
     t.datetime "created_at", null: false
     t.bigint "creator_id", null: false
     t.text "description"
@@ -245,6 +246,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
     t.string "name"
     t.integer "parent_message_id"
     t.string "slug"
+    t.datetime "solved_at"
     t.string "sortable_name"
     t.string "type", null: false
     t.datetime "updated_at", null: false
@@ -321,6 +323,25 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
     t.string "owner_type", null: false
     t.datetime "updated_at", null: false
     t.index ["owner_type", "owner_id"], name: "index_storage_totals_on_owner", unique: true
+  end
+
+  create_table "taggings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "room_id", null: false
+    t.integer "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["room_id"], name: "index_taggings_on_room_id"
+    t.index ["tag_id", "room_id"], name: "index_taggings_on_tag_id_and_room_id", unique: true
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.string "color"
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "room_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["room_id", "name"], name: "index_tags_on_room_id_and_name", unique: true
+    t.index ["room_id"], name: "index_tags_on_room_id"
   end
 
   create_table "user_notification_settings", force: :cascade do |t|
@@ -413,6 +434,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
   add_foreign_key "searches", "users", column: "creator_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "single_sign_on_records", "users"
+  add_foreign_key "taggings", "rooms"
+  add_foreign_key "taggings", "tags"
+  add_foreign_key "tags", "rooms"
   add_foreign_key "user_notification_settings", "users"
   add_foreign_key "users", "badges"
   add_foreign_key "webhooks", "users"
