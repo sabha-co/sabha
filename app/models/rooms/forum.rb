@@ -22,11 +22,20 @@ class Rooms::Forum < Room
   # forum member gets access, mirroring how a thread inherits its parent room's
   # members. Runs in `Current.user`'s context (the poster).
   def post!(title:, body:, tag_ids: [])
-    transaction do
-      message = messages.create!(body: body)
-      post = Rooms::Thread.create_for({ parent_message_id: message.id, name: title }, users: users)
-      post.tag_ids = scoped_tag_ids(tag_ids)
-      post
+    attempts = 0
+    begin
+      transaction do
+        message = messages.create!(body: body)
+        post = Rooms::Thread.create_for({ parent_message_id: message.id, name: title }, users: users)
+        post.tag_ids = scoped_tag_ids(tag_ids)
+        post
+      end
+    rescue ActiveRecord::RecordNotUnique
+      # Two posts with the same title can race the rooms.slug unique index. The
+      # loser retries: unique_slug_from_title now sees the winner's slug and
+      # picks the next suffix.
+      raise if (attempts += 1) >= 3
+      retry
     end
   end
 

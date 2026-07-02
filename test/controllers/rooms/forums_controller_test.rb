@@ -200,4 +200,63 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_url
   end
+
+  # --- Review-hardening -------------------------------------------------------
+
+  test "the Solved filter shows only solved posts" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+    Current.set(user: users(:david)) do
+      forum.post!(title: "Solved one", body: "<div>b</div>").mark_solved!
+      forum.post!(title: "Open one", body: "<div>b</div>")
+    end
+
+    get rooms_forum_url(forum, solved: "solved")
+
+    assert_equal [ "Solved one" ], css_select(".forum-card__title").map(&:text)
+  end
+
+  test "the newest sort orders by creation, distinct from recent activity" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+    first = second = nil
+    Current.set(user: users(:david)) do
+      first = forum.post!(title: "First created", body: "<div>b</div>")
+      second = forum.post!(title: "Second created", body: "<div>b</div>")
+    end
+    first.update!(last_active_at: 1.minute.ago)
+    second.update!(last_active_at: 2.hours.ago)
+
+    get rooms_forum_url(forum, sort: "recent")
+    assert_equal [ "First created", "Second created" ], css_select(".forum-card__title").map(&:text)
+
+    get rooms_forum_url(forum, sort: "newest")
+    assert_equal [ "Second created", "First created" ], css_select(".forum-card__title").map(&:text)
+  end
+
+  test "a crafted hash tag_ids param does not error the gallery" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+    Current.set(user: users(:david)) { forum.post!(title: "A post", body: "<div>b</div>") }
+
+    get rooms_forum_url(forum), params: { tag_ids: { evil: "1" } }
+
+    assert_response :success
+  end
+
+  test "an admin rename persists and announces the change" do
+    forum = Rooms::Forum.create_for({ name: "Old Name", creator: users(:david) }, users: users(:david))
+
+    assert_difference -> { Message.unscoped.where(room: forum, event: "room_renamed").count }, 1 do
+      put rooms_forum_url(forum), params: { room: { name: "New Name" } }
+    end
+
+    assert_equal "New Name", forum.reload.name
+  end
+
+  test "a non-member is bounced from the forum gallery" do
+    forum = Rooms::Forum.create_for({ name: "Members only", creator: users(:david) }, users: users(:david))
+    sign_in :kevin
+
+    get rooms_forum_url(forum)
+
+    assert_redirected_to root_url
+  end
 end

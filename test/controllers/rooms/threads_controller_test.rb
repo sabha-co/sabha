@@ -244,4 +244,15 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     thread.reload
     assert thread.active?, "Thread should still be active"
   end
+
+  test "cannot start a chat thread off a forum's opening post message" do
+    sign_in :david
+    forum = Rooms::Forum.create_for({ name: "Help", creator: users(:david) }, users: users(:david))
+    opening = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }.parent_message
+
+    assert_no_difference -> { Rooms::Thread.count } do
+      post rooms_threads_url, params: { parent_message_id: opening.id }
+    end
+    assert_redirected_to root_url
+  end
 end

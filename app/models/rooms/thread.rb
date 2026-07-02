@@ -107,12 +107,31 @@ class Rooms::Thread < Room
 
   def mark_solved!
     update!(solved_at: Time.current)
-    broadcast_solved_change
+    broadcast_content_change
   end
 
   def reopen!
     update!(solved_at: nil)
-    broadcast_solved_change
+    broadcast_content_change
+  end
+
+  # Push a post's current card + header to every surface that renders it (gallery
+  # card, panel, standalone page). Called after a Solved change and after a
+  # title/tag edit. Streams are keyed by the tenanted forum/post models (never a
+  # bare symbol) so updates never leak across workspaces in SaaS. No-op for
+  # ordinary chat threads.
+  def broadcast_content_change
+    return unless forum_post?
+
+    forum = parent_message.room
+    broadcast_replace_to [ forum, :posts ],
+      target: ActionView::RecordIdentifier.dom_id(self, :card),
+      partial: "rooms/forums/post_card",
+      locals: { post: self, forum: forum, participants: { id => participant_creators } }
+    broadcast_replace_to [ self, :messages ],
+      target: ActionView::RecordIdentifier.dom_id(self, :header),
+      partial: "rooms/forums/post_header_state",
+      locals: { post: self }
   end
 
   def applicable_activity_types(message)
@@ -150,24 +169,6 @@ class Rooms::Thread < Room
   end
 
   private
-    # Push the Solved state change to every surface that renders this post: the
-    # gallery card and the shared post-header state on the panel and standalone
-    # page. Streams are keyed by the tenanted forum/post models (never a bare
-    # symbol) so updates never leak across workspaces in SaaS.
-    def broadcast_solved_change
-      return unless forum_post?
-
-      forum = parent_message.room
-      broadcast_replace_to [ forum, :posts ],
-        target: ActionView::RecordIdentifier.dom_id(self, :card),
-        partial: "rooms/forums/post_card",
-        locals: { post: self, forum: forum, participants: { id => participant_creators } }
-      broadcast_replace_to [ self, :messages ],
-        target: ActionView::RecordIdentifier.dom_id(self, :header),
-        partial: "rooms/forums/post_header_state",
-        locals: { post: self }
-    end
-
     # Generate a permanent, URL-safe slug the first time a forum post is given a
     # title. It is never regenerated on later renames, so shared links stay valid.
     def assign_forum_post_slug
@@ -182,7 +183,7 @@ class Rooms::Thread < Room
       suffix = 2
       # The rooms.slug unique index is the hard guarantee; this loop just avoids
       # the common collision. Concurrent creates of the same title can still race
-      # the index (the loser retries at the controller) — acceptable for v1.
+      # the index — the loser retries in Rooms::Forum#post!.
       while Room.where.not(id: id).exists?(slug: candidate)
         candidate = "#{base}-#{suffix}"
         suffix += 1

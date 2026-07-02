@@ -42,7 +42,9 @@ class Rooms::ForumsController < RoomsController
 
   private
     def filter_tag_ids
-      Array(params[:tag_ids]).reject(&:blank?)
+      # Only accept scalar ids; a crafted `tag_ids[k]=v` hash param would
+      # otherwise reach the query as nested arrays and error the gallery.
+      Array(params[:tag_ids]).select { |id| id.is_a?(String) || id.is_a?(Integer) }.reject(&:blank?)
     end
 
     def forum_params

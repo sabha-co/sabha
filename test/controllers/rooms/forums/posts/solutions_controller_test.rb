@@ -83,4 +83,12 @@ class Rooms::Forums::Posts::SolutionsControllerTest < ActionDispatch::Integratio
       end
     end
   end
+
+  test "a reply broadcasts the reply-count update to the post's own stream (panel + page)" do
+    assert_turbo_stream_broadcasts [ @post, :messages ], count: 1 do
+      Current.set(user: users(:kevin)) do
+        @post.messages.create!(body: "<div>a reply</div>", creator: users(:kevin))
+      end
+    end
+  end
 end

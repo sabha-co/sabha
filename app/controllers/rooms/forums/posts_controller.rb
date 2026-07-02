@@ -26,6 +26,7 @@ class Rooms::Forums::PostsController < ApplicationController
   def update
     @post.update!(name: post_params[:title])
     @forum.apply_tags(@post, post_params[:tag_ids])
+    @post.broadcast_content_change
 
     redirect_to rooms_forum_url(@forum), notice: "Updated “#{@post.title}”"
   rescue ActiveRecord::RecordInvalid => e

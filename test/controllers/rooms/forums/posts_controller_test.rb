@@ -146,4 +146,15 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal "Admin edited", post.reload.title
   end
+
+  test "editing a post broadcasts a card and header refresh to the live surfaces" do
+    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Original", body: "<div>b</div>") }
+    sign_in :kevin
+
+    assert_turbo_stream_broadcasts [ @forum, :posts ], count: 1 do
+      assert_turbo_stream_broadcasts [ post, :messages ], count: 1 do
+        patch rooms_forum_post_url(@forum, post), params: { post: { title: "Edited title" } }
+      end
+    end
+  end
 end
