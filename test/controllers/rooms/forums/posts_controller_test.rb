@@ -87,4 +87,63 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_url
   end
+
+  # --- Editing a post's title and tags after creation (R8) --------------------
+
+  test "the original poster can edit the post's title and tags after creation" do
+    setup_tag = @forum.tags.create!(name: "Setup")
+    post = Current.set(user: users(:kevin)) do
+      @forum.post!(title: "Original", body: "<div>b</div>", tag_ids: [ @question.id ])
+    end
+    sign_in :kevin
+
+    patch rooms_forum_post_url(@forum, post), params: { post: { title: "Edited title", tag_ids: [ setup_tag.id ] } }
+
+    post.reload
+    assert_equal "Edited title", post.title
+    assert_equal [ setup_tag ], post.tags.to_a
+    assert_redirected_to rooms_forum_url(@forum)
+  end
+
+  test "editing a post's title does not change its slug" do
+    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Keep the slug", body: "<div>b</div>") }
+    original_slug = post.slug
+    sign_in :kevin
+
+    patch rooms_forum_post_url(@forum, post), params: { post: { title: "A brand new title" } }
+
+    assert_equal original_slug, post.reload.slug
+  end
+
+  test "editing cannot attach another forum's tag" do
+    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Scoped", body: "<div>b</div>") }
+    foreign = Rooms::Forum.create_for({ name: "Other", creator: users(:david) }, users: users(:david)).tags.create!(name: "Foreign")
+    sign_in :kevin
+
+    patch rooms_forum_post_url(@forum, post), params: { post: { title: "Scoped", tag_ids: [ @question.id, foreign.id ] } }
+
+    assert_equal [ @question ], post.reload.tags.to_a
+  end
+
+  test "a non-OP non-admin member cannot edit a post" do
+    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Mine", body: "<div>b</div>") }
+    @forum.memberships.grant_to(users(:jz))
+    sign_in :jz
+
+    get edit_rooms_forum_post_url(@forum, post)
+    assert_response :forbidden
+
+    patch rooms_forum_post_url(@forum, post), params: { post: { title: "Hijacked" } }
+    assert_response :forbidden
+    assert_equal "Mine", post.reload.title
+  end
+
+  test "an admin can edit any post" do
+    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Mine", body: "<div>b</div>") }
+    sign_in :david  # admin, not OP
+
+    patch rooms_forum_post_url(@forum, post), params: { post: { title: "Admin edited" } }
+
+    assert_equal "Admin edited", post.reload.title
+  end
 end

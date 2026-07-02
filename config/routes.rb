@@ -150,7 +150,7 @@ Rails.application.routes.draw do
     resources :closeds
     resources :forums do
       resources :tags, only: %i[ create destroy ], module: "forums"
-      resources :posts, only: %i[ new create ], module: "forums" do
+      resources :posts, only: %i[ new create edit update ], module: "forums" do
         resource :solution, only: %i[ create destroy ], module: "posts"
       end
     end

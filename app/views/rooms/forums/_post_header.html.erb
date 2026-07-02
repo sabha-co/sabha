@@ -4,6 +4,8 @@
 
   <% if Current.user&.can_administer?(post) %>
     <div class="forum-post-header__actions flex-item-no-shrink">
+      <%= link_to "Edit", edit_rooms_forum_post_path(post.parent_message.room, post),
+            class: "btn txt-small", data: { turbo_frame: "_top" } %>
       <%= render "rooms/forums/solved_toggle", post: post %>
     </div>
   <% end %>

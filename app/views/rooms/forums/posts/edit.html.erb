@@ -1,0 +1,44 @@
+<% @page_title = "Edit post" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to rooms_forum_path(@forum) %>
+  </div>
+<% end %>
+
+<section class="panel flex flex-column gap">
+  <h1 class="txt-large margin-none"><strong>Edit post</strong></h1>
+
+  <%= form_with model: @post, url: rooms_forum_post_path(@forum, @post), scope: :post, class: "flex flex-column gap" do |form| %>
+    <label class="flex align-center gap input input--actor">
+      <%= form.text_field :title, value: @post.title, class: "input txt-large",
+            required: true, autofocus: true, placeholder: "Post title", maxlength: 200 %>
+      <span class="for-screen-reader">Post title</span>
+    </label>
+
+    <% if @forum.tags.ordered.any? %>
+      <% current_tag_ids = @post.tag_ids %>
+      <fieldset class="flex flex-column gap-half pad borderless margin-none">
+        <legend class="txt-small txt-muted">Tags</legend>
+        <%# Empty value so unchecking every tag still submits an (empty) list. %>
+        <%= hidden_field_tag "post[tag_ids][]", "" %>
+        <div class="flex flex-wrap gap-half">
+          <% @forum.tags.ordered.each do |tag| %>
+            <label class="flex align-center gap-half cursor-pointer">
+              <%= check_box_tag "post[tag_ids][]", tag.id, current_tag_ids.include?(tag.id), id: dom_id(tag, :edit) %>
+              <% if tag.color.present? %>
+                <span class="flex-item-no-shrink" style="background: <%= tag.color %>; width: 0.75em; height: 0.75em; border-radius: 50%;"></span>
+              <% end %>
+              <span class="txt-small"><%= tag.name %></span>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+    <% end %>
+
+    <%= form.button class: "btn btn--reversed txt-large center", type: "submit" do %>
+      <%= icon_tag "check", size: 20 %>
+      <span>Save changes</span>
+    <% end %>
+  <% end %>
+</section>

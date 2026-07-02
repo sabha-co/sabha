@@ -46,6 +46,11 @@ class Rooms::Forum < Room
     scope.order(Arel.sql(SORTS.fetch(sort, SORTS["recent"])))
   end
 
+  # Replace a post's tags, keeping only tags that belong to this forum (R8 edit).
+  def apply_tags(post, tag_ids)
+    post.tag_ids = scoped_tag_ids(tag_ids)
+  end
+
   # Seed the forum's tag set from a comma-separated list (used at creation).
   # Blank/duplicate names are ignored; invalid names are skipped silently.
   def create_tags_from_list(list)
