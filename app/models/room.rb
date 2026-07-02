@@ -55,6 +55,14 @@ class Room < ApplicationRecord
   scope :without_directs, -> { where.not(type: "Rooms::Direct") }
   scope :without_threads, -> { where.not(type: "Rooms::Thread") }
 
+  # Rooms a user can discover and join from Browse: open rooms and forums they
+  # aren't already in. Called on Room for both; on Rooms::Open (bots API) STI
+  # narrows it back to open rooms only.
+  scope :browsable_by, ->(user) {
+    active.where(type: %w[ Rooms::Open Rooms::Forum ])
+          .where.not(id: user.memberships.visible.select(:room_id))
+  }
+
   scope :ordered, -> { order(:sortable_name) }
   scope :matching, ->(query) {
     query.present? ? where("name LIKE ?", "%#{sanitize_sql_like(query)}%") : all

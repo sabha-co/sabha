@@ -1,10 +1,6 @@
 # Rooms open to all users on the account. Anyone can discover and join via Browse.
 # When `auto_join`, all existing users are auto-added and new signups are auto-joined.
 class Rooms::Open < Room
-  scope :browsable_by, ->(user) {
-    active.where.not(id: user.memberships.visible.select(:room_id))
-  }
-
   after_save_commit :grant_access_to_all_users, if: :auto_join?
 
   def applicable_activity_types(message)
