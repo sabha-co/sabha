@@ -1,0 +1,13 @@
+<% @page_title = "Post not found" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to root_path %>
+  </div>
+<% end %>
+
+<section class="panel forum-post-missing flex flex-column align-center gap txt-align-center">
+  <h1 class="txt-large margin-none">Post not found</h1>
+  <p class="txt-muted margin-none">This post may have been removed, or the link is incorrect.</p>
+  <%= link_to "Back to Sabha", root_path, class: "btn btn--reversed" %>
+</section>

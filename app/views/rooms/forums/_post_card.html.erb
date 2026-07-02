@@ -1,4 +1,6 @@
-<%# locals: (post:, forum:, participants: {}) %>
+<%# locals: (post:, forum:, participants: {}, **rest) %>
+<%# **rest absorbs the default local turbo-rails injects when this partial is
+    broadcast (thread: from a post, message: from a reply). %>
 <%= link_to rooms_thread_path(post), id: dom_id(post, :card),
       class: "forum-card flex align-start gap",
       data: { turbo_frame: "thread_panel_frame", updated_at: post.last_active_at&.iso8601 } do %>

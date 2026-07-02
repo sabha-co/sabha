@@ -5,6 +5,7 @@ module Message::Threadable
     after_create_commit :involve_creator_in_thread
     after_create_commit :update_thread_reply_count
     after_create_commit :update_parent_message_threads
+    after_create_commit :update_forum_gallery_card
     after_create_commit :create_thread_reply_notifications
     after_update_commit :broadcast_parent_message_to_threads
   end
@@ -35,6 +36,23 @@ module Message::Threadable
           locals: { message: room.parent_message }
         )
       end
+    end
+
+    # A reply in a forum post must refresh the gallery card (reply count, last
+    # activity, participant avatars). The chat-oriented broadcast above targets
+    # `dom_id(parent_message, :threads)`, which exists in a chat message list but
+    # not in the forum gallery — so forum posts need this dedicated card replace,
+    # keyed by the tenanted forum model.
+    def update_forum_gallery_card
+      return unless room.thread? && room.forum_post?
+
+      forum = room.parent_message.room
+      broadcast_replace_to(
+        [ forum, :posts ],
+        target: ActionView::RecordIdentifier.dom_id(room, :card),
+        partial: "rooms/forums/post_card",
+        locals: { post: room, forum: forum, participants: { room.id => room.participant_creators } }
+      )
     end
 
     def create_thread_reply_notifications

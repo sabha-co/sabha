@@ -1,0 +1,16 @@
+<% @page_title = "Join to view this post" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to root_path %>
+  </div>
+<% end %>
+
+<section class="panel forum-post-gated flex flex-column align-center gap txt-align-center">
+  <span class="forum__glyph" aria-hidden="true"><%= icon_tag "board" %></span>
+  <h1 class="txt-large margin-none"><strong><%= @post.title %></strong></h1>
+  <p class="txt-muted margin-none">
+    This post is in <strong><%= @forum.name %></strong>. Join the forum to read the full conversation and reply.
+  </p>
+  <%= button_to "Join #{@forum.name}", room_membership_path(@forum), method: :post, class: "btn btn--reversed" %>
+</section>

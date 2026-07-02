@@ -1,0 +1,26 @@
+<% @page_title = @post.title %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to rooms_forum_path(@forum) %>
+  </div>
+<% end %>
+
+<section class="panel forum-post flex flex-column gap">
+  <%= render "rooms/forums/post_header", post: @post, context: :page %>
+
+  <%= message_area_tag(@post, id: "thread-message-area") do %>
+    <%= render "messages/template" %>
+
+    <%= messages_tag(@post, refresh: false) do %>
+      <%= render "messages/message_list", messages: @messages, room: @post, first_unread_message: @first_unread_message, composer_id: "thread-composer" %>
+    <% end %>
+
+    <%= turbo_stream_from @membership if @membership %>
+    <%= turbo_stream_from @post, :messages %>
+    <%= turbo_stream_from Current.user, @post, :messages %>
+    <%= button_to_jump_to_newest_message %>
+  <% end %>
+
+  <%= render "rooms/threads/reply_composer" %>
+</section>

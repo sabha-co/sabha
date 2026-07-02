@@ -1,0 +1,10 @@
+<%# locals: (post:, context: :page) %>
+<div class="forum-post-header flex align-start justify-between gap full-width">
+  <%= render "rooms/forums/post_header_state", post: post %>
+
+  <% if Current.user&.can_administer?(post) %>
+    <div class="forum-post-header__actions flex-item-no-shrink">
+      <%= render "rooms/forums/solved_toggle", post: post %>
+    </div>
+  <% end %>
+</div>

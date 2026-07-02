@@ -99,12 +99,20 @@ class Rooms::Thread < Room
     solved_at.present?
   end
 
+  # A post is viewable by its members — which, for a forum post, are the forum's
+  # members (membership fans out on join). Gates the canonical page.
+  def viewable_by?(user)
+    user.present? && memberships.active.exists?(user_id: user.id)
+  end
+
   def mark_solved!
     update!(solved_at: Time.current)
+    broadcast_solved_change
   end
 
   def reopen!
     update!(solved_at: nil)
+    broadcast_solved_change
   end
 
   def applicable_activity_types(message)
@@ -142,6 +150,24 @@ class Rooms::Thread < Room
   end
 
   private
+    # Push the Solved state change to every surface that renders this post: the
+    # gallery card and the shared post-header state on the panel and standalone
+    # page. Streams are keyed by the tenanted forum/post models (never a bare
+    # symbol) so updates never leak across workspaces in SaaS.
+    def broadcast_solved_change
+      return unless forum_post?
+
+      forum = parent_message.room
+      broadcast_replace_to [ forum, :posts ],
+        target: ActionView::RecordIdentifier.dom_id(self, :card),
+        partial: "rooms/forums/post_card",
+        locals: { post: self, forum: forum, participants: { id => participant_creators } }
+      broadcast_replace_to [ self, :messages ],
+        target: ActionView::RecordIdentifier.dom_id(self, :header),
+        partial: "rooms/forums/post_header_state",
+        locals: { post: self }
+    end
+
     # Generate a permanent, URL-safe slug the first time a forum post is given a
     # title. It is never regenerated on later renames, so shared links stay valid.
     def assign_forum_post_slug

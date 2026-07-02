@@ -150,7 +150,9 @@ Rails.application.routes.draw do
     resources :closeds
     resources :forums do
       resources :tags, only: %i[ create destroy ], module: "forums"
-      resources :posts, only: %i[ new create ], module: "forums"
+      resources :posts, only: %i[ new create ], module: "forums" do
+        resource :solution, only: %i[ create destroy ], module: "posts"
+      end
     end
     resources :directs
     resources :threads, only: %i[ create show edit update destroy ]
@@ -175,6 +177,10 @@ Rails.application.routes.draw do
 
     get "@:message_id", to: "rooms#show", as: :at_message
   end
+
+  # Permanent, shareable forum-post page (member-gated in v1). Renders standalone
+  # with no redirect, unlike the in-app thread panel.
+  get "/f/:slug", to: "forum_posts#show", as: :forum_post
 
   # Bot API — authenticate with `Authorization: Bearer <bot_key>`.
   namespace :api, defaults: { format: :json } do
