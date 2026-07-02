@@ -3,6 +3,9 @@ class Rooms::Thread < Room
   class NestedThreadError < StandardError; end
 
   validates_presence_of :parent_message
+  # Forum posts are titled; chat threads are not. Guarded on forum_post? so the
+  # nameless chat thread stays valid.
+  validates :name, presence: true, if: :forum_post?
 
   # Forum posts are Rooms::Thread instances whose parent message lives in a
   # forum. They carry a title (stored in `name`), a permanent slug, a Solved

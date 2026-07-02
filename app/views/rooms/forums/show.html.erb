@@ -1,0 +1,66 @@
+<% @page_title = room_display_name(@room) %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to_last_room_visited %>
+  </div>
+  <% if Current.user.can_administer?(@room) %>
+    <div class="flex align-center gap flex-item-justify-end">
+      <%= link_to edit_rooms_forum_path(@room), class: "btn" do %>
+        <%= icon_tag "settings" %>
+        <span class="for-screen-reader">Forum settings</span>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<section class="forum panel flex flex-column gap">
+  <header class="forum__head flex align-start justify-between gap">
+    <div class="flex align-center gap">
+      <span class="forum__glyph flex-item-no-shrink" aria-hidden="true"><%= icon_tag "board" %></span>
+      <div class="flex flex-column gap-half">
+        <h1 class="txt-large margin-none"><strong><%= @room.name %></strong></h1>
+        <% if @room.description.present? %>
+          <p class="txt-small txt-muted margin-none"><%= @room.description %></p>
+        <% end %>
+      </div>
+    </div>
+
+    <%= link_to new_rooms_forum_post_path(@room), class: "btn btn--reversed flex-item-no-shrink" do %>
+      <%= icon_tag "add" %>
+      <span>New post</span>
+    <% end %>
+  </header>
+
+  <% filtering = params[:tag_ids].present? || params[:solved].present? %>
+
+  <% if @posts.any? || filtering %>
+    <%= render "rooms/forums/filter_bar", forum: @room %>
+  <% end %>
+
+  <% if @posts.any? %>
+    <div id="<%= dom_id(@room, :posts) %>" class="forum__list flex flex-column">
+      <%= render partial: "rooms/forums/post_card", collection: @posts, as: :post,
+            locals: { forum: @room, participants: @participants } %>
+    </div>
+  <% elsif filtering %>
+    <div class="forum__empty flex flex-column align-center gap txt-align-center">
+      <span class="forum__empty-glyph" aria-hidden="true"><%= icon_tag "board" %></span>
+      <h2 class="txt-medium margin-none">Nothing matches these filters</h2>
+      <p class="txt-small txt-muted margin-none">Try clearing a tag or the Solved filter to see more posts.</p>
+      <%= link_to rooms_forum_path(@room), class: "btn" do %>
+        <span>Clear filters</span>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="forum__empty flex flex-column align-center gap txt-align-center">
+      <span class="forum__empty-glyph" aria-hidden="true"><%= icon_tag "board" %></span>
+      <h2 class="txt-medium margin-none">No posts yet</h2>
+      <p class="txt-small txt-muted margin-none">Start the first conversation — ask a question or share something worth keeping.</p>
+      <%= link_to new_rooms_forum_post_path(@room), class: "btn btn--reversed" do %>
+        <%= icon_tag "add" %>
+        <span>New post</span>
+      <% end %>
+    </div>
+  <% end %>
+</section>

@@ -19,6 +19,11 @@ class RoomsController < ApplicationController
       return
     end
 
+    if @room.forum?
+      redirect_to rooms_forum_path(@room)
+      return
+    end
+
     @messages = find_messages
   end
 

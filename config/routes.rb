@@ -148,7 +148,10 @@ Rails.application.routes.draw do
     get "browse", to: "browse#index", as: :browse
     resources :opens
     resources :closeds
-    resources :forums
+    resources :forums do
+      resources :tags, only: %i[ create destroy ], module: "forums"
+      resources :posts, only: %i[ new create ], module: "forums"
+    end
     resources :directs
     resources :threads, only: %i[ create show edit update destroy ]
   end

@@ -32,6 +32,12 @@
       <span>Browse rooms</span>
     <% end %>
 
+    <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
+      <%= link_to new_rooms_forum_path, class: "btn action-btn full-width" do %>
+        <span>New forum</span>
+      <% end %>
+    <% end %>
+
     <%= link_to user_hidden_rooms_path, class: "btn action-btn full-width",
             data: { turbo_frame: :hidden_rooms, action: "click->popup#close" } do %>
       <span>Hidden rooms</span>

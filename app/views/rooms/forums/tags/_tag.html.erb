@@ -1,0 +1,13 @@
+<%# locals: (tag:, forum:) %>
+<li id="<%= dom_id(tag) %>" class="flex align-center gap">
+  <% if tag.color.present? %>
+    <span class="flex-item-no-shrink" style="background: <%= tag.color %>; width: 1em; height: 1em; border-radius: 50%;"></span>
+  <% end %>
+  <span class="flex-item-grow"><%= tag.name %></span>
+  <span class="txt-x-small txt-muted flex-item-no-shrink"><%= pluralize(tag.posts.length, "post") %></span>
+
+  <%= button_to rooms_forum_tag_path(forum, tag), method: :delete, class: "btn txt-small flex-item-no-shrink btn--negative", data: {
+        turbo_confirm: "Delete this tag? It will be removed from all posts." } do %>
+    <%= icon_tag "minus" %>
+  <% end %>
+</li>

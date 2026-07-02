@@ -1,0 +1,201 @@
+/* Forum gallery — post cards, tags, and Solved state. Uses the shared OKLCH
+   tokens from colors.css so it tracks light/dark automatically. */
+
+.forum__glyph {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.4rem;
+  color: var(--color-link);
+  background: var(--color-selected);
+}
+
+.forum__list {
+  border: 1px solid var(--color-border-dark);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+/* --- filter bar ------------------------------------------------------ */
+.forum-filter {
+  row-gap: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+.forum-filter__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--color-text-lighter);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-darker);
+}
+
+.forum-filter__chip:hover {
+  border-color: var(--color-border-darkest);
+}
+
+.forum-filter__chip--active {
+  color: var(--color-link);
+  background: var(--color-selected);
+  border-color: var(--color-link);
+}
+
+.forum-seg {
+  border: 1px solid var(--color-border-darker);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.forum-seg__btn {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  text-decoration: none;
+  color: var(--color-text-lighter);
+  background: var(--color-bg);
+}
+
+.forum-seg__btn + .forum-seg__btn {
+  border-left: 1px solid var(--color-border-dark);
+}
+
+.forum-seg__btn:hover {
+  background: var(--color-message-bg);
+}
+
+.forum-seg__btn--active {
+  color: var(--color-text-reversed);
+  background: var(--color-text);
+}
+
+/* --- post card ------------------------------------------------------- */
+.forum-card {
+  padding: 1rem;
+  color: inherit;
+  text-decoration: none;
+  border-top: 1px solid var(--color-border-dark);
+  transition: background 120ms ease;
+}
+
+.forum-card:first-child {
+  border-top: 0;
+}
+
+.forum-card:hover {
+  background: var(--color-message-bg);
+}
+
+.forum-card__status {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-top: 0.1rem;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-darker);
+  color: var(--color-border-darkest);
+}
+
+.forum-card__status .icon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.forum-card__status--solved {
+  color: oklch(var(--lch-green));
+  border-color: color-mix(in oklab, oklch(var(--lch-green)) 55%, var(--color-bg));
+  background: color-mix(in oklab, oklch(var(--lch-green)) 15%, var(--color-bg));
+}
+
+.forum-card__title {
+  font-size: 1rem;
+  font-weight: 580;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+
+.forum-card:hover .forum-card__title {
+  color: var(--color-link);
+}
+
+/* --- tags ------------------------------------------------------------ */
+.forum-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  background: var(--color-message-bg);
+  color: var(--color-text-lighter);
+}
+
+.forum-tag__dot {
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  flex: none;
+}
+
+.forum-tag--solved {
+  font-weight: 560;
+  background: color-mix(in oklab, oklch(var(--lch-green)) 15%, var(--color-bg));
+  color: color-mix(in oklab, oklch(var(--lch-green)) 72%, black);
+}
+
+.forum-tag--solved .icon {
+  width: 0.7em;
+  height: 0.7em;
+}
+
+/* --- meta row -------------------------------------------------------- */
+.forum-card__meta {
+  --column-gap: 0.6rem;
+}
+
+.forum-card__sep {
+  color: var(--color-border-darker);
+}
+
+.forum-avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+}
+
+.forum-card__stack {
+  align-items: center;
+}
+
+.forum-card__stack .forum-card__stack-avatar {
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+.forum-card__stack .forum-card__stack-avatar + .forum-card__stack-avatar {
+  margin-left: -0.4rem;
+}
+
+/* --- empty state ----------------------------------------------------- */
+.forum__empty {
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed var(--color-border-darker);
+  border-radius: 0.75rem;
+}
+
+.forum__empty-glyph {
+  color: var(--color-border-darkest);
+}
+
+.forum__empty-glyph .icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}

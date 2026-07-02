@@ -1,0 +1,37 @@
+<% @page_title = "Edit #{room_display_name(@room)}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to rooms_forum_path(@room) %>
+  </div>
+<% end %>
+
+<section class="panel flex flex-column gap" style="view-transition-name: edit-room-<%= @room.id %>">
+  <%= form_with model: @room, url: rooms_forum_path(@room), data: { controller: "form" } do |form| %>
+    <div class="flex flex-column gap">
+      <label class="flex align-center gap input input--actor">
+        <%= form.text_field :name, name: "room[name]", class: "input txt-large",
+              required: true, placeholder: "Name the forum",
+              data: { action: "keydown.enter->form#submit:prevent" } %>
+        <%= icon_tag "board" %>
+      </label>
+
+      <label class="flex align-center gap input input--actor">
+        <%= form.text_area :description, name: "room[description]", rows: 2, maxlength: 280, class: "input txt-medium",
+              placeholder: "What's this forum about?" %>
+      </label>
+
+      <%= submit_room_button_tag %>
+    </div>
+  <% end %>
+
+  <hr class="margin-block separator full-width" style="--border-style: solid">
+  <p class="txt-muted margin-none margin-block-half txt-align-center">Tags</p>
+  <%= render "rooms/forums/tags/list", forum: @room %>
+
+  <hr class="margin-block separator full-width" style="--border-style: solid">
+  <p class="txt-muted margin-none margin-block-half txt-align-center">Danger zone</p>
+  <div class="txt-align-center pad-block">
+    <%= button_to_delete_room @room %>
+  </div>
+</section>

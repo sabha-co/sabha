@@ -1,0 +1,11 @@
+<% @page_title = "New forum" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back %>
+  </div>
+<% end %>
+
+<section class="panel txt-align-center" style="view-transition-name: new-forum">
+  <%= render "rooms/forums/form", room: @room %>
+</section>
