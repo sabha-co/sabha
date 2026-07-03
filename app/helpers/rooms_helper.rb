@@ -79,7 +79,7 @@ module RoomsHelper
     if room.is_a?(Rooms::Closed)
       icon_tag "lock"
     elsif room.is_a?(Rooms::Forum)
-      icon_tag "board"
+      icon_tag "message-log"
     elsif !room.is_a?(Rooms::Direct)
       "#"
     end
