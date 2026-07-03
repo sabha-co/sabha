@@ -23,7 +23,7 @@ The canonical `/f/:slug` page is member-gated in v1 but is deliberately a standa
 
 ## Composing
 
-The gallery's **New post** button reveals an inline composer (`forum_compose` Stimulus controller — no route change). It has a title field and a rich body that reuses the chat composer: the Trix editor with `@`-mention autocomplete, a rich-text toolbar toggle, and inline file attachments (`forum_body` controller). It submits to `Rooms::Forums::PostsController#create`, which calls `post!`.
+**New post** lives in the top nav (`rooms/show/nav`) and reveals an inline composer at the top of the gallery — no route change. Because the nav renders in a separate DOM subtree, the button reaches the gallery's `forum_compose` controller through a `forum-compose-opener` Stimulus outlet. The composer has a title field and a rich body that reuses the chat composer: the Trix editor with `@`-mention autocomplete, a rich-text toolbar toggle, and inline file attachments (`forum_body` controller). It submits to `Rooms::Forums::PostsController#create`, which calls `post!`.
 
 ## Filtering & sorting
 
@@ -38,10 +38,10 @@ Both are plain query params read by `Rooms::Forum#posts(solved:, sort:)`.
 
 A post is **solved** when its thread has a `solved_at` (`Rooms::Thread#solved?`). Toggling goes through `Rooms::Forums::Posts::SolutionsController`:
 
-- `create` → `mark_solved!` ("Mark solved")
+- `create` → `solve!` ("Mark solved")
 - `destroy` → `reopen!` ("Reopen")
 
-Changes broadcast live to the post header (title + Solved badge) and update the gallery card.
+A title or Solved change triggers `Rooms::Thread`'s `after_update_commit :broadcast_content_change`, which live-refreshes the post header (title + Solved badge) and the gallery card everywhere they render.
 
 ## Slugs
 
@@ -54,12 +54,14 @@ The `⋯` menu on a post header (`rooms/forums/_post_header`) is available to ev
 | Item | Who | Action |
 |------|-----|--------|
 | Copy link | Anyone | Copies the canonical `/f/:slug` URL (`copy-to-clipboard`) |
-| Edit | Admin / post creator | Edit the title (`Rooms::Forums::PostsController#edit`) |
+| Edit | Admin / post creator | Edit the title **inline** — `edit` swaps a form into the header's title turbo-frame (`dom_id(post, :title)`), like a message edits in place; `update` redirects so the frame swaps back |
 | Mark solved / Reopen | Admin / post creator | Toggle the solved state |
 
 ## Live updates
 
-The gallery subscribes with `turbo_stream_from @room, :posts`; new and updated posts stream in without a reload. Solved-state changes broadcast to the individual post header.
+The gallery subscribes to `turbo_stream_from @room, :posts` and `turbo_stream_from @membership`. **Existing** cards live-refresh via replace broadcasts — a reply updates the card's reply count, activity, and participant avatars (`Message::Threadable#update_forum_gallery_card`); a title or Solved change refreshes the card and the post header (`Rooms::Thread#broadcast_content_change`). The membership subscription is what lets the nav's involvement bell cycle its state.
+
+Brand-new posts are **not** appended live — they show on the next gallery load (the author is redirected to the gallery on create).
 
 ## Identity
 
@@ -72,7 +74,7 @@ Forum rooms use the `message-log` glyph across the sidebar indicator, the create
 | Models | `app/models/rooms/forum.rb`, `app/models/rooms/thread.rb` |
 | Controllers | `app/controllers/rooms/forums_controller.rb`, `rooms/forums/posts_controller.rb`, `rooms/forums/posts/solutions_controller.rb`, `forum_posts_controller.rb` |
 | Views | `app/views/rooms/forums/*`, `app/views/forum_posts/*` |
-| JS | `app/javascript/controllers/forum_compose_controller.js`, `forum_body_controller.js` |
+| JS | `app/javascript/controllers/forum_compose_controller.js`, `forum_compose_opener_controller.js`, `forum_body_controller.js` |
 | Styles | `app/assets/stylesheets/application/forum.css` |
 | Routes | `config/routes.rb` — `resources :forums` (+ nested `posts` / `solution`), `/f/:slug` |
 
