@@ -3,7 +3,7 @@
   <span class="forum__empty-glyph" aria-hidden="true"><%= icon_tag "message-log" %></span>
   <% if filtering %>
     <h2 class="txt-medium margin-none">Nothing matches these filters</h2>
-    <p class="txt-small txt-muted margin-none">Try clearing a tag or the Solved filter to see more posts.</p>
+    <p class="txt-small txt-muted margin-none">Try clearing the Solved filter to see more posts.</p>
     <%= link_to "Clear filters", room_path(forum), class: "btn" %>
   <% else %>
     <h2 class="txt-medium margin-none">No posts yet</h2>

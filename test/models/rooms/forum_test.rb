@@ -9,6 +9,15 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_includes forum.users, users(:david)
   end
 
+  test "joining or renaming a forum writes no orphaned system message" do
+    forum = rooms(:help_desk)
+
+    assert_no_difference -> { Message.where(room_id: forum.id).count } do
+      forum.accept_join!(users(:jason))
+      forum.announce_rename("Old name", actor: users(:david))
+    end
+  end
+
   test "an opening post does not bump the forum's activity (no chat-counter reorder)" do
     forum = rooms(:help_desk)
     before = forum.last_active_at

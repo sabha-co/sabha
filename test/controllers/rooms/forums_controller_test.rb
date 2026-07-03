@@ -197,10 +197,12 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "Second created", "First created" ], css_select(".forum-card__title").map(&:text)
   end
 
-  test "an admin rename persists and announces the change" do
+  test "an admin rename persists without writing an orphaned announcement" do
     forum = Rooms::Forum.create_for({ name: "Old Name", creator: users(:david) }, users: users(:david))
 
-    assert_difference -> { Message.unscoped.where(room: forum, event: "room_renamed").count }, 1 do
+    # A forum renders a gallery, not a message stream, so the rename must not
+    # post a room_renamed event message that nothing would display.
+    assert_no_difference -> { Message.unscoped.where(room: forum, event: "room_renamed").count } do
       put rooms_forum_url(forum), params: { room: { name: "New Name" } }
     end
 

@@ -191,6 +191,11 @@ class Room < ApplicationRecord
   # callbacks (notifications, search indexing, push, counter_cache, etc.).
   # Only the room-level Turbo Stream append is broadcast.
   def post_system_message(event:, body:, actor:)
+    # Forums render a gallery of posts, not a message stream — a system event
+    # message here is an orphaned write nothing ever displays. Skip it for every
+    # event type (join, leave, rename, member changes).
+    return if forum?
+
     now = Time.current
     client_message_id = Random.uuid
 
