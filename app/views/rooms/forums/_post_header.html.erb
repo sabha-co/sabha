@@ -4,21 +4,28 @@
 
   <%= render "rooms/forums/post_header_state", post: post %>
 
-  <% if Current.user&.can_administer?(post) %>
-    <%= tag.details class: "position-relative flex-item-no-shrink", data: {
-          controller: "popup", popup_orientation_top_class: "",
-          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
-        } do %>
-      <summary class="btn action-btn options-btn">
-        <%= icon_tag "menu-dots-horizontal" %>
-        <span class="for-screen-reader">Post options</span>
-      </summary>
+  <%= tag.details class: "position-relative flex-item-no-shrink", data: {
+        controller: "popup", popup_orientation_top_class: "",
+        action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
+      } do %>
+    <summary class="btn action-btn options-btn">
+      <%= icon_tag "menu-dots-horizontal" %>
+      <span class="for-screen-reader">Post options</span>
+    </summary>
 
-      <div class="popup-menu forum-post-menu border shadow" data-popup-target="menu">
+    <div class="popup-menu forum-post-menu border shadow" data-popup-target="menu">
+      <%= tag.button class: "btn action-btn full-width", data: {
+            controller: "copy-to-clipboard", action: "copy-to-clipboard#copy",
+            copy_to_clipboard_success_class: "btn--success",
+            copy_to_clipboard_content_value: forum_post_url(post.slug) } do %>
+        <span>Copy link</span>
+      <% end %>
+
+      <% if Current.user&.can_administer?(post) %>
         <%= link_to "Edit", edit_rooms_forum_post_path(post.parent_message.room, post),
               class: "btn action-btn full-width", data: { turbo_frame: "_top" } %>
         <%= render "rooms/forums/solved_toggle", post: post %>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
   <% end %>
 </div>
