@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_03_000636) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_03_120000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -245,6 +245,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_03_000636) do
     t.integer "messages_count", default: 0
     t.string "name"
     t.integer "parent_message_id"
+    t.integer "parent_room_id"
     t.string "slug"
     t.datetime "solved_at"
     t.string "sortable_name"
@@ -252,6 +253,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_03_000636) do
     t.datetime "updated_at", null: false
     t.index ["members_hash"], name: "index_rooms_on_members_hash", unique: true
     t.index ["parent_message_id"], name: "index_rooms_on_parent_message_id_unique_thread", unique: true, where: "type = 'Rooms::Thread' AND parent_message_id IS NOT NULL"
+    t.index ["parent_room_id", "active", "created_at"], name: "index_rooms_on_parent_room_and_created", where: "parent_room_id IS NOT NULL"
+    t.index ["parent_room_id", "active", "last_active_at"], name: "index_rooms_on_parent_room_and_activity", where: "parent_room_id IS NOT NULL"
     t.index ["slug"], name: "index_rooms_on_slug", unique: true, where: "slug IS NOT NULL"
   end
 

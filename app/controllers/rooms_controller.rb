@@ -62,8 +62,10 @@ class RoomsController < ApplicationController
     # A forum is a room like any other — it renders here at /rooms/:id (the
     # gallery of posts) instead of the message stream. No separate route/UI.
     def render_forum_gallery
-      @posts = @room.posts(solved: params[:solved], sort: params[:sort])
-                    .includes(creator: { avatar_attachment: :blob })
+      posts = @room.posts(solved: params[:solved], sort: params[:sort])
+                   .includes(creator: { avatar_attachment: :blob })
+      set_page_and_extract_portion_from posts, per_page: 20
+      @posts = @page.records
       @participants = Rooms::Thread.preload_participant_creators(@posts)
       render "rooms/forums/gallery"
     end

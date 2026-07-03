@@ -209,6 +209,20 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "New Name", forum.reload.name
   end
 
+  test "the gallery paginates and lazy-loads further posts" do
+    forum = Rooms::Forum.create_for({ name: "Busy", creator: users(:david) }, users: users(:david))
+    21.times { |i| Current.set(user: users(:david)) { forum.post!(title: "Post #{i}", body: "<div>b</div>") } }
+
+    get room_url(forum)
+    assert_response :success
+    assert_select "a.forum-card", count: 20
+    assert_select "turbo-frame#next_page_container"
+
+    get room_url(forum, page: 2, format: :turbo_stream)
+    assert_response :success
+    assert_match "forum-card", response.body
+  end
+
   test "a non-member is bounced from the forum gallery" do
     forum = Rooms::Forum.create_for({ name: "Members only", creator: users(:david) }, users: users(:david))
     sign_in :kevin

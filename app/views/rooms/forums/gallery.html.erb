@@ -31,6 +31,9 @@
       <div id="<%= dom_id(@room, :posts) %>" class="forum__list flex flex-column">
         <%= render partial: "rooms/forums/post_card", collection: @posts, as: :post,
               locals: { forum: @room, participants: @participants } %>
+        <% unless @page.last? %>
+          <%= render "rooms/forums/next_page_container", forum: @room, page: @page.next_param %>
+        <% end %>
       </div>
     <% elsif filtering %>
       <%= render "rooms/forums/empty", forum: @room, filtering: true %>

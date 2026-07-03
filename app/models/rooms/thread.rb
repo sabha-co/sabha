@@ -7,6 +7,10 @@ class Rooms::Thread < Room
   # nameless chat thread stays valid.
   validates :name, presence: true, if: :forum_post?
 
+  # Denormalize the room this thread was spawned in (see Room#parent_room), so
+  # the forum gallery filters and sorts on the rooms table alone.
+  before_validation :assign_parent_room, on: :create
+
   # Forum posts are Rooms::Thread instances whose parent message lives in a
   # forum. They carry a title (stored in `name`), a permanent slug, and a Solved
   # state; ordinary chat threads leave all of these unused.
@@ -184,6 +188,10 @@ class Rooms::Thread < Room
   end
 
   private
+    def assign_parent_room
+      self.parent_room_id ||= parent_message&.room_id
+    end
+
     def content_changed?
       saved_change_to_name? || saved_change_to_solved_at?
     end

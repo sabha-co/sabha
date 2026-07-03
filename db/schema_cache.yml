@@ -940,6 +940,16 @@ columns:
     comment:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
+    name: parent_room_id
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
     name: slug
     cast_type: *5
     sql_type_metadata: *6
@@ -2600,6 +2610,42 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: rooms
+    name: index_rooms_on_parent_room_and_activity
+    unique: false
+    columns:
+    - parent_room_id
+    - active
+    - last_active_at
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where: parent_room_id IS NOT NULL
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: rooms
+    name: index_rooms_on_parent_room_and_created
+    unique: false
+    columns:
+    - parent_room_id
+    - active
+    - created_at
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where: parent_room_id IS NOT NULL
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: rooms
     name: index_rooms_on_slug
     unique: true
     columns:
@@ -2915,4 +2961,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260703000636
+version: 20260703120000

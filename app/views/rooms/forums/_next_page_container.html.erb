@@ -1,0 +1,7 @@
+<%# Lazy-loads the next page of posts into the gallery, preserving the active
+    Solved/Sort filters. Mirrors rooms/browse. %>
+<%= turbo_frame_tag :next_page_container, loading: :lazy,
+      src: room_path(forum, page: page, solved: params[:solved].presence, sort: params[:sort].presence, format: :turbo_stream),
+      class: "flex center" do %>
+  <div class="spinner center"></div>
+<% end %>

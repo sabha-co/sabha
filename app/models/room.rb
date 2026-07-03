@@ -39,7 +39,11 @@ class Room < ApplicationRecord
   has_one :last_message, -> { active.without_events.order(created_at: :desc) }, class_name: "Message"
   has_many :threads, through: :messages, class_name: "Rooms::Thread"
   belongs_to :parent_message, class_name: "Message", optional: true
-  has_one :parent_room, through: :parent_message, source: :room, class_name: "Room"
+  # Denormalized direct FK to the room a thread was spawned in (the forum, for a
+  # forum post) — the same shape messages have via room_id. Set from
+  # parent_message.room on create; lets the gallery query threads without joining
+  # through messages. Assigned in Rooms::Thread#assign_parent_room.
+  belongs_to :parent_room, class_name: "Room", optional: true
 
   belongs_to :creator, class_name: "User", default: -> { Current.user }
 

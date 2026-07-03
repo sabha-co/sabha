@@ -37,8 +37,12 @@ class Rooms::Forum < Room
   # Gallery posts: active post-threads, filtered by Solved state and sorted.
   #   - solved: "solved" | "open" | nil (all)
   #   - sort:   "recent" (default) | "newest"
+  #
+  # Queried by the denormalized parent_room_id FK (not the threads-through-
+  # messages join) so the filter + sort ride a composite index — no filesort,
+  # the same way a room's message stream sorts on (room_id, created_at).
   def posts(solved: nil, sort: nil)
-    scope = threads.active
+    scope = Rooms::Thread.active.where(parent_room_id: id)
     scope = scope.solved   if solved == "solved"
     scope = scope.unsolved if solved == "open"
     sort == "newest" ? scope.reverse_chronologically : scope.recently_active
