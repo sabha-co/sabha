@@ -10,7 +10,6 @@
 <% else %>
   <%= button_to rooms_forum_post_solution_path(forum, post), method: :post,
         class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close" } do %>
-    <%= icon_tag "check" %>
     <span>Mark solved</span>
   <% end %>
 <% end %>

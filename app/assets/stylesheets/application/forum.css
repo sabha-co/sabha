@@ -131,8 +131,18 @@
 /* --- filter bar ------------------------------------------------------ */
 .forum-filter { row-gap: 0.5rem; }
 
-/* Primary action sits at the right end of the filter row. */
-.forum-filter__new { margin-left: auto; }
+/* New post lives in the top nav: an outline button sized to the nav's button
+   height (matching the member-count button) so the row stays aligned. The label
+   drops to an icon-only button on narrow screens to keep the bar tight. */
+.forum-nav-new {
+  block-size: var(--navbar-btn-size);
+  --btn-padding: 0 0.8em;
+  font-size: var(--font-size-small);
+}
+
+@media (max-width: 120ch) {
+  .forum-nav-new__label { display: none; }
+}
 
 .forum-seg { border: 1px solid var(--color-border-darker); border-radius: 0.5rem; overflow: hidden; }
 
@@ -221,6 +231,7 @@
    positioning of .message__actions-menu. */
 .forum-post-menu {
   --btn-size: 2.8em;
+  --arrow-size: 1.5em;
   inset: var(--btn-size) 0 auto auto;
   transform-origin: top right;
   z-index: 100;
@@ -234,9 +245,15 @@
   transform: translateX(0);
 }
 
+/* Match the sidebar dropdown items exactly (.actions-menu .action-btn, which is
+   scoped under #sidebar so it can't be shared): same small font, item padding,
+   and hover-pill radius — so the button interactions read identically. */
 .forum-post-menu .action-btn {
+  font-size: var(--font-size-small);
   --width: 100%;
   --btn-padding: calc(var(--inline-space) * 2 / 3) var(--inline-space);
+  --btn-border-radius: calc(var(--arrow-size) / 2 - var(--inline-space-half));
+  --busy-inset: calc(var(--inline-space) * 1.5);
   white-space: nowrap;
   justify-content: start;
   font-weight: 400;
