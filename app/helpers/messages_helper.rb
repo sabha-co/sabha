@@ -69,6 +69,20 @@ module MessagesHelper
     tag.div id: dom_id(room, :messages), class: "messages", aria: { live: "polite", relevant: "additions" }, data: data, &
   end
 
+  # True when this message was written by the forum post's original poster —
+  # either the opening message itself (which lives in the forum) or a reply by
+  # the same author. Deterministic per message, so it stays cache-safe.
+  def forum_op?(message)
+    room = message.room
+    if room.forum?
+      true
+    elsif room.thread? && (parent = room.parent_message) && parent.room.forum?
+      parent.creator_id == message.creator_id
+    else
+      false
+    end
+  end
+
   def message_tag(message, is_unread: false, composer_id: "composer", &)
     message_timestamp_milliseconds = message.created_at.to_fs(:epoch)
 
@@ -93,7 +107,7 @@ module MessagesHelper
     data[:message_event] = true if message.event?
 
     tag.div id: dom_id(message),
-      class: class_names("message", "message--event": message.event?, "message--welcome": message.welcome?, "message--emoji": !message.event? && !message.welcome? && message.plain_text_body.all_emoji?),
+      class: class_names("message", "message--event": message.event?, "message--welcome": message.welcome?, "message--emoji": !message.event? && !message.welcome? && message.plain_text_body.all_emoji?, "message--forum-opening": message.room.forum?),
       data: data, &
   rescue Exception => e
     Sentry.capture_exception(e, extra: { message: message })

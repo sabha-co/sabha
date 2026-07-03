@@ -1,5 +1,7 @@
 <%# locals: (post:, context: :page) %>
-<div class="forum-post-header flex align-start justify-between gap full-width">
+<div class="forum-post-header flex align-center gap">
+  <span class="forum-post-header__glyph flex-item-no-shrink" aria-hidden="true"><%= icon_tag "chat-bubble" %></span>
+
   <%= render "rooms/forums/post_header_state", post: post %>
 
   <% if Current.user&.can_administer?(post) %>

@@ -47,10 +47,6 @@
 
 /* The body reuses the composer's rich input shell; give it room to read as a
    post body rather than a one-line chat message. */
-.forum-compose__body {
-  align-items: stretch;
-}
-
 .forum-compose__body trix-editor {
   min-block-size: 6em;
 }
@@ -155,12 +151,57 @@
 .forum-seg__btn--active { color: var(--color-text-reversed); background: var(--color-text); }
 
 /* --- post header (shared by panel + standalone page) ----------------- */
+/* A muted glyph anchors the question as a hero above the title. */
+.forum-post-header__glyph {
+  display: inline-flex;
+  color: var(--color-border-darkest);
+}
+
+.forum-post-header__glyph .icon {
+  --icon-size: 1.9rem;
+}
+
+/* The forum hero sits inline (glyph · title · ⋯) in the thread panel's header,
+   which is otherwise a fixed-height single-line bar — let it grow so a wrapping
+   title doesn't overflow the bar. */
+.thread-panel__header:has(.forum-post-header) {
+  block-size: auto;
+  padding-block: 0.6rem;
+}
+
+.thread-panel__header .forum-post-header {
+  flex: 1;
+  min-inline-size: 0;
+}
+
 .forum-post-header__title {
   font-size: 1.375rem;
   font-weight: 620;
   line-height: 1.3;
   letter-spacing: -0.01em;
   color: var(--color-text);
+}
+
+/* --- opening post (the question): read it like a post, not a chat line --- */
+/* The opening message lives in the forum (message--forum-opening); give it
+   larger, roomier type. The parent partial already emits the "N replies"
+   separator below it, which serves as the divider before the discussion. */
+.message--forum-opening .message__body-content {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  padding-block-end: 0.5rem;
+}
+
+/* "OP" tag next to the original poster's name (opening message + their replies). */
+.message__op-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.05rem 0.32rem;
+  border-radius: 0.35rem;
+  line-height: 1.5;
+  color: var(--color-link);
+  background: var(--color-selected);
 }
 
 /* Post options menu: the shared .popup-menu (same bordered, arrowed dropdown as

@@ -17,6 +17,22 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#thread-message-area"
   end
 
+  test "the opening post renders as a hero with an OP badge, distinct from replies" do
+    sign_in :david
+    post = create_post(members: [ users(:david), users(:kevin) ])
+    Current.set(user: users(:kevin)) { post.messages.create!(body: "<div>A reply</div>") }
+
+    get forum_post_url(post.slug)
+
+    assert_response :success
+    assert_select ".forum-post-header__glyph"
+    # The opening message lives in the forum and gets the roomier "question" treatment.
+    assert_select ".message--forum-opening"
+    # The original poster (david) is badged on the opening message; kevin's reply is not.
+    assert_select ".message--forum-opening .message__op-badge", text: "OP"
+    assert_select ".message__op-badge", count: 1
+  end
+
   test "a logged-in non-member sees the join CTA, not the post content or a root bounce" do
     post = create_post(members: [ users(:david) ])
     sign_in :kevin

@@ -1,12 +1,10 @@
 <%# locals: (post:, **rest) %>
 <%# The broadcast target for Solved changes (title + badge). **rest absorbs the
     default `thread:` local turbo-rails injects on broadcast. %>
-<div id="<%= dom_id(post, :header) %>" class="forum-post-header__main flex flex-column gap-half min-width">
+<div id="<%= dom_id(post, :header) %>" class="forum-post-header__main flex align-center gap flex-wrap min-width flex-item-grow">
   <h1 class="forum-post-header__title margin-none"><%= post.title %></h1>
 
   <% if post.solved? %>
-    <div class="flex align-center gap-half flex-wrap">
-      <span class="forum-tag forum-tag--solved"><%= icon_tag "check" %> Solved</span>
-    </div>
+    <span class="forum-tag forum-tag--solved"><%= icon_tag "check" %> Solved</span>
   <% end %>
 </div>

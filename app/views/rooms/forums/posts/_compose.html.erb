@@ -9,22 +9,41 @@
     <strong>New post</strong>
   </div>
 
-  <%= form.text_field :title, class: "forum-compose__title input", required: true,
-        placeholder: "Post title", maxlength: 200, data: { forum_compose_target: "title" } %>
+  <%= form.text_field :title, class: "forum-compose__title input fill-white", required: true,
+        placeholder: "Post title", maxlength: 200, style: "--input-border-radius: 1.1rem",
+        data: { forum_compose_target: "title" } %>
 
-  <%# Same rich Trix editor as the chat/reply composer — the app's input shell and
-      @-mention autocomplete — sized for a post body. Submits post[body] normally,
-      with no message-send machinery. %>
-  <div class="composer__input input input--actor fill-white min-width forum-compose__body" style="--input-border-radius: 1.1rem">
-    <%= form.rich_text_area :body,
-          class: "input full-width",
-          placeholder: "Write your post…",
-          aria: { multiline: "true", label: "Post body" },
-          data: {
-            controller: "rich-autocomplete",
-            action: rich_text_data_actions,
-            rich_autocomplete_url_value: autocompletable_users_path(room_id: forum.id),
-            permitted_attachment_types: "application/vnd.actiontext.opengraph-embed" } %>
+  <%# Same rich Trix editor as the chat composer — @-mention autocomplete, a
+      rich-text toolbar toggle, and inline file attachments (native ActionText
+      uploads). Submits post[body] normally; see forum_body_controller. %>
+  <div class="flex composer__input input input--actor fill-white min-width forum-compose__body"
+       data-controller="forum-body" data-forum-body-toolbar-class="composer--rich-text"
+       style="--input-border-radius: 1.1rem">
+    <div class="flex align-end gap full-width">
+      <div class="flex flex-column flex-item-grow min-width gap">
+        <%= form.rich_text_area :body,
+              class: "input", style: "order: -1",
+              placeholder: "Write your post…",
+              aria: { multiline: "true", label: "Post body" },
+              data: {
+                forum_body_target: "text",
+                controller: "rich-autocomplete",
+                action: "trix-focus->rich-autocomplete#focus trix-change->rich-autocomplete#search trix-blur->rich-autocomplete#blur",
+                rich_autocomplete_url_value: autocompletable_users_path(room_id: forum.id),
+                permitted_attachment_types: "application/vnd.actiontext.opengraph-embed" } %>
+      </div>
+
+      <label class="btn btn--borderless txt-small flex-item-no-shrink composer__attachment-btn input--file">
+        <%= icon_tag "attachment" %>
+        <input type="file" data-action="forum-body#filePicked" multiple>
+        <span class="for-screen-reader">Attach a file</span>
+      </label>
+
+      <button type="button" class="btn btn--borderless txt-small flex-item-no-shrink composer__rich-text-btn" data-action="forum-body#toggleToolbar">
+        <%= icon_tag "text-options" %>
+        <span class="for-screen-reader">Rich text</span>
+      </button>
+    </div>
   </div>
 
   <div class="forum-compose__foot flex align-center justify-end gap">

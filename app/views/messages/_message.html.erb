@@ -36,6 +36,7 @@
                   <strong data-reply-target="author" class="<%= 'txt-strikethrough' if message.creator.deactivated? %>"><%= message.creator.name %></strong>
                 <% end %>
                 <span class="message__badge"><%= render "users/role_badge", user: message.creator %></span>
+                <% if forum_op?(message) %><span class="message__op-badge" title="Original poster">OP</span><% end %>
                 <%= link_to message_timestamp(message, style: timestamp_style, class: "message__timestamp"), message_permalink_path(message), target: "_top",
                       class: "message__permalink" %>
                 <%= render "messages/actions/bookmark_indicator", message: %>
