@@ -98,8 +98,6 @@
   color: var(--color-text);
 }
 
-.forum-card:hover .forum-card__title { color: var(--color-link); }
-
 /* --- Solved badge ---------------------------------------------------- */
 .forum-tag {
   display: inline-flex;
@@ -121,9 +119,10 @@
 
 .forum-tag--solved .icon { width: 0.7em; height: 0.7em; }
 
-/* --- meta row -------------------------------------------------------- */
-.forum-card__meta { --column-gap: 0.6rem; }
-.forum-card__sep { color: var(--color-border-darker); }
+/* --- byline (author) + right-aligned activity column ----------------- */
+/* The activity column right-aligns replies + last-active so each row reads
+   left→right: what the post is, then how much is happening in it. */
+.forum-card__activity { text-align: end; min-inline-size: 0; }
 .forum-avatar { border-radius: 50%; object-fit: cover; flex: none; }
 .forum-card__stack { align-items: center; }
 .forum-card__stack .forum-card__stack-avatar { box-shadow: 0 0 0 2px var(--color-bg); }
@@ -148,7 +147,15 @@
 
 .forum-seg__btn + .forum-seg__btn { border-left: 1px solid var(--color-border-dark); }
 .forum-seg__btn:hover { background: var(--color-message-bg); }
-.forum-seg__btn--active { color: var(--color-text-reversed); background: var(--color-text); }
+
+/* Active filter reads as "selected" without borrowing an accent: a quiet neutral
+   fill, monochrome like the app's other selection states — so the only
+   solid/colored pill in the forum is the primary New post action. */
+.forum-seg__btn--active {
+  color: var(--color-text);
+  background: var(--color-border-dark);
+  font-weight: 600;
+}
 
 /* --- post header (shared by panel + standalone page) ----------------- */
 /* A muted glyph anchors the question as a hero above the title. */
