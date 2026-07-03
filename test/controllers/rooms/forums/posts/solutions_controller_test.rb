@@ -29,7 +29,7 @@ class Rooms::Forums::Posts::SolutionsControllerTest < ActionDispatch::Integratio
   end
 
   test "the original poster can reopen a Solved post (R11 reopen)" do
-    @post.mark_solved!
+    @post.solve!
     sign_in :kevin
 
     delete rooms_forum_post_solution_url(@forum, @post)

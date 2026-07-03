@@ -12,6 +12,17 @@ class Rooms::Thread < Room
   # state; ordinary chat threads leave all of these unused.
   before_save :assign_forum_post_slug
 
+  # Re-broadcast a post's card + header wherever it renders whenever its title or
+  # Solved state changes. Chat threads never touch either column, so this stays
+  # dormant for them (broadcast_content_change also guards on forum_post?).
+  after_update_commit :broadcast_content_change, if: :content_changed?
+
+  # Gallery filters & sorts, composed by Rooms::Forum#posts.
+  scope :solved,                  -> { where.not(solved_at: nil) }
+  scope :unsolved,                -> { where(solved_at: nil) }
+  scope :recently_active,         -> { order(last_active_at: :desc) }
+  scope :reverse_chronologically, -> { order(created_at: :desc) }
+
   class << self
     def preload_participant_creators(threads, limit: 5)
       threads = threads.to_a.uniq
@@ -102,14 +113,12 @@ class Rooms::Thread < Room
     user.present? && memberships.active.exists?(user_id: user.id)
   end
 
-  def mark_solved!
+  def solve!
     update!(solved_at: Time.current)
-    broadcast_content_change
   end
 
   def reopen!
     update!(solved_at: nil)
-    broadcast_content_change
   end
 
   # Push a post's current card + header to every surface that renders it (gallery
@@ -166,6 +175,10 @@ class Rooms::Thread < Room
   end
 
   private
+    def content_changed?
+      saved_change_to_name? || saved_change_to_solved_at?
+    end
+
     # Generate a permanent, URL-safe slug the first time a forum post is given a
     # title. It is never regenerated on later renames, so shared links stay valid.
     def assign_forum_post_slug

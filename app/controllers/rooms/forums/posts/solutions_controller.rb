@@ -7,7 +7,7 @@ class Rooms::Forums::Posts::SolutionsController < ApplicationController
   before_action :ensure_can_resolve
 
   def create
-    @post.mark_solved!
+    @post.solve!
     redirect_back fallback_location: room_url(@forum)
   end
 

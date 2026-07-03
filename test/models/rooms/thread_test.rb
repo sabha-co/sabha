@@ -174,7 +174,7 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
 
     assert_not post.solved?
 
-    post.mark_solved!
+    post.solve!
     assert post.solved?
     assert post.solved_at.present?
 

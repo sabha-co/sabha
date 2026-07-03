@@ -34,15 +34,13 @@ class Rooms::Forum < Room
     end
   end
 
-  SORTS = { "recent" => "rooms.last_active_at DESC", "newest" => "rooms.created_at DESC" }.freeze
-
   # Gallery posts: active post-threads, filtered by Solved state and sorted.
   #   - solved: "solved" | "open" | nil (all)
   #   - sort:   "recent" (default) | "newest"
   def posts(solved: nil, sort: nil)
     scope = threads.active
-    scope = scope.where.not(solved_at: nil) if solved == "solved"
-    scope = scope.where(solved_at: nil)     if solved == "open"
-    scope.order(Arel.sql(SORTS.fetch(sort, SORTS["recent"])))
+    scope = scope.solved   if solved == "solved"
+    scope = scope.unsolved if solved == "open"
+    sort == "newest" ? scope.reverse_chronologically : scope.recently_active
   end
 end

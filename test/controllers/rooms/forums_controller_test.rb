@@ -54,7 +54,7 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
     Current.set(user: users(:david)) do
       forum.post!(title: "First question", body: "<div>Body one</div>")
-      forum.post!(title: "Second question", body: "<div>Body two</div>").mark_solved!
+      forum.post!(title: "Second question", body: "<div>Body two</div>").solve!
     end
 
     get room_url(forum)
@@ -160,7 +160,7 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
   test "the Solved filter shows only solved posts" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
     Current.set(user: users(:david)) do
-      forum.post!(title: "Solved one", body: "<div>b</div>").mark_solved!
+      forum.post!(title: "Solved one", body: "<div>b</div>").solve!
       forum.post!(title: "Open one", body: "<div>b</div>")
     end
 
