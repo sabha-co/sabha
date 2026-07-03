@@ -44,18 +44,10 @@ module Message::Threadable
     # A reply in a forum post must refresh the gallery card (reply count, last
     # activity, participant avatars). The chat-oriented broadcast above targets
     # `dom_id(parent_message, :threads)`, which exists in a chat message list but
-    # not in the forum gallery — so forum posts need this dedicated card replace,
-    # keyed by the tenanted forum model.
+    # not in the forum gallery — so the post-thread owns the card replace (the
+    # same broadcast fires on a title/Solved change).
     def update_forum_gallery_card
-      return unless room.thread? && room.forum_post?
-
-      forum = room.parent_message.room
-      broadcast_replace_to(
-        [ forum, :posts ],
-        target: ActionView::RecordIdentifier.dom_id(room, :card),
-        partial: "rooms/forums/post_card",
-        locals: { post: room, forum: forum, participants: { room.id => room.participant_creators } }
-      )
+      room.broadcast_gallery_card if room.thread?
     end
 
     # A forum post is its opening message plus a Rooms::Thread. Deleting the

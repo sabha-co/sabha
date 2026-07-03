@@ -121,12 +121,12 @@ class Rooms::Thread < Room
     update!(solved_at: nil)
   end
 
-  # Push a post's current card + header to every surface that renders it (gallery
-  # card, panel, standalone page). Called after a Solved change and after a
-  # title edit. Streams are keyed by the tenanted forum/post models (never a
-  # bare symbol) so updates never leak across workspaces in SaaS. No-op for
-  # ordinary chat threads.
-  def broadcast_content_change
+  # Replace this post's gallery card wherever it renders — reply count, activity,
+  # participant avatars, title, Solved badge. Fired both by a new reply
+  # (Message::Threadable#update_forum_gallery_card) and by a title/Solved change
+  # here. Keyed by the tenanted forum model (never a bare symbol) so updates
+  # never leak across workspaces in SaaS. No-op for ordinary chat threads.
+  def broadcast_gallery_card
     return unless forum_post?
 
     forum = parent_message.room
@@ -134,6 +134,15 @@ class Rooms::Thread < Room
       target: ActionView::RecordIdentifier.dom_id(self, :card),
       partial: "rooms/forums/post_card",
       locals: { post: self, forum: forum, participants: { id => participant_creators } }
+  end
+
+  # Push a post's current card + header to every surface that renders it (gallery
+  # card, panel, standalone page). Called after a Solved change and after a title
+  # edit. No-op for ordinary chat threads.
+  def broadcast_content_change
+    return unless forum_post?
+
+    broadcast_gallery_card
     broadcast_replace_to [ self, :messages ],
       target: ActionView::RecordIdentifier.dom_id(self, :header),
       partial: "rooms/forums/post_header_state",
