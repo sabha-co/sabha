@@ -101,7 +101,8 @@ User ──────┐
   │        │                 ├── Rooms::Open    (public)
   │        │                 ├── Rooms::Closed  (invite-only)
   │        │                 ├── Rooms::Direct  (1:1 / group DMs)
-  │        │                 └── Rooms::Thread  (tied to parent message)
+  │        │                 ├── Rooms::Forum   (gallery of titled posts)
+  │        │                 └── Rooms::Thread  (parent message; also backs forum posts)
   │        │
   │        └── involvement: invisible | nothing | mentions | everything
   │
@@ -128,7 +129,7 @@ Models primarily use namespace decomposition, with selective service objects whe
 
 | Directory | Purpose |
 |-----------|---------|
-| `app/models/rooms/` | STI subclasses: `Open`, `Closed`, `Direct`, `Thread` |
+| `app/models/rooms/` | STI subclasses: `Open`, `Closed`, `Direct`, `Forum`, `Thread` |
 | `app/models/user/` | `Avatar`, `Bannable`, `Blockable`, `Bot`, `DicebearAvatar`, `EmailChangeable`, `Mentionable`, `Notifiable`, `PasswordAuthable`, `Role`, `SaasBridged`, `Streakable`, `Transferable`, `Verifiable` |
 | `app/models/message/` | `Attachment`, `Broadcasts`, `Mentionee`, `Searchable`, `Streakable`, `Threadable`, `Unreadable` |
 | `app/models/membership/` | `Cacheable`, `Connectable`, `Involvable`, `Notifiable`, `Starrable` |
@@ -149,14 +150,15 @@ Models primarily use namespace decomposition, with selective service objects whe
 - **`Rooms::Open`** - Auto-grants membership to all current and future users. New users join all open rooms on creation.
 - **`Rooms::Closed`** - Membership must be explicitly granted by an admin or room creator.
 - **`Rooms::Direct`** - Identified by an MD5 `members_hash` of sorted user IDs, ensuring one DM room per unique set of participants. Default involvement: `everything`.
-- **`Rooms::Thread`** - Tied to a `parent_message`. Inherits permissions from the parent room. Default involvement: `invisible` except for thread creator and parent message author.
+- **`Rooms::Forum`** - Presents its posts as a gallery instead of a chat stream. Each post is an opening message plus a `Rooms::Thread` (titled, sluggable, solvable). Joinable like an Open room, but posts don't ping members. See `docs/features/FORUMS.md`.
+- **`Rooms::Thread`** - Tied to a `parent_message`. Inherits permissions from the parent room. Default involvement: `invisible` except for thread creator and parent message author. Also backs forum posts (which carry a title, slug, and solved state).
 
 ### All Models
 
 | Model | Purpose |
 |-------|---------|
 | `User` | User record with role enum (`member`, `moderator`, `administrator`, `bot`) |
-| `Room` | STI base class for `Open`, `Closed`, `Direct`, `Thread` |
+| `Room` | STI base class for `Open`, `Closed`, `Direct`, `Forum`, `Thread` |
 | `Membership` | User ↔ Room link with involvement level |
 | `Message` | Chat message with ActionText body and attachments |
 | `Account` | Singleton workspace settings. `has_json :settings` for feature flags |

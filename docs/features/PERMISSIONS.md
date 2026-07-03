@@ -25,6 +25,7 @@ Key predicates:
 | **Open** | Public rooms accessible to all members |
 | **Closed** | Private invite-only rooms |
 | **Direct** | 1-on-1 or group direct messages |
+| **Forum** | Gallery of titled posts; each post is a `Rooms::Thread` (see `FORUMS.md`) |
 | **Thread** | Discussion threads tied to a parent message |
 
 ## Room Permission Matrix
@@ -34,10 +35,13 @@ Key predicates:
 | **Direct** | Any user* | Members | N/A | Any member of the DM |
 | **Open** | Any user* | Members | Admin/Creator | Admin/Creator |
 | **Closed** | Any user* | Members | Admin/Creator | Admin/Creator |
+| **Forum** | Any user* | Members | Admin/Creator | Admin/Creator |
 | **Thread** | Any member of the parent room† | Members | Admin/Creator | Admin/Creator |
 
 \* Can be restricted to admins via Account Settings (see below).
 † Parent must be a message in an Open or Closed room; threads cannot be created on Direct or Thread messages.
+
+Forum **posts** are `Rooms::Thread`s: any forum member can create one, but editing a post's title or toggling its solved state is limited to an administrator or the post's creator. "Copy link" (the canonical `/f/:slug` URL) is available to every viewer.
 
 Open rooms with `auto_join: true` grant membership to all existing users and to every new signup (`Rooms::Open#auto_join`). The original "All Talk" room cannot be deleted (`Room::CannotDeleteOriginalError`).
 
