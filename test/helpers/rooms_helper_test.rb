@@ -3,8 +3,8 @@ require "test_helper"
 class RoomsHelperTest < ActionView::TestCase
   include ApplicationHelper
 
-  test "room_type_indicator uses the board glyph for forums" do
-    assert_includes room_type_indicator(rooms(:help_desk)), "icon--board"
+  test "room_type_indicator uses the message-log glyph for forums" do
+    assert_includes room_type_indicator(rooms(:help_desk)), "icon--message-log"
   end
 
   test "room_type_indicator uses a hash for open rooms" do
