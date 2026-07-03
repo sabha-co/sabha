@@ -2,7 +2,7 @@
 
 <% content_for :nav do %>
   <div class="flex-item-justify-start">
-    <%= link_back_to rooms_forum_path(@forum) %>
+    <%= link_back_to room_path(@forum) %>
   </div>
 <% end %>
 
@@ -15,26 +15,6 @@
             required: true, autofocus: true, placeholder: "Post title", maxlength: 200 %>
       <span class="for-screen-reader">Post title</span>
     </label>
-
-    <% if @forum.tags.ordered.any? %>
-      <% current_tag_ids = @post.tag_ids %>
-      <fieldset class="flex flex-column gap-half pad borderless margin-none">
-        <legend class="txt-small txt-muted">Tags</legend>
-        <%# Empty value so unchecking every tag still submits an (empty) list. %>
-        <%= hidden_field_tag "post[tag_ids][]", "" %>
-        <div class="flex flex-wrap gap-half">
-          <% @forum.tags.ordered.each do |tag| %>
-            <label class="flex align-center gap-half cursor-pointer">
-              <%= check_box_tag "post[tag_ids][]", tag.id, current_tag_ids.include?(tag.id), id: dom_id(tag, :edit) %>
-              <% if tag.color.present? %>
-                <span class="flex-item-no-shrink" style="background: <%= tag.color %>; width: 0.75em; height: 0.75em; border-radius: 50%;"></span>
-              <% end %>
-              <span class="txt-small"><%= tag.name %></span>
-            </label>
-          <% end %>
-        </div>
-      </fieldset>
-    <% end %>
 
     <%= form.button class: "btn btn--reversed txt-large center", type: "submit" do %>
       <%= icon_tag "check", size: 20 %>

@@ -1,11 +1,5 @@
-<% @page_title = "New forum" %>
-
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back %>
-  </div>
+<%= render layout: "rooms/layouts/new" do %>
+  <%= render "rooms/unified_form", room: @room,
+        open_url: rooms_opens_path, closed_url: rooms_closeds_path, forum_url: rooms_forums_path,
+        default_type: "forum" %>
 <% end %>
-
-<section class="panel txt-align-center" style="view-transition-name: new-forum">
-  <%= render "rooms/forums/form", room: @room %>
-</section>

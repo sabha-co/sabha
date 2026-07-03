@@ -1,15 +1,15 @@
-<%# locals: (post:) — OP/admin only; rendered per-viewer, so it stays out of the
-    Solved broadcast (which has no viewer context). Refreshes on the toggler's
-    own redirect. %>
+<%# locals: (post:) — OP/admin only; rendered per-viewer inside the post options
+    menu, so it stays out of the Solved broadcast (which has no viewer context).
+    Refreshes on the toggler's own redirect. %>
 <% forum = post.parent_message.room %>
 <% if post.solved? %>
   <%= button_to rooms_forum_post_solution_path(forum, post), method: :delete,
-        class: "btn txt-small", data: { turbo_frame: "_top" } do %>
+        class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close" } do %>
     <span>Reopen</span>
   <% end %>
 <% else %>
   <%= button_to rooms_forum_post_solution_path(forum, post), method: :post,
-        class: "btn btn--reversed txt-small", data: { turbo_frame: "_top" } do %>
+        class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close" } do %>
     <%= icon_tag "check" %>
     <span>Mark solved</span>
   <% end %>

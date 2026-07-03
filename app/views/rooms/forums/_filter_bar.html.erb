@@ -1,40 +1,25 @@
 <%# locals: (forum:) %>
-<% active_tag_ids = Array(params[:tag_ids]).reject(&:blank?).map(&:to_s) %>
 <% current_solved = params[:solved].presence %>
 <% current_sort = params[:sort].presence == "newest" ? "newest" : "recent" %>
 
 <div class="forum-filter flex align-center gap flex-wrap">
-  <% if forum.tags.ordered.any? %>
-    <div class="forum-filter__tags flex align-center gap-half flex-wrap">
-      <%= link_to "All", rooms_forum_path(forum, solved: current_solved, sort: params[:sort]),
-            class: class_names("forum-filter__chip", "forum-filter__chip--active" => active_tag_ids.empty?) %>
-      <% forum.tags.ordered.each do |tag| %>
-        <% is_active = active_tag_ids.include?(tag.id.to_s) %>
-        <% next_ids = is_active ? active_tag_ids - [ tag.id.to_s ] : active_tag_ids + [ tag.id.to_s ] %>
-        <%= link_to rooms_forum_path(forum, tag_ids: next_ids, solved: current_solved, sort: params[:sort]),
-              class: class_names("forum-filter__chip", "forum-filter__chip--active" => is_active) do %>
-          <% if tag.color.present? %>
-            <span class="forum-tag__dot" style="background: <%= tag.color %>"></span>
-          <% end %>
-          <%= tag.name %>
-        <% end %>
-      <% end %>
-    </div>
-  <% end %>
-
-  <div class="flex-item-grow"></div>
-
   <div class="forum-seg flex" role="group" aria-label="Solved filter">
     <% [ [ "All", nil ], [ "Open", "open" ], [ "Solved", "solved" ] ].each do |label, value| %>
-      <%= link_to label, rooms_forum_path(forum, tag_ids: active_tag_ids, solved: value, sort: params[:sort]),
+      <%= link_to label, room_path(forum, solved: value, sort: params[:sort]),
             class: class_names("forum-seg__btn", "forum-seg__btn--active" => current_solved == value) %>
     <% end %>
   </div>
 
   <div class="forum-seg flex" role="group" aria-label="Sort">
     <% [ [ "Recent", "recent" ], [ "Newest", "newest" ] ].each do |label, value| %>
-      <%= link_to label, rooms_forum_path(forum, tag_ids: active_tag_ids, solved: current_solved, sort: value),
+      <%= link_to label, room_path(forum, solved: current_solved, sort: value),
             class: class_names("forum-seg__btn", "forum-seg__btn--active" => current_sort == value) %>
     <% end %>
   </div>
+
+  <button type="button" class="btn btn--reversed forum-filter__new"
+          data-forum-compose-target="opener" data-action="forum-compose#open">
+    <%= icon_tag "add" %>
+    <span>New post</span>
+  </button>
 </div>

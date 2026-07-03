@@ -356,17 +356,6 @@ class Room < ApplicationRecord
     # satisfy FK constraints.
     def destroy_all_associated_records
       message_ids = Message.where(room_id: id).pluck(:id)
-      post_ids = Rooms::Thread.where(parent_message_id: message_ids).pluck(:id)
-
-      # Taggings reference posts (room_id) and tags (tag_id), and tags reference
-      # this forum (room_id) — all RESTRICT FKs, so clear them before the rows
-      # they point at. No-ops for non-forum rooms, which own no tags/taggings.
-      Tagging.where(room_id: post_ids).delete_all if post_ids.any?
-      forum_tag_ids = Tag.where(room_id: id).pluck(:id)
-      if forum_tag_ids.any?
-        Tagging.where(tag_id: forum_tag_ids).delete_all
-        Tag.where(id: forum_tag_ids).delete_all
-      end
 
       # First, destroy any thread rooms that were created from messages in this room
       # (threads have parent_message_id pointing to messages in this room)

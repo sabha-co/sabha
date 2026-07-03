@@ -8,12 +8,12 @@ class Rooms::Forums::Posts::SolutionsController < ApplicationController
 
   def create
     @post.mark_solved!
-    redirect_back fallback_location: rooms_forum_url(@forum)
+    redirect_back fallback_location: room_url(@forum)
   end
 
   def destroy
     @post.reopen!
-    redirect_back fallback_location: rooms_forum_url(@forum)
+    redirect_back fallback_location: room_url(@forum)
   end
 
   private

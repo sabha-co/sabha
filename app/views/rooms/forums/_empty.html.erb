@@ -1,0 +1,16 @@
+<%# locals: (forum:, filtering:) %>
+<div class="forum__empty flex flex-column align-center gap txt-align-center">
+  <span class="forum__empty-glyph" aria-hidden="true"><%= icon_tag "board" %></span>
+  <% if filtering %>
+    <h2 class="txt-medium margin-none">Nothing matches these filters</h2>
+    <p class="txt-small txt-muted margin-none">Try clearing a tag or the Solved filter to see more posts.</p>
+    <%= link_to "Clear filters", room_path(forum), class: "btn" %>
+  <% else %>
+    <h2 class="txt-medium margin-none">No posts yet</h2>
+    <p class="txt-small txt-muted margin-none">Start the first conversation — ask a question or share something worth keeping.</p>
+    <button type="button" class="btn btn--reversed" data-forum-compose-target="opener" data-action="forum-compose#open">
+      <%= icon_tag "add" %>
+      <span>New post</span>
+    </button>
+  <% end %>
+</div>

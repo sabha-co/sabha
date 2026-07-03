@@ -8,12 +8,9 @@ class Rooms::Thread < Room
   validates :name, presence: true, if: :forum_post?
 
   # Forum posts are Rooms::Thread instances whose parent message lives in a
-  # forum. They carry a title (stored in `name`), a permanent slug, a Solved
-  # state, and tags; ordinary chat threads leave all of these unused.
+  # forum. They carry a title (stored in `name`), a permanent slug, and a Solved
+  # state; ordinary chat threads leave all of these unused.
   before_save :assign_forum_post_slug
-
-  has_many :taggings, foreign_key: :room_id, inverse_of: :post, dependent: :delete_all
-  has_many :tags, through: :taggings
 
   class << self
     def preload_participant_creators(threads, limit: 5)
@@ -117,7 +114,7 @@ class Rooms::Thread < Room
 
   # Push a post's current card + header to every surface that renders it (gallery
   # card, panel, standalone page). Called after a Solved change and after a
-  # title/tag edit. Streams are keyed by the tenanted forum/post models (never a
+  # title edit. Streams are keyed by the tenanted forum/post models (never a
   # bare symbol) so updates never leak across workspaces in SaaS. No-op for
   # ordinary chat threads.
   def broadcast_content_change

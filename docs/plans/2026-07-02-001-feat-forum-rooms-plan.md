@@ -7,9 +7,13 @@ origin: docs/brainstorms/2026-07-02-forum-rooms-requirements.md
 
 # feat: Add Forum room type for help-desk/Q&A
 
+## Scope revision — 2026-07-03: tags removed
+
+**Tags were removed from this feature to simplify it.** The `Tag`/`Tagging` models, their tables and migrations, the tag route/controller, all tag UI (filter chips, compose checkboxes, card/header badges, edit curation), and their tests are gone. A post now carries a **title** and a **Solved state** only; the gallery filters by **Solved** and **sort** (Recent/Newest). Everything below that references tags — the summary, requirements R7–R9, R16's tag cascade, and units U3/U5/U6/U7/U8 — is superseded by this note. The rest of the plan (STI room type, post-as-thread, gallery, Solved, canonical page, cascade) stands.
+
 ## Summary
 
-Add a `Rooms::Forum` STI room type whose main view is a gallery of posts instead of a chat stream. Each post is an opening `Message` in the forum plus a `Rooms::Thread` spawned on it for replies — reusing the existing thread machinery and its `parent_message` invariant. Posts carry a title, per-forum admin-curated tags, and a first-class Solved state; the gallery filters by tag and Solved. A post opens in the existing third-column thread panel in-app and also renders at a permanent canonical URL as a standalone page.
+Add a `Rooms::Forum` STI room type whose main view is a gallery of posts instead of a chat stream. Each post is an opening `Message` in the forum plus a `Rooms::Thread` spawned on it for replies — reusing the existing thread machinery and its `parent_message` invariant. Posts carry a title and a first-class Solved state; the gallery filters by Solved and sort. A post opens in the existing third-column thread panel in-app and also renders at a permanent canonical URL as a standalone page.
 
 ---
 

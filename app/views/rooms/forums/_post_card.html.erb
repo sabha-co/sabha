@@ -11,20 +11,9 @@
   <div class="forum-card__body flex flex-column gap-half flex-item-grow">
     <h3 class="forum-card__title margin-none"><%= post.title %></h3>
 
-    <% tags = post.tags.sort_by { |tag| tag.name.downcase } %>
-    <% if post.solved? || tags.any? %>
+    <% if post.solved? %>
       <div class="forum-card__tags flex align-center gap-half flex-wrap">
-        <% if post.solved? %>
-          <span class="forum-tag forum-tag--solved"><%= icon_tag "check" %> Solved</span>
-        <% end %>
-        <% tags.each do |tag| %>
-          <span class="forum-tag">
-            <% if tag.color.present? %>
-              <span class="forum-tag__dot" style="background: <%= tag.color %>"></span>
-            <% end %>
-            <%= tag.name %>
-          </span>
-        <% end %>
+        <span class="forum-tag forum-tag--solved"><%= icon_tag "check" %> Solved</span>
       </div>
     <% end %>
 

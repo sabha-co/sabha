@@ -7,12 +7,10 @@ class Rooms::ForumsController < RoomsController
 
   DEFAULT_FORUM_NAME = "New forum"
 
-  # Gallery of posts, filtered by tag/Solved and sorted, with tags and
-  # participant avatars preloaded for the cards.
+  # A forum renders at the canonical /rooms/:id (RoomsController#show draws the
+  # gallery), same as open/closed rooms redirect there.
   def show
-    @posts = @room.posts(tag_ids: filter_tag_ids, solved: params[:solved], sort: params[:sort])
-                  .includes(:tags, creator: { avatar_attachment: :blob })
-    @participants = Rooms::Thread.preload_participant_creators(@posts)
+    redirect_to room_url(@room)
   end
 
   def new
@@ -20,35 +18,29 @@ class Rooms::ForumsController < RoomsController
   end
 
   def create
-    @room = Rooms::Forum.create_for(forum_params.except(:tags), users: Current.user)
-    @room.create_tags_from_list(forum_params[:tags])
+    @room = Rooms::Forum.create_for(forum_params, users: Current.user)
 
     broadcast_create_room
-    redirect_to rooms_forum_url(@room)
+    redirect_to room_url(@room)
   end
 
   def edit
+    load_users_for_access_management
   end
 
   def update
     old_name = @room.name
 
-    @room.update! forum_params.except(:tags)
+    @room.update! forum_params
     @room.announce_rename(old_name, actor: Current.user) if @room.name != old_name
 
     RoomUpdateBroadcastJob.perform_later(@room)
-    redirect_back fallback_location: rooms_forum_url(@room), notice: "Changes saved"
+    redirect_back fallback_location: room_url(@room), notice: "Changes saved"
   end
 
   private
-    def filter_tag_ids
-      # Only accept scalar ids; a crafted `tag_ids[k]=v` hash param would
-      # otherwise reach the query as nested arrays and error the gallery.
-      Array(params[:tag_ids]).select { |id| id.is_a?(String) || id.is_a?(Integer) }.reject(&:blank?)
-    end
-
     def forum_params
-      params.require(:room).permit(:name, :description, :tags)
+      params.require(:room).permit(:name, :description)
     end
 
     def broadcast_create_room

@@ -1,95 +1,78 @@
-/* Forum gallery — post cards, tags, and Solved state. Uses the shared OKLCH
-   tokens from colors.css so it tracks light/dark automatically. */
+/* Forum — the post gallery renders inside the normal room shell (#main-content),
+   in place of the message stream. Uses the shared OKLCH tokens so it tracks
+   light/dark automatically. */
 
-.forum__glyph {
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 0.4rem;
-  color: var(--color-link);
-  background: var(--color-selected);
+/* Fill the main content column and scroll internally, top-aligned (the chat
+   message area pins to the bottom; the gallery reads top-down). */
+.forum {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  align-self: stretch;
 }
 
-.forum__list {
-  border: 1px solid var(--color-border-dark);
-  border-radius: 0.75rem;
-  overflow: hidden;
+/* Left-aligned like the message list — share the app's content gutter. A wide
+   cap keeps line lengths sane on ultrawide without leaving a right void on
+   normal screens. Everything below shares this same left edge. The top offset
+   clears the fixed nav bar (the chat stream pins to the bottom, so it never
+   collides; the gallery reads top-down and must start below the nav). */
+.forum__inner {
+  width: 100%;
+  max-inline-size: 80rem;
+  padding: calc(var(--navbar-height) + 0.25rem) calc(var(--inline-space) + 1vw) 2.5rem;
 }
 
-/* --- filter bar ------------------------------------------------------ */
-.forum-filter {
-  row-gap: 0.5rem;
-  padding-bottom: 0.25rem;
+/* --- inline "New post" compose --------------------------------------- */
+.forum-compose {
+  border: 1px solid var(--color-border-darker);
+  border-radius: 0.9rem;
+  padding: 0.9rem 1rem;
+  background: color-mix(in oklab, var(--color-message-bg) 40%, var(--color-bg));
 }
 
-.forum-filter__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.28rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
+.forum-compose__head {
+  color: var(--color-text-lighter);
+}
+
+.forum-compose__close {
+  padding: 0.2rem;
   line-height: 1;
-  text-decoration: none;
-  color: var(--color-text-lighter);
-  background: var(--color-bg);
-  border: 1px solid var(--color-border-darker);
 }
 
-.forum-filter__chip:hover {
-  border-color: var(--color-border-darkest);
+.forum-compose__title {
+  font-size: 1.15rem;
+  font-weight: 600;
 }
 
-.forum-filter__chip--active {
-  color: var(--color-link);
-  background: var(--color-selected);
-  border-color: var(--color-link);
+/* The body reuses the composer's rich input shell; give it room to read as a
+   post body rather than a one-line chat message. */
+.forum-compose__body {
+  align-items: stretch;
 }
 
-.forum-seg {
-  border: 1px solid var(--color-border-darker);
-  border-radius: 0.5rem;
-  overflow: hidden;
+.forum-compose__body trix-editor {
+  min-block-size: 6em;
 }
 
-.forum-seg__btn {
-  padding: 0.3rem 0.65rem;
-  font-size: 0.75rem;
-  line-height: 1.1;
-  text-decoration: none;
-  color: var(--color-text-lighter);
-  background: var(--color-bg);
-}
-
-.forum-seg__btn + .forum-seg__btn {
-  border-left: 1px solid var(--color-border-dark);
-}
-
-.forum-seg__btn:hover {
-  background: var(--color-message-bg);
-}
-
-.forum-seg__btn--active {
-  color: var(--color-text-reversed);
-  background: var(--color-text);
-}
-
-/* --- post card ------------------------------------------------------- */
+/* --- post cards (full-width list rows, hairline-divided) ------------- */
 .forum-card {
-  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: 0.6rem;
   color: inherit;
   text-decoration: none;
-  border-top: 1px solid var(--color-border-dark);
   transition: background 120ms ease;
 }
 
-.forum-card:first-child {
-  border-top: 0;
+.forum-card + .forum-card {
+  border-top: 1px solid var(--color-border-darker);
 }
 
 .forum-card:hover {
-  background: var(--color-message-bg);
+  background: color-mix(in oklab, var(--color-message-bg) 55%, var(--color-bg));
 }
 
 .forum-card__status {
@@ -104,10 +87,7 @@
   color: var(--color-border-darkest);
 }
 
-.forum-card__status .icon {
-  width: 0.85rem;
-  height: 0.85rem;
-}
+.forum-card__status .icon { width: 0.85rem; height: 0.85rem; }
 
 .forum-card__status--solved {
   color: oklch(var(--lch-green));
@@ -117,16 +97,14 @@
 
 .forum-card__title {
   font-size: 1rem;
-  font-weight: 580;
+  font-weight: 585;
   line-height: 1.35;
   color: var(--color-text);
 }
 
-.forum-card:hover .forum-card__title {
-  color: var(--color-link);
-}
+.forum-card:hover .forum-card__title { color: var(--color-link); }
 
-/* --- tags ------------------------------------------------------------ */
+/* --- Solved badge ---------------------------------------------------- */
 .forum-tag {
   display: inline-flex;
   align-items: center;
@@ -139,50 +117,42 @@
   color: var(--color-text-lighter);
 }
 
-.forum-tag__dot {
-  width: 0.55em;
-  height: 0.55em;
-  border-radius: 50%;
-  flex: none;
-}
-
 .forum-tag--solved {
   font-weight: 560;
   background: color-mix(in oklab, oklch(var(--lch-green)) 15%, var(--color-bg));
   color: color-mix(in oklab, oklch(var(--lch-green)) 72%, black);
 }
 
-.forum-tag--solved .icon {
-  width: 0.7em;
-  height: 0.7em;
-}
+.forum-tag--solved .icon { width: 0.7em; height: 0.7em; }
 
 /* --- meta row -------------------------------------------------------- */
-.forum-card__meta {
-  --column-gap: 0.6rem;
+.forum-card__meta { --column-gap: 0.6rem; }
+.forum-card__sep { color: var(--color-border-darker); }
+.forum-avatar { border-radius: 50%; object-fit: cover; flex: none; }
+.forum-card__stack { align-items: center; }
+.forum-card__stack .forum-card__stack-avatar { box-shadow: 0 0 0 2px var(--color-bg); }
+.forum-card__stack .forum-card__stack-avatar + .forum-card__stack-avatar { margin-left: -0.4rem; }
+
+/* --- filter bar ------------------------------------------------------ */
+.forum-filter { row-gap: 0.5rem; }
+
+/* Primary action sits at the right end of the filter row. */
+.forum-filter__new { margin-left: auto; }
+
+.forum-seg { border: 1px solid var(--color-border-darker); border-radius: 0.5rem; overflow: hidden; }
+
+.forum-seg__btn {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  text-decoration: none;
+  color: var(--color-text-lighter);
+  background: var(--color-bg);
 }
 
-.forum-card__sep {
-  color: var(--color-border-darker);
-}
-
-.forum-avatar {
-  border-radius: 50%;
-  object-fit: cover;
-  flex: none;
-}
-
-.forum-card__stack {
-  align-items: center;
-}
-
-.forum-card__stack .forum-card__stack-avatar {
-  box-shadow: 0 0 0 2px var(--color-bg);
-}
-
-.forum-card__stack .forum-card__stack-avatar + .forum-card__stack-avatar {
-  margin-left: -0.4rem;
-}
+.forum-seg__btn + .forum-seg__btn { border-left: 1px solid var(--color-border-dark); }
+.forum-seg__btn:hover { background: var(--color-message-bg); }
+.forum-seg__btn--active { color: var(--color-text-reversed); background: var(--color-text); }
 
 /* --- post header (shared by panel + standalone page) ----------------- */
 .forum-post-header__title {
@@ -193,29 +163,43 @@
   color: var(--color-text);
 }
 
-.forum-post-header__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+/* Post options menu: the shared .popup-menu (same bordered, arrowed dropdown as
+   the sidebar room menu), but anchored to the right of the header's ⋯ trigger so
+   it opens down-and-left instead of spilling off-panel. Mirrors the right-hand
+   positioning of .message__actions-menu. */
+.forum-post-menu {
+  --btn-size: 2.8em;
+  inset: var(--btn-size) 0 auto auto;
+  transform-origin: top right;
+  z-index: 100;
+  min-inline-size: 11ch;
+}
+
+.forum-post-menu::before,
+.forum-post-menu::after {
+  inset-inline-start: auto;
+  inset-inline-end: calc(var(--btn-size) / 2);
+  transform: translateX(0);
+}
+
+.forum-post-menu .action-btn {
+  --width: 100%;
+  --btn-padding: calc(var(--inline-space) * 2 / 3) var(--inline-space);
+  white-space: nowrap;
+  justify-content: start;
+  font-weight: 400;
 }
 
 .forum-post-gated,
-.forum-post-missing {
-  padding: 2.5rem 1.5rem;
-}
+.forum-post-missing { padding: 2.5rem 1.5rem; }
 
 /* --- empty state ----------------------------------------------------- */
 .forum__empty {
-  padding: 2.5rem 1.5rem;
+  padding: 3rem 1.5rem;
   border: 1px dashed var(--color-border-darker);
   border-radius: 0.75rem;
+  margin-top: 0.5rem;
 }
 
-.forum__empty-glyph {
-  color: var(--color-border-darkest);
-}
-
-.forum__empty-glyph .icon {
-  width: 1.75rem;
-  height: 1.75rem;
-}
+.forum__empty-glyph { color: var(--color-border-darkest); }
+.forum__empty-glyph .icon { width: 1.75rem; height: 1.75rem; }

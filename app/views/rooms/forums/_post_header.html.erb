@@ -3,10 +3,20 @@
   <%= render "rooms/forums/post_header_state", post: post %>
 
   <% if Current.user&.can_administer?(post) %>
-    <div class="forum-post-header__actions flex-item-no-shrink">
-      <%= link_to "Edit", edit_rooms_forum_post_path(post.parent_message.room, post),
-            class: "btn txt-small", data: { turbo_frame: "_top" } %>
-      <%= render "rooms/forums/solved_toggle", post: post %>
-    </div>
+    <%= tag.details class: "position-relative flex-item-no-shrink", data: {
+          controller: "popup", popup_orientation_top_class: "",
+          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
+        } do %>
+      <summary class="btn action-btn options-btn">
+        <%= icon_tag "menu-dots-horizontal" %>
+        <span class="for-screen-reader">Post options</span>
+      </summary>
+
+      <div class="popup-menu forum-post-menu border shadow" data-popup-target="menu">
+        <%= link_to "Edit", edit_rooms_forum_post_path(post.parent_message.room, post),
+              class: "btn action-btn full-width", data: { turbo_frame: "_top" } %>
+        <%= render "rooms/forums/solved_toggle", post: post %>
+      </div>
+    <% end %>
   <% end %>
 </div>

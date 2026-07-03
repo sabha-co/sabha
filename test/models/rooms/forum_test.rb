@@ -103,17 +103,13 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_not post.reload.cascade_deactivated?
   end
 
-  test "hard-deleting a forum removes its posts, tags, and taggings (R16)" do
+  test "hard-deleting a forum removes its posts (R16)" do
     forum = rooms(:help_desk)
     post = create_forum_post
-    tag = forum.tags.create!(name: "Q")
-    post.tags << tag
 
     assert_nothing_raised { forum.destroy }
 
     assert_not Rooms::Thread.exists?(post.id)
-    assert_equal 0, Tag.where(room_id: forum.id).count
-    assert_equal 0, Tagging.where(room_id: post.id).count
   end
 
   # --- Review-hardening -------------------------------------------------------
@@ -124,14 +120,6 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     message.stubs(:mentionees).returns([ users(:jason) ])
 
     assert_includes forum.applicable_activity_types(message), :mention
-  end
-
-  test "create_tags_from_list skips blank, duplicate, and over-length names" do
-    forum = rooms(:help_desk)
-
-    forum.create_tags_from_list("Question, , Question, #{'x' * 40}, Bug")
-
-    assert_equal %w[Bug Question], forum.tags.ordered.pluck(:name)
   end
 
   test "deleting a post's opening message deactivates the post-thread (no zombie)" do

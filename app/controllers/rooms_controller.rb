@@ -19,10 +19,7 @@ class RoomsController < ApplicationController
       return
     end
 
-    if @room.forum?
-      redirect_to rooms_forum_path(@room)
-      return
-    end
+    return render_forum_gallery if @room.forum?
 
     @messages = find_messages
   end
@@ -60,6 +57,15 @@ class RoomsController < ApplicationController
 
     def ensure_can_administer
       head :forbidden unless @room && Current.user.can_administer?(@room)
+    end
+
+    # A forum is a room like any other — it renders here at /rooms/:id (the
+    # gallery of posts) instead of the message stream. No separate route/UI.
+    def render_forum_gallery
+      @posts = @room.posts(solved: params[:solved], sort: params[:sort])
+                    .includes(creator: { avatar_attachment: :blob })
+      @participants = Rooms::Thread.preload_participant_creators(@posts)
+      render "rooms/forums/gallery"
     end
 
     def find_messages

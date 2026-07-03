@@ -437,7 +437,7 @@ columns:
     collation:
     comment:
   badges:
-  - &30 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: color
     cast_type: *5
@@ -1240,28 +1240,6 @@ columns:
     collation:
     comment:
   - *11
-  taggings:
-  - *7
-  - *10
-  - *25
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
-    name: tag_id
-    cast_type: *3
-    sql_type_metadata: *4
-    'null': false
-    default:
-    default_function:
-    collation:
-    comment:
-  - *11
-  tags:
-  - *30
-  - *7
-  - *10
-  - *14
-  - *25
-  - *11
   user_notification_settings:
   - *7
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
@@ -1668,8 +1646,6 @@ primary_keys:
   single_sign_on_records: id
   storage_entries: id
   storage_totals: id
-  taggings: id
-  tags: id
   user_notification_settings: id
   users: id
   webhook_events: id
@@ -1702,8 +1678,6 @@ data_sources:
   single_sign_on_records: true
   storage_entries: true
   storage_totals: true
-  taggings: true
-  tags: true
   user_notification_settings: true
   users: true
   webhook_events: true
@@ -2831,74 +2805,6 @@ indexes:
     columns:
     - owner_type
     - owner_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  taggings:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: taggings
-    name: index_taggings_on_room_id
-    unique: false
-    columns:
-    - room_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: taggings
-    name: index_taggings_on_tag_id_and_room_id
-    unique: true
-    columns:
-    - tag_id
-    - room_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  tags:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: tags
-    name: index_tags_on_room_id
-    unique: false
-    columns:
-    - room_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: tags
-    name: index_tags_on_room_id_and_name
-    unique: true
-    columns:
-    - room_id
-    - name
     lengths: {}
     orders: {}
     opclasses: {}

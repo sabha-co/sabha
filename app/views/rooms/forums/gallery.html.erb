@@ -1,0 +1,38 @@
+<% @page_title = room_display_name(@room) %>
+<% @body_class = "sidebar" %>
+
+<% content_for :head do %>
+  <meta name="current-room-id" content="<%= @room.id %>">
+<% end %>
+
+<%= render "rooms/show/nav", room: @room %>
+
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+
+<% filtering = params[:solved].present? %>
+<% populated = @posts.any? || filtering %>
+
+<div class="forum" data-controller="forum-compose">
+  <%= turbo_stream_from @room, :posts %>
+
+  <div class="forum__inner flex flex-column gap">
+    <% if populated %>
+      <%= render "rooms/forums/filter_bar", forum: @room %>
+    <% end %>
+
+    <div class="forum-compose" data-forum-compose-target="form" hidden>
+      <%= render "rooms/forums/posts/compose", forum: @room %>
+    </div>
+
+    <% if @posts.any? %>
+      <div id="<%= dom_id(@room, :posts) %>" class="forum__list flex flex-column">
+        <%= render partial: "rooms/forums/post_card", collection: @posts, as: :post,
+              locals: { forum: @room, participants: @participants } %>
+      </div>
+    <% elsif filtering %>
+      <%= render "rooms/forums/empty", forum: @room, filtering: true %>
+    <% else %>
+      <%= render "rooms/forums/empty", forum: @room, filtering: false %>
+    <% end %>
+  </div>
+</div>

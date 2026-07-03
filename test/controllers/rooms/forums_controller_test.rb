@@ -22,57 +22,46 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert forum.forum?
     assert_equal 1, forum.memberships.count
     assert_includes forum.users, users(:david)
-    assert_redirected_to rooms_forum_url(forum)
+    assert_redirected_to room_url(forum)
   end
 
-  test "create with a starter tag list persists forum-scoped tags" do
-    post rooms_forums_url, params: { room: { name: "Help Desk", tags: "Question, Bug, Setup" } }
-    forum = Room.last
-
-    assert_equal %w[Bug Question Setup], forum.tags.ordered.pluck(:name)
-    forum.tags.each { |tag| assert_equal forum.id, tag.room_id }
-  end
-
-  test "tags are forum-scoped: forum A's tag is absent from forum B (AE4)" do
-    forum_a = Rooms::Forum.create_for({ name: "A", creator: users(:david) }, users: users(:david))
-    forum_b = Rooms::Forum.create_for({ name: "B", creator: users(:david) }, users: users(:david))
-
-    post rooms_forum_tags_url(forum_a), params: { tag: { name: "Question" } }
-
-    assert_equal %w[Question], forum_a.tags.pluck(:name)
-    assert_empty forum_b.tags
-  end
-
-  test "show redirects the generic room path to the forum gallery" do
+  test "the forum renders its gallery at the canonical room URL" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
 
     get room_url(forum)
 
-    assert_redirected_to rooms_forum_url(forum)
+    assert_response :success
+    assert_select ".forum"
+  end
+
+  test "the namespaced forum path redirects to the canonical room URL" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+
+    get rooms_forum_url(forum)
+
+    assert_redirected_to room_url(forum)
   end
 
   test "show renders the gallery for a member" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
 
-    get rooms_forum_url(forum)
+    get room_url(forum)
 
     assert_response :success
   end
 
-  test "the gallery renders a card per post with title, tags, Solved badge, and a panel link" do
+  test "the gallery renders a card per post with title, Solved badge, and a panel link" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
-    tag = forum.tags.create!(name: "Question")
     Current.set(user: users(:david)) do
-      forum.post!(title: "First question", body: "<div>Body one</div>", tag_ids: [ tag.id ])
+      forum.post!(title: "First question", body: "<div>Body one</div>")
       forum.post!(title: "Second question", body: "<div>Body two</div>").mark_solved!
     end
 
-    get rooms_forum_url(forum)
+    get room_url(forum)
 
     assert_response :success
     assert_select ".forum-card", count: 2
     assert_select ".forum-card__title", text: "First question"
-    assert_select ".forum-tag", text: /Question/
     assert_select ".forum-tag--solved", text: /Solved/
     assert_select "a.forum-card[data-turbo-frame='thread_panel_frame']", count: 2
   end
@@ -80,10 +69,10 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
   test "an empty forum shows the empty-state CTA" do
     forum = Rooms::Forum.create_for({ name: "Quiet", creator: users(:david) }, users: users(:david))
 
-    get rooms_forum_url(forum)
+    get room_url(forum)
 
     assert_select ".forum__empty"
-    assert_select ".forum__empty a[href=?]", new_rooms_forum_post_path(forum)
+    assert_select ".forum__empty button[data-action*=?]", "forum-compose#open"
   end
 
   test "gallery cards are ordered by most recent activity" do
@@ -96,48 +85,17 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     older.update!(last_active_at: 2.hours.ago)
     newer.update!(last_active_at: 1.minute.ago)
 
-    get rooms_forum_url(forum)
+    get room_url(forum)
 
     titles = css_select(".forum-card__title").map(&:text)
     assert_equal [ "Newer post", "Older post" ], titles
   end
 
-  test "filtering by tag and Solved composes (AE2)" do
+  test "a Solved filter matching nothing renders the empty-filter state with the bar still present" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
-    question = forum.tags.create!(name: "Question")
-    bug = forum.tags.create!(name: "Bug")
-    Current.set(user: users(:david)) do
-      forum.post!(title: "Solved question", body: "<div>b</div>", tag_ids: [ question.id ]).mark_solved!
-      forum.post!(title: "Open question", body: "<div>b</div>", tag_ids: [ question.id ])
-      forum.post!(title: "A bug", body: "<div>b</div>", tag_ids: [ bug.id ])
-    end
+    Current.set(user: users(:david)) { forum.post!(title: "Open post", body: "<div>b</div>") }
 
-    get rooms_forum_url(forum, tag_ids: [ question.id ], solved: "open")
-
-    assert_equal [ "Open question" ], css_select(".forum-card__title").map(&:text)
-  end
-
-  test "composing two tags returns posts having either tag (OR semantics)" do
-    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
-    question = forum.tags.create!(name: "Question")
-    bug = forum.tags.create!(name: "Bug")
-    Current.set(user: users(:david)) do
-      forum.post!(title: "A question", body: "<div>b</div>", tag_ids: [ question.id ])
-      forum.post!(title: "A bug", body: "<div>b</div>", tag_ids: [ bug.id ])
-      forum.post!(title: "Untagged", body: "<div>b</div>")
-    end
-
-    get rooms_forum_url(forum, tag_ids: [ question.id, bug.id ])
-
-    assert_equal [ "A bug", "A question" ], css_select(".forum-card__title").map(&:text).sort
-  end
-
-  test "a filter matching nothing renders the empty-filter state with the bar still present" do
-    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
-    question = forum.tags.create!(name: "Question")
-    Current.set(user: users(:david)) { forum.post!(title: "Untagged post", body: "<div>b</div>") }
-
-    get rooms_forum_url(forum, tag_ids: [ question.id ])
+    get room_url(forum, solved: "solved")
 
     assert_response :success
     assert_select ".forum-card", count: 0
@@ -145,26 +103,22 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".forum-filter"
   end
 
-  test "the filter bar reflects the active tag and Solved state" do
+  test "the filter bar reflects the active Solved state" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
-    question = forum.tags.create!(name: "Question")
-    Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>", tag_ids: [ question.id ]) }
+    Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }
 
-    get rooms_forum_url(forum, tag_ids: [ question.id ], solved: "open")
+    get room_url(forum, solved: "open")
 
-    assert_select ".forum-filter__chip--active", text: /Question/
     assert_select ".forum-seg__btn--active", text: "Open"
   end
 
-  test "admin sees the forum edit form with tag curation" do
+  test "admin sees the forum edit form" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
-    forum.tags.create!(name: "Question")
 
     get edit_rooms_forum_url(forum)
 
     assert_response :success
-    assert_select "form[action=?]", rooms_forum_tags_path(forum)
-    assert_select "input[name='tag[name]']"
+    assert_select "input[name='room[name]']"
   end
 
   test "a non-admin non-creator cannot edit or update the forum" do
@@ -179,7 +133,7 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Docs", forum.reload.name
   end
 
-  test "non-admin cannot create a forum when creation is restricted to admins" do
+  test "non-admin cannot create a forum when creation is restricted to administrators" do
     accounts(:signal).settings.restrict_room_creation_to_administrators = true
     accounts(:signal).save!
     sign_in :jz
@@ -210,7 +164,7 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
       forum.post!(title: "Open one", body: "<div>b</div>")
     end
 
-    get rooms_forum_url(forum, solved: "solved")
+    get room_url(forum, solved: "solved")
 
     assert_equal [ "Solved one" ], css_select(".forum-card__title").map(&:text)
   end
@@ -225,20 +179,11 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     first.update!(last_active_at: 1.minute.ago)
     second.update!(last_active_at: 2.hours.ago)
 
-    get rooms_forum_url(forum, sort: "recent")
+    get room_url(forum, sort: "recent")
     assert_equal [ "First created", "Second created" ], css_select(".forum-card__title").map(&:text)
 
-    get rooms_forum_url(forum, sort: "newest")
+    get room_url(forum, sort: "newest")
     assert_equal [ "Second created", "First created" ], css_select(".forum-card__title").map(&:text)
-  end
-
-  test "a crafted hash tag_ids param does not error the gallery" do
-    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
-    Current.set(user: users(:david)) { forum.post!(title: "A post", body: "<div>b</div>") }
-
-    get rooms_forum_url(forum), params: { tag_ids: { evil: "1" } }
-
-    assert_response :success
   end
 
   test "an admin rename persists and announces the change" do
@@ -255,7 +200,7 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     forum = Rooms::Forum.create_for({ name: "Members only", creator: users(:david) }, users: users(:david))
     sign_in :kevin
 
-    get rooms_forum_url(forum)
+    get room_url(forum)
 
     assert_redirected_to root_url
   end

@@ -325,25 +325,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_03_000636) do
     t.index ["owner_type", "owner_id"], name: "index_storage_totals_on_owner", unique: true
   end
 
-  create_table "taggings", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "room_id", null: false
-    t.integer "tag_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["room_id"], name: "index_taggings_on_room_id"
-    t.index ["tag_id", "room_id"], name: "index_taggings_on_tag_id_and_room_id", unique: true
-  end
-
-  create_table "tags", force: :cascade do |t|
-    t.string "color"
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.integer "room_id", null: false
-    t.datetime "updated_at", null: false
-    t.index ["room_id", "name"], name: "index_tags_on_room_id_and_name", unique: true
-    t.index ["room_id"], name: "index_tags_on_room_id"
-  end
-
   create_table "user_notification_settings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email_frequency", default: "hourly", null: false
@@ -434,9 +415,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_03_000636) do
   add_foreign_key "searches", "users", column: "creator_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "single_sign_on_records", "users"
-  add_foreign_key "taggings", "rooms"
-  add_foreign_key "taggings", "tags"
-  add_foreign_key "tags", "rooms"
   add_foreign_key "user_notification_settings", "users"
   add_foreign_key "users", "badges"
   add_foreign_key "webhooks", "users"

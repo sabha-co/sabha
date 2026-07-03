@@ -4,44 +4,34 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
   setup do
     sign_in :david
     @forum = Rooms::Forum.create_for({ name: "Help Desk", creator: users(:david) }, users: [ users(:david), users(:kevin) ])
-    @question = @forum.tags.create!(name: "Question")
   end
 
-  test "new renders the compose form with the forum's tags" do
-    get new_rooms_forum_post_url(@forum)
+  test "the gallery carries the inline compose form" do
+    get room_url(@forum)
 
     assert_response :success
     assert_select "form[action=?]", rooms_forum_posts_path(@forum)
     assert_select "input[name='post[title]']"
-    assert_select "input[name='post[tag_ids][]'][value=?]", @question.id.to_s
   end
 
-  test "create makes one opening message and one post-thread, persisting title, slug, and tags" do
+  test "create makes one opening message and one post-thread, persisting title and slug" do
     assert_difference [ -> { @forum.messages.count }, -> { Rooms::Thread.count } ], 1 do
-      post rooms_forum_posts_url(@forum), params: { post: { title: "How do I reset?", body: "<div>Steps?</div>", tag_ids: [ @question.id ] } }
+      post rooms_forum_posts_url(@forum), params: { post: { title: "How do I reset?", body: "<div>Steps?</div>" } }
     end
 
     thread = Rooms::Thread.last
     assert_equal "How do I reset?", thread.title
     assert_equal "how-do-i-reset", thread.slug
-    assert_equal [ @question ], thread.tags.to_a
-    assert_redirected_to rooms_forum_url(@forum)
+    assert_redirected_to room_url(@forum)
   end
 
-  test "a post can be created with no tags" do
-    assert_difference -> { Rooms::Thread.count }, 1 do
-      post rooms_forum_posts_url(@forum), params: { post: { title: "No tags here", body: "<div>Body</div>" } }
-    end
-
-    assert_empty Rooms::Thread.last.tags
-  end
-
-  test "a blank title is rejected" do
+  test "a blank title is rejected and bounces back to the gallery with an alert" do
     assert_no_difference -> { Rooms::Thread.count } do
       post rooms_forum_posts_url(@forum), params: { post: { title: "", body: "<div>Body</div>" } }
     end
 
-    assert_response :unprocessable_entity
+    assert_redirected_to room_url(@forum)
+    assert flash[:alert].present?
   end
 
   test "every forum member can access a member's new post" do
@@ -50,17 +40,6 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
 
     # Kevin is a forum member but not the poster; he must still be a member of the post.
     assert_includes thread.users, users(:kevin)
-  end
-
-  test "a tag from another forum cannot be attached to this forum's post" do
-    other_forum = Rooms::Forum.create_for({ name: "Other", creator: users(:david) }, users: users(:david))
-    foreign_tag = other_forum.tags.create!(name: "Foreign")
-
-    post rooms_forum_posts_url(@forum), params: { post: { title: "Crafted", body: "<div>Body</div>", tag_ids: [ @question.id, foreign_tag.id ] } }
-    thread = Rooms::Thread.last
-
-    assert_equal [ @question ], thread.tags.to_a
-    assert_not_includes thread.tags, foreign_tag
   end
 
   test "creating a post does not mark the forum unread for other members" do
@@ -88,21 +67,16 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
   end
 
-  # --- Editing a post's title and tags after creation (R8) --------------------
+  # --- Editing a post's title after creation (R8) -----------------------------
 
-  test "the original poster can edit the post's title and tags after creation" do
-    setup_tag = @forum.tags.create!(name: "Setup")
-    post = Current.set(user: users(:kevin)) do
-      @forum.post!(title: "Original", body: "<div>b</div>", tag_ids: [ @question.id ])
-    end
+  test "the original poster can edit the post's title after creation" do
+    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Original", body: "<div>b</div>") }
     sign_in :kevin
 
-    patch rooms_forum_post_url(@forum, post), params: { post: { title: "Edited title", tag_ids: [ setup_tag.id ] } }
+    patch rooms_forum_post_url(@forum, post), params: { post: { title: "Edited title" } }
 
-    post.reload
-    assert_equal "Edited title", post.title
-    assert_equal [ setup_tag ], post.tags.to_a
-    assert_redirected_to rooms_forum_url(@forum)
+    assert_equal "Edited title", post.reload.title
+    assert_redirected_to room_url(@forum)
   end
 
   test "editing a post's title does not change its slug" do
@@ -113,16 +87,6 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     patch rooms_forum_post_url(@forum, post), params: { post: { title: "A brand new title" } }
 
     assert_equal original_slug, post.reload.slug
-  end
-
-  test "editing cannot attach another forum's tag" do
-    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Scoped", body: "<div>b</div>") }
-    foreign = Rooms::Forum.create_for({ name: "Other", creator: users(:david) }, users: users(:david)).tags.create!(name: "Foreign")
-    sign_in :kevin
-
-    patch rooms_forum_post_url(@forum, post), params: { post: { title: "Scoped", tag_ids: [ @question.id, foreign.id ] } }
-
-    assert_equal [ @question ], post.reload.tags.to_a
   end
 
   test "a non-OP non-admin member cannot edit a post" do

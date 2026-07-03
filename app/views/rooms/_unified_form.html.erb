@@ -1,7 +1,11 @@
-<%= form_with model: room, url: open_url,
+<% default_type = local_assigns[:default_type].presence || "open" %>
+<% initial_url = { "closed" => closed_url, "forum" => forum_url }[default_type] || open_url %>
+
+<%= form_with model: room, url: initial_url,
       data: { controller: "room-form",
               room_form_open_url_value: open_url,
-              room_form_closed_url_value: closed_url } do |form| %>
+              room_form_closed_url_value: closed_url,
+              room_form_forum_url_value: forum_url } do |form| %>
 
   <div class="flex flex-column gap">
     <label class="flex align-center gap input input--actor">
@@ -24,12 +28,12 @@
   <div class="flex flex-column gap pad-inline margin-block">
     <label class="flex align-center gap cursor-pointer">
       <input type="radio" name="room_type" value="open"
-             <%= "checked" if local_assigns[:default_type] != "closed" %>
+             <%= "checked" if default_type == "open" %>
              data-action="change->room-form#selectType">
       <span><strong># Public</strong> <span class="txt-deemphasize">&mdash; Anyone can find and join</span></span>
     </label>
 
-    <div data-room-form-target="autoJoinOption" class="pad-inline-double" <%= "hidden" if local_assigns[:default_type] == "closed" %>>
+    <div data-room-form-target="autoJoinOption" class="pad-inline-double" <%= "hidden" unless default_type == "open" %>>
       <label class="flex align-center gap cursor-pointer">
         <%= form.check_box :auto_join, name: "room[auto_join]" %>
         <span class="txt-small">Add all members automatically</span>
@@ -38,9 +42,16 @@
 
     <label class="flex align-center gap cursor-pointer">
       <input type="radio" name="room_type" value="closed"
-             <%= "checked" if local_assigns[:default_type] == "closed" %>
+             <%= "checked" if default_type == "closed" %>
              data-action="change->room-form#selectType">
       <span><strong><%= icon_tag "lock", size: 12 %> Private</strong> <span class="txt-deemphasize">&mdash; Only invited members</span></span>
+    </label>
+
+    <label class="flex align-center gap cursor-pointer">
+      <input type="radio" name="room_type" value="forum"
+             <%= "checked" if default_type == "forum" %>
+             data-action="change->room-form#selectType">
+      <span><strong><%= icon_tag "board", size: 12 %> Forum</strong> <span class="txt-deemphasize">&mdash; Titled posts instead of a chat stream</span></span>
     </label>
   </div>
 
