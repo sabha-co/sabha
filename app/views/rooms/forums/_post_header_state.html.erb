@@ -2,7 +2,11 @@
 <%# The broadcast target for Solved changes (title + badge). **rest absorbs the
     default `thread:` local turbo-rails injects on broadcast. %>
 <div id="<%= dom_id(post, :header) %>" class="forum-post-header__main flex align-center gap flex-wrap min-width flex-item-grow">
-  <h1 class="forum-post-header__title margin-none"><%= post.title %></h1>
+  <%# The title edits in place: the Edit action swaps its form into this frame,
+      like a message edits inside its own turbo-frame. No page navigation. %>
+  <%= turbo_frame_tag dom_id(post, :title), class: "forum-post-header__title-frame min-width" do %>
+    <h1 class="forum-post-header__title margin-none"><%= post.title %></h1>
+  <% end %>
 
   <% if post.solved? %>
     <span class="forum-tag forum-tag--solved"><%= icon_tag "check" %> Solved</span>

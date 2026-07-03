@@ -23,7 +23,7 @@
 
       <% if Current.user&.can_administer?(post) %>
         <%= link_to "Edit", edit_rooms_forum_post_path(post.parent_message.room, post),
-              class: "btn action-btn full-width", data: { turbo_frame: "_top" } %>
+              class: "btn action-btn full-width", data: { turbo_frame: dom_id(post, :title), action: "popup#close" } %>
         <%= render "rooms/forums/solved_toggle", post: post %>
       <% end %>
     </div>

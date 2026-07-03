@@ -1,24 +1,23 @@
-<% @page_title = "Edit post" %>
+<%# Inline title edit — renders into the header's title frame so editing happens
+    in place (mirroring a message editing inside its own turbo-frame), rather than
+    navigating to a separate page. %>
+<%= turbo_frame_tag dom_id(@post, :title) do %>
+  <%= form_with model: @post, url: rooms_forum_post_path(@forum, @post), scope: :post,
+        class: "forum-post-title-edit flex align-center gap-half min-width full-width" do |form| %>
+    <%= form.text_field :title, value: @post.title,
+          class: "forum-post-header__title input fill-white flex-item-grow min-width",
+          required: true, autofocus: true, maxlength: 200, aria: { label: "Post title" },
+          style: "--input-border-radius: 0.6rem" %>
 
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to room_path(@forum) %>
-  </div>
-<% end %>
+    <%= form.button class: "btn btn--reversed flex-item-no-shrink", type: "submit" do %>
+      <%= icon_tag "check" %>
+      <span class="for-screen-reader">Save title</span>
+    <% end %>
 
-<section class="panel flex flex-column gap">
-  <h1 class="txt-large margin-none"><strong>Edit post</strong></h1>
-
-  <%= form_with model: @post, url: rooms_forum_post_path(@forum, @post), scope: :post, class: "flex flex-column gap" do |form| %>
-    <label class="flex align-center gap input input--actor">
-      <%= form.text_field :title, value: @post.title, class: "input txt-large",
-            required: true, autofocus: true, placeholder: "Post title", maxlength: 200 %>
-      <span class="for-screen-reader">Post title</span>
-    </label>
-
-    <%= form.button class: "btn btn--reversed txt-large center", type: "submit" do %>
-      <%= icon_tag "check", size: 20 %>
-      <span>Save changes</span>
+    <%= link_to forum_post_path(@post.slug), class: "btn btn--borderless flex-item-no-shrink",
+          data: { turbo_frame: dom_id(@post, :title) } do %>
+      <%= icon_tag "close" %>
+      <span class="for-screen-reader">Cancel</span>
     <% end %>
   <% end %>
-</section>
+<% end %>

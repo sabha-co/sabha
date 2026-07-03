@@ -189,6 +189,10 @@
   color: var(--color-text);
 }
 
+/* The title frame hugs the title in display mode (so the Solved badge stays
+   alongside), but takes the row when it holds the inline edit form. */
+.forum-post-header__title-frame:has(.forum-post-title-edit) { flex: 1; }
+
 /* --- opening post (the question): read it like a post, not a chat line --- */
 /* The opening message lives in the forum (message--forum-opening); give it
    larger, roomier type. The parent partial already emits the "N replies"
