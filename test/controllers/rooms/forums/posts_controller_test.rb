@@ -89,6 +89,18 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_slug, post.reload.slug
   end
 
+  test "a deleted post cannot be edited through the nested route" do
+    post = Current.set(user: users(:david)) { @forum.post!(title: "Doomed", body: "<div>b</div>") }
+    post.deactivate
+
+    get edit_rooms_forum_post_url(@forum, post)
+    assert_redirected_to room_url(@forum)
+
+    patch rooms_forum_post_url(@forum, post), params: { post: { title: "Zombie" } }
+    assert_redirected_to room_url(@forum)
+    assert_equal "Doomed", post.reload.name
+  end
+
   test "a non-OP non-admin member cannot edit a post" do
     post = Current.set(user: users(:kevin)) { @forum.post!(title: "Mine", body: "<div>b</div>") }
     @forum.memberships.grant_to(users(:jz))

@@ -47,6 +47,15 @@ class Rooms::Forums::Posts::SolutionsControllerTest < ActionDispatch::Integratio
     assert_response :forbidden
   end
 
+  test "a deleted post cannot be marked Solved through the nested route" do
+    @post.deactivate
+
+    post rooms_forum_post_solution_url(@forum, @post)
+
+    assert_redirected_to room_url(@forum)
+    assert_not @post.reload.solved?
+  end
+
   test "a post can be marked Solved with zero replies" do
     sign_in :kevin
     assert_equal 0, @post.messages_count

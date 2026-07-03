@@ -12,7 +12,11 @@ module ForumPostScoped
     end
 
     def set_post
-      @post = @forum&.threads&.find_by(id: params[:post_id] || params[:id])
+      # `.active` so a deleted post can't be edited or solved through these
+      # nested routes — its /f/:slug page already 404s, and the forum.threads
+      # association isn't active-scoped (it joins through the still-active
+      # opening message).
+      @post = @forum&.threads&.active&.find_by(id: params[:post_id] || params[:id])
       redirect_to room_url(@forum), alert: "Post not found" unless @post
     end
 

@@ -39,7 +39,9 @@ class Room::MessagePusher
     def push_path
       helpers = Rails.application.routes.url_helpers
 
-      if room.thread? && room.parent_message
+      if post = message.forum_post
+        helpers.forum_post_path(post.slug)
+      elsif room.thread? && room.parent_message
         helpers.room_at_message_path(room.parent_message.room, room.parent_message)
       else
         helpers.room_path(room)

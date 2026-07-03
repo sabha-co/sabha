@@ -82,6 +82,18 @@ class Message < ApplicationRecord
     !event?
   end
 
+  # The forum post (Rooms::Thread) this message belongs to — as the opening
+  # message (the post spawned on it) or a reply (the post it lives in). nil for
+  # non-forum messages. Permalinks resolve forum messages to /f/:slug through
+  # this; the plain room-anchor URL would land on the gallery instead.
+  def forum_post
+    if room.forum?
+      threads.first
+    elsif room.thread? && room.forum_post?
+      room
+    end
+  end
+
   def bookmarked_by?(user)
     # Scope path: with_bookmark_status_for LEFT JOIN sets is_bookmarked
     # Use ActiveRecord::Type::Boolean to handle SQLite's 0/1/"0"/"1" values
@@ -364,8 +376,11 @@ class Message < ApplicationRecord
       broadcast_reactivation if saved_change_to_attribute?(:active) && active?
     end
 
+    # Forum opening posts are gallery entries, not chat: they must not bump the
+    # forum's activity (which would reorder it in the sidebar like a chat
+    # message). Replies live in the post-thread, whose activity still updates.
     def touch_room_activity
-      room.touch(:last_active_at)
+      room.touch(:last_active_at) unless room.forum?
     end
 
     def ensure_can_message_recipient

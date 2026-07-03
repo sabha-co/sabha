@@ -9,7 +9,9 @@ module MessagesHelper
 
   def message_permalink_path(message)
     room = message.room
-    if room.thread? && (parent = room.parent_message)
+    if post = message.forum_post
+      room.forum? ? forum_post_path(post.slug) : forum_post_path(post.slug, message_id: message.id)
+    elsif room.thread? && (parent = room.parent_message)
       room_at_message_path(parent.room, parent)
     else
       room_at_message_path(room, message)
@@ -18,7 +20,9 @@ module MessagesHelper
 
   def message_permalink_url(message)
     room = message.room
-    if room.thread? && (parent = room.parent_message)
+    if post = message.forum_post
+      room.forum? ? forum_post_url(post.slug) : forum_post_url(post.slug, message_id: message.id)
+    elsif room.thread? && (parent = room.parent_message)
       room_at_message_url(parent.room, parent)
     else
       room_at_message_url(room, message)

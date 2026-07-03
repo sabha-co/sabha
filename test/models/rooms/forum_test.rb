@@ -9,6 +9,17 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_includes forum.users, users(:david)
   end
 
+  test "an opening post does not bump the forum's activity (no chat-counter reorder)" do
+    forum = rooms(:help_desk)
+    before = forum.last_active_at
+
+    travel_to 3.hours.from_now do
+      create_forum_post(title: "Fresh post", forum: forum)
+    end
+
+    assert_equal before.to_i, forum.reload.last_active_at.to_i
+  end
+
   test "type predicates place a forum among sidebar rooms, not threads or directs" do
     forum = rooms(:help_desk)
 
