@@ -121,6 +121,17 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='room[name]']"
   end
 
+  test "the forum edit page has no public/private access toggle" do
+    # The access switch only knows Open<->Closed; toggling it on a forum would
+    # becomes!(Rooms::Open) and orphan the posts, so it must not render here.
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+
+    get edit_rooms_forum_url(forum)
+
+    assert_response :success
+    assert_select "form[action=?]", room_access_path(forum), count: 0
+  end
+
   test "a non-admin non-creator cannot edit or update the forum" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: [ users(:david), users(:kevin) ])
 
