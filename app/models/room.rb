@@ -264,6 +264,7 @@ class Room < ApplicationRecord
   def remove_member!(user, actor:)
     memberships.revoke_from(user)
     invalidate_member_count_cache
+    clean_up_thread_follows_later(user)
     announce_membership_changes(revoked: [ user ], actor: actor)
   end
 
@@ -292,7 +293,19 @@ class Room < ApplicationRecord
 
   def accept_leave!(user)
     memberships.find_by!(user: user).leave!
+    clean_up_thread_follows_later(user)
     post_system_message(event: "member_left", body: "left", actor: user)
+  end
+
+  # Silence one member's chat-thread follows so reply notifications stop for a
+  # room they left — their per-thread memberships go invisible. Scoped to that
+  # member, never touches other members. Runs from ThreadFollowCleanupJob.
+  # Mirrors Rooms::Forum#silence_post_follows_for for a forum's posts.
+  def silence_thread_follows_for(user)
+    thread_ids = Rooms::Thread.where(parent_room_id: id).select(:id)
+    Membership.active.where(user_id: user.id, room_id: thread_ids)
+              .where.not(involvement: "invisible")
+              .update_all(involvement: "invisible")
   end
 
   def bot_memberships_for_events(item, event)
@@ -327,6 +340,14 @@ class Room < ApplicationRecord
   end
 
   private
+    # Only Open and Closed rooms spawn chat threads, so only they need the
+    # follow-silencing sweep on leave. Forums run their own post-follow cleanup,
+    # and directs/sub-rooms have no threads to silence.
+    def clean_up_thread_follows_later(user)
+      return unless open? || closed?
+      ThreadFollowCleanupJob.perform_later(room: self, user: user)
+    end
+
     def destroy_notifications_for_messages
       message_ids = Message.where(room_id: id).pluck(:id)
       return if message_ids.empty?
