@@ -42,14 +42,6 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to room_url(forum)
   end
 
-  test "show renders the gallery for a member" do
-    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
-
-    get room_url(forum)
-
-    assert_response :success
-  end
-
   test "the gallery renders a card per post with title, Solved badge, and a panel link" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
     Current.set(user: users(:david)) do

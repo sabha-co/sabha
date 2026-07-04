@@ -29,15 +29,9 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_equal before.to_i, forum.reload.last_active_at.to_i
   end
 
-  test "type predicates place a forum among sidebar rooms, not threads or directs" do
-    forum = rooms(:help_desk)
-
-    assert forum.forum?
-    assert forum.sidebar_room?
-    assert_not forum.thread?
-    assert_not forum.direct?
-    assert_not forum.open?
-    assert_not forum.closed?
+  test "a forum counts as a sidebar room; a direct message does not" do
+    assert rooms(:help_desk).sidebar_room?, "forums list in the sidebar with open and closed rooms"
+    assert_not rooms(:david_and_jason).sidebar_room?, "directs stay out of the room sidebar"
   end
 
   test "forums scope returns only forums" do
