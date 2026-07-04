@@ -140,7 +140,7 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#thread_panel_frame"
   end
 
-  test "show requires membership in thread" do
+  test "show requires access to the parent room" do
     parent_message = @room.messages.create!(
       body: "Parent for access test",
       creator: @jason,
@@ -148,8 +148,10 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     )
 
     thread = Rooms::Thread.create!(parent_message: parent_message, creator: @jason)
-    # Don't grant membership to david
 
+    # kevin is not a member of the parent room, so thread access is denied —
+    # access derives from the parent room, not from a per-thread membership.
+    sign_in :kevin
     get rooms_thread_url(thread)
     assert_redirected_to root_url
   end
@@ -198,6 +200,7 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
   test "update requires appropriate permissions" do
     sign_in :jz
     @jz = users(:jz)
+    @room.memberships.grant_to(@jz) # a parent-room member, so jz can view the thread…
 
     parent_message = @room.messages.create!(
       body: "Parent for update permission test",
@@ -207,7 +210,7 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
 
     thread = Rooms::Thread.create_for({ parent_message_id: parent_message.id, creator: @david }, users: [ @jz ])
 
-    # jz is not creator or admin, should be forbidden
+    # …but jz is neither the creator nor an admin, so renaming is forbidden.
     patch rooms_thread_url(thread), params: { room: { name: "Hijacked Name" } }
     assert_response :forbidden
 
@@ -228,6 +231,7 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
   test "destroy requires appropriate permissions" do
     sign_in :jz
     @jz = users(:jz)
+    @room.memberships.grant_to(@jz) # a parent-room member, so jz can view the thread…
 
     parent_message = @room.messages.create!(
       body: "Parent for permission test",
@@ -237,7 +241,7 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
 
     thread = Rooms::Thread.create_for({ parent_message_id: parent_message.id, creator: @david }, users: [ @jz ])
 
-    # jz is not creator or admin, should be forbidden
+    # …but jz is neither the creator nor an admin, so deleting is forbidden.
     delete rooms_thread_url(thread)
     assert_response :forbidden
 

@@ -26,12 +26,13 @@ class User < ApplicationRecord
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
 
   # A single message the user can reach: one in a room they belong to
-  # (reachable_messages), or — because a forum post derives access from its forum
-  # rather than a per-post membership — a message in a post they can view. Raises
-  # when neither applies, so callers 404 the way `reachable_messages.find` did.
+  # (reachable_messages), or — because a nested sub-room (forum post or chat
+  # thread) derives access from its parent rather than a per-sub-room membership
+  # — a message in a sub-room they can view. Raises when neither applies, so
+  # callers 404 the way `reachable_messages.find` did.
   def reachable_message(id)
     reachable_messages.find_by(id:) ||
-      viewable_forum_post_message(id) ||
+      viewable_sub_room_message(id) ||
       raise(ActiveRecord::RecordNotFound, "Couldn't find Message with id=#{id}")
   end
 
@@ -208,12 +209,13 @@ class User < ApplicationRecord
   end
 
   private
-    # A message whose room is a forum post this user can view — access derives
-    # from the forum, so no per-post membership is required. Nil for anything
-    # that isn't a post or that the user can't see.
-    def viewable_forum_post_message(id)
+    # A message whose room is a nested sub-room (forum post or chat thread) this
+    # user can view — access derives from the parent, so no per-sub-room
+    # membership is required. Nil for anything that isn't a sub-room or that the
+    # user can't see.
+    def viewable_sub_room_message(id)
       message = Message.active.find_by(id:)
-      message if message&.room&.post? && message.room.viewable_by?(self)
+      message if message&.room&.sub_room? && message.room.viewable_by?(self)
     end
 
     def deactivate_direct_rooms

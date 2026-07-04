@@ -146,6 +146,19 @@ class Room < ApplicationRecord
     open? || closed? || forum?
   end
 
+  # Chat threads and forum posts are nested sub-rooms — they derive access from a
+  # parent and never stand on their own in the sidebar.
+  def sub_room?
+    thread? || post?
+  end
+
+  # Access to a room derives from active membership. Sub-rooms (chat threads and
+  # forum posts) override this to delegate to their parent, so a parent member
+  # can open them without a per-sub-room membership row of their own.
+  def viewable_by?(user)
+    user.present? && memberships.active.exists?(user_id: user.id)
+  end
+
   def default_involvement(user: nil)
     "mentions"
   end

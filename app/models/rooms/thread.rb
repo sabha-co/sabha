@@ -11,6 +11,11 @@ class Rooms::Thread < Room
   # Denormalize the room this thread was spawned in (see Room#parent_room).
   before_validation :assign_parent_room, on: :create
 
+  # Access derives from the room this thread was spawned in — a member of the
+  # parent room can open the thread without a per-thread membership row (mirrors
+  # Rooms::Post delegating to its forum).
+  delegate :viewable_by?, to: :parent_room
+
   def self.find_or_create_for(parent_message, users:)
     raise NestedThreadError if parent_message.room.thread?
 
