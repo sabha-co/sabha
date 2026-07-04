@@ -47,7 +47,7 @@ class MessagesController < ApplicationController
   def destroy
     # A post's opening message is its body — deleting it alone would orphan a
     # bodyless post. Delete the whole post instead (Rooms::Forums::PostsController).
-    return head :forbidden if @room.is_a?(Rooms::Post) && @room.opening_message?(@message)
+    return head :forbidden if @room.post? && @room.opening_message?(@message)
 
     @message.deactivate
     @message.broadcast_remove

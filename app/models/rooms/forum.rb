@@ -75,6 +75,16 @@ class Rooms::Forum < Room
     clean_up_post_follows_later(user)
   end
 
+  # Silence one member's post follows so reply notifications stop for a forum
+  # they left — their per-post memberships go invisible. Scoped to that member,
+  # never touches other members. Runs from ForumFollowCleanupJob.
+  def silence_post_follows_for(user)
+    post_ids = Rooms::Post.where(parent_room_id: id).select(:id)
+    Membership.active.where(user_id: user.id, room_id: post_ids)
+              .where.not(involvement: "invisible")
+              .update_all(involvement: "invisible")
+  end
+
   private
     def clean_up_post_follows_later(user)
       ForumFollowCleanupJob.perform_later(forum: self, user: user)

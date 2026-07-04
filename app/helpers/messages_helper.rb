@@ -78,7 +78,7 @@ module MessagesHelper
   # creator (the OP), so this is deterministic and O(1) — cache-safe. Non-post
   # messages are never OP.
   def forum_op?(message)
-    message.room.is_a?(Rooms::Post) && message.creator_id == message.room.creator_id
+    message.room.post? && message.creator_id == message.room.creator_id
   end
 
   # True for the single opening message of a forum post — its earliest message,
@@ -86,7 +86,7 @@ module MessagesHelper
   # Memoized per post so a message list resolves it once, not per message.
   def forum_opening_message?(message)
     room = message.room
-    return false unless room.is_a?(Rooms::Post)
+    return false unless room.post?
 
     (@forum_opening_ids ||= {})[room.id] ||= room.messages.active.order(:created_at, :id).pick(:id)
     @forum_opening_ids[room.id] == message.id

@@ -87,7 +87,7 @@ class Message < ApplicationRecord
   # replies — so the post is simply the message's room. Permalinks resolve post
   # messages to /f/:slug through this.
   def forum_post
-    room if room.is_a?(Rooms::Post)
+    room if room.post?
   end
 
   def bookmarked_by?(user)

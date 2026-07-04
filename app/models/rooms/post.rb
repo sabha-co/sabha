@@ -108,6 +108,10 @@ class Rooms::Post < Room
     membership
   end
 
+  def unfollow!(user)
+    Membership.where(room_id: id, user_id: user.id).destroy_all
+  end
+
   def applicable_activity_types(message)
     types = [ :thread_reply ]
     types << :mention if message.mentionees.any?

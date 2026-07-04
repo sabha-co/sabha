@@ -10,7 +10,7 @@ class Rooms::Posts::MembershipsController < ApplicationController
   end
 
   def destroy
-    Membership.where(room_id: @post.id, user_id: Current.user.id).destroy_all
+    @post.unfollow!(Current.user)
     redirect_back fallback_location: forum_post_url(@post.slug)
   end
 
