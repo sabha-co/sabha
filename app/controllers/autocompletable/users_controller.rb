@@ -22,13 +22,15 @@ class Autocompletable::UsersController < ApplicationController
     def resolve_room
       return unless params[:room_id].present?
 
-      Current.user.rooms.find_by(id: params[:room_id]) ||
-        viewable_sub_room(params[:room_id]) ||
-        raise(ActiveRecord::RecordNotFound)
+      room = Current.user.rooms.find_by(id: params[:room_id]) || viewable_sub_room(params[:room_id])
+      # A silenced-but-active sub-room membership must not grant roster access
+      # once the member has lost parent access — re-check, as set_room does.
+      room = nil if room&.sub_room? && !room.viewable_by?(Current.user)
+      room || raise(ActiveRecord::RecordNotFound)
     end
 
     def viewable_sub_room(room_id)
-      room = Room.active.where(type: %w[ Rooms::Thread Rooms::Post ]).find_by(id: room_id)
+      room = Room.active.sub_rooms.find_by(id: room_id)
       room if room&.viewable_by?(Current.user)
     end
 

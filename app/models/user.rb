@@ -31,7 +31,11 @@ class User < ApplicationRecord
   # — a message in a sub-room they can view. Raises when neither applies, so
   # callers 404 the way `reachable_messages.find` did.
   def reachable_message(id)
-    reachable_messages.find_by(id:) ||
+    message = reachable_messages.find_by(id:)
+    # A silenced-but-active sub-room membership must not authorize a message the
+    # user can no longer view — re-check derived access, as set_room does.
+    message = nil if message&.room&.sub_room? && !message.room.viewable_by?(self)
+    message ||
       viewable_sub_room_message(id) ||
       raise(ActiveRecord::RecordNotFound, "Couldn't find Message with id=#{id}")
   end

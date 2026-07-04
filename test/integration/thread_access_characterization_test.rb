@@ -63,6 +63,21 @@ class ThreadAccessCharacterizationTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url, "removal from the parent room revokes thread access"
   end
 
+  test "a removed member cannot reach a thread message via a silenced-but-active membership" do
+    closed = Rooms::Closed.create!(name: "War Room", creator: @creator)
+    closed.memberships.grant_to([ @creator, @member ])
+    parent = closed.messages.create!(body: "hi", creator: @creator)
+    thread = Rooms::Thread.find_or_create_for(parent, creator: @creator)
+    reply = Current.set(user: @member) { thread.messages.create!(body: "in", creator: @member) }
+    assert_equal reply, @member.reachable_message(reply.id), "engaged member reaches it before removal"
+
+    closed.remove_member!(@member, actor: @creator)
+
+    # The member's thread membership is still active (only silenced), so it would
+    # resolve via reachable_messages — the viewable_by? re-check must deny it.
+    assert_raises(ActiveRecord::RecordNotFound) { @member.reachable_message(reply.id) }
+  end
+
   # ---- Reply notifications -------------------------------------------------
 
   test "a reply notifies active thread followers, not passive members or non-members" do

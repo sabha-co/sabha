@@ -59,6 +59,9 @@ class Room < ApplicationRecord
   # room listings and the sidebar. (Named for threads historically; it now also
   # covers Rooms::Post, which is likewise a sub-room, not a sidebar room.)
   scope :without_threads, -> { where.not(type: %w[ Rooms::Thread Rooms::Post ]) }
+  # Nested sub-rooms — chat threads and forum posts. The class-level complement
+  # of #sub_room?, and the single source for the sub-room STI type list.
+  scope :sub_rooms, -> { where(type: %w[ Rooms::Thread Rooms::Post ]) }
 
   # Rooms a user can discover and join from Browse: open rooms and forums they
   # aren't already in. Called on Room for both; on Rooms::Open (bots API) STI

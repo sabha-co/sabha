@@ -70,7 +70,7 @@ class MessagesController < ApplicationController
     end
 
     def viewable_sub_room(room_id)
-      room = Room.active.where(type: %w[ Rooms::Thread Rooms::Post ]).find_by(id: room_id)
+      room = Room.active.sub_rooms.find_by(id: room_id)
       room if room&.viewable_by?(Current.user)
     end
 
