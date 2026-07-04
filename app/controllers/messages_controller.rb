@@ -77,7 +77,7 @@ class MessagesController < ApplicationController
       if @room
         @message = @room.messages.find(params[:id])
       else
-        @message = Current.user.reachable_messages.find(params[:id])
+        @message = Current.user.reachable_message(params[:id])
       end
     end
 

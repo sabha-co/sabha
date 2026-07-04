@@ -893,4 +893,16 @@ class UserTest < ActiveSupport::TestCase
     assert_nil membership.reload.unread_at,
       "blank loaded_at must be clamped to Time.current so unread is marked read"
   end
+
+  test "reachable_message resolves forum-post messages by forum access, not post membership" do
+    forum = Rooms::Forum.create_for({ name: "Help", creator: users(:david) }, users: [ users(:david), users(:kevin) ])
+    post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }
+    message = post.messages.first
+    member = users(:kevin)   # in the forum, no post membership
+    outsider = users(:jason) # not in the forum
+
+    assert_not Membership.exists?(room_id: post.id, user_id: member.id)
+    assert_equal message, member.reachable_message(message.id), "a forum member reaches the post message"
+    assert_raises(ActiveRecord::RecordNotFound) { outsider.reachable_message(message.id) }
+  end
 end

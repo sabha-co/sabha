@@ -25,6 +25,16 @@ class User < ApplicationRecord
 
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
 
+  # A single message the user can reach: one in a room they belong to
+  # (reachable_messages), or — because a forum post derives access from its forum
+  # rather than a per-post membership — a message in a post they can view. Raises
+  # when neither applies, so callers 404 the way `reachable_messages.find` did.
+  def reachable_message(id)
+    reachable_messages.find_by(id:) ||
+      viewable_forum_post_message(id) ||
+      raise(ActiveRecord::RecordNotFound, "Couldn't find Message with id=#{id}")
+  end
+
   def active_invite_link
     join_codes.active.first
   end
@@ -189,6 +199,14 @@ class User < ApplicationRecord
   end
 
   private
+    # A message whose room is a forum post this user can view — access derives
+    # from the forum, so no per-post membership is required. Nil for anything
+    # that isn't a post or that the user can't see.
+    def viewable_forum_post_message(id)
+      message = Message.active.find_by(id:)
+      message if message&.room&.post? && message.room.viewable_by?(self)
+    end
+
     def deactivate_direct_rooms
       Membership.where(user_id: id).direct_rooms.each do |membership|
         membership.room.deactivate
