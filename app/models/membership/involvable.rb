@@ -25,7 +25,7 @@ module Membership::Involvable
   end
 
   def ensure_receives_mentions!
-    update(involvement: :mentions) if involved_in_invisible?
+    update!(involvement: :mentions) if involved_in_invisible?
   end
 
   private
