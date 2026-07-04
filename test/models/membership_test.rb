@@ -601,13 +601,23 @@ class MembershipTest < ActiveSupport::TestCase
     assert_not membership.receives_mentions?
   end
 
-  test "ensure_receives_mentions! upgrades involvement to mentions" do
+  test "ensure_receives_mentions! upgrades an uninvolved invisible member to mentions" do
+    membership = memberships(:david_pets)
+    membership.update!(involvement: :invisible)
+
+    membership.ensure_receives_mentions!
+
+    assert_equal "mentions", membership.reload.involvement
+  end
+
+  test "ensure_receives_mentions! preserves an explicit nothing mute" do
     membership = memberships(:david_pets)
     membership.update!(involvement: :nothing)
 
     membership.ensure_receives_mentions!
 
-    assert_equal "mentions", membership.reload.involvement
+    assert_equal "nothing", membership.reload.involvement,
+      "posting must not silently un-mute an explicit mute"
   end
 
   test "ensure_receives_mentions! does not downgrade everything to mentions" do
