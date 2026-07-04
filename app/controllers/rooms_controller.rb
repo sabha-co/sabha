@@ -1,4 +1,6 @@
 class RoomsController < ApplicationController
+  include SubRoomAccessible
+
   before_action :set_room, only: %i[ show destroy ]
   before_action :set_membership, only: %i[ show ]
   before_action :ensure_has_real_name, only: %i[ show ]
@@ -45,17 +47,11 @@ class RoomsController < ApplicationController
       # stale row must not grant access after they leave the parent. So fall back
       # to parent-derived access, then re-check viewable_by? for any sub-room.
       room ||= viewable_sub_room(params[:room_id] || params[:id])
-      room = nil if room&.sub_room? && !room.viewable_by?(Current.user)
-      if room
+      if room = deny_stale_sub_room(room)
         @room = room
       else
         redirect_to root_url, alert: "Room not found or inaccessible"
       end
-    end
-
-    def viewable_sub_room(room_id)
-      room = Room.active.sub_rooms.find_by(id: room_id)
-      room if room&.viewable_by?(Current.user)
     end
 
     def set_membership

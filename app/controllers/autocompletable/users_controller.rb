@@ -1,4 +1,6 @@
 class Autocompletable::UsersController < ApplicationController
+  include SubRoomAccessible
+
   def index
     @users = find_autocompletable_users
     @users = add_everyone_mention_if_applicable(@users)
@@ -23,15 +25,7 @@ class Autocompletable::UsersController < ApplicationController
       return unless params[:room_id].present?
 
       room = Current.user.rooms.find_by(id: params[:room_id]) || viewable_sub_room(params[:room_id])
-      # A silenced-but-active sub-room membership must not grant roster access
-      # once the member has lost parent access — re-check, as set_room does.
-      room = nil if room&.sub_room? && !room.viewable_by?(Current.user)
-      room || raise(ActiveRecord::RecordNotFound)
-    end
-
-    def viewable_sub_room(room_id)
-      room = Room.active.sub_rooms.find_by(id: room_id)
-      room if room&.viewable_by?(Current.user)
+      deny_stale_sub_room(room) || raise(ActiveRecord::RecordNotFound)
     end
 
     def users_scope
