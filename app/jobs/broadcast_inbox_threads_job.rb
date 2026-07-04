@@ -10,7 +10,7 @@ class BroadcastInboxThreadsJob < ApplicationJob
     return unless thread && parent_message
 
     thread_user_ids = thread.memberships.active.visible.pluck(:user_id)
-    parent_room_user_ids = parent_message.room.memberships.active.involved_in_everything.pluck(:user_id)
+    parent_room_user_ids = thread.parent_room.memberships.active.involved_in_everything.pluck(:user_id)
     all_user_ids = (thread_user_ids + parent_room_user_ids).uniq - [ creator_id ]
 
     return if all_user_ids.empty?

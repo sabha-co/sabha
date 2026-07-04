@@ -55,12 +55,9 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
 
   private
     # The container whose "everything" members also hear about a reply: a forum
-    # post's forum, or a chat thread's parent room.
+    # post's forum, or a chat thread's parent room — both the sub-room's
+    # parent_room.
     def reply_container_for(room)
-      if room.post?
-        room.parent_room
-      elsif room.parent_message
-        room.parent_message.room
-      end
+      room.parent_room if room.sub_room?
     end
 end

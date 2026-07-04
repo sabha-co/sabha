@@ -41,7 +41,7 @@ module Message::Threadable
     def update_parent_message_threads
       if room.thread? && room.parent_message
         broadcast_replace_to(
-          room.parent_message.room,
+          room.parent_room,
           :messages,
           target: ActionView::RecordIdentifier.dom_id(room.parent_message, :threads),
           partial: "messages/threads",
