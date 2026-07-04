@@ -71,7 +71,13 @@ class RoomsController < ApplicationController
       set_page_and_extract_portion_from posts, per_page: 20
       @posts = @page.records
       @participants = Rooms::Post.preload_participant_creators(@posts)
-      render "rooms/forums/gallery"
+
+      # Only a lazy pagination request (which carries ?page=N) wants the append
+      # stream. A plain visit — including the redirect-follow after creating a
+      # forum or post, which Turbo sends with a turbo-stream Accept header but no
+      # page param — must render the full gallery page, or the browser applies a
+      # no-op stream against an off-page target and never navigates.
+      render "rooms/forums/gallery", formats: [ params[:page].present? ? :turbo_stream : :html ]
     end
 
     def find_messages

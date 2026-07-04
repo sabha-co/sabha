@@ -34,6 +34,31 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".forum"
   end
 
+  # Regression: creating a forum or post redirects to the gallery, and Turbo
+  # follows that redirect with a turbo-stream Accept header but no page param.
+  # Without disambiguating on the page param, show served the pagination fragment
+  # (an append against an off-page target), so the browser never navigated and
+  # creation looked like it silently failed.
+  test "a turbo-stream visit without a page param renders the full gallery page" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+
+    get room_url(forum), as: :turbo_stream
+
+    assert_response :success
+    assert_select ".forum"
+    assert_select "turbo-stream[action=append]", count: 0
+  end
+
+  test "a paginated turbo-stream request renders the append stream" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+    Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }
+
+    get room_url(forum, page: 1), as: :turbo_stream
+
+    assert_response :success
+    assert_select "turbo-stream[action=append]"
+  end
+
   test "the namespaced forum path redirects to the canonical room URL" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
 
