@@ -372,11 +372,8 @@ class Message < ApplicationRecord
       broadcast_reactivation if saved_change_to_attribute?(:active) && active?
     end
 
-    # Forum opening posts are gallery entries, not chat: they must not bump the
-    # forum's activity (which would reorder it in the sidebar like a chat
-    # message). Replies live in the post-thread, whose activity still updates.
     def touch_room_activity
-      room.touch(:last_active_at) unless room.forum?
+      room.touch(:last_active_at)
     end
 
     def ensure_can_message_recipient

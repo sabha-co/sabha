@@ -39,10 +39,17 @@ class Rooms::Post < Room
     [ messages_count - 1, 0 ].max
   end
 
-  # The opening message (message #1) — the post body. It can't be deleted on its
-  # own (that would leave a bodyless post); delete the whole post instead.
+  # The id of the opening message (message #1) — the post body, its earliest
+  # message. The single definition of "which message opens the post"; the message
+  # list helper (forum_opening_message?) reads it too.
+  def opening_message_id
+    messages.active.order(:created_at, :id).pick(:id)
+  end
+
+  # The opening message can't be deleted on its own (that would leave a bodyless
+  # post); delete the whole post instead.
   def opening_message?(message)
-    message.id == messages.active.order(:created_at, :id).pick(:id)
+    message.id == opening_message_id
   end
 
   # A post's title is stored in the `name` column.

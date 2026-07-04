@@ -83,12 +83,13 @@ module MessagesHelper
 
   # True for the single opening message of a forum post — its earliest message,
   # which carries the post body and gets the roomier "question" hero treatment.
-  # Memoized per post so a message list resolves it once, not per message.
+  # Memoized per post so a message list resolves it once, not per message; the
+  # "which message opens the post" query lives on Rooms::Post#opening_message_id.
   def forum_opening_message?(message)
     room = message.room
     return false unless room.post?
 
-    (@forum_opening_ids ||= {})[room.id] ||= room.messages.active.order(:created_at, :id).pick(:id)
+    (@forum_opening_ids ||= {})[room.id] ||= room.opening_message_id
     @forum_opening_ids[room.id] == message.id
   end
 
