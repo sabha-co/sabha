@@ -15,6 +15,7 @@ module Room::Nested
     transaction do
       Membership.where(room_id: id).update_all(active: false)
       Message.where(room_id: id).update_all(active: false)
+      destroy_notifications_for_messages
       self.cascade_deactivated = cascade
       deactivate!
     end

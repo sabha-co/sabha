@@ -132,6 +132,17 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_not Rooms::Post.exists?(post.id)
   end
 
+  test "deleting a forum destroys notifications tied to its posts' messages" do
+    forum = rooms(:help_desk)
+    post = create_forum_post
+    message = post.messages.first
+    Notification.create!(user: users(:jason), message: message, actor: users(:david), activity_type: "thread_reply")
+
+    assert_difference -> { Notification.where(message_id: message.id).count }, -1 do
+      forum.deactivate
+    end
+  end
+
   # --- Review-hardening -------------------------------------------------------
 
   test "an opening post that mentions a member routes a mention activity type" do

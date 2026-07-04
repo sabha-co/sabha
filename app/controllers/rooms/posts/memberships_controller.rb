@@ -17,6 +17,7 @@ class Rooms::Posts::MembershipsController < ApplicationController
   private
     def set_post
       @post = Rooms::Post.active.find_by(id: params[:post_id])
-      head :forbidden unless @post&.viewable_by?(Current.user)
+      return head :not_found unless @post
+      head :forbidden unless @post.viewable_by?(Current.user)
     end
 end

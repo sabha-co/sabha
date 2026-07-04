@@ -34,4 +34,12 @@ class Rooms::Posts::MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
     assert_not Membership.exists?(room_id: @post.id, user_id: users(:jz).id)
   end
+
+  test "Following a nonexistent post returns 404, not 403" do
+    sign_in :kevin
+
+    post rooms_post_membership_url(999_999)
+
+    assert_response :not_found
+  end
 end

@@ -220,6 +220,16 @@ class Rooms::PostTest < ActiveSupport::TestCase
     assert_not Solution.exists?(user_id: solver.id)
   end
 
+  test "deleting a post destroys notifications tied to its messages" do
+    post = Current.set(user: users(:david)) { @forum.post!(title: "Answered", body: "b") }
+    message = post.messages.first
+    Notification.create!(user: users(:jason), message: message, actor: users(:david), activity_type: "thread_reply")
+
+    assert_difference -> { Notification.where(message_id: message.id).count }, -1 do
+      post.deactivate
+    end
+  end
+
   private
     def create_post(title:, author: users(:david))
       Rooms::Post.create!(parent_room: @forum, name: title, creator: author)
