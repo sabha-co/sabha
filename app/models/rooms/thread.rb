@@ -16,6 +16,13 @@ class Rooms::Thread < Room
   # Rooms::Post delegating to its forum).
   delegate :viewable_by?, to: :parent_room
 
+  # @mentions resolve against the parent room's roster rather than the thread's
+  # handful of followers, so a parent member can be mentioned in before they've
+  # engaged (mirrors Rooms::Post#mentionable_users).
+  def mentionable_users
+    parent_room.users
+  end
+
   # Grants a membership to the creator only — a thread never fans a row out to
   # every parent-room member. Other members view via derived access (see
   # #viewable_by?) and follow lazily on their first reply.

@@ -81,6 +81,29 @@ class ThreadAccessCharacterizationTest < ActionDispatch::IntegrationTest
       "a non-member is never a target"
   end
 
+  test "a parent-room member can be @mentioned in a thread without a thread membership" do
+    # A creator-only thread (no fan-out): jason is a parent member but not a
+    # thread member, yet an @mention must still resolve and notify him.
+    parent_message = @parent.messages.create!(body: "topic", creator: @creator)
+    thread = Rooms::Thread.find_or_create_for(parent_message, creator: @creator)
+    assert_not Membership.exists?(room_id: thread.id, user_id: @member.id),
+      "precondition: the mentionee is not a thread member"
+
+    reply = nil
+    perform_enqueued_jobs do
+      reply = Current.set(user: @creator) do
+        thread.messages.create!(
+          body: "<div>hey #{mention_attachment_for(:jason)}</div>",
+          creator: @creator,
+          client_message_id: "thread-mention-1"
+        )
+      end
+    end
+
+    assert_includes reply.mentionee_ids, @member.id, "a parent member resolves via the parent-room roster"
+    assert Notification.exists?(user: @member, message: reply, activity_type: "mention")
+  end
+
   # ---- Inbox threads -------------------------------------------------------
 
   test "inbox threads surfaces a followed thread and hides it from a non-member" do
