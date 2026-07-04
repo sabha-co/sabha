@@ -154,7 +154,7 @@ module MessagesHelper
     ""
   end
 
-  def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false, composer_id: "composer")
+  def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false, composer_id: "composer", forum_replies_count: nil)
     [
       message,
       room_id,
@@ -165,7 +165,8 @@ module MessagesHelper
       is_parent,
       show_room_name,
       composer_id,
-      message.thread_fingerprint
+      message.thread_fingerprint,
+      forum_replies_count
     ]
   end
 

@@ -204,9 +204,10 @@
 .forum-post-header__title-frame:has(.forum-post-title-edit) { flex: 1; }
 
 /* --- opening post (the question): read it like a post, not a chat line --- */
-/* The opening message lives in the forum (message--forum-opening); give it
-   larger, roomier type. The parent partial already emits the "N replies"
-   separator below it, which serves as the divider before the discussion. */
+/* The opening message carries the post body (message--forum-opening); give it
+   larger, roomier type. The message partial emits a "N replies" separator below
+   it (only on the post's own page), which serves as the divider before the
+   discussion. */
 .message--forum-opening .message__body-content {
   font-size: 1.0625rem;
   line-height: 1.6;

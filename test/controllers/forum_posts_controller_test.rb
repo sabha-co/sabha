@@ -26,11 +26,18 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".forum-post-header__glyph"
-    # The opening message lives in the forum and gets the roomier "question" treatment.
+    # The opening message carries the post body and gets the roomier "question" treatment.
     assert_select ".message--forum-opening"
     # The original poster (david) is badged on the opening message; kevin's reply is not.
     assert_select ".message--forum-opening .message__op-badge", text: "OP"
     assert_select ".message__op-badge", count: 1
+    # A "N replies" divider on the opening message separates the question from the
+    # discussion. Its count span carries the id that a new reply broadcasts to
+    # (Message::Threadable#update_thread_reply_count), so it must match exactly.
+    count_id = "#{ActionView::RecordIdentifier.dom_id(post, :replies_separator)}_count"
+    assert_select ".message--forum-opening .message__replies-separator ##{count_id}", text: "1 reply"
+    # Replies never carry the divider — only the opening message does.
+    assert_select ".message:not(.message--forum-opening) .message__replies-separator", count: 0
   end
 
   test "a logged-in non-member sees the join CTA, not the post content or a root bounce" do
