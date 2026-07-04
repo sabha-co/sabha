@@ -51,6 +51,20 @@ class MessagesController < ApplicationController
   end
 
   private
+    # A forum post derives access from its forum: a member can read and reply to
+    # a post without a per-post membership (one is created lazily on reply). So
+    # fall back to forum-derived access when there's no direct membership.
+    def set_room
+      @membership = Current.user.memberships.find_by(room_id: params[:room_id])
+      @room = @membership&.room || viewable_forum_post(params[:room_id])
+      raise ActiveRecord::RecordNotFound unless @room
+    end
+
+    def viewable_forum_post(room_id)
+      post = Rooms::Post.active.find_by(id: room_id)
+      post if post&.viewable_by?(Current.user)
+    end
+
     def set_message
       if @room
         @message = @room.messages.find(params[:id])

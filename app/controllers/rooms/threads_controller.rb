@@ -35,7 +35,7 @@ class Rooms::ThreadsController < RoomsController
 
   private
   def set_parent_message
-    if message = Current.user.reachable_messages.joins(:room).where.not(room: { type: [ "Rooms::Direct", "Rooms::Thread", "Rooms::Forum" ] }).find_by(id: params[:parent_message_id])
+    if message = Current.user.reachable_messages.joins(:room).where.not(room: { type: [ "Rooms::Direct", "Rooms::Thread", "Rooms::Forum", "Rooms::Post" ] }).find_by(id: params[:parent_message_id])
       @parent_message = message
     else
       redirect_to root_url, alert: "Message not found or inaccessible"

@@ -1,7 +1,7 @@
 <%# locals: (post:) — OP/admin only; rendered per-viewer inside the post options
     menu, so it stays out of the Solved broadcast (which has no viewer context).
     Refreshes on the toggler's own redirect. %>
-<% forum = post.parent_message.room %>
+<% forum = post.parent_room %>
 <% if post.solved? %>
   <%= button_to rooms_forum_post_solution_path(forum, post), method: :delete,
         class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close" } do %>

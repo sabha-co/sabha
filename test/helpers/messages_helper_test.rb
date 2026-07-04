@@ -6,7 +6,7 @@ class MessagesHelperTest < ActionView::TestCase
   test "a forum post's opening message permalinks to its /f/:slug page, not the gallery" do
     post = create_forum_post(title: "How do I export?")
 
-    assert_equal forum_post_path(post.slug), message_permalink_path(post.parent_message)
+    assert_equal forum_post_path(post.slug), message_permalink_path(post.messages.first)
   end
 
   test "a forum reply permalinks to the post page anchored to the reply" do

@@ -29,7 +29,7 @@ class Rooms::Forums::Posts::SolutionsControllerTest < ActionDispatch::Integratio
   end
 
   test "the original poster can reopen a Solved post (R11 reopen)" do
-    @post.solve!
+    Current.set(user: users(:kevin)) { @post.solve! }
     sign_in :kevin
 
     delete rooms_forum_post_solution_url(@forum, @post)
@@ -56,9 +56,10 @@ class Rooms::Forums::Posts::SolutionsControllerTest < ActionDispatch::Integratio
     assert_not @post.reload.solved?
   end
 
-  test "a post can be marked Solved with zero replies" do
+  test "a post can be marked Solved with only its opening message (no replies)" do
     sign_in :kevin
-    assert_equal 0, @post.messages_count
+    assert_equal 0, @post.replies_count
+    assert_equal 1, @post.messages_count, "just the opening message"
 
     post rooms_forum_post_solution_url(@forum, @post)
 

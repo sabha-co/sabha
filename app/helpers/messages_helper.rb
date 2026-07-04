@@ -10,7 +10,7 @@ module MessagesHelper
   def message_permalink_path(message)
     room = message.room
     if post = message.forum_post
-      room.forum? ? forum_post_path(post.slug) : forum_post_path(post.slug, message_id: message.id)
+      forum_opening_message?(message) ? forum_post_path(post.slug) : forum_post_path(post.slug, message_id: message.id)
     elsif room.thread? && (parent = room.parent_message)
       room_at_message_path(parent.room, parent)
     else
@@ -21,7 +21,7 @@ module MessagesHelper
   def message_permalink_url(message)
     room = message.room
     if post = message.forum_post
-      room.forum? ? forum_post_url(post.slug) : forum_post_url(post.slug, message_id: message.id)
+      forum_opening_message?(message) ? forum_post_url(post.slug) : forum_post_url(post.slug, message_id: message.id)
     elsif room.thread? && (parent = room.parent_message)
       room_at_message_url(parent.room, parent)
     else
@@ -73,18 +73,23 @@ module MessagesHelper
     tag.div id: dom_id(room, :messages), class: "messages", aria: { live: "polite", relevant: "additions" }, data: data, &
   end
 
-  # True when this message was written by the forum post's original poster —
-  # either the opening message itself (which lives in the forum) or a reply by
-  # the same author. Deterministic per message, so it stays cache-safe.
+  # True when this message was written by the forum post's original poster — the
+  # opening message or any later reply by the same author. The post records its
+  # creator (the OP), so this is deterministic and O(1) — cache-safe. Non-post
+  # messages are never OP.
   def forum_op?(message)
+    message.room.is_a?(Rooms::Post) && message.creator_id == message.room.creator_id
+  end
+
+  # True for the single opening message of a forum post — its earliest message,
+  # which carries the post body and gets the roomier "question" hero treatment.
+  # Memoized per post so a message list resolves it once, not per message.
+  def forum_opening_message?(message)
     room = message.room
-    if room.forum?
-      true
-    elsif room.thread? && (parent = room.parent_message) && parent.room.forum?
-      parent.creator_id == message.creator_id
-    else
-      false
-    end
+    return false unless room.is_a?(Rooms::Post)
+
+    (@forum_opening_ids ||= {})[room.id] ||= room.messages.active.order(:created_at, :id).pick(:id)
+    @forum_opening_ids[room.id] == message.id
   end
 
   def message_tag(message, is_unread: false, composer_id: "composer", &)
@@ -111,7 +116,7 @@ module MessagesHelper
     data[:message_event] = true if message.event?
 
     tag.div id: dom_id(message),
-      class: class_names("message", "message--event": message.event?, "message--welcome": message.welcome?, "message--emoji": !message.event? && !message.welcome? && message.plain_text_body.all_emoji?, "message--forum-opening": message.room.forum?),
+      class: class_names("message", "message--event": message.event?, "message--welcome": message.welcome?, "message--emoji": !message.event? && !message.welcome? && message.plain_text_body.all_emoji?, "message--forum-opening": forum_opening_message?(message)),
       data: data, &
   rescue Exception => e
     Sentry.capture_exception(e, extra: { message: message })

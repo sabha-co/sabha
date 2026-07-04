@@ -1,7 +1,7 @@
 <%# locals: (post:, forum:, participants: {}, **rest) %>
 <%# **rest absorbs the default local turbo-rails injects when this partial is
     broadcast (thread: from a post, message: from a reply). %>
-<%= link_to rooms_thread_path(post), id: dom_id(post, :card),
+<%= link_to rooms_post_path(post), id: dom_id(post, :card),
       class: "forum-card flex align-start gap",
       data: { turbo_frame: "thread_panel_frame", updated_at: post.last_active_at&.iso8601 } do %>
   <span class="forum-card__status <%= "forum-card__status--solved" if post.solved? %>" aria-hidden="true">
@@ -33,7 +33,7 @@
           <% end %>
         </span>
       <% end %>
-      <strong><%= pluralize(post.messages_count.to_i, "reply", "replies") %></strong>
+      <strong><%= pluralize(post.replies_count, "reply", "replies") %></strong>
     </span>
 
     <% if post.last_active_at.present? %>

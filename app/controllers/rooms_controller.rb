@@ -81,7 +81,9 @@ class RoomsController < ApplicationController
     end
 
     def first_unread_from(messages)
-      return unless @membership.unread?
+      # A forum member can view a post without a membership (access is
+      # forum-derived), so there may be no unread state to anchor on.
+      return unless @membership&.unread?
       messages.ordered.since(@membership.unread_at).first
     end
 

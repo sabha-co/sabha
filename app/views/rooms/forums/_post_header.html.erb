@@ -21,8 +21,20 @@
         <span>Copy link</span>
       <% end %>
 
+      <% if Current.user && post.followed_by?(Current.user) %>
+        <%= button_to rooms_post_membership_path(post), method: :delete,
+              class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close" } do %>
+          <span>Unfollow</span>
+        <% end %>
+      <% elsif Current.user %>
+        <%= button_to rooms_post_membership_path(post), method: :post,
+              class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close" } do %>
+          <span>Follow</span>
+        <% end %>
+      <% end %>
+
       <% if Current.user&.can_administer?(post) %>
-        <%= link_to edit_rooms_forum_post_path(post.parent_message.room, post),
+        <%= link_to edit_rooms_forum_post_path(post.parent_room, post),
               class: "btn action-btn full-width", data: { turbo_frame: dom_id(post, :title), action: "popup#close" } do %>
           <span>Edit</span>
         <% end %>

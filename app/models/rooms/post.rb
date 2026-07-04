@@ -29,6 +29,12 @@ class Rooms::Post < Room
   scope :recently_active,         -> { order(last_active_at: :desc) }
   scope :reverse_chronologically, -> { order(created_at: :desc) }
 
+  # Replies exclude the opening message (message #1), which carries the post
+  # body. messages_count counts every message in the room, so subtract the OP.
+  def replies_count
+    [ messages_count - 1, 0 ].max
+  end
+
   # A post's title is stored in the `name` column.
   def title
     name
@@ -73,6 +79,14 @@ class Rooms::Post < Room
 
   def default_involvement(user: nil)
     user.present? && user == creator ? "everything" : "invisible"
+  end
+
+  # True when the user is a follower — an active, non-invisible membership that
+  # drives reply notifications. The author and anyone who replied or explicitly
+  # Followed qualifies; a member who never engaged (access is forum-derived) does
+  # not.
+  def followed_by?(user)
+    user.present? && memberships.active.where.not(involvement: "invisible").exists?(user_id: user.id)
   end
 
   # A member becomes a follower of this post the moment they reply — lazily, so

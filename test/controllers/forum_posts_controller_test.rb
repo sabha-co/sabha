@@ -75,14 +75,4 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
-
-  test "deleting the opening message removes the post from its canonical page too" do
-    sign_in :david
-    post = create_post
-    post.parent_message.deactivate
-
-    get forum_post_url(post.slug)
-
-    assert_response :not_found
-  end
 end

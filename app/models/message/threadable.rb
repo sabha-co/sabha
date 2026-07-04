@@ -26,14 +26,16 @@ module Message::Threadable
     end
 
     def update_thread_reply_count
-      if room.thread?
-        broadcast_update_to(
-          room,
-          :messages,
-          target: "#{ActionView::RecordIdentifier.dom_id(room, :replies_separator)}_count",
-          html: ActionController::Base.helpers.pluralize(room.messages_count, "reply", "replies")
-        )
-      end
+      return unless room.thread? || room.post?
+
+      # A chat thread's messages are all replies; a post's exclude the OP.
+      count = room.post? ? room.replies_count : room.messages_count
+      broadcast_update_to(
+        room,
+        :messages,
+        target: "#{ActionView::RecordIdentifier.dom_id(room, :replies_separator)}_count",
+        html: ActionController::Base.helpers.pluralize(count, "reply", "replies")
+      )
     end
 
     def update_parent_message_threads

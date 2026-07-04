@@ -14,19 +14,20 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='post[title]']"
   end
 
-  test "create makes one opening message and one post-thread, persisting title and slug" do
-    assert_difference [ -> { @forum.messages.count }, -> { Rooms::Thread.count } ], 1 do
+  test "create makes one post with its opening message, persisting title and slug" do
+    assert_difference -> { Rooms::Post.count }, 1 do
       post rooms_forum_posts_url(@forum), params: { post: { title: "How do I reset?", body: "<div>Steps?</div>" } }
     end
 
-    thread = Rooms::Thread.last
-    assert_equal "How do I reset?", thread.title
-    assert_equal "how-do-i-reset", thread.slug
+    created = Rooms::Post.last
+    assert_equal "How do I reset?", created.title
+    assert_equal "how-do-i-reset", created.slug
+    assert_equal 1, created.messages.count, "the body becomes message #1"
     assert_redirected_to room_url(@forum)
   end
 
   test "a blank title is rejected and bounces back to the gallery with an alert" do
-    assert_no_difference -> { Rooms::Thread.count } do
+    assert_no_difference -> { Rooms::Post.count } do
       post rooms_forum_posts_url(@forum), params: { post: { title: "", body: "<div>Body</div>" } }
     end
 
@@ -34,12 +35,14 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     assert flash[:alert].present?
   end
 
-  test "every forum member can access a member's new post" do
+  test "a forum member can view a member's new post without holding a post membership" do
     post rooms_forum_posts_url(@forum), params: { post: { title: "Shared", body: "<div>Body</div>" } }
-    thread = Rooms::Thread.last
+    created = Rooms::Post.last
 
-    # Kevin is a forum member but not the poster; he must still be a member of the post.
-    assert_includes thread.users, users(:kevin)
+    # Kevin is a forum member but not the poster: no per-post membership row,
+    # yet access derives from forum membership.
+    assert_not_includes created.users, users(:kevin)
+    assert created.viewable_by?(users(:kevin))
   end
 
   test "creating a post does not mark the forum unread for other members" do
@@ -54,13 +57,13 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
   test "the new post appears in the forum gallery" do
     post rooms_forum_posts_url(@forum), params: { post: { title: "Latest", body: "<div>Body</div>" } }
 
-    assert_includes @forum.threads.active, Rooms::Thread.last
+    assert_includes @forum.posts, Rooms::Post.last
   end
 
   test "a non-member cannot post to the forum" do
     sign_in :jz
 
-    assert_no_difference -> { Rooms::Thread.count } do
+    assert_no_difference -> { Rooms::Post.count } do
       post rooms_forum_posts_url(@forum), params: { post: { title: "Intruder", body: "<div>Body</div>" } }
     end
 
