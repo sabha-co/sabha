@@ -3,6 +3,7 @@ module Message::Threadable
 
   included do
     after_create_commit :involve_creator_in_thread
+    after_create_commit :follow_post_by_creator
     after_create_commit :update_thread_reply_count
     after_create_commit :update_parent_message_threads
     after_create_commit :update_forum_gallery_card
@@ -14,6 +15,14 @@ module Message::Threadable
   private
     def involve_creator_in_thread
       room.involve_user(creator, unread: false) if room.thread?
+    end
+
+    # A reply (or the opening message) makes its author a follower of the post,
+    # lazily — forum posts don't fan membership out to every member, so
+    # engagement is what creates the row. Mirrors Fizzy's
+    # Comment#watch_card_by_creator.
+    def follow_post_by_creator
+      room.follow!(creator) if room.post?
     end
 
     def update_thread_reply_count
@@ -47,7 +56,7 @@ module Message::Threadable
     # not in the forum gallery — so the post-thread owns the card replace (the
     # same broadcast fires on a title/Solved change).
     def update_forum_gallery_card
-      room.broadcast_gallery_card if room.thread?
+      room.broadcast_gallery_card if room.post?
     end
 
     # A forum post is its opening message plus a Rooms::Thread. Deleting the
@@ -64,7 +73,7 @@ module Message::Threadable
     end
 
     def create_thread_reply_notifications
-      return unless room.thread? && room.parent_message
+      return unless (room.thread? && room.parent_message) || room.post?
 
       CreateThreadReplyNotificationsJob.perform_later(message_id: id, thread_id: room.id, creator_id: creator_id)
     end

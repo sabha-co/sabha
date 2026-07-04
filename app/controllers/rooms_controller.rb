@@ -66,7 +66,7 @@ class RoomsController < ApplicationController
                    .includes(creator: { avatar_attachment: :blob })
       set_page_and_extract_portion_from posts, per_page: 20
       @posts = @page.records
-      @participants = Rooms::Thread.preload_participant_creators(@posts)
+      @participants = Rooms::Post.preload_participant_creators(@posts)
       render "rooms/forums/gallery"
     end
 

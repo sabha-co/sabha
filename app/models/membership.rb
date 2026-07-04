@@ -36,7 +36,7 @@ class Membership < ApplicationRecord
   scope :shared, -> { joins(:room).where(rooms: { type: %w[Rooms::Open Rooms::Closed Rooms::Forum] }) }
   scope :direct_rooms, -> { joins(:room).where(rooms: { type: "Rooms::Direct" }) }
   scope :without_direct_rooms, -> { joins(:room).where.not(rooms: { type: "Rooms::Direct" }) }
-  scope :without_thread_rooms, -> { joins(:room).where.not(rooms: { type: "Rooms::Thread" }) }
+  scope :without_thread_rooms, -> { joins(:room).where.not(rooms: { type: %w[ Rooms::Thread Rooms::Post ] }) }
   scope :active_rooms, -> { joins(:room).where(rooms: { active: true }) }
   scope :with_messages, -> { joins(:room).where("rooms.messages_count > 0") }
   # Memberships that have unread messages OR whose room was updated recently.

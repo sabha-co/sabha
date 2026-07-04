@@ -129,7 +129,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
 
     assert_nothing_raised { forum.destroy }
 
-    assert_not Rooms::Thread.exists?(post.id)
+    assert_not Rooms::Post.exists?(post.id)
   end
 
   # --- Review-hardening -------------------------------------------------------
@@ -140,16 +140,5 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     message.stubs(:mentionees).returns([ users(:jason) ])
 
     assert_includes forum.applicable_activity_types(message), :mention
-  end
-
-  test "deleting a post's opening message deactivates the post-thread (no zombie)" do
-    forum = rooms(:help_desk)
-    post = create_forum_post(title: "Doomed")
-    assert post.active?
-
-    post.parent_message.deactivate
-
-    assert post.reload.deactivated?, "the post-thread should be deactivated with its opening message"
-    assert_not_includes forum.posts, post
   end
 end

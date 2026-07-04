@@ -1142,6 +1142,21 @@ columns:
     comment:
   - *11
   - *22
+  solutions:
+  - *7
+  - *10
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: post_id
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': false
+    default:
+    default_function:
+    collation:
+    comment:
+  - *11
+  - *22
   storage_entries:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
@@ -1654,6 +1669,7 @@ primary_keys:
   sessions: id
   single_sign_on_nonces: id
   single_sign_on_records: id
+  solutions: id
   storage_entries: id
   storage_totals: id
   user_notification_settings: id
@@ -1686,6 +1702,7 @@ data_sources:
   sessions: true
   single_sign_on_nonces: true
   single_sign_on_records: true
+  solutions: true
   storage_entries: true
   storage_totals: true
   user_notification_settings: true
@@ -2793,6 +2810,39 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
+  solutions:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: solutions
+    name: index_solutions_on_post_id
+    unique: true
+    columns:
+    - post_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: solutions
+    name: index_solutions_on_user_id
+    unique: false
+    columns:
+    - user_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
   storage_entries:
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: storage_entries
@@ -2961,4 +3011,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260703120000
+version: 20260704000001

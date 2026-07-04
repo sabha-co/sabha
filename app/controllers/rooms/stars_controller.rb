@@ -24,6 +24,6 @@ class Rooms::StarsController < ApplicationController
   private
 
   def ensure_starrable
-    head :unprocessable_entity if @room.direct? || @room.thread? || @membership.involved_in_invisible?
+    head :unprocessable_entity if @room.direct? || @room.thread? || @room.post? || @membership.involved_in_invisible?
   end
 end

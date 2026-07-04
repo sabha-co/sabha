@@ -1,5 +1,5 @@
 # Loads @forum and @post for the forum-post controllers (posts, solutions) and
-# authorizes edits to the post's OP or an admin. The post is a Rooms::Thread
+# authorizes edits to the post's author or an admin. The post is a Rooms::Post
 # scoped to a forum the current user belongs to, so a non-member never resolves
 # one — membership is the gate.
 module ForumPostScoped
@@ -12,11 +12,9 @@ module ForumPostScoped
     end
 
     def set_post
-      # `.active` so a deleted post can't be edited or solved through these
-      # nested routes — its /f/:slug page already 404s, and the forum.threads
-      # association isn't active-scoped (it joins through the still-active
-      # opening message).
-      @post = @forum&.threads&.active&.find_by(id: params[:post_id] || params[:id])
+      # `@forum.posts` is active-scoped, so a deleted post can't be edited or
+      # solved through these nested routes — its /f/:slug page already 404s.
+      @post = @forum&.posts&.find_by(id: params[:post_id] || params[:id])
       redirect_to room_url(@forum), alert: "Post not found" unless @post
     end
 

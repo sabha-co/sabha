@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_03_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_04_000001) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -304,6 +304,15 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_03_120000) do
     t.index ["user_id"], name: "index_single_sign_on_records_on_user_id", unique: true
   end
 
+  create_table "solutions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "post_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["post_id"], name: "index_solutions_on_post_id", unique: true
+    t.index ["user_id"], name: "index_solutions_on_user_id"
+  end
+
   create_table "storage_entries", force: :cascade do |t|
     t.integer "blob_id"
     t.datetime "created_at", null: false
@@ -418,6 +427,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_03_120000) do
   add_foreign_key "searches", "users", column: "creator_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "single_sign_on_records", "users"
+  add_foreign_key "solutions", "rooms", column: "post_id"
+  add_foreign_key "solutions", "users"
   add_foreign_key "user_notification_settings", "users"
   add_foreign_key "users", "badges"
   add_foreign_key "webhooks", "users"

@@ -82,16 +82,12 @@ class Message < ApplicationRecord
     !event?
   end
 
-  # The forum post (Rooms::Thread) this message belongs to — as the opening
-  # message (the post spawned on it) or a reply (the post it lives in). nil for
-  # non-forum messages. Permalinks resolve forum messages to /f/:slug through
-  # this; the plain room-anchor URL would land on the gallery instead.
+  # The forum post (Rooms::Post) this message belongs to, or nil for non-post
+  # messages. A post's messages ARE its content — the opening body and the
+  # replies — so the post is simply the message's room. Permalinks resolve post
+  # messages to /f/:slug through this.
   def forum_post
-    if room.forum?
-      threads.first
-    elsif room.thread? && room.forum_post?
-      room
-    end
+    room if room.is_a?(Rooms::Post)
   end
 
   def bookmarked_by?(user)

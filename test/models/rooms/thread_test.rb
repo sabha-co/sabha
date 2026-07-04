@@ -131,61 +131,12 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     assert_includes html, users(:jason).name
   end
 
-  # --- Forum post attributes (U2) --------------------------------------------
-
-  test "forum post stores its title in name" do
-    post = create_forum_post(title: "How do I reset my password?")
-    assert_equal "How do I reset my password?", post.title
-    assert_equal "How do I reset my password?", post.name
-    assert post.forum_post?
-  end
-
-  test "forum post gets a URL-safe slug derived from its title" do
-    post = create_forum_post(title: "How do I reset my password?")
-    assert_equal "how-do-i-reset-my-password", post.slug
-  end
-
-  test "two forum posts with the same title get distinct slugs" do
-    first = create_forum_post(title: "Setup guide")
-    second = create_forum_post(title: "Setup guide")
-
-    assert_not_equal first.slug, second.slug
-    assert_equal "setup-guide", first.slug
-    assert_equal "setup-guide-2", second.slug
-  end
-
-  test "forum post slug is permanent across a later rename" do
-    post = create_forum_post(title: "Original title")
-    original_slug = post.slug
-
-    post.update!(name: "Completely different title")
-
-    assert_equal original_slug, post.slug
-  end
-
+  # Chat threads are nameless and never get a forum-post slug. (Forum-post title,
+  # slug, and Solved behavior now live on Rooms::Post — see rooms/post_test.)
   test "chat threads do not get a slug" do
     thread = Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
     assert_nil thread.slug
     assert_not thread.forum_post?
-  end
-
-  test "solved state lifecycle" do
-    post = create_forum_post(title: "Broken webhook")
-
-    assert_not post.solved?
-
-    post.solve!
-    assert post.solved?
-    assert post.solved_at.present?
-
-    post.reopen!
-    assert_not post.solved?
-    assert_nil post.solved_at
-  end
-
-  test "forum post display name is its title, not the thread glyph" do
-    post = create_forum_post(title: "Where is the export button?")
-    assert_equal "Where is the export button?", post.display_name
   end
 
   private

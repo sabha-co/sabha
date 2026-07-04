@@ -21,8 +21,8 @@ class ForumPostsController < RoomsController
 
   private
     def set_post
-      @room = @post = Rooms::Thread.active.find_by(slug: params[:slug])
-      @forum = @post&.parent_message&.room
+      @room = @post = Rooms::Post.active.find_by(slug: params[:slug])
+      @forum = @post&.parent_room
       @membership = @post && Membership.find_by(room_id: @post.id, user_id: Current.user.id)
     end
 
