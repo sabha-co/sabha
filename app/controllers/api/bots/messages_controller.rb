@@ -85,7 +85,7 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
     def resolve_target_room
       return @room if params[:parent_message_id].blank?
-      Rooms::Thread.find_or_create_for(parent_message_in_room, users: @room.users)
+      Rooms::Thread.find_or_create_for(parent_message_in_room, creator: Current.user)
     end
 
     # Scoping through @room.messages enforces the API contract that

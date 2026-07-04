@@ -10,7 +10,6 @@ class Room < ApplicationRecord
         Array(users).collect { |user| { room_id: room.id, user_id: user.id, involvement: room.default_involvement(user: user), active: true } },
         unique_by: %i[room_id user_id]
       )
-      room.threads.find_each { |thread| thread.memberships.grant_to(users) }
     end
 
     def revoke_from(users)
@@ -21,7 +20,6 @@ class Room < ApplicationRecord
 
       # Must use the `user_id: ...` condition and not `user: ...` for the hierarchical permissions to work
       Membership.active.where(room_id: room.id, user_id: user_ids).update(active: false)
-      room.threads.find_each { |thread| thread.memberships.revoke_from(users) }
     end
 
     def revise(granted: [], revoked: [])

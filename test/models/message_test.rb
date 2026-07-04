@@ -372,7 +372,7 @@ class MessageTest < ActiveSupport::TestCase
     before = message.thread_fingerprint
 
     Current.set(user: users(:david)) do
-      Rooms::Thread.find_or_create_for(message, users: rooms(:watercooler).users)
+      Rooms::Thread.find_or_create_for(message, creator: users(:david))
         .messages.create!(body: "Reply", creator: users(:david), client_message_id: "fp-2")
     end
 

@@ -355,7 +355,7 @@ class RoomTest < ActiveSupport::TestCase
     parent_message = parent_room.messages.create!(body: "Starting a thread", creator: bender, client_message_id: "wh-thread-1")
 
     thread = Current.set(user: bender) do
-      Rooms::Thread.find_or_create_for(parent_message, users: parent_room.users)
+      Rooms::Thread.find_or_create_for(parent_message, creator: bender)
     end
     thread.involve_user(bender, unread: false)
 

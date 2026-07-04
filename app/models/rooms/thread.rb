@@ -16,11 +16,14 @@ class Rooms::Thread < Room
   # Rooms::Post delegating to its forum).
   delegate :viewable_by?, to: :parent_room
 
-  def self.find_or_create_for(parent_message, users:)
+  # Grants a membership to the creator only — a thread never fans a row out to
+  # every parent-room member. Other members view via derived access (see
+  # #viewable_by?) and follow lazily on their first reply.
+  def self.find_or_create_for(parent_message, creator:)
     raise NestedThreadError if parent_message.room.thread?
 
     parent_message.threads.active.find_by(type: "Rooms::Thread") ||
-      create_for({ parent_message_id: parent_message.id }, users: users)
+      create_for({ parent_message_id: parent_message.id, creator: creator }, users: [ creator ])
   end
 
   def default_involvement(user: nil)
