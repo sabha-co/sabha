@@ -50,6 +50,23 @@ class Rooms::Forum < Room
     end
   end
 
+  # Deleting a forum cuts access instantly but defers the heavy cascade. The
+  # forum row and its own memberships deactivate synchronously — so viewable_by?
+  # (which its posts delegate to here) fails on the next click and the forum
+  # leaves the sidebar — while the O(posts × replies) soft-delete of every post
+  # runs in ForumDeactivationJob. A forum owns no messages of its own (posts hold
+  # them), so there's nothing else to clean up synchronously.
+  def deactivate
+    raise CannotDeleteOriginalError if original?
+
+    transaction do
+      memberships.update_all(active: false)
+      deactivate!
+    end
+
+    ForumDeactivationJob.perform_later(forum: self)
+  end
+
   # Gallery posts: active posts, filtered by Solved state and sorted.
   #   - solved: "solved" | "open" | nil (all)
   #   - sort:   "recent" (default) | "newest"
