@@ -185,6 +185,46 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_enqueued_with(job: ForumReactivationJob) { forum.reactivate }
   end
 
+  # --- Concurrency + retry safety (B4) ----------------------------------------
+
+  test "reactivating during a pending deactivation cancels the stale deletion" do
+    forum = rooms(:help_desk)
+    post = create_forum_post
+
+    forum.deactivate # enqueues ForumDeactivationJob (not yet run)
+    forum.reactivate # sync-flips the forum active again; enqueues ForumReactivationJob
+
+    perform_enqueued_jobs # both run: the superseded deletion bails, the restore is a no-op
+
+    assert forum.reload.active?
+    assert post.reload.active?, "the post stays active — the superseded deletion job bailed"
+  end
+
+  test "deactivating during a pending reactivation cancels the stale restore" do
+    forum = rooms(:help_desk)
+    post = create_forum_post
+    perform_enqueued_jobs { forum.deactivate }
+    assert post.reload.deactivated?
+
+    forum.reactivate # enqueues ForumReactivationJob (not yet run)
+    forum.deactivate # sync-flips inactive again; enqueues ForumDeactivationJob
+
+    perform_enqueued_jobs # the superseded restore bails, the deletion re-applies
+
+    assert_not forum.reload.active?
+    assert post.reload.deactivated?, "the post stays deleted — the superseded restore job bailed"
+  end
+
+  test "the deactivation job re-runs safely after a crash" do
+    forum = rooms(:help_desk)
+    post = create_forum_post
+    forum.deactivate
+
+    2.times { ForumDeactivationJob.perform_now(forum: forum) } # crash + retry re-runs from the start
+
+    assert post.reload.deactivated?
+  end
+
   test "hard-deleting a forum removes its posts (R16)" do
     forum = rooms(:help_desk)
     post = create_forum_post

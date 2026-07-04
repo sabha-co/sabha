@@ -15,9 +15,17 @@ class ForumDeactivationJob < ApplicationJob
   # non-cascade marker and stays deleted across a forum restore (R15). Idempotent:
   # a retry re-scans and simply skips the now-inactive posts, so re-running from
   # the start is safe.
+  #
+  # The forum's own `active` flag is the (de)activation state: if a reactivation
+  # supersedes this delete — before the job starts or mid-cascade — bail so the
+  # two never interleave. Any posts already soft-deleted are picked back up by
+  # ForumReactivationJob, so the reactivation wins cleanly.
   def perform(forum:)
-    Rooms::Post.active.where(parent_room_id: forum.id).find_each do |post|
-      post.deactivate(cascade: true)
+    return if forum.active?
+
+    Rooms::Post.active.where(parent_room_id: forum.id).in_batches do |batch|
+      return if forum.reload.active?
+      batch.each { |post| post.deactivate(cascade: true) }
     end
   end
 end

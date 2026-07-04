@@ -10,9 +10,16 @@ class ForumReactivationJob < ApplicationJob
   # messages and memberships in its own short transaction (Room::Nested), so the
   # write lock is released between posts. Idempotent: a retry re-scans and skips
   # posts already restored (no longer active: false + cascade_deactivated).
+  #
+  # The forum's own `active` flag is the (de)activation state: if a re-deletion
+  # supersedes this restore — before the job starts or mid-cascade — bail so the
+  # two never interleave. ForumDeactivationJob then re-deletes cleanly.
   def perform(forum:)
-    Rooms::Post.where(parent_room_id: forum.id, active: false, cascade_deactivated: true).find_each do |post|
-      post.reactivate
+    return unless forum.active?
+
+    Rooms::Post.where(parent_room_id: forum.id, active: false, cascade_deactivated: true).in_batches do |batch|
+      return unless forum.reload.active?
+      batch.each(&:reactivate)
     end
   end
 end
