@@ -164,6 +164,27 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert post.reload.deactivated?, "re-running the job leaves the post deleted"
   end
 
+  test "restoring a forum makes it visible instantly, before the post-restore job runs" do
+    forum = rooms(:help_desk)
+    forum.memberships.grant_to(users(:david))
+    create_forum_post
+    perform_enqueued_jobs { forum.deactivate }
+    assert_not forum.viewable_by?(users(:david))
+
+    forum.reactivate # no perform_enqueued_jobs — the synchronous half must stand alone
+
+    assert forum.reload.active?, "the forum row is reactivated synchronously"
+    assert forum.viewable_by?(users(:david)), "forum membership is restored instantly — it reappears in the sidebar"
+  end
+
+  test "restoring a forum enqueues the post-restore job" do
+    forum = rooms(:help_desk)
+    create_forum_post
+    perform_enqueued_jobs { forum.deactivate }
+
+    assert_enqueued_with(job: ForumReactivationJob) { forum.reactivate }
+  end
+
   test "hard-deleting a forum removes its posts (R16)" do
     forum = rooms(:help_desk)
     post = create_forum_post

@@ -67,6 +67,20 @@ class Rooms::Forum < Room
     ForumDeactivationJob.perform_later(forum: self)
   end
 
+  # Mirror of #deactivate: bring the forum back instantly (row + its own
+  # memberships) so it reappears in the sidebar and viewable_by? passes on the
+  # next click, then restore its cascade-deactivated posts in the background.
+  # Only posts the forum's delete cascaded are restored — one deleted on its own
+  # stays deleted (R15).
+  def reactivate
+    transaction do
+      memberships.rewhere(active: false).update_all(active: true)
+      activate!
+    end
+
+    ForumReactivationJob.perform_later(forum: self)
+  end
+
   # Gallery posts: active posts, filtered by Solved state and sorted.
   #   - solved: "solved" | "open" | nil (all)
   #   - sort:   "recent" (default) | "newest"
