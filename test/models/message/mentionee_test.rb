@@ -114,6 +114,20 @@ class Message::MentioneeTest < ActiveSupport::TestCase
     assert_empty message.mentionees
   end
 
+  test "mentionees in a forum post reach a mentioned forum member who is not a follower" do
+    forum = Rooms::Forum.create_for({ name: "Help", creator: @david }, users: [ @david, @jz ])
+    post = Current.set(user: @david) { forum.post!(title: "Q", body: "<div>b</div>") }
+    assert_not post.followed_by?(@jz), "jz is a forum member but not a post follower"
+
+    reply = post.messages.create!(
+      body: "<div>Ping #{mention_attachment_for(:jz)}</div>",
+      creator: @david,
+      client_message_id: "post_mention_1"
+    )
+
+    assert_includes reply.mentionees, @jz
+  end
+
   # ===================
   # mentionee_ids method tests
   # ===================
