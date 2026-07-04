@@ -126,6 +126,40 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Admin edited", post.reload.title
   end
 
+  # --- Deleting a post (D4) ---------------------------------------------------
+
+  test "the author can delete a post, deactivating it" do
+    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Remove me", body: "<div>b</div>") }
+    sign_in :kevin
+
+    delete rooms_forum_post_url(@forum, post)
+
+    assert post.reload.deactivated?
+    assert_redirected_to room_url(@forum)
+  end
+
+  test "a non-author non-admin member cannot delete a post" do
+    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Mine", body: "<div>b</div>") }
+    @forum.memberships.grant_to(users(:jz))
+    sign_in :jz
+
+    delete rooms_forum_post_url(@forum, post)
+
+    assert_response :forbidden
+    assert post.reload.active?
+  end
+
+  test "the opening message of a post cannot be deleted on its own" do
+    post = Current.set(user: users(:kevin)) { @forum.post!(title: "Keep body", body: "<div>b</div>") }
+    opening = post.messages.first
+    sign_in :kevin
+
+    delete room_message_url(post, opening)
+
+    assert_response :forbidden
+    assert opening.reload.active?, "the post body must survive; delete the post instead"
+  end
+
   test "editing a post broadcasts a card and header refresh to the live surfaces" do
     post = Current.set(user: users(:kevin)) { @forum.post!(title: "Original", body: "<div>b</div>") }
     sign_in :kevin

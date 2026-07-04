@@ -149,7 +149,7 @@ Rails.application.routes.draw do
     resources :opens
     resources :closeds
     resources :forums do
-      resources :posts, only: %i[ create edit update ], module: "forums" do
+      resources :posts, only: %i[ create edit update destroy ], module: "forums" do
         resource :solution, only: %i[ create destroy ], module: "posts"
       end
     end

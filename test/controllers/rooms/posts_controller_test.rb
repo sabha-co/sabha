@@ -32,4 +32,21 @@ class Rooms::PostsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "a member removed from the forum loses read and reply access to a post they engaged with" do
+    # kevin replies, gaining an active per-post membership
+    Current.set(user: users(:kevin)) { @post.messages.create!(body: "<div>reply</div>", creator: users(:kevin)) }
+    assert Membership.exists?(room_id: @post.id, user_id: users(:kevin).id)
+
+    @forum.remove_member!(users(:kevin), actor: users(:david))
+    sign_in :kevin
+
+    # Access derives from forum membership, so the stale post membership grants nothing.
+    get rooms_post_url(@post)
+    assert_response :forbidden
+
+    assert_no_difference -> { @post.messages.count } do
+      post room_messages_url(@post), params: { message: { body: "<div>sneaky</div>" } }
+    end
+  end
 end

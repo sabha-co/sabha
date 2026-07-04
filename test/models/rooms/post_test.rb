@@ -210,6 +210,16 @@ class Rooms::PostTest < ActiveSupport::TestCase
     assert_equal "everything", Membership.find_by(room_id: post.id, user_id: stayer.id).involvement
   end
 
+  test "destroying a user who marked a post Solved removes the Solution (no FK block)" do
+    post = create_post(title: "Answered")
+    solver = users(:jason)
+    Current.set(user: solver) { post.solve! }
+    assert Solution.exists?(user_id: solver.id)
+
+    assert_nothing_raised { solver.destroy }
+    assert_not Solution.exists?(user_id: solver.id)
+  end
+
   private
     def create_post(title:, author: users(:david))
       Rooms::Post.create!(parent_room: @forum, name: title, creator: author)

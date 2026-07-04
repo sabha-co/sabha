@@ -240,6 +240,7 @@ class User < ApplicationRecord
       Search.where(creator_id: id).delete_all          # second FK; user_id side is dependent: :delete_all
       Ban.where(user_id: id).delete_all                # delete_all skips `bust_cache`; intentional fast path
       Webhook.where(user_id: id).delete_all
+      Solution.where(user_id: id).delete_all           # posts a user marked Solved (restrict FK, no dependents)
 
       # Bundle items where this user was the actor (in any user's bundle).
       Notification::BundleItem.where(actor_id: id).delete_all

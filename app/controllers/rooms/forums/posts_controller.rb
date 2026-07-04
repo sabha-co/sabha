@@ -5,8 +5,8 @@ class Rooms::Forums::PostsController < ApplicationController
   include ForumPostScoped
 
   before_action :set_forum
-  before_action :set_post, only: %i[ edit update ]
-  before_action :ensure_can_administer_post, only: %i[ edit update ]
+  before_action :set_post, only: %i[ edit update destroy ]
+  before_action :ensure_can_administer_post, only: %i[ edit update destroy ]
 
   def create
     post = @forum.post!(title: post_params[:title], body: post_params[:body])
@@ -33,6 +33,13 @@ class Rooms::Forums::PostsController < ApplicationController
   rescue ActiveRecord::RecordInvalid => e
     flash.now[:alert] = e.record.errors.full_messages.to_sentence.presence || "Could not update the post"
     render :edit, status: :unprocessable_entity
+  end
+
+  # Deleting a post soft-deletes the whole Rooms::Post (its messages + replies),
+  # not its opening message. Authorized to the post's author or an admin.
+  def destroy
+    @post.deactivate
+    redirect_to room_url(@forum), notice: "Deleted “#{@post.title}”"
   end
 
   private

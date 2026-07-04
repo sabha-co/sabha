@@ -39,7 +39,11 @@ class RoomsController < ApplicationController
     end
 
     def set_room
-      if room = Current.user.rooms.includes(parent_message: { creator: :avatar_attachment }).find_by(id: params[:room_id] || params[:id])
+      room = Current.user.rooms.includes(parent_message: { creator: :avatar_attachment }).find_by(id: params[:room_id] || params[:id])
+      # A post's access derives from its forum, not from the (possibly stale)
+      # membership row that placed it in Current.user.rooms.
+      room = nil if room.is_a?(Rooms::Post) && !room.viewable_by?(Current.user)
+      if room
         @room = room
       else
         redirect_to root_url, alert: "Room not found or inaccessible"
@@ -63,7 +67,7 @@ class RoomsController < ApplicationController
     # gallery of posts) instead of the message stream. No separate route/UI.
     def render_forum_gallery
       posts = @room.posts(solved: params[:solved], sort: params[:sort])
-                   .includes(creator: { avatar_attachment: :blob })
+                   .includes(:solution, creator: { avatar_attachment: :blob })
       set_page_and_extract_portion_from posts, per_page: 20
       @posts = @page.records
       @participants = Rooms::Post.preload_participant_creators(@posts)

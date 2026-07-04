@@ -39,6 +39,11 @@
           <span>Edit</span>
         <% end %>
         <%= render "rooms/forums/solved_toggle", post: post %>
+        <%= button_to rooms_forum_post_path(post.parent_room, post), method: :delete,
+              class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close",
+              turbo_confirm: "Delete this post and all its replies?" } do %>
+          <span>Delete post</span>
+        <% end %>
       <% end %>
     </div>
   <% end %>
