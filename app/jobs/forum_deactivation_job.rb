@@ -17,15 +17,18 @@ class ForumDeactivationJob < ApplicationJob
   # the start is safe.
   #
   # The forum's own `active` flag is the (de)activation state: if a reactivation
-  # supersedes this delete — before the job starts or mid-cascade — bail so the
-  # two never interleave. Any posts already soft-deleted are picked back up by
-  # ForumReactivationJob, so the reactivation wins cleanly.
+  # supersedes this delete — before the job starts or mid-cascade — stop so the
+  # two never interleave, then hand off to ForumReactivationJob to restore any
+  # posts already soft-deleted. The pair converge on the forum's final state, so
+  # the last admin action wins even under concurrent workers.
   def perform(forum:)
     return if forum.active?
 
     Rooms::Post.active.where(parent_room_id: forum.id).in_batches do |batch|
-      return if forum.reload.active?
+      break if forum.reload.active?
       batch.each { |post| post.deactivate(cascade: true) }
     end
+
+    ForumReactivationJob.perform_later(forum: forum) if forum.reload.active?
   end
 end
