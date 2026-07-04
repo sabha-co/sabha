@@ -38,7 +38,7 @@ module DemoHelpers
   def normalize_seed_timestamps!
     Message.update_all("updated_at = created_at")
 
-    Room.where.not(type: %w[Rooms::Direct Rooms::Thread]).find_each do |room|
+    Room.where.not(type: %w[Rooms::Direct Rooms::Thread Rooms::Post]).find_each do |room|
       earliest = room.messages.without_events.minimum(:created_at)
       next unless earliest
 

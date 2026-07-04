@@ -9,7 +9,6 @@ module Message::Threadable
     after_create_commit :update_forum_gallery_card
     after_create_commit :create_thread_reply_notifications
     after_update_commit :broadcast_parent_message_to_threads
-    after_update_commit :deactivate_forum_post_when_opening_message_removed
   end
 
   private
@@ -39,9 +38,7 @@ module Message::Threadable
     end
 
     def update_parent_message_threads
-      # Forum posts refresh via update_forum_gallery_card instead — the forum
-      # gallery has no `dom_id(parent_message, :threads)` element to target.
-      if room.thread? && room.parent_message && !room.forum_post?
+      if room.thread? && room.parent_message
         broadcast_replace_to(
           room.parent_message.room,
           :messages,
@@ -59,19 +56,6 @@ module Message::Threadable
     # same broadcast fires on a title/Solved change).
     def update_forum_gallery_card
       room.broadcast_gallery_card if room.post?
-    end
-
-    # A forum post is its opening message plus a Rooms::Thread. Deleting the
-    # opening message (the OP body) deletes the post: deactivate the post-thread
-    # too, so the post disappears consistently from the gallery, the filters, and
-    # its /f/:slug page instead of being orphaned (gone from the gallery but
-    # still live at its URL). Runs only on individual message deletes — forum
-    # cascade uses update_all, which skips callbacks.
-    def deactivate_forum_post_when_opening_message_removed
-      return unless saved_change_to_attribute?(:active) && !active?
-      return unless room.forum?
-
-      threads.active.find_each(&:deactivate)
     end
 
     def create_thread_reply_notifications

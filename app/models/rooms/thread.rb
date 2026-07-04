@@ -1,33 +1,15 @@
-# Rooms that start off from a parent message and inherit permissions from that message's room.
+# A chat thread: a room that starts off from a parent message and inherits
+# permissions from that message's room. (Forum posts are Rooms::Post, not
+# threads — their title, slug, Solved state, and gallery live there.)
 class Rooms::Thread < Room
   class NestedThreadError < StandardError; end
 
   include Room::Participants, Room::Nested
 
   validates_presence_of :parent_message
-  # Forum posts are titled; chat threads are not. Guarded on forum_post? so the
-  # nameless chat thread stays valid.
-  validates :name, presence: true, if: :forum_post?
 
-  # Denormalize the room this thread was spawned in (see Room#parent_room), so
-  # the forum gallery filters and sorts on the rooms table alone.
+  # Denormalize the room this thread was spawned in (see Room#parent_room).
   before_validation :assign_parent_room, on: :create
-
-  # Forum posts are Rooms::Thread instances whose parent message lives in a
-  # forum. They carry a title (stored in `name`), a permanent slug, and a Solved
-  # state; ordinary chat threads leave all of these unused.
-  before_save :assign_forum_post_slug
-
-  # Re-broadcast a post's card + header wherever it renders whenever its title or
-  # Solved state changes. Chat threads never touch either column, so this stays
-  # dormant for them (broadcast_content_change also guards on forum_post?).
-  after_update_commit :broadcast_content_change, if: :content_changed?
-
-  # Gallery filters & sorts, composed by Rooms::Forum#posts.
-  scope :solved,                  -> { where.not(solved_at: nil) }
-  scope :unsolved,                -> { where(solved_at: nil) }
-  scope :recently_active,         -> { order(last_active_at: :desc) }
-  scope :reverse_chronologically, -> { order(created_at: :desc) }
 
   def self.find_or_create_for(parent_message, users:)
     raise NestedThreadError if parent_message.room.thread?
@@ -44,69 +26,6 @@ class Rooms::Thread < Room
     end
   end
 
-  # --- Forum post attributes -------------------------------------------------
-
-  # A forum post's title is stored in the otherwise-unused `name` column.
-  def title
-    name
-  end
-
-  def title=(value)
-    self.name = value
-  end
-
-  # True when this thread is a forum post (its parent message lives in a forum),
-  # as opposed to a chat thread branched off a message in a normal room.
-  def forum_post?
-    parent_message&.room&.forum?
-  end
-
-  def solved?
-    solved_at.present?
-  end
-
-  # A post is viewable by its members — which, for a forum post, are the forum's
-  # members (membership fans out on join). Gates the canonical page.
-  def viewable_by?(user)
-    user.present? && memberships.active.exists?(user_id: user.id)
-  end
-
-  def solve!
-    update!(solved_at: Time.current)
-  end
-
-  def reopen!
-    update!(solved_at: nil)
-  end
-
-  # Replace this post's gallery card wherever it renders — reply count, activity,
-  # participant avatars, title, Solved badge. Fired both by a new reply
-  # (Message::Threadable#update_forum_gallery_card) and by a title/Solved change
-  # here. Keyed by the tenanted forum model (never a bare symbol) so updates
-  # never leak across workspaces in SaaS. No-op for ordinary chat threads.
-  def broadcast_gallery_card
-    return unless forum_post?
-
-    forum = parent_message.room
-    broadcast_replace_to [ forum, :posts ],
-      target: ActionView::RecordIdentifier.dom_id(self, :card),
-      partial: "rooms/forums/post_card",
-      locals: { post: self, forum: forum, participants: { id => participant_creators } }
-  end
-
-  # Push a post's current card + header to every surface that renders it (gallery
-  # card, panel, standalone page). Called after a Solved change and after a title
-  # edit. No-op for ordinary chat threads.
-  def broadcast_content_change
-    return unless forum_post?
-
-    broadcast_gallery_card
-    broadcast_replace_to [ self, :messages ],
-      target: ActionView::RecordIdentifier.dom_id(self, :header),
-      partial: "rooms/forums/post_header_state",
-      locals: { post: self }
-  end
-
   def applicable_activity_types(message)
     types = [ :thread_reply ]
     return types if parent_room&.direct?
@@ -117,31 +36,5 @@ class Rooms::Thread < Room
   private
     def assign_parent_room
       self.parent_room_id ||= parent_message&.room_id
-    end
-
-    def content_changed?
-      saved_change_to_name? || saved_change_to_solved_at?
-    end
-
-    # Generate a permanent, URL-safe slug the first time a forum post is given a
-    # title. It is never regenerated on later renames, so shared links stay valid.
-    def assign_forum_post_slug
-      return unless forum_post? && name.present? && slug.blank?
-
-      self.slug = unique_slug_from_title
-    end
-
-    def unique_slug_from_title
-      base = name.parameterize.presence || "post"
-      candidate = base
-      suffix = 2
-      # The rooms.slug unique index is the hard guarantee; this loop just avoids
-      # the common collision. Concurrent creates of the same title can still race
-      # the index — the loser retries in Rooms::Forum#post!.
-      while Room.where.not(id: id).exists?(slug: candidate)
-        candidate = "#{base}-#{suffix}"
-        suffix += 1
-      end
-      candidate
     end
 end

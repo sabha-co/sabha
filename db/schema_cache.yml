@@ -960,16 +960,6 @@ columns:
     comment:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
-    name: solved_at
-    cast_type: *1
-    sql_type_metadata: *2
-    'null': true
-    default:
-    default_function:
-    collation:
-    comment:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
     name: sortable_name
     cast_type: *5
     sql_type_metadata: *6
@@ -3011,4 +3001,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260704000001
+version: 20260704000002

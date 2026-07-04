@@ -4,19 +4,29 @@ A **forum** is a room type (`Rooms::Forum`) that presents its content as a galle
 
 ## Anatomy of a post
 
-A forum post is not a new model. It reuses the existing thread stack:
+A forum post is a first-class room: **`Rooms::Post`**, a sibling of `Rooms::Thread`. It belongs directly to its forum through `rooms.parent_room_id`, and its **opening body is simply its first message**; replies are the messages that follow. The post carries the title (stored in `name`), a permanent `slug`, and a Solved state (see below).
 
-- an **opening `Message`** in the forum (holds the post body), plus
-- a **`Rooms::Thread`** spawned on that message — this *is* the post. It carries the title (stored in `name`), a permanent `slug`, a `solved_at` timestamp, and all replies.
+`Rooms::Forum#post!(title:, body:)` creates the post and its first message in one transaction, in the poster's `Current.user` context. The post keeps normal unread behavior for its own members; the forum does not — its `receive` is a no-op, so a new post never marks the forum unread or bumps chat counters. The gallery surfaces new posts by activity order instead of by an unread badge.
 
-`Rooms::Forum#post!(title:, body:)` creates both in one transaction, in the poster's `Current.user` context. Replies live in the post-thread and keep normal unread behavior; the opening message does not — the forum's `receive` is a no-op, so a new post never marks the forum unread or bumps chat counters. The gallery surfaces new posts by activity order instead of by an unread badge.
+`Rooms::Post` and `Rooms::Thread` share two capabilities through concerns: participant listing (`Room::Participants` — the avatars on a card) and the cascade-deactivation lifecycle (`Room::Nested`). Everything else about a post — title, slug, Solved, forum-derived access — lives on `Rooms::Post`.
+
+## Access & membership (no fan-out)
+
+Access is **derived from the forum, not fanned out to every post**. Creating a post grants a membership to the author only; joining a forum creates **zero** post memberships. A post's `viewable_by?` delegates to its forum (`Rooms::Forum#viewable_by?`), so any forum member can read and reply to any post without holding a per-post row. This keeps `memberships` at roughly `participants`, not `members × posts`.
+
+A member's post membership is created **lazily**, on engagement:
+
+- **On reply** — `Message::Threadable#follow_post_by_creator` calls `Rooms::Post#follow!`, an idempotent, self-healing upsert (never downgrades an existing follower).
+- **Via Follow** — the explicit opt-in for reply notifications without replying (see below).
+
+Leaving a forum enqueues `ForumFollowCleanupJob`, which silences that one member's post follows (sets them invisible) so reply notifications stop; it never touches other members' follows.
 
 ## Where it renders
 
 | Surface | Route | Renders |
 |---------|-------|---------|
 | Gallery | `/rooms/:id` — `RoomsController#show` → `render_forum_gallery` | `rooms/forums/gallery`, inside the normal room shell in place of the message stream |
-| Post (in-app) | opens in the thread panel from a gallery card | `rooms/threads/show` with the forum post header |
+| Post (in-app) | `/rooms/posts/:id` — `Rooms::PostsController#show`, opened in the thread panel from a gallery card | `rooms/posts/show` |
 | Post (canonical) | `/f/:slug` — `ForumPostsController#show` (`forum_post_path`) | standalone page, no redirect — the permanent, shareable link |
 
 The canonical `/f/:slug` page is member-gated in v1 but is deliberately a standalone render (not the in-app panel) so it can become public and SEO-indexable later — mirroring the utility of a classic web forum.
@@ -29,37 +39,47 @@ The canonical `/f/:slug` page is member-gated in v1 but is deliberately a standa
 
 The filter bar (`rooms/forums/_filter_bar`) offers:
 
-- **Solved** — All / Open / Solved (`?solved=`), filtered on `solved_at` presence.
+- **Solved** — All / Open / Solved (`?solved=`), a `joins(:solution)` / `where.missing(:solution)` filter.
 - **Sort** — Recent (`last_active_at`, default) / Newest (`created_at`) (`?sort=`).
 
-Both are plain query params read by `Rooms::Forum#posts(solved:, sort:)`.
+Both are plain query params read by `Rooms::Forum#posts(solved:, sort:)`, which queries `Rooms::Post` on the denormalized `parent_room_id` FK so the filter + sort ride the `(parent_room_id, active, last_active_at)` composite index — no filesort.
 
 ## Solved state
 
-A post is **solved** when its thread has a `solved_at` (`Rooms::Thread#solved?`). Toggling goes through `Rooms::Forums::Posts::SolutionsController`:
+Solved is modeled as a **record, not a column**: a `Solution` (`belongs_to :post, :user`) exists iff the post is solved, and it carries who marked it and when. `Rooms::Post#solved?` is `solution.present?`; `solved_by` / `solved_at` derive from it. Toggling goes through `Rooms::Forums::Posts::SolutionsController`:
 
-- `create` → `solve!` ("Mark solved")
-- `destroy` → `reopen!` ("Reopen")
+- `create` → `solve!` ("Mark solved") — creates the `Solution`
+- `destroy` → `reopen!` ("Reopen") — destroys it
 
-A title or Solved change triggers `Rooms::Thread`'s `after_update_commit :broadcast_content_change`, which live-refreshes the post header (title + Solved badge) and the gallery card everywhere they render.
+`solve!`/`reopen!` broadcast `Rooms::Post#broadcast_content_change`, which live-refreshes the post header (title + Solved badge) and the gallery card everywhere they render.
+
+## Following
+
+Because access is forum-derived, a member is **not** automatically subscribed to a post's replies. **Follow** is the opt-in, modeled as state-as-records — the member's own membership on the post:
+
+- **Follow** = membership `create` (`Rooms::Posts::MembershipsController#create` → `follow!`, involvement `everything`)
+- **Unfollow** = membership `destroy`
+
+The author and anyone who replies are followed implicitly (lazy membership). Changing an existing follow's level stays the ordinary `Rooms::InvolvementsController#update`.
 
 ## Slugs
 
-Each post gets a permanent, URL-safe `slug` derived from its title on first save (`Rooms::Thread#assign_forum_post_slug`). The `rooms.slug` unique index is the hard guarantee against collisions; two same-titled posts that race are resolved by a retry in `post!` that picks the next numbered suffix.
+Each post gets a permanent, URL-safe `slug` derived from its title on first save (`Rooms::Post#assign_slug`). The `rooms.slug` unique index is the hard guarantee against collisions; two same-titled posts that race are resolved by a retry in `post!` that picks the next numbered suffix.
 
 ## Post options menu
 
-The `⋯` menu on a post header (`rooms/forums/_post_header`) is available to every viewer:
+The `⋯` menu on a post header (`rooms/forums/_post_header`) offers:
 
 | Item | Who | Action |
 |------|-----|--------|
 | Copy link | Anyone | Copies the canonical `/f/:slug` URL (`copy-to-clipboard`) |
-| Edit | Admin / post creator | Edit the title **inline** — `edit` swaps a form into the header's title turbo-frame (`dom_id(post, :title)`), like a message edits in place; `update` redirects so the frame swaps back |
-| Mark solved / Reopen | Admin / post creator | Toggle the solved state |
+| Follow / Unfollow | Any member | Create/destroy the viewer's own post membership |
+| Edit | Admin / post author | Edit the title **inline** — `edit` swaps a form into the header's title turbo-frame (`dom_id(post, :title)`); `update` redirects so the frame swaps back |
+| Mark solved / Reopen | Admin / post author | Toggle the Solved state |
 
 ## Live updates
 
-The gallery subscribes to `turbo_stream_from @room, :posts` and `turbo_stream_from @membership`. **Existing** cards live-refresh via replace broadcasts — a reply updates the card's reply count, activity, and participant avatars (`Message::Threadable#update_forum_gallery_card`); a title or Solved change refreshes the card and the post header (`Rooms::Thread#broadcast_content_change`). The membership subscription is what lets the nav's involvement bell cycle its state.
+The gallery subscribes to `turbo_stream_from @room, :posts` and `turbo_stream_from @membership`. **Existing** cards live-refresh via replace broadcasts — a reply updates the card's reply count, activity, and participant avatars (`Message::Threadable#update_forum_gallery_card` → `Rooms::Post#broadcast_gallery_card`); a title or Solved change refreshes the card and the post header (`Rooms::Post#broadcast_content_change`). The membership subscription is what lets the nav's involvement bell cycle its state.
 
 Brand-new posts are **not** appended live — they show on the next gallery load (the author is redirected to the gallery on create).
 
@@ -71,12 +91,13 @@ Forum rooms use the `message-log` glyph across the sidebar indicator, the create
 
 | Area | Files |
 |------|-------|
-| Models | `app/models/rooms/forum.rb`, `app/models/rooms/thread.rb` |
-| Controllers | `app/controllers/rooms/forums_controller.rb`, `rooms/forums/posts_controller.rb`, `rooms/forums/posts/solutions_controller.rb`, `forum_posts_controller.rb` |
-| Views | `app/views/rooms/forums/*`, `app/views/forum_posts/*` |
+| Models | `app/models/rooms/forum.rb`, `app/models/rooms/post.rb`, `app/models/solution.rb`, `app/models/room/participants.rb`, `app/models/room/nested.rb` |
+| Controllers | `app/controllers/rooms/forums_controller.rb`, `rooms/forums/posts_controller.rb`, `rooms/forums/posts/solutions_controller.rb`, `rooms/posts_controller.rb`, `rooms/posts/memberships_controller.rb`, `forum_posts_controller.rb` |
+| Jobs | `app/jobs/forum_follow_cleanup_job.rb` |
+| Views | `app/views/rooms/forums/*`, `app/views/rooms/posts/*`, `app/views/forum_posts/*` |
 | JS | `app/javascript/controllers/forum_compose_controller.js`, `forum_compose_opener_controller.js`, `forum_body_controller.js` |
 | Styles | `app/assets/stylesheets/application/forum.css` |
-| Routes | `config/routes.rb` — `resources :forums` (+ nested `posts` / `solution`), `/f/:slug` |
+| Routes | `config/routes.rb` — `resources :forums` (+ nested `posts` / `solution`), `resources :posts` (+ `membership`), `/f/:slug` |
 
 ## Not in v1
 

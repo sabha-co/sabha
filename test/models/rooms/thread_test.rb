@@ -136,7 +136,6 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
   test "chat threads do not get a slug" do
     thread = Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
     assert_nil thread.slug
-    assert_not thread.forum_post?
   end
 
   private
