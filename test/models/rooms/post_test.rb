@@ -144,6 +144,18 @@ class Rooms::PostTest < ActiveSupport::TestCase
     end
   end
 
+  test "creating a post prepends its card into the forum gallery for live viewers" do
+    post = nil
+    streams = capture_turbo_stream_broadcasts [ @forum, :posts ] do
+      post = Current.set(user: users(:david)) { @forum.post!(title: "Fresh", body: "b") }
+    end
+
+    prepend = streams.find { |stream| stream["action"] == "prepend" }
+    assert prepend, "a new post should prepend a card into the gallery"
+    assert_equal ActionView::RecordIdentifier.dom_id(@forum, :posts), prepend["target"]
+    assert prepend.at_css("##{ActionView::RecordIdentifier.dom_id(post, :card)}"), "the prepend carries the post's card"
+  end
+
   # --- Scale contract: no membership fan-out (D2) ----------------------------
 
   test "post! grants a membership to the author only, not to every forum member" do

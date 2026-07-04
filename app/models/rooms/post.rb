@@ -18,6 +18,10 @@ class Rooms::Post < Room
 
   before_save :assign_slug
 
+  # Stream a new post into the top of every member's open gallery. The author
+  # sees it via their post-create redirect; this reaches everyone else watching.
+  after_create_commit :broadcast_gallery_insertion
+
   # Re-broadcast the post's card + header when its title changes. Solved changes
   # go through solve!/reopen! (which create/destroy a Solution — no rooms update
   # fires here), so they broadcast explicitly.
@@ -116,6 +120,23 @@ class Rooms::Post < Room
     types = [ :thread_reply ]
     types << :mention if message.mentionees.any?
     types
+  end
+
+  # Prepend this post's card into the forum gallery for every member watching it
+  # live — a brand-new card has no element to replace yet, so insertion needs its
+  # own action. Newest-first is the top for both gallery sorts (recent activity /
+  # newest), so the head of the list is always the right slot.
+  #
+  # Two accepted, self-correcting limitations: a viewer filtering to "Solved"
+  # briefly sees the new (unsolved) post, and a viewer sitting on the empty-state
+  # gallery (no list container yet) sees nothing until they navigate — the forum
+  # stream is neither filter- nor emptiness-aware. Both resolve on next load,
+  # short of fanning a stream out per filter.
+  def broadcast_gallery_insertion
+    broadcast_prepend_to [ parent_room, :posts ],
+      target: ActionView::RecordIdentifier.dom_id(parent_room, :posts),
+      partial: "rooms/forums/post_card",
+      locals: { post: self, forum: parent_room, participants: { id => participant_creators } }
   end
 
   # Replace this post's gallery card wherever it renders — reply count, activity,
