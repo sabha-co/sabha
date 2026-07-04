@@ -300,8 +300,8 @@ class Room < ApplicationRecord
       # Use Ruby select/map instead of pluck to leverage preloaded users
       users.reject { |u| u == for_user }.map(&:name).to_sentence.presence || for_user&.name
     elsif thread?
-      # Forum post-threads carry the post title in `name`; chat threads have no
-      # name and fall back to the thread glyph plus their parent room's name.
+      # A chat thread shows its given name if it was renamed, else the thread
+      # glyph plus the name of the room it was spawned in.
       name.presence || "🧵 #{parent_message&.room&.name}"
     else
       name
