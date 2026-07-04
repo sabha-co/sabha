@@ -501,7 +501,7 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal false, truncated
   end
 
-  # ----- Email bundle candidates (U5) -----
+  # ----- Email bundle candidates -----
 
   test "mention to an away user with all flags on creates a kind=mention BundleItem" do
     enable_email_path!(users(:jason))

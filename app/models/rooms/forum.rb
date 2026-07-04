@@ -71,7 +71,7 @@ class Rooms::Forum < Room
   # memberships) so it reappears in the sidebar and viewable_by? passes on the
   # next click, then restore its cascade-deactivated posts in the background.
   # Only posts the forum's delete cascaded are restored — one deleted on its own
-  # stays deleted (R15).
+  # stays deleted.
   def reactivate
     transaction do
       memberships.rewhere(active: false).update_all(active: true)

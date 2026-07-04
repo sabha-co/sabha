@@ -12,8 +12,8 @@ class ForumDeactivationJob < ApplicationJob
   # the whole forum.
   #
   # Only still-active posts are cascaded, so a post deleted on its own keeps its
-  # non-cascade marker and stays deleted across a forum restore (R15). Idempotent:
-  # a retry re-scans and simply skips the now-inactive posts, so re-running from
+  # non-cascade marker and stays deleted across a forum restore. Idempotent: a
+  # retry re-scans and simply skips the now-inactive posts, so re-running from
   # the start is safe.
   #
   # The forum's own `active` flag is the (de)activation state: if a reactivation

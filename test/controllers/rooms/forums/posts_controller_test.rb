@@ -56,7 +56,7 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
   end
 
-  # --- Editing a post's title after creation (R8) -----------------------------
+  # --- Editing a post's title after creation -----------------------------
 
   test "the original poster can edit the post's title after creation" do
     post = Current.set(user: users(:kevin)) { @forum.post!(title: "Original", body: "<div>b</div>") }
@@ -112,7 +112,7 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Admin edited", post.reload.title
   end
 
-  # --- Deleting a post (D4) ---------------------------------------------------
+  # --- Deleting a post ---------------------------------------------------
 
   test "the author can delete a post, deactivating it" do
     post = Current.set(user: users(:kevin)) { @forum.post!(title: "Remove me", body: "<div>b</div>") }

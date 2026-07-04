@@ -24,7 +24,7 @@ class EmailUnsubscribesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     refute @user.reload.notification_settings.weekly_digest_subscribed
     assert @user.notification_settings.missed_email_enabled,
-      "weekly digest unsubscribe must not affect missed-notification preference (R10)"
+      "weekly digest unsubscribe must not affect missed-notification preference"
   end
 
   test "GET shows the confirmation page" do

@@ -44,7 +44,7 @@ class ThreadAccessCharacterizationTest < ActionDispatch::IntegrationTest
   test "removing a member from the parent room removes their thread access" do
     # Use a Closed room so removal is the semantically real path, and let the
     # member engage first so a thread-follow row lingers after removal — that
-    # exercises the stale-row defense (T4) once fan-out cascade is gone.
+    # exercises the stale-row defense once the fan-out cascade is gone.
     closed = Rooms::Closed.create!(name: "War Room", creator: @creator)
     closed.memberships.grant_to([ @creator, @member ])
     parent = closed.messages.create!(body: "hi", creator: @creator)

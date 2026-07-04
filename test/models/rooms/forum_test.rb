@@ -81,7 +81,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_includes Membership.shared, membership
   end
 
-  # --- Cascade & reactivation correctness (U4) --------------------------------
+  # --- Cascade & reactivation correctness --------------------------------
 
   test "restoring a forum restores posts that were active when it was deleted" do
     forum = rooms(:help_desk)
@@ -106,7 +106,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     perform_enqueued_jobs { forum.reactivate }
 
     assert kept.reload.active?, "a post active at forum-delete time should return"
-    assert removed.reload.deactivated?, "an individually-deleted post must stay deleted (R15)"
+    assert removed.reload.deactivated?, "an individually-deleted post must stay deleted"
   end
 
   test "a cascade-deactivated post carries the marker; a self-deleted post does not" do
@@ -132,7 +132,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_not post.reload.cascade_deactivated?
   end
 
-  # --- Async (de)activation: instant cutoff, background cascade (B) -----------
+  # --- Async (de)activation: instant cutoff, background cascade --------------
 
   test "deleting a forum cuts access to its posts instantly, before the cascade job runs" do
     forum = rooms(:help_desk)
@@ -185,7 +185,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_enqueued_with(job: ForumReactivationJob) { forum.reactivate }
   end
 
-  # --- Concurrency + retry safety (B4) ----------------------------------------
+  # --- Concurrency + retry safety --------------------------------------------
 
   test "reactivating during a pending deactivation cancels the stale deletion" do
     forum = rooms(:help_desk)
@@ -225,7 +225,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert post.reload.deactivated?
   end
 
-  test "hard-deleting a forum removes its posts (R16)" do
+  test "hard-deleting a forum removes its posts" do
     forum = rooms(:help_desk)
     post = create_forum_post
 

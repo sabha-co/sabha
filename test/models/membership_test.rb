@@ -643,7 +643,7 @@ class MembershipTest < ActiveSupport::TestCase
     membership.update!(involvement: :mentions)
 
     assert_nil membership.user.try(:notification_settings),
-      "U2 has not landed yet — settings association should not exist"
+      "notification settings haven't landed yet — the association should not exist"
     assert_equal :mentions, membership.effective_involvement
   end
 

@@ -93,7 +93,7 @@ class Rooms::PostTest < ActiveSupport::TestCase
     assert_not_includes Rooms::Post.unsolved, solved_post
   end
 
-  # --- Access derived from the forum (D2) ------------------------------------
+  # --- Access derived from the forum ------------------------------------
 
   test "a post is viewable by a forum member and not by a non-member" do
     member = users(:jason)
@@ -161,7 +161,7 @@ class Rooms::PostTest < ActiveSupport::TestCase
     assert prepend.at_css("##{ActionView::RecordIdentifier.dom_id(post, :card)}"), "the prepend carries the post's card"
   end
 
-  # --- Scale contract: no membership fan-out (D2) ----------------------------
+  # --- Scale contract: no membership fan-out ----------------------------
 
   test "post! grants a membership to the author only, not to every forum member" do
     @forum.memberships.grant_to([ users(:jason), users(:jz), users(:kevin) ])

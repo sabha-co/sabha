@@ -395,7 +395,7 @@ class Room < ApplicationRecord
     # Cascade-deactivate this room's nested sub-rooms: chat threads (spawned off
     # its messages) and, for a forum, its posts (owned via parent_room_id). Only
     # cascade-deactivate still-active ones; sub-rooms already deleted on their own
-    # keep their non-cascade marker, so reactivation leaves them deleted (R15).
+    # keep their non-cascade marker, so reactivation leaves them deleted.
     def deactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
       Rooms::Thread.active.where(parent_message_id: message_ids)
@@ -410,7 +410,7 @@ class Room < ApplicationRecord
     def reactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
       # Restore only sub-rooms this room's cascade deactivated — never ones
-      # deleted individually beforehand (R15).
+      # deleted individually beforehand.
       Rooms::Thread.where(parent_message_id: message_ids, active: false, cascade_deactivated: true)
         .find_each(&:reactivate)
 

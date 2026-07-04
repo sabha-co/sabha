@@ -28,7 +28,7 @@ class Rooms::Forums::Posts::SolutionsControllerTest < ActionDispatch::Integratio
     assert_not @post.reload.solved?
   end
 
-  test "the original poster can reopen a Solved post (R11 reopen)" do
+  test "the original poster can reopen a Solved post" do
     Current.set(user: users(:kevin)) { @post.solve! }
     sign_in :kevin
 

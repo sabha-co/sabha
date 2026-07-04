@@ -5,7 +5,7 @@ class ForumReactivationJob < ApplicationJob
   end
 
   # Restores the posts a forum's deletion cascaded — and only those, so a post
-  # deleted on its own stays deleted (R15). Rooms::Forum#reactivate brings the
+  # deleted on its own stays deleted. Rooms::Forum#reactivate brings the
   # forum row + memberships back synchronously; this restores each post's
   # messages and memberships in its own short transaction (Room::Nested), so the
   # write lock is released between posts. Idempotent: a retry re-scans and skips
