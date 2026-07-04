@@ -9,6 +9,21 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_includes forum.users, users(:david)
   end
 
+  test "a forum forces auto_join on and adds every active user on create" do
+    forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
+
+    assert forum.auto_join?
+    assert_equal User.active.to_set, forum.reload.users.to_set
+  end
+
+  test "a new user is auto-joined to existing forums" do
+    forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
+
+    newcomer = User.create!(name: "Newcomer", email_address: "newcomer@example.com", password: "secret123456")
+
+    assert_includes forum.reload.users, newcomer
+  end
+
   test "joining or renaming a forum writes no orphaned system message" do
     forum = rooms(:help_desk)
 

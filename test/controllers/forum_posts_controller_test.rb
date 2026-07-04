@@ -35,6 +35,7 @@ class ForumPostsControllerTest < ActionDispatch::IntegrationTest
 
   test "a logged-in non-member sees the join CTA, not the post content or a root bounce" do
     post = create_post(members: [ users(:david) ])
+    @forum.remove_member!(users(:kevin), actor: users(:david)) # auto-joined, then removed
     sign_in :kevin
 
     get forum_post_url(post.slug)

@@ -27,6 +27,7 @@ class Rooms::Posts::MembershipsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a non-forum-member cannot Follow a post" do
+    @forum.remove_member!(users(:jz), actor: users(:david)) # auto-joined, then removed
     sign_in :jz
 
     post rooms_post_membership_url(@post)

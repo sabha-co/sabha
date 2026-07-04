@@ -18,6 +18,7 @@ class Rooms::PostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a non-forum-member is forbidden from the post panel" do
+    @forum.remove_member!(users(:jz), actor: users(:david)) # auto-joined, then removed
     sign_in :jz # not a forum member
 
     get rooms_post_url(@post)

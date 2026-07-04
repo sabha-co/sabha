@@ -895,11 +895,12 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "reachable_message resolves forum-post messages by forum access, not post membership" do
-    forum = Rooms::Forum.create_for({ name: "Help", creator: users(:david) }, users: [ users(:david), users(:kevin) ])
+    forum = Rooms::Forum.create_for({ name: "Help", creator: users(:david) }, users: users(:david))
     post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }
     message = post.messages.first
-    member = users(:kevin)   # in the forum, no post membership
-    outsider = users(:jason) # not in the forum
+    member = users(:kevin)   # auto-joined to the forum, no post membership
+    outsider = users(:jason)
+    forum.remove_member!(outsider, actor: users(:david)) # removed → no forum access
 
     assert_not Membership.exists?(room_id: post.id, user_id: member.id)
     assert_equal message, member.reachable_message(message.id), "a forum member reaches the post message"

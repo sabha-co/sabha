@@ -46,6 +46,7 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a non-member cannot post to the forum" do
+    @forum.remove_member!(users(:jz), actor: users(:david)) # auto-joined, then removed
     sign_in :jz
 
     assert_no_difference -> { Rooms::Post.count } do

@@ -5,6 +5,13 @@
 # row out to every post: access derives from forum membership (see viewable_by?)
 # and members follow individual posts lazily.
 class Rooms::Forum < Room
+  include Room::AutoJoinable
+
+  # A forum is always community-wide: every active user is a member and new
+  # signups join automatically. auto_join is forced on (and not exposed in the
+  # UI), so Room::AutoJoinable adds all users on create.
+  before_validation :enable_auto_join
+
   def applicable_activity_types(message)
     message.mentionees.any? ? [ :mention ] : []
   end
@@ -86,6 +93,10 @@ class Rooms::Forum < Room
   end
 
   private
+    def enable_auto_join
+      self.auto_join = true
+    end
+
     def clean_up_post_follows_later(user)
       ForumFollowCleanupJob.perform_later(forum: self, user: user)
     end

@@ -13,14 +13,14 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='room[name]']"
   end
 
-  test "create makes a forum, grants creator membership, broadcasts one sidebar add, and redirects" do
+  test "create makes a forum, auto-joins every active user, broadcasts a sidebar add to the creator, and redirects" do
     assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 1 do
       post rooms_forums_url, params: { room: { name: "Support Forum" } }
     end
 
     forum = Room.last
     assert forum.forum?
-    assert_equal 1, forum.memberships.count
+    assert_equal User.active.count, forum.memberships.count
     assert_includes forum.users, users(:david)
     assert_redirected_to room_url(forum)
   end
@@ -240,8 +240,9 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_match "forum-card", response.body
   end
 
-  test "a non-member is bounced from the forum gallery" do
+  test "a removed member is bounced from the forum gallery" do
     forum = Rooms::Forum.create_for({ name: "Members only", creator: users(:david) }, users: users(:david))
+    forum.remove_member!(users(:kevin), actor: users(:david)) # auto-joined, then removed
     sign_in :kevin
 
     get room_url(forum)

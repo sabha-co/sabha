@@ -81,7 +81,7 @@ class User < ApplicationRecord
   before_validation :set_default_name
   before_validation :normalize_social_urls
   before_save :transliterate_name, if: :name_changed?
-  after_create_commit :grant_membership_to_open_rooms
+  after_create_commit :grant_membership_to_auto_join_rooms
 
   scope :ordered, -> { order(arel_table[:role].desc, arel_table[:name].lower) }
   scope :recent_posters_first, ->(room_id = nil) do
@@ -219,11 +219,14 @@ class User < ApplicationRecord
       end
     end
 
-    def grant_membership_to_open_rooms
-      forced_room_ids = Rooms::Open.active.where(auto_join: true).pluck(:id)
+    def grant_membership_to_auto_join_rooms
+      forced_room_ids = Room.active.where(auto_join: true).pluck(:id)
       return if forced_room_ids.empty?
 
       Membership.insert_all(forced_room_ids.collect { |room_id| { room_id: room_id, user_id: id } })
+
+      # Open auto-join rooms fan their threads out to members; a forum derives
+      # post access from forum membership, so it needs no per-post rows here.
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
         thread.memberships.grant_to(self)
       end
