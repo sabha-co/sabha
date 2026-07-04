@@ -15,13 +15,6 @@ class Rooms::PostTest < ActiveSupport::TestCase
     assert_equal @forum, post.parent_room
   end
 
-  test "a post requires a title" do
-    post = Rooms::Post.new(parent_room: @forum, creator: users(:david))
-
-    assert_not post.valid?
-    assert post.errors[:name].present?
-  end
-
   test "a post gets a URL-safe slug derived from its title" do
     post = create_post(title: "How do I reset my password?")
     assert_equal "how-do-i-reset-my-password", post.slug

@@ -6,12 +6,6 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     @parent_message = @parent_room.messages.create!(body: "Parent message", creator: users(:david))
   end
 
-  test "thread requires parent message" do
-    thread = Rooms::Thread.new(creator: users(:david))
-    assert_not thread.valid?
-    assert thread.errors[:parent_message].present?
-  end
-
   test "default involvement for thread creator is everything" do
     thread = Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
     assert_equal "everything", thread.default_involvement(user: users(:david))

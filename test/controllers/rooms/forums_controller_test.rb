@@ -203,7 +203,7 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
 
   test "the gallery paginates and lazy-loads further posts" do
     forum = Rooms::Forum.create_for({ name: "Busy", creator: users(:david) }, users: users(:david))
-    21.times { |i| Current.set(user: users(:david)) { forum.post!(title: "Post #{i}", body: "<div>b</div>") } }
+    21.times { |i| Rooms::Post.create!(parent_room: forum, name: "Post #{i}", creator: users(:david)) }
 
     get room_url(forum)
     assert_response :success

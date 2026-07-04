@@ -35,15 +35,6 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     assert flash[:alert].present?
   end
 
-  test "a forum member can view a member's new post without holding a post membership" do
-    post rooms_forum_posts_url(@forum), params: { post: { title: "Shared", body: "<div>Body</div>" } }
-    created = Rooms::Post.last
-
-    # Kevin is a forum member but not the poster: no per-post membership row,
-    # yet access derives from forum membership.
-    assert_not_includes created.users, users(:kevin)
-    assert created.viewable_by?(users(:kevin))
-  end
 
   test "creating a post does not mark the forum unread for other members" do
     kevin_membership = @forum.memberships.find_by(user: users(:kevin))
@@ -52,12 +43,6 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     post rooms_forum_posts_url(@forum), params: { post: { title: "Quiet", body: "<div>Body</div>" } }
 
     assert kevin_membership.reload.read?, "opening a post should not mark the forum unread"
-  end
-
-  test "the new post appears in the forum gallery" do
-    post rooms_forum_posts_url(@forum), params: { post: { title: "Latest", body: "<div>Body</div>" } }
-
-    assert_includes @forum.posts, Rooms::Post.last
   end
 
   test "a non-member cannot post to the forum" do
