@@ -49,13 +49,12 @@ module Message::Threadable
       end
     end
 
-    # A reply in a forum post must refresh the gallery card (reply count, last
-    # activity, participant avatars). The chat-oriented broadcast above targets
-    # `dom_id(parent_message, :threads)`, which exists in a chat message list but
-    # not in the forum gallery — so the post-thread owns the card replace (the
-    # same broadcast fires on a title/Solved change).
+    # A reply bumps the post's activity, so move its gallery card to the top —
+    # the right slot under the default "recent" sort — while refreshing its reply
+    # count, timestamp, and participant avatars. (A title/Solved change instead
+    # keeps the card in place via broadcast_gallery_card, since neither reorders.)
     def update_forum_gallery_card
-      room.broadcast_gallery_card if room.post?
+      room.broadcast_gallery_card_to_top if room.post?
     end
 
     def create_thread_reply_notifications

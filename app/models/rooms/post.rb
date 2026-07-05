@@ -20,7 +20,7 @@ class Rooms::Post < Room
 
   # Stream a new post into the top of every member's open gallery. The author
   # sees it via their post-create redirect; this reaches everyone else watching.
-  after_create_commit :broadcast_gallery_insertion
+  after_create_commit :broadcast_gallery_card_to_top
 
   # Re-broadcast the post's card + header when its title changes. Solved changes
   # go through solve!/reopen! (which create/destroy a Solution — no rooms update
@@ -125,17 +125,17 @@ class Rooms::Post < Room
     types
   end
 
-  # Prepend this post's card into the forum gallery for every member watching it
-  # live — a brand-new card has no element to replace yet, so insertion needs its
-  # own action. Newest-first is the top for both gallery sorts (recent activity /
-  # newest), so the head of the list is always the right slot.
+  # Move this post's card to the top of every open gallery. Turbo's prepend
+  # de-dupes by id, so the one action both INSERTS a brand-new post's card and
+  # MOVES an existing card back to the top when a reply bumps its activity — the
+  # right slot under the default "recent" (last active) sort, and newest-first.
   #
-  # Two accepted, self-correcting limitations: a viewer filtering to "Solved"
-  # briefly sees the new (unsolved) post, and a viewer sitting on the empty-state
-  # gallery (no list container yet) sees nothing until they navigate — the forum
-  # stream is neither filter- nor emptiness-aware. Both resolve on next load,
-  # short of fanning a stream out per filter.
-  def broadcast_gallery_insertion
+  # Accepted, self-correcting limitations (all resolve on next load): a viewer
+  # filtered to "Solved" briefly sees an open post that was created or replied to,
+  # a viewer on "Newest" sort sees a replied-to post jump that a reload wouldn't
+  # move, and a viewer on the empty-state gallery (no list container yet) sees
+  # nothing until they navigate.
+  def broadcast_gallery_card_to_top
     broadcast_prepend_to [ parent_room, :posts ],
       target: ActionView::RecordIdentifier.dom_id(parent_room, :posts),
       partial: "rooms/forums/post_card",

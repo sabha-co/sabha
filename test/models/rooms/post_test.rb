@@ -148,6 +148,19 @@ class Rooms::PostTest < ActiveSupport::TestCase
     assert prepend.at_css("##{ActionView::RecordIdentifier.dom_id(post, :card)}"), "the prepend carries the post's card"
   end
 
+  test "replying to a post bumps its card to the top of the gallery" do
+    post = Current.set(user: users(:david)) { @forum.post!(title: "Needs an answer", body: "b") }
+
+    streams = capture_turbo_stream_broadcasts [ @forum, :posts ] do
+      Current.set(user: users(:david)) { post.messages.create!(body: "<div>a reply</div>") }
+    end
+
+    prepend = streams.find { |stream| stream["action"] == "prepend" }
+    assert prepend, "a reply should prepend (move) the post's card to the top of the gallery"
+    assert_equal ActionView::RecordIdentifier.dom_id(@forum, :posts), prepend["target"]
+    assert prepend.at_css("##{ActionView::RecordIdentifier.dom_id(post, :card)}"), "the prepend carries the post's card"
+  end
+
   # --- Scale contract: no membership fan-out (D2) ----------------------------
 
   test "post! grants a membership to the author only, not to every forum member" do
