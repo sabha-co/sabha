@@ -14,6 +14,8 @@ A forum post is a first-class room: **`Rooms::Post`**, a sibling of `Rooms::Thre
 
 Access is **derived from the forum, not fanned out to every post**. Creating a post grants a membership to the author only; joining a forum creates **zero** post memberships. A post's `viewable_by?` delegates to its forum (`Rooms::Forum#viewable_by?`), so any forum member can read and reply to any post without holding a per-post row. This keeps `memberships` at roughly `participants`, not `members × posts`.
 
+The same forum-derived rule reaches the **real-time channels**. `RoomChannel#find_room` — inherited by `PresenceChannel` and `TypingNotificationsChannel` — falls back to `User#reachable_post`, so a member subscribes to a post's typing and presence streams without a per-post membership, mirroring the controllers. (Without that fallback the subscription is rejected and the client keeps whispering `refresh` to a dead subscription.) Presence itself no-ops for a membership-less viewer — there is no row to mark present — which is by design, not a gap.
+
 A member's post membership is created **lazily**, on engagement:
 
 - **On reply** — `Message::Threadable#follow_post_by_creator` calls `Rooms::Post#follow!`, an idempotent, self-healing upsert (never downgrades an existing follower).
