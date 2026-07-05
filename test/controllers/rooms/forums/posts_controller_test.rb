@@ -36,13 +36,13 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
   end
 
 
-  test "creating a post does not mark the forum unread for other members" do
+  test "creating a post marks the forum unread for other members" do
     kevin_membership = @forum.memberships.find_by(user: users(:kevin))
     assert kevin_membership.read?
 
     post rooms_forum_posts_url(@forum), params: { post: { title: "Quiet", body: "<div>Body</div>" } }
 
-    assert kevin_membership.reload.read?, "opening a post should not mark the forum unread"
+    assert kevin_membership.reload.unread?, "a new post marks other members' forum unread"
   end
 
   test "a non-member cannot post to the forum" do

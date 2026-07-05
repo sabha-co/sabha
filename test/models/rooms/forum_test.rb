@@ -161,4 +161,42 @@ class Rooms::ForumTest < ActiveSupport::TestCase
 
     assert_includes forum.applicable_activity_types(message), :mention
   end
+
+  # --- Sidebar unread from post activity --------------------------------------
+
+  test "a new post marks the forum unread for other members but not the author" do
+    forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
+    forum.memberships.update_all(unread_at: nil)
+
+    Current.set(user: users(:david)) { forum.post!(title: "How do I reset?", body: "b") }
+
+    kevin_membership = forum.memberships.find_by(user: users(:kevin))
+    assert kevin_membership.unread?, "other members' forum membership is marked unread"
+    assert_equal 0, kevin_membership.unread_notifications_count, "a plain new post is a dot, not a numbered mention"
+    assert forum.memberships.find_by(user: users(:david)).read?, "the author isn't marked unread by their own post"
+  end
+
+  test "a plain reply does not mark the forum unread" do
+    forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
+    post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "b") }
+    forum.memberships.update_all(unread_at: nil)
+
+    Current.set(user: users(:kevin)) { post.messages.create!(body: "<div>a reply</div>") }
+
+    assert_empty forum.memberships.unread, "a plain reply leaves the forum read for every member"
+  end
+
+  test "a mention in a reply marks only the mentioned member's forum unread" do
+    forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
+    post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "b") }
+    forum.memberships.update_all(unread_at: nil)
+    mention = %(<action-text-attachment sgid="#{users(:kevin).attachable_sgid}" content-type="application/vnd.sabha.mention"></action-text-attachment>)
+
+    Current.set(user: users(:david)) { post.messages.create!(body: "<div>#{mention} ping</div>") }
+
+    kevin_membership = forum.memberships.find_by(user: users(:kevin))
+    assert kevin_membership.unread?, "the mentioned member is marked unread"
+    assert_equal 1, kevin_membership.unread_notifications_count, "a mention shows a number badge on the forum"
+    assert_equal 1, forum.memberships.unread.count, "only the mentioned member is poked by a reply mention"
+  end
 end
