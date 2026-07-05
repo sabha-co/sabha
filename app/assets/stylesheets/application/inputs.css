@@ -136,6 +136,19 @@ input[type="radio"]:disabled::after {
   background-color: var(--color-border-darker);
 }
 
+/* Room-type options stack a title above a description; nudge the radio down so
+   it optically centers on the title line instead of sitting flush to its top. */
+.room-type-option input[type="radio"] {
+  margin-block-start: 0.15em;
+}
+
+/* The "add all members" checkbox is a child of the Public option: hug it to
+   Public and indent so it lines up under the option's title/description text. */
+.room-type-suboption {
+  margin-block-start: var(--block-space-half);
+  padding-inline-start: calc(1.075em + var(--inline-space));
+}
+
 .input--transparent {
   --input-border-color: currentColor;
   --input-color: currentColor;
