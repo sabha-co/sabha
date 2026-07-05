@@ -1,7 +1,7 @@
 class Rooms::ForumsController < RoomsController
   before_action :set_room, only: %i[ show edit update destroy ]
   before_action :set_membership, only: %i[ edit ]
-  before_action :ensure_can_administer, only: %i[ edit update destroy ]
+  before_action :ensure_can_administer, only: %i[ update destroy ]
   before_action :remember_last_room_visited, only: :show
   before_action :ensure_permission_to_create_rooms, only: %i[ new create ]
 

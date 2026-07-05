@@ -180,12 +180,14 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", room_access_path(forum), count: 0
   end
 
-  test "a non-admin non-creator cannot edit or update the forum" do
+  test "a non-admin non-creator can view but not update the forum settings" do
+    # A member opens the same tabbed edit page as open/closed rooms — to see the
+    # member list, notifications, and Leave — but only admins can rename or destroy.
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: [ users(:david), users(:kevin) ])
 
     sign_in :kevin
     get edit_rooms_forum_url(forum)
-    assert_response :forbidden
+    assert_response :success
 
     put rooms_forum_url(forum), params: { room: { name: "Hijacked" } }
     assert_response :forbidden
