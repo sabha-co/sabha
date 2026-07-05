@@ -1,6 +1,8 @@
 class ForumDeactivationJob < ApplicationJob
   queue_as :default
 
+  # The forum was hard-destroyed before this ran — nothing left to cascade, so
+  # swallow the error rather than retry a job that can never succeed.
   rescue_from ActiveJob::DeserializationError do
   end
 

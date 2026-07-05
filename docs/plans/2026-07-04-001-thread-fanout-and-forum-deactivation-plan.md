@@ -95,17 +95,17 @@ Ships on one branch; phases are in review order.
 - One-time, batched delete of `invisible` thread memberships to reclaim rows. Log the count. Ship separately or skip.
 
 ### A7 — `parent_room` accessor consistency sweep (T7 — no behavior change)
-Opportunistic; rides this branch because A2/A4 already touch several of these files. Replace `parent_message.room` with the unified `parent_room` accessor at the five sites that are **pure aliases** (they don't otherwise need `parent_message`):
+Opportunistic; rides this branch because A2/A4 already touch several of these files. Replace `parent_message.room` with the unified `parent_room` accessor at the sites that are **pure aliases** (they don't otherwise need `parent_message`):
 - `create_thread_reply_notifications_job.rb:63` — line **61** of the same file already uses `parent_room`; this removes the intra-file split.
 - `broadcast_inbox_threads_job.rb:13` → `parent_room.memberships`
-- `room.rb:305` (`display_name`) → `parent_room&.name`
 - `missed_notifications_mailer.rb:24` → `parent_room&.name`
 - `threadable.rb:43` (broadcast target) → `parent_room`
 
 **Explicitly leave the permalink hops alone** — `rooms_controller.rb:18`, `threads_controller.rb:28/33/46`, `message_pusher.rb:49` all build `room_at_message_path(room, message)` and need the *message*, so swapping `.room` saves nothing; likewise `Rooms::Thread.find_or_create_for` (`thread.rb:15`) runs before the thread object exists and must read `parent_message.room`.
 
-Two guards so this stays a no-op:
-- **No N+1.** Where a swapped site renders in a list (`display_name` in the sidebar/inbox), repoint the existing `includes(parent_message: :room)` preload to `includes(:parent_room)` so the swap doesn't trade a loaded association for an unloaded one.
+**Also left as-is: `Room#display_name` (`room.rb`, the thread branch).** It reads `parent_message&.room&.name`, and swapping it to `parent_room&.name` would require repointing its sidebar/inbox `includes(parent_message: :room)` preloads to `includes(:parent_room)` to avoid trading a loaded association for an N+1. The churn across those call sites isn't worth a cosmetic swap, so this one site keeps the message-hop.
+
+Guard so this stays a no-op:
 - **All threads resolve.** `parent_room` is set on create — for threads via the `Rooms::Thread`-only `assign_parent_room` callback (`rooms/thread.rb:12`/`:37`, `before_validation ... on: :create`), for posts via `Rooms::Post.create!(parent_room: self)` (`rooms/forum.rb:35`) — and backfilled for existing rows (migration `20260703120000`), so no new `nil` paths.
 
 ## Part A risks

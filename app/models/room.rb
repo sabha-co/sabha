@@ -3,6 +3,10 @@ class Room < ApplicationRecord
 
   CannotDeleteOriginalError = Class.new(StandardError)
 
+  # The STI types of nested sub-rooms — chat threads and forum posts. The single
+  # source for the type list; both the sub_rooms and without_threads scopes read it.
+  SUB_ROOM_TYPES = %w[ Rooms::Thread Rooms::Post ].freeze
+
   has_many :memberships, -> { active } do
     def grant_to(users)
       room = proxy_association.owner
@@ -58,10 +62,10 @@ class Room < ApplicationRecord
   # Excludes nested sub-rooms — chat threads and forum posts — from top-level
   # room listings and the sidebar. (Named for threads historically; it now also
   # covers Rooms::Post, which is likewise a sub-room, not a sidebar room.)
-  scope :without_threads, -> { where.not(type: %w[ Rooms::Thread Rooms::Post ]) }
-  # Nested sub-rooms — chat threads and forum posts. The class-level complement
-  # of #sub_room?, and the single source for the sub-room STI type list.
-  scope :sub_rooms, -> { where(type: %w[ Rooms::Thread Rooms::Post ]) }
+  scope :without_threads, -> { where.not(type: SUB_ROOM_TYPES) }
+  # Nested sub-rooms — chat threads and forum posts; the class-level complement
+  # of #sub_room?.
+  scope :sub_rooms, -> { where(type: SUB_ROOM_TYPES) }
 
   # Rooms a user can discover and join from Browse: open rooms and forums they
   # aren't already in. Called on Room for both; on Rooms::Open (bots API) STI

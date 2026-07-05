@@ -40,13 +40,15 @@ class User < ApplicationRecord
       raise(ActiveRecord::RecordNotFound, "Couldn't find Message with id=#{id}")
   end
 
-  # The forum post with this id the user can reach, or nil. Access derives from
-  # the forum (viewable_by?), so a member resolves a post they haven't followed
-  # while an outsider gets nil — the single finder behind the channel and the
-  # controllers that reach posts without a per-post membership.
-  def reachable_post(id)
-    post = Rooms::Post.active.find_by(id:)
-    post if post&.viewable_by?(self)
+  # A room this user can currently reach, or nil: one they belong to, or a nested
+  # sub-room (forum post or chat thread) whose access derives from its parent. A
+  # sub-room is re-checked with viewable_by? even when a membership resolved it,
+  # so a silenced-but-active row can't keep granting access after the user loses
+  # parent access. Backs RoomChannel (presence/typing) the way SubRoomAccessible
+  # backs the controllers that resolve a room from params.
+  def reachable_room(id)
+    room = rooms.find_by(id:) || Room.active.sub_rooms.find_by(id:)
+    room unless room&.sub_room? && !room.viewable_by?(self)
   end
 
   def active_invite_link
