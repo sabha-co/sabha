@@ -26,10 +26,10 @@ class Rooms::Forums::PostsController < ApplicationController
     @post.update!(name: post_params[:title])
 
     # Editing is inline (the form lives in the header's title frame). Redirect to
-    # the post page so Turbo swaps that frame back to the display title in place;
+    # the post panel so Turbo swaps that frame back to the display title in place;
     # the model's after_update_commit broadcast refreshes the card and any other
     # open surfaces.
-    redirect_to forum_post_url(@post.slug)
+    redirect_to rooms_post_url(@post)
   rescue ActiveRecord::RecordInvalid => e
     flash.now[:alert] = e.record.errors.full_messages.to_sentence.presence || "Could not update the post"
     render :edit, status: :unprocessable_entity

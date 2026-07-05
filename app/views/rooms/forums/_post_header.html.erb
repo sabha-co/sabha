@@ -17,7 +17,7 @@
       <%= tag.button class: "btn action-btn full-width", data: {
             controller: "copy-to-clipboard", action: "copy-to-clipboard#copy",
             copy_to_clipboard_success_class: "btn--success",
-            copy_to_clipboard_content_value: forum_post_url(post.slug) } do %>
+            copy_to_clipboard_content_value: room_url(post.parent_room, post: post.slug) } do %>
         <span>Copy link</span>
       <% end %>
 

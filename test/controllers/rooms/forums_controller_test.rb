@@ -83,6 +83,37 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a.forum-card[data-turbo-frame='thread_panel_frame']", count: 2
   end
 
+  test "a post deep-link points the panel frame at the post so it opens over the gallery" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+    post = Current.set(user: users(:david)) { forum.post!(title: "Deep link", body: "<div>b</div>") }
+
+    get room_url(forum, post: post.slug)
+
+    assert_response :success
+    assert_select ".forum"
+    assert_select "turbo-frame#thread_panel_frame[src=?]", rooms_post_path(post)
+  end
+
+  test "a post deep-link forwards a reply anchor to the panel frame" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+    post = Current.set(user: users(:david)) { forum.post!(title: "Deep link", body: "<div>b</div>") }
+    reply = post.messages.create!(body: "<div>a reply</div>", creator: users(:david))
+
+    get room_url(forum, post: post.slug, message_id: reply.id)
+
+    assert_select "turbo-frame#thread_panel_frame[src=?]", rooms_post_path(post, message_id: reply.id)
+  end
+
+  test "an unknown post slug renders the plain gallery with no panel frame src" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+
+    get room_url(forum, post: "no-such-post")
+
+    assert_response :success
+    assert_select ".forum"
+    assert_select "turbo-frame#thread_panel_frame:not([src])"
+  end
+
   test "an empty forum shows the empty-state CTA" do
     forum = Rooms::Forum.create_for({ name: "Quiet", creator: users(:david) }, users: users(:david))
 

@@ -183,10 +183,6 @@ Rails.application.routes.draw do
     get "@:message_id", to: "rooms#show", as: :at_message
   end
 
-  # Permanent, shareable forum-post page (member-gated in v1). Renders standalone
-  # with no redirect, unlike the in-app thread panel.
-  get "/f/:slug", to: "forum_posts#show", as: :forum_post
-
   # Bot API — authenticate with `Authorization: Bearer <bot_key>`.
   namespace :api, defaults: { format: :json } do
     namespace :bots do

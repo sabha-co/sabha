@@ -14,7 +14,7 @@
       <span class="for-screen-reader">Save title</span>
     <% end %>
 
-    <%= link_to forum_post_path(@post.slug), class: "btn btn--borderless flex-item-no-shrink",
+    <%= link_to rooms_post_path(@post), class: "btn btn--borderless flex-item-no-shrink",
           data: { turbo_frame: dom_id(@post, :title) } do %>
       <%= icon_tag "close" %>
       <span class="for-screen-reader">Cancel</span>

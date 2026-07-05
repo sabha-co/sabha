@@ -85,7 +85,7 @@ class Message < ApplicationRecord
   # The forum post (Rooms::Post) this message belongs to, or nil for non-post
   # messages. A post's messages ARE its content — the opening body and the
   # replies — so the post is simply the message's room. Permalinks resolve post
-  # messages to /f/:slug through this.
+  # messages to the forum gallery deep-link (?post=<slug>) through this.
   def forum_post
     room if room.post?
   end

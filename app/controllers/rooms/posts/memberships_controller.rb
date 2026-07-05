@@ -6,12 +6,12 @@ class Rooms::Posts::MembershipsController < ApplicationController
 
   def create
     @post.follow!(Current.user)
-    redirect_back fallback_location: forum_post_url(@post.slug)
+    redirect_back fallback_location: room_url(@post.parent_room, post: @post.slug)
   end
 
   def destroy
     @post.unfollow!(Current.user)
-    redirect_back fallback_location: forum_post_url(@post.slug)
+    redirect_back fallback_location: room_url(@post.parent_room, post: @post.slug)
   end
 
   private

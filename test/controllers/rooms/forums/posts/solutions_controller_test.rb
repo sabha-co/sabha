@@ -78,11 +78,11 @@ class Rooms::Forums::Posts::SolutionsControllerTest < ActionDispatch::Integratio
 
   test "the Solved toggle is shown to the OP but not to a plain member" do
     sign_in :kevin
-    get forum_post_url(@post.slug)
+    get rooms_post_url(@post)
     assert_select "form[action=?]", rooms_forum_post_solution_path(@forum, @post)
 
     sign_in :jz
-    get forum_post_url(@post.slug)
+    get rooms_post_url(@post)
     assert_select "form[action=?]", rooms_forum_post_solution_path(@forum, @post), count: 0
   end
 

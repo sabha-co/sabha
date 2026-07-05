@@ -55,16 +55,16 @@ class Room::MessagePusherTest < ActiveSupport::TestCase
 
     payload = Room::MessagePusher.payload_for(room: post, message: reply)
 
-    expected_path = Rails.application.routes.url_helpers.forum_post_path(post.slug, message_id: reply.id)
+    expected_path = Rails.application.routes.url_helpers.room_path(post.parent_room, post: post.slug, message_id: reply.id)
     assert_equal expected_path, payload[:path]
   end
 
-  test "build_payload for a forum post opening message links to the post with no reply anchor" do
+  test "build_payload for a forum post opening message links to the gallery deep-link with no reply anchor" do
     post = Current.set(user: users(:david)) { rooms(:help_desk).post!(title: "Deploys", body: "How?") }
     opening = post.messages.first
 
     payload = Room::MessagePusher.payload_for(room: post, message: opening)
 
-    assert_equal Rails.application.routes.url_helpers.forum_post_path(post.slug), payload[:path]
+    assert_equal Rails.application.routes.url_helpers.room_path(post.parent_room, post: post.slug), payload[:path]
   end
 end

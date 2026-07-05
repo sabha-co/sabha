@@ -40,11 +40,8 @@ class Room::MessagePusher
       helpers = Rails.application.routes.url_helpers
 
       if post = message.forum_post
-        if post.opening_message?(message)
-          helpers.forum_post_path(post.slug)
-        else
-          helpers.forum_post_path(post.slug, message_id: message.id)
-        end
+        message_id = message.id unless post.opening_message?(message)
+        helpers.room_path(post.parent_room, post: post.slug, message_id:)
       elsif room.thread? && room.parent_message
         helpers.room_at_message_path(room.parent_message.room, room.parent_message)
       else

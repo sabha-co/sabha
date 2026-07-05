@@ -13,9 +13,9 @@ module ForumPostScoped
 
     def set_post
       # Active- and forum-scoped, so a deleted post — or one in another forum —
-      # can't be edited or solved through these nested routes; its /f/:slug page
-      # already 404s. A plain finder (not @forum.posts, the sorted gallery scope)
-      # avoids an ORDER BY on a by-id lookup.
+      # can't be edited or solved through these nested routes. A plain finder
+      # (not @forum.posts, the sorted gallery scope) avoids an ORDER BY on a
+      # by-id lookup.
       @post = @forum && Rooms::Post.active.find_by(parent_room_id: @forum.id, id: params[:post_id] || params[:id])
       redirect_to room_url(@forum), alert: "Post not found" unless @post
     end

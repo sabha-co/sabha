@@ -65,7 +65,7 @@ class Rooms::Forums::PostsControllerTest < ActionDispatch::IntegrationTest
     patch rooms_forum_post_url(@forum, post), params: { post: { title: "Edited title" } }
 
     assert_equal "Edited title", post.reload.title
-    assert_redirected_to forum_post_url(post.slug)
+    assert_redirected_to rooms_post_url(post)
   end
 
   test "editing a post's title does not change its slug" do

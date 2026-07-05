@@ -17,6 +17,25 @@ class Rooms::PostsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".forum-post-header__title", text: "How do I reset?"
   end
 
+  test "the opening message renders as a hero, badged OP, divided from replies by a live count" do
+    Current.set(user: users(:kevin)) { @post.messages.create!(body: "<div>A reply</div>") }
+    sign_in :david
+
+    get rooms_post_url(@post)
+
+    assert_response :success
+    # The opening message carries the post body and gets the roomier treatment.
+    assert_select ".message--forum-opening"
+    # The author (david) is badged OP on the opening message; kevin's reply is not.
+    assert_select ".message--forum-opening .message__op-badge", text: "OP"
+    assert_select ".message__op-badge", count: 1
+    # A "N replies" divider separates the question from the discussion; its count
+    # span carries the id a new reply broadcasts to (Message::Threadable).
+    count_id = "#{ActionView::RecordIdentifier.dom_id(@post, :replies_separator)}_count"
+    assert_select ".message--forum-opening .message__replies-separator ##{count_id}", text: "1 reply"
+    assert_select ".message:not(.message--forum-opening) .message__replies-separator", count: 0
+  end
+
   test "a non-forum-member is forbidden from the post panel" do
     @forum.remove_member!(users(:jz), actor: users(:david)) # auto-joined, then removed
     sign_in :jz # not a forum member
