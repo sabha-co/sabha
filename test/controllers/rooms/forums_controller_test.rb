@@ -83,6 +83,20 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a.forum-card[data-turbo-frame='thread_panel_frame']", count: 2
   end
 
+  test "the gallery marks the posts the viewer follows and leaves the rest unmarked" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+    Current.set(user: users(:david)) do
+      forum.post!(title: "I follow this", body: "<div>b</div>") # author auto-follows
+      Rooms::Post.create!(parent_room: forum, name: "I don't follow this", creator: users(:kevin))
+    end
+
+    get room_url(forum)
+
+    assert_response :success
+    assert_select ".forum-card", count: 2
+    assert_select ".forum-tag--following", text: /Following/, count: 1
+  end
+
   test "a post deep-link points the panel frame at the post so it opens over the gallery" do
     forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
     post = Current.set(user: users(:david)) { forum.post!(title: "Deep link", body: "<div>b</div>") }

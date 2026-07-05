@@ -156,6 +156,9 @@
 
 .forum-tag--solved .icon { width: 0.7em; height: 0.7em; }
 
+/* "Following" mark — rendered server-side on the cards the viewer follows. */
+.forum-tag--following .icon { width: 0.8em; height: 0.8em; }
+
 /* --- byline (author) + right-aligned activity column ----------------- */
 /* The activity column right-aligns replies + last-active so each row reads
    left→right: what the post is, then how much is happening in it. */

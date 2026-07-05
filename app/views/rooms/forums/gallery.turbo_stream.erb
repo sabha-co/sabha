@@ -3,7 +3,7 @@
 
 <%= turbo_stream.append dom_id(@room, :posts) do %>
   <%= render partial: "rooms/forums/post_card", collection: @posts, as: :post,
-        locals: { forum: @room, participants: @participants } %>
+        locals: { forum: @room, participants: @participants, viewer: Current.user } %>
 <% end %>
 
 <% unless @page.last? %>

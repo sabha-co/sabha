@@ -6,21 +6,32 @@ class Rooms::Posts::MembershipsController < ApplicationController
 
   def create
     @post.follow!(Current.user)
-    respond_with_follow_control
+    respond_with_follow_change
   end
 
   def destroy
     @post.unfollow!(Current.user)
-    respond_with_follow_control
+    respond_with_follow_change
   end
 
   private
-    # In the browser the Follow/Unfollow button lives in a turbo frame, so flip it
-    # in place — the state change shows without reloading and dropping the panel.
-    # A non-frame request (JS off) falls back to the full redirect.
-    def respond_with_follow_control
+    # Flip the Follow/Unfollow button in its frame, and refresh this post's gallery
+    # card so its "Following" pill updates for the actor without a reload. Both ride
+    # one turbo_stream straight to the actor — the card replace is a direct response,
+    # not a broadcast, so it never touches other viewers' viewer-agnostic cards. A
+    # missing card target (off the current gallery page) is a harmless no-op; JS off
+    # falls back to the full redirect.
+    def respond_with_follow_change
       if turbo_frame_request?
-        render partial: "rooms/forums/posts/follow_control", locals: { post: @post }
+        render turbo_stream: [
+          turbo_stream.replace(helpers.dom_id(@post, :follow),
+            partial: "rooms/forums/posts/follow_control", locals: { post: @post }),
+          turbo_stream.replace(helpers.dom_id(@post, :card),
+            partial: "rooms/forums/post_card",
+            locals: { post: @post, forum: @post.parent_room,
+                      participants: Rooms::Post.preload_participant_creators([ @post ]),
+                      viewer: Current.user })
+        ]
       else
         redirect_back fallback_location: room_url(@post.parent_room, post: @post.slug)
       end

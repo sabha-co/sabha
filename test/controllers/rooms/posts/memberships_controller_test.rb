@@ -17,13 +17,16 @@ class Rooms::Posts::MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "everything", membership.involvement
   end
 
-  test "Following via a turbo frame flips the control to Unfollow in place" do
+  test "Following via a turbo frame flips the button and refreshes the gallery card's mark" do
     sign_in :kevin
 
     post rooms_post_membership_url(@post), headers: { "Turbo-Frame" => "follow" }
 
     assert_response :success
+    assert_select "turbo-stream[action='replace'][target=?]", ActionView::RecordIdentifier.dom_id(@post, :follow)
+    assert_select "turbo-stream[action='replace'][target=?]", ActionView::RecordIdentifier.dom_id(@post, :card)
     assert_select "turbo-frame button", text: /Unfollow/
+    assert_select ".forum-tag--following", text: /Following/
   end
 
   test "Unfollow removes the membership" do
@@ -33,6 +36,17 @@ class Rooms::Posts::MembershipsControllerTest < ActionDispatch::IntegrationTest
     delete rooms_post_membership_url(@post)
 
     assert_not Membership.exists?(room_id: @post.id, user_id: users(:kevin).id)
+  end
+
+  test "Unfollow via a turbo frame flips the button and clears the gallery card's mark" do
+    @post.follow!(users(:kevin))
+    sign_in :kevin
+
+    delete rooms_post_membership_url(@post), headers: { "Turbo-Frame" => "follow" }
+
+    assert_response :success
+    assert_select "turbo-frame button", text: /Follow/
+    assert_select ".forum-tag--following", count: 0
   end
 
   test "a non-forum-member cannot Follow a post" do
