@@ -32,16 +32,6 @@
           <%= button_to_change_involvement(room, @membership.involvement) %>
         <% end %>
       <% end %>
-
-      <% if room.forum? %>
-        <%= button_tag type: "button", class: "btn forum-nav-new", aria: { label: "New post" }, data: {
-              controller: "forum-compose-opener",
-              forum_compose_opener_forum_compose_outlet: ".forum",
-              action: "forum-compose-opener#open" } do %>
-          <%= icon_tag "add" %>
-          <span class="forum-nav-new__label">New post</span>
-        <% end %>
-      <% end %>
     </div>
   <% end %>
 <% end %>

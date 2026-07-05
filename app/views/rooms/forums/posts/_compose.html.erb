@@ -1,14 +1,8 @@
 <%# locals: (forum:) %>
-<%# The inline "New post" compose. Toggled in place by the forum-compose
-    Stimulus controller; posts to create with no route change. %>
+<%# The inline "New post" compose form. Rendered inside the gallery's <details>
+    disclosure — the <summary> opens/closes it; this is just the fields. Posts to
+    create with no route change. %>
 <%= form_with url: rooms_forum_posts_path(forum), scope: :post, class: "forum-compose__form flex flex-column gap" do |form| %>
-  <div class="forum-compose__head flex align-center gap">
-    <button type="button" class="btn btn--borderless forum-compose__close" data-action="forum-compose#close" aria-label="Cancel">
-      <%= icon_tag "close" %>
-    </button>
-    <strong>New post</strong>
-  </div>
-
   <%= form.text_field :title, class: "forum-compose__title input fill-white", required: true,
         placeholder: "Post title", maxlength: 200, style: "--input-border-radius: 1.1rem",
         data: { forum_compose_target: "title" } %>

@@ -7,10 +7,6 @@
     <%= link_to "Clear filters", room_path(forum), class: "btn" %>
   <% else %>
     <h2 class="txt-medium margin-none">No posts yet</h2>
-    <p class="txt-small txt-muted margin-none">Start the first conversation — ask a question or share something worth keeping.</p>
-    <button type="button" class="btn btn--reversed" data-forum-compose-target="opener" data-action="forum-compose#open">
-      <%= icon_tag "add" %>
-      <span>New post</span>
-    </button>
+    <p class="txt-small txt-muted margin-none">Use <strong>New post</strong> above to start the first conversation — ask a question or share something worth keeping.</p>
   <% end %>
 </div>

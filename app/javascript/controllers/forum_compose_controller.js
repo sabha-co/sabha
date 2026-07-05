@@ -1,21 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Toggles the "New post" compose form in place at the top of the forum gallery,
-// Discord-style — no route change. The form lives in the page (hidden); opening
-// it just reveals it and focuses the title.
+// The "New post" composer is a native <details> disclosure: the <summary> opens
+// and closes it, and CSS handles the styling and the ＋/✕ affordance. The one
+// thing HTML can't do is move focus into the panel on open — that's this
+// controller's only job.
 export default class extends Controller {
-  static targets = ["opener", "form", "title"]
+  static targets = ["title"]
 
-  open(event) {
-    event?.preventDefault()
-    this.formTarget.hidden = false
-    if (this.hasOpenerTarget) this.openerTarget.hidden = true
-    this.titleTarget?.focus()
-  }
-
-  close(event) {
-    event?.preventDefault()
-    this.formTarget.hidden = true
-    if (this.hasOpenerTarget) this.openerTarget.hidden = false
+  focus() {
+    if (this.element.open) this.titleTarget?.focus()
   }
 }

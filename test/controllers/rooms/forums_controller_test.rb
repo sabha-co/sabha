@@ -114,13 +114,13 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#thread_panel_frame:not([src])"
   end
 
-  test "an empty forum shows the empty-state CTA" do
+  test "an empty forum shows the empty state and the New post composer" do
     forum = Rooms::Forum.create_for({ name: "Quiet", creator: users(:david) }, users: users(:david))
 
     get room_url(forum)
 
     assert_select ".forum__empty"
-    assert_select ".forum__empty button[data-action*=?]", "forum-compose#open"
+    assert_select "details.forum-compose > summary", text: /New post/
   end
 
   test "gallery cards are ordered by most recent activity" do

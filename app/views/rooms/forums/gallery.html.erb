@@ -12,19 +12,30 @@
 <% filtering = params[:solved].present? %>
 <% populated = @posts.any? || filtering %>
 
-<div class="forum" data-controller="forum-compose">
+<div class="forum">
   <%= turbo_stream_from @room, :posts %>
   <%# Involvement changes (the nav bell) broadcast to the membership stream —
       subscribe so the button cycles its state, like the chat and post pages. %>
   <%= turbo_stream_from @membership if @membership %>
 
   <div class="forum__inner flex flex-column gap">
-    <% if populated %>
-      <%= render "rooms/forums/filter_bar", forum: @room %>
-    <% end %>
+    <%# Toolbar row: filters lead on the left, New post pinned to the right. %>
+    <div class="forum__toolbar flex align-center gap flex-wrap">
+      <% if populated %>
+        <%= render "rooms/forums/filter_bar", forum: @room %>
+      <% end %>
 
-    <div class="forum-compose" data-forum-compose-target="form" hidden>
-      <%= render "rooms/forums/posts/compose", forum: @room %>
+      <%# Native <details> disclosure: the summary is the "New post" trigger; the
+          controller only focuses the title on open (see forum_compose). Pinned
+          right when closed; expands to a full-width row below the filters on open. %>
+      <%= tag.details class: "forum-compose", data: {
+            controller: "forum-compose", action: "toggle->forum-compose#focus" } do %>
+        <summary class="forum-compose__toggle btn btn--reversed">
+          <%= icon_tag "add", class: "forum-compose__toggle-icon" %>
+          <span>New post</span>
+        </summary>
+        <%= render "rooms/forums/posts/compose", forum: @room %>
+      <% end %>
     </div>
 
     <% if @posts.any? %>
