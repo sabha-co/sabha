@@ -1,0 +1,52 @@
+<%# locals: (post:, forum:, participants: {}, viewer: nil, **rest) %>
+<%# **rest absorbs the default local turbo-rails injects when this partial is
+    broadcast (thread: from a post, message: from a reply). A broadcast reaches
+    every member with one shared HTML, so it passes no viewer and the Following
+    pill is omitted; only a request render (the gallery, pagination) passes a
+    viewer, where follow state is this user's — it refreshes on the next load. %>
+<%= link_to rooms_post_path(post), id: dom_id(post, :card),
+      class: "forum-card flex align-start gap",
+      data: { turbo_frame: "thread_panel_frame", updated_at: post.last_active_at&.iso8601 } do %>
+  <span class="forum-card__status <%= "forum-card__status--solved" if post.solved? %>" aria-hidden="true">
+    <%= icon_tag(post.solved? ? "check" : "chat-bubble") %>
+  </span>
+
+  <div class="forum-card__body flex flex-column gap-half flex-item-grow min-width">
+    <h3 class="forum-card__title margin-none"><%= post.title %></h3>
+
+    <div class="forum-card__byline flex align-center gap-half txt-x-small txt-muted flex-wrap">
+      <span class="forum-card__author flex align-center gap-half">
+        <%= avatar_image_tag post.creator, size: 20, class: "forum-avatar" %>
+        <span><%= post.creator.name %></span>
+      </span>
+
+      <% if viewer && post.followed_by?(viewer) %>
+        <span class="forum-tag forum-tag--following" aria-label="You follow this post">
+          <%= icon_tag "bell" %> Following
+        </span>
+      <% end %>
+
+      <% if post.solved? %>
+        <span class="forum-tag forum-tag--solved"><%= icon_tag "check" %> Solved</span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="forum-card__activity flex flex-column align-end gap-half txt-x-small txt-muted flex-item-no-shrink" data-controller="local-time">
+    <span class="forum-card__replies flex align-center gap-half">
+      <% repliers = (participants[post.id] || []).reject { |user| user == post.creator }.first(3) %>
+      <% if repliers.any? %>
+        <span class="forum-card__stack flex-inline">
+          <% repliers.each do |user| %>
+            <%= avatar_image_tag user, size: 18, class: "forum-avatar forum-card__stack-avatar" %>
+          <% end %>
+        </span>
+      <% end %>
+      <strong><%= pluralize(post.replies_count, "reply", "replies") %></strong>
+    </span>
+
+    <% if post.last_active_at.present? %>
+      <span>Updated <%= local_datetime_tag post.last_active_at, style: :relative %></span>
+    <% end %>
+  </div>
+<% end %>

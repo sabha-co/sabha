@@ -37,6 +37,34 @@ class TypingNotificationsChannelTest < ActionCable::Channel::TestCase
     assert subscription.rejected?
   end
 
+  # A forum post derives access from its forum, so a member can type in a post
+  # they haven't followed — no per-post membership row. Without the derived-access
+  # fallback in RoomChannel#find_room, the typing channel rejected them.
+  test "a forum member without a post membership can subscribe to a post" do
+    forum = Rooms::Forum.create_for({ name: "Help", creator: users(:david) }, users: users(:david))
+    post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }
+    member = users(:kevin) # auto-joined to the forum, no post membership
+    assert_not Membership.exists?(room_id: post.id, user_id: member.id)
+
+    stub_connection(current_user: member)
+    subscribe room_id: post.id
+
+    assert subscription.confirmed?
+    assert_has_stream_for post
+  end
+
+  test "a non-forum-member is rejected from a post" do
+    forum = Rooms::Forum.create_for({ name: "Help", creator: users(:david) }, users: users(:david))
+    post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }
+    outsider = users(:jason)
+    forum.remove_member!(outsider, actor: users(:david)) # auto-joined, then removed
+
+    stub_connection(current_user: outsider)
+    subscribe room_id: post.id
+
+    assert subscription.rejected?
+  end
+
   test "start and stop handle nil @room gracefully (AnyCable HTTP RPC scenario)" do
     # In AnyCable HTTP RPC mode, @room isn't preserved between calls.
     # Simulate this by creating a fresh channel instance and calling actions directly.

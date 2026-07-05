@@ -20,9 +20,9 @@ module Message::Mentionee
   def mentionees
     @mentionees ||=
       if mentions_everyone?
-        room.users.to_a
+        room.mentionable_users.to_a
       elsif (ids = mentioned_users.map(&:id)).any?
-        room.users.where(id: ids).to_a
+        room.mentionable_users.where(id: ids).to_a
       else
         []
       end

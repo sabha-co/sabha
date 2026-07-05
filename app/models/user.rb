@@ -25,6 +25,25 @@ class User < ApplicationRecord
 
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
 
+  # A single message the user can reach: one in a room they belong to
+  # (reachable_messages), or — because a forum post derives access from its forum
+  # rather than a per-post membership — a message in a post they can view. Raises
+  # when neither applies, so callers 404 the way `reachable_messages.find` did.
+  def reachable_message(id)
+    reachable_messages.find_by(id:) ||
+      viewable_forum_post_message(id) ||
+      raise(ActiveRecord::RecordNotFound, "Couldn't find Message with id=#{id}")
+  end
+
+  # The forum post with this id the user can reach, or nil. Access derives from
+  # the forum (viewable_by?), so a member resolves a post they haven't followed
+  # while an outsider gets nil — the single finder behind the channel and the
+  # controllers that reach posts without a per-post membership.
+  def reachable_post(id)
+    post = Rooms::Post.active.find_by(id:)
+    post if post&.viewable_by?(self)
+  end
+
   def active_invite_link
     join_codes.active.first
   end
@@ -71,7 +90,7 @@ class User < ApplicationRecord
   before_validation :set_default_name
   before_validation :normalize_social_urls
   before_save :transliterate_name, if: :name_changed?
-  after_create_commit :grant_membership_to_open_rooms
+  after_create_commit :grant_membership_to_auto_join_rooms
 
   scope :ordered, -> { order(arel_table[:role].desc, arel_table[:name].lower) }
   scope :recent_posters_first, ->(room_id = nil) do
@@ -189,6 +208,14 @@ class User < ApplicationRecord
   end
 
   private
+    # A message whose room is a forum post this user can view — access derives
+    # from the forum, so no per-post membership is required. Nil for anything
+    # that isn't a post or that the user can't see.
+    def viewable_forum_post_message(id)
+      message = Message.active.find_by(id:)
+      message if message&.room&.post? && message.room.viewable_by?(self)
+    end
+
     def deactivate_direct_rooms
       Membership.where(user_id: id).direct_rooms.each do |membership|
         membership.room.deactivate
@@ -201,11 +228,14 @@ class User < ApplicationRecord
       end
     end
 
-    def grant_membership_to_open_rooms
-      forced_room_ids = Rooms::Open.active.where(auto_join: true).pluck(:id)
+    def grant_membership_to_auto_join_rooms
+      forced_room_ids = Room.active.where(auto_join: true).pluck(:id)
       return if forced_room_ids.empty?
 
       Membership.insert_all(forced_room_ids.collect { |room_id| { room_id: room_id, user_id: id } })
+
+      # Open auto-join rooms fan their threads out to members; a forum derives
+      # post access from forum membership, so it needs no per-post rows here.
       Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
         thread.memberships.grant_to(self)
       end
@@ -240,6 +270,7 @@ class User < ApplicationRecord
       Search.where(creator_id: id).delete_all          # second FK; user_id side is dependent: :delete_all
       Ban.where(user_id: id).delete_all                # delete_all skips `bust_cache`; intentional fast path
       Webhook.where(user_id: id).delete_all
+      Solution.where(user_id: id).delete_all           # posts a user marked Solved (restrict FK, no dependents)
 
       # Bundle items where this user was the actor (in any user's bundle).
       Notification::BundleItem.where(actor_id: id).delete_all

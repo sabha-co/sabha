@@ -4,7 +4,7 @@ class AccountsController < ApplicationController
 
   def show
     @member_count = User.without_bots.active.verified.count
-    @room_count = Room.where(type: %w[Rooms::Open Rooms::Closed]).count
+    @room_count = Room.where(type: %w[Rooms::Open Rooms::Closed Rooms::Forum]).count
   end
 
   def edit

@@ -39,7 +39,11 @@ class Room < ApplicationRecord
   has_one :last_message, -> { active.without_events.order(created_at: :desc) }, class_name: "Message"
   has_many :threads, through: :messages, class_name: "Rooms::Thread"
   belongs_to :parent_message, class_name: "Message", optional: true
-  has_one :parent_room, through: :parent_message, source: :room, class_name: "Room"
+  # Denormalized direct FK to the room a thread was spawned in (the forum, for a
+  # forum post) — the same shape messages have via room_id. Set from
+  # parent_message.room on create; lets the gallery query threads without joining
+  # through messages. Assigned in Rooms::Thread#assign_parent_room.
+  belongs_to :parent_room, class_name: "Room", optional: true
 
   belongs_to :creator, class_name: "User", default: -> { Current.user }
 
@@ -50,9 +54,21 @@ class Room < ApplicationRecord
 
   scope :opens,           -> { where(type: "Rooms::Open") }
   scope :closeds,         -> { where(type: "Rooms::Closed") }
+  scope :forums,          -> { where(type: "Rooms::Forum") }
   scope :directs,         -> { where(type: "Rooms::Direct") }
   scope :without_directs, -> { where.not(type: "Rooms::Direct") }
-  scope :without_threads, -> { where.not(type: "Rooms::Thread") }
+  # Excludes nested sub-rooms — chat threads and forum posts — from top-level
+  # room listings and the sidebar. (Named for threads historically; it now also
+  # covers Rooms::Post, which is likewise a sub-room, not a sidebar room.)
+  scope :without_threads, -> { where.not(type: %w[ Rooms::Thread Rooms::Post ]) }
+
+  # Rooms a user can discover and join from Browse: open rooms and forums they
+  # aren't already in. Called on Room for both; on Rooms::Open (bots API) STI
+  # narrows it back to open rooms only.
+  scope :browsable_by, ->(user) {
+    active.where(type: %w[ Rooms::Open Rooms::Forum ])
+          .where.not(id: user.memberships.visible.select(:room_id))
+  }
 
   scope :ordered, -> { order(:sortable_name) }
   scope :matching, ->(query) {
@@ -118,12 +134,27 @@ class Room < ApplicationRecord
     is_a?(Rooms::Thread)
   end
 
+  def forum?
+    is_a?(Rooms::Forum)
+  end
+
+  def post?
+    is_a?(Rooms::Post)
+  end
+
   def sidebar_room?
-    open? || closed?
+    open? || closed? || forum?
   end
 
   def default_involvement(user: nil)
     "mentions"
+  end
+
+  # The users who can be @mentioned here. Rooms::Post overrides this — its access
+  # derives from its forum, so a post mentions the forum's members, not the
+  # handful who happen to have followed it.
+  def mentionable_users
+    users
   end
 
   def active_member_count
@@ -178,6 +209,11 @@ class Room < ApplicationRecord
   # callbacks (notifications, search indexing, push, counter_cache, etc.).
   # Only the room-level Turbo Stream append is broadcast.
   def post_system_message(event:, body:, actor:)
+    # Forums render a gallery of posts, not a message stream — a system event
+    # message here is an orphaned write nothing ever displays. Skip it for every
+    # event type (join, leave, rename, member changes).
+    return if forum?
+
     now = Time.current
     client_message_id = Random.uuid
 
@@ -238,7 +274,7 @@ class Room < ApplicationRecord
   end
 
   def ensure_visible_members_remain!(excluding:)
-    return if open?
+    return if open? || forum?
     remaining = memberships.visible.where.not(user_id: Array(excluding)).count
     raise Membership::LastVisibleMemberError if remaining <= 0
   end
@@ -257,7 +293,7 @@ class Room < ApplicationRecord
       .where(user_id: bot_ids)
       .includes(user: :webhook)
 
-    if direct? || thread?
+    if direct? || thread? || post?
       eligible.to_a
     elsif item.is_a?(Message) && event == :created
       eligible.to_a.select { |m| item.mentionees.include?(m.user) || item.mentions_everyone? }
@@ -271,7 +307,9 @@ class Room < ApplicationRecord
       # Use Ruby select/map instead of pluck to leverage preloaded users
       users.reject { |u| u == for_user }.map(&:name).to_sentence.presence || for_user&.name
     elsif thread?
-      "🧵 #{parent_message&.room&.name}"
+      # A chat thread shows its given name if it was renamed, else the thread
+      # glyph plus the name of the room it was spawned in.
+      name.presence || "🧵 #{parent_message&.room&.name}"
     else
       name
     end
@@ -319,24 +357,45 @@ class Room < ApplicationRecord
       end
     end
 
+    # Cascade-deactivate this room's nested sub-rooms: chat threads (spawned off
+    # its messages) and, for a forum, its posts (owned via parent_room_id). Only
+    # cascade-deactivate still-active ones; sub-rooms already deleted on their own
+    # keep their non-cascade marker, so reactivation leaves them deleted (R15).
     def deactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
-      Rooms::Thread.where(parent_message_id: message_ids).find_each(&:deactivate)
+      Rooms::Thread.active.where(parent_message_id: message_ids)
+        .find_each { |thread| thread.deactivate(cascade: true) }
+
+      if forum?
+        Rooms::Post.active.where(parent_room_id: id)
+          .find_each { |post| post.deactivate(cascade: true) }
+      end
     end
 
     def reactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
-      Rooms::Thread.where(parent_message_id: message_ids, active: false).find_each(&:reactivate)
+      # Restore only sub-rooms this room's cascade deactivated — never ones
+      # deleted individually beforehand (R15).
+      Rooms::Thread.where(parent_message_id: message_ids, active: false, cascade_deactivated: true)
+        .find_each(&:reactivate)
+
+      if forum?
+        Rooms::Post.where(parent_room_id: id, active: false, cascade_deactivated: true)
+          .find_each(&:reactivate)
+      end
     end
 
     # Clean up associated records explicitly because the cascade has to walk
-    # parent_message → thread → messages → memberships in a specific order to
-    # satisfy FK constraints.
+    # nested sub-rooms → messages → memberships in a specific order to satisfy FK
+    # constraints.
     def destroy_all_associated_records
-      # First, destroy any thread rooms that were created from messages in this room
-      # (threads have parent_message_id pointing to messages in this room)
       message_ids = Message.where(room_id: id).pluck(:id)
+
+      # First, destroy nested sub-rooms: chat threads spawned from this room's
+      # messages, and (for a forum) its posts owned via parent_room_id. Each
+      # cleans up its own messages, memberships, and solution on destroy.
       Rooms::Thread.where(parent_message_id: message_ids).find_each(&:destroy)
+      Rooms::Post.where(parent_room_id: id).find_each(&:destroy) if forum?
 
       # Then delete messages (they have FKs to boosts, bookmarks, notifications)
       Message.where(room_id: id).find_each(&:destroy)

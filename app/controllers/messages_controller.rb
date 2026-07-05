@@ -45,17 +45,34 @@ class MessagesController < ApplicationController
   end
 
   def destroy
+    # A post's opening message is its body — deleting it alone would orphan a
+    # bodyless post. Delete the whole post instead (Rooms::Forums::PostsController).
+    return head :forbidden if @room.post? && @room.opening_message?(@message)
+
     @message.deactivate
     @message.broadcast_remove
     notify_bots(@message, :deleted)
   end
 
   private
+    # A forum post derives access from its forum: a member can read and reply to
+    # a post without a per-post membership (one is created lazily on reply). So
+    # fall back to forum-derived access when there's no direct membership — and,
+    # crucially, re-check viewable_by? even when a (possibly stale) post
+    # membership resolved the room, so a member removed from the forum loses post
+    # access immediately rather than riding an orphaned membership row.
+    def set_room
+      @membership = Current.user.memberships.find_by(room_id: params[:room_id])
+      @room = @membership&.room || Current.user.reachable_post(params[:room_id])
+      @room = nil if @room.is_a?(Rooms::Post) && !@room.viewable_by?(Current.user)
+      raise ActiveRecord::RecordNotFound unless @room
+    end
+
     def set_message
       if @room
         @message = @room.messages.find(params[:id])
       else
-        @message = Current.user.reachable_messages.find(params[:id])
+        @message = Current.user.reachable_message(params[:id])
       end
     end
 

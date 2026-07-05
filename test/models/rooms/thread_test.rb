@@ -6,12 +6,6 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     @parent_message = @parent_room.messages.create!(body: "Parent message", creator: users(:david))
   end
 
-  test "thread requires parent message" do
-    thread = Rooms::Thread.new(creator: users(:david))
-    assert_not thread.valid?
-    assert thread.errors[:parent_message].present?
-  end
-
   test "default involvement for thread creator is everything" do
     thread = Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
     assert_equal "everything", thread.default_involvement(user: users(:david))
@@ -129,6 +123,13 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     end
 
     assert_includes html, users(:jason).name
+  end
+
+  # Chat threads are nameless and never get a forum-post slug. (Forum-post title,
+  # slug, and Solved behavior now live on Rooms::Post — see rooms/post_test.)
+  test "chat threads do not get a slug" do
+    thread = Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
+    assert_nil thread.slug
   end
 
   private

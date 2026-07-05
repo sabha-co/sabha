@@ -4,16 +4,22 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
   rescue_from ActiveJob::DeserializationError do
   end
 
+  # thread_id is the room a reply lives in — a chat thread or a forum post.
   def perform(message_id:, thread_id:, creator_id:)
-    thread = Room.find_by(id: thread_id)
+    room = Room.find_by(id: thread_id)
     message = Message.find_by(id: message_id)
-    return unless thread && message && thread.parent_message
-    return if thread.parent_message.room.direct?
+    return unless room && message
 
-    # Same recipient logic as BroadcastInboxThreadsJob
-    thread_user_ids = thread.memberships.active.visible.pluck(:user_id)
-    parent_room_user_ids = thread.parent_message.room.memberships.active.involved_in_everything.pluck(:user_id)
-    all_user_ids = (thread_user_ids + parent_room_user_ids).uniq - [ creator_id ]
+    container = reply_container_for(room)
+    return unless container
+    return if container.direct?
+
+    # Followers of this thread/post, plus members who opted into "everything" on
+    # the container (a chat thread's parent room, or a forum post's forum). Same
+    # recipient logic as BroadcastInboxThreadsJob.
+    room_user_ids = room.memberships.active.visible.pluck(:user_id)
+    container_user_ids = container.memberships.active.involved_in_everything.pluck(:user_id)
+    all_user_ids = (room_user_ids + container_user_ids).uniq - [ creator_id ]
 
     return if all_user_ids.empty?
 
@@ -46,4 +52,15 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
       notification.user.broadcast_activity_indicator
     end
   end
+
+  private
+    # The container whose "everything" members also hear about a reply: a forum
+    # post's forum, or a chat thread's parent room.
+    def reply_container_for(room)
+      if room.post?
+        room.parent_room
+      elsif room.parent_message
+        room.parent_message.room
+      end
+    end
 end

@@ -16,7 +16,7 @@ class Messages::BookmarksController < ApplicationController
 
   private
     def set_message
-      @message = Current.user.reachable_messages.find(params[:message_id])
+      @message = Current.user.reachable_message(params[:message_id])
     end
 
     def broadcast_message_update

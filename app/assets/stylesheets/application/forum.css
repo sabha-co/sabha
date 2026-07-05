@@ -1,0 +1,302 @@
+/* Forum — the post gallery renders inside the normal room shell (#main-content),
+   in place of the message stream. Uses the shared OKLCH tokens so it tracks
+   light/dark automatically. */
+
+/* Fill the main content column and scroll internally, top-aligned (the chat
+   message area pins to the bottom; the gallery reads top-down). */
+.forum {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  align-self: stretch;
+}
+
+/* Left-aligned like the message list — share the app's content gutter. A wide
+   cap keeps line lengths sane on ultrawide without leaving a right void on
+   normal screens. Everything below shares this same left edge. The top offset
+   clears the fixed nav bar (the chat stream pins to the bottom, so it never
+   collides; the gallery reads top-down and must start below the nav). */
+.forum__inner {
+  width: 100%;
+  max-inline-size: 80rem;
+  padding: calc(var(--navbar-height) + 1rem) calc(var(--inline-space) + 1vw) 2.5rem;
+}
+
+/* --- inline "New post" compose (native <details> disclosure) --------- */
+/* The <summary> is the "New post" trigger; <details> handles open/close and the
+   ✕ affordance with no JS. Closed, it's just the pill. Open, the card frames the
+   form and the ＋ glyph rotates into a ✕. */
+.forum-compose > summary {
+  list-style: none;
+  display: inline-flex;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.forum-compose > summary::-webkit-details-marker {
+  display: none;
+}
+
+.forum-compose[open] {
+  border: 1px solid var(--color-border-darker);
+  border-radius: 0.9rem;
+  padding: 0.9rem 1rem;
+  background: color-mix(in oklab, var(--color-message-bg) 40%, var(--color-bg));
+}
+
+.forum-compose[open] > summary {
+  margin-block-end: 0.75rem;
+}
+
+.forum-compose[open] .forum-compose__toggle-icon {
+  transform: rotate(45deg);
+}
+
+.forum-compose__title {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* The body reuses the composer's rich input shell; give it room to read as a
+   post body rather than a one-line chat message. */
+.forum-compose__body trix-editor {
+  min-block-size: 6em;
+}
+
+/* --- toolbar: filters (left) + New post (right) ---------------------- */
+/* Filters lead on the left; the composer pins to the right edge and expands to a
+   full-width row below them when opened. On an empty forum (no filters) it sits
+   left. Everything wraps on narrow screens. */
+.forum__toolbar .forum-compose {
+  margin-inline-start: auto;
+}
+
+.forum__toolbar .forum-compose:only-child {
+  margin-inline-start: 0;
+}
+
+.forum__toolbar .forum-compose[open] {
+  flex: 1 1 100%;
+  margin-inline-start: 0;
+}
+
+/* A smaller, lighter "New post" pill so it doesn't outweigh the content or echo
+   the heavy room-name pill in the nav. */
+.forum-compose__toggle {
+  --btn-padding: 0.4em 0.85em;
+  font-size: var(--font-size-small);
+}
+
+/* --- post cards (full-width list rows, hairline-divided) ------------- */
+.forum-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: 0.6rem;
+  color: inherit;
+  text-decoration: none;
+  transition: background 120ms ease;
+}
+
+.forum-card + .forum-card {
+  border-top: 1px solid var(--color-border-darker);
+}
+
+.forum-card:hover {
+  background: color-mix(in oklab, var(--color-message-bg) 55%, var(--color-bg));
+}
+
+.forum-card__status {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-top: 0.1rem;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border-darker);
+  color: var(--color-border-darkest);
+}
+
+.forum-card__status .icon { width: 0.85rem; height: 0.85rem; }
+
+.forum-card__status--solved {
+  color: oklch(var(--lch-green));
+  border-color: color-mix(in oklab, oklch(var(--lch-green)) 55%, var(--color-bg));
+  background: color-mix(in oklab, oklch(var(--lch-green)) 15%, var(--color-bg));
+}
+
+.forum-card__title {
+  font-size: 1rem;
+  font-weight: 585;
+  line-height: 1.35;
+  color: var(--color-text);
+}
+
+/* --- Solved badge ---------------------------------------------------- */
+.forum-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  background: var(--color-message-bg);
+  color: var(--color-text-lighter);
+}
+
+.forum-tag--solved {
+  font-weight: 560;
+  background: color-mix(in oklab, oklch(var(--lch-green)) 15%, var(--color-bg));
+  color: color-mix(in oklab, oklch(var(--lch-green)) 72%, black);
+}
+
+.forum-tag--solved .icon { width: 0.7em; height: 0.7em; }
+
+/* "Following" mark — rendered server-side on the cards the viewer follows. */
+.forum-tag--following .icon { width: 0.8em; height: 0.8em; }
+
+/* --- byline (author) + right-aligned activity column ----------------- */
+/* The activity column right-aligns replies + last-active so each row reads
+   left→right: what the post is, then how much is happening in it. */
+.forum-card__activity { text-align: end; min-inline-size: 0; }
+.forum-avatar { border-radius: 50%; object-fit: cover; flex: none; }
+.forum-card__stack { align-items: center; }
+.forum-card__stack .forum-card__stack-avatar { box-shadow: 0 0 0 2px var(--color-bg); }
+.forum-card__stack .forum-card__stack-avatar + .forum-card__stack-avatar { margin-left: -0.4rem; }
+
+/* --- filter bar ------------------------------------------------------ */
+.forum-filter { row-gap: 0.5rem; }
+
+.forum-seg { border: 1px solid var(--color-border-darker); border-radius: 0.5rem; overflow: hidden; }
+
+.forum-seg__btn {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  text-decoration: none;
+  color: var(--color-text-lighter);
+  background: var(--color-bg);
+}
+
+.forum-seg__btn + .forum-seg__btn { border-left: 1px solid var(--color-border-dark); }
+.forum-seg__btn:hover { background: var(--color-message-bg); }
+
+/* Active filter reads as "selected" without borrowing an accent: a quiet neutral
+   fill, monochrome like the app's other selection states — so the only
+   solid/colored pill in the forum is the primary New post action. */
+.forum-seg__btn--active {
+  color: var(--color-text);
+  background: var(--color-border-dark);
+  font-weight: 600;
+}
+
+/* --- post header (shared by panel + standalone page) ----------------- */
+/* A muted glyph anchors the question as a hero above the title. */
+.forum-post-header__glyph {
+  display: inline-flex;
+  color: var(--color-border-darkest);
+}
+
+.forum-post-header__glyph .icon {
+  --icon-size: 1.9rem;
+}
+
+/* The forum hero sits inline (glyph · title · ⋯) in the thread panel's header,
+   which is otherwise a fixed-height single-line bar — let it grow so a wrapping
+   title doesn't overflow the bar. */
+.thread-panel__header:has(.forum-post-header) {
+  block-size: auto;
+  padding-block: 0.6rem;
+}
+
+.thread-panel__header .forum-post-header {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.forum-post-header__title {
+  font-size: 1.375rem;
+  font-weight: 620;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+/* The title frame hugs the title in display mode (so the Solved badge stays
+   alongside), but takes the row when it holds the inline edit form. */
+.forum-post-header__title-frame:has(.forum-post-title-edit) { flex: 1; }
+
+/* --- opening post (the question): read it like a post, not a chat line --- */
+/* The opening message carries the post body (message--forum-opening); give it
+   larger, roomier type. The message partial emits a "N replies" separator below
+   it (only on the post's own page), which serves as the divider before the
+   discussion. */
+.message--forum-opening .message__body-content {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  padding-block-end: 0.5rem;
+}
+
+/* "OP" tag next to the original poster's name (opening message + their replies). */
+.message__op-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.05rem 0.32rem;
+  border-radius: 0.35rem;
+  line-height: 1.5;
+  color: var(--color-link);
+  background: var(--color-selected);
+}
+
+/* Post options menu: the shared .popup-menu (same bordered, arrowed dropdown as
+   the sidebar room menu), but anchored to the right of the header's ⋯ trigger so
+   it opens down-and-left instead of spilling off-panel. Mirrors the right-hand
+   positioning of .message__actions-menu. */
+.forum-post-menu {
+  --btn-size: 2.8em;
+  --arrow-size: 1.5em;
+  inset: var(--btn-size) 0 auto auto;
+  transform-origin: top right;
+  z-index: 100;
+  min-inline-size: 11ch;
+}
+
+.forum-post-menu::before,
+.forum-post-menu::after {
+  inset-inline-start: auto;
+  inset-inline-end: calc(var(--btn-size) / 2);
+  transform: translateX(0);
+}
+
+/* Match the sidebar dropdown items exactly (.actions-menu .action-btn, which is
+   scoped under #sidebar so it can't be shared): same small font, item padding,
+   and hover-pill radius — so the button interactions read identically. */
+.forum-post-menu .action-btn {
+  font-size: var(--font-size-small);
+  --width: 100%;
+  --btn-padding: calc(var(--inline-space) * 2 / 3) var(--inline-space);
+  --btn-border-radius: calc(var(--arrow-size) / 2 - var(--inline-space-half));
+  --busy-inset: calc(var(--inline-space) * 1.5);
+  white-space: nowrap;
+  justify-content: start;
+  font-weight: 400;
+}
+
+.forum-post-gated,
+.forum-post-missing { padding: 2.5rem 1.5rem; }
+
+/* --- empty state ----------------------------------------------------- */
+.forum__empty {
+  padding: 3rem 1.5rem;
+  border: 1px dashed var(--color-border-darker);
+  border-radius: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.forum__empty-glyph { color: var(--color-border-darkest); }
+.forum__empty-glyph .icon { width: 1.75rem; height: 1.75rem; }

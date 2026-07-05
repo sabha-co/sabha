@@ -38,6 +38,19 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "forum post autocomplete resolves via forum access and suggests forum members" do
+    forum = Rooms::Forum.create_for({ name: "Help", creator: users(:david) }, users: [ users(:david), users(:kevin) ])
+    post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }
+
+    sign_in :kevin
+    assert_not Membership.exists?(room_id: post.id, user_id: users(:kevin).id), "kevin is a forum member, not a post follower"
+
+    get autocompletable_users_url(room_id: post.id, format: :json), params: { query: "da" }
+
+    assert_response :success
+    assert_includes response.parsed_body.map { |u| u["name"] }, "David"
+  end
+
   test "blank query returns recent users (mention picker default)" do
     get autocompletable_users_url(format: :json), params: { query: "" }
 

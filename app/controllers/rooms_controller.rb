@@ -19,6 +19,8 @@ class RoomsController < ApplicationController
       return
     end
 
+    return render_forum_gallery if @room.forum?
+
     @messages = find_messages
   end
 
@@ -37,7 +39,11 @@ class RoomsController < ApplicationController
     end
 
     def set_room
-      if room = Current.user.rooms.includes(parent_message: { creator: :avatar_attachment }).find_by(id: params[:room_id] || params[:id])
+      room = Current.user.rooms.includes(parent_message: { creator: :avatar_attachment }).find_by(id: params[:room_id] || params[:id])
+      # A post's access derives from its forum, not from the (possibly stale)
+      # membership row that placed it in Current.user.rooms.
+      room = nil if room.is_a?(Rooms::Post) && !room.viewable_by?(Current.user)
+      if room
         @room = room
       else
         redirect_to root_url, alert: "Room not found or inaccessible"
@@ -57,6 +63,36 @@ class RoomsController < ApplicationController
       head :forbidden unless @room && Current.user.can_administer?(@room)
     end
 
+    # A forum is a room like any other — it renders here at /rooms/:id (the
+    # gallery of posts) instead of the message stream. No separate route/UI.
+    def render_forum_gallery
+      @deep_linked_post = deep_linked_post
+
+      posts = @room.posts(solved: params[:solved], sort: params[:sort])
+                   .includes(:solution, creator: { avatar_attachment: :blob })
+      set_page_and_extract_portion_from posts, per_page: 20
+      @posts = @page.records
+      @participants = Rooms::Post.preload_participant_creators(@posts)
+
+      # Only a lazy pagination request (which carries ?page=N) wants the append
+      # stream. A plain visit — including the redirect-follow after creating a
+      # forum or post, which Turbo sends with a turbo-stream Accept header but no
+      # page param — must render the full gallery page, or the browser applies a
+      # no-op stream against an off-page target and never navigates.
+      render "rooms/forums/gallery", formats: [ params[:page].present? ? :turbo_stream : :html ]
+    end
+
+    # A permalink or push deep-links a post as ?post=<slug> on its forum's URL.
+    # The gallery renders behind it and the layout points the thread-panel frame
+    # at this post, so the panel opens over the gallery on load. A stale or
+    # non-viewable slug just yields the plain gallery.
+    def deep_linked_post
+      return if params[:post].blank?
+
+      post = Rooms::Post.active.find_by(parent_room_id: @room.id, slug: params[:post])
+      post if post&.viewable_by?(Current.user)
+    end
+
     def find_messages
       messages = @room.messages.for_display.with_bookmark_status_for(Current.user)
       @first_unread_message = first_unread_from(messages)
@@ -68,7 +104,9 @@ class RoomsController < ApplicationController
     end
 
     def first_unread_from(messages)
-      return unless @membership.unread?
+      # A forum member can view a post without a membership (access is
+      # forum-derived), so there may be no unread state to anchor on.
+      return unless @membership&.unread?
       messages.ordered.since(@membership.unread_at).first
     end
 

@@ -9,7 +9,10 @@ module MessagesHelper
 
   def message_permalink_path(message)
     room = message.room
-    if room.thread? && (parent = room.parent_message)
+    if post = message.forum_post
+      message_id = message.id unless forum_opening_message?(message)
+      room_path(post.parent_room, post: post.slug, message_id:)
+    elsif room.thread? && (parent = room.parent_message)
       room_at_message_path(parent.room, parent)
     else
       room_at_message_path(room, message)
@@ -18,7 +21,10 @@ module MessagesHelper
 
   def message_permalink_url(message)
     room = message.room
-    if room.thread? && (parent = room.parent_message)
+    if post = message.forum_post
+      message_id = message.id unless forum_opening_message?(message)
+      room_url(post.parent_room, post: post.slug, message_id:)
+    elsif room.thread? && (parent = room.parent_message)
       room_at_message_url(parent.room, parent)
     else
       room_at_message_url(room, message)
@@ -69,6 +75,26 @@ module MessagesHelper
     tag.div id: dom_id(room, :messages), class: "messages", aria: { live: "polite", relevant: "additions" }, data: data, &
   end
 
+  # True when this message was written by the forum post's original poster — the
+  # opening message or any later reply by the same author. The post records its
+  # creator (the OP), so this is deterministic and O(1) — cache-safe. Non-post
+  # messages are never OP.
+  def forum_op?(message)
+    message.room.post? && message.creator_id == message.room.creator_id
+  end
+
+  # True for the single opening message of a forum post — its earliest message,
+  # which carries the post body and gets the roomier "question" hero treatment.
+  # Memoized per post so a message list resolves it once, not per message; the
+  # "which message opens the post" query lives on Rooms::Post#opening_message_id.
+  def forum_opening_message?(message)
+    room = message.room
+    return false unless room.post?
+
+    (@forum_opening_ids ||= {})[room.id] ||= room.opening_message_id
+    @forum_opening_ids[room.id] == message.id
+  end
+
   def message_tag(message, is_unread: false, composer_id: "composer", &)
     message_timestamp_milliseconds = message.created_at.to_fs(:epoch)
 
@@ -93,7 +119,7 @@ module MessagesHelper
     data[:message_event] = true if message.event?
 
     tag.div id: dom_id(message),
-      class: class_names("message", "message--event": message.event?, "message--welcome": message.welcome?, "message--emoji": !message.event? && !message.welcome? && message.plain_text_body.all_emoji?),
+      class: class_names("message", "message--event": message.event?, "message--welcome": message.welcome?, "message--emoji": !message.event? && !message.welcome? && message.plain_text_body.all_emoji?, "message--forum-opening": forum_opening_message?(message)),
       data: data, &
   rescue Exception => e
     Sentry.capture_exception(e, extra: { message: message })
@@ -130,7 +156,7 @@ module MessagesHelper
     ""
   end
 
-  def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false, composer_id: "composer")
+  def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false, composer_id: "composer", forum_replies_count: nil)
     [
       message,
       room_id,
@@ -141,7 +167,8 @@ module MessagesHelper
       is_parent,
       show_room_name,
       composer_id,
-      message.thread_fingerprint
+      message.thread_fingerprint,
+      forum_replies_count
     ]
   end
 

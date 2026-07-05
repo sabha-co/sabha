@@ -26,7 +26,7 @@ class Rooms::MembershipsController < ApplicationController
 
   private
     def set_joinable_room
-      @room = Rooms::Open.active.find(params[:room_id])
+      @room = Room.active.where(type: %w[ Rooms::Open Rooms::Forum ]).find(params[:room_id])
     end
 
     def ensure_not_direct_room

@@ -82,6 +82,14 @@ class Message < ApplicationRecord
     !event?
   end
 
+  # The forum post (Rooms::Post) this message belongs to, or nil for non-post
+  # messages. A post's messages ARE its content — the opening body and the
+  # replies — so the post is simply the message's room. Permalinks resolve post
+  # messages to the forum gallery deep-link (?post=<slug>) through this.
+  def forum_post
+    room if room.post?
+  end
+
   def bookmarked_by?(user)
     # Scope path: with_bookmark_status_for LEFT JOIN sets is_bookmarked
     # Use ActiveRecord::Type::Boolean to handle SQLite's 0/1/"0"/"1" values

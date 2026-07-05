@@ -14,7 +14,11 @@ class RoomChannel < ApplicationCable::Channel
 
     def find_room
       with_tenant_context do
-        current_user&.rooms&.find_by(id: params[:room_id])
+        # A forum post derives access from its forum, so a member reaches it
+        # (typing, presence) without a per-post membership. An outsider resolves
+        # nil and is rejected.
+        current_user&.rooms&.find_by(id: params[:room_id]) ||
+          current_user&.reachable_post(params[:room_id])
       end
     end
 end

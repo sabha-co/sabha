@@ -148,8 +148,19 @@ Rails.application.routes.draw do
     get "browse", to: "browse#index", as: :browse
     resources :opens
     resources :closeds
+    resources :forums do
+      resources :posts, only: %i[ create edit update destroy ], module: "forums" do
+        resource :solution, only: %i[ create destroy ], module: "posts"
+      end
+    end
     resources :directs
     resources :threads, only: %i[ create show edit update destroy ]
+
+    # The in-app post panel (show) plus Follow, modeled as the current user's
+    # membership on the post: Follow = create, Unfollow = destroy.
+    resources :posts, only: :show do
+      resource :membership, only: %i[ create destroy ], module: "posts"
+    end
   end
 
   resources :rooms do

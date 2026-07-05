@@ -1,4 +1,4 @@
-<% if Current.user.can_administer?(room) %>
+<% if Current.user.can_administer?(room) && (room.open? || room.closed?) %>
   <%= form_with url: room_access_path(room), method: :patch, data: { controller: "form" } do %>
     <%= hidden_field_tag :open, room.is_a?(Rooms::Open) ? "0" : "1" %>
     <div class="flex align-center gap pad-block">

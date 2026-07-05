@@ -1,5 +1,5 @@
 <%= render layout: "rooms/layouts/new" do %>
   <%= render "rooms/unified_form", room: @room,
-        open_url: rooms_opens_path, closed_url: rooms_closeds_path,
+        open_url: rooms_opens_path, closed_url: rooms_closeds_path, forum_url: rooms_forums_path,
         default_type: "closed" %>
 <% end %>

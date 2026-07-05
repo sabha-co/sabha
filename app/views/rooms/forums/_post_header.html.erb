@@ -1,0 +1,40 @@
+<%# locals: (post:, context: :page) %>
+<div class="forum-post-header flex align-center gap">
+  <span class="forum-post-header__glyph flex-item-no-shrink" aria-hidden="true"><%= icon_tag "chat-bubble" %></span>
+
+  <%= render "rooms/forums/post_header_state", post: post %>
+
+  <%= tag.details class: "position-relative flex-item-no-shrink", data: {
+        controller: "popup", popup_orientation_top_class: "",
+        action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
+      } do %>
+    <summary class="btn action-btn options-btn">
+      <%= icon_tag "menu-dots-horizontal" %>
+      <span class="for-screen-reader">Post options</span>
+    </summary>
+
+    <div class="popup-menu forum-post-menu border shadow" data-popup-target="menu">
+      <%= tag.button class: "btn action-btn full-width", data: {
+            controller: "copy-to-clipboard", action: "copy-to-clipboard#copy popup#close",
+            copy_to_clipboard_success_class: "btn--success",
+            copy_to_clipboard_content_value: room_url(post.parent_room, post: post.slug) } do %>
+        <span>Copy link</span>
+      <% end %>
+
+      <%= render "rooms/forums/posts/follow_control", post: post %>
+
+      <% if Current.user&.can_administer?(post) %>
+        <%= link_to edit_rooms_forum_post_path(post.parent_room, post),
+              class: "btn action-btn full-width", data: { turbo_frame: dom_id(post, :title), action: "popup#close" } do %>
+          <span>Edit</span>
+        <% end %>
+        <%= render "rooms/forums/solved_toggle", post: post %>
+        <%= button_to rooms_forum_post_path(post.parent_room, post), method: :delete,
+              class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close",
+              turbo_confirm: "Delete this post and all its replies?" } do %>
+          <span>Delete post</span>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

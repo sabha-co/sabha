@@ -18,7 +18,8 @@
             <%= link_to user_path(message.creator), class: "message__author txt-undecorated", title: message.creator.title, data: { turbo_frame: "_top" } do %>
               <strong data-reply-target="author" class="<%= 'txt-strikethrough' if message.creator.deactivated? %>"><%= message.creator.name %></strong>
             <% end %>
-            <%= link_to message_timestamp(message, class: "message__timestamp"), room_at_message_path(message.room, message), target: "_top",
+            <% if forum_op?(message) %><span class="message__op-badge" title="Original poster">OP</span><% end %>
+            <%= link_to message_timestamp(message, class: "message__timestamp"), message_permalink_path(message), target: "_top",
                   class: "message__permalink" %>
             <%= render "messages/actions/bookmark_indicator", message: %>
             <span class="message__meta-block message__room message__original-room message__original-room--with-in">

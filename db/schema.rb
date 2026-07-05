@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_04_000001) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -236,6 +236,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
   create_table "rooms", force: :cascade do |t|
     t.boolean "active", default: true
     t.boolean "auto_join", default: false, null: false
+    t.boolean "cascade_deactivated", default: false, null: false
     t.datetime "created_at", null: false
     t.bigint "creator_id", null: false
     t.text "description"
@@ -244,12 +245,15 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
     t.integer "messages_count", default: 0
     t.string "name"
     t.integer "parent_message_id"
+    t.integer "parent_room_id"
     t.string "slug"
     t.string "sortable_name"
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.index ["members_hash"], name: "index_rooms_on_members_hash", unique: true
     t.index ["parent_message_id"], name: "index_rooms_on_parent_message_id_unique_thread", unique: true, where: "type = 'Rooms::Thread' AND parent_message_id IS NOT NULL"
+    t.index ["parent_room_id", "active", "created_at"], name: "index_rooms_on_parent_room_and_created", where: "parent_room_id IS NOT NULL"
+    t.index ["parent_room_id", "active", "last_active_at"], name: "index_rooms_on_parent_room_and_activity", where: "parent_room_id IS NOT NULL"
     t.index ["slug"], name: "index_rooms_on_slug", unique: true, where: "slug IS NOT NULL"
   end
 
@@ -297,6 +301,15 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
     t.integer "user_id", null: false
     t.index ["external_id"], name: "index_single_sign_on_records_on_external_id", unique: true
     t.index ["user_id"], name: "index_single_sign_on_records_on_user_id", unique: true
+  end
+
+  create_table "solutions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "post_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["post_id"], name: "index_solutions_on_post_id", unique: true
+    t.index ["user_id"], name: "index_solutions_on_user_id"
   end
 
   create_table "storage_entries", force: :cascade do |t|
@@ -413,6 +426,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_21_061320) do
   add_foreign_key "searches", "users", column: "creator_id"
   add_foreign_key "sessions", "users"
   add_foreign_key "single_sign_on_records", "users"
+  add_foreign_key "solutions", "rooms", column: "post_id"
+  add_foreign_key "solutions", "users"
   add_foreign_key "user_notification_settings", "users"
   add_foreign_key "users", "badges"
   add_foreign_key "webhooks", "users"

@@ -17,7 +17,10 @@
   }
 
   &:has(.btn--faux) {
-    padding-inline: var(--inline-space);
+    /* Match the content gutter (message list / forum use calc(--inline-space + 1vw))
+       so the nav's logo/room button sits on the content's left edge. Both nav and
+       #main-content already share the same 5vw offset; only this 1vw was missing. */
+    padding-inline: calc(var(--inline-space) + 1vw) var(--inline-space);
 
     @media (min-width: 120ch) {
       margin-inline-start: 5vw;

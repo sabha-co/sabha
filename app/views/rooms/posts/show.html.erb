@@ -1,0 +1,21 @@
+<%= turbo_frame_tag "thread_panel_frame" do %>
+  <div class="thread-panel__header">
+    <%= render "rooms/forums/post_header", post: @post, context: :panel %>
+    <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close post">&times;</button>
+  </div>
+
+  <%= message_area_tag(@post, id: "thread-message-area") do %>
+    <%= render "messages/template" %>
+
+    <%= messages_tag(@post, refresh: false) do %>
+      <%= render "messages/message_list", messages: @messages, room: @post, first_unread_message: @first_unread_message, composer_id: "thread-composer" %>
+    <% end %>
+
+    <%= turbo_stream_from @membership if @membership %>
+    <%= turbo_stream_from @post, :messages %>
+    <%= turbo_stream_from Current.user, @post, :messages %>
+    <%= button_to_jump_to_newest_message %>
+  <% end %>
+
+  <%= render "rooms/threads/reply_composer" %>
+<% end %>

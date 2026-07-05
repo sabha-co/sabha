@@ -2,7 +2,8 @@
 <%# locals: (message:, current_room: nil, first_unread_message: nil, is_unread: false, timestamp_style: :time, show_date_separator: true, composer_id: "composer") -%>
 
 <% is_first_unread_message = (message == first_unread_message) %>
-<% cache message_cache_key(message, room_id: current_room&.id, is_first_unread_message:, is_unread:, composer_id:) do %>
+<% is_forum_opening = current_room == message.room && forum_opening_message?(message) %>
+<% cache message_cache_key(message, room_id: current_room&.id, is_first_unread_message:, is_unread:, composer_id:, forum_replies_count: (message.room.replies_count if is_forum_opening)) do %>
   <%= message_tag message, is_unread: is_unread, composer_id: composer_id do %>
     <div class="message-separator message__loading-indicator">
       <span class="busy txt-muted"></span>
@@ -36,6 +37,7 @@
                   <strong data-reply-target="author" class="<%= 'txt-strikethrough' if message.creator.deactivated? %>"><%= message.creator.name %></strong>
                 <% end %>
                 <span class="message__badge"><%= render "users/role_badge", user: message.creator %></span>
+                <% if forum_op?(message) %><span class="message__op-badge" title="Original poster">OP</span><% end %>
                 <%= link_to message_timestamp(message, style: timestamp_style, class: "message__timestamp"), message_permalink_path(message), target: "_top",
                       class: "message__permalink" %>
                 <%= render "messages/actions/bookmark_indicator", message: %>
@@ -58,6 +60,15 @@
           </div>
         </div>
       </turbo-frame>
+
+      <%# A forum post's opening message is the question; the "N replies" divider
+          below it separates it from the discussion. Its count updates live via
+          Message::Threadable#update_thread_reply_count. %>
+      <% if is_forum_opening %>
+        <h2 id="<%= dom_id(message.room, :replies_separator) %>" class="message-separator message__replies-separator">
+          <span id="<%= dom_id(message.room, :replies_separator) %>_count" class="message__replies-count"><%= pluralize(message.room.replies_count, "reply", "replies") %></span>
+        </h2>
+      <% end %>
     <% end %>
     <div class="message-separator message__loading-indicator">
       <span class="busy txt-muted"></span>

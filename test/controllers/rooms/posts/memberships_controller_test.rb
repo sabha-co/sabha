@@ -1,0 +1,69 @@
+require "test_helper"
+
+class Rooms::Posts::MembershipsControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    @forum = Rooms::Forum.create_for({ name: "Help Desk", creator: users(:david) }, users: [ users(:david), users(:kevin) ])
+    @post = Current.set(user: users(:david)) { @forum.post!(title: "How do I reset?", body: "<div>b</div>") }
+  end
+
+  test "a forum member Follows a post by creating a membership" do
+    sign_in :kevin
+    assert_not Membership.exists?(room_id: @post.id, user_id: users(:kevin).id)
+
+    post rooms_post_membership_url(@post)
+
+    membership = Membership.find_by(room_id: @post.id, user_id: users(:kevin).id)
+    assert membership.present?, "Follow creates the membership"
+    assert_equal "everything", membership.involvement
+  end
+
+  test "Following via a turbo frame flips the button and refreshes the gallery card's mark" do
+    sign_in :kevin
+
+    post rooms_post_membership_url(@post), headers: { "Turbo-Frame" => "follow" }
+
+    assert_response :success
+    assert_select "turbo-stream[action='replace'][target=?]", ActionView::RecordIdentifier.dom_id(@post, :follow)
+    assert_select "turbo-stream[action='replace'][target=?]", ActionView::RecordIdentifier.dom_id(@post, :card)
+    assert_select "turbo-frame button", text: /Unfollow/
+    assert_select ".forum-tag--following", text: /Following/
+  end
+
+  test "Unfollow removes the membership" do
+    @post.follow!(users(:kevin))
+    sign_in :kevin
+
+    delete rooms_post_membership_url(@post)
+
+    assert_not Membership.exists?(room_id: @post.id, user_id: users(:kevin).id)
+  end
+
+  test "Unfollow via a turbo frame flips the button and clears the gallery card's mark" do
+    @post.follow!(users(:kevin))
+    sign_in :kevin
+
+    delete rooms_post_membership_url(@post), headers: { "Turbo-Frame" => "follow" }
+
+    assert_response :success
+    assert_select "turbo-frame button", text: /Follow/
+    assert_select ".forum-tag--following", count: 0
+  end
+
+  test "a non-forum-member cannot Follow a post" do
+    @forum.remove_member!(users(:jz), actor: users(:david)) # auto-joined, then removed
+    sign_in :jz
+
+    post rooms_post_membership_url(@post)
+
+    assert_response :forbidden
+    assert_not Membership.exists?(room_id: @post.id, user_id: users(:jz).id)
+  end
+
+  test "Following a nonexistent post returns 404, not 403" do
+    sign_in :kevin
+
+    post rooms_post_membership_url(999_999)
+
+    assert_response :not_found
+  end
+end

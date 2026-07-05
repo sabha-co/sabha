@@ -856,6 +856,16 @@ columns:
     default_function:
     collation:
     comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: cascade_deactivated
+    cast_type: *8
+    sql_type_metadata: *9
+    'null': false
+    default: false
+    default_function:
+    collation:
+    comment:
   - *7
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
@@ -921,6 +931,16 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: parent_message_id
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: parent_room_id
     cast_type: *3
     sql_type_metadata: *4
     'null': true
@@ -1106,6 +1126,21 @@ columns:
     cast_type: *1
     sql_type_metadata: *2
     'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - *11
+  - *22
+  solutions:
+  - *7
+  - *10
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: post_id
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': false
     default:
     default_function:
     collation:
@@ -1624,6 +1659,7 @@ primary_keys:
   sessions: id
   single_sign_on_nonces: id
   single_sign_on_records: id
+  solutions: id
   storage_entries: id
   storage_totals: id
   user_notification_settings: id
@@ -1656,6 +1692,7 @@ data_sources:
   sessions: true
   single_sign_on_nonces: true
   single_sign_on_records: true
+  solutions: true
   storage_entries: true
   storage_totals: true
   user_notification_settings: true
@@ -2580,6 +2617,42 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: rooms
+    name: index_rooms_on_parent_room_and_activity
+    unique: false
+    columns:
+    - parent_room_id
+    - active
+    - last_active_at
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where: parent_room_id IS NOT NULL
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: rooms
+    name: index_rooms_on_parent_room_and_created
+    unique: false
+    columns:
+    - parent_room_id
+    - active
+    - created_at
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where: parent_room_id IS NOT NULL
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: rooms
     name: index_rooms_on_slug
     unique: true
     columns:
@@ -2715,6 +2788,39 @@ indexes:
     table: single_sign_on_records
     name: index_single_sign_on_records_on_user_id
     unique: true
+    columns:
+    - user_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  solutions:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: solutions
+    name: index_solutions_on_post_id
+    unique: true
+    columns:
+    - post_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: solutions
+    name: index_solutions_on_user_id
+    unique: false
     columns:
     - user_id
     lengths: {}
@@ -2895,4 +3001,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260521061320
+version: 20260704000001

@@ -26,7 +26,7 @@ module DemoHelpers
       updated_at: created_at,
       client_message_id: SecureRandom.uuid
     )
-  rescue ActiveRecord::RecordInvalid
+  rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
     nil
   end
 
@@ -38,7 +38,7 @@ module DemoHelpers
   def normalize_seed_timestamps!
     Message.update_all("updated_at = created_at")
 
-    Room.where.not(type: %w[Rooms::Direct Rooms::Thread]).find_each do |room|
+    Room.where.not(type: %w[Rooms::Direct Rooms::Thread Rooms::Post]).find_each do |room|
       earliest = room.messages.without_events.minimum(:created_at)
       next unless earliest
 
@@ -56,24 +56,89 @@ module DemoHelpers
       abort "⛔ Refusing to clean database in #{Rails.env} without DEMO_MODE=true"
     end
 
-    Notification.delete_all
-    Boost.delete_all
-    Bookmark.delete_all
-    Block.delete_all
-    ActionText::RichText.delete_all
-    Message.where(room_id: Rooms::Thread.select(:id)).delete_all
-    Membership.where(room_id: Rooms::Thread.select(:id)).delete_all
-    Rooms::Thread.delete_all
-    Message.delete_all
-    Membership.delete_all
-    Room.delete_all
-    Session.delete_all
-    AuthToken.delete_all
-    Ban.delete_all
-    User.delete_all
-    Badge.delete_all
+    # Wipe every table (except the schema bookkeeping and the account) with foreign
+    # keys off, so the reset needs no delete ordering and can't be blocked by an
+    # association the list forgot — solutions, notification settings, join codes,
+    # bundles, webhooks, and anything added later.
+    conn = ApplicationRecord.connection
+    preserved = %w[schema_migrations ar_internal_metadata accounts]
+
+    conn.execute("PRAGMA defer_foreign_keys = ON")
+    conn.execute("PRAGMA foreign_keys = OFF")
+    begin
+      (conn.tables - preserved).each { |table| conn.execute("DELETE FROM #{conn.quote_table_name(table)}") }
+    ensure
+      conn.execute("PRAGMA foreign_keys = ON")
+    end
 
     Account.first_or_create!(name: "Sabha")
+  end
+
+  # Forum seed content — a dev-community Q&A. Each becomes a Rooms::Post with an
+  # opening message and a handful of replies; the flagged ones are marked Solved.
+  FORUM_POSTS = [
+    { title: "Question about OKLCH color tokens", body: "Migrating our palette to OKLCH and the lightness looks off in dark mode. How are you splitting the light/dark tokens?", solved: true },
+    { title: "Help needed with push notifications", body: "Web push fires in Chrome but never in Safari. Is there a service-worker gotcha I'm missing?", solved: false },
+    { title: "How do I set up deploying to production?", body: "First time shipping a Rails app with Kamal. What's the minimal setup for a single server?", solved: true },
+    { title: "Best practice for CSP headers?", body: "Locking down Content-Security-Policy without breaking Turbo and ActionCable — anyone have a known-good baseline?", solved: false },
+    { title: "@mentions keeps failing intermittently", body: "Sometimes an @mention notifies, sometimes it doesn't. Can't find a pattern — where would you start debugging?", solved: false },
+    { title: "How do I fix dark-mode flicker?", body: "On first paint the page flashes light before going dark. Where should the theme be set to avoid the flash?", solved: true },
+    { title: "Help needed with the mobile sidebar", body: "The overlay sidebar won't close when I tap a room on mobile. Is there a Turbo/Stimulus pattern for this?", solved: false },
+    { title: "importmap pinning — what am I missing?", body: "Pinned a package with bin/importmap but the browser 404s on it. Do I need to vendor it too?", solved: true },
+    { title: "Tailwind v4 layers — what am I missing?", body: "Moved to Tailwind v4 and my custom @layer components stopped applying. Did the layer ordering change?", solved: false },
+    { title: "Best way to structure ActionCable channels?", body: "The channel count is getting messy. One channel per feature, or a shared one with actions?", solved: false }
+  ].freeze
+
+  FORUM_REPLIES = [
+    "Ran into this exact thing last week.",
+    "Have you checked the server logs when it happens?",
+    "This fixed it for me — worth a shot.",
+    "Great question, following.",
+    "I think the docs are out of date on this.",
+    "Works on my end, so it might be environment-specific.",
+    "Make sure you're on the latest version first.",
+    "+1, hitting the same issue.",
+    "That did the trick, thank you! 🙏",
+    "Could be a caching thing — try clearing it.",
+    "Interesting, I'd never have guessed that.",
+    "Here's the approach that worked for us."
+  ].freeze
+
+  # Build a community forum: a Rooms::Forum (auto-joins every active user) plus a
+  # gallery of posts, each with a backdated opening message, several replies from
+  # different members, and a Solution where flagged. last_active_at is pinned back
+  # after seeding because each reply otherwise touches it to "now" — which would
+  # flatten the gallery's recent sort and every card's "Updated …" to the same time.
+  def create_forum!(name:, creator:, users:)
+    forum = Rooms::Forum.create!(name: name, creator: creator)
+
+    FORUM_POSTS.each_with_index do |seed, index|
+      author = users.sample
+      # A recency gradient so the default "recent" sort shows a realistic spread:
+      # the first post is fresh, the rest fan out over the past couple of weeks.
+      last_active = index.zero? ? rand(1..3).hours.ago : rand(6..320).hours.ago
+      opened_at   = last_active - rand(1..48).hours
+
+      post = Rooms::Post.create!(parent_room: forum, name: seed[:title], creator: author,
+                                 created_at: opened_at, updated_at: opened_at)
+      post.memberships.grant_to(author)
+      post.messages.create!(body: "<div>#{seed[:body]}</div>", creator: author,
+                            created_at: opened_at, client_message_id: SecureRandom.uuid)
+
+      reply_count = rand(3..15)
+      reply_count.times do |i|
+        replier  = (users - [ author ]).sample || author
+        reply_at = opened_at + ((last_active - opened_at) * (i + 1) / (reply_count + 1))
+        post.messages.create!(body: "<div>#{FORUM_REPLIES.sample}</div>", creator: replier,
+                              created_at: reply_at, client_message_id: SecureRandom.uuid)
+      end
+
+      post.create_solution!(user: [ author, creator ].sample) if seed[:solved]
+
+      post.update_columns(last_active_at: last_active, updated_at: last_active)
+    end
+
+    forum
   end
 end
 
@@ -154,6 +219,9 @@ namespace :generate do
       puts "🧵 Creating threads..."
       MaxDemo.create_threads(rooms, users)
 
+      puts "🗂️  Creating a forum with posts..."
+      DemoHelpers.create_forum!(name: "Community Q&A", creator: users.first, users: users)
+
       puts "🔥 Adding boosts..."
       MaxDemo.create_boosts(users)
 
@@ -185,6 +253,7 @@ namespace :generate do
       puts "   Closed Rooms: #{Rooms::Closed.count}"
       puts "   Direct Messages: #{Rooms::Direct.count}"
       puts "   Threads: #{Rooms::Thread.count}"
+      puts "   Forums: #{Rooms::Forum.count} (#{Rooms::Post.count} posts, #{Solution.count} solved)"
       puts "   Messages: #{Message.count} (#{Message.where(active: false).count} soft-deleted)"
       puts "   Boosts: #{Boost.count}"
       puts "   Bookmarks: #{Bookmark.count}"
@@ -412,7 +481,7 @@ namespace :generate do
           dm = Rooms::Direct.create_for({}, users: pair)
           rooms[:direct] << dm
           add_dm_messages(dm, pair)
-        rescue ActiveRecord::RecordInvalid
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
       end
@@ -424,7 +493,7 @@ namespace :generate do
           dm = Rooms::Direct.create_for({}, users: special_users)
           rooms[:direct] << dm
           add_special_group_dm_messages(dm, special_users)
-        rescue ActiveRecord::RecordInvalid
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
       end
@@ -438,7 +507,7 @@ namespace :generate do
             dm = Rooms::Direct.create_for({}, users: [ special, other ])
             rooms[:direct] << dm
             add_dm_messages(dm, [ special, other ])
-          rescue ActiveRecord::RecordInvalid
+          rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
             nil
           end
         end
@@ -451,7 +520,7 @@ namespace :generate do
         begin
           dm = Rooms::Direct.create_for({}, users: participants)
           rooms[:direct] << dm
-        rescue ActiveRecord::RecordInvalid
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
         print "." if (i % 25).zero?
@@ -470,7 +539,7 @@ namespace :generate do
           rooms[:direct] << dm
           add_dm_messages(dm, group_members)
           group_dm_count += 1
-        rescue ActiveRecord::RecordInvalid
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
       end
@@ -484,7 +553,7 @@ namespace :generate do
           rooms[:direct] << dm
           add_dm_messages(dm, participants)
           group_dm_count += 1
-        rescue ActiveRecord::RecordInvalid
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
       end
@@ -522,7 +591,7 @@ namespace :generate do
             created_at: base_time + time_offset,
             client_message_id: SecureRandom.uuid
           )
-        rescue ActiveRecord::RecordInvalid
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
       end
@@ -556,7 +625,7 @@ namespace :generate do
             created_at: base_time + time_offset,
             client_message_id: SecureRandom.uuid
           )
-        rescue ActiveRecord::RecordInvalid
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
       end
@@ -598,7 +667,7 @@ namespace :generate do
               client_message_id: SecureRandom.uuid
             )
             message_count += 1
-          rescue ActiveRecord::RecordInvalid
+          rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
             nil
           end
         end
@@ -630,7 +699,7 @@ namespace :generate do
                 client_message_id: SecureRandom.uuid
               )
               message_count += 1
-            rescue ActiveRecord::RecordInvalid
+            rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
               nil
             end
           end
@@ -659,7 +728,7 @@ namespace :generate do
               client_message_id: SecureRandom.uuid
             )
             message_count += 1
-          rescue ActiveRecord::RecordInvalid
+          rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
             nil
           end
         end
@@ -745,7 +814,7 @@ namespace :generate do
 
             thread_count += 1
             print "."
-          rescue ActiveRecord::RecordInvalid
+          rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
             nil
           end
         end
@@ -797,7 +866,7 @@ namespace :generate do
 
           thread_count += 1
           print "."
-        rescue ActiveRecord::RecordInvalid
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
       end
@@ -849,7 +918,7 @@ namespace :generate do
 
           thread_count += 1
           print "."
-        rescue ActiveRecord::RecordInvalid
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
       end
@@ -1100,6 +1169,9 @@ namespace :generate do
     puts "🧵 Creating threads..."
     create_threads(rooms, users)
 
+    puts "🗂️  Creating a forum with posts..."
+    DemoHelpers.create_forum!(name: "Community Q&A", creator: users.first, users: users)
+
     puts "🔥 Adding boosts..."
     create_boosts(users)
 
@@ -1113,6 +1185,7 @@ namespace :generate do
     puts "📊 Summary:"
     puts "   Users: #{User.count}"
     puts "   Rooms: #{Room.where(type: %w[Rooms::Open Rooms::Closed]).count} (+ #{Rooms::Direct.count} DMs, #{Rooms::Thread.count} threads)"
+    puts "   Forums: #{Rooms::Forum.count} (#{Rooms::Post.count} posts, #{Solution.count} solved)"
     puts "   Messages: #{Message.count}"
     puts "   Boosts: #{Boost.count}"
     puts "   Bookmarks: #{Bookmark.count}"
