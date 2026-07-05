@@ -52,8 +52,8 @@ class Rooms::PostTest < ActiveSupport::TestCase
     end
 
     assert post.solved?
-    assert_equal solver, post.solved_by
-    assert post.solved_at.present?
+    assert_equal solver, post.solution.user
+    assert post.solution.created_at.present?
   end
 
   test "reopening destroys the Solution" do
@@ -66,8 +66,7 @@ class Rooms::PostTest < ActiveSupport::TestCase
     end
 
     assert_not post.solved?
-    assert_nil post.solved_at
-    assert_nil post.solved_by
+    assert_nil post.solution
   end
 
   test "solving twice keeps a single Solution" do

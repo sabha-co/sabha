@@ -150,6 +150,13 @@ class Room < ApplicationRecord
     "mentions"
   end
 
+  # The users who can be @mentioned here. Rooms::Post overrides this — its access
+  # derives from its forum, so a post mentions the forum's members, not the
+  # handful who happen to have followed it.
+  def mentionable_users
+    users
+  end
+
   def active_member_count
     Rails.cache.fetch(active_member_count_cache_key, expires_in: 5.minutes) do
       memberships.visible.joins(:user).merge(User.active).count

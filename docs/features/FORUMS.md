@@ -26,10 +26,10 @@ Leaving a forum enqueues `ForumFollowCleanupJob`, which silences that one member
 | Surface | Route | Renders |
 |---------|-------|---------|
 | Gallery | `/rooms/:id` — `RoomsController#show` → `render_forum_gallery` | `rooms/forums/gallery`, inside the normal room shell in place of the message stream |
-| Post (in-app) | `/rooms/posts/:id` — `Rooms::PostsController#show`, opened in the thread panel from a gallery card | `rooms/posts/show` |
-| Post (canonical) | `/f/:slug` — `ForumPostsController#show` (`forum_post_path`) | standalone page, no redirect — the permanent, shareable link |
+| Post (panel) | `/rooms/posts/:id` — `Rooms::PostsController#show`, opened in the thread panel from a gallery card | `rooms/posts/show` (layout-less panel) |
+| Post (permalink) | `/rooms/:forum_id?post=<slug>` — the gallery with the panel pre-opened | gallery + deep-linked panel |
 
-The canonical `/f/:slug` page is member-gated in v1 but is deliberately a standalone render (not the in-app panel) so it can become public and SEO-indexable later — mirroring the utility of a classic web forum.
+A post has **no standalone page**. Its shareable link is a deep-link onto the forum gallery: `?post=<slug>` (plus an optional `&message_id=` to anchor a specific reply). `RoomsController#deep_linked_post` resolves the slug and the layout points the thread-panel frame at that post, so the panel opens over the gallery on load. A stale or non-viewable slug just yields the plain gallery.
 
 ## Composing
 
@@ -46,7 +46,7 @@ Both are plain query params read by `Rooms::Forum#posts(solved:, sort:)`, which 
 
 ## Solved state
 
-Solved is modeled as a **record, not a column**: a `Solution` (`belongs_to :post, :user`) exists iff the post is solved, and it carries who marked it and when. `Rooms::Post#solved?` is `solution.present?`; `solved_by` / `solved_at` derive from it. Toggling goes through `Rooms::Forums::Posts::SolutionsController`:
+Solved is modeled as a **record, not a column**: a `Solution` (`belongs_to :post, :user`) exists iff the post is solved, and it carries who marked it and when. `Rooms::Post#solved?` is `solution.present?`. Toggling goes through `Rooms::Forums::Posts::SolutionsController`:
 
 - `create` → `solve!` ("Mark solved") — creates the `Solution`
 - `destroy` → `reopen!` ("Reopen") — destroys it
@@ -72,16 +72,21 @@ The `⋯` menu on a post header (`rooms/forums/_post_header`) offers:
 
 | Item | Who | Action |
 |------|-----|--------|
-| Copy link | Anyone | Copies the canonical `/f/:slug` URL (`copy-to-clipboard`) |
+| Copy link | Anyone | Copies the post's permalink — the `?post=<slug>` gallery deep-link (`copy-to-clipboard`) |
 | Follow / Unfollow | Any member | Create/destroy the viewer's own post membership |
 | Edit | Admin / post author | Edit the title **inline** — `edit` swaps a form into the header's title turbo-frame (`dom_id(post, :title)`); `update` redirects so the frame swaps back |
 | Mark solved / Reopen | Admin / post author | Toggle the Solved state |
 
 ## Live updates
 
-The gallery subscribes to `turbo_stream_from @room, :posts` and `turbo_stream_from @membership`. **Existing** cards live-refresh via replace broadcasts — a reply updates the card's reply count, activity, and participant avatars (`Message::Threadable#update_forum_gallery_card` → `Rooms::Post#broadcast_gallery_card`); a title or Solved change refreshes the card and the post header (`Rooms::Post#broadcast_content_change`). The membership subscription is what lets the nav's involvement bell cycle its state.
+The gallery subscribes to `turbo_stream_from @room, :posts` and `turbo_stream_from @membership`. Broadcasts keep it current:
 
-Brand-new posts are **not** appended live — they show on the next gallery load (the author is redirected to the gallery on create).
+- **New posts** prepend live — `Rooms::Post#broadcast_gallery_insertion` (an `after_create_commit`) streams the new card to the top of every member's open gallery.
+- **Existing cards** refresh via replace broadcasts — a reply updates the card's reply count, activity, and participant avatars (`Message::Threadable#update_forum_gallery_card` → `Rooms::Post#broadcast_gallery_card`); a title or Solved change refreshes the card and the post header (`Rooms::Post#broadcast_content_change`).
+
+The membership subscription is what lets the nav's involvement bell cycle its state.
+
+Two accepted, self-correcting limits on the new-post stream: a viewer filtered to "Solved" briefly sees a new (unsolved) post, and a viewer sitting on the empty-state gallery (no list container yet) sees nothing until they navigate. Both resolve on the next load.
 
 ## Identity
 
@@ -92,13 +97,13 @@ Forum rooms use the `message-log` glyph across the sidebar indicator, the create
 | Area | Files |
 |------|-------|
 | Models | `app/models/rooms/forum.rb`, `app/models/rooms/post.rb`, `app/models/solution.rb`, `app/models/room/participants.rb`, `app/models/room/nested.rb` |
-| Controllers | `app/controllers/rooms/forums_controller.rb`, `rooms/forums/posts_controller.rb`, `rooms/forums/posts/solutions_controller.rb`, `rooms/posts_controller.rb`, `rooms/posts/memberships_controller.rb`, `forum_posts_controller.rb` |
+| Controllers | `app/controllers/rooms/forums_controller.rb`, `rooms/forums/posts_controller.rb`, `rooms/forums/posts/solutions_controller.rb`, `rooms/posts_controller.rb`, `rooms/posts/memberships_controller.rb`, `concerns/forum_post_scoped.rb` |
 | Jobs | `app/jobs/forum_follow_cleanup_job.rb` |
-| Views | `app/views/rooms/forums/*`, `app/views/rooms/posts/*`, `app/views/forum_posts/*` |
+| Views | `app/views/rooms/forums/*`, `app/views/rooms/posts/*` |
 | JS | `app/javascript/controllers/forum_compose_controller.js`, `forum_compose_opener_controller.js`, `forum_body_controller.js` |
 | Styles | `app/assets/stylesheets/application/forum.css` |
-| Routes | `config/routes.rb` — `resources :forums` (+ nested `posts` / `solution`), `resources :posts` (+ `membership`), `/f/:slug` |
+| Routes | `config/routes.rb` — `resources :forums` (+ nested `posts` / `solution`), `resources :posts` (+ `membership`) |
 
 ## Not in v1
 
-Post tags/categories were considered and cut to keep the first version simple — there is no taxonomy on posts. Public (unauthenticated) access to `/f/:slug` and SEO indexing are the intended next step but are not enabled yet.
+Post tags/categories were considered and cut to keep the first version simple — there is no taxonomy on posts. Posts have no standalone page — sharing is via the `?post=<slug>` gallery deep-link; a public, SEO-indexable post page is a possible future step but is not built.

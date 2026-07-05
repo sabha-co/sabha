@@ -63,14 +63,9 @@ class MessagesController < ApplicationController
     # access immediately rather than riding an orphaned membership row.
     def set_room
       @membership = Current.user.memberships.find_by(room_id: params[:room_id])
-      @room = @membership&.room || viewable_forum_post(params[:room_id])
+      @room = @membership&.room || Current.user.reachable_post(params[:room_id])
       @room = nil if @room.is_a?(Rooms::Post) && !@room.viewable_by?(Current.user)
       raise ActiveRecord::RecordNotFound unless @room
-    end
-
-    def viewable_forum_post(room_id)
-      post = Rooms::Post.active.find_by(id: room_id)
-      post if post&.viewable_by?(Current.user)
     end
 
     def set_message

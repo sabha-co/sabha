@@ -65,16 +65,6 @@ class Rooms::Post < Room
     solution.present?
   end
 
-  # Derived from the Solution record so views calling post.solved_at / solved_by
-  # keep working after the column was dropped.
-  def solved_at
-    solution&.created_at
-  end
-
-  def solved_by
-    solution&.user
-  end
-
   def solve!
     return if solved?
 
@@ -93,6 +83,12 @@ class Rooms::Post < Room
   # Access is defined once on the forum and delegated down, Fizzy-style — a post
   # has no per-member membership row of its own for every forum member.
   delegate :viewable_by?, to: :parent_room
+
+  # A post has no roster of its own — anyone in the forum can be @mentioned — so
+  # mentions resolve against the forum's members, not the post's few followers.
+  def mentionable_users
+    parent_room.users
+  end
 
   def default_involvement(user: nil)
     user.present? && user == creator ? "everything" : "invisible"

@@ -23,24 +23,13 @@ class Autocompletable::UsersController < ApplicationController
       return unless params[:room_id].present?
 
       Current.user.rooms.find_by(id: params[:room_id]) ||
-        viewable_forum_post(params[:room_id]) ||
+        Current.user.reachable_post(params[:room_id]) ||
         raise(ActiveRecord::RecordNotFound)
     end
 
-    def viewable_forum_post(room_id)
-      post = Rooms::Post.active.find_by(id: room_id)
-      post if post&.viewable_by?(Current.user)
-    end
-
     def users_scope
-      base = room ? mentionable_users : User.all
+      base = room ? room.mentionable_users : User.all
       base.active.without_default_names.recent_posters_first(room&.id).with_attached_avatar
-    end
-
-    # A post has no roster of its own — anyone in the forum can be @mentioned — so
-    # autocomplete against the forum's members, not the post's few followers.
-    def mentionable_users
-      room.post? ? room.parent_room.users : room.users
     end
 
     def add_everyone_mention_if_applicable(users)

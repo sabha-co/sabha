@@ -20,9 +20,9 @@ module Message::Mentionee
   def mentionees
     @mentionees ||=
       if mentions_everyone?
-        mention_roster.to_a
+        room.mentionable_users.to_a
       elsif (ids = mentioned_users.map(&:id)).any?
-        mention_roster.where(id: ids).to_a
+        room.mentionable_users.where(id: ids).to_a
       else
         []
       end
@@ -33,15 +33,6 @@ module Message::Mentionee
   end
 
   private
-    # Who can be @mentioned in this room. A forum post derives access from its
-    # forum, so mentions resolve against the forum's members rather than the
-    # post's handful of followers — otherwise @mentioning a forum member who
-    # hasn't engaged with the post yet would silently notify no one. Every other
-    # room mentions its own members.
-    def mention_roster
-      room.post? ? room.parent_room.users : room.users
-    end
-
     def reset_mentionee_memo
       @mentionees = @mentionee_ids = nil
     end

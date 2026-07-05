@@ -35,6 +35,15 @@ class User < ApplicationRecord
       raise(ActiveRecord::RecordNotFound, "Couldn't find Message with id=#{id}")
   end
 
+  # The forum post with this id the user can reach, or nil. Access derives from
+  # the forum (viewable_by?), so a member resolves a post they haven't followed
+  # while an outsider gets nil — the single finder behind the channel and the
+  # controllers that reach posts without a per-post membership.
+  def reachable_post(id)
+    post = Rooms::Post.active.find_by(id:)
+    post if post&.viewable_by?(self)
+  end
+
   def active_invite_link
     join_codes.active.first
   end
