@@ -1,0 +1,15 @@
+<%# locals: (post:) %>
+<%# Follow/Unfollow flips in place inside the open menu via this frame, so the
+    state change is visible immediately without reloading the page. Rendered
+    per-viewer (needs Current.user), so it never rides a viewer-less broadcast. %>
+<%= turbo_frame_tag dom_id(post, :follow) do %>
+  <% if Current.user && post.followed_by?(Current.user) %>
+    <%= button_to rooms_post_membership_path(post), method: :delete, class: "btn action-btn full-width" do %>
+      <span>Unfollow</span>
+    <% end %>
+  <% elsif Current.user %>
+    <%= button_to rooms_post_membership_path(post), method: :post, class: "btn action-btn full-width" do %>
+      <span>Follow</span>
+    <% end %>
+  <% end %>
+<% end %>

@@ -6,15 +6,26 @@ class Rooms::Posts::MembershipsController < ApplicationController
 
   def create
     @post.follow!(Current.user)
-    redirect_back fallback_location: room_url(@post.parent_room, post: @post.slug)
+    respond_with_follow_control
   end
 
   def destroy
     @post.unfollow!(Current.user)
-    redirect_back fallback_location: room_url(@post.parent_room, post: @post.slug)
+    respond_with_follow_control
   end
 
   private
+    # In the browser the Follow/Unfollow button lives in a turbo frame, so flip it
+    # in place — the state change shows without reloading and dropping the panel.
+    # A non-frame request (JS off) falls back to the full redirect.
+    def respond_with_follow_control
+      if turbo_frame_request?
+        render partial: "rooms/forums/posts/follow_control", locals: { post: @post }
+      else
+        redirect_back fallback_location: room_url(@post.parent_room, post: @post.slug)
+      end
+    end
+
     def set_post
       @post = Rooms::Post.active.find_by(id: params[:post_id])
       return head :not_found unless @post

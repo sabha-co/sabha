@@ -15,23 +15,13 @@
 
     <div class="popup-menu forum-post-menu border shadow" data-popup-target="menu">
       <%= tag.button class: "btn action-btn full-width", data: {
-            controller: "copy-to-clipboard", action: "copy-to-clipboard#copy",
+            controller: "copy-to-clipboard", action: "copy-to-clipboard#copy popup#close",
             copy_to_clipboard_success_class: "btn--success",
             copy_to_clipboard_content_value: room_url(post.parent_room, post: post.slug) } do %>
         <span>Copy link</span>
       <% end %>
 
-      <% if Current.user && post.followed_by?(Current.user) %>
-        <%= button_to rooms_post_membership_path(post), method: :delete,
-              class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close" } do %>
-          <span>Unfollow</span>
-        <% end %>
-      <% elsif Current.user %>
-        <%= button_to rooms_post_membership_path(post), method: :post,
-              class: "btn action-btn full-width", data: { turbo_frame: "_top", action: "popup#close" } do %>
-          <span>Follow</span>
-        <% end %>
-      <% end %>
+      <%= render "rooms/forums/posts/follow_control", post: post %>
 
       <% if Current.user&.can_administer?(post) %>
         <%= link_to edit_rooms_forum_post_path(post.parent_room, post),

@@ -17,6 +17,15 @@ class Rooms::Posts::MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "everything", membership.involvement
   end
 
+  test "Following via a turbo frame flips the control to Unfollow in place" do
+    sign_in :kevin
+
+    post rooms_post_membership_url(@post), headers: { "Turbo-Frame" => "follow" }
+
+    assert_response :success
+    assert_select "turbo-frame button", text: /Unfollow/
+  end
+
   test "Unfollow removes the membership" do
     @post.follow!(users(:kevin))
     sign_in :kevin
