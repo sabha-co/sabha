@@ -17,6 +17,6 @@ module SubRoomAccessible
     # a member removed from the parent loses it immediately rather than riding an
     # orphaned row. A non-sub-room (a normal sidebar room) passes through untouched.
     def deny_stale_sub_room(room)
-      room unless room&.sub_room? && !room.viewable_by?(Current.user)
+      room unless room&.stale_sub_room_for?(Current.user)
     end
 end

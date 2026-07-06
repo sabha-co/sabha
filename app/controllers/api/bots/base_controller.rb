@@ -13,7 +13,7 @@ class API::Bots::BaseController < ApplicationController
     # keep granting it. Raises (→ 404) when unreachable, like `rooms.find` did.
     def reachable_bot_room(id)
       room = Current.user.rooms.find(id)
-      raise ActiveRecord::RecordNotFound if room.sub_room? && !room.viewable_by?(Current.user)
+      raise ActiveRecord::RecordNotFound if room.stale_sub_room_for?(Current.user)
       room
     end
 

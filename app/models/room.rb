@@ -164,6 +164,15 @@ class Room < ApplicationRecord
     user.present? && memberships.active.exists?(user_id: user.id)
   end
 
+  # A sub-room reached only through a membership row that outlived its access:
+  # removal silences a follow but leaves the row active, so it still resolves even
+  # though the parent-derived access is gone. Non-sub-rooms are never stale — for
+  # them the membership row IS the access. Callers that resolve a room from a
+  # membership (RoomScoped, SubRoomAccessible, User#reachable_room) deny on this.
+  def stale_sub_room_for?(user)
+    sub_room? && !viewable_by?(user)
+  end
+
   def default_involvement(user: nil)
     "mentions"
   end
