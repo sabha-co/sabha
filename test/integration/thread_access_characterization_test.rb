@@ -96,6 +96,25 @@ class ThreadAccessCharacterizationTest < ActionDispatch::IntegrationTest
       "a non-member is never a target"
   end
 
+  test "the parent-message author auto-follows a thread someone else opens on their message" do
+    # @creator authored the message; @member opens the thread; @passive replies.
+    # The author never touched the thread, yet a reply must reach them.
+    author = @creator
+    parent_message = @parent.messages.create!(body: "author's question", creator: author)
+    thread = Rooms::Thread.find_or_create_for(parent_message, creator: @member)
+
+    assert_equal "everything", thread.memberships.find_by(user: author)&.involvement,
+      "the message author gets an everything row on create, without opening the thread"
+
+    reply = nil
+    perform_enqueued_jobs do
+      reply = Current.set(user: @passive) { thread.messages.create!(body: "an answer", creator: @passive) }
+    end
+
+    assert Notification.exists?(user: author, message: reply, activity_type: "thread_reply"),
+      "so a reply to a thread on their message notifies the author"
+  end
+
   test "a parent-room member can be @mentioned in a thread without a thread membership" do
     # A creator-only thread (no fan-out): jason is a parent member but not a
     # thread member, yet an @mention must still resolve and notify him.

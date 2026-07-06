@@ -23,14 +23,18 @@ class Rooms::Thread < Room
     parent_room.users
   end
 
-  # Grants a membership to the creator only — a thread never fans a row out to
-  # every parent-room member. Other members view via derived access (see
-  # #viewable_by?) and follow lazily on their first reply.
+  # Grants a membership to the thread creator and the parent-message author only
+  # — a thread never fans a row out to every parent-room member. Both auto-follow
+  # (involvement "everything" via #default_involvement) so replies notify them:
+  # the author hears about a thread opened on their message even when someone else
+  # opens it. Every other member views via derived access (see #viewable_by?) and
+  # follows lazily on their first reply.
   def self.find_or_create_for(parent_message, creator:)
     raise NestedThreadError if parent_message.room.thread?
 
     parent_message.threads.active.find_by(type: "Rooms::Thread") ||
-      create_for({ parent_message_id: parent_message.id, creator: creator }, users: [ creator ])
+      create_for({ parent_message_id: parent_message.id, creator: creator },
+                 users: [ creator, parent_message.creator ].uniq)
   end
 
   def default_involvement(user: nil)

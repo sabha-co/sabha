@@ -45,7 +45,9 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to rooms_thread_url(existing_thread)
   end
 
-  test "create grants a membership to the creator only, not every parent room member" do
+  test "create grants a membership to the creator and the parent-message author, not every parent room member" do
+    kevin = users(:kevin)
+    @room.memberships.grant_to(kevin) # a third parent-room member, uninvolved
     parent_message = @room.messages.create!(
       body: "Parent message",
       creator: @jason,
@@ -56,9 +58,12 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     assert_response :redirect
 
     thread = Rooms::Thread.last
-    assert_equal [ @david.id ], thread.memberships.pluck(:user_id),
-      "only the thread creator gets a membership row — a thread never fans out"
-    assert thread.viewable_by?(@jason), "other parent-room members view via derived access"
+    assert_equal [ @david.id, @jason.id ].sort, thread.memberships.pluck(:user_id).sort,
+      "the thread creator and the parent-message author each get a row — a thread never fans out to every member"
+    assert_equal "everything", thread.memberships.find_by(user: @jason).involvement,
+      "the parent-message author auto-follows so replies to their message notify them"
+    assert_not thread.memberships.exists?(user: kevin), "an uninvolved parent member gets no row"
+    assert thread.viewable_by?(kevin), "…but still views via derived access"
   end
 
   test "create requires parent message to be reachable by user" do
