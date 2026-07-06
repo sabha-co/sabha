@@ -115,7 +115,7 @@ class Rooms::PostTest < ActiveSupport::TestCase
     @forum.memberships.grant_to(member)
     post = create_post(title: "Members only")
 
-    Membership.create!(room: post, user: outsider, involvement: "everything", active: true)
+    Membership.create!(room: post, user: outsider, involvement: "everything")
 
     assert_not post.viewable_by?(outsider), "a follow row on the post does not confer access"
     assert post.viewable_by?(member), "a forum member views the post via derived access"

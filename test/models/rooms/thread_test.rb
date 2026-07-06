@@ -43,7 +43,7 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     thread = Rooms::Thread.find_or_create_for(parent_message, creator: users(:david))
 
     outsider = users(:kevin) # not a member of `parent`
-    Membership.create!(room: thread, user: outsider, involvement: "everything", active: true)
+    Membership.create!(room: thread, user: outsider, involvement: "everything")
 
     assert_not thread.viewable_by?(outsider), "a follow row on the thread does not confer access"
     assert thread.viewable_by?(users(:jason)), "a parent member views the thread via derived access"
