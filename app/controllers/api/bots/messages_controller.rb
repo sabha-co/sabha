@@ -80,7 +80,7 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
   private
     def set_room
-      @room = Current.user.rooms.find(params[:room_id])
+      @room = reachable_bot_room(params[:room_id])
     end
 
     def resolve_target_room

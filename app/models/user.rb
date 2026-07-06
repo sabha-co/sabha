@@ -20,23 +20,24 @@ class User < ApplicationRecord
 
   has_many :bookmarks, class_name: "Bookmark"
   has_many :bookmarked_messages, -> { order("bookmarks.created_at DESC") }, through: :bookmarks, source: :message
-  has_many :reachable_messages, through: :rooms, source: :messages
   has_many :messages, -> { active }, foreign_key: :creator_id, class_name: "Message"
 
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
 
-  # A single message the user can reach: one in a room they belong to
-  # (reachable_messages), or — because a nested sub-room (forum post or chat
-  # thread) derives access from its parent rather than a per-sub-room membership
-  # — a message in a sub-room they can view. Raises when neither applies, so
-  # callers 404 the way `reachable_messages.find` did.
+  # Active messages the user can reach — those in rooms they belong to, plus those
+  # in nested sub-rooms (forum posts / chat threads) whose parent they belong to.
+  # Access to a sub-room derives from its parent, so this is not a plain
+  # membership join; see Message.reachable_by for the full rule. Backs search,
+  # unreads, the inbox feed, and the bots search API.
+  def reachable_messages
+    Message.reachable_by(self)
+  end
+
+  # A single message the user can reach, or a 404. reachable_messages already
+  # encodes derived sub-room access (a passive parent member reaches it, a stale
+  # row does not), so no per-call re-check is needed.
   def reachable_message(id)
-    message = reachable_messages.find_by(id:)
-    # A silenced-but-active sub-room membership must not authorize a message the
-    # user can no longer view — re-check derived access, as set_room does.
-    message = nil if message&.room&.sub_room? && !message.room.viewable_by?(self)
-    message ||
-      viewable_sub_room_message(id) ||
+    reachable_messages.find_by(id:) ||
       raise(ActiveRecord::RecordNotFound, "Couldn't find Message with id=#{id}")
   end
 
@@ -215,15 +216,6 @@ class User < ApplicationRecord
   end
 
   private
-    # A message whose room is a nested sub-room (forum post or chat thread) this
-    # user can view — access derives from the parent, so no per-sub-room
-    # membership is required. Nil for anything that isn't a sub-room or that the
-    # user can't see.
-    def viewable_sub_room_message(id)
-      message = Message.active.find_by(id:)
-      message if message&.room&.sub_room? && message.room.viewable_by?(self)
-    end
-
     def deactivate_direct_rooms
       Membership.where(user_id: id).direct_rooms.each do |membership|
         membership.room.deactivate

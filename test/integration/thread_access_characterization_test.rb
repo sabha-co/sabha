@@ -138,6 +138,39 @@ class ThreadAccessCharacterizationTest < ActionDispatch::IntegrationTest
     assert Notification.exists?(user: @member, message: reply, activity_type: "mention")
   end
 
+  # ---- Reachability: derived at the collection, leak-safe ------------------
+  # reachable_messages backs search, unreads, the inbox feed, and the bots search
+  # API. It must derive sub-room reach from the parent — including passive members
+  # (no sub-room row) and excluding a stale row a leaver keeps.
+
+  test "reachable_messages reaches a thread a passive parent member never joined" do
+    parent_message = @parent.messages.create!(body: "topic", creator: @creator)
+    thread = Rooms::Thread.find_or_create_for(parent_message, creator: @creator)
+    reply = thread.messages.create!(body: "content", creator: @creator)
+
+    assert_not Membership.exists?(room_id: thread.id, user_id: @passive.id),
+      "precondition: the passive parent member has no thread row"
+    assert @passive.reachable_messages.exists?(id: reply.id),
+      "a parent member reaches thread messages via derived access (e.g. from search)"
+    assert_not @outsider.reachable_messages.exists?(id: reply.id),
+      "a non-member of the parent never reaches them"
+  end
+
+  test "reachable_messages drops a thread after the member leaves the parent room" do
+    closed = Rooms::Closed.create!(name: "War Room", creator: @creator)
+    closed.memberships.grant_to([ @creator, @member ])
+    parent = closed.messages.create!(body: "topic", creator: @creator)
+    thread = Rooms::Thread.find_or_create_for(parent, creator: @creator)
+    reply = Current.set(user: @member) { thread.messages.create!(body: "engaged", creator: @member) }
+    assert @member.reachable_messages.exists?(id: reply.id), "reachable while a member"
+
+    closed.remove_member!(@member, actor: @creator)
+    ThreadFollowCleanupJob.perform_now(room: closed, user: @member)
+
+    assert_not @member.reachable_messages.exists?(id: reply.id),
+      "a silenced-but-active thread row grants no reach after leaving the parent (closes the search/unreads/inbox leak)"
+  end
+
   # ---- Inbox threads -------------------------------------------------------
 
   test "inbox threads surfaces a followed thread and hides it from a non-member" do

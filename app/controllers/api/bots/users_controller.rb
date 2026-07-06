@@ -29,6 +29,6 @@ class API::Bots::UsersController < API::Bots::BaseController
     end
 
     def scoped_room
-      Current.user.rooms.find(params[:room_id])
+      reachable_bot_room(params[:room_id])
     end
 end

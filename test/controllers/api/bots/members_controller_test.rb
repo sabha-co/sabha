@@ -26,6 +26,24 @@ class API::Bots::MembersControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "returns 404 for a sub-room the bot can no longer view after leaving the parent" do
+    thread = nil
+    Current.set(user: @bot) do
+      room = Rooms::Closed.create_for({ name: "Bot Parent" }, users: @bot)
+      room.add_member!(users(:david), actor: @bot) # keep a human so the room survives
+      parent = room.messages.create!(body: "topic", creator: @bot)
+      thread = Rooms::Thread.find_or_create_for(parent, creator: @bot)
+      room.remove_member!(@bot, actor: users(:david))
+      ThreadFollowCleanupJob.perform_now(room: room, user: @bot)
+    end
+    assert Membership.exists?(room_id: thread.id, user_id: @bot.id, active: true),
+      "precondition: the bot keeps a silenced-but-active thread row"
+
+    get api_bots_room_members_url(thread), headers: bot_headers(@bot.bot_key)
+
+    assert_response :not_found
+  end
+
   test "invalid bot key redirects to sign in" do
     get api_bots_room_members_url(@room), headers: bot_headers("999-invalid")
 

@@ -54,6 +54,6 @@ class API::Bots::RoomsController < API::Bots::BaseController
     end
 
     def set_room
-      @room = Current.user.rooms.find(params[:id])
+      @room = reachable_bot_room(params[:id])
     end
 end
