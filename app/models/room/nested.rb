@@ -4,13 +4,13 @@
 # cascaded from the parent (a room deactivating its threads, a forum its posts)
 # as opposed to an individual delete. Only cascade-deactivated sub-rooms are
 # restored when the parent reactivates, so one deleted on its own stays deleted
-# across a parent delete/restore (R15).
+# across a parent delete/restore.
 module Room::Nested
   extend ActiveSupport::Concern
 
   # Deactivates the sub-room. Called either when an admin deletes it directly, or
   # when its parent is deactivated (which cascades). `cascade: true` marks the
-  # latter — see the R15 note above.
+  # latter — see the note above.
   def deactivate(cascade: false)
     transaction do
       Membership.where(room_id: id).update_all(active: false)

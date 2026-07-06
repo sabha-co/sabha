@@ -22,14 +22,6 @@ class Rooms::Forum < Room
   def receive(message)
   end
 
-  # A forum's posts derive their access from the forum: any active member can
-  # view them, without a per-post membership row for every member. Rooms::Post
-  # delegates its viewable_by? here (Fizzy: a Card delegates accessible_to? to
-  # its Board).
-  def viewable_by?(user)
-    user.present? && memberships.active.exists?(user_id: user.id)
-  end
-
   # Creates a post: a Rooms::Post that belongs to this forum, with its body as
   # message #1. Only the author gets a membership (involvement "everything" via
   # Rooms::Post#default_involvement) — a post does NOT fan a row out to every
@@ -51,6 +43,37 @@ class Rooms::Forum < Room
       raise if (attempts += 1) >= 3
       retry
     end
+  end
+
+  # Deleting a forum cuts access instantly but defers the heavy cascade. The
+  # forum row and its own memberships deactivate synchronously — so viewable_by?
+  # (which its posts delegate to here) fails on the next click and the forum
+  # leaves the sidebar — while the O(posts × replies) soft-delete of every post
+  # runs in ForumDeactivationJob. A forum owns no messages of its own (posts hold
+  # them), so there's nothing else to clean up synchronously.
+  def deactivate
+    raise CannotDeleteOriginalError if original?
+
+    transaction do
+      memberships.update_all(active: false)
+      deactivate!
+    end
+
+    ForumDeactivationJob.perform_later(forum: self)
+  end
+
+  # Mirror of #deactivate: bring the forum back instantly (row + its own
+  # memberships) so it reappears in the sidebar and viewable_by? passes on the
+  # next click, then restore its cascade-deactivated posts in the background.
+  # Only posts the forum's delete cascaded are restored — one deleted on its own
+  # stays deleted.
+  def reactivate
+    transaction do
+      memberships.rewhere(active: false).update_all(active: true)
+      activate!
+    end
+
+    ForumReactivationJob.perform_later(forum: self)
   end
 
   # Gallery posts: active posts, filtered by Solved state and sorted.

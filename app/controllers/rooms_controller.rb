@@ -1,4 +1,6 @@
 class RoomsController < ApplicationController
+  include SubRoomAccessible
+
   before_action :set_room, only: %i[ show destroy ]
   before_action :set_membership, only: %i[ show ]
   before_action :ensure_has_real_name, only: %i[ show ]
@@ -40,10 +42,12 @@ class RoomsController < ApplicationController
 
     def set_room
       room = Current.user.rooms.includes(parent_message: { creator: :avatar_attachment }).find_by(id: params[:room_id] || params[:id])
-      # A post's access derives from its forum, not from the (possibly stale)
-      # membership row that placed it in Current.user.rooms.
-      room = nil if room.is_a?(Rooms::Post) && !room.viewable_by?(Current.user)
-      if room
+      # A sub-room (forum post or chat thread) derives access from its parent: a
+      # parent member can open one without a membership row of their own, and a
+      # stale row must not grant access after they leave the parent. So fall back
+      # to parent-derived access, then re-check viewable_by? for any sub-room.
+      room ||= viewable_sub_room(params[:room_id] || params[:id])
+      if room = deny_stale_sub_room(room)
         @room = room
       else
         redirect_to root_url, alert: "Room not found or inaccessible"

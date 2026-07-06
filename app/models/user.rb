@@ -20,28 +20,36 @@ class User < ApplicationRecord
 
   has_many :bookmarks, class_name: "Bookmark"
   has_many :bookmarked_messages, -> { order("bookmarks.created_at DESC") }, through: :bookmarks, source: :message
-  has_many :reachable_messages, through: :rooms, source: :messages
   has_many :messages, -> { active }, foreign_key: :creator_id, class_name: "Message"
 
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
 
-  # A single message the user can reach: one in a room they belong to
-  # (reachable_messages), or — because a forum post derives access from its forum
-  # rather than a per-post membership — a message in a post they can view. Raises
-  # when neither applies, so callers 404 the way `reachable_messages.find` did.
+  # Active messages the user can reach — those in rooms they belong to, plus those
+  # in nested sub-rooms (forum posts / chat threads) whose parent they belong to.
+  # Access to a sub-room derives from its parent, so this is not a plain
+  # membership join; see Message.reachable_by for the full rule. Backs search,
+  # unreads, the inbox feed, and the bots search API.
+  def reachable_messages
+    Message.reachable_by(self)
+  end
+
+  # A single message the user can reach, or a 404. reachable_messages already
+  # encodes derived sub-room access (a passive parent member reaches it, a stale
+  # row does not), so no per-call re-check is needed.
   def reachable_message(id)
     reachable_messages.find_by(id:) ||
-      viewable_forum_post_message(id) ||
       raise(ActiveRecord::RecordNotFound, "Couldn't find Message with id=#{id}")
   end
 
-  # The forum post with this id the user can reach, or nil. Access derives from
-  # the forum (viewable_by?), so a member resolves a post they haven't followed
-  # while an outsider gets nil — the single finder behind the channel and the
-  # controllers that reach posts without a per-post membership.
-  def reachable_post(id)
-    post = Rooms::Post.active.find_by(id:)
-    post if post&.viewable_by?(self)
+  # A room this user can currently reach, or nil: one they belong to, or a nested
+  # sub-room (forum post or chat thread) whose access derives from its parent. A
+  # sub-room is re-checked with viewable_by? even when a membership resolved it,
+  # so a silenced-but-active row can't keep granting access after the user loses
+  # parent access. Backs RoomChannel (presence/typing) the way SubRoomAccessible
+  # backs the controllers that resolve a room from params.
+  def reachable_room(id)
+    room = rooms.find_by(id:) || Room.active.sub_rooms.find_by(id:)
+    room unless room&.sub_room? && !room.viewable_by?(self)
   end
 
   def active_invite_link
@@ -208,14 +216,6 @@ class User < ApplicationRecord
   end
 
   private
-    # A message whose room is a forum post this user can view — access derives
-    # from the forum, so no per-post membership is required. Nil for anything
-    # that isn't a post or that the user can't see.
-    def viewable_forum_post_message(id)
-      message = Message.active.find_by(id:)
-      message if message&.room&.post? && message.room.viewable_by?(self)
-    end
-
     def deactivate_direct_rooms
       Membership.where(user_id: id).direct_rooms.each do |membership|
         membership.room.deactivate
@@ -232,13 +232,11 @@ class User < ApplicationRecord
       forced_room_ids = Room.active.where(auto_join: true).pluck(:id)
       return if forced_room_ids.empty?
 
+      # Only the auto-join rooms themselves need a membership row. Their nested
+      # sub-rooms (an open room's threads, a forum's posts) derive access from
+      # this parent membership, so a new member reaches them without a per-sub-room
+      # row of their own — no fan-out.
       Membership.insert_all(forced_room_ids.collect { |room_id| { room_id: room_id, user_id: id } })
-
-      # Open auto-join rooms fan their threads out to members; a forum derives
-      # post access from forum membership, so it needs no per-post rows here.
-      Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
-        thread.memberships.grant_to(self)
-      end
     end
 
     # Clean up associated records explicitly because most `has_many` declarations

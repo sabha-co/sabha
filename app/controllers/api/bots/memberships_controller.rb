@@ -12,7 +12,7 @@ class API::Bots::MembershipsController < API::Bots::BaseController
   end
 
   def destroy
-    room = Current.user.rooms.find(params[:room_id])
+    room = reachable_bot_room(params[:room_id])
 
     if room.direct?
       return render json: { error: "Cannot leave direct messages", code: "validation_failed" }, status: :unprocessable_entity

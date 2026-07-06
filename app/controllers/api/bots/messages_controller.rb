@@ -30,12 +30,8 @@ class API::Bots::MessagesController < API::Bots::BaseController
   end
 
   def show
-    @message = Message.active
-                      .where(room_id: Current.user.rooms.select(:id))
-                      .with_rich_text_body_and_embeds
-                      .with_creator
-                      .with_attached_attachment
-                      .find(params[:id])
+    @message = reachable_bot_message(params[:id],
+      Message.active.with_rich_text_body_and_embeds.with_creator.with_attached_attachment)
   end
 
   def create
@@ -80,12 +76,12 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
   private
     def set_room
-      @room = Current.user.rooms.find(params[:room_id])
+      @room = reachable_bot_room(params[:room_id])
     end
 
     def resolve_target_room
       return @room if params[:parent_message_id].blank?
-      Rooms::Thread.find_or_create_for(parent_message_in_room, users: @room.users)
+      Rooms::Thread.find_or_create_for(parent_message_in_room, creator: Current.user)
     end
 
     # Scoping through @room.messages enforces the API contract that
@@ -101,7 +97,7 @@ class API::Bots::MessagesController < API::Bots::BaseController
     end
 
     def set_message
-      @message = Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:id])
+      @message = reachable_bot_message(params[:id])
       @room = @message.room
     end
 

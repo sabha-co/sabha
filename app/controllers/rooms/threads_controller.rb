@@ -7,7 +7,7 @@ class Rooms::ThreadsController < RoomsController
   before_action :set_parent_message, only: %i[ create ]
 
   def create
-    @room = Rooms::Thread.find_or_create_for(@parent_message, users: parent_room.users)
+    @room = Rooms::Thread.find_or_create_for(@parent_message, creator: Current.user)
     @room.involve_user(Current.user, unread: false)
 
     redirect_to rooms_thread_path(@room)
@@ -40,10 +40,6 @@ class Rooms::ThreadsController < RoomsController
     else
       redirect_to root_url, alert: "Message not found or inaccessible"
     end
-  end
-
-  def parent_room
-    @parent_message.room
   end
 
   def room_params

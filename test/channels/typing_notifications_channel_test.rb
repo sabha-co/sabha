@@ -65,6 +65,55 @@ class TypingNotificationsChannelTest < ActionCable::Channel::TestCase
     assert subscription.rejected?
   end
 
+  # A chat thread derives access from the room it was spawned in, so a parent-room
+  # member can type in a thread they never posted in — no per-thread membership.
+  test "a parent-room member without a thread membership can subscribe to a thread" do
+    parent = users(:david).rooms.first
+    parent_message = parent.messages.create!(body: "topic", creator: users(:david))
+    thread = Rooms::Thread.find_or_create_for(parent_message, creator: users(:david))
+    member = parent.users.excluding(users(:david)).first
+    assert_not Membership.exists?(room_id: thread.id, user_id: member.id),
+      "precondition: the member has no thread membership"
+
+    stub_connection(current_user: member)
+    subscribe room_id: thread.id
+
+    assert subscription.confirmed?
+    assert_has_stream_for thread
+  end
+
+  # A member removed from the parent room keeps a silenced-but-active thread
+  # membership (follows are silenced, not deactivated). That stale row must not
+  # keep granting channel access after they lose parent access.
+  test "a member removed from the parent room is rejected from a thread despite a silenced membership" do
+    parent = Rooms::Closed.create!(name: "War Room", creator: users(:david))
+    parent.memberships.grant_to([ users(:david), users(:jason) ])
+    parent_message = parent.messages.create!(body: "topic", creator: users(:david))
+    thread = Rooms::Thread.find_or_create_for(parent_message, creator: users(:david))
+    Current.set(user: users(:jason)) { thread.messages.create!(body: "in", creator: users(:jason)) }
+
+    perform_enqueued_jobs { parent.remove_member!(users(:jason), actor: users(:david)) }
+    assert Membership.exists?(room_id: thread.id, user_id: users(:jason).id, active: true),
+      "precondition: the silenced thread membership is still active"
+
+    stub_connection(current_user: users(:jason))
+    subscribe room_id: thread.id
+
+    assert subscription.rejected?
+  end
+
+  test "a non-member of the parent room is rejected from a thread" do
+    parent = users(:david).rooms.first
+    parent_message = parent.messages.create!(body: "topic", creator: users(:david))
+    thread = Rooms::Thread.find_or_create_for(parent_message, creator: users(:david))
+    outsider = User.where.not(id: parent.users.select(:id)).active.first
+
+    stub_connection(current_user: outsider)
+    subscribe room_id: thread.id
+
+    assert subscription.rejected?
+  end
+
   test "start and stop handle nil @room gracefully (AnyCable HTTP RPC scenario)" do
     # In AnyCable HTTP RPC mode, @room isn't preserved between calls.
     # Simulate this by creating a fresh channel instance and calling actions directly.

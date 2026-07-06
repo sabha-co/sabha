@@ -88,6 +88,25 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
     assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
   end
 
+  test "show 404s for a message in a sub-room the bot left the parent of" do
+    thread = reply = nil
+    Current.set(user: @bot) do
+      room = Rooms::Closed.create_for({ name: "Bot Thread Parent", creator: @bot }, users: @bot)
+      room.add_member!(users(:david), actor: @bot) # keep a human so removal is allowed
+      parent = room.messages.create!(body: "topic", creator: @bot)
+      thread = Rooms::Thread.find_or_create_for(parent, creator: @bot)
+      reply = thread.messages.create!(body: "secret", creator: @bot)
+      room.remove_member!(@bot, actor: users(:david))
+      ThreadFollowCleanupJob.perform_now(room: room, user: @bot)
+    end
+    assert Membership.exists?(room_id: thread.id, user_id: @bot.id, active: true),
+      "precondition: the bot keeps a silenced-but-active thread row"
+
+    get api_bots_message_url(reply), headers: bot_headers(@bot.bot_key)
+
+    assert_response :not_found
+  end
+
   # has_more truncation signal
 
   test "has_more is false and next_cursor is nil when results fit within limit" do

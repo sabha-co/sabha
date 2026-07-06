@@ -32,7 +32,7 @@ class API::Bots::Messages::BoostsController < API::Bots::BaseController
 
   private
     def set_room_and_message
-      @message = Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:message_id])
+      @message = reachable_bot_message(params[:message_id])
       @room = @message.room
     end
 end

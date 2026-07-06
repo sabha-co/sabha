@@ -51,6 +51,22 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.parsed_body.map { |u| u["name"] }, "David"
   end
 
+  test "a member removed from the parent room cannot enumerate the roster via the thread mention picker" do
+    room = rooms(:pets)
+    parent = room.messages.create!(body: "topic", creator: users(:david))
+    thread = Rooms::Thread.find_or_create_for(parent, creator: users(:david))
+    Current.set(user: users(:jason)) { thread.messages.create!(body: "in", creator: users(:jason)) }
+
+    room.remove_member!(users(:jason), actor: users(:david))
+
+    # jason's thread membership is still active (only silenced), so it resolves
+    # via Current.user.rooms — the viewable_by? re-check must deny the picker.
+    sign_in :jason
+    assert_raises ActiveRecord::RecordNotFound do
+      get autocompletable_users_url(room_id: thread.id, format: :json), params: { query: "da" }
+    end
+  end
+
   test "blank query returns recent users (mention picker default)" do
     get autocompletable_users_url(format: :json), params: { query: "" }
 

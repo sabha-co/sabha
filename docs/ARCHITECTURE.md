@@ -101,8 +101,9 @@ User ──────┐
   │        │                 ├── Rooms::Open    (public)
   │        │                 ├── Rooms::Closed  (invite-only)
   │        │                 ├── Rooms::Direct  (1:1 / group DMs)
-  │        │                 ├── Rooms::Forum   (gallery of titled posts)
-  │        │                 └── Rooms::Thread  (parent message; also backs forum posts)
+  │        │                 ├── Rooms::Forum   (container of posts; a gallery, owns no messages)
+  │        │                 ├── Rooms::Thread  (replies branched off a parent message)
+  │        │                 └── Rooms::Post    (a forum post; its opening body is message #1)
   │        │
   │        └── involvement: invisible | nothing | mentions | everything
   │
@@ -129,7 +130,7 @@ Models primarily use namespace decomposition, with selective service objects whe
 
 | Directory | Purpose |
 |-----------|---------|
-| `app/models/rooms/` | STI subclasses: `Open`, `Closed`, `Direct`, `Forum`, `Thread` |
+| `app/models/rooms/` | STI subclasses: `Open`, `Closed`, `Direct`, `Forum`, `Thread`, `Post` |
 | `app/models/user/` | `Avatar`, `Bannable`, `Blockable`, `Bot`, `DicebearAvatar`, `EmailChangeable`, `Mentionable`, `Notifiable`, `PasswordAuthable`, `Role`, `SaasBridged`, `Streakable`, `Transferable`, `Verifiable` |
 | `app/models/message/` | `Attachment`, `Broadcasts`, `Mentionee`, `Searchable`, `Streakable`, `Threadable`, `Unreadable` |
 | `app/models/membership/` | `Cacheable`, `Connectable`, `Involvable`, `Notifiable`, `Starrable` |
@@ -150,15 +151,16 @@ Models primarily use namespace decomposition, with selective service objects whe
 - **`Rooms::Open`** - Auto-grants membership to all current and future users. New users join all open rooms on creation.
 - **`Rooms::Closed`** - Membership must be explicitly granted by an admin or room creator.
 - **`Rooms::Direct`** - Identified by an MD5 `members_hash` of sorted user IDs, ensuring one DM room per unique set of participants. Default involvement: `everything`.
-- **`Rooms::Forum`** - Presents its posts as a gallery instead of a chat stream. Each post is an opening message plus a `Rooms::Thread` (titled, sluggable, solvable). Joinable like an Open room, but posts don't ping members. See `docs/features/FORUMS.md`.
-- **`Rooms::Thread`** - Tied to a `parent_message`. Inherits permissions from the parent room. Default involvement: `invisible` except for thread creator and parent message author. Also backs forum posts (which carry a title, slug, and solved state).
+- **`Rooms::Forum`** - A container of posts, presented as a gallery. Owns no messages of its own (`receive` is a no-op); joinable like an Open room, but posts don't ping members. Its posts derive access from the forum's membership. See `docs/features/FORUMS.md`.
+- **`Rooms::Thread`** - A sub-room: replies branched off a `parent_message`. Access derives from the room it was spawned in (`parent_room`), not a per-thread membership fan-out. Default involvement: `invisible` except for the thread creator and parent-message author.
+- **`Rooms::Post`** - A sub-room: a first-class forum post belonging to its forum via `parent_room_id`, carrying a title (`name`), permanent `slug`, and Solved state (a `Solution` record). Its opening body is message #1; replies are the messages that follow. Access derives from the forum (`viewable_by?` delegates to `parent_room`); members follow lazily on engagement. Sibling of `Rooms::Thread`.
 
 ### All Models
 
 | Model | Purpose |
 |-------|---------|
 | `User` | User record with role enum (`member`, `moderator`, `administrator`, `bot`) |
-| `Room` | STI base class for `Open`, `Closed`, `Direct`, `Forum`, `Thread` |
+| `Room` | STI base class for `Open`, `Closed`, `Direct`, `Forum`, `Thread`, `Post` |
 | `Membership` | User ↔ Room link with involvement level |
 | `Message` | Chat message with ActionText body and attachments |
 | `Account` | Singleton workspace settings. `has_json :settings` for feature flags |
@@ -482,3 +484,7 @@ Multi-stage build:
 6. **Broadcasts are close to state changes.** Most real-time updates are model/job-driven, with targeted controller broadcasts for user-scoped UI changes.
 
 7. **3-container deployment.** The web container runs Puma, Redis, and Solid Queue workers together. AnyCable-Go runs as a separate container for WebSocket scaling. A reverse proxy (kamal-proxy or Thruster) handles TLS and routes `/cable` traffic to AnyCable-Go. This keeps operations simple while separating WebSocket connections from the Ruby process.
+
+8. **STI for room types, not `delegated_type`.** Every room variant — `Rooms::Open`, `Closed`, `Direct`, `Forum`, and the nested `Thread` / `Post` — is single-table inheritance on one `rooms` table sharing a fat `Room` base. The acknowledged cost is subtype-specific columns that sit null on the others (`parent_message_id`, `parent_room_id`, `cascade_deactivated`, `slug`, `members_hash`) and a few base methods a subtype nullifies (`Rooms::Forum#receive` is a deliberate no-op — a forum owns no messages of its own). Rails' `delegated_type` — a thin `rooms` table plus per-type detail tables — is the standard alternative that avoids both, and would be a legitimate choice. We stay on STI deliberately: per-tenant SQLite bounds each workspace's row count, so the sparse columns cost effectively nothing; STI is the pervasively-assumed pattern across the models, scopes, and queries here; and the `if forum?` / `if post?` branching that STI tends to breed is best addressed by deriving a nested room's access from its container (its `parent_room`) rather than its subtype — a behavior change, not a table-strategy change. Reach for `delegated_type` only if base-class no-op overrides or per-subtype columns outgrow what the shared `Room` behavior justifies; at today's surface, STI wins on inertia and is not a gap.
+
+9. **Rooms are the membership + message-stream container — which is why Post and Forum are room types.** `Room` isn't "a chat room"; it's the unit that owns members and/or a message stream, with unread state, broadcasts, mentions, and soft-delete on top. `Rooms::Post` reuses both halves — a post is a conversation (its opening body is message #1, replies follow), and since a `Message` keys off `room_id`, any message stream must be a room. `Rooms::Forum` reuses only the membership half: it owns no messages (`receive` is a no-op) but holds the members its posts derive access from (`Rooms::Post#viewable_by?` delegates to `parent_room`). Post-as-a-room is simply correct; Forum-as-a-room is the pragmatic compromise — the no-op is the rent for reusing one Membership system instead of building a second. Revisit `delegated_type` (see #8) only if forums grow behavior that doesn't map to a room.

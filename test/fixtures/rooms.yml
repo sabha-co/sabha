@@ -28,6 +28,7 @@ help_desk:
   name: Help Desk
   type: Rooms::Forum
   creator: :david
+  auto_join: true
   created_at: <%= 2.days.ago %>
   last_active_at: <%= 2.hours.ago %>
 

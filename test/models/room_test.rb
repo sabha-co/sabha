@@ -262,6 +262,47 @@ class RoomTest < ActiveSupport::TestCase
     end
   end
 
+  # thread-follow cleanup on leave
+
+  test "removing a member from the parent room silences their thread follows" do
+    room = rooms(:pets)
+    parent = room.messages.create!(body: "topic", creator: users(:david))
+    thread = Rooms::Thread.find_or_create_for(parent, creator: users(:david))
+    Current.set(user: users(:jason)) { thread.messages.create!(body: "in", creator: users(:jason)) }
+    assert_equal "mentions", thread.memberships.find_by(user: users(:jason)).involvement
+
+    perform_enqueued_jobs { room.remove_member!(users(:jason), actor: users(:david)) }
+
+    assert_equal "invisible", thread.memberships.find_by(user: users(:jason)).involvement,
+      "an engaged follower's thread membership is silenced when they leave the parent room"
+  end
+
+  test "self-leaving the parent room silences the member's thread follows" do
+    room = rooms(:pets)
+    parent = room.messages.create!(body: "topic", creator: users(:david))
+    thread = Rooms::Thread.find_or_create_for(parent, creator: users(:david))
+    Current.set(user: users(:jason)) { thread.messages.create!(body: "in", creator: users(:jason)) }
+
+    perform_enqueued_jobs { room.accept_leave!(users(:jason)) }
+
+    assert_equal "invisible", thread.memberships.find_by(user: users(:jason)).involvement
+  end
+
+  test "silencing thread follows on leave is scoped to the leaver" do
+    room = rooms(:pets)
+    room.memberships.grant_to(users(:kevin))
+    parent = room.messages.create!(body: "topic", creator: users(:david))
+    thread = Rooms::Thread.find_or_create_for(parent, creator: users(:david))
+    Current.set(user: users(:jason)) { thread.messages.create!(body: "j", creator: users(:jason)) }
+    Current.set(user: users(:kevin)) { thread.messages.create!(body: "k", creator: users(:kevin)) }
+
+    perform_enqueued_jobs { room.remove_member!(users(:jason), actor: users(:david)) }
+
+    assert_equal "invisible", thread.memberships.find_by(user: users(:jason)).involvement
+    assert_equal "mentions", thread.memberships.find_by(user: users(:kevin)).involvement,
+      "another member's thread follow is untouched"
+  end
+
   # toggle_access!
 
   test "toggle_access! returns reloaded room with correct class" do
@@ -355,7 +396,7 @@ class RoomTest < ActiveSupport::TestCase
     parent_message = parent_room.messages.create!(body: "Starting a thread", creator: bender, client_message_id: "wh-thread-1")
 
     thread = Current.set(user: bender) do
-      Rooms::Thread.find_or_create_for(parent_message, users: parent_room.users)
+      Rooms::Thread.find_or_create_for(parent_message, creator: bender)
     end
     thread.involve_user(bender, unread: false)
 

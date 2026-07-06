@@ -81,16 +81,16 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_includes Membership.shared, membership
   end
 
-  # --- Cascade & reactivation correctness (U4) --------------------------------
+  # --- Cascade & reactivation correctness --------------------------------
 
   test "restoring a forum restores posts that were active when it was deleted" do
     forum = rooms(:help_desk)
     post = create_forum_post
 
-    forum.deactivate
+    perform_enqueued_jobs { forum.deactivate }
     assert post.reload.deactivated?
 
-    forum.reactivate
+    perform_enqueued_jobs { forum.reactivate }
     assert post.reload.active?
   end
 
@@ -102,11 +102,11 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     removed.deactivate
     assert removed.reload.deactivated?, "the post should be deleted on its own"
 
-    forum.deactivate
-    forum.reactivate
+    perform_enqueued_jobs { forum.deactivate }
+    perform_enqueued_jobs { forum.reactivate }
 
     assert kept.reload.active?, "a post active at forum-delete time should return"
-    assert removed.reload.deactivated?, "an individually-deleted post must stay deleted (R15)"
+    assert removed.reload.deactivated?, "an individually-deleted post must stay deleted"
   end
 
   test "a cascade-deactivated post carries the marker; a self-deleted post does not" do
@@ -115,7 +115,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     cascaded = create_forum_post(title: "cascade")
 
     self_deleted.deactivate
-    forum.deactivate
+    perform_enqueued_jobs { forum.deactivate }
 
     assert_not self_deleted.reload.cascade_deactivated?, "self-delete must not set the cascade marker"
     assert cascaded.reload.cascade_deactivated?, "cascade delete must set the marker"
@@ -125,14 +125,107 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     forum = rooms(:help_desk)
     post = create_forum_post
 
-    forum.deactivate
+    perform_enqueued_jobs { forum.deactivate }
     assert post.reload.cascade_deactivated?
 
-    forum.reactivate
+    perform_enqueued_jobs { forum.reactivate }
     assert_not post.reload.cascade_deactivated?
   end
 
-  test "hard-deleting a forum removes its posts (R16)" do
+  # --- Async (de)activation: instant cutoff, background cascade --------------
+
+  test "deleting a forum cuts access to its posts instantly, before the cascade job runs" do
+    forum = rooms(:help_desk)
+    forum.memberships.grant_to(users(:david))
+    post = create_forum_post
+    assert post.viewable_by?(users(:david)), "a forum member can view a post beforehand"
+
+    forum.deactivate # no perform_enqueued_jobs — the synchronous half must stand alone
+
+    assert_not forum.reload.active?, "the forum row is deactivated synchronously"
+    assert_not post.viewable_by?(users(:david)), "post access (derived from forum membership) is cut instantly"
+  end
+
+  test "deleting a forum enqueues the post-cascade job" do
+    forum = rooms(:help_desk)
+    create_forum_post
+
+    assert_enqueued_with(job: ForumDeactivationJob) { forum.deactivate }
+  end
+
+  test "the post cascade runs in the background and re-running the job is a no-op" do
+    forum = rooms(:help_desk)
+    post = create_forum_post
+
+    perform_enqueued_jobs { forum.deactivate }
+    assert post.reload.deactivated?, "the background job soft-deletes the post"
+
+    assert_nothing_raised { ForumDeactivationJob.perform_now(forum: forum) }
+    assert post.reload.deactivated?, "re-running the job leaves the post deleted"
+  end
+
+  test "restoring a forum makes it visible instantly, before the post-restore job runs" do
+    forum = rooms(:help_desk)
+    forum.memberships.grant_to(users(:david))
+    create_forum_post
+    perform_enqueued_jobs { forum.deactivate }
+    assert_not forum.viewable_by?(users(:david))
+
+    forum.reactivate # no perform_enqueued_jobs — the synchronous half must stand alone
+
+    assert forum.reload.active?, "the forum row is reactivated synchronously"
+    assert forum.viewable_by?(users(:david)), "forum membership is restored instantly — it reappears in the sidebar"
+  end
+
+  test "restoring a forum enqueues the post-restore job" do
+    forum = rooms(:help_desk)
+    create_forum_post
+    perform_enqueued_jobs { forum.deactivate }
+
+    assert_enqueued_with(job: ForumReactivationJob) { forum.reactivate }
+  end
+
+  # --- Concurrency + retry safety --------------------------------------------
+
+  test "reactivating during a pending deactivation cancels the stale deletion" do
+    forum = rooms(:help_desk)
+    post = create_forum_post
+
+    forum.deactivate # enqueues ForumDeactivationJob (not yet run)
+    forum.reactivate # sync-flips the forum active again; enqueues ForumReactivationJob
+
+    perform_enqueued_jobs # both run: the superseded deletion bails, the restore is a no-op
+
+    assert forum.reload.active?
+    assert post.reload.active?, "the post stays active — the superseded deletion job bailed"
+  end
+
+  test "deactivating during a pending reactivation cancels the stale restore" do
+    forum = rooms(:help_desk)
+    post = create_forum_post
+    perform_enqueued_jobs { forum.deactivate }
+    assert post.reload.deactivated?
+
+    forum.reactivate # enqueues ForumReactivationJob (not yet run)
+    forum.deactivate # sync-flips inactive again; enqueues ForumDeactivationJob
+
+    perform_enqueued_jobs # the superseded restore bails, the deletion re-applies
+
+    assert_not forum.reload.active?
+    assert post.reload.deactivated?, "the post stays deleted — the superseded restore job bailed"
+  end
+
+  test "the deactivation job re-runs safely after a crash" do
+    forum = rooms(:help_desk)
+    post = create_forum_post
+    forum.deactivate
+
+    2.times { ForumDeactivationJob.perform_now(forum: forum) } # crash + retry re-runs from the start
+
+    assert post.reload.deactivated?
+  end
+
+  test "hard-deleting a forum removes its posts" do
     forum = rooms(:help_desk)
     post = create_forum_post
 
@@ -148,7 +241,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     Notification.create!(user: users(:jason), message: message, actor: users(:david), activity_type: "thread_reply")
 
     assert_difference -> { Notification.where(message_id: message.id).count }, -1 do
-      forum.deactivate
+      perform_enqueued_jobs { forum.deactivate }
     end
   end
 

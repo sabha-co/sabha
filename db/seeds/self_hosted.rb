@@ -65,7 +65,7 @@ m19 = post_message general, ashwin, "Can't wait to see them!", at: times[18]
 m20 = post_message random,  jason,  "Happy Friday everyone!", at: times[19]
 
 # Thread on Jason's question about threads
-thread = Rooms::Thread.find_or_create_for(m5, users: [ jason, ashwin, david ])
+thread = Rooms::Thread.find_or_create_for(m5, creator: jason)
 post_message thread, ashwin, "Yes! Threads are great for focused discussions.", at: times[5]
 post_message thread, david,  "I've been using them for code reviews.", at: times[6]
 post_message thread, jason,  "Nice, I'll start using them more.", at: times[7]

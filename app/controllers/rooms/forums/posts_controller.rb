@@ -17,7 +17,7 @@ class Rooms::Forums::PostsController < ApplicationController
     redirect_to room_url(@forum), alert: e.record.errors.full_messages.to_sentence.presence || "Could not create the post"
   end
 
-  # The title is editable after creation (R8); the body lives in the opening
+  # The title is editable after creation; the body lives in the opening
   # message and is edited through the normal message flow.
   def edit
   end

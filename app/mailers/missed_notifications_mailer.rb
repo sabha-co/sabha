@@ -21,7 +21,7 @@ class MissedNotificationsMailer < ApplicationMailer
     def room_label_for(room)
       case room
       when Rooms::Direct then "Direct message"
-      when Rooms::Thread then "Thread in #{room.parent_message&.room&.name || "a room"}"
+      when Rooms::Thread then "Thread in #{room.parent_room&.name || "a room"}"
       else room.name
       end
     end

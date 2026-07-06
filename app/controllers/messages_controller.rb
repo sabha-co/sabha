@@ -1,5 +1,5 @@
 class MessagesController < ApplicationController
-  include ActiveStorage::SetCurrent, RoomScoped, NotifyBots
+  include ActiveStorage::SetCurrent, RoomScoped, NotifyBots, SubRoomAccessible
 
   skip_before_action :set_room
   before_action :set_room, only: %i[ index destroy ]
@@ -55,16 +55,11 @@ class MessagesController < ApplicationController
   end
 
   private
-    # A forum post derives access from its forum: a member can read and reply to
-    # a post without a per-post membership (one is created lazily on reply). So
-    # fall back to forum-derived access when there's no direct membership — and,
-    # crucially, re-check viewable_by? even when a (possibly stale) post
-    # membership resolved the room, so a member removed from the forum loses post
-    # access immediately rather than riding an orphaned membership row.
+    # Fall back to parent-derived access for a sub-room when there's no direct
+    # membership, then re-check so a stale membership can't keep granting it.
     def set_room
       @membership = Current.user.memberships.find_by(room_id: params[:room_id])
-      @room = @membership&.room || Current.user.reachable_post(params[:room_id])
-      @room = nil if @room.is_a?(Rooms::Post) && !@room.viewable_by?(Current.user)
+      @room = deny_stale_sub_room(@membership&.room || viewable_sub_room(params[:room_id]))
       raise ActiveRecord::RecordNotFound unless @room
     end
 

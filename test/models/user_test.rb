@@ -44,6 +44,22 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.member_of?(non_auto_room), "New user should not be auto-joined to non-auto_join rooms"
   end
 
+  test "a new user reaches existing threads in an auto_join room via derived access, without a thread membership" do
+    auto_join_room = Rooms::Open.create!(name: "Auto Room", creator: users(:david), auto_join: true)
+    parent_message = auto_join_room.messages.create!(body: "topic", creator: users(:david))
+    thread = Rooms::Thread.find_or_create_for(parent_message, creator: users(:david))
+    reply = thread.messages.create!(body: "existing reply", creator: users(:david))
+
+    user = create_new_user
+
+    assert_not Membership.exists?(room_id: thread.id, user_id: user.id),
+      "signing up must not fan a membership row out into every existing thread"
+    assert user.reachable_messages.exists?(id: reply.id),
+      "the new member still reaches the thread's messages via parent-derived access"
+    assert_not_includes Inbox::ThreadsQuery.new(user).call.map(&:id), parent_message.id,
+      "a passive new member gets no inbox entry for a thread they never engaged with"
+  end
+
   test "creating an unverified user does not post a welcome message" do
     original_room = Room.original
 

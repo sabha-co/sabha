@@ -40,6 +40,19 @@ class Message < ApplicationRecord
   scope :created_before, ->(time) { where(created_at: ..time) }
   scope :in_rooms, ->(ids) { where(room_id: ids) }
 
+  # Active messages a user can reach: those in an active room they belong to, plus
+  # those in a nested sub-room (forum post / chat thread) whose PARENT they belong
+  # to — sub-room access derives from the parent, not a per-sub-room membership. So
+  # a passive parent member reaches a sub-room they never joined, and a silenced-
+  # but-active row a user keeps after leaving the parent grants no reach (its room
+  # fails the parent check). Backs search, unreads, the inbox feed, and User#reachable_message(s).
+  scope :reachable_by, ->(user) {
+    mine = Membership.active.where(user_id: user.id).select(:room_id)
+    normal_rooms = Room.active.where(id: mine).where.not(type: Room::SUB_ROOM_TYPES)
+    sub_rooms    = Room.active.where(type: Room::SUB_ROOM_TYPES, parent_room_id: mine)
+    active.where(room_id: normal_rooms.or(sub_rooms).select(:id))
+  }
+
   # Composite cursor for stable pagination across timestamp ties.
   # Pairs with an ORDER BY (created_at DESC, id DESC) — emit cursor from the
   # last row of a page, pass it back to skip past that exact (time, id) point.

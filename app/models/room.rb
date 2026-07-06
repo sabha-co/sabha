@@ -3,6 +3,10 @@ class Room < ApplicationRecord
 
   CannotDeleteOriginalError = Class.new(StandardError)
 
+  # The STI types of nested sub-rooms — chat threads and forum posts. The single
+  # source for the type list; both the sub_rooms and without_threads scopes read it.
+  SUB_ROOM_TYPES = %w[ Rooms::Thread Rooms::Post ].freeze
+
   has_many :memberships, -> { active } do
     def grant_to(users)
       room = proxy_association.owner
@@ -10,7 +14,6 @@ class Room < ApplicationRecord
         Array(users).collect { |user| { room_id: room.id, user_id: user.id, involvement: room.default_involvement(user: user), active: true } },
         unique_by: %i[room_id user_id]
       )
-      room.threads.find_each { |thread| thread.memberships.grant_to(users) }
     end
 
     def revoke_from(users)
@@ -21,7 +24,6 @@ class Room < ApplicationRecord
 
       # Must use the `user_id: ...` condition and not `user: ...` for the hierarchical permissions to work
       Membership.active.where(room_id: room.id, user_id: user_ids).update(active: false)
-      room.threads.find_each { |thread| thread.memberships.revoke_from(users) }
     end
 
     def revise(granted: [], revoked: [])
@@ -60,7 +62,10 @@ class Room < ApplicationRecord
   # Excludes nested sub-rooms — chat threads and forum posts — from top-level
   # room listings and the sidebar. (Named for threads historically; it now also
   # covers Rooms::Post, which is likewise a sub-room, not a sidebar room.)
-  scope :without_threads, -> { where.not(type: %w[ Rooms::Thread Rooms::Post ]) }
+  scope :without_threads, -> { where.not(type: SUB_ROOM_TYPES) }
+  # Nested sub-rooms — chat threads and forum posts; the class-level complement
+  # of #sub_room?.
+  scope :sub_rooms, -> { where(type: SUB_ROOM_TYPES) }
 
   # Rooms a user can discover and join from Browse: open rooms and forums they
   # aren't already in. Called on Room for both; on Rooms::Open (bots API) STI
@@ -144,6 +149,19 @@ class Room < ApplicationRecord
 
   def sidebar_room?
     open? || closed? || forum?
+  end
+
+  # Chat threads and forum posts are nested sub-rooms — they derive access from a
+  # parent and never stand on their own in the sidebar.
+  def sub_room?
+    thread? || post?
+  end
+
+  # Access to a room derives from active membership. Sub-rooms (chat threads and
+  # forum posts) override this to delegate to their parent, so a parent member
+  # can open them without a per-sub-room membership row of their own.
+  def viewable_by?(user)
+    user.present? && memberships.active.exists?(user_id: user.id)
   end
 
   def default_involvement(user: nil)
@@ -253,6 +271,7 @@ class Room < ApplicationRecord
   def remove_member!(user, actor:)
     memberships.revoke_from(user)
     invalidate_member_count_cache
+    clean_up_thread_follows_later(user)
     announce_membership_changes(revoked: [ user ], actor: actor)
   end
 
@@ -281,7 +300,19 @@ class Room < ApplicationRecord
 
   def accept_leave!(user)
     memberships.find_by!(user: user).leave!
+    clean_up_thread_follows_later(user)
     post_system_message(event: "member_left", body: "left", actor: user)
+  end
+
+  # Silence one member's chat-thread follows so reply notifications stop for a
+  # room they left — their per-thread memberships go invisible. Scoped to that
+  # member, never touches other members. Runs from ThreadFollowCleanupJob.
+  # Mirrors Rooms::Forum#silence_post_follows_for for a forum's posts.
+  def silence_thread_follows_for(user)
+    thread_ids = Rooms::Thread.where(parent_room_id: id).select(:id)
+    Membership.active.where(user_id: user.id, room_id: thread_ids)
+              .where.not(involvement: "invisible")
+              .update_all(involvement: "invisible")
   end
 
   def bot_memberships_for_events(item, event)
@@ -316,6 +347,14 @@ class Room < ApplicationRecord
   end
 
   private
+    # Only Open and Closed rooms spawn chat threads, so only they need the
+    # follow-silencing sweep on leave. Forums run their own post-follow cleanup,
+    # and directs/sub-rooms have no threads to silence.
+    def clean_up_thread_follows_later(user)
+      return unless open? || closed?
+      ThreadFollowCleanupJob.perform_later(room: self, user: user)
+    end
+
     def destroy_notifications_for_messages
       message_ids = Message.where(room_id: id).pluck(:id)
       return if message_ids.empty?
@@ -357,32 +396,22 @@ class Room < ApplicationRecord
       end
     end
 
-    # Cascade-deactivate this room's nested sub-rooms: chat threads (spawned off
-    # its messages) and, for a forum, its posts (owned via parent_room_id). Only
-    # cascade-deactivate still-active ones; sub-rooms already deleted on their own
-    # keep their non-cascade marker, so reactivation leaves them deleted (R15).
+    # Cascade-deactivate the chat threads spawned off this room's messages. Only
+    # cascade-deactivate still-active ones; a thread already deleted on its own
+    # keeps its non-cascade marker, so reactivation leaves it deleted. (A forum
+    # cascades its posts separately, off the request path — see ForumDeactivationJob.)
     def deactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
       Rooms::Thread.active.where(parent_message_id: message_ids)
         .find_each { |thread| thread.deactivate(cascade: true) }
-
-      if forum?
-        Rooms::Post.active.where(parent_room_id: id)
-          .find_each { |post| post.deactivate(cascade: true) }
-      end
     end
 
     def reactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
-      # Restore only sub-rooms this room's cascade deactivated — never ones
-      # deleted individually beforehand (R15).
+      # Restore only threads this room's cascade deactivated — never ones
+      # deleted individually beforehand.
       Rooms::Thread.where(parent_message_id: message_ids, active: false, cascade_deactivated: true)
         .find_each(&:reactivate)
-
-      if forum?
-        Rooms::Post.where(parent_room_id: id, active: false, cascade_deactivated: true)
-          .find_each(&:reactivate)
-      end
     end
 
     # Clean up associated records explicitly because the cascade has to walk

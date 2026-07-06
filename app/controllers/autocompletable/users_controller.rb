@@ -1,4 +1,6 @@
 class Autocompletable::UsersController < ApplicationController
+  include SubRoomAccessible
+
   def index
     @users = find_autocompletable_users
     @users = add_everyone_mention_if_applicable(@users)
@@ -14,17 +16,16 @@ class Autocompletable::UsersController < ApplicationController
       @room = resolve_room
     end
 
-    # A forum member can open and reply to a post without holding a per-post
-    # membership (access derives from the forum), so resolve posts by viewable_by?
-    # too — Current.user.rooms only covers rooms they belong to and would 404 the
-    # @mention picker for a member who hasn't followed the post yet. Rooms they
-    # genuinely can't reach still raise, exactly as before.
+    # A member can open and reply to a sub-room (forum post or chat thread)
+    # without holding a per-sub-room membership (access derives from the parent),
+    # so resolve those by viewable_by? too — Current.user.rooms only covers rooms
+    # they belong to and would 404 the @mention picker for a member who hasn't
+    # engaged yet. Rooms they genuinely can't reach still raise, exactly as before.
     def resolve_room
       return unless params[:room_id].present?
 
-      Current.user.rooms.find_by(id: params[:room_id]) ||
-        Current.user.reachable_post(params[:room_id]) ||
-        raise(ActiveRecord::RecordNotFound)
+      room = Current.user.rooms.find_by(id: params[:room_id]) || viewable_sub_room(params[:room_id])
+      deny_stale_sub_room(room) || raise(ActiveRecord::RecordNotFound)
     end
 
     def users_scope
