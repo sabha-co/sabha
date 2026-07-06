@@ -40,12 +40,15 @@ class Rooms::Thread < Room
   end
 
   # The thread creator always follows; the parent-message author auto-follows too,
-  # but only while they can still reach the parent room — access is parent-derived,
-  # so auto-following an author who has left would notify them into a thread they
-  # could no longer open.
+  # but only while they're still a *visible* member of the parent room. An active-
+  # row check (viewable_by?) isn't enough: self-service leave keeps the membership
+  # active and only flips involvement to "invisible", so viewable_by? still passes
+  # — yet a member who left shouldn't be pulled into, and notified about, a new
+  # thread opened on their old message.
   def self.auto_followers(parent_message, creator)
     followers = [ creator ]
-    followers << parent_message.creator if parent_message.room.viewable_by?(parent_message.creator)
+    author = parent_message.creator
+    followers << author if parent_message.room.memberships.active.visible.exists?(user_id: author.id)
     followers.uniq
   end
   private_class_method :auto_followers

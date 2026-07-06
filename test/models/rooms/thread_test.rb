@@ -13,7 +13,18 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     assert thread.memberships.active.exists?(user_id: users(:david).id)
   end
 
-  test "find_or_create_for skips the author when they have left the parent room" do
+  test "find_or_create_for skips the author who self-left the parent room" do
+    # Self-service leave keeps the row active and only flips involvement to
+    # invisible, so an active-row check (viewable_by?) would wrongly still follow.
+    @parent_room.memberships.find_by(user: users(:david)).update!(involvement: :invisible)
+
+    thread = Rooms::Thread.find_or_create_for(@parent_message, creator: users(:jason))
+
+    assert thread.memberships.active.exists?(user_id: users(:jason).id)
+    assert_not thread.memberships.exists?(user_id: users(:david).id)
+  end
+
+  test "find_or_create_for skips the author removed from the parent room" do
     @parent_room.memberships.find_by(user: users(:david)).update!(active: false)
 
     thread = Rooms::Thread.find_or_create_for(@parent_message, creator: users(:jason))
