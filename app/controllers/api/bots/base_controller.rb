@@ -17,6 +17,13 @@ class API::Bots::BaseController < ApplicationController
       room
     end
 
+    # A message the bot can reach: one whose room it can currently reach (see
+    # reachable_bot_room — a stale sub-room the bot left the parent of is rejected).
+    # `scope` lets a caller add eager-loads. Raises (→ 404) otherwise.
+    def reachable_bot_message(id, scope = Message.active)
+      scope.find(id).tap { |message| reachable_bot_room(message.room_id) }
+    end
+
     def require_bot_authentication
       head :forbidden unless authenticated_by.bot_key?
     end

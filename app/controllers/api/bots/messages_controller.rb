@@ -30,12 +30,8 @@ class API::Bots::MessagesController < API::Bots::BaseController
   end
 
   def show
-    @message = Message.active
-                      .where(room_id: Current.user.rooms.select(:id))
-                      .with_rich_text_body_and_embeds
-                      .with_creator
-                      .with_attached_attachment
-                      .find(params[:id])
+    @message = reachable_bot_message(params[:id],
+      Message.active.with_rich_text_body_and_embeds.with_creator.with_attached_attachment)
   end
 
   def create
@@ -101,7 +97,7 @@ class API::Bots::MessagesController < API::Bots::BaseController
     end
 
     def set_message
-      @message = Message.active.where(room_id: Current.user.rooms.select(:id)).find(params[:id])
+      @message = reachable_bot_message(params[:id])
       @room = @message.room
     end
 
