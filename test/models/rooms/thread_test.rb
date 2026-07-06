@@ -33,6 +33,23 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     assert_not thread.memberships.exists?(user_id: users(:david).id)
   end
 
+  # A thread membership row is a follow, never access — viewable_by? delegates to
+  # the parent room and never consults the thread's own memberships. Build a fresh
+  # parent so we control who is a member (the setup's rooms(:hq) has every user).
+  test "a thread follow row grants no access — access derives from the parent room" do
+    parent = Rooms::Closed.create!(name: "Fresh room", creator: users(:david))
+    parent.memberships.grant_to(users(:jason))
+    parent_message = parent.messages.create!(body: "topic", creator: users(:david))
+    thread = Rooms::Thread.find_or_create_for(parent_message, creator: users(:david))
+
+    outsider = users(:kevin) # not a member of `parent`
+    Membership.create!(room: thread, user: outsider, involvement: "everything", active: true)
+
+    assert_not thread.viewable_by?(outsider), "a follow row on the thread does not confer access"
+    assert thread.viewable_by?(users(:jason)), "a parent member views the thread via derived access"
+    assert_not thread.viewable_by?(nil)
+  end
+
   test "default involvement for thread creator is everything" do
     thread = Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
     assert_equal "everything", thread.default_involvement(user: users(:david))
