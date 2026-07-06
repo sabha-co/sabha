@@ -107,6 +107,21 @@ class Rooms::PostTest < ActiveSupport::TestCase
     assert_not post.viewable_by?(nil)
   end
 
+  # A post membership row is a follow, never access — viewable_by? delegates to the
+  # forum and never consults the post's own memberships.
+  test "a post follow row grants no access — access derives from the forum" do
+    member = users(:jason)
+    outsider = users(:kevin) # not a member of help_desk
+    @forum.memberships.grant_to(member)
+    post = create_post(title: "Members only")
+
+    Membership.create!(room: post, user: outsider, involvement: "everything")
+
+    assert_not post.viewable_by?(outsider), "a follow row on the post does not confer access"
+    assert post.viewable_by?(member), "a forum member views the post via derived access"
+    assert_not Membership.exists?(room_id: post.id, user_id: member.id), "the forum member holds no post row"
+  end
+
   test "default involvement is everything for the author, invisible for others" do
     author = users(:david)
     post = create_post(title: "Mine", author: author)

@@ -204,4 +204,55 @@ class ThreadAccessCharacterizationTest < ActionDispatch::IntegrationTest
     assert_equal before, @member.reload.memberships.unread.count,
       "thread activity must not raise an unread badge for a passive parent member"
   end
+
+  # ---- RoomScoped gate: derived access re-checked at the controller --------
+  # RoomScoped resolves @room straight from Current.user.memberships. A removed
+  # member's sub-room follow stays active (only silenced), so without a
+  # viewable_by? re-check the RoomScoped endpoints (refresh, members, ...) serve
+  # a room the member can no longer open — a message-content / roster leak.
+
+  test "a removed member cannot read new thread messages via the RoomScoped refresh endpoint" do
+    closed, thread = engaged_thread_in_closed_room
+
+    closed.remove_member!(@member, actor: @creator)
+    ThreadFollowCleanupJob.perform_now(room: closed, user: @member)
+    Current.set(user: @creator) { thread.messages.create!(body: "after you left", creator: @creator) }
+
+    sign_in :jason
+    assert_raises ActiveRecord::RecordNotFound, "the silenced-but-active follow row grants no access" do
+      get room_refresh_url(thread, format: :turbo_stream), params: { since: 10.minutes.ago.to_fs(:epoch) }
+    end
+  end
+
+  test "a removed member cannot read the members roster of a thread they lost access to" do
+    closed, thread = engaged_thread_in_closed_room
+
+    closed.remove_member!(@member, actor: @creator)
+    ThreadFollowCleanupJob.perform_now(room: closed, user: @member)
+
+    sign_in :jason
+    assert_raises ActiveRecord::RecordNotFound do
+      get room_members_url(thread)
+    end
+  end
+
+  test "a current member who follows a thread still reaches it through RoomScoped" do
+    closed, thread = engaged_thread_in_closed_room
+
+    sign_in :jason
+    get room_refresh_url(thread, format: :turbo_stream), params: { since: 10.minutes.ago.to_fs(:epoch) }
+    assert_response :success, "a current parent member keeps access — no regression from the gate"
+  end
+
+  private
+    # A private room with a chat thread the member has engaged in (so a follow row
+    # exists) — the arrange every RoomScoped-gate test starts from.
+    def engaged_thread_in_closed_room
+      closed = Rooms::Closed.create!(name: "War Room", creator: @creator)
+      closed.memberships.grant_to([ @creator, @member ])
+      parent = closed.messages.create!(body: "topic", creator: @creator)
+      thread = Rooms::Thread.find_or_create_for(parent, creator: @creator)
+      Current.set(user: @member) { thread.messages.create!(body: "engaged", creator: @member) }
+      [ closed, thread ]
+    end
 end

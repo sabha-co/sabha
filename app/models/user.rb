@@ -49,7 +49,7 @@ class User < ApplicationRecord
   # backs the controllers that resolve a room from params.
   def reachable_room(id)
     room = rooms.find_by(id:) || Room.active.sub_rooms.find_by(id:)
-    room unless room&.sub_room? && !room.viewable_by?(self)
+    room unless room&.stale_sub_room_for?(self)
   end
 
   def active_invite_link
