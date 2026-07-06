@@ -22,11 +22,6 @@ class Rooms::Forum < Room
   def receive(message)
   end
 
-  # A forum's posts derive their access from the forum: any active member can
-  # view them, without a per-post membership row for every member. Rooms::Post
-  # delegates its viewable_by? here (Fizzy: a Card delegates accessible_to? to
-  # its Board) — the member check itself lives on the base Room.
-
   # Creates a post: a Rooms::Post that belongs to this forum, with its body as
   # message #1. Only the author gets a membership (involvement "everything" via
   # Rooms::Post#default_involvement) — a post does NOT fan a row out to every

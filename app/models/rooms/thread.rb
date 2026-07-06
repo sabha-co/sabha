@@ -27,15 +27,28 @@ class Rooms::Thread < Room
   # — a thread never fans a row out to every parent-room member. Both auto-follow
   # (involvement "everything" via #default_involvement) so replies notify them:
   # the author hears about a thread opened on their message even when someone else
-  # opens it. Every other member views via derived access (see #viewable_by?) and
+  # opens it. The author is included only while they can still reach the parent
+  # room, so an author who has left isn't notified into a thread they can no longer
+  # open. Every other member views via derived access (see #viewable_by?) and
   # follows lazily on their first reply.
   def self.find_or_create_for(parent_message, creator:)
     raise NestedThreadError if parent_message.room.thread?
 
     parent_message.threads.active.find_by(type: "Rooms::Thread") ||
       create_for({ parent_message_id: parent_message.id, creator: creator },
-                 users: [ creator, parent_message.creator ].uniq)
+                 users: auto_followers(parent_message, creator))
   end
+
+  # The thread creator always follows; the parent-message author auto-follows too,
+  # but only while they can still reach the parent room — access is parent-derived,
+  # so auto-following an author who has left would notify them into a thread they
+  # could no longer open.
+  def self.auto_followers(parent_message, creator)
+    followers = [ creator ]
+    followers << parent_message.creator if parent_message.room.viewable_by?(parent_message.creator)
+    followers.uniq
+  end
+  private_class_method :auto_followers
 
   def default_involvement(user: nil)
     if user.present? && (user == creator || user == parent_message&.creator)

@@ -396,32 +396,22 @@ class Room < ApplicationRecord
       end
     end
 
-    # Cascade-deactivate this room's nested sub-rooms: chat threads (spawned off
-    # its messages) and, for a forum, its posts (owned via parent_room_id). Only
-    # cascade-deactivate still-active ones; sub-rooms already deleted on their own
-    # keep their non-cascade marker, so reactivation leaves them deleted.
+    # Cascade-deactivate the chat threads spawned off this room's messages. Only
+    # cascade-deactivate still-active ones; a thread already deleted on its own
+    # keeps its non-cascade marker, so reactivation leaves it deleted. (A forum
+    # cascades its posts separately, off the request path — see ForumDeactivationJob.)
     def deactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
       Rooms::Thread.active.where(parent_message_id: message_ids)
         .find_each { |thread| thread.deactivate(cascade: true) }
-
-      if forum?
-        Rooms::Post.active.where(parent_room_id: id)
-          .find_each { |post| post.deactivate(cascade: true) }
-      end
     end
 
     def reactivate_threads
       message_ids = Message.where(room_id: id).pluck(:id)
-      # Restore only sub-rooms this room's cascade deactivated — never ones
+      # Restore only threads this room's cascade deactivated — never ones
       # deleted individually beforehand.
       Rooms::Thread.where(parent_message_id: message_ids, active: false, cascade_deactivated: true)
         .find_each(&:reactivate)
-
-      if forum?
-        Rooms::Post.where(parent_room_id: id, active: false, cascade_deactivated: true)
-          .find_each(&:reactivate)
-      end
     end
 
     # Clean up associated records explicitly because the cascade has to walk
