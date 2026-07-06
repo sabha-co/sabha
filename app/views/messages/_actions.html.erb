@@ -1,7 +1,7 @@
 <%# Be sure to check/update messages/_template.html.erb when changing this file %>
 <%# locals: (message:, current_room: nil) -%>
 
-<% show_thread_actions = !message.room.direct? && !current_room&.thread? && !message.room.thread? && !message.room.post? %>
+<% show_thread_actions = !message.room.direct? && !current_room&.thread? && !message.room.sub_room? %>
 <% existing_thread = message.threads.find { |t| t.active? } if show_thread_actions %>
 
 <div class="message__actions" data-controller="soft-keyboard">

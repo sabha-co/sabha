@@ -26,7 +26,7 @@ module Message::Threadable
     end
 
     def update_thread_reply_count
-      return unless room.thread? || room.post?
+      return unless room.sub_room?
 
       # A chat thread's messages are all replies; a post's exclude the OP.
       count = room.post? ? room.replies_count : room.messages_count

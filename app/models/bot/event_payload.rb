@@ -77,7 +77,7 @@ module Bot::EventPayload
 
     private
       def thread_to_api(message)
-        return nil unless message.room.thread? || message.room.post?
+        return nil unless message.room.sub_room?
         { id: message.room.id, parent_message_id: message.room.parent_message_id }
       end
 
