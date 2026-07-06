@@ -232,13 +232,11 @@ class User < ApplicationRecord
       forced_room_ids = Room.active.where(auto_join: true).pluck(:id)
       return if forced_room_ids.empty?
 
+      # Only the auto-join rooms themselves need a membership row. Their nested
+      # sub-rooms (an open room's threads, a forum's posts) derive access from
+      # this parent membership, so a new member reaches them without a per-sub-room
+      # row of their own — no fan-out.
       Membership.insert_all(forced_room_ids.collect { |room_id| { room_id: room_id, user_id: id } })
-
-      # Open auto-join rooms fan their threads out to members; a forum derives
-      # post access from forum membership, so it needs no per-post rows here.
-      Rooms::Thread.joins(:parent_room).where(parent_room: { type: "Rooms::Open", auto_join: true }).find_each do |thread|
-        thread.memberships.grant_to(self)
-      end
     end
 
     # Clean up associated records explicitly because most `has_many` declarations
