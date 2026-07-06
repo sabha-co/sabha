@@ -50,6 +50,9 @@ class Rooms::Thread < Room
   end
   private_class_method :auto_followers
 
+  # The involvement a membership is granted at, not a claim that these users are
+  # always followed: the creator always is, but the parent-message author only
+  # gets a row while they can still reach the parent room (see .auto_followers).
   def default_involvement(user: nil)
     if user.present? && (user == creator || user == parent_message&.creator)
       "everything"
