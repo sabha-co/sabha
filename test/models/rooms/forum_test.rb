@@ -279,7 +279,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_empty forum.memberships.unread, "a plain reply leaves the forum read for every member"
   end
 
-  test "a mention in a reply marks only the mentioned member's forum unread" do
+  test "a mention in a reply does not badge the forum — it surfaces in Activity only" do
     forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
     post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "b") }
     forum.memberships.update_all(unread_at: nil)
@@ -288,8 +288,10 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     Current.set(user: users(:david)) { post.messages.create!(body: "<div>#{mention} ping</div>") }
 
     kevin_membership = forum.memberships.find_by(user: users(:kevin))
-    assert kevin_membership.unread?, "the mentioned member is marked unread"
-    assert_equal 1, kevin_membership.unread_notifications_count, "a mention shows a number badge on the forum"
-    assert_equal 1, forum.memberships.unread.count, "only the mentioned member is poked by a reply mention"
+    assert kevin_membership.read?, "a forum mention no longer marks the forum sidebar unread"
+    assert_equal 0, kevin_membership.unread_notifications_count, "and no number badge on the forum — a forum mention is quiet, like a thread mention"
+    assert_empty forum.memberships.unread, "a reply mention leaves the forum read for every member"
+    assert Notification.exists?(user: users(:kevin), activity_type: "mention"),
+      "the mention still reaches the member through Activity"
   end
 end

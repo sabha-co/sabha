@@ -7,6 +7,21 @@
       <% end %>
       <%= icon_tag "thread", class: "thread-panel__icon" %>
     </h2>
+
+    <%= tag.details class: "position-relative flex-item-no-shrink", data: {
+          controller: "popup", popup_orientation_top_class: "",
+          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
+        } do %>
+      <summary class="btn action-btn options-btn">
+        <%= icon_tag "menu-dots-horizontal" %>
+        <span class="for-screen-reader">Thread options</span>
+      </summary>
+
+      <div class="popup-menu forum-post-menu border shadow" data-popup-target="menu">
+        <%= render "rooms/threads/follow_control", thread: @room %>
+      </div>
+    <% end %>
+
     <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close thread">&times;</button>
   </div>
 

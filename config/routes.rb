@@ -154,7 +154,11 @@ Rails.application.routes.draw do
       end
     end
     resources :directs
-    resources :threads, only: %i[ create show edit update destroy ]
+    # The thread panel (show) plus Follow, modeled as the current user's membership
+    # on the thread: Follow = create, Unfollow = destroy (mirrors posts below).
+    resources :threads, only: %i[ create show edit update destroy ] do
+      resource :membership, only: %i[ create destroy ], module: "threads"
+    end
 
     # The in-app post panel (show) plus Follow, modeled as the current user's
     # membership on the post: Follow = create, Unfollow = destroy.

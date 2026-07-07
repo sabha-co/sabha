@@ -66,6 +66,24 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     assert thread.viewable_by?(kevin), "…but still views via derived access"
   end
 
+  test "create does not subscribe a member who merely opens an existing thread" do
+    kevin = users(:kevin)
+    @room.memberships.grant_to(kevin)
+    parent_message = @room.messages.create!(
+      body: "Parent for lurk test", creator: @jason, client_message_id: "lurk_open_1"
+    )
+    thread = Rooms::Thread.create_for(
+      { parent_message_id: parent_message.id, creator: @david }, users: [ @david, @jason ]
+    )
+
+    sign_in :kevin
+    post rooms_threads_url, params: { parent_message_id: parent_message.id }
+
+    assert_not thread.memberships.exists?(user: kevin),
+      "opening a thread doesn't subscribe you — you follow by replying or via the Follow control"
+    assert thread.viewable_by?(kevin), "…but you can still view it via derived access"
+  end
+
   test "create requires parent message to be reachable by user" do
     # Create a message in a room david is not a member of
     closed_room = Rooms::Closed.create!(name: "Secret Room", creator: @jason)

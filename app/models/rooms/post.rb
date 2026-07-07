@@ -5,7 +5,7 @@
 # title, a permanent slug, a Solved state, and derives its access from the forum
 # rather than from a per-member membership fan-out.
 class Rooms::Post < Room
-  include Room::Participants, Room::Nested
+  include Room::Participants, Room::Nested, Room::Followable
 
   # The forum this post lives in. The real FK (rooms.parent_room_id), unlike a
   # chat thread's denormalized copy of its parent message's room.
@@ -92,31 +92,6 @@ class Rooms::Post < Room
 
   def default_involvement(user: nil)
     user.present? && user == creator ? "everything" : "invisible"
-  end
-
-  # True when the user is a follower — an active, non-invisible membership that
-  # drives reply notifications. The author and anyone who replied or explicitly
-  # Followed qualifies; a member who never engaged (access is forum-derived) does
-  # not.
-  def followed_by?(user)
-    user.present? && memberships.active.where.not(involvement: "invisible").exists?(user_id: user.id)
-  end
-
-  # A member becomes a follower of this post the moment they reply — lazily, so
-  # a forum never fans a membership row out to every member. Idempotent and
-  # self-healing: it (re)activates a dropped membership and lifts an invisible
-  # one back to "everything", but never downgrades a follower who dialed
-  # themselves down. Mirrors Fizzy's Watch created on comment.
-  def follow!(user)
-    membership = Membership.find_or_initialize_by(room_id: id, user_id: user.id)
-    membership.active = true
-    membership.involvement = "everything" if membership.new_record? || membership.involved_in_invisible?
-    membership.save! if membership.changed?
-    membership
-  end
-
-  def unfollow!(user)
-    Membership.where(room_id: id, user_id: user.id).destroy_all
   end
 
   def applicable_activity_types(message)

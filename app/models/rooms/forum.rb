@@ -115,18 +115,17 @@ class Rooms::Forum < Room
               .update_all(involvement: "invisible")
   end
 
-  # Poke the forum's sidebar unread for the members a post's activity should reach
-  # (see Message::Threadable#mark_forum_unread). The forum owns no messages, so this
+  # Poke the forum's sidebar unread for a new post — a dot, like any new room
+  # message — for the members who should see it. A forum owns no messages, so this
   # mirrors a chat room's unread behavior against the forum's own memberships. It
   # deliberately does NOT bump last_active_at — a post surfaces the forum via its
   # unread state (which sorts to the top of its group), not chat-style reordering.
+  #
+  # Mentions are deliberately NOT surfaced here: a forum mention behaves like a
+  # thread mention, reaching the named member through Activity only (see
+  # Message::Mentionee), not a sidebar dot or number badge.
   def mark_unread_from_post(message)
-    # A new post lights the whole forum unread — a dot, like any new room message.
     mark_members_unread(message) if message.room.opening_message?(message)
-
-    # A mention lights the forum unread AND bumps its notification count, so the
-    # sidebar shows a number badge, exactly like a chat-room mention.
-    notify_mentioned_members(message)
   end
 
   private
@@ -144,20 +143,6 @@ class Rooms::Forum < Room
       recipients = memberships.visible.disconnected.where.not(user_id: message.creator_id)
       recipients.read.update_all(unread_at: message.created_at, updated_at: Time.current)
       recipients.includes(:user).each { |membership| broadcast_dot(membership) }
-    end
-
-    # The named members (never the author), while they're away: each gets the dot
-    # and +1 on the notification count so the forum shows a number badge.
-    def notify_mentioned_members(message)
-      mentioned = message.mentionees.reject { |user| user.id == message.creator_id }
-      memberships.visible.disconnected.where(user: mentioned).includes(:user).each do |membership|
-        membership.update!(
-          unread_at: membership.unread_at || message.created_at,
-          unread_notifications_count: membership.unread_notifications_count + 1
-        )
-        broadcast_dot(membership)
-        UnreadNotificationsChannel.broadcast_to(membership.user, { roomId: id })
-      end
     end
 
     def broadcast_dot(membership)
