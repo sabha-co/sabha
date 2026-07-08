@@ -294,11 +294,11 @@ class Message < ApplicationRecord
             .involved_in_everything
             .includes(eager_load)
       when :thread_reply
-        # Thread members upgraded via Room#involve_user have involvement: :mentions
-        # by default. receives_push_for?(:thread_reply) qualifies anyone
-        # !involved_in_invisible?, so the `.visible` scope already does all the
-        # filtering needed here. Pre-filtering further to :everything would drop
-        # the typical replier.
+        # Sub-room followers (chat threads and forum posts) sit at involvement
+        # :everything via Room::Followable#follow!. receives_push_for?(:thread_reply)
+        # qualifies anyone !involved_in_invisible?, so the `.visible` scope already
+        # does all the filtering needed here — and it still covers any legacy
+        # :mentions rows from before the sub-room levels were unified.
         room.memberships.visible.disconnected
             .where.not(user_id: creator_id)
             .includes(eager_load)

@@ -4,7 +4,7 @@
 class Rooms::Thread < Room
   class NestedThreadError < StandardError; end
 
-  include Room::Participants, Room::Nested
+  include Room::Participants, Room::Nested, Room::Followable
 
   validates_presence_of :parent_message
 

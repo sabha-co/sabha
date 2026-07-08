@@ -269,7 +269,8 @@ class RoomTest < ActiveSupport::TestCase
     parent = room.messages.create!(body: "topic", creator: users(:david))
     thread = Rooms::Thread.find_or_create_for(parent, creator: users(:david))
     Current.set(user: users(:jason)) { thread.messages.create!(body: "in", creator: users(:jason)) }
-    assert_equal "mentions", thread.memberships.find_by(user: users(:jason)).involvement
+    assert_equal "everything", thread.memberships.find_by(user: users(:jason)).involvement,
+      "replying follows the thread at everything"
 
     perform_enqueued_jobs { room.remove_member!(users(:jason), actor: users(:david)) }
 
@@ -299,7 +300,7 @@ class RoomTest < ActiveSupport::TestCase
     perform_enqueued_jobs { room.remove_member!(users(:jason), actor: users(:david)) }
 
     assert_equal "invisible", thread.memberships.find_by(user: users(:jason)).involvement
-    assert_equal "mentions", thread.memberships.find_by(user: users(:kevin)).involvement,
+    assert_equal "everything", thread.memberships.find_by(user: users(:kevin)).involvement,
       "another member's thread follow is untouched"
   end
 

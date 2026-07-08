@@ -2,8 +2,7 @@ module Message::Threadable
   extend ActiveSupport::Concern
 
   included do
-    after_create_commit :involve_creator_in_thread
-    after_create_commit :follow_post_by_creator
+    after_create_commit :follow_sub_room_by_creator
     after_create_commit :update_thread_reply_count
     after_create_commit :update_parent_message_threads
     after_create_commit :update_forum_gallery_card
@@ -13,16 +12,13 @@ module Message::Threadable
   end
 
   private
-    def involve_creator_in_thread
-      room.involve_user(creator, unread: false) if room.thread?
-    end
-
-    # A reply (or the opening message) makes its author a follower of the post,
-    # lazily — forum posts don't fan membership out to every member, so
-    # engagement is what creates the row. Mirrors Fizzy's
+    # A reply (or the opening message) makes its author a follower of the sub-room,
+    # lazily — sub-rooms don't fan membership out to every parent member, so
+    # engagement is what creates the row. A chat thread and a forum post follow
+    # alike, at "everything" (Room::Followable#follow!). Mirrors Fizzy's
     # Comment#watch_card_by_creator.
-    def follow_post_by_creator
-      room.follow!(creator) if room.post?
+    def follow_sub_room_by_creator
+      room.follow!(creator) if room.sub_room?
     end
 
     def update_thread_reply_count

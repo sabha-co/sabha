@@ -7,8 +7,12 @@ class Rooms::ThreadsController < RoomsController
   before_action :set_parent_message, only: %i[ create ]
 
   def create
+    # Opening a thread doesn't subscribe you — access derives from the parent room,
+    # and you follow lazily on your first reply (Message::Threadable) or explicitly
+    # via the Follow control. Creating a *new* thread still follows its creator and
+    # the parent-message author, granted by find_or_create_for. Re-subscribing here
+    # would undo an Unfollow the next time you opened the thread.
     @room = Rooms::Thread.find_or_create_for(@parent_message, creator: Current.user)
-    @room.involve_user(Current.user, unread: false)
 
     redirect_to rooms_thread_path(@room)
   end
