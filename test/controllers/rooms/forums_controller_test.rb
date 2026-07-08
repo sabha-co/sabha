@@ -34,6 +34,15 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".forum"
   end
 
+  test "the gallery mounts presence so opening a forum clears its sidebar unread" do
+    forum = Rooms::Forum.create_for({ name: "Docs", creator: users(:david) }, users: users(:david))
+
+    get room_url(forum)
+
+    assert_response :success
+    assert_select ".forum[data-controller~='presence'][data-presence-room-id-value=?]", forum.id.to_s
+  end
+
   # Regression: creating a forum or post redirects to the gallery, and Turbo
   # follows that redirect with a turbo-stream Accept header but no page param.
   # Without disambiguating on the page param, show served the pagination fragment

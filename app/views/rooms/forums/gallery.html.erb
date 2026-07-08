@@ -12,7 +12,11 @@
 <% filtering = params[:solved].present? %>
 <% populated = @posts.any? || filtering %>
 
-<div class="forum">
+<%# Mount the presence controller so opening the forum clears its sidebar unread,
+    the same way a room's message area does (see message_area_tag). The gallery
+    renders cards, not a message stream, so it wires presence itself. %>
+<div class="forum" data-controller="presence" data-presence-room-id-value="<%= @room.id %>"
+     data-action="visibilitychange@document->presence#visibilityChanged">
   <%= turbo_stream_from @room, :posts %>
   <%# Involvement changes (the nav bell) broadcast to the membership stream —
       subscribe so the button cycles its state, like the chat and post pages. %>
