@@ -61,25 +61,9 @@ because `performance` inherits `production` but isn't `Rails.env.production?`):
    `RAILS_ENV=production`. Use `command: sh -c "./bin/rails db:prepare && exec ./bin/boot"`.
 2. **`SKIP_THRUSTER=1`** to expose Puma directly on `:3000` (no TLS/Thruster in front).
 
-<details>
-<summary>In-process ActionCable compose</summary>
-
-```yaml
-services:
-  web:
-    image: ghcr.io/sabha-co/sabha:1.10.0
-    command: sh -c "./bin/rails db:prepare && exec ./bin/boot"
-    environment:
-      RAILS_ENV: performance
-      SECRET_KEY_BASE: dummy
-      SKIP_THRUSTER: "1"
-      ANYCABLE_ENABLED: "false"
-      APP_HOST: <target-ip>
-    ports: ["3000:3000"]
-    volumes: ["sabha_storage:/rails/storage"]
-volumes: { sabha_storage: }
-```
-</details>
+> The in-process ActionCable compose (a no-AnyCable baseline) is no longer
+> available: AnyCable is required, and `ANYCABLE_ENABLED=false` now aborts boot.
+> Use the AnyCable compose below.
 
 <details>
 <summary>AnyCable compose</summary>
@@ -93,8 +77,6 @@ services:
       RAILS_ENV: performance
       SECRET_KEY_BASE: dummy
       SKIP_THRUSTER: "1"
-      ANYCABLE_ENABLED: "true"
-      CABLE_ADAPTER: any_cable      # REQUIRED — see "Gotchas" below
       APP_HOST: <target-ip>
     ports: ["3000:3000"]
     volumes: ["sabha_storage:/rails/storage"]
@@ -184,12 +166,13 @@ vs AnyCable.
 
 These tripped up the test and are worth knowing (or fixing):
 
-- **`performance` cable.yml ignores `ANYCABLE_ENABLED`.** Unlike `production`, the
-  `performance:` block resolves the adapter from `ENV.fetch("CABLE_ADAPTER", "redis")`.
-  So `ANYCABLE_ENABLED=true` alone leaves ActionCable on the **redis** adapter and
-  Turbo broadcasts go to Redis (which anycable-go never reads) — connections work but
-  **no messages are delivered**. You must also set `CABLE_ADAPTER=any_cable`.
-  *Consider mirroring production's `ANYCABLE_ENABLED` check in the performance block.*
+- **`performance` cable.yml now uses `any_cable` directly.** Earlier this block
+  resolved the adapter from `ENV.fetch("CABLE_ADAPTER", "redis")`, so forgetting
+  `CABLE_ADAPTER=any_cable` left ActionCable on the **redis** adapter and Turbo
+  broadcasts went to Redis (which anycable-go never reads) — connections worked but
+  **no messages were delivered**. Since AnyCable became required, every app
+  environment (including `performance`) uses `any_cable` unconditionally, so
+  `CABLE_ADAPTER` and `ANYCABLE_ENABLED` are no longer read.
 - **anycable-go must bind `--host=0.0.0.0`** in Docker, or it listens on localhost
   inside the container and docker-proxy can't reach it.
 - **Disabling broadcast batching floods anycable-go.** With `broadcast_batching: true`

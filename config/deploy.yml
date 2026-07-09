@@ -48,7 +48,6 @@ env:
     - UMAMI_WEBSITE_ID
     - UMAMI_HOST
     - CSP_FRAME_ANCESTORS
-    - ANYCABLE_ENABLED
     - ANYCABLE_SECRET
     - CLOUDFLARE_TURNSTILE_SITE_KEY
     - CLOUDFLARE_TURNSTILE_SECRET_KEY
@@ -56,13 +55,8 @@ env:
 volumes:
   - "/disk/sabha/:/rails/storage/"
 
-# AnyCable WebSocket server (enabled by default)
+# AnyCable WebSocket server (required)
 # Routes /cable path to AnyCable on the same domain
-#
-# To disable AnyCable and use standard ActionCable:
-# 1. Set ANYCABLE_ENABLED=false in your secrets
-# 2. Comment out the 'anycable' accessory below
-# 3. Redeploy: kamal deploy
 accessories:
   anycable:
     image: anycable/anycable-go:1.6

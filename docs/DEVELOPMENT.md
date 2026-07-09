@@ -58,29 +58,19 @@ Opens at `http://localhost:3000`
 
 ### What `bin/dev` starts
 
-A single Rails server process (Puma) with Solid Queue running in-process.
+Foreman runs three processes together: the Rails server (Puma, with Solid Queue
+in-process), the Tailwind CSS watcher, and `anycable-go`. AnyCable is required —
+it carries all real-time delivery (live messages, typing, presence) — so
+`bin/dev` always boots it.
 
-For active CSS development, run the Tailwind watcher in a separate terminal:
-
-```bash
-pnpm run build:css:watch
-```
-
-### With AnyCable (optional)
-
-For production-like WebSocket handling:
+`anycable-go` must be on your PATH. `bin/setup` installs it on macOS; otherwise:
 
 ```bash
-bin/dev --anycable
+brew install anycable-go   # macOS
+# other platforms: https://docs.anycable.io/anycable-go/getting_started
 ```
 
-This uses foreman to run Rails + AnyCable-Go + CSS watcher together.
-
-Requires `anycable-go` installed:
-
-```bash
-brew install anycable-go
-```
+`bin/dev` preflights for the binary and exits with an install hint if it's missing.
 
 ---
 

@@ -113,7 +113,7 @@ Self-hosted Sabhas can hand off sign-in to an external identity provider (HMAC-s
 
 ### AnyCable
 
-[AnyCable](https://docs.anycable.io/) is a high-performance WebSocket server written in Go that replaces Rails' built-in ActionCable, allowing Sabha to handle significantly more concurrent connections with less memory. Enabled by default (HTTP RPC mode). Benchmarks show 10x faster WebSocket connections and 2x message throughput vs ActionCable. Disable by setting `ANYCABLE_ENABLED=false`.
+[AnyCable](https://docs.anycable.io/) is a high-performance WebSocket server written in Go that replaces Rails' built-in ActionCable, allowing Sabha to handle significantly more concurrent connections with less memory. Required, in HTTP RPC mode — it carries all real-time delivery. Benchmarks show 10x faster WebSocket connections and 2x message throughput vs ActionCable.
 
 ### Solid Queue
 

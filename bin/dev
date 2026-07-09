@@ -25,21 +25,24 @@ export PORT="${PORT:-3000}"
 export RUBY_DEBUG_OPEN="true"
 export RUBY_DEBUG_LAZY="true"
 
-USE_ANYCABLE=0
-for arg in "$@"; do
-  case $arg in
-    --anycable) USE_ANYCABLE=1 ;;
-  esac
-done
+# AnyCable is required: bin/dev boots anycable-go via Procfile.dev, so the binary
+# must be on PATH. Fail fast with an actionable message instead of a cryptic
+# foreman "command not found" and a half-broken real-time layer.
+if ! command -v anycable-go >/dev/null 2>&1; then
+  echo "anycable-go is not installed, but AnyCable is required to run Sabha locally."
+  echo
+  echo "Install it:"
+  echo "  macOS:  brew install anycable-go"
+  echo "  other:  https://docs.anycable.io/anycable-go/getting_started"
+  echo
+  echo "Then re-run bin/dev. (bin/setup installs it automatically on macOS.)"
+  exit 1
+fi
 
 if ! gem list foreman -i --silent; then
   echo "Installing foreman..."
   gem install foreman
 fi
 
-if [ "$USE_ANYCABLE" = "1" ]; then
-  export ANYCABLE_ENABLED="true"
-  exec foreman start -f Procfile.dev.anycable
-else
-  exec foreman start -f Procfile.dev
-fi
+# AnyCable is required: dev always boots anycable-go alongside Rails.
+exec foreman start -f Procfile.dev

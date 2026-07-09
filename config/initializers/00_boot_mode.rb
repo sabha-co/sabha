@@ -13,6 +13,13 @@ if Sabha.saas? && ENV["AUTH_METHOD"].in?(%w[password sso])
   abort "FATAL: AUTH_METHOD=#{ENV['AUTH_METHOD']} is not supported in SaaS mode. SaaS uses OTP-only authentication via GlobalIdentity."
 end
 
+# AnyCable is required. The in-process ActionCable fallback was removed, so
+# ANYCABLE_ENABLED=false has nothing left to fall back to — fail loudly on boot
+# rather than silently degrading a holdout's real-time layer.
+if ENV["ANYCABLE_ENABLED"] == "false"
+  abort "FATAL: ANYCABLE_ENABLED=false is no longer supported — AnyCable is required. Remove ANYCABLE_ENABLED from your environment and run the anycable-go accessory."
+end
+
 if Rails.env.production? && !ENV["SECRET_KEY_BASE_DUMMY"].present?
   required = %w[APP_HOST SECRET_KEY_BASE]
 

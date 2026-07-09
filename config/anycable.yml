@@ -16,10 +16,6 @@ default: &default
 
 development:
   <<: *default
-  # Use Redis broadcasting when AnyCable is not enabled (default in dev)
-  <% unless ENV["ANYCABLE_ENABLED"] == "true" %>
-  broadcast_adapter: redis
-  <% end %>
   websocket_url: "ws://localhost:8080/cable"
   secret: "development-secret-change-in-production"
 

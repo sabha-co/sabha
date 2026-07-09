@@ -67,14 +67,9 @@ Rails.application.configure do
   # Uncomment if you wish to allow Action Cable access from any origin.
   # config.action_cable.disable_request_forgery_protection = true
 
-  # WebSocket URL (used by action_cable_meta_tag)
-  # When AnyCable is enabled, connect to AnyCable-Go on port 8080
-  # When disabled (default), connect to Rails ActionCable on port 3000
-  if ENV["ANYCABLE_ENABLED"] == "true"
-    config.action_cable.url = "ws://localhost:8080/cable"
-  else
-    config.action_cable.url = "ws://localhost:3000/cable"
-  end
+  # WebSocket URL (used by action_cable_meta_tag). AnyCable is required, so the
+  # client always connects to anycable-go on port 8080.
+  config.action_cable.url = "ws://localhost:8080/cable"
 
   # Uncomment to test with production class job queue
   # config.active_job.queue_adapter = :solid_queue
