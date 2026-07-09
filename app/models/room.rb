@@ -102,7 +102,7 @@ class Room < ApplicationRecord
 
   def receive(message)
     catch_up_sender(message)
-    broadcast_unread_to_disconnected_users(message)
+    broadcast_touched
   end
 
   # Routing-vocabulary symbols that apply to a message in this room — a subset
@@ -395,19 +395,14 @@ class Room < ApplicationRecord
         .update_all(last_read_at: message.created_at, last_read_message_id: message.id, updated_at: Time.current)
     end
 
-    def broadcast_unread_to_disconnected_users(message)
-      users = memberships.visible.disconnected.where.not(user: message.creator).includes(:user).map(&:user)
-      return if users.empty?
-
-      payload = {
-        roomId: id,
-        roomSize: messages_count,
-        roomUpdatedAt: last_active_at.iso8601,
-        forceUnread: true
-      }
-      users.each do |user|
-        UserUnreadRoomsChannel.broadcast_to(user, payload)
-      end
+    # One shared publish per message, whatever the room's size. Every open
+    # sidebar in the account gets the touched room's sort metadata and derives
+    # its own unread state client-side: non-members find no matching row, and
+    # the member viewing the room sees the message land, so no dot.
+    def broadcast_touched
+      RoomListChannel.broadcast_to(Account.sole, { roomId: id, roomSize: messages_count, roomUpdatedAt: last_active_at.iso8601 })
+    rescue ActiveRecord::RecordNotFound
+      # No account yet (e.g., during setup or seed)
     end
 
     # Cascade-deactivate the chat threads spawned off this room's messages. Only

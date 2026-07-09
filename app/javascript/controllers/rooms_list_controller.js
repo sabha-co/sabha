@@ -19,7 +19,7 @@ export default class extends Controller {
       received: this.#addBadge.bind(this)
     })
     this.roomListChannel ??= await cable.subscribeTo({ channel: "RoomListChannel" }, {
-      received: this.#roomUpdated.bind(this)
+      received: this.#roomListReceived.bind(this)
     })
     this.involvementsChannel ??= await cable.subscribeTo({ channel: "UserInvolvementsChannel" }, {
       received: this.#updateInvolvement.bind(this)
@@ -115,17 +115,52 @@ export default class extends Controller {
     this.dispatch("addBadge", { detail: { roomId: roomId } })
   }
   
+  // The shared room-list stream carries two payload kinds: a rename
+  // ({roomId, sortableName}) and a touched nudge ({roomId, roomSize,
+  // roomUpdatedAt}) published once per message for the whole account.
+  #roomListReceived(payload) {
+    if (payload.sortableName !== undefined) {
+      this.#roomUpdated(payload)
+    } else {
+      this.#touched(payload)
+    }
+  }
+
   #roomUpdated({ roomId, sortableName }) {
     const rooms = this.#findRoomTargets(roomId)
 
     rooms.forEach(room => {
       const sortedListTarget = room.closest('[data-sorted-list-target]')
       if (!sortedListTarget) return
-      
+
       sortedListTarget.dataset.name = sortableName
     })
 
     this.dispatch("renamed", { detail: { roomId: roomId } })
+  }
+
+  // A room was touched by a new message. Refresh its sort metadata for
+  // everyone; derive unread locally — only a member not viewing the room
+  // gets the dot (the viewer sees the message land, so they stay read).
+  #touched({ roomId, roomSize, roomUpdatedAt }) {
+    const rooms = this.#findRoomTargets(roomId)
+
+    rooms.forEach(room => {
+      const sortedListTarget = room.closest('[data-sorted-list-target]')
+      if (!sortedListTarget) return
+
+      sortedListTarget.dataset.updatedAt = roomUpdatedAt
+      sortedListTarget.dataset.size = roomSize
+
+      if (Current.room?.id != roomId) {
+        if (sortedListTarget.dataset.sortedListPriority) {
+          sortedListTarget.dataset.sortedListPriority = "0"
+        }
+        room.classList.add(this.unreadClass)
+      }
+    })
+
+    this.dispatch("unread", { detail: { roomId: roomId } })
   }
   
   #updateInvolvement({ roomId, involvement }) {

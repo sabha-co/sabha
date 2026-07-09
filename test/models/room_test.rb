@@ -459,6 +459,22 @@ class RoomTest < ActiveSupport::TestCase
     end
   end
 
+  test "receiving a message publishes one shared nudge, not one per member" do
+    room = rooms(:watercooler)
+    members = room.memberships.visible.includes(:user).map(&:user)
+    assert members.size >= 2, "fixture should have multiple members for this test to be meaningful"
+    ActionCable.server.pubsub.clear
+
+    assert_broadcasts(RoomListChannel.broadcasting_for(Account.sole), 1) do
+      room.messages.create!(body: "Hello all", creator: members.first, client_message_id: SecureRandom.uuid)
+    end
+
+    members.each do |user|
+      assert_empty ActionCable.server.pubsub.broadcasts(UserUnreadRoomsChannel.broadcasting_for(user)),
+        "the send path should not push per-member unread broadcasts"
+    end
+  end
+
   test "reactivating a sidebar room broadcasts an append to each visible member's sidebar" do
     room = rooms(:pets)
     room.update_columns(active: false)
