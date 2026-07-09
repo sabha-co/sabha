@@ -81,6 +81,56 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert_includes Membership.shared, membership
   end
 
+  test "an opening post dots disconnected read members but not the author" do
+    forum = rooms(:help_desk)
+    forum.memberships.grant_to(users(:jason))
+    forum.memberships.grant_to(users(:david))
+    reader = forum.memberships.find_by!(user: users(:jason))
+    reader.update_columns(connected_at: nil, connections: 0, unread_at: nil)
+    author = forum.memberships.find_by!(user: users(:david))
+    author.update_columns(connected_at: nil, connections: 0, unread_at: nil)
+
+    create_forum_post(title: "Fresh question", forum: forum, author: users(:david))
+
+    assert reader.reload.unread?, "a disconnected member should get the forum's sidebar dot"
+    assert author.reload.read?, "the author never dots their own forum"
+  end
+
+  test "an opening post leaves connected members read" do
+    forum = rooms(:help_desk)
+    forum.memberships.grant_to(users(:jason))
+    connected = forum.memberships.find_by!(user: users(:jason))
+    connected.update_columns(connected_at: Time.current, connections: 1, unread_at: nil)
+
+    create_forum_post(title: "Another question", forum: forum, author: users(:david))
+
+    assert connected.reload.read?, "a member viewing live never gets the dot"
+  end
+
+  test "an opening post does not move an already-unread member's forum anchor" do
+    forum = rooms(:help_desk)
+    forum.memberships.grant_to(users(:jason))
+    membership = forum.memberships.find_by!(user: users(:jason))
+    anchor = 1.day.ago.change(usec: 0)
+    membership.update_columns(connected_at: nil, connections: 0, unread_at: anchor)
+
+    create_forum_post(title: "Yet another question", forum: forum, author: users(:david))
+
+    assert_equal anchor, membership.reload.unread_at
+  end
+
+  test "a reply to a post does not dot the forum" do
+    forum = rooms(:help_desk)
+    post = create_forum_post(title: "Existing discussion", forum: forum, author: users(:david))
+    forum.memberships.grant_to(users(:jason))
+    reader = forum.memberships.find_by!(user: users(:jason))
+    reader.update_columns(connected_at: nil, connections: 0, unread_at: nil)
+
+    post.messages.create!(body: "A reply", creator: users(:david), client_message_id: "forum_reply_no_dot")
+
+    assert reader.reload.read?, "only a post's opening message dots the forum sidebar"
+  end
+
   # --- Cascade & reactivation correctness --------------------------------
 
   test "restoring a forum restores posts that were active when it was deleted" do

@@ -56,6 +56,87 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal 1, recipient_membership.unread_notifications_count
   end
 
+  test "creating a message leaves connected memberships read" do
+    room = rooms(:pets)
+    recipient_membership = room.memberships.find_by!(user: users(:david))
+    recipient_membership.update!(unread_at: nil)
+    recipient_membership.update_columns(connected_at: Time.current, connections: 1)
+
+    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "connected_stays_read")
+
+    assert recipient_membership.reload.read?
+  end
+
+  test "creating a message leaves the sender's membership read even when disconnected" do
+    room = rooms(:pets)
+    sender_membership = room.memberships.find_by!(user: users(:jason))
+    sender_membership.update!(unread_at: nil)
+    sender_membership.update_columns(connected_at: nil, connections: 0)
+
+    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "sender_stays_read")
+
+    assert sender_membership.reload.read?
+  end
+
+  test "creating a message does not move an already-unread membership's anchor" do
+    room = rooms(:pets)
+    membership = room.memberships.find_by!(user: users(:david))
+    membership.update_columns(connected_at: nil, connections: 0)
+
+    first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "anchor_first")
+    assert_equal first.created_at, membership.reload.unread_at
+
+    room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "anchor_second")
+
+    assert_equal first.created_at, membership.reload.unread_at,
+      "the unread anchor must stay at the first unseen message so the New separator doesn't drift"
+  end
+
+  test "creating a message does not mark invisible memberships unread" do
+    room = rooms(:pets)
+    membership = room.memberships.find_by!(user: users(:david))
+    membership.update!(unread_at: nil, involvement: :invisible)
+    membership.update_columns(connected_at: nil, connections: 0)
+
+    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "invisible_stays_read")
+
+    assert membership.reload.read?
+  end
+
+  test "@everyone to a read disconnected member sets unread and bumps the badge" do
+    # Pins the KTD-sensitive callback ordering: deliver_to_room must set unread_at
+    # before increment_unread_notifications_counters checks it, or a read member
+    # never gets the badge bump.
+    room = rooms(:pets)
+    membership = room.memberships.find_by!(user: users(:david))
+    membership.update!(unread_at: nil, unread_notifications_count: 0)
+    membership.update_columns(connected_at: nil, connections: 0)
+
+    everyone_sgid = Everyone.new.attachable_sgid
+    message = room.messages.create!(
+      creator: users(:jason),
+      body: "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>",
+      client_message_id: "everyone_to_read_disconnected"
+    )
+
+    membership.reload
+    assert_equal message.created_at, membership.unread_at
+    assert_equal 1, membership.unread_notifications_count
+  end
+
+  test "DM to a read disconnected recipient sets unread and bumps the badge" do
+    room = rooms(:david_and_jason)
+    membership = room.memberships.find_by!(user: users(:david))
+    membership.update!(unread_at: nil, unread_notifications_count: 0)
+    membership.update_columns(connected_at: nil, connections: 0)
+
+    message = room.messages.create!(creator: users(:jason), body: "Hey", client_message_id: "dm_to_read_disconnected")
+
+    membership.reload
+    assert_equal message.created_at, membership.unread_at
+    assert_equal 1, membership.unread_notifications_count
+  end
+
   # Event messages
 
   test "without_events scope excludes event messages" do

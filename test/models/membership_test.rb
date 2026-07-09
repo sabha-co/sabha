@@ -217,6 +217,68 @@ class MembershipTest < ActiveSupport::TestCase
     assert @membership.unread?
   end
 
+  test "presenting in a room clears unread state and the notification badge" do
+    @membership.update!(unread_at: 1.hour.ago, unread_notifications_count: 3)
+
+    @membership.present
+
+    @membership.reload
+    assert @membership.read?
+    assert_equal 0, @membership.unread_notifications_count
+    assert @membership.connected?
+  end
+
+  test "read_until advances the anchor past the given time and recomputes the badge" do
+    room = @membership.room
+    first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "read_until_1")
+    second = room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "read_until_2")
+    mention = room.messages.create!(
+      creator: users(:jason),
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      client_message_id: "read_until_3"
+    )
+    @membership.update!(unread_at: first.created_at)
+
+    @membership.read_until(first.created_at)
+
+    @membership.reload
+    assert @membership.unread?
+    assert_equal second.created_at, @membership.unread_at
+    assert_equal 1, @membership.unread_notifications_count, "the mention after the new anchor must still count"
+    assert mention.created_at > @membership.unread_at
+  end
+
+  test "read_until marks read when no messages remain after the given time" do
+    room = @membership.room
+    last = room.messages.create!(creator: users(:jason), body: "Last", client_message_id: "read_until_last")
+    @membership.update!(unread_at: last.created_at, unread_notifications_count: 2)
+
+    @membership.read_until(last.created_at)
+
+    @membership.reload
+    assert @membership.read?
+    assert_equal 0, @membership.unread_notifications_count
+  end
+
+  test "read_until ignores a time before the current anchor" do
+    room = @membership.room
+    first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "read_until_noop_1")
+    second = room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "read_until_noop_2")
+    @membership.update!(unread_at: second.created_at)
+
+    @membership.read_until(first.created_at)
+
+    assert_equal second.created_at, @membership.reload.unread_at
+  end
+
+  test "read_until is a no-op when already read" do
+    @membership.update!(unread_at: nil)
+
+    @membership.read_until(Time.current)
+
+    assert @membership.reload.read?
+  end
+
   # Leave! tests
 
   test "leave! makes membership invisible" do

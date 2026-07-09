@@ -15,6 +15,29 @@ class RoomTest < ActiveSupport::TestCase
     assert rooms(:watercooler).users.include?(users(:kevin))
   end
 
+  test "involve_user with unread marks a read membership unread at the last message" do
+    room = rooms(:watercooler)
+    last_message = room.messages.create!(creator: users(:jason), body: "Latest", client_message_id: "involve_unread")
+    membership = room.memberships.find_by!(user: users(:david))
+    membership.update!(unread_at: nil)
+
+    room.involve_user(users(:david), unread: true)
+
+    assert_equal last_message.created_at, membership.reload.unread_at
+  end
+
+  test "involve_user with unread does not move an already-unread anchor" do
+    room = rooms(:watercooler)
+    first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "involve_anchor_1")
+    room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "involve_anchor_2")
+    membership = room.memberships.find_by!(user: users(:david))
+    membership.update!(unread_at: first.created_at)
+
+    room.involve_user(users(:david), unread: true)
+
+    assert_equal first.created_at, membership.reload.unread_at
+  end
+
   test "revoke membership from user" do
     rooms(:watercooler).memberships.revoke_from(users(:david))
     assert_not rooms(:watercooler).users.include?(users(:david))
