@@ -6,7 +6,7 @@ class Messages::UnreadsControllerTest < ActionDispatch::IntegrationTest
     @room = rooms(:watercooler)
     @message = @room.messages.create!(creator: users(:jason), body: "Test message")
     @membership = @room.memberships.find_by(user: users(:david))
-    @membership.update!(unread_at: nil)
+    catch_up @membership
   end
 
   test "create marks message as unread" do
@@ -17,6 +17,6 @@ class Messages::UnreadsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     @membership.reload
     assert @membership.unread?
-    assert_equal @message.created_at, @membership.unread_at
+    assert_equal @message, @membership.first_unread_message
   end
 end

@@ -138,10 +138,12 @@ class Rooms::Forum < Room
     end
 
     # Every disconnected member but the author — a member viewing the gallery sees
-    # the post live and their presence already keeps them read.
+    # the post live and their presence already keeps them read. A forum owns no
+    # messages, so its dot can't derive from a read cursor: the marked_unread
+    # flag carries it, and presence (connect) clears it on open.
     def mark_members_unread(message)
       recipients = memberships.visible.disconnected.where.not(user_id: message.creator_id)
-      recipients.read.update_all(unread_at: message.created_at, updated_at: Time.current)
+      recipients.read.update_all(marked_unread: true, updated_at: Time.current)
       recipients.includes(:user).each { |membership| broadcast_dot(membership) }
     end
 

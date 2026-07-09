@@ -584,6 +584,36 @@ columns:
     default_function:
     collation:
     comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: last_read_at
+    cast_type: *1
+    sql_type_metadata: *2
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: last_read_message_id
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: marked_unread
+    cast_type: *8
+    sql_type_metadata: *9
+    'null': false
+    default: false
+    default_function:
+    collation:
+    comment:
   - &25 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: room_id
@@ -3001,4 +3031,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260704000001
+version: 20260709000001

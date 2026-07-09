@@ -19,7 +19,7 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     room = rooms(:pets)
     room.messages.create!(creator: users(:jason), body: "Seen already", client_message_id: "separator_seen")
     first_unread = room.messages.create!(creator: users(:jason), body: "New to you", client_message_id: "separator_unread")
-    room.memberships.find_by!(user: users(:david)).update!(unread_at: first_unread.created_at)
+    rewind_unread_to room.memberships.find_by!(user: users(:david)), first_unread
 
     get room_url(room)
 
@@ -30,7 +30,7 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
   test "show renders no new-messages separator when the membership is read" do
     room = rooms(:pets)
     room.messages.create!(creator: users(:jason), body: "Nothing new", client_message_id: "separator_none")
-    room.memberships.find_by!(user: users(:david)).update!(unread_at: nil)
+    catch_up room.memberships.find_by!(user: users(:david))
 
     get room_url(room)
 

@@ -188,37 +188,50 @@ class MembershipTest < ActiveSupport::TestCase
 
   # Read/Unread tests
 
-  test "mark_unread_at sets unread_at to message created_at" do
+  test "mark_unread_at makes the message the first unread" do
     message = @membership.room.messages.create!(creator: users(:jason), body: "Test")
-    @membership.update!(unread_at: nil)
+    catch_up @membership
 
     @membership.mark_unread_at(message)
 
-    assert_equal message.created_at, @membership.unread_at
     assert @membership.unread?
+    assert_equal message, @membership.first_unread_message
   end
 
-  test "read clears unread_at" do
-    @membership.update!(unread_at: 1.hour.ago)
+  test "read clears unread state" do
+    message = @membership.room.messages.create!(creator: users(:jason), body: "Unseen")
+    rewind_unread_to @membership, message
 
     @membership.read
 
-    assert_nil @membership.unread_at
     assert @membership.read?
+    assert_nil @membership.first_unread_message
   end
 
   test "read? and unread? are opposites" do
-    @membership.update!(unread_at: nil)
+    message = @membership.room.messages.create!(creator: users(:jason), body: "Unseen")
+
+    catch_up @membership
     assert @membership.read?
     assert_not @membership.unread?
 
-    @membership.update!(unread_at: 1.hour.ago)
+    rewind_unread_to @membership, message
     assert_not @membership.read?
     assert @membership.unread?
   end
 
+  test "a membership with no cursor yet reads as read, not all-unread" do
+    @membership.room.messages.create!(creator: users(:jason), body: "History")
+    @membership.update_columns(last_read_at: nil, last_read_message_id: nil, marked_unread: false)
+
+    assert @membership.read?
+    assert_not Membership.unread.exists?(@membership.id)
+  end
+
   test "presenting in a room clears unread state and the notification badge" do
-    @membership.update!(unread_at: 1.hour.ago, unread_notifications_count: 3)
+    message = @membership.room.messages.create!(creator: users(:jason), body: "Unseen")
+    rewind_unread_to @membership, message
+    @membership.update!(unread_notifications_count: 3)
 
     @membership.present
 
@@ -237,21 +250,22 @@ class MembershipTest < ActiveSupport::TestCase
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       client_message_id: "read_until_3"
     )
-    @membership.update!(unread_at: first.created_at)
+    rewind_unread_to @membership, first
 
     @membership.read_until(first.created_at)
 
     @membership.reload
     assert @membership.unread?
-    assert_equal second.created_at, @membership.unread_at
+    assert_equal second, @membership.first_unread_message
     assert_equal 1, @membership.unread_notifications_count, "the mention after the new anchor must still count"
-    assert mention.created_at > @membership.unread_at
+    assert mention.created_at > @membership.first_unread_message.created_at
   end
 
   test "read_until marks read when no messages remain after the given time" do
     room = @membership.room
     last = room.messages.create!(creator: users(:jason), body: "Last", client_message_id: "read_until_last")
-    @membership.update!(unread_at: last.created_at, unread_notifications_count: 2)
+    rewind_unread_to @membership, last
+    @membership.update!(unread_notifications_count: 2)
 
     @membership.read_until(last.created_at)
 
@@ -264,19 +278,67 @@ class MembershipTest < ActiveSupport::TestCase
     room = @membership.room
     first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "read_until_noop_1")
     second = room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "read_until_noop_2")
-    @membership.update!(unread_at: second.created_at)
+    rewind_unread_to @membership, second
 
     @membership.read_until(first.created_at)
 
-    assert_equal second.created_at, @membership.reload.unread_at
+    assert_equal second, @membership.reload.first_unread_message
   end
 
   test "read_until is a no-op when already read" do
-    @membership.update!(unread_at: nil)
+    catch_up @membership
 
     @membership.read_until(Time.current)
 
     assert @membership.reload.read?
+  end
+
+  test "fully disconnecting counts messages watched live as seen" do
+    @membership.present
+    @membership.room.messages.create!(creator: users(:jason), body: "Watched live", client_message_id: "watched_live")
+
+    @membership.disconnected
+
+    assert @membership.reload.read?, "messages that landed while connected must not dot the room after leaving"
+  end
+
+  test "disconnecting preserves an explicit mark-as-unread" do
+    @membership.present
+    message = @membership.room.messages.create!(creator: users(:jason), body: "Keep me unread", client_message_id: "keep_unread")
+    @membership.mark_unread_at(message)
+
+    @membership.disconnected
+
+    @membership.reload
+    assert @membership.unread?, "an explicit mark must survive leaving the room"
+    assert_equal message, @membership.first_unread_message
+  end
+
+  test "refreshing the connection advances the cursor" do
+    @membership.present
+    @membership.room.messages.create!(creator: users(:jason), body: "Seen on heartbeat", client_message_id: "heartbeat_seen")
+
+    @membership.refresh_connection
+    @membership.update_columns(connected_at: nil, connections: 0)
+
+    assert @membership.reload.read?
+  end
+
+  test "disconnect_all advances cursors but preserves explicit marks" do
+    watching = memberships(:david_watercooler)
+    marked = memberships(:jason_watercooler)
+    watching.present
+    marked.present
+
+    message = watching.room.messages.create!(creator: users(:kevin), body: "Before shutdown", client_message_id: "shutdown_msg")
+    marked.mark_unread_at(message)
+
+    Membership.disconnect_all
+
+    assert watching.reload.read?, "a watcher's cursor advances on shutdown"
+    marked.reload
+    assert marked.unread?, "an explicit mark survives shutdown"
+    assert_equal message, marked.first_unread_message
   end
 
   # Leave! tests
@@ -345,7 +407,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications returns mentioned messages for non-direct rooms" do
     room = rooms(:pets)
     membership = room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: 1.day.ago)
+    force_all_unread membership
 
     # Message mentioning david — should be an unread notification
     mentioned_msg = room.messages.create!(
@@ -368,7 +430,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications returns all messages for direct rooms" do
     dm_room = rooms(:david_and_jason)
     membership = dm_room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: 1.day.ago)
+    force_all_unread membership
 
     msg = dm_room.messages.create!(
       body: "Hey!",
@@ -382,7 +444,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications includes @everyone messages" do
     room = rooms(:pets)
     membership = room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: 1.day.ago)
+    force_all_unread membership
 
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
@@ -400,7 +462,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "has_unread_notifications? true when mentioned in unread messages" do
     room = rooms(:pets)
     membership = room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: 1.day.ago)
+    force_all_unread membership
 
     room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
@@ -414,7 +476,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "has_unread_notifications? false when no mentions in unread messages" do
     room = rooms(:pets)
     membership = room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: 1.day.ago)
+    force_all_unread membership
 
     room.messages.create!(
       body: "<div>No mentions here</div>",
@@ -428,7 +490,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "has_unread_notifications? false when read" do
     room = rooms(:pets)
     membership = room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: nil)
+    catch_up membership
 
     assert_not membership.has_unread_notifications?
   end
@@ -436,7 +498,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count tracks mentioned unread messages" do
     room = rooms(:pets)
     david_membership = room.memberships.find_by(user: users(:david))
-    david_membership.update!(unread_at: 1.day.ago)
+    force_all_unread david_membership
 
     room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
@@ -455,7 +517,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count not bumped by non-mentioning messages" do
     room = rooms(:pets)
     david_membership = room.memberships.find_by(user: users(:david))
-    david_membership.update!(unread_at: 1.day.ago)
+    force_all_unread david_membership
 
     room.messages.create!(
       body: "<div>No mention</div>",
@@ -469,7 +531,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count zero when read" do
     room = rooms(:pets)
     membership = room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: nil)
+    catch_up membership
 
     assert_equal 0, membership.unread_notifications_count
   end
@@ -477,7 +539,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count drops when a mention message is soft-deleted" do
     room = rooms(:pets)
     david_membership = room.memberships.find_by(user: users(:david))
-    david_membership.update!(unread_at: 1.day.ago)
+    force_all_unread david_membership
 
     message = room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
@@ -495,7 +557,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count drops when a DM message is soft-deleted" do
     dm_room = rooms(:david_and_jason)
     membership = dm_room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: 1.day.ago)
+    force_all_unread membership
 
     earlier = dm_room.messages.create!(
       body: "first",
@@ -522,7 +584,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count drops when a mention message is hard-destroyed" do
     room = rooms(:pets)
     david_membership = room.memberships.find_by(user: users(:david))
-    david_membership.update!(unread_at: 1.day.ago)
+    force_all_unread david_membership
 
     message = room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
@@ -540,7 +602,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count drops when a DM message is hard-destroyed" do
     dm_room = rooms(:david_and_jason)
     membership = dm_room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: 1.day.ago)
+    force_all_unread membership
 
     earlier = dm_room.messages.create!(
       body: "first",
@@ -565,7 +627,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count restores when a soft-deleted DM message is reactivated" do
     dm_room = rooms(:david_and_jason)
     membership = dm_room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: 1.day.ago)
+    force_all_unread membership
 
     message = dm_room.messages.create!(
       body: "hello",
@@ -585,7 +647,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count restores when a soft-deleted @everyone message is reactivated" do
     room = rooms(:pets)
     membership = room.memberships.find_by(user: users(:david))
-    membership.update!(unread_at: 1.day.ago)
+    force_all_unread membership
 
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
@@ -608,7 +670,14 @@ class MembershipTest < ActiveSupport::TestCase
   test "unread_notifications_count bumps the DM sender when their unread window includes the message" do
     dm_room = rooms(:david_and_jason)
     sender_membership = dm_room.memberships.find_by(user: users(:jason))
-    sender_membership.update!(unread_at: 1.day.ago)
+
+    unseen = dm_room.messages.create!(
+      body: "waiting for jason",
+      creator: users(:david),
+      client_message_id: "dm_sender_window_anchor"
+    )
+    rewind_unread_to sender_membership, unseen
+    sender_membership.update!(unread_notifications_count: 1)
 
     dm_room.messages.create!(
       body: "self-aware",
@@ -616,7 +685,8 @@ class MembershipTest < ActiveSupport::TestCase
       client_message_id: "dm_sender_in_window"
     )
 
-    assert_equal 1, sender_membership.reload.unread_notifications_count
+    assert_equal 2, sender_membership.reload.unread_notifications_count,
+      "a sender with an open unread window keeps it, and their own DM message counts inside it"
   end
 
   test "unread_notifications_count recomputes when DM message at the unread anchor is soft-deleted" do
@@ -634,12 +704,13 @@ class MembershipTest < ActiveSupport::TestCase
       client_message_id: "dm_follow_up"
     )
 
-    membership.update!(unread_at: anchor.created_at, unread_notifications_count: 2)
+    rewind_unread_to membership, anchor
+    membership.update!(unread_notifications_count: 2)
 
     anchor.deactivate
 
     membership.reload
-    assert_equal follow_up.created_at, membership.unread_at
+    assert_equal follow_up, membership.first_unread_message
     assert_equal 1, membership.unread_notifications_count
   end
 

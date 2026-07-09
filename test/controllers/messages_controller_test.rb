@@ -62,7 +62,8 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     # Per-user broadcast: disconnected reader gets one update on their UserUnreadRoomsChannel.
     # Global no-broadcast guards the CRIT-3 thundering-herd fix: no broadcast to "unread_rooms".
     other_member = @room.memberships.visible.where.not(user: users(:david)).first
-    other_member.update!(unread_at: nil, connected_at: nil)
+    catch_up other_member
+    other_member.update!(connected_at: nil)
 
     stream_name = UserUnreadRoomsChannel.broadcasting_for(other_member.user)
     assert_broadcasts stream_name, 1 do
@@ -78,7 +79,8 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     # must still receive roomSize/roomUpdatedAt via UserUnreadRoomsChannel through
     # Room#broadcast_unread_to_disconnected_users, otherwise the sidebar sort goes stale.
     jason_membership = @room.memberships.find_by(user: users(:jason))
-    jason_membership.update!(unread_at: nil, connected_at: nil)
+    catch_up jason_membership
+    jason_membership.update!(connected_at: nil)
 
     stream_name = UserUnreadRoomsChannel.broadcasting_for(users(:jason))
     payloads = capture_broadcasts(stream_name) do

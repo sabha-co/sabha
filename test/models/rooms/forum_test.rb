@@ -86,9 +86,9 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     forum.memberships.grant_to(users(:jason))
     forum.memberships.grant_to(users(:david))
     reader = forum.memberships.find_by!(user: users(:jason))
-    reader.update_columns(connected_at: nil, connections: 0, unread_at: nil)
+    reader.update_columns(connected_at: nil, connections: 0, marked_unread: false)
     author = forum.memberships.find_by!(user: users(:david))
-    author.update_columns(connected_at: nil, connections: 0, unread_at: nil)
+    author.update_columns(connected_at: nil, connections: 0, marked_unread: false)
 
     create_forum_post(title: "Fresh question", forum: forum, author: users(:david))
 
@@ -100,23 +100,22 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     forum = rooms(:help_desk)
     forum.memberships.grant_to(users(:jason))
     connected = forum.memberships.find_by!(user: users(:jason))
-    connected.update_columns(connected_at: Time.current, connections: 1, unread_at: nil)
+    connected.update_columns(connected_at: Time.current, connections: 1, marked_unread: false)
 
     create_forum_post(title: "Another question", forum: forum, author: users(:david))
 
     assert connected.reload.read?, "a member viewing live never gets the dot"
   end
 
-  test "an opening post does not move an already-unread member's forum anchor" do
+  test "an opening post keeps an already-dotted member's forum dot" do
     forum = rooms(:help_desk)
     forum.memberships.grant_to(users(:jason))
     membership = forum.memberships.find_by!(user: users(:jason))
-    anchor = 1.day.ago.change(usec: 0)
-    membership.update_columns(connected_at: nil, connections: 0, unread_at: anchor)
+    membership.update_columns(connected_at: nil, connections: 0, marked_unread: true)
 
     create_forum_post(title: "Yet another question", forum: forum, author: users(:david))
 
-    assert_equal anchor, membership.reload.unread_at
+    assert membership.reload.unread?, "an already-dotted forum stays dotted"
   end
 
   test "a reply to a post does not dot the forum" do
@@ -124,7 +123,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     post = create_forum_post(title: "Existing discussion", forum: forum, author: users(:david))
     forum.memberships.grant_to(users(:jason))
     reader = forum.memberships.find_by!(user: users(:jason))
-    reader.update_columns(connected_at: nil, connections: 0, unread_at: nil)
+    reader.update_columns(connected_at: nil, connections: 0, marked_unread: false)
 
     post.messages.create!(body: "A reply", creator: users(:david), client_message_id: "forum_reply_no_dot")
 
@@ -309,7 +308,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
 
   test "a new post marks the forum unread for other members but not the author" do
     forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
-    forum.memberships.update_all(unread_at: nil)
+    forum.memberships.update_all(marked_unread: false)
 
     Current.set(user: users(:david)) { forum.post!(title: "How do I reset?", body: "b") }
 
@@ -322,7 +321,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
   test "a plain reply does not mark the forum unread" do
     forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
     post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "b") }
-    forum.memberships.update_all(unread_at: nil)
+    forum.memberships.update_all(marked_unread: false)
 
     Current.set(user: users(:kevin)) { post.messages.create!(body: "<div>a reply</div>") }
 
@@ -332,7 +331,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
   test "a mention in a reply does not badge the forum — it surfaces in Activity only" do
     forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
     post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "b") }
-    forum.memberships.update_all(unread_at: nil)
+    forum.memberships.update_all(marked_unread: false)
     mention = %(<action-text-attachment sgid="#{users(:kevin).attachable_sgid}" content-type="application/vnd.sabha.mention"></action-text-attachment>)
 
     Current.set(user: users(:david)) { post.messages.create!(body: "<div>#{mention} ping</div>") }

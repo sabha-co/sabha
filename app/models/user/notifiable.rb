@@ -129,14 +129,17 @@ module User::Notifiable
           m.read_until(until_time) if include_dms
           next
         end
+        next if m.last_read_at.nil?
+
+        unseen_window = m.room.messages.without_events
+          .after_cursor(m.last_read_at, m.last_read_message_id)
+          .created_before(until_time)
 
         notified_message_ids = Notification.where(user: self)
-          .where(message_id: m.room.messages.without_events.between(m.unread_at, until_time).select(:id))
+          .where(message_id: unseen_window.select(:id))
           .pluck(:message_id)
 
-        non_notified = m.room.messages.without_events
-          .where.not(id: notified_message_ids)
-          .between(m.unread_at, until_time)
+        non_notified = unseen_window.where.not(id: notified_message_ids)
 
         if non_notified.none?
           m.read_until(until_time)

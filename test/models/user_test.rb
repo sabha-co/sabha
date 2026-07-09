@@ -842,21 +842,25 @@ class UserTest < ActiveSupport::TestCase
   test "mark_direct_messages_as_read clears unread on DM memberships up to the given time" do
     user = users(:david)
     dm = memberships(:david_david_and_kevin)
-    dm.update_column(:unread_at, 30.minutes.ago)
+    # A minute old: loaded_at stamps truncate to seconds, so a message created
+    # "now" would land after the stamp and legitimately stay unread.
+    unseen = travel_to(1.minute.ago) { dm.room.messages.create!(creator: users(:kevin), body: "hi", client_message_id: "dm_mark_read") }
+    rewind_unread_to dm, unseen
 
     user.mark_direct_messages_as_read(Time.current.iso8601)
 
-    assert_nil dm.reload.unread_at, "DM membership must be marked read"
+    assert dm.reload.read?, "DM membership must be marked read"
   end
 
   test "mark_direct_messages_as_read leaves non-DM memberships untouched" do
     user = users(:david)
     non_dm = memberships(:david_designers)
-    non_dm.update_column(:unread_at, 30.minutes.ago)
+    unseen = non_dm.room.messages.create!(creator: users(:jason), body: "hi", client_message_id: "non_dm_untouched")
+    rewind_unread_to non_dm, unseen
 
     user.mark_direct_messages_as_read(Time.current.iso8601)
 
-    assert_not_nil non_dm.reload.unread_at,
+    assert non_dm.reload.unread?,
       "non-DM membership must not be touched by mark_direct_messages_as_read"
   end
 
@@ -864,7 +868,8 @@ class UserTest < ActiveSupport::TestCase
     user = users(:david)
     user.update_column(:activity_seen_at, 1.day.ago)
     non_dm = memberships(:david_designers)
-    non_dm.update_column(:unread_at, 30.minutes.ago)
+    unseen = travel_to(1.minute.ago) { non_dm.room.messages.create!(creator: users(:jason), body: "hi", client_message_id: "inbox_mark_read") }
+    rewind_unread_to non_dm, unseen
 
     now_iso = Time.current.iso8601
     user.mark_inbox_as_read(
@@ -873,7 +878,7 @@ class UserTest < ActiveSupport::TestCase
       activity_loaded_at: now_iso
     )
 
-    assert_nil non_dm.reload.unread_at, "non-direct unread membership must be marked read"
+    assert non_dm.reload.read?, "non-direct unread membership must be marked read"
     assert user.reload.activity_seen_at > 1.minute.ago,
       "activity_seen_at must advance to the activity_loaded_at"
   end
@@ -881,24 +886,27 @@ class UserTest < ActiveSupport::TestCase
   test "mark_inbox_as_read falls back to Time.current when a loaded_at timestamp is stale (> 1 hour old)" do
     user = users(:david)
     membership = memberships(:david_designers)
-    membership.update_column(:unread_at, 5.minutes.ago)
+    unseen = membership.room.messages.create!(creator: users(:jason), body: "hi", client_message_id: "inbox_stale_read")
+    rewind_unread_to membership, unseen
 
-    # A 2-hour-old stamp would leave unread_at untouched (5.minutes.ago > 2.hours.ago).
-    # The freshness check rewrites it to Time.current, so the membership ends up read.
+    # A 2-hour-old stamp would leave the fresh message unread (it's newer than
+    # the stamp). The freshness check rewrites it to Time.current, so the
+    # membership ends up read.
     user.mark_inbox_as_read(
       messages_loaded_at: 2.hours.ago.iso8601,
       notifications_loaded_at: 2.hours.ago.iso8601,
       activity_loaded_at: 2.hours.ago.iso8601
     )
 
-    assert_nil membership.reload.unread_at,
+    assert membership.reload.read?,
       "stale loaded_at must be clamped to Time.current so unread is marked read"
   end
 
   test "mark_inbox_as_read falls back to Time.current when loaded_at is blank" do
     user = users(:david)
     membership = memberships(:david_designers)
-    membership.update_column(:unread_at, 30.minutes.ago)
+    unseen = membership.room.messages.create!(creator: users(:jason), body: "hi", client_message_id: "inbox_blank_read")
+    rewind_unread_to membership, unseen
 
     user.mark_inbox_as_read(
       messages_loaded_at: nil,
@@ -906,7 +914,7 @@ class UserTest < ActiveSupport::TestCase
       activity_loaded_at: nil
     )
 
-    assert_nil membership.reload.unread_at,
+    assert membership.reload.read?,
       "blank loaded_at must be clamped to Time.current so unread is marked read"
   end
 

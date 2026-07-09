@@ -61,7 +61,7 @@ class Notification < ApplicationRecord
       next unless message
 
       Membership.where(room_id: message.room_id, user_id: notification.user_id)
-                .where("unread_at IS NOT NULL AND unread_at <= ?", message.created_at)
+                .merge(Membership.with_message_unseen(message.created_at, message.id))
                 .update_all("unread_notifications_count = MAX(unread_notifications_count - 1, 0)")
     end
   end

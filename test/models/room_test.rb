@@ -19,11 +19,13 @@ class RoomTest < ActiveSupport::TestCase
     room = rooms(:watercooler)
     last_message = room.messages.create!(creator: users(:jason), body: "Latest", client_message_id: "involve_unread")
     membership = room.memberships.find_by!(user: users(:david))
-    membership.update!(unread_at: nil)
+    catch_up membership
 
     room.involve_user(users(:david), unread: true)
 
-    assert_equal last_message.created_at, membership.reload.unread_at
+    membership.reload
+    assert membership.unread?
+    assert_equal last_message, membership.first_unread_message
   end
 
   test "involve_user with unread does not move an already-unread anchor" do
@@ -31,11 +33,11 @@ class RoomTest < ActiveSupport::TestCase
     first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "involve_anchor_1")
     room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "involve_anchor_2")
     membership = room.memberships.find_by!(user: users(:david))
-    membership.update!(unread_at: first.created_at)
+    rewind_unread_to membership, first
 
     room.involve_user(users(:david), unread: true)
 
-    assert_equal first.created_at, membership.reload.unread_at
+    assert_equal first, membership.reload.first_unread_message
   end
 
   test "revoke membership from user" do

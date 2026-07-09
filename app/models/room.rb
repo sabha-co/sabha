@@ -10,9 +10,13 @@ class Room < ApplicationRecord
   has_many :memberships, -> { active } do
     def grant_to(users)
       room = proxy_association.owner
+      # New members start caught up to the room's head — messages after the
+      # grant dot them. update_only keeps a rejoining member's cursor intact.
+      head = room.messages.reorder(:created_at, :id).last
+      head_at, head_id = head ? [ head.created_at, head.id ] : [ Time.current, 0 ]
       Membership.upsert_all(
-        Array(users).collect { |user| { room_id: room.id, user_id: user.id, involvement: room.default_involvement(user: user), active: true } },
-        unique_by: %i[room_id user_id]
+        Array(users).collect { |user| { room_id: room.id, user_id: user.id, involvement: room.default_involvement(user: user), active: true, last_read_at: head_at, last_read_message_id: head_id } },
+        unique_by: %i[room_id user_id], update_only: %i[involvement active]
       )
     end
 
@@ -97,7 +101,8 @@ class Room < ApplicationRecord
   end
 
   def receive(message)
-    unread_memberships(message)
+    catch_up_sender(message)
+    broadcast_unread_to_disconnected_users(message)
   end
 
   # Routing-vocabulary symbols that apply to a message in this room — a subset
@@ -109,7 +114,7 @@ class Room < ApplicationRecord
 
   def involve_user(user, unread: false)
     membership = memberships.create_with(involvement: "mentions").find_or_create_by(user: user)
-    membership.update(unread_at: messages.last&.created_at || Time.current) if unread && membership.read?
+    membership.rewind_to_unread if unread && membership.read?
     membership.ensure_receives_mentions!
   end
 
@@ -380,14 +385,14 @@ class Room < ApplicationRecord
       self.last_active_at = Time.current
     end
 
-    def unread_memberships(message)
-      # Mark read users as unread
-      memberships.visible.disconnected.read.where.not(user: message.creator)
-        .update_all(unread_at: message.created_at, updated_at: Time.current)
-
-      # Broadcast to ALL disconnected users (not just newly unread)
-      # Already-unread users need updated roomSize/roomUpdatedAt for sidebar ordering
-      broadcast_unread_to_disconnected_users(message)
+    # Sending means the sender has seen everything — but only advance their
+    # cursor when they were already caught up. A sender with an open unread
+    # window (away in a DM, or an explicit mark) keeps it: their own message
+    # lands inside the window, matching how the badge counts it.
+    def catch_up_sender(message)
+      memberships.where(user_id: message.creator_id)
+        .merge(Membership.caught_up_besides(message))
+        .update_all(last_read_at: message.created_at, last_read_message_id: message.id, updated_at: Time.current)
     end
 
     def broadcast_unread_to_disconnected_users(message)

@@ -40,8 +40,8 @@ module Message::Broadcasts
     end
 
     if ignore_if_older_message
-      # Filter in SQL: exclude users who have read or whose unread_at is after this message
-      scope = scope.where("unread_at IS NOT NULL AND unread_at <= ?", created_at)
+      # Filter in SQL: only users for whom this message is still unseen
+      scope = scope.merge(Membership.with_message_unseen(created_at, id))
     end
 
     scope.pluck(:user_id)

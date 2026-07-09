@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_04_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -145,6 +145,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_04_000001) do
     t.integer "connections", default: 0, null: false
     t.datetime "created_at", null: false
     t.string "involvement", default: "mentions"
+    t.datetime "last_read_at"
+    t.integer "last_read_message_id"
+    t.boolean "marked_unread", default: false, null: false
     t.integer "room_id", null: false
     t.boolean "starred", default: false, null: false
     t.datetime "unread_at"
