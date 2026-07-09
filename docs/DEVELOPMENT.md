@@ -8,14 +8,15 @@ Guide for contributing to Sabha.
 
 - **Ruby** 4.0+ (check `.ruby-version`)
 - **Node.js** 24+ and **pnpm**
-- **Redis** (for ActionCable in development)
+- **anycable-go** — the WebSocket server; required for all real-time delivery. See the [AnyCable install guide](https://docs.anycable.io/anycable-go/getting_started).
+- **Redis** (for Kredis)
 - **libvips** (for image processing)
 - **SQLite** 3.35+
 
 ### macOS
 
 ```bash
-brew install ruby node pnpm redis libvips sqlite
+brew install ruby node pnpm redis libvips sqlite anycable-go
 brew services start redis
 ```
 
@@ -26,6 +27,10 @@ sudo apt-get install -y libvips-dev redis-server sqlite3 libsqlite3-dev
 curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash -
 sudo apt-get install -y nodejs
 npm install -g pnpm
+
+# anycable-go isn't packaged for apt — install a release binary or via npm.
+# See https://docs.anycable.io/anycable-go/getting_started
+npm install -g @anycable/anycable-go
 ```
 
 ---
@@ -38,7 +43,7 @@ cd sabha
 bin/setup
 ```
 
-This installs gems, pnpm packages, prepares the database, and builds Tailwind.
+This installs gems, pnpm packages, `anycable-go` (on macOS), prepares the database, and builds Tailwind.
 
 To populate development data (users, rooms, messages):
 
