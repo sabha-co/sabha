@@ -12,6 +12,7 @@
       <%= composer_form_tag(room) do |form| %>
         <div class="composer__everyone-confirm align-center gap txt-small pad border border-radius shadow fill-white margin-block-end-half"
              role="alert" hidden data-composer-target="everyoneConfirm">
+          <%= icon_tag "bell-alert", class: "flex-item-no-shrink txt-lighter" %>
           <span class="flex-item-grow">
             Notify all <strong data-composer-target="everyoneConfirmCount"></strong> people in this room?
             <span class="txt-subtle" hidden data-composer-target="everyoneConfirmRoomWide">
