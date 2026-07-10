@@ -102,7 +102,7 @@ class Room < ApplicationRecord
 
   def receive(message)
     catch_up_sender(message)
-    broadcast_touched
+    broadcast_touched(creator_id: message.creator_id)
   end
 
   # Routing-vocabulary symbols that apply to a message in this room — a subset
@@ -397,10 +397,12 @@ class Room < ApplicationRecord
 
     # One shared publish per message, whatever the room's size. Every open
     # sidebar in the account gets the touched room's sort metadata and derives
-    # its own unread state client-side: non-members find no matching row, and
-    # the member viewing the room sees the message land, so no dot.
-    def broadcast_touched
-      RoomListChannel.broadcast_to(Account.sole, { roomId: id, roomSize: messages_count, roomUpdatedAt: last_active_at.iso8601 })
+    # its own unread state client-side: non-members find no matching row, the
+    # member viewing the room sees the message land, and the creator's own
+    # clients skip the dot (they may be elsewhere — a forum author lands on
+    # their new post, a sender's second device sits in another room).
+    def broadcast_touched(creator_id:)
+      RoomListChannel.broadcast_to(Account.sole, { roomId: id, roomSize: messages_count, roomUpdatedAt: last_active_at.iso8601, creatorId: creator_id })
     rescue ActiveRecord::RecordNotFound
       # No account yet (e.g., during setup or seed)
     end

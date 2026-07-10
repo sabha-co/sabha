@@ -117,7 +117,8 @@ export default class extends Controller {
   
   // The shared room-list stream carries two payload kinds: a rename
   // ({roomId, sortableName}) and a touched nudge ({roomId, roomSize,
-  // roomUpdatedAt}) published once per message for the whole account.
+  // roomUpdatedAt, creatorId}) published once per message for the whole
+  // account.
   #roomListReceived(payload) {
     if (payload.sortableName !== undefined) {
       this.#roomUpdated(payload)
@@ -139,10 +140,11 @@ export default class extends Controller {
     this.dispatch("renamed", { detail: { roomId: roomId } })
   }
 
-  // A room was touched by a new message. Refresh its sort metadata for
-  // everyone; derive unread locally — only a member not viewing the room
-  // gets the dot (the viewer sees the message land, so they stay read).
-  #touched({ roomId, roomSize, roomUpdatedAt }) {
+  // A room was touched by a new message or forum post. Refresh its sort
+  // metadata for everyone; derive unread locally — no dot for the member
+  // viewing the room (they see it land) or for the creator's own clients
+  // (a forum author lands on their new post, not the forum).
+  #touched({ roomId, roomSize, roomUpdatedAt, creatorId }) {
     const rooms = this.#findRoomTargets(roomId)
 
     rooms.forEach(room => {
@@ -152,7 +154,7 @@ export default class extends Controller {
       sortedListTarget.dataset.updatedAt = roomUpdatedAt
       sortedListTarget.dataset.size = roomSize
 
-      if (Current.room?.id != roomId) {
+      if (Current.room?.id != roomId && Current.user?.id != creatorId) {
         if (sortedListTarget.dataset.sortedListPriority) {
           sortedListTarget.dataset.sortedListPriority = "0"
         }

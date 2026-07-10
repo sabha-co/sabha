@@ -11,10 +11,10 @@
 # reset every member to caught-up; a membership with no cursor (created in
 # the deploy window by pre-cursor code) reads as read, not all-unread.
 #
-# marked_unread covers the two states a cursor cannot: an explicit
-# mark-as-unread (which must survive connection churn without being wiped by
-# a cursor advance) and forum dots (a forum owns no messages, so there is no
-# message for a cursor to fall behind).
+# marked_unread covers the one state a cursor cannot: an explicit
+# mark-as-unread, which must survive connection churn without being wiped by
+# a cursor advance. (A forum owns no messages, but its dot still derives —
+# from posts created after the cursor. See UNSEEN_POSTS_SQL.)
 module Membership::Unreadable
   extend ActiveSupport::Concern
 
@@ -29,6 +29,22 @@ module Membership::Unreadable
           OR (messages.created_at = memberships.last_read_at AND messages.id > memberships.last_read_message_id))
     )
   SQL
+
+  # A forum owns no messages: its dot derives from active posts (sub-rooms)
+  # created after the cursor instead. Time-only comparison — the cursor's
+  # message id means nothing against posts. Rides
+  # index_rooms_on_parent_room_and_created.
+  UNSEEN_POSTS_SQL = <<~SQL.squish
+    EXISTS (
+      SELECT 1 FROM rooms posts
+      WHERE posts.parent_room_id = memberships.room_id
+        AND posts.type = 'Rooms::Post'
+        AND posts.active = TRUE
+        AND posts.created_at > memberships.last_read_at
+    )
+  SQL
+
+  UNSEEN_SQL = "(#{UNSEEN_MESSAGES_SQL} OR #{UNSEEN_POSTS_SQL})"
 
   included do
     has_many :unread_notifications, ->(membership) {
@@ -52,7 +68,7 @@ module Membership::Unreadable
 
     scope :read, -> {
       where(marked_unread: false)
-        .where("memberships.connected_at >= :ttl OR memberships.last_read_at IS NULL OR NOT #{UNSEEN_MESSAGES_SQL}",
+        .where("memberships.connected_at >= :ttl OR memberships.last_read_at IS NULL OR NOT #{UNSEEN_SQL}",
                ttl: Membership::Connectable::CONNECTION_TTL.ago)
     }
     scope :unread, -> {
@@ -60,7 +76,7 @@ module Membership::Unreadable
         where(marked_unread: true).or(
           where(connected_at: [ nil, ...Membership::Connectable::CONNECTION_TTL.ago ])
             .where.not(last_read_at: nil)
-            .where(UNSEEN_MESSAGES_SQL)
+            .where(UNSEEN_SQL)
         )
       )
     }
@@ -68,7 +84,7 @@ module Membership::Unreadable
     # Used to filter direct messages in the sidebar to only show recent conversations.
     scope :recently_active_or_unread, ->(since: 7.days.ago) {
       joins(:room).where(
-        "memberships.marked_unread = TRUE OR (memberships.last_read_at IS NOT NULL AND #{UNSEEN_MESSAGES_SQL}) OR rooms.updated_at > :since",
+        "memberships.marked_unread = TRUE OR (memberships.last_read_at IS NOT NULL AND #{UNSEEN_SQL}) OR rooms.updated_at > :since",
         since: since
       )
     }
@@ -101,6 +117,22 @@ module Membership::Unreadable
         )
       SQL
     }
+    # The forum analog of caught_up_besides: caught up on every post except,
+    # at most, the given one. The set whose cursor may safely advance past
+    # that post.
+    scope :caught_up_besides_post, ->(post) {
+      where(marked_unread: false).where(<<~SQL.squish, post_id: post.id)
+        NOT EXISTS (
+          SELECT 1 FROM rooms posts
+          WHERE posts.parent_room_id = memberships.room_id
+            AND posts.type = 'Rooms::Post'
+            AND posts.active = TRUE
+            AND posts.id != :post_id
+            AND (memberships.last_read_at IS NULL
+              OR posts.created_at > memberships.last_read_at)
+        )
+      SQL
+    }
 
     before_create :snapshot_read_cursor
   end
@@ -113,7 +145,7 @@ module Membership::Unreadable
     return false if involved_in_invisible?
     return true if marked_unread?
     return false if connected?
-    unseen_messages?
+    unseen_messages? || unseen_posts?
   end
 
   def read
@@ -165,7 +197,8 @@ module Membership::Unreadable
   end
 
   # When this membership became unread: the first unseen message's timestamp.
-  # Nil when read, or when the unread state is flag-only (forum dots).
+  # Nil when read, or when the unread carries no message (a forum's
+  # post-derived dot, or an explicit mark in an empty room).
   def unread_since
     return nil unless unread?
     first_unread_message&.created_at
@@ -179,6 +212,12 @@ module Membership::Unreadable
   def unseen_messages?
     return false if last_read_at.nil?
     room.messages.after_cursor(last_read_at, last_read_message_id).exists?
+  end
+
+  # The forum arm of unread?: active posts created after the cursor.
+  def unseen_posts?
+    return false if last_read_at.nil? || !room.forum?
+    room.posts.where("created_at > ?", last_read_at).exists?
   end
 
   # Recompute the count of notification-worthy messages after a cursor

@@ -76,6 +76,7 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal 1, nudges.size
     assert_equal @room.id, nudges.first["roomId"]
+    assert_equal users(:david).id, nudges.first["creatorId"], "the nudge carries the sender so their own clients skip the dot"
   end
 
   test "mentioning a user in a room they're not viewing refreshes their sidebar sort metadata" do

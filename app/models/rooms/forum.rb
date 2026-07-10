@@ -115,17 +115,22 @@ class Rooms::Forum < Room
               .update_all(involvement: "invisible")
   end
 
-  # Poke the forum's sidebar unread for a new post — a dot, like any new room
-  # message — for the members who should see it. A forum owns no messages, so this
-  # mirrors a chat room's unread behavior against the forum's own memberships. It
-  # deliberately does NOT bump last_active_at — a post surfaces the forum via its
-  # unread state (which sorts to the top of its group), not chat-style reordering.
+  # A new post is the forum's version of receiving a message: the author's
+  # cursor advances and one shared nudge goes out, exactly like Room#receive.
+  # Every other member's dot derives from the post's position against their
+  # cursor (Membership::Unreadable::UNSEEN_POSTS_SQL) — nothing is written to
+  # member rows. It deliberately does NOT bump last_active_at — a post
+  # surfaces the forum via its unread state (which sorts to the top of its
+  # group), not chat-style reordering.
   #
   # Mentions are deliberately NOT surfaced here: a forum mention behaves like a
   # thread mention, reaching the named member through Activity only (see
   # Message::Mentionee), not a sidebar dot or number badge.
-  def mark_unread_from_post(message)
-    mark_members_unread(message) if message.room.opening_message?(message)
+  def receive_post(message)
+    return unless message.room.opening_message?(message)
+
+    catch_up_author(message.room)
+    broadcast_touched(creator_id: message.creator_id)
   end
 
   private
@@ -137,19 +142,12 @@ class Rooms::Forum < Room
       ForumFollowCleanupJob.perform_later(forum: self, user: user)
     end
 
-    # Every disconnected member but the author — a member viewing the gallery sees
-    # the post live and their presence already keeps them read. A forum owns no
-    # messages, so its dot can't derive from a read cursor: the marked_unread
-    # flag carries it, and presence (connect) clears it on open.
-    def mark_members_unread(message)
-      recipients = memberships.visible.disconnected.where.not(user_id: message.creator_id)
-      recipients.read.update_all(marked_unread: true, updated_at: Time.current)
-      recipients.includes(:user).each { |membership| broadcast_dot(membership) }
-    end
-
-    def broadcast_dot(membership)
-      UserUnreadRoomsChannel.broadcast_to(membership.user, {
-        roomId: id, roomSize: messages_count, roomUpdatedAt: last_active_at.iso8601, forceUnread: true
-      })
+    # Posting means the author has seen the forum's newest state — advance
+    # their cursor past their own post so it never dots them, unless another
+    # unseen post keeps their window open (mirrors Room#catch_up_sender).
+    def catch_up_author(post)
+      memberships.where(user_id: post.creator_id)
+        .merge(Membership.caught_up_besides_post(post))
+        .update_all(last_read_at: post.created_at, last_read_message_id: 0, updated_at: Time.current)
     end
 end

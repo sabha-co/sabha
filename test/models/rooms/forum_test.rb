@@ -130,6 +130,57 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert reader.reload.read?, "only a post's opening message dots the forum sidebar"
   end
 
+  test "a new post writes no member rows and publishes one shared nudge" do
+    forum = rooms(:help_desk)
+    forum.memberships.grant_to(users(:jason))
+    forum.memberships.grant_to(users(:kevin))
+    others = forum.memberships.where.not(user_id: users(:david).id)
+    others.each { |membership| catch_up membership }
+    others.update_all(connected_at: nil, connections: 0)
+    before = others.reload.map(&:attributes)
+    ActionCable.server.pubsub.clear
+
+    nudges = capture_broadcasts(RoomListChannel.broadcasting_for(Account.sole)) do
+      create_forum_post(title: "Zero writes", forum: forum, author: users(:david))
+    end
+
+    assert_equal before, others.reload.map(&:attributes), "a post should not touch other members' rows"
+    assert others.all?(&:unread?), "the dot still derives for every member who hasn't seen the post"
+    assert_equal 1, nudges.count { |n| n["roomId"] == forum.id }, "one shared nudge for the forum"
+    others.includes(:user).each do |membership|
+      assert_empty ActionCable.server.pubsub.broadcasts(UserUnreadRoomsChannel.broadcasting_for(membership.user)),
+        "no per-member dot push should fire"
+    end
+  end
+
+  test "an author with an older unseen post keeps their dot when they post" do
+    forum = rooms(:help_desk)
+    forum.memberships.grant_to(users(:david))
+    author = forum.memberships.find_by!(user: users(:david))
+    catch_up author
+    author.update_columns(connected_at: nil, connections: 0)
+    create_forum_post(title: "Someone else's question", forum: forum, author: users(:kevin))
+    assert author.reload.unread?, "another member's post dots the author like anyone else"
+
+    create_forum_post(title: "The author's own question", forum: forum, author: users(:david))
+
+    assert author.reload.unread?, "posting must not clear the author's dot for posts they haven't seen"
+  end
+
+  test "deleting the only unseen post heals the forum dot" do
+    forum = rooms(:help_desk)
+    forum.memberships.grant_to(users(:jason))
+    reader = forum.memberships.find_by!(user: users(:jason))
+    catch_up reader
+    reader.update_columns(connected_at: nil, connections: 0)
+    post = create_forum_post(title: "Soon deleted", forum: forum, author: users(:david))
+    assert reader.reload.unread?, "the fresh post dots the reader"
+
+    post.deactivate
+
+    assert reader.reload.read?, "derived forum unread self-heals when the post disappears"
+  end
+
   # --- Cascade & reactivation correctness --------------------------------
 
   test "restoring a forum restores posts that were active when it was deleted" do
@@ -308,7 +359,6 @@ class Rooms::ForumTest < ActiveSupport::TestCase
 
   test "a new post marks the forum unread for other members but not the author" do
     forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
-    forum.memberships.update_all(marked_unread: false)
 
     Current.set(user: users(:david)) { forum.post!(title: "How do I reset?", body: "b") }
 
@@ -321,7 +371,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
   test "a plain reply does not mark the forum unread" do
     forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
     post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "b") }
-    forum.memberships.update_all(marked_unread: false)
+    forum.memberships.each { |membership| catch_up membership }
 
     Current.set(user: users(:kevin)) { post.messages.create!(body: "<div>a reply</div>") }
 
@@ -331,7 +381,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
   test "a mention in a reply does not badge the forum — it surfaces in Activity only" do
     forum = Rooms::Forum.create_for({ name: "Community", creator: users(:david) }, users: users(:david))
     post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "b") }
-    forum.memberships.update_all(marked_unread: false)
+    forum.memberships.each { |membership| catch_up membership }
     mention = %(<action-text-attachment sgid="#{users(:kevin).attachable_sgid}" content-type="application/vnd.sabha.mention"></action-text-attachment>)
 
     Current.set(user: users(:david)) { post.messages.create!(body: "<div>#{mention} ping</div>") }
