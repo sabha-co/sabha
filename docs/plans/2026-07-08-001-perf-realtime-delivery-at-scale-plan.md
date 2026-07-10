@@ -457,7 +457,7 @@ Status per PR. Update the table and dated log as units land; requirements and un
 | PR 1b · R0 cutover | U11 | Not started | — |
 | PR 2 · R1 derived unread | U2, U3, U4 | **Complete, in review** | [#139](https://github.com/sabha-co/sabha/pull/139) (`realtime-delivery-at-scale`) |
 | PR 3 · R2 signed-stream sidebar | U5 | **Complete, in review** | [#140](https://github.com/sabha-co/sabha/pull/140) (`signed-stream-sidebar`, stacked on #139) |
-| PR 4 · R3 AnyCable presence | U6 | Not started | — |
+| PR 4 · R3 AnyCable presence | U6 | Implemented on branch | `anycable-presence` (stacked on #140) |
 | PR 5 · R4 @everyone guardrail | U7, U8 | Not started | — |
 | PR 6 · R5 defer residual | U9 | Not started | — |
 | PR 7 · R6 JWT | U10 | Not started | — |
@@ -471,6 +471,7 @@ Status per PR. Update the table and dated log as units land; requirements and un
 - **2026-07-10** — U5 started on `signed-stream-sidebar` (branched off PR 2's branch; ships only after U11 per the dependency note).
 - **2026-07-10** — Decision: R0 is treated as merged for sequencing — PR 3 no longer waits on the U11 cutover landing first (production already defaults to AnyCable; the in-process `$pubsub` fallback keeps a dev holdout working meanwhile).
 - **2026-07-10** — U5 landed on `signed-stream-sidebar` (`667eee5`), opened as [#140](https://github.com/sabha-co/sabha/pull/140) stacked on #139. Log-verified against anycable-go: one shared publish per send/rename, mark-as-unread on the member's ReadRoomsChannel, zero `$pubsub` subscribe RPCs reaching Rails.
+- **2026-07-10** — U6 implemented on `anycable-presence` (stacked on `signed-stream-sidebar`): `PresenceChannel` now `include`s `AnyCable::Rails::Channel::Presence` and joins/leaves the room's own stream (`broadcasting_for(room)`, tenant-scoped by the Room GID) on present/absent. Additive per KTD4 — the `connected_at` last-seen lifecycle (`present`/50s `refresh`/`disconnected`) and all push (`connected?`, 60s), email (`workspace_locally_away?`, 1h), and activity-tier gating read the persisted column unchanged; presence adds only the ephemeral Go-side live set. No JS change (the existing controller already drives present/absent/unsubscribe); a live "who's here" consumer stays on the native track. Degrades gracefully on a dev in-process fallback (`join_presence` no-ops when not `anycabled?`). Both suites green.
 - **2026-07-10** — U5 implemented: the sidebar's shared stream is now a signed `$pubsub` stream (`Account#room_list_stream_name`, GID-scoped per tenant) carrying both nudge and rename payloads; `RoomListChannel` and `UserUnreadRoomsChannel` deleted. Mark-as-unread — the per-user channel's last producer — moved onto `ReadRoomsChannel` (`unread: true` + sort keys), so read-state rides one per-user channel in both directions. Sidebar subscriptions drop 4 → 3, and the shared one no longer costs a Rails subscribe RPC under anycable-go (dev pre-cutover falls back to the gem's in-process `$pubsub` handler). Both suites green.
 
 ### Carried follow-ups
