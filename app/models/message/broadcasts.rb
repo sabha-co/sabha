@@ -18,6 +18,9 @@ module Message::Broadcasts
   end
 
   def broadcast_notifications(ignore_if_older_message: false)
+    # A capped @everyone posts room-wide; skip the per-recipient live badge push.
+    return if everyone_mention_capped?
+
     user_ids = notification_recipient_ids(ignore_if_older_message)
     return if user_ids.empty?
 

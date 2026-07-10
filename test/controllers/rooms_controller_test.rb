@@ -15,6 +15,31 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "composer carries the @everyone confirm threshold, member count, and cap flag" do
+    room = rooms(:pets)
+
+    get room_url(room)
+
+    assert_response :success
+    assert_select "form#composer[data-composer-everyone-confirm-threshold-value=?]",
+                  Rails.configuration.x.everyone_mention.confirm_threshold.to_s
+    assert_select "form#composer[data-composer-everyone-member-count-value=?]", room.active_member_count.to_s
+    assert_select "form#composer[data-composer-everyone-capped-value='false']"
+    assert_select ".composer__everyone-confirm[hidden]"
+  end
+
+  test "composer flags the @everyone cap when the room is over the ceiling" do
+    room = rooms(:pets)
+    original = Rails.configuration.x.everyone_mention.ceiling
+    Rails.configuration.x.everyone_mention.ceiling = 1
+
+    get room_url(room)
+
+    assert_select "form#composer[data-composer-everyone-capped-value='true']"
+  ensure
+    Rails.configuration.x.everyone_mention.ceiling = original
+  end
+
   test "show renders the new-messages separator inside the first unread message" do
     room = rooms(:pets)
     room.messages.create!(creator: users(:jason), body: "Seen already", client_message_id: "separator_seen")

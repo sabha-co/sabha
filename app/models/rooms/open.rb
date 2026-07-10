@@ -5,7 +5,10 @@ class Rooms::Open < Room
 
   def applicable_activity_types(message)
     types = [ :everyone_room_message ]
-    types << :mention if message.mentions_everyone? || message.mentionees.any?
+    # A capped @everyone drops the :mention pass, so its push (room.user_ids) and
+    # missed-email bundle don't fan out to the whole room; the message still
+    # rides :everyone_room_message like any other post.
+    types << :mention if (message.mentions_everyone? || message.mentionees.any?) && !message.everyone_mention_capped?
     types
   end
 end

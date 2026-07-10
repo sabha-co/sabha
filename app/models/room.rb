@@ -195,6 +195,12 @@ class Room < ApplicationRecord
     end
   end
 
+  # Above the configured ceiling, @everyone degrades from per-member
+  # notification fan-out to a single room-wide post (see Message#everyone_mention_capped?).
+  def everyone_mention_over_ceiling?
+    active_member_count > Rails.configuration.x.everyone_mention.ceiling
+  end
+
   def invalidate_member_count_cache
     Rails.cache.delete(active_member_count_cache_key)
   end
@@ -401,6 +407,11 @@ class Room < ApplicationRecord
     # member viewing the room sees the message land, and the creator's own
     # clients skip the dot (they may be elsewhere — a forum author lands on
     # their new post, a sender's second device sits in another room).
+    #
+    # creator_id rides the payload rather than AnyCable's socket-level
+    # to_others: — the skip is per-user, not per-socket, and this fires off the
+    # HTTP create path where no originating socket is in scope. to_others would
+    # exclude only the one posting socket, missing the sender's other devices.
     def broadcast_touched(creator_id:)
       Account.sole.broadcast_room_list({ roomId: id, roomSize: messages_count, roomUpdatedAt: last_active_at.iso8601, creatorId: creator_id })
     rescue ActiveRecord::RecordNotFound
