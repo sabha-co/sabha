@@ -59,15 +59,17 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "creating a message publishes one shared room nudge instead of per-user unread broadcasts" do
-    # One account-wide publish regardless of member count; each client derives
-    # its own unread state from it. No per-user UserUnreadRoomsChannel push and
-    # no global "unread_rooms" broadcast (the original thundering-herd fix).
+    # One account-wide publish on the signed room-list stream regardless of
+    # member count; each client derives its own unread state from it. No
+    # per-user push (ReadRoomsChannel is the surviving per-user read-state
+    # stream) and no global "unread_rooms" broadcast (the original
+    # thundering-herd fix).
     other_member = @room.memberships.visible.where.not(user: users(:david)).first
     catch_up other_member
     other_member.update!(connected_at: nil)
 
-    nudges = capture_broadcasts(RoomListChannel.broadcasting_for(Account.sole)) do
-      assert_no_broadcasts UserUnreadRoomsChannel.broadcasting_for(other_member.user) do
+    nudges = capture_broadcasts(Account.sole.room_list_stream_name) do
+      assert_no_broadcasts ReadRoomsChannel.broadcasting_for(other_member.user) do
         assert_no_broadcasts "unread_rooms" do
           post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
         end
@@ -87,7 +89,7 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     catch_up jason_membership
     jason_membership.update!(connected_at: nil)
 
-    nudges = capture_broadcasts(RoomListChannel.broadcasting_for(Account.sole)) do
+    nudges = capture_broadcasts(Account.sole.room_list_stream_name) do
       post room_messages_url(@room, format: :turbo_stream),
         params: { message: { body: "<div>Hey #{mention_attachment_for(:jason)}</div>", client_message_id: SecureRandom.uuid } }
     end

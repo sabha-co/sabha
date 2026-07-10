@@ -433,28 +433,28 @@ class RoomTest < ActiveSupport::TestCase
     assert_includes result.map(&:user_id), bender.id, "bot in a thread should receive message events even without a mention"
   end
 
-  # The tests below pin observable Room callback behavior: RoomListChannel
-  # broadcasts on sortable_name change, sidebar appends to each visible member
+  # The tests below pin observable Room callback behavior: the shared
+  # room-list stream broadcasts on sortable_name change, sidebar appends to each visible member
   # on reactivation (suppressed for thread rooms), and the room_created event
   # message posted on creation (suppressed for direct and thread rooms). They
   # assert what the callbacks emit, not how they're wired, so they survive
   # moves between the model and concerns.
 
-  test "renaming a room broadcasts to the room list channel" do
+  test "renaming a room broadcasts to the shared room-list stream" do
     room = rooms(:pets)
     ActionCable.server.pubsub.clear
 
-    assert_broadcasts(RoomListChannel.broadcasting_for(Account.sole), 1) do
+    assert_broadcasts(Account.sole.room_list_stream_name, 1) do
       room.update!(name: "Other Pets")
     end
   end
 
-  test "updating a room without changing its name does not broadcast to the room list channel" do
+  test "updating a room without changing its name does not broadcast to the room-list stream" do
     room = rooms(:pets)
     room.save!  # ensure sortable_name is materialized (fixtures bypass callbacks)
     ActionCable.server.pubsub.clear
 
-    assert_no_broadcasts(RoomListChannel.broadcasting_for(Account.sole)) do
+    assert_no_broadcasts(Account.sole.room_list_stream_name) do
       room.update!(last_active_at: 1.second.from_now)
     end
   end
@@ -465,12 +465,12 @@ class RoomTest < ActiveSupport::TestCase
     assert members.size >= 2, "fixture should have multiple members for this test to be meaningful"
     ActionCable.server.pubsub.clear
 
-    assert_broadcasts(RoomListChannel.broadcasting_for(Account.sole), 1) do
+    assert_broadcasts(Account.sole.room_list_stream_name, 1) do
       room.messages.create!(body: "Hello all", creator: members.first, client_message_id: SecureRandom.uuid)
     end
 
     members.each do |user|
-      assert_empty ActionCable.server.pubsub.broadcasts(UserUnreadRoomsChannel.broadcasting_for(user)),
+      assert_empty ActionCable.server.pubsub.broadcasts(ReadRoomsChannel.broadcasting_for(user)),
         "the send path should not push per-member unread broadcasts"
     end
   end

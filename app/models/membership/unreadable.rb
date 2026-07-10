@@ -281,21 +281,24 @@ module Membership::Unreadable
         .count
     end
 
+    # Read-state transitions are per-user, so both directions ride the
+    # member's own ReadRoomsChannel: a bare { room_id: } means read; the
+    # mark-as-unread form adds unread: true plus the sidebar sort keys.
     def broadcast_read
       ReadRoomsChannel.broadcast_to(user, { room_id: room_id })
     end
 
     def broadcast_unread
-      UserUnreadRoomsChannel.broadcast_to(user, unread_payload)
+      ReadRoomsChannel.broadcast_to(user, unread_payload)
       UnreadNotificationsChannel.broadcast_to(user, notification_payload) if has_unread_notifications?
     end
 
     def unread_payload
       {
-        roomId: room.id,
-        roomSize: room.messages_count,
-        roomUpdatedAt: room.last_active_at.iso8601,
-        forceUnread: true
+        room_id: room.id,
+        room_size: room.messages_count,
+        room_updated_at: room.last_active_at.iso8601,
+        unread: true
       }
     end
 

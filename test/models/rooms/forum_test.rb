@@ -140,7 +140,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     before = others.reload.map(&:attributes)
     ActionCable.server.pubsub.clear
 
-    nudges = capture_broadcasts(RoomListChannel.broadcasting_for(Account.sole)) do
+    nudges = capture_broadcasts(Account.sole.room_list_stream_name) do
       create_forum_post(title: "Zero writes", forum: forum, author: users(:david))
     end
 
@@ -148,7 +148,7 @@ class Rooms::ForumTest < ActiveSupport::TestCase
     assert others.all?(&:unread?), "the dot still derives for every member who hasn't seen the post"
     assert_equal 1, nudges.count { |n| n["roomId"] == forum.id }, "one shared nudge for the forum"
     others.includes(:user).each do |membership|
-      assert_empty ActionCable.server.pubsub.broadcasts(UserUnreadRoomsChannel.broadcasting_for(membership.user)),
+      assert_empty ActionCable.server.pubsub.broadcasts(ReadRoomsChannel.broadcasting_for(membership.user)),
         "no per-member dot push should fire"
     end
   end

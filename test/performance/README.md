@@ -33,7 +33,7 @@ and the loop is closed by measuring whether broadcasts come back:
   │    • AnyCable ── anycable-go :8080 ──RPC──▶ Rails /_anycable │
   │                                                             │
   │  ① connect  → verify signed cookie → Session → Current.user │
-  │     subscribe→ PresenceChannel, UserUnreadRoomsChannel,     │
+  │     subscribe→ PresenceChannel, $pubsub room-list stream,   │
   │                HeartbeatChannel, 3× Turbo::StreamsChannel    │
   │                                                             │
   │  ② create Message → broadcast_append_to room, :messages     │
@@ -84,8 +84,8 @@ docker run --rm -i \
 ```
 
 The `sockets` scenario opens WebSocket connections, each subscribing to
-`PresenceChannel`, `UserUnreadRoomsChannel`, `HeartbeatChannel`, and the signed
-Turbo streams. After 30s the `messages` scenario POSTs messages to room 1;
+`PresenceChannel`, the account's signed room-list stream (`$pubsub`),
+`HeartbeatChannel`, and the signed Turbo streams. After 30s the `messages` scenario POSTs messages to room 1;
 connected sockets count broadcasts via the `appends_received` metric in the k6
 summary.
 
@@ -134,7 +134,7 @@ latent bug:
 | | once-campfire | Sabha |
 |---|---|---|
 | **Signed stream names** | `gid://campfire/...` (correct for Campfire) | `gid://sabha/...` — updated for the renamed GlobalID app |
-| **Channel name** | `UnreadRoomsChannel` | `UserUnreadRoomsChannel` (renamed in Sabha) |
+| **Sidebar unread channel** | `UnreadRoomsChannel` | retired — the sidebar rides the account's signed room-list stream (`$pubsub`) |
 | **Cookie key digest** | SHA1 `KeyGenerator` | **SHA256** (matches `load_defaults 8.2`) |
 | **Parameters** | hardcoded `duration: 60s`, `rate = USERS/3` | `RATE`, `HOLD`, `VUS`, `DURATION`, `MSG_COUNT` — establishment rate decoupled from concurrency |
 | **WS vs HTTP port** | single `PORT` | separate `WS_PORT` (so the same script drives ActionCable `:3000` or anycable-go `:8080`) |

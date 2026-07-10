@@ -39,8 +39,9 @@ On a **1 vCPU / 2 GB** VPS running Sabha v1.10.0:
   performance env.
 
 Each virtual user opens a WebSocket and subscribes to the same channels a real
-room page does: `PresenceChannel`, `UserUnreadRoomsChannel`, `HeartbeatChannel`,
-and three signed `Turbo::StreamsChannel` streams.
+room page does: `PresenceChannel`, the account's signed room-list stream
+(`$pubsub`), `HeartbeatChannel`, and three signed `Turbo::StreamsChannel`
+streams.
 
 ### Reproducing it
 
