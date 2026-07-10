@@ -111,6 +111,13 @@ accessories:
         ANYCABLE_LOG_LEVEL: "info"
       secret:
         - ANYCABLE_SECRET
+        # Optional two-secret split: sign client-facing JWT identity + signed
+        # streams with a secret distinct from the RPC/broadcast ANYCABLE_SECRET.
+        # Both fall back to ANYCABLE_SECRET when unset, so leaving these out keeps
+        # the single-secret setup. To enable, set both here and in the web role,
+        # and add them to your secrets file:
+        # - ANYCABLE_JWT_SECRET
+        # - ANYCABLE_STREAMS_SECRET
 
   # Beszel monitoring agent — reports host + container metrics to the hub at
   # https://monitor.sabha.co. Same hub used for SabhaCloud customer servers.

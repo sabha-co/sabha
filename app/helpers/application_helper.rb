@@ -20,6 +20,19 @@ module ApplicationHelper
     end
   end
 
+  # Emits the cable URL with a signed JWT identity so anycable-go can identify
+  # the socket in Go and skip the Rails connect RPC. The token is minted from
+  # the already-authenticated request, so a reconnect storm no longer hits the
+  # RPC. With no current user (login pages) we fall back to a tokenless URL so
+  # anycable-go authenticates via the connect RPC.
+  def signed_action_cable_meta_tag
+    return action_cable_meta_tag if Current.user.nil?
+
+    base_url = ActionCable.server.config.url || ActionCable.server.config.mount_path
+    token = AnyCable::JWT.encode({ current_user: Current.user })
+    tag "meta", name: "action-cable-url", content: "#{base_url}?#{AnyCable.config.jwt_param}=#{token}"
+  end
+
   def custom_styles_tag
     if custom_styles = Current.account&.custom_styles
       # Inline custom styles should not force a full Turbo reload across navigations

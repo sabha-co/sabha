@@ -187,6 +187,14 @@ Rails.application.routes.draw do
     get "@:message_id", to: "rooms#show", as: :at_message
   end
 
+  # Cable config discovery + JWT refresh. A signed-in client (browser, or a
+  # native client once it authenticates) fetches its WebSocket URL and a fresh
+  # identity token here instead of scraping the HTML meta tag — the refresh
+  # sibling of the short-lived `jid` token minted into the layout.
+  namespace :api, defaults: { format: :json } do
+    resource :cable, only: :show
+  end
+
   # Bot API — authenticate with `Authorization: Bearer <bot_key>`.
   namespace :api, defaults: { format: :json } do
     namespace :bots do

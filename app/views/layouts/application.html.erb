@@ -19,7 +19,7 @@
     <meta property="og:logo" content="<%= request.base_url %>/icon.png">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-    <%= Sabha.saas? ? tenanted_action_cable_meta_tag : action_cable_meta_tag %>
+    <%= Sabha.saas? ? tenanted_action_cable_meta_tag : signed_action_cable_meta_tag %>
     <%= tag.meta name: "anycable-whisper", content: "true" %>
     <%= current_user_meta_tags %>
 

@@ -6,11 +6,24 @@ module TenantingHelper
   # kamal-proxy routes /cable to AnyCable-Go via path_prefix, so the
   # workspace ID can't be a path prefix (/1000001/cable won't match).
   # Instead: wss://sabha.co/cable?wid=1000002
+  #
+  # When there's an authenticated user we also mint a signed JWT identity so
+  # anycable-go identifies the socket in Go and skips the Rails connect RPC.
+  # The tenant rides as its own `current_tenant` claim — a plain string the
+  # gem's `around_command :with_tenant` opens the tenant DB with before the
+  # `current_user` GID is lazily resolved. `?wid=` stays as the tokenless
+  # fallback (the connect RPC still resolves the tenant from it).
   def tenanted_action_cable_meta_tag
     workspace_id = request.env["sabha.workspace_id"]
     base_url = ActionCable.server.config.url || "#{request.script_name}/cable"
+    url = "#{base_url}?wid=#{workspace_id}"
 
-    tag "meta", name: "action-cable-url", content: "#{base_url}?wid=#{workspace_id}"
+    if Current.user && workspace_id.present?
+      token = AnyCable::JWT.encode({ current_user: Current.user, current_tenant: workspace_id.to_s })
+      url += "&#{AnyCable.config.jwt_param}=#{token}"
+    end
+
+    tag "meta", name: "action-cable-url", content: url
   end
 
   # Expose the workspace path prefix (request.script_name) to JavaScript.
