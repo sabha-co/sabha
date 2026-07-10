@@ -21,6 +21,18 @@ class BroadcastMentionNotificationsJobTest < ActiveJob::TestCase
     end
   end
 
+  test "refreshes each mentioned user's sidebar activity indicator" do
+    message = @room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+      creator: @david,
+      client_message_id: "mention_broadcast_job_indicator"
+    )
+
+    assert_turbo_stream_broadcasts [ @jason, :sidebar_activity_indicator ], count: 1 do
+      BroadcastMentionNotificationsJob.perform_now(message_id: message.id)
+    end
+  end
+
   test "does nothing when the message has no mention notifications" do
     message = @room.messages.create!(
       body: "Plain message",

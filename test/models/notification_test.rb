@@ -301,11 +301,13 @@ class NotificationTest < ActiveSupport::TestCase
 
   test "creating a mention notification broadcasts the activity indicator" do
     assert_turbo_stream_broadcasts [ @david, :sidebar_activity_indicator ], count: 1 do
-      @room.messages.create!(
-        body: "<div>Hey #{mention_attachment_for(:david)}</div>",
-        creator: @jason,
-        client_message_id: "indicator_broadcast_mention"
-      )
+      perform_enqueued_jobs(only: BroadcastMentionNotificationsJob) do
+        @room.messages.create!(
+          body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+          creator: @jason,
+          client_message_id: "indicator_broadcast_mention"
+        )
+      end
     end
   end
 
