@@ -458,7 +458,7 @@ Status per PR. Update the table and dated log as units land; requirements and un
 | PR 2 · R1 derived unread | U2, U3, U4 | **Complete, in review** | [#139](https://github.com/sabha-co/sabha/pull/139) (`realtime-delivery-at-scale`) |
 | PR 3 · R2 signed-stream sidebar | U5 | **Complete, in review** | [#140](https://github.com/sabha-co/sabha/pull/140) (`signed-stream-sidebar`, stacked on #139) |
 | PR 4 · R3 AnyCable presence | U6 | **In review** | [#141](https://github.com/sabha-co/sabha/pull/141) (`anycable-presence`, stacked on #140) |
-| PR 5 · R4 @everyone guardrail | U7, U8 | Implemented on branch | `everyone-guardrail` (stacked on #141) |
+| PR 5 · R4 @everyone guardrail | U7, U8 | **In review** | [#142](https://github.com/sabha-co/sabha/pull/142) (`everyone-guardrail`, stacked on #141) |
 | PR 6 · R5 defer residual | U9 | Not started | — |
 | PR 7 · R6 JWT | U10 | Not started | — |
 
