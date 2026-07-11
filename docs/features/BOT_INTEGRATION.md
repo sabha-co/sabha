@@ -598,7 +598,7 @@ Bots should implement reconnection with exponential backoff. Sabha's AnyCable se
 
 ## OpenClaw Integration
 
-[OpenClaw](https://openclaw.ai) is an AI agent platform that connects to chat services. The [`openclaw-sabha`](https://github.com/openclaw/openclaw-sabha) plugin (v0.10.0+) implements the bearer-token auth and HMAC webhook verification documented here.
+[OpenClaw](https://openclaw.ai) is an AI agent platform that connects to chat services. The [`openclaw-sabha`](https://github.com/sabha-co/openclaw-sabha) plugin (v0.10.0+) implements the bearer-token auth and HMAC webhook verification documented here.
 
 ### Architecture
 
