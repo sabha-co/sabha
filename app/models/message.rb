@@ -61,6 +61,13 @@ class Message < ApplicationRecord
     where(table[:created_at].lt(time))
       .or(where(table[:created_at].eq(time)).where(table[:id].lt(id)))
   }
+  # Mirror of before_cursor: everything strictly after a (time, id) point.
+  # Powers derived unread — messages after a membership's read cursor.
+  scope :after_cursor, ->(time, id) {
+    table = arel_table
+    where(table[:created_at].gt(time))
+      .or(where(table[:created_at].eq(time)).where(table[:id].gt(id)))
+  }
   scope :with_bookmark_status_for, ->(user) {
     joins(sanitize_sql_array([ <<~SQL.squish, user.id ])).select("messages.*, (bookmarks.id IS NOT NULL) AS is_bookmarked")
       LEFT JOIN bookmarks

@@ -35,7 +35,7 @@ class SidebarMembershipsTest < ActiveSupport::TestCase
     room.messages.create!(creator: @jason, body: "Hello")
 
     # Mark as read and set room as old (after message creation to avoid callback updates)
-    @david.memberships.find_by(room: room).update!(unread_at: nil)
+    catch_up @david.memberships.find_by(room: room)
     room.update_columns(updated_at: 10.days.ago)
 
     direct = @sidebar.direct
@@ -48,7 +48,7 @@ class SidebarMembershipsTest < ActiveSupport::TestCase
     message = room.messages.create!(creator: @jason, body: "Hello")
 
     # Mark as unread and set room as old
-    @david.memberships.find_by(room: room).update!(unread_at: message.created_at)
+    rewind_unread_to @david.memberships.find_by(room: room), message
     room.update_columns(updated_at: 10.days.ago)
 
     direct = @sidebar.direct

@@ -6,7 +6,7 @@ class Message::BroadcastsTest < ActiveSupport::TestCase
     @user = users(:david)
   end
 
-  test "notification_recipient_ids filters by unread_at when ignore_if_older_message is true" do
+  test "notification_recipient_ids filters to unseen when ignore_if_older_message is true" do
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
@@ -16,18 +16,18 @@ class Message::BroadcastsTest < ActiveSupport::TestCase
       creator: @user
     )
 
-    # Mark one user as having read (unread_at = nil)
-    @room.memberships.find_by(user: users(:jason)).update!(unread_at: nil)
+    # One user has seen everything
+    catch_up @room.memberships.find_by(user: users(:jason))
 
-    # Mark another user as unread before this message
-    @room.memberships.find_by(user: users(:david)).update!(unread_at: 1.hour.ago)
+    # Another user's cursor sits before this message
+    force_all_unread @room.memberships.find_by(user: users(:david))
 
     user_ids = message.send(:notification_recipient_ids, true)
 
-    # David should be included (unread_at before message)
+    # David should be included (message unseen for them)
     assert_includes user_ids, users(:david).id
 
-    # Jason should be excluded (read - unread_at is nil)
+    # Jason should be excluded (caught up)
     assert_not_includes user_ids, users(:jason).id
   end
 

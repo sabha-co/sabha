@@ -15,6 +15,29 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "show renders the new-messages separator inside the first unread message" do
+    room = rooms(:pets)
+    room.messages.create!(creator: users(:jason), body: "Seen already", client_message_id: "separator_seen")
+    first_unread = room.messages.create!(creator: users(:jason), body: "New to you", client_message_id: "separator_unread")
+    rewind_unread_to room.memberships.find_by!(user: users(:david)), first_unread
+
+    get room_url(room)
+
+    assert_response :success
+    assert_select "[data-message-id='#{first_unread.id}'] #unread_separator", count: 1
+  end
+
+  test "show renders no new-messages separator when the membership is read" do
+    room = rooms(:pets)
+    room.messages.create!(creator: users(:jason), body: "Nothing new", client_message_id: "separator_none")
+    catch_up room.memberships.find_by!(user: users(:david))
+
+    get room_url(room)
+
+    assert_response :success
+    assert_select "#unread_separator", count: 0
+  end
+
   test "shows records the last room visited in a cookie" do
     get room_url(users(:david).rooms.last)
     assert_equal users(:david).rooms.last.id.to_s, response.cookies["last_room"]

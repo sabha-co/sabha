@@ -99,7 +99,7 @@ class RoomsController < ApplicationController
 
     def find_messages
       messages = @room.messages.for_display.with_bookmark_status_for(Current.user)
-      @first_unread_message = first_unread_from(messages)
+      @first_unread_message = first_unread
 
       anchor = target_message(messages) || @first_unread_message
       result = anchor ? messages.page_around(anchor) : messages.last_page
@@ -107,11 +107,11 @@ class RoomsController < ApplicationController
       Message.with_thread_participants(with_thread_parent(result))
     end
 
-    def first_unread_from(messages)
+    def first_unread
       # A forum member can view a post without a membership (access is
       # forum-derived), so there may be no unread state to anchor on.
       return unless @membership&.unread?
-      messages.ordered.since(@membership.unread_at).first
+      @membership.first_unread_message
     end
 
     def target_message(messages)

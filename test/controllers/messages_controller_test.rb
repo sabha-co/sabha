@@ -58,39 +58,44 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "creating a message broadcasts unread to per-user channels but never to the global unread_rooms channel" do
-    # Per-user broadcast: disconnected reader gets one update on their UserUnreadRoomsChannel.
-    # Global no-broadcast guards the CRIT-3 thundering-herd fix: no broadcast to "unread_rooms".
+  test "creating a message publishes one shared room nudge instead of per-user unread broadcasts" do
+    # One account-wide publish regardless of member count; each client derives
+    # its own unread state from it. No per-user UserUnreadRoomsChannel push and
+    # no global "unread_rooms" broadcast (the original thundering-herd fix).
     other_member = @room.memberships.visible.where.not(user: users(:david)).first
-    other_member.update!(unread_at: nil, connected_at: nil)
+    catch_up other_member
+    other_member.update!(connected_at: nil)
 
-    stream_name = UserUnreadRoomsChannel.broadcasting_for(other_member.user)
-    assert_broadcasts stream_name, 1 do
-      assert_no_broadcasts "unread_rooms" do
-        post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
+    nudges = capture_broadcasts(RoomListChannel.broadcasting_for(Account.sole)) do
+      assert_no_broadcasts UserUnreadRoomsChannel.broadcasting_for(other_member.user) do
+        assert_no_broadcasts "unread_rooms" do
+          post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
+        end
       end
     end
+
+    assert_equal 1, nudges.size
+    assert_equal @room.id, nudges.first["roomId"]
+    assert_equal users(:david).id, nudges.first["creatorId"], "the nudge carries the sender so their own clients skip the dot"
   end
 
   test "mentioning a user in a room they're not viewing refreshes their sidebar sort metadata" do
-    # Regression: BroadcastMentioneeSidebarUpdatesJob now replaces only the inner link partial,
-    # not the full row. The cross-room mention case (user disconnected from the mentioned room)
-    # must still receive roomSize/roomUpdatedAt via UserUnreadRoomsChannel through
-    # Room#broadcast_unread_to_disconnected_users, otherwise the sidebar sort goes stale.
+    # The shared nudge carries the sidebar sort keys (roomUpdatedAt, roomSize),
+    # so a disconnected mentionee's sidebar re-floats the room without a
+    # per-user push; their client derives the unread dot from the nudge.
     jason_membership = @room.memberships.find_by(user: users(:jason))
-    jason_membership.update!(unread_at: nil, connected_at: nil)
+    catch_up jason_membership
+    jason_membership.update!(connected_at: nil)
 
-    stream_name = UserUnreadRoomsChannel.broadcasting_for(users(:jason))
-    payloads = capture_broadcasts(stream_name) do
+    nudges = capture_broadcasts(RoomListChannel.broadcasting_for(Account.sole)) do
       post room_messages_url(@room, format: :turbo_stream),
         params: { message: { body: "<div>Hey #{mention_attachment_for(:jason)}</div>", client_message_id: SecureRandom.uuid } }
     end
 
-    sort_payload = payloads.find { |p| p["forceUnread"] == true }
-    assert sort_payload, "expected a UserUnreadRoomsChannel payload with forceUnread for the disconnected mentionee"
-    assert_equal @room.id, sort_payload["roomId"]
-    assert_equal @room.reload.messages_count, sort_payload["roomSize"]
-    assert_equal @room.last_active_at.iso8601, sort_payload["roomUpdatedAt"]
+    nudge = nudges.find { |n| n["roomId"] == @room.id }
+    assert nudge, "expected a shared room-list nudge carrying the room's sort metadata"
+    assert_equal @room.reload.messages_count, nudge["roomSize"]
+    assert_equal @room.last_active_at.iso8601, nudge["roomUpdatedAt"]
   end
 
   test "update updates a message belonging to the user" do

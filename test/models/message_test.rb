@@ -31,19 +31,21 @@ class MessageTest < ActiveSupport::TestCase
   test "creating a message marks disconnected read memberships as unread" do
     room = rooms(:pets)
     recipient_membership = room.memberships.find_by!(user: users(:david))
-    recipient_membership.update!(unread_at: nil)
+    catch_up recipient_membership
     recipient_membership.update_columns(connected_at: nil, connections: 0)
 
     message = room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "deliver_to_room_marks_unread")
 
-    assert_equal message.created_at, recipient_membership.reload.unread_at
+    recipient_membership.reload
+    assert recipient_membership.unread?
+    assert_equal message, recipient_membership.first_unread_message
   end
 
-  test "mention to a read disconnected recipient sets unread_at and bumps unread_notifications_count" do
+  test "mention to a read disconnected recipient sets unread and bumps unread_notifications_count" do
     room = rooms(:pets)
     recipient_membership = room.memberships.find_by!(user: users(:david))
-    recipient_membership.update!(unread_at: nil, unread_notifications_count: 0)
-    recipient_membership.update_columns(connected_at: nil, connections: 0)
+    catch_up recipient_membership
+    recipient_membership.update_columns(connected_at: nil, connections: 0, unread_notifications_count: 0)
 
     message = room.messages.create!(
       creator: users(:jason),
@@ -52,8 +54,121 @@ class MessageTest < ActiveSupport::TestCase
     )
 
     recipient_membership.reload
-    assert_equal message.created_at, recipient_membership.unread_at
+    assert recipient_membership.unread?
+    assert_equal message, recipient_membership.first_unread_message
     assert_equal 1, recipient_membership.unread_notifications_count
+  end
+
+  test "creating a message leaves connected memberships read" do
+    room = rooms(:pets)
+    recipient_membership = room.memberships.find_by!(user: users(:david))
+    catch_up recipient_membership
+    recipient_membership.update_columns(connected_at: Time.current, connections: 1)
+
+    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "connected_stays_read")
+
+    assert recipient_membership.reload.read?
+  end
+
+  test "creating a message leaves the sender's membership read even when disconnected" do
+    room = rooms(:pets)
+    sender_membership = room.memberships.find_by!(user: users(:jason))
+    catch_up sender_membership
+    sender_membership.update_columns(connected_at: nil, connections: 0)
+
+    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "sender_stays_read")
+
+    assert sender_membership.reload.read?
+  end
+
+  test "creating a message does not move an already-unread membership's anchor" do
+    room = rooms(:pets)
+    membership = room.memberships.find_by!(user: users(:david))
+    catch_up membership
+    membership.update_columns(connected_at: nil, connections: 0)
+
+    first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "anchor_first")
+    assert_equal first, membership.reload.first_unread_message
+
+    room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "anchor_second")
+
+    assert_equal first, membership.reload.first_unread_message,
+      "the unread anchor must stay at the first unseen message so the New separator doesn't drift"
+  end
+
+  test "creating a message does not mark invisible memberships unread" do
+    room = rooms(:pets)
+    membership = room.memberships.find_by!(user: users(:david))
+    catch_up membership
+    membership.update!(involvement: :invisible)
+    membership.update_columns(connected_at: nil, connections: 0)
+
+    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "invisible_stays_read")
+
+    assert membership.reload.read?
+  end
+
+  test "@everyone to a read disconnected member sets unread and bumps the badge" do
+    # Pins the KTD-sensitive eligibility: a read, disconnected member's badge
+    # must bump on send even though sending no longer writes their unread row.
+    room = rooms(:pets)
+    membership = room.memberships.find_by!(user: users(:david))
+    catch_up membership
+    membership.update_columns(connected_at: nil, connections: 0, unread_notifications_count: 0)
+
+    everyone_sgid = Everyone.new.attachable_sgid
+    message = room.messages.create!(
+      creator: users(:jason),
+      body: "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>",
+      client_message_id: "everyone_to_read_disconnected"
+    )
+
+    membership.reload
+    assert membership.unread?
+    assert_equal message, membership.first_unread_message
+    assert_equal 1, membership.unread_notifications_count
+  end
+
+  test "sending writes no per-member unread rows, and the count derives on reopen" do
+    room = rooms(:pets)
+    reader = room.memberships.find_by!(user: users(:david))
+    catch_up reader
+    reader.update_columns(connected_at: nil, connections: 0)
+
+    snapshot = -> { room.memberships.where.not(user_id: users(:jason).id).order(:id).pluck(:updated_at, :last_read_at, :last_read_message_id, :marked_unread) }
+    before = snapshot.call
+
+    20.times { |i| room.messages.create!(creator: users(:jason), body: "Msg #{i}", client_message_id: "burst_#{i}") }
+
+    assert_equal before, snapshot.call, "sending must not write any non-sender membership row"
+    assert_equal 20, room.messages.after_cursor(reader.last_read_at, reader.last_read_message_id).count,
+      "the derived unread count reflects every message that landed while away"
+    assert reader.reload.unread?
+  end
+
+  test "a rejoining member keeps their read cursor" do
+    room = rooms(:pets)
+    membership = room.memberships.find_by!(user: users(:david))
+    anchor = room.messages.create!(creator: users(:jason), body: "Anchor", client_message_id: "regrant_anchor")
+    rewind_unread_to membership, anchor
+
+    room.memberships.grant_to(users(:david))
+
+    assert_equal anchor, membership.reload.first_unread_message, "re-granting must not reset the cursor to head"
+  end
+
+  test "DM to a read disconnected recipient sets unread and bumps the badge" do
+    room = rooms(:david_and_jason)
+    membership = room.memberships.find_by!(user: users(:david))
+    catch_up membership
+    membership.update_columns(connected_at: nil, connections: 0, unread_notifications_count: 0)
+
+    message = room.messages.create!(creator: users(:jason), body: "Hey", client_message_id: "dm_to_read_disconnected")
+
+    membership.reload
+    assert membership.unread?
+    assert_equal message, membership.first_unread_message
+    assert_equal 1, membership.unread_notifications_count
   end
 
   # Event messages
@@ -84,74 +199,56 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal [], message_mentioning_a_non_member.mentionees
   end
 
-  test "deactivating message clears unread timestamps pointing to it" do
+  test "a deactivated message stops counting toward unread" do
     room = rooms(:pets)
-    user = users(:david)
-    membership = room.memberships.find_by(user: user)
+    membership = room.memberships.find_by(user: users(:david))
 
-    # Create two messages
     message1 = room.messages.create!(creator: users(:jason), body: "First message", client_message_id: "msg1")
     message2 = room.messages.create!(creator: users(:jason), body: "Second message", client_message_id: "msg2")
 
-    # Mark membership as unread at message1
-    membership.update!(unread_at: message1.created_at)
+    rewind_unread_to membership, message1
     assert membership.unread?
-    assert_equal message1.created_at, membership.unread_at
+    assert_equal message1, membership.first_unread_message
 
-    # Deactivate message1
     message1.deactivate
 
-    # Should update unread_at to message2 since it's the next unread message
+    # Derived unread only sees active messages, so the first unread moves on
     membership.reload
     assert membership.unread?
-    assert_equal message2.created_at, membership.unread_at
+    assert_equal message2, membership.first_unread_message
   end
 
-  test "deactivating last unread message marks membership as read" do
+  test "deactivating the last unread message leaves the membership read" do
     room = rooms(:pets)
-    user = users(:david)
-    membership = room.memberships.find_by(user: user)
+    membership = room.memberships.find_by(user: users(:david))
 
-    # Create one message
     message = room.messages.create!(creator: users(:jason), body: "Only message", client_message_id: "msg1")
-
-    # Mark membership as unread at this message
-    membership.update!(unread_at: message.created_at)
+    rewind_unread_to membership, message
     assert membership.unread?
 
-    # Deactivate the message
     message.deactivate
 
-    # Should mark membership as read since no unread messages remain
+    # No phantom dot: nothing active sits after the cursor anymore
     membership.reload
     assert membership.read?
-    assert_nil membership.unread_at
+    assert_nil membership.first_unread_message
   end
 
-  test "deactivating message only affects memberships with matching unread_at" do
+  test "deactivating a message leaves other members' unread anchors alone" do
     room = rooms(:pets)
-    user1 = users(:david)
-    user2 = users(:jason)
-    membership1 = room.memberships.find_by(user: user1)
-    membership2 = room.memberships.find_by(user: user2)
+    membership1 = room.memberships.find_by(user: users(:david))
+    membership2 = room.memberships.find_by(user: users(:jason))
 
-    # Create two messages
     message1 = room.messages.create!(creator: users(:jason), body: "First message", client_message_id: "msg1")
     message2 = room.messages.create!(creator: users(:jason), body: "Second message", client_message_id: "msg2")
 
-    # Mark memberships with different unread_at timestamps
-    membership1.update!(unread_at: message1.created_at)
-    membership2.update!(unread_at: message2.created_at)
+    rewind_unread_to membership1, message1
+    rewind_unread_to membership2, message2
 
-    # Deactivate message1
     message1.deactivate
 
-    # Only membership1 should be affected
-    membership1.reload
-    membership2.reload
-
-    assert_equal message2.created_at, membership1.unread_at  # Updated to next message
-    assert_equal message2.created_at, membership2.unread_at  # Unchanged
+    assert_equal message2, membership1.reload.first_unread_message  # moved past the deleted message
+    assert_equal message2, membership2.reload.first_unread_message  # unchanged
   end
 
   test "@everyone mention sets mentions_everyone flag" do

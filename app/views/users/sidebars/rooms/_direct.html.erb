@@ -1,11 +1,14 @@
-<% cache membership do %>
+<%# Unread is derived, not stored — a new message doesn't touch the
+    membership row, so the derived state must be part of the cache key. %>
+<% membership_unread = membership.unread? %>
+<% cache [ membership, membership_unread ] do %>
   <% members = @direct_room_members&.dig(membership.room.id).presence || membership.room.users.without(membership.user).presence || [ membership.user ] %>
 
-  <%= link_to_room membership.room, class: [ "direct", "unread": membership.unread? ], id: dom_id(membership.room, :list),
+  <%= link_to_room membership.room, class: [ "direct", "unread": membership_unread ], id: dom_id(membership.room, :list),
         data: {
           sorted_list_target: "item",
-          sorted_list_priority: membership.unread? ? 0 : 1,
-          updated_at: (membership.unread_at || membership.room.updated_at)&.iso8601
+          sorted_list_priority: membership_unread ? 0 : 1,
+          updated_at: ((membership_unread && membership.unread_since) || membership.room.updated_at)&.iso8601
         } do %>
     <% if members.many? %>
       <div class="avatar__group">

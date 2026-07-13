@@ -15,6 +15,31 @@ class RoomTest < ActiveSupport::TestCase
     assert rooms(:watercooler).users.include?(users(:kevin))
   end
 
+  test "involve_user with unread marks a read membership unread at the last message" do
+    room = rooms(:watercooler)
+    last_message = room.messages.create!(creator: users(:jason), body: "Latest", client_message_id: "involve_unread")
+    membership = room.memberships.find_by!(user: users(:david))
+    catch_up membership
+
+    room.involve_user(users(:david), unread: true)
+
+    membership.reload
+    assert membership.unread?
+    assert_equal last_message, membership.first_unread_message
+  end
+
+  test "involve_user with unread does not move an already-unread anchor" do
+    room = rooms(:watercooler)
+    first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "involve_anchor_1")
+    room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "involve_anchor_2")
+    membership = room.memberships.find_by!(user: users(:david))
+    rewind_unread_to membership, first
+
+    room.involve_user(users(:david), unread: true)
+
+    assert_equal first, membership.reload.first_unread_message
+  end
+
   test "revoke membership from user" do
     rooms(:watercooler).memberships.revoke_from(users(:david))
     assert_not rooms(:watercooler).users.include?(users(:david))
@@ -431,6 +456,22 @@ class RoomTest < ActiveSupport::TestCase
 
     assert_no_broadcasts(RoomListChannel.broadcasting_for(Account.sole)) do
       room.update!(last_active_at: 1.second.from_now)
+    end
+  end
+
+  test "receiving a message publishes one shared nudge, not one per member" do
+    room = rooms(:watercooler)
+    members = room.memberships.visible.includes(:user).map(&:user)
+    assert members.size >= 2, "fixture should have multiple members for this test to be meaningful"
+    ActionCable.server.pubsub.clear
+
+    assert_broadcasts(RoomListChannel.broadcasting_for(Account.sole), 1) do
+      room.messages.create!(body: "Hello all", creator: members.first, client_message_id: SecureRandom.uuid)
+    end
+
+    members.each do |user|
+      assert_empty ActionCable.server.pubsub.broadcasts(UserUnreadRoomsChannel.broadcasting_for(user)),
+        "the send path should not push per-member unread broadcasts"
     end
   end
 

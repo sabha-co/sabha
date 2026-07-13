@@ -14,12 +14,33 @@ module Membership::Connectable
   ACTIVITY_TIERS = { active: 10.minutes, away: 1.hour, recently_active: 24.hours }.freeze
 
   class_methods do
+    # Server shutdown drops every connection at once, so every watcher's
+    # cursor advances to their room's head first — messages they watched live
+    # count as seen. Explicit mark-as-unread survives.
     def disconnect_all
+      connected.where(marked_unread: false).update_all(<<~SQL.squish)
+        last_read_at = COALESCE(
+          (SELECT m.created_at FROM messages m
+            WHERE m.room_id = memberships.room_id AND m.active = TRUE
+            ORDER BY m.created_at DESC, m.id DESC LIMIT 1),
+          CURRENT_TIMESTAMP),
+        last_read_message_id = COALESCE(
+          (SELECT m.id FROM messages m
+            WHERE m.room_id = memberships.room_id AND m.active = TRUE
+            ORDER BY m.created_at DESC, m.id DESC LIMIT 1),
+          0)
+      SQL
       connected.update_all connected_at: nil, connections: 0, updated_at: Time.current
     end
 
     def connect(membership, connections)
-      where(id: membership.id).update_all(connections: connections, connected_at: Time.current, unread_at: nil, unread_notifications_count: 0)
+      head_at, head_id = membership.room_head_position
+      where(id: membership.id).update_all(
+        connections: connections, connected_at: Time.current,
+        last_read_at: head_at, last_read_message_id: head_id,
+        marked_unread: false, unread_notifications_count: 0,
+        updated_at: Time.current
+      )
     end
 
     def last_connected_at_for(user_ids)
@@ -74,14 +95,21 @@ module Membership::Connectable
     touch :connected_at
   end
 
+  # Fully leaving a room counts everything watched live as seen, so the
+  # cursor advances to the room's head — unless the member explicitly marked
+  # the room unread, which must survive the disconnect.
   def disconnected
     decrement_connections
-    update! connected_at: nil if connections < 1
+    if connections < 1
+      update! connected_at: nil
+      advance_cursor_to_head unless marked_unread?
+    end
   end
 
   def refresh_connection
     increment_connections unless connected?
     touch :connected_at
+    advance_cursor_to_head unless marked_unread?
   end
 
   def increment_connections

@@ -6,7 +6,7 @@ module Message::Threadable
     after_create_commit :update_thread_reply_count
     after_create_commit :update_parent_message_threads
     after_create_commit :update_forum_gallery_card
-    after_create_commit :mark_forum_unread
+    after_create_commit :surface_on_forum
     after_create_commit :create_thread_reply_notifications
     after_update_commit :broadcast_parent_message_to_threads
   end
@@ -54,13 +54,13 @@ module Message::Threadable
       room.broadcast_gallery_card_to_top if room.post?
     end
 
-    # A post's activity pokes the forum's sidebar unread for the members who should
-    # see it — a new post reaches every member, a mention reaches the people named,
-    # a plain reply reaches no one (its followers get an Activity notification). The
-    # forum owns no messages, so this is how the signal reaches its sidebar entry;
-    # opening the forum clears it via presence (Membership::Connectable.connect).
-    def mark_forum_unread
-      room.parent_room.mark_unread_from_post(self) if room.post?
+    # A post's opening message is the forum's version of receiving a message:
+    # it surfaces the forum's sidebar entry for every member. A plain reply
+    # reaches no one this way (its followers get an Activity notification),
+    # and opening the forum clears the dot via presence
+    # (Membership::Connectable.connect).
+    def surface_on_forum
+      room.parent_room.receive_post(self) if room.post?
     end
 
     def create_thread_reply_notifications

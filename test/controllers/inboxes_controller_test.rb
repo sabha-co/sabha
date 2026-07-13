@@ -399,14 +399,16 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   test "clear marks memberships as read" do
     room = rooms(:pets)
     membership = room.memberships.find_by(user: @david)
-    membership.update!(unread_at: 1.hour.ago)
+    force_all_unread membership
 
     # Create a mention so mark_inbox_as_read finds a notified room
-    room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
-      creator: @jason,
-      client_message_id: "clear_test_mention"
-    )
+    travel_to(1.minute.ago) do
+      room.messages.create!(
+        body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+        creator: @jason,
+        client_message_id: "clear_test_mention"
+      )
+    end
 
     # First visit activity to set the session timestamp
     get inbox_activity_index_url
@@ -422,7 +424,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   test "clear stays on page when stay param is present" do
     room = rooms(:pets)
     membership = room.memberships.find_by(user: @david)
-    membership.update!(unread_at: 1.hour.ago)
+    force_all_unread membership
 
     get inbox_activity_index_url
     post inbox_clearance_url, params: { stay: true }
@@ -430,10 +432,12 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "clear with scope direct_messages only clears DM rooms" do
-    # DM room
+    # DM room with an unseen message — a minute old, because loaded_at stamps
+    # truncate to seconds and a just-created message would outrun them
     dm_room = rooms(:david_and_jason)
+    travel_to(1.minute.ago) { dm_room.messages.create!(creator: @jason, body: "hi", client_message_id: "dm_scope_clear") }
     dm_membership = dm_room.memberships.find_by(user: @david)
-    dm_membership.update!(unread_at: 1.hour.ago)
+    force_all_unread dm_membership
 
     # Regular room with mention
     room_with_mention = rooms(:pets)
@@ -442,7 +446,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       creator: @jason
     )
     membership_with_mention = room_with_mention.memberships.find_by(user: @david)
-    membership_with_mention.update!(unread_at: 1.hour.ago)
+    force_all_unread membership_with_mention
 
     # Visit direct_messages page to set session timestamp
     get inbox_direct_messages_url
