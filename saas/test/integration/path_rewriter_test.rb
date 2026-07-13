@@ -66,13 +66,14 @@ class PathRewriterTest < ActionDispatch::IntegrationTest
     # First request to acme workspace
     workspace_get "/", workspace: workspace_acme
     assert_response :success
-    # Action cable URL should reference acme workspace via query param
-    assert_match %r{action-cable-url.*content="[^"]*\?wid=#{workspace_acme.external_id}"}, response.body
+    # Action cable URL should reference acme workspace via query param (a signed
+    # JWT identity may follow as &jid=...).
+    assert_match %r{action-cable-url.*content="[^"]*\?wid=#{workspace_acme.external_id}(&|")}, response.body
 
     # Second request to shared workspace
     workspace_get "/", workspace: workspace_shared
     assert_response :success
     # Action cable URL should now reference shared workspace
-    assert_match %r{action-cable-url.*content="[^"]*\?wid=#{workspace_shared.external_id}"}, response.body
+    assert_match %r{action-cable-url.*content="[^"]*\?wid=#{workspace_shared.external_id}(&|")}, response.body
   end
 end
