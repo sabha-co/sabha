@@ -43,6 +43,36 @@ class PresenceChannelTest < ActionCable::Channel::TestCase
     end
   end
 
+  test "presenting joins the room's own presence stream" do
+    membership = users(:david).memberships.first
+    subscribe room_id: membership.room_id
+
+    subscription.expects(:join_presence).with(PresenceChannel.broadcasting_for(membership.room))
+    subscription.present
+  end
+
+  test "going absent leaves the presence set" do
+    membership = users(:david).memberships.first
+    subscribe room_id: membership.room_id
+
+    subscription.expects(:leave_presence)
+    subscription.absent
+  end
+
+  test "presence is keyed by the user id so a member's tabs dedupe to one entry" do
+    membership = users(:david).memberships.first
+    subscribe room_id: membership.room_id
+
+    assert_equal users(:david).id, subscription.send(:user_presence_id)
+  end
+
+  test "the presence stream matches the room's subscription stream" do
+    membership = users(:david).memberships.first
+    subscribe room_id: membership.room_id
+
+    assert_has_stream PresenceChannel.broadcasting_for(membership.room)
+  end
+
   test "absent handles nil @room gracefully (AnyCable HTTP RPC scenario)" do
     # In AnyCable HTTP RPC mode, @room isn't preserved between calls.
     # Simulate this by creating a fresh channel instance and calling absent directly.
