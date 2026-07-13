@@ -235,13 +235,13 @@ Current.request    # HTTP request
                         │
           ┌─────────────┼─────────────────────┐
           ▼             ▼                     ▼
-    RoomChannel    PresenceChannel     RoomListChannel
-    (messages)     (online users)      (sidebar updates)
-          │
+    RoomChannel    PresenceChannel     $pubsub signed
+    (messages)     (online users)      room-list stream
+          │                            (sidebar updates)
     ┌─────┼──────────────┬──────────────────┐
     ▼     ▼              ▼                  ▼
- Typing  Heartbeat   UserUnread        InboxActivity
- Notifs  Channel     RoomsChannel      Channel
+ Typing  Heartbeat   ReadRooms         InboxActivity
+ Notifs  Channel     Channel           Channel
                                             │
                                      ┌──────┼──────┐
                                      ▼      ▼      ▼
@@ -253,11 +253,10 @@ Current.request    # HTTP request
 |---------|---------|
 | `RoomChannel` | Message broadcasts to room subscribers |
 | `PresenceChannel` | Online/offline user tracking |
-| `RoomListChannel` | Sidebar room list updates (new rooms, reordering) |
-| `UserUnreadRoomsChannel` | Per-user unread room badges |
+| Room-list signed stream (`$pubsub`) | One shared, account-scoped sidebar stream: room touched by a message or post, renames. Clients subscribe with a server-signed name that anycable-go verifies itself — no per-subscriber Rails round-trip; each client derives its own unread state |
 | `TypingNotificationsChannel` | "User is typing..." indicators |
 | `HeartbeatChannel` | Connection keep-alive |
-| `ReadRoomsChannel` | Marks rooms as read |
+| `ReadRoomsChannel` | Per-user read-state pushes: room read (clear the dot) and explicit mark-as-unread |
 | `UserInvolvementsChannel` | Notification preference changes |
 | `InboxActivityChannel` | Real-time inbox: @mentions |
 | `InboxThreadsChannel` | Real-time inbox: thread replies |

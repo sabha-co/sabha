@@ -5,21 +5,26 @@ import { ignoringBriefDisconnects } from "helpers/dom_helpers"
 export default class extends Controller {
   static targets = [ "room" ]
   static classes = [ "unread", "badge" ]
+  static values = { stream: String }
 
   #disconnected = true
   #keepCurrentRoomUnread = false
 
   async connect() {
-    this.userUnreadsChannel ??= await cable.subscribeTo({ channel: "UserUnreadRoomsChannel" }, {
-      connected: this.#channelConnected.bind(this),
-      disconnected: this.#channelDisconnected.bind(this),
-      received: this.#unread.bind(this)
-    })
+    // The room-list stream is a signed pub/sub stream shared by the whole
+    // account: anycable-go verifies the signature itself, so subscribing
+    // costs no Rails round-trip. Missed nudges while disconnected mean a
+    // stale sidebar, so a reconnect reloads the frame (#channelConnected).
+    // No stream value means no account yet (nothing broadcasts either).
+    if (this.streamValue) {
+      this.roomListChannel ??= await cable.subscribeTo({ channel: "$pubsub", signed_stream_name: this.streamValue }, {
+        connected: this.#channelConnected.bind(this),
+        disconnected: this.#channelDisconnected.bind(this),
+        received: this.#roomListReceived.bind(this)
+      })
+    }
     this.notificationsChannel ??= await cable.subscribeTo({ channel: "UnreadNotificationsChannel" }, {
       received: this.#addBadge.bind(this)
-    })
-    this.roomListChannel ??= await cable.subscribeTo({ channel: "RoomListChannel" }, {
-      received: this.#roomListReceived.bind(this)
     })
     this.involvementsChannel ??= await cable.subscribeTo({ channel: "UserInvolvementsChannel" }, {
       received: this.#updateInvolvement.bind(this)
@@ -28,9 +33,6 @@ export default class extends Controller {
 
   disconnect() {
     ignoringBriefDisconnects(this.element, () => {
-      this.userUnreadsChannel?.unsubscribe()
-      this.userUnreadsChannel = null
-
       this.notificationsChannel?.unsubscribe()
       this.notificationsChannel = null
 
@@ -78,28 +80,26 @@ export default class extends Controller {
     this.#disconnected = true
   }
 
-  #unread({ roomId, roomSize, roomUpdatedAt, forceUnread }) {
+  // Mark-as-unread arrives on the member's own ReadRoomsChannel (routed by
+  // the read-rooms controller): dot the room even when it's the one being
+  // viewed, and keep the dot through the next sidebar render.
+  markUnread({ detail: { roomId, roomSize, roomUpdatedAt } }) {
     const unreadRooms = this.#findRoomTargets(roomId)
 
     unreadRooms.forEach(unreadRoom => {
       const sortedListTarget = unreadRoom.closest('[data-sorted-list-target]')
       if (!sortedListTarget) return
-      
+
       if (sortedListTarget.dataset.sortedListPriority) {
         sortedListTarget.dataset.sortedListPriority = "0"
       }
       sortedListTarget.dataset.updatedAt = roomUpdatedAt
       sortedListTarget.dataset.size = roomSize
-      
-      if (forceUnread || Current.room?.id != roomId) {
-        unreadRoom.classList.add(this.unreadClass)
-      }
-      
-      if (forceUnread) {
-        this.#keepCurrentRoomUnread = true
-      }
+
+      unreadRoom.classList.add(this.unreadClass)
+      this.#keepCurrentRoomUnread = true
     })
-    
+
     this.dispatch("unread", { detail: { roomId: roomId } })
   }
 

@@ -444,3 +444,38 @@ The questions flagged in earlier drafts were resolved 2026-07-09 after grounding
 - Zulip wildcard: compose banner threshold `wildcard_mention_threshold = 15` (`web/src/compose_validate.ts:106`), `can_mention_many_users_group` (`zerver/lib/message.py:1489-1496`), enforced in `zerver/actions/message_send.py:1921-1934`.
 
 **AnyCable primitives** (docs.anycable.io) — presence (`AnyCable::Rails::Channel::Presence`, `join_presence`), signed streams (`$pubsub`, `AnyCable::Rails.signed_stream_name`, `--streams_secret`), JWT (`action_cable_with_jwt_meta_tag`, `anycable.secret`, `jwt_ttl`), HTTP-RPC single-container setup — all OSS, no Pro dependency.
+
+---
+
+## Progress
+
+Status per PR. Update the table and dated log as units land; requirements and unit definitions above stay frozen.
+
+| Plan PR | Units | Status | Where |
+|---|---|---|---|
+| PR 1a · R0 deprecate | U1 | In review | [#138](https://github.com/sabha-co/sabha/pull/138) |
+| PR 1b · R0 cutover | U11 | Not started | — |
+| PR 2 · R1 derived unread | U2, U3, U4 | **Complete, in review** | [#139](https://github.com/sabha-co/sabha/pull/139) (`realtime-delivery-at-scale`) |
+| PR 3 · R2 signed-stream sidebar | U5 | **Complete, in review** | [#140](https://github.com/sabha-co/sabha/pull/140) (`signed-stream-sidebar`, stacked on #139) |
+| PR 4 · R3 AnyCable presence | U6 | Not started | — |
+| PR 5 · R4 @everyone guardrail | U7, U8 | Not started | — |
+| PR 6 · R5 defer residual | U9 | Not started | — |
+| PR 7 · R6 JWT | U10 | Not started | — |
+
+### Log
+
+- **2026-07-09** — U2 landed on `realtime-delivery-at-scale` (`24b4ad7`, characterization first in `47ecbf2`): read cursor + derived unread + badge re-anchor. Cutover is a one-time in-migration reset (backfill job dropped by decision — legacy dots deliberately not carried).
+- **2026-07-10** — U3 (`c8e8d9d`): send-path per-member push replaced by one account-scoped nudge on `RoomListChannel`; tenant isolation asserted in the SaaS suite (KTD5).
+- **2026-07-10** — U4 (`dc1d311`): forum dots derived from posts (`UNSEEN_POSTS_SQL`); nudge carries `creatorId` so the actor's own clients skip the dot. `UserUnreadRoomsChannel` down to one producer (explicit mark-as-unread).
+- **2026-07-10** — PR 2 opened as [#139](https://github.com/sabha-co/sabha/pull/139). Log-verified in dev: send = 1 sender-cursor write + 1 shared publish (was ~330 per-user publishes); forum post = 2 author-cursor writes + 1 publish, no flag fan-out.
+- **2026-07-10** — U5 started on `signed-stream-sidebar` (branched off PR 2's branch; ships only after U11 per the dependency note).
+- **2026-07-10** — Decision: R0 is treated as merged for sequencing — PR 3 no longer waits on the U11 cutover landing first (production already defaults to AnyCable; the in-process `$pubsub` fallback keeps a dev holdout working meanwhile).
+- **2026-07-10** — U5 landed on `signed-stream-sidebar` (`667eee5`), opened as [#140](https://github.com/sabha-co/sabha/pull/140) stacked on #139. Log-verified against anycable-go: one shared publish per send/rename, mark-as-unread on the member's ReadRoomsChannel, zero `$pubsub` subscribe RPCs reaching Rails.
+- **2026-07-10** — U5 implemented: the sidebar's shared stream is now a signed `$pubsub` stream (`Account#room_list_stream_name`, GID-scoped per tenant) carrying both nudge and rename payloads; `RoomListChannel` and `UserUnreadRoomsChannel` deleted. Mark-as-unread — the per-user channel's last producer — moved onto `ReadRoomsChannel` (`unread: true` + sort keys), so read-state rides one per-user channel in both directions. Sidebar subscriptions drop 4 → 3, and the shared one no longer costs a Rails subscribe RPC under anycable-go (dev pre-cutover falls back to the gem's in-process `$pubsub` handler). Both suites green.
+
+### Carried follow-ups
+
+- Drop `memberships.unread_at` + `index_memberships_on_room_unread` + `index_memberships_on_user_unread_active` one release after PR 2; add `ignored_columns` in the PR 2 release first (pending).
+- Measure the shared nudge's O(connected) client refetch on the large-room harness before U5 ships (the R1 → R2 isolation gate; see Risks).
+- Candidate: guard the nudge with `sub_room?` so post/thread rooms stop emitting publishes no sidebar consumes (parity waste today; decide with the measurement above).
+- `docs/features/UNREAD_AND_MENTION_INDICATORS.md` still describes the pre-R1 `unread_at` model — needs a derived-unread rewrite (belongs with PR 2).

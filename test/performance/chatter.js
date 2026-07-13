@@ -25,6 +25,11 @@ const turboSignedStreamNames = [
   "IloybGtPaTh2YzJGaWFHRXZWWE5sY2k4eDpyb29tcyI=--42a94033d5823d82bcafce1d88911270a1ca74f1eb015206bb4156166613dc12"
 ];
 
+// The account-wide room-list stream every sidebar subscribes to: an AnyCable
+// signed pub/sub stream (not a Turbo stream), signed for gid://sabha/Account/1
+// with the performance env's anycable secret ("test-secret").
+const roomListSignedStreamName = "IloybGtPaTh2YzJGaWFHRXZRV05qYjNWdWRDOHg6cm9vbV9saXN0Ig==--c1b981a1efbb7ac7743d5e3213d68d1a067a67dcd2b9e07041ca6ca9e1cef62f";
+
 const dummyCookies = new SharedArray('cookies', function () {
   return papaparse.parse(open('cookies.txt'), { header: false }).data;
 });
@@ -83,7 +88,7 @@ export function sockets() {
   ws.connect(url, params, function(socket) {
     socket.on('open', function open() {
       socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"PresenceChannel", "room_id":1}' }));
-      socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"UserUnreadRoomsChannel"}' }));
+      socket.send(JSON.stringify({ command: 'subscribe', identifier: `{"channel":"$pubsub","signed_stream_name":"${roomListSignedStreamName}"}` }));
       socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"HeartbeatChannel"}' }));
       turboSignedStreamNames.forEach((signedStreamName) => {
         socket.send(JSON.stringify({ command: 'subscribe', identifier: `{"channel":"Turbo::StreamsChannel", "signed_stream_name":"${signedStreamName}"}` }));

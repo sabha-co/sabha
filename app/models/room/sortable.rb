@@ -12,7 +12,7 @@ module Room::Sortable
     end
 
     def broadcast_updates
-      RoomListChannel.broadcast_to(Account.sole, { roomId: id, sortableName: sortable_name })
+      Account.sole.broadcast_room_list({ roomId: id, sortableName: sortable_name })
     rescue ActiveRecord::RecordNotFound
       # No account yet (e.g., during setup or seed)
     end

@@ -59,6 +59,25 @@ class Account < ApplicationRecord
     sync_logo_to_workspace
   end
 
+  # The account-wide room-list stream: one publish per room event (touched by
+  # a message or post, renamed) that every member's open sidebar consumes. It
+  # is a signed pub/sub stream rather than a channel — the sidebar subscribes
+  # with the signed name and anycable-go verifies the signature itself, no
+  # per-subscriber Rails round-trip. The name is built on the account's
+  # GlobalID, which carries the tenant in SaaS, so streams never cross
+  # workspaces.
+  def broadcast_room_list(payload)
+    ActionCable.server.broadcast room_list_stream_name, payload
+  end
+
+  def room_list_stream_name
+    AnyCable::Rails.stream_name_from([ self, :room_list ])
+  end
+
+  def signed_room_list_stream_name
+    AnyCable::Rails.signed_stream_name([ self, :room_list ])
+  end
+
   private
     def invite_links_disabled?
       saved_change_to_settings? && !settings.allow_users_to_create_invite_links?

@@ -402,7 +402,7 @@ class Room < ApplicationRecord
     # clients skip the dot (they may be elsewhere — a forum author lands on
     # their new post, a sender's second device sits in another room).
     def broadcast_touched(creator_id:)
-      RoomListChannel.broadcast_to(Account.sole, { roomId: id, roomSize: messages_count, roomUpdatedAt: last_active_at.iso8601, creatorId: creator_id })
+      Account.sole.broadcast_room_list({ roomId: id, roomSize: messages_count, roomUpdatedAt: last_active_at.iso8601, creatorId: creator_id })
     rescue ActiveRecord::RecordNotFound
       # No account yet (e.g., during setup or seed)
     end
