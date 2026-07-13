@@ -107,7 +107,6 @@ jobs:
           CSP_FRAME_ANCESTORS=${{ secrets.CSP_FRAME_ANCESTORS }}
           ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
 
-          ANYCABLE_ENABLED=${{ secrets.ANYCABLE_ENABLED }}
           ANYCABLE_SECRET=${{ secrets.ANYCABLE_SECRET }}
 
           CLOUDFLARE_TURNSTILE_SITE_KEY=${{ secrets.CLOUDFLARE_TURNSTILE_SITE_KEY }}

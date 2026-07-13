@@ -67,6 +67,21 @@ if ! command -v gh &>/dev/null; then
   echo
 fi
 
+# Install anycable-go if needed. AnyCable is required to run Sabha locally
+# (bin/dev boots it alongside Rails). It's not in most Linux package repos, so
+# fall back to a pointer rather than failing setup — bin/dev preflights for it.
+if ! command -v anycable-go &>/dev/null; then
+  echo
+  echo "▸ Installing anycable-go"
+  if command -v brew &>/dev/null; then
+    brew install anycable-go
+  else
+    echo "Please install anycable-go: https://docs.anycable.io/anycable-go/getting_started"
+    echo "(AnyCable is required to run Sabha locally via bin/dev.)"
+  fi
+  echo
+fi
+
 step() {
   local step_name="$1"
   shift

@@ -1,25 +1,14 @@
-default: &default
-  adapter: redis
-  url: redis://localhost:6379
-
+# AnyCable is required (see config/anycable.yml). The in-process ActionCable
+# fallback (the redis adapter, previously toggled by an env flag) was removed;
+# every app environment uses the any_cable adapter. The test env keeps test.
 development:
-  adapter: <%= ENV["ANYCABLE_ENABLED"] == "true" ? "any_cable" : "redis" %>
-  <% if ENV["ANYCABLE_ENABLED"] != "true" %>
-  url: redis://localhost:6379
-  channel_prefix: sabha_development
-  <% end %>
+  adapter: any_cable
 
 test:
   adapter: test
 
 performance:
-  adapter: <%= ENV.fetch("CABLE_ADAPTER", "redis") %>
-  url: redis://localhost:6379
-  channel_prefix: sabha_performance
+  adapter: any_cable
 
 production:
-  adapter: <%= ENV["ANYCABLE_ENABLED"] == "false" ? "redis" : "any_cable" %>
-  <% if ENV["ANYCABLE_ENABLED"] == "false" %>
-  url: <%= ENV.fetch("REDIS_URL", "redis://localhost:6379") %>
-  channel_prefix: sabha_production
-  <% end %>
+  adapter: any_cable

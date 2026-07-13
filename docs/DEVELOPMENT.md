@@ -8,14 +8,15 @@ Guide for contributing to Sabha.
 
 - **Ruby** 4.0+ (check `.ruby-version`)
 - **Node.js** 24+ and **pnpm**
-- **Redis** (for ActionCable in development)
+- **anycable-go** — the WebSocket server; required for all real-time delivery. See the [AnyCable install guide](https://docs.anycable.io/anycable-go/getting_started).
+- **Redis** (for Kredis)
 - **libvips** (for image processing)
 - **SQLite** 3.35+
 
 ### macOS
 
 ```bash
-brew install ruby node pnpm redis libvips sqlite
+brew install ruby node pnpm redis libvips sqlite anycable-go
 brew services start redis
 ```
 
@@ -26,6 +27,10 @@ sudo apt-get install -y libvips-dev redis-server sqlite3 libsqlite3-dev
 curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash -
 sudo apt-get install -y nodejs
 npm install -g pnpm
+
+# anycable-go isn't packaged for apt — install a release binary or via npm.
+# See https://docs.anycable.io/anycable-go/getting_started
+npm install -g @anycable/anycable-go
 ```
 
 ---
@@ -38,7 +43,7 @@ cd sabha
 bin/setup
 ```
 
-This installs gems, pnpm packages, prepares the database, and builds Tailwind.
+This installs gems, pnpm packages, `anycable-go` (on macOS), prepares the database, and builds Tailwind.
 
 To populate development data (users, rooms, messages):
 
@@ -58,29 +63,19 @@ Opens at `http://localhost:3000`
 
 ### What `bin/dev` starts
 
-A single Rails server process (Puma) with Solid Queue running in-process.
+Foreman runs three processes together: the Rails server (Puma, with Solid Queue
+in-process), the Tailwind CSS watcher, and `anycable-go`. AnyCable is required —
+it carries all real-time delivery (live messages, typing, presence) — so
+`bin/dev` always boots it.
 
-For active CSS development, run the Tailwind watcher in a separate terminal:
-
-```bash
-pnpm run build:css:watch
-```
-
-### With AnyCable (optional)
-
-For production-like WebSocket handling:
+`anycable-go` must be on your PATH. `bin/setup` installs it on macOS; otherwise:
 
 ```bash
-bin/dev --anycable
+brew install anycable-go   # macOS
+# other platforms: https://docs.anycable.io/anycable-go/getting_started
 ```
 
-This uses foreman to run Rails + AnyCable-Go + CSS watcher together.
-
-Requires `anycable-go` installed:
-
-```bash
-brew install anycable-go
-```
+`bin/dev` preflights for the binary and exits with an install hint if it's missing.
 
 ---
 

@@ -88,8 +88,7 @@ RESEND_API_KEY=your_resend_api_key
 VAPID_PUBLIC_KEY=your_public_key
 VAPID_PRIVATE_KEY=your_private_key
 
-# AnyCable (high-performance WebSockets)
-ANYCABLE_ENABLED=true
+# AnyCable (high-performance WebSockets) — required
 ANYCABLE_SECRET=$(openssl rand -hex 32)
 
 # Cloudflare Turnstile CAPTCHA (optional)
@@ -409,8 +408,7 @@ See `.env.multitenant.sample` for the authoritative list. The variables actually
 
 | Variable | Description |
 |----------|-------------|
-| `ANYCABLE_ENABLED` | `true` to route `/cable` to the AnyCable-Go accessory |
-| `ANYCABLE_SECRET` | Shared secret between Puma and AnyCable-Go (required when enabled) |
+| `ANYCABLE_SECRET` | Shared secret between Puma and AnyCable-Go (required) |
 
 ### Tenant backups (R2)
 

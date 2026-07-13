@@ -156,8 +156,8 @@ MAILER_FROM_EMAIL=noreply@yourdomain.com
 VAPID_PUBLIC_KEY=your_public_key
 VAPID_PRIVATE_KEY=your_private_key
 
-# WebSockets (uses ActionCable through Puma)
-ANYCABLE_ENABLED=false
+# WebSockets — AnyCable is required; run the anycable-go accessory
+ANYCABLE_SECRET=your_anycable_secret
 
 # Authentication: "password" (default), "otp", or "sso"
 AUTH_METHOD=password

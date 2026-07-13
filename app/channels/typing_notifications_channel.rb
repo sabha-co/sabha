@@ -1,7 +1,7 @@
 class TypingNotificationsChannel < RoomChannel
   def subscribed
     if @room = find_room
-      stream_for @room, **stream_options
+      stream_for @room, whisper: true
     else
       reject
     end
@@ -22,9 +22,5 @@ class TypingNotificationsChannel < RoomChannel
   private
     def current_user_attributes
       current_user.slice(:id, :name)
-    end
-
-    def stream_options
-      AnyCable::Rails.enabled? ? { whisper: true } : {}
     end
 end
