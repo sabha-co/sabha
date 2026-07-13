@@ -108,6 +108,9 @@ accessories:
         ANYCABLE_RPC_HOST: "http://sabha-web:3000/_anycable"
         ANYCABLE_BROADCAST_ADAPTER: "http"
         ANYCABLE_HTTP_BROADCAST_PORT: "8080"
+        # Presence lives in the broker component; without a broker the presence
+        # set silently no-ops. Memory is right for this single-node accessory.
+        ANYCABLE_BROKER: "memory"
         ANYCABLE_LOG_LEVEL: "info"
       secret:
         - ANYCABLE_SECRET
