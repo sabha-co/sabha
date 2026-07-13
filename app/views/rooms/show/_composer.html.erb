@@ -10,6 +10,19 @@
 
     <turbo-frame id="composer-frame">
       <%= composer_form_tag(room) do |form| %>
+        <div class="composer__everyone-confirm align-center gap txt-small pad border border-radius shadow fill-white margin-block-end-half"
+             role="alert" hidden data-composer-target="everyoneConfirm">
+          <%= icon_tag "bell-alert", class: "flex-item-no-shrink txt-lighter" %>
+          <span class="flex-item-grow">
+            Notify all <strong data-composer-target="everyoneConfirmCount"></strong> people in this room?
+            <span class="txt-subtle" hidden data-composer-target="everyoneConfirmRoomWide">
+              They'll see it room-wide, without individual notifications.
+            </span>
+          </span>
+          <button type="button" class="btn txt-small flex-item-no-shrink" data-action="composer#cancelEveryone">Cancel</button>
+          <button type="button" class="btn btn--reversed txt-small flex-item-no-shrink" data-action="composer#confirmEveryone">Send to everyone</button>
+        </div>
+
         <fieldset data-composer-target="fields" contents>
           <div class="flex flex-column">
             <div class="composer__filelist flex flex--align-center gap flex-wrap" data-composer-target="fileList"></div>

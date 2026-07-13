@@ -32,6 +32,13 @@ module Message::Mentionee
     @mentionee_ids ||= mentionees.map(&:id)
   end
 
+  # An @everyone in a room past the ceiling: the durable Activity rows and the
+  # mention badge are still written, but the per-member push, email, and live
+  # broadcasts are dropped in favor of the room-wide post.
+  def everyone_mention_capped?
+    mentions_everyone? && room.everyone_mention_over_ceiling?
+  end
+
   private
     def reset_mentionee_memo
       @mentionees = @mentionee_ids = nil
@@ -80,7 +87,12 @@ module Message::Mentionee
         unique_by: "index_notifications_on_message_user_type"
       )
 
-      User.where(id: recipient_ids).each(&:broadcast_activity_indicator)
+      # Above the ceiling the rows above are enough: the message posts room-wide,
+      # so skip the O(members) per-recipient activity dot and Activity-tab append.
+      return if everyone_mention_capped?
+
+      # The per-recipient activity-indicator render and Activity-tab append both
+      # ride the job, off the request path.
       broadcast_mention_notifications
     end
 

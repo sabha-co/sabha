@@ -5,8 +5,8 @@ import { escapeHTML } from "helpers/dom_helpers"
 
 export default class extends Controller {
   static classes = ["toolbar"]
-  static targets = [ "clientid", "fields", "fileList", "text" ]
-  static values = { roomId: Number, directUploadUrl: String }
+  static targets = [ "clientid", "fields", "fileList", "text", "everyoneConfirm", "everyoneConfirmCount", "everyoneConfirmRoomWide" ]
+  static values = { roomId: Number, directUploadUrl: String, everyoneConfirmThreshold: Number, everyoneMemberCount: Number, everyoneCapped: Boolean }
   static outlets = [ "messages" ]
 
   #files = []
@@ -20,12 +20,58 @@ export default class extends Controller {
   submit(event) {
     event.preventDefault()
 
-    if (!this.fieldsTarget.disabled) {
-      this.#submitFiles()
-      this.#submitMessage()
-      this.collapseToolbar()
-      this.textTarget.focus()
+    if (this.fieldsTarget.disabled) return
+
+    if (this.#needsEveryoneConfirm()) {
+      this.#showEveryoneConfirm()
+      return
     }
+
+    this.#send()
+  }
+
+  confirmEveryone() {
+    this.#hideEveryoneConfirm()
+    this.#send()
+  }
+
+  cancelEveryone() {
+    this.#hideEveryoneConfirm()
+    this.textTarget.focus()
+  }
+
+  #send() {
+    this.#submitFiles()
+    this.#submitMessage()
+    this.collapseToolbar()
+    this.textTarget.focus()
+  }
+
+  #needsEveryoneConfirm() {
+    return this.hasEveryoneConfirmTarget &&
+      this.#mentionsEveryone() &&
+      this.everyoneMemberCountValue >= this.everyoneConfirmThresholdValue
+  }
+
+  #mentionsEveryone() {
+    return !!this.textTarget.querySelector(".mention--everyone")
+  }
+
+  #showEveryoneConfirm() {
+    if (this.hasEveryoneConfirmCountTarget) {
+      this.everyoneConfirmCountTarget.textContent = this.everyoneMemberCountValue
+    }
+    if (this.hasEveryoneConfirmRoomWideTarget) {
+      this.everyoneConfirmRoomWideTarget.hidden = !this.everyoneCappedValue
+    }
+    this.everyoneConfirmTarget.hidden = false
+    this.everyoneConfirmTarget.style.display = "flex"
+  }
+
+  #hideEveryoneConfirm() {
+    if (!this.hasEveryoneConfirmTarget) return
+    this.everyoneConfirmTarget.hidden = true
+    this.everyoneConfirmTarget.style.display = ""
   }
 
   submitEnd(event) {

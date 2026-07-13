@@ -18,15 +18,13 @@ module Message::Broadcasts
   end
 
   def broadcast_notifications(ignore_if_older_message: false)
-    user_ids = notification_recipient_ids(ignore_if_older_message)
-    return if user_ids.empty?
+    # A capped @everyone posts room-wide; skip the per-recipient live badge push.
+    return if everyone_mention_capped?
+    # Nothing to notify for a plain message — don't enqueue a no-op job.
+    return if !mentions_everyone? && mentionee_ids.blank?
 
-    payload = { roomId: room.id }
-
-    # Auto-batching enabled in config/anycable.yml handles aggregation
-    User.where(id: user_ids).find_each do |user|
-      UnreadNotificationsChannel.broadcast_to(user, payload)
-    end
+    # The per-recipient live badge push rides the job, off the request path.
+    BroadcastUnreadNotificationsJob.perform_later(message_id: id, ignore_if_older_message:)
   end
 
   def notification_recipient_ids(ignore_if_older_message)

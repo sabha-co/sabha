@@ -225,4 +225,32 @@ class Message::MentioneeTest < ActiveSupport::TestCase
 
     assert_includes citing_message.mentionees, @david
   end
+
+  # ===================
+  # create defers the per-recipient activity indicator to a job (U9)
+  # ===================
+
+  test "creating a mention enqueues the broadcast job instead of rendering the indicator inline" do
+    assert_turbo_stream_broadcasts [ @jason, :sidebar_activity_indicator ], count: 0 do
+      assert_enqueued_with job: BroadcastMentionNotificationsJob do
+        @room.messages.create!(
+          body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+          creator: @david,
+          client_message_id: "defer_indicator_1"
+        )
+      end
+    end
+  end
+
+  test "the enqueued job renders the activity indicator for each recipient" do
+    @room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
+      creator: @david,
+      client_message_id: "defer_indicator_2"
+    )
+
+    assert_turbo_stream_broadcasts [ @jason, :sidebar_activity_indicator ], count: 1 do
+      perform_enqueued_jobs only: BroadcastMentionNotificationsJob
+    end
+  end
 end
