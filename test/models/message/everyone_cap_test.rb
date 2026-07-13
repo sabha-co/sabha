@@ -48,7 +48,9 @@ class Message::EveryoneCapTest < ActiveSupport::TestCase
 
       badge_stream = UnreadNotificationsChannel.broadcasting_for(@recipient)
       assert_no_broadcasts badge_stream do
-        message.broadcast_notifications
+        assert_no_enqueued_jobs only: BroadcastUnreadNotificationsJob do
+          message.broadcast_notifications
+        end
       end
     end
   end
@@ -62,7 +64,9 @@ class Message::EveryoneCapTest < ActiveSupport::TestCase
 
       badge_stream = UnreadNotificationsChannel.broadcasting_for(@recipient)
       assert_broadcasts badge_stream, 1 do
-        message.broadcast_notifications
+        perform_enqueued_jobs only: BroadcastUnreadNotificationsJob do
+          message.broadcast_notifications
+        end
       end
 
       assert_includes @room.applicable_activity_types(message), :mention

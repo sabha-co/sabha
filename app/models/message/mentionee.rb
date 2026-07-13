@@ -91,7 +91,8 @@ module Message::Mentionee
       # so skip the O(members) per-recipient activity dot and Activity-tab append.
       return if everyone_mention_capped?
 
-      User.where(id: recipient_ids).each(&:broadcast_activity_indicator)
+      # The per-recipient activity-indicator render and Activity-tab append both
+      # ride the job, off the request path.
       broadcast_mention_notifications
     end
 

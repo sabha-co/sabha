@@ -31,7 +31,7 @@ class Message::BroadcastsTest < ActiveSupport::TestCase
     assert_not_includes user_ids, users(:jason).id
   end
 
-  test "broadcast_notifications broadcasts unread badge updates for mentions" do
+  test "broadcast_notifications defers the mention badge push to a job" do
     message = @room.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
       client_message_id: "badge_broadcast_mention",
@@ -39,20 +39,30 @@ class Message::BroadcastsTest < ActiveSupport::TestCase
     )
 
     stream_name = UnreadNotificationsChannel.broadcasting_for(users(:jason))
+
+    # Deferred: nothing on the request path, one job enqueued.
+    assert_no_broadcasts stream_name do
+      assert_enqueued_jobs 1, only: BroadcastUnreadNotificationsJob do
+        message.broadcast_notifications
+      end
+    end
+
+    # The badge push lands when the job runs.
     assert_broadcasts stream_name, 1 do
-      message.broadcast_notifications
+      perform_enqueued_jobs only: BroadcastUnreadNotificationsJob do
+        message.broadcast_notifications
+      end
     end
   end
 
-  test "broadcast_notifications does not broadcast unread badge updates for regular messages" do
+  test "broadcast_notifications does not enqueue a badge push for regular messages" do
     message = @room.messages.create!(
       body: "Plain regular update",
       client_message_id: "badge_broadcast_regular",
       creator: @user
     )
 
-    stream_name = UnreadNotificationsChannel.broadcasting_for(users(:jason))
-    assert_no_broadcasts stream_name do
+    assert_no_enqueued_jobs only: BroadcastUnreadNotificationsJob do
       message.broadcast_notifications
     end
   end

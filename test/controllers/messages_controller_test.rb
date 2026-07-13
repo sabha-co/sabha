@@ -100,6 +100,23 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     assert_equal @room.last_active_at.iso8601, nudge["roomUpdatedAt"]
   end
 
+  test "creating a mention defers the per-recipient broadcasts to jobs instead of rendering synchronously" do
+    jason = users(:jason)
+    badge_stream = UnreadNotificationsChannel.broadcasting_for(jason)
+
+    # Neither the sidebar activity indicator nor the live badge push runs on the
+    # request path; both ride background jobs so create latency stays flat.
+    assert_turbo_stream_broadcasts [ jason, :sidebar_activity_indicator ], count: 0 do
+      assert_no_broadcasts badge_stream do
+        post room_messages_url(@room, format: :turbo_stream),
+          params: { message: { body: "<div>Hey #{mention_attachment_for(:jason)}</div>", client_message_id: SecureRandom.uuid } }
+      end
+    end
+
+    assert_enqueued_jobs 1, only: BroadcastMentionNotificationsJob
+    assert_enqueued_jobs 1, only: BroadcastUnreadNotificationsJob
+  end
+
   test "update updates a message belonging to the user" do
     message = @room.messages.where(creator: users(:david)).first
 
