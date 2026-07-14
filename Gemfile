@@ -26,7 +26,8 @@ gem "turbo-rails"
 gem "stimulus-rails"
 
 # Real-time WebSocket server (core gem avoids gRPC dependency since we use HTTP RPC mode)
-gem "anycable-rails-core", "~> 1.6"
+# Sourced from our fork for the presence-leave id string-cast fix, until it ships upstream.
+gem "anycable-rails-core", github: "ashwin47/anycable-rails", branch: "presence-leave-cast-id"
 
 # Media handling
 gem "image_processing", ">= 1.2"

@@ -1,4 +1,14 @@
 GIT
+  remote: https://github.com/ashwin47/anycable-rails.git
+  revision: 0aac948c75048890e7732981cb31893890fcd838
+  branch: presence-leave-cast-id
+  specs:
+    anycable-rails-core (1.6.2)
+      actioncable (>= 7.0, < 9.0)
+      anycable-core (~> 1.6.0)
+      globalid
+
+GIT
   remote: https://github.com/rails/rails.git
   revision: cfa4e1b475472c7980a42dd810f237951db5108a
   ref: cfa4e1b475472c7980a42dd810f237951db5108a
@@ -112,10 +122,6 @@ GEM
       base64 (>= 0.2)
       google-protobuf (~> 4)
       stringio (~> 3)
-    anycable-rails-core (1.6.2)
-      actioncable (>= 7.0, < 9.0)
-      anycable-core (~> 1.6.0)
-      globalid
     anyway_config (2.8.0)
       ruby-next-core (~> 1.0)
     ast (2.4.3)
@@ -459,7 +465,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  anycable-rails-core (~> 1.6)
+  anycable-rails-core!
   bcrypt
   benchmark
   bootsnap
@@ -521,7 +527,7 @@ CHECKSUMS
   activesupport (8.2.0.alpha)
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
   anycable-core (1.6.4) sha256=17073a3c744d7057e43bc7ed2cbdc1d50f173bb0c874109c55a49c7b95819396
-  anycable-rails-core (1.6.2) sha256=868e31c1df0aa3096073fa59df5c9815cdaaf2e798578d874f598044418f6d13
+  anycable-rails-core (1.6.2)
   anyway_config (2.8.0) sha256=f6797a7231f81202dcd3d0c07284e836e45713e761d320180348b13a5c7c9306
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
