@@ -12,6 +12,11 @@ on:
         required: false
         default: false
         type: boolean
+      reboot_anycable:
+        description: 'Reboot AnyCable (required after rotating ANYCABLE_SECRET)'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: deploy-multitenant
@@ -142,8 +147,14 @@ jobs:
           SERVER_IP: ${{ secrets.SERVER_IP }}
           PROXY_HOST: ${{ secrets.DOMAIN }}
 
+      # Accessories keep their own container lifecycle, so `kamal deploy` never
+      # re-uploads their env — AnyCable holds whatever ANYCABLE_SECRET it booted
+      # with until it's rebooted, and a stale value 401s every WebSocket
+      # handshake. Rebooting is a hard stop/start that drops live sockets for
+      # several seconds, so it's opt-in: run this workflow manually with
+      # reboot_anycable after rotating the secret.
       - name: Reboot AnyCable to sync secrets
-        if: ${{ github.event.inputs.run_setup != 'true' }}
+        if: ${{ github.event.inputs.reboot_anycable == 'true' }}
         run: kamal accessory reboot anycable -d multitenant
         env:
           KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
