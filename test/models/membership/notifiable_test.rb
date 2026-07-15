@@ -50,10 +50,14 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
 
   # ---------- receives_push_for? ----------
 
-  test "receives_push_for? returns false when the membership is connected" do
-    @recipient_membership.connected
+  # Connectedness is deliberately not this predicate's business any more. The
+  # dispatcher asks anycable-go who is actually present and subtracts them
+  # (Room::PushTest covers that); answering it here too would let a stale column
+  # override the live signal.
+  test "receives_push_for? ignores the connection column — presence gating is the dispatcher's job" do
+    @recipient_membership.update_columns(connected_at: Time.current, connections: 1)
 
-    refute @recipient_membership.receives_push_for?(@message, :mention)
+    assert @recipient_membership.receives_push_for?(@message, :mention)
   end
 
   test "receives_push_for? returns true for direct_message regardless of involvement" do

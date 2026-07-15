@@ -17,11 +17,15 @@ module Membership::Notifiable
     end
   end
 
+  # Deliberately says nothing about whether the member is watching the room.
+  # That's the dispatcher's call now: it asks anycable-go who's actually present
+  # and subtracts them (Message#watching?), falling back to `connected?` only
+  # when the broker can't answer. Answering it here too would mean a stale
+  # column silently overriding the live signal.
   def receives_push_for?(message, activity_type)
     activity_type = activity_type.to_sym
     return false unless Notification::Routing::PUSH_TYPES.include?(activity_type)
     return false unless common_gates_pass?(message)
-    return false if connected?
     # Settings-missing means "default" (push_enabled defaults to true), so only
     # suppress when an explicit false is on file. Mirrors how missed-email is
     # opt-in (settings-missing → false) by aligning the guard with the column

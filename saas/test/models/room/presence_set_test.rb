@@ -44,6 +44,29 @@ class Room::PresenceSetTenancyTest < ActiveSupport::TestCase
     end
   end
 
+  # The stream names differing is necessary but not sufficient — this is the
+  # thing that would actually hurt: one workspace's watchers suppressing another
+  # workspace's pushes.
+  test "presence in one workspace never gates push in another" do
+    ApplicationRecord.with_tenant(@tenant_b) do
+      room = find_or_create_room
+      watching room, 1 # user id 1 is watching over in tenant B
+    end
+
+    ApplicationRecord.with_tenant(@tenant_a) do
+      room = find_or_create_room
+      creator = User.find_or_create_by!(email_address: "creator@example.com") do |user|
+        user.name = "Creator"
+        user.role = :member
+        user.verified_at = Time.current
+      end
+      room.memberships.find_or_create_by!(user: creator)
+
+      assert_nil Room::PresenceSet.for(room).find { |id| id == 1 },
+        "tenant A must read its own (empty) presence set, not tenant B's watcher"
+    end
+  end
+
   private
     def room_and_stream
       room = find_or_create_room
