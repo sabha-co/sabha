@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_15_000001) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -22,7 +22,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
     t.integer "usage_limit"
     t.integer "user_id"
     t.index ["account_id", "kind"], name: "index_account_join_codes_on_account_id_and_kind"
-    t.index ["account_id"], name: "index_account_join_codes_on_account_id"
     t.index ["code"], name: "index_account_join_codes_on_code", unique: true
     t.index ["user_id"], name: "index_account_join_codes_on_user_id"
   end
@@ -114,7 +113,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
     t.datetime "updated_at", null: false
     t.index ["blocked_id"], name: "index_blocks_on_blocked_id"
     t.index ["blocker_id", "blocked_id"], name: "index_blocks_on_blocker_id_and_blocked_id", unique: true
-    t.index ["blocker_id"], name: "index_blocks_on_blocker_id"
   end
 
   create_table "bookmarks", force: :cascade do |t|
@@ -124,7 +122,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
     t.integer "user_id", null: false
     t.index ["message_id"], name: "index_bookmarks_on_message_id"
     t.index ["user_id", "message_id"], name: "index_bookmarks_on_user_message", unique: true
-    t.index ["user_id"], name: "index_bookmarks_on_user_id"
   end
 
   create_table "boosts", force: :cascade do |t|
@@ -136,7 +133,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
     t.index ["booster_id"], name: "index_boosts_on_booster_id"
     t.index ["message_id", "booster_id", "content"], name: "index_boosts_on_message_booster_content", unique: true
     t.index ["message_id", "created_at"], name: "index_boosts_on_message_created"
-    t.index ["message_id"], name: "index_boosts_on_message_id"
   end
 
   create_table "memberships", force: :cascade do |t|
@@ -156,12 +152,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
     t.integer "user_id", null: false
     t.index ["room_id", "created_at"], name: "index_memberships_on_room_id_and_created_at"
     t.index ["room_id", "unread_at"], name: "index_memberships_on_room_unread"
-    t.index ["room_id", "user_id", "involvement"], name: "index_memberships_on_room_user_involvement"
     t.index ["room_id", "user_id"], name: "index_memberships_on_room_id_and_user_id", unique: true
-    t.index ["room_id"], name: "index_memberships_on_room_id"
     t.index ["user_id", "starred"], name: "index_memberships_on_user_id_and_starred"
     t.index ["user_id", "unread_at"], name: "index_memberships_on_user_unread_active", where: "active = 1 AND unread_at IS NOT NULL"
-    t.index ["user_id"], name: "index_memberships_on_user_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -179,7 +172,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
     t.index ["creator_id"], name: "index_messages_on_creator_id"
     t.index ["room_id", "created_at"], name: "index_messages_on_room_id_and_created_at"
     t.index ["room_id", "mentions_everyone"], name: "index_messages_on_room_id_and_mentions_everyone", where: "mentions_everyone = true"
-    t.index ["room_id"], name: "index_messages_on_room_id"
   end
 
   create_table "notification_bundle_items", force: :cascade do |t|
@@ -191,7 +183,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
     t.datetime "updated_at", null: false
     t.index ["actor_id"], name: "index_notification_bundle_items_on_actor_id"
     t.index ["bundle_id", "message_id", "kind"], name: "index_notification_bundle_items_unique_per_bundle", unique: true
-    t.index ["bundle_id"], name: "index_notification_bundle_items_on_bundle_id"
     t.index ["message_id"], name: "index_notification_bundle_items_on_message_id"
   end
 
@@ -206,7 +197,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_09_000001) do
     t.integer "user_id", null: false
     t.index ["user_id", "ends_at"], name: "index_notification_bundles_on_user_ends_at"
     t.index ["user_id"], name: "index_notification_bundles_active_per_user", unique: true, where: "delivered_at IS NULL AND canceled_at IS NULL"
-    t.index ["user_id"], name: "index_notification_bundles_on_user_id"
   end
 
   create_table "notifications", force: :cascade do |t|

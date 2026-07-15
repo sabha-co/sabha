@@ -1733,22 +1733,6 @@ indexes:
   account_join_codes:
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: account_join_codes
-    name: index_account_join_codes_on_account_id
-    unique: false
-    columns:
-    - account_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: account_join_codes
     name: index_account_join_codes_on_account_id_and_kind
     unique: false
     columns:
@@ -1990,22 +1974,6 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: blocks
-    name: index_blocks_on_blocker_id
-    unique: false
-    columns:
-    - blocker_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: blocks
     name: index_blocks_on_blocker_id_and_blocked_id
     unique: true
     columns:
@@ -2028,22 +1996,6 @@ indexes:
     unique: false
     columns:
     - message_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: bookmarks
-    name: index_bookmarks_on_user_id
-    unique: false
-    columns:
-    - user_id
     lengths: {}
     orders: {}
     opclasses: {}
@@ -2123,39 +2075,7 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: boosts
-    name: index_boosts_on_message_id
-    unique: false
-    columns:
-    - message_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
   memberships:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: memberships
-    name: index_memberships_on_room_id
-    unique: false
-    columns:
-    - room_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: memberships
     name: index_memberships_on_room_id_and_created_at
@@ -2197,40 +2117,6 @@ indexes:
     columns:
     - room_id
     - unread_at
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: memberships
-    name: index_memberships_on_room_user_involvement
-    unique: false
-    columns:
-    - room_id
-    - user_id
-    - involvement
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: memberships
-    name: index_memberships_on_user_id
-    unique: false
-    columns:
-    - user_id
     lengths: {}
     orders: {}
     opclasses: {}
@@ -2328,22 +2214,6 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: messages
-    name: index_messages_on_room_id
-    unique: false
-    columns:
-    - room_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: messages
     name: index_messages_on_room_id_and_created_at
     unique: false
     columns:
@@ -2383,22 +2253,6 @@ indexes:
     unique: false
     columns:
     - actor_id
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: notification_bundle_items
-    name: index_notification_bundle_items_on_bundle_id
-    unique: false
-    columns:
-    - bundle_id
     lengths: {}
     orders: {}
     opclasses: {}
@@ -2467,22 +2321,6 @@ indexes:
     columns:
     - user_id
     - ends_at
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: notification_bundles
-    name: index_notification_bundles_on_user_id
-    unique: false
-    columns:
-    - user_id
     lengths: {}
     orders: {}
     opclasses: {}
@@ -3031,4 +2869,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260709000001
+version: 20260715000001
