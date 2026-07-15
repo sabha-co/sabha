@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Sabha is a Ruby on Rails chat application: Hotwire/Turbo views, ActionCable for real-time, Tailwind CSS v4 via `@tailwindcss/cli`, Importmap for JS. SQLite3 in production.
+Sabha is a Ruby on Rails chat application: Hotwire/Turbo views, AnyCable (a separate Go WebSocket server) for real-time, Tailwind CSS v4 via `@tailwindcss/cli`, Importmap for JS. SQLite3 in production.
 
 **Two deployment modes:** Self-hosted (default, single-tenant) and SaaS (multi-tenant via `activerecord-tenanted` gem, engine in `saas/`, enabled by `SAAS=true` or `tmp/saas.txt`). See @docs/multi-tenant/ for SaaS architecture details.
 
@@ -73,6 +73,16 @@ Stateless for real-time, persistent for history. No mentions table — parsed fr
 ### Authentication
 - **Self-hosted:** Password or email OTP (`AuthToken`), `Session` model, `Current.user`/`Current.session`/`Current.account`
 - **SaaS:** `GlobalIdentity` + `AuthCode` + `GlobalSession` + `WorkspaceMembership`. `Current.user` derives from workspace membership.
+
+### Real-time (AnyCable)
+Sabha uses **AnyCable** as its real-time transport — a required runtime dependency, not the in-process ActionCable adapter. How it's wired here:
+
+- **Transport:** `anycable-go` is a separate process that terminates every WebSocket connection and calls back into Rails over HTTP RPC at `/_anycable`. All environments use the `any_cable` adapter in `config/cable.yml` (only `test` uses `test`) — the in-process/redis fallback was removed, so Rails is never the WebSocket server.
+- **Process topology:** dev starts it via `bin/dev` (`Procfile.dev`, port 8080). Both deployment modes run `anycable/anycable-go` as a Kamal accessory routed at `/cable` with RPC pointed back at the Rails service — self-hosted via `config/deploy.yml`, SaaS via `config/deploy.multitenant.yml`. A self-hosted install needs the sidecar too; there is no Rails-only mode.
+- **Broker:** the **in-memory broker** backs presence and stream history (presence TTL 15s). State is per-node, so we run a single `anycable-go` replica — scaling out would require a shared broker (Redis/NATS).
+- **Auth:** sockets are identified by a JWT so reconnects skip the connect RPC.
+- **Channels** are ordinary ActionCable classes; presence uses `AnyCable::Rails::Channel::Presence` (`PresenceChannel`).
+- **Config:** `config/anycable.yml` (JWT/stream secrets) + `config/cable.yml`. Docs: https://docs.anycable.io (full text: https://docs.anycable.io/llms-full.txt).
 
 ## Development Commands
 
