@@ -59,6 +59,14 @@ class PresenceChannelTest < ActionCable::Channel::TestCase
     subscription.absent
   end
 
+  test "unsubscribing does not leave presence — AnyCable auto-removes on unsubscribe, an explicit leave races the stream teardown" do
+    membership = users(:david).memberships.first
+    subscribe room_id: membership.room_id
+
+    subscription.expects(:leave_presence).never
+    unsubscribe
+  end
+
   test "presence is keyed by the user id so a member's tabs dedupe to one entry" do
     membership = users(:david).memberships.first
     subscribe room_id: membership.room_id

@@ -2,7 +2,7 @@ class PresenceChannel < RoomChannel
   include AnyCable::Rails::Channel::Presence
 
   on_subscribe   :present, unless: :subscription_rejected?
-  on_unsubscribe :absent,  unless: :subscription_rejected?
+  on_unsubscribe :depart,  unless: :subscription_rejected?
 
   def present
     with_tenant_context do
@@ -15,6 +15,9 @@ class PresenceChannel < RoomChannel
     end
   end
 
+  # A tab going hidden while staying subscribed: AnyCable won't auto-remove
+  # presence (the subscription lives on), so we leave it ourselves. The stream
+  # is still active, so this never races a teardown.
   def absent
     with_tenant_context do
       leave_presence
@@ -29,6 +32,17 @@ class PresenceChannel < RoomChannel
   end
 
   private
+    # after_unsubscribe fires on both graceful unsubscribe and disconnect. In
+    # both cases AnyCable removes our presence entry on its own — at once on
+    # unsubscribe, after presence_ttl on disconnect — so calling leave_presence
+    # here is redundant and races the stream teardown ("stream not found").
+    # Only run the connection bookkeeping.
+    def depart
+      with_tenant_context do
+        membership&.disconnected
+      end
+    end
+
     def membership
       with_tenant_context do
         room&.memberships&.find_by(user: current_user)
