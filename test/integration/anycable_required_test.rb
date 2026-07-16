@@ -25,6 +25,8 @@ class AnycableRequiredTest < ActiveSupport::TestCase
       .env.sample
       .env.multitenant.sample
       .github/workflows/deploy_with_kamal.yml
+      .kamal/secrets
+      .kamal/secrets.multitenant
       bin/dev
     ]
 
