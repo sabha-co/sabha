@@ -192,6 +192,12 @@ class Load
             "-e", "ANYCABLE_BROADCAST_ADAPTER=http",
             "-e", "ANYCABLE_HTTP_BROADCAST_PORT=8080",
             "-e", "ANYCABLE_SECRET=test-secret",
+            # Presence lives in the broker component. Without one the presence
+            # API reports unsupported, Rails falls back to connected_at, and the
+            # harness measures the pre-presence path while looking like it
+            # measured the new one. These two must track the deploy accessories.
+            "-e", "ANYCABLE_BROKER=memory",
+            "-e", "ANYCABLE_PRESENCE_TTL=45",
             "-e", "ANYCABLE_LOG_LEVEL=info",
             "anycable/anycable-go:1.6"
         end

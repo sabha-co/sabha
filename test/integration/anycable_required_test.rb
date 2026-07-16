@@ -66,28 +66,28 @@ class AnycableRequiredTest < ActiveSupport::TestCase
     assert_match(/Missing required environment variables:.*ANYCABLE_SECRET/, output)
   end
 
-  test "every shipped launch point protects the presence API with a secret" do
-    deploy_accessory_envs.each do |file, env|
-      assert_includes Array(env["secret"]), "ANYCABLE_SECRET",
+  test "every launch point protects the presence API with a secret" do
+    launch_points.each do |file, settings|
+      assert settings["ANYCABLE_SECRET"].present?,
         "#{file} must pass a secret, or anycable-go disables the presence API"
     end
-
-    assert_match(/--secret=/, procfile_anycable_command,
-      "Procfile.dev must pass a secret, or anycable-go disables the presence API"
-    )
   end
 
-  test "no shipped launch point opens a dedicated API port or public mode" do
-    deploy_accessory_envs.each do |file, env|
+  test "no launch point opens a dedicated API port or public mode" do
+    launch_points.each do |file, settings|
       %w[ANYCABLE_API_PORT ANYCABLE_PUBLIC].each do |key|
-        assert_nil env["clear"][key], "#{file} must not set #{key} — it would serve the API unauthenticated"
+        assert_nil settings[key], "#{file} must not set #{key} — it would serve the API unauthenticated"
       end
     end
+  end
 
-    %w[--api_port --public].each do |flag|
-      refute_match(/#{Regexp.escape(flag)}/, procfile_anycable_command,
-        "Procfile.dev must not pass #{flag} — it would serve the API unauthenticated"
-      )
+  # Presence lives in the broker component. Drop it and the presence API reports
+  # unsupported, every read degrades to the connected_at fallback, and push goes
+  # to people who are sitting in the room reading — silently, since nothing raises.
+  test "every launch point runs a broker, which presence requires" do
+    launch_points.each do |file, settings|
+      assert_equal "memory", settings["ANYCABLE_BROKER"],
+        "#{file} must run the memory broker, or the presence API reports unsupported and push fails open"
     end
   end
 
@@ -95,8 +95,7 @@ class AnycableRequiredTest < ActiveSupport::TestCase
   # silently. It has to clear the client's worst-case reconnect (~34s) or a blip
   # pushes someone who never left. The 15s default does not.
   test "presence TTL is set explicitly and clears the worst-case reconnect" do
-    ttls = deploy_accessory_envs.to_h { |file, env| [ file, env["clear"]["ANYCABLE_PRESENCE_TTL"] ] }
-    ttls["Procfile.dev"] = procfile_anycable_command[/--presence_ttl=(\S+)/, 1]
+    ttls = launch_points.transform_values { |settings| settings["ANYCABLE_PRESENCE_TTL"] }
 
     ttls.each do |file, ttl|
       refute_nil ttl, "#{file} must set presence TTL explicitly — the 15s default is under the reconnect window"
@@ -110,14 +109,38 @@ class AnycableRequiredTest < ActiveSupport::TestCase
   end
 
   private
-    def deploy_accessory_envs
-      %w[config/deploy.yml config/deploy.multitenant.yml].to_h do |file|
-        config = YAML.load_file(ROOT.join(file), aliases: true)
-        [ file, config.dig("accessories", "anycable", "env") ]
-      end
+    # Every place we start anycable-go, normalized to the ANYCABLE_* settings it
+    # ends up running with, whatever syntax the file uses. The load harness is in
+    # here deliberately: if it drifts from production it measures the wrong path
+    # while looking like it measured the right one.
+    def launch_points
+      {
+        "config/deploy.yml" => deploy_settings("config/deploy.yml"),
+        "config/deploy.multitenant.yml" => deploy_settings("config/deploy.multitenant.yml"),
+        "Procfile.dev" => procfile_settings,
+        "bin/load-anycable" => load_harness_settings
+      }
     end
 
-    def procfile_anycable_command
-      File.read(ROOT.join("Procfile.dev"))[/^anycable:.*$/]
+    def deploy_settings(file)
+      env = YAML.load_file(ROOT.join(file), aliases: true).dig("accessories", "anycable", "env")
+      secrets = Array(env["secret"]).to_h { |key| [ key, "(from secrets)" ] }
+
+      env["clear"].merge(secrets)
+    end
+
+    # `anycable: anycable-go --broker=memory --presence_ttl=45 …`
+    def procfile_settings
+      command = File.read(ROOT.join("Procfile.dev"))[/^anycable:.*$/]
+
+      command.scan(/--(\w+)=(\S+)/).to_h { |flag, value| [ "ANYCABLE_#{flag.upcase}", value ] }
+    end
+
+    # `execute :docker, :run, … "-e", "ANYCABLE_BROKER=memory", …`, scoped to the
+    # anycable container so the web container's env doesn't answer for it.
+    def load_harness_settings
+      block = File.read(ROOT.join("bin/load-anycable"))[/:sabha_anycable.*?anycable\/anycable-go/m]
+
+      block.scan(/"(ANYCABLE_\w+)=([^"]*)"/).to_h
     end
 end
