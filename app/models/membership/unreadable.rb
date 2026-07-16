@@ -68,13 +68,13 @@ module Membership::Unreadable
 
     scope :read, -> {
       where(marked_unread: false)
-        .where("memberships.connected_at >= :ttl OR memberships.last_read_at IS NULL OR NOT #{UNSEEN_SQL}",
-               ttl: Membership::Connectable::CONNECTION_TTL.ago)
+        .where("(#{Membership::Connectable::CONNECTED_SQL}) OR memberships.last_read_at IS NULL OR NOT #{UNSEEN_SQL}",
+               connection_ttl: Membership::Connectable::CONNECTION_TTL.ago)
     }
     scope :unread, -> {
       visible.merge(
         where(marked_unread: true).or(
-          where(connected_at: [ nil, ...Membership::Connectable::CONNECTION_TTL.ago ])
+          where(Membership::Connectable::DISCONNECTED_SQL, connection_ttl: Membership::Connectable::CONNECTION_TTL.ago)
             .where.not(last_read_at: nil)
             .where(UNSEEN_SQL)
         )
@@ -98,7 +98,7 @@ module Membership::Unreadable
             t: created_at, id: id)
         .merge(
           where(marked_unread: true)
-            .or(where(connected_at: [ nil, ...Membership::Connectable::CONNECTION_TTL.ago ]))
+            .or(where(Membership::Connectable::DISCONNECTED_SQL, connection_ttl: Membership::Connectable::CONNECTION_TTL.ago))
         )
     }
     # Memberships caught up on everything except, at most, the given message —

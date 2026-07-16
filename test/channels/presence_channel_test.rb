@@ -67,6 +67,44 @@ class PresenceChannelTest < ActionCable::Channel::TestCase
     unsubscribe
   end
 
+  # One subscription contributes one connection, so it may only take one away.
+  # A hidden tab sends `absent`; closing it then fires unsubscribe as well, and
+  # the second decrement would come out of another tab's count — marking a room
+  # unread while the member is still sitting in it.
+  test "a hidden tab that then closes gives back exactly one connection" do
+    membership = users(:david).memberships.first
+    subscribe room_id: membership.room_id
+    membership.reload.present # a second tab
+    assert_equal 2, membership.reload.connections
+
+    subscription.absent
+    unsubscribe
+
+    assert_equal 1, membership.reload.connections, "the second tab's connection must survive"
+    assert membership.connected?
+  end
+
+  # The two tests above can't see this. Under AnyCable every command is its own
+  # RPC against a fresh channel object, so the guard only survives from `absent`
+  # to `depart` if it's registered channel state — but the ActionCable test
+  # adapter reuses one instance, where a plain attr_accessor passes both of them
+  # while silently double-decrementing in production. Pin the mechanism itself.
+  test "the departure guard is channel state, so it survives the RPC boundary" do
+    assert_includes PresenceChannel.channel_state_attributes, :departed,
+      "a plain instance variable is gone by the next RPC, so `depart` would decrement a second time"
+  end
+
+  test "presenting again after going absent re-arms the departure guard" do
+    membership = users(:david).memberships.first
+    subscribe room_id: membership.room_id
+
+    subscription.absent
+    subscription.present # tab visible again
+    unsubscribe          # …and now it really closes
+
+    assert_equal 0, membership.reload.connections
+  end
+
   test "presence is keyed by the user id so a member's tabs dedupe to one entry" do
     membership = users(:david).memberships.first
     subscribe room_id: membership.room_id

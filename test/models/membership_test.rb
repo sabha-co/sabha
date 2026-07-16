@@ -8,81 +8,253 @@ class MembershipTest < ActiveSupport::TestCase
     @membership = memberships(:david_watercooler)
   end
 
+  # Membership.connect writes with update_all, so the in-memory record doesn't
+  # see its own write. Reload every time rather than leave that to each test.
+  def present(membership)
+    membership.present
+    membership.reload
+  end
+
+  # Counts statements that take the SQLite writer. A SELECT is free; an UPDATE
+  # is the thing this work exists to remove.
+  def writes_while
+    writes = 0
+    counter = ->(_name, _start, _finish, _id, payload) do
+      writes += 1 if payload[:sql] =~ /\A\s*(INSERT|UPDATE|DELETE)/i
+    end
+
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { yield }
+    writes
+  end
+
   test "connected scope" do
-    @membership.connected
+    present @membership
     assert Membership.connected.exists?(@membership.id)
 
     @membership.disconnected
     assert_not Membership.connected.exists?(@membership.id)
 
+    present @membership
     travel_to Membership::Connectable::CONNECTION_TTL.from_now + 1
     assert_not Membership.connected.exists?(@membership.id)
   end
 
-  test "disconnected scope" do
+  test "disconnected scope is the exact negation of connected" do
+    present @membership
+    assert_not Membership.disconnected.exists?(@membership.id)
+
     @membership.disconnected
     assert Membership.disconnected.exists?(@membership.id)
 
-    @membership.connected
-    assert_not Membership.disconnected.exists?(@membership.id)
-
-    travel_to Membership::Connectable::CONNECTION_TTL.from_now + 1
-    assert Membership.disconnected.exists?(@membership.id)
+    assert_equal Membership.count, Membership.connected.count + Membership.disconnected.count,
+      "every membership is one or the other — no row may fall between the two scopes"
   end
 
-  test "connected? is false when connection is stale" do
-    @membership.connected
-    travel_to Membership::Connectable::CONNECTION_TTL.from_now + 1
-    assert_not @membership.connected?
-  end
-
-  test "connecting" do
-    @membership.connected
+  test "connected? needs a live connection AND fresh last-seen" do
+    present @membership
     assert @membership.connected?
+
+    travel_to Membership::Connectable::CONNECTION_TTL.from_now + 1
+    assert_not @membership.connected?, "stale last-seen: the socket died without saying so"
+
+    @membership.update_columns(connected_at: Time.current, connections: 0)
+    assert_not @membership.connected?, "no connections: they left, however fresh last-seen looks"
+  end
+
+  test "presenting counts each tab" do
+    present @membership
     assert_equal 1, @membership.connections
 
-    @membership.connected
+    present @membership
     assert_equal 2, @membership.connections
   end
 
-  test "connecting resets stale connection count" do
-    2.times { @membership.connected }
+  test "presenting resets stale connection count" do
+    2.times { present @membership }
     assert_equal 2, @membership.connections
 
     travel_to Membership::Connectable::CONNECTION_TTL.from_now + 1
-    @membership.connected
+    present @membership
     assert_equal 1, @membership.connections
   end
 
   test "disconnecting" do
-    2.times { @membership.connected }
+    2.times { present @membership }
 
     @membership.disconnected
-    assert @membership.connected?
+    assert @membership.reload.connected?
     assert_equal 1, @membership.connections
 
     @membership.disconnected
-    assert_not @membership.connected?
+    assert_not @membership.reload.connected?
     assert_equal 0, @membership.connections
   end
 
   test "disconnecting resets stale connection count" do
-    2.times { @membership.connected }
+    2.times { present @membership }
     assert_equal 2, @membership.connections
 
     travel_to Membership::Connectable::CONNECTION_TTL.from_now + 1
     @membership.disconnected
-    assert_equal 0, @membership.connections
+    assert_equal 0, @membership.reload.connections
   end
 
-  test "refreshing the connection" do
-    @membership.connected
+  test "fully disconnecting keeps last-seen, so email measures from real activity" do
+    Membership.unscoped.where(user_id: @membership.user_id).update_all(connected_at: nil, connections: 0)
+    present @membership
 
-    travel_to Membership::Connectable::CONNECTION_TTL.from_now + 1
-    assert_not @membership.connected?
+    @membership.disconnected
+
+    assert_not_nil @membership.reload.connected_at,
+      "wiping last-seen on disconnect is what made a member look instantly away"
+    assert_not Membership.workspace_locally_away?(@membership.user_id), "just left is not away"
+
+    travel_to Membership::Connectable::ACTIVITY_TIERS[:away].from_now + 1.minute
+    assert Membership.workspace_locally_away?(@membership.user_id)
+  end
+
+  # R4. The heartbeat used to write two rows every 50s per open tab, whatever
+  # was happening — the largest concurrency-scaled load on a single SQLite
+  # writer. These pin that idle watching now writes nothing at all.
+  test "a heartbeat with fresh last-seen writes nothing" do
+    present @membership
+
+    assert_equal 0, writes_while { @membership.reload.refresh_connection },
+      "an idle watcher must cost zero writes — this is the whole point of the exercise"
+  end
+
+  test "a heartbeat past the write threshold writes exactly once" do
+    present @membership
+    travel_to Membership::Connectable::CONNECTION_REFRESH_THRESHOLD.from_now + 1
+
+    assert_equal 1, writes_while { @membership.reload.refresh_connection },
+      "last-seen and the read cursor ride one UPDATE — two would take the writer twice per watcher"
+  end
+
+  test "a heartbeat past the threshold carries the read cursor with it" do
+    present @membership
+    message = @membership.room.messages.create! \
+      body: "seen live", creator: users(:jason), client_message_id: "heartbeat_cursor"
+
+    travel_to Membership::Connectable::CONNECTION_REFRESH_THRESHOLD.from_now + 1
+    @membership.reload.refresh_connection
+
+    assert_equal message.id, @membership.reload.last_read_message_id
+  end
+
+  test "a heartbeat never advances the cursor past an explicit mark-as-unread" do
+    present @membership
+    message = @membership.room.messages.create! \
+      body: "marked", creator: users(:jason), client_message_id: "heartbeat_marked"
+    @membership.reload.mark_unread_at(message)
+
+    travel_to Membership::Connectable::CONNECTION_REFRESH_THRESHOLD.from_now + 1
+    @membership.reload.refresh_connection
+
+    assert @membership.reload.unread?, "an explicit mark must survive the heartbeat"
+    assert_equal message, @membership.first_unread_message
+    assert_operator @membership.connected_at, :>, 1.minute.ago, "…while last-seen still refreshes"
+  end
+
+  test "the timing constants stay in the order the design depends on" do
+    client_cadence = 2.minutes # presence_controller.js REFRESH_INTERVAL
+
+    assert_operator client_cadence, :<, Membership::Connectable::CONNECTION_REFRESH_THRESHOLD,
+      "a watcher must beat more often than the server writes, or every beat writes"
+    assert_operator Membership::Connectable::CONNECTION_REFRESH_THRESHOLD, :<, Membership::Connectable::CONNECTION_TTL,
+      "last-seen must be rewritten before it goes stale, or watchers flicker offline between their own beats"
+    assert_operator Membership::Connectable::CONNECTION_TTL, :<, Membership::Connectable::ACTIVITY_TIERS[:active],
+      "a member must read as disconnected before their dot stops saying active"
+  end
+
+  # The unread scopes ask "were they watching when this landed?" in SQL. They
+  # used to answer with last-seen freshness alone, which was fine while a
+  # disconnect wiped the timestamp. Now that it survives (so email can measure
+  # from real activity) freshness alone would call a member who left an hour's
+  # worth of messages ago "still watching" for a full TTL.
+  test "a departed member with fresh last-seen still shows unread by scope" do
+    present @membership
+    @membership.disconnected # cursor to head, refcount to zero, last-seen kept
+
+    @membership.room.messages.create! \
+      body: "arrived after they left", creator: users(:jason), client_message_id: "after_depart"
+
+    assert Membership.unread.exists?(@membership.id),
+      "fresh last-seen must not mask a member who actually left — that is what the refcount is for"
+    assert_not Membership.read.exists?(@membership.id)
+    assert @membership.reload.unread?
+  end
+
+  test "a watching member's room never flips unread" do
+    present @membership
+
+    @membership.room.messages.create! \
+      body: "arrived while watching", creator: users(:jason), client_message_id: "while_watching"
+
+    assert Membership.read.exists?(@membership.id)
+    assert_not Membership.unread.exists?(@membership.id), "R6: a member watching a room never sees it flip unread"
+    assert @membership.reload.read?
+  end
+
+  test "with_message_unseen skips a watcher but catches a member who has left" do
+    present @membership
+    message = @membership.room.messages.create! \
+      body: "landed", creator: users(:jason), client_message_id: "unseen_scope"
+    @membership.reload.update_columns(last_read_at: 1.hour.ago, last_read_message_id: 0)
+
+    assert_empty Membership.with_message_unseen(message.created_at, message.id).where(id: @membership.id),
+      "a watching member saw it land"
+
+    @membership.update_columns(connections: 0) # left; last-seen still fresh
+
+    assert_not_empty Membership.with_message_unseen(message.created_at, message.id).where(id: @membership.id),
+      "a departed member did not"
+  end
+
+  test "a refresh landing after depart does not resurrect a departed membership" do
+    present @membership
+    @membership.disconnected
+    assert_equal 0, @membership.reload.connections
 
     @membership.refresh_connection
-    assert @membership.connected?
+
+    assert_equal 0, @membership.reload.connections
+    assert_not @membership.connected?
+  end
+
+  # OQ4. A broker restart fires no depart, so the dead session's +1 is never
+  # given back and the next present ratchets the count. The over-count is
+  # accepted rather than prevented — every way of preventing it costs an HTTP
+  # call on the connection-establishment path, which is the measured ceiling.
+  # These two pin why accepting it is safe.
+  test "a ratcheted refcount still counts watched messages as seen when the member leaves" do
+    present @membership
+    present @membership # broker restart: no depart fired, so this ratchets
+    assert_equal 2, @membership.connections, "the ratchet is accepted, not prevented"
+
+    watched = @membership.room.messages.create! \
+      body: "watched live", creator: users(:jason), client_message_id: "ratchet"
+
+    @membership.disconnected
+
+    assert_equal 1, @membership.reload.connections, "still over-counted…"
+    assert_equal watched.id, @membership.last_read_message_id,
+      "…but the cursor advances anyway: the advance must not wait for the refcount to reach zero"
+  end
+
+  test "an over-counted refcount reads as connected only until last-seen goes stale" do
+    present @membership
+    present @membership
+    @membership.disconnected
+
+    assert @membership.reload.connected?,
+      "the accepted harm: reads connected though the member left — same shape as a silent transport death"
+
+    travel_to Membership::Connectable::CONNECTION_TTL.from_now + 1
+    assert_not @membership.connected?, "and it heals on the TTL that already bounds a silent death"
+
+    present @membership
+    assert_equal 1, @membership.connections, "the next present clears the drift entirely"
   end
 
   test "deactivating a membership resets user connections" do
@@ -118,6 +290,43 @@ class MembershipTest < ActiveSupport::TestCase
   test "activity_status returns :offline when connected over 1 hour ago or never" do
     assert_equal :offline, Membership.activity_status(2.hours.ago)
     assert_equal :offline, Membership.activity_status(nil)
+  end
+
+  # OQ5. Preserving last-seen for email must not leave a green dot burning for
+  # ten minutes after someone closes their browser. The dot's "are they here"
+  # half reads the refcount; only its "how long ago" half reads last-seen.
+  test "activity_status is offline for a departed member however fresh last-seen is" do
+    assert_equal :active, Membership.activity_status(2.minutes.ago, connected: true)
+    assert_equal :offline, Membership.activity_status(2.minutes.ago, connected: false)
+  end
+
+  test "activity_statuses_for greys a departed member at once while last-seen survives" do
+    david = users(:david)
+    Membership.unscoped.where(user_id: david.id).update_all(connected_at: nil, connections: 0)
+
+    present @membership
+    assert_equal :active, Membership.activity_statuses_for([ david.id ])[david.id]
+
+    @membership.disconnected
+
+    assert_equal :offline, Membership.activity_statuses_for([ david.id ])[david.id],
+      "closing the browser greys the dot immediately, exactly as it did before last-seen was preserved"
+    assert_not_nil @membership.reload.connected_at, "…and last-seen still survives, for email"
+  end
+
+  # online? and online_user_count answer a different question than the dot —
+  # "how many people have been around lately" — so they stay last-seen-based.
+  # They must agree with each other, though: accounts_helper adds one to the
+  # count when online? is false, and would double-count otherwise.
+  test "online? stays last-seen based, so a member who just left still counts as around" do
+    david = users(:david)
+    Membership.unscoped.where(user_id: david.id).update_all(connected_at: nil, connections: 0)
+
+    present @membership
+    @membership.disconnected
+
+    assert Membership.online?(david), "they were here a moment ago"
+    assert_empty Membership.connected.where(user_id: david.id), "…though they hold no connection"
   end
 
   test "last_connected_at_for returns max connected_at per user" do
@@ -315,30 +524,28 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "refreshing the connection advances the cursor" do
-    @membership.present
+    present @membership
     @membership.room.messages.create!(creator: users(:jason), body: "Seen on heartbeat", client_message_id: "heartbeat_seen")
 
+    travel_to Membership::Connectable::CONNECTION_REFRESH_THRESHOLD.from_now + 1
     @membership.refresh_connection
     @membership.update_columns(connected_at: nil, connections: 0)
 
     assert @membership.reload.read?
   end
 
-  test "disconnect_all advances cursors but preserves explicit marks" do
-    watching = memberships(:david_watercooler)
-    marked = memberships(:jason_watercooler)
-    watching.present
-    marked.present
+  # R7/KTD6. disconnect_all existed to reset connections "when deploying new
+  # versions", from when Rails held the sockets. It doesn't any more — they
+  # terminate at the anycable-go accessory and survive a web deploy — so a
+  # booting release was wiping the state of members who never left, with no
+  # client event to repair it. It also ran in puma's before_fork, i.e. at boot,
+  # not at shutdown, so it never did the job its name implied.
+  test "booting a release no longer mass-resets connected members" do
+    assert_not Membership.respond_to?(:disconnect_all),
+      "disconnect_all is gone: it was also the only thing resetting a drifted refcount, so its removal and OQ4 are one decision"
 
-    message = watching.room.messages.create!(creator: users(:kevin), body: "Before shutdown", client_message_id: "shutdown_msg")
-    marked.mark_unread_at(message)
-
-    Membership.disconnect_all
-
-    assert watching.reload.read?, "a watcher's cursor advances on shutdown"
-    marked.reload
-    assert marked.unread?, "an explicit mark survives shutdown"
-    assert_equal message, marked.first_unread_message
+    assert_not_includes File.read(Rails.root.join("config/puma.rb")), "disconnect_all",
+      "a booting web process must not wipe members whose sockets are still live on the anycable-go accessory"
   end
 
   # Leave! tests

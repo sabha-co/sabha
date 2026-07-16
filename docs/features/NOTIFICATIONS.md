@@ -92,7 +92,11 @@ Push asks anycable-go. It terminates every WebSocket, so its broker already know
 
 This replaced a `connected_at` freshness check, which required every open tab to keep the column warm with a timed write — the largest concurrency-scaled write source on the single SQLite writer. The grace period after a socket dies is now anycable-go's `--presence_ttl` (45s, set explicitly), not the old 60-second `CONNECTION_TTL`.
 
-When the broker can't answer, gating falls back to the `connected?` column — coarser and staler, but it only fires when anycable-go is unreachable, which is also when those members are receiving no live messages anyway. Failing open (a redundant push) beats failing closed (a missed one). An **empty** presence set is not a failure: it means nobody is here, and everyone gets pushed.
+When the broker can't answer, gating falls back to the `connected?` column — coarser and staler, but it only fires when anycable-go is unreachable, which is also when those members are receiving no live messages anyway. Failing open (a redundant push) beats failing closed (a missed one). An **empty** presence set is not a failure: it means nobody is here, and everyone gets pushed. Note the fallback's window is now `CONNECTION_TTL` (5 minutes, widened once push stopped depending on it), so a broker outage suppresses push for anyone seen in the last five minutes — a wider notification gap than before, accepted because it needs Rails up and the broker down at once.
+
+**`connected?` means two things at once, deliberately.** It is `connections > 0 && connected_at` fresh within `CONNECTION_TTL`. The refcount drops the instant a member leaves; the timestamp is the only tell that a socket died without saying so. Both halves are needed, and the same pair is expressed in SQL as `Membership::Connectable::CONNECTED_SQL` for the `read`/`unread`/`with_message_unseen` scopes — freshness alone would call a member who left "still watching" for a full TTL, now that the timestamp survives a disconnect.
+
+`connected_at` is a **last-seen**, not a liveness flag: `disconnected` no longer clears it. Clearing it was what made a member look instantly away, so `workspace_locally_away?` sent a missed-message email to someone who had closed their laptop a minute earlier. Anything asking "are they here *now*" must pair it with the refcount.
 
 Email asks the database. `workspace_locally_away?` queries `Membership.last_connected_at_for([id])` against the **`:away` activity tier — 1 hour** — workspace-local, not cross-workspace.
 

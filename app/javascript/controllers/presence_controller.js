@@ -1,8 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 import { cable } from "@hotwired/turbo-rails"
 import { delay, nextFrame } from "helpers/timing_helpers"
+import { pageIsTurboPreview } from "helpers/turbo_helpers"
 
-const REFRESH_INTERVAL = 50 * 1000 // 50 seconds
+// The heartbeat keeps the server's last-seen from going stale (its TTL is 5
+// minutes) and carries the read cursor forward. It no longer has to be frequent:
+// the server writes at most once every 4 minutes and ignores the rest, so a
+// tighter cadence would buy nothing but RPCs. Must stay under the server's write
+// threshold so a watcher never goes stale between their own beats.
+const REFRESH_INTERVAL = 2 * 60 * 1000 // 2 minutes
 
 // We delay transmitting visibility changes to ignore brief periods of invisibility,
 // like switching to another tab and back
@@ -12,6 +18,10 @@ export default class extends Controller {
   static values = { roomId: Number }
 
   async connect() {
+    // A cached preview render is not a visit: presenting from one would churn
+    // connect/depart writes for a page the reader may never land on.
+    if (pageIsTurboPreview()) return
+
     const roomId = this.roomIdValue || Current.room.id
 
     this.channel = await cable.subscribeTo({ channel: "PresenceChannel", room_id: roomId }, {
@@ -19,10 +29,16 @@ export default class extends Controller {
       disconnected: this.#websocketDisconnected
     })
 
-    this.wasVisible = true
+    // Deliberately no `present` here. Subscribing already presents us server
+    // side, so sending one too would count this tab twice.
+    this.wasVisible = this.#isVisible
 
     await nextFrame()
     this.dispatch("present", { detail: { roomId } })
+
+    // ...but a tab that (re)subscribes while hidden would then sit in the
+    // presence set suppressing its own push notifications. Hand it straight back.
+    if (!this.#isVisible) this.channel.send({ action: "absent" })
   }
 
   disconnect() {

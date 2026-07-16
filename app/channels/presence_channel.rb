@@ -1,6 +1,11 @@
 class PresenceChannel < RoomChannel
   include AnyCable::Rails::Channel::Presence
 
+  # Has this subscription already given its connection back? Channel state, not
+  # an instance variable: every command arrives as its own RPC with a fresh
+  # channel object, so an ivar set in `absent` would be gone by `depart`.
+  state_attr_accessor :departed
+
   on_subscribe   :present, unless: :subscription_rejected?
   on_unsubscribe :depart,  unless: :subscription_rejected?
 
@@ -11,6 +16,7 @@ class PresenceChannel < RoomChannel
 
       m.present
       join_presence room_presence_stream
+      self.departed = false
       ReadRoomsChannel.broadcast_to(current_user, { room_id: m.room_id })
     end
   end
@@ -21,7 +27,7 @@ class PresenceChannel < RoomChannel
   def absent
     with_tenant_context do
       leave_presence
-      membership&.disconnected
+      depart_once
     end
   end
 
@@ -39,8 +45,20 @@ class PresenceChannel < RoomChannel
     # Only run the connection bookkeeping.
     def depart
       with_tenant_context do
-        membership&.disconnected
+        depart_once
       end
+    end
+
+    # A subscription contributes exactly one connection, so it may only take one
+    # away. A hidden tab has already sent `absent`; closing it then fires
+    # unsubscribe too, and without this guard that second decrement would come
+    # out of another tab's count — marking a room unread while the member is
+    # still sitting in it.
+    def depart_once
+      return if departed
+
+      membership&.disconnected
+      self.departed = true
     end
 
     def membership
