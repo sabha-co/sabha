@@ -59,12 +59,17 @@ class Room::PresenceSetTest < ActiveSupport::TestCase
     end
   end
 
-  test "a broker that times out or refuses the connection is unavailable" do
-    [ Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, SocketError ].each do |error|
+  # An escape here fails the whole dispatch job, taking missed-email down with
+  # push — strictly worse than falling back to the column. TLS matters because
+  # the broadcast URL is env-driven and an operator may point it at https.
+  test "a broker that times out, refuses, or fails its handshake is unavailable" do
+    [ Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Errno::ECONNRESET,
+      SocketError, EOFError, OpenSSL::SSL::SSLError, Net::HTTPBadResponse,
+      Net::HTTPHeaderSyntaxError ].each do |error|
       WebMock.reset!
       stub_presence_request.to_raise(error)
 
-      assert_nil Room::PresenceSet.for(@room), "#{error} must not escape"
+      assert_nil Room::PresenceSet.for(@room), "#{error} must not escape and fail the dispatch job"
     end
   end
 

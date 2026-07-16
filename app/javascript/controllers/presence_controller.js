@@ -31,14 +31,12 @@ export default class extends Controller {
 
     // Deliberately no `present` here. Subscribing already presents us server
     // side, so sending one too would count this tab twice.
-    this.wasVisible = this.#isVisible
-
     await nextFrame()
     this.dispatch("present", { detail: { roomId } })
 
-    // ...but a tab that (re)subscribes while hidden would then sit in the
-    // presence set suppressing its own push notifications. Hand it straight back.
-    if (!this.#isVisible) this.channel.send({ action: "absent" })
+    // The connected callback can fire before the await above assigns
+    // this.channel, so report once more now that we can actually send.
+    this.#reportVisibility()
   }
 
   disconnect() {
@@ -56,7 +54,24 @@ export default class extends Controller {
 
   #websocketConnected = () => {
     this.connected = true
-    this.#startRefreshTimer()
+    this.#reportVisibility()
+  }
+
+  // Runs on every subscription confirmation, not just the first. Action Cable
+  // resubscribes everything after a socket reconnect (welcome → reload) and the
+  // server presents us on each subscribe — all without Stimulus connect()
+  // running again. A hidden tab would otherwise rejoin the presence set on every
+  // reconnect and go on suppressing its own push notifications until the next
+  // visibility change. Never sends `present`: the server has already done that.
+  #reportVisibility = () => {
+    if (this.#isVisible) {
+      this.#startRefreshTimer()
+      this.wasVisible = true
+    } else {
+      this.#stopRefreshTimer()
+      this.channel?.send({ action: "absent" })
+      this.wasVisible = false
+    }
   }
 
   #websocketDisconnected = () => {

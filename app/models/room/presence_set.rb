@@ -17,10 +17,14 @@ class Room::PresenceSet
   API_SECRET_LABEL = "api-cable"
 
   # Not a blanket rescue: a bug in here must not disguise itself as "broker
-  # down" and silently push every watching member for the rest of time.
+  # down" and silently push every watching member for the rest of time. But
+  # anything the network can do to us belongs here — an escape fails the whole
+  # dispatch job, taking email down with push, which is strictly worse than the
+  # fallback. OpenSSL and Net's header errors descend from StandardError alone,
+  # so no amount of IOError/SystemCallError catches them.
   FETCH_ERRORS = [
-    Net::OpenTimeout, Net::ReadTimeout, Net::HTTPBadResponse,
-    IOError, SystemCallError, SocketError, JSON::ParserError
+    Net::OpenTimeout, Net::ReadTimeout, Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError,
+    OpenSSL::SSL::SSLError, IOError, SystemCallError, SocketError, JSON::ParserError
   ].freeze
 
   def self.for(room) = new(room).user_ids
