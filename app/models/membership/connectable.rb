@@ -54,11 +54,11 @@ module Membership::Connectable
     end
 
     # A dot answers two questions with one word, and each half reads the signal
-    # that knows. "Are they here?" is `connected:` — the refcount plus freshness.
-    # "How long ago were they here?" is the preserved last-seen, which is what
-    # the away tier reads. Closing a browser goes grey at once because the
-    # refcount drops, even though last-seen deliberately survives for email.
-    def activity_status(connected_at, connected: true)
+    # that knows: "are they here" is the refcount plus freshness, "how long ago"
+    # is the preserved last-seen. Required rather than defaulted — a default
+    # would quietly assume the flattering answer and leave a green dot burning
+    # after someone closed their browser.
+    def activity_status(connected_at, connected:)
       return :offline unless connected_at
       return :offline unless connected
 
@@ -107,50 +107,43 @@ module Membership::Connectable
     self.class.connect(self, connected? ? connections + 1 : 1)
   end
 
-  # Leaving counts everything watched live as seen, so the cursor advances to
-  # the room's head — unless the member explicitly marked the room unread, which
-  # must survive the disconnect.
+  # Leaving counts everything watched live as seen, so the cursor advances —
+  # unless the member explicitly marked the room unread, which must survive.
   #
-  # The advance deliberately does not wait for the refcount to reach zero. The
-  # member was watching right up to this moment, so everything so far is seen
-  # whether or not another tab is still open — and a tab that is still open
-  # advances the cursor on its own heartbeat anyway. Gating it on `connections
-  # < 1` would mean a refcount that drifted high (a broker restart fires no
-  # depart, so its session's +1 is never undone) silently stops counting watched
-  # messages as seen, which is the one harm that wouldn't heal. See OQ4.
+  # The advance deliberately doesn't wait for the refcount to reach zero. A
+  # refcount drifts high whenever a session dies without departing (a broker
+  # restart), and gating on `connections < 1` would then silently stop counting
+  # watched messages as seen. Advancing every time is right anyway: they were
+  # watching until this moment, and a tab still open re-advances on its own beat.
   #
-  # last-seen is never cleared here: it's what email's away tier reads, and
-  # wiping it on disconnect is what made a member look instantly away.
+  # last-seen is never cleared: it's what email's away tier reads, and wiping it
+  # is what made a member look instantly away.
   def disconnected
     decrement_connections
     advance_cursor_to_head unless marked_unread?
   end
 
-  # The heartbeat. It arrives every client cadence from every open tab, so what
-  # matters most is how often it writes *nothing*: last-seen only has to stay
-  # fresher than CONNECTION_TTL, so re-stamping it on every beat was pure write
-  # amplification against a single SQLite writer. Idle watching now costs zero
-  # writes; a watcher writes once per CONNECTION_REFRESH_THRESHOLD.
+  # The heartbeat, which arrives from every open tab on every client cadence.
+  # What matters is how often it writes nothing: last-seen only has to stay
+  # fresher than CONNECTION_TTL, so re-stamping it every beat was pure write
+  # amplification against a single writer.
   #
-  # The skip is decided here rather than in a WHERE clause on the UPDATE: a
-  # statement that matches no rows still opens a write transaction, which is the
-  # exact thing being avoided.
+  # The skip is decided here rather than as a WHERE clause, because an UPDATE
+  # matching no rows still opens a write transaction — the thing being avoided.
   def refresh_connection
-    # Never resurrect a departed membership — a refresh can be in flight when
-    # the tab closes and land after depart.
-    return unless connections > 0
+    return unless connections > 0 # a refresh can land after depart; don't resurrect
     return if connected_at? && connected_at > CONNECTION_REFRESH_THRESHOLD.ago
 
     self.class.refresh(self, marked_unread? ? nil : room_head_position)
   end
 
-  # A stale refcount is not worth decrementing down from — whatever it was
-  # counting is long gone, so drop straight to zero.
-  def decrement_connections
-    connected? ? decrement!(:connections, touch: true) : update!(connections: 0)
-  end
-
   private
+    # A stale refcount isn't worth counting down from — whatever it counted is
+    # long gone, so drop straight to zero.
+    def decrement_connections
+      connected? ? decrement!(:connections, touch: true) : update!(connections: 0)
+    end
+
     def reset_user_connections_if_deactivated
       user.reset_remote_connections if deactivated?
     end

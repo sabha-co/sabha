@@ -113,7 +113,7 @@ class MembershipTest < ActiveSupport::TestCase
     assert Membership.workspace_locally_away?(@membership.user_id)
   end
 
-  # R4. The heartbeat used to write two rows every 50s per open tab, whatever
+  # The heartbeat used to write two rows every 50s per open tab, whatever
   # was happening — the largest concurrency-scaled load on a single SQLite
   # writer. These pin that idle watching now writes nothing at all.
   test "a heartbeat with fresh last-seen writes nothing" do
@@ -192,7 +192,7 @@ class MembershipTest < ActiveSupport::TestCase
       body: "arrived while watching", creator: users(:jason), client_message_id: "while_watching"
 
     assert Membership.read.exists?(@membership.id)
-    assert_not Membership.unread.exists?(@membership.id), "R6: a member watching a room never sees it flip unread"
+    assert_not Membership.unread.exists?(@membership.id), "a member watching a room must never see it flip unread"
     assert @membership.reload.read?
   end
 
@@ -222,7 +222,7 @@ class MembershipTest < ActiveSupport::TestCase
     assert_not @membership.connected?
   end
 
-  # OQ4. A broker restart fires no depart, so the dead session's +1 is never
+  # A broker restart fires no depart, so the dead session's +1 is never
   # given back and the next present ratchets the count. The over-count is
   # accepted rather than prevented — every way of preventing it costs an HTTP
   # call on the connection-establishment path, which is the measured ceiling.
@@ -276,23 +276,23 @@ class MembershipTest < ActiveSupport::TestCase
   # Activity status tests
 
   test "activity_status returns :active when connected within 10 minutes" do
-    assert_equal :active, Membership.activity_status(2.minutes.ago)
-    assert_equal :active, Membership.activity_status(9.minutes.ago)
-    assert_equal :active, Membership.activity_status(Time.current)
+    assert_equal :active, Membership.activity_status(2.minutes.ago, connected: true)
+    assert_equal :active, Membership.activity_status(9.minutes.ago, connected: true)
+    assert_equal :active, Membership.activity_status(Time.current, connected: true)
   end
 
   test "activity_status returns :away when connected within 1 hour" do
-    assert_equal :away, Membership.activity_status(11.minutes.ago)
-    assert_equal :away, Membership.activity_status(30.minutes.ago)
-    assert_equal :away, Membership.activity_status(59.minutes.ago)
+    assert_equal :away, Membership.activity_status(11.minutes.ago, connected: true)
+    assert_equal :away, Membership.activity_status(30.minutes.ago, connected: true)
+    assert_equal :away, Membership.activity_status(59.minutes.ago, connected: true)
   end
 
   test "activity_status returns :offline when connected over 1 hour ago or never" do
-    assert_equal :offline, Membership.activity_status(2.hours.ago)
-    assert_equal :offline, Membership.activity_status(nil)
+    assert_equal :offline, Membership.activity_status(2.hours.ago, connected: true)
+    assert_equal :offline, Membership.activity_status(nil, connected: true)
   end
 
-  # OQ5. Preserving last-seen for email must not leave a green dot burning for
+  # Preserving last-seen for email must not leave a green dot burning for
   # ten minutes after someone closes their browser. The dot's "are they here"
   # half reads the refcount; only its "how long ago" half reads last-seen.
   test "activity_status is offline for a departed member however fresh last-seen is" do
@@ -351,8 +351,8 @@ class MembershipTest < ActiveSupport::TestCase
 
     result = Membership.last_connected_at_for([ david.id, jason.id ])
 
-    assert_equal :active, Membership.activity_status(result[david.id])
-    assert_equal :away, Membership.activity_status(result[jason.id])
+    assert_equal :active, Membership.activity_status(result[david.id], connected: true)
+    assert_equal :away, Membership.activity_status(result[jason.id], connected: true)
   end
 
   test "online? is true only when the user has a membership connected within the active tier" do
@@ -534,7 +534,7 @@ class MembershipTest < ActiveSupport::TestCase
     assert @membership.reload.read?
   end
 
-  # R7/KTD6. disconnect_all existed to reset connections "when deploying new
+  # disconnect_all existed to reset connections "when deploying new
   # versions", from when Rails held the sockets. It doesn't any more — they
   # terminate at the anycable-go accessory and survive a web deploy — so a
   # booting release was wiping the state of members who never left, with no
@@ -542,7 +542,7 @@ class MembershipTest < ActiveSupport::TestCase
   # not at shutdown, so it never did the job its name implied.
   test "booting a release no longer mass-resets connected members" do
     assert_not Membership.respond_to?(:disconnect_all),
-      "disconnect_all is gone: it was also the only thing resetting a drifted refcount, so its removal and OQ4 are one decision"
+      "disconnect_all is gone: it was also the only thing resetting a drifted refcount, so removing it and tolerating that drift are one decision"
 
     assert_not_includes File.read(Rails.root.join("config/puma.rb")), "disconnect_all",
       "a booting web process must not wipe members whose sockets are still live on the anycable-go accessory"

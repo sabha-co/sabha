@@ -91,9 +91,9 @@ class AnycableRequiredTest < ActiveSupport::TestCase
     end
   end
 
-  # KTD7: presence TTL is how long push stays suppressed after a socket dies
-  # silently. It has to clear the client's worst-case reconnect (~34s) or a blip
-  # pushes someone who never left. The 15s default does not.
+  # Presence TTL is how long push stays suppressed after a socket dies silently.
+  # It has to clear the client's worst-case reconnect (~34s) or a blip pushes
+  # someone who never left. The 15s default does not.
   test "presence TTL is set explicitly and clears the worst-case reconnect" do
     ttls = launch_points.transform_values { |settings| settings["ANYCABLE_PRESENCE_TTL"] }
 

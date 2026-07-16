@@ -10,6 +10,8 @@
 module PresenceTestHelper
   extend ActiveSupport::Concern
 
+  PRESENCE_URL_PATTERN = %r{/api/presence/.+/users\z}
+
   included do
     setup { stub_empty_presence }
   end
@@ -28,8 +30,6 @@ module PresenceTestHelper
   end
 
   private
-    PRESENCE_URL_PATTERN = %r{/api/presence/.+/users\z}
-
     # `records` is omitted when the set is empty, exactly as anycable-go sends it.
     def stub_empty_presence
       stub_request(:get, PRESENCE_URL_PATTERN)

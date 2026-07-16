@@ -2,7 +2,7 @@
 
 require_relative "../../test_helper"
 
-# R3: presence gating decides who gets a push, so a stream name that collided
+# Presence gating decides who gets a push, so a stream name that collided
 # across workspaces would leak one tenant's watchers into another's push
 # decisions. Nothing in anycable-go enforces that separation — one secret
 # authorizes every API call — so it holds only because the Room GID carries the
