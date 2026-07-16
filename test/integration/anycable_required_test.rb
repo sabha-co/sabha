@@ -1,11 +1,20 @@
 require "test_helper"
 
-# Guards the AnyCable-required cutover. The in-process ActionCable fallback and
-# its ANYCABLE_ENABLED / AnyCable::Rails.enabled? branches were removed; if any
-# creep back, real-time silently regresses to the unsupported fallback path.
+# AnyCable is a required runtime dependency, and most of what that means can't be
+# reached from a request: it lives in how a separate Go process is launched, and
+# in a boot that must refuse rather than degrade. So the assertions here are a
+# mix of real boot behaviour and config facts with no other test surface — a
+# missing broker or an unprotected API doesn't raise anywhere, it just quietly
+# pushes people who are sitting in the room reading.
+#
+# The bar for adding to this file: the config must have a consequence that
+# nothing else can catch. Grepping source text for a string that no longer means
+# anything at runtime is a lint rule, not a test, and doesn't belong here.
 class AnycableRequiredTest < ActiveSupport::TestCase
   ROOT = Rails.root
 
+  # Globs rather than walking a hand-written file list, so it can't develop the
+  # blind spot that a maintained list eventually does.
   test "no AnyCable::Rails.enabled? gate remains in app/ (whisper is unconditional)" do
     offenders = Dir.glob(ROOT.join("app/**/*.{rb,erb}")).select do |path|
       File.read(path).include?("AnyCable::Rails.enabled?")
@@ -13,30 +22,6 @@ class AnycableRequiredTest < ActiveSupport::TestCase
 
     assert_empty offenders,
       "AnyCable is required — remove the AnyCable::Rails.enabled? branches: #{offenders}"
-  end
-
-  test "no ANYCABLE_ENABLED reference remains in configs, env samples, or the deploy workflow" do
-    files = %w[
-      config/cable.yml
-      config/anycable.yml
-      config/environments/development.rb
-      config/deploy.yml
-      config/deploy.multitenant.yml
-      .env.sample
-      .env.multitenant.sample
-      .github/workflows/deploy_with_kamal.yml
-      .kamal/secrets
-      .kamal/secrets.multitenant
-      bin/dev
-    ]
-
-    offenders = files.select do |rel|
-      path = ROOT.join(rel)
-      File.exist?(path) && File.read(path).include?("ANYCABLE_ENABLED")
-    end
-
-    assert_empty offenders,
-      "The disable path is gone — ANYCABLE_ENABLED should not appear in: #{offenders}"
   end
 
   test "cable.yml uses the any_cable adapter in every app environment" do
@@ -115,6 +100,9 @@ class AnycableRequiredTest < ActiveSupport::TestCase
     # ends up running with, whatever syntax the file uses. The load harness is in
     # here deliberately: if it drifts from production it measures the wrong path
     # while looking like it measured the right one.
+    #
+    # Hand-written, and therefore the one thing here that can't detect its own
+    # gaps — a fifth launch point is unguarded until someone adds it below.
     def launch_points
       {
         "config/deploy.yml" => deploy_settings("config/deploy.yml"),
