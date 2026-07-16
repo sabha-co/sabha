@@ -66,7 +66,7 @@ A membership receives a push only when **all** of the following hold (`receives_
 
 - The user has `push_enabled` and is not banned/deactivated.
 - The membership's `effective_involvement` (per-room value layered over the user's global mode) matches the activity type — e.g. `:mention` requires at least `:mentions`, room messages require `:everything`.
-- The user is **not currently connected** to that room — `Membership::Connectable#connected?` uses a 60-second TTL on `last_connected_at`.
+- The user is **not currently watching** that room — read live from the anycable-go broker (`Room::PresenceSet`), falling back to `Membership::Connectable#connected?` (5-minute TTL on `connected_at`) only when the broker can't answer.
 - The user is not the message author and is not blocked by the author (or vice versa — block is symmetric for `can_ping?`).
 - The user has at least one valid `Push::Subscription` row.
 
@@ -94,12 +94,12 @@ Badge count (unread rooms) included in all payloads.
 - **Invalidation pool:** 1 thread (serial cleanup of expired subscriptions).
 - **Persistent HTTP:** `Net::HTTP::Persistent` with a 150-conn pool. The `WebPush` gem doesn't use it natively, so `config/initializers/web_push.rb` monkey-patches a `WebPush::PersistentRequest` adapter onto the gem.
 - **Error handling:** `WebPush::ExpiredSubscription` (HTTP 404/410) and `OpenSSL::OpenSSLError` trigger auto-destroy of the offending subscription on the invalidation pool.
-- **SaaS support:** captures and restores `ActsAsTenant.current_tenant` across thread boundaries so deliveries run with the correct tenant DB connection.
+- **SaaS support:** captures and restores `ApplicationRecord.current_tenant` across thread boundaries so deliveries run with the correct tenant DB connection.
 - **SSRF protection:** `Push::Subscription` validates the endpoint URL against an HTTPS-only allowlist (`PERMITTED_ENDPOINT_HOSTS`) at create time and pins the resolved IP (`resolved_endpoint_ip`) so a later DNS swap can't redirect a delivery to an internal host.
 
 ## Design Decisions
 
-- **Connection-aware delivery**: Sabha tracks `last_connected_at` on memberships with a 60-second TTL. Users actively viewing a room don't receive push notifications, reducing noise.
+- **Presence-aware delivery**: push gating asks the anycable-go broker who is watching the room (`Room::PresenceSet`), so members actively viewing a room don't receive push notifications. The membership connection columns survive as the fallback signal (5-minute TTL) for when the broker is unreachable.
 - **Room-type payloads**: Notification payloads are built based on room type (direct, shared, thread) rather than event type, keeping the payload logic simple.
 - **PWA install prompt**: `pwa_install_controller.js` intercepts `beforeinstallprompt` with platform-specific install instructions rather than relying on native browser prompts.
 - **Dynamic VAPID subject**: Uses `"mailto:#{Branding.support_email}"` so push service contact info matches your deployment.

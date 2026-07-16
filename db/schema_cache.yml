@@ -636,16 +636,6 @@ columns:
     comment:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
-    name: unread_at
-    cast_type: *1
-    sql_type_metadata: *2
-    'null': true
-    default:
-    default_function:
-    collation:
-    comment:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
     name: unread_notifications_count
     cast_type: *3
     sql_type_metadata: *4
@@ -2112,23 +2102,6 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: memberships
-    name: index_memberships_on_room_unread
-    unique: false
-    columns:
-    - room_id
-    - unread_at
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: memberships
     name: index_memberships_on_user_id_and_starred
     unique: false
     columns:
@@ -2138,23 +2111,6 @@ indexes:
     orders: {}
     opclasses: {}
     where:
-    type:
-    using:
-    include:
-    nulls_not_distinct:
-    comment:
-    valid: true
-  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
-    table: memberships
-    name: index_memberships_on_user_unread_active
-    unique: false
-    columns:
-    - user_id
-    - unread_at
-    lengths: {}
-    orders: {}
-    opclasses: {}
-    where: active = 1 AND unread_at IS NOT NULL
     type:
     using:
     include:
@@ -2869,4 +2825,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260715000001
+version: 20260716000001

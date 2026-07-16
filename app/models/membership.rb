@@ -1,4 +1,9 @@
 class Membership < ApplicationRecord
+  # Dropped in favor of the read cursor (last_read_at, last_read_message_id,
+  # marked_unread). Ignoring it keeps inserts from naming the column on a
+  # database the drop migration hasn't reached yet.
+  self.ignored_columns += %w[ unread_at ]
+
   include Cacheable, Connectable, Involvable, Starrable, Deactivatable, Notifiable
 
   belongs_to :room

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_15_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_07_16_000001) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -146,15 +146,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_15_000001) do
     t.boolean "marked_unread", default: false, null: false
     t.integer "room_id", null: false
     t.boolean "starred", default: false, null: false
-    t.datetime "unread_at"
     t.integer "unread_notifications_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["room_id", "created_at"], name: "index_memberships_on_room_id_and_created_at"
-    t.index ["room_id", "unread_at"], name: "index_memberships_on_room_unread"
     t.index ["room_id", "user_id"], name: "index_memberships_on_room_id_and_user_id", unique: true
     t.index ["user_id", "starred"], name: "index_memberships_on_user_id_and_starred"
-    t.index ["user_id", "unread_at"], name: "index_memberships_on_user_unread_active", where: "active = 1 AND unread_at IS NOT NULL"
   end
 
   create_table "messages", force: :cascade do |t|
