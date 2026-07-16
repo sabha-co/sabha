@@ -3,29 +3,6 @@
     {
       "warning_type": "SQL Injection",
       "warning_code": 0,
-      "fingerprint": "61bedc3ac97875bc2b120dc67be35d6e28dab09298b4b9b6b5f9920067d44aa9",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "app/models/membership.rb",
-      "line": 42,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "select(\"memberships.*\", \"(\\n  SELECT COUNT(DISTINCT messages.id)\\n  FROM messages\\n  WHERE messages.room_id = memberships.room_id\\n    AND messages.created_at >= COALESCE(\\n      memberships.unread_at,\\n      '#{Time.current.utc.iso8601}'\\n    )\\n    AND (\\n      EXISTS (\\n        SELECT 1\\n        FROM rooms\\n        WHERE rooms.id = memberships.room_id\\n          AND rooms.type = 'Rooms::Direct'\\n      )\\n      OR EXISTS (\\n        SELECT 1\\n        FROM notifications\\n        WHERE notifications.message_id = messages.id\\n          AND notifications.user_id = memberships.user_id\\n          AND notifications.activity_type = 'mention'\\n      )\\n      OR messages.mentions_everyone = true\\n    )\\n) AS preloaded_unread_notifications_count\\n\".squish)",
-      "note": "Safe: Time.current.utc.iso8601 is not user input",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "Membership",
-        "method": "with_has_unread_notifications"
-      },
-      "user_input": "Time.current.utc.iso8601",
-      "confidence": "Medium",
-      "cwe_id": [
-        89
-      ]
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
       "fingerprint": "d945fde5757cce776dfa778dd65837908a22403c6e966c46803374767d94592a",
       "check_name": "SQL",
       "message": "Possible SQL injection",
