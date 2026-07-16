@@ -57,7 +57,7 @@ class PresenceChannel < RoomChannel
     def depart_once
       return if departed
 
-      membership&.disconnected
+      membership&.disconnect
       self.departed = true
     end
 

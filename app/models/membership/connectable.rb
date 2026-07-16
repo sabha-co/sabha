@@ -118,7 +118,7 @@ module Membership::Connectable
   #
   # last-seen is never cleared: it's what email's away tier reads, and wiping it
   # is what made a member look instantly away.
-  def disconnected
+  def disconnect
     decrement_connections
     advance_cursor_to_head unless marked_unread?
   end

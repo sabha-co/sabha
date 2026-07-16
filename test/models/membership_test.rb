@@ -31,7 +31,7 @@ class MembershipTest < ActiveSupport::TestCase
     present @membership
     assert Membership.connected.exists?(@membership.id)
 
-    @membership.disconnected
+    @membership.disconnect
     assert_not Membership.connected.exists?(@membership.id)
 
     present @membership
@@ -43,7 +43,7 @@ class MembershipTest < ActiveSupport::TestCase
     present @membership
     assert_not Membership.disconnected.exists?(@membership.id)
 
-    @membership.disconnected
+    @membership.disconnect
     assert Membership.disconnected.exists?(@membership.id)
 
     assert_equal Membership.count, Membership.connected.count + Membership.disconnected.count,
@@ -81,11 +81,11 @@ class MembershipTest < ActiveSupport::TestCase
   test "disconnecting" do
     2.times { present @membership }
 
-    @membership.disconnected
+    @membership.disconnect
     assert @membership.reload.connected?
     assert_equal 1, @membership.connections
 
-    @membership.disconnected
+    @membership.disconnect
     assert_not @membership.reload.connected?
     assert_equal 0, @membership.connections
   end
@@ -95,7 +95,7 @@ class MembershipTest < ActiveSupport::TestCase
     assert_equal 2, @membership.connections
 
     travel_to Membership::Connectable::CONNECTION_TTL.from_now + 1
-    @membership.disconnected
+    @membership.disconnect
     assert_equal 0, @membership.reload.connections
   end
 
@@ -103,7 +103,7 @@ class MembershipTest < ActiveSupport::TestCase
     Membership.unscoped.where(user_id: @membership.user_id).update_all(connected_at: nil, connections: 0)
     present @membership
 
-    @membership.disconnected
+    @membership.disconnect
 
     assert_not_nil @membership.reload.connected_at,
       "wiping last-seen on disconnect is what made a member look instantly away"
@@ -174,7 +174,7 @@ class MembershipTest < ActiveSupport::TestCase
   # worth of messages ago "still watching" for a full TTL.
   test "a departed member with fresh last-seen still shows unread by scope" do
     present @membership
-    @membership.disconnected # cursor to head, refcount to zero, last-seen kept
+    @membership.disconnect # cursor to head, refcount to zero, last-seen kept
 
     @membership.room.messages.create! \
       body: "arrived after they left", creator: users(:jason), client_message_id: "after_depart"
@@ -213,7 +213,7 @@ class MembershipTest < ActiveSupport::TestCase
 
   test "a refresh landing after depart does not resurrect a departed membership" do
     present @membership
-    @membership.disconnected
+    @membership.disconnect
     assert_equal 0, @membership.reload.connections
 
     @membership.refresh_connection
@@ -235,7 +235,7 @@ class MembershipTest < ActiveSupport::TestCase
     watched = @membership.room.messages.create! \
       body: "watched live", creator: users(:jason), client_message_id: "ratchet"
 
-    @membership.disconnected
+    @membership.disconnect
 
     assert_equal 1, @membership.reload.connections, "still over-counted…"
     assert_equal watched.id, @membership.last_read_message_id,
@@ -245,7 +245,7 @@ class MembershipTest < ActiveSupport::TestCase
   test "an over-counted refcount reads as connected only until last-seen goes stale" do
     present @membership
     present @membership
-    @membership.disconnected
+    @membership.disconnect
 
     assert @membership.reload.connected?,
       "the accepted harm: reads connected though the member left — same shape as a silent transport death"
@@ -307,7 +307,7 @@ class MembershipTest < ActiveSupport::TestCase
     present @membership
     assert_equal :active, Membership.activity_statuses_for([ david.id ])[david.id]
 
-    @membership.disconnected
+    @membership.disconnect
 
     assert_equal :offline, Membership.activity_statuses_for([ david.id ])[david.id],
       "closing the browser greys the dot immediately, exactly as it did before last-seen was preserved"
@@ -323,7 +323,7 @@ class MembershipTest < ActiveSupport::TestCase
     Membership.unscoped.where(user_id: david.id).update_all(connected_at: nil, connections: 0)
 
     present @membership
-    @membership.disconnected
+    @membership.disconnect
 
     assert Membership.online?(david), "they were here a moment ago"
     assert_empty Membership.connected.where(user_id: david.id), "…though they hold no connection"
@@ -506,7 +506,7 @@ class MembershipTest < ActiveSupport::TestCase
     @membership.present
     @membership.room.messages.create!(creator: users(:jason), body: "Watched live", client_message_id: "watched_live")
 
-    @membership.disconnected
+    @membership.disconnect
 
     assert @membership.reload.read?, "messages that landed while connected must not dot the room after leaving"
   end
@@ -516,7 +516,7 @@ class MembershipTest < ActiveSupport::TestCase
     message = @membership.room.messages.create!(creator: users(:jason), body: "Keep me unread", client_message_id: "keep_unread")
     @membership.mark_unread_at(message)
 
-    @membership.disconnected
+    @membership.disconnect
 
     @membership.reload
     assert @membership.unread?, "an explicit mark must survive leaving the room"
