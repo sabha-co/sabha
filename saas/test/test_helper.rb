@@ -20,6 +20,7 @@ require "mocha/minitest"
 require "webmock/minitest"
 
 require_relative "../../test/test_helpers/turnstile_test_helper"
+require_relative "../../test/test_helpers/presence_test_helper"
 
 # Load untenanted fixtures from saas/test/fixtures/
 SAAS_FIXTURE_PATH = File.expand_path("fixtures", __dir__)
@@ -93,6 +94,7 @@ end
 class ActiveSupport::TestCase
   include ActiveJob::TestHelper
   include SaasTestHelper
+  include PresenceTestHelper
 
   setup do
     ActionCable.server.pubsub.clear if defined?(ActionCable.server.pubsub)

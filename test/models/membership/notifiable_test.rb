@@ -50,42 +50,46 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
 
   # ---------- receives_push_for? ----------
 
-  test "receives_push_for? returns false when the membership is connected" do
-    @recipient_membership.connected
+  # Connectedness is deliberately not this predicate's business any more. The
+  # dispatcher asks anycable-go who is actually present and subtracts them
+  # (Room::PushTest covers that); answering it here too would let a stale column
+  # override the live signal.
+  test "receives_push_for? ignores the connection column — presence gating is the dispatcher's job" do
+    @recipient_membership.update_columns(connected_at: Time.current, connections: 1)
 
-    refute @recipient_membership.receives_push_for?(@message, :mention)
+    assert @recipient_membership.receives_push_for?(@message, :mention)
   end
 
   test "receives_push_for? returns true for direct_message regardless of involvement" do
-    @recipient_membership.disconnected
+    @recipient_membership.disconnect
     @recipient_membership.update!(involvement: :nothing)
 
     assert @recipient_membership.receives_push_for?(@message, :direct_message)
   end
 
   test "receives_push_for? returns false for everyone_room_message when involvement is mentions" do
-    @recipient_membership.disconnected
+    @recipient_membership.disconnect
     @recipient_membership.update!(involvement: :mentions)
 
     refute @recipient_membership.receives_push_for?(@message, :everyone_room_message)
   end
 
   test "receives_push_for? returns true for everyone_room_message when involvement is everything" do
-    @recipient_membership.disconnected
+    @recipient_membership.disconnect
     @recipient_membership.update!(involvement: :everything)
 
     assert @recipient_membership.receives_push_for?(@message, :everyone_room_message)
   end
 
   test "receives_push_for? returns false when user's push_enabled is off" do
-    @recipient_membership.disconnected
+    @recipient_membership.disconnect
     (@recipient_membership.user.notification_settings || @recipient_membership.user.create_notification_settings!).update!(push_enabled: false)
 
     refute @recipient_membership.receives_push_for?(@message, :mention)
   end
 
   test "receives_push_for? returns false when sender is blocked by recipient" do
-    @recipient_membership.disconnected
+    @recipient_membership.disconnect
     @recipient_membership.user.block!(@creator)
 
     refute @recipient_membership.receives_push_for?(@message, :mention)

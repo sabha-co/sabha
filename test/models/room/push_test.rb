@@ -26,14 +26,87 @@ class Room::PushTest < ActiveSupport::TestCase
     wait_for_web_push_delivery_pool_tasks(5)
   end
 
-  test "does not notify for connected rooms" do
-    memberships(:kevin_designers).connected
+  # These assert on the gating decision rather than on delivery counts. The pool
+  # swallows every exception from its worker threads (by design — a dead endpoint
+  # must not take down dispatch), which also swallows a mocha "unexpected
+  # invocation". So a payload_send expectation can catch too FEW pushes but never
+  # too many — and too many is the whole failure mode presence gating prevents.
+  test "does not notify a member who is watching the room" do
+    message = mention_kevin_in_designers "watching"
+    watching rooms(:designers), users(:kevin)
 
+    assert_not_includes message.push_recipient_user_ids_for(:mention), users(:kevin).id
+  end
+
+  # The point of the exercise: a fresh connected_at means nothing once the broker
+  # says the member isn't there. This pushed nobody before presence gating.
+  test "notifies a member whose connection column is fresh but who is not present" do
+    memberships(:kevin_designers).update_columns(connected_at: Time.current, connections: 1)
+    message = mention_kevin_in_designers "stale_column"
+
+    assert_includes message.push_recipient_user_ids_for(:mention), users(:kevin).id
+  end
+
+  test "falls back to the connection column when the broker cannot answer" do
+    presence_broker_unavailable
+    memberships(:kevin_designers).update_columns(connected_at: Time.current, connections: 1)
+    message = mention_kevin_in_designers "fallback"
+
+    assert_not_includes message.push_recipient_user_ids_for(:mention), users(:kevin).id
+  end
+
+  test "an unreachable broker still notifies a member whose connection column is stale" do
+    presence_broker_unavailable
+    memberships(:kevin_designers).update_columns(connected_at: nil, connections: 0)
+    message = mention_kevin_in_designers "fallback_stale"
+
+    assert_includes message.push_recipient_user_ids_for(:mention), users(:kevin).id
+  end
+
+  # A restarted broker answers successfully with an empty set. That must read as
+  # "nobody is here" and push, not trip the unavailable fallback.
+  test "an empty presence set notifies everyone rather than falling back" do
+    memberships(:kevin_designers).update_columns(connected_at: Time.current, connections: 1)
+    watching rooms(:designers) # nobody
+    message = mention_kevin_in_designers "empty_set"
+
+    assert_includes message.push_recipient_user_ids_for(:mention), users(:kevin).id
+  end
+
+  test "a present user id with no membership row is ignored" do
+    watching rooms(:designers), 999_999
+    message = mention_kevin_in_designers "ghost"
+
+    assert_includes message.push_recipient_user_ids_for(:mention), users(:kevin).id
+  end
+
+  test "a member watching the room is dropped from an everyone_room_message too" do
+    memberships(:kevin_designers).update! involvement: "everything"
+    watching rooms(:designers), users(:kevin)
+    message = mention_kevin_in_designers "everyone_watching"
+
+    assert_not_includes message.push_recipient_user_ids_for(:everyone_room_message), users(:kevin).id
+  end
+
+  # notify_recipients runs everyone_room_message and mention for this message.
+  # Both must see the same presence set, from one call.
+  test "fetches presence once for a message that triggers multiple activity types" do
     perform_enqueued_jobs only: Notification::DispatchJob do
-      WebPush.expects(:payload_send).times(2)
-      rooms(:designers).messages.create! body: "Hey @kevin", client_message_id: "earth", creator: users(:david)
+      mention_kevin_in_designers "one_fetch"
     end
-    wait_for_web_push_delivery_pool_tasks(2)
+
+    assert_requested :get, presence_url_for(rooms(:designers)), times: 1
+  end
+
+  test "the memoized presence set does not go stale between activity types" do
+    message = mention_kevin_in_designers "memoized"
+    watching rooms(:designers), users(:kevin)
+    message.push_recipient_user_ids_for(:mention)
+
+    # A second fetch would answer differently; the memo must win.
+    watching rooms(:designers)
+
+    assert_not_includes message.push_recipient_user_ids_for(:everyone_room_message), users(:kevin).id
   end
 
   test "does not notify for invisible rooms" do
@@ -154,6 +227,14 @@ class Room::PushTest < ActiveSupport::TestCase
   end
 
   private
+    # Creates the message without running dispatch, so a test can set up presence
+    # and then ask the gate directly.
+    def mention_kevin_in_designers(client_message_id)
+      rooms(:designers).messages.create! \
+        body: "Hey #{mention_attachment_for(:kevin)}",
+        client_message_id: client_message_id, creator: users(:david)
+    end
+
     def wait_for_web_push_delivery_pool_tasks(count)
       wait_for_pool_tasks(Rails.configuration.x.web_push_pool.delivery_pool, count)
     end

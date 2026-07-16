@@ -201,12 +201,19 @@ class Message < ApplicationRecord
     return if event?
 
     types = only ? Array(only).map(&:to_sym) : room.applicable_activity_types(self)
+    push_subscriptions = []
 
+    # Two phases. Everything that can raise — in-app rows, email bundles, and
+    # working out who to push — runs first; posting runs last. A push can't be
+    # recalled once posted, so a raise afterwards (the next activity type's
+    # email work, say) would re-send it when the job retries.
     types.each do |activity_type|
-      deliver_in_app_row_for(activity_type, actor: actor)         if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
-      deliver_push_for(activity_type)                             if Notification::Routing::PUSH_TYPES.include?(activity_type)
-      enqueue_missed_email_candidates_for(activity_type)          if Notification::Routing::EMAIL_TYPES.include?(activity_type)
+      deliver_in_app_row_for(activity_type, actor: actor)              if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
+      push_subscriptions.concat push_subscriptions_for(activity_type)  if Notification::Routing::PUSH_TYPES.include?(activity_type)
+      enqueue_missed_email_candidates_for(activity_type)               if Notification::Routing::EMAIL_TYPES.include?(activity_type)
     end
+
+    deliver_pushes_to push_subscriptions
   end
 
   # Block ids touching this message's creator — memoized so per-recipient
@@ -223,29 +230,20 @@ class Message < ApplicationRecord
   end
 
   # Returns the candidate user-id set for a push activity type. The membership
-  # scopes pre-filter for speed (involvement, connection, creator exclusion),
-  # then Membership::Notifiable#receives_push_for? applies the full gate so
-  # block checks, user health, message/room state, and the push_enabled
-  # setting all participate — same predicates run at dispatch time and at
-  # delivery time, per arch § 4–5.
+  # scopes pre-filter for speed (involvement, creator exclusion), anyone
+  # currently watching the room is dropped, then
+  # Membership::Notifiable#receives_push_for? applies the full gate so block
+  # checks, user health, message/room state, and the push_enabled setting all
+  # participate — same predicates run at dispatch time and at delivery time,
+  # per arch § 4–5.
   def push_recipient_user_ids_for(activity_type)
     activity_type = activity_type.to_sym
     return [] unless Notification::Routing::PUSH_TYPES.include?(activity_type)
 
     push_candidate_memberships_for(activity_type)
+      .reject { |membership| watching?(membership) }
       .select { |membership| membership.receives_push_for?(self, activity_type) }
       .map(&:user_id)
-  end
-
-  def deliver_push_for(activity_type)
-    user_ids = push_recipient_user_ids_for(activity_type)
-    return if user_ids.empty?
-
-    subscriptions = Push::Subscription.where(user_id: user_ids)
-    return if subscriptions.empty?
-
-    payload = Room::MessagePusher.payload_for(room: room, message: self)
-    Rails.configuration.x.web_push_pool.queue(payload, subscriptions)
   end
 
   # Walks the candidate recipient set for `activity_type`, runs
@@ -291,12 +289,51 @@ class Message < ApplicationRecord
   end
 
   private
+    # Who has this room open right now, straight from anycable-go, which holds
+    # their sockets. Memoized because notify_recipients runs up to three activity
+    # types and they must agree with each other — and because it's an HTTP call.
+    # nil means the broker couldn't answer, which is not the same as nobody being
+    # here, so `defined?` rather than `||=`.
+    def watching_user_ids
+      return @watching_user_ids if defined?(@watching_user_ids)
+
+      @watching_user_ids = Room::PresenceSet.for(room)
+    end
+
+    def watching?(membership)
+      if watching_user_ids
+        watching_user_ids.include?(membership.user_id)
+      else
+        # No live signal, so fall back to the column presence replaced. Coarser
+        # and staler, but it only fires when anycable-go is unreachable — which
+        # is also when these members are receiving no live messages anyway.
+        membership.connected?
+      end
+    end
+
+    def push_subscriptions_for(activity_type)
+      user_ids = push_recipient_user_ids_for(activity_type)
+      return [] if user_ids.empty?
+
+      Push::Subscription.where(user_id: user_ids).to_a
+    end
+
+    # Phase 2. Deliberately dumb: everything that can fail has already run. The
+    # payload is built before the first post, so a raise here still means
+    # nothing went out and the job can retry cleanly.
+    def deliver_pushes_to(subscriptions)
+      return if subscriptions.empty?
+
+      payload = Room::MessagePusher.payload_for(room: room, message: self)
+      Rails.configuration.x.web_push_pool.queue(payload, subscriptions)
+    end
+
     def push_candidate_memberships_for(activity_type)
       eager_load = { user: :notification_settings }
 
       case activity_type
       when :everyone_room_message
-        room.memberships.visible.disconnected
+        room.memberships.visible
             .where.not(user_id: creator_id)
             .involved_in_everything
             .includes(eager_load)
@@ -306,16 +343,16 @@ class Message < ApplicationRecord
         # qualifies anyone !involved_in_invisible?, so the `.visible` scope already
         # does all the filtering needed here — and it still covers any legacy
         # :mentions rows from before the sub-room levels were unified.
-        room.memberships.visible.disconnected
+        room.memberships.visible
             .where.not(user_id: creator_id)
             .includes(eager_load)
       when :direct_message
-        room.memberships.visible.disconnected
+        room.memberships.visible
             .where.not(user_id: creator_id)
             .includes(eager_load)
       when :mention
         candidate_user_ids = mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
-        room.memberships.visible.disconnected
+        room.memberships.visible
             .where(user_id: candidate_user_ids)
             .involved_in_mentions
             .includes(eager_load)

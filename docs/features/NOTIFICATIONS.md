@@ -18,7 +18,7 @@ All notification channels — in-app rows, push, missed-notification email (bund
 | Channel | Trigger | Storage |
 |---|---|---|
 | In-app row | Per-message, when activity_type creates a `Notification` row | `notifications` table (existing) |
-| Push (WebPush) | Per-message, when membership is push-eligible and disconnected | `push_subscriptions` (existing) |
+| Push (WebPush) | Per-message, when membership is push-eligible and the member isn't watching the room (per the AnyCable broker) | `push_subscriptions` (existing) |
 | Missed-notification email | Per-message, eligible items accumulate into a per-user bundle and deliver hourly/daily | `notification_bundles` + `notification_bundle_items` (new) |
 | Weekly activity digest email | Recurring per-workspace job, generated content for opted-in members | No persistent store; `last_digest_sent_at` per user for dedup |
 
@@ -82,11 +82,23 @@ Folding the two-source rule into one method removes the per-call-site foot-gun w
 
 Channel-specific gates:
 
-- **Push:** `user.push_enabled?`, membership not currently `connected?`.
+- **Push:** `user.push_enabled?`, and the member is not currently watching the room. Watching is decided by the dispatcher, not by this predicate — see below.
 - **Missed-notification email:** `user.missed_email_enabled?`, account email flag on, `user.workspace_locally_away?`, `activity_type.in?(Notification::Routing::EMAIL_TYPES)`.
 - **Weekly digest:** `user.weekly_digest_subscribed?`, account `weekly_digest_enabled?`.
 
-**Two distinct presence checks:** push uses per-membership `connected?` (room-scoped, 60-second WebSocket TTL); email uses `workspace_locally_away?` (queries `Membership.last_connected_at_for([id])` against the **`:away` activity tier — 1 hour** — workspace-local, not cross-workspace).
+**Two distinct presence checks, from two different sources.**
+
+Push asks anycable-go. It terminates every WebSocket, so its broker already knows who has a room open — `Room::PresenceSet` reads that set over the HTTP API (`GET /api/presence/:stream/users`) and `Message#watching?` subtracts those users from the candidates. One fetch per dispatch job, memoized on the message so every activity type sees the same answer. `receives_push_for?` deliberately says nothing about connectedness: a stale column must not override the live signal.
+
+This replaced a `connected_at` freshness check, which required every open tab to keep the column warm with a timed write — the largest concurrency-scaled write source on the single SQLite writer. The grace period after a socket dies is now anycable-go's `--presence_ttl` (45s, set explicitly), not the old 60-second `CONNECTION_TTL`.
+
+When the broker can't answer, gating falls back to the `connected?` column — coarser and staler, but it only fires when anycable-go is unreachable, which is also when those members are receiving no live messages anyway. Failing open (a redundant push) beats failing closed (a missed one). An **empty** presence set is not a failure: it means nobody is here, and everyone gets pushed. Note the fallback's window is now `CONNECTION_TTL` (5 minutes, widened once push stopped depending on it), so a broker outage suppresses push for anyone seen in the last five minutes — a wider notification gap than before, accepted because it needs Rails up and the broker down at once.
+
+**`connected?` means two things at once, deliberately.** It is `connections > 0 && connected_at` fresh within `CONNECTION_TTL`. The refcount drops the instant a member leaves; the timestamp is the only tell that a socket died without saying so. Both halves are needed, and the same pair is expressed in SQL as `Membership::Connectable::CONNECTED_SQL` for the `read`/`unread`/`with_message_unseen` scopes — freshness alone would call a member who left "still watching" for a full TTL, now that the timestamp survives a disconnect.
+
+`connected_at` is a **last-seen**, not a liveness flag: `disconnected` no longer clears it. Clearing it was what made a member look instantly away, so `workspace_locally_away?` sent a missed-message email to someone who had closed their laptop a minute earlier. Anything asking "are they here *now*" must pair it with the refcount.
+
+Email asks the database. `workspace_locally_away?` queries `Membership.last_connected_at_for([id])` against the **`:away` activity tier — 1 hour** — workspace-local, not cross-workspace.
 
 `workspace_locally_away?` returns true when the user's most recent connection in any of this workspace's memberships is more than `Membership::Connectable::ACTIVITY_TIERS[:away]` (1 hour) ago, or never. The `:away` tier is chosen over the tighter `:active` tier (10 minutes) because email is asking a different question than UI presence: not "should we show a green dot" but "has the user been gone long enough that an email is the right way to reach them?" A brief mid-window visit (e.g. user pops in for 2 minutes during an hourly bundle) means the user could plausibly have seen the message live, so the bundle should drop at delivery time. Using the 10-minute tier would email those users; using the 1-hour tier does not.
 

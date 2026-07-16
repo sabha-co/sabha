@@ -70,6 +70,12 @@ fi
 # Install anycable-go if needed. AnyCable is required to run Sabha locally
 # (bin/dev boots it alongside Rails). It's not in most Linux package repos, so
 # fall back to a pointer rather than failing setup — bin/dev preflights for it.
+#
+# 1.6.9 is the floor: push gating reads presence over anycable-go's HTTP API,
+# which doesn't exist before it. An older binary works for everything else, so
+# an already-installed one needs upgrading, not leaving alone.
+ANYCABLE_MINIMUM_VERSION="1.6.9"
+
 if ! command -v anycable-go &>/dev/null; then
   echo
   echo "▸ Installing anycable-go"
@@ -80,6 +86,20 @@ if ! command -v anycable-go &>/dev/null; then
     echo "(AnyCable is required to run Sabha locally via bin/dev.)"
   fi
   echo
+else
+  anycable_version="$(anycable-go --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+  if [ -n "$anycable_version" ] && \
+     [ "$(printf '%s\n' "$ANYCABLE_MINIMUM_VERSION" "$anycable_version" | sort -V | head -1)" != "$ANYCABLE_MINIMUM_VERSION" ]; then
+    echo
+    echo "▸ Upgrading anycable-go ($anycable_version is below the $ANYCABLE_MINIMUM_VERSION required for presence-gated push)"
+    if command -v brew &>/dev/null; then
+      brew upgrade anycable-go
+    else
+      echo "Please upgrade anycable-go to $ANYCABLE_MINIMUM_VERSION or newer:"
+      echo "https://docs.anycable.io/anycable-go/getting_started"
+    fi
+    echo
+  fi
 fi
 
 step() {

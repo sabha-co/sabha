@@ -39,6 +39,29 @@ if ! command -v anycable-go >/dev/null 2>&1; then
   exit 1
 fi
 
+# Push gating reads presence over anycable-go's HTTP API, which first shipped in
+# 1.6.9. Older binaries start fine and serve WebSockets fine — they just 404
+# every presence read, so Rails falls back to the connected_at column and pushes
+# members who are sitting in the room reading. Nothing raises, so preflight it.
+ANYCABLE_MINIMUM_VERSION="1.6.9"
+anycable_version="$(anycable-go --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+
+if [ -z "$anycable_version" ]; then
+  echo "Could not determine the anycable-go version; expected at least $ANYCABLE_MINIMUM_VERSION."
+  echo "Continuing — presence-gated push will silently fall back if it's older."
+elif [ "$(printf '%s\n' "$ANYCABLE_MINIMUM_VERSION" "$anycable_version" | sort -V | head -1)" != "$ANYCABLE_MINIMUM_VERSION" ]; then
+  echo "anycable-go $anycable_version is too old — Sabha needs at least $ANYCABLE_MINIMUM_VERSION."
+  echo
+  echo "Its HTTP API (which push gating reads presence from) doesn't exist before"
+  echo "$ANYCABLE_MINIMUM_VERSION. Real-time would still work, but every presence read would 404 and"
+  echo "push would quietly notify people who are already reading the room."
+  echo
+  echo "Upgrade it:"
+  echo "  macOS:  brew upgrade anycable-go"
+  echo "  other:  https://docs.anycable.io/anycable-go/getting_started"
+  exit 1
+fi
+
 if ! gem list foreman -i --silent; then
   echo "Installing foreman..."
   gem install foreman

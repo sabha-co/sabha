@@ -21,7 +21,13 @@ if ENV["ANYCABLE_ENABLED"] == "false"
 end
 
 if Rails.env.production? && !ENV["SECRET_KEY_BASE_DUMMY"].present?
-  required = %w[APP_HOST SECRET_KEY_BASE]
+  # ANYCABLE_SECRET has always been required for RPC and JWT signing, but a
+  # blank one used to fail loudly at the first WebSocket. Push gating now
+  # derives the presence API secret from it, and anycable-go *disables* its API
+  # when no secret is set — so a blank value would instead degrade every
+  # presence read to "broker unavailable" and quietly push members who are
+  # sitting in the room reading. Fail here instead.
+  required = %w[APP_HOST SECRET_KEY_BASE ANYCABLE_SECRET]
 
   if Sabha.saas?
     required += %w[COOKIE_DOMAIN UNTENANTED_DATABASE_URL]

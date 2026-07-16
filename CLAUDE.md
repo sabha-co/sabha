@@ -79,7 +79,8 @@ Sabha uses **AnyCable** as its real-time transport — a required runtime depend
 
 - **Transport:** `anycable-go` is a separate process that terminates every WebSocket connection and calls back into Rails over HTTP RPC at `/_anycable`. All environments use the `any_cable` adapter in `config/cable.yml` (only `test` uses `test`) — the in-process/redis fallback was removed, so Rails is never the WebSocket server.
 - **Process topology:** dev starts it via `bin/dev` (`Procfile.dev`, port 8080). Both deployment modes run `anycable/anycable-go` as a Kamal accessory routed at `/cable` with RPC pointed back at the Rails service — self-hosted via `config/deploy.yml`, SaaS via `config/deploy.multitenant.yml`. A self-hosted install needs the sidecar too; there is no Rails-only mode.
-- **Broker:** the **in-memory broker** backs presence and stream history (presence TTL 15s). State is per-node, so we run a single `anycable-go` replica — scaling out would require a shared broker (Redis/NATS).
+- **Broker:** the **in-memory broker** backs presence and stream history (presence TTL set explicitly to 45s — it bounds how long push stays suppressed after a socket dies, so it must clear the client's worst-case reconnect). State is per-node, so we run a single `anycable-go` replica.
+- **Presence reads:** push gating asks the broker who's watching (`Room::PresenceSet` → `GET /api/presence/:stream/users`) rather than the `connected_at` column. The API secret is derived: `HMAC-SHA256(ANYCABLE_SECRET, "api-cable")`. An unreachable broker degrades to the DB signal rather than dropping pushes.
 - **Auth:** sockets are identified by a JWT so reconnects skip the connect RPC.
 - **Channels** are ordinary ActionCable classes; presence uses `AnyCable::Rails::Channel::Presence` (`PresenceChannel`).
 - **Config:** `config/anycable.yml` (JWT/stream secrets) + `config/cable.yml`. Docs: https://docs.anycable.io (full text: https://docs.anycable.io/llms-full.txt).

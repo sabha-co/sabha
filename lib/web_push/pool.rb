@@ -9,10 +9,16 @@ class WebPush::Pool
     @invalid_subscription_handler = invalid_subscription_handler
   end
 
+  # Build every notification before posting any of them. Building one hits the
+  # DB for the badge count and resolves the endpoint's DNS, either of which can
+  # raise — and a posted delivery can't be recalled, so raising partway through
+  # would re-send the earlier ones when the job retries. Posting itself can't
+  # raise, so once the first delivery is out the rest follow.
   def queue(payload, subscriptions)
-    subscriptions.find_each do |subscription|
-      deliver_later(payload, subscription)
-    end
+    tenant = current_tenant
+    deliveries = subscriptions.map { |subscription| [ subscription.notification(**payload), subscription.id ] }
+
+    deliveries.each { |notification, subscription_id| deliver_later(notification, subscription_id, tenant) }
   end
 
   def shutdown
@@ -22,15 +28,7 @@ class WebPush::Pool
   end
 
   private
-    def deliver_later(payload, subscription)
-      # Capture tenant context FIRST for SaaS mode (thread pool loses context)
-      # Must capture before any AR operations to ensure consistency
-      tenant = current_tenant
-
-      # Ensure any AR operations happen before we post to the thread pool
-      notification = subscription.notification(**payload)
-      subscription_id = subscription.id
-
+    def deliver_later(notification, subscription_id, tenant)
       delivery_pool.post do
         deliver(notification, subscription_id, tenant)
       rescue Exception => e

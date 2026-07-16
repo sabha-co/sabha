@@ -59,6 +59,9 @@ volumes:
 # Routes /cable path to AnyCable on the same domain
 accessories:
   anycable:
+    # 1.6.9+ required: the HTTP API that push gating reads presence from
+    # (Room::PresenceSet) doesn't exist before it, and its absence is silent —
+    # presence reads 404 and push falls back to the connected_at column.
     image: anycable/anycable-go:1.6
     host: <%= ENV.fetch("SERVER_IP") %>
     proxy:
@@ -78,6 +81,14 @@ accessories:
         # Presence lives in the broker component; without a broker the presence
         # set silently no-ops. Memory is right for this single-node accessory.
         ANYCABLE_BROKER: "memory"
+        # How long a dropped socket stays "present", and therefore how long push
+        # stays suppressed after someone's connection dies silently. Set
+        # explicitly rather than inheriting the 15s default: it must clear the
+        # client's worst-case reconnect (~34s — ActionCable caps its backoff
+        # exponent at 10 and adds a 6s stale window) or a blip would push someone
+        # who is still sitting in the room.
+        # Seconds, bare — anycable-go rejects a duration string like "45s".
+        ANYCABLE_PRESENCE_TTL: "45"
         ANYCABLE_LOG_LEVEL: "info"
       secret:
         - ANYCABLE_SECRET
