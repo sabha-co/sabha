@@ -17,4 +17,22 @@ class SaasAccountTest < ActiveSupport::TestCase
   ensure
     identity&.destroy
   end
+
+  test "attaching and purging logo syncs has_logo flag on workspace" do
+    identity = GlobalIdentity.create!(name: "Logo Sync", email_address: "logosync@example.com", verified_at: Time.current)
+
+    with_provisioned_workspace(name: "Logo Test", creator: identity) do |workspace|
+      ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+        account = Account.first
+
+        account.update!(logo: { io: StringIO.new("fake png"), filename: "logo.png", content_type: "image/png" })
+        assert workspace.reload.has_logo?, "expected has_logo to flip true after attach"
+
+        account.purge_logo
+        assert_not workspace.reload.has_logo?, "expected has_logo to flip false after purge"
+      end
+    end
+  ensure
+    identity&.destroy
+  end
 end

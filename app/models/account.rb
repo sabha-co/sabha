@@ -3,14 +3,16 @@ class Account < ApplicationRecord
 
   VALID_AUTH_METHODS = %w[password otp sso].freeze
   ALLOWED_LOGO_CONTENT_TYPES = %w[ image/jpeg image/png image/gif image/webp ].freeze
+  MAX_LOGO_SIZE = 5.megabytes
 
-  InvalidLogoType = Class.new(StandardError)
-
-  has_one_attached :logo
+  has_one_attached :logo, dependent: :purge_later
   has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true
+
+  validate :acceptable_logo, if: :logo_attached?
 
   after_save :invalidate_personal_invite_links, if: :invite_links_disabled?
   after_commit :sync_name_to_workspace, if: :saved_change_to_name?
+  after_save_commit :sync_logo_to_workspace
 
   # Auth config is ENV-driven and shared across all accounts on a deploy.
   class << self
@@ -44,18 +46,8 @@ class Account < ApplicationRecord
     end
   end
 
-  def attach_logo(attachable)
-    content_type = attachable.try(:content_type) || attachable[:content_type]
-    raise InvalidLogoType unless content_type.in?(ALLOWED_LOGO_CONTENT_TYPES)
-
-    logo.attach(attachable)
-    touch
-    sync_logo_to_workspace
-  end
-
   def purge_logo
     logo.purge
-    touch
     sync_logo_to_workspace
   end
 
@@ -79,6 +71,21 @@ class Account < ApplicationRecord
   end
 
   private
+    def logo_attached?
+      logo.attached?
+    end
+
+    def acceptable_logo
+      unless ALLOWED_LOGO_CONTENT_TYPES.include?(logo.content_type)
+        errors.add(:logo, "must be a JPEG, PNG, GIF, or WebP image")
+        return
+      end
+
+      if logo.byte_size > MAX_LOGO_SIZE
+        errors.add(:logo, "is too large (max #{MAX_LOGO_SIZE / 1.megabyte}MB)")
+      end
+    end
+
     def invite_links_disabled?
       saved_change_to_settings? && !settings.allow_users_to_create_invite_links?
     end
