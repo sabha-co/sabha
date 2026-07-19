@@ -34,7 +34,7 @@ Sabha is a Ruby on Rails chat application using Hotwire/Turbo, AnyCable-Go, Tail
 - Use `ApplicationRecord` (not `ActiveRecord::Base`) in multi-tenant code paths.
 
 ## Key Domain Knowledge
-- `Room` uses STI. Current types include `Rooms::Open`, `Rooms::Closed`, `Rooms::Direct`, `Rooms::Thread`, `Rooms::Forum`, and `Rooms::Post`; a `Rooms::Thread` is tied to a parent message.
+- `Room` uses STI with six subclasses. `Rooms::Open`, `Rooms::Closed`, and `Rooms::Forum` appear in the sidebar; `Rooms::Forum` forces `auto_join` on and renders a post gallery rather than a message stream. `Rooms::Direct` is one room per unique member set, keyed by `members_hash`. `Rooms::Thread` (tied to a parent message) and `Rooms::Post` (tied to a forum) are the `SUB_ROOM_TYPES`, and both delegate `viewable_by?` to their parent so access is inherited rather than re-declared. `Rooms::AccessController#update` converts Open ↔ Closed in place with `becomes!`.
 - Messages, rooms, and memberships are soft-deleted through the `Deactivatable` concern and its `active` flag. Boosts and bookmarks are hard-deleted.
 - Mentions are stateless for real-time delivery and persistent through history notifications. They are parsed from Action Text HTML by `Message::Mentionee`; there is no mentions table. `Notification` records power Activity and unread badges, and `@everyone` uses `messages.mentions_everyone`.
 - Self-hosted authentication uses `Session` and password/email OTP through `AuthToken`, with request state in `Current.user`, `Current.session`, and `Current.account`. SaaS authentication uses `GlobalIdentity`, `AuthCode`, `GlobalSession`, and `WorkspaceMembership`; the workspace membership determines `Current.user`.

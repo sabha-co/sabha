@@ -62,7 +62,13 @@ end
 ## Key Domain Knowledge
 
 ### Room System (STI)
-`Room` base class with: `Rooms::Open`, `Rooms::Closed`, `Rooms::Direct`, `Rooms::Thread` (tied to a parent message)
+`Room` base class with six subclasses:
+
+- **Sidebar rooms** — `Rooms::Open` (browsable, joinable, optional `auto_join`), `Rooms::Closed` (explicit membership), `Rooms::Forum` (community-wide, `auto_join` forced on; renders a **post gallery**, not a message stream)
+- **DMs** — `Rooms::Direct`, one per unique member set via `members_hash`
+- **Sub-rooms** (`SUB_ROOM_TYPES`) — `Rooms::Thread` (tied to a parent message) and `Rooms::Post` (tied to a forum). Both delegate `viewable_by?` to their parent, so access is inherited rather than re-declared.
+
+`Rooms::AccessController#update` converts Open ↔ Closed in place via `becomes!`.
 
 ### Soft Deletion
 Messages, Rooms, Memberships use `Deactivatable` concern (`active` boolean). Boost and Bookmark are hard-deleted.
