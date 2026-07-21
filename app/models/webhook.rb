@@ -4,6 +4,8 @@ require "uri"
 class Webhook < ApplicationRecord
   ENDPOINT_TIMEOUT = 300.seconds
 
+  class DeliveryError < StandardError; end
+
   belongs_to :user
 
   validates :url, presence: true, format: { with: /\Ahttps?:\/\/.+\z/i, message: "must be a valid HTTP(S) URL" }
@@ -58,7 +60,7 @@ class Webhook < ApplicationRecord
 
     def deliver_without_reply(event_name, payload)
       post(event_name, payload).tap do |response|
-        raise "Failed to deliver webhook to #{url}, response: #{response.code} #{response.message}" unless response.is_a?(Net::HTTPSuccess)
+        raise Webhook::DeliveryError, "Failed to deliver webhook to #{url}, response: #{response.code} #{response.message}" unless response.is_a?(Net::HTTPSuccess)
       end
     end
 
