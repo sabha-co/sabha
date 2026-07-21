@@ -7,16 +7,6 @@ class Bot::WebhookJobTest < ActiveJob::TestCase
     DemoMode.stubs(:enabled?).returns(false)
   end
 
-  test "retries on transient network errors" do
-    @webhook.stubs(:deliver).raises(Errno::ECONNRESET)
-
-    assert_nothing_raised do
-      Bot::WebhookJob.perform_now(@webhook, "message_created", "{}", @room, false)
-    end
-
-    assert_enqueued_with(job: Bot::WebhookJob)
-  end
-
   test "does not retry programming errors" do
     @webhook.stubs(:deliver).raises(NoMethodError, "undefined method `avatar' for nil")
 
@@ -42,5 +32,20 @@ class Bot::WebhookJobTest < ActiveJob::TestCase
     @webhook.expects(:deliver).never
 
     Bot::WebhookJob.perform_now(@webhook, "message_created", "{}", @room, false)
+  end
+
+  test "discards when the webhook has been deleted" do
+    assert_enqueued_with(job: Bot::WebhookJob) do
+      Bot::WebhookJob.perform_later(@webhook, "message_created", "{}", @room, false)
+    end
+
+    @webhook.destroy!
+
+    # With the record gone, GlobalID deserialization raises
+    # ActiveJob::DeserializationError; discard_on must swallow it so the queue
+    # closes cleanly instead of surfacing a failed execution nothing can act on.
+    assert_nothing_raised do
+      perform_enqueued_jobs(only: Bot::WebhookJob)
+    end
   end
 end

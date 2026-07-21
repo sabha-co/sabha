@@ -1,4 +1,10 @@
 class Bot::WebhookJob < ApplicationJob
+  # A webhook or its room can be deleted between enqueue and perform; the
+  # GlobalID arguments then fail to deserialize. Discard rather than retry —
+  # the records aren't coming back — so the queue closes cleanly instead of
+  # recording a failed execution nothing can act on.
+  discard_on ActiveJob::DeserializationError
+
   # Retry transient network failures (connection drops, DNS hiccups, SSL
   # renegotiation) and HTTP-level delivery failures (a bot endpoint returning
   # a transient 5xx). Programming errors — NoMethodError, TypeError, nil bugs
