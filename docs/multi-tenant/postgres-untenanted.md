@@ -101,6 +101,16 @@ Production uses a managed PostgreSQL service. No database accessory in Kamal —
 
 `UNTENANTED_DATABASE_URL` lives in `.env.multitenant` (gitignored) and is forwarded into the container via `.kamal/secrets.multitenant`. SSL params are included in the URL (e.g., `?sslmode=require`).
 
+### Upgrading Postgres major versions
+
+The untenanted database is managed infrastructure, so a major-version upgrade (e.g. 17 → 18) is the provider's operation, not a Kamal deploy. The app carries no version risk — CI already exercises the suite against the target major (the untenanted service is `postgres:18`). But untenanted records gate every request (login and workspace resolution), so treat it as a brief maintenance window with a rollback:
+
+1. **Snapshot** `SELECT version()` and row counts for `global_identities`, `workspaces`, `workspace_memberships`, and `global_sessions`.
+2. **Confirm a backup** — the provider's point-in-time recovery, or a `pg_dump --format=custom` taken from a host on the target major (the app container ships only `libpq5`, no client binaries).
+3. **Upgrade in place** via the provider. If it issues a new endpoint, repoint `UNTENANTED_DATABASE_URL` (keep `?sslmode=require`) and redeploy the multitenant service.
+4. **Verify** `version()` reports the new major, all four row counts match the snapshot, and a real login → workspace → session path works.
+5. **Roll back** via the provider's point-in-time recovery if verification fails. A major upgrade rewrites the cluster and isn't reversible in place, so the backup/PITR is the only rollback — keep it until 18 is confirmed healthy.
+
 ## Migrations
 
 Untenanted migrations live in `saas/db/untenanted_migrate/` and use pure ActiveRecord DSL — no SQLite-specific syntax — so they apply against PostgreSQL without modification.
