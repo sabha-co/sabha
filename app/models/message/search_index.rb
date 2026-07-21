@@ -30,6 +30,19 @@ module Message::SearchIndex
     postgresql? ? connection.column_exists?(:messages, :body_search) : sqlite_index_present?
   end
 
+  # Empties the index without dropping it. The demo seed's reset wipes every
+  # table in connection.tables, but an FTS5 virtual table isn't reported there
+  # (see #sqlite_index_present?), so that loop skips the shadow table and its
+  # rows would otherwise pile up as orphans across re-seeds. On Postgres the
+  # tsvector lives on the messages row itself, so deleting the messages already
+  # clears it — nothing to do here.
+  def clear!
+    return if postgresql?
+    return unless exists?
+
+    connection.execute "DELETE FROM message_search_index"
+  end
+
   # --- Keeping the index current (called from Message::Searchable callbacks) ---
 
   def add(message)
