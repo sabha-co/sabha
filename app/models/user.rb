@@ -116,12 +116,24 @@ class User < ApplicationRecord
       .group(users_table[:id])
       .order(messages_table[:created_at].maximum.desc)
   end
-  scope :by_first_name, ->(first_name) { where("CASE WHEN instr(name, ' ') > 0 THEN substr(name, 1, instr(name, ' ')-1) ELSE name END = ?", first_name.to_s.strip) }
+  scope :by_first_name, ->(first_name) {
+    # instr (SQLite) and strpos (Postgres) both return the 1-based index of the
+    # first space, or 0 when absent, so substr extracts the first token on either
+    # engine. The comparison stays an exact, case-sensitive match as before.
+    space_at = connection.adapter_name == "PostgreSQL" ? "strpos(name, ' ')" : "instr(name, ' ')"
+    where("CASE WHEN #{space_at} > 0 THEN substr(name, 1, #{space_at} - 1) ELSE name END = ?", first_name.to_s.strip)
+  }
   scope :filtered_by, ->(query) {
     return all unless query.present?
 
+    # matches renders ILIKE on Postgres and LIKE on SQLite, so the search stays
+    # case-insensitive on both (a bare LIKE is case-sensitive on Postgres).
     pattern = "%#{sanitize_sql_like(query)}%"
-    where("name LIKE :q OR ascii_name LIKE :q OR twitter_username LIKE :q OR linkedin_username LIKE :q", q: pattern)
+    t = arel_table
+    where(t[:name].matches(pattern)
+      .or(t[:ascii_name].matches(pattern))
+      .or(t[:twitter_username].matches(pattern))
+      .or(t[:linkedin_username].matches(pattern)))
   }
 
   # Exact first-name matches ranked above partial matches. Both legs capped at limit.
@@ -131,7 +143,12 @@ class User < ApplicationRecord
   end
 
   scope :sharing_rooms_with, ->(user) {
-    joins(:memberships).where(memberships: { room_id: user.rooms.select(:id) }).distinct
+    # Users co-present in any room this user actively belongs to. Expressed as a
+    # subquery rather than a join + distinct so that chaining .ordered — which
+    # sorts by LOWER(name) — stays valid on Postgres, where SELECT DISTINCT
+    # rejects an ORDER BY expression that isn't in the select list. The IN
+    # subquery dedupes naturally, so the result set is unchanged.
+    where(id: Membership.active.where(room_id: user.rooms.select(:id)).select(:user_id))
   }
 
 

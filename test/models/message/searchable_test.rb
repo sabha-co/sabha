@@ -26,4 +26,24 @@ class Message::SearchableTest < ActiveSupport::TestCase
     assert_equal [], rooms(:designers).messages.search("span")
     assert_equal [ message ], rooms(:designers).messages.search("eel")
   end
+
+  test "search stems terms so run matches running" do
+    message = rooms(:designers).messages.create! body: "we are running late", client_message_id: "stem", creator: users(:david)
+
+    # porter on SQLite, the english config on Postgres — both stem running to run.
+    assert_equal [ message ], rooms(:designers).messages.search("run")
+  end
+
+  test "stopword-only queries diverge by engine — the one documented difference" do
+    message = rooms(:designers).messages.create! body: "who goes there", client_message_id: "stop", creator: users(:david)
+
+    if Message::SearchIndex.postgresql?
+      # Postgres's english config strips stopwords, so plainto_tsquery('english', 'who')
+      # is empty and matches nothing.
+      assert_equal [], rooms(:designers).messages.search("who")
+    else
+      # FTS5's porter tokenizer keeps stopwords, so "who" is indexed and matches.
+      assert_equal [ message ], rooms(:designers).messages.search("who")
+    end
+  end
 end

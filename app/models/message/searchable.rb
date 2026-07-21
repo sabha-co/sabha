@@ -6,23 +6,22 @@ module Message::Searchable
     after_update_commit  :update_in_index
     after_destroy_commit :remove_from_index
 
-    scope :search, ->(query) { joins("join message_search_index idx on messages.id = idx.rowid").where("idx.body match ?", query).ordered }
+    # Message::SearchIndex owns the engine-specific index (an FTS5 shadow table
+    # on SQLite, a tsvector column on Postgres); this concern just declares the
+    # lifecycle hooks and the scope and delegates the mechanics to it.
+    scope :search, ->(query) { Message::SearchIndex.search(all, query) }
   end
 
   private
     def create_in_index
-      execute_sql_with_binds "insert into message_search_index(rowid, body) values (?, ?)", id, plain_text_body
+      Message::SearchIndex.add(self)
     end
 
     def update_in_index
-      execute_sql_with_binds "update message_search_index set body = ? where rowid = ?", plain_text_body, id
+      Message::SearchIndex.refresh(self)
     end
 
     def remove_from_index
-      execute_sql_with_binds "delete from message_search_index where rowid = ?", id
-    end
-
-    def execute_sql_with_binds(*statement)
-      self.class.connection.execute self.class.sanitize_sql(statement)
+      Message::SearchIndex.remove(self)
     end
 end

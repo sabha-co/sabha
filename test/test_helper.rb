@@ -4,6 +4,14 @@ ENV.delete("COOKIE_DOMAIN")
 require_relative "../config/environment"
 
 require "rails/test_help"
+
+# maintain_test_schema! (triggered by requiring rails/test_help) reloads
+# db/schema.rb via load_schema, not the db:prepare task, so it never runs the
+# search-index ensure step and — since the search DDL is intentionally absent
+# from schema.rb — leaves the test database without a search index. Provision it
+# here so searchable tests have a working index on either adapter.
+Message::SearchIndex.ensure!
+
 require "mocha/minitest"
 require "webmock/minitest"
 if ENV["EVENT_PROF"]
@@ -29,6 +37,10 @@ class ActiveSupport::TestCase
   # FIXME: Why isn't this included in ActiveSupport::TestCase by default?
   include ActiveJob::TestHelper
 
+  # If re-enabling parallel testing, provision the search index per worker too:
+  # each worker gets its own database via load_schema (which omits the
+  # engine-specific search DDL), so add `parallelize_setup { Message::SearchIndex.ensure! }`
+  # alongside the top-of-file ensure! call.
   # parallelize(workers: :number_of_processors)
 
   # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.

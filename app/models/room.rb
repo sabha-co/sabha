@@ -81,7 +81,8 @@ class Room < ApplicationRecord
 
   scope :ordered, -> { order(:sortable_name) }
   scope :matching, ->(query) {
-    query.present? ? where("name LIKE ?", "%#{sanitize_sql_like(query)}%") : all
+    # matches renders ILIKE on Postgres, LIKE on SQLite — case-insensitive on both.
+    query.present? ? where(arel_table[:name].matches("%#{sanitize_sql_like(query)}%")) : all
   }
 
   class << self

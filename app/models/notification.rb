@@ -62,7 +62,7 @@ class Notification < ApplicationRecord
 
       Membership.where(room_id: message.room_id, user_id: notification.user_id)
                 .merge(Membership.with_message_unseen(message.created_at, message.id))
-                .update_all("unread_notifications_count = MAX(unread_notifications_count - 1, 0)")
+                .update_all("unread_notifications_count = CASE WHEN unread_notifications_count > 0 THEN unread_notifications_count - 1 ELSE 0 END")
     end
   end
 

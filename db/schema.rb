@@ -422,7 +422,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_16_000001) do
   add_foreign_key "users", "badges"
   add_foreign_key "webhooks", "users"
 
-  # Virtual tables defined in this database.
-  # Note that virtual tables may not work with other database engines. Be careful if changing database.
-  create_virtual_table "message_search_index", "fts5", ["body", "tokenize=porter"]
+  # The full-text search index is intentionally not dumped here — it is
+  # engine-specific (an FTS5 virtual table on SQLite, a tsvector column + GIN
+  # index on Postgres) and a single schema file can't hold both. It is
+  # provisioned by Message::SearchIndex (run from db:prepare and the test schema
+  # load), and a SchemaDumper filter keeps it out of future dumps.
 end

@@ -710,6 +710,30 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 10, User.matching("David", limit: 10).size
   end
 
+  # by_first_name / filtered_by dialect portability (SQLite + Postgres)
+
+  test "by_first_name groups a multi-word name under its first token" do
+    ada = User.create!(name: "Ada Lovelace", email_address: "ada@example.com", verified_at: 1.day.ago)
+
+    assert_includes User.by_first_name("Ada"), ada
+    assert_not_includes User.by_first_name("Lovelace"), ada
+  end
+
+  test "by_first_name matches a single-word name with no trailing split" do
+    grace = User.create!(name: "Grace", email_address: "grace@example.com", verified_at: 1.day.ago)
+
+    assert_includes User.by_first_name("Grace"), grace
+  end
+
+  test "filtered_by matches case-insensitively on every adapter" do
+    # Postgres LIKE is case-sensitive; this fails there unless the scope renders
+    # ILIKE. SQLite LIKE is case-insensitive, so it must keep matching too.
+    alice = User.create!(name: "Alice", email_address: "alice@example.com", verified_at: 1.day.ago)
+
+    assert_includes User.filtered_by("alice"), alice
+    assert_includes User.filtered_by("ALICE"), alice
+  end
+
   # User.sharing_rooms_with
 
   test "sharing_rooms_with returns members of rooms the bot shares" do

@@ -28,7 +28,15 @@ module Slack
     private
 
     def find_by_slack_id(slack_user_id)
-      User.where("json_extract(preferences, '$.slack_user_id') = ?", slack_user_id).first
+      # preferences is a JSON-serialized text column. SQLite reads it with
+      # json_extract; Postgres needs a jsonb cast before the ->> accessor.
+      matcher =
+        if User.connection.adapter_name == "PostgreSQL"
+          "(preferences::jsonb ->> 'slack_user_id') = ?"
+        else
+          "json_extract(preferences, '$.slack_user_id') = ?"
+        end
+      User.where(matcher, slack_user_id).first
     end
 
     def create_user(slack_user)
