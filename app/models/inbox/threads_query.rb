@@ -26,7 +26,7 @@ class Inbox::ThreadsQuery
     ApplicationRecord.sanitize_sql_array([ <<~SQL.squish, user.id, user.id ])
       SELECT DISTINCT threads.parent_message_id
       FROM rooms threads
-      WHERE threads.active = 1
+      WHERE threads.active = TRUE
         AND threads.type = 'Rooms::Thread'
         AND threads.messages_count > 0
         AND (
@@ -34,7 +34,7 @@ class Inbox::ThreadsQuery
             SELECT 1 FROM memberships
             WHERE memberships.room_id = threads.id
               AND memberships.user_id = ?
-              AND memberships.active = 1
+              AND memberships.active = TRUE
               AND memberships.involvement != 'invisible'
           )
           OR EXISTS (
@@ -42,7 +42,7 @@ class Inbox::ThreadsQuery
             INNER JOIN memberships ON memberships.room_id = messages.room_id
             WHERE messages.id = threads.parent_message_id
               AND memberships.user_id = ?
-              AND memberships.active = 1
+              AND memberships.active = TRUE
               AND memberships.involvement = 'everything'
           )
         )

@@ -37,6 +37,18 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     assert_equal "lindy", prefs["slack_username"]
   end
 
+  test "re-importing finds existing users by slack_user_id instead of duplicating them" do
+    # The second pass resolves each user through find_by_slack_id, which reads
+    # the slack_user_id out of the JSON preferences column — json_extract on
+    # SQLite, a jsonb cast on Postgres. If that lookup errored or missed, the
+    # importer would create duplicates.
+    Slack::Importer.new(@zip_path.to_s).import!
+
+    assert_no_difference "User.count" do
+      Slack::Importer.new(@zip_path.to_s).import!
+    end
+  end
+
   test "skips deleted and bot users" do
     importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!

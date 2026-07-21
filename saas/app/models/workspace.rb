@@ -167,6 +167,12 @@ class Workspace < UntenantedRecord
       # Note: Uses find_or_create patterns to handle partial data from failed attempts
       # and stale tenant DBs reused during tests (same external_id due to sequence rollback)
       ApplicationRecord.with_tenant(tenant_id) do
+        # The full-text search index is engine-specific and lives outside
+        # db/schema.rb (see Message::SearchIndex), so a freshly schema-loaded
+        # tenant database doesn't have it yet. Provision it before any message
+        # indexing runs. Idempotent, so reused stale test tenants are a no-op.
+        Message::SearchIndex.ensure!
+
         # Create or update Account (singleton per workspace)
         account = Account.find_or_initialize_by(singleton_guard: 0)
         account.update!(name: name) if account.name != name

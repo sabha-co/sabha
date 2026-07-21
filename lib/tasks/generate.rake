@@ -71,6 +71,11 @@ module DemoHelpers
       conn.execute("PRAGMA foreign_keys = ON")
     end
 
+    # The FTS5 search index is a virtual table, so it isn't in conn.tables and the
+    # wipe loop above skips it — clear it explicitly so re-seeds don't leave behind
+    # orphaned index rows.
+    Message::SearchIndex.clear!
+
     Account.first_or_create!(name: "Sabha")
   end
 

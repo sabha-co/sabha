@@ -87,6 +87,6 @@ module Message::Unreadable
 
       Membership.where(room_id: room_id)
                 .merge(Membership.with_message_unseen(created_at, id))
-                .update_all("unread_notifications_count = MAX(unread_notifications_count - 1, 0)")
+                .update_all("unread_notifications_count = CASE WHEN unread_notifications_count > 0 THEN unread_notifications_count - 1 ELSE 0 END")
     end
 end

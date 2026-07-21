@@ -4,6 +4,14 @@ require "rails/dom/testing/assertions"
 class RoomTest < ActiveSupport::TestCase
   include ActionCable::TestHelper, Rails::Dom::Testing::Assertions::SelectorAssertions
 
+  test "matching finds a room case-insensitively on every adapter" do
+    # ILIKE on Postgres, LIKE on SQLite — a bare LIKE would miss this on Postgres.
+    room = Rooms::Open.create!(name: "General", creator: users(:david))
+
+    assert_includes Room.matching("general"), room
+    assert_includes Room.matching("GENERAL"), room
+  end
+
   test "last_active_at is set on room creation" do
     room = Rooms::Open.create!(name: "New Room", creator: users(:david))
     assert room.last_active_at.present?
@@ -195,9 +203,16 @@ class RoomTest < ActiveSupport::TestCase
     room = rooms(:pets)
 
     message = room.post_system_message(event: "member_joined", body: "added Alice", actor: users(:david))
-    results = Message.connection.execute("SELECT count(*) FROM message_search_index WHERE rowid = #{message.id}")
 
-    assert_equal 0, results.first.values.first
+    # insert! bypasses the indexing callbacks, so the message must not reach the
+    # search index on either engine — an empty FTS5 shadow row (SQLite) or a null
+    # tsvector column (Postgres).
+    if Message::SearchIndex.postgresql?
+      assert_nil Message.connection.select_value("SELECT body_search FROM messages WHERE id = #{message.id}")
+    else
+      count = Message.connection.select_value("SELECT count(*) FROM message_search_index WHERE rowid = #{message.id}")
+      assert_equal 0, count
+    end
   end
 
   test "announce_rename posts a room_renamed event" do

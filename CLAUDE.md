@@ -59,6 +59,11 @@ end
 - Prefer namespace decomposition (`User::Role`, `Message::Searchable`) over `app/services/` bloat
 - No form objects, policy gems, or service layers unless pain is real and measurable
 
+### Database Portability (keep it Postgres-ready)
+SQLite is the default engine, but the app is deliberately kept PostgreSQL-compatible so a future self-hosted Postgres option is a deployment change, not a code rewrite (the SaaS untenanted DB already runs Postgres). Write new SQL to run on **both** engines:
+- Prefer Arel / adapter-agnostic ActiveRecord over raw SQL. When raw SQL is unavoidable, keep it portable — `matches` (renders `ILIKE`/`LIKE`) not a bare `LIKE`, boolean `TRUE`/`FALSE` not `1`/`0`, a `CASE` clamp not scalar `MAX`/`GREATEST`, and branch on `connection.adapter_name` only where no common form exists (`strpos`/`instr`, `jsonb ->>`/`json_extract`).
+- Full-text search is engine-specific and owned by `Message::SearchIndex` (FTS5 on SQLite, a `tsvector` column on Postgres). Route all index reads/writes through it — don't hardcode `message_search_index`. The index lives outside `db/schema.rb`; provision it via `Message::SearchIndex.ensure!`, never a migration.
+
 ## Key Domain Knowledge
 
 ### Room System (STI)

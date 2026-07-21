@@ -81,9 +81,11 @@ class Accounts::UsersController < ApplicationController
       @searching = true
       query = params[:query].to_s.strip
       pattern = "%#{User.sanitize_sql_like(query)}%"
+      # matches renders ILIKE on Postgres, LIKE on SQLite — case-insensitive on both.
+      name_matches = User.arel_table[:name].matches(pattern)
       people_scope = Current.user.staff? ? users_scope : users_scope.active
-      people = people_scope.where("name LIKE ?", pattern)
-      bots = bots_scope.where("name LIKE ?", pattern)
+      people = people_scope.where(name_matches)
+      bots = bots_scope.where(name_matches)
       @users = (people + bots).first(50)
       preload_activity(@users)
       @users = sort_by_activity(@users)
