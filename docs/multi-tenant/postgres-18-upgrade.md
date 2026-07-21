@@ -65,9 +65,10 @@ test -s untenanted-17.dump || { echo "backup is empty"; exit 1; }
 pg_restore --list untenanted-17.dump > /dev/null && echo "backup verified"
 ```
 
-`pg_dump`/`pg_restore` must not be older than the server — use the client from
-the PostgreSQL 18 packages (the runtime image already ships
-`postgresql-client-18`).
+`pg_dump`/`pg_restore` must not be older than the server, so run them from a
+PostgreSQL 18-equipped host — a maintenance box, your workstation, or the managed
+provider's own tooling — **not** the app container, which ships only `libpq5`
+(for the `pg` gem) and carries no client binaries.
 
 ## 3. Cut over
 
