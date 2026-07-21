@@ -437,4 +437,5 @@ When all R2 vars are set, `Workspace::Backup` is active and final backups run on
 
 - [activerecord-tenanted Guide](activerecord-tenanted-guide.md)
 - [PostgreSQL Decision](postgres-untenanted.md)
+- [Untenanted Postgres 17 → 18 Upgrade](postgres-18-upgrade.md)
 - [Self-Hosted Deployment](../DEPLOYMENT.md)

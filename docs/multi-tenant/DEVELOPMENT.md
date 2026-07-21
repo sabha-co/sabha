@@ -12,15 +12,16 @@ For self-hosted development, see [../DEVELOPMENT.md](../DEVELOPMENT.md).
 
 Everything from the [self-hosted prerequisites](../DEVELOPMENT.md#prerequisites), plus:
 
-- **PostgreSQL** (for the untenanted database)
+- **PostgreSQL 18** (for the untenanted database) — the standard across CI, dev,
+  and production; stay on 18 so nothing test-splits across majors.
 
 ```bash
 # macOS
-brew install postgresql
-brew services start postgresql
+brew install postgresql@18
+brew services start postgresql@18
 
-# Ubuntu/Debian
-sudo apt-get install -y postgresql postgresql-contrib
+# Ubuntu/Debian (PGDG provides 18; the distro default may be older)
+sudo apt-get install -y postgresql-18 postgresql-contrib-18
 ```
 
 ---

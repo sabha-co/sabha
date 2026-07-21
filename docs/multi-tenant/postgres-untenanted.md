@@ -79,11 +79,14 @@ Production URL includes SSL params: `postgres://user:pass@host:port/db?sslmode=r
 
 ### Development setup
 
-PostgreSQL must be running locally. With Homebrew:
+**PostgreSQL 18 is the standard** across CI, local development, and production —
+keep them on one major so nothing test-splits. A local server on 17 or older
+will run the suite but drifts from what CI (the untenanted service is
+`postgres:18`) and production run; upgrade to match. With Homebrew:
 
 ```bash
-brew install postgresql
-brew services start postgresql
+brew install postgresql@18
+brew services start postgresql@18
 ```
 
 Then create the databases:
