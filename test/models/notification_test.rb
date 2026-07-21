@@ -266,6 +266,25 @@ class NotificationTest < ActiveSupport::TestCase
       "Re-mentioning via edit does not re-create notifications (create-only)"
   end
 
+  test "decrementing an already-zero unread counter clamps at zero" do
+    message = @room.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)}</div>",
+      creator: @jason,
+      client_message_id: "clamp_test"
+    )
+    notification = Notification.find_by!(user: @david, message: message, activity_type: "mention")
+
+    membership = @room.memberships.find_by!(user: @david)
+    # Eligible for a decrement (cursor before the message, marked unread) but the
+    # counter is already at the floor — the portable CASE clamp (replacing the
+    # SQLite-only scalar MAX) must keep it at 0 rather than going negative.
+    membership.update!(last_read_at: message.created_at - 1.second, marked_unread: true, unread_notifications_count: 0)
+
+    Notification.decrement_membership_counters([ notification ])
+
+    assert_equal 0, membership.reload.unread_notifications_count
+  end
+
   test "quoting a message creates mention notification for original author" do
     original_message = @room.messages.create!(
       body: "<div>Original message</div>",
