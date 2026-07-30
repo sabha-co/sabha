@@ -100,6 +100,29 @@ class AccountTest < ActiveSupport::TestCase
     assert_not @account.logo.attached?
   end
 
+  test "logo_variant resizes a variable logo" do
+    @account.logo.attach io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg"
+
+    assert_kind_of ActiveStorage::VariantWithRecord, @account.logo_variant(:large)
+  end
+
+  test "logo_variant is nil without a logo" do
+    assert_nil @account.logo_variant(:large)
+  end
+
+  test "logo_variant is nil for a content type libvips can no longer resize" do
+    @account.logo.attach io: file_fixture("pixel.bmp").open, filename: "pixel.bmp", content_type: "image/bmp"
+
+    assert_nil @account.logo_variant(:large)
+  end
+
+  # The declared content type is the uploader's claim; libvips picks its loader from the bytes.
+  test "logo_variant is nil when the bytes are not the declared image type" do
+    @account.logo.attach io: file_fixture("pixel.bmp").open, filename: "pixel.png", content_type: "image/png"
+
+    assert_nil @account.logo_variant(:large)
+  end
+
   test "disabling invite links destroys all personal invite links" do
     personal_link = account_join_codes(:signal_personal)
     global_link = account_join_codes(:signal)

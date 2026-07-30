@@ -64,6 +64,8 @@ module Message::Attachment
       attachment&.analyze
     end
 
+    # Runs inline on message create, so a file libvips refuses must not take the message down with
+    # it — the message is still worth sending without a thumbnail.
     def process_attachment_thumbnail
       case
       when attachment.video?
@@ -71,5 +73,7 @@ module Message::Attachment
       when attachment.representable?
         attachment.representation(:thumb).processed
       end
+    rescue Vips::Error => error
+      Rails.logger.warn "Could not thumbnail attachment for message #{id}: #{error.message}"
     end
 end

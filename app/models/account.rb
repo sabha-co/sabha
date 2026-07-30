@@ -6,7 +6,11 @@ class Account < ApplicationRecord
 
   InvalidLogoType = Class.new(StandardError)
 
-  has_one_attached :logo
+  has_one_attached :logo do |attachable|
+    attachable.variant :large, resize_to_limit: [ 512, 512 ], format: :png
+    attachable.variant :small, resize_to_limit: [ 192, 192 ], format: :png
+  end
+
   has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true
 
   after_save :invalidate_personal_invite_links, if: :invite_links_disabled?
@@ -57,6 +61,17 @@ class Account < ApplicationRecord
     logo.purge
     touch
     sync_logo_to_workspace
+  end
+
+  # nil when the logo can't be resized, so callers fall back to the stock icon. See
+  # User::Avatar#avatar_variant for why a declared image type is no guarantee.
+  def logo_variant(size)
+    return unless logo.attached? && logo.variable?
+
+    logo.variant(size).processed
+  rescue Vips::Error => error
+    Rails.logger.warn "Could not resize logo for account #{id}: #{error.message}"
+    nil
   end
 
   # The account-wide room-list stream: one publish per room event (touched by

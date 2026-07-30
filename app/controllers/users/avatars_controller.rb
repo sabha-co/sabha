@@ -14,8 +14,8 @@ class Users::AvatarsController < ApplicationController
     if stale?(etag: @user)
       expires_in 30.minutes, public: true, stale_while_revalidate: 1.week
 
-      if @user.avatar.attached?
-        serve_uploaded_avatar
+      if (avatar_variant = @user.avatar_variant)
+        send_webp_blob_file avatar_variant.key
       elsif @user.bot?
         render_bot
       elsif Dicebear.enabled?
@@ -32,13 +32,6 @@ class Users::AvatarsController < ApplicationController
   end
 
   private
-    SQUARE_WEBP_VARIANT = { resize_to_limit: [ 512, 512 ], format: :webp }
-
-    def serve_uploaded_avatar
-      avatar_variant = @user.avatar.variant(SQUARE_WEBP_VARIANT).processed
-      send_webp_blob_file avatar_variant.key
-    end
-
     def serve_dicebear_avatar
       svg = @user.dicebear_svg
       if svg.present?

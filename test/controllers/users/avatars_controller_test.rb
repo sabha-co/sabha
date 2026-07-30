@@ -48,6 +48,18 @@ class Users::AvatarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "text", text: "K"
   end
 
+  test "show initials when the uploaded avatar cannot be resized" do
+    Rails.configuration.x.dicebear.enabled = false
+    users(:kevin).avatar.attach io: file_fixture("pixel.bmp").open, filename: "pixel.png", content_type: "image/png"
+
+    get user_avatar_url(users(:kevin).avatar_token)
+
+    assert_response :success
+    assert_select "text", text: "K"
+  ensure
+    Rails.configuration.x.dicebear.enabled = true
+  end
+
   test "show image with invalid token responds 404" do
     get user_avatar_url("not-a-valid-token")
 
