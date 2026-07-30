@@ -40,6 +40,11 @@ class AccountTest < ActiveSupport::TestCase
   end
 
   private
+    def dimensions_of(variant)
+      image = Vips::Image.new_from_buffer variant.download, ""
+      [ image.width, image.height ]
+    end
+
     def with_env(values)
       originals = values.transform_values { |_| nil }
       values.each_key { |key| originals[key] = ENV[key] }
@@ -100,10 +105,11 @@ class AccountTest < ActiveSupport::TestCase
     assert_not @account.logo.attached?
   end
 
-  test "logo_variant resizes a variable logo" do
+  test "logo_variant resizes a variable logo to the requested size" do
     @account.logo.attach io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg"
 
-    assert_kind_of ActiveStorage::VariantWithRecord, @account.logo_variant(:large)
+    assert_equal [ 512, 512 ], dimensions_of(@account.logo_variant(:large))
+    assert_equal [ 192, 192 ], dimensions_of(@account.logo_variant(:small))
   end
 
   test "logo_variant is nil without a logo" do

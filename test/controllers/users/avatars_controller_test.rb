@@ -48,6 +48,18 @@ class Users::AvatarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "text", text: "K"
   end
 
+  test "show the uploaded avatar resized to a square webp" do
+    users(:kevin).avatar.attach io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg"
+
+    get user_avatar_url(users(:kevin).avatar_token)
+
+    assert_response :success
+    assert_equal "image/webp", response.content_type
+
+    image = Vips::Image.new_from_buffer response.body, ""
+    assert_equal [ 512, 512 ], [ image.width, image.height ]
+  end
+
   test "show initials when the uploaded avatar cannot be resized" do
     Rails.configuration.x.dicebear.enabled = false
     users(:kevin).avatar.attach io: file_fixture("pixel.bmp").open, filename: "pixel.png", content_type: "image/png"

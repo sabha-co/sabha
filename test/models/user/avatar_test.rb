@@ -24,7 +24,8 @@ class User::AvatarTest < ActiveSupport::TestCase
     user = users(:david)
     user.avatar.attach io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg"
 
-    assert_kind_of ActiveStorage::VariantWithRecord, user.avatar_variant
+    image = Vips::Image.new_from_buffer user.avatar_variant.download, ""
+    assert_equal [ 512, 512 ], [ image.width, image.height ]
   end
 
   test "avatar_variant is nil without an avatar" do
