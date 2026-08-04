@@ -16,10 +16,6 @@ class RoomStreamsChannel < ApplicationCable::Channel
   extend  Turbo::Streams::StreamName
   include Turbo::Streams::StreamName::ClassMethods
 
-  # The trailing segment of the stream names this channel guards: a room's
-  # message stream and a forum's gallery of posts.
-  GUARDED_SUFFIXES = %w[ messages posts ].freeze
-
   # A stream name can point at a record that's since been deleted or — in SaaS —
   # one minted in another workspace, which the tenanted locator refuses outright
   # rather than returning nil. Nothing resolves either way, and both end in the
@@ -31,11 +27,20 @@ class RoomStreamsChannel < ApplicationCable::Channel
   ].compact.freeze
 
   class << self
-    # True for the stream names this channel exists to guard, whoever is asking.
-    # Deliberately free of database work — Turbo::StreamsChannel consults this on
-    # every subscribe, guarded or not.
+    # True for the stream names this channel exists to guard, whoever is asking:
+    # the ones a room's contents ride on. Every one of them trails a plain suffix
+    # after the room — [ room, :messages ] and [ user, room, :messages ] alike —
+    # so the room sits second from the end. Asking the name which model it names
+    # beats matching a list of suffixes: a stream added later, [ room, :updates ],
+    # is guarded the day it appears rather than waiting on someone to remember.
+    #
+    # Deliberately free of database work: Turbo::StreamsChannel consults this on
+    # every subscribe, guarded or not, and a GlobalID names its class outright.
     def guarded_stream?(stream_name)
-      GUARDED_SUFFIXES.include? segments(stream_name).last
+      gid = GlobalID.parse(segments(stream_name)[-2])
+      gid.present? && gid.model_class <= Room
+    rescue NameError
+      false
     end
 
     # Stream names are the streamables' GlobalID params joined with ":". A GID
@@ -60,9 +65,10 @@ class RoomStreamsChannel < ApplicationCable::Channel
       stream_name if stream_name.present? && authorized?(stream_name)
     end
 
-    # Two shapes reach here: "<room>:messages" and "<room>:posts", which every
-    # member of the room shares, and "<user>:<room>:messages", which carries one
-    # person's own state (their bookmark marks) and so belongs to them alone.
+    # Streams shared by everyone in the room — "<room>:messages", "<room>:posts"
+    # — carry only the room check. A longer name leads with the user whose own
+    # state it carries (their bookmark marks), and that user has to be the one
+    # asking.
     def authorized?(stream_name)
       return false unless self.class.guarded_stream?(stream_name)
 

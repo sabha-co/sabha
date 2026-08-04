@@ -37,4 +37,12 @@ class TurboStreamsChannelAuthorizationTest < ActionCable::Channel::TestCase
 
     assert subscription.confirmed?
   end
+
+  test "the account-wide room stream still works on the stock channel" do
+    stub_connection current_user: users(:kevin)
+
+    subscribe signed_stream_name: Turbo::StreamsChannel.signed_stream_name([ accounts(:signal), :rooms ])
+
+    assert subscription.confirmed?
+  end
 end

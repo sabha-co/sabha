@@ -95,6 +95,21 @@ class RoomStreamsChannelTest < ActionCable::Channel::TestCase
     assert subscription.rejected?
   end
 
+  # What counts as a room stream is read off the name, not matched against a list
+  # of known suffixes, so a stream nobody has written yet is already covered.
+
+  test "a room stream with a suffix this channel has never seen is still guarded" do
+    signed = Turbo::StreamsChannel.signed_stream_name([ @room, :some_future_suffix ])
+
+    stub_connection current_user: users(:rachel)
+    subscribe signed_stream_name: signed
+    assert subscription.rejected?, "an outsider must not reach a new room stream either"
+
+    stub_connection current_user: users(:kevin)
+    subscribe signed_stream_name: signed
+    assert subscription.confirmed?
+  end
+
   # The three-segment stream carries one person's own state — their bookmark
   # marks — so sharing the room isn't enough.
 
