@@ -38,6 +38,13 @@ class Rooms::OpensController < RoomsController
   end
 
   private
+    # Open and closed rooms convert into each other, so both are in reach here.
+    # Nothing else is: promoting a direct room or a thread would republish its
+    # conversation to the whole account.
+    def serves?(room)
+      room.convertible?
+    end
+
     # Allows us to edit a closed room and turn it into an open one on saving.
     def force_room_type
       @room = @room.becomes!(Rooms::Open)

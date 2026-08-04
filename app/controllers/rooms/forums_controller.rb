@@ -39,6 +39,10 @@ class Rooms::ForumsController < RoomsController
   end
 
   private
+    def serves?(room)
+      room.forum?
+    end
+
     def forum_params
       params.require(:room).permit(:name, :description)
     end

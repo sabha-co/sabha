@@ -195,4 +195,45 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to room_url(room)
     assert_equal "Kevin's Updated Room", room.reload.name
   end
+
+  # Only open and closed rooms are in reach here. Every case below is a room its
+  # creator administers, so the permission check passes and the room type is the
+  # only thing standing between a private conversation and the whole account.
+
+  test "a direct room can't be promoted to an open room by a participant" do
+    sign_in :kevin
+    direct = Rooms::Direct.create_for({ creator: users(:kevin) }, users: [ users(:kevin), users(:jz) ])
+
+    put rooms_open_url(direct), params: { room: { name: "Leaked" } }
+
+    assert_redirected_to root_url
+    assert_equal "Rooms::Direct", Room.find(direct.id).type
+    assert_not Room.browsable_by(users(:rachel)).exists?(id: direct.id)
+  end
+
+  test "a direct room can't be promoted to an open room by an administrator" do
+    put rooms_open_url(rooms(:david_and_kevin)), params: { room: { name: "Leaked" } }
+
+    assert_redirected_to root_url
+    assert_equal "Rooms::Direct", Room.find(rooms(:david_and_kevin).id).type
+  end
+
+  test "a chat thread can't be promoted out of its closed room into an open one" do
+    sign_in :kevin
+    message = rooms(:designers).messages.create!(creator: users(:kevin), body: "private")
+    thread = Rooms::Thread.find_or_create_for(message, creator: users(:kevin))
+
+    put rooms_open_url(thread), params: { room: { name: "Leaked" } }
+
+    assert_redirected_to root_url
+    assert_equal "Rooms::Thread", Room.find(thread.id).type
+    assert_not Room.browsable_by(users(:rachel)).exists?(id: thread.id)
+  end
+
+  test "a forum can't be converted into an open room" do
+    put rooms_open_url(rooms(:help_desk)), params: { room: { name: "Leaked" } }
+
+    assert_redirected_to root_url
+    assert_equal "Rooms::Forum", Room.find(rooms(:help_desk).id).type
+  end
 end

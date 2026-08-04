@@ -38,6 +38,13 @@ class Rooms::ClosedsController < RoomsController
   end
 
   private
+    # Open and closed rooms convert into each other, so both are in reach here.
+    # Nothing else is: a direct room converted to closed gets a membership list
+    # its creator then controls.
+    def serves?(room)
+      room.convertible?
+    end
+
     # Allows us to edit an open room and turn it into a closed one on saving.
     def force_room_type
       @room = @room.becomes!(Rooms::Closed)

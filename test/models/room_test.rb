@@ -365,6 +365,40 @@ class RoomTest < ActiveSupport::TestCase
     assert_equal room.object_id, result.object_id
   end
 
+  # The type invariant behind the access toggle. Controllers scope their lookups
+  # too, but the rule lives on the record so no route around them can widen a
+  # private conversation's audience.
+
+  test "a direct room can't change its type" do
+    direct = rooms(:david_and_kevin)
+
+    assert_not direct.becomes!(Rooms::Open).save
+    assert_equal "Rooms::Direct", Room.find(direct.id).type
+  end
+
+  test "a chat thread can't change its type" do
+    parent = rooms(:designers).messages.create!(creator: users(:kevin), body: "private")
+    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:kevin))
+
+    assert_not thread.becomes!(Rooms::Open).save
+    assert_equal "Rooms::Thread", Room.find(thread.id).type
+  end
+
+  test "a forum can't change its type" do
+    forum = rooms(:help_desk)
+
+    assert_not forum.becomes!(Rooms::Closed).save
+    assert_equal "Rooms::Forum", Room.find(forum.id).type
+  end
+
+  test "open and closed rooms still convert into each other" do
+    assert rooms(:pets).becomes!(Rooms::Closed).save
+    assert_equal "Rooms::Closed", Room.find(rooms(:pets).id).type
+
+    assert rooms(:designers).becomes!(Rooms::Open).save
+    assert_equal "Rooms::Open", Room.find(rooms(:designers).id).type
+  end
+
   test "post_welcome_message creates a welcome message" do
     room = rooms(:hq)
     user = users(:kevin)

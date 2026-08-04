@@ -19,8 +19,8 @@
   <% end %>
 
   <%= turbo_stream_from @membership %>
-  <%= turbo_stream_from @room, :messages %>
-  <%= turbo_stream_from Current.user, @room, :messages %>
+  <%= turbo_stream_from @room, :messages, channel: "RoomStreamsChannel" %>
+  <%= turbo_stream_from Current.user, @room, :messages, channel: "RoomStreamsChannel" %>
   <%= button_to_jump_to_newest_message %>
 <% end %>
 

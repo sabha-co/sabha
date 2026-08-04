@@ -30,6 +30,10 @@ class Rooms::DirectsController < RoomsController
   end
 
   private
+    def serves?(room)
+      room.direct?
+    end
+
     def set_direct_room
       @room = Current.user.rooms.find_by(id: params[:id], type: Rooms::Direct.sti_name)
       redirect_to root_url, alert: "Conversation not found" unless @room
