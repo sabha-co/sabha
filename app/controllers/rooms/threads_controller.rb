@@ -38,6 +38,10 @@ class Rooms::ThreadsController < RoomsController
   end
 
   private
+  def serves?(room)
+    room.thread?
+  end
+
   def set_parent_message
     if message = Current.user.reachable_messages.joins(:room).where.not(room: { type: [ "Rooms::Direct", "Rooms::Thread", "Rooms::Forum", "Rooms::Post" ] }).find_by(id: params[:parent_message_id])
       @parent_message = message

@@ -47,11 +47,24 @@ class RoomsController < ApplicationController
       # stale row must not grant access after they leave the parent. So fall back
       # to parent-derived access, then re-check viewable_by? for any sub-room.
       room ||= viewable_sub_room(params[:room_id] || params[:id])
-      if room = deny_stale_sub_room(room)
+      room = deny_stale_sub_room(room)
+
+      if room && serves?(room)
         @room = room
       else
         redirect_to root_url, alert: "Room not found or inaccessible"
       end
+    end
+
+    # Whether this room is one the namespace is about. #show here serves all six
+    # types, so the base answers yes to everything; a subclass that edits,
+    # converts, or deletes rooms narrows it to its own. Without that narrowing
+    # one namespace reaches another's rooms — the /rooms/opens form loads a
+    # direct room or a thread and turns it into a room the account can browse.
+    # Asked after both lookups above, since either can surface a room this
+    # controller has no business touching.
+    def serves?(room)
+      true
     end
 
     def set_membership

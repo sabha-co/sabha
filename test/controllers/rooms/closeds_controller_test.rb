@@ -151,4 +151,25 @@ class Rooms::ClosedsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to room_url(room)
     assert_equal "Kevin's Updated Room", room.reload.name
   end
+
+  test "a direct room can't be converted into a closed room" do
+    sign_in :kevin
+    direct = Rooms::Direct.create_for({ creator: users(:kevin) }, users: [ users(:kevin), users(:jz) ])
+
+    put rooms_closed_url(direct), params: { room: { name: "Seized" } }
+
+    assert_redirected_to root_url
+    assert_equal "Rooms::Direct", Room.find(direct.id).type
+  end
+
+  test "a chat thread can't be converted into a closed room" do
+    sign_in :kevin
+    message = rooms(:designers).messages.create!(creator: users(:kevin), body: "private")
+    thread = Rooms::Thread.find_or_create_for(message, creator: users(:kevin))
+
+    put rooms_closed_url(thread), params: { room: { name: "Seized" } }
+
+    assert_redirected_to root_url
+    assert_equal "Rooms::Thread", Room.find(thread.id).type
+  end
 end

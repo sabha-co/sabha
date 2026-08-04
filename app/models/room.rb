@@ -7,6 +7,10 @@ class Room < ApplicationRecord
   # source for the type list; both the sub_rooms and without_threads scopes read it.
   SUB_ROOM_TYPES = %w[ Rooms::Thread Rooms::Post ].freeze
 
+  # The two types that convert into each other — the public/private toggle. Every
+  # other type is fixed for its whole life; see #convertible?.
+  CONVERTIBLE_TYPES = %w[ Rooms::Open Rooms::Closed ].freeze
+
   has_many :memberships, -> { active } do
     def grant_to(users)
       room = proxy_association.owner
@@ -57,6 +61,8 @@ class Room < ApplicationRecord
   before_destroy :destroy_all_associated_records
 
   before_validation :set_initial_last_active_at, on: :create
+
+  validate :type_changes_only_between_open_and_closed, on: :update
 
   scope :opens,           -> { where(type: "Rooms::Open") }
   scope :closeds,         -> { where(type: "Rooms::Closed") }
@@ -155,6 +161,12 @@ class Room < ApplicationRecord
 
   def sidebar_room?
     open? || closed? || forum?
+  end
+
+  # Whether this room has a public/private toggle. Only open and closed rooms do:
+  # they're the same room seen two ways, differing in how you get in.
+  def convertible?
+    CONVERTIBLE_TYPES.include?(type)
   end
 
   # Chat threads and forum posts are nested sub-rooms — they derive access from a
@@ -368,6 +380,19 @@ class Room < ApplicationRecord
   end
 
   private
+    # Open and closed rooms convert into each other freely — that's the
+    # public/private toggle. Nothing else moves: a direct room or a sub-room that
+    # turned into an open one would republish a private conversation to everyone
+    # in the account, and a forum that did would strand its posts. The rule lives
+    # here rather than only in the controllers that call becomes! so that every
+    # route to a type change has to get past it.
+    def type_changes_only_between_open_and_closed
+      return unless type_changed?
+      return if CONVERTIBLE_TYPES.include?(type_was) && CONVERTIBLE_TYPES.include?(type)
+
+      errors.add :type, "can't be changed once a room is created"
+    end
+
     # Only Open and Closed rooms spawn chat threads, so only they need the
     # follow-silencing sweep on leave. Forums run their own post-follow cleanup,
     # and directs/sub-rooms have no threads to silence.
