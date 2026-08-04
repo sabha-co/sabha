@@ -17,7 +17,7 @@
     renders cards, not a message stream, so it wires presence itself. %>
 <div class="forum" data-controller="presence" data-presence-room-id-value="<%= @room.id %>"
      data-action="visibilitychange@document->presence#visibilityChanged">
-  <%= turbo_stream_from @room, :posts %>
+  <%= turbo_stream_from @room, :posts, channel: "RoomStreamsChannel" %>
   <%# Involvement changes (the nav bell) broadcast to the membership stream —
       subscribe so the button cycles its state, like the chat and post pages. %>
   <%= turbo_stream_from @membership if @membership %>
