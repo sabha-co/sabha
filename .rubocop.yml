@@ -1,6 +1,24 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+# The socket lives in anycable-go, not in Rails, so three ActionCable habits stop
+# working here: channel instance variables don't survive between commands, a Ruby
+# block passed to stream_from never runs, and periodic timers have no process to
+# tick in. Each fails silently at runtime — these cops catch them at lint time.
+require:
+  - anycable/rails/rubocop
+
+# They ship scoped to "**/channels/**/*.rb", which also sweeps in test/channels —
+# where an @ivar is a fixture held across a test, not state a channel expects to
+# survive an RPC. Narrow them to the channels that actually run on the socket.
+AnyCable/InstanceVars: &anycable_channels
+  Include:
+    - 'app/channels/**/*.rb'
+    - 'saas/app/channels/**/*.rb'
+
+AnyCable/StreamFrom: *anycable_channels
+AnyCable/PeriodicalTimers: *anycable_channels
+
 AllCops:
   Exclude:
     - 'db/migrate/**/*'
