@@ -1,7 +1,7 @@
 class TypingNotificationsChannel < RoomChannel
   def subscribed
-    if @room = find_room
-      stream_for @room, whisper: true
+    if room
+      stream_for room, whisper: true
     else
       reject
     end
