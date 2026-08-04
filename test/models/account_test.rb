@@ -40,6 +40,11 @@ class AccountTest < ActiveSupport::TestCase
   end
 
   private
+    def dimensions_of(variant)
+      image = Vips::Image.new_from_buffer variant.download, ""
+      [ image.width, image.height ]
+    end
+
     def with_env(values)
       originals = values.transform_values { |_| nil }
       values.each_key { |key| originals[key] = ENV[key] }
@@ -98,6 +103,30 @@ class AccountTest < ActiveSupport::TestCase
       @account.attach_logo({ io: file_fixture("logo.svg").open, filename: "logo.svg", content_type: "image/svg+xml" })
     end
     assert_not @account.logo.attached?
+  end
+
+  test "logo_variant resizes a variable logo to the requested size" do
+    @account.logo.attach io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg"
+
+    assert_equal [ 512, 512 ], dimensions_of(@account.logo_variant(:large))
+    assert_equal [ 192, 192 ], dimensions_of(@account.logo_variant(:small))
+  end
+
+  test "logo_variant is nil without a logo" do
+    assert_nil @account.logo_variant(:large)
+  end
+
+  test "logo_variant is nil for a content type libvips can no longer resize" do
+    @account.logo.attach io: file_fixture("pixel.bmp").open, filename: "pixel.bmp", content_type: "image/bmp"
+
+    assert_nil @account.logo_variant(:large)
+  end
+
+  # The declared content type is the uploader's claim; libvips picks its loader from the bytes.
+  test "logo_variant is nil when the bytes are not the declared image type" do
+    @account.logo.attach io: file_fixture("pixel.bmp").open, filename: "pixel.png", content_type: "image/png"
+
+    assert_nil @account.logo_variant(:large)
   end
 
   test "disabling invite links destroys all personal invite links" do
