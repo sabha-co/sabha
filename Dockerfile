@@ -21,7 +21,7 @@ FROM base AS build
 ARG PNPM_VERSION=10.28.0
 RUN apt-get update -qq && \
   apt-get install --no-install-recommends -y \
-  build-essential git pkg-config curl libyaml-dev libssl-dev ca-certificates && \
+  build-essential git pkg-config curl libyaml-dev libssl-dev libvips ca-certificates && \
   curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt-get install --no-install-recommends -y nodejs && \
   npm install -g pnpm@$PNPM_VERSION && \
