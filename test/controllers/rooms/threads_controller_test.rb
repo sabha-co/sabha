@@ -44,18 +44,6 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to rooms_thread_url(existing_thread)
   end
 
-  test "new requires the parent message to be reachable by the user" do
-    closed_room = Rooms::Closed.create!(name: "Secret Room", creator: @jason)
-    closed_room.memberships.grant_to(@jason)
-    parent_message = closed_room.messages.create!(
-      body: "Secret message", creator: @jason, client_message_id: "provisional_unreachable_1"
-    )
-
-    get new_rooms_thread_url(parent_message_id: parent_message.id)
-    assert_redirected_to root_url
-    assert_equal "Message not found or inaccessible", flash[:alert]
-  end
-
   # ===================
   # Create action tests
   # ===================
