@@ -46,6 +46,21 @@ class API::Bots::Messages::CreatesTest < ActionDispatch::IntegrationTest
     assert_no_match %r{/rooms/#{@room.id}/messages/#{message.id}\b}, response.location
   end
 
+  test "create with parent_message_id and a blank body materializes no thread" do
+    parent = messages(:fourth)
+
+    # The thread + reply are created atomically, so a blank reply leaves no empty
+    # thread (or membership) behind — the same guarantee as the web reply path.
+    assert_no_difference [ -> { Rooms::Thread.count }, -> { Message.count } ] do
+      post api_bots_room_messages_url(@room, parent_message_id: parent.id),
+        params: "   ",
+        headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
+    end
+
+    assert_response :unprocessable_entity
+    assert_equal "validation_failed", response.parsed_body["code"]
+  end
+
   test "create with parent_message_id reuses an existing thread room (idempotent)" do
     parent = messages(:fourth)
 

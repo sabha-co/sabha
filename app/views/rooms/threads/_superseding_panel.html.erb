@@ -1,0 +1,6 @@
+<%# locals: (thread:) -%>
+<%# Replaces a still-open provisional panel once the thread is materialized
+    elsewhere (Rooms::Thread#supersede_provisional_panels). A lazy frame that
+    reloads the real thread per-viewer, so each browser fetches it with its own
+    session and unread state. %>
+<%= turbo_frame_tag "thread_panel_frame", src: rooms_thread_path(thread) %>

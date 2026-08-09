@@ -83,7 +83,7 @@ class Rooms::Threads::MembershipsControllerTest < ActionDispatch::IntegrationTes
     assert_not @thread.followed_by?(@jason), "Unfollow drops the author's subscription"
 
     # Reopening the thread must not silently re-subscribe them.
-    post rooms_threads_url, params: { parent_message_id: @parent_message.id }
+    get rooms_thread_url(@thread)
     assert_not @thread.reload.followed_by?(@jason), "Unfollow persists — reopening the thread doesn't re-subscribe"
   end
 end

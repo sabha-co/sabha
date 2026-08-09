@@ -33,6 +33,40 @@ class Rooms::ThreadTest < ActiveSupport::TestCase
     assert_not thread.memberships.exists?(user_id: users(:david).id)
   end
 
+  test "reply_to materializes the thread lazily with its first reply" do
+    message = nil
+    assert_difference -> { Rooms::Thread.count }, 1 do
+      message = Rooms::Thread.reply_to(@parent_message, creator: users(:jason), message_params: { body: "First reply" })
+    end
+
+    assert_equal "First reply", message.plain_text_body
+    assert_equal @parent_message.id, message.room.parent_message_id
+    assert message.room.memberships.active.exists?(user_id: users(:jason).id), "the replier follows the thread they opened"
+  end
+
+  test "reply_to is idempotent — a second reply reuses the existing thread" do
+    first = Rooms::Thread.reply_to(@parent_message, creator: users(:jason), message_params: { body: "one" })
+
+    assert_no_difference -> { Rooms::Thread.count } do
+      second = Rooms::Thread.reply_to(@parent_message, creator: users(:david), message_params: { body: "two" })
+      assert_equal first.room_id, second.room_id
+    end
+  end
+
+  test "reply_to rejects a blank reply and materializes nothing" do
+    assert_no_difference [ -> { Rooms::Thread.count }, -> { Message.count } ] do
+      assert_raises Rooms::Thread::BlankReplyError do
+        Rooms::Thread.reply_to(@parent_message, creator: users(:jason), message_params: { body: "  " })
+      end
+    end
+  end
+
+  test "materializing a thread supersedes open provisional panels for the parent message" do
+    assert_turbo_stream_broadcasts [ @parent_message, :thread ], count: 1 do
+      Rooms::Thread.create!(parent_message: @parent_message, creator: users(:david))
+    end
+  end
+
   # A thread membership row is a follow, never access — viewable_by? delegates to
   # the parent room and never consults the thread's own memberships. Build a fresh
   # parent so we control who is a member (the setup's rooms(:hq) has every user).

@@ -4,44 +4,8 @@
       data-typing-notifications-active-class="typing-indicator--active"
       data-typing-notifications-room-id-value="<%= @room.id %>">
     <%= composer_form_tag(@room, form_id: "thread-composer", message_area_id: "thread-message-area", connection_monitor: false) do |form| %>
-      <fieldset data-composer-target="fields" contents>
-        <div class="flex flex-column">
-          <div class="composer__filelist flex flex--align-center gap flex-wrap" data-composer-target="fileList"></div>
-
-          <div class="flex composer__input input input--actor fill-white min-width" style="--input-border-radius: 1.3rem">
-            <div class="flex align-end gap full-width">
-              <%= icon_tag "messages-outlined", class: "composer__input-hint", style: "view-transition-name: none;" %>
-
-              <div class="flex flex-column flex-item-grow min-width gap">
-                <%= form.rich_text_area :body,
-                      id: "thread_message_body",
-                      rows: 1,
-                      class: "input",
-                      style: "order: -1",
-                      aria: { multiline: "true", label: "Reply in thread" },
-                      data: {
-                        controller: "rich-autocomplete",
-                        action: rich_text_data_actions,
-                        rich_autocomplete_url_value: autocompletable_users_path(room_id: @room.id),
-                        permitted_attachment_types: "application/vnd.actiontext.opengraph-embed",
-                        composer_target: "text" } %>
-              </div>
-
-              <label class="btn btn--borderless txt-small flex-item-no-shrink composer__attachment-btn input--file">
-                <%= icon_tag "attachment" %>
-                <input type="file" data-action="composer#filePicked" multiple />
-                <span class="for-screen-reader">Attach a file</span>
-              </label>
-
-              <%= form.button name: "send", type: "submit", data: { action: "composer#submit" },
-                    class: "btn btn--reversed flex-item-no-shrink txt-small" do %>
-                <%= icon_tag "arrow-up" %>
-                <span class="for-screen-reader">Send Reply</span>
-              <% end %>
-            </div>
-          </div>
-        </div>
-      </fieldset>
+      <%= render "rooms/composer_fields", form: form, autocomplete_room: @room,
+            label: "Reply in thread", send_label: "Send Reply", body_id: "thread_message_body" %>
 
       <div class="typing-indicator gap txt-small align-center flex-inline" aria-live="polite" aria-atomic="true" data-typing-notifications-target="indicator">
         <span class="typing-dots"><span></span><span></span><span></span></span>

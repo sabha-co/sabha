@@ -75,7 +75,7 @@ export default class extends Controller {
   }
 
   submitEnd(event) {
-    if (!event.detail.success) {
+    if (!event.detail.success && this.hasMessagesOutlet) {
       this.messagesOutlet.failPendingMessage(this.clientidTarget.value)
     }
   }
@@ -169,8 +169,13 @@ export default class extends Controller {
     if (this.#validInput()) {
       const clientMessageId = this.#generateClientId()
 
-      await this.messagesOutlet.insertPendingMessage(clientMessageId, this.textTarget)
-      await nextFrame()
+      // No messages outlet when composing the first reply in a provisional thread
+      // panel (no thread, so no message stream yet). Skip the optimistic insert and
+      // just submit — the server materializes the thread and renders the real panel.
+      if (this.hasMessagesOutlet) {
+        await this.messagesOutlet.insertPendingMessage(clientMessageId, this.textTarget)
+        await nextFrame()
+      }
 
       this.clientidTarget.value = clientMessageId
       this.element.requestSubmit()
@@ -183,6 +188,16 @@ export default class extends Controller {
   }
 
   async #submitFiles() {
+    // A provisional thread panel has no messages outlet and no room-scoped upload
+    // endpoint (the attachment button is hidden there). Drop any dragged/pasted
+    // files rather than crash on the missing outlet or POST an attachment with no
+    // parent_message_id — attachments work once the thread exists.
+    if (!this.hasMessagesOutlet) {
+      this.#files = []
+      this.#updateFileList()
+      return
+    }
+
     const files = this.#files
 
     this.#files = []

@@ -1,0 +1,28 @@
+<%# A provisional thread panel: no thread exists yet, so nothing here is scoped to
+    a room. Sending the first reply materializes the thread and swaps this frame
+    for rooms/threads/show (Rooms::ThreadsController#create). No message stream or
+    Follow control — you auto-follow by sending the first reply. The one
+    subscription is to the parent message: if someone else's reply materializes the
+    thread first, this panel is reloaded into it (Rooms::Thread#supersede_provisional_panels). %>
+<%= turbo_frame_tag "thread_panel_frame" do %>
+  <% parent_message = @parent_message %>
+  <%= turbo_stream_from parent_message, :thread %>
+  <div class="thread-panel__header">
+    <h2 class="thread-panel__title">
+      <%= link_to room_at_message_path(parent_message.room, parent_message), data: { turbo_frame: "_top" } do %>
+        <%= room_type_indicator(parent_message.room) %><%= room_display_name(parent_message.room) %>
+      <% end %>
+      <%= icon_tag "thread", class: "thread-panel__icon" %>
+    </h2>
+
+    <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close thread">&times;</button>
+  </div>
+
+  <div id="thread-message-area" class="message-area message-area--provisional" contents>
+    <%= tag.div id: dom_id(parent_message, :thread_replies), class: "messages", aria: { live: "polite", relevant: "additions" } do %>
+      <%= render "rooms/threads/provisional_parent", message: parent_message %>
+    <% end %>
+  </div>
+
+  <%= render "rooms/threads/provisional_composer", parent_message: parent_message %>
+<% end %>

@@ -229,6 +229,13 @@
   }
 }
 
+/* A provisional thread panel (Rooms::ThreadsController#new) renders its parent
+   message statically, with no messages controller to add .message--formatted, so
+   reveal it directly — the parent is server-rendered and needs no JS formatting. */
+.message-area--provisional .message {
+  visibility: visible;
+}
+
 .message-separator {
   align-items: center;
   font-size: 0.8rem;
