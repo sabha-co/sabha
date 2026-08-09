@@ -19,6 +19,58 @@ class Rooms::DirectTest < ActiveSupport::TestCase
     assert room.memberships.all? { |m| m.involved_in_everything? }
   end
 
+  # Lazy materialization — a DM exists only once someone sends something.
+
+  test "message_to materializes the DM lazily with its first message" do
+    jz, rachel = users(:jz), users(:rachel)
+    Current.user = jz
+
+    message = nil
+    assert_difference -> { Rooms::Direct.count }, 1 do
+      message = Rooms::Direct.message_to([ jz, rachel ], creator: jz, message_params: { body: "First message" })
+    end
+
+    assert_equal "First message", message.plain_text_body
+    assert message.room.users.include?(jz)
+    assert message.room.users.include?(rachel)
+  end
+
+  test "message_to is idempotent — a second message reuses the existing DM" do
+    jz, rachel = users(:jz), users(:rachel)
+    Current.user = jz
+
+    first = Rooms::Direct.message_to([ jz, rachel ], creator: jz, message_params: { body: "one" })
+
+    assert_no_difference -> { Rooms::Direct.count } do
+      second = Rooms::Direct.message_to([ rachel, jz ], creator: rachel, message_params: { body: "two" })
+      assert_equal first.room_id, second.room_id
+    end
+  end
+
+  test "message_to rejects a blank message and materializes nothing" do
+    jz, rachel = users(:jz), users(:rachel)
+    Current.user = jz
+
+    assert_no_difference [ -> { Rooms::Direct.count }, -> { Message.count } ] do
+      assert_raises Rooms::Direct::BlankMessageError do
+        Rooms::Direct.message_to([ jz, rachel ], creator: jz, message_params: { body: "  " })
+      end
+    end
+  end
+
+  test "for finds an existing DM without creating one" do
+    jz, rachel = users(:jz), users(:rachel)
+    Current.user = jz
+
+    assert_nil Rooms::Direct.for([ jz, rachel ])
+
+    existing = Rooms::Direct.find_or_create_for([ jz, rachel ])
+
+    assert_no_difference -> { Rooms::Direct.count } do
+      assert_equal existing, Rooms::Direct.for([ jz, rachel ])
+    end
+  end
+
   test "broadcasts to sidebar for each member on creation" do
     jz = users(:jz)
     rachel = users(:rachel)

@@ -1,37 +1,35 @@
-<% content_for :nav do %>
-  <%= account_logo_tag if Current.account.logo.attached? %>
+<% if room.direct? %>
+  <%= render "rooms/directs/header", title: room_display_name(room), room: room, membership: @membership %>
+<% else %>
+  <% content_for :nav do %>
+    <%= account_logo_tag if Current.account.logo.attached? %>
 
-  <% if room.thread? %>
-    <%= link_back_to_or_referrer room_at_message_path(room.parent_message.room, room.parent_message) %>
-  <% elsif room.direct? %>
-    <%= link_back_to_or_referrer inbox_direct_messages_path %>
-  <% end %>
+    <% if room.thread? %>
+      <%= link_back_to_or_referrer room_at_message_path(room.parent_message.room, room.parent_message) %>
+    <% end %>
 
-  <%= link_to edit_room_path(room), class: "btn btn--reversed btn--faux room--current" do %>
-    <h1 class="room__contents txt-medium overflow-ellipsis">
-      <% if room.direct? %>
-        <span class="for-screen-reader">Direct message with</span>
-      <% end %>
-
-      <% if room.thread? %>
-        🧵 <%= room_display_name(room.parent_message.room) %>
-      <% else %>
-        <%= room_type_indicator(room) %> <%= room_display_name(room) %>
-      <% end %>
-    </h1>
-  <% end %>
-
-  <% unless room.thread? %>
-    <%= link_to_edit_room(room) %>
-  <% end %>
-
-  <% unless hotwire_native_app? %>
-    <div class="flex gap-half align-center navbar-actions">
-      <% unless room.thread? %>
-        <%= turbo_frame_tag dom_id(room, :involvement) do %>
-          <%= button_to_change_involvement(room, @membership.involvement) %>
+    <%= link_to edit_room_path(room), class: "btn btn--reversed btn--faux room--current" do %>
+      <h1 class="room__contents txt-medium overflow-ellipsis">
+        <% if room.thread? %>
+          🧵 <%= room_display_name(room.parent_message.room) %>
+        <% else %>
+          <%= room_type_indicator(room) %> <%= room_display_name(room) %>
         <% end %>
-      <% end %>
-    </div>
+      </h1>
+    <% end %>
+
+    <% unless room.thread? %>
+      <%= link_to_edit_room(room) %>
+    <% end %>
+
+    <% unless hotwire_native_app? %>
+      <div class="flex gap-half align-center navbar-actions">
+        <% unless room.thread? %>
+          <%= turbo_frame_tag dom_id(room, :involvement) do %>
+            <%= button_to_change_involvement(room, @membership.involvement) %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
   <% end %>
 <% end %>

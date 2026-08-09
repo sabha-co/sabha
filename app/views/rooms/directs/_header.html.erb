@@ -1,0 +1,29 @@
+<%# locals: (title:, room: nil, membership: nil) -%>
+<%# The DM surface header — shared by the live conversation (rooms/show/_nav) and
+    the provisional compose surface (rooms/directs/new). With a persisted room the
+    title links to its settings and the edit + involvement controls show; the
+    provisional surface (room: nil) has nothing to edit or follow yet. %>
+<% content_for :nav do %>
+  <%= account_logo_tag if Current.account.logo.attached? %>
+  <%= link_back_to_or_referrer inbox_direct_messages_path %>
+
+  <% heading = tag.h1 class: "room__contents txt-medium overflow-ellipsis" do %>
+    <span class="for-screen-reader">Direct message with</span>
+    <%= title %>
+  <% end %>
+
+  <% if room %>
+    <%= link_to heading, edit_room_path(room), class: "btn btn--reversed btn--faux room--current" %>
+    <%= link_to_edit_room(room) %>
+
+    <% unless hotwire_native_app? %>
+      <div class="flex gap-half align-center navbar-actions">
+        <%= turbo_frame_tag dom_id(room, :involvement) do %>
+          <%= button_to_change_involvement(room, membership.involvement) %>
+        <% end %>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="btn btn--reversed btn--faux room--current"><%= heading %></div>
+  <% end %>
+<% end %>
