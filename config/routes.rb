@@ -156,7 +156,7 @@ Rails.application.routes.draw do
     resources :directs
     # The thread panel (show) plus Follow, modeled as the current user's membership
     # on the thread: Follow = create, Unfollow = destroy (mirrors posts below).
-    resources :threads, only: %i[ create show edit update destroy ] do
+    resources :threads, only: %i[ new create show edit update destroy ] do
       resource :membership, only: %i[ create destroy ], module: "threads"
     end
 

@@ -1,0 +1,30 @@
+<%# locals: (parent_message:) -%>
+<%# The composer for a thread that doesn't exist yet: sending the first reply
+    materializes the thread (Rooms::ThreadsController#create) and swaps this
+    provisional panel for the real one. There's no room to stream to yet, so no
+    typing indicator and no optimistic insert (the composer controller skips it
+    without a messages outlet) — just a plain submit into thread_panel_frame.
+    Mentions resolve against the parent room roster (Rooms::Thread#mentionable_users). %>
+<% unless Current.user.blocked_in?(parent_message.room) %>
+  <div class="composer composer--thread flex align-end gap position-relative">
+    <%= form_with model: Message.new, url: rooms_threads_path, id: "thread-composer",
+          class: "margin-block flex-item-grow contain",
+          data: {
+            controller: "composer drop-target",
+            action: composer_data_actions(connection_monitor: false),
+            composer_toolbar_class: "composer--rich-text",
+            composer_direct_upload_url_value: rails_direct_uploads_url,
+            turbo_frame: "thread_panel_frame" } do |form| %>
+      <%= hidden_field_tag :parent_message_id, parent_message.id %>
+
+      <%# Attachments are disabled until the thread exists: the upload path needs a
+          room-scoped message stream and can't carry parent_message_id. Start the
+          thread with a text reply, then attach files in the real composer. %>
+      <%= render "rooms/composer_fields", form: form, autocomplete_room: parent_message.room,
+            label: "Reply in thread", send_label: "Send Reply", body_id: "thread_message_body",
+            attachments: false %>
+
+      <%= form.hidden_field :client_message_id, data: { composer_target: "clientid" } %>
+    <% end %>
+  </div>
+<% end %>

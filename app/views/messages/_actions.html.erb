@@ -12,7 +12,7 @@
         <span class="for-screen-reader">Reply</span>
       <% end %>
     <% else %>
-      <%= button_to rooms_threads_path, params: { parent_message_id: message.id }, class: "btn message__action-btn message__options-btn message__reply-btn", form: { data: { turbo_frame: "thread_panel_frame" } } do %>
+      <%= link_to new_rooms_thread_path(parent_message_id: message.id), class: "btn message__action-btn message__options-btn message__reply-btn", data: { turbo_frame: "thread_panel_frame" } do %>
         <%= icon_tag "reply" %>
         <span class="for-screen-reader">Reply</span>
       <% end %>
@@ -63,7 +63,7 @@
                 <span>Reply</span>
               <% end %>
             <% else %>
-              <%= button_to rooms_threads_path, params: { parent_message_id: message.id }, class: "btn message__action-btn full-width", form: { data: { turbo_frame: "thread_panel_frame" } } do %>
+              <%= link_to new_rooms_thread_path(parent_message_id: message.id), class: "btn message__action-btn full-width", data: { turbo_frame: "thread_panel_frame" } do %>
                 <span>Reply</span>
               <% end %>
             <% end %>

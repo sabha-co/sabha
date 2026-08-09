@@ -1,20 +1,45 @@
 class Rooms::ThreadsController < RoomsController
-  skip_before_action :remember_last_room_visited, only: %i[ show create ]
-  skip_before_action :ensure_has_real_name, only: %i[ show create ]
+  include ActiveStorage::SetCurrent, NotifyBots
+
+  skip_before_action :remember_last_room_visited, only: %i[ new show create ]
+  skip_before_action :ensure_has_real_name, only: %i[ new show create ]
   before_action :set_room, only: %i[ show edit update destroy ]
   before_action :ensure_can_administer, only: %i[ update destroy ]
   before_action :set_membership, only: %i[ show edit ]
-  before_action :set_parent_message, only: %i[ create ]
+  before_action :set_parent_message, only: %i[ new create ]
+
+  def new
+    # A provisional panel: no thread exists yet, and opening one writes nothing.
+    # The thread is materialized only when the first reply is sent (see #create),
+    # so an opened-but-abandoned thread leaves no empty room or membership behind.
+    #
+    # The reply button lives in the cached message partial, so its "new" link can
+    # outlive the threadless state. If a thread now exists, show the real one
+    # rather than an empty provisional panel that would hide existing replies.
+    if existing = @parent_message.threads.active.find_by(type: "Rooms::Thread")
+      redirect_to rooms_thread_path(existing)
+    else
+      render layout: false
+    end
+  end
 
   def create
-    # Opening a thread doesn't subscribe you — access derives from the parent room,
-    # and you follow lazily on your first reply (Message::Threadable) or explicitly
-    # via the Follow control. Creating a *new* thread still follows its creator and
-    # the parent-message author, granted by find_or_create_for. Re-subscribing here
-    # would undo an Unfollow the next time you opened the thread.
-    @room = Rooms::Thread.find_or_create_for(@parent_message, creator: Current.user)
+    # The first reply materializes the thread (Rooms::Thread.reply_to). Opening a
+    # thread doesn't subscribe you — you follow lazily on your first reply
+    # (Message::Threadable) or via the Follow control. Materializing follows the
+    # creator and the parent-message author (find_or_create_for).
+    @message = Rooms::Thread.reply_to(@parent_message, creator: Current.user, message_params: message_params)
+    @room = @message.room
+
+    @message.broadcast_create
+    @message.broadcast_mentionee_sidebar_updates
+    notify_bots(@message, :created)
 
     redirect_to rooms_thread_path(@room)
+  rescue ActiveRecord::RecordInvalid, Rooms::Thread::BlankReplyError
+    # A blank or invalid first reply created nothing (the transaction rolled back
+    # the just-opened thread). Re-render the provisional panel so the composer stays.
+    render :new, layout: false, status: :unprocessable_entity
   end
 
   def show
@@ -52,5 +77,9 @@ class Rooms::ThreadsController < RoomsController
 
   def room_params
     params.require(:room).permit(:name)
+  end
+
+  def message_params
+    params.require(:message).permit(:body, :attachment, :client_message_id)
   end
 end
