@@ -122,7 +122,7 @@ GEM
   specs:
     action_text-trix (2.1.19)
       railties
-    activerecord-tenanted (0.7.0)
+    activerecord-tenanted (0.8.0)
       activerecord (>= 8.1.2.1)
       railties (>= 8.1.2.1)
       zeitwerk
@@ -508,7 +508,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  activerecord-tenanted (= 0.7.0)
+  activerecord-tenanted (= 0.8.0)
   anycable-rails-core!
   aws-sdk-s3
   aws-sdk-sesv2
@@ -573,7 +573,7 @@ CHECKSUMS
   activejob (8.2.0.alpha)
   activemodel (8.2.0.alpha)
   activerecord (8.2.0.alpha)
-  activerecord-tenanted (0.7.0) sha256=ec4f6ea40b0df80be43fac7712c5322fbcdde56da11583695779856571b1d4b0
+  activerecord-tenanted (0.8.0) sha256=cef39df2b92316eac88d5ba71c3fa5910756e1e5669784f52c11fa996bcac087
   activestorage (8.2.0.alpha)
   activesupport (8.2.0.alpha)
   addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
