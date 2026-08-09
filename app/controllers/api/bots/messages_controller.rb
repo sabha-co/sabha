@@ -35,22 +35,19 @@ class API::Bots::MessagesController < API::Bots::BaseController
   end
 
   def create
-    target_room = resolve_target_room
-    target_room.involve_user(Current.user, unread: false) if target_room != @room
+    @message = post_message
 
-    @message = target_room.messages.create_with_attachment(message_params)
+    @message.broadcast_create
+    @message.broadcast_mentionee_sidebar_updates
+    notify_bots(@message, :created)
 
-    if @message.persisted?
-      @message.broadcast_create
-      @message.broadcast_mentionee_sidebar_updates
-      notify_bots(@message, :created)
-
-      render json: { id: @message.id, room_id: target_room.id },
-             status: :created,
-             location: room_message_url(target_room, @message)
-    else
-      render json: { error: @message.errors.full_messages.to_sentence, code: "validation_failed" }, status: :unprocessable_entity
-    end
+    render json: { id: @message.id, room_id: @message.room_id },
+           status: :created,
+           location: room_message_url(@message.room, @message)
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { error: e.record.errors.full_messages.to_sentence, code: "validation_failed" }, status: :unprocessable_entity
+  rescue Rooms::Thread::BlankReplyError
+    render json: { error: "Message can't be blank", code: "validation_failed" }, status: :unprocessable_entity
   rescue LoadError
     render json: { error: "Storage service unavailable", code: "service_unavailable" }, status: :service_unavailable
   end
@@ -79,9 +76,17 @@ class API::Bots::MessagesController < API::Bots::BaseController
       @room = reachable_bot_room(params[:room_id])
     end
 
-    def resolve_target_room
-      return @room if params[:parent_message_id].blank?
-      Rooms::Thread.find_or_create_for(parent_message_in_room, creator: Current.user)
+    # A reply carrying parent_message_id materializes the thread and its reply
+    # atomically (Rooms::Thread.reply_to): a blank or invalid reply rolls the
+    # just-opened thread back rather than orphaning it, and the bot follows only
+    # once the reply persists (Message::Threadable#follow_sub_room_by_creator). A
+    # plain message posts straight to the URL room.
+    def post_message
+      if params[:parent_message_id].present?
+        Rooms::Thread.reply_to(parent_message_in_room, creator: Current.user, message_params: message_params)
+      else
+        @room.messages.create_with_attachment!(message_params)
+      end
     end
 
     # Scoping through @room.messages enforces the API contract that
