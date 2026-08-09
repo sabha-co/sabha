@@ -8,7 +8,7 @@
 eval_gemfile "Gemfile"
 
 # Multi-tenancy infrastructure
-gem "activerecord-tenanted", "0.7.0"
+gem "activerecord-tenanted", "0.8.0"
 
 # PostgreSQL for the shared untenanted database (global identities, workspaces, sessions)
 gem "pg"
