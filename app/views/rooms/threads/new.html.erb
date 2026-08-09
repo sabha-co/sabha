@@ -18,7 +18,7 @@
     <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close thread">&times;</button>
   </div>
 
-  <div id="thread-message-area" class="message-area" contents>
+  <div id="thread-message-area" class="message-area message-area--provisional" contents>
     <%= tag.div id: dom_id(parent_message, :thread_replies), class: "messages", aria: { live: "polite", relevant: "additions" } do %>
       <%= render "rooms/threads/provisional_parent", message: parent_message %>
     <% end %>
