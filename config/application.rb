@@ -40,6 +40,14 @@ module Sabha
     # Fallback to English if translation key is missing
     config.i18n.fallbacks = true
 
+    # Sabha always runs behind a reverse proxy (Kamal proxy or Caddy, sometimes
+    # fronted by Cloudflare), so the real client IP comes from X-Forwarded-For.
+    # The legacy Client-IP header is attacker-supplied — bots probing for exploits
+    # inject a bogus one (e.g. 127.0.0.1) to trip Rails' spoofing check, turning
+    # every probe into a noisy IpSpoofAttackError. X-Forwarded-For takes
+    # precedence over Client-IP, so remote_ip is unchanged for real requests.
+    config.action_dispatch.ip_spoofing_check = false
+
     console do
       if Sabha.saas?
         require_relative "../lib/console/tenant_helpers"
