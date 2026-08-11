@@ -80,7 +80,7 @@ Three status tiers: online, away, offline. 60-second TTL.
 
 ### Branding Customization
 
-Full white-label — app name, support email, PWA colors, icons. Custom CSS via admin panel. See [BRANDING.md](./BRANDING.md).
+Full white-label — app name, support email, PWA colors, icons. See [BRANDING.md](./BRANDING.md).
 
 ### Welcome Messages
 
