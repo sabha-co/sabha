@@ -19,8 +19,7 @@ module TranslationsHelper
     role: { "🇺🇸": "Role", "🇪🇸": "Rol", "🇫🇷": "Rôle", "🇮🇳": "भूमिका", "🇩🇪": "Rolle", "🇧🇷": "Função" },
     webhook_url: { "🇺🇸": "Webhook URL", "🇪🇸": "URL del Webhook", "🇫🇷": "URL du webhook", "🇮🇳": "वेबहुक URL", "🇩🇪": "Webhook-URL", "🇧🇷": "URL do webhook" },
     chat_bots: { "🇺🇸": "Chat bots. With Chat bots, other sites and services can post updates directly to Sabha.", "🇪🇸": "Bots de chat. Con los bots de chat, otros sitios y servicios pueden publicar actualizaciones directamente en Sabha.", "🇫🇷": "Bots de discussion. Avec les bots de discussion, d'autres sites et services peuvent publier des mises à jour directement sur Sabha.", "🇮🇳": "चैट बॉट। चैट बॉट के साथ, अन्य साइटों और सेवाएं सीधे Sabha में अपडेट पोस्ट कर सकती हैं।", "🇩🇪": "Chat-Bots. Mit Chat-Bots können andere Websites und Dienste Updates direkt in Sabha veröffentlichen.", "🇧🇷": "Bots de bate-papo. Com os bots de bate-papo, outros sites e serviços podem postar atualizações diretamente no Sabha." },
-    bot_name: { "🇺🇸": "Name the bot", "🇪🇸": "Nombrar al bot", "🇫🇷": "Nommer le bot", "🇮🇳": "बॉट का नाम दें", "🇩🇪": "Benenne den Bot", "🇧🇷": "Nomeie o bot" },
-    custom_styles: { "🇺🇸": "Add custom CSS styles. Use Caution: you could break things.", "🇪🇸": "Agrega estilos CSS personalizados. Usa precaución: podrías romper cosas.", "🇫🇷": "Ajoutez des styles CSS personnalisés. Utilisez avec précaution : vous pourriez casser des choses.", "🇮🇳": "कस्टम CSS स्टाइल जोड़ें। सावधानी बरतें: आप चीज़ों को तोड़ सकते हैं।", "🇩🇪": "Fügen Sie benutzerdefinierte CSS-Stile hinzu. Vorsicht: Sie könnten Dinge kaputt machen.", "🇧🇷": "Adicione estilos CSS personalizados. Use com cautela: você poderia quebrar coisas." }
+    bot_name: { "🇺🇸": "Name the bot", "🇪🇸": "Nombrar al bot", "🇫🇷": "Nommer le bot", "🇮🇳": "बॉट का नाम दें", "🇩🇪": "Benenne den Bot", "🇧🇷": "Nomeie o bot" }
   }
 
   def translations_for(translation_key)

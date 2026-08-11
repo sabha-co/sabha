@@ -88,7 +88,6 @@ Rails.application.routes.draw do
 
       resource :join_code, only: %i[ create update ]
       resource :logo, only: %i[ show destroy ]
-      resource :custom_styles, only: %i[ edit update ]
     end
   end
 

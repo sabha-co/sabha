@@ -1,6 +1,10 @@
 class Account < ApplicationRecord
   include Joinable, Account::Storage
 
+  # The custom-CSS feature is retired but its column still exists. Ignore it so
+  # a later migration can drop the column without breaking rolling deploys.
+  self.ignored_columns += %w[custom_styles]
+
   VALID_AUTH_METHODS = %w[password otp sso].freeze
   ALLOWED_LOGO_CONTENT_TYPES = %w[ image/jpeg image/png image/gif image/webp ].freeze
 

@@ -105,25 +105,6 @@ Files in `public/` are served directly and need no recompilation. After replacin
 
 Administrators can upload a custom logo at `/accounts/edit`. It overrides the `app-icon` PNGs for the in-app logo, the PNG favicon, the Apple touch icon, and the PWA icons — without redeploying. It does **not** change the SVG favicon (`public/icon.svg`) or the Open Graph images, so replace those files directly if you need them branded.
 
-## Custom Styles
-
-Administrators can add custom CSS through the admin interface at `/accounts/custom_styles/edit`.
-
-Sabha uses CSS custom properties for theming. Override them to match your brand:
-
-```css
-:root {
-  --color-text: #1a1a1a;
-  --color-primary: #2563eb;
-  --color-link: #2563eb;
-  --color-border: #e5e7eb;
-}
-```
-
-See `app/javascript/entrypoints/application.css` for the full list of available properties.
-
-Custom styles are stored per account and loaded inline.
-
 ## Example Configuration
 
 ```bash

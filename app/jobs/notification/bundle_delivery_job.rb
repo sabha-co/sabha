@@ -88,7 +88,7 @@ class Notification::BundleDeliveryJob < ApplicationJob
     # canceling the bundle is the only sane action. Transient errors (5xx,
     # rate limits, timeouts) propagate so Solid Queue retries.
     def terminal_error_classes
-      classes = [ Resend::Error::InvalidRequestError ]
+      classes = [ Resend::Error::InvalidRequestError, Resend::Error::NotFoundError ]
       if defined?(Aws::SESV2::Errors)
         classes << Aws::SESV2::Errors::MessageRejected
         classes << Aws::SESV2::Errors::MailFromDomainNotVerified

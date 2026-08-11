@@ -101,6 +101,19 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
     assert_nil @bundle.delivered_at
   end
 
+  test "cancels the bundle and discards on a Resend 404 not-found error" do
+    create_item!(create_message!)
+    # Resend 1.7 remapped 404 from InvalidRequestError to NotFoundError; both are
+    # non-retryable 4xx failures, so the bundle must still cancel rather than fail.
+    MissedNotificationsMailer.expects(:bundle).raises(Resend::Error::NotFoundError.new("not found", 404))
+
+    assert_nothing_raised do
+      Notification::BundleDeliveryJob.perform_now(@bundle)
+    end
+    assert @bundle.reload.canceled_at.present?
+    assert_nil @bundle.delivered_at
+  end
+
   test "transient provider errors are retried, not canceled" do
     create_item!(create_message!)
     MissedNotificationsMailer.expects(:bundle).raises(Resend::Error::InternalServerError.new("oops", 500))

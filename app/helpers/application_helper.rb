@@ -33,15 +33,6 @@ module ApplicationHelper
     tag "meta", name: "action-cable-url", content: "#{base_url}?#{AnyCable.config.jwt_param}=#{token}"
   end
 
-  def custom_styles_tag
-    if custom_styles = Current.account&.custom_styles
-      # Inline custom styles should not force a full Turbo reload across navigations
-      # Sanitize to prevent breaking out of the <style> tag context (XSS via </style><script>...)
-      sanitized = custom_styles.to_s.gsub(%r{</style}i, "")
-      tag.style(sanitized.html_safe)
-    end
-  end
-
   def icon_tag(name, **options)
     tag.span class: class_names("icon icon--#{name}", options.delete(:class)), "aria-hidden": true, **options
   end
