@@ -22,6 +22,11 @@ class MessagesController < ApplicationController
     @message.broadcast_create
     @message.broadcast_mentionee_sidebar_updates
     notify_bots(@message, :created)
+  rescue ActiveRecord::RecordNotUnique
+    # A replayed send (retry after a lost response): the message already
+    # exists, so answer with it again without re-broadcasting.
+    @message = @room.messages.find_by!(client_message_id: message_params[:client_message_id])
+    render :create
   rescue ActiveRecord::RecordInvalid
     render action: :not_allowed
   rescue ActiveRecord::RecordNotFound

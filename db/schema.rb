@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_16_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_12_190930) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -165,6 +165,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_16_000001) do
     t.datetime "updated_at", null: false
     t.boolean "welcome", default: false, null: false
     t.index ["active", "room_id", "created_at"], name: "index_messages_on_active_room_created"
+    t.index ["client_message_id"], name: "index_messages_on_client_message_id", unique: true
     t.index ["created_at"], name: "index_messages_on_created_at"
     t.index ["creator_id"], name: "index_messages_on_creator_id"
     t.index ["room_id", "created_at"], name: "index_messages_on_room_id_and_created_at"
@@ -422,9 +423,4 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_16_000001) do
   add_foreign_key "users", "badges"
   add_foreign_key "webhooks", "users"
 
-  # The full-text search index is intentionally not dumped here — it is
-  # engine-specific (an FTS5 virtual table on SQLite, a tsvector column + GIN
-  # index on Postgres) and a single schema file can't hold both. It is
-  # provisioned by Message::SearchIndex (run from db:prepare and the test schema
-  # load), and a SchemaDumper filter keeps it out of future dumps.
 end

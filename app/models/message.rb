@@ -422,7 +422,7 @@ class Message < ApplicationRecord
   private
     # Bots and API consumers don't generate client-side IDs for Turbo dedup
     def set_default_client_message_id
-      self.client_message_id ||= Random.uuid
+      self.client_message_id ||= SecureRandom.uuid
     end
 
     def broadcast_reactivation_if_restored

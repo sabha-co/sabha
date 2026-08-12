@@ -58,6 +58,21 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "replaying a create with the same client_message_id answers with the existing message instead of duplicating" do
+    params = { message: { body: "New one", client_message_id: "replayed-send" } }
+
+    post room_messages_url(@room, format: :turbo_stream), params: params
+    message = Message.last
+
+    assert_no_difference -> { Message.count } do
+      post room_messages_url(@room, format: :turbo_stream), params: params
+    end
+
+    assert_response :success
+    assert_select "turbo-stream[action=append][target=?]", dom_id(@room, :messages)
+    assert_select "##{dom_id(message)}"
+  end
+
   test "creating a message publishes one shared room nudge instead of per-user unread broadcasts" do
     # One account-wide publish on the signed room-list stream regardless of
     # member count; each client derives its own unread state from it. No
