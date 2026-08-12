@@ -286,7 +286,7 @@ pre {
   position: absolute;
   z-index: 3;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     max-inline-size: calc(var(--max-width) - var(--inline-space));
   }
 }

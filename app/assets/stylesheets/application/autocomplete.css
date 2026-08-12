@@ -142,7 +142,7 @@ suggestion-option {
 .autocomplete__container {
   --input-padding: 0.3em 0;
 
-  @media (min-width: 120ch) {
+  @media (min-width: 1024px) {
     /* Sidebar-specific sizing — only constrain when inside the sidebar new-DM form */
     .directs--new & {
       max-inline-size: calc(

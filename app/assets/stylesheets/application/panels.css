@@ -27,7 +27,7 @@
   max-inline-size: 100vw;
   padding: var(--panel-padding);
 
-  @media (min-width: 120ch) {
+  @media (min-width: 1024px) {
     --panel-padding: 2em;
 
     box-shadow: var(--panel-shadow);
@@ -319,7 +319,7 @@
   --width: 32rem;
   min-block-size: 18rem;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     --width: calc(100vw - 2rem);
     max-inline-size: calc(100vw - 1rem);
     margin: 0.5rem;
@@ -332,7 +332,7 @@
   gap: var(--inline-space-half);
   padding: 1.5rem 1.5rem 1rem;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     padding: 1rem 1rem 0.75rem;
   }
 }
@@ -341,7 +341,7 @@
   font-size: 1.25rem;
   font-weight: 600;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     font-size: 1.1rem;
   }
 }
@@ -350,7 +350,7 @@
   color: var(--color-text-lighter);
   font-size: 0.95rem;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     font-size: 0.9rem;
   }
 }
@@ -362,7 +362,7 @@
   min-block-size: 12rem;
   padding: 0 1.5rem 1.5rem;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     gap: 0.75rem;
     padding: 0 1rem 1rem;
   }
@@ -377,7 +377,7 @@
   justify-content: center;
   min-block-size: 5rem;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     flex-direction: column;
     gap: 0.5rem;
     text-align: center;
@@ -387,7 +387,7 @@
 .library__download-loading-text {
   flex: 1;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     flex: none;
   }
 }
@@ -404,7 +404,7 @@
   color: currentColor;
   inline-size: 1.75rem;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     block-size: 1.5rem;
     inline-size: 1.5rem;
   }
@@ -422,7 +422,7 @@
   padding: 0;
   list-style: none;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     gap: 0.5rem;
   }
 }
@@ -436,7 +436,7 @@
   border: 1px solid var(--color-border);
   border-radius: 0.75rem;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
@@ -449,7 +449,7 @@
   flex-direction: column;
   gap: 0.2rem;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     align-items: center;
     text-align: center;
   }
@@ -469,7 +469,7 @@
   --btn-padding: 0.45rem 1rem;
   text-decoration: none;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     inline-size: 100%;
     justify-content: center;
   }
@@ -489,7 +489,7 @@
   transition: background-color 0.15s ease, border-color 0.15s ease;
   min-width: fit-content;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     inline-size: 100%;
     padding: 0.75rem;
   }

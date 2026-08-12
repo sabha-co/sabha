@@ -10,7 +10,7 @@ trix-editor,
     overflow: clip;
     padding: var(--block-space) calc(var(--inline-space) * 1.5);
 
-    @media (min-width: 120ch) {
+    @media (min-width: 1024px) {
       align-items: start;
       flex-direction: row;
     }
@@ -49,7 +49,7 @@ trix-editor,
     max-inline-size: 100%;
     overflow: clip;
 
-    @media (min-width: 120ch) {
+    @media (min-width: 1024px) {
       inline-size: 15dvw;
     }
 
@@ -58,7 +58,7 @@ trix-editor,
       inline-size: 100%;
       object-fit: contain;
 
-      @media (max-width: 120ch) {
+      @media (max-width: 1024px) {
         object-position: top left;
       }
     }

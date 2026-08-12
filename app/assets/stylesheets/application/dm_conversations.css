@@ -7,7 +7,7 @@
 .dm-compose {
   --dm-content-inset: var(--navbar-height);
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     --dm-content-inset: calc(var(--navbar-height) + var(--inline-space));
   }
 }

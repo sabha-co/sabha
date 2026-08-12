@@ -599,7 +599,7 @@
         var(--inline-space) * var(--num-buttons) - 1.2em
     );
 
-    @media (max-width: 120ch) {
+    @media (max-width: 1024px) {
       --num-buttons: 2;
 
       .account-has-logo & {
@@ -639,7 +639,7 @@
   mask-image: var(--mask);
   position: relative;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     display: flex;
   }
 
@@ -724,7 +724,7 @@
   overflow-y: auto;
   overflow-x: hidden;
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     padding-block-start: calc(var(--navbar-height) + var(--inline-space));
   }
 }

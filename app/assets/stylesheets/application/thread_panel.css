@@ -12,7 +12,7 @@
 }
 
 /* Desktop: slide from right */
-@media (min-width: 120ch) {
+@media (min-width: 1024px) {
   #thread-panel {
     transform: translateX(100%);
   }
@@ -23,7 +23,7 @@
 }
 
 /* Mobile: full-screen overlay sliding up from bottom */
-@media (width < 120ch) {
+@media (width < 1024px) {
   #thread-panel:not([hidden]) {
     position: fixed;
     inset: 0;

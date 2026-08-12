@@ -6,7 +6,7 @@
 
 .composer__context-btn {
   .composer:has(.composer__input:focus-within) & {
-    @media (max-width: 120ch) {
+    @media (max-width: 1024px) {
       display: none;
     }
   }
@@ -233,7 +233,7 @@
   }
 }
 
-@media (min-width: 120ch) and (any-hover: hover) and (pointer: fine) {
+@media (min-width: 1024px) and (any-hover: hover) and (pointer: fine) {
   .composer__rich-text-btn {
     display: inline-flex;
   }

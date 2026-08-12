@@ -36,7 +36,7 @@ body {
 #app-logo {
   display: none;
 
-  @media (min-width: 120ch) {
+  @media (min-width: 1024px) {
     block-size: var(--footer-height);
     display: grid;
     filter: saturate(0);
@@ -79,7 +79,7 @@ body {
   .sidebar & {
     justify-content: end;
 
-    @media (min-width: 120ch) {
+    @media (min-width: 1024px) {
       border-inline: 1px solid var(--color-border-darker);
       margin-inline: 0 5vw;
     }
@@ -150,7 +150,7 @@ body {
    Split the non-sidebar space 50/50 between main and thread (was ~2:1).
    --thread-width is the single source of truth so anything else that needs
    to know the thread column's width (e.g. fixed nav offset) stays in sync. */
-@media (min-width: 120ch) {
+@media (min-width: 1024px) {
   body:has(#thread-panel:not([hidden])) {
     --thread-width: calc((100vw - var(--sidebar-width)) / 2);
 

@@ -24,14 +24,14 @@
 
   }
 
-  @media (min-width: 120ch) {
+  @media (min-width: 1024px) {
     .thread-panel-open & {
       inset-inline-end: var(--thread-width);
     }
   }
 
   .sidebar & {
-    @media (max-width: 120ch) {
+    @media (max-width: 1024px) {
       padding-block: var(--block-space-half);
 
       &::before {

@@ -99,7 +99,7 @@
   position: relative;
   row-gap: var(--message-space);
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     padding-block-start: var(--navbar-height);
   }
 }
@@ -564,7 +564,7 @@
     inline-size: auto;
   }
 
-  @media (max-width: 120ch) {
+  @media (max-width: 1024px) {
     max-inline-size: 100%;
   }
 }
