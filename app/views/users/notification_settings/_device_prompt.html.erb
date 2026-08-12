@@ -1,10 +1,18 @@
-<span class="button_to_change_notifying" id="notification_bell_container" hidden
+<%# Device-level push enrollment: hidden until the notifications controller
+    confirms this browser has no push subscription, then offers to enroll it. %>
+<div id="notification_bell_container" hidden
     data-controller="notifications" data-notifications-subscriptions-url-value="<%= user_push_subscriptions_path %>" data-notifications-attention-class="btn--pulsing">
   <%= turbo_frame_tag "global_notifications" do %>
-    <button class="btn sidebar__footer-item" title="Turn on notifications" data-action="click->notifications#attemptToSubscribe" data-notifications-target="bell">
-      <%= icon_tag "notification-bell-alert" %>
-      <span class="for-screen-reader">Enable notifications for all rooms</span>
-    </button>
+    <div class="setting-row">
+      <span class="setting-row__text">
+        <span class="setting-row__title">This browser</span>
+        <span class="txt-small txt-muted">Sabha needs this browser's permission to show alerts.</span>
+      </span>
+      <button class="btn" data-action="click->notifications#attemptToSubscribe" data-notifications-target="bell">
+        <%= icon_tag "notification-bell-alert" %>
+        Turn on
+      </button>
+    </div>
   <% end %>
 
   <dialog data-notifications-target="notAllowedNotice" class="dialog pad center center-block border-radius border shadow" style="--inline-space: var(--block-space)" aria-label="Notifications aren't allowed">
@@ -31,4 +39,4 @@
       </form>
     </div>
   </dialog>
-</span> 
+</div>

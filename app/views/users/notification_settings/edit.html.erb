@@ -27,6 +27,8 @@
           attribute: :push_enabled,
           title:     "Push notifications",
           hint:      "Receive alerts on all devices even when Sabha is closed." %>
+
+    <%= render "users/notification_settings/device_prompt" %>
   </div>
 
   <%# ─── Email ─────────────────────────────────────────────────────── %>

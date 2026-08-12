@@ -13,6 +13,15 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     assert_select "form"
   end
 
+  test "edit offers the device-level push enrollment prompt" do
+    get edit_user_notification_settings_url(user_id: "me")
+
+    assert_response :success
+    assert_select "#notification_bell_container[hidden]" do
+      assert_select "button[data-notifications-target=bell]"
+    end
+  end
+
   test "edit lists shared memberships with involvement controls" do
     get edit_user_notification_settings_url(user_id: "me")
 
