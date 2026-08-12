@@ -10,7 +10,7 @@
 .sidebar__container {
   block-size: 100dvh;
   max-block-size: 100dvh;
-  padding-inline-end: var(--sidebar-tools-width);
+  padding-inline-start: var(--sidebar-tools-width);
   position: relative;
 }
 
@@ -19,13 +19,13 @@
   backdrop-filter: blur(12px);
   background-color: var(--color-bg-translucent);
   block-size: 100dvh;
-  border-inline-start: 1px solid var(--color-border-darker);
+  border-inline-end: 1px solid var(--color-border-darker);
   contain: layout style;
   display: flex;
   flex-direction: column;
   align-items: center;
   inline-size: var(--sidebar-tools-width);
-  inset: 0 0 0 auto;
+  inset: 0 auto 0 0;
   overflow-y: auto;
   padding-block: 0 var(--block-space);
   padding-inline: calc(var(--block-space) / 2);
@@ -135,12 +135,12 @@
 
 .sidebar__toggle {
   inset-block-start: var(--block-space-half);
-  inset-inline-start: calc(
+  inset-inline-end: calc(
     (var(--btn-size) + max(var(--inline-space), 1vw)) * -1
   );
   position: absolute;
   transition:
-    inset-inline-start 300ms cubic-bezier(0.25, 1, 0.5, 1),
+    inset-inline-end 300ms cubic-bezier(0.25, 1, 0.5, 1),
     border-color 300ms cubic-bezier(0.25, 1, 0.5, 1),
     background-color 300ms cubic-bezier(0.25, 1, 0.5, 1);
   z-index: 5;
@@ -185,7 +185,7 @@
 
     @media (max-width: 120ch) {
       display: none;
-      inset-inline-start: var(--sidebar-inline-space);
+      inset-inline-end: var(--sidebar-inline-space);
 
       & img {
         filter: invert(0);

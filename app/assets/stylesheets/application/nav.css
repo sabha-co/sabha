@@ -3,14 +3,14 @@
   column-gap: var(--inline-space-half);
   display: flex;
   inset: 0 0 auto 0;
-  inset-inline-end: var(--sidebar-width);
+  inset-inline-start: var(--sidebar-width);
   padding-block: calc(var(--block-space) + env(safe-area-inset-top)) var(--block-space);
   padding-inline: calc(var(--inline-space) * 1.5) calc(var(--inline-space-double) + env(safe-area-inset-right));
   pointer-events: none;
   position: fixed;
   row-gap: var(--block-space);
   z-index: 2;
-  transition: inset-inline-end 300ms cubic-bezier(0.25, 1, 0.5, 1);
+  transition: inset-inline-start 300ms cubic-bezier(0.25, 1, 0.5, 1);
 
   & > * {
     pointer-events: auto;
@@ -22,18 +22,11 @@
        #main-content already share the same 5vw offset; only this 1vw was missing. */
     padding-inline: calc(var(--inline-space) + 1vw) var(--inline-space);
 
-    @media (min-width: 120ch) {
-      margin-inline-start: 5vw;
-
-      .thread-panel-open & {
-        margin-inline-start: 0;
-      }
-    }
   }
 
   @media (min-width: 120ch) {
     .thread-panel-open & {
-      inset-inline-end: calc(var(--sidebar-width) + var(--thread-width));
+      inset-inline-end: var(--thread-width);
     }
   }
 
@@ -53,7 +46,6 @@
     }
   }
 }
-
 
 .top-banner {
   display: flex;
