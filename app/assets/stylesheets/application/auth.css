@@ -1,0 +1,281 @@
+/* v2 auth card — sign-in, code entry, password reset, join, first run and the
+   signed-out landing all share one centred card: logo mark, title over blurb,
+   fields labelled above their inputs, and a full-width accent action. */
+
+/* The session layout is a single centred column, not the app shell — undo
+   layout.css's body grid so its <main> can centre the card. */
+body.session {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+/* Ground for cards that render inside the app layout (join, first run) —
+   the session layout centres its own <main> instead. */
+.auth-ground {
+  display: flex;
+  justify-content: center;
+  padding: 48px 16px 80px;
+}
+
+.auth-card {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-overlay);
+  inline-size: 420px;
+  max-inline-size: calc(100vw - 2rem);
+  padding: 32px 30px;
+  text-align: start;
+}
+
+.auth-card__header {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.auth-card__logo img {
+  block-size: 46px;
+  border-radius: 13px;
+  display: block;
+  inline-size: 46px;
+  object-fit: cover;
+}
+
+.auth-card__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.auth-card__blurb {
+  color: var(--color-text-muted);
+  font-size: 0.84375rem;
+  line-height: 1.55;
+  margin: 5px 0 0;
+  text-wrap: pretty;
+}
+
+/* Fields: label row above the input; the row also carries side links
+   ("Forgot your password?") and the translate popup. */
+.auth-card__field {
+  margin-block-start: 16px;
+
+  .auth-card__header + &,
+  form > &:first-child {
+    margin-block-start: 22px;
+  }
+}
+
+.auth-card__label {
+  align-items: center;
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  justify-content: space-between;
+  margin-block-end: 6px;
+}
+
+.auth-card__label-link {
+  color: var(--color-link);
+  font-size: 0.78125rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  @media (any-hover: hover) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.auth-card__field .input {
+  --input-border-color: var(--color-border);
+
+  background-color: var(--color-bg);
+  border-radius: 9px;
+  inline-size: 100%;
+  padding: 11px 13px;
+}
+
+/* Primary action: accent, full width */
+.auth-card .auth-card__submit {
+  --btn-background: var(--color-accent-brand);
+  --btn-border-color: var(--color-accent-brand);
+  --btn-border-radius: 9px;
+  --btn-color: var(--color-text-reversed);
+  --btn-padding: 12px;
+
+  font-size: 0.875rem;
+  font-weight: 600;
+  inline-size: 100%;
+  justify-content: center;
+  margin-block-start: 18px;
+}
+
+/* Quiet full-width action for terminal states (signed out, expired link) */
+.auth-card .auth-card__action--quiet {
+  --btn-background: transparent;
+  --btn-border-color: var(--color-border);
+  --btn-border-radius: 9px;
+  --btn-color: var(--color-text-lighter);
+  --btn-padding: 12px;
+
+  font-size: 0.875rem;
+  font-weight: 600;
+  inline-size: 100%;
+  justify-content: center;
+  margin-block-start: 18px;
+}
+
+/* Centred small print under an action */
+.auth-card__note {
+  color: var(--color-text-subtle);
+  font-size: 0.78125rem;
+  line-height: 1.55;
+  margin: 14px 0 0;
+  text-align: center;
+  text-wrap: pretty;
+
+  a {
+    color: var(--color-link);
+    font-weight: 600;
+    text-decoration: none;
+
+    @media (any-hover: hover) {
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+/* Hairline-topped footer ("New here? …") */
+.auth-card__footer {
+  border-block-start: 1px solid var(--color-border);
+  color: var(--color-text-subtle);
+  font-size: 0.78125rem;
+  line-height: 1.55;
+  margin-block-start: 22px;
+  padding-block-start: 18px;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+/* In-card alert/notice row (join flow renders flash inside the card) */
+.auth-card__alert {
+  border: 1px solid color-mix(in oklch, var(--color-negative) 32%, transparent);
+  background-color: color-mix(in oklch, var(--color-negative) 7%, transparent);
+  border-radius: 10px;
+  color: var(--color-text-lighter);
+  display: flex;
+  font-size: 0.8125rem;
+  gap: 9px;
+  line-height: 1.5;
+  margin-block-start: 20px;
+  padding: 11px 13px;
+
+  &::before {
+    color: var(--color-negative);
+    content: "●";
+    flex-shrink: 0;
+    font-size: 0.8em;
+    line-height: 1.9;
+  }
+}
+
+.auth-card__alert--positive {
+  border-color: var(--color-border);
+  background-color: var(--color-bg-sunk);
+
+  &::before {
+    color: var(--color-positive);
+  }
+}
+
+/* Members line on the join card ("124 members · 9 here now") */
+.auth-card__meta {
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: 0.78125rem;
+  gap: 0.5ch;
+  justify-content: center;
+  margin-block-start: 16px;
+}
+
+/* First-run avatar row: preview + upload chip on a sunk card */
+.auth-card__avatar-row {
+  align-items: center;
+  background-color: var(--color-bg-sunk);
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  display: flex;
+  gap: 13px;
+  margin-block-start: 22px;
+  padding: 12px 13px;
+
+  img {
+    block-size: 44px;
+    border-radius: 12px;
+    display: block;
+    inline-size: 44px;
+    object-fit: cover;
+  }
+}
+
+.auth-card__avatar-copy {
+  flex: 1;
+  min-inline-size: 0;
+
+  strong {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  span {
+    color: var(--color-text-muted);
+    display: block;
+    font-size: 0.75rem;
+    margin-block-start: 2px;
+  }
+}
+
+.auth-card .auth-card__chip-btn {
+  --btn-background: transparent;
+  --btn-border-color: var(--color-border);
+  --btn-border-radius: 8px;
+  --btn-color: var(--color-text-muted);
+  --btn-padding: 6px 11px;
+
+  flex-shrink: 0;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  position: relative;
+
+  input[type="file"] {
+    cursor: pointer;
+    inset: 0;
+    opacity: 0;
+    position: absolute;
+
+    &::file-selector-button {
+      cursor: pointer;
+    }
+  }
+}
+
+/* The one-time-code input reads as a code */
+.auth-card .input--otp {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: max(16px, 1.05rem);
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-align: center;
+  text-transform: uppercase;
+}

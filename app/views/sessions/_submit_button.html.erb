@@ -1,5 +1,5 @@
 <%# locals: (form:, label:) %>
-<%= form.button class: "btn btn--reversed center txt-large",
+<%= form.button class: "btn auth-card__submit",
     type: "submit",
     data: defined?(hotwire_native_app?) && hotwire_native_app? ? { controller: "bridge--button", bridge_title: "Submit" } : {} do %>
   <%= label %>

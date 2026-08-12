@@ -3,23 +3,19 @@
   <%= link_to "← Back", new_session_path(return_to: session[:return_to_after_authenticating]), class: "txt-medium txt-muted txt-undecorated" %>
 <% end %>
 
-<section class="txt-align-center">
-  <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
-    <div class="flex justify-center mb-6">
-      <%= link_to root_path do %>
-        <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name, class: "w-18 h-auto rounded-lg" %>
-      <% end %>
-    </div>
-
-    <%= form_with url: password_resets_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
-      <fieldset class="flex flex-column gap center-block pad">
-        <legend class="txt-large txt-align-center"><strong>Reset your password</strong></legend>
-
-        <p class="txt-medium txt-muted">Enter your email address and we'll send you instructions to reset your password.</p>
-
-        <%= render "sessions/email_field", form: form %>
-        <%= render "sessions/submit_button", form: form, label: "Send reset instructions" %>
-      </fieldset>
+<section class="auth-card <%= "shake" if flash[:alert] %>">
+  <header class="auth-card__header">
+    <%= link_to root_path, class: "auth-card__logo" do %>
+      <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name %>
     <% end %>
-  </div>
+    <div>
+      <h1 class="auth-card__title">Reset your password</h1>
+      <p class="auth-card__blurb">Enter your email address and we'll send you instructions to reset your password.</p>
+    </div>
+  </header>
+
+  <%= form_with url: password_resets_path, html: { autocomplete: "off" } do |form| %>
+    <%= render "sessions/email_field", form: form %>
+    <%= render "sessions/submit_button", form: form, label: "Send reset instructions" %>
+  <% end %>
 </section>

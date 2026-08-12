@@ -30,7 +30,7 @@
     <%= umami_analytics_tag %>
   </head>
 
-  <body data-controller="theme">
+  <body class="session" data-controller="theme">
     <main class="min-h-dvh flex flex-col items-center justify-center p-4 sm:p-6">
       <% if notice = flash[:notice] || flash[:alert] %>
         <div class="flash" data-controller="element-removal" data-action="animationend->element-removal#remove">

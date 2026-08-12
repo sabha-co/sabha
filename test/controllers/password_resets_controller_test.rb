@@ -17,7 +17,7 @@ class PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     get new_password_reset_url
 
     assert_response :success
-    assert_select "legend", "Reset your password"
+    assert_select "h1", "Reset your password"
   end
 
   test "create sends password reset email for existing user" do
@@ -45,7 +45,7 @@ class PasswordResetsControllerTest < ActionDispatch::IntegrationTest
     get edit_password_reset_url(token)
 
     assert_response :success
-    assert_select "legend", "Set new password"
+    assert_select "h1", "Set new password"
   end
 
   test "edit redirects with invalid token" do

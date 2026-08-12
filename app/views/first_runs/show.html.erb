@@ -1,59 +1,63 @@
 <% @page_title = "Set up #{Branding.app_name}" %>
 <% @body_class = "signup" %>
 
-<%= form_with model: @user, url: first_run_path, class: "center max-width" do |form| %>
-  <section class="nametag u-relative">
-    <div class="flex justify-center align-center pad-block">
-      <%= icon_tag "lanyard", class: "nametag__lanyard" %>
-    </div>
+<div class="auth-ground">
+  <section class="auth-card">
+    <header class="auth-card__header">
+      <span class="auth-card__logo">
+        <%= image_tag "icons/sabha-icon.svg", alt: "" %>
+      </span>
+      <div>
+        <h1 class="auth-card__title">Set up your community</h1>
+        <p class="auth-card__blurb">One form, once. The community is named from your deployment config.</p>
+      </div>
+    </header>
 
-    <div class="nametag__inner flex flex-column gap">
-      <fieldset class="flex flex-column center-block">
-        <legend class="txt-large txt-align-center"><strong>Create your account</strong></legend>
-
-        <label class="align-center center avatar__form gap" data-controller="upload-preview">
-          <div class="btn input--file">
-            <%= icon_tag "camera" %>
-            <%= form.file_field :avatar, class: "input", accept: "image/*",
-                  data: { upload_preview_target: "input", action: "upload-preview#previewImage" } %>
-            <span class="for-screen-reader">Add your avatar</span>
-          </div>
-
-          <div class="btn avatar input--file txt-xx-large">
-            <%= image_tag "default-avatar.svg", data: { upload_preview_target: "image" }, aria: { hidden: true } %>
-            <span class="for-screen-reader">Avatar</span>
-          </div>
-        </label>
-      </fieldset>
-
-      <div class="flex align-center gap">
-        <%= translation_button(:user_name) %>
-        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-          <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
-                data: { "1p-ignore": true } %>
-          <%= icon_tag "person" %>
+    <%= form_with model: @user, url: first_run_path do |form| %>
+      <div class="auth-card__avatar-row" data-controller="upload-preview">
+        <%= image_tag "default-avatar.svg", data: { upload_preview_target: "image" }, aria: { hidden: true } %>
+        <span class="auth-card__avatar-copy">
+          <strong>Your avatar</strong>
+          <span>Add one now, or replace it whenever.</span>
+        </span>
+        <label class="btn auth-card__chip-btn">
+          Upload
+          <%= form.file_field :avatar, accept: "image/*",
+                data: { upload_preview_target: "input", action: "upload-preview#previewImage" } %>
+          <span class="for-screen-reader">Add your avatar</span>
         </label>
       </div>
 
-      <div class="flex align-center gap">
-        <%= translation_button(:email_address) %>
-        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-          <%= form.email_field :email_address, class: "input", autocomplete: "username", placeholder: "Your email address", required: true %>
-          <%= icon_tag "email" %>
-        </label>
+      <div class="auth-card__field">
+        <div class="auth-card__label">
+          <label for="user_name">Your name</label>
+          <%= translation_button(:user_name) %>
+        </div>
+        <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "How you want to be known", autofocus: true, required: true,
+              data: { "1p-ignore": true } %>
       </div>
 
-      <div class="flex align-center gap">
-        <%= translation_button(:password) %>
-        <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-          <%= form.password_field :password, class: "input", autocomplete: "new-password", placeholder: "Choose a password", required: true, maxlength: 72 %>
-          <%= icon_tag "password" %>
-        </label>
+      <div class="auth-card__field">
+        <div class="auth-card__label">
+          <label for="user_email_address">Email</label>
+          <%= translation_button(:email_address) %>
+        </div>
+        <%= form.email_field :email_address, class: "input", autocomplete: "username", placeholder: "you@example.com", required: true %>
       </div>
 
-      <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-        Create account
+      <div class="auth-card__field">
+        <div class="auth-card__label">
+          <label for="user_password">Password</label>
+          <%= translation_button(:password) %>
+        </div>
+        <%= form.password_field :password, class: "input", autocomplete: "new-password", placeholder: "Choose a password", required: true, maxlength: 72 %>
+      </div>
+
+      <%= form.button class: "btn auth-card__submit", type: "submit" do %>
+        Create the community
       <% end %>
-    </div>
+    <% end %>
+
+    <p class="auth-card__note">This account becomes the first administrator, and a <%= FirstRun::FIRST_ROOM_NAME %> room is created with everyone auto-joined.</p>
   </section>
-<% end %>
+</div>

@@ -1,108 +1,108 @@
 <% @page_title = "Sign up" %>
 <% @body_class = "signup" %>
 
-<%= form_with model: @user, url: request.fullpath, class: "center" do |form| %>
-  <section class="nametag u-relative">
-    <div class="flex justify-center align-center pad-block">
-      <%= image_tag "lanyard.svg", class: "nametag__lanyard", alt: "" %>
+<div class="auth-ground">
+  <section class="auth-card <%= "shake" if flash[:alert] %>">
+    <header class="auth-card__header">
+      <%= link_to root_path, class: "auth-card__logo" do %>
+        <%= image_tag fresh_account_logo_path, alt: Current.account.name %>
+      <% end %>
+      <div>
+        <h1 class="auth-card__title">Join <%= Current.account.name %></h1>
+        <p class="auth-card__blurb">
+          <% if @join_code.personal? %>
+            <strong><%= @join_code.user.name %></strong> invited you to join.
+          <% else %>
+            You've been invited to join.
+          <% end %>
+        </p>
+      </div>
+    </header>
+
+    <div class="auth-card__meta">
+      <span><%= @member_count %> members</span>
+      <span>&middot;</span>
+      <span><%= @online_user_count_extended %> here now</span>
     </div>
 
-    <div class="nametag__inner flex flex-column gap">
-      <fieldset class="flex flex-column center-block">
-        <legend class="txt-align-center flex gap align-center justify-center">
-          <%= account_logo_tag %>
-          <strong class="txt-large"><%= Current.account.name %></strong>
-        </legend>
+    <% if flash[:notice] %>
+      <div class="auth-card__alert auth-card__alert--positive"><div><%= flash[:notice] %></div></div>
+    <% end %>
 
-        <div class="txt-align-center txt-medium margin-block-start-half">
-          <% if @join_code.personal? %>
-            <strong><%= @join_code.user.name %></strong> invited you to join
-          <% else %>
-            You've been invited to join
-          <% end %>
-        </div>
+    <% if flash[:alert] %>
+      <div class="auth-card__alert"><div><%= flash[:alert] %></div></div>
+    <% end %>
 
-        <div class="flex justify-center gap txt-medium">
-          <span class="flex align-center gap-half">
-            <span class="status-dot status--active"></span>
-            <%= @online_user_count_extended %> Online
-          </span>
-          <span>&middot;</span>
-          <span><%= @member_count %> Members</span>
-        </div>
-      </fieldset>
-
-      <% if flash[:notice] %>
-        <p class="txt-medium txt-positive txt-align-center"><%= flash[:notice] %></p>
+    <% if saas_unauthenticated? %>
+      <%# SaaS: User is not logged in - show sign up/sign in options %>
+      <%= link_to untenanted_path(:new_registration, return_to: @return_to_url), class: "btn auth-card__submit" do %>
+        Sign up to join
       <% end %>
 
-      <% if flash[:alert] %>
-        <p class="txt-medium txt-negative txt-align-center"><%= flash[:alert] %></p>
-      <% end %>
-
-      <% if saas_unauthenticated? %>
-        <%# SaaS: User is not logged in - show sign up/sign in options %>
-        <div class="flex flex-column gap">
-          <%= link_to untenanted_path(:new_registration, return_to: @return_to_url), class: "btn btn--reversed center txt-large" do %>
-            Sign up to join
-          <% end %>
-        </div>
-
-        <div class="txt-medium txt-align-center">
-          Already have an account? <%= link_to "Sign in", untenanted_path(:new_session, return_to: @return_to_url) %>
-        </div>
-      <% elsif saas_authenticated? %>
-        <%# SaaS: User is globally authenticated, one-click join %>
-        <p class="txt-medium txt-align-center txt-muted">
-          Joining as <strong><%= Current.global_identity.email_address %></strong>
-        </p>
-
-        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+      <p class="auth-card__note">
+        Already have an account? <%= link_to "Sign in", untenanted_path(:new_session, return_to: @return_to_url) %>
+      </p>
+    <% elsif saas_authenticated? %>
+      <%# SaaS: User is globally authenticated, one-click join %>
+      <%= form_with model: @user, url: request.fullpath do |form| %>
+        <%= form.button class: "btn auth-card__submit", type: "submit" do %>
           Join <%= Current.account.name %>
         <% end %>
-      <% else %>
-        <%# Self-hosted or new SaaS user: full signup form %>
-        <div data-controller="name-field">
-          <div class="flex align-center gap">
+      <% end %>
+
+      <p class="auth-card__note">
+        Joining as <strong><%= Current.global_identity.email_address %></strong>
+      </p>
+    <% else %>
+      <%# Self-hosted or new SaaS user: full signup form %>
+      <%= form_with model: @user, url: request.fullpath do |form| %>
+        <div class="auth-card__field" data-controller="name-field">
+          <div class="auth-card__label">
+            <label for="user_name">Your name</label>
             <%= translation_button(:user_name) %>
-            <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-              <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Your name", autofocus: true, required: true,
-                    minlength: 2, maxlength: 100, data: { "1p-ignore": true, action: "input->name-field#validate" } %>
-              <%= icon_tag "person" %>
-            </label>
           </div>
-          <p class="txt-small txt-negative margin-block-start-half" hidden data-name-field-target="hint">This looks like an email address. Your name goes here!</p>
+          <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "How you want to be known", autofocus: true, required: true,
+                minlength: 2, maxlength: 100, data: { "1p-ignore": true, action: "input->name-field#validate" } %>
+          <p class="auth-card__note txt-negative" hidden data-name-field-target="hint">This looks like an email address. Your name goes here!</p>
         </div>
 
-        <div class="flex align-center gap">
-          <%= translation_button(:email_address) %>
-          <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-            <%= form.email_field :email_address, class: "input", autocomplete: "username", placeholder: "Your email address", required: true %>
-            <%= icon_tag "email" %>
-          </label>
+        <div class="auth-card__field">
+          <div class="auth-card__label">
+            <label for="user_email_address">Email</label>
+            <%= translation_button(:email_address) %>
+          </div>
+          <%= form.email_field :email_address, class: "input", autocomplete: "username", placeholder: "you@example.com", required: true %>
         </div>
 
         <% unless Account.otp_auth? %>
-          <div class="flex align-center gap">
-            <%= translation_button(:password) %>
-            <label class="flex align-center gap flex-item-grow txt-large input input--actor">
-              <%= form.password_field :password, class: "input", autocomplete: "new-password",
-                  placeholder: "Choose a password", required: true, minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
-              <%= icon_tag "password" %>
-            </label>
+          <div class="auth-card__field">
+            <div class="auth-card__label">
+              <label for="user_password">Password</label>
+              <%= translation_button(:password) %>
+            </div>
+            <%= form.password_field :password, class: "input", autocomplete: "new-password",
+                placeholder: "At least #{User::MINIMUM_PASSWORD_LENGTH} characters", required: true, minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
           </div>
         <% end %>
 
-        <div class="flex justify-center"><%= cloudflare_turnstile %></div>
+        <div class="auth-card__field flex justify-center"><%= cloudflare_turnstile %></div>
 
-        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-          Join <%= Current.account.name %>
+        <%= form.button class: "btn auth-card__submit", type: "submit" do %>
+          <%= Account.otp_auth? ? "Email me a code" : "Create account" %>
         <% end %>
-
-        <div class="txt-medium txt-align-center">
-          Already have an account? <%= link_to "Sign in", new_session_path(return_to: request.fullpath) %>
-        </div>
       <% end %>
-    </div>
+
+      <p class="auth-card__note">
+        <% if Account.otp_auth? %>
+          We email a code to confirm the address. No password needed.
+        <% else %>
+          You will get an email to confirm the address before you can post.
+        <% end %>
+      </p>
+
+      <footer class="auth-card__footer">
+        Already have an account? <%= link_to "Sign in", new_session_path(return_to: request.fullpath), class: "auth-card__label-link" %>
+      </footer>
+    <% end %>
   </section>
-<% end %>
+</div>

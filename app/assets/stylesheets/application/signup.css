@@ -1,47 +1,4 @@
-.nametag {
-  --fieldset-border-color: var(--color-border-darker);
-  --nametag-padding: var(--block-space-double);
-  --nametag-border-size: 1px;
-
-  background-color: var(--color-bg-sunk);
-  border-radius: var(--fieldset-border-radius, 1em);
-  border: var(--nametag-border-size) solid var(--fieldset-border-color);
-  box-shadow: 0 0 1em oklch(var(--lch-black) / 0.2);
-  margin-block-end: var(--block-space);
-  margin-block-start: 18ex;
-  overflow: unset;
-  padding: var(--nametag-padding);
-
-  @media (max-width: 120ch) {
-    --nametag-padding: calc(var(--block-space) * 1.5);
-  }
-}
-
-.nametag__inner {
-  --avatar-size: 4ch;
-  --nametag-inner-padding: var(--block-space);
-
-  background-color: var(--color-bg);
-  border-radius: 0.8em;
-  border: var(--nametag-border-size) solid var(--fieldset-border-color);
-  inline-size: 42ch;
-  max-inline-size: calc(100dvw - var(--nametag-padding) - var(--nametag-inner-padding) - (var(--nametag-border-size) * 6) - var(--inline-space) * 2);
-  padding: var(--nametag-inner-padding);
-
-  legend {
-    padding-inline: 0.8em;
-  }
-}
-
-.nametag__lanyard {
-  block-size: auto;
-  display: block;
-  inline-size: 20ex;
-  inset-block-start: -4.5ex;
-  position: absolute;
-}
-
-/* Unuspported browser */
+/* Unsupported browser */
 .browser-list img {
   aspect-ratio: 1;
   block-size: auto;

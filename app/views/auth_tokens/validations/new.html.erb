@@ -4,27 +4,23 @@
   <%= link_to "← Back", new_session_path, class: "txt-medium txt-muted txt-undecorated" %>
 <% end %>
 
-<section class="txt-align-center">
-  <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
-    <div class="flex justify-center mb-6">
-      <%= link_to root_path do %>
-        <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name, class: "w-18 h-auto rounded-lg" %>
-      <% end %>
-    </div>
-
-    <%= form_with url: auth_tokens_validations_url, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
-      <fieldset class="flex flex-column gap center-block pad">
-        <legend class="txt-large txt-align-center"><strong>Check your email</strong></legend>
-
-        <p class="txt-medium txt-muted">Enter the 6-character code we sent to <strong class="txt-body"><%= session[:otp_email_address] || "your email" %></strong></p>
-
-        <%= render "sessions/code_field", form: form, styled: true, show_icon: false, show_translation: false %>
-        <%= render "sessions/submit_button", form: form, label: "Verify" %>
-
-        <p class="txt-small txt-muted">
-          Didn't receive it? <%= link_to "Try again", new_session_path %>
-        </p>
-      </fieldset>
+<section class="auth-card <%= "shake" if flash[:alert] %>">
+  <header class="auth-card__header">
+    <%= link_to root_path, class: "auth-card__logo" do %>
+      <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name %>
     <% end %>
-  </div>
+    <div>
+      <h1 class="auth-card__title">Check your email</h1>
+      <p class="auth-card__blurb">We sent a code to <strong><%= session[:otp_email_address] || "your email" %></strong>. It expires in 15 minutes and works once.</p>
+    </div>
+  </header>
+
+  <%= form_with url: auth_tokens_validations_url, html: { autocomplete: "off" } do |form| %>
+    <%= render "sessions/code_field", form: form %>
+    <%= render "sessions/submit_button", form: form, label: "Verify" %>
+  <% end %>
+
+  <p class="auth-card__note">
+    Didn't receive it? <%= link_to "Try again", new_session_path %>
+  </p>
 </section>

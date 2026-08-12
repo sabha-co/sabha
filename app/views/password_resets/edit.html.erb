@@ -3,40 +3,36 @@
   <%= link_to "← Back", new_session_path, class: "txt-medium txt-muted txt-undecorated" %>
 <% end %>
 
-<section class="txt-align-center">
-  <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
-    <div class="flex justify-center mb-6">
-      <%= link_to root_path do %>
-        <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name, class: "w-18 h-auto rounded-lg" %>
-      <% end %>
+<section class="auth-card <%= "shake" if flash[:alert] %>">
+  <header class="auth-card__header">
+    <%= link_to root_path, class: "auth-card__logo" do %>
+      <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name %>
+    <% end %>
+    <div>
+      <h1 class="auth-card__title">Set new password</h1>
+      <p class="auth-card__blurb">At least <%= User::MINIMUM_PASSWORD_LENGTH %> characters. You'll be signed in right after.</p>
+    </div>
+  </header>
+
+  <%= form_with url: password_reset_path(params[:token]), method: :patch, html: { autocomplete: "off" } do |form| %>
+    <div class="auth-card__field">
+      <div class="auth-card__label">
+        <label for="password">New password</label>
+        <%= translation_button(:password) %>
+      </div>
+      <%= form.password_field :password, required: true, class: "input", autofocus: true,
+          autocomplete: "new-password", placeholder: "At least #{User::MINIMUM_PASSWORD_LENGTH} characters", minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
     </div>
 
-    <%= form_with url: password_reset_path(params[:token]), method: :patch, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
-      <fieldset class="flex flex-column gap center-block pad">
-        <legend class="txt-large txt-align-center"><strong>Set new password</strong></legend>
+    <div class="auth-card__field">
+      <div class="auth-card__label">
+        <label for="password_confirmation">Confirm new password</label>
+        <%= translation_button(:password_confirmation) %>
+      </div>
+      <%= form.password_field :password_confirmation, required: true, class: "input",
+          autocomplete: "new-password", placeholder: "Repeat the password", minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
+    </div>
 
-        <div class="flex align-center gap">
-          <%= translation_button(:password) %>
-          <label class="flex align-center gap input input--actor txt-large">
-            <%= form.password_field :password, required: true, class: "input", autofocus: true,
-                autocomplete: "new-password", placeholder: "New password", minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
-            <%= icon_tag "password" %>
-          </label>
-        </div>
-
-        <div class="flex align-center gap">
-          <%= translation_button(:password_confirmation) %>
-          <label class="flex align-center gap input input--actor txt-large">
-            <%= form.password_field :password_confirmation, required: true, class: "input",
-                autocomplete: "new-password", placeholder: "Confirm new password", minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
-            <%= icon_tag "password" %>
-          </label>
-        </div>
-
-        <p class="txt-small txt-muted">Password must be at least <%= User::MINIMUM_PASSWORD_LENGTH %> characters long.</p>
-
-        <%= render "sessions/submit_button", form: form, label: "Reset password" %>
-      </fieldset>
-    <% end %>
-  </div>
+    <%= render "sessions/submit_button", form: form, label: "Reset password" %>
+  <% end %>
 </section>
