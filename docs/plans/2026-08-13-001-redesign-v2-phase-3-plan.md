@@ -37,7 +37,7 @@ The comp's Search is a command-palette overlay, not a page: floating card near t
 
 **Activity** (`inboxes/_nav` yield + `notifications/_activity`):
 - Header annotation "N unread" beside the title (count of unread notifications — scope exists for the badge already).
-- **Mark all read** action right-aligned in the bar (`Notification` bulk-read — check for an existing endpoint; if absent this is the one new controller action in the plan, RESTful as `inbox/notification_reads#create`… verify against existing read-tracking first, the unread badge implies most plumbing exists).
+- **Mark all read** action right-aligned in the bar — the endpoint already exists: `Inboxes::ClearancesController#create` (`inbox_clearance_path`) calls `Current.user.mark_inbox_as_read`, including the activity watermark and membership counter resets. Wire the button to it; no new controller action.
 - **Today / Earlier** group labels (render-time grouping, no query change).
 - Per-row unread dot, right-aligned, accent.
 - Timestamps go compact-relative ("10:02 AM", "Yesterday") via the existing `local_time` machinery, replacing "9 July 2026 at 16:33".
@@ -95,7 +95,7 @@ Each workstream = one commit or a small bisectable series on `redesign-v2` (stil
 
 - Tests-first for every behavior rebuild (palette, mark-all-read, DM split, bookmark remove); targeted system walls matched to each change; full unit + SaaS (`unset UNTENANTED_DATABASE_URL; SAAS=true bin/rails test saas/test/`) at every boundary.
 - Light + dark live screenshots of touched surfaces; drawer/rail/desktop widths for WS1, WS5, WS6.
-- Designer-boundary check per workstream: the only schema change is the optional `users.status`; the only new endpoint candidate is mark-all-read (verify existing plumbing first).
+- Designer-boundary check per workstream: the only schema change is the optional status column (WS4); the plan adds zero new endpoints (mark-all-read reuses `inbox_clearance_path`).
 
 ## Out of scope (record, don't silently drop)
 
