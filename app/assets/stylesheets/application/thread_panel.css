@@ -3,7 +3,7 @@
   flex-direction: column;
   overflow: hidden;
   background-color: var(--color-bg);
-  border-inline: 1px solid var(--color-border-darker);
+  border-inline: 1px solid var(--color-border-dark);
   transition: transform 300ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -57,30 +57,52 @@
   translate: 0 1px;
 }
 
+/* Two-line title stack: bold "Thread" over an accent "in {room}" link that
+   jumps back to the parent message */
 .thread-panel__title {
   display: flex;
-  align-items: center;
-  gap: 0.5em;
+  flex-direction: column;
+  gap: 1px;
   flex: 1;
   min-inline-size: 0;
-  font-size: 1em;
-  font-weight: 600;
+  font-size: 0.90625rem;
+  font-weight: 700;
   margin: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+}
 
-  & a {
-    color: inherit;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2em;
+.thread-panel__name {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4em;
+}
 
+.thread-panel__room {
+  color: var(--color-link);
+  font-size: 0.75rem;
+  font-weight: 400;
+  overflow: hidden;
+  text-decoration: none;
+  text-overflow: ellipsis;
+
+  @media (any-hover: hover) {
     &:hover {
       text-decoration: underline;
     }
   }
+}
+
+/* Follow/Unfollow chip in the header */
+.thread-panel__follow {
+  --btn-background: transparent;
+  --btn-border-color: var(--color-border-dark);
+  --btn-border-radius: 7px;
+  --btn-color: var(--color-text-muted);
+  --btn-padding: 5px 10px;
+
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .thread-panel__close {
@@ -132,4 +154,19 @@
   flex-shrink: 0;
   padding: var(--block-space-half) var(--inline-space);
   border-block-start: 1px solid var(--color-border);
+}
+
+/* Panel rows sit tighter than the main stream: 32px avatars, one step down
+   on body type (forum opening posts keep their 36px hero treatment) */
+#thread-panel .message:not(.message--forum-opening) {
+  column-gap: 10px;
+  grid-auto-columns: 32px 1fr min-content;
+}
+
+#thread-panel .message:not(.message--forum-opening) .message__avatar {
+  --avatar-size: 32px;
+}
+
+#thread-panel .message:not(.message--forum-opening) .message__body-content {
+  font-size: 0.875rem;
 }

@@ -2,25 +2,14 @@
   <% parent_message = @room.parent_message %>
   <div class="thread-panel__header">
     <h2 class="thread-panel__title">
-      <%= link_to room_at_message_path(parent_message.room, parent_message), data: { turbo_frame: "_top" } do %>
-        <%= room_type_indicator(parent_message.room) %><%= room_display_name(parent_message.room) %>
+      <span class="thread-panel__name"><%= icon_tag "thread", class: "thread-panel__icon" %> Thread</span>
+      <%= link_to room_at_message_path(parent_message.room, parent_message), class: "thread-panel__room", data: { turbo_frame: "_top" } do %>
+        in <%= room_display_name(parent_message.room) %>
       <% end %>
-      <%= icon_tag "thread", class: "thread-panel__icon" %>
     </h2>
 
-    <%= tag.details class: "position-relative flex-item-no-shrink", data: {
-          controller: "popup", popup_orientation_top_class: "",
-          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
-        } do %>
-      <summary class="btn action-btn options-btn">
-        <%= icon_tag "menu-dots-horizontal" %>
-        <span class="for-screen-reader">Thread options</span>
-      </summary>
-
-      <div class="popup-menu forum-post-menu border shadow" data-popup-target="menu">
-        <%= render "rooms/threads/follow_control", thread: @room %>
-      </div>
-    <% end %>
+    <%# Follow state sits in the header as a chip — reachable without a menu %>
+    <%= render "rooms/threads/follow_control", thread: @room %>
 
     <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close thread">&times;</button>
   </div>
