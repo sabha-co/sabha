@@ -1,5 +1,12 @@
 <% @page_title = "Activity" %>
-<%= render "inboxes/nav", title: "Activity" do %>
+<% mark_all_read = capture do %>
+  <div class="navbar-actions">
+    <%= button_to "Mark all read", inbox_clearance_path, class: "btn txt-small" %>
+  </div>
+<% end %>
+<%= render "inboxes/nav", title: "Activity",
+      count: (@unread_activity_count.to_i.positive? ? "#{@unread_activity_count} unread" : nil),
+      actions: mark_all_read do %>
   <%= render "inboxes/activity/filter" %>
 <% end %>
 

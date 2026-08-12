@@ -59,7 +59,7 @@ class Notification::BoostGroup
         [ user, :inbox_activity ],
         target: target,
         partial: "notifications/boost_group",
-        locals: { notification: new(remaining), timestamp_style: :long_datetime }
+        locals: { notification: new(remaining) }
       )
     else
       Turbo::StreamsChannel.broadcast_remove_to(

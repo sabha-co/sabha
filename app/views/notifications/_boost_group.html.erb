@@ -1,7 +1,9 @@
-<%# locals: (notification:, timestamp_style: :long_datetime) -%>
+<%# locals: (notification:, timestamp_style: :compact) -%>
 <div id="<%= notification.group_dom_id %>" class="message notification--boost notification--boost-group"
      data-message-id="<%= notification.latest_notification.id %>"
      data-sort-value="<%= notification.created_at.to_fs(:epoch) %>"
+     data-activity-bucket="<%= activity_bucket(notification) %>"
+     data-activity-unread="<%= activity_unread?(notification) %>"
      data-search-results-target="message"
      data-inbox-target="message">
   <div class="avatar message__avatar avatar--stacked">

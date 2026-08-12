@@ -67,12 +67,16 @@ module User::Notifiable
     update!(activity_seen_at: time)
   end
 
+  # Notifications that arrived since the user last opened the Activity tab.
+  # Powers the sidebar dot (exists?) and the Activity header count.
+  def unseen_notifications
+    activity_seen_at ? notifications.where("notifications.created_at > ?", activity_seen_at) : notifications
+  end
+
   # True when at least one notification row has arrived since the user last
   # opened the Activity tab. Drives the sidebar Activity dot.
   def unseen_activity?
-    scope = notifications
-    scope = scope.where("notifications.created_at > ?", activity_seen_at) if activity_seen_at
-    scope.exists?
+    unseen_notifications.exists?
   end
 
   # Marks all direct message rooms as read up to the loaded timestamp.

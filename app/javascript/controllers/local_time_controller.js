@@ -1,13 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = [ "time", "date", "datetime", "longdatetime", "relative" ]
+  static targets = [ "time", "date", "datetime", "longdatetime", "relative", "compact" ]
 
   initialize() {
     this.timeFormatter = new Intl.DateTimeFormat(undefined, { timeStyle: "short" })
     this.dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: "long" })
     this.dateTimeFormatter = new Intl.DateTimeFormat(undefined, { timeStyle: "short", dateStyle: "short" })
     this.longDateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: "long" })
+    this.compactDateFormatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" })
+    this.compactDateYearFormatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" })
   }
 
   connect() {
@@ -42,6 +44,29 @@ export default class extends Controller {
 
   relativeTargetConnected(target) {
     this.formatRelativeTime(target);
+  }
+
+  // Day-aware short form: today → clock time, yesterday → the word, older →
+  // a short date (with year once it differs).
+  compactTargetConnected(target) {
+    const dt = new Date(target.getAttribute("datetime"))
+    const now = new Date()
+    const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    const dayDiff = Math.round((startOfDay(now) - startOfDay(dt)) / 86400000)
+
+    let text
+    if (dayDiff <= 0) {
+      text = this.timeFormatter.format(dt)
+    } else if (dayDiff === 1) {
+      text = "Yesterday"
+    } else if (dt.getFullYear() === now.getFullYear()) {
+      text = this.compactDateFormatter.format(dt)
+    } else {
+      text = this.compactDateYearFormatter.format(dt)
+    }
+
+    target.textContent = text
+    target.title = this.dateTimeFormatter.format(dt)
   }
 
   updateRelativeTimes() {

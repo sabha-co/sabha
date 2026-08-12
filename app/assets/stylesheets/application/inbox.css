@@ -51,6 +51,48 @@ body.inbox .searches__results > :last-child {
   }
 }
 
+/* Today / Earlier group eyebrows. Every row carries its bucket; the eyebrow
+   renders on the first row of each bucket via sibling logic, so prepended
+   older pages and live-appended rows keep the labels deduped without a
+   re-render. The list is ascending, so buckets only ever step earlier→today. */
+body.inbox [data-activity-bucket]::before {
+  color: var(--color-text-subtle);
+  content: "Earlier";
+  display: none;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  grid-area: sep;
+  letter-spacing: 0.07em;
+  margin-block-end: 6px;
+  text-transform: uppercase;
+}
+
+body.inbox [data-activity-bucket="today"]::before {
+  content: "Today";
+}
+
+body.inbox [data-activity-bucket]:first-child::before,
+body.inbox [data-activity-bucket="earlier"] + [data-activity-bucket="today"]::before {
+  display: block;
+}
+
+/* Since-last-visit unread mark: an accent dot on the row's right edge */
+body.inbox [data-activity-unread="true"] {
+  position: relative;
+
+  &::after {
+    background-color: var(--color-accent-brand);
+    border-radius: 50%;
+    block-size: 8px;
+    content: "";
+    inline-size: 8px;
+    inset-block-start: 50%;
+    inset-inline-end: 4px;
+    position: absolute;
+    transform: translateY(-50%);
+  }
+}
+
 /* The Activity kind filter rides the header bar beside the title */
 .inbox-filter {
   align-items: center;

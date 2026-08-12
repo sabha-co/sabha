@@ -9,7 +9,7 @@ class BroadcastMentionNotificationsJob < ApplicationJob
         [ notification.user, :inbox_activity ],
         target: "inbox",
         partial: "notifications/notification",
-        locals: { notification: notification, timestamp_style: :long_datetime }
+        locals: { notification: notification }
       )
       notification.user.broadcast_activity_indicator
     end

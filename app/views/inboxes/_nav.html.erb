@@ -9,4 +9,6 @@
   <%= yield if block_given? %>
 
   <div class="flex-item-grow"></div>
+
+  <%= local_assigns[:actions] %>
 <% end %>

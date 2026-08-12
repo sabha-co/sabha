@@ -34,4 +34,18 @@ module NotificationsHelper
     room = notification.message.room
     room.sub_room? ? room.parent_room : room
   end
+
+  # The Today / Earlier grouping mark. The first row of each bucket renders
+  # the group eyebrow via CSS sibling logic, so prepended older pages and
+  # live-appended rows keep labels deduped without re-rendering the list.
+  def activity_bucket(notification)
+    notification.created_at.today? ? "today" : "earlier"
+  end
+
+  # Since-last-visit unread mark: set against the pre-touch watermark the
+  # controller captured. Outside that request (live broadcasts) the ivar is
+  # absent and the row is by definition newer than the last visit.
+  def activity_unread?(notification)
+    @activity_last_seen_at.nil? || notification.created_at > @activity_last_seen_at
+  end
 end

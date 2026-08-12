@@ -1,4 +1,4 @@
-<%# locals: (notification:, timestamp_style: :long_datetime) -%>
+<%# locals: (notification:, timestamp_style: :compact) -%>
 <% if notification.boost_notification? %>
   <%= render "notifications/boost", notification: notification, timestamp_style: timestamp_style %>
 <% else %>

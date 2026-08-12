@@ -231,6 +231,71 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "newer marker", response.body
   end
 
+  test "activity annotates the header with the unread count and offers Mark all read" do
+    Notification.where(user: @david).delete_all
+    @david.update_column(:activity_seen_at, 1.hour.ago)
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} unread count marker</div>",
+      creator: @jason,
+      client_message_id: "unread_count_marker"
+    )
+
+    get inbox_activity_index_url
+
+    assert_response :success
+    assert_select ".navbar-count", text: "1 unread"
+    assert_select "form[action=?]", inbox_clearance_path
+  end
+
+  test "activity marks rows that arrived since the previous visit and clears them on the next" do
+    Notification.where(user: @david).delete_all
+    travel_to(2.days.ago) do
+      rooms(:pets).messages.create!(
+        body: "<div>Hey #{mention_attachment_for(:david)} seen row</div>",
+        creator: @jason,
+        client_message_id: "seen_row"
+      )
+    end
+    @david.update_column(:activity_seen_at, 1.day.ago)
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} fresh row</div>",
+      creator: @jason,
+      client_message_id: "fresh_row"
+    )
+
+    get inbox_activity_index_url
+
+    assert_select ".notification--activity[data-activity-unread='true']", count: 1
+    assert_select ".notification--activity[data-activity-unread='false']", count: 1
+
+    get inbox_activity_index_url
+
+    assert_select "[data-activity-unread='true']", count: 0
+    assert_select ".navbar-count", count: 0
+  end
+
+  test "activity rows carry bucket markers and compact timestamps" do
+    Notification.where(user: @david).delete_all
+    travel_to(2.days.ago) do
+      rooms(:pets).messages.create!(
+        body: "<div>Hey #{mention_attachment_for(:david)} earlier bucket</div>",
+        creator: @jason,
+        client_message_id: "earlier_bucket"
+      )
+    end
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} today bucket</div>",
+      creator: @jason,
+      client_message_id: "today_bucket"
+    )
+
+    get inbox_activity_index_url
+
+    assert_select "[data-activity-bucket='earlier']", count: 1
+    assert_select "[data-activity-bucket='today']", count: 1
+    assert_select ".notification--activity time[data-local-time-target='compact']", count: 2
+  end
+
   test "mentioning a non-member does not add them to the room" do
     sign_in :kevin
     kevin = users(:kevin)
