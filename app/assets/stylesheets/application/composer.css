@@ -4,14 +4,6 @@
   padding: var(--block-space-half) calc(var(--inline-space) + 1vw);
 }
 
-.composer__context-btn {
-  .composer:has(.composer__input:focus-within) & {
-    @media (max-width: 1024px) {
-      display: none;
-    }
-  }
-}
-
 /* Leading glyph on the search surfaces' inputs (the composer itself no longer
    carries one) */
 .composer__input-hint {
@@ -245,7 +237,7 @@
 @media (max-width: 499.9px) {
   .composer__attachment-btn,
   .composer__rich-text-btn,
-  .composer__context-btn {
+  .composer__search-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;

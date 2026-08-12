@@ -1,4 +1,4 @@
-<%# locals: (form:, autocomplete_room:, label:, send_label:, body_id: nil, toolbar_toggle: false, attachments: true) -%>
+<%# locals: (form:, autocomplete_room:, label:, send_label:, body_id: nil, toolbar_toggle: false, attachments: true, search_path: nil) -%>
 <%# The shared input card for every chat composer — the main room composer, a
     thread reply, and a provisional (not-yet-created) thread reply. Callers supply
     the form builder plus the bits that vary: the room to autocomplete @-mentions
@@ -38,6 +38,13 @@
             <%= icon_tag "text-options" %>
             <span class="for-screen-reader">Rich text</span>
           </button>
+        <% end %>
+
+        <% if search_path %>
+          <%= link_to search_path, class: "btn btn--borderless txt-small flex-item-no-shrink composer__search-btn", style: "view-transition-name: input-switcher" do %>
+            <%= icon_tag "search" %>
+            <span class="for-screen-reader">Search</span>
+          <% end %>
         <% end %>
 
         <%# No for-screen-reader span — with the icon it would trip the
