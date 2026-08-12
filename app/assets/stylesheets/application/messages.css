@@ -175,18 +175,57 @@
     margin-block-start: calc((var(--message-space) + (var(--message-row-gap) * 2) - 2px) * -1);
   }
 
-  &.message--failed {
+  &.message--failed .message__body-content {
+    animation: wiggle 0.4s both;
+  }
+
+  /* The undelivered draft dims; the chip stays at full strength */
+  &.message--failed .message__body-content > :not(.message__failed-notice),
+  &.message--retrying .message__body-content > :not(.message__failed-notice) {
     opacity: 0.5;
+  }
+}
 
-    .message__meta::after {
-      content: "🚫";
-      font-size: 1em;
-      line-height: 1;
-    }
+/* Failed-send chip: the draft stays in place, the chip says so and offers the
+   one action that helps */
+.message__failed-notice {
+  align-items: center;
+  background-color: color-mix(in srgb, var(--color-negative) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-negative) 32%, transparent);
+  border-radius: 8px;
+  color: var(--color-negative);
+  display: flex;
+  font-size: 0.78125rem;
+  gap: 10px;
+  inline-size: fit-content;
+  margin-block-start: 6px;
+  padding: 5px 10px;
 
-    .message__body-content {
-      animation: wiggle 0.4s both;
-      outline: 1px dashed var(--color-negative);
+  &::before {
+    background-color: var(--color-negative);
+    border-radius: 50%;
+    block-size: 6px;
+    content: "";
+    flex-shrink: 0;
+    inline-size: 6px;
+  }
+}
+
+.message__failed-retry {
+  --btn-background: transparent;
+  --btn-border-color: color-mix(in srgb, var(--color-negative) 40%, transparent);
+  --btn-border-radius: 6px;
+  --btn-color: var(--color-negative);
+  --btn-padding: 2px 9px;
+  --hover-color: transparent;
+  --hover-filter: none;
+
+  font-size: 0.71875rem;
+  font-weight: 600;
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: color-mix(in srgb, var(--color-negative) 12%, transparent);
     }
   }
 }

@@ -30,12 +30,38 @@ export default class ClientMessage {
     }
   }
 
-  failed(clientMessageId) {
+  failed(clientMessageId, retryable = false) {
     const element = this.#findWithId(clientMessageId)
+    if (!element) return
 
-    if (element) {
-      element.classList.add("message--failed")
+    element.classList.remove("message--retrying")
+    element.classList.add("message--failed")
+
+    if (!element.querySelector(".message__failed-notice")) {
+      element.querySelector(".message__body-content")?.insertAdjacentHTML("beforeend", this.#failedNotice(clientMessageId, retryable))
     }
+  }
+
+  retrying(clientMessageId) {
+    const element = this.#findWithId(clientMessageId)
+    if (!element) return
+
+    element.classList.remove("message--failed")
+    element.classList.add("message--retrying")
+    element.querySelector(".message__failed-notice")?.remove()
+  }
+
+  #failedNotice(clientMessageId, retryable) {
+    const retry = retryable
+      ? `<button type="button" class="btn message__failed-retry"
+                 data-action="messages#retryPendingMessage"
+                 data-messages-client-message-id-param="${clientMessageId}">Retry</button>`
+      : ""
+
+    return `<div class="message__failed-notice">
+      <span>Couldn’t send. Your message is still here.</span>
+      ${retry}
+    </div>`
   }
 
   #findWithId(clientMessageId) {

@@ -75,7 +75,11 @@ export default class extends Controller {
   }
 
   submitEnd(event) {
-    if (!event.detail.success && this.hasMessagesOutlet) {
+    if (!this.hasMessagesOutlet) return
+
+    if (event.detail.success) {
+      this.messagesOutlet.resolvePendingMessage(this.clientidTarget.value)
+    } else {
       this.messagesOutlet.failPendingMessage(this.clientidTarget.value)
     }
   }
@@ -183,6 +187,12 @@ export default class extends Controller {
       }
 
       this.clientidTarget.value = clientMessageId
+
+      // Captured before reset so a failed send can be retried as-submitted
+      if (this.hasMessagesOutlet) {
+        this.messagesOutlet.rememberPendingMessage(clientMessageId, this.element.action, new FormData(this.element))
+      }
+
       this.element.requestSubmit()
       this.#reset()
     }

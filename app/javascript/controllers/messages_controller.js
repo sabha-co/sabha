@@ -16,6 +16,7 @@ export default class extends Controller {
   #formatter
   #scrollManager
   #scrollTracker
+  #pendingSends = new Map()
 
   // Lifecycle
 
@@ -178,8 +179,51 @@ export default class extends Controller {
     this.#clientMessage.update(clientMessageId, body)
   }
 
+  rememberPendingMessage(clientMessageId, url, formData) {
+    this.#pendingSends.set(clientMessageId, { url, formData })
+  }
+
+  resolvePendingMessage(clientMessageId) {
+    this.#pendingSends.delete(clientMessageId)
+  }
+
   failPendingMessage(clientMessageId) {
-    this.#clientMessage.failed(clientMessageId)
+    this.#clientMessage.failed(clientMessageId, this.#pendingSends.has(clientMessageId))
+  }
+
+  // Re-drives a failed send with its original payload. The server treats a
+  // replayed client_message_id as the same message, and the appended response
+  // replaces the pending node (Turbo appends dedupe by id) — so this is safe
+  // even when the first attempt actually reached the server.
+  async retryPendingMessage(event) {
+    const clientMessageId = event.params.clientMessageId
+    const pending = this.#pendingSends.get(clientMessageId)
+    if (!pending) return
+
+    this.#clientMessage.retrying(clientMessageId)
+
+    try {
+      // The replayed FormData already carries the form's authenticity_token;
+      // the header covers it when the meta tag is present.
+      const csrfToken = document.querySelector("meta[name=csrf-token]")?.content
+
+      const response = await fetch(pending.url, {
+        method: "POST",
+        headers: {
+          "Accept": "text/vnd.turbo-stream.html",
+          ...(csrfToken && { "X-CSRF-Token": csrfToken })
+        },
+        body: pending.formData,
+        credentials: "same-origin"
+      })
+      if (!response.ok) throw new Error(`Send failed: ${response.status}`)
+
+      this.#pendingSends.delete(clientMessageId)
+      Turbo.renderStreamMessage(await response.text())
+    } catch (error) {
+      console.warn("[MessageRetry]", error)
+      this.#clientMessage.failed(clientMessageId, true)
+    }
   }
 
   // Callbacks
