@@ -33,6 +33,10 @@
       overflow: hidden;
     }
 
+    .sidebar__workspace {
+      display: none;
+    }
+
     .sidebar__menu {
       /* clear the rail's pinned expand button */
       padding-block-start: calc(var(--block-space-half) + var(--btn-size) + var(--block-space-half));
@@ -106,6 +110,76 @@
       display: none;
     }
   }
+}
+
+/* Workspace header: identity chip above the tool rows — logo tile, name over
+   member counts, quiet settings gear */
+.sidebar__workspace {
+  align-items: center;
+  color: var(--color-text);
+  display: flex;
+  gap: 10px;
+  padding: 13px 14px;
+
+  /* The drawer/overlay close button pins to the same corner — slide the
+     gear clear of it while the sidebar is open below the docked breakpoint */
+  #sidebar.open & {
+    @media (max-width: 1279.9px) {
+      padding-inline-end: calc(var(--btn-size) + var(--sidebar-inline-space));
+    }
+  }
+}
+
+.sidebar__workspace-logo {
+  block-size: 32px;
+  border-radius: 9px;
+  display: block;
+  flex-shrink: 0;
+  inline-size: 32px;
+  overflow: hidden;
+
+  & img {
+    block-size: 100%;
+    display: block;
+    inline-size: 100%;
+    object-fit: cover;
+  }
+}
+
+.sidebar__workspace-initial {
+  align-items: center;
+  background-color: var(--color-accent-brand);
+  block-size: 100%;
+  color: var(--color-text-reversed);
+  display: flex;
+  font-size: 0.875rem;
+  font-weight: 700;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.sidebar__workspace-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.sidebar__workspace-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar__workspace-sub {
+  color: var(--color-text-subtle);
+  font-size: 0.71875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Tool block: full-width rows above the room sections */

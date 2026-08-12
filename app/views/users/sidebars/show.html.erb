@@ -10,6 +10,28 @@
         data-badge-dot-unread-class="badge"
         data-action="rooms-list:unread@window->badge-dot#update rooms-list:read@window->badge-dot#update rooms-list:addBadge@window->badge-dot#update turbo:submit-start->turbo-frame#unpermanize turbo:before-render@document->maintain-scroll#beforeRender">
 
+    <header class="sidebar__workspace">
+      <%= link_to root_path, class: "sidebar__workspace-logo", title: Current.account.name do %>
+        <% if Current.account.logo.attached? %>
+          <%= image_tag fresh_account_logo_path, alt: "", size: 64 %>
+        <% else %>
+          <span class="sidebar__workspace-initial" aria-hidden="true"><%= Current.account.name.first %></span>
+        <% end %>
+        <span class="for-screen-reader"><%= Current.account.name %> home</span>
+      <% end %>
+
+      <span class="sidebar__workspace-info">
+        <span class="sidebar__workspace-name"><%= Current.account.name %></span>
+        <span class="sidebar__workspace-sub"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</span>
+      </span>
+
+      <% account_tool_label = Current.user&.staff? ? "Settings" : "About" %>
+      <%= link_to account_path, class: "btn sidebar__footer-item", title: account_tool_label do %>
+        <%= icon_tag "gear" %>
+        <span class="for-screen-reader"><%= account_tool_label %></span>
+      <% end %>
+    </header>
+
     <nav class="sidebar__menu" aria-label="Tools">
       <%= link_to searches_path, id: "room-search", class: "btn sidebar__menu-item" do %>
         <%= icon_tag "search" %>
