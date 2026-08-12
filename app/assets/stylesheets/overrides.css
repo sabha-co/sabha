@@ -54,54 +54,6 @@
   }
 }
 
-/* Library: match small-screen nav padding to the rest of the app */
-@media (max-width: 120ch) {
-  body.library-collapsed #nav {
-    padding-block: var(--block-space-half);
-
-    /* replicate subtle top fade used with sidebar pages */
-    &::before {
-      background: linear-gradient(
-        180deg,
-        oklch(var(--lch-white)) 20%,
-        oklch(var(--lch-white) / 0) 100%
-      );
-      content: "";
-      inset: 0;
-      position: absolute;
-      z-index: -1;
-    }
-  }
-}
-
-body.library-collapsed #nav {
-  background-color: oklch(var(--lch-white));
-}
-
-@media (prefers-color-scheme: dark) {
-  body.library-collapsed #nav {
-    background-color: oklch(var(--lch-white) / 0);
-    background-color: #000;
-  }
-}
-
-@media (min-width: 120ch) {
-  body.library-collapsed #nav:has(.btn--faux)::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -5vw;
-    right: 0;
-    background-color: oklch(var(--lch-white));
-    z-index: -1;
-  }
-}
-
-@media (min-width: 120ch) and (prefers-color-scheme: dark) {
-  body.library-collapsed #nav:has(.btn--faux)::before {
-    background-color: #000;
-  }
 }
 
 @media (max-width: 100ch) {
