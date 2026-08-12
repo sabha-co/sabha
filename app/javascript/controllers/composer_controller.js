@@ -80,6 +80,11 @@ export default class extends Controller {
     }
   }
 
+  // Send only carries the accent fill while there is something to send
+  draftChanged() {
+    this.element.classList.toggle("composer--drafting", this.#validInput())
+  }
+
   toggleToolbar() {
     this.element.classList.toggle(this.toolbarClass)
     this.textTarget.focus()
@@ -231,6 +236,7 @@ export default class extends Controller {
 
   #reset() {
     this.textTarget.value = ""
+    this.draftChanged()
   }
 
   #updateFileList() {

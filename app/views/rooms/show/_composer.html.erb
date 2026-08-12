@@ -1,40 +1,44 @@
 <%# locals: (room:) -%>
 <% content_for :footer do %>
-  <div class="composer flex align-end gap position-relative"
+  <div class="composer flex flex-column position-relative"
       data-controller="typing-notifications"
       data-typing-notifications-active-class="typing-indicator--active"
       data-typing-notifications-room-id-value="<%= room.id %>">
-    <%= link_to searches_path, class: "btn flex-item-no-shrink margin-block-end composer__context-btn", style: "view-transition-name: input-switcher" do %>
-      <%= icon_tag "search" %>
-      <span class="for-screen-reader">Search</span>
-    <% end %>
+    <%# Reserved 22px row: always present, outside the message scroller, so the
+        composer never shifts when someone starts or stops typing %>
+    <div class="typing-indicator" aria-live="polite" aria-atomic="true" data-typing-notifications-target="indicator">
+      <span class="typing-dots"><span></span><span></span><span></span></span>
+      <div class="typing-indicator__author spinner" data-typing-notifications-target="author"></div>
+    </div>
 
-    <turbo-frame id="composer-frame">
-      <%= composer_form_tag(room) do |form| %>
-        <div class="composer__everyone-confirm align-center gap txt-small pad border border-radius shadow fill-white margin-block-end-half"
-             role="alert" hidden data-composer-target="everyoneConfirm">
-          <%= icon_tag "bell-alert", class: "flex-item-no-shrink txt-lighter" %>
-          <span class="flex-item-grow">
-            Notify all <strong data-composer-target="everyoneConfirmCount"></strong> people in this room?
-            <span class="txt-subtle" hidden data-composer-target="everyoneConfirmRoomWide">
-              They'll see it room-wide, without individual notifications.
-            </span>
-          </span>
-          <button type="button" class="btn txt-small flex-item-no-shrink" data-action="composer#cancelEveryone">Cancel</button>
-          <button type="button" class="btn btn--reversed txt-small flex-item-no-shrink" data-action="composer#confirmEveryone">Send to everyone</button>
-        </div>
-
-        <%= render "rooms/composer_fields", form: form, autocomplete_room: room,
-              label: "Write a message", send_label: "Send Message",
-              toolbar_toggle: true, hint_transition: "input-btn" %>
-
-        <div class="typing-indicator gap txt-small align-center flex-inline" aria-live="polite" aria-atomic="true" data-typing-notifications-target="indicator">
-          <span class="typing-dots"><span></span><span></span><span></span></span>
-          <div class="typing-indicator__author spinner" data-typing-notifications-target="author"></div>
-        </div>
-
-        <%= form.hidden_field :client_message_id, data: { composer_target: "clientid" } %>
+    <div class="composer__row flex align-end gap">
+      <%= link_to searches_path, class: "btn flex-item-no-shrink margin-block-end composer__context-btn", style: "view-transition-name: input-switcher" do %>
+        <%= icon_tag "search" %>
+        <span class="for-screen-reader">Search</span>
       <% end %>
-    </turbo-frame>
+
+      <turbo-frame id="composer-frame">
+        <%= composer_form_tag(room) do |form| %>
+          <div class="composer__everyone-confirm align-center gap txt-small pad border border-radius shadow fill-white margin-block-end-half"
+               role="alert" hidden data-composer-target="everyoneConfirm">
+            <%= icon_tag "bell-alert", class: "flex-item-no-shrink txt-lighter" %>
+            <span class="flex-item-grow">
+              Notify all <strong data-composer-target="everyoneConfirmCount"></strong> people in this room?
+              <span class="txt-subtle" hidden data-composer-target="everyoneConfirmRoomWide">
+                They'll see it room-wide, without individual notifications.
+              </span>
+            </span>
+            <button type="button" class="btn txt-small flex-item-no-shrink" data-action="composer#cancelEveryone">Cancel</button>
+            <button type="button" class="btn btn--reversed txt-small flex-item-no-shrink" data-action="composer#confirmEveryone">Send to everyone</button>
+          </div>
+
+          <%= render "rooms/composer_fields", form: form, autocomplete_room: room,
+                label: "Write a message", send_label: "Send Message",
+                toolbar_toggle: true %>
+
+          <%= form.hidden_field :client_message_id, data: { composer_target: "clientid" } %>
+        <% end %>
+      </turbo-frame>
+    </div>
   </div>
 <% end %>

@@ -1,32 +1,30 @@
-<%# locals: (form:, autocomplete_room:, label:, send_label:, body_id: nil, toolbar_toggle: false, hint_transition: "none", attachments: true) -%>
-<%# The shared input row for every chat composer — the main room composer, a
+<%# locals: (form:, autocomplete_room:, label:, send_label:, body_id: nil, toolbar_toggle: false, attachments: true) -%>
+<%# The shared input card for every chat composer — the main room composer, a
     thread reply, and a provisional (not-yet-created) thread reply. Callers supply
     the form builder plus the bits that vary: the room to autocomplete @-mentions
     against, the aria/send labels, and whether to show the rich-text toolbar toggle
-    (main composer only). The surrounding chrome (typing indicator, everyone-confirm,
-    hidden fields) stays in each caller since it differs per context. %>
+    (main composer only). The card stacks format bar (Trix toolbar, when toggled)
+    over the input over the tools row; the surrounding chrome (typing indicator,
+    everyone-confirm, hidden fields) stays in each caller since it differs per
+    context. %>
 <fieldset data-composer-target="fields" contents>
   <div class="flex flex-column">
     <div class="composer__filelist flex flex--align-center gap flex-wrap" data-composer-target="fileList"></div>
 
-    <div class="flex composer__input input input--actor fill-white min-width" style="--input-border-radius: 1.3rem">
-      <div class="flex align-end gap full-width">
-        <%= icon_tag "messages-outlined", class: "composer__input-hint", style: "view-transition-name: #{hint_transition};" %>
+    <div class="composer__input input input--actor fill-white min-width flex flex-column" style="--input-border-radius: 1.3rem">
+      <% body_options = {
+           rows: 1, class: "input",
+           aria: { multiline: "true", label: label },
+           data: {
+             controller: "rich-autocomplete",
+             action: rich_text_data_actions,
+             rich_autocomplete_url_value: autocompletable_users_path(room_id: autocomplete_room.id),
+             permitted_attachment_types: "application/vnd.actiontext.opengraph-embed",
+             composer_target: "text" } } %>
+      <% body_options[:id] = body_id if body_id %>
+      <%= form.rich_text_area :body, **body_options %>
 
-        <div class="flex flex-column flex-item-grow min-width gap">
-          <% body_options = {
-               rows: 1, class: "input", style: "order: -1",
-               aria: { multiline: "true", label: label },
-               data: {
-                 controller: "rich-autocomplete",
-                 action: rich_text_data_actions,
-                 rich_autocomplete_url_value: autocompletable_users_path(room_id: autocomplete_room.id),
-                 permitted_attachment_types: "application/vnd.actiontext.opengraph-embed",
-                 composer_target: "text" } } %>
-          <% body_options[:id] = body_id if body_id %>
-          <%= form.rich_text_area :body, **body_options %>
-        </div>
-
+      <div class="composer__tools flex align-center full-width">
         <% if attachments %>
           <label class="btn btn--borderless txt-small flex-item-no-shrink composer__attachment-btn input--file">
             <%= icon_tag "attachment" %>
@@ -42,10 +40,13 @@
           </button>
         <% end %>
 
+        <%# No for-screen-reader span — with the icon it would trip the
+            circle-button treatment in buttons.css; the aria-label names it. %>
         <%= form.button name: "send", type: "submit", data: { action: "composer#submit" },
-              class: "btn btn--reversed flex-item-no-shrink txt-small" do %>
+              aria: { label: send_label },
+              class: "btn composer__send-btn flex-item-no-shrink" do %>
+          <span aria-hidden="true">Send</span>
           <%= icon_tag "arrow-up" %>
-          <span class="for-screen-reader"><%= send_label %></span>
         <% end %>
       </div>
     </div>

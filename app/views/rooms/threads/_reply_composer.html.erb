@@ -1,16 +1,17 @@
 <% unless Current.user.blocked_in?(@room) %>
-  <div class="composer composer--thread flex align-end gap position-relative"
+  <div class="composer composer--thread flex flex-column position-relative"
       data-controller="typing-notifications"
       data-typing-notifications-active-class="typing-indicator--active"
       data-typing-notifications-room-id-value="<%= @room.id %>">
+    <%# Reserved 22px row — see rooms/show/_composer %>
+    <div class="typing-indicator" aria-live="polite" aria-atomic="true" data-typing-notifications-target="indicator">
+      <span class="typing-dots"><span></span><span></span><span></span></span>
+      <div class="typing-indicator__author spinner" data-typing-notifications-target="author"></div>
+    </div>
+
     <%= composer_form_tag(@room, form_id: "thread-composer", message_area_id: "thread-message-area", connection_monitor: false) do |form| %>
       <%= render "rooms/composer_fields", form: form, autocomplete_room: @room,
             label: "Reply in thread", send_label: "Send Reply", body_id: "thread_message_body" %>
-
-      <div class="typing-indicator gap txt-small align-center flex-inline" aria-live="polite" aria-atomic="true" data-typing-notifications-target="indicator">
-        <span class="typing-dots"><span></span><span></span><span></span></span>
-        <div class="typing-indicator__author spinner" data-typing-notifications-target="author"></div>
-      </div>
 
       <%= form.hidden_field :client_message_id, data: { composer_target: "clientid" } %>
     <% end %>
