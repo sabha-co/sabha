@@ -11,10 +11,12 @@ module InboxScoped
       Message.with_thread_participants(paginate(query.call.with_bookmark_status_for(Current.user)))
     end
 
-    # Bookmarks paginate by bookmark records but return their messages.
-    def find_bookmarked_messages
-      bookmarks = paginate Inbox::BookmarksQuery.new(Current.user).call
-      Message.with_thread_participants(bookmarks.map(&:message)).each { |m| m.bookmarked = true }
+    # Bookmarks paginate by bookmark records; the cards need both the bookmark
+    # (saved time) and its message, so the records come back whole.
+    def find_bookmarks
+      paginate(Inbox::BookmarksQuery.new(Current.user).call).tap do |bookmarks|
+        Message.with_thread_participants(bookmarks.map(&:message)).each { |m| m.bookmarked = true }
+      end
     end
 
     def find_notifications(filter: nil)

@@ -4,7 +4,7 @@ class Inboxes::BookmarksController < ApplicationController
   before_action :set_bookmark_pagination_anchors, if: :paginating?
 
   def index
-    @messages = find_bookmarked_messages
+    @bookmarks = find_bookmarks
 
     render partial: "items" if paginating?
   end

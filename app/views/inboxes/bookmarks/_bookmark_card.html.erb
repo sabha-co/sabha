@@ -1,0 +1,33 @@
+<%# locals: (bookmark:) -%>
+<%# A saved message as a card: where it lives and when it was saved, the
+    message itself (author, time, body), and an inline Remove. The card keeps
+    the message dom id so the destroy broadcast removes it live. %>
+<% message = bookmark.message %>
+<div id="<%= dom_id(message) %>" class="bookmark-card"
+     data-message-id="<%= message.id %>"
+     data-sort-value="<%= bookmark.created_at.to_fs(:epoch) %>"
+     data-controller="local-time"
+     data-updated-at="<%= bookmark.created_at.iso8601 %>"
+     data-search-results-target="message"
+     data-inbox-target="message">
+  <div class="bookmark-card__head">
+    <%= link_to room_display_name(message.room, for_user: nil), room_path(message.room), class: "bookmark-card__room" %>
+    <span class="bookmark-card__saved">Saved <%= local_datetime_tag bookmark.created_at, style: :relative %></span>
+    <%= button_to "Remove", message_bookmark_path(message), method: :delete, class: "btn bookmark-card__remove",
+          form_class: "bookmark-card__remove-form",
+          aria: { label: "Remove bookmark" } %>
+  </div>
+
+  <div class="bookmark-card__message">
+    <figure class="avatar bookmark-card__avatar">
+      <%= render "users/popup", user: message.creator %>
+    </figure>
+    <div class="bookmark-card__content">
+      <h3 class="bookmark-card__byline">
+        <strong><%= message.creator.name %></strong>
+        <%= message_timestamp(message, style: :compact, class: "bookmark-card__time") %>
+      </h3>
+      <div class="trix-content"><%= message_presentation(message) %></div>
+    </div>
+  </div>
+</div>

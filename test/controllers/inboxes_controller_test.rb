@@ -524,6 +524,22 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Bookmarked message marker", response.body
   end
 
+  test "bookmarks render as cards with the saved time and an inline remove" do
+    message = messages(:first)
+    message.update!(body: "Card bookmark marker")
+    Bookmark.create!(user: @david, message: message)
+
+    get inbox_bookmarks_url
+
+    assert_response :success
+    assert_select ".bookmark-card" do
+      assert_select "a.bookmark-card__room"
+      assert_select ".bookmark-card__saved"
+      assert_select "form[action=?]", message_bookmark_path(message)
+    end
+    assert_match "Card bookmark marker", response.body
+  end
+
   test "bookmarks excludes inactive messages" do
     message = messages(:first)
     message.update!(body: "Inactive message marker")

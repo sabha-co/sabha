@@ -1,2 +1,1 @@
-<%= render collection: @messages, partial: "/messages/message",
-           cached: -> message { message_cache_key(message, room_id: "inbox_#{Current.user.id}") } %>
+<%= render partial: "inboxes/bookmarks/bookmark_card", collection: @bookmarks, as: :bookmark %>

@@ -3,7 +3,8 @@
 
   &:has(.message),
   &:has(.dm-conversation),
-  &:has(.thread-card) {
+  &:has(.thread-card),
+  &:has(.bookmark-card) {
     .message-area--empty {
       display: none;
     }
@@ -15,7 +16,7 @@
    * centers in the remaining space. Uses order to place compose (from yielded
    * content) above the empty state (which comes first in the DOM).
    */
-  &:not(:has(.message)):not(:has(.dm-conversation)):not(:has(.thread-card)) {
+  &:not(:has(.message)):not(:has(.dm-conversation)):not(:has(.thread-card)):not(:has(.bookmark-card)) {
     --opacity: 0.2;
 
     block-size: 100vh;

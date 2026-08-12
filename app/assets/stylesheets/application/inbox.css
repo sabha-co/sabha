@@ -7,8 +7,8 @@ body.inbox .searches__results {
   row-gap: 0;
 }
 
-/* Thread cards carry their own chrome; everything else divides on hairlines */
-body.inbox .searches__results > :not(.thread-card) {
+/* Cards carry their own chrome; everything else divides on hairlines */
+body.inbox .searches__results > :not(.thread-card):not(.bookmark-card) {
   border-block-end: 1px solid var(--color-border);
   padding-block: 10px;
 }
@@ -17,7 +17,8 @@ body.inbox .searches__results > :last-child {
   border-block-end: 0;
 }
 
-body.inbox .searches__results:has(.thread-card) {
+body.inbox .searches__results:has(.thread-card),
+body.inbox .searches__results:has(.bookmark-card) {
   padding-inline: 16px;
   row-gap: 12px;
 }
@@ -166,6 +167,86 @@ body.inbox [data-activity-unread="true"] {
   font-size: 0.9375rem;
   line-height: 1.5;
   text-decoration: none;
+}
+
+/* Bookmarks: each saved message is a card — where and when it was saved over
+   the message itself, with an inline Remove. */
+.bookmark-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.bookmark-card__head {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.bookmark-card__room {
+  color: var(--color-link);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+
+  @media (any-hover: hover) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.bookmark-card__saved {
+  color: var(--color-text-subtle);
+  font-size: 0.75rem;
+}
+
+.bookmark-card__remove-form {
+  margin-inline-start: auto;
+}
+
+.bookmark-card__remove {
+  --btn-background: transparent;
+  --btn-border-color: var(--color-border);
+
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.bookmark-card__message {
+  display: flex;
+  gap: 10px;
+}
+
+.bookmark-card__avatar {
+  --avatar-size: 28px;
+
+  flex-shrink: 0;
+}
+
+.bookmark-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.bookmark-card__byline {
+  align-items: baseline;
+  display: flex;
+  font-size: 0.875rem;
+  gap: 8px;
+  margin: 0;
+}
+
+.bookmark-card__time {
+  color: var(--color-text-subtle);
+  font-size: 0.75rem;
+  font-weight: 400;
 }
 
 /* Footer facepile: small overlapping participant faces (forum-card pattern) */
