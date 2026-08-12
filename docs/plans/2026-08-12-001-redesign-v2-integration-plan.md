@@ -157,6 +157,15 @@ Order follows the README (tokens first, or every component is built twice). **PR
 
 **Commit boundary (PR 2):** forum + inbox reskin as their own commits (keep forum and inbox separate if the diff is large).
 
+**As built (2026-08-12):** four commits — `270308c` (shared patterns), `832e94e` (forum), `f944995` (thread panel), `80c00a5` (inboxes).
+
+- *Shared patterns* live in `patterns.css`: `.segmented-control` (pill track on `--color-border`, pad 3, 13/600 items, selected `--color-bg` + `--shadow-raise`) and `.list-row` (11/15 row, 32px avatar, 11px gap, title 14/600 over subtitle 12.5 subtle, hairline divider that skips the last row). Consumers today: forum filters (segmented control, replacing the bespoke `forum-seg`) and the DM conversation list (list-row classes stacked on the `dm-conversation` BEM). Activity tabs and member-status adopt in their own steps — activity has no tabs today and inventing them is feature work, not reskin.
+- *Forum:* gallery rows to the v2 scale (15/20 padding, 15.5/700 titles, 26px status disc — solid positive with a white check when solved — v2 chips for Following/Solved, subtle right-column meta), compose card flips to the accent tint, post header to 26/700, OP chip to the exact v2 chip spec. The "N replies" divider under a post's opening message became the v2 left-aligned small-caps label (messages.css) — it renders on thread parents too, which matches the mock's thread panel.
+- *Thread panel:* two-line header ("Thread" over an accent "in {room}" link), **Follow/Unfollow surfaced as a header chip** — it previously hid inside a ⋯ popup that existed only for it (this closes the visibility half of the recorded thread-vs-forum consistency gap); panel rows tighten to 32px avatars and 14px body while forum opening posts keep their hero treatment.
+- *Inboxes:* `inbox.css` makes the feed surfaces read as a hairline-divided list (row-gap 0, per-row dividers); the DM list drops its filled-card look for transparent list rows with an accent unread dot and 34px avatars. **D3 resolved as recommended (option A):** the undrawn `notifications` + `messages` surfaces keep working unchanged — they ride the same message-row rendering and the same divided-list treatment, still reached from the overflow menus.
+- *Deferred (recorded, needs data-layer work beyond reskin):* the mock's Threads-inbox thread *cards* (grouped by thread, root text, "N new" badge, inline Unfollow) and Activity *verb rows* ("X mentioned you in Y") — both surfaces currently render raw message rows via `search_results_tag`; converting them means grouping queries and per-notification verb copy, not CSS. Also not built: activity filter tabs (don't exist today).
+- *Verified:* full suite 1831 green, tight wall + row tests 17 green, SaaS 305 green, screenshots light + dark (gallery, compose, post, thread panel, DM list).
+
 ---
 
 ### Step 5 — Auth, settings, members, invitations, room CRUD (highest volume, lowest risk)
