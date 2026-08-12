@@ -893,3 +893,10 @@
      per-accent lift on :root). */
   --color-accent-brand: oklch(var(--lch-accent-lift));
 }
+
+/* Under contrast, --color-bg-sunk collapses onto --color-bg, so the footer's
+   sunk background gives it no visible edge. Restore the separation with a
+   hairline so the footer still reads as the bottom bar. */
+#sidebar[data-contrast="true"] .sidebar__footer {
+  border-block-start: 1px solid var(--color-border-dark);
+}
