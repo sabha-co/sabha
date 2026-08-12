@@ -93,10 +93,6 @@
   overscroll-behavior: contain;
   position: relative;
   row-gap: var(--message-space);
-
-  @media (max-width: 1024px) {
-    padding-block-start: var(--navbar-height);
-  }
 }
 
 .message {

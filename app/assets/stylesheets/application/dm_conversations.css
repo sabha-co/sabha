@@ -1,15 +1,10 @@
 /*
- * DM inbox layout uses --dm-content-inset for the first element's top padding,
- * accounting for the fixed navbar. Both the compose form and dm-list use it
- * so only one place needs updating if the navbar changes.
+ * The first element under the header bar (compose form or the list itself)
+ * takes the same top inset so the two layouts start at one rhythm.
  */
 .dm-list,
 .dm-compose {
-  --dm-content-inset: var(--navbar-height);
-
-  @media (max-width: 1024px) {
-    --dm-content-inset: calc(var(--navbar-height) + var(--inline-space));
-  }
+  --dm-content-inset: var(--inline-space);
 }
 
 /* DM Inbox conversation list — hairline-divided list rows */

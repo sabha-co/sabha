@@ -2,7 +2,7 @@
 <% @body_class = "sidebar searches" %>
 
 <% content_for :nav do %>
-  <div class="searches__query flex align-center gap pad-block-start-half">
+  <div class="searches__query flex align-center gap">
     <%= tag.div class: "btn btn--reversed btn--faux align-center gap txt-nowrap" do %>
       <%= avatar_image_tag(@user, size: 20, class: "avatar", loading: :lazy) %>
       <%= @user.name %>    

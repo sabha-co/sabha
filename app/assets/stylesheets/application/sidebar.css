@@ -301,7 +301,8 @@
 :root[data-theme="dark"] .theme-toggle__sun { display: inline-block; }
 
 .sidebar__toggle {
-  inset-block-start: var(--block-space-half);
+  /* Vertically centered on the header bar it floats over */
+  inset-block-start: calc((var(--navbar-height) - var(--btn-size)) / 2);
   inset-inline-end: calc(
     (var(--btn-size) + max(var(--inline-space), 1vw)) * -1
   );
@@ -776,7 +777,7 @@
 }
 
 .searches__results {
-  padding-block-start: var(--navbar-height);
+  padding-block-start: var(--block-space);
 }
 
 .searches__input:required:invalid {
@@ -832,14 +833,9 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: var(--inline-space);
-  padding-block-start: var(--navbar-height);
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-
-  @media (max-width: 1024px) {
-    padding-block-start: calc(var(--navbar-height) + var(--inline-space));
-  }
 }
 
 .dm-conversation {

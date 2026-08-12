@@ -1,50 +1,82 @@
+/* The header bar: a solid in-flow row (grid area "nav") with a hairline
+   underneath. Surfaces fill it via content_for :nav — the room surface renders
+   glyph + name + topic + actions; other surfaces reuse the same bar. */
 #nav {
   align-items: center;
-  column-gap: var(--inline-space-half);
+  background-color: var(--color-bg);
+  border-block-end: 1px solid var(--color-border);
+  column-gap: 10px;
   display: flex;
-  inset: 0 0 auto 0;
-  inset-inline-start: var(--sidebar-width);
-  padding-block: calc(var(--block-space) + env(safe-area-inset-top)) var(--block-space);
-  padding-inline: calc(var(--inline-space) * 1.5) calc(var(--inline-space-double) + env(safe-area-inset-right));
-  pointer-events: none;
-  position: fixed;
-  row-gap: var(--block-space);
+  min-block-size: var(--navbar-height);
+  /* Grid item: without this the bar's nowrap content (room topic, search
+     recents) inflates the 1fr column's auto minimum and the page overflows */
+  min-inline-size: 0;
+  padding-block-start: env(safe-area-inset-top);
+  padding-inline: 18px calc(18px + env(safe-area-inset-right));
+  position: relative;
   z-index: 2;
-  transition: inset-inline-start 300ms cubic-bezier(0.25, 1, 0.5, 1);
 
-  & > * {
-    pointer-events: auto;
-  }
-
-  &:has(.btn--faux) {
-    /* Match the content gutter (message list / forum use calc(--inline-space + 1vw))
-       so the nav's logo/room button sits on the content's left edge. Both nav and
-       #main-content already share the same 5vw offset; only this 1vw was missing. */
-    padding-inline: calc(var(--inline-space) + 1vw) var(--inline-space);
-
-  }
-
-  @media (min-width: 1024px) {
-    .thread-panel-open & {
-      inset-inline-end: var(--thread-width);
+  /* The sidebar hamburger pokes out over the bar's left edge whenever the
+     sidebar isn't docked — reserve room for it. */
+  @media (max-width: 1279.9px) {
+    .sidebar & {
+      padding-inline-start: calc(var(--btn-size, 2.65em) + max(var(--inline-space), 1vw) + 12px);
     }
   }
+}
 
-  .sidebar & {
-    @media (max-width: 1024px) {
-      padding-block: var(--block-space-half);
+.navbar-glyph {
+  --icon-size: 15px;
 
-      &::before {
-        background: linear-gradient(180deg,
-            oklch(var(--lch-white)) 20%,
-            oklch(var(--lch-white) / 0) 100%);
-        content: "";
-        inset: 0;
-        position: absolute;
-        z-index: -1;
-      }
-    }
+  color: var(--color-text-subtle);
+  flex-shrink: 0;
+  font-size: 0.9375rem;
+}
+
+.navbar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  & a {
+    color: inherit;
+    text-decoration: none;
   }
+}
+
+/* Room topic rides beside the name and soaks up the slack, so the actions
+   stay pinned to the right edge even when it's blank. */
+.navbar-topic {
+  color: var(--color-text-muted);
+  flex: 1;
+  font-size: 0.84375rem;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 833.9px) {
+    visibility: hidden;
+  }
+}
+
+.navbar-count {
+  color: var(--color-text-subtle);
+  font-size: 0.84375rem;
+  font-weight: 600;
+}
+
+/* Bar action buttons are quiet icon buttons, not pills */
+#nav .navbar-actions .btn {
+  --btn-background: transparent;
+  --btn-border-color: transparent;
+
+  color: var(--color-text-muted);
 }
 
 .top-banner {

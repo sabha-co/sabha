@@ -6,15 +6,13 @@ module RoomsHelper
   end
 
   def link_to_room_roster(room)
-    count = room.active_member_count
     link_to \
       room_roster_path(room),
       class: "btn",
       aria: { label: "Who's in #{room_display_name(room)}" },
       data: { turbo_frame: "thread_panel_frame", room_id: room.id } do
-        image_tag("person.svg", aria: { hidden: "true" }) +
-        tag.span(number_with_delimiter(count), class: "hide-on-mobile") +
-        tag.span(round_for_mobile(count), class: "hide-on-desktop")
+        icon_tag("info", style: "--icon-size: 18px") +
+        tag.span("Room details", class: "for-screen-reader")
     end
   end
 
@@ -119,17 +117,5 @@ module RoomsHelper
       remaining_actions += " refresh-room:offline@window->composer#offline" if connection_monitor
 
       [ drop_target_actions, drag_and_drop_actions, trix_attachment_actions, remaining_actions ].join(" ")
-    end
-
-    # round_for_mobile(123)             # => "123"
-    # round_for_mobile(1234)            # => "1.2k"
-    # round_for_mobile(12345)           # => "12k"
-    # round_for_mobile(12345678)        # => "12M"
-    def round_for_mobile(number)
-      number_to_human(number,
-                      precision: number < 10_000 ? 1 : 0,
-                      significant: false,
-                      format: "%n%u",
-                      units: { thousand: "k", million: "M", billion: "B" })
     end
 end

@@ -4,7 +4,7 @@ html {
 
 body {
   --footer-height: calc((var(--block-space)) + 3.6em + var(--block-space));
-  --navbar-height: 4.125em;
+  --navbar-height: 54px;
   --sidebar-width: 0vw;
 
   display: grid;
@@ -156,8 +156,10 @@ body {
   body:has(#thread-panel:not([hidden])) {
     --thread-width: 360px;
 
+    /* The panel owns its full column height — it carries its own 54px header,
+       so the main bar must not span across it. */
     grid-template-areas:
-      "sidebar nav nav"
+      "sidebar nav thread"
       "sidebar main thread";
     grid-template-columns: var(--sidebar-width) 1fr var(--thread-width);
   }

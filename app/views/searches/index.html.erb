@@ -3,7 +3,7 @@
 
 <% content_for :nav do %>
   <% if @query %>
-    <div class="searches__query flex align-center gap pad-block-start-half">
+    <div class="searches__query flex align-center gap">
       <%= tag.div class: "btn btn--reversed btn--faux align-center gap txt-nowrap" do %>
         <span class="overflow-ellipsis">“<%= @query %>”</span>
         <span class="flex-item-no-shrink"><%= @message_count %></span>

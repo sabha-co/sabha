@@ -1,18 +1,12 @@
 <% content_for :nav do %>
-  <%= account_logo_tag if Current.account.logo.attached? %>
-
   <%= link_back %>
 
-  <%= tag.span class: "btn btn--reversed btn--faux room--current" do %>
-    <h1 class="room__contents txt-medium overflow-ellipsis">
-      <%= title %>
-    </h1>
-    <% if local_assigns[:count] %>
-      <span class="flex-item-no-shrink"><%= count %></span>
-    <% end %>
+  <h1 class="navbar-title"><%= title %></h1>
+  <% if local_assigns[:count] %>
+    <span class="navbar-count"><%= count %></span>
   <% end %>
 
   <%= yield if block_given? %>
 
   <div class="flex-item-grow"></div>
-<% end %> 
+<% end %>

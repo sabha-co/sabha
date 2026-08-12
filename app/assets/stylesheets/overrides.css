@@ -43,22 +43,6 @@
     rgba(0, 0, 0, 0) 0px 0px 0px 0px !important;
 }
 
-#nav:has(.room--current) .account-logo {
-  display: none;
-}
-
-@media (min-width: 100ch) {
-  #nav:has(.room--current) .account-logo {
-    display: block;
-  }
-}
-
-@media (max-width: 100ch) {
-  .account-has-logo .room--current .room__contents {
-    --num-buttons: 2;
-  }
-}
-
 /* The floating action bar reveals as a unit on hover, keyboard focus within
    the row, or while one of its popups is open. Visibility (inherited) is what
    hides it — an opacity-only reveal would leave invisible floating buttons

@@ -23,7 +23,7 @@
     0 1.2em 1.6em -2em oklch(var(--lch-always-black) / 0.6);
 
   inline-size: var(--panel-width);
-  margin: calc(var(--navbar-height) - var(--block-space)) auto var(--block-space);
+  margin: var(--block-space-double) auto var(--block-space);
   max-inline-size: 100vw;
   padding: var(--panel-padding);
 
@@ -101,7 +101,7 @@
 .settings-layout {
   display: grid;
   gap: var(--block-space);
-  margin: calc(var(--navbar-height) - var(--block-space)) auto var(--block-space);
+  margin: var(--block-space-double) auto var(--block-space);
   max-inline-size: 100ch;
   padding: var(--block-space);
 

@@ -14,13 +14,11 @@
 
 /* Left-aligned like the message list — share the app's content gutter. A wide
    cap keeps line lengths sane on ultrawide without leaving a right void on
-   normal screens. Everything below shares this same left edge. The top offset
-   clears the fixed nav bar (the chat stream pins to the bottom, so it never
-   collides; the gallery reads top-down and must start below the nav). */
+   normal screens. Everything below shares this same left edge. */
 .forum__inner {
   width: 100%;
   max-inline-size: 80rem;
-  padding: calc(var(--navbar-height) + 1rem) calc(var(--inline-space) + 1vw) 2.5rem;
+  padding: 1rem calc(var(--inline-space) + 1vw) 2.5rem;
 }
 
 /* --- inline "New post" compose (native <details> disclosure) --------- */
