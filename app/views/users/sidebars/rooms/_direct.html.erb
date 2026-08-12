@@ -1,10 +1,12 @@
-<%# Unread is derived, not stored — a new message doesn't touch the
-    membership row, so the derived state must be part of the cache key. %>
+<%# Unread, the badge count and presence are derived, not stored — none of
+    them touch the membership row, so the derived state must be part of the
+    cache key. %>
 <% membership_unread = membership.unread? %>
-<% cache [ membership, membership_unread ] do %>
-  <% members = @direct_room_members&.dig(membership.room.id).presence || membership.room.users.without(membership.user).presence || [ membership.user ] %>
-
-  <%= link_to_room membership.room, class: [ "direct", "unread": membership_unread ], id: dom_id(membership.room, :list),
+<% notifications_count = membership.unread_notifications_count.to_i %>
+<% members = @direct_room_members&.dig(membership.room.id).presence || membership.room.users.without(membership.user).presence || [ membership.user ] %>
+<% presence = members.many? ? nil : @direct_member_statuses&.dig(members.first.id) %>
+<% cache [ membership, membership_unread, notifications_count, presence ] do %>
+  <%= link_to_room membership.room, class: [ "direct", "unread": membership_unread, "badge": notifications_count > 0 ], id: dom_id(membership.room, :list),
         data: {
           sorted_list_target: "item",
           sorted_list_priority: membership_unread ? 0 : 1,
@@ -19,8 +21,11 @@
         <% end %>
       </div>
     <% else %>
-      <span class="avatar">
+      <span class="avatar direct__avatar">
         <%= avatar_image_tag(members.first, size: 48, loading: :lazy) %>
+        <% if presence %>
+          <span class="status-dot status--<%= presence %> direct__presence" aria-hidden="true"></span>
+        <% end %>
       </span>
     <% end %>
 
@@ -34,5 +39,7 @@
         <% end %>
       </span>
     </span>
+
+    <% if notifications_count > 0 %><span class="notification-badge"><%= notifications_count %></span><% end %>
   <% end %>
 <% end %>

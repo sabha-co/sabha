@@ -8,6 +8,7 @@ module Sidebar
 
     @direct_memberships   = sidebar.direct
     @direct_room_members  = sidebar.direct_room_members(@direct_memberships)
+    @direct_member_statuses = sidebar.direct_member_statuses(@direct_room_members)
     @starred_memberships  = sidebar.starred
     @shared_memberships   = sidebar.shared
     @forum_memberships    = sidebar.forums

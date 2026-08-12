@@ -82,6 +82,9 @@
                 data-action="collapsible-section#toggle">
           <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
           <h1 class="txt-small font-semibold txt-label sidebar__label">Favorites</h1>
+          <% if @starred_memberships.size.positive? %>
+            <span class="sidebar__label-count"><%= @starred_memberships.size %></span>
+          <% end %>
         </button>
 
         <div data-collapsible-section-target="content" class="flex flex-col rooms-list">
@@ -90,7 +93,12 @@
       </div>
 
       <div class="flex items-center justify-between gap-half mb-2">
-        <h1 class="txt-small font-semibold txt-label sidebar__label">Rooms</h1>
+        <span class="flex items-center gap-half">
+          <h1 class="txt-small font-semibold txt-label sidebar__label">Rooms</h1>
+          <% if @shared_memberships.size.positive? %>
+            <span class="sidebar__label-count"><%= @shared_memberships.size %></span>
+          <% end %>
+        </span>
         <div class="flex items-center gap-half">
           <%= render "users/sidebars/all_rooms_actions" %>
           <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
@@ -107,9 +115,14 @@
         <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @shared_memberships %>
       </div>
 
+      <%= link_to rooms_browse_path, class: "sidebar__browse-all" do %>
+        Browse all rooms <span aria-hidden="true">→</span>
+      <% end %>
+
       <% if @forum_memberships.any? %>
-        <div class="flex items-center justify-between gap-half mb-2">
+        <div class="flex items-center gap-half mb-2">
           <h1 class="txt-small font-semibold txt-label sidebar__label">Forums</h1>
+          <span class="sidebar__label-count"><%= @forum_memberships.size %></span>
         </div>
         <div data-controller="sorted-list" <%= all_rooms_sort_order %>
              data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
@@ -122,7 +135,12 @@
 
       <% if show_dm_section?(@direct_memberships) %>
         <div class="flex items-center justify-between gap-half mb-2">
-          <h1 class="txt-small font-semibold txt-label sidebar__label">Direct messages</h1>
+          <span class="flex items-center gap-half">
+            <h1 class="txt-small font-semibold txt-label sidebar__label">Direct messages</h1>
+            <% if @direct_memberships.size.positive? %>
+              <span class="sidebar__label-count"><%= @direct_memberships.size %></span>
+            <% end %>
+          </span>
           <% if can_create_dms? %>
             <%= link_to new_rooms_direct_path, class: "btn btn--small", aria: { label: "New direct message" }, data: { turbo_frame: "direct_rooms_control" } do %>
               <%= icon_tag "add" %>

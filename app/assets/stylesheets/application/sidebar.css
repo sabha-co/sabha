@@ -292,6 +292,44 @@
   white-space: nowrap;
 }
 
+/* Row count riding each section label */
+.sidebar__label-count {
+  color: var(--color-text-subtle);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+/* Quiet accent row closing the rooms list */
+.sidebar__browse-all {
+  color: var(--color-accent-brand);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 6px 1.2ch;
+  text-decoration: none;
+
+  @media (any-hover: hover) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* Presence on 1:1 DM rows: the roster's connected signal as a corner dot */
+.direct__avatar {
+  overflow: visible;
+  position: relative;
+}
+
+.direct__presence {
+  border: 2px solid var(--color-bg-sunk);
+  block-size: 10px;
+  inline-size: 10px;
+  inset-block-end: -1px;
+  inset-inline-end: -1px;
+  position: absolute;
+}
+
 /* Shortcut hint on the Search row — only where a keyboard is likely */
 .sidebar__menu-kbd {
   border: 1px solid var(--color-border);
@@ -613,6 +651,27 @@
       inline-size: var(--size);
       margin-inline-start: auto;
     }
+  }
+
+  /* DM rows reuse the room-row unread badge; it replaces the plain dot */
+  .notification-badge {
+    background-color: var(--color-negative);
+    border-radius: 1em;
+    box-sizing: content-box;
+    color: white;
+    flex-shrink: 0;
+    font-size: 0.65em;
+    font-weight: 700;
+    line-height: 1;
+    margin-inline-start: auto;
+    min-inline-size: 1.3em;
+    padding: 0.2em 0.35em;
+    text-align: center;
+    animation: badge-in 200ms cubic-bezier(0.25, 1, 0.5, 1) both;
+  }
+
+  &.badge.unread::after {
+    display: none;
   }
 }
 

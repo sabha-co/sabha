@@ -75,6 +75,15 @@ class SidebarMemberships
       .transform_values { |ms| other_members(ms).presence || [ user ] }
   end
 
+  # Presence for the DM rows — the roster's connected signal, one query.
+  # Returns a hash of user_id => :active | :away | :offline.
+  def direct_member_statuses(direct_room_members)
+    user_ids = direct_room_members.values.flatten.map(&:id).uniq
+    return {} if user_ids.empty?
+
+    Membership.activity_statuses_for(user_ids)
+  end
+
   private
 
   def shared_base
