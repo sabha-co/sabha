@@ -1,5 +1,7 @@
 .avatar {
-  --avatar-border-radius: 50%;
+  /* v2 squircle: 9px at the 36px message size, scaling with the avatar so
+     smaller ones (22px sidebar DMs, 17px boost chips) keep the same shape */
+  --avatar-border-radius: 25%;
 
   aspect-ratio: 1;
   border-radius: var(--avatar-border-radius);

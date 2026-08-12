@@ -141,11 +141,11 @@
   --content-padding-block: 0.66rem;
   --content-padding-inline: calc(var(--inline-space) * 1.5);
 
-  column-gap: var(--message-column-gap);
+  column-gap: 12px;
   content-visibility: auto;
   contain-intrinsic-size: auto 6em;
   display: grid;
-  grid-auto-columns: var(--inline-space-double) 1fr min-content;
+  grid-auto-columns: 36px 1fr min-content;
   grid-auto-rows: min-content;
   grid-template-areas:
     "loading_up loading_up loading_up"
@@ -379,7 +379,7 @@
 
 .message__avatar {
   --avatar-border-size: 1px;
-  --avatar-size: 3.5ch;
+  --avatar-size: 36px;
 
   grid-area: avatar;
   z-index: 2;
@@ -913,7 +913,7 @@ img.message__attachment {
 
 /* Me */
 .message--me {
-  grid-auto-columns: min-content 1fr var(--inline-space-double);
+  grid-auto-columns: min-content 1fr 36px;
   grid-template-areas:
     "loading_up loading_up loading_up"
     "new new new"

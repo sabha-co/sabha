@@ -163,7 +163,7 @@
 /* The activity column right-aligns replies + last-active so each row reads
    left→right: what the post is, then how much is happening in it. */
 .forum-card__activity { text-align: end; min-inline-size: 0; }
-.forum-avatar { border-radius: 50%; object-fit: cover; flex: none; }
+.forum-avatar { border-radius: 25%; object-fit: cover; flex: none; }
 .forum-card__stack { align-items: center; }
 .forum-card__stack .forum-card__stack-avatar { box-shadow: 0 0 0 2px var(--color-bg); }
 .forum-card__stack .forum-card__stack-avatar + .forum-card__stack-avatar { margin-left: -0.4rem; }
