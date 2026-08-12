@@ -11,7 +11,7 @@
 1. **Member-pill target (WS2).** The comp's header pill (`👤 124`) opens the community-wide **members directory**, not the room roster — even though the count shown is the room's. Proposed: follow the comp. Alternative: open the roster panel (arguably more natural; the ⓘ next to it already opens the roster, which argues for the comp's split).
 2. **DM split view (WS5) — build or defer.** The largest layout change left. The comp draws a persistent conversation-list column beside the open DM. Everything else in this plan works without it.
 3. **Settings consolidation (WS6) — build or defer.** Second large item: one two-pane settings surface with a section nav replacing today's separate card pages. Content parity already exists; this is shell + navigation work.
-4. **Profile "status" field (WS4, one item).** The comp has "What are you up to?" (shown in the footer chip) *distinct from* Bio. Today the chip shows `bio || "Here now"`. Matching the comp needs a new `users.status` column — the one schema change in this plan. Skippable independently.
+4. **Profile "status" field (WS4, one item).** The comp has "What are you up to?" (shown in the footer chip) *distinct from* Bio. Today the chip shows `bio || "Here now"`. Matching the comp needs a new `users.status_message` column — the one schema change in this plan. (`users.status` is taken: it is the existing active/deactivated/banned account-state enum gating login and moderation, and is untouchable.) Skippable independently.
 
 ---
 
@@ -21,7 +21,7 @@ The comp's Search is a command-palette overlay, not a page: floating card near t
 
 - Rebuild on the existing **scrim-dialog primitive** (`dialog_controller` + `.scrim-dialog`), mounted in the layout like the reaction picker; a variant class tops-aligns the card (the primitive centers by default).
 - The palette is the *entry point*; submitting still navigates to `searches_path` with results rendering on the existing results page (routes and `SearchesController` unchanged). The sidebar Search row and the composer search button open the palette instead of navigating.
-- Recent searches render as chips in the palette (data already exists — `@recent_searches`); clearing stays (`clear_searches_url`).
+- Recent searches render as chips in the palette. The layout-mounted partial queries `Current.user.searches.global.ordered` directly (with a limit) — `@recent_searches` is assigned only by `SearchesController#index`, so a layout mount can't rely on the ivar. Clearing stays (`clear_searches_url`).
 - **⌘K / Ctrl-K** global shortcut opens it; the sidebar row gets the `⌘K` hint (shown only on fine-pointer devices).
 - The results page keeps its nav treatment but its input moves to the top of the results column (comp's reading order), dropping the bottom composer-style bar.
 - **Tests first:** palette opens via shortcut and sidebar row, ESC closes, submit navigates to results, recent-search chip navigates.
@@ -36,10 +36,10 @@ The comp's Search is a command-palette overlay, not a page: floating card near t
 ## WS3 — Inbox polish cluster (view/CSS work, no new queries except two counts)
 
 **Activity** (`inboxes/_nav` yield + `notifications/_activity`):
-- Header annotation "N unread" beside the title (count of unread notifications — scope exists for the badge already).
+- Header annotation "N unread" beside the title. **Unread semantics (owner-decided): since-last-visit.** Notifications carry no per-row read state — the signal is the `activity_seen_at` watermark, and `#index` advances it as it renders. The controller passes the pre-touch watermark to the view; the count and the per-row dots derive from `created_at > watermark`, so markers show what arrived since the previous visit and clear on the next load. No controller behavior change, and the sidebar dot's `unseen_activity?` semantics stay untouched.
 - **Mark all read** action right-aligned in the bar — the endpoint already exists: `Inboxes::ClearancesController#create` (`inbox_clearance_path`) calls `Current.user.mark_inbox_as_read`, including the activity watermark and membership counter resets. Wire the button to it; no new controller action.
-- **Today / Earlier** group labels (render-time grouping, no query change).
-- Per-row unread dot, right-aligned, accent.
+- **Today / Earlier** group labels (render-time grouping, no query change). The list appends paginated `_items` pages, so labels must dedupe across page boundaries — mirror the message day-separator approach rather than emitting labels only at first render.
+- Per-row unread dot, right-aligned, accent (same since-last-visit signal as the header count).
 - Timestamps go compact-relative ("10:02 AM", "Yesterday") via the existing `local_time` machinery, replacing "9 July 2026 at 16:33".
 
 **Threads** (`inboxes/threads/_thread_card`):
@@ -59,14 +59,15 @@ The comp's Search is a command-palette overlay, not a page: floating card near t
 - **NEW SINCE LAST VISIT** divider: the comp's red, right-anchored label treatment (today: centered accent-indigo). Red here is the comp's deliberate exception to the accent system — confirm against the token spec's `--negative`/unread token before hardcoding.
 - **Sidebar**: section counts ("ROOMS 8", "FORUMS 3", "DIRECT MESSAGES 5", "FAVORITES 2"); a "Browse all rooms →" row at the end of the rooms list (route exists; the ⋯ menu entry can stay); numeric unread badges on DM rows (`membership.unread_notifications_count` — rooms rows already do this); presence dots on DM row avatars (connected-scope, same signal as the roster); `⌘K` hint on the Search row (couples WS1).
 - **Composer placeholder**: "Message #general" / "Message {first name}" via a `placeholder` on the rich-text field (verify Trix respects it; if not, CSS `:empty::before` on the editor — solved, not skipped).
-- **Profile status field** per owner decision #4: `users.status` column, "What are you up to?" input on the profile page, footer chip shows `status || "Here now"`, Bio stays Bio. (Skippable independently.)
+- **Profile status field** per owner decision #4: `users.status_message` column, "What are you up to?" input on the profile page, footer chip shows `status_message || "Here now"`, Bio stays Bio. (Skippable independently.)
 - **Error pages**: leave the system font stack (they load without the asset pipeline) — recorded as accepted, not a gap.
 
 ## WS5 — DM split view (large; owner gate #2)
 
 - The comp: DM tool opens a two-pane surface — conversation-list column (~280px; rows: avatar + presence dot, name, time, last-message snippet, unread badge) with the open conversation beside it. Conversation header: name + **"Here now" presence subtitle** + **View profile** button; DM headers drop the ⓘ roster button.
+- Header fallbacks (the codebase supports both): presence subtitle and View profile render only for 1:1 DMs (exactly one other member); group DMs show an "N members" subtitle with no View profile; Note-to-self shows the name only.
 - Proposed shape: the DM inbox page becomes the split surface; opening a DM at a `/rooms/:id` URL with `Rooms::Direct` renders the same two-pane layout (list + conversation), so both entries converge. Below 1024 the list is its own screen and the conversation is full-width with a back link — the app's current behavior, kept.
-- Routes unchanged; this is layout + a shared list partial (the DM-inbox list already renders conversation rows with snippets — it becomes the column).
+- Routes unchanged. Flagged per the scope stance: the conversation pane gets a **new Turbo frame**, and direct-room rendering extends to load the conversation-list data currently assembled by `Inboxes::DirectMessagesController` (with the same preload care the inbox list already takes). Otherwise layout + a shared list partial — the DM-inbox list already renders conversation rows with snippets and becomes the column.
 - Presence subtitle reuses the roster's connected/last-seen buckets for the other member.
 - **Tests first:** split renders at desktop, list row opens conversation in place, mobile keeps full-width + back.
 
