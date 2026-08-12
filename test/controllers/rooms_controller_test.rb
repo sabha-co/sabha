@@ -23,6 +23,13 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".connection-banner.connection-banner--visible", false
   end
 
+  test "the lazy sidebar frame renders a cold-start skeleton until its rooms load" do
+    get room_url(users(:david).rooms.last)
+
+    assert_response :success
+    assert_select "turbo-frame#user_sidebar[src] .sidebar-skeleton .sidebar-skeleton__row"
+  end
+
   test "composer carries the @everyone confirm threshold, member count, and cap flag" do
     room = rooms(:pets)
 

@@ -900,3 +900,55 @@
 #sidebar[data-contrast="true"] .sidebar__footer {
   border-block-start: 1px solid var(--color-border-dark);
 }
+
+/* Cold-start skeleton for the lazy sidebar frame (users/sidebars/_skeleton).
+   Theme-agnostic bars (text colour at low alpha reads on light or dark ground);
+   a gentle pulse, disabled under reduced-motion. */
+.sidebar-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-block: 8px;
+  padding-inline: var(--sidebar-inline-space);
+}
+
+.sidebar-skeleton__row {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  padding-block: 7px;
+}
+
+.sidebar-skeleton__glyph,
+.sidebar-skeleton__bar {
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+  background: color-mix(in oklch, var(--color-text) 14%, transparent);
+  border-radius: 6px;
+}
+
+.sidebar-skeleton__glyph {
+  block-size: 20px;
+  flex-shrink: 0;
+  inline-size: 20px;
+}
+
+.sidebar-skeleton__bar {
+  block-size: 12px;
+  inline-size: 60%;
+}
+
+.sidebar-skeleton__row:nth-child(2) .sidebar-skeleton__bar { inline-size: 44%; }
+.sidebar-skeleton__row:nth-child(3) .sidebar-skeleton__bar { inline-size: 68%; }
+.sidebar-skeleton__row:nth-child(4) .sidebar-skeleton__bar { inline-size: 38%; }
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-skeleton__glyph,
+  .sidebar-skeleton__bar {
+    animation: none;
+  }
+}
