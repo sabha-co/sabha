@@ -1,9 +1,11 @@
 <%# locals: (user:, status:) %>
 <li class="roster__row">
-  <%= link_to user_path(user), class: "roster__link", title: user.title, data: { turbo_frame: "_top" } do %>
+  <%= link_to user_path(user), class: "roster__link roster__link--#{status}", title: user.title, data: { turbo_frame: "_top" } do %>
     <span class="roster__avatar">
-      <span class="status-dot status-dot--roster <%= "status--#{status}" %>" aria-hidden="true"></span>
-      <figure class="avatar" style="--avatar-size: 30px;">
+      <% if status == "active" %>
+        <span class="status-dot status-dot--roster status--active" aria-hidden="true"></span>
+      <% end %>
+      <figure class="avatar" style="--avatar-size: 26px;">
         <%= avatar_image_tag(user, alt: "") %>
       </figure>
     </span>

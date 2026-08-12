@@ -229,6 +229,12 @@
   }
 }
 
+/* Away members read as recently-here, not present: dimmed, and the section
+   header carries the status so the row drops its own dot. */
+.roster__link--away {
+  opacity: 0.65;
+}
+
 .roster__avatar {
   flex-shrink: 0;
   position: relative;
@@ -236,17 +242,22 @@
 
 .status-dot--roster {
   border: 2px solid var(--color-bg);
-  height: 11px;
+  height: 9px;
   inset-block-end: -1px;
   inset-inline-end: -1px;
   position: absolute;
-  width: 11px;
+  width: 9px;
 }
 
 .roster__name {
+  font-size: 0.84375rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.roster__link--active .roster__name {
+  font-weight: 500;
 }
 
 .roster__empty {
