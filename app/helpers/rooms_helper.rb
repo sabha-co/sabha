@@ -80,6 +80,19 @@ module RoomsHelper
     room.display_name(for_user: for_user)
   end
 
+  # "Message #general" for channels, "Message Kevin" for 1:1 DMs; group DMs
+  # fall back to the member-list display name.
+  def composer_placeholder(room)
+    if room.direct?
+      others = room.users.without(Current.user)
+      name = others.one? ? others.first.name.split(" ").first : room_display_name(room)
+      "Message #{name}"
+    else
+      prefix = room.is_a?(Rooms::Open) ? "#" : ""
+      "Message #{prefix}#{room_display_name(room)}"
+    end
+  end
+
   def edit_room_path(room)
     case room
     when Rooms::Direct then edit_rooms_direct_path(room)

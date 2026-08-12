@@ -1,4 +1,4 @@
-<%# locals: (form:, autocomplete_room:, label:, send_label:, body_id: nil, toolbar_toggle: false, attachments: true, search_path: nil) -%>
+<%# locals: (form:, autocomplete_room:, label:, send_label:, body_id: nil, toolbar_toggle: false, attachments: true, search_path: nil, placeholder: nil) -%>
 <%# The shared input card for every chat composer — the main room composer, a
     thread reply, and a provisional (not-yet-created) thread reply. Callers supply
     the form builder plus the bits that vary: the room to autocomplete @-mentions
@@ -22,6 +22,7 @@
              permitted_attachment_types: "application/vnd.actiontext.opengraph-embed",
              composer_target: "text" } } %>
       <% body_options[:id] = body_id if body_id %>
+      <% body_options[:placeholder] = placeholder if placeholder %>
       <%= form.rich_text_area :body, **body_options %>
 
       <div class="composer__tools flex align-center full-width">
