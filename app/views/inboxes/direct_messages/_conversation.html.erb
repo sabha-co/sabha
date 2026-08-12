@@ -1,10 +1,10 @@
 <% members = direct_room_members[membership.room_id] || [] %>
 <% last_message = membership.room.last_message %>
 <%= link_to room_path(membership.room),
-            class: ["dm-conversation", "unread": membership.unread?],
+            class: ["list-row", "dm-conversation", "unread": membership.unread?],
             id: dom_id(membership.room, :dm_inbox),
             data: { room_id: membership.room_id, dm_list_target: "conversation" } do %>
-  <div class="dm-conversation__avatar">
+  <div class="dm-conversation__avatar list-row__avatar">
     <% if members.many? %>
       <div class="avatar__group">
         <% members.first(4).each do |member| %>
@@ -24,20 +24,20 @@
     <% end %>
   </div>
 
-  <div class="dm-conversation__content">
-    <div class="dm-conversation__names">
+  <div class="dm-conversation__content list-row__body">
+    <div class="dm-conversation__names list-row__title">
       <%= members.any? ? members.map(&:name).to_sentence : "Note to self" %>
     </div>
 
     <% if last_message.present? %>
-      <div class="dm-conversation__preview">
+      <div class="dm-conversation__preview list-row__subtitle">
         <span class="dm-conversation__sender"><%= last_message.creator.name %>:</span>
         <span class="dm-conversation__text"><%= last_message.plain_text_body.truncate(100) %></span>
       </div>
     <% end %>
   </div>
 
-  <div class="dm-conversation__meta">
+  <div class="dm-conversation__meta list-row__trailing">
     <span class="dm-conversation__time">
       <%= time_ago_in_words(membership.room.last_active_at) %> ago
     </span>

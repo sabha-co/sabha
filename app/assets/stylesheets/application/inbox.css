@@ -1,0 +1,17 @@
+/* Inbox surfaces (activity, threads, bookmarks, notifications, messages):
+   the feed reads as a hairline-divided list, not a chat stream. Rows are the
+   shared message partial; the DM list has its own treatment
+   (dm_conversations.css on the .list-row rhythm). */
+
+body.inbox .searches__results {
+  row-gap: 0;
+}
+
+body.inbox .searches__results > * {
+  border-block-end: 1px solid var(--color-border);
+  padding-block: 10px;
+}
+
+body.inbox .searches__results > :last-child {
+  border-block-end: 0;
+}
