@@ -8,6 +8,9 @@
 <%= render "rooms/show/nav", room: @room %>
 
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+<%# Wide screens dock the roster by default (thread_panel_controller gates on
+    viewport width and the reader's sticky dismissal) %>
+<% content_for :auto_panel_src, room_roster_path(@room) unless @room.direct? || @room.sub_room? %>
 
 <%= message_area_tag(@room) do %>
   <%= render "messages/template" %>

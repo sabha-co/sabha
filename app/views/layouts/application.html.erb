@@ -91,6 +91,7 @@
 
     <aside id="thread-panel" hidden aria-label="Thread"
            data-controller="thread-panel"
+           data-thread-panel-auto-src-value="<%= content_for(:auto_panel_src) %>"
            data-action="keydown@document->thread-panel#closeOnEscape turbo:before-visit@document->thread-panel#closeOnNavigation">
       <%# A deep-linked post (gallery visited as ?post=<slug>) eager-loads its
           panel here; the frame-load opens the panel over the gallery. %>
