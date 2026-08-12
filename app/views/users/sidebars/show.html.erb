@@ -109,17 +109,25 @@
     </div>
 
     <footer class="sidebar__footer">
-      <% account_tool_label = Current.user&.staff? ? "Settings" : "About" %>
-      <%= link_to account_path, class: "btn sidebar__footer-item", title: account_tool_label do %>
-        <%= icon_tag Current.user&.staff? ? "crown" : "world" %>
-        <span class="for-screen-reader"><%= account_tool_label %></span>
+      <%= link_to user_profile_path, class: "sidebar__me", title: Current.user.name do %>
+        <span class="sidebar__me-avatar">
+          <figure class="avatar" style="--avatar-size: 32px;">
+            <%= avatar_image_tag(Current.user, size: 32, style: "view-transition-name: avatar-#{Current.user.id}", loading: :lazy) %>
+          </figure>
+          <span class="status-dot status--active sidebar__me-dot" aria-hidden="true"></span>
+        </span>
+        <span class="sidebar__me-info">
+          <span class="sidebar__me-name"><%= Current.user.name %></span>
+          <span class="sidebar__me-status"><%= Current.user.bio.presence || "Here now" %></span>
+        </span>
       <% end %>
 
       <%= render "users/sidebars/bell" %>
 
-      <%= link_to user_profile_path, class: "btn avatar sidebar__footer-item", title: Current.user.name do %>
-        <%= avatar_image_tag(Current.user, size: 40, style: "view-transition-name: avatar-#{Current.user.id}", loading: :lazy) %>
-        <span class="for-screen-reader"><%= Current.user.name %></span>
+      <% account_tool_label = Current.user&.staff? ? "Settings" : "About" %>
+      <%= link_to account_path, class: "btn sidebar__footer-item", title: account_tool_label do %>
+        <%= icon_tag Current.user&.staff? ? "crown" : "world" %>
+        <span class="for-screen-reader"><%= account_tool_label %></span>
       <% end %>
     </footer>
     </div>

@@ -95,6 +95,16 @@
       flex-direction: column;
       padding-inline: 6px;
     }
+
+    /* The chip collapses to just the avatar in the rail */
+    .sidebar__me {
+      flex: initial;
+      padding: 4px;
+    }
+
+    .sidebar__me-info {
+      display: none;
+    }
   }
 }
 
@@ -186,26 +196,84 @@
   letter-spacing: 0.07em;
 }
 
-/* Footer: account, notifications, profile */
+/* Footer: the signed-in user chip (avatar + name + status) with quiet tools
+   on the right, over a hairline */
 .sidebar__footer {
   align-items: center;
   background-color: var(--color-bg-sunk);
+  border-block-start: 1px solid var(--color-border-dark);
   display: flex;
-  gap: var(--inline-space-half);
+  gap: 2px;
   inset-block-end: 0;
   margin-block-start: auto;
-  padding-block: var(--block-space-half) calc(var(--block-space-half) + env(safe-area-inset-bottom));
-  padding-inline: var(--sidebar-inline-space);
+  padding-block: 8px calc(8px + env(safe-area-inset-bottom));
+  padding-inline: calc(var(--sidebar-inline-space) / 2);
   position: sticky;
   z-index: 2;
+}
+
+.sidebar__me {
+  align-items: center;
+  border-radius: var(--border-radius-md);
+  color: var(--color-text);
+  display: flex;
+  flex: 1;
+  gap: 10px;
+  min-inline-size: 0;
+  padding: 4px 6px;
+  text-decoration: none;
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: var(--color-bg-hover);
+    }
+  }
+}
+
+.sidebar__me-avatar {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar__me-dot {
+  block-size: 10px;
+  border: 2px solid var(--color-bg-sunk);
+  inline-size: 10px;
+  inset-block-end: -2px;
+  inset-inline-end: -2px;
+  position: absolute;
+  z-index: 1;
+}
+
+.sidebar__me-info {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.sidebar__me-name {
+  font-size: 0.84375rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar__me-status {
+  color: var(--color-text-subtle);
+  font-size: 0.71875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar__footer-item {
   --btn-background: transparent;
   --btn-border-color: transparent;
-  --btn-padding: 0.4em;
+  --btn-padding: 0.35em;
   --hover-color: transparent;
   --hover-filter: none;
+  --icon-size: 18px;
 
   color: var(--color-text-muted);
 
@@ -892,13 +960,6 @@
   /* The workspace accent, lifted for the dark ground (colors.css sets the
      per-accent lift on :root). */
   --color-accent-brand: oklch(var(--lch-accent-lift));
-}
-
-/* Under contrast, --color-bg-sunk collapses onto --color-bg, so the footer's
-   sunk background gives it no visible edge. Restore the separation with a
-   hairline so the footer still reads as the bottom bar. */
-#sidebar[data-contrast="true"] .sidebar__footer {
-  border-block-start: 1px solid var(--color-border-dark);
 }
 
 /* Cold-start skeleton for the lazy sidebar frame (users/sidebars/_skeleton).
