@@ -41,13 +41,6 @@
   &:active {
     transform: scale(0.97);
   }
-
-  &:has(.input--boost):focus-within {
-    --boost-border-color: var(--color-selected-dark);
-    --hover-color: var(--color-selected-dark);
-
-    box-shadow: 0 0 0 var(--hover-size) var(--hover-color);
-  }
 }
 
 .btn:is(.boost__action) {
@@ -77,52 +70,9 @@
   inline-size: auto;
 }
 
-.boost__form {
-  transition: none;
-
-  &.expanded {
-    animation: boost 0.15s cubic-bezier(0.25, 1, 0.5, 1) both;
-    transform: translate3d(0, 0, 0);
-  }
-
-  .boost__form-label:focus {
-    outline: none;
-  }
-
-  .input--boost {
-    --hover-size: 0;
-    --input-background: transparent;
-    --input-border-size: 0;
-    --input-padding: 0;
-    --outline-size: 0;
-
-    box-shadow: none;
-    display: inherit;
-    max-inline-size: 16ch;
-    min-inline-size: 2em;
-    outline: 0;
-  }
-}
-
 /* Variants */
 .boost--deleting {
   animation: scale-fade-out 0.15s both;
-}
-
-/* Reactions */
-.quick-boosts {
-  display: grid;
-  grid-template-columns: repeat(4, 2em);
-
-  .btn {
-    transition: transform 100ms cubic-bezier(0.25, 1, 0.5, 1);
-
-    @media (any-hover: hover) {
-      &:where(:not(:active):hover) .boost-character {
-        transform: scale(1.15);
-      }
-    }
-  }
 }
 
 .boost-character {

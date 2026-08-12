@@ -6,13 +6,50 @@ class BoostingMessagesTest < ApplicationSystemTestCase
     join_room rooms(:designers)
   end
 
-  test "boosting a message" do
-    within_message messages(:third) do
-      reveal_message_actions
-      fill_in_boost_input "Good morning"
+  test "boosting a message with custom text" do
+    open_reaction_picker messages(:third)
+
+    within_reaction_picker do
+      fill_in "boost[content]", with: "Good morning"
       click_on "Submit"
+    end
+
+    assert_reaction_picker_closed
+    within_message messages(:third) do
       assert_boost_text "Good morning"
     end
+  end
+
+  test "picking a reaction from the grid" do
+    open_reaction_picker messages(:third)
+
+    within_reaction_picker do
+      click_on "Party popper"
+    end
+
+    assert_reaction_picker_closed
+    within_message messages(:third) do
+      assert_boost_text "🎉"
+    end
+  end
+
+  test "the picker closes on escape without boosting" do
+    open_reaction_picker messages(:third)
+
+    find("#reaction_picker_dialog").send_keys :escape
+
+    assert_reaction_picker_closed
+    within_message messages(:third) do
+      assert_no_selector ".boost"
+    end
+  end
+
+  test "clicking the scrim closes the picker" do
+    open_reaction_picker messages(:third)
+
+    click_reaction_picker_scrim
+
+    assert_reaction_picker_closed
   end
 
   test "deleting a boost" do
@@ -30,11 +67,14 @@ class BoostingMessagesTest < ApplicationSystemTestCase
     end
   end
 
-  test "message update preserves the input state" do
+  test "message update preserves the picker input state" do
     within_message messages(:third) do
       assert_message_text "Third time's a charm."
-      reveal_message_actions
-      fill_in_boost_input "Hey!"
+    end
+
+    open_reaction_picker messages(:third)
+    within_reaction_picker do
+      fill_in "boost[content]", with: "Hey!"
     end
 
     using_session("JZ") do
@@ -52,25 +92,29 @@ class BoostingMessagesTest < ApplicationSystemTestCase
 
     within_message messages(:third) do
       assert_message_text "Redacted!"
+    end
+    within_reaction_picker do
       assert_boost_input_value "Hey!"
     end
   end
 
-  test "boost by another user preserves the input state" do
-    within_message messages(:third) do
-      assert_message_text "Third time's a charm."
-      reveal_message_actions
-      fill_in_boost_input "Hey!"
+  test "boost by another user preserves the picker input state" do
+    open_reaction_picker messages(:third)
+    within_reaction_picker do
+      fill_in "boost[content]", with: "Hey!"
     end
 
     using_session("David") do
       sign_in "david@37signals.com"
       join_room rooms(:designers)
 
-      within_message messages(:third) do
-        reveal_message_actions
-        fill_in_boost_input "Morning"
+      open_reaction_picker messages(:third)
+      within_reaction_picker do
+        fill_in "boost[content]", with: "Morning"
         click_on "Submit"
+      end
+
+      within_message messages(:third) do
         assert_boost_text "Morning"
       end
     end
@@ -79,18 +123,38 @@ class BoostingMessagesTest < ApplicationSystemTestCase
 
     within_message messages(:third) do
       assert_boost_text "Morning"
+    end
+    within_reaction_picker do
       assert_boost_input_value "Hey!"
     end
   end
 
   private
-    def fill_in_boost_input(text)
-      click_on "New boost"
-      fill_in "boost[content]", with: text
+    def open_reaction_picker(message)
+      within_message message do
+        reveal_message_actions
+        click_on "Add reaction"
+      end
+
+      assert_selector "#reaction_picker_dialog[open]"
+    end
+
+    def within_reaction_picker(&block)
+      within "#reaction_picker_dialog", &block
+    end
+
+    def assert_reaction_picker_closed
+      assert_no_selector "#reaction_picker_dialog[open]"
+    end
+
+    def click_reaction_picker_scrim
+      # The backdrop isn't a DOM element — a click on it dispatches with the
+      # <dialog> itself as the target, which is what this simulates.
+      execute_script "document.getElementById('reaction_picker_dialog').click()"
     end
 
     def assert_boost_input_value(text)
-      assert page.has_field? "boost[content]", with: text
+      assert page.has_field?("boost[content]", with: text)
     end
 
     def assert_boost_text(text, **options)

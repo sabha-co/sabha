@@ -1,25 +1,28 @@
-<%= turbo_frame_tag dom_id(@message, :new_boost) do %>
-  <div class="boost flex-inline postion--relative max-width fill-white" style="--column-gap: var(--inline-space-half)">
-    <%= form_with model: [ @message, Boost.new ], class: "boost__form flex align-center gap expanded",
-          data: { controller: "form scroll-into-view", turbo_frame: dom_id(@message, :boosting), action: "keydown.esc->form#cancel" } do |form| %>
-      <label class="boost__form-label flex gap" style="--column-gap: 0.7ch;" role="button" tabindex="0" aria-label="Add a boost">
-        <figure class="avatar boost__avatar flex-item-no-shrink">
-          <%= avatar_tag Current.user, loading: :lazy %>
-          <span class="for-screen-reader"><%= Current.user.name %></span>
-        </figure>
+<%= turbo_frame_tag "reaction_picker" do %>
+  <div class="scrim-dialog__body">
+    <span class="scrim-dialog__label">Quick reactions</span>
 
-        <%= form.text_field :content, id: nil, autofocus: true, autocomplete: "off", autocorrect: "off", maxlength: 16,
-              required: true, pattern: /\S+.*/, data: { boost_form_target: "input" }, class: "input input--boost txt-small" %>
-      </label>
+    <div class="reaction-grid">
+      <% EmojiHelper::REACTIONS.each do |character, title| %>
+        <%= form_with model: [ @message, Boost.new ], data: { turbo_frame: dom_id(@message, :boosting) } do |form| %>
+          <%= hidden_field_tag "boost[content]", character %>
+          <%= form.button type: "submit", title: title, class: "btn reaction-grid__btn", data: { emoji: character } do %>
+            <figure class="margin-none boost-character"><%= character %></figure>
+            <span class="for-screen-reader"><%= title %></span>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
 
-      <%= form.button class: "btn btn--reversed", type: "submit" do %>
+    <%= form_with model: [ @message, Boost.new ], class: "reaction-custom",
+          data: { controller: "form", turbo_frame: dom_id(@message, :boosting) } do |form| %>
+      <%= form.text_field :content, id: nil, autocomplete: "off", autocorrect: "off", maxlength: 16,
+            required: true, pattern: /\S+.*/, placeholder: "Custom — 16 characters max",
+            class: "input reaction-custom__input txt-small" %>
+
+      <%= form.button class: "btn btn--reversed reaction-custom__submit", type: "submit" do %>
         <%= icon_tag "check" %>
         <span class="for-screen-reader">Submit</span>
-      <% end %>
-
-      <%= link_to message_boosts_path(@message), data: { turbo_frame: dom_id(@message, :boosts), form_target: "cancel" }, class: "btn btn--negative" do %>
-        <%= icon_tag "minus" %>
-        <span class="for-screen-reader">Cancel</span>
       <% end %>
     <% end %>
   </div>

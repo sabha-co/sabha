@@ -1,6 +1,6 @@
 <%# locals: (message:) -%>
 
-<div class="message__actions" data-controller="soft-keyboard">
+<div class="message__actions">
   <%= tag.details class: "position-relative",
       data: { controller: "popup", action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside", popup_orientation_top_class: "popup-orientation-top" } do %>
     <summary class="btn message__action-btn message__bar-btn message__options-btn options-btn">
@@ -9,22 +9,11 @@
     </summary>
 
     <div class="popup-menu message__actions-menu border shadow" data-popup-target="menu">
-      <div class="quick-boosts">
-        <% EmojiHelper::REACTIONS.each do |character, title| %>
-          <%= form_with model: [ message, Boost.new ], data: { turbo_frame: dom_id(message, :boosting), action: "popup#close"} do |form| %>
-            <%= hidden_field_tag "boost[content]", character %>
-            <%= form.button type: "submit", title: title, class: "btn message__action-btn", data: { emoji: character } do %>
-              <figure class="margin-none boost-character"><%= character %></figure>
-              <span class="for-screen-reader"><%= title %></span>
-            <% end %>
-          <% end %>
-        <% end %>
-
+      <div>
         <%= link_to new_message_boost_path(message),
-              class: "btn message__action-btn message__boost-btn",
-              data: { turbo_frame: dom_id(message, :new_boost), action: "soft-keyboard#open popup#close" } do %>
-          <%= icon_tag "boost" %>
-          <span class="for-screen-reader">New boost</span>
+              class: "btn message__action-btn full-width message__boost-btn",
+              data: { turbo_frame: "reaction_picker", action: "popup#close" } do %>
+          <span>Add reaction</span>
         <% end %>
       </div>
     </div>

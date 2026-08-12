@@ -1,0 +1,7 @@
+<%# The shared reaction-picker dialog: every boost entry point navigates the
+    reaction_picker frame here, and the dialog opens once the frame loads. %>
+<dialog id="reaction_picker_dialog" class="scrim-dialog" aria-label="Add a reaction"
+        data-controller="dialog"
+        data-action="click->dialog#closeOnScrim turbo:submit-end->dialog#closeOnSubmit">
+  <%= turbo_frame_tag "reaction_picker", data: { action: "turbo:frame-load->dialog#open" } %>
+</dialog>

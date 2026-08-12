@@ -4,7 +4,7 @@
 <% show_thread_actions = !message.room.direct? && !current_room&.thread? && !message.room.sub_room? %>
 <% existing_thread = message.threads.find { |t| t.active? } if show_thread_actions %>
 
-<div class="message__actions" data-controller="soft-keyboard">
+<div class="message__actions">
   <%# Quick reactions surface in the bar on pointer devices; phones keep the
       single overflow menu below, so these hide on coarse pointers. %>
   <% EmojiHelper::REACTIONS.first(4).each do |character, title| %>
@@ -19,7 +19,7 @@
 
   <%= link_to new_message_boost_path(message),
         class: "btn message__action-btn message__bar-btn message__boost-btn message__quick-reaction",
-        data: { turbo_frame: dom_id(message, :new_boost), action: "soft-keyboard#open" } do %>
+        data: { turbo_frame: "reaction_picker" } do %>
     <%= icon_tag "boost" %>
     <span class="for-screen-reader">Boost this message</span>
   <% end %>
@@ -45,26 +45,13 @@
     </summary>
 
     <div class="popup-menu message__actions-menu border shadow" data-popup-target="menu">
-      <div class="quick-boosts">
-        <% EmojiHelper::REACTIONS.each do |character, title| %>
-          <%= form_with model: [ message, Boost.new ], data: { turbo_frame: dom_id(message, :boosting), action: "popup#close"} do |form| %>
-            <%= hidden_field_tag "boost[content]", character %>
-            <%= form.button type: "submit", title: title, class: "btn message__action-btn", data: { emoji: character } do %>
-              <figure class="margin-none boost-character"><%= character %></figure>
-              <span class="for-screen-reader"><%= title %></span>
-            <% end %>
-          <% end %>
-        <% end %>
-
+      <div>
         <%= link_to new_message_boost_path(message),
-              class: "btn message__action-btn message__boost-btn",
-              data: { turbo_frame: dom_id(message, :new_boost), action: "soft-keyboard#open popup#close" } do %>
-          <%= icon_tag "boost" %>
-          <span class="for-screen-reader">New boost</span>
+              class: "btn message__action-btn full-width message__boost-btn",
+              data: { turbo_frame: "reaction_picker", action: "popup#close" } do %>
+          <span>Add reaction</span>
         <% end %>
-      </div>
 
-      <div class="border-top margin-block-start-half pad-block-start-half">
         <% if message.content_type.attachment? %>
           <%= link_to rails_blob_path(message.attachment, disposition: "attachment", only_path: true), class: "btn message__action-btn full-width hide-in-ios-pwa" do %>
             <span>Download</span>

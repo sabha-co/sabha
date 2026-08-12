@@ -1,0 +1,89 @@
+/* v2 scrim dialogs (reaction picker, role menu): a native <dialog> shown as a
+   modal over a dimmed scrim. The card sits on the raised surface; the scrim
+   click-closes (dialog_controller) while clicks on the card land on its
+   descendants and pass through. */
+
+.scrim-dialog {
+  background-color: var(--color-bg-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-overlay);
+  color: var(--color-text);
+  inline-size: var(--dialog-width, 296px);
+  inset: 0;
+  /* the global reset zeroes margins, which would pin the dialog to the
+     top-left — restore the UA's centered placement */
+  margin: auto;
+  max-inline-size: calc(100dvw - var(--inline-space) * 2);
+  padding: 0;
+  position: fixed;
+
+  &::backdrop {
+    background-color: rgb(12 14 20 / 0.36);
+  }
+}
+
+.scrim-dialog__header {
+  border-block-end: 1px solid var(--color-border);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 12px 14px;
+}
+
+.scrim-dialog__body {
+  padding: 14px;
+}
+
+/* Small-caps section eyebrow inside the card */
+.scrim-dialog__label {
+  color: var(--color-text-subtle);
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+/* Reaction picker: the full emoji grid over a custom-boost input */
+.reaction-grid {
+  display: grid;
+  gap: 4px;
+  /* minmax(0, 1fr): a bare 1fr bottoms out at the buttons' intrinsic width,
+     overflowing the card and clipping the seventh column */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-block-start: 10px;
+}
+
+.reaction-grid .btn {
+  --btn-background: transparent;
+  --btn-border-color: transparent;
+  --btn-border-radius: 8px;
+  --btn-padding: 0;
+  --hover-color: transparent;
+  --hover-filter: none;
+
+  block-size: 34px;
+  inline-size: 100%;
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: var(--color-bg-hover);
+    }
+
+    &:where(:not(:active):hover) .boost-character {
+      transform: scale(1.15);
+    }
+  }
+}
+
+.reaction-custom {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-block-start: 12px;
+}
+
+.reaction-custom__input {
+  flex: 1;
+  min-inline-size: 0;
+}
