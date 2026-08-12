@@ -1,6 +1,6 @@
 # Plan: Sabha v2 redesign — Phase 2 (reskin + rebuild to handoff fidelity)
 
-**Status:** complete except the composer emoji button (awaits Lexxy) — WS0–WS6 built through 2026-08-13, incl. the owner-requested follow-ups (footer theme toggle, move-search, message-menu dialog, phone polish) · **Date:** 2026-08-12 · **Builds on:** Phase 1 (`redesign-v2`, Steps 1–6, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
+**Status:** complete except the composer emoji button (awaits Lexxy) — WS0–WS6 built through 2026-08-13, incl. the owner-requested follow-ups (footer theme toggle, move-search, message-menu dialog, phone polish; header bar + sidebar top, below) · **Date:** 2026-08-12 · **Builds on:** Phase 1 (`redesign-v2`, Steps 1–6, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
 
 > **What this is.** Phase 1 completed the designer's six-step build order **as a reskin** (plus sanctioned rebuilds: the shell/sidebar move, message-row scale, action bar, composer typing row, accent system, forums data section) and the token system was verified pixel-matching the spec. What the reskin discipline deferred is a **concrete, enumerable set** — the typeface, a handful of DOM/Stimulus rebuilds, responsive breakpoint work, and a cluster of data-shaped UX the designer's own scope ("routes/models/controllers/Turbo targets don't change — the DOM inside them does") parked. Phase 2 closes that gap so the running app matches the handoff's **look and interaction**, not just its tokens.
 
@@ -180,6 +180,17 @@ Each workstream = one commit or a small bisectable series. **Resolved:** Phase 2
 - **Per boundary:** full unit (`bin/rails test`), the tight system wall, SaaS (`SAAS=true bin/rails test saas/test/`), light+dark screenshots of touched surfaces.
 - **Parity:** verify each step under `native.css` (Hotwire Native) and SaaS views.
 - **Designer boundary check:** no routes/models/controllers/Turbo-target/partial-structure change **except** the sanctioned ④ data item — the activity/thread queries (WS4). WS3 no longer changes the boost model — reactions are reskin-only.
+
+## Addendum (2026-08-13): header bar + sidebar top
+
+Owner spotted two comp surfaces neither phase had itemized — the room **header bar** and the **sidebar top** — and asked for both plus the filter. Built:
+
+- **Header bar rebuild** — `#nav` was still v1's fixed transparent overlay (black pill title, floating chips). Now the comp's solid in-flow 54px bar (grid row, hairline below): room glyph + name (700/16) + the room description inline (13.5 muted, hidden <834; the element WS1 declared moot now exists) + bell + an info button opening the roster panel (replacing the member-count pill). `--navbar-height` is now 54px and every fixed-nav clearance hack (messages, dm-list, searches, forum, panels margins) is gone. The thread-open grid became `"sidebar nav thread"` so the panel owns its full column with its own 54px header. Gotcha for posterity: an in-flow `#nav` grid item needs `min-inline-size: 0` or its nowrap content inflates the 1fr track and the page scrolls sideways at phone widths.
+- **Sidebar workspace header** — logo tile (account logo, else accent tile with the name's initial) + account name + "N members · M here now" (reuses `User.without_bots.active.verified.count` + `online_users_count`) + a gear to account settings. Hidden in the closed rail; the gear slides clear of the drawer close button.
+- **Sidebar filter** — "Filter rooms and people": `sidebar_filter_controller` hides room rows (`data-name`) and DM rows (name text) via `[hidden]` as you type; Escape/native clear restores. Tests first (`test/system/sidebar_filter_test.rb`).
+- **Corner app logo removed** (owner call, same session) — the bottom-right Sabha logo strip and the 5vw right gutter aren't in the comp; `#main-content` now runs to the panel/viewport edge and the thread panel keeps only its left hairline.
+
+Still deliberately absent from the header: the huddle chip and pinned strip (deferred features, slots left free).
 
 ## Out of scope (record, don't silently drop)
 
