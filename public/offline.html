@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <title>Something broke on our side</title>
+    <title>You're offline</title>
     <meta charset="utf-8">
     <meta name="viewport" content="initial-scale=1, width=device-width">
     <meta name="robots" content="noindex, nofollow">
@@ -29,7 +29,6 @@
         padding: 2rem;
       }
       main { display: grid; gap: 0.6rem; place-items: center; text-align: center; max-width: 28rem; }
-      .numeral { font-size: 5rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1; opacity: 0.12; }
       h1 { font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; }
       p { color: var(--muted); font-size: 0.9375rem; }
       .button {
@@ -49,12 +48,11 @@
     </style>
   </head>
   <body>
-    <!-- This file lives in public/500.html -->
+    <!-- This file lives in public/offline.html and is precached by the service worker -->
     <main>
-      <p class="numeral" aria-hidden="true">500</p>
-      <h1>Something broke on our side</h1>
-      <p>The error is logged and nothing you wrote was lost. Try again in a moment.</p>
-      <a class="button" href="/" onclick="location.reload(); return false;">Reload</a>
+      <h1>You're offline</h1>
+      <p>Messages you already loaded are readable. Anything you type sends when the connection is back.</p>
+      <a class="button" href="/" onclick="location.reload(); return false;">Retry now</a>
     </main>
   </body>
 </html>

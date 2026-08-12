@@ -133,3 +133,11 @@ button.list-row {
 .empty-state__action {
   margin-block-start: 14px;
 }
+
+/* A full-page host for an empty state that owns the whole content area (a
+   styled 403, say) rather than sitting inside a card or message list. */
+.empty-state-page {
+  display: grid;
+  min-block-size: 72vh;
+  place-content: center;
+}

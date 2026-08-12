@@ -1,0 +1,13 @@
+<%# locals: (title:, message:, back_to:, back_label:) %>
+<% @page_title = "Not available" %>
+<% @body_class = "sidebar" %>
+
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+
+<div class="empty-state-page">
+  <div class="empty-state">
+    <h1 class="empty-state__title"><%= title %></h1>
+    <p class="empty-state__body"><%= message %></p>
+    <%= link_to back_label, back_to, class: "btn empty-state__action" %>
+  </div>
+</div>

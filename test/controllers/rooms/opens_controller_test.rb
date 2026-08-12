@@ -82,11 +82,16 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
 
     sign_in :jz  # non-admin user
 
+    # A stale/disabled "New room" link is a navigation, so it lands on the
+    # styled, in-app 403 that explains the wall.
     get new_rooms_open_url
     assert_response :forbidden
+    assert_select ".empty-state__title", text: "Administrators only"
 
+    # The form post is not a navigation — it stays a bare status.
     post rooms_opens_url, params: { room: { name: "My New Room" } }
     assert_response :forbidden
+    assert_select ".empty-state__title", count: 0
   end
 
   test "admin can create room when restricted to administrators" do

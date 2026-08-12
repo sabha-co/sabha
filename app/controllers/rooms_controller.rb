@@ -159,7 +159,10 @@ class RoomsController < ApplicationController
 
     def ensure_permission_to_create_rooms
       if Current.account.settings.restrict_room_creation_to_administrators? && !Current.user.administrator?
-        head :forbidden
+        render_forbidden \
+          title: "Administrators only",
+          message: "New rooms are limited to administrators in this community. Ask an administrator to open one for you.",
+          back_label: "Back to the community"
       end
     end
 end
