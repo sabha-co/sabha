@@ -1,5 +1,6 @@
 <% @page_title = "Threads" %>
-<%= render "inboxes/nav", title: "Threads" %>
+<%= render "inboxes/nav", title: "Threads",
+      count: (@followed_thread_count.to_i.positive? ? "#{pluralize(@followed_thread_count, "thread")} you follow" : nil) %>
 
 <% content_for :messages do %>
   <%= search_results_tag("inbox", inbox_threads_url, highlight_mentions: true, thread_messages: false) do %>

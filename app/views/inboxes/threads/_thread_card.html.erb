@@ -3,7 +3,7 @@
     message, and an inline follow toggle. Reply count and last-reply ride the
     embedded messages/threads target, so they update live; the "new" badge and
     follow state reflect page-load state (the inbox stream is viewer-less). %>
-<div id="<%= dom_id(message) %>" class="thread-card"
+<div id="<%= dom_id(message) %>" class="thread-card <%= "thread-card--unread" if unread > 0 %>"
      data-message-id="<%= message.id %>"
      data-sort-value="<%= message.created_at.to_fs(:epoch) %>"
      data-search-results-target="message"

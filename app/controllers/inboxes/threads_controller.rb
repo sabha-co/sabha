@@ -7,6 +7,10 @@ class Inboxes::ThreadsController < ApplicationController
     @messages = find_messages_with(Inbox::ThreadsQuery)
     @thread_unread = Inbox::ThreadsQuery.unseen_reply_counts(Current.user, @messages)
 
-    render partial: "items" if paginating?
+    if paginating?
+      render partial: "items"
+    else
+      @followed_thread_count = Inbox::ThreadsQuery.new(Current.user).call.except(:order).count
+    end
   end
 end

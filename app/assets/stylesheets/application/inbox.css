@@ -7,13 +7,19 @@ body.inbox .searches__results {
   row-gap: 0;
 }
 
-body.inbox .searches__results > * {
+/* Thread cards carry their own chrome; everything else divides on hairlines */
+body.inbox .searches__results > :not(.thread-card) {
   border-block-end: 1px solid var(--color-border);
   padding-block: 10px;
 }
 
 body.inbox .searches__results > :last-child {
   border-block-end: 0;
+}
+
+body.inbox .searches__results:has(.thread-card) {
+  padding-inline: 16px;
+  row-gap: 12px;
 }
 
 /* Activity verb rows (mentions, replies) reuse the message shell but read as
@@ -104,10 +110,18 @@ body.inbox [data-activity-unread="true"] {
    toggle, a "started by" byline with an optional unread pill, the root message,
    and the live reply-count footer (the embedded messages/threads chips). */
 .thread-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-inline: 16px;
+  padding: 14px 16px;
+}
+
+/* Threads with unseen replies get the accent tint the comp draws */
+.thread-card--unread {
+  background-color: color-mix(in oklch, var(--color-accent-brand) 5%, var(--color-bg));
+  border-color: color-mix(in oklch, var(--color-accent-brand) 30%, var(--color-border));
 }
 
 .thread-card__head {
@@ -152,4 +166,19 @@ body.inbox [data-activity-unread="true"] {
   font-size: 0.9375rem;
   line-height: 1.5;
   text-decoration: none;
+}
+
+/* Footer facepile: small overlapping participant faces (forum-card pattern) */
+.thread-card .thread__avatars {
+  gap: 0;
+}
+
+.thread-card .thread__avatar {
+  --avatar-size: 18px;
+
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+.thread-card .thread__avatar + .thread__avatar {
+  margin-inline-start: -5px;
 }

@@ -438,6 +438,21 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Parent message everything involvement", response.body
   end
 
+  test "threads annotates the header with the follow count and tints unread cards" do
+    room = rooms(:pets)
+    parent = room.messages.create!(body: "Tinted root", creator: @jason, client_message_id: "tint_parent")
+    thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
+    thread.memberships.grant_to(@david)
+    thread.messages.create!(body: "Tinted reply", creator: @jason, client_message_id: "tint_reply")
+    thread.memberships.find_by(user: @david).update!(last_read_at: 1.day.ago, last_read_message_id: 0)
+
+    get inbox_threads_url
+
+    assert_response :success
+    assert_select ".navbar-count", text: /\d+ threads? you follow/
+    assert_select ".thread-card--unread .thread-card__new", text: "1 new"
+  end
+
   test "threads excludes threads with no messages" do
     room = rooms(:pets)
 
