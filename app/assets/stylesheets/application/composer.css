@@ -238,3 +238,25 @@
     display: inline-flex;
   }
 }
+
+/* Phone: the composer stays one compact card, but its controls grow to 44px
+   tap targets. Formatting already lives behind the rich-text toggle — the
+   persistent format bar is deferred to the Lexxy migration. */
+@media (max-width: 499.9px) {
+  .composer__attachment-btn,
+  .composer__rich-text-btn,
+  .composer__context-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    margin-inline: 0;
+  }
+
+  .composer__send-btn {
+    --btn-padding: 0.7em 1.15em;
+
+    min-block-size: 44px;
+  }
+}

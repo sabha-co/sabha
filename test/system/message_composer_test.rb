@@ -8,6 +8,10 @@ require "application_system_test_case"
 class MessageComposerTest < ApplicationSystemTestCase
   setup { sign_in "kevin@37signals.com" }
 
+  # A couple of tests below resize to a phone; reset so the width can't leak
+  # into the tests that follow in the same browser session.
+  teardown { page.current_window.resize_to(1400, 1400) }
+
   test "a sent message appears in the conversation" do
     click_on "Designers"
     dismiss_pwa_install_prompt
@@ -63,5 +67,24 @@ class MessageComposerTest < ApplicationSystemTestCase
       "Naima, Theo and 1 other are typing",
       "Naima, Theo and 2 others are typing"
     ], labels
+  end
+
+  test "on a phone the composer keeps 44px tap targets with formatting behind the toggle" do
+    page.current_window.resize_to(390, 800)
+
+    find("#sidebar-toggle").click
+    click_on "Designers"
+    dismiss_pwa_install_prompt
+
+    # The tools row meets the 44px minimum tap target.
+    %w[.composer__send-btn .composer__rich-text-btn .composer__attachment-btn].each do |selector|
+      height = find(selector).evaluate_script("Math.round(this.getBoundingClientRect().height)")
+      assert_operator height, :>=, 44, "#{selector} is #{height}px tall, below the 44px minimum"
+    end
+
+    # Formatting is reachable but tucked behind the toggle, not shown inline.
+    assert_no_selector ".composer--rich-text"
+    find(".composer__rich-text-btn").click
+    assert_selector ".composer--rich-text"
   end
 end
