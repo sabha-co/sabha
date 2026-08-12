@@ -19,4 +19,14 @@ class SidebarNavigationTest < ApplicationSystemTestCase
     assert_selector ".message", minimum: 1   # the room's message stream rendered
     assert_selector ".composer"              # and its composer is present
   end
+
+  test "the footer theme toggle flips to an explicit theme choice" do
+    toggle = find(".sidebar__footer button[title='Switch theme']")
+
+    toggle.click
+    assert_equal "dark", page.evaluate_script("document.documentElement.dataset.theme")
+
+    toggle.click
+    assert_equal "light", page.evaluate_script("document.documentElement.dataset.theme")
+  end
 end

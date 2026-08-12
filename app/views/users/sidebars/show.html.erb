@@ -122,6 +122,12 @@
         </span>
       <% end %>
 
+      <button class="btn sidebar__footer-item" title="Switch theme" data-action="theme#toggle">
+        <%= icon_tag "moon", class: "theme-toggle__moon" %>
+        <%= icon_tag "sun", class: "theme-toggle__sun" %>
+        <span class="for-screen-reader">Switch between light and dark themes</span>
+      </button>
+
       <% account_tool_label = Current.user&.staff? ? "Settings" : "About" %>
       <%= link_to account_path, class: "btn sidebar__footer-item", title: account_tool_label do %>
         <%= icon_tag Current.user&.staff? ? "crown" : "world" %>

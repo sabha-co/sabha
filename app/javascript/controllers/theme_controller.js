@@ -26,6 +26,15 @@ export default class extends Controller {
     this.updateButtons()
   }
 
+  // The footer toggle flips the effective appearance to an explicit choice;
+  // the appearance settings' three-state control is the way back to System.
+  toggle() {
+    const explicit = document.documentElement.getAttribute("data-theme")
+    const effectivelyDark = explicit ? explicit === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches
+
+    effectivelyDark ? this.setLight() : this.setDark()
+  }
+
   applyTheme() {
     const theme = localStorage.getItem("theme")
     const currentTheme = document.documentElement.getAttribute("data-theme") || "light"

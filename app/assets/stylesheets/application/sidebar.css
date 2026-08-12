@@ -285,6 +285,21 @@
   }
 }
 
+/* The theme toggle shows the appearance you'd switch TO: moon under the light
+   theme, sun under dark. Keyed off :root (the app theme), not the sidebar's
+   own contrast surface. */
+.theme-toggle__sun {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle__moon { display: none; }
+  :root:not([data-theme="light"]) .theme-toggle__sun { display: inline-block; }
+}
+
+:root[data-theme="dark"] .theme-toggle__moon { display: none; }
+:root[data-theme="dark"] .theme-toggle__sun { display: inline-block; }
+
 .sidebar__toggle {
   inset-block-start: var(--block-space-half);
   inset-inline-end: calc(
