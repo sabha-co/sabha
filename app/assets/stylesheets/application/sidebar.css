@@ -14,12 +14,57 @@
 .sidebar__close.sidebar__close {
   display: none;
 
-  @media (max-width: 120ch) {
-    display: flex;
-    position: absolute;
-    inset-block-start: var(--block-space-half);
-    inset-inline-end: var(--sidebar-inline-space);
-    z-index: 4;
+  #sidebar.open & {
+    @media (max-width: 1279.9px) {
+      display: flex;
+      position: absolute;
+      inset-block-start: var(--block-space-half);
+      inset-inline-end: var(--sidebar-inline-space);
+      z-index: 4;
+    }
+  }
+}
+
+/* Rail (834-1279, closed): icon-only tool column; the room sections wait
+   inside the expanded overlay */
+@media (min-width: 834px) and (max-width: 1279.9px) {
+  #sidebar:not(.open) {
+    .sidebar__container {
+      overflow: hidden;
+    }
+
+    .sidebar__menu {
+      /* clear the rail's pinned expand button */
+      padding-block-start: calc(var(--block-space-half) + var(--btn-size) + var(--block-space-half));
+      padding-inline: 6px;
+    }
+
+    .sidebar__menu-item {
+      --btn-padding: var(--space-row) 0;
+
+      justify-content: center;
+
+      &.has-unread-activity::after,
+      &.has-unread-dms::after {
+        inset-block-start: 4px;
+        inset-inline-end: 6px;
+        transform: none;
+      }
+    }
+
+    .sidebar__menu-label {
+      display: none;
+    }
+
+    .rooms {
+      display: none;
+    }
+
+    .sidebar__footer {
+      align-items: center;
+      flex-direction: column;
+      padding-inline: 6px;
+    }
   }
 }
 
@@ -184,7 +229,28 @@
     }
   }
 
-  @media (min-width: 120ch) {
+  @media (min-width: 834px) and (max-width: 1279.9px) {
+    --btn-background: transparent;
+    --btn-border-color: transparent;
+    --hover-color: transparent;
+    --hover-filter: none;
+
+    color: var(--color-text-muted);
+    display: flex;
+    inset-block-start: var(--block-space-half);
+    inset-inline: 0;
+    margin-inline: auto;
+    position: absolute;
+
+    @media (any-hover: hover) {
+      &:hover {
+        background-color: var(--color-bg-hover);
+        color: var(--color-text);
+      }
+    }
+  }
+
+  @media (min-width: 1280px) {
     display: none;
     inset-block-start: var(--block-space);
   }
@@ -192,7 +258,7 @@
   .open & {
     inset-block-start: var(--block-space);
 
-    @media (max-width: 120ch) {
+    @media (max-width: 1279.9px) {
       display: none;
       inset-inline-end: var(--sidebar-inline-space);
 

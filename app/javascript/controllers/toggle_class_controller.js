@@ -15,11 +15,21 @@ export default class extends Controller {
     // Close sidebar on mobile when navigating to a new page
     this._handleTurboClick = (event) => this.#handleTurboClick(event)
     document.addEventListener("turbo:click", this._handleTurboClick)
+
+    // Close an overlaid sidebar when pointing outside it (scrim clicks land
+    // on the body, so this also serves as the scrim's dismiss action)
+    this._handleOutsidePointer = (event) => this.#handleOutsidePointer(event)
+    document.addEventListener("mousedown", this._handleOutsidePointer)
+    document.addEventListener("touchstart", this._handleOutsidePointer, {
+      passive: true,
+    })
   }
 
   disconnect() {
     document.removeEventListener("keydown", this._handleKeydown)
     document.removeEventListener("turbo:click", this._handleTurboClick)
+    document.removeEventListener("mousedown", this._handleOutsidePointer)
+    document.removeEventListener("touchstart", this._handleOutsidePointer)
   }
 
   toggle() {
@@ -88,10 +98,9 @@ export default class extends Controller {
   }
 
   #handleTurboClick(event) {
-    // On mobile (max-width: 120ch), close the sidebar when clicking a link inside it
-    // This ensures the user sees the room content after selecting it
-    if (window.matchMedia("(min-width: 120ch)").matches) return
-    if (!this.element.classList.contains(this.toggleClass)) return
+    // When the sidebar overlays the content (drawer or expanded rail), close
+    // it on navigation so the user sees the room they just picked
+    if (!this.#openAsOverlay) return
 
     // Check if the clicked element is a link inside the sidebar
     const target = event.target
@@ -101,5 +110,22 @@ export default class extends Controller {
 
     // Close the sidebar
     this.element.classList.remove(this.toggleClass)
+  }
+
+  #handleOutsidePointer(event) {
+    if (!this.#openAsOverlay) return
+    if (this.element.contains(event.target)) return
+
+    this.element.classList.remove(this.toggleClass)
+  }
+
+  // Overlay modes (drawer below 834px, expanded rail below 1280px) position
+  // the element fixed; when docked it's a static grid column. Keying off the
+  // computed style keeps the breakpoints out of the JS.
+  get #openAsOverlay() {
+    return (
+      this.element.classList.contains(this.toggleClass) &&
+      getComputedStyle(this.element).position === "fixed"
+    )
   }
 }

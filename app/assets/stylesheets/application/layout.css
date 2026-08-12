@@ -15,8 +15,19 @@ body {
   grid-template-rows: min-content 1fr;
   max-block-size: 100dvh;
 
+  /* Sidebar states: docked >=1280 (272px wide desktop, 240px narrow),
+     a 60px icon rail 834-1279 that expands over the content on demand,
+     and an off-canvas drawer below 834. */
   &.sidebar {
-    @media (min-width: 120ch) {
+    @media (min-width: 834px) {
+      --sidebar-width: 60px;
+    }
+
+    @media (min-width: 1280px) {
+      --sidebar-width: 240px;
+    }
+
+    @media (min-width: 1440px) {
       --sidebar-width: 272px;
     }
   }
@@ -91,25 +102,47 @@ body {
     max-block-size: 100dvh;
     z-index: 3;
 
-    @media (max-width: 120ch) {
-      inset: 0;
+    /* Drawer: off-canvas over a scrim */
+    @media (max-width: 833.9px) {
+      inline-size: min(300px, 85vw);
+      inset: 0 auto 0 0;
       position: fixed;
       padding-block: env(safe-area-inset-top) env(safe-area-inset-bottom);
       transform: translate(-100%);
     }
+
+    /* Rail: docked at 60px; opening expands it over the conversation */
+    @media (min-width: 834px) and (max-width: 1279.9px) {
+      &.open {
+        box-shadow: var(--shadow-overlay);
+        inline-size: 264px;
+        inset: 0 auto 0 0;
+        position: fixed;
+      }
+    }
   }
 
   &.open {
-    @media (max-width: 120ch) {
+    @media (max-width: 833.9px) {
       transform: translate(0);
     }
   }
 }
 
-/* Lock body scroll when mobile sidebar overlay is open */
-@media (max-width: 120ch) {
+/* Below the docked breakpoint an open sidebar overlays the content:
+   dim it with a scrim (clicks land on body and close via the controller)
+   and lock the page scroll. */
+@media (max-width: 1279.9px) {
   body.sidebar:has(#sidebar.open) {
     overflow: hidden;
+
+    &::after {
+      background-color: oklch(var(--lch-always-black) / 0.4);
+      content: "";
+      inset: 0;
+      position: fixed;
+      z-index: 2;
+    }
   }
 }
 
