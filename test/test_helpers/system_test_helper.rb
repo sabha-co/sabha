@@ -38,12 +38,14 @@ module SystemTestHelper
       wait_for_network_idle!
       wait_for_cable_connection
       dismiss_pwa_install_prompt
-    rescue Capybara::ExpectationNotMet, RuntimeError => e
+    rescue Capybara::ExpectationNotMet, Capybara::Cuprite::Error, RuntimeError => e
       # Retry the whole navigation, not a manual sleep-poll. Cuprite raises
       # ObsoleteNode when Turbo replaces the document mid-navigation — that is a
       # full-page swap, outside Capybara's element auto-reload — and the cable
       # handshake can outrun even a generous wait under load. Re-navigate; the
       # assertions inside auto-wait, so no explicit sleep is needed.
+      # (ObsoleteNode descends from Cuprite's own StandardError subclass, not
+      # RuntimeError, so it must be rescued explicitly.)
       raise e unless e.is_a?(Capybara::ExpectationNotMet) ||
                      e.message.include?("ObsoleteNode") || e.message.include?("Cuprite")
       raise e if (attempts += 1) >= 4

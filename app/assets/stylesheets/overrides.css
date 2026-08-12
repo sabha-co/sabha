@@ -54,42 +54,39 @@
   }
 }
 
-}
-
 @media (max-width: 100ch) {
   .account-has-logo .room--current .room__contents {
     --num-buttons: 2;
   }
 }
 
-.message__meta .message__actions .message__options-btn {
-  --btn-padding: 0 0.5em;
-  aspect-ratio: unset;
-  block-size: auto;
-  border-radius: 0.3em;
-}
-
-@media (min-width: 100ch) {
-  .message__meta .message__actions {
-    inset-block-start: inherit;
-    inset-inline-start: inherit;
-    position: inherit;
-    transform: inherit;
-  }
-}
-
+/* The floating action bar reveals as a unit on hover, keyboard focus within
+   the row, or while one of its popups is open. Visibility (inherited) is what
+   hides it — an opacity-only reveal would leave invisible floating buttons
+   hit-testable over the previous row. */
 @media (hover: hover) and (pointer: fine) {
-  .message__options-btn {
+  .message__meta .message__actions {
     opacity: 0;
-    transition: opacity 150ms ease-out;
+    pointer-events: none;
+    transition: opacity 150ms ease-out, visibility 150ms;
+    visibility: hidden;
   }
 
-  .message:hover .message__options-btn {
+  .message:is(:hover, :focus-within, :has([open])) .message__meta .message__actions {
     opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
   }
 }
 
+/* Touch keeps the one-menu model: no floating bar, no quick reactions —
+   Reply and the overflow stay in the meta row. */
 @media (hover: none) and (pointer: coarse) {
+  .message__quick-reaction,
+  .message__reply-label {
+    display: none;
+  }
+
   .message__options-btn {
     opacity: 0.5;
   }

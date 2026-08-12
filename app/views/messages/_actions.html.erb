@@ -5,23 +5,41 @@
 <% existing_thread = message.threads.find { |t| t.active? } if show_thread_actions %>
 
 <div class="message__actions" data-controller="soft-keyboard">
+  <%# Quick reactions surface in the bar on pointer devices; phones keep the
+      single overflow menu below, so these hide on coarse pointers. %>
+  <% EmojiHelper::REACTIONS.first(4).each do |character, title| %>
+    <%= form_with model: [ message, Boost.new ], class: "message__quick-reaction", data: { turbo_frame: dom_id(message, :boosting) } do |form| %>
+      <%= hidden_field_tag "boost[content]", character %>
+      <%= form.button type: "submit", title: title, class: "btn message__action-btn message__bar-btn", data: { emoji: character } do %>
+        <figure class="margin-none boost-character"><%= character %></figure>
+        <span class="for-screen-reader"><%= title %></span>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%= link_to new_message_boost_path(message),
+        class: "btn message__action-btn message__bar-btn message__boost-btn message__quick-reaction",
+        data: { turbo_frame: dom_id(message, :new_boost), action: "soft-keyboard#open" } do %>
+    <%= icon_tag "boost" %>
+    <span class="for-screen-reader">Boost this message</span>
+  <% end %>
+
   <% if show_thread_actions %>
-    <% if existing_thread %>
-      <%= link_to rooms_thread_path(existing_thread), class: "btn message__action-btn message__options-btn message__reply-btn", data: { turbo_frame: "thread_panel_frame" } do %>
-        <%= icon_tag "reply" %>
-        <span class="for-screen-reader">Reply</span>
-      <% end %>
-    <% else %>
-      <%= link_to new_rooms_thread_path(parent_message_id: message.id), class: "btn message__action-btn message__options-btn message__reply-btn", data: { turbo_frame: "thread_panel_frame" } do %>
-        <%= icon_tag "reply" %>
-        <span class="for-screen-reader">Reply</span>
-      <% end %>
+    <%# No for-screen-reader span here — combined with the icon it would trip
+        the circle-button treatment in buttons.css and stack the label. The
+        aria-label keeps the name when touch hides the visible label. %>
+    <%= link_to existing_thread ? rooms_thread_path(existing_thread) : new_rooms_thread_path(parent_message_id: message.id),
+          class: "btn message__action-btn message__bar-btn message__options-btn message__reply-btn",
+          aria: { label: "Reply" },
+          data: { turbo_frame: "thread_panel_frame" } do %>
+      <%= icon_tag "reply" %>
+      <span class="message__reply-label">Reply</span>
     <% end %>
   <% end %>
 
   <%= tag.details class: "position-relative",
       data: { controller: "popup", action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside", popup_orientation_top_class: "popup-orientation-top" } do %>
-    <summary class="btn message__action-btn message__options-btn options-btn">
+    <summary class="btn message__action-btn message__bar-btn message__options-btn options-btn">
       <%= icon_tag "menu-dots-horizontal" %>
       <span class="for-screen-reader">Message options</span>
     </summary>

@@ -6,7 +6,10 @@ require "application_system_test_case"
 class MessageRowTest < ApplicationSystemTestCase
   setup do
     sign_in "kevin@37signals.com"
-    join_room rooms(:designers)
+    # Navigate by sidebar click rather than join_room's visit — same reasoning
+    # as message_composer_test, it avoids the post-visit stream-source race.
+    click_on "Designers"
+    dismiss_pwa_install_prompt
   end
 
   test "consecutive messages from the same author group as a follow-on" do
@@ -22,6 +25,23 @@ class MessageRowTest < ApplicationSystemTestCase
 
     message.hover
     assert_message_actions_revealed message
+  end
+
+  test "keyboard focus inside a message reveals its actions" do
+    message = find(".message", text: "Third time's a charm.")
+    assert_message_actions_hidden message
+
+    message.find(".message__author").evaluate_script("this.focus()")
+    assert_message_actions_revealed message
+  end
+
+  test "a quick reaction from the action bar boosts the message" do
+    within_message messages(:third) do
+      find(".message__body-content").hover
+      find(".message__quick-reaction button[title='Thumbs up']").click
+
+      assert_selector ".boost", text: "👍"
+    end
   end
 
   private

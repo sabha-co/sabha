@@ -3,7 +3,7 @@
 <div class="message__actions" data-controller="soft-keyboard">
   <%= tag.details class: "position-relative",
       data: { controller: "popup", action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside", popup_orientation_top_class: "popup-orientation-top" } do %>
-    <summary class="btn message__action-btn message__options-btn options-btn">
+    <summary class="btn message__action-btn message__bar-btn message__options-btn options-btn">
       <%= icon_tag "menu-dots-horizontal" %>
       <span class="for-screen-reader">Message options</span>
     </summary>

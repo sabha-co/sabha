@@ -189,18 +189,18 @@
     animation: message-arrive 250ms cubic-bezier(0.25, 1, 0.5, 1) both;
   }
 
+  /* content-visibility:auto implies paint containment, which would clip the
+     floating action bar and the popup menus — lift it whenever either shows */
+  &:hover,
+  &:focus-within,
   &:has([open]) {
     content-visibility: visible;
     contain: none;
     z-index: 1;
+  }
 
-    [open] .message__options-btn {
-      opacity: 1;
-    }
-
-    [open] .popup-menu {
-      display: block;
-    }
+  &:has([open]) [open] .popup-menu {
+    display: block;
   }
 
   &:has(.boost-item) {
@@ -480,15 +480,6 @@
     flex: 1;
   }
 
-  .message__actions {
-    .message__options-btn {
-      --btn-padding: 0 0.5em;
-
-      aspect-ratio: unset;
-      block-size: auto;
-      border-radius: 0.3em;
-    }
-  }
 }
 
 .message__author {
@@ -670,6 +661,40 @@ img.message__attachment {
   justify-content: start;
 }
 
+/* The action bar: quick reactions, boost, Reply and the overflow menu. On
+   pointer devices it floats above the row's top-right corner (revealed on
+   hover/focus-within — see overrides.css); on touch it stays in the meta row
+   and collapses to Reply + overflow. */
+.message__meta .message__actions {
+  align-items: center;
+  column-gap: 2px;
+  flex-wrap: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .message__meta .message__actions {
+    background-color: var(--color-bg-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-pop);
+    inline-size: max-content; /* shrink-to-fit under-measures the flex row */
+    inset-block-start: -12px;
+    inset-inline-end: 0;
+    padding: 3px;
+    position: absolute;
+    z-index: 3;
+  }
+}
+
+.message__quick-reaction {
+  display: inline-flex;
+}
+
+.message__reply-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .message__action-btn {
   --btn-background: transparent;
   --btn-border-color: transparent;
@@ -697,9 +722,29 @@ img.message__attachment {
     --btn-padding: calc(var(--inline-space-half) / 2) var(--inline-space-half);
     --btn-border-radius: calc(var(--arrow-size) / 2 - var(--inline-space-half));
     --busy-inset: calc(var(--inline-space) * 1.5);
-  
+
     justify-content: start;
-  } 
+  }
+}
+
+/* Bar-level buttons: compact, content-sized (the 25% flex-basis above is for
+   the overflow menu context — a %-basis child also breaks the floating bar's
+   max-content measurement, so it must be neutralised here). */
+.message__bar-btn {
+  --btn-padding: 0.25em 0.5em;
+
+  aspect-ratio: unset;
+  block-size: auto;
+  border-radius: calc(var(--border-radius-md) - 3px);
+  flex-basis: auto;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  white-space: nowrap;
+
+  .boost-character {
+    font-size: 1.05rem;
+    line-height: 1.3;
+  }
 }
 
 .bookmark-indicator--active {
