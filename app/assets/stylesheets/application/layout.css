@@ -146,18 +146,24 @@ body {
   }
 }
 
-/* Thread panel: three-column grid when open (desktop only).
-   Split the non-sidebar space 50/50 between main and thread (was ~2:1).
-   --thread-width is the single source of truth so anything else that needs
-   to know the thread column's width (e.g. fixed nav offset) stays in sync. */
+/* Contextual right panel: three-column grid when open (desktop only).
+   Thread, room and profile panels read as a fixed 360px rail; a forum post
+   is a reading column, so it takes the wider 680 measure instead (clamped so
+   the main column survives on narrow desktops). --thread-width is the single
+   source of truth so anything else that needs the panel's width (e.g. the
+   fixed nav offset) stays in sync. */
 @media (min-width: 1024px) {
   body:has(#thread-panel:not([hidden])) {
-    --thread-width: calc((100vw - var(--sidebar-width)) / 2);
+    --thread-width: 360px;
 
     grid-template-areas:
       "sidebar nav nav"
       "sidebar main thread";
     grid-template-columns: var(--sidebar-width) 1fr var(--thread-width);
+  }
+
+  body:has(#thread-panel:not([hidden]) .forum-post-header) {
+    --thread-width: clamp(360px, 42vw, 680px);
   }
 
   body:has(#thread-panel:not([hidden])) #main-content {
