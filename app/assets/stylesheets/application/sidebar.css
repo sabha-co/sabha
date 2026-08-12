@@ -56,8 +56,38 @@
       display: none;
     }
 
+    /* The full room sections wait inside the expanded overlay, but the top of
+       the main Rooms list previews here as compact glyph rows so unread rooms
+       stay one glance away. Favorites, forums, DMs, section headers and stars
+       all collapse; the rows themselves are reused, so their live unread
+       badges keep updating. */
     .rooms {
+      gap: 2px;
+      padding-inline: 6px;
+    }
+
+    .rooms > *:not(.rail-rooms) {
       display: none;
+    }
+
+    .rail-rooms .room-row:nth-child(n+5),
+    .rail-rooms .room-row .star,
+    .rail-rooms .room__name,
+    .rail-rooms .muted-indicator {
+      display: none;
+    }
+
+    .rail-rooms .room {
+      --btn-padding: var(--space-row) 0;
+
+      justify-content: center;
+      position: relative;
+    }
+
+    .rail-rooms .notification-badge {
+      position: absolute;
+      inset-block-start: 2px;
+      inset-inline-end: 4px;
     }
 
     .sidebar__footer {

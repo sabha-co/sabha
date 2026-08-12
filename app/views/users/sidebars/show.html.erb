@@ -69,7 +69,7 @@
       </div>
       <div data-controller="sorted-list" <%= all_rooms_sort_order %>
            data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
-           class="flex position-relative flex-col rooms-list">
+           class="rail-rooms flex position-relative flex-col rooms-list">
         <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @shared_memberships %>
       </div>
 
