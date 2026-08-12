@@ -1,6 +1,6 @@
 # Plan: Sabha v2 redesign — Phase 2 (reskin + rebuild to handoff fidelity)
 
-**Status:** draft (review) · **Date:** 2026-08-12 · **Builds on:** Phase 1 (`redesign-v2`, Steps 1–6, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
+**Status:** in progress — WS0, WS1, WS6 built (2026-08-12); WS2–WS5 not started · **Date:** 2026-08-12 · **Builds on:** Phase 1 (`redesign-v2`, Steps 1–6, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
 
 > **What this is.** Phase 1 completed the designer's six-step build order **as a reskin** (plus sanctioned rebuilds: the shell/sidebar move, message-row scale, action bar, composer typing row, accent system, forums data section) and the token system was verified pixel-matching the spec. What the reskin discipline deferred is a **concrete, enumerable set** — the typeface, a handful of DOM/Stimulus rebuilds, responsive breakpoint work, and a cluster of data-shaped UX the designer's own scope ("routes/models/controllers/Turbo targets don't change — the DOM inside them does") parked. Phase 2 closes that gap so the running app matches the handoff's **look and interaction**, not just its tokens.
 
@@ -24,7 +24,39 @@ Single-line commits, no attribution; **nothing pushed / no PRs without explicit 
 
 ---
 
+## Build status (2026-08-12)
+
+WS0, WS1 and WS6 are **built** on `redesign-v2`; WS2–WS5 are **not started**. Every behavior rebuild landed tests-first; both suites stay green. The workstream sections below keep the original plan text — where implementation diverged, the divergence is recorded here.
+
+| WS | Status | Commits | Notes |
+|----|--------|---------|-------|
+| **WS0** Type | ✅ Built | `cf3eeab` | Instrument Sans **roman + italic** (real italics) + JetBrains Mono, variable wght 400–700, self-hosted with OFL licenses; all four mono sites → `--font-mono`; preload on both the app and session layouts. |
+| **WS1** Responsive | ✅ Built | `583c5b6` `81ead12` `9df1364` `2cafd2e` | See deviations below. |
+| **WS6** Auth | ✅ Built | `629c78b` `4c3cb31` `f35adc2` | Six-box OTP mirrors `OtpCode.sanitize`; in-card alerts across 5 session-layout views; "Send another" resend. Expired view — see deviation. |
+| **WS2** Panel | ⏳ Not started | — | Highest structural risk; planned last. Now also carries the reading column (see WS1). |
+| **WS3** Reactions | ⏳ Not started | — | Reskin-only (P2-3). |
+| **WS4** Inbox data | ⏳ Not started | — | |
+| **WS5** States | ⏳ Not started | — | |
+
+**WS1 deviations from the plan text:**
+- **`120ch` → `1024px`, uniformly (not "1024/1280").** Instrument Sans makes `120ch` resolve to ~1279px (vs ~1024 in the old system font), so the WS0 font swap had shifted every content breakpoint ~250px. All 36 sites map to **1024px** — restoring pre-WS0 behavior and matching the handoff's "tablet landscape" breakpoint. The dock stays at the existing px `1280`.
+- **Header-drops are moot.** The current room header (`rooms/show/_nav`) has no member-pill, topic line, or standalone bell — those are handoff elements the app hasn't built. Not fabricated (building them = net-new).
+- **Mini-composer was mostly already built.** The format bar already sits behind `composer#toggleToolbar` — no new Stimulus controller needed. The only real gap, and the only change, was **44px phone tap targets** (`<500px`).
+- **Reading column `680/560` moved to WS2.** It needs the 360px-thread-vs-wide-post split WS2 builds (a 680 column can't live in a 360 panel).
+- **Deferred, small:** member role "collapse into row" (shared `rooms/threads/_user`); reply-button 40/28 tap target.
+- **Built:** forum width-steps (`.forum-card__stack` faces `<1024`, `.forum-filter__sort` `<500`, post title 21px `<500`); rail rooms (first 4 of the main Rooms list as compact glyph rows in the 1024–1279 rail, reusing the live-updating rows via a `.rail-rooms` hook + `.room__glyph`/`.room__name` split).
+
+**WS6 deviation — the expired-link view was not built.** Expired/invalid redirects to the code screen, where the in-card alert ("Invalid or expired token") + the "Send another" resend form a recovery loop. A dedicated view would need an expired-vs-invalid distinction (`AuthToken.lookup` returns `nil` for both) plus new routing — net-new, and a worse experience than the resend loop.
+
+**Pre-existing bugs found while testing, fixed separately (not Phase 2 scope):**
+- `25daea4` — the contrast sidebar footer had no visible bottom bar: under `data-contrast`, `--color-bg-sunk` collapses onto `--color-bg`, so the footer's sunk background vanished. Added a hairline.
+- `2e8c9d8` — `Account#join_code` returned `nil` for fixture/seed-created accounts (the `after_create` backfill callback doesn't fire for those), crashing the About page's invite partial. `join_code` now self-heals by backfilling the global code.
+
+---
+
 ## WS0 — Type system (foundation; lands first, like tokens did in Phase 1)
+
+> **✅ Built** (`cf3eeab`). Shipped with roman + italic faces and all four mono sites repointed — see Build status.
 
 **Why first:** flipping the face ripples to every surface; do it before per-component polish so nothing is sized twice.
 
@@ -37,6 +69,8 @@ Single-line commits, no attribution; **nothing pushed / no PRs without explicit 
 - **Verify:** light+dark screenshots across surfaces; no behavior tests.
 
 ## WS1 — Responsive completion (breakpoint unification, rail rows, mobile composer)
+
+> **✅ Built.** Deviations from the text below are in Build status: breakpoints unified to `1024px` (not 1024/1280), header-drops moot, mini-composer = tap targets only, reading column → WS2.
 
 The breakpoint machine is **split**: Phase 1 put the *sidebar* on pixel breakpoints but left thread/composer/content on the legacy `120ch`. Unify, then finish the per-width rules.
 
@@ -81,6 +115,8 @@ Both Activity and Threads inboxes render **raw message rows** via `search_result
 
 ## WS6 — Auth completion
 
+> **✅ Built.** Six-box OTP, in-card alerts, "Send another" resend. The expired-link view was handled via the recovery loop instead of a dedicated view — see Build status.
+
 - **Six-box OTP input (REBUILD, headline):** replace the single `.input--otp` (`auth.css:274-281`, `app/views/sessions/_code_field.html.erb`) with six discrete cells + a Stimulus controller: per-cell focus-advance/backspace, **paste-split across all six**, display normalization (upper-case, O→0, I/L→1, strip spaces/dashes) writing into a hidden concatenated `code` field; active cell gets the accent highlight. Server still receives one `code` param — no controller change.
 - **In-card alerts (RESKIN):** move the flash render **into** the card on the session-layout pages (from the floating pill, `app/views/layouts/session.html.erb:35-47`); add the amber `alert` tone to `.auth-card__alert` (today neg + positive only).
 - **Code screen (RESKIN):** "Didn't get it? **Send another**" resend + the mode-unavailable copy when `AUTH_METHOD≠otp` (`app/views/auth_tokens/validations/new.html.erb:23-25`).
@@ -100,7 +136,7 @@ Mirror the designer's build order (as Phase 1 did), each workstream shippable on
 5. **WS4 Inbox data** — isolated query work.
 6. **WS2 Contextual panel** — highest structural risk; its own careful series, once the rest is stable.
 
-Each workstream = one commit or a small bisectable series. **Confirm before starting:** whether Phase 2 continues on `redesign-v2` or lands after Phase 1 merges.
+Each workstream = one commit or a small bisectable series. **Resolved:** Phase 2 is continuing on `redesign-v2` (still unpushed, no PR). Actual order so far: WS0 → WS1 → WS6 (WS1 pulled ahead of WS6 to close the WS0 `ch`-coupling promptly).
 
 ## Verification
 
