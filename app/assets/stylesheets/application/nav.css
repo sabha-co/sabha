@@ -83,6 +83,30 @@
   color: white;
 }
 
+/* Live connection-lost strip — hidden until the socket drops
+   (connection_status_controller). Tinted amber, matching the States comp. */
+.connection-banner {
+  align-items: center;
+  background: color-mix(in oklch, var(--color-alert) 8%, var(--color-bg));
+  border-block-end: 1px solid color-mix(in oklch, var(--color-alert) 35%, transparent);
+  color: var(--color-alert);
+  display: none;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  text-align: center;
+}
+
+.connection-banner--visible {
+  display: flex;
+}
+
+.connection-banner__spinner {
+  flex-shrink: 0;
+}
+
 .skip-navigation {
   --left-offset: -999em;
 

@@ -1,0 +1,8 @@
+<%# Live connection-lost strip. Hidden until HeartbeatChannel reports the socket
+    dropped; the app keeps working read-only while it reconnects. %>
+<div class="connection-banner" role="status" aria-live="polite"
+     data-controller="connection-status"
+     data-connection-status-visible-class="connection-banner--visible">
+  <span class="busy connection-banner__spinner" aria-hidden="true"></span>
+  <span>Reconnecting — new messages will appear when the connection returns.</span>
+</div>

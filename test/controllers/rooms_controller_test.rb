@@ -15,6 +15,14 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "the app layout mounts the connection-lost banner, hidden until the socket drops" do
+    get room_url(users(:david).rooms.last)
+
+    assert_response :success
+    assert_select ".connection-banner[data-controller=?]", "connection-status"
+    assert_select ".connection-banner.connection-banner--visible", false
+  end
+
   test "composer carries the @everyone confirm threshold, member count, and cap flag" do
     room = rooms(:pets)
 
