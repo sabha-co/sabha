@@ -1,6 +1,6 @@
 /* Workspace selector sidebar — always-dark strip (Discord/Slack-style).
    Colors are intentionally fixed (don't swap with light/dark mode).
-   References app tokens where possible (--lch-always-black, --color-lch-blue). */
+   References app tokens where possible (--lch-always-black, --color-accent-brand). */
 
 :root {
   --workspace-selector-width: 4.5rem;
@@ -10,7 +10,7 @@
   --workspace-selector-bg: oklch(17% 0 0);
   --workspace-selector-icon-bg: oklch(32% 0 0);
   --workspace-selector-icon-bg-hover: oklch(42% 0 0);
-  --workspace-selector-icon-bg-active: var(--color-lch-blue);
+  --workspace-selector-icon-bg-active: var(--color-accent-brand);
   --workspace-selector-text: oklch(92% 0 0);
   --workspace-selector-text-active: oklch(100% 0 0);
   --workspace-selector-border: oklch(22% 0 0);
@@ -99,7 +99,7 @@
 }
 
 .workspace-selector__home--active {
-  background: var(--color-lch-blue);
+  background: var(--color-accent-brand);
   color: var(--workspace-selector-text-active);
 }
 
@@ -372,15 +372,15 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--color-lch-green);
+  background: var(--color-positive);
   opacity: 0;
   transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: inherit;
 }
 
 .workspace-selector__add:hover {
-  border-color: var(--color-lch-green);
-  color: var(--color-lch-white);
+  border-color: var(--color-positive);
+  color: var(--color-text-reversed);
   border-radius: 1rem;
   border-style: solid;
   transform: translateX(2px) scale(1.05);
@@ -416,7 +416,7 @@
   justify-content: center;
   font-weight: 600;
   font-size: 1rem;
-  color: var(--color-lch-white);
+  color: var(--color-text-reversed);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -989,7 +989,7 @@
 .workspace-selector__add:focus-visible,
 .workspace-selector__home:focus-visible,
 .workspace-selector__profile:focus-visible {
-  outline: 2px solid var(--color-lch-blue);
+  outline: 2px solid var(--color-accent-brand);
   outline-offset: 2px;
 }
 

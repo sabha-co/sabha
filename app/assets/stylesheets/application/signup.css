@@ -3,7 +3,7 @@
   --nametag-padding: var(--block-space-double);
   --nametag-border-size: 1px;
 
-  background-color: var(--color-message-bg);
+  background-color: var(--color-bg-sunk);
   border-radius: var(--fieldset-border-radius, 1em);
   border: var(--nametag-border-size) solid var(--fieldset-border-color);
   box-shadow: 0 0 1em oklch(var(--lch-black) / 0.2);

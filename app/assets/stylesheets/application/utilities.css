@@ -6,6 +6,19 @@
   --block-space: 1rem;
   --block-space-half: calc(var(--block-space) / 2);
   --block-space-double: calc(var(--block-space) * 2);
+
+  /* Density: vertical rhythm for repeated rows (comfortable values) */
+  --space-row: 9px;
+  --space-msg: 15px;
+
+  /* Corner radius scale. Named --border-radius-* rather than --radius-*
+     because Tailwind's rounded-* utilities resolve var(--radius-sm/md/lg)
+     from its default theme — reusing those names would rebind every
+     rounded-* call site. */
+  --border-radius-sm: 6px;
+  --border-radius-md: 9px;
+  --border-radius-lg: 12px;
+  --border-radius-pill: 999px;
 }
 
 /* Text */

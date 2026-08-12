@@ -57,7 +57,7 @@
   align-items: start;
   padding: 0.875rem 1rem;
   border-radius: 0.66em;
-  background-color: var(--color-message-bg);
+  background-color: var(--color-bg-sunk);
   text-decoration: none;
   color: inherit;
   transition: background-color 150ms ease-out;

@@ -72,6 +72,13 @@ Order follows the README (tokens first, or every component is built twice). **PR
 
 **PR 1 (foundation):** the token consolidation + accent scaffold — colour-only, lands first and alone.
 
+**As built (2026-08-12, on `redesign-v2`):** four deviations discovered during implementation, all verified against the code:
+- **Radius tokens landed as `--border-radius-sm/md/lg/pill`, not `--radius-*`.** Tailwind's `rounded-lg` utility compiles to `border-radius: var(--radius-lg)` and 12 auth/marketing views use it — declaring the v2 names unlayered in `colors.css` would have silently rebound those cards from 8px to 12px. Steps 2–6 should consume the `--border-radius-*` names. Density (`--space-row`/`--space-msg`) and radius live in `utilities.css` beside the existing spacing tokens; elevation (`--shadow-raise/pop/overlay`) lives in `colors.css`.
+- **The code-syntax palette was dead — deleted, not thinned.** `--color-keyword`/`--color-entity`/`--color-markup-*` etc. (4 declaration blocks) have zero consumers anywhere (CSS, ERB, JS); removed outright with the shadcn aliases.
+- **One retirement caller the audit missed:** `saas/app/assets/stylesheets/workspace_selector.css` read the Tailwind-emitted `--color-lch-blue/green/white` literals; migrated to `--color-accent-brand`/`--color-positive`/`--color-text-reversed`.
+- **SaaS static pages: deferred (owner call, 2026-08-12 — keep the marketing side as is for now).** The 5 static pages render under the `marketing` layout, which loads `marketing/*.css` (its own `--text-primary` world), not `application/colors.css` — so the app-token retirements can't break them, and their undefined `var(--color-text-primary, #111)` keeps rendering at its fallback exactly as before. When marketing is revisited, the fix is marketing's own `var(--text-primary)`, not an app token.
+- Dark values are declared once as `--dark-lch-*` primitives in `colors.css`; the media-query and `[data-theme="dark"]` scopes only bind them, and the accent dark story is pure primitive rebinding (`--lch-accent-bg: var(--lch-accent-lift) / 0.15`), so `bg-selected`-style utilities stay dark-correct with no semantic re-derivation. All five accents were exercised in light + dark via a throwaway screenshot harness (JS-set `data-accent`) — no committed toggle was needed; forest/rust lifts read clearly on the dark ground.
+
 ---
 
 ### Step 2 — Shell & sidebar (the biggest structural move)

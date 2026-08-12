@@ -248,7 +248,7 @@
   time,
   span {
     padding: 0.66em 2.33ch;
-    background-color: var(--color-message-bg);
+    background-color: var(--color-bg-sunk);
     border-radius: 3em;
   }
 
@@ -264,7 +264,7 @@
   margin-block: var(--message-space);
 
   span {
-    background-color: var(--color-message-bg);
+    background-color: var(--color-bg-sunk);
   }
   
   &:first-of-type {
@@ -290,12 +290,12 @@
 
   time,
   span {
-    background-color: var(--color-message-bg);
+    background-color: var(--color-bg-sunk);
   }
 
   &::after,
   &::before {
-    border-top: 2px solid var(--color-message-bg);
+    border-top: 2px solid var(--color-border);
   }
 
   .message--first-of-day & {
@@ -323,12 +323,12 @@
   visibility: visible;
 
   span {
-    background-color: var(--color-message-bg);
+    background-color: var(--color-bg-sunk);
   }
 
   &::after,
   &::before {
-    border-top: 2px solid var(--color-message-bg);
+    border-top: 2px solid var(--color-border);
   }
 }
 
@@ -364,12 +364,12 @@
 
   span {
     background-color: transparent;
-    color: var(--color-contrast);
+    color: var(--color-accent-brand);
   }
 
   &::after,
   &::before {
-    border-top: 2px solid var(--color-contrast);
+    border-top: 2px solid var(--color-accent-brand);
   }
 
   .message:first-child & {
@@ -570,7 +570,7 @@
 
     @media (any-hover: hover) {
       &:where(:not(:active):hover) {
-        background-color: var(--color-message-bg);
+        background-color: var(--color-bg-hover);
         border-color: var(--color-border-darker);
       }
     }
@@ -606,7 +606,7 @@
 }
 
 .message__body-content {
-  background-color: var(--message-background, var(--color-message-bg));
+  background-color: var(--message-background, var(--color-bg-sunk));
   border-radius: 0.66em;
   color: var(--message-color, var(--color-text));
   font-weight: 400;

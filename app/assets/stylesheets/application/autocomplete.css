@@ -172,7 +172,7 @@ suggestion-option {
   --avatar-size: var(--inline-space-double);
 
   align-items: center;
-  background-color: var(--color-message-bg);
+  background-color: var(--color-bg-sunk);
   border-radius: var(--btn-border-radius, 2em);
   color: currentColor;
   display: inline-flex;

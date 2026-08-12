@@ -1,59 +1,183 @@
+/* Design tokens — the single place color values are declared.
+   Three layers: primitives (--lch-*) hold raw OKLCH triples; the semantic
+   layer (--color-*) is the only one components read; scopes (dark mode,
+   [data-accent], the contrast sidebar) rebind primitives locally. The
+   Tailwind entrypoint re-exposes the semantic names to utilities but
+   declares no values of its own. */
+
 :root {
-  /* Named color values */
+  color-scheme: light dark;
+
+  /* Primitives — light values */
   --lch-black: 0% 0 0;
   --lch-white: 100% 0 0;
-  --lch-gray: 96% 0.005 96;
-  --lch-gray-dark: 92% 0.005 96;
+  --lch-always-black: 0% 0 0;
   --lch-gray-darker: 75% 0.005 96;
   --lch-gray-darkest: 65% 0.005 96;
-  --lch-almost-black: 35% 0.005 96;
-  --lch-blue: 54% 0.23 255;
-  --lch-blue-light: 95% 0.03 255;
-  --lch-blue-dark: 80% 0.08 255;
-  --lch-orange: 70% 0.2 44;
-  --lch-red: 51% 0.2 31;
-  --lch-red-light: 98% 0.08 22;
-  --lch-green: 65.59% 0.234 142.49;
-  --lch-purple: 50% 0.18 282;
-  --lch-always-black: 0% 0 0;
 
-  /* Abstractions */
-  --color-negative: oklch(var(--lch-red));
-  --color-positive: oklch(var(--lch-green));
+  --lch-ink: 20.4% 0.007 258;
+  --lch-ink-1: 33.9% 0.014 257;
+  --lch-ink-2: 50.4% 0.018 257;
+  --lch-ink-3: 70.3% 0.018 256;
+  --lch-line: 93.4% 0.006 265;
+  --lch-line-2: 95.8% 0.004 271;
+  --lch-raise: 100% 0 0;
+  --lch-sunk: 98.5% 0.001 286;
+  --lch-hover: 97.6% 0.003 265;
+  --lch-control: 73% 0.005 96;
+
+  --lch-green: 57.4% 0.135 155;
+  --lch-red: 57% 0.168 26;
+  --lch-red-light: 98% 0.08 22;
+  --lch-orange: 61% 0.129 70;
+
+  /* Primitives — dark values, declared once. The two dark scopes at the
+     bottom of this file only bind them, so the auto (media query) and
+     explicit ([data-theme="dark"]) paths can never drift apart. */
+  --dark-lch-black: 100% 0 0;
+  --dark-lch-white: 19.6% 0.008 274;
+  --dark-lch-gray-darker: 44.95% 0 0;
+  --dark-lch-gray-darkest: 64.95% 0 0;
+  --dark-lch-ink: 95.2% 0.006 265;
+  --dark-lch-ink-1: 87.5% 0.011 262;
+  --dark-lch-ink-2: 70.3% 0.018 256;
+  --dark-lch-ink-3: 55.3% 0.019 259;
+  --dark-lch-line: 28.6% 0.013 273;
+  --dark-lch-line-2: 25.7% 0.012 271;
+  --dark-lch-raise: 23.1% 0.010 268;
+  --dark-lch-sunk: 21% 0.010 277;
+  --dark-lch-hover: 24.8% 0.012 271;
+  --dark-lch-control: 40% 0 0;
+  --dark-lch-green: 75% 0.145 158;
+  --dark-lch-red: 68.7% 0.140 24;
+  --dark-lch-red-light: 28% 0.05 20;
+  --dark-lch-orange: 74.9% 0.123 78;
+
+  /* Semantic — the only layer components read */
   --color-bg: oklch(var(--lch-white));
+  --color-bg-raised: oklch(var(--lch-raise));
+  --color-bg-sunk: oklch(var(--lch-sunk));
+  --color-bg-hover: oklch(var(--lch-hover));
   --color-bg-negative: oklch(var(--lch-red-light));
-  --color-message-bg: oklch(var(--lch-gray));
-  --color-text: oklch(var(--lch-black));
-  --color-text-lighter: oklch(var(--lch-almost-black));
+
+  --color-text: oklch(var(--lch-ink));
+  --color-text-lighter: oklch(var(--lch-ink-1));
+  --color-text-muted: oklch(var(--lch-ink-2));
+  /* Subtle clears 3:1 contrast but not 4.5:1 — decorative meta only
+     (timestamps, counts, section labels); load-bearing text uses muted. */
+  --color-text-subtle: oklch(var(--lch-ink-3));
   --color-text-reversed: oklch(var(--lch-white));
-  --color-link: oklch(var(--lch-blue));
-  --color-border: oklch(var(--lch-gray));
-  --color-border-dark: oklch(var(--lch-gray-dark));
+
+  --color-border: oklch(var(--lch-line-2));
+  --color-border-dark: oklch(var(--lch-line));
   --color-border-darker: oklch(var(--lch-gray-darker));
   --color-border-darkest: oklch(var(--lch-gray-darkest));
-  --color-selected: oklch(var(--lch-blue-light));
-  --color-selected-dark: oklch(var(--lch-blue-dark));
-  --color-alert: oklch(var(--lch-orange));
-  --color-contrast: oklch(var(--lch-purple));
+  --control-border: oklch(var(--lch-control));
 
+  --color-accent-brand: oklch(var(--lch-accent));
+  --color-link: var(--color-accent-brand);
+  --color-selected: oklch(var(--lch-accent-bg));
+  --color-selected-dark: oklch(var(--lch-accent-bd));
+
+  --color-negative: oklch(var(--lch-red));
+  --color-positive: oklch(var(--lch-green));
+  --color-alert: oklch(var(--lch-orange));
+
+  /* Elevation */
+  --shadow-raise: 0 1px 2px oklch(var(--lch-always-black) / 0.04);
+  --shadow-pop: 0 3px 12px oklch(var(--lch-always-black) / 0.1);
+  --shadow-overlay: 0 12px 40px oklch(var(--lch-always-black) / 0.28);
 }
 
-/* Dark mode for "auto" theme (no explicit data-theme set) */
-:root:not([data-theme]) {
-  @media (prefers-color-scheme: dark) {
-    --lch-black: 100% 0 0;
-    --lch-white: 0% 0 0;
-    --lch-gray: 25.2% 0 0;
-    --lch-gray-dark: 30.12% 0 0;
-    --lch-gray-darker: 44.95% 0 0;
-    --lch-gray-darkest: 64.95% 0 0;
-    --lch-almost-black: 85% 0 0;
-    --lch-blue: 72.25% 0.16 248;
-    --lch-blue-light: 28.11% 0.053 248;
-    --lch-blue-dark: 42.25% 0.07 248;
-    --lch-red: 73.8% 0.184 29.18;
-    --lch-red-light: 28% 0.05 20;
-    --lch-green: 75% 0.21 141.89;
-    --lch-purple: 72% 0.18 282;
+/* Accent scopes — one selectable hue per workspace; indigo is the default.
+   Each block carries the light triple plus the lift used on dark grounds.
+   Selection tints derive from the lift in dark mode (see the dark scopes),
+   so a new accent only ever needs these four values. */
+:root,
+:root[data-accent="indigo"] {
+  --lch-accent: 51.9% 0.202 276;
+  --lch-accent-bg: 95.5% 0.019 283;
+  --lch-accent-bd: 89.5% 0.045 284;
+  --lch-accent-lift: 65.8% 0.159 280;
+}
+
+:root[data-accent="ink"] {
+  --lch-accent: 32.9% 0.025 266;
+  --lch-accent-bg: 94.9% 0.004 271;
+  --lch-accent-bd: 88.8% 0.010 267;
+  --lch-accent-lift: 77.5% 0.024 264;
+}
+
+:root[data-accent="forest"] {
+  --lch-accent: 48.6% 0.090 165;
+  --lch-accent-bg: 95.2% 0.013 167;
+  --lch-accent-bd: 88.5% 0.030 170;
+  --lch-accent-lift: 73.5% 0.109 164;
+}
+
+:root[data-accent="rust"] {
+  --lch-accent: 52.4% 0.130 41;
+  --lch-accent-bg: 95.3% 0.014 46;
+  --lch-accent-bd: 88.1% 0.032 45;
+  --lch-accent-lift: 71.5% 0.114 45;
+}
+
+:root[data-accent="plum"] {
+  --lch-accent: 47.7% 0.138 317;
+  --lch-accent-bg: 94.9% 0.017 317;
+  --lch-accent-bd: 87.4% 0.044 318;
+  --lch-accent-lift: 71.8% 0.110 317;
+}
+
+/* Dark scopes — bind the --dark-* primitives declared above. Keep the two
+   blocks identical; values belong in the --dark-* declarations, never here.
+   These come after the accent scopes so the accent lift wins on dark. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --lch-black: var(--dark-lch-black);
+    --lch-white: var(--dark-lch-white);
+    --lch-gray-darker: var(--dark-lch-gray-darker);
+    --lch-gray-darkest: var(--dark-lch-gray-darkest);
+    --lch-ink: var(--dark-lch-ink);
+    --lch-ink-1: var(--dark-lch-ink-1);
+    --lch-ink-2: var(--dark-lch-ink-2);
+    --lch-ink-3: var(--dark-lch-ink-3);
+    --lch-line: var(--dark-lch-line);
+    --lch-line-2: var(--dark-lch-line-2);
+    --lch-raise: var(--dark-lch-raise);
+    --lch-sunk: var(--dark-lch-sunk);
+    --lch-hover: var(--dark-lch-hover);
+    --lch-control: var(--dark-lch-control);
+    --lch-green: var(--dark-lch-green);
+    --lch-red: var(--dark-lch-red);
+    --lch-red-light: var(--dark-lch-red-light);
+    --lch-orange: var(--dark-lch-orange);
+    --lch-accent: var(--lch-accent-lift);
+    --lch-accent-bg: var(--lch-accent-lift) / 0.15;
+    --lch-accent-bd: var(--lch-accent-lift) / 0.34;
   }
+}
+
+:root[data-theme="dark"] {
+  --lch-black: var(--dark-lch-black);
+  --lch-white: var(--dark-lch-white);
+  --lch-gray-darker: var(--dark-lch-gray-darker);
+  --lch-gray-darkest: var(--dark-lch-gray-darkest);
+  --lch-ink: var(--dark-lch-ink);
+  --lch-ink-1: var(--dark-lch-ink-1);
+  --lch-ink-2: var(--dark-lch-ink-2);
+  --lch-ink-3: var(--dark-lch-ink-3);
+  --lch-line: var(--dark-lch-line);
+  --lch-line-2: var(--dark-lch-line-2);
+  --lch-raise: var(--dark-lch-raise);
+  --lch-sunk: var(--dark-lch-sunk);
+  --lch-hover: var(--dark-lch-hover);
+  --lch-control: var(--dark-lch-control);
+  --lch-green: var(--dark-lch-green);
+  --lch-red: var(--dark-lch-red);
+  --lch-red-light: var(--dark-lch-red-light);
+  --lch-orange: var(--dark-lch-orange);
+  --lch-accent: var(--lch-accent-lift);
+  --lch-accent-bg: var(--lch-accent-lift) / 0.15;
+  --lch-accent-bd: var(--lch-accent-lift) / 0.34;
 }

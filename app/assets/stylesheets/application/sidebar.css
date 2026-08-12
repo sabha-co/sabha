@@ -764,7 +764,7 @@
   align-items: start;
   padding: 0.875rem 1rem;
   border-radius: 0.66em;
-  background-color: var(--color-message-bg);
+  background-color: var(--color-bg-sunk);
   text-decoration: none;
   color: inherit;
   transition: background-color 150ms ease-out;
@@ -871,4 +871,21 @@
   border-radius: 50%;
   flex-shrink: 0;
   animation: badge-in 200ms cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+/* Contrast treatment — a scope, not a theme: rebinds the semantic tokens
+   inside the sidebar only, so it reads dark in both light and dark modes.
+   Dormant until the shell sets data-contrast on #sidebar. */
+#sidebar[data-contrast="true"] {
+  --color-bg: oklch(21% 0.010 277);
+  --color-bg-raised: oklch(24% 0.012 271);
+  --color-bg-sunk: oklch(21% 0.010 277);
+  --color-bg-hover: oklch(26.5% 0.013 273);
+  --color-text: oklch(100% 0 0);
+  --color-text-lighter: oklch(92.7% 0.009 265);
+  --color-text-muted: oklch(73% 0.017 263);
+  --color-text-subtle: oklch(57.2% 0.020 264);
+  --color-border-dark: oklch(28.2% 0.013 273);
+  --color-selected: oklch(100% 0 0 / 0.10);
+  --color-accent-brand: oklch(72% 0.14 280);
 }
