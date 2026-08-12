@@ -118,13 +118,6 @@
   justify-content: end;
 }
 
-@media (min-width: 100ch) {
-  .message--me .message__actions {
-    inset-inline-end: auto;
-    inset-inline-start: auto;
-  }
-}
-
 .message--emoji:not(:has(.composer--edit)).message--me .message__body-content {
   padding: var(--content-padding-block) 0 var(--content-padding-block)
     var(--content-padding-inline);
