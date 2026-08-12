@@ -182,12 +182,27 @@
 }
 
 .forum-avatar { border-radius: 25%; object-fit: cover; flex: none; }
-.forum-card__stack { align-items: center; }
+.forum-card__stack {
+  align-items: center;
+
+  /* Participant faces are a desktop affordance; below tablet-landscape the row
+     keeps just the reply count, which never leaves. */
+  @media (max-width: 1023.9px) {
+    display: none;
+  }
+}
 .forum-card__stack .forum-card__stack-avatar { box-shadow: 0 0 0 2px var(--color-bg); }
 .forum-card__stack .forum-card__stack-avatar + .forum-card__stack-avatar { margin-inline-start: -6px; }
 
 /* --- filter bar (uses the shared .segmented-control from patterns.css) --- */
 .forum-filter { row-gap: 0.5rem; }
+
+/* The sort control drops on phones; the Solved filter stays. */
+.forum-filter__sort {
+  @media (max-width: 499.9px) {
+    display: none;
+  }
+}
 
 /* --- post header (shared by panel + standalone page) ----------------- */
 /* A muted glyph anchors the question as a hero above the title. */
@@ -219,6 +234,11 @@
   line-height: 1.25;
   letter-spacing: -0.025em;
   color: var(--color-text);
+
+  /* Tighter title on phones. */
+  @media (max-width: 499.9px) {
+    font-size: 1.3125rem;
+  }
 }
 
 /* The title frame hugs the title in display mode (so the Solved badge stays
