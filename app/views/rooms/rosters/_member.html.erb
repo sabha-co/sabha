@@ -1,0 +1,13 @@
+<%# locals: (user:, status:) %>
+<li class="roster__row">
+  <%= link_to user_path(user), class: "roster__link", title: user.title, data: { turbo_frame: "_top" } do %>
+    <span class="roster__avatar">
+      <span class="status-dot status-dot--roster <%= "status--#{status}" %>" aria-hidden="true"></span>
+      <figure class="avatar" style="--avatar-size: 30px;">
+        <%= avatar_image_tag(user, alt: "") %>
+      </figure>
+    </span>
+    <span class="roster__name"><%= user.name %></span>
+    <%= render "users/role_badge", user: user %>
+  <% end %>
+</li>

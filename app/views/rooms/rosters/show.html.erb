@@ -1,0 +1,46 @@
+<%= turbo_frame_tag "thread_panel_frame" do %>
+  <div class="thread-panel__header">
+    <h2 class="thread-panel__title">
+      <span class="thread-panel__name"><%= room_type_indicator(@room) %> <%= room_display_name(@room) %></span>
+      <span class="thread-panel__room thread-panel__room--plain"><%= pluralize(@room.active_member_count, "member") %></span>
+    </h2>
+
+    <%= link_to edit_room_path(@room), class: "btn thread-panel__follow", data: { turbo_frame: "_top" } do %>
+      <%= icon_tag "gear" %> Settings
+    <% end %>
+
+    <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close room info">&times;</button>
+  </div>
+
+  <div class="roster">
+    <% if @room.description.present? %>
+      <p class="roster__topic"><%= @room.description %></p>
+    <% end %>
+
+    <% if @roster.any_present? %>
+      <% if @roster.here_now.any? %>
+        <section class="roster__section">
+          <h3 class="roster__label">Here now <span class="roster__count"><%= @roster.here_now.size %></span></h3>
+          <menu class="roster__list">
+            <%= render partial: "rooms/rosters/member", collection: @roster.here_now, as: :user, locals: { status: "active" } %>
+          </menu>
+        </section>
+      <% end %>
+
+      <% if @roster.away.any? %>
+        <section class="roster__section">
+          <h3 class="roster__label">Away <span class="roster__count"><%= @roster.away.size %></span></h3>
+          <menu class="roster__list">
+            <%= render partial: "rooms/rosters/member", collection: @roster.away, as: :user, locals: { status: "away" } %>
+          </menu>
+        </section>
+      <% end %>
+    <% else %>
+      <p class="roster__empty">No one's here right now.</p>
+    <% end %>
+
+    <%= link_to room_members_path(@room), class: "btn full-width roster__all", data: { turbo_frame: "_top" } do %>
+      View all <%= pluralize(@room.active_member_count, "member") %>
+    <% end %>
+  </div>
+<% end %>

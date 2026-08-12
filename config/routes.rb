@@ -179,6 +179,7 @@ Rails.application.routes.draw do
       end
       resource :star, only: %i[ create destroy ]
       resource :membership, only: %i[ create destroy ]
+      resource :roster, only: :show
       resources :members, only: %i[ index create destroy ]
       resource :access, only: :update, controller: "access"
     end

@@ -5,13 +5,13 @@ module RoomsHelper
     }.merge(attributes.delete(:data) || {}), &
   end
 
-  def link_to_edit_room(room)
+  def link_to_room_roster(room)
     count = room.active_member_count
     link_to \
-      edit_room_path(room),
+      room_roster_path(room),
       class: "btn",
-      style: "view-transition-name: edit-room-#{room.id}",
-      data: { room_id: room.id } do
+      aria: { label: "Who's in #{room_display_name(room)}" },
+      data: { turbo_frame: "thread_panel_frame", room_id: room.id } do
         image_tag("person.svg", aria: { hidden: "true" }) +
         tag.span(number_with_delimiter(count), class: "hide-on-mobile") +
         tag.span(round_for_mobile(count), class: "hide-on-desktop")

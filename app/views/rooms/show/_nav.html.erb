@@ -22,7 +22,7 @@
   <% end %>
 
   <% unless room.thread? %>
-    <%= link_to_edit_room(room) %>
+    <%= link_to_room_roster(room) %>
   <% end %>
 
   <% unless hotwire_native_app? %>

@@ -156,6 +156,110 @@
   border-block-start: 1px solid var(--color-border);
 }
 
+/* A plain subtitle (member count) where the thread panel shows an accent room
+   link — same slot, no affordance. */
+.thread-panel__room--plain {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* Room roster panel: the contextual room info that opens from the header member
+   count — here-now / away sections of avatar rows over a "View all" footer. */
+.roster {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow-y: auto;
+  padding: var(--block-space-half) var(--inline-space) var(--block-space);
+}
+
+.roster__topic {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0 0 var(--block-space-half);
+}
+
+.roster__section {
+  margin-block-start: var(--block-space-half);
+}
+
+.roster__label {
+  align-items: baseline;
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  gap: 6px;
+  letter-spacing: 0.07em;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.roster__count {
+  color: var(--color-text-subtle);
+  font-weight: 500;
+}
+
+.roster__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+.roster__row {
+  margin: 0;
+}
+
+.roster__link {
+  align-items: center;
+  border-radius: 8px;
+  color: var(--color-text);
+  display: flex;
+  gap: 10px;
+  padding: 6px 8px;
+  text-decoration: none;
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: var(--color-bg-hover);
+    }
+  }
+}
+
+.roster__avatar {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.status-dot--roster {
+  border: 2px solid var(--color-bg);
+  height: 11px;
+  inset-block-end: -1px;
+  inset-inline-end: -1px;
+  position: absolute;
+  width: 11px;
+}
+
+.roster__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster__empty {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  padding-block: var(--block-space);
+  text-align: center;
+}
+
+.roster__all {
+  margin-block-start: var(--block-space);
+}
+
 /* Panel rows sit tighter than the main stream: 32px avatars, one step down
    on body type (forum opening posts keep their 36px hero treatment) */
 #thread-panel .message:not(.message--forum-opening) {
