@@ -41,7 +41,9 @@
         <% end %>
 
         <% if search_path %>
-          <%= link_to search_path, class: "btn btn--borderless txt-small flex-item-no-shrink composer__search-btn", style: "view-transition-name: input-switcher" do %>
+          <%= link_to search_path, class: "btn btn--borderless txt-small flex-item-no-shrink composer__search-btn",
+                style: "view-transition-name: input-switcher",
+                data: { controller: "search-palette", action: "search-palette#open" } do %>
             <%= icon_tag "search" %>
             <span class="for-screen-reader">Search</span>
           <% end %>

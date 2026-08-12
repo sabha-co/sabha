@@ -1,0 +1,34 @@
+<%# The ⌘K search palette: one scrim dialog mounted in the layout. Every
+    search entry point opens it (search_palette_controller), and submitting
+    or picking a recent search navigates to the results page — the palette
+    never renders results itself. %>
+<dialog id="search_palette" class="scrim-dialog scrim-dialog--palette" aria-label="Search"
+        data-controller="dialog"
+        data-action="click->dialog#closeOnScrim
+                     keydown.meta+k@document->dialog#open:prevent
+                     keydown.ctrl+k@document->dialog#open:prevent
+                     turbo:submit-end->dialog#closeOnSubmit
+                     turbo:before-cache@document->dialog#close">
+  <%= form_with url: searches_path, class: "search-palette__field" do |form| %>
+    <%= icon_tag "search", class: "search-palette__glyph" %>
+    <%= form.text_field :q, class: "search-palette__input", autofocus: true, required: true,
+          autocomplete: "off", aria: { label: "Search" },
+          placeholder: "Search messages across every room you can see" %>
+    <button type="button" class="search-palette__esc" data-action="dialog#close">
+      ESC<span class="for-screen-reader"> Close search</span>
+    </button>
+  <% end %>
+
+  <div class="search-palette__body">
+    <% if palette_recent_searches.any? %>
+      <span class="scrim-dialog__label">Recent searches</span>
+      <div class="search-palette__chips">
+        <% palette_recent_searches.each do |search| %>
+          <%= link_to search.query, searches_path(q: search.query), class: "search-palette__chip" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <p class="search-palette__hint">Enter a keyword or phrase to search across all your messages and rooms.</p>
+  </div>
+</dialog>

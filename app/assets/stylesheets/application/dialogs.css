@@ -192,6 +192,98 @@
   --dialog-width: 250px;
 }
 
+/* ⌘K search palette: a wide card parked near the top of the viewport */
+.scrim-dialog--palette {
+  --dialog-width: 640px;
+
+  margin-block-start: min(96px, 14dvh);
+  overflow: hidden;
+}
+
+.search-palette__field {
+  align-items: center;
+  border-block-end: 1px solid var(--color-border);
+  display: flex;
+  gap: 11px;
+  padding: 15px 18px;
+}
+
+.search-palette__glyph {
+  --icon-size: 16px;
+
+  color: var(--color-text-subtle);
+  flex-shrink: 0;
+}
+
+.search-palette__input {
+  background: transparent;
+  border: 0;
+  color: var(--color-text);
+  flex: 1;
+  font-size: max(16px, 1rem);
+  min-inline-size: 0;
+
+  /* the card itself is the focus affordance — mute the global outline
+     and the tailwindcss/forms focus ring (a box-shadow) */
+  &:focus {
+    box-shadow: none;
+    outline: none;
+  }
+
+  &::placeholder {
+    color: var(--color-text-subtle);
+  }
+}
+
+.search-palette__esc {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 0.6875rem;
+  padding: 2px 6px;
+
+  @media (pointer: coarse) {
+    display: none;
+  }
+}
+
+.search-palette__body {
+  padding: 16px 18px 20px;
+}
+
+.search-palette__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 10px;
+}
+
+.search-palette__chip {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 5px 13px;
+  text-decoration: none;
+
+  &:hover {
+    border-color: color-mix(in oklch, var(--color-accent-brand) 50%, transparent);
+    color: var(--color-accent-brand);
+  }
+}
+
+.search-palette__hint {
+  color: var(--color-text-subtle);
+  font-size: 0.84375rem;
+  line-height: 1.55;
+  margin: 18px 0 0;
+}
+
 .message-menu {
   display: flex;
   flex-direction: column;

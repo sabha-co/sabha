@@ -28,23 +28,34 @@
   </div>
 <% end %>
 
-<% content_for :sidebar do %>
-  <div class="rooms position-relative flex flex-column gap overflow-y overflow-hide-scrollbar">
-    <% @recent_searches.each do |search| %>
-      <%= link_to searches_path(q: search.query), class: "align-center gap room btn txt-nowrap" do %>
-        <span class="overflow-ellipsis">“<%= search.query %>”</span>
-      <% end %>
-    <% end %>
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
-    <% if @recent_searches.any? %>
-      <%= button_to clear_searches_url, method: :delete, class: "btn searches__btn",
-              data: { turbo_confirm: "Are you sure you want to clear your recent searches?" } do %>
-        <%= icon_tag "broom" %>
-        <span class="for-screen-reader">Clear recent searches</span>
+<div class="searches__bar flex align-center gap">
+  <%= link_to room_path(@return_to_room),
+          class: "btn flex-item-no-shrink d-hotwire-native-none", style: "view-transition-name: input-switcher; --btn-border-radius: 0.5em" do %>
+    <%= icon_tag "arrow-left" %>
+    <span class="for-screen-reader">Exit search</span>
+  <% end %>
+
+  <%= form_with url: searches_path, class: "flex-item-grow contain flex align-center gap",
+        data: { controller: "form", action: "keydown.esc->form#cancel" } do |form| %>
+    <div class="composer__input flex align-center flex-item-grow gap full-width input input--actor min-width">
+      <%= icon_tag "search", class: "composer__input-hint", style: "view-transition-name: input-btn;" %>
+
+      <%= form.text_field :q, value: params[:q], class: "searches__input input flex-item-grow", role: "searchbox", aria: { label: "search" }, autofocus: true, required: true %>
+
+      <%= link_to searches_path, data: { form_target: "cancel" }, role: "button", class: "searches__reset" do %>
+        <%= icon_tag "close" %>
+        <span class="for-screen-reader">Clear search field</span>
       <% end %>
-    <% end %>
-  </div>
-<% end %>
+
+      <%= form.button type: "submit", class: "btn btn--reversed flex-item-no-shrink txt-small", style: "--btn-border-radius: 0.5em" do %>
+        <%= icon_tag "arrow-up" %>
+        <span class="for-screen-reader">Search</span>
+      <% end %>
+    </div>
+  <% end %>
+</div>
 
 <div id="message-area" class="message-area">
   <div class="message-area--empty min-width center">
@@ -64,31 +75,3 @@
   <% end %>
 </div>
 
-<% content_for :footer do %>
-  <div class="composer flex align-end gap">
-    <%= link_to room_path(@return_to_room),
-            class: "btn flex-item-no-shrink margin-block-end d-hotwire-native-none", style: "view-transition-name: input-switcher; --btn-border-radius: 0.5em" do %>
-      <%= icon_tag "arrow-left" %>
-      <span class="for-screen-reader">Exit search </span>
-    <% end %>
-
-    <%= form_with url: searches_path, class: "margin-block flex-item-grow contain flex align-center gap",
-          data: { controller: "form", action: "keydown.esc->form#cancel" } do |form| %>
-      <div class="composer__input flex align-center flex-item-grow gap full-width input input--actor min-width">
-        <%= icon_tag "search", class: "composer__input-hint", style: "view-transition-name: input-btn;" %>
-
-        <%= form.text_field :q, value: params[:q], class: "searches__input input flex-item-grow", role: "searchbox", aria: { label: "search" }, autofocus: true, required: true %>
-
-        <%= link_to searches_path, data: { form_target: "cancel" }, role: "button", class: "searches__reset" do %>
-          <%= icon_tag "close" %>
-          <span class="for-screen-reader">Clear search field</span>
-        <% end %>
-
-        <%= form.button type: "submit", class: "btn btn--reversed flex-item-no-shrink txt-small", style: "--btn-border-radius: 0.5em" do %>
-          <%= icon_tag "arrow-up" %>
-          <span class="for-screen-reader">Search</span>
-        <% end %>
-      </div>
-    <% end %>
-  </div>
-<% end %>

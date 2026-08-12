@@ -57,7 +57,8 @@
       }
     }
 
-    .sidebar__menu-label {
+    .sidebar__menu-label,
+    .sidebar__menu-kbd {
       display: none;
     }
 
@@ -289,6 +290,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Shortcut hint on the Search row — only where a keyboard is likely */
+.sidebar__menu-kbd {
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  color: var(--color-text-subtle);
+  display: none;
+  font-family: inherit;
+  font-size: 0.6875rem;
+  margin-inline-start: auto;
+  padding: 1px 5px;
+
+  @media (hover: hover) and (pointer: fine) {
+    display: inline-block;
+  }
 }
 
 /* Chrome buttons (section add/menu, drawer close) sit quietly on the
@@ -900,6 +917,31 @@
 
 .searches__results {
   padding-block-start: var(--block-space);
+}
+
+/* Results page: the input rides at the top of the column (the palette is the
+   entry point; this refines) and the results scroll beneath it. */
+.searches__bar {
+  padding: 12px var(--inline-space) 10px;
+}
+
+body.searches #main-content {
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+body.searches .searches__results {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/* The generic empty state forces a 100vh flex column for the DM compose
+   layout; under the top-mounted bar it should just fill the leftover column. */
+body.searches .message-area:not(:has(.message)):not(:has(.dm-conversation)):not(:has(.thread-card)) {
+  block-size: auto;
+  flex: 1;
+  min-block-size: 0;
 }
 
 .searches__input:required:invalid {

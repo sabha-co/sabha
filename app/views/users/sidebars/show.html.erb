@@ -43,9 +43,11 @@
     </div>
 
     <nav class="sidebar__menu" aria-label="Tools">
-      <%= link_to searches_path, id: "room-search", class: "btn sidebar__menu-item" do %>
+      <%= link_to searches_path, id: "room-search", class: "btn sidebar__menu-item",
+            data: { controller: "search-palette", action: "search-palette#open" } do %>
         <%= icon_tag "search" %>
         <span class="sidebar__menu-label">Search</span>
+        <kbd class="sidebar__menu-kbd" data-search-palette-target="kbd">⌘K</kbd>
       <% end %>
 
       <%= turbo_stream_from Current.user, :sidebar_activity_indicator %>

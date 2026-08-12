@@ -14,4 +14,10 @@ module SearchesHelper
       search_results_thread_messages_value: thread_messages
     }, &
   end
+
+  # The palette renders in the layout, outside SearchesController, so it can't
+  # lean on @recent_searches — it queries the model directly.
+  def palette_recent_searches
+    @palette_recent_searches ||= Current.user.searches.global.ordered.limit(8)
+  end
 end
