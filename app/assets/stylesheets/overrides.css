@@ -140,10 +140,3 @@
   text-align: left;
 }
 
-.message__actions-menu {
-  --btn-size: 2.1em;
-}
-
-.message__actions-menu .quick-boosts {
-  --btn-size: 2.65em;
-}

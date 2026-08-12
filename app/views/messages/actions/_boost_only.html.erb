@@ -1,21 +1,22 @@
 <%# locals: (message:) -%>
 
 <div class="message__actions">
-  <%= tag.details class: "position-relative",
-      data: { controller: "popup", action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside", popup_orientation_top_class: "popup-orientation-top" } do %>
-    <summary class="btn message__action-btn message__bar-btn message__options-btn options-btn">
+  <%= tag.div class: "position-relative", data: { controller: "dialog" } do %>
+    <button type="button" class="btn message__action-btn message__bar-btn message__options-btn options-btn" data-action="dialog#open">
       <%= icon_tag "menu-dots-horizontal" %>
       <span class="for-screen-reader">Message options</span>
-    </summary>
+    </button>
 
-    <div class="popup-menu message__actions-menu border shadow" data-popup-target="menu">
-      <div>
+    <dialog class="scrim-dialog scrim-dialog--menu" aria-label="Message options"
+        data-dialog-target="modal"
+        data-action="click->dialog#closeOnScrim click->dialog#closeOnMenuAction turbo:submit-end->dialog#closeOnSubmit">
+      <div class="message-menu">
         <%= link_to new_message_boost_path(message),
               class: "btn message__action-btn full-width message__boost-btn",
-              data: { turbo_frame: "reaction_picker", action: "popup#close" } do %>
+              data: { turbo_frame: "reaction_picker" } do %>
           <span>Add reaction</span>
         <% end %>
       </div>
-    </div>
+    </dialog>
   <% end %>
 </div>

@@ -725,15 +725,6 @@ img.message__attachment {
   &:where(:not(:active)):focus-visible {
     opacity: 1;
   }
-
-  .message__actions-menu & {
-    --width: 100%;
-    --btn-padding: calc(var(--inline-space-half) / 2) var(--inline-space-half);
-    --btn-border-radius: calc(var(--arrow-size) / 2 - var(--inline-space-half));
-    --busy-inset: calc(var(--inline-space) * 1.5);
-
-    justify-content: start;
-  }
 }
 
 /* Bar-level buttons: compact, content-sized (the 25% flex-basis above is for
@@ -844,25 +835,6 @@ img.message__attachment {
   }
 }
 
-.message__actions-menu {
-  --arrow-size: 1.5em;
-
-  inset: var(--btn-size) 0 auto auto;
-  transform-origin: top right;
-  z-index: 3;
-
-  &::before {
-    inset-inline-start: auto;
-    inset-inline-end: calc(var(--btn-size) / 2);
-    transform: translateX(0);
-  }
-
-  &::after {
-    inset-inline-start: auto;
-    inset-inline-end: calc(var(--btn-size) / 2);
-    transform: translateX(0);
-  }
-}
 
 .message__avatar-menu {
   --block-space: 1rem;

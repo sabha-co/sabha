@@ -186,3 +186,39 @@
 .manage-member__action--negative {
   color: var(--color-negative);
 }
+
+/* Message-options menu: a narrow card of plain label rows */
+.scrim-dialog--menu {
+  --dialog-width: 250px;
+}
+
+.message-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+}
+
+.message-menu .btn {
+  --btn-background: transparent;
+  --btn-border-color: transparent;
+  --btn-border-radius: 9px;
+  --btn-padding: 9px 12px;
+  --hover-color: transparent;
+  --hover-filter: none;
+
+  font-size: 0.875rem;
+  font-weight: 400;
+  inline-size: 100%;
+  justify-content: flex-start;
+  text-align: start;
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: var(--color-bg-hover);
+    }
+  }
+}
+
+.message-menu .message-menu__danger {
+  color: var(--color-negative);
+}

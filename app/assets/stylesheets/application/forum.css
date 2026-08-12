@@ -270,8 +270,7 @@
 
 /* Post options menu: the shared .popup-menu (same bordered, arrowed dropdown as
    the sidebar room menu), but anchored to the right of the header's ⋯ trigger so
-   it opens down-and-left instead of spilling off-panel. Mirrors the right-hand
-   positioning of .message__actions-menu. */
+   it opens down-and-left instead of spilling off-panel. */
 .forum-post-menu {
   --btn-size: 2.8em;
   --arrow-size: 1.5em;

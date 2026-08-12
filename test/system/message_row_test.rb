@@ -35,6 +35,20 @@ class MessageRowTest < ApplicationSystemTestCase
     assert_message_actions_revealed message
   end
 
+  test "the options menu opens as a dialog and closes when an item is chosen" do
+    within_message messages(:third) do
+      reveal_message_actions
+    end
+
+    assert_selector "dialog[aria-label='Message options'][open]"
+
+    within "dialog[aria-label='Message options'][open]" do
+      click_on "Copy link"
+    end
+
+    assert_no_selector "dialog[aria-label='Message options'][open]"
+  end
+
   test "a quick reaction from the action bar boosts the message" do
     within_message messages(:third) do
       find(".message__body-content").hover
