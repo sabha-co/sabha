@@ -39,10 +39,10 @@
 }
 
 .forum-compose[open] {
-  border: 1px solid var(--color-border-darker);
-  border-radius: 0.9rem;
+  border: 1px solid var(--color-selected-dark);
+  border-radius: 12px;
   padding: 0.9rem 1rem;
-  background: var(--color-bg-sunk);
+  background: var(--color-selected);
 }
 
 .forum-compose[open] > summary {
@@ -84,24 +84,21 @@
 /* A smaller, lighter "New post" pill so it doesn't outweigh the content or echo
    the heavy room-name pill in the nav. */
 .forum-compose__toggle {
-  --btn-padding: 0.4em 0.85em;
-  font-size: var(--font-size-small);
+  --btn-padding: 0.65em 1.3em;
+
+  font-size: 0.84375rem;
 }
 
 /* --- post cards (full-width list rows, hairline-divided) ------------- */
 .forum-card {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.85rem 0.5rem;
-  border-radius: 0.6rem;
+  gap: 14px;
+  padding: 15px 20px 15px 4px;
+  border-block-end: 1px solid var(--color-border);
   color: inherit;
   text-decoration: none;
   transition: background 120ms ease;
-}
-
-.forum-card + .forum-card {
-  border-top: 1px solid var(--color-border-darker);
 }
 
 .forum-card:hover {
@@ -111,47 +108,56 @@
 .forum-card__status {
   display: grid;
   place-items: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  margin-top: 0.1rem;
+  width: 26px;
+  height: 26px;
+  margin-top: 1px;
   flex: none;
   border-radius: 50%;
-  border: 1.5px solid var(--color-border-darker);
-  color: var(--color-border-darkest);
+  border: 1.5px solid var(--color-border-dark);
+  color: var(--color-text-subtle);
 }
 
-.forum-card__status .icon { width: 0.85rem; height: 0.85rem; }
+.forum-card__status .icon { width: 13px; height: 13px; }
 
+/* Solved flips to a solid positive disc with a white check (white holds on
+   the mid-lightness green in both themes) */
 .forum-card__status--solved {
-  color: oklch(var(--lch-green));
-  border-color: color-mix(in oklab, oklch(var(--lch-green)) 55%, var(--color-bg));
-  background: color-mix(in oklab, oklch(var(--lch-green)) 15%, var(--color-bg));
+  color: white;
+  border-color: var(--color-positive);
+  background: var(--color-positive);
 }
 
 .forum-card__title {
-  font-size: 1rem;
-  font-weight: 585;
+  font-size: 0.96875rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
   line-height: 1.35;
   color: var(--color-text);
 }
 
-/* --- Solved badge ---------------------------------------------------- */
+.forum-card__byline {
+  font-size: 0.84375rem;
+  color: var(--color-text-lighter);
+  margin-block-start: 2px;
+}
+
+/* --- chips: neutral (Following) and positive (Solved) ----------------- */
 .forum-tag {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.72rem;
+  padding: 2px 9px;
+  border-radius: var(--border-radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
   line-height: 1.3;
-  background: var(--color-bg-sunk);
-  color: var(--color-text-lighter);
+  background: var(--color-border);
+  color: var(--color-text-muted);
 }
 
 .forum-tag--solved {
-  font-weight: 560;
-  background: color-mix(in oklab, oklch(var(--lch-green)) 15%, var(--color-bg));
-  color: color-mix(in oklab, oklch(var(--lch-green)) 72%, black);
+  background: oklch(var(--lch-green) / 0.14);
+  color: var(--color-positive);
 }
 
 .forum-tag--solved .icon { width: 0.7em; height: 0.7em; }
@@ -162,11 +168,23 @@
 /* --- byline (author) + right-aligned activity column ----------------- */
 /* The activity column right-aligns replies + last-active so each row reads
    left→right: what the post is, then how much is happening in it. */
-.forum-card__activity { text-align: end; min-inline-size: 0; }
+.forum-card__activity {
+  text-align: end;
+  min-inline-size: 0;
+  padding-block-start: 2px;
+  font-size: 0.78125rem;
+  color: var(--color-text-subtle);
+}
+
+.forum-card__replies {
+  font-size: 0.84375rem;
+  color: var(--color-text-lighter);
+}
+
 .forum-avatar { border-radius: 25%; object-fit: cover; flex: none; }
 .forum-card__stack { align-items: center; }
 .forum-card__stack .forum-card__stack-avatar { box-shadow: 0 0 0 2px var(--color-bg); }
-.forum-card__stack .forum-card__stack-avatar + .forum-card__stack-avatar { margin-left: -0.4rem; }
+.forum-card__stack .forum-card__stack-avatar + .forum-card__stack-avatar { margin-inline-start: -6px; }
 
 /* --- filter bar (uses the shared .segmented-control from patterns.css) --- */
 .forum-filter { row-gap: 0.5rem; }
@@ -196,10 +214,10 @@
 }
 
 .forum-post-header__title {
-  font-size: 1.375rem;
-  font-weight: 620;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
   color: var(--color-text);
 }
 
@@ -220,11 +238,11 @@
 
 /* "OP" tag next to the original poster's name (opening message + their replies). */
 .message__op-badge {
-  font-size: 0.62rem;
+  font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 0.05rem 0.32rem;
-  border-radius: 0.35rem;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
   line-height: 1.5;
   color: var(--color-link);
   background: var(--color-selected);

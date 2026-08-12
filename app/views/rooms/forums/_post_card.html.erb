@@ -14,7 +14,7 @@
   <div class="forum-card__body flex flex-column gap-half flex-item-grow min-width">
     <h3 class="forum-card__title margin-none"><%= post.title %></h3>
 
-    <div class="forum-card__byline flex align-center gap-half txt-x-small txt-muted flex-wrap">
+    <div class="forum-card__byline flex align-center gap-half flex-wrap">
       <span class="forum-card__author flex align-center gap-half">
         <%= avatar_image_tag post.creator, size: 20, class: "forum-avatar" %>
         <span><%= post.creator.name %></span>
@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  <div class="forum-card__activity flex flex-column align-end gap-half txt-x-small txt-muted flex-item-no-shrink" data-controller="local-time">
+  <div class="forum-card__activity flex flex-column align-end gap-half flex-item-no-shrink" data-controller="local-time">
     <span class="forum-card__replies flex align-center gap-half">
       <% repliers = (participants[post.id] || []).reject { |user| user == post.creator }.first(3) %>
       <% if repliers.any? %>
