@@ -1,6 +1,6 @@
 # Plan: Sabha v2 redesign — Phase 2 (reskin + rebuild to handoff fidelity)
 
-**Status:** in progress — WS0, WS1, WS6 built (2026-08-12); WS2–WS5 not started · **Date:** 2026-08-12 · **Builds on:** Phase 1 (`redesign-v2`, Steps 1–6, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
+**Status:** in progress — WS0, WS1, WS4, WS6 built (2026-08-12); WS2, WS3, WS5 not started · **Date:** 2026-08-12 · **Builds on:** Phase 1 (`redesign-v2`, Steps 1–6, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
 
 > **What this is.** Phase 1 completed the designer's six-step build order **as a reskin** (plus sanctioned rebuilds: the shell/sidebar move, message-row scale, action bar, composer typing row, accent system, forums data section) and the token system was verified pixel-matching the spec. What the reskin discipline deferred is a **concrete, enumerable set** — the typeface, a handful of DOM/Stimulus rebuilds, responsive breakpoint work, and a cluster of data-shaped UX the designer's own scope ("routes/models/controllers/Turbo targets don't change — the DOM inside them does") parked. Phase 2 closes that gap so the running app matches the handoff's **look and interaction**, not just its tokens.
 
@@ -37,7 +37,7 @@ WS0, WS1 and WS6 are **built** on `redesign-v2`; WS2–WS5 are **not started**. 
 | **WS6** Auth | ✅ Built | `629c78b` `4c3cb31` `f35adc2` | Six-box OTP mirrors `OtpCode.sanitize`; in-card alerts across 5 session-layout views; "Send another" resend. Expired view — see deviation. |
 | **WS2** Panel | ⏳ Not started | — | Highest structural risk; planned last. Now also carries the reading column (see WS1). |
 | **WS3** Reactions | ⏳ Not started | — | Reskin-only (P2-3). |
-| **WS4** Inbox data | ⏳ Not started | — | |
+| **WS4** Inbox data | ✅ Built | `5802bce` `4c2bdbf` `7ce62aa` | Activity verb rows, four filter tabs, Threads-inbox cards with inline follow. See deviations below. |
 | **WS5** States | ⏳ Not started | — | |
 
 **WS1 deviations from the plan text:**
@@ -49,6 +49,11 @@ WS0, WS1 and WS6 are **built** on `redesign-v2`; WS2–WS5 are **not started**. 
 - **Built:** forum width-steps (`.forum-card__stack` faces `<1024`, `.forum-filter__sort` `<500`, post title 21px `<500`); rail rooms (first 4 of the main Rooms list as compact glyph rows in the 1024–1279 rail, reusing the live-updating rows via a `.rail-rooms` hook + `.room__glyph`/`.room__name` split).
 
 **WS6 deviation — the expired-link view was not built.** Expired/invalid redirects to the code screen, where the in-card alert ("Invalid or expired token") + the "Send another" resend form a recovery loop. A dedicated view would need an expired-vs-invalid distinction (`AuthToken.lookup` returns `nil` for both) plus new routing — net-new, and a worse experience than the resend loop.
+
+**WS4 deviations from the plan text:**
+- **Boosts already had verb rows.** Only mentions and thread-replies rendered as raw message rows, so the verb-row swap targets just those two (glyph `@` / `↩` on a corner badge over the actor avatar). A reply's row keys to the *parent* room — its own room is the thread/post sub-room.
+- **Four filter tabs, not three.** The comp's filter is All / Mentions / Replies / **Reactions** (Reactions == boosts); the plan text listed three. `Inbox::ActivityQuery` maps each tab value to an `activity_type`, and the filter rides through pagination via the paginator URL. Streaming is **not** filter-aware — a new off-filter notification can append until reload (a snapshot, not filter-aware streaming).
+- **Thread cards are static-render, not live-rebuilt.** Each card shows room, "started by", an optional "N new" pill (one batched query, `Inbox::ThreadsQuery.unseen_reply_counts` — no N+1), the root message, the embedded `messages/threads` reply-count footer, and an inline follow toggle. The toggle reuses `rooms/threads/_follow_control`, so **thread Unfollow now exists in the app** — closing the sharpest thread↔forum gap. Reply count and last-reply update live (the embedded footer is the existing broadcast target); the **"N new" pill and follow state reflect page-load state**, and a brand-new thread arriving live still appends as a plain message row until reload — because the `inbox_threads` broadcast is viewer-less (the follow control needs `Current.user`). Fully-live cards would need a per-viewer `inbox_threads` broadcast rework — deferred, like the reactions pipeline. Cards are not fragment-cached (they carry per-viewer state).
 
 **Pre-existing bugs found while testing, fixed separately (not Phase 2 scope):**
 - `25daea4` — the contrast sidebar footer had no visible bottom bar: under `data-contrast`, `--color-bg-sunk` collapses onto `--color-bg`, so the footer's sunk background vanished. Added a hairline.
@@ -101,6 +106,8 @@ The breakpoint machine is **split**: Phase 1 put the *sidebar* on pixel breakpoi
 
 ## WS4 — Inbox / Activity data surfaces (④ query work)
 
+> **✅ Built** (`5802bce` `4c2bdbf` `7ce62aa`). Verb rows for mentions/replies, four filter tabs (adds Reactions), and static-render Threads-inbox cards with inline follow — see Build status for the deviations, notably the viewer-less-broadcast limits on the cards' "N new" pill and follow state.
+
 Both Activity and Threads inboxes render **raw message rows** via `search_results_tag` today (`app/views/inboxes/`).
 
 - **Activity verb rows:** "X mentioned you in Y" + a kind glyph. Per-notification verb copy + a grouping/rendering query off the existing `Notification` model.
@@ -138,7 +145,7 @@ Mirror the designer's build order (as Phase 1 did), each workstream shippable on
 5. **WS4 Inbox data** — isolated query work.
 6. **WS2 Contextual panel** — highest structural risk; its own careful series, once the rest is stable.
 
-Each workstream = one commit or a small bisectable series. **Resolved:** Phase 2 is continuing on `redesign-v2` (still unpushed, no PR). Actual order so far: WS0 → WS1 → WS6 (WS1 pulled ahead of WS6 to close the WS0 `ch`-coupling promptly).
+Each workstream = one commit or a small bisectable series. **Resolved:** Phase 2 is continuing on `redesign-v2` (still unpushed, no PR). Actual order so far: WS0 → WS1 → WS6 → WS4. (WS1 pulled ahead of WS6 to close the WS0 `ch`-coupling promptly; WS4 pulled ahead of WS3/WS5 as the self-contained, decision-free block — its verb-row/card/query work has no coupling to the reactions or states rebuilds.)
 
 ## Verification
 
