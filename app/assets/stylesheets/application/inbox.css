@@ -51,11 +51,12 @@ body.inbox .searches__results > :last-child {
   }
 }
 
-/* The Activity kind filter sits above the feed, on its own padded row. */
+/* The Activity kind filter rides the nav bar beside the title (the nav is
+   fixed, so an in-feed row would sit under it). */
 .inbox-filter {
-  border-block-end: 1px solid var(--color-border);
+  align-items: center;
   display: flex;
-  padding: 12px 16px;
+  margin-inline-start: 0.5rem;
 }
 
 /* Threads inbox: each followed thread is a card — the room + an inline follow
