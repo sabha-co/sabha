@@ -156,15 +156,9 @@
   border-block-start: 1px solid var(--color-border);
 }
 
-/* A plain subtitle (member count) where the thread panel shows an accent room
-   link — same slot, no affordance. */
-.thread-panel__room--plain {
-  color: var(--color-text-muted);
-  font-weight: 400;
-}
-
 /* Room roster panel: the contextual room info that opens from the header member
-   count — here-now / away sections of avatar rows over a "View all" footer. */
+   count — a description, a favourite/settings button pair, then here-now / away
+   sections of avatar rows. */
 .roster {
   display: flex;
   flex: 1;
@@ -178,11 +172,44 @@
   color: var(--color-text-muted);
   font-size: 0.875rem;
   line-height: 1.5;
-  margin: 0 0 var(--block-space-half);
+  margin: 0 0 14px;
+}
+
+/* Favourite + Settings sit as two equal buttons under the description. */
+.roster__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.roster__action {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  gap: 5px;
+  justify-content: center;
+  padding: 7px;
+  text-decoration: none;
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: var(--color-bg-hover);
+    }
+  }
+}
+
+.roster__fav--on {
+  color: var(--color-accent-brand);
 }
 
 .roster__section {
-  margin-block-start: var(--block-space-half);
+  margin-block-start: 18px;
 }
 
 .roster__label {
@@ -195,11 +222,6 @@
   letter-spacing: 0.07em;
   margin: 0 0 4px;
   text-transform: uppercase;
-}
-
-.roster__count {
-  color: var(--color-text-subtle);
-  font-weight: 500;
 }
 
 .roster__list {
@@ -247,6 +269,7 @@
   inset-inline-end: -1px;
   position: absolute;
   width: 9px;
+  z-index: 1; /* the avatar figure is a positioned, overflow-clipped sibling — lift the dot above it */
 }
 
 .roster__name {
@@ -265,10 +288,6 @@
   font-size: 0.875rem;
   padding-block: var(--block-space);
   text-align: center;
-}
-
-.roster__all {
-  margin-block-start: var(--block-space);
 }
 
 /* Panel rows sit tighter than the main stream: 32px avatars, one step down

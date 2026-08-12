@@ -25,6 +25,20 @@ class Rooms::RostersControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: /Settings/
   end
 
+  test "offers a favourite toggle for a starrable room" do
+    get room_roster_url(@room)
+
+    assert_response :success
+    assert_select "button.roster__fav[data-star-toggle-url-value=?]", room_star_path(@room)
+  end
+
+  test "omits the favourite toggle for a direct message" do
+    get room_roster_url(rooms(:david_and_jason))
+
+    assert_response :success
+    assert_select "button.roster__fav", false
+  end
+
   test "a non-member cannot see a room's roster" do
     sign_in :rachel
 
