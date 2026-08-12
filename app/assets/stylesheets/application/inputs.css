@@ -245,11 +245,11 @@ input[type="radio"]:disabled::after {
 
 /* .input--code migrated to Tailwind in application.css */
 
-/* Switches */
+/* Switches — v2: 38×22 pill, accent track when on */
 .switch {
-  block-size: 1.75em;
+  block-size: 22px;
   display: inline-flex;
-  inline-size: 3em;
+  inline-size: 38px;
   position: relative;
   border-radius: 2em;
 
@@ -294,7 +294,8 @@ input[type="radio"]:disabled::after {
 }
 
 .setting-row__title {
-  font-weight: 500;
+  font-size: 0.90625rem;
+  font-weight: 600;
 }
 
 .setting-row .switch {
@@ -311,13 +312,15 @@ input[type="radio"]:disabled::after {
   transition: background-color 200ms cubic-bezier(0.25, 1, 0.5, 1);
 
   &::before {
-    background-color: var(--color-text-reversed);
-    block-size: 1.35em;
+    /* knob stays white on the accent track in both themes */
+    background-color: oklch(100% 0 0);
+    block-size: 18px;
     border-radius: 50%;
+    box-shadow: 0 1px 2px oklch(var(--lch-always-black) / 0.25);
     content: "";
-    inline-size: 1.35em;
-    inset-block-end: 0.2em;
-    inset-inline-start: 0.2em;
+    inline-size: 18px;
+    inset-block-end: 2px;
+    inset-inline-start: 2px;
     position: absolute;
     transition: transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
   }
@@ -328,10 +331,10 @@ input[type="radio"]:disabled::after {
   }
 
   .switch__input:checked + & {
-    background-color: var(--color-text);
+    background-color: var(--color-accent-brand);
 
     &::before {
-      transform: translateX(1.2em);
+      transform: translateX(16px);
     }
   }
 }

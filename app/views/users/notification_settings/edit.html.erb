@@ -13,92 +13,83 @@
   </div>
 <% end %>
 
-<section class="panel flex flex-column gap">
-  <h1 class="txt-align-center txt-large margin-none">Notification preferences</h1>
+<section class="panel">
+  <header class="settings-header">
+    <div class="settings-header__scope">Your settings</div>
+    <h1 class="settings-header__title">Notifications</h1>
+    <p class="settings-header__blurb">What reaches you, and how. Per-room involvement overrides these.</p>
+  </header>
 
-  <div class="margin-block pad fill-shade border-radius">
-
-    <%# ─── Push ─────────────────────────────────────────────────────── %>
-    <section>
-      <p class="txt-small txt-muted txt-label margin-block-end-half">Push</p>
-
-      <%= render "users/notification_settings/toggle",
-            settings:  @settings,
-            attribute: :push_enabled,
-            title:     "Push notifications",
-            hint:      "Receive alerts on all devices even when Sabha is closed." %>
-    </section>
-
-    <%# ─── Email ─────────────────────────────────────────────────────── %>
-    <% if email_section_visible? %>
-      <hr class="separator separator--row margin-block">
-
-      <section>
-        <p class="txt-small txt-muted txt-label margin-block-end-half">Email</p>
-
-        <% if all_email_features_disabled? %>
-          <p class="txt-small txt-muted margin-none">
-            Email notifications are turned off for this workspace.
-            <%= link_to "Enable in workspace settings", edit_account_path %>.
-          </p>
-        <% else %>
-          <% if missed_email_section_visible? %>
-            <% if Current.account.email_notifications_enabled? %>
-              <%= render "users/notification_settings/toggle",
-                    settings:  @settings,
-                    attribute: :missed_email_enabled,
-                    title:     "Email me when I'm mentioned or sent a DM while I'm away" %>
-
-              <%= form_with model: @settings, url: user_notification_settings_path(user_id: "me"), method: :patch, scope: :user_notification_settings, data: { controller: "form" } do |form| %>
-                <div class="flex align-center flex-wrap gap-half">
-                  <span class="txt-small txt-muted">Bundle into</span>
-                  <%= form.select :email_frequency,
-                        [["one hourly email", "hourly"], ["one daily email", "daily"]], {},
-                        class: "input txt-small", style: "inline-size: auto; min-inline-size: 12em;",
-                        data: { action: "change->form#submit" } %>
-                </div>
-              <% end %>
-            <% else %>
-              <p class="txt-small txt-muted margin-none">
-                Missed-notification email is turned off for this workspace.
-                <%= link_to "Enable in workspace settings", edit_account_path %>.
-              </p>
-            <% end %>
-          <% end %>
-
-          <% if missed_email_section_visible? && weekly_digest_section_visible? %>
-            <hr class="separator separator--row separator--soft">
-          <% end %>
-
-          <% if weekly_digest_section_visible? %>
-            <% if Current.account.weekly_digest_enabled? %>
-              <%= render "users/notification_settings/toggle",
-                    settings:  @settings,
-                    attribute: :weekly_digest_subscribed,
-                    title:     "Receive the weekly community digest" %>
-            <% else %>
-              <p class="txt-small txt-muted margin-none">
-                The weekly community digest is turned off for this workspace.
-                <%= link_to "Enable in workspace settings", edit_account_path %>.
-              </p>
-            <% end %>
-          <% end %>
-        <% end %>
-      </section>
-    <% end %>
-
+  <span class="settings-label">Push</span>
+  <div class="settings-card">
+    <%= render "users/notification_settings/toggle",
+          settings:  @settings,
+          attribute: :push_enabled,
+          title:     "Push notifications",
+          hint:      "Receive alerts on all devices even when Sabha is closed." %>
   </div>
 
+  <%# ─── Email ─────────────────────────────────────────────────────── %>
+  <% if email_section_visible? %>
+    <span class="settings-label">Email</span>
+    <div class="settings-card">
+      <% if all_email_features_disabled? %>
+        <p class="txt-small txt-muted margin-none">
+          Email notifications are turned off for this workspace.
+          <%= link_to "Enable in workspace settings", edit_account_path %>.
+        </p>
+      <% else %>
+        <% if missed_email_section_visible? %>
+          <% if Current.account.email_notifications_enabled? %>
+            <%= render "users/notification_settings/toggle",
+                  settings:  @settings,
+                  attribute: :missed_email_enabled,
+                  title:     "Email me when I'm mentioned or sent a DM while I'm away" %>
+
+            <%= form_with model: @settings, url: user_notification_settings_path(user_id: "me"), method: :patch, scope: :user_notification_settings, data: { controller: "form" } do |form| %>
+              <div class="flex align-center flex-wrap gap-half">
+                <span class="txt-small txt-muted">Bundle into</span>
+                <%= form.select :email_frequency,
+                      [["one hourly email", "hourly"], ["one daily email", "daily"]], {},
+                      class: "input txt-small", style: "inline-size: auto; min-inline-size: 12em;",
+                      data: { action: "change->form#submit" } %>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="txt-small txt-muted margin-none">
+              Missed-notification email is turned off for this workspace.
+              <%= link_to "Enable in workspace settings", edit_account_path %>.
+            </p>
+          <% end %>
+        <% end %>
+
+        <% if weekly_digest_section_visible? %>
+          <% if Current.account.weekly_digest_enabled? %>
+            <%= render "users/notification_settings/toggle",
+                  settings:  @settings,
+                  attribute: :weekly_digest_subscribed,
+                  title:     "Receive the weekly community digest" %>
+          <% else %>
+            <p class="txt-small txt-muted margin-none">
+              The weekly community digest is turned off for this workspace.
+              <%= link_to "Enable in workspace settings", edit_account_path %>.
+            </p>
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
   <%# ─── Per-room notifications ────────────────────────────────────── %>
-  <div class="margin-block pad fill-shade border-radius" style="margin-top: 0;">
-    <p class="txt-small txt-muted txt-label margin-block-end-half">Per-room notifications</p>
-    <p class="txt-small txt-muted margin-block-end-half">Choose how closely you follow each room. Use the bell button to set your involvement level.</p>
+  <% @memberships.each do |membership| %>
+    <%= turbo_stream_from membership %>
+  <% end %>
 
-    <% @memberships.each do |membership| %>
-      <%= turbo_stream_from membership %>
-    <% end %>
+  <span class="settings-label">Per-room notifications</span>
+  <div class="settings-card">
+    <p class="txt-small txt-muted margin-none">Choose how closely you follow each room. Use the bell button to set your involvement level.</p>
 
-    <menu class="flex flex-column gap-half margin-none pad">
+    <menu class="flex flex-column gap-half margin-none" style="padding: 0;">
       <%= render partial: "users/notification_settings/membership", collection: @memberships %>
     </menu>
   </div>

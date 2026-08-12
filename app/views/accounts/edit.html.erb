@@ -18,56 +18,68 @@
   </div>
 <% end %>
 
-<section class="panel txt-align-center flex flex-column gap" style="view-transition-name: account-settings">
-  <div class="align-center center avatar__form gap" data-controller="upload-preview">
-    <%= form_with model: @account, method: :patch, class: "txt-medium", data: { controller: "form" } do |form| %>
-      <label class="btn input--file">
-        <%= icon_tag "camera" %>
-        <%= form.file_field :logo, class: "input", accept: "image/*",
-              data: { action: "upload-preview#previewImage change->form#submit" } %>
-        <span class="for-screen-reader">Upload logo</span>
-      </label>
-    <% end %>
+<section class="panel" style="view-transition-name: account-settings">
+  <header class="settings-header">
+    <div class="settings-header__scope">Community settings</div>
+    <h1 class="settings-header__title">Identity</h1>
+    <p class="settings-header__blurb">Name and logo. Changes here are seen by every member.</p>
+  </header>
 
-    <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
-      <label class="btn avatar input--file account-logo txt-xx-large">
-        <%= image_tag fresh_account_logo_path, role: "presentation", size: 48, data: { upload_preview_target: "image" } %>
-        <%= form.file_field :logo, class: "input", accept: "image/*",
-              data: { action: "upload-preview#previewImage change->form#submit" } %>
-        <span class="for-screen-reader">Upload logo</span>
-      </label>
-    <% end %>
-
-    <% if @account.logo.attached? %>
-      <%= button_to fresh_account_logo_path, method: :delete, class: "btn btn--negative txt-small avatar__delete-btn" do %>
-        <%= icon_tag "minus" %>
-        <span class="for-screen-reader">Delete logo</span>
+  <div class="settings-card">
+    <div class="settings-avatar-row" data-controller="upload-preview">
+      <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
+        <label class="btn avatar input--file account-logo">
+          <%= image_tag fresh_account_logo_path, role: "presentation", size: 48, data: { upload_preview_target: "image" } %>
+          <%= form.file_field :logo, class: "input", accept: "image/*",
+                data: { action: "upload-preview#previewImage change->form#submit" } %>
+          <span class="for-screen-reader">Upload logo</span>
+        </label>
       <% end %>
+
+      <div class="flex align-center gap-half">
+        <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
+          <label class="btn settings-chip-btn">
+            Replace logo
+            <%= form.file_field :logo, accept: "image/*",
+                  data: { action: "upload-preview#previewImage change->form#submit" } %>
+            <span class="for-screen-reader">Upload logo</span>
+          </label>
+        <% end %>
+
+        <% if @account.logo.attached? %>
+          <%= button_to fresh_account_logo_path, method: :delete, class: "btn settings-chip-btn settings-chip-btn--negative" do %>
+            Remove
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <%= form_with model: @account, data: { controller: "form" } do |form| %>
+      <div class="settings-field">
+        <div class="settings-field__label">
+          <label for="account_name">Name</label>
+          <%= translation_button(:account_name) %>
+        </div>
+        <%= form.text_field :name, class: "input", autocomplete: "off", placeholder: "Name this account",
+              data: { action: "keydown.enter->form#submit" } %>
+      </div>
+
+      <div class="settings-field">
+        <%= form.button "Save changes", class: "btn settings-save", type: "submit" %>
+      </div>
     <% end %>
   </div>
 
-  <%= form_with model: @account, data: { controller: "form" }, class: "flex flex-column gap" do |form| %>
-    <div class="flex align-center gap">
-      <%= translation_button(:account_name) %>
-
-      <label class="flex align-center gap flex-item-grow">
-        <%= form.text_field :name, class: "input txt-large", autocomplete: "off", placeholder: "Name this account", autofocus: true,
-              data: { action: "keydown.enter->form#submit" } %>
-      </label>
-
-      <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-        <%= icon_tag "check" %>
-        <span class="for-screen-reader">Save changes</span>
-      <% end %>
-    </div>
-  <% end %>
-
   <%= render "accounts/admin_settings" %>
 
-  <div class="flex justify-center">
-    <%= link_to account_users_path, class: "btn btn--reversed" do %>
-      <%= icon_tag "everyone" %>
-      <span>Manage members</span>
+  <span class="settings-label">Members</span>
+  <div class="settings-card">
+    <%= link_to account_users_path, class: "setting-row txt-undecorated" do %>
+      <span class="setting-row__text">
+        <span class="setting-row__title">Manage members</span>
+        <span class="txt-small txt-muted">Roles, badges, deactivations, and bans</span>
+      </span>
+      <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
     <% end %>
   </div>
 </section>

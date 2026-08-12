@@ -58,7 +58,7 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
 
     get edit_user_notification_settings_url(user_id: "me")
 
-    assert_select "p", text: "Email", count: 0
+    assert_select ".settings-label", text: "Email", count: 0
     assert_select "input[name='user_notification_settings[missed_email_enabled]']", count: 0
     assert_select "input[name='user_notification_settings[weekly_digest_subscribed]']", count: 0
   end
@@ -78,7 +78,7 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     get edit_user_notification_settings_url(user_id: "me")
 
     assert_select "a[href=?]", edit_account_path, count: 0
-    assert_select "p", text: "Email", count: 0
+    assert_select ".settings-label", text: "Email", count: 0
     assert_no_match(/Missed-notification email is turned off/, @response.body)
     assert_no_match(/weekly community digest is turned off/, @response.body)
   end
@@ -89,7 +89,7 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
 
     get edit_user_notification_settings_url(user_id: "me")
 
-    assert_select "p", text: "Email", count: 1
+    assert_select ".settings-label", text: "Email", count: 1
     assert_select "input[name='user_notification_settings[missed_email_enabled]']", count: 1
     assert_select "input[name='user_notification_settings[weekly_digest_subscribed]']", count: 0
     assert_no_match(/weekly community digest is turned off/, @response.body)

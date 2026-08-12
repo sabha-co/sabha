@@ -17,160 +17,160 @@
   </div>
 <% end %>
 
-<section class="panel flex flex-column gap" style="view-transition-name: avatar-<%= @user.id %>">
+<section class="panel" style="view-transition-name: avatar-<%= @user.id %>">
   <%= render partial: "pwa/install_instructions" %>
 
-  <div class="align-center center avatar__form gap" data-controller="upload-preview">
-    <%= profile_form_with @user, class:"txt-medium" do |form| %>
-      <label class="btn input--file">
-        <%= icon_tag "camera" %>
-        <%= form.file_field :avatar, id: "file", class: "input", accept: "image/*",
-            data: { upload_preview_target: "input", action: "upload-preview#previewImage change->form#submit" } %>
-        <span class="for-screen-reader">Upload avatar</span>
-      </label>
-    <% end %>
+  <header class="settings-header">
+    <div class="settings-header__scope">Your settings</div>
+    <h1 class="settings-header__title">Profile</h1>
+    <p class="settings-header__blurb">How you appear to everyone in <%= Current.account.name %>. Only you can change this.</p>
+  </header>
+
+  <% if flash[:alert] %>
+    <div class="auth-card__alert" style="margin: 0 0 16px;"><div><%= flash[:alert] %></div></div>
+  <% end %>
+
+  <div class="settings-card">
+    <div class="settings-avatar-row" data-controller="upload-preview">
+      <%= profile_form_with @user do |form| %>
+        <label class="btn avatar input--file">
+          <%= image_tag user_image_path(@user), role: "presentation", size: 300, data: { upload_preview_target: "image" } %>
+          <%= form.file_field :avatar, class: "input", accept: "image/*",
+                              data: { upload_preview_target: "input", action: "upload-preview#previewImage change->form#submit" } %>
+          <span class="for-screen-reader">Avatar</span>
+        </label>
+      <% end %>
+
+      <div class="flex align-center gap-half">
+        <%= profile_form_with @user do |form| %>
+          <label class="btn settings-chip-btn">
+            Upload
+            <%= form.file_field :avatar, accept: "image/*",
+                data: { upload_preview_target: "input", action: "upload-preview#previewImage change->form#submit" } %>
+            <span class="for-screen-reader">Upload avatar</span>
+          </label>
+        <% end %>
+
+        <% if @user.avatar.attached? %>
+          <%= button_to user_avatar_path(@user), method: :delete, class: "btn settings-chip-btn settings-chip-btn--negative" do %>
+            Remove
+          <% end %>
+        <% elsif Dicebear.enabled? %>
+          <%= button_to user_avatar_shuffle_path, method: :post, class: "btn settings-chip-btn" do %>
+            Shuffle
+          <% end %>
+        <% end %>
+      </div>
+    </div>
 
     <%= profile_form_with @user do |form| %>
-      <label class="btn avatar input--file txt-xx-large">
-        <%= image_tag user_image_path(@user), role: "presentation", size: 300, data: { upload_preview_target: "image" } %>
-        <%= form.file_field :avatar, id: "file", class: "input", accept: "image/*",
-                            data: { upload_preview_target: "input", action: "upload-preview#previewImage change->form#submit" } %>
-        <span class="for-screen-reader">Avatar</span>
-      </label>
-    <% end %>
-
-    <% if @user.avatar.attached? %>
-      <%= button_to user_avatar_path(@user), method: :delete, class: "btn btn--negative txt-small avatar__delete-btn" do %>
-        <%= icon_tag "minus" %>
-        <span class="for-screen-reader">Delete avatar</span>
-      <% end %>
-    <% elsif Dicebear.enabled? %>
-      <%= button_to user_avatar_shuffle_path, method: :post, class: "btn txt-small" do %>
-        <%= icon_tag "refresh" %>
-        <span class="for-screen-reader">Shuffle avatar</span>
-      <% end %>
-    <% end %>
-  </div>
-
-  <%= profile_form_with @user do |form| %>
-    <div class="flex flex-column gap">
-
-      <% if flash[:alert] %>
-        <div class="margin-block pad-inline fill-negative border-radius">
-          <p class="pad-inline-start txt-medium txt-negative"><%= flash[:alert] %></p>
+      <div class="settings-field">
+        <div class="settings-field__label">
+          <label for="user_name">Name</label>
+          <%= translation_button(:user_name) %>
         </div>
-      <% end %>
-      
-      <div class="flex align-center gap">
-        <%= translation_button(:user_name) %>
-
-        <label class="flex align-center gap flex-item-grow input input--actor">
-          <%= form.text_field :name, value: @user.editable_name, class: "input txt-medium ", autocomplete: "name", placeholder: "Enter your name",
-                              autofocus: true, required: true,  data: { "1p-ignore": true } %>
-          <%= icon_tag "person" %>
-        </label>
+        <%= form.text_field :name, value: @user.editable_name, class: "input", autocomplete: "name", placeholder: "Enter your name",
+                            required: true, data: { "1p-ignore": true } %>
       </div>
 
-      <div class="flex align-center gap">
-        <%= translation_button(:email_address) %>
-
-        <label class="flex align-center gap flex-item-grow input input--actor">
-          <% if Sabha.saas? %>
-            <%= form.email_field :email_address, class: "input txt-medium", value: @user.email_address,
-                                 disabled: true, readonly: true %>
-          <% else %>
-            <%= form.email_field :email_address, class: "input txt-medium", value: @user.email_address, autocomplete: "username",
-                                 placeholder: "Enter your email address", required: true %>
-          <% end %>
-          <%= icon_tag "email" %>
-        </label>
-      </div>
-
-      <% if @user.pending_email_change? && !Sabha.saas? %>
-        <div class="flex align-center gap">
-          <div class="btn" style="visibility: hidden;"></div>
-          <p class="txt-small txt-muted margin-none">
+      <div class="settings-field">
+        <div class="settings-field__label">
+          <label for="user_email_address">Email</label>
+          <%= translation_button(:email_address) %>
+        </div>
+        <% if Sabha.saas? %>
+          <%= form.email_field :email_address, class: "input", value: @user.email_address, disabled: true, readonly: true %>
+        <% else %>
+          <%= form.email_field :email_address, class: "input", value: @user.email_address, autocomplete: "username",
+                               placeholder: "Enter your email address", required: true %>
+        <% end %>
+        <% if @user.pending_email_change? && !Sabha.saas? %>
+          <p class="settings-field__hint">
             Pending: <strong><%= @user.unconfirmed_email %></strong> ·
             <%= link_to "Cancel", user_email_change_path, data: { turbo_method: :delete } %>
           </p>
-        </div>
-      <% end %>
-
-      <div class="flex align-center gap">
-        <%= translation_button(:twitter) %>
-
-        <label class="flex align-center gap flex-item-grow input input--actor">
-          <%= form.text_field :twitter_url, class: "input txt-medium ", placeholder: "Your X profile", required: false %>
-          <%= icon_tag "twitter" %>
-        </label>
-      </div>
-
-      <div class="flex align-center gap">
-        <%= translation_button(:linkedin) %>
-
-        <label class="flex align-center gap flex-item-grow input input--actor">
-          <%= form.text_field :linkedin_url, class: "input txt-medium ", placeholder: "Your LinkedIn profile", required: false %>
-          <%= icon_tag "linkedin" %>
-        </label>
-      </div>
-
-      <div class="flex align-center gap">
-        <%= translation_button(:website) %>
-
-        <label class="flex align-center gap flex-item-grow input input--actor">
-          <%= form.text_field :personal_url, class: "input txt-medium ", placeholder: "Your website", required: false %>
-          <%= icon_tag "web" %>
-        </label>
-      </div>
-
-      <div class="flex align-start gap">
-        <%= translation_button(:bio) %>
-
-        <label class="flex align-center gap flex-item-grow input input--actor">
-          <%= form.text_area :bio, class: "input txt-medium", placeholder: "A few words about yourself…", maxlength: 200,
-                             rows: 3, required: false %>
-          <%= icon_tag "bio" %>
-        </label>
-      </div>
-
-      <%= profile_form_submit_button %>
-    </div>
-  <% end %>
-
-  <div class="margin-block pad fill-shade border-radius">
-    <section>
-      <p class="txt-small txt-muted txt-label margin-block-end">Appearance</p>
-      <%= render "users/profiles/theme" %>
-    </section>
-
-    <hr class="separator separator--row margin-block">
-
-    <section>
-      <p class="txt-small txt-muted txt-label">Notifications</p>
-      <%= link_to edit_user_notification_settings_path, class: "setting-row txt-undecorated" do %>
-        <span class="setting-row__text">
-          <span class="setting-row__title">Notification preferences</span>
-          <span class="txt-small txt-muted">Email, push, and per-room alerts</span>
-        </span>
-        <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
-      <% end %>
-    </section>
-
-    <% if Rails.env.development? %>
-      <hr class="separator separator--row margin-block">
-
-      <section>
-        <p class="txt-small txt-muted txt-label">Developer</p>
-        <%= link_to user_push_subscriptions_url, class: "setting-row txt-undecorated" do %>
-          <span class="setting-row__text">
-            <span class="setting-row__title">Push notifications dev mode</span>
-            <span class="txt-small txt-muted">Test push subscriptions on this device</span>
-          </span>
-          <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
         <% end %>
-      </section>
+      </div>
+
+      <div class="settings-field">
+        <div class="settings-field__label">
+          <label for="user_twitter_url">X profile</label>
+          <%= translation_button(:twitter) %>
+        </div>
+        <%= form.text_field :twitter_url, class: "input", placeholder: "Your X profile", required: false %>
+      </div>
+
+      <div class="settings-field">
+        <div class="settings-field__label">
+          <label for="user_linkedin_url">LinkedIn</label>
+          <%= translation_button(:linkedin) %>
+        </div>
+        <%= form.text_field :linkedin_url, class: "input", placeholder: "Your LinkedIn profile", required: false %>
+      </div>
+
+      <div class="settings-field">
+        <div class="settings-field__label">
+          <label for="user_personal_url">Website</label>
+          <%= translation_button(:website) %>
+        </div>
+        <%= form.text_field :personal_url, class: "input", placeholder: "Your website", required: false %>
+      </div>
+
+      <div class="settings-field">
+        <div class="settings-field__label">
+          <label for="user_bio">Bio</label>
+          <%= translation_button(:bio) %>
+        </div>
+        <%= form.text_area :bio, class: "input", placeholder: "A few words about yourself…", maxlength: 200, rows: 3, required: false %>
+      </div>
+
+      <div class="settings-field">
+        <%= profile_form_submit_button %>
+      </div>
     <% end %>
   </div>
 
-  <%= render "users/profiles/transfer", user: @user %>
+  <span class="settings-label">Appearance</span>
+  <div class="settings-card">
+    <%= render "users/profiles/theme" %>
+  </div>
+
+  <span class="settings-label">Notifications</span>
+  <div class="settings-card">
+    <%= link_to edit_user_notification_settings_path, class: "setting-row txt-undecorated" do %>
+      <span class="setting-row__text">
+        <span class="setting-row__title">Notification preferences</span>
+        <span class="txt-small txt-muted">Email, push, and per-room alerts</span>
+      </span>
+      <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
+    <% end %>
+  </div>
+
+  <% if Rails.env.development? %>
+    <span class="settings-label">Developer</span>
+    <div class="settings-card">
+      <%= link_to user_push_subscriptions_url, class: "setting-row txt-undecorated" do %>
+        <span class="setting-row__text">
+          <span class="setting-row__title">Push notifications dev mode</span>
+          <span class="txt-small txt-muted">Test push subscriptions on this device</span>
+        </span>
+        <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <span class="settings-label">Account</span>
+  <div class="settings-card">
+    <%= render "users/profiles/transfer", user: @user %>
+
+    <% if Current.user.can_administer? %>
+      <%= link_to edit_account_path, class: "setting-row txt-undecorated" do %>
+        <span class="setting-row__text">
+          <span class="setting-row__title flex align-center gap-half">Community settings <span class="chip-staff">Staff</span></span>
+          <span class="txt-small txt-muted">Name, logo, permissions, and invitations for everyone</span>
+        </span>
+        <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
+      <% end %>
+    <% end %>
+  </div>
 </section>

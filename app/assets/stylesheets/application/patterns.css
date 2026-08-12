@@ -23,13 +23,16 @@
   white-space: nowrap;
 
   @media (any-hover: hover) {
-    &:where(:not(.segmented-control__btn--active)):hover {
+    &:where(:not(.segmented-control__btn--active, [aria-selected="true"])):hover {
       color: var(--color-text);
     }
   }
 }
 
-.segmented-control__btn--active {
+/* Selected state: by class, or by aria-selected for JS-driven controls
+   (theme picker) */
+.segmented-control__btn--active,
+.segmented-control .segmented-control__btn[aria-selected="true"] {
   background-color: var(--color-bg);
   box-shadow: var(--shadow-raise);
   color: var(--color-text);
