@@ -218,23 +218,6 @@
   justify-content: center;
 }
 
-.members-empty {
-  padding: 70px 24px;
-  text-align: center;
-}
-
-.members-empty__title {
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.members-empty__hint {
-  color: var(--color-text-muted);
-  font-size: 0.84375rem;
-  margin: 7px 0 0;
-}
-
 .status-dot {
   width: 0.5em;
   height: 0.5em;

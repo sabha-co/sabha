@@ -142,7 +142,7 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
 
     get room_url(forum)
 
-    assert_select ".forum__empty"
+    assert_select ".empty-state", text: /No posts yet/
     assert_select "details.forum-compose > summary", text: /New post/
   end
 
@@ -170,7 +170,7 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".forum-card", count: 0
-    assert_select ".forum__empty", text: /Nothing matches these filters/
+    assert_select ".empty-state", text: /Nothing solved yet/
     assert_select ".forum-filter"
   end
 

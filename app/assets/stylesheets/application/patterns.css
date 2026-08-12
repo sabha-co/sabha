@@ -99,3 +99,37 @@ button.list-row {
   flex: none;
   margin-inline-start: auto;
 }
+
+/* --- empty state ------------------------------------------------------- */
+/* No illustration. The heading is the fact, the sentence is the cause or the
+   fix, and the action appears only when there is something to press. Every
+   "nothing here yet" surface shares this — rooms, forums, inboxes, search,
+   members, browse. The parent supplies the centering context (a tall
+   message-area or a bordered card); this owns the inner rhythm. */
+.empty-state {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.empty-state__title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.empty-state__body {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  margin: 0;
+  max-inline-size: 34ch;
+}
+
+.empty-state__action {
+  margin-block-start: 14px;
+}

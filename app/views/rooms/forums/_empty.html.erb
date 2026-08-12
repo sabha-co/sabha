@@ -1,12 +1,10 @@
 <%# locals: (forum:, filtering:) %>
-<div class="forum__empty flex flex-column align-center gap txt-align-center">
-  <span class="forum__empty-glyph" aria-hidden="true"><%= icon_tag "message-log" %></span>
+<div class="empty-state">
   <% if filtering %>
-    <h2 class="txt-medium margin-none">Nothing matches these filters</h2>
-    <p class="txt-small txt-muted margin-none">Try clearing the Solved filter to see more posts.</p>
-    <%= link_to "Clear filters", room_path(forum), class: "btn" %>
+    <h2 class="empty-state__title">Nothing solved yet</h2>
+    <p class="empty-state__body">No post here has been marked solved. Clear the Solved filter to see the open ones.</p>
   <% else %>
-    <h2 class="txt-medium margin-none">No posts yet</h2>
-    <p class="txt-small txt-muted margin-none">Use <strong>New post</strong> above to start the first conversation — ask a question or share something worth keeping.</p>
+    <h2 class="empty-state__title">No posts yet</h2>
+    <p class="empty-state__body">Forums hold one question per post, and each can be marked solved. Start with the thing you actually need answered.</p>
   <% end %>
 </div>

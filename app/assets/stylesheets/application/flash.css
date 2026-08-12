@@ -11,14 +11,16 @@
 .flash__inner {
   animation: appear-then-fade 3s 300ms cubic-bezier(0.25, 1, 0.5, 1) both;
   background-color: var(--flash-background, var(--color-positive));
-  border-radius: 1rem;
-  color: white;
+  border-radius: var(--border-radius-lg);
+  /* Literal white: the toast is a saturated positive/negative fill in both
+     themes, so text must stay light — --color-text-reversed flips dark. */
+  color: oklch(100% 0 0);
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.875rem 1.25rem;
   max-width: 32rem;
-  box-shadow: 0 4px 12px oklch(var(--lch-always-black) / 0.15);
+  box-shadow: var(--shadow-overlay);
 
   img {
     flex-shrink: 0;

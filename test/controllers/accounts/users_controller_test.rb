@@ -20,7 +20,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
   test "index search returns no results for non-matching query" do
     get account_users_url, params: { query: "nonexistent" }
     assert_response :success
-    assert_select ".members-empty__title", text: "No one matches “nonexistent”"
+    assert_select ".empty-state__title", text: "No one matches “nonexistent”"
   end
 
   test "staff search finds deactivated and banned users" do

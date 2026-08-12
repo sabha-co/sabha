@@ -7,48 +7,39 @@
   empty_state = case controller_name
   when "activity"
     {
-      icon: "mentions",
-      headline: "No activity yet",
-      description: "Mentions, boosts, and thread replies will appear here."
+      headline: "Nothing needs you",
+      description: "Mentions, replies in threads you follow, and reactions to your messages land here. Everything so far is read."
     }
   when "direct_messages"
     {
-      icon: "messages",
       headline: "No conversations yet",
-      description: Current.user.can_create_direct_messages? ? "Type a name above to start one." : "Direct messages will appear here."
+      description: Current.user.can_create_direct_messages? ?
+        "Direct messages are private to the people in them. Type a name above to start one." :
+        "Direct messages are private to the people in them."
     }
   when "threads"
     {
-      icon: "threads",
       headline: "No threads yet",
-      description: "Replies to messages you've participated in will appear here."
+      description: "Reply in a thread, or start one from any message, and it appears here with its unread count."
     }
   when "bookmarks"
     {
-      icon: "bookmark",
       headline: "No bookmarks yet",
-      description: "Save messages for later by clicking the bookmark icon on any message."
+      description: "Save a message from its ⋯ menu and it waits here — private to you, and it never expires."
     }
   else
     {
-      icon: "messages-outlined",
-      headline: "All caught up",
-      description: "You don't have any notifications right now."
+      headline: "Nothing here yet",
+      description: "Messages from the rooms you're in will appear here."
     }
   end
 %>
 
 <div id="message-area" class="message-area">
   <div class="message-area--empty min-width center">
-    <div class="message-area--empty__content center pad">
-      <figure class="message-area--empty__figure">
-        <%= icon_tag empty_state[:icon] %>
-      </figure>
-
-      <div class="message-area--empty__text">
-        <h2 class="txt-large"><%= empty_state[:headline] %></h2>
-        <p class="txt-muted"><%= empty_state[:description] %></p>
-      </div>
+    <div class="empty-state">
+      <h2 class="empty-state__title"><%= empty_state[:headline] %></h2>
+      <p class="empty-state__body"><%= empty_state[:description] %></p>
     </div>
   </div>
 

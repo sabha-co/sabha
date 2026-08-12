@@ -67,9 +67,9 @@
             <%= render partial: "accounts/users/user", collection: @users, as: :user %>
           </div>
         <% else %>
-          <div class="members-empty">
-            <p class="members-empty__title">No one matches <% if params[:query].present? %>&ldquo;<%= params[:query] %>&rdquo;<% else %>your search<% end %></p>
-            <p class="members-empty__hint">Search runs on names, and only over people you can see.</p>
+          <div class="empty-state">
+            <p class="empty-state__title">No one matches <% if params[:query].present? %>&ldquo;<%= params[:query] %>&rdquo;<% else %>your search<% end %></p>
+            <p class="empty-state__body">Search runs on names only, and only over people you can see. Deactivated accounts are staff-visible.</p>
           </div>
         <% end %>
       <% elsif @filtering_deactivated %>
