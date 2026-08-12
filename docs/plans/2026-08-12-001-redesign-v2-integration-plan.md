@@ -104,6 +104,15 @@ Order follows the README (tokens first, or every component is built twice). **PR
 
 **Commit boundary (PR 2):** the shell move is PR 2's highest-risk part — land it as an early, self-contained commit series (including the `library-collapsed` deletion) so it stays bisectable within the branch.
 
+**As built (2026-08-12, on `redesign-v2`, commits `8c99834`…):** landed as five commits — dead-machinery deletion, protective drawer tests, the grid flip, the sidebar rebuild + contrast, and the breakpoint states — plus rail tests. Notes:
+- **Sidebar ladder:** 272px docked ≥1440, 240px at 1280–1439 (the responsive spec's narrow-desktop baseline), 60px rail at 834–1279 expanding to a 264px overlay + scrim on the toggle, 300px drawer over a scrim <834. The 70px always-on tools rail is retired; tools became full-width rows at the sidebar top and Settings/Bell/Avatar moved to a sticky footer.
+- **Rail defers per-room glyphs.** The spec's rail shows compact room rows with unread dots; the landed rail shows the tool icons + footer and expands for rooms (per-room compact rendering needs its own markup — follow-up, not CSS).
+- **Overlay dismissal keys off computed `position: fixed`,** not a media query in JS — drawer and expanded rail are the fixed modes, so outside-press/navigate-close need no breakpoint constants.
+- **Current-room state is real now:** `rooms_list` marks the active room `aria-current="page"` on load and every `turbo:load`, and the row styles the accent tint from it.
+- **Forums section required a small data-layer change** (sanctioned by this step): `Membership.forum_rooms` scopes, `SidebarMemberships#forums`, `sidebar_list_name` targeting `:forum_rooms`, and `SIDEBAR_SECTIONS` gaining the section — so live room-added/removed broadcasts land in the right list (three exact-count broadcast tests updated accordingly).
+- **`#room-search` exists at last** — the Search tool row carries the id, so the drawer's initial-focus selector finally resolves.
+- Also swept four latent broken-var callers found en route: two `var(--color-accent)` focus outlines (sidebar CSS) and the SaaS admin sparkline/storage bar reading deleted or never-defined names (`--color-accent`, `--color-warning`).
+
 ---
 
 ### Step 3 — Message row & composer (two real behaviour changes, not just CSS)
