@@ -142,8 +142,9 @@ body.session {
   text-align: center;
   text-wrap: pretty;
 
-  a {
+  :is(a, button) {
     color: var(--color-link);
+    cursor: pointer;
     font-weight: 600;
     text-decoration: none;
 
@@ -153,6 +154,11 @@ body.session {
       }
     }
   }
+}
+
+/* "Send another" resends inline within the note sentence. */
+.auth-card__resend {
+  display: inline;
 }
 
 /* Hairline-topped footer ("New here? …") */

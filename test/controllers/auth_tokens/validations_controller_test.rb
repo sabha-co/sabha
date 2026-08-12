@@ -26,6 +26,20 @@ class AuthTokens::ValidationsControllerTest < ActionDispatch::IntegrationTest
     assert auth_token.reload.used_at.present?
   end
 
+  test "the code screen offers a resend that issues a fresh code" do
+    post auth_tokens_url, params: { email_address: @user.email_address }
+
+    get new_auth_tokens_validations_url
+    assert_response :success
+    assert_select "form.auth-card__resend[action=?]", auth_tokens_path
+    assert_select "button", text: "Send another"
+
+    assert_difference -> { @user.auth_tokens.count }, 1 do
+      post auth_tokens_url, params: { email_address: @user.email_address }
+    end
+    assert_redirected_to new_auth_tokens_validations_path
+  end
+
   test "invalid OTP code rejects login" do
     post auth_tokens_url, params: { email_address: @user.email_address }
 

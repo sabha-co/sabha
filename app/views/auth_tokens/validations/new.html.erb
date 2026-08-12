@@ -23,6 +23,13 @@
   <% end %>
 
   <p class="auth-card__note">
-    Didn't receive it? <%= link_to "Try again", new_session_path %>
+    <% if session[:otp_email_address].present? %>
+      Didn't get it?
+      <%= button_to "Send another", auth_tokens_path,
+            params: { email_address: session[:otp_email_address] },
+            form: { class: "auth-card__resend" } %>
+    <% else %>
+      <%= link_to "Back to sign in", new_session_path %>
+    <% end %>
   </p>
 </section>
