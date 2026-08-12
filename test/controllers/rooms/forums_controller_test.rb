@@ -180,7 +180,7 @@ class Rooms::ForumsControllerTest < ActionDispatch::IntegrationTest
 
     get room_url(forum, solved: "open")
 
-    assert_select ".forum-seg__btn--active", text: "Open"
+    assert_select ".segmented-control__btn--active", text: "Open"
   end
 
   test "admin sees the forum edit form" do

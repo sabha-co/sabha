@@ -168,31 +168,8 @@
 .forum-card__stack .forum-card__stack-avatar { box-shadow: 0 0 0 2px var(--color-bg); }
 .forum-card__stack .forum-card__stack-avatar + .forum-card__stack-avatar { margin-left: -0.4rem; }
 
-/* --- filter bar ------------------------------------------------------ */
+/* --- filter bar (uses the shared .segmented-control from patterns.css) --- */
 .forum-filter { row-gap: 0.5rem; }
-
-.forum-seg { border: 1px solid var(--color-border-darker); border-radius: 0.5rem; overflow: hidden; }
-
-.forum-seg__btn {
-  padding: 0.3rem 0.65rem;
-  font-size: 0.75rem;
-  line-height: 1.1;
-  text-decoration: none;
-  color: var(--color-text-lighter);
-  background: var(--color-bg);
-}
-
-.forum-seg__btn + .forum-seg__btn { border-left: 1px solid var(--color-border-dark); }
-.forum-seg__btn:hover { background: var(--color-bg-hover); }
-
-/* Active filter reads as "selected" without borrowing an accent: a quiet neutral
-   fill, monochrome like the app's other selection states — so the only
-   solid/colored pill in the forum is the primary New post action. */
-.forum-seg__btn--active {
-  color: var(--color-text);
-  background: var(--color-border-dark);
-  font-weight: 600;
-}
 
 /* --- post header (shared by panel + standalone page) ----------------- */
 /* A muted glyph anchors the question as a hero above the title. */

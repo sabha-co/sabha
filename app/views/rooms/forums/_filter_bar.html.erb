@@ -3,17 +3,17 @@
 <% current_sort = params[:sort].presence == "newest" ? "newest" : "recent" %>
 
 <div class="forum-filter flex align-center gap flex-wrap">
-  <div class="forum-seg flex" role="group" aria-label="Solved filter">
+  <div class="segmented-control" role="group" aria-label="Solved filter">
     <% [ [ "All", nil ], [ "Open", "open" ], [ "Solved", "solved" ] ].each do |label, value| %>
       <%= link_to label, room_path(forum, solved: value, sort: params[:sort]),
-            class: class_names("forum-seg__btn", "forum-seg__btn--active" => current_solved == value) %>
+            class: class_names("segmented-control__btn", "segmented-control__btn--active" => current_solved == value) %>
     <% end %>
   </div>
 
-  <div class="forum-seg flex" role="group" aria-label="Sort">
+  <div class="segmented-control" role="group" aria-label="Sort">
     <% [ [ "Recent", "recent" ], [ "Newest", "newest" ] ].each do |label, value| %>
       <%= link_to label, room_path(forum, solved: current_solved, sort: value),
-            class: class_names("forum-seg__btn", "forum-seg__btn--active" => current_sort == value) %>
+            class: class_names("segmented-control__btn", "segmented-control__btn--active" => current_sort == value) %>
     <% end %>
   </div>
 </div>
