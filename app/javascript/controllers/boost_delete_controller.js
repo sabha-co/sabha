@@ -6,6 +6,10 @@ export default class extends Controller {
   static values = { boosterId: Number }
 
   connect() {
+    // Chips are cached per [boost, booster], so "is this mine" can only be
+    // stamped client-side
+    this.element.classList.toggle("boost--mine", this.#currentUserIsBooster)
+
     if (this.#currentUserIsBooster) {
       this.#setAccessibleAttributes()
     }

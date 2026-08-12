@@ -5,15 +5,22 @@
   left: -2px;
 }
 
-/* Item */
+/* Item: 23px pill chip, 17px reactor avatar, accent-tinted when yours */
 .boost {
   border: 1px solid var(--boost-border-color);
-  border-radius: 4rem;
+  border-radius: var(--border-radius-pill);
   margin-block-start: calc(var(--block-space-half) / 2);
+  min-block-size: 23px;
   opacity: 1;
-  padding: 0.1em 0.2em 0.1em 0.1em;
+  padding: 0.1em 0.5em 0.1em 0.15em;
   transition: opacity 100ms ease-in-out, box-shadow 150ms cubic-bezier(0.25, 1, 0.5, 1);
   cursor: pointer;
+
+  &.boost--mine {
+    --boost-border-color: var(--color-selected-dark);
+
+    background-color: var(--color-selected);
+  }
 
   .boost__action {
     margin-block-start: 0;
@@ -65,7 +72,7 @@
 }
 
 .boost__avatar {
-  --avatar-size: 2.2ch;
+  --avatar-size: 17px;
 
   inline-size: auto;
 }

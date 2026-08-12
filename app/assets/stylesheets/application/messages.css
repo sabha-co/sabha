@@ -422,7 +422,7 @@
   justify-content: space-between;
   line-height: 1.5;
   inline-size: 100%;
-  margin: 0;
+  margin: 0 0 2px;
 
   .message__meta-block {
     font-size: 0.8rem;
@@ -473,7 +473,7 @@
 
   .message__heading {
     align-items: center;
-    column-gap: calc(var(--message-column-gap) / 2);
+    column-gap: 7px;
     display: inline-flex;
     margin: 0;
     min-inline-size: 0;
@@ -482,9 +482,11 @@
 
 }
 
+/* Meta line: author 14.5/700, time and "(edited)" 11.5 subtle */
 .message__author {
-  font-size: 0.8rem;
-  font-weight: 400;
+  color: var(--color-text);
+  font-size: 0.90625rem;
+  font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -511,18 +513,18 @@
 }
 
 .message__permalink {
-  color: var(--color-text);
-  font-size: 0.8rem;
+  color: var(--color-text-subtle);
+  font-size: 0.71875rem;
   font-weight: 400;
-  opacity: 0.5;
   text-decoration: none;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .message__edited {
-  opacity: 0.5;
-  font-size: 0.8rem;
+  color: var(--color-text-subtle);
+  font-size: 0.71875rem;
+  margin-inline-start: 4px;
 }
 
 .message__body {
@@ -599,7 +601,9 @@
 .message__body-content {
   background-color: var(--message-background, var(--color-bg-sunk));
   border-radius: 0.66em;
-  color: var(--message-color, var(--color-text));
+  color: var(--message-color, var(--color-text-lighter));
+  font-size: 0.9375rem;
+  line-height: 1.55;
   font-weight: 400;
   inline-size: 100%;
   margin-block-end: var(--message-row-gap);

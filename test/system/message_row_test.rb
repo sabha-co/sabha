@@ -40,7 +40,8 @@ class MessageRowTest < ApplicationSystemTestCase
       find(".message__body-content").hover
       find(".message__quick-reaction button[title='Thumbs up']").click
 
-      assert_selector ".boost", text: "👍"
+      # Your own chip carries the accent tint (stamped client-side)
+      assert_selector ".boost.boost--mine", text: "👍"
     end
   end
 
