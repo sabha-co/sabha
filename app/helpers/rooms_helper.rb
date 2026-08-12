@@ -53,8 +53,7 @@ module RoomsHelper
         class: "message-area__return-to-latest btn",
         data: { action: "messages#returnToLatest", messages_target: "latest" },
         hidden: true do
-      image_tag("arrow-down.svg", aria: { hidden: "true" }, size: 20) +
-      tag.span("Jump to newest message", class: "for-screen-reader")
+      tag.span("Jump to newest") + icon_tag("arrow-down", style: "--icon-size: 13px")
     end
   end
 

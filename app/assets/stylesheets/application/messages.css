@@ -38,12 +38,26 @@
   }
 }
 
+/* Labeled accent pill floating over the composer */
 .message-area__return-to-latest {
+  --btn-background: var(--color-accent-brand);
+  --btn-border-color: transparent;
+  --btn-border-radius: 999px;
+  --btn-padding: 7px 15px;
+
+  box-shadow: 0 4px 14px rgb(15 17 26 / 0.18);
+  color: var(--color-text-reversed);
+  font-size: 0.78125rem;
+  font-weight: 600;
+  gap: 6px;
+  /* --footer-height understates the composer card; clear it with margin */
+  inset-block-end: calc(var(--footer-height) + 5em);
+  inset-inline-start: 50%;
   outline: 0 solid var(--color-selected-dark);
-  inset-block-end: var(--footer-height);
-  inset-inline-start: calc(50% - calc(var(--btn-size) / 2));
   position: absolute;
-  
+  transform: translateX(-50%);
+  white-space: nowrap;
+
   &.pulse {
     animation: pulsing-outline 2s infinite both;
   }
@@ -358,20 +372,33 @@
   }
 }
 
+/* The comp's deliberate red exception to the accent system: a hairline
+   running left into a right-anchored label. */
 .message__new-separator {
   grid-area: new;
   margin-block: calc(var(--message-space) / 2);
-  display: grid;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   animation: separator-reveal 250ms cubic-bezier(0.25, 1, 0.5, 1) both;
 
   span {
     background-color: transparent;
-    color: var(--color-accent-brand);
+    color: var(--color-negative);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 0;
   }
 
-  &::after,
   &::before {
-    border-top: 2px solid var(--color-accent-brand);
+    border-top: 1px solid color-mix(in oklch, var(--color-negative) 50%, transparent);
+    content: "";
+    flex: 1;
+  }
+
+  &::after {
+    display: none;
   }
 
   .message:first-child & {
