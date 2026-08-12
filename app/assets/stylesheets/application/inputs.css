@@ -136,17 +136,55 @@ input[type="radio"]:disabled::after {
   background-color: var(--color-border-darker);
 }
 
-/* Room-type options stack a title above a description; nudge the radio down so
-   it optically centers on the title line instead of sitting flush to its top. */
-.room-type-option input[type="radio"] {
-  margin-block-start: 0.15em;
+/* Room-type picker: three selectable cards; the radio itself is visually
+   hidden and the checked state paints the card accent. */
+.room-type-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-block-end: 18px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* The "add all members" checkbox is a child of the Public option: hug it to
-   Public and indent so it lines up under the option's title/description text. */
-.room-type-suboption {
-  margin-block-start: var(--block-space-half);
-  padding-inline-start: calc(1.075em + var(--inline-space));
+.room-type-card {
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 11px;
+
+  &:has(input:checked) {
+    background-color: var(--color-selected);
+    border-color: var(--color-accent-brand);
+
+    .room-type-card__head {
+      color: var(--color-accent-brand);
+    }
+  }
+
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+}
+
+.room-type-card__head {
+  align-items: center;
+  display: inline-flex;
+  font-size: 0.84375rem;
+  font-weight: 700;
+  gap: 7px;
+}
+
+.room-type-card__blurb {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 
 .input--transparent {

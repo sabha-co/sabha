@@ -11,7 +11,7 @@ class Rooms::BrowseControllerTest < ActionDispatch::IntegrationTest
     get rooms_browse_url
 
     assert_response :success
-    assert_select "strong", text: "Everyone Forum", count: 0
+    assert_select ".list-row__title", text: "Everyone Forum", count: 0
   end
 
   test "a forum a member was removed from reappears in Browse so they can rejoin" do
@@ -21,7 +21,7 @@ class Rooms::BrowseControllerTest < ActionDispatch::IntegrationTest
     get rooms_browse_url
 
     assert_response :success
-    assert_select "#browsable_rooms strong", text: "Discoverable Forum"
+    assert_select "#browsable_rooms .list-row__title", text: "Discoverable Forum"
   end
 
   test "rejoining a browsable forum grants membership and lands on the gallery" do

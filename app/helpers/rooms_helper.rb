@@ -40,17 +40,14 @@ module RoomsHelper
   def button_to_delete_room(room, url: nil)
     if room.is_a?(Rooms::Direct)
       confirm_message = "Are you sure you want to delete this conversation and all messages in it? This can't be undone."
-      button_label = "Delete conversation"
+      aria_label = "Delete conversation"
     else
       confirm_message = "Are you sure you want to delete this room and all messages in it? This can't be undone."
-      button_label = room_display_name(room)
+      aria_label = "Delete #{room_display_name(room)}"
     end
 
-    button_to room, method: :delete, class: "btn btn--negative max-width", aria: { label: "Delete #{room.name}" },
-        data: { turbo_confirm: confirm_message } do
-      image_tag("trash.svg", aria: { hidden: "true" }, size: 20) +
-      tag.span(button_label, class: "overflow-ellipsis")
-    end
+    button_to "Delete", room, method: :delete, class: "btn settings-chip-btn settings-chip-btn--negative flex-item-no-shrink",
+        aria: { label: aria_label }, data: { turbo_confirm: confirm_message }
   end
 
   def button_to_jump_to_newest_message
@@ -63,11 +60,8 @@ module RoomsHelper
     end
   end
 
-  def submit_room_button_tag
-    button_tag class: "btn btn--reversed txt-large center", type: "submit" do
-      image_tag("check.svg", aria: { hidden: "true" }, size: 20) +
-      tag.span("Save", class: "for-screen-reader")
-    end
+  def submit_room_button_tag(label = "Save changes")
+    button_tag label, class: "btn settings-save", type: "submit"
   end
 
   def composer_form_tag(room, form_id: "composer", message_area_id: "message-area", connection_monitor: true, &)

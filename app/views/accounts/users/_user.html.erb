@@ -1,33 +1,36 @@
 <%# locals: (user:) %>
-<%= turbo_frame_tag dom_id(user), class: "member-row flex align-center gap #{"banned" if user.banned?}" do %>
-  <% if user.bot? %>
-    <span class="status-dot" aria-hidden="true"></span>
-  <% else %>
-    <span class="status-dot <%= activity_status_class(user) %>" aria-hidden="true"></span>
-  <% end %>
-
-  <div class="flex-item-no-shrink" style="--avatar-size: 3.75ch;">
+<%= turbo_frame_tag dom_id(user), class: "list-row member-row #{"banned" if user.banned?}" do %>
+  <span class="member-row__avatar list-row__avatar">
     <%= render "users/popup", user: user, boundary: ".members-list" %>
-  </div>
+    <% unless user.bot? %>
+      <span class="member-row__dot status-dot <%= activity_status_class(user) %>" aria-hidden="true"></span>
+    <% end %>
+  </span>
 
-  <div class="min-width flex-item-grow">
-    <div class="overflow-ellipsis">
-      <%= link_to user_path(user), class: "txt-undecorated", data: { turbo_frame: "_top" } do %>
+  <div class="list-row__body">
+    <div class="flex align-center gap-half min-width">
+      <%= link_to user_path(user), class: "txt-undecorated list-row__title", data: { turbo_frame: "_top" } do %>
         <strong><%= user.name %></strong>
         <% if user == Current.user %><span class="txt-x-small txt-muted">(you)</span><% end %>
       <% end %>
       <% if user.bot? %>
-        <span class="txt-x-small txt-muted" title="Bot"><%= icon_tag "bot" %> Bot</span>
+        <span class="member-badge" title="Bot"><%= icon_tag "bot" %> Bot</span>
       <% elsif user.badge %>
-        <span class="txt-x-small txt-muted"><%= user.badge.name %></span>
+        <span class="member-badge" <%= tag.attributes(style: "--badge-color: #{user.badge.color}") if user.badge.color.present? %>><%= user.badge.name %></span>
+      <% end %>
+    </div>
+    <div class="list-row__subtitle">
+      <% if user.bot? %>
+        Posts through the API
+      <% else %>
+        <%= { "status--active" => "Here now", "status--away" => "Away", "status--offline" => "Offline" }[activity_status_class(user)] %> · joined <%= user.created_at.year %>
       <% end %>
     </div>
   </div>
 
   <% if user.bot? %>
     <% if Current.user.can_administer? %>
-      <hr class="separator" aria-hidden="true">
-      <div class="member-controls flex align-center gap">
+      <div class="member-controls list-row__trailing flex align-center gap">
         <%= link_to account_bot_path(user), class: "btn txt-small flex-item-no-shrink", data: { turbo_frame: "_top" } do %>
           <%= icon_tag "settings" %>
           <span class="for-screen-reader">Manage <%= user.name %></span>
@@ -38,9 +41,7 @@
     <% has_controls = user.manageable_by?(Current.user) || user.reactivatable_by?(Current.user) || user.unbannable_by?(Current.user) || user.removable_by?(Current.user) || user == Current.user %>
 
     <% if has_controls %>
-      <hr class="separator" aria-hidden="true">
-
-      <div class="member-controls flex align-center gap">
+      <div class="member-controls list-row__trailing flex align-center gap">
         <% if user.manageable_by?(Current.user) %>
           <%= render "accounts/users/role_toggle", user: user, role: :administrator, icon: "crown" %>
           <%= render "accounts/users/role_toggle", user: user, role: :moderator, icon: "shield" %>
@@ -56,20 +57,19 @@
         <% end %>
 
         <% if user.reactivatable_by?(Current.user) %>
-          <%= button_to account_user_reactivation_path(user), method: :post, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
+          <%= button_to account_user_reactivation_path(user), method: :post, class: "btn settings-chip-btn flex-item-no-shrink", data: {
                 turbo_confirm: "Reactivate #{user.name}? They will be able to log in again." } do %>
             Reactivate
           <% end %>
         <% elsif user.unbannable_by?(Current.user) %>
-          <%= button_to user_ban_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--reversed", data: {
+          <%= button_to user_ban_path(user), method: :delete, class: "btn settings-chip-btn flex-item-no-shrink", data: {
                 turbo_confirm: "Unban #{user.name}? They will be able to access the chat again." } do %>
             Unban
           <% end %>
         <% elsif user.removable_by?(Current.user) %>
-          <%= button_to account_user_path(user), method: :delete, class: "btn txt-small flex-item-no-shrink btn--negative", data: {
+          <%= button_to account_user_path(user), method: :delete, class: "btn settings-chip-btn settings-chip-btn--negative flex-item-no-shrink", data: {
                 turbo_confirm: "Deactivate #{user.name}? They will no longer be able to log in, but their messages will remain visible. To remove their messages, use Ban instead from their profile page."} do %>
-            <%= icon_tag "minus" %>
-            <span class="for-screen-reader">Deactivate <%= user.name %></span>
+            Deactivate
           <% end %>
         <% end %>
 

@@ -1,3 +1,9 @@
-<%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form", turbo: false }, class: "pad-block" do %>
-  <%= select_tag :involvement, options_for_select(involvement_options_for(room), membership.involvement), data: { action: "change->form#submit" }, class: "max-width" %>
+<%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form", turbo: false } do %>
+  <label class="setting-row">
+    <span class="setting-row__text">
+      <span class="setting-row__title">Involvement</span>
+      <span class="txt-small txt-muted">How closely you follow this room</span>
+    </span>
+    <%= select_tag :involvement, options_for_select(involvement_options_for(room), membership.involvement), data: { action: "change->form#submit" }, class: "txt-small flex-item-no-shrink", style: "max-inline-size: 15em;" %>
+  </label>
 <% end %>

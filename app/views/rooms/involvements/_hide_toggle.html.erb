@@ -1,12 +1,16 @@
-<%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form", turbo: false }, class: "flex align-center gap pad-block" do %>
+<%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form", turbo: false } do %>
   <%= hidden_field_tag :involvement, is_hidden ? "mentions" : "invisible" %>
-  <span>Hide from sidebar</span>
-  <hr class="separator" aria-hidden="true">
-  <label class="switch">
-    <input type="checkbox"
-           class="switch__input"
-           <%= "checked" if is_hidden %>
-           data-action="change->form#submit">
-    <span class="switch__btn round"></span>
+  <label class="setting-row">
+    <span class="setting-row__text">
+      <span class="setting-row__title">Hide from sidebar</span>
+      <span class="txt-small txt-muted">The room stays joined, it just stops taking up space.</span>
+    </span>
+    <span class="switch">
+      <input type="checkbox"
+             class="switch__input"
+             <%= "checked" if is_hidden %>
+             data-action="change->form#submit">
+      <span class="switch__btn round"></span>
+    </span>
   </label>
 <% end %>

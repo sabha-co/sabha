@@ -7,10 +7,20 @@
 <% end %>
 
 <section class="panel">
-  <h1 class="txt-large txt-align-center margin-block">Browse rooms</h1>
+  <header class="settings-header flex align-center justify-between gap">
+    <div>
+      <h1 class="settings-header__title margin-none" style="font-size: 1.25rem;">Browse rooms</h1>
+      <p class="txt-small txt-muted margin-none">Open rooms you haven't joined yet</p>
+    </div>
+    <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
+      <%= link_to new_rooms_open_path, class: "btn settings-save flex-item-no-shrink" do %>
+        New room
+      <% end %>
+    <% end %>
+  </header>
 
   <% if @rooms.any? %>
-    <div id="browsable_rooms" class="flex flex-column gap">
+    <div id="browsable_rooms" class="browse-card">
       <%= render partial: "rooms/browse/room", collection: @rooms, as: :room %>
 
       <% unless @page.last? %>
@@ -18,6 +28,9 @@
       <% end %>
     </div>
   <% else %>
-    <p class="txt-deemphasize txt-align-center pad">You're a member of all available rooms.</p>
+    <div class="members-empty">
+      <p class="members-empty__title">You're in every room already</p>
+      <p class="members-empty__hint">When someone opens a new room, it shows up here for you to join.</p>
+    </div>
   <% end %>
 </section>

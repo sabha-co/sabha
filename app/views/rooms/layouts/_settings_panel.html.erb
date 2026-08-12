@@ -1,29 +1,39 @@
 <% if membership %>
-  <p class="txt-muted margin-none margin-block-half txt-align-center">Notifications</p>
-
-  <% if membership.involved_in_invisible? %>
-    <%= render "rooms/involvements/hide_toggle", room: room, is_hidden: true %>
-  <% else %>
-    <%= render "rooms/involvements/involvement_select", room: room, membership: membership %>
-    <%= render "rooms/involvements/hide_toggle", room: room, is_hidden: false %>
-  <% end %>
-
-  <hr class="margin-block separator full-width" style="--border-style: solid">
-  <p class="txt-muted margin-none margin-block-half txt-align-center">Membership</p>
-
-  <div class="txt-align-center pad-block">
-    <%= button_to room_membership_path(room), method: :delete,
-          class: "btn max-width",
-          data: { turbo_confirm: "Leave #{room_display_name(room)}?" } do %>
-      Leave room
+  <span class="settings-label">Notifications</span>
+  <div class="settings-card">
+    <% if membership.involved_in_invisible? %>
+      <%= render "rooms/involvements/hide_toggle", room: room, is_hidden: true %>
+    <% else %>
+      <%= render "rooms/involvements/involvement_select", room: room, membership: membership %>
+      <%= render "rooms/involvements/hide_toggle", room: room, is_hidden: false %>
     <% end %>
+  </div>
+
+  <span class="settings-label">Membership</span>
+  <div class="settings-card">
+    <div class="setting-row">
+      <span class="setting-row__text">
+        <span class="setting-row__title">Leave this room</span>
+        <span class="txt-small txt-muted">It disappears from your sidebar. Rejoining starts your unread count fresh.</span>
+      </span>
+      <%= button_to room_membership_path(room), method: :delete,
+            class: "btn settings-chip-btn flex-item-no-shrink",
+            data: { turbo_confirm: "Leave #{room_display_name(room)}?" } do %>
+        Leave
+      <% end %>
+    </div>
   </div>
 <% end %>
 
 <% if Current.user.can_administer?(room) && !room.original? %>
-  <hr class="margin-block separator full-width" style="--border-style: solid">
-  <p class="txt-muted margin-none margin-block-half txt-align-center">Danger zone</p>
-  <div class="txt-align-center pad-block">
-    <%= button_to_delete_room room %>
+  <span class="settings-label">Danger zone</span>
+  <div class="settings-card">
+    <div class="setting-row">
+      <span class="setting-row__text">
+        <span class="setting-row__title txt-negative">Delete this room</span>
+        <span class="txt-small txt-muted">Every message in it goes too. This can't be undone.</span>
+      </span>
+      <%= button_to_delete_room room %>
+    </div>
   </div>
 <% end %>

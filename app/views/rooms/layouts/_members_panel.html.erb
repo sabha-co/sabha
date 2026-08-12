@@ -1,18 +1,20 @@
 <% if Current.user.can_administer?(room) && room.convertible? %>
-  <%= form_with url: room_access_path(room), method: :patch, data: { controller: "form" } do %>
-    <%= hidden_field_tag :open, room.is_a?(Rooms::Open) ? "0" : "1" %>
-    <div class="flex align-center gap pad-block">
-      <span><b>Public</b> (anyone can join)</span>
-      <hr class="separator" aria-hidden="true">
-      <label class="switch">
-        <input type="checkbox" class="switch__input" <%= "checked" if room.is_a?(Rooms::Open) %> data-action="change->form#submit">
-        <span class="switch__btn round"></span>
-        <span class="for-screen-reader"><%= room.is_a?(Rooms::Open) ? "Make this room invite-only" : "Let anyone join this room" %></span>
+  <div class="settings-card margin-block-end">
+    <%= form_with url: room_access_path(room), method: :patch, data: { controller: "form" } do %>
+      <%= hidden_field_tag :open, room.is_a?(Rooms::Open) ? "0" : "1" %>
+      <label class="setting-row">
+        <span class="setting-row__text">
+          <span class="setting-row__title">Open to everyone</span>
+          <span class="txt-small txt-muted">Anyone can find and join this room. Off makes it invite-only.</span>
+        </span>
+        <span class="switch">
+          <input type="checkbox" class="switch__input" <%= "checked" if room.is_a?(Rooms::Open) %> data-action="change->form#submit">
+          <span class="switch__btn round"></span>
+          <span class="for-screen-reader"><%= room.is_a?(Rooms::Open) ? "Make this room invite-only" : "Let anyone join this room" %></span>
+        </span>
       </label>
-    </div>
-  <% end %>
-
-  <hr class="margin-block separator full-width" style="--border-style: solid">
+    <% end %>
+  </div>
 <% end %>
 
 <% if Current.user.can_administer?(room) && room.sidebar_room? %>

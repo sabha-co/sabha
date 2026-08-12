@@ -37,31 +37,36 @@
   }
 }
 
+/* Room-edit tabs ride the shared segmented-control look */
 .room-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--color-border-darker);
+  align-items: center;
+  background-color: var(--color-border);
+  border-radius: var(--border-radius-pill);
+  display: inline-flex;
+  gap: 2px;
   margin-block-end: var(--block-space);
-  margin-inline: calc(-1 * var(--panel-padding));
-  padding-inline: var(--panel-padding);
+  padding: 3px;
 }
 
 .room-tabs [role="tab"] {
-  flex: 1;
-  padding: 0.75em 0.5em;
-  border: none;
   background: none;
-  font: inherit;
-  font-weight: 600;
+  border: none;
+  border-radius: var(--border-radius-pill);
   color: var(--color-text-muted);
   cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 5px 14px;
   text-align: center;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  white-space: nowrap;
 }
 
 .room-tabs [role="tab"][aria-selected="true"] {
+  background-color: var(--color-bg);
+  box-shadow: var(--shadow-raise);
   color: var(--color-text);
-  border-bottom-color: currentColor;
 }
 
 .room-tabs [role="tab"]:hover:not([aria-selected="true"]) {
@@ -125,14 +130,25 @@
   overflow-y: auto;
 }
 
-.role-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--block-space);
+/* Members directory: small-caps heading above a bordered card of list rows.
+   The card keeps the {role}s_section id — Turbo Streams append rows to it. */
+.role-section-group:not(:has([id^="user_"])) {
+  display: none;
+}
 
-  &:not(:has([id^="user_"])) {
-    display: none;
-  }
+.role-section {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.role-section__heading,
+.role-section-header {
+  color: var(--color-text-subtle);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  padding: 0 2px 8px;
+  text-transform: uppercase;
 }
 
 .banned strong {
@@ -140,42 +156,37 @@
   opacity: 0.6;
 }
 
-.member-status-tabs {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  margin-block-end: var(--block-space);
-}
-
-.member-status-tab {
-  color: var(--color-text-muted);
-  text-decoration: none;
+/* Member row extras on the shared .list-row rhythm */
+.member-row__avatar {
   position: relative;
-
-  &:hover {
-    color: var(--color-text);
-  }
-
-  & + & {
-    padding-inline-start: 0.875rem;
-
-    &::before {
-      content: "·";
-      color: var(--color-text-muted);
-      position: absolute;
-      inset-inline-start: -0.125rem;
-    }
-  }
 }
 
-.member-status-tab--active {
-  color: var(--color-text);
-  font-weight: 600;
+.member-row__dot {
+  border: 2px solid var(--color-bg);
+  block-size: 10px;
+  inline-size: 10px;
+  inset-block-end: -2px;
+  inset-inline-end: -2px;
+  position: absolute;
+}
+
+.member-badge {
+  --badge-color: var(--color-accent-brand);
+
+  background-color: color-mix(in srgb, var(--badge-color) 14%, transparent);
+  border-radius: 4px;
+  color: var(--badge-color);
+  flex: none;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  text-transform: uppercase;
 }
 
 /* Member management responsive styles */
 .panel--members {
-  --panel-width: 60ch;
+  --panel-width: 68ch;
 }
 
 .panel--members .member-row {
@@ -193,6 +204,37 @@
   flex-shrink: 0;
 }
 
+/* Browse rooms: bordered card of list rows */
+.browse-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.browse-room__glyph {
+  align-items: center;
+  display: inline-flex;
+  flex: none;
+  inline-size: 20px;
+  justify-content: center;
+}
+
+.members-empty {
+  padding: 70px 24px;
+  text-align: center;
+}
+
+.members-empty__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.members-empty__hint {
+  color: var(--color-text-muted);
+  font-size: 0.84375rem;
+  margin: 7px 0 0;
+}
+
 .status-dot {
   width: 0.5em;
   height: 0.5em;
@@ -206,10 +248,6 @@
 .status--offline { background-color: var(--color-border-darker); }
 
 @media (max-width: 480px) {
-  .panel--members .member-row .separator {
-    display: none;
-  }
-
   .panel--members .member-row {
     flex-wrap: wrap;
     gap: 0.5rem;
@@ -219,7 +257,6 @@
     flex-basis: 100%;
     flex-shrink: 1;
     justify-content: flex-end;
-    padding-inline-start: calc(0.5em + 3.75ch + 1rem);
   }
 
   .panel--members .members-header {

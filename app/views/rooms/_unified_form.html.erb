@@ -7,64 +7,65 @@
               room_form_closed_url_value: closed_url,
               room_form_forum_url_value: forum_url } do |form| %>
 
-  <div class="flex flex-column gap">
-    <label class="flex align-center gap input input--actor">
-      <%= form.text_field :name, name: "room[name]", class: "input txt-large",
-            required: true, autofocus: true, placeholder: "Name the room",
-            data: { action: "keydown.enter->form#submit:prevent" } %>
-      <%= icon_tag "chat-bubble" %>
-      <span class="for-screen-reader">Name this room</span>
+  <div class="room-type-grid txt-align-start">
+    <label class="room-type-card">
+      <input type="radio" name="room_type" value="open" class="for-screen-reader"
+             <%= "checked" if default_type == "open" %>
+             data-action="change->room-form#selectType">
+      <span class="room-type-card__head"># Public</span>
+      <span class="room-type-card__blurb">Anyone can find and join</span>
     </label>
 
-    <label class="flex align-center gap input input--actor">
-      <%= form.text_area :description, name: "room[description]", rows: 1, maxlength: 280, class: "input txt-medium",
-            placeholder: "What's this room about? (optional)" %>
-      <span class="for-screen-reader">Room description</span>
-    </label>
-  </div>
-
-  <hr class="margin-block borderless">
-
-  <div class="flex flex-column gap pad-inline margin-block txt-align-start">
-    <div class="flex flex-column">
-      <label class="flex align-start gap cursor-pointer room-type-option">
-        <input type="radio" name="room_type" value="open"
-               <%= "checked" if default_type == "open" %>
-               data-action="change->room-form#selectType">
-        <span class="flex flex-column">
-          <strong># Public</strong>
-          <span class="txt-small txt-deemphasize">Anyone can find and join</span>
-        </span>
-      </label>
-
-      <div data-room-form-target="autoJoinOption" class="room-type-suboption" <%= "hidden" unless default_type == "open" %>>
-        <label class="flex align-center gap cursor-pointer">
-          <%= form.check_box :auto_join, name: "room[auto_join]" %>
-          <span class="txt-small">Add all members automatically</span>
-        </label>
-      </div>
-    </div>
-
-    <label class="flex align-start gap cursor-pointer room-type-option">
-      <input type="radio" name="room_type" value="closed"
+    <label class="room-type-card">
+      <input type="radio" name="room_type" value="closed" class="for-screen-reader"
              <%= "checked" if default_type == "closed" %>
              data-action="change->room-form#selectType">
-      <span class="flex flex-column">
-        <strong><%= icon_tag "lock", size: 12 %> Private</strong>
-        <span class="txt-small txt-deemphasize">Invite-only</span>
-      </span>
+      <span class="room-type-card__head"><%= icon_tag "lock", size: 12 %> Private</span>
+      <span class="room-type-card__blurb">Invite-only, hidden from browse</span>
     </label>
 
-    <label class="flex align-start gap cursor-pointer room-type-option">
-      <input type="radio" name="room_type" value="forum"
+    <label class="room-type-card">
+      <input type="radio" name="room_type" value="forum" class="for-screen-reader"
              <%= "checked" if default_type == "forum" %>
              data-action="change->room-form#selectType">
-      <span class="flex flex-column">
-        <strong><%= icon_tag "message-log", size: 12 %> Forum</strong>
-        <span class="txt-small txt-deemphasize">Organized discussions, each in its own post</span>
-      </span>
+      <span class="room-type-card__head"><%= icon_tag "message-log", size: 12 %> Forum</span>
+      <span class="room-type-card__blurb">Organized discussions, each in its own post</span>
     </label>
   </div>
 
-  <%= submit_room_button_tag %>
+  <div class="txt-align-start">
+    <div class="settings-field">
+      <div class="settings-field__label">
+        <label for="room_name">Name</label>
+      </div>
+      <%= form.text_field :name, name: "room[name]", class: "input",
+            required: true, autofocus: true, placeholder: "Name the room",
+            data: { action: "keydown.enter->form#submit:prevent" } %>
+    </div>
+
+    <div class="settings-field">
+      <div class="settings-field__label">
+        <label for="room_description">Description</label>
+      </div>
+      <%= form.text_area :description, name: "room[description]", rows: 1, maxlength: 280, class: "input",
+            placeholder: "What's this room about? (optional)" %>
+    </div>
+
+    <div class="settings-field" data-room-form-target="autoJoinOption" <%= "hidden" unless default_type == "open" %>>
+      <label class="setting-row">
+        <span class="setting-row__text">
+          <span class="setting-row__title">Add new members automatically</span>
+          <span class="txt-small txt-muted">Everyone who joins the community lands in this room too.</span>
+        </span>
+        <span class="switch">
+          <%= form.check_box :auto_join, name: "room[auto_join]", class: "switch__input" %>
+          <span class="switch__btn round"></span>
+        </span>
+      </label>
+    </div>
+
+    <div class="settings-field">
+      <%= submit_room_button_tag "Create room" %>
+    </div>
+  </div>
 <% end %>

@@ -29,28 +29,31 @@
 <% end %>
 
 <section class="panel panel--members flex flex-column gap">
-  <div class="members-header flex align-center justify-between gap margin-block-end">
-    <h2 class="txt-large margin-none"><strong>Members (<%= @member_count %>)</strong></h2>
+  <div class="members-header flex align-center justify-between gap">
+    <div>
+      <h2 class="settings-header__title margin-none" style="font-size: 1.25rem;">Members</h2>
+      <p class="txt-small txt-muted margin-none"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</p>
+    </div>
     <%= form_with url: account_users_path, method: :get, data: { turbo_frame: "account_users", controller: "form" } do |f| %>
       <%= f.search_field :query,
             value: params[:query],
             class: "input txt-small",
-            placeholder: "Search member",
+            placeholder: "Search members",
             data: { action: "input->form#debouncedSubmit" } %>
     <% end %>
   </div>
 
   <% if Current.user.staff? && (@deactivated_count.to_i > 0 || @banned_count.to_i > 0 || @filtering_deactivated || @filtering_banned) %>
-    <nav class="member-status-tabs txt-small" aria-label="Member status">
+    <nav class="segmented-control" aria-label="Member status">
       <%= link_to "All", account_users_path,
-            class: class_names("member-status-tab", "member-status-tab--active": !@filtering_deactivated && !@filtering_banned) %>
+            class: class_names("segmented-control__btn", "member-status-tab", "member-status-tab--active": !@filtering_deactivated && !@filtering_banned, "segmented-control__btn--active": !@filtering_deactivated && !@filtering_banned) %>
       <% if @deactivated_count.to_i > 0 || @filtering_deactivated %>
         <%= link_to "Deactivated (#{@deactivated_count.to_i})", account_users_path(status: "deactivated"),
-              class: class_names("member-status-tab", "member-status-tab--active": @filtering_deactivated) %>
+              class: class_names("segmented-control__btn", "member-status-tab", "member-status-tab--active": @filtering_deactivated, "segmented-control__btn--active": @filtering_deactivated) %>
       <% end %>
       <% if @banned_count.to_i > 0 || @filtering_banned %>
         <%= link_to "Banned (#{@banned_count.to_i})", account_users_path(status: "banned"),
-              class: class_names("member-status-tab", "member-status-tab--active": @filtering_banned) %>
+              class: class_names("segmented-control__btn", "member-status-tab", "member-status-tab--active": @filtering_banned, "segmented-control__btn--active": @filtering_banned) %>
       <% end %>
     </nav>
   <% end %>
@@ -60,46 +63,62 @@
       <% if @searching %>
         <% if @users.any? %>
           <p class="txt-small txt-muted margin-block-half"><%= pluralize(@users.size, "result") %></p>
-          <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+          <div class="role-section">
+            <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+          </div>
         <% else %>
-          <p class="txt-small txt-muted">No members found</p>
+          <div class="members-empty">
+            <p class="members-empty__title">No one matches <% if params[:query].present? %>&ldquo;<%= params[:query] %>&rdquo;<% else %>your search<% end %></p>
+            <p class="members-empty__hint">Search runs on names, and only over people you can see.</p>
+          </div>
         <% end %>
       <% elsif @filtering_deactivated %>
         <% if @users.any? %>
-          <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+          <div class="role-section">
+            <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+          </div>
         <% else %>
           <p class="txt-small txt-muted">No deactivated members</p>
         <% end %>
       <% elsif @filtering_banned %>
         <% if @users.any? %>
-          <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+          <div class="role-section">
+            <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+          </div>
         <% else %>
           <p class="txt-small txt-muted">No banned members</p>
         <% end %>
       <% else %>
-        <div id="administrators_section" class="role-section">
-          <div class="flex align-center justify-between margin-block-half">
-            <p class="txt-small txt-muted margin-none role-section__heading">Administrators</p>
-            <span class="txt-small txt-muted"><%= pluralize(online_users_count, "member") %> online</span>
+        <div class="role-section-group">
+          <div class="flex align-center justify-between role-section-header">
+            <p class="role-section__heading margin-none">Administrators</p>
           </div>
-          <%= render partial: "accounts/users/user", collection: @administrators, as: :user %>
+          <div id="administrators_section" class="role-section">
+            <%= render partial: "accounts/users/user", collection: @administrators, as: :user %>
+          </div>
         </div>
 
-        <div id="moderators_section" class="role-section">
-          <p class="txt-small txt-muted margin-block-half role-section__heading">Moderators</p>
-          <%= render partial: "accounts/users/user", collection: @moderators, as: :user %>
+        <div class="role-section-group">
+          <p class="role-section__heading margin-none role-section-header">Moderators</p>
+          <div id="moderators_section" class="role-section">
+            <%= render partial: "accounts/users/user", collection: @moderators, as: :user %>
+          </div>
         </div>
 
-        <div id="members_section" class="role-section">
-          <p class="txt-small txt-muted margin-block-half role-section__heading">Members</p>
-          <%= render partial: "accounts/users/user", collection: @members, as: :user %>
-          <%= render "accounts/users/next_page_container", page: @page.next_param unless @page.last? %>
+        <div class="role-section-group">
+          <p class="role-section__heading margin-none role-section-header">Members</p>
+          <div id="members_section" class="role-section">
+            <%= render partial: "accounts/users/user", collection: @members, as: :user %>
+            <%= render "accounts/users/next_page_container", page: @page.next_param unless @page.last? %>
+          </div>
         </div>
 
         <% if @bots&.any? %>
-          <div id="bots_section" class="role-section">
-            <p class="txt-small txt-muted margin-block-half role-section__heading">Bots</p>
-            <%= render partial: "accounts/users/user", collection: @bots, as: :user %>
+          <div class="role-section-group">
+            <p class="role-section__heading margin-none role-section-header">Bots</p>
+            <div id="bots_section" class="role-section">
+              <%= render partial: "accounts/users/user", collection: @bots, as: :user %>
+            </div>
           </div>
         <% end %>
       <% end %>
