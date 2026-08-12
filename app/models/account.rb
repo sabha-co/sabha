@@ -8,6 +8,10 @@ class Account < ApplicationRecord
   VALID_AUTH_METHODS = %w[password otp sso].freeze
   ALLOWED_LOGO_CONTENT_TYPES = %w[ image/jpeg image/png image/gif image/webp ].freeze
 
+  # The workspace accent drives every interactive tint via [data-accent] on the
+  # html element (see app/assets/stylesheets/application/colors.css).
+  ACCENTS = %w[indigo ink forest rust plum].freeze
+
   InvalidLogoType = Class.new(StandardError)
 
   has_one_attached :logo do |attachable|
@@ -15,7 +19,9 @@ class Account < ApplicationRecord
     attachable.variant :small, resize_to_limit: [ 192, 192 ], format: :png
   end
 
-  has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true
+  has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true, accent: "indigo"
+
+  validate :accent_must_be_shipped
 
   after_save :invalidate_personal_invite_links, if: :invite_links_disabled?
   after_commit :sync_name_to_workspace, if: :saved_change_to_name?
@@ -98,6 +104,12 @@ class Account < ApplicationRecord
   end
 
   private
+    def accent_must_be_shipped
+      unless settings.accent.in?(ACCENTS)
+        errors.add(:settings, "accent must be one of: #{ACCENTS.join(", ")}")
+      end
+    end
+
     def invite_links_disabled?
       saved_change_to_settings? && !settings.allow_users_to_create_invite_links?
     end

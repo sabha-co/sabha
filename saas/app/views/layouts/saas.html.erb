@@ -31,7 +31,7 @@
     <%= umami_analytics_tag %>
   </head>
 
-  <body class="<%= class_names(@body_class, "app-with-workspaces": show_workspace_selector?) %>" data-controller="theme">
+  <body class="<%= class_names("session", @body_class, "app-with-workspaces": show_workspace_selector?) %>" data-controller="theme">
     <% if show_workspace_selector? %>
       <%= render "shared/workspace_selector" %>
     <% end %>

@@ -148,6 +148,49 @@
   --btn-color: var(--color-negative);
 }
 
+/* Accent picker: five paint-chip swatches, ring on the chosen one */
+.accent-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.accent-swatch {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.accent-swatch__dot {
+  background-color: var(--swatch-color);
+  block-size: 22px;
+  border-radius: 50%;
+  inline-size: 22px;
+}
+
+.accent-swatch:has(input:checked) .accent-swatch__dot {
+  box-shadow:
+    0 0 0 2px var(--color-bg),
+    0 0 0 4px var(--color-text);
+}
+
+.accent-swatch:has(input:focus-visible) .accent-swatch__dot {
+  outline: 2px solid var(--color-link);
+  outline-offset: 2px;
+}
+
+.accent-swatch__name {
+  color: var(--color-text-subtle);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.accent-swatch:has(input:checked) .accent-swatch__name {
+  color: var(--color-text);
+}
+
 /* Staff-only chip beside admin-gated items */
 .chip-staff {
   border: 1px solid var(--color-border);

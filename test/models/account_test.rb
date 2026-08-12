@@ -54,6 +54,24 @@ class AccountTest < ActiveSupport::TestCase
       originals.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
     end
 
+  test "settings accent defaults to indigo" do
+    assert_equal "indigo", @account.settings.accent
+    assert_equal "indigo", Account.new.settings.accent
+  end
+
+  test "settings accent accepts each shipped accent" do
+    Account::ACCENTS.each do |accent|
+      @account.update!(settings: { "accent" => accent })
+      assert_equal accent, @account.reload.settings.accent
+    end
+  end
+
+  test "settings accent rejects values outside the shipped set" do
+    @account.settings.accent = "crimson"
+    assert_not @account.valid?
+    assert @account.errors[:settings].any?
+  end
+
   test "settings restrict_room_creation_to_administrators can be toggled" do
     @account.settings.restrict_room_creation_to_administrators = true
     assert @account.settings.restrict_room_creation_to_administrators?

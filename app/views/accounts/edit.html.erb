@@ -70,6 +70,32 @@
     <% end %>
   </div>
 
+  <span class="settings-label">Appearance</span>
+  <div class="settings-card">
+    <%# turbo: false — data-accent lives on <html>, which Turbo Drive doesn't
+        morph, so the accent change needs a full page load to take effect. %>
+    <%= form_with model: @account, data: { controller: "form", turbo: false } do |form| %>
+      <%= form.fields_for :settings, @account.settings do |settings_form| %>
+        <div class="setting-row">
+          <span class="setting-row__text">
+            <span class="setting-row__title">Accent color</span>
+            <span class="txt-small txt-muted">Set once — links, selection, and highlights follow it everywhere.</span>
+          </span>
+          <div class="accent-picker" role="radiogroup" aria-label="Accent color">
+            <% Account::ACCENTS.each do |accent| %>
+              <label class="accent-swatch" title="<%= accent.capitalize %>">
+                <%= settings_form.radio_button :accent, accent, checked: account_accent == accent,
+                      class: "for-screen-reader", data: { action: "change->form#submit" } %>
+                <span class="accent-swatch__dot" style="--swatch-color: <%= accent_swatch_color(accent) %>"></span>
+                <span class="accent-swatch__name"><%= accent.capitalize %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
   <%= render "accounts/admin_settings" %>
 
   <span class="settings-label">Members</span>

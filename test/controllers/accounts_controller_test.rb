@@ -48,6 +48,27 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "admin can pick a workspace accent" do
+    put account_url, params: { account: { settings: { accent: "forest" } } }
+
+    assert_redirected_to edit_account_url
+    assert_equal "forest", accounts(:signal).reload.settings.accent
+  end
+
+  test "the layout stamps the workspace accent on the html element" do
+    accounts(:signal).update!(settings: { "accent" => "plum" })
+
+    get user_profile_url
+
+    assert_select "html[data-accent=?]", "plum"
+  end
+
+  test "the layout falls back to indigo when no accent is stored" do
+    get user_profile_url
+
+    assert_select "html[data-accent=?]", "indigo"
+  end
+
   test "admin can flip email_notifications_enabled" do
     assert_not accounts(:signal).email_notifications_enabled?
 
