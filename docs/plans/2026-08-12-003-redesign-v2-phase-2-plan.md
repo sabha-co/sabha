@@ -1,6 +1,6 @@
 # Plan: Sabha v2 redesign — Phase 2 (reskin + rebuild to handoff fidelity)
 
-**Status:** in progress — WS0, WS1, WS4, WS6 built (2026-08-12); WS2, WS3, WS5 not started · **Date:** 2026-08-12 · **Builds on:** Phase 1 (`redesign-v2`, Steps 1–6, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
+**Status:** in progress — WS0, WS1, WS2, WS4, WS6 built (2026-08-12); WS3, WS5 partial · **Date:** 2026-08-12 · **Builds on:** Phase 1 (`redesign-v2`, Steps 1–6, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
 
 > **What this is.** Phase 1 completed the designer's six-step build order **as a reskin** (plus sanctioned rebuilds: the shell/sidebar move, message-row scale, action bar, composer typing row, accent system, forums data section) and the token system was verified pixel-matching the spec. What the reskin discipline deferred is a **concrete, enumerable set** — the typeface, a handful of DOM/Stimulus rebuilds, responsive breakpoint work, and a cluster of data-shaped UX the designer's own scope ("routes/models/controllers/Turbo targets don't change — the DOM inside them does") parked. Phase 2 closes that gap so the running app matches the handoff's **look and interaction**, not just its tokens.
 
@@ -28,18 +28,17 @@ Single-line commits, no attribution; **nothing pushed / no PRs without explicit 
 
 ## Build status (2026-08-12)
 
-WS0, WS1, WS4 and WS6 are **built** on `redesign-v2`; WS3 and WS5 are **partly built** (the clean pieces done, the rest flagged below); WS2 is **not started**. Every behavior rebuild landed tests-first; both suites stay green. The workstream sections below keep the original plan text — where implementation diverged, the divergence is recorded here.
+WS0, WS1, WS2, WS4 and WS6 are **built** on `redesign-v2`; WS3 and WS5 are **partly built** (the clean pieces done, the rest flagged below). WS2 was scoped by the owner to the contextual-panel core + room roster (profile-in-rail declined). Every behavior rebuild landed tests-first; both suites stay green. The workstream sections below keep the original plan text — where implementation diverged, the divergence is recorded here.
 
 | WS | Status | Commits | Notes |
 |----|--------|---------|-------|
 | **WS0** Type | ✅ Built | `cf3eeab` | Instrument Sans **roman + italic** (real italics) + JetBrains Mono, variable wght 400–700, self-hosted with OFL licenses; all four mono sites → `--font-mono`; preload on both the app and session layouts. |
 | **WS1** Responsive | ✅ Built | `583c5b6` `81ead12` `9df1364` `2cafd2e` | See deviations below. |
 | **WS6** Auth | ✅ Built | `629c78b` `4c3cb31` `f35adc2` | Six-box OTP mirrors `OtpCode.sanitize`; in-card alerts across 5 session-layout views; "Send another" resend. Expired view — see deviation. |
-| **WS2** Panel | ⏳ Not started | — | Highest structural risk; planned last. Now also carries the reading column (see WS1). |
+| **WS2** Panel | ✅ Built | `99a0084` `e51aee1` | Right column is a fixed 360px contextual rail (`99a0084`), widening to the 680 reading column only for forum posts (`:has(.forum-post-header)` — carries WS1's readW). Room presence roster (`e51aee1`) opens in the panel from the header member count. Profile-in-rail declined by owner — see deviation. |
 | **WS3** Reactions | ◐ Partial | — | Reactions reskin was **already done in Phase 1** (pill chips, 17px avatar, `boost--mine` accent tint, trailing add). Scrim dialogs, the composer emoji button, and move-search are **not** done — see WS3 notes below. |
 | **WS4** Inbox data | ✅ Built | `5802bce` `4c2bdbf` `7ce62aa` | Activity verb rows, four filter tabs, Threads-inbox cards with inline follow. See deviations below. |
 | **WS5** States | ◐ Partial | `11bd15f` `2e5259f` | Live connection-lost banner and sidebar cold-start skeleton built. Message Retry and the remaining skeletons are flagged — see WS5 notes below. |
-| **WS5** States | ⏳ Not started | — | |
 
 **WS1 deviations from the plan text:**
 - **`120ch` → `1024px`, uniformly (not "1024/1280").** Instrument Sans makes `120ch` resolve to ~1279px (vs ~1024 in the old system font), so the WS0 font swap had shifted every content breakpoint ~250px. All 36 sites map to **1024px** — restoring pre-WS0 behavior and matching the handoff's "tablet landscape" breakpoint. The dock stays at the existing px `1280`.
@@ -102,6 +101,13 @@ The breakpoint machine is **split**: Phase 1 put the *sidebar* on pixel breakpoi
 - **Tests-first:** rail per-room row rendering; mini-composer `＋` disclosure.
 
 ## WS2 — Contextual right-panel host (highest structural risk; own commit series)
+
+> **✅ Built** (`99a0084` structural core, `e51aee1` room roster). Deviations from the text below, all deliberate:
+> - **No new panel-host or "swap controller."** The existing `thread_panel_frame` + `thread-panel` Stimulus controller *are* the contextual host — thread, post, and now room all render into the same frame, so swapping is just frame navigation. The grid change is `--thread-width: 360px`, widened to `clamp(360px, 42vw, 680px)` only when the frame holds a post (`body:has(#thread-panel:not([hidden]) .forum-post-header)`). That single `:has()` rule is where WS1's reading column (`readW 680`) landed — no separate reading-width work.
+> - **Room panel = presence roster, scoped by the owner to "roster only."** `Room::Roster` buckets the room's members into **here now** (the `connected` scope: refcount + fresh last-seen) and **away** (disconnected but seen within the away tier); offline is a count, not a section — matching the handoff, which shows only Here-now/Away. Note the model's own `activity_status` `:away` tier is effectively unreachable via `activity_statuses_for` (a `connected` member's last-seen is always fresh → `:active`), so the roster defines its buckets directly off the `connected`/`disconnected` scopes. `Rooms::RostersController#show` → `room_roster_path`; the header member count (`link_to_room_roster`, was `link_to_edit_room`) opens it, with a Settings link inside the panel back to full room settings.
+> - **Profile-in-rail: declined by owner (2026-08-12).** The message-avatar quick-profile hovercard already works well and stays; only the room roster was in scope this pass.
+> - **`<1024`:** the panel already goes full-screen overlay (existing behavior); the thread's parent-room "back link" already exists as `.thread-panel__room`. The thread-header glyph→`#` swap is a cosmetic detail left as a minor follow-up.
+> - **Verification:** `Room::Roster` categorization (5 tests) + `Rooms::RostersController` render/auth (3 tests) + real-data runner check; unit + SaaS (305/0) green. Live visual not screenshotted — `bin/dev` went down mid-session; render is covered by the controller test through the real Rails stack.
 
 - Today only the **thread panel** occupies the right column, at `120ch`, 50/50 split (`layout.css:149-174`). The handoff wants a **single 360px contextual host ≥1280** that swaps **Thread ↔ Room ↔ Profile** (Huddle panel out; leave the slot).
 - New panel-host markup + a Stimulus swap controller; grid change to a fixed 360px column. Below 1024: thread takes the full column, the room demotes to a **back link**, and the thread header glyph swaps to `#` (couples with WS1's breakpoint migration).
