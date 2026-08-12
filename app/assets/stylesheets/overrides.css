@@ -79,8 +79,15 @@
 }
 
 /* Touch keeps the one-menu model: no floating bar, no quick reactions —
-   Reply and the overflow stay in the meta row. */
+   Reply and the overflow stay in the meta row, grown to real tap targets. */
 @media (hover: none) and (pointer: coarse) {
+  .message__meta .message__action-btn {
+    align-items: center;
+    justify-content: center;
+    min-block-size: 40px;
+    min-inline-size: 40px;
+  }
+
   .message__quick-reaction,
   .message__reply-label {
     display: none;

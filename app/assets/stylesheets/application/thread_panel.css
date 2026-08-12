@@ -57,6 +57,23 @@
   translate: 0 1px;
 }
 
+/* Full-screen (phone/tablet) the panel IS the room context, so the header
+   leads with the room glyph instead of the thread icon */
+.thread-panel__hash {
+  display: none;
+  opacity: 0.5;
+}
+
+@media (width < 1024px) {
+  .thread-panel__icon {
+    display: none;
+  }
+
+  .thread-panel__hash {
+    display: inline;
+  }
+}
+
 /* Two-line title stack: bold "Thread" over an accent "in {room}" link that
    jumps back to the parent message */
 .thread-panel__title {

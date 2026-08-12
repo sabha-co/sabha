@@ -9,7 +9,7 @@
   <%= turbo_stream_from parent_message, :thread %>
   <div class="thread-panel__header">
     <h2 class="thread-panel__title">
-      <span class="thread-panel__name"><%= icon_tag "thread", class: "thread-panel__icon" %> Thread</span>
+      <span class="thread-panel__name"><%= icon_tag "thread", class: "thread-panel__icon" %><span class="thread-panel__hash" aria-hidden="true">#</span> Thread</span>
       <%= link_to room_at_message_path(parent_message.room, parent_message), class: "thread-panel__room", data: { turbo_frame: "_top" } do %>
         in <%= room_display_name(parent_message.room) %>
       <% end %>
