@@ -1,0 +1,30 @@
+<%# locals: (notification:, timestamp_style: :long_datetime) -%>
+<%# A mention or thread-reply as a verb row: the actor, what they did, and where
+    — not the full message. Boosts render through notifications/_boost. %>
+<div id="<%= dom_id(notification) %>" class="message notification--activity"
+     data-message-id="<%= notification.id %>"
+     data-sort-value="<%= notification.created_at.to_fs(:epoch) %>"
+     data-search-results-target="message"
+     data-inbox-target="message">
+  <div class="avatar message__avatar notification__avatar">
+    <%= render "users/popup", user: notification.actor %>
+    <span class="notification__kind" aria-hidden="true"><%= activity_glyph(notification) %></span>
+  </div>
+  <div class="message__body">
+    <div class="message__body-content">
+      <div class="message__meta">
+        <h3 class="message__heading">
+          <strong><%= notification.actor.name %></strong>
+          <span class="txt-muted"><%= activity_verb(notification) %></span>
+          <%= link_to room_display_name(activity_room(notification), for_user: nil),
+              message_permalink_path(notification.message), target: "_top", class: "notification__where" %>
+          <%= link_to message_timestamp(notification.message, style: timestamp_style, class: "message__timestamp"),
+              message_permalink_path(notification.message), target: "_top", class: "message__permalink" %>
+        </h3>
+      </div>
+      <div class="message__presentation">
+        <div class="trix-content txt-muted"><%= truncate(notification.message.plain_text_body, length: 120) %></div>
+      </div>
+    </div>
+  </div>
+</div>

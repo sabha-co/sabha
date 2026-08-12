@@ -150,6 +150,43 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Thread reply visible in activity", response.body
   end
 
+  test "activity renders a mention as a verb row, not a full message" do
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} verb row marker</div>",
+      creator: @jason,
+      client_message_id: "mention_verb_row"
+    )
+
+    get inbox_activity_index_url
+
+    assert_response :success
+    assert_select ".notification--activity" do
+      assert_select ".notification__kind", text: "@"
+      assert_select "strong", text: @jason.name
+      assert_select "a.notification__where"
+    end
+    assert_match "mentioned you in", response.body
+  end
+
+  test "activity renders a thread reply as a verb row keyed to the parent room" do
+    parent = rooms(:pets).messages.create!(
+      body: "Parent for verb row reply", creator: @jason, client_message_id: "reply_verb_parent"
+    )
+    thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
+    thread.memberships.grant_to(@david)
+    thread.memberships.find_by(user: @david).update!(involvement: :mentions)
+    reply = thread.messages.create!(
+      body: "Reply verb row body", creator: @jason, client_message_id: "reply_verb_reply"
+    )
+    CreateThreadReplyNotificationsJob.perform_now(message_id: reply.id, thread_id: thread.id, creator_id: @jason.id)
+
+    get inbox_activity_index_url
+
+    assert_response :success
+    assert_select ".notification--activity .notification__kind", text: "↩"
+    assert_match "replied in a thread in", response.body
+  end
+
   test "activity feed shows every notification, including ones from before the last visit" do
     room = rooms(:pets)
     Notification.where(user: @david).delete_all

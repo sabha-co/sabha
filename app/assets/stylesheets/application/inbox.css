@@ -15,3 +15,38 @@ body.inbox .searches__results > * {
 body.inbox .searches__results > :last-child {
   border-block-end: 0;
 }
+
+/* Activity verb rows (mentions, replies) reuse the message shell but read as
+   "X mentioned you in Y" — the actor, the verb, and an accent room link — with
+   a kind glyph tucked on the avatar's corner. Boosts keep their own row. */
+.notification__avatar {
+  position: relative;
+}
+
+.notification__kind {
+  align-items: center;
+  background-color: var(--color-bg-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  block-size: 17px;
+  display: flex;
+  font-size: 9px;
+  inline-size: 17px;
+  inset-block-end: -3px;
+  inset-inline-end: -3px;
+  justify-content: center;
+  line-height: 1;
+  position: absolute;
+}
+
+.notification__where {
+  color: var(--color-link);
+  font-weight: 600;
+  text-decoration: none;
+
+  @media (any-hover: hover) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
