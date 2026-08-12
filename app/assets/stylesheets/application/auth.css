@@ -272,7 +272,7 @@ body.session {
 
 /* The one-time-code input reads as a code */
 .auth-card .input--otp {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: max(16px, 1.05rem);
   font-weight: 600;
   letter-spacing: 0.35em;

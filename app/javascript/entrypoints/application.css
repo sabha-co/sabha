@@ -68,10 +68,8 @@ main#main-content:focus {
 
 /* Code input variant - migrated from inputs.css */
 .input--code {
-  @apply font-mono break-words whitespace-pre-wrap;
-  font-family:
-    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
-    monaco, monospace;
+  @apply break-words whitespace-pre-wrap;
+  font-family: var(--font-mono);
 }
 
 /* Button component classes - migrated from buttons.css */

@@ -1,5 +1,35 @@
+/* Self-hosted variable fonts: Instrument Sans is the UI/body face, JetBrains
+   Mono the code face. Declared here in vanilla CSS — not the Tailwind entry —
+   so Propshaft rewrites the relative url() to the digested asset, the same
+   mechanism icons.css relies on. The woff2 and their OFL licenses live in
+   app/assets/fonts/ (Propshaft auto-adds that dir to the asset load path). */
+@font-face {
+  font-family: "Instrument Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../instrument-sans.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Instrument Sans";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../instrument-sans-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("../jetbrains-mono.woff2") format("woff2");
+}
+
 :root {
-  --font-family: -apple-system, BlinkMacSystemFont, Aptos, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-family: "Instrument Sans", -apple-system, BlinkMacSystemFont, Aptos, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monaco, monospace;
   --hover-color: var(--color-border-darker);
   --hover-size: 0.15em;
   --hover-filter: brightness(1);
@@ -153,7 +183,7 @@ code {
 
 pre {
   background-color: var(--color-bg);
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monaco, monospace;
+  font-family: var(--font-mono);
   font-size: 0.8rem;
   white-space: pre-wrap;
   word-wrap: break-word;
