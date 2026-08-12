@@ -1,19 +1,23 @@
 <%# locals: (form:, autofocus: true, show_translation: true) %>
-<div class="auth-card__field">
+<div class="auth-card__field" data-controller="otp-input">
   <div class="auth-card__label">
     <label for="code">One-time code</label>
     <% if show_translation && defined?(translation_button) %>
       <%= translation_button(:one_time_code) %>
     <% end %>
   </div>
-  <%= form.text_field :code,
-      required: true,
-      class: "input input--otp",
-      autofocus: autofocus,
-      autocomplete: "one-time-code",
-      placeholder: "Enter code",
-      minlength: 6,
-      maxlength: 6,
-      pattern: "[A-Za-z0-9]{6}",
-      title: "Enter the 6-character code from your email" %>
+
+  <div class="otp" role="group" aria-label="Enter the 6-character code from your email">
+    <% 6.times do |i| %>
+      <input type="text" inputmode="latin" class="input otp__cell"
+             maxlength="1"
+             autocomplete="<%= i.zero? ? "one-time-code" : "off" %>"
+             aria-label="Character <%= i + 1 %> of 6"
+             <%= "autofocus" if autofocus && i.zero? %>
+             data-otp-input-target="cell"
+             data-action="input->otp-input#input keydown->otp-input#keydown paste->otp-input#paste">
+    <% end %>
+  </div>
+
+  <%= form.hidden_field :code, data: { otp_input_target: "code" } %>
 </div>

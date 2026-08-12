@@ -270,12 +270,21 @@ body.session {
   }
 }
 
-/* The one-time-code input reads as a code */
-.auth-card .input--otp {
+/* The one-time-code field is six discrete cells that behave as one input (the
+   otp-input controller mirrors them into a hidden `code`). Each cell reuses the
+   .input box; the active cell takes the accent from the shared focus outline. */
+.auth-card .otp {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.auth-card .otp__cell {
+  inline-size: 2.75rem;
+  padding-inline: 0;
   font-family: var(--font-mono);
-  font-size: max(16px, 1.05rem);
+  font-size: max(16px, 1.375rem);
   font-weight: 600;
-  letter-spacing: 0.35em;
   text-align: center;
   text-transform: uppercase;
 }
