@@ -13,6 +13,15 @@ class Account::JoinableTest < ActiveSupport::TestCase
     end
   end
 
+  test "join_code backfills a missing global code (e.g. a fixture-seeded account)" do
+    account = accounts(:signal)
+    account.join_codes.global.destroy_all
+
+    assert_difference -> { account.join_codes.global.count }, 1 do
+      assert_match /\w{4}-\w{4}-\w{4}/, account.join_code.code
+    end
+  end
+
   test "join_code lazily regenerates an expired global code" do
     account = accounts(:signal)
     stale = account.join_code

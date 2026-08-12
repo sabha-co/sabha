@@ -8,8 +8,8 @@ module Account::Joinable
   end
 
   def join_code
-    join_codes.global.first.tap do |code|
-      code.regenerate_code if code&.expired?
+    (join_codes.global.first || create_global_join_code).tap do |code|
+      code.regenerate_code if code.expired?
     end
   end
 
