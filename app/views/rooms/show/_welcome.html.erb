@@ -3,19 +3,14 @@
     <div class="message__body center">
       <div class="message__body-content position-relative">
         <%= account_logo_tag style: "center margin-block-end txt-large" %>
-        <div class="flex align-center gap">
-          <div class="system-welcome--translation">
-            <%= translation_button(:invite_message) %>
-          </div>
-          <p>
-            <strong>Welcome to <%= Branding.contextual_app_name %></strong><br>
-            <% if Current.user.can_administer? %>
-              To invite people to chat, share the join link below.
-            <% else %>
-              Don't be a stranger—say hello and introduce yourself.
-            <% end %>
-          </p>
-        </div>
+        <p>
+          <strong>Welcome to <%= Branding.contextual_app_name %></strong><br>
+          <% if Current.user.can_administer? %>
+            To invite people to chat, share the join link below.
+          <% else %>
+            Don't be a stranger—say hello and introduce yourself.
+          <% end %>
+        </p>
         <% if Current.user.can_administer? %>
           <div class="margin-block-start">
             <%= render "accounts/invite", show_regenerate: false %>

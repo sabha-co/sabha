@@ -2,8 +2,6 @@
   <div class="flex flex-column gap">
     <% if Current.user.can_administer?(room) %>
       <div class="flex align-center gap">
-        <%= translation_button(:room_name) %>
-
         <label class="flex align-center gap flex-item-grow input input--actor">
           <%= form.text_field :name, name: "room[name]", id: "room_name", class: "input txt-large",
                 required: true, autofocus: true, placeholder: "Name the room",
@@ -13,8 +11,6 @@
       </div>
 
       <div class="flex align-start gap">
-        <%= translation_button(:room_description) %>
-
         <label class="flex align-center gap flex-item-grow input input--actor">
           <%= form.text_area :description, name: "room[description]", rows: 2, maxlength: 280, class: "input txt-medium",
                 placeholder: "What's this room about?" %>

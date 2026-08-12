@@ -1,10 +1,7 @@
-<%# locals: (form:, autofocus: true, show_translation: true) %>
+<%# locals: (form:, autofocus: true) %>
 <div class="auth-card__field">
   <div class="auth-card__label">
     <label for="email_address">Email</label>
-    <% if show_translation && defined?(translation_button) %>
-      <%= translation_button(:email_address) %>
-    <% end %>
   </div>
   <%= form.email_field :email_address,
       required: true,

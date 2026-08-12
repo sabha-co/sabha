@@ -271,37 +271,6 @@ pre {
   }
 }
 
-/* Language translations */
-.lanuage-list-menu {
-  --max-width: 40ch;
-
-  background-color: var(--color-border);
-  border: 1px solid var(--color-border-dark);
-  border-radius: 0.5em;
-  inset: auto;
-  inline-size: max-content;
-  margin-inline: var(--inline-space);
-  max-inline-size: 40ch;
-  overflow: clip;
-  position: absolute;
-  z-index: 3;
-
-  @media (max-width: 1024px) {
-    max-inline-size: calc(var(--max-width) - var(--inline-space));
-  }
-}
-
-.language-list {
-  display: grid;
-  gap: var(--block-space-half) var(--inline-space);
-  grid-template-rows: min-content;
-  grid-template-columns: min-content 1fr;
-  justify-content: start;
-  margin: 0;
-  padding: var(--block-space) var(--inline-space-double);
-  text-align: start;
-}
-
 /* Nicer scrollbars on Chrome 29+. This is intended for Windows machines, but */
 /* there's not a way to target Windows using CSS, so Chrome on Mac will have */
 /* slightly thinner scrollbars than normal. #C1C1C1 is the default color on Macs. */

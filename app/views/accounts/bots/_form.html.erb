@@ -29,7 +29,6 @@
   <% end %>
 
   <div class="flex align-center gap">
-    <%= translation_button(:bot_name) %>
     <label class="flex align-center gap flex-item-grow txt-large input input--actor">
       <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "Name the bot", autofocus: true, required: true,
             data: { "1p-ignore": true } %>
@@ -45,7 +44,6 @@
   <p class="txt-small txt-muted margin-none">The webhook URL is <strong>optional</strong> — Sabha posts events to webhook when no WebSocket is connected.</p>
 
   <div class="flex align-center gap pad-block-half">
-    <%= translation_button(:webhook_url) %>
     <label class="flex align-center gap flex-item-grow txt-large input input--actor">
       <%= form.url_field :webhook_url, class: "input", placeholder: "https://example.com/webhook" %>
       <%= icon_tag "web" %>

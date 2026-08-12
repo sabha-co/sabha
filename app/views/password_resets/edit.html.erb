@@ -20,7 +20,6 @@
     <div class="auth-card__field">
       <div class="auth-card__label">
         <label for="password">New password</label>
-        <%= translation_button(:password) %>
       </div>
       <%= form.password_field :password, required: true, class: "input", autofocus: true,
           autocomplete: "new-password", placeholder: "At least #{User::MINIMUM_PASSWORD_LENGTH} characters", minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>
@@ -29,7 +28,6 @@
     <div class="auth-card__field">
       <div class="auth-card__label">
         <label for="password_confirmation">Confirm new password</label>
-        <%= translation_button(:password_confirmation) %>
       </div>
       <%= form.password_field :password_confirmation, required: true, class: "input",
           autocomplete: "new-password", placeholder: "Repeat the password", minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>

@@ -58,7 +58,6 @@
       <div class="settings-field">
         <div class="settings-field__label">
           <label for="account_name">Name</label>
-          <%= translation_button(:account_name) %>
         </div>
         <%= form.text_field :name, class: "input", autocomplete: "off", placeholder: "Name this account",
               data: { action: "keydown.enter->form#submit" } %>

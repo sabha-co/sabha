@@ -69,7 +69,6 @@ img.icon {
 .icon--eye { --svg: url("../eye.svg"); }
 .icon--filter { --svg: url("../filter.svg"); }
 .icon--gear { --svg: url("../gear.svg"); }
-.icon--globe { --svg: url("../globe.svg"); }
 .icon--golden-ticket { --svg: url("../golden-ticket.svg"); }
 .icon--grid { --svg: url("../grid.svg"); }
 .icon--help { --svg: url("../help.svg"); }

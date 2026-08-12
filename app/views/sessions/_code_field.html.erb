@@ -1,10 +1,7 @@
-<%# locals: (form:, autofocus: true, show_translation: true) %>
+<%# locals: (form:, autofocus: true) %>
 <div class="auth-card__field" data-controller="otp-input">
   <div class="auth-card__label">
     <label for="code">One-time code</label>
-    <% if show_translation && defined?(translation_button) %>
-      <%= translation_button(:one_time_code) %>
-    <% end %>
   </div>
 
   <div class="otp" role="group" aria-label="Enter the 6-character code from your email">

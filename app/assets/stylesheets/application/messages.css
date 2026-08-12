@@ -75,12 +75,6 @@
     overflow: unset;
   }
 
-  .system-welcome--translation {
-    inset-block-start: var(--block-space);
-    inset-inline-start: var(--block-space);
-    position: absolute;
-  }
-
   .invite-label {
     display: none;
   }

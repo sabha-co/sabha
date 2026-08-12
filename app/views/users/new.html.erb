@@ -59,7 +59,6 @@
         <div class="auth-card__field" data-controller="name-field">
           <div class="auth-card__label">
             <label for="user_name">Your name</label>
-            <%= translation_button(:user_name) %>
           </div>
           <%= form.text_field :name, class: "input", autocomplete: "name", placeholder: "How you want to be known", autofocus: true, required: true,
                 minlength: 2, maxlength: 100, data: { "1p-ignore": true, action: "input->name-field#validate" } %>
@@ -69,7 +68,6 @@
         <div class="auth-card__field">
           <div class="auth-card__label">
             <label for="user_email_address">Email</label>
-            <%= translation_button(:email_address) %>
           </div>
           <%= form.email_field :email_address, class: "input", autocomplete: "username", placeholder: "you@example.com", required: true %>
         </div>
@@ -78,7 +76,6 @@
           <div class="auth-card__field">
             <div class="auth-card__label">
               <label for="user_password">Password</label>
-              <%= translation_button(:password) %>
             </div>
             <%= form.password_field :password, class: "input", autocomplete: "new-password",
                 placeholder: "At least #{User::MINIMUM_PASSWORD_LENGTH} characters", required: true, minlength: User::MINIMUM_PASSWORD_LENGTH, maxlength: 72 %>

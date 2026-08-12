@@ -67,7 +67,6 @@
       <div class="settings-field">
         <div class="settings-field__label">
           <label for="user_name">Name</label>
-          <%= translation_button(:user_name) %>
         </div>
         <%= form.text_field :name, value: @user.editable_name, class: "input", autocomplete: "name", placeholder: "Enter your name",
                             required: true, data: { "1p-ignore": true } %>
@@ -76,7 +75,6 @@
       <div class="settings-field">
         <div class="settings-field__label">
           <label for="user_email_address">Email</label>
-          <%= translation_button(:email_address) %>
         </div>
         <% if Sabha.saas? %>
           <%= form.email_field :email_address, class: "input", value: @user.email_address, disabled: true, readonly: true %>
@@ -95,7 +93,6 @@
       <div class="settings-field">
         <div class="settings-field__label">
           <label for="user_twitter_url">X profile</label>
-          <%= translation_button(:twitter) %>
         </div>
         <%= form.text_field :twitter_url, class: "input", placeholder: "Your X profile", required: false %>
       </div>
@@ -103,7 +100,6 @@
       <div class="settings-field">
         <div class="settings-field__label">
           <label for="user_linkedin_url">LinkedIn</label>
-          <%= translation_button(:linkedin) %>
         </div>
         <%= form.text_field :linkedin_url, class: "input", placeholder: "Your LinkedIn profile", required: false %>
       </div>
@@ -111,7 +107,6 @@
       <div class="settings-field">
         <div class="settings-field__label">
           <label for="user_personal_url">Website</label>
-          <%= translation_button(:website) %>
         </div>
         <%= form.text_field :personal_url, class: "input", placeholder: "Your website", required: false %>
       </div>
@@ -119,7 +114,6 @@
       <div class="settings-field">
         <div class="settings-field__label">
           <label for="user_bio">Bio</label>
-          <%= translation_button(:bio) %>
         </div>
         <%= form.text_area :bio, class: "input", placeholder: "A few words about yourself…", maxlength: 200, rows: 3, required: false %>
       </div>

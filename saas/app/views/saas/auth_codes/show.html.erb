@@ -17,7 +17,7 @@
   <%= render "sessions/flash_messages" %>
 
   <%= form_with url: auth_code_path, html: { autocomplete: "off" } do |form| %>
-    <%= render "sessions/code_field", form: form, show_translation: false %>
+    <%= render "sessions/code_field", form: form %>
     <%= render "sessions/submit_button", form: form, label: "Verify" %>
   <% end %>
 
