@@ -6,7 +6,7 @@
        data-unread-indicator-indicators-value='[{"selector":".direct.unread","class":"has-unread-dms","target":"dms"}]'
        data-action="rooms-list:unread@window->unread-indicator#update rooms-list:read@window->unread-indicator#update rooms-list:addBadge@window->unread-indicator#update">
     <div class="sidebar__container overflow-y overflow-hide-scrollbar"
-        data-controller="badge-dot maintain-scroll debounce-updates"
+        data-controller="badge-dot maintain-scroll debounce-updates sidebar-filter"
         data-badge-dot-unread-class="badge"
         data-action="rooms-list:unread@window->badge-dot#update rooms-list:read@window->badge-dot#update rooms-list:addBadge@window->badge-dot#update turbo:submit-start->turbo-frame#unpermanize turbo:before-render@document->maintain-scroll#beforeRender">
 
@@ -31,6 +31,16 @@
         <span class="for-screen-reader"><%= account_tool_label %></span>
       <% end %>
     </header>
+
+    <div class="sidebar__filter">
+      <label class="sidebar__filter-field">
+        <%= icon_tag "search", class: "sidebar__filter-icon" %>
+        <input type="search" class="sidebar__filter-input" placeholder="Filter rooms and people"
+               aria-label="Filter rooms and people"
+               data-sidebar-filter-target="input"
+               data-action="input->sidebar-filter#filter search->sidebar-filter#filter keydown.esc->sidebar-filter#clear">
+      </label>
+    </div>
 
     <nav class="sidebar__menu" aria-label="Tools">
       <%= link_to searches_path, id: "room-search", class: "btn sidebar__menu-item" do %>
