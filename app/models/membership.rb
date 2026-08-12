@@ -30,6 +30,8 @@ class Membership < ApplicationRecord
   scope :direct_rooms, -> { joins(:room).where(rooms: { type: "Rooms::Direct" }) }
   scope :without_direct_rooms, -> { joins(:room).where.not(rooms: { type: "Rooms::Direct" }) }
   scope :without_thread_rooms, -> { joins(:room).where.not(rooms: { type: %w[ Rooms::Thread Rooms::Post ] }) }
+  scope :forum_rooms, -> { joins(:room).where(rooms: { type: "Rooms::Forum" }) }
+  scope :without_forum_rooms, -> { joins(:room).where.not(rooms: { type: "Rooms::Forum" }) }
   scope :active_rooms, -> { joins(:room).where(rooms: { active: true }) }
   scope :with_messages, -> { joins(:room).where("rooms.messages_count > 0") }
 

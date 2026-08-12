@@ -22,7 +22,7 @@
 
           <div class="flex flex-column gap-half">
             <div style="background: var(--color-surface-alt); border-radius: 4px; height: 8px; overflow: hidden;">
-              <div style="background: <%= account.exceeding_storage_limit? ? 'var(--color-negative)' : account.nearing_storage_limit? ? 'var(--color-warning)' : 'var(--color-accent)' %>; height: 100%; width: <%= account.storage_percentage_used %>%; transition: width 0.3s;"></div>
+              <div style="background: <%= account.exceeding_storage_limit? ? 'var(--color-negative)' : account.nearing_storage_limit? ? 'var(--color-alert)' : 'var(--color-accent-brand)' %>; height: 100%; width: <%= account.storage_percentage_used %>%; transition: width 0.3s;"></div>
             </div>
             <p class="txt-small txt-muted">
               <%= number_to_human_size(account.bytes_used) %> of <%= number_to_human_size(Storage::WORKSPACE_LIMIT) %> used

@@ -12,7 +12,13 @@ module Membership::Starrable
   end
 
   def sidebar_list_name
-    starred? ? :starred_rooms : :shared_rooms
+    if starred?
+      :starred_rooms
+    elsif room.forum?
+      :forum_rooms
+    else
+      :shared_rooms
+    end
   end
 
   private

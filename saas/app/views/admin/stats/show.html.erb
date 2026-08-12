@@ -2,7 +2,7 @@
 
 <%# SVG sparkline helper — plots daily counts as a filled area chart %>
 <%
-  sparkline = ->(data, color: "var(--color-accent)") {
+  sparkline = ->(data, color: "var(--color-accent-brand)") {
     values = data.map(&:last)
     max = [values.max || 0, 1].max
     width = 300

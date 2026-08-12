@@ -17,7 +17,7 @@ body {
 
   &.sidebar {
     @media (min-width: 120ch) {
-      --sidebar-width: calc(26vw + var(--sidebar-tools-width));
+      --sidebar-width: 272px;
     }
   }
 }
@@ -85,9 +85,7 @@ body {
   transition: transform 300ms cubic-bezier(0.25, 1, 0.5, 1);
 
   .sidebar & {
-    -webkit-backdrop-filter: blur(66px);
-    backdrop-filter: blur(66px);
-    background-color: oklch(var(--lch-white) / 0.66);
+    background-color: var(--color-bg-sunk);
     block-size: 100dvh;
     contain: layout style;
     max-block-size: 100dvh;
@@ -127,10 +125,6 @@ body {
       "sidebar nav nav"
       "sidebar main thread";
     grid-template-columns: var(--sidebar-width) 1fr var(--thread-width);
-  }
-
-  body.sidebar:has(#thread-panel:not([hidden])) {
-    --sidebar-width: calc(20vw + var(--sidebar-tools-width));
   }
 
   body:has(#thread-panel:not([hidden])) #main-content {

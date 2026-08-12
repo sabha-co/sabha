@@ -1,7 +1,7 @@
 module Sidebar
   extend ActiveSupport::Concern
 
-  SIDEBAR_SECTIONS = [ :starred_rooms, :shared_rooms ].freeze
+  SIDEBAR_SECTIONS = [ :starred_rooms, :shared_rooms, :forum_rooms ].freeze
 
   def set_sidebar_memberships
     sidebar = SidebarMemberships.new(Current.user)
@@ -10,6 +10,7 @@ module Sidebar
     @direct_room_members  = sidebar.direct_room_members(@direct_memberships)
     @starred_memberships  = sidebar.starred
     @shared_memberships   = sidebar.shared
+    @forum_memberships    = sidebar.forums
   end
 
   def broadcast_sidebar_room_added(user, room, formats: nil)

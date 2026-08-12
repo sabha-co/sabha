@@ -36,10 +36,17 @@ class SidebarMemberships
     shared_base.starred
   end
 
-  # Unstarred shared room memberships shown in the "All Rooms" section.
+  # Unstarred shared room memberships shown in the "Rooms" section.
+  # Forums are listed separately.
   #
   def shared
-    shared_base.unstarred
+    shared_base.unstarred.without_forum_rooms
+  end
+
+  # Forum memberships shown in the "Forums" section.
+  #
+  def forums
+    shared_base.unstarred.forum_rooms
   end
 
   # Hidden room memberships (rooms with invisible involvement).

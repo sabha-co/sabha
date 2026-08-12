@@ -1,10 +1,9 @@
 <span class="button_to_change_notifying" id="notification_bell_container" hidden
     data-controller="notifications" data-notifications-subscriptions-url-value="<%= user_push_subscriptions_path %>" data-notifications-attention-class="btn--pulsing">
   <%= turbo_frame_tag "global_notifications" do %>
-    <button class="btn sidebar__tool" data-action="click->notifications#attemptToSubscribe" data-notifications-target="bell">
+    <button class="btn sidebar__footer-item" title="Turn on notifications" data-action="click->notifications#attemptToSubscribe" data-notifications-target="bell">
       <%= icon_tag "notification-bell-alert" %>
       <span class="for-screen-reader">Enable notifications for all rooms</span>
-      <span class="sidebar__tool-label" style="white-space: normal; line-height: 1.2; font-weight: 400; top: 36px; bottom: auto;">Turn On Notifications</span>
     </button>
   <% end %>
 

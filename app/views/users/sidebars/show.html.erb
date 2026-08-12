@@ -9,36 +9,31 @@
         data-controller="badge-dot maintain-scroll debounce-updates"
         data-badge-dot-unread-class="badge"
         data-action="rooms-list:unread@window->badge-dot#update rooms-list:read@window->badge-dot#update rooms-list:addBadge@window->badge-dot#update turbo:submit-start->turbo-frame#unpermanize turbo:before-render@document->maintain-scroll#beforeRender">
-    <% if show_dm_section?(@direct_memberships) %>
-      <turbo-frame id="direct_rooms_control" target="_top">
-        <div class="directs gap overflow-x overflow-hide-scrollbar">
-          <% if can_create_dms? %>
-            <%= link_to new_rooms_direct_path, class: "direct direct__new", data: { turbo_frame: "_self" } do %>
-              <span class="avatar avatar--icon">
-                <%= icon_tag "messages-add" %>
-              </span>
 
-              <span class="direct__author flex max-width min-width border-radius pad-inline-half">
-                <span class="for-screen-reader">New</span>
-                <span class="txt-small overflow-clip">DM</span>
-              </span>
-            <% end %>
-          <% end %>
-
-          <div id="direct_rooms" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
-               data-sorted-list-order-value="desc"
-               data-action="rooms-list:unread@window->sorted-list#reSort">
-            <%= render partial: "users/sidebars/rooms/direct", collection: @direct_memberships, as: :membership, cached: true %>
-          </div>
-        </div>
-      </turbo-frame>
-
-      <% if show_dm_separator?(@direct_memberships) %>
-        <hr class="sidebar__separator">
+    <nav class="sidebar__menu" aria-label="Tools">
+      <%= link_to searches_path, id: "room-search", class: "btn sidebar__menu-item" do %>
+        <%= icon_tag "search" %>
+        <span class="sidebar__menu-label">Search</span>
       <% end %>
-    <% else %>
-      <div class="pad-block"></div>
-    <% end %>
+
+      <%= turbo_stream_from Current.user, :sidebar_activity_indicator %>
+      <%= render "users/sidebars/activity_indicator", user: Current.user %>
+
+      <%= link_to inbox_direct_messages_path, class: "btn sidebar__menu-item", data: { unread_indicator_target: "dms" } do %>
+        <%= icon_tag "messages" %>
+        <span class="sidebar__menu-label">Direct messages</span>
+      <% end %>
+
+      <%= link_to inbox_threads_path, class: "btn sidebar__menu-item" do %>
+        <%= icon_tag "threads" %>
+        <span class="sidebar__menu-label">Threads</span>
+      <% end %>
+
+      <%= link_to inbox_bookmarks_path, class: "btn sidebar__menu-item" do %>
+        <%= icon_tag "bookmark" %>
+        <span class="sidebar__menu-label">Bookmarks</span>
+      <% end %>
+    </nav>
 
     <div class="rooms position-relative flex flex-col gap">
       <div id="favorites_section"
@@ -52,7 +47,7 @@
                 data-collapsible-section-target="toggle"
                 data-action="collapsible-section#toggle">
           <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
-          <h1 class="txt-small font-semibold txt-label">Favorites</h1>
+          <h1 class="txt-small font-semibold txt-label sidebar__label">Favorites</h1>
         </button>
 
         <div data-collapsible-section-target="content" class="flex flex-col rooms-list">
@@ -61,7 +56,7 @@
       </div>
 
       <div class="flex items-center justify-between gap-half mb-2">
-        <h1 class="txt-small font-semibold txt-label">All Rooms</h1>
+        <h1 class="txt-small font-semibold txt-label sidebar__label">Rooms</h1>
         <div class="flex items-center gap-half">
           <%= render "users/sidebars/all_rooms_actions" %>
           <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
@@ -78,57 +73,65 @@
         <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @shared_memberships %>
       </div>
 
+      <% if @forum_memberships.any? %>
+        <div class="flex items-center justify-between gap-half mb-2">
+          <h1 class="txt-small font-semibold txt-label sidebar__label">Forums</h1>
+        </div>
+        <div data-controller="sorted-list" <%= all_rooms_sort_order %>
+             data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
+             class="flex position-relative flex-col rooms-list">
+          <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :forum_rooms, memberships: @forum_memberships %>
+        </div>
+      <% end %>
+
       <%= turbo_frame_tag :hidden_rooms %>
+
+      <% if show_dm_section?(@direct_memberships) %>
+        <div class="flex items-center justify-between gap-half mb-2">
+          <h1 class="txt-small font-semibold txt-label sidebar__label">Direct messages</h1>
+          <% if can_create_dms? %>
+            <%= link_to new_rooms_direct_path, class: "btn btn--small", aria: { label: "New direct message" }, data: { turbo_frame: "direct_rooms_control" } do %>
+              <%= icon_tag "add" %>
+              <span class="for-screen-reader">New direct message</span>
+            <% end %>
+          <% end %>
+        </div>
+        <turbo-frame id="direct_rooms_control" target="_top">
+          <div class="directs gap">
+            <div id="direct_rooms" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
+                 data-sorted-list-order-value="desc"
+                 data-action="rooms-list:unread@window->sorted-list#reSort">
+              <%= render partial: "users/sidebars/rooms/direct", collection: @direct_memberships, as: :membership, cached: true %>
+            </div>
+          </div>
+        </turbo-frame>
+      <% end %>
     </div>
-  </div>
 
-  <button id="sidebar-toggle" class="btn sidebar__toggle" data-action="click->toggle-class#toggle">
-    <%= icon_tag "menu" %>
-    <span class="for-screen-reader">Open menu</span>
-  </button>
-
-  <div class="sidebar__tools d-hotwire-native-none">
-    <button class="btn sidebar__tool sidebar__close" data-action="click->toggle-class#toggle" aria-label="Close sidebar">
-      <%= icon_tag "close" %>
-      <span class="sidebar__tool-label">Close</span>
-    </button>
-
-    <div class="sidebar__tool-container">
-      <%= turbo_stream_from Current.user, :sidebar_activity_indicator %>
-      <%= render "users/sidebars/activity_indicator", user: Current.user %>
-
-      <%= link_to inbox_direct_messages_path, class: "btn sidebar__tool", data: { unread_indicator_target: "dms" } do %>
-        <%= icon_tag "messages" %>
-        <span class="for-screen-reader">DMs</span>
-        <span class="sidebar__tool-label">DMs</span>
-      <% end %>
-
-      <%= link_to inbox_threads_path, class: "btn sidebar__tool" do %>
-        <%= icon_tag "threads" %>
-        <span class="for-screen-reader">Threads</span>
-        <span class="sidebar__tool-label">Threads</span>
-      <% end %>
-
-      <%= link_to inbox_bookmarks_path, class: "btn sidebar__tool" do %>
-        <%= icon_tag "bookmark" %>
-        <span class="for-screen-reader">Bookmarks</span>
-        <span class="sidebar__tool-label">Bookmarks</span>
-      <% end %>
-
+    <footer class="sidebar__footer">
       <% account_tool_label = Current.user&.staff? ? "Settings" : "About" %>
-      <%= link_to account_path, class: "btn sidebar__tool" do %>
+      <%= link_to account_path, class: "btn sidebar__footer-item", title: account_tool_label do %>
         <%= icon_tag Current.user&.staff? ? "crown" : "world" %>
         <span class="for-screen-reader"><%= account_tool_label %></span>
-        <span class="sidebar__tool-label"><%= account_tool_label %></span>
       <% end %>
-      
+
       <%= render "users/sidebars/bell" %>
 
-      <%= link_to user_profile_path, class: "btn avatar sidebar__tool" do %>
+      <%= link_to user_profile_path, class: "btn avatar sidebar__footer-item", title: Current.user.name do %>
         <%= avatar_image_tag(Current.user, size: 40, style: "view-transition-name: avatar-#{Current.user.id}", loading: :lazy) %>
         <span class="for-screen-reader"><%= Current.user.name %></span>
       <% end %>
+    </footer>
     </div>
-  </div>
+
+    <button id="sidebar-toggle" class="btn sidebar__toggle" data-action="click->toggle-class#toggle">
+      <%= icon_tag "menu" %>
+      <span class="for-screen-reader">Open menu</span>
+    </button>
+
+    <button class="btn sidebar__close d-hotwire-native-none" data-action="click->toggle-class#toggle" aria-label="Close sidebar">
+      <%= icon_tag "close" %>
+      <span class="for-screen-reader">Close sidebar</span>
+    </button>
   </div>
 <% end %>

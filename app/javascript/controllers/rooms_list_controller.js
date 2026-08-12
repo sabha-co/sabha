@@ -46,12 +46,20 @@ export default class extends Controller {
 
   loaded() {
     this.#readCurrentRoom()
+    this.markCurrent()
   }
 
   roomTargetConnected(target) {
     if (!this.#keepCurrentRoomUnread && target.dataset.roomId == Current.room?.id) {
       this.#readCurrentRoom()
     }
+    this.#markCurrentOn(target)
+  }
+
+  // The sidebar frame is turbo-permanent, so page navigations don't rerender
+  // it — re-mark the current room from the fresh meta tags on every visit.
+  markCurrent() {
+    this.roomTargets.forEach(target => this.#markCurrentOn(target))
   }
 
   read({ detail: { roomId } }) {
@@ -180,6 +188,14 @@ export default class extends Controller {
 
   #findRoomTargets(roomId) {
     return this.roomTargets.filter(roomTarget => roomTarget.dataset.roomId == roomId)
+  }
+
+  #markCurrentOn(target) {
+    if (target.dataset.roomId == Current.room?.id) {
+      target.setAttribute("aria-current", "page")
+    } else {
+      target.removeAttribute("aria-current")
+    }
   }
   
   #readCurrentRoom() {
