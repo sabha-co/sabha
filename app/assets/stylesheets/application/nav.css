@@ -49,6 +49,34 @@
   }
 }
 
+/* Member-count pill between the room name and topic. The count is the
+   room's, but it links to the community-wide members directory. */
+.navbar-members {
+  --icon-size: 12px;
+
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  column-gap: 5px;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text);
+  }
+
+  @media (max-width: 833.9px) {
+    display: none;
+  }
+}
+
 /* Room topic rides beside the name and soaks up the slack, so the actions
    stay pinned to the right edge even when it's blank. */
 .navbar-topic {
