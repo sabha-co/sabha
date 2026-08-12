@@ -1,5 +1,22 @@
 # Fetches parent messages with active threads the user can access, ordered by most recent thread activity.
 class Inbox::ThreadsQuery
+  # Unseen active-reply counts, per thread room, for the reader — one query so
+  # the cards can badge "N new" without an N+1 over the page. Only threads the
+  # reader follows (has an active membership on) contribute; the rest carry no
+  # badge. A nil cursor reads as caught up, matching Membership::Unreadable.
+  def self.unseen_reply_counts(user, messages)
+    thread_room_ids = messages.flat_map { |m| m.threads.select(&:active?).map(&:id) }
+    return {} if thread_room_ids.empty?
+
+    Message.active.without_events
+           .joins("INNER JOIN memberships ON memberships.room_id = messages.room_id")
+           .where(room_id: thread_room_ids)
+           .where("memberships.user_id = ? AND memberships.active = TRUE", user.id)
+           .where("messages.created_at > memberships.last_read_at OR (messages.created_at = memberships.last_read_at AND messages.id > memberships.last_read_message_id)")
+           .group("messages.room_id")
+           .count
+  end
+
   def initialize(user)
     @user = user
   end

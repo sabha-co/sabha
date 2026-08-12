@@ -1,3 +1,6 @@
-<%= render collection: @messages, partial: "/messages/message",
-           cached: -> message { message_cache_key(message, room_id: "inbox_threads_#{Current.user.id}", show_room_name: true) },
-           locals: { timestamp_style: :long_datetime, show_date_separator: false } %>
+<% @messages.each do |message| %>
+  <% thread = message.threads.detect { |t| t.active? && t.messages_count.to_i > 0 } %>
+  <% if thread %>
+    <%= render "inboxes/threads/thread_card", message: message, thread: thread, unread: @thread_unread[thread.id].to_i %>
+  <% end %>
+<% end %>

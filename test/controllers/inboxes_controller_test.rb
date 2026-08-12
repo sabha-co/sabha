@@ -331,6 +331,24 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Parent message for thread visibility test", response.body
   end
 
+  test "threads renders each thread as a card with room, starter and an inline follow control" do
+    room = rooms(:pets)
+    parent = room.messages.create!(body: "Card root message", creator: @jason, client_message_id: "card_parent")
+    thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
+    thread.memberships.grant_to(@david)
+    thread.messages.create!(body: "Card reply", creator: @jason, client_message_id: "card_reply")
+
+    get inbox_threads_url
+
+    assert_response :success
+    assert_select ".thread-card" do
+      assert_select "a.thread-card__room"
+      assert_select ".thread-card__byline strong", text: @jason.name
+      assert_select "a.thread-card__root"
+      assert_select "form[action=?]", rooms_thread_membership_path(thread)
+    end
+  end
+
   test "threads shows parent messages for users with everything involvement in parent room" do
     room = rooms(:pets)
 

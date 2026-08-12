@@ -57,3 +57,57 @@ body.inbox .searches__results > :last-child {
   display: flex;
   padding: 12px 16px;
 }
+
+/* Threads inbox: each followed thread is a card — the room + an inline follow
+   toggle, a "started by" byline with an optional unread pill, the root message,
+   and the live reply-count footer (the embedded messages/threads chips). */
+.thread-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-inline: 16px;
+}
+
+.thread-card__head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.thread-card__room {
+  color: var(--color-link);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+
+  @media (any-hover: hover) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.thread-card__byline {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.thread-card__new {
+  background-color: color-mix(in oklch, var(--color-accent-brand) 14%, transparent);
+  border-radius: 999px;
+  color: var(--color-accent-brand);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-inline-start: 6px;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+
+.thread-card__root {
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  text-decoration: none;
+}

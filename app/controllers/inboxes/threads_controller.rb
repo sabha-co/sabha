@@ -5,6 +5,7 @@ class Inboxes::ThreadsController < ApplicationController
 
   def index
     @messages = find_messages_with(Inbox::ThreadsQuery)
+    @thread_unread = Inbox::ThreadsQuery.unseen_reply_counts(Current.user, @messages)
 
     render partial: "items" if paginating?
   end

@@ -1,0 +1,27 @@
+<%# locals: (message:, thread:, unread: 0) -%>
+<%# A followed thread as a card: the room it lives in, who started it, the root
+    message, and an inline follow toggle. Reply count and last-reply ride the
+    embedded messages/threads target, so they update live; the "new" badge and
+    follow state reflect page-load state (the inbox stream is viewer-less). %>
+<div id="<%= dom_id(message) %>" class="thread-card"
+     data-message-id="<%= message.id %>"
+     data-sort-value="<%= message.created_at.to_fs(:epoch) %>"
+     data-search-results-target="message"
+     data-inbox-target="message">
+  <div class="thread-card__head">
+    <%= link_to room_display_name(message.room, for_user: nil), room_path(message.room), class: "thread-card__room" %>
+    <%= render "rooms/threads/follow_control", thread: thread %>
+  </div>
+
+  <p class="thread-card__byline">
+    started by <strong><%= thread.creator.name %></strong><% if unread > 0 %>
+      <span class="thread-card__new"><%= unread %> new</span>
+    <% end %>
+  </p>
+
+  <%= link_to rooms_thread_path(thread), class: "thread-card__root", data: { turbo_frame: "thread_panel_frame" } do %>
+    <%= truncate(message.plain_text_body, length: 140) %>
+  <% end %>
+
+  <%= render "messages/threads", message: message %>
+</div>
