@@ -20,7 +20,9 @@ Standing from Phase 1: message **grouping stays client-side** (C3); **compact de
 
 ## Standing constraints
 
-Single-line commits, no attribution; **nothing pushed / no PRs without explicit approval**; behavior rebuilds get tests **first** (tests-before-refactor); run **both** suites each step (`bin/rails test` + `SAAS=true bin/rails test saas/test/`, unset `UNTENANTED_DATABASE_URL` first); SaaS + Hotwire-Native (`native.css`) parity each step; run targeted system tests matched to the change, not the full sweep.
+Single-line commits, no attribution; **nothing pushed / no PRs without explicit approval**; behavior rebuilds get tests **first** (tests-before-refactor); run **both** suites each step (`bin/rails test` + `SAAS=true bin/rails test saas/test/`, unset `UNTENANTED_DATABASE_URL` first); SaaS + Hotwire-Native (`native.css`) parity each step.
+
+**System tests — run the specific file for the changed surface, never the full sweep.** The whole `test:system` run takes ~100s and carries pre-existing flakes (the `SendingMessages#join_room` ObsoleteNode races), so running it every iteration stalls progress. For a UI change, run only the matching file(s) — `bin/rails test test/system/<file>.rb` (note: `bin/rails test`, not `test:system`, so file args are honored) — matched to the surface touched.
 
 ---
 
