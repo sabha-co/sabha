@@ -3,7 +3,7 @@
   flex-direction: column;
   overflow: hidden;
   background-color: var(--color-bg);
-  border-inline: 1px solid var(--color-border-dark);
+  border-inline-start: 1px solid var(--color-border-dark);
   transition: transform 300ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
