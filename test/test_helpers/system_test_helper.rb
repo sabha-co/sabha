@@ -1,34 +1,53 @@
 module SystemTestHelper
   def sign_in(email_address, password = "secret123456")
-    visit root_url
-    click_on "Sign In"
+    visit root_url  # unauthenticated root redirects straight to the sign-in form
 
     fill_in "email_address", with: email_address
     fill_in "password", with: password
 
-    click_on "log_in"
+    click_on "Sign in"
     wait_for_network_idle!
     assert_selector ".rooms", wait: 5  # Wait for sidebar to load
   end
 
   def wait_for_cable_connection
-    assert_selector "turbo-cable-stream-source[connected]", minimum: 1, visible: false
+    # Capybara auto-waits and reloads stale elements, but that reload does NOT
+    # cover Cuprite's ObsoleteNode when Turbo replaces the whole document
+    # mid-check — a plain `assert_selector ..., wait: 20` still failed ~1 in 3
+    # full-suite runs. So poll and tolerate ObsoleteNode explicitly. (Per-assertion
+    # wait only; the global default_max_wait_time stays 5 so negative assertions
+    # aren't slowed.)
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20
+    loop do
+      begin
+        return if has_selector?("turbo-cable-stream-source[connected]", visible: false, wait: 1)
+      rescue RuntimeError => e
+        raise unless e.message.include?("ObsoleteNode") || e.message.include?("Cuprite")
+        # node replaced during a Turbo render — re-query on the next pass
+      end
+      if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+        raise Capybara::ExpectationNotMet, "turbo-cable-stream-source[connected] did not appear within 20s"
+      end
+    end
   end
 
   def join_room(room)
-    retries = 0
+    attempts = 0
     begin
       visit room_url(room)
       wait_for_network_idle!
       wait_for_cable_connection
       dismiss_pwa_install_prompt
-    rescue RuntimeError => e
-      # Cuprite wraps ObsoleteNode errors in RuntimeError during Turbo navigation
-      raise e unless e.message.include?("ObsoleteNode") || e.message.include?("Cuprite")
-      retries += 1
-      sleep 0.5
-      retry if retries < 3
-      raise e
+    rescue Capybara::ExpectationNotMet, RuntimeError => e
+      # Retry the whole navigation, not a manual sleep-poll. Cuprite raises
+      # ObsoleteNode when Turbo replaces the document mid-navigation — that is a
+      # full-page swap, outside Capybara's element auto-reload — and the cable
+      # handshake can outrun even a generous wait under load. Re-navigate; the
+      # assertions inside auto-wait, so no explicit sleep is needed.
+      raise e unless e.is_a?(Capybara::ExpectationNotMet) ||
+                     e.message.include?("ObsoleteNode") || e.message.include?("Cuprite")
+      raise e if (attempts += 1) >= 4
+      retry
     end
   end
 

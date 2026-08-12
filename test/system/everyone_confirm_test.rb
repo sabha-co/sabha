@@ -42,9 +42,21 @@ class EveryoneConfirmTest < ApplicationSystemTestCase
   private
     def compose_everyone
       assert_selector "trix-editor"
+      # A mention is a Trix *attachment* (contentType application/vnd.sabha.mention),
+      # not raw HTML — Trix's sanitizer strips the class off an inserted <span>, so
+      # insertHTML never produces a detectable .mention--everyone. Insert the real
+      # attachment with a valid signed GlobalID so both the composer's confirm gate
+      # and the sent message resolve @everyone, matching mentions_autocomplete_handler.js.
+      sgid = Everyone.new.attachable_sgid
       page.execute_script(<<~JS)
         const editor = document.querySelector("trix-editor").editor
-        editor.insertHTML('<span class="mention mention--everyone" sgid="everyone">@everyone</span> ')
+        const attachment = new Trix.Attachment({
+          content: '<span class="mention mention--everyone" sgid="#{sgid}">@everyone</span>',
+          contentType: "application/vnd.sabha.mention",
+          sgid: "#{sgid}"
+        })
+        editor.insertAttachment(attachment)
+        editor.insertString(" ")
       JS
     end
 end
