@@ -1,0 +1,10 @@
+<%# Renders the flash inside the auth card (as an .auth-card__alert row) and
+    flags the session layout so its floating pill doesn't also fire — the card
+    is the calmer, persistent home for sign-in feedback. %>
+<% content_for :flash_shown, "1" %>
+<% if flash[:notice] %>
+  <div class="auth-card__alert auth-card__alert--positive"><div><%= flash[:notice] %></div></div>
+<% end %>
+<% if flash[:alert] %>
+  <div class="auth-card__alert"><div><%= flash[:alert] %></div></div>
+<% end %>

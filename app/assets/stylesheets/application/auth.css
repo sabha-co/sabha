@@ -198,6 +198,16 @@ body.session {
   }
 }
 
+/* Amber warning tone — e.g. an unverified address that still needs a step. */
+.auth-card__alert--alert {
+  border-color: color-mix(in oklch, var(--color-alert) 32%, transparent);
+  background-color: color-mix(in oklch, var(--color-alert) 8%, transparent);
+
+  &::before {
+    color: var(--color-alert);
+  }
+}
+
 /* Members line on the join card ("124 members · 9 here now") */
 .auth-card__meta {
   color: var(--color-text-muted);

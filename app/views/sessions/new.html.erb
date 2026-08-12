@@ -18,6 +18,8 @@
     </div>
   </header>
 
+  <%= render "sessions/flash" %>
+
   <% if Account.otp_auth? %>
     <%= form_with url: auth_tokens_url, html: { autocomplete: "off" } do |form| %>
       <%= render "sessions/email_field", form: form %>

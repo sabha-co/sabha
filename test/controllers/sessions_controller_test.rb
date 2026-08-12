@@ -34,6 +34,15 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Invalid email or password.", flash[:alert]
   end
 
+  test "an auth error renders inside the card, not as the floating flash pill" do
+    post session_url, params: { email_address: "david@37signals.com", password: "wrong" }
+    follow_redirect!
+
+    assert_response :success
+    assert_select ".auth-card__alert", text: /Invalid email or password/
+    assert_select ".flash", count: 0
+  end
+
   test "create with unverified email redirects with verification message" do
     user = users(:david)
     user.update!(verified_at: nil)
