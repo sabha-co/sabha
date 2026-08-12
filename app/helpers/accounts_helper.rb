@@ -41,9 +41,4 @@ module AccountsHelper
     status = @activity_statuses&.dig(user.id)
     STATUS_CSS_CLASSES[status] unless status.nil? || status == :offline
   end
-
-  def badge_options
-    badges = @badges || Badge.ordered
-    [ [ "No badge", "" ] ] + badges.map { |b| [ b.name, b.id ] }
-  end
 end

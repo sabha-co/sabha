@@ -10,6 +10,34 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "edit renders the manage-member dialog content" do
+    get edit_account_user_url(users(:kevin))
+
+    assert_response :success
+    assert_select "turbo-frame#manage_member" do
+      assert_select ".role-option", count: 3
+      assert_select ".role-option--current", text: /Member/
+      assert_select ".badge-chip", text: "Founder"
+      assert_select "button", text: "Deactivate"
+      assert_select "button", text: /Ban/
+    end
+  end
+
+  test "edit omits deactivation for yourself" do
+    get edit_account_user_url(users(:david))
+
+    assert_response :success
+    assert_select "button", text: "Deactivate", count: 0
+  end
+
+  test "edit is refused for non-admins" do
+    sign_in :kevin
+
+    get edit_account_user_url(users(:jz))
+
+    assert_redirected_to root_path
+  end
+
   test "index search finds users by name" do
     get account_users_url, params: { query: "Dav" }
     assert_response :success

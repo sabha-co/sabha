@@ -38,21 +38,14 @@
       </div>
     <% end %>
   <% else %>
-    <% has_controls = user.manageable_by?(Current.user) || user.reactivatable_by?(Current.user) || user.unbannable_by?(Current.user) || user.removable_by?(Current.user) || user == Current.user %>
+    <% has_controls = user.manageable_by?(Current.user) || user.reactivatable_by?(Current.user) || user.unbannable_by?(Current.user) || user == Current.user %>
 
     <% if has_controls %>
       <div class="member-controls list-row__trailing flex align-center gap">
         <% if user.manageable_by?(Current.user) %>
-          <%= render "accounts/users/role_toggle", user: user, role: :administrator, icon: "crown" %>
-          <%= render "accounts/users/role_toggle", user: user, role: :moderator, icon: "shield" %>
-
-          <%= form_with model: user, url: account_user_path(user), data: { turbo: false, controller: "form" }, method: :patch, class: "flex-item-no-shrink" do |form| %>
-            <%= form.select :badge_id,
-                  options_for_select(badge_options, user.badge&.id),
-                  {},
-                  class: "input txt-small",
-                  style: "width: 10ch;",
-                  data: { action: "form#submit" } %>
+          <%= link_to edit_account_user_path(user), class: "btn settings-chip-btn flex-item-no-shrink",
+                data: { turbo_frame: "manage_member" } do %>
+            Manage
           <% end %>
         <% end %>
 
@@ -65,11 +58,6 @@
           <%= button_to user_ban_path(user), method: :delete, class: "btn settings-chip-btn flex-item-no-shrink", data: {
                 turbo_confirm: "Unban #{user.name}? They will be able to access the chat again." } do %>
             Unban
-          <% end %>
-        <% elsif user.removable_by?(Current.user) %>
-          <%= button_to account_user_path(user), method: :delete, class: "btn settings-chip-btn settings-chip-btn--negative flex-item-no-shrink", data: {
-                turbo_confirm: "Deactivate #{user.name}? They will no longer be able to log in, but their messages will remain visible. To remove their messages, use Ban instead from their profile page."} do %>
-            Deactivate
           <% end %>
         <% end %>
 

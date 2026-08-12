@@ -36,7 +36,9 @@ class BoostingMessagesTest < ApplicationSystemTestCase
   test "the picker closes on escape without boosting" do
     open_reaction_picker messages(:third)
 
-    find("#reaction_picker_dialog").send_keys :escape
+    # A bare keyboard escape — element-targeted send_keys clicks the card to
+    # focus it, which could land on an emoji cell.
+    page.driver.browser.keyboard.type(:Escape)
 
     assert_reaction_picker_closed
     within_message messages(:third) do

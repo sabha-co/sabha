@@ -87,3 +87,102 @@
   flex: 1;
   min-inline-size: 0;
 }
+
+/* Manage-member dialog: role rows over badge chips over account actions */
+.manage-member {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+}
+
+.manage-member__name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  margin: 0;
+  padding: 10px 12px 8px;
+}
+
+.manage-member__label {
+  padding: 2px 12px 4px;
+}
+
+.manage-member__rule {
+  background-color: var(--color-border);
+  block-size: 1px;
+  border: 0;
+  margin: 6px 8px;
+}
+
+.role-option,
+.manage-member__action {
+  --btn-background: transparent;
+  --btn-border-color: transparent;
+  --btn-border-radius: 9px;
+  --btn-padding: 9px 12px;
+  --hover-color: transparent;
+  --hover-filter: none;
+
+  font-size: 0.875rem;
+  font-weight: 400;
+  gap: 10px;
+  inline-size: 100%;
+  justify-content: flex-start;
+
+  @media (any-hover: hover) {
+    &:hover:not(:disabled) {
+      background-color: var(--color-bg-hover);
+    }
+  }
+}
+
+.role-option__tick {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  inline-size: 15px;
+  text-align: center;
+}
+
+.role-option__label {
+  flex: 1;
+  text-align: start;
+}
+
+.role-option__hint {
+  color: var(--color-text-subtle);
+  font-size: 0.71875rem;
+}
+
+.role-option--current {
+  background-color: var(--color-selected);
+  color: var(--color-accent-brand);
+}
+
+.badge-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 12px 10px;
+}
+
+.badge-chip {
+  --badge-color: var(--color-text-muted);
+  --btn-background: color-mix(in srgb, var(--badge-color) 12%, transparent);
+  --btn-border-color: transparent;
+  --btn-border-radius: 5px;
+  --btn-padding: 3px 8px;
+  --hover-filter: none;
+
+  color: var(--badge-color);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.badge-chip--current {
+  --btn-border-color: var(--badge-color);
+}
+
+.manage-member__action--negative {
+  color: var(--color-negative);
+}

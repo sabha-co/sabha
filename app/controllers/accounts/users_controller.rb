@@ -1,12 +1,11 @@
 class Accounts::UsersController < ApplicationController
   include NotifyBots
 
-  before_action :ensure_can_administer, only: %i[update destroy]
-  before_action :set_user, only: %i[update destroy]
+  before_action :ensure_can_administer, only: %i[edit update destroy]
+  before_action :set_user, only: %i[edit update destroy]
   before_action :load_status_counts, only: :index, if: -> { Current.user.staff? }
 
   def index
-    @badges = Badge.ordered.to_a if Current.user.can_administer?
     @member_count = User.without_bots.active.verified.count
 
     if searching?
@@ -18,6 +17,12 @@ class Accounts::UsersController < ApplicationController
     else
       load_members_by_role
     end
+  end
+
+  def edit
+    return redirect_to account_users_url unless @user.manageable_by?(Current.user)
+
+    @badges = Badge.ordered.to_a
   end
 
   def update

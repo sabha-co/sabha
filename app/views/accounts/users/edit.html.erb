@@ -1,0 +1,63 @@
+<%= turbo_frame_tag "manage_member" do %>
+  <div class="manage-member">
+    <h2 class="manage-member__name"><%= @user.name %></h2>
+
+    <span class="scrim-dialog__label manage-member__label">Role</span>
+    <% { "member" => nil, "moderator" => "edit & delete any message", "administrator" => "full control" }.each do |role, hint| %>
+      <%= form_with model: @user, url: account_user_path(@user) do |form| %>
+        <%= form.hidden_field :role, value: role %>
+        <%= form.button type: "submit", disabled: @user == Current.user,
+              class: "btn role-option #{"role-option--current" if @user.role == role}" do %>
+          <span class="role-option__tick" aria-hidden="true"><%= "✓" if @user.role == role %></span>
+          <span class="role-option__label"><%= role.capitalize %></span>
+          <% if hint %>
+            <span class="role-option__hint"><%= hint %></span>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <hr class="manage-member__rule">
+
+    <span class="scrim-dialog__label manage-member__label">Badge</span>
+    <div class="badge-chips">
+      <% @badges.each do |badge| %>
+        <%= form_with model: @user, url: account_user_path(@user) do |form| %>
+          <%= form.hidden_field :badge_id, value: badge.id %>
+          <%= form.button type: "submit",
+                class: "btn badge-chip #{"badge-chip--current" if @user.badge == badge}",
+                style: ("--badge-color: #{badge.color}" if badge.color.present?) do %>
+            <%= badge.name %>
+          <% end %>
+        <% end %>
+      <% end %>
+
+      <%= form_with model: @user, url: account_user_path(@user) do |form| %>
+        <%= form.hidden_field :badge_id, value: "" %>
+        <%= form.button type: "submit", class: "btn badge-chip #{"badge-chip--current" if @user.badge.nil?}" do %>
+          None
+        <% end %>
+      <% end %>
+    </div>
+
+    <% if @user.removable_by?(Current.user) || @user.bannable_by?(Current.user) %>
+      <hr class="manage-member__rule">
+
+      <% if @user.removable_by?(Current.user) %>
+        <%= button_to account_user_path(@user), method: :delete, class: "btn manage-member__action",
+              data: { turbo_confirm: "Deactivate #{@user.name}? They will no longer be able to log in, but their messages will remain visible." } do %>
+          <span>Deactivate</span>
+        <% end %>
+      <% end %>
+
+      <% if @user.bannable_by?(Current.user) %>
+        <%= button_to user_ban_path(@user), method: :post,
+              class: "btn manage-member__action manage-member__action--negative",
+              form: { data: { turbo_frame: "_top" } },
+              data: { turbo_confirm: "Ban #{@user.name} and delete all their messages? This can't be undone." } do %>
+          <span>Ban and delete their messages</span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
