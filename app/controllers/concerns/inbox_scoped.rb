@@ -17,8 +17,8 @@ module InboxScoped
       Message.with_thread_participants(bookmarks.map(&:message)).each { |m| m.bookmarked = true }
     end
 
-    def find_notifications
-      query = Inbox::ActivityQuery.new(Current.user)
+    def find_notifications(filter: nil)
+      query = Inbox::ActivityQuery.new(Current.user, filter: filter)
 
       paginate(query.call).tap do |notifications|
         messages = notifications.filter_map(&:message)

@@ -1,0 +1,11 @@
+<%# The Activity feed's kind filter. "Reactions" are boosts; each tab value maps
+    to an activity_type in Inbox::ActivityQuery::FILTERS. %>
+<% current = params[:filter].presence %>
+<div class="inbox-filter">
+  <div class="segmented-control" role="group" aria-label="Filter activity">
+    <% [ [ "All", nil ], [ "Mentions", "mentions" ], [ "Replies", "replies" ], [ "Reactions", "reactions" ] ].each do |label, value| %>
+      <%= link_to label, inbox_activity_index_path(filter: value),
+            class: class_names("segmented-control__btn", "segmented-control__btn--active" => current == value) %>
+    <% end %>
+  </div>
+</div>

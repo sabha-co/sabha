@@ -50,3 +50,10 @@ body.inbox .searches__results > :last-child {
     }
   }
 }
+
+/* The Activity kind filter sits above the feed, on its own padded row. */
+.inbox-filter {
+  border-block-end: 1px solid var(--color-border);
+  display: flex;
+  padding: 12px 16px;
+}

@@ -4,7 +4,7 @@ class Inboxes::ActivityController < ApplicationController
   before_action :set_notification_pagination_anchors, if: :paginating?
 
   def index
-    @notifications = find_notifications
+    @notifications = find_notifications(filter: params[:filter])
 
     if paginating?
       render partial: "items"

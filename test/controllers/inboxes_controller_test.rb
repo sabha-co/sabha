@@ -187,6 +187,24 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "replied in a thread in", response.body
   end
 
+  test "activity filter tabs scope the feed to the chosen kind" do
+    rooms(:pets).messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} filter mention marker</div>",
+      creator: @jason, client_message_id: "filter_mention"
+    )
+    boosted = rooms(:pets).messages.create!(body: "boosted for filter", creator: @david, client_message_id: "filter_boost_msg")
+    perform_enqueued_jobs(only: Notification::DispatchJob) do
+      boosted.boosts.create!(content: "🔥", booster: @jason)
+    end
+
+    get inbox_activity_index_url(filter: "mentions")
+
+    assert_response :success
+    assert_select ".segmented-control__btn--active", text: "Mentions"
+    assert_match "filter mention marker", response.body
+    assert_no_match "boosted your message", response.body
+  end
+
   test "activity feed shows every notification, including ones from before the last visit" do
     room = rooms(:pets)
     Notification.where(user: @david).delete_all

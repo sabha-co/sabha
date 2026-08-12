@@ -2,7 +2,8 @@
 <%= render "inboxes/nav", title: "Activity" %>
 
 <% content_for :messages do %>
-  <%= search_results_tag("inbox", inbox_activity_index_url, highlight_mentions: true, thread_messages: false) do %>
+  <%= render "inboxes/activity/filter" %>
+  <%= search_results_tag("inbox", inbox_activity_index_url(filter: params[:filter]), highlight_mentions: true, thread_messages: false) do %>
     <%= render "notifications/list", notifications: @notifications %>
   <% end %>
   <%= turbo_stream_from Current.user, :inbox_activity %>
