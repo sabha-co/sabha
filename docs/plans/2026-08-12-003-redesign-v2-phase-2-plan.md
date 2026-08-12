@@ -70,6 +70,7 @@ WS0, WS1, WS2, WS4 and WS6 are **built** on `redesign-v2`; WS3 and WS5 are **par
 **Pre-existing bugs found while testing, fixed separately (not Phase 2 scope):**
 - `25daea4` — the contrast sidebar footer had no visible bottom bar: under `data-contrast`, `--color-bg-sunk` collapses onto `--color-bg`, so the footer's sunk background vanished. Added a hairline.
 - `2e8c9d8` — `Account#join_code` returned `nil` for fixture/seed-created accounts (the `after_create` backfill callback doesn't fire for those), crashing the About page's invite partial. `join_code` now self-heals by backfilling the global code.
+- `84bcf2d` (folded into the Retry idempotency commit, which is what surfaced it) — the app minted `client_message_id`s with `Random.uuid`, which draws from Ruby's **seedable** Mersenne Twister rather than a CSPRNG. Any `srand` (the test runner does this) makes the "unique" id sequence replay — SaaS tenant DBs, which persist across test runs, collided the moment the unique index existed. All three app call sites (`Message#set_default_client_message_id`, `Room#post_system_message`, `Room#post_welcome_message`) now use `SecureRandom.uuid`.
 
 ---
 
