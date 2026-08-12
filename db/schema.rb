@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_12_190930) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_13_000001) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -360,6 +360,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_12_190930) do
     t.text "preferences", default: "{}"
     t.integer "role", default: 0, null: false
     t.integer "status", default: 0, null: false
+    t.string "status_message"
     t.date "streak_updated_on"
     t.string "twitter_url"
     t.string "twitter_username"

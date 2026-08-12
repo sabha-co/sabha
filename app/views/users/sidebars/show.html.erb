@@ -170,7 +170,7 @@
         </span>
         <span class="sidebar__me-info">
           <span class="sidebar__me-name"><%= Current.user.name %></span>
-          <span class="sidebar__me-status"><%= Current.user.bio.presence || "Here now" %></span>
+          <span class="sidebar__me-status"><%= Current.user.status_message.presence || "Here now" %></span>
         </span>
       <% end %>
 

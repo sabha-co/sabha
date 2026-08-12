@@ -113,6 +113,13 @@
 
       <div class="settings-field">
         <div class="settings-field__label">
+          <label for="user_status_message">Status</label>
+        </div>
+        <%= form.text_field :status_message, class: "input", placeholder: "What are you up to?", maxlength: 80, required: false %>
+      </div>
+
+      <div class="settings-field">
+        <div class="settings-field__label">
           <label for="user_bio">Bio</label>
         </div>
         <%= form.text_area :bio, class: "input", placeholder: "A few words about yourself…", maxlength: 200, rows: 3, required: false %>

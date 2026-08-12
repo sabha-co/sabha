@@ -18,6 +18,17 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_user_notification_settings_path, count: 1
   end
 
+  test "status message saves from the profile form and is distinct from bio" do
+    patch user_profile_url, params: {
+      user: { status_message: "Gardening this week", bio: "Long-time member" }
+    }
+
+    assert_redirected_to user_profile_url
+    @user.reload
+    assert_equal "Gardening this week", @user.status_message
+    assert_equal "Long-time member", @user.bio
+  end
+
   test "email change sends verification email" do
     assert_enqueued_emails 1 do
       patch user_profile_url, params: {
