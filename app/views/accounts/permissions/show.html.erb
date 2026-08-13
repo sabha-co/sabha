@@ -1,0 +1,49 @@
+<% @page_title = "Permissions" %>
+<% email_configured = Sabha.email_configured? %>
+
+<%= render layout: "settings/shell", locals: { section: :permissions } do %>
+  <header class="settings-header">
+    <div class="settings-header__scope">Community settings</div>
+    <h1 class="settings-header__title">Permissions</h1>
+    <p class="settings-header__blurb">What members can do without asking staff.</p>
+  </header>
+
+  <div class="settings-card">
+    <%= render "accounts/setting_toggle", account: @account, scope: :settings,
+          attribute: :restrict_room_creation_to_administrators,
+          title:     "Must be admin to create new rooms",
+          hint:      "Members can still join and post in rooms that already exist." %>
+
+    <%= render "accounts/setting_toggle", account: @account, scope: :settings,
+          attribute: :restrict_direct_messages_to_administrators,
+          title:     "Must be admin to start DMs",
+          hint:      "Existing DMs keep working — only new ones are restricted." %>
+  </div>
+
+  <% unless Sabha.email_globally_disabled? %>
+    <span class="settings-label">Email <span class="version-badge">Beta</span></span>
+    <div class="settings-card">
+      <% unless email_configured %>
+        <div class="callout callout--alert">
+          <%= icon_tag "alert", class: "flex-item-no-shrink" %>
+          <div class="txt-small">
+            <strong>Email isn't set up yet.</strong>
+            Add a verified Resend sending domain and set <code>RESEND_API_KEY</code> to turn these on.
+          </div>
+        </div>
+      <% end %>
+
+      <%= render "accounts/setting_toggle", account: @account,
+            attribute: :email_notifications_enabled,
+            title:     "Send missed-notification emails",
+            hint:      "Emails users a recap when they miss a mention or DM while offline.",
+            disabled:  !email_configured %>
+
+      <%= render "accounts/setting_toggle", account: @account,
+            attribute: :weekly_digest_enabled,
+            title:     "Send the weekly community digest",
+            hint:      "A Monday recap of top rooms and threads, sent to everyone who opted in.",
+            disabled:  !email_configured %>
+    </div>
+  <% end %>
+<% end %>

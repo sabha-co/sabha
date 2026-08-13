@@ -1,0 +1,61 @@
+<% @page_title = "Invitations" %>
+<% join_code = @account.join_code %>
+<% url = join_url(join_code.code) %>
+
+<%= render layout: "settings/shell", locals: { section: :invitations } do %>
+  <header class="settings-header">
+    <div class="settings-header__scope">Community settings</div>
+    <h1 class="settings-header__title">Invitations</h1>
+    <p class="settings-header__blurb">One join link for the whole community, plus whether members can mint their own.</p>
+  </header>
+
+  <div class="settings-card">
+    <div class="setting-row" style="align-items: start; flex-direction: column; gap: 12px;">
+      <span class="setting-row__text">
+        <span class="setting-row__title" id="invite_label">Join link</span>
+        <span class="txt-small txt-muted">
+          Anyone with the link can create an account.
+          <% if join_code.expires? %><%= join_code.expiry_display %>.<% end %>
+          <% if join_code.used? %><%= join_code.usage_display %>.<% end %>
+        </span>
+      </span>
+
+      <div class="flex align-center gap-half full-width flex-wrap">
+        <input type="text" class="input flex-item-grow" id="invite_url" value="<%= url %>" aria-labelledby="invite_label" readonly style="min-inline-size: 0;">
+
+        <%= link_to_zoom_qr_code(url) do %>
+          <span class="for-screen-reader">Show join link QR code</span>
+          <%= icon_tag "qr-code" %>
+        <% end %>
+
+        <%= button_to_copy_to_clipboard(url) do %>
+          <span class="for-screen-reader">Copy join link</span>
+          <%= icon_tag "copy-paste" %>
+        <% end %>
+
+        <%= web_share_session_button(url, "Link to join #{Current.account.name}", "Hit this link to join me in #{Current.account.name} and start chatting.") do %>
+          <span class="for-screen-reader">Share join link</span>
+          <%= icon_tag "share" %>
+        <% end %>
+
+        <%= button_to account_join_code_path, class: "btn btn--regenerate", data: { tooltip: true } do %>
+          <%= icon_tag "refresh" %>
+          <span class="for-screen-reader"><% if join_code.used? %><%= join_code.usage_display %> · <% end %>Regenerate join link</span>
+        <% end %>
+
+        <%= button_to account_join_code_path, method: :patch, class: "btn", aria: { pressed: join_code.expires? }, data: { tooltip: true } do %>
+          <%= icon_tag "history" %>
+          <span class="for-screen-reader"><%= join_code.expires? ? "#{join_code.expiry_display} · Make permanent" : "Never expires · Set to expire" %></span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <span class="settings-label">Member invites</span>
+  <div class="settings-card">
+    <%= render "accounts/setting_toggle", account: @account, scope: :settings,
+          attribute: :allow_users_to_create_invite_links,
+          title:     "Allow everyone to create invite links",
+          hint:      "Off means only admins can generate invite URLs." %>
+  </div>
+<% end %>

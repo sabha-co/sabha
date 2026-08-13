@@ -8,11 +8,13 @@ class Accounts::BotsControllerTest < ActionDispatch::IntegrationTest
   test "index" do
     get account_bots_url
     assert_response :ok
+    assert_select ".settings-nav__item[aria-current=page]", text: "Bots & webhooks"
   end
 
   test "show" do
     get account_bot_url(users(:bender))
     assert_response :ok
+    assert_select ".settings-nav__item[aria-current=page]", text: "Bots & webhooks"
   end
 
   test "create" do

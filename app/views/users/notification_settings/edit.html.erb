@@ -1,19 +1,6 @@
 <% @page_title = "Notification preferences" %>
 
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to_last_room_visited %>
-  </div>
-
-  <div class="flex-item-justify-end">
-    <%= link_to user_profile_path, class: "btn avatar" do %>
-      <%= avatar_image_tag(Current.user, size: 40, loading: :lazy) %>
-      <span class="for-screen-reader">Back to profile</span>
-    <% end %>
-  </div>
-<% end %>
-
-<section class="panel">
+<%= render layout: "settings/shell", locals: { section: :notifications } do %>
   <header class="settings-header">
     <div class="settings-header__scope">Your settings</div>
     <h1 class="settings-header__title">Notifications</h1>
@@ -95,4 +82,4 @@
       <%= render partial: "users/notification_settings/membership", collection: @memberships %>
     </menu>
   </div>
-</section>
+<% end %>

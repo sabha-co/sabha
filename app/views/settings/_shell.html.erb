@@ -1,0 +1,55 @@
+<%# locals: (section:) %>
+<%# Two-pane settings shell. Pages mount inside it via
+    `render layout: "settings/shell", locals: { section: :profile }` — the
+    section nav shows one surface at a time (Your settings ↔ Community),
+    with the switch row flipping between them for admins. %>
+<% community = community_settings_section?(section) %>
+<% sections = community ? community_settings_sections : personal_settings_sections %>
+
+<% @body_class = "sidebar settings" %>
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+<% content_for :nav do %>
+  <%= link_back_to_last_room_visited %>
+  <h1 class="navbar-title">Settings</h1>
+  <div class="flex-item-grow"></div>
+<% end %>
+
+<section class="settings-split">
+  <nav class="settings-nav" aria-label="Settings sections">
+    <header class="settings-nav__header">
+      <h2 class="settings-nav__title"><%= community ? "Community" : "Your settings" %></h2>
+      <p class="settings-nav__sub">
+        <span class="settings-nav__sub-name"><%= community ? Current.account.name : Current.user.name %></span>
+        <% if community %><span class="settings-nav__chip">Admin only</span><% end %>
+      </p>
+    </header>
+
+    <div class="settings-nav__group">
+      <span class="settings-nav__label"><%= community ? "Community" : "Your account" %></span>
+      <% sections.each do |key, label, path| %>
+        <%= link_to label, path, class: "settings-nav__item",
+              aria: { current: section == key ? "page" : nil } %>
+      <% end %>
+    </div>
+
+    <% if community %>
+      <%= link_to user_profile_path, class: "settings-nav__switch" do %>
+        <%= icon_tag "settings" %>
+        <span class="settings-nav__switch-label">Your settings</span>
+        <span aria-hidden="true">&rsaquo;</span>
+      <% end %>
+    <% elsif Current.user.can_administer? %>
+      <%= link_to edit_account_path, class: "settings-nav__switch" do %>
+        <%= icon_tag "settings" %>
+        <span class="settings-nav__switch-label">Community settings</span>
+        <span aria-hidden="true">&rsaquo;</span>
+      <% end %>
+    <% end %>
+  </nav>
+
+  <div class="settings-split__content">
+    <div class="settings-split__inner">
+      <%= yield %>
+    </div>
+  </div>
+</section>

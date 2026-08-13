@@ -1,43 +1,38 @@
-<% @page_title = "Chat bots" %>
+<% @page_title = "Bots & webhooks" %>
 
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to edit_account_path %>
+<%= render layout: "settings/shell", locals: { section: :bots } do %>
+  <header class="settings-header">
+    <div class="settings-header__scope">Community settings</div>
+    <h1 class="settings-header__title">Bots &amp; webhooks</h1>
+    <p class="settings-header__blurb">Bots post messages and respond to mentions via the API. <%= link_to "API docs", skill_path, target: "_blank", class: "txt-underlined" %></p>
+  </header>
+
+  <div class="flex flex-column gap" style="view-transition-name: chat-bots">
+    <% if @bots.any? %>
+      <menu class="flex flex-column gap-half margin-none pad-none">
+        <%= render partial: "accounts/bots/bot", collection: @bots %>
+      </menu>
+    <% end %>
+
+    <div class="flex flex-column gap">
+      <h2 class="txt-small txt-muted margin-none"><strong>Add a bot</strong></h2>
+
+      <div class="fill-shade border-radius pad flex align-center gap">
+        <div class="flex-item-grow min-width">
+          <div class="txt-small"><strong>Create manually</strong></div>
+          <div class="txt-x-small txt-muted">Set up a bot yourself with a name. Add a webhook URL later if you need HTTP delivery.</div>
+        </div>
+        <%= link_to new_account_bot_path, class: "btn btn--primary btn--small flex-item-no-shrink", aria: { label: "Create a bot manually" } do %>
+          <%= icon_tag "add" %>
+          <span>Create bot</span>
+        <% end %>
+      </div>
+
+      <div class="fill-shade border-radius pad flex flex-column gap-half">
+        <div class="txt-small"><strong>Invite URL</strong></div>
+        <div class="txt-x-small txt-muted">Generate a one-time URL to register a bot via the API using <%= link_to "Openclaw plugin.", "https://github.com/sabha-co/openclaw-sabha?tab=readme-ov-file#install", target: "_blank", class: "txt-underlined" %></div>
+        <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code %>
+      </div>
+    </div>
   </div>
 <% end %>
-
-<section class="panel flex flex-column gap" style="view-transition-name: chat-bots">
-  <div class="flex flex-column gap-half">
-    <h1 class="txt-large margin-none"><strong>Chat bots</strong></h1>
-    <p class="txt-small txt-muted margin-none">Bots post messages and respond to mentions via the API. <%= link_to "API docs", skill_path, target: "_blank", class: "txt-underlined" %></p>
-  </div>
-
-  <% if @bots.any? %>
-    <menu class="flex flex-column gap-half margin-none pad-none">
-      <%= render partial: "accounts/bots/bot", collection: @bots %>
-    </menu>
-  <% end %>
-
-  <hr class="separator full-width" style="--border-style: solid">
-
-  <div class="flex flex-column gap">
-    <h2 class="txt-small txt-muted margin-none"><strong>Add a bot</strong></h2>
-
-    <div class="fill-shade border-radius pad flex align-center gap">
-      <div class="flex-item-grow min-width">
-        <div class="txt-small"><strong>Create manually</strong></div>
-        <div class="txt-x-small txt-muted">Set up a bot yourself with a name. Add a webhook URL later if you need HTTP delivery.</div>
-      </div>
-      <%= link_to new_account_bot_path, class: "btn btn--primary btn--small flex-item-no-shrink", aria: { label: "Create a bot manually" } do %>
-        <%= icon_tag "add" %>
-        <span>Create bot</span>
-      <% end %>
-    </div>
-
-    <div class="fill-shade border-radius pad flex flex-column gap-half">
-      <div class="txt-small"><strong>Invite URL</strong></div>
-      <div class="txt-x-small txt-muted">Generate a one-time URL to register a bot via the API using <%= link_to "Openclaw plugin.", "https://github.com/sabha-co/openclaw-sabha?tab=readme-ov-file#install", target: "_blank", class: "txt-underlined" %></div>
-      <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code %>
-    </div>
-  </div>
-</section>

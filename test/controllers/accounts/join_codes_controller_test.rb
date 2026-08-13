@@ -13,6 +13,12 @@ class Accounts::JoinCodesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "New join link generated", flash[:notice]
   end
 
+  test "create returns to the settings page it came from" do
+    post account_join_code_url, headers: { "HTTP_REFERER" => account_invitations_url }
+
+    assert_redirected_to account_invitations_url
+  end
+
   test "only administrators can create new join codes" do
     sign_in :jz
     post account_join_code_url

@@ -18,6 +18,34 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_user_notification_settings_path, count: 1
   end
 
+  test "show renders inside the settings shell with Profile current" do
+    get user_profile_url
+
+    assert_select ".settings-nav__item", count: 4
+    assert_select ".settings-nav__item[aria-current=page]", text: "Profile"
+  end
+
+  test "admins get the community settings switch" do
+    get user_profile_url
+
+    assert_select "a.settings-nav__switch[href=?]", edit_account_path, text: /Community settings/
+  end
+
+  test "non-admins get no community settings switch" do
+    sign_in :kevin
+
+    get user_profile_url
+
+    assert_response :success
+    assert_select ".settings-nav__switch", count: 0
+  end
+
+  test "the theme control moved off the profile page" do
+    get user_profile_url
+
+    assert_select "[data-action*=?]", "theme#setLight", count: 0
+  end
+
   test "status message saves from the profile form and is distinct from bio" do
     patch user_profile_url, params: {
       user: { status_message: "Gardening this week", bio: "Long-time member" }

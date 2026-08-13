@@ -23,6 +23,31 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
+  test "edit renders inside the settings shell with Identity current" do
+    get edit_account_url
+
+    assert_select ".settings-nav__item", count: 5
+    assert_select ".settings-nav__item[aria-current=page]", text: "Identity"
+    assert_select "a.settings-nav__switch[href=?]", user_profile_path, text: /Your settings/
+    assert_select "input[name=?]", "account[settings][accent]"
+  end
+
+  test "the restriction toggles moved off the identity page" do
+    get edit_account_url
+
+    assert_select "input[type=hidden][name=?]", "account[settings][restrict_room_creation_to_administrators]", count: 0
+    assert_select "input[type=hidden][name=?]", "account[email_notifications_enabled]", count: 0
+  end
+
+  test "update returns to the settings page it came from" do
+    put account_url,
+        params: { account: { settings: { restrict_direct_messages_to_administrators: true } } },
+        headers: { "HTTP_REFERER" => account_permissions_url }
+
+    assert_redirected_to account_permissions_url
+    assert accounts(:signal).reload.settings.restrict_direct_messages_to_administrators?
+  end
+
   test "non-admins cannot access edit" do
     sign_in :kevin
     assert users(:kevin).member?

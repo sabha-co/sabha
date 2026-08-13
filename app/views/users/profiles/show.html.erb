@@ -1,23 +1,6 @@
-<% @page_title = @user.name %>
+<% @page_title = "Profile" %>
 
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back %>
-  </div>
-
-  <div class="flex-item-justify-end">
-    <%= form_with url: session_path, method: :delete, data: { controller: "sessions" } do %>
-      <%= hidden_field_tag :push_subscription_endpoint, nil, data: { sessions_target: "pushSubscriptionEndpoint" } %>
-
-      <button class="btn" data-action="sessions#logout:prevent">
-        <%= icon_tag "logout" %>
-        <span class="for-screen-reader">Log out</span>
-      </button>
-    <% end %>
-  </div>
-<% end %>
-
-<section class="panel" style="view-transition-name: avatar-<%= @user.id %>">
+<%= render layout: "settings/shell", locals: { section: :profile } do %>
   <%= render partial: "pwa/install_instructions" %>
 
   <header class="settings-header">
@@ -30,7 +13,7 @@
     <div class="auth-card__alert" style="margin: 0 0 16px;"><div><%= flash[:alert] %></div></div>
   <% end %>
 
-  <div class="settings-card">
+  <div class="settings-card" style="view-transition-name: avatar-<%= @user.id %>">
     <div class="settings-avatar-row" data-controller="upload-preview">
       <%= profile_form_with @user do |form| %>
         <label class="btn avatar input--file">
@@ -130,48 +113,4 @@
       </div>
     <% end %>
   </div>
-
-  <span class="settings-label">Appearance</span>
-  <div class="settings-card">
-    <%= render "users/profiles/theme" %>
-  </div>
-
-  <span class="settings-label">Notifications</span>
-  <div class="settings-card">
-    <%= link_to edit_user_notification_settings_path, class: "setting-row txt-undecorated" do %>
-      <span class="setting-row__text">
-        <span class="setting-row__title">Notification preferences</span>
-        <span class="txt-small txt-muted">Email, push, and per-room alerts</span>
-      </span>
-      <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
-    <% end %>
-  </div>
-
-  <% if Rails.env.development? %>
-    <span class="settings-label">Developer</span>
-    <div class="settings-card">
-      <%= link_to user_push_subscriptions_url, class: "setting-row txt-undecorated" do %>
-        <span class="setting-row__text">
-          <span class="setting-row__title">Push notifications dev mode</span>
-          <span class="txt-small txt-muted">Test push subscriptions on this device</span>
-        </span>
-        <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
-      <% end %>
-    </div>
-  <% end %>
-
-  <span class="settings-label">Account</span>
-  <div class="settings-card">
-    <%= render "users/profiles/transfer", user: @user %>
-
-    <% if Current.user.can_administer? %>
-      <%= link_to edit_account_path, class: "setting-row txt-undecorated" do %>
-        <span class="setting-row__text">
-          <span class="setting-row__title flex align-center gap-half">Community settings <span class="chip-staff">Staff</span></span>
-          <span class="txt-small txt-muted">Name, logo, permissions, and invitations for everyone</span>
-        </span>
-        <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
-      <% end %>
-    <% end %>
-  </div>
-</section>
+<% end %>

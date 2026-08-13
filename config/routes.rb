@@ -86,6 +86,8 @@ Rails.application.routes.draw do
 
       resource :bot_invite_code, only: :create, controller: "bot_invite_codes"
 
+      resource :invitations, only: :show
+      resource :permissions, only: :show
       resource :join_code, only: %i[ create update ]
       resource :logo, only: %i[ show destroy ]
     end
@@ -112,6 +114,8 @@ Rails.application.routes.draw do
         resource :sidebar, only: :show
         resources :hidden_rooms, only: :index
         resource :profile
+        resource :appearance, only: :show
+        resource :account_data, only: :show
         resource :avatar_shuffle, only: :create
         resource :email_change, only: :destroy
         resource :invite_link, only: :create

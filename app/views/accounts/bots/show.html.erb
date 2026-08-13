@@ -1,12 +1,7 @@
 <% @page_title = @bot.name %>
 
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to account_bots_path %>
-  </div>
-<% end %>
-
-<section class="panel flex flex-column gap" style="view-transition-name: chat-bot-<%= @bot.id %>">
+<%= render layout: "settings/shell", locals: { section: :bots } do %>
+<div class="flex flex-column gap" style="view-transition-name: chat-bot-<%= @bot.id %>">
   <div class="flex align-center gap pad-inline">
     <figure class="avatar flex-item--no-shrink" style="--avatar-size: 3em;">
       <%= avatar_tag @bot %>
@@ -133,4 +128,5 @@
       <span>Delete bot</span>
     <% end %>
   </div>
-</section>
+</div>
+<% end %>

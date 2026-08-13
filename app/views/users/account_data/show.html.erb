@@ -1,0 +1,39 @@
+<% @page_title = "Account & data" %>
+
+<%= render layout: "settings/shell", locals: { section: :account_data } do %>
+  <header class="settings-header">
+    <div class="settings-header__scope">Your settings</div>
+    <h1 class="settings-header__title">Account & data</h1>
+    <p class="settings-header__blurb">Sessions and sign-out. Your data is yours and leaving is supported.</p>
+  </header>
+
+  <div class="settings-card">
+    <%= render "users/profiles/transfer", user: Current.user %>
+
+    <div class="setting-row">
+      <span class="setting-row__text">
+        <span class="setting-row__title">Log out</span>
+        <span class="txt-small txt-muted">On this device only</span>
+      </span>
+      <%= form_with url: session_path, method: :delete, data: { controller: "sessions" } do %>
+        <%= hidden_field_tag :push_subscription_endpoint, nil, data: { sessions_target: "pushSubscriptionEndpoint" } %>
+        <button class="btn settings-chip-btn settings-chip-btn--negative" data-action="sessions#logout:prevent">
+          Log out
+        </button>
+      <% end %>
+    </div>
+  </div>
+
+  <% if Rails.env.development? %>
+    <span class="settings-label">Developer</span>
+    <div class="settings-card">
+      <%= link_to user_push_subscriptions_url, class: "setting-row txt-undecorated" do %>
+        <span class="setting-row__text">
+          <span class="setting-row__title">Push notifications dev mode</span>
+          <span class="txt-small txt-muted">Test push subscriptions on this device</span>
+        </span>
+        <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

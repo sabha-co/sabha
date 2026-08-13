@@ -11,6 +11,7 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     get edit_user_notification_settings_url(user_id: "me")
     assert_response :success
     assert_select "form"
+    assert_select ".settings-nav__item[aria-current=page]", text: "Notifications"
   end
 
   test "edit offers the device-level push enrollment prompt" do

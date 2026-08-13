@@ -8,6 +8,7 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
   test "index badges" do
     get account_badges_url
     assert_response :success
+    assert_select ".settings-nav__item[aria-current=page]", text: "Badges"
   end
 
   test "non-admins cannot index badges" do

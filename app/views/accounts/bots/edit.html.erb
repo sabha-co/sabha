@@ -1,12 +1,8 @@
 <% @page_title = "Edit bot" %>
 
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to account_bot_path(@bot) %>
-  </div>
-<% end %>
-
-<section class="panel flex flex-column gap" style="view-transition-name: chat-bot-<%= @bot.id %>">
+<%= render layout: "settings/shell", locals: { section: :bots } do %>
+<div class="flex flex-column gap" style="view-transition-name: chat-bot-<%= @bot.id %>">
+  <p class="margin-none"><%= link_to "‹ Back to #{@bot.name}", account_bot_path(@bot), class: "txt-small txt-muted txt-undecorated" %></p>
   <div class="flex align-center gap pad-inline">
     <figure class="avatar flex-item-no-shrink" style="--avatar-size: 3em;">
       <%= avatar_tag @bot %>
@@ -23,4 +19,5 @@
   <%= form_with model: @bot, url: account_bot_path(@bot), class: "flex flex-column gap" do |form| %>
     <%= render "accounts/bots/form", form: form, bot: @bot %>
   <% end %>
-</section>
+</div>
+<% end %>

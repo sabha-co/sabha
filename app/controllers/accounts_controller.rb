@@ -13,9 +13,9 @@ class AccountsController < ApplicationController
   def update
     @account.attach_logo(account_params[:logo]) if account_params[:logo].present?
     @account.update!(merged_account_params.except(:logo))
-    redirect_to edit_account_url, notice: "✓"
+    redirect_back fallback_location: edit_account_url, notice: "✓"
   rescue Account::InvalidLogoType
-    redirect_to edit_account_url, alert: "Logo must be a JPEG, PNG, GIF, or WebP image"
+    redirect_back fallback_location: edit_account_url, alert: "Logo must be a JPEG, PNG, GIF, or WebP image"
   end
 
   private

@@ -1,12 +1,8 @@
 <% @page_title = "#{@bot.name} in #{@room.name}" %>
 
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to account_bot_path(@bot) %>
-  </div>
-<% end %>
-
-<section class="panel flex flex-column gap">
+<%= render layout: "settings/shell", locals: { section: :bots } do %>
+<div class="flex flex-column gap">
+  <p class="margin-none"><%= link_to "‹ Room access", account_bot_rooms_path(@bot), class: "txt-small txt-muted txt-undecorated" %></p>
   <div class="flex align-center gap pad-inline">
     <figure class="avatar flex-item--no-shrink" style="--avatar-size: 2em;">
       <%= avatar_tag @bot %>
@@ -74,4 +70,5 @@
       <% end %>
     </div>
   <% end %>
-</section>
+</div>
+<% end %>
