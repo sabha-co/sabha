@@ -45,6 +45,14 @@ html, body {
   text-size-adjust: none;
 }
 
+/* Instrument Sans tops out at 700. The UA default for these is `bolder`,
+   which computes to 900 inside already-bold contexts (message authors,
+   sidebar names) and makes the browser synthesize the weight — cap it so
+   emphasis always renders real glyphs. */
+b, strong {
+  font-weight: 700;
+}
+
 /* Links */
 :where(a:not([class]):not(:has(img))) {
   color: var(--link-color, var(--color-link));

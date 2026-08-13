@@ -250,7 +250,7 @@
 
   color: var(--color-text-muted);
   display: flex;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   gap: 1.2ch;
   justify-content: flex-start;
   position: relative;

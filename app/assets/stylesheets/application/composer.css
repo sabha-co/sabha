@@ -128,6 +128,12 @@
 .composer trix-editor.input {
   max-block-size: 12rem;
   overflow-y: auto;
+
+  /* Comp: 15px message text in the field. The 16px input floor exists to
+     stop iOS focus-zoom, which only matters on coarse pointers. */
+  @media (pointer: fine) {
+    font-size: 0.9375rem;
+  }
 }
 
 /* Rich text editor styling for all devices */

@@ -557,6 +557,7 @@
 .message__permalink {
   color: var(--color-text-subtle);
   font-size: 0.71875rem;
+  font-variant-numeric: tabular-nums;
   font-weight: 400;
   text-decoration: none;
   white-space: nowrap;
