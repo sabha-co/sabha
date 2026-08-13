@@ -163,8 +163,21 @@
   .dm-compose {
     --dm-content-inset: 0;
 
+    /* Grid, not flex: minmax(0, 1fr) pins the picker to the leftover width
+       regardless of pill/input intrinsic size, so the submit arrow can never
+       be pushed past the rail edge (selected pills ellipsize instead). */
+    display: grid;
     flex-shrink: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
     padding: 10px 12px;
+
+    .autocomplete__input {
+      min-inline-size: 0;
+    }
+
+    .autocomplete__list {
+      max-inline-size: 100%;
+    }
   }
 
   .dm-list {
