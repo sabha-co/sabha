@@ -143,6 +143,63 @@ body {
   grid-area: thread;
 }
 
+/* DM split view: the conversation rail docks between the sidebar and the
+   open conversation. Below the split width, direct rooms hide the rail
+   (conversation full-width, back link in the header) while the DM inbox
+   promotes it to the whole content area — the list is the screen. */
+#list-rail {
+  display: none;
+  grid-area: rail;
+}
+
+@media (min-width: 1024px) {
+  body:has(#list-rail) {
+    grid-template-areas:
+      "sidebar rail nav"
+      "sidebar rail main";
+    grid-template-columns: var(--sidebar-width) 272px minmax(0, 1fr);
+  }
+
+  body:has(#list-rail):has(#thread-panel:not([hidden])) {
+    grid-template-areas:
+      "sidebar rail nav thread"
+      "sidebar rail main thread";
+    grid-template-columns: var(--sidebar-width) 272px minmax(0, 1fr) var(--thread-width);
+  }
+
+  #list-rail {
+    background-color: var(--color-bg);
+    border-inline-end: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+    overflow: hidden;
+
+    .sidebar & {
+      border-inline-start: 1px solid var(--color-border-darker);
+    }
+  }
+
+  body:has(#list-rail) .dm-back {
+    display: none;
+  }
+}
+
+@media (max-width: 1023.9px) {
+  body.inbox:has(#list-rail) {
+    #list-rail {
+      display: flex;
+      flex-direction: column;
+      grid-area: main;
+      min-block-size: 0;
+    }
+
+    #main-content {
+      display: none;
+    }
+  }
+}
+
 #footer {
   grid-area: footer;
 }

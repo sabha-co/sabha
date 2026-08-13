@@ -16,6 +16,18 @@ module RoomsHelper
     end
   end
 
+  def dm_presence_label(status)
+    case status
+    when :active then "Here now"
+    when :away then "Away"
+    else "Offline"
+    end
+  end
+
+  def direct_member_status(user)
+    Membership.activity_statuses_for([ user.id ])[user.id]
+  end
+
   def link_back_to_last_room_visited
     if controller.respond_to?(:last_room_visited)
       # Use the controller's method if available

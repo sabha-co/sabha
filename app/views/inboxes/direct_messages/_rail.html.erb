@@ -1,0 +1,44 @@
+<%# The DM conversation rail, shared by the DM inbox and direct-room pages.
+    Keeps the #inbox container + dm-list contract the broadcasts and the
+    paginator target. %>
+<header class="dm-rail__header">
+  <h2 class="dm-rail__title">Direct messages</h2>
+</header>
+
+<% if Current.user.can_create_direct_messages? %>
+  <%= form_with url: rooms_directs_path, class: "dm-compose" do |form| %>
+    <section class="autocomplete__container dm-compose__container">
+      <div class="autocomplete__input input flex flex-wrap position-relative"
+          data-controller="autocomplete" data-autocomplete-url-value="<%= autocompletable_users_path %>">
+        <%= render "users/autocompletables/user_select", form: form, placeholder: "New message to…" %>
+      </div>
+    </section>
+
+    <%= button_tag class: "btn btn--reversed dm-compose__submit", type: "submit" do %>
+      <%= icon_tag "arrow-right" %>
+      <span class="for-screen-reader">Start conversation</span>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div id="inbox"
+     class="dm-list"
+     data-controller="dm-list"
+     data-dm-list-target="conversations"
+     data-dm-list-loading-class="dm-conversation--loading"
+     data-dm-list-page-url-value="<%= inbox_direct_messages_url %>">
+  <%= render "inboxes/direct_messages/items" %>
+</div>
+
+<% if @memberships.blank? %>
+  <div class="dm-rail__empty">
+    <h3 class="empty-state__title">No conversations yet</h3>
+    <p class="empty-state__body">
+      <%= Current.user.can_create_direct_messages? ?
+            "Direct messages are private to the people in them. Type a name above to start one." :
+            "Direct messages are private to the people in them." %>
+    </p>
+  </div>
+<% end %>
+
+<%= turbo_stream_from Current.user, :inbox_direct_messages %>

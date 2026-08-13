@@ -81,6 +81,12 @@
       </div>
     <% end %>
 
+    <% if content_for?(:list_rail) %>
+      <aside id="list-rail" aria-label="Conversations">
+        <%= yield :list_rail %>
+      </aside>
+    <% end %>
+
     <main id="main-content" tabindex="-1">
       <%= yield %>
 

@@ -1,8 +1,13 @@
+<% dm_members = room.direct? ? room.members_for_display(excluding: Current.user) : [] %>
+<% dm_other = dm_members.one? ? dm_members.first : nil %>
+<% dm_status = dm_other && direct_member_status(dm_other) %>
+
 <% content_for :nav do %>
   <% if room.thread? %>
     <%= link_back_to_or_referrer room_at_message_path(room.parent_message.room, room.parent_message) %>
   <% elsif room.direct? %>
-    <%= link_back_to_or_referrer inbox_direct_messages_path %>
+    <%# The rail replaces this affordance at split widths (CSS hides it) %>
+    <span class="dm-back"><%= link_back_to_or_referrer inbox_direct_messages_path %></span>
   <% end %>
 
   <% unless room.direct? %>
@@ -11,19 +16,48 @@
     </span>
   <% end %>
 
-  <h1 class="navbar-title">
-    <%= link_to edit_room_path(room) do %>
-      <% if room.direct? %>
-        <span class="for-screen-reader">Direct message with</span>
-      <% end %>
+  <% if room.direct? %>
+    <div class="navbar-dm">
+      <span class="avatar navbar-dm__avatar">
+        <% if dm_members.many? %>
+          <div class="avatar__group">
+            <% dm_members.first(4).each do |member| %>
+              <span class="avatar"><%= avatar_image_tag(member, size: 20, loading: :lazy) %></span>
+            <% end %>
+          </div>
+        <% else %>
+          <%= avatar_image_tag(dm_other || Current.user, size: 30) %>
+          <% if dm_status %>
+            <span class="status-dot status--<%= dm_status %> navbar-dm__dot" aria-hidden="true"></span>
+          <% end %>
+        <% end %>
+      </span>
 
-      <% if room.thread? %>
-        <%= room_display_name(room.parent_message.room) %>
-      <% else %>
-        <%= room_display_name(room) %>
+      <div class="navbar-dm__text">
+        <h1 class="navbar-title">
+          <%= link_to edit_room_path(room) do %>
+            <span class="for-screen-reader">Direct message with</span>
+            <%= room_display_name(room) %>
+          <% end %>
+        </h1>
+        <% if dm_other %>
+          <span class="navbar-dm__status"><%= dm_presence_label(dm_status) %></span>
+        <% elsif dm_members.many? %>
+          <span class="navbar-dm__status"><%= pluralize(room.active_member_count, "member") %></span>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <h1 class="navbar-title">
+      <%= link_to edit_room_path(room) do %>
+        <% if room.thread? %>
+          <%= room_display_name(room.parent_message.room) %>
+        <% else %>
+          <%= room_display_name(room) %>
+        <% end %>
       <% end %>
-    <% end %>
-  </h1>
+    </h1>
+  <% end %>
 
   <% unless room.thread? || room.direct? %>
     <%= link_to account_users_path, class: "navbar-members",
@@ -36,12 +70,16 @@
 
   <% unless hotwire_native_app? %>
     <div class="flex gap-half align-center navbar-actions">
+      <% if dm_other %>
+        <%= link_to "View profile", user_path(dm_other), class: "btn navbar-view-profile" %>
+      <% end %>
+
       <% unless room.thread? %>
         <%= turbo_frame_tag dom_id(room, :involvement) do %>
           <%= button_to_change_involvement(room, @membership.involvement) %>
         <% end %>
 
-        <%= link_to_room_roster(room) %>
+        <%= link_to_room_roster(room) unless room.direct? %>
       <% end %>
     </div>
   <% end %>

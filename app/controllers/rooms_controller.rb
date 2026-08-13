@@ -1,5 +1,5 @@
 class RoomsController < ApplicationController
-  include SubRoomAccessible
+  include SubRoomAccessible, DirectMessageListable
 
   before_action :set_room, only: %i[ show destroy ]
   before_action :set_membership, only: %i[ show ]
@@ -23,6 +23,7 @@ class RoomsController < ApplicationController
 
     return render_forum_gallery if @room.forum?
 
+    load_dm_conversations if @room.direct?
     @messages = find_messages
   end
 

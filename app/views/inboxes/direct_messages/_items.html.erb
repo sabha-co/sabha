@@ -1,4 +1,5 @@
 <%= render partial: "inboxes/direct_messages/conversation",
            collection: @memberships,
            as: :membership,
-           locals: { direct_room_members: @direct_room_members } %>
+           locals: { direct_room_members: @direct_room_members,
+                     member_statuses: @direct_member_statuses } %>

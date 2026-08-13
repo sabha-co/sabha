@@ -1,5 +1,12 @@
 <% members = direct_room_members[membership.room_id] || [] %>
 <% last_message = membership.room.last_message %>
+<%# Broadcast re-renders pass no statuses map — fall back to a single lookup
+    so live-updated rows keep their presence dot. %>
+<% presence = if members.one?
+     statuses = local_assigns[:member_statuses] || Membership.activity_statuses_for([ members.first.id ])
+     statuses[members.first.id]
+   end %>
+<% notifications_count = membership.unread_notifications_count.to_i %>
 <%= link_to room_path(membership.room),
             class: ["list-row", "dm-conversation", "unread": membership.unread?],
             id: dom_id(membership.room, :dm_inbox),
@@ -13,13 +20,12 @@
           </span>
         <% end %>
       </div>
-    <% elsif members.one? %>
-      <span class="avatar">
-        <%= avatar_image_tag(members.first, size: 48, loading: :lazy) %>
-      </span>
     <% else %>
       <span class="avatar">
-        <%= avatar_image_tag(Current.user, size: 48, loading: :lazy) %>
+        <%= avatar_image_tag(members.first || Current.user, size: 48, loading: :lazy) %>
+        <% if presence %>
+          <span class="status-dot status--<%= presence %> dm-conversation__presence" aria-hidden="true"></span>
+        <% end %>
       </span>
     <% end %>
   </div>
@@ -39,9 +45,11 @@
 
   <div class="dm-conversation__meta list-row__trailing">
     <span class="dm-conversation__time">
-      <%= time_ago_in_words(membership.room.last_active_at) %> ago
+      <%= local_datetime_tag membership.room.last_active_at, style: :compact %>
     </span>
-    <% if membership.unread? %>
+    <% if notifications_count > 0 %>
+      <span class="dm-conversation__count"><%= notifications_count %></span>
+    <% elsif membership.unread? %>
       <span class="dm-conversation__badge"></span>
     <% end %>
   </div>
