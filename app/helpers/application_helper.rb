@@ -57,9 +57,10 @@ module ApplicationHelper
     link_back_to request.referer || "/"
   end
 
-  def link_back_to(destination)
-    link_to destination, class: "btn d-hotwire-native-none" do
-      icon_tag("arrow-left") + tag.span("Go Back", class: "for-screen-reader")
+  def link_back_to(destination, label: "Back")
+    link_to destination, class: "navbar-back d-hotwire-native-none" do
+      tag.span("‹", class: "navbar-back__chevron", aria: { hidden: true }) +
+        tag.span(label, class: "navbar-back__label")
     end
   end
 

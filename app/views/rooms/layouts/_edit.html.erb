@@ -3,9 +3,8 @@
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <% content_for :nav do %>
-  <%= link_back_to room_path(room) %>
+  <%= link_back_to room_path(room), label: room_display_name(room) %>
   <h1 class="navbar-title"><%= room.direct? ? "Conversation settings" : "Room settings" %></h1>
-  <span class="navbar-count"><%= room_display_name(room) %></span>
   <div class="flex-item-grow"></div>
 <% end %>
 

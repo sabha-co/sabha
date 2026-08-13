@@ -157,6 +157,39 @@
   font-weight: 600;
 }
 
+/* Quiet accent back link — "‹ Back", or "‹ {room name}" when the caller
+   labels the destination. Padding + negative margin keep the visual quiet
+   while preserving a comfortable tap target. */
+.navbar-back {
+  align-items: center;
+  color: var(--color-accent-brand);
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 0.84375rem;
+  font-weight: 600;
+  gap: 5px;
+  margin: -8px -6px;
+  padding: 8px 6px;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover .navbar-back__label {
+    text-decoration: underline;
+  }
+}
+
+.navbar-back__chevron {
+  font-size: 1.1875rem;
+  line-height: 1;
+  translate: 0 -1px;
+}
+
+.navbar-back__label {
+  max-inline-size: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Quiet accent text action at the bar's end ("Manage badges") */
 .navbar-text-link {
   color: var(--color-accent-brand);
