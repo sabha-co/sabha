@@ -1,24 +1,18 @@
 <% @page_title = "Browse rooms" %>
+<% @body_class = "sidebar browse" %>
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to root_path %>
-  </div>
+  <%= link_back %>
+  <h1 class="navbar-title">Browse rooms</h1>
+  <span class="navbar-count">Every room you can see, joined or not</span>
+  <div class="flex-item-grow"></div>
+  <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
+    <%= link_to "New room", new_rooms_open_path, class: "btn settings-save flex-item-no-shrink" %>
+  <% end %>
 <% end %>
 
-<section class="panel">
-  <header class="settings-header flex align-center justify-between gap">
-    <div>
-      <h1 class="settings-header__title margin-none" style="font-size: 1.25rem;">Browse rooms</h1>
-      <p class="txt-small txt-muted margin-none">Open rooms you haven't joined yet</p>
-    </div>
-    <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
-      <%= link_to new_rooms_open_path, class: "btn settings-save flex-item-no-shrink" do %>
-        New room
-      <% end %>
-    <% end %>
-  </header>
-
+<section class="browse-page">
   <% if @rooms.any? %>
     <div id="browsable_rooms" class="browse-card">
       <%= render partial: "rooms/browse/room", collection: @rooms, as: :room %>
@@ -29,8 +23,8 @@
     </div>
   <% else %>
     <div class="empty-state">
-      <p class="empty-state__title">You're in every room</p>
-      <p class="empty-state__body">Nothing left to browse. Private rooms you haven't been invited to never appear here.</p>
+      <p class="empty-state__title">Nothing to browse yet</p>
+      <p class="empty-state__body">Rooms you can see appear here — open rooms to join, plus the private ones you're in.</p>
     </div>
   <% end %>
 </section>

@@ -226,10 +226,22 @@ body.members #main-content {
   flex-shrink: 0;
 }
 
-/* Browse rooms: bordered card of list rows */
+/* Browse rooms: an in-shell column holding a bordered card of list rows */
+body.browse #main-content {
+  justify-content: flex-start;
+}
+
+.browse-page {
+  padding: 16px 18px 30px;
+}
+
 .browse-card {
   border: 1px solid var(--color-border);
   border-radius: 12px;
+
+  .browse-page & {
+    max-inline-size: 760px;
+  }
 }
 
 .browse-room__glyph {
@@ -238,6 +250,17 @@ body.members #main-content {
   flex: none;
   inline-size: 20px;
   justify-content: center;
+}
+
+/* Non-action state for rooms you're already in */
+.browse-room__joined {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  display: inline-block;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  padding: 6px 13px;
 }
 
 .status-dot {

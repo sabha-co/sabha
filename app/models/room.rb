@@ -85,6 +85,13 @@ class Room < ApplicationRecord
           .where.not(id: user.memberships.visible.select(:room_id))
   }
 
+  # Everything Browse lists for a user: all open rooms and forums, joined or
+  # not, plus the closed rooms they're visibly in.
+  scope :visible_in_browse_by, ->(user) {
+    active.where(type: %w[ Rooms::Open Rooms::Forum ])
+          .or(active.where(type: "Rooms::Closed", id: user.memberships.visible.select(:room_id)))
+  }
+
   scope :ordered, -> { order(:sortable_name) }
   scope :matching, ->(query) {
     # matches renders ILIKE on Postgres, LIKE on SQLite — case-insensitive on both.

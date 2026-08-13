@@ -1,10 +1,15 @@
+<% joined = @joined_room_ids.include?(room.id) %>
 <div class="list-row">
   <span class="browse-room__glyph txt-deemphasize" aria-hidden="true"><%= room_type_indicator(room) %></span>
 
   <div class="list-row__body">
     <div class="flex align-baseline gap-half min-width">
-      <span class="list-row__title"><%= room.name %></span>
-      <span class="txt-x-small txt-subtle flex-item-no-shrink"><%= pluralize(room.active_member_count, "member") %></span>
+      <% if joined %>
+        <%= link_to room.name, room_path(room), class: "list-row__title txt-undecorated" %>
+      <% else %>
+        <span class="list-row__title"><%= room.name %></span>
+      <% end %>
+      <span class="txt-x-small txt-subtle flex-item-no-shrink"><%= browse_room_type_label(room) %> · <%= pluralize(room.active_member_count, "member") %></span>
     </div>
     <% if room.description.present? %>
       <div class="list-row__subtitle"><%= room.description %></div>
@@ -12,8 +17,12 @@
   </div>
 
   <div class="list-row__trailing">
-    <%= button_to room_membership_path(room), method: :post, class: "btn settings-save" do %>
-      Join
+    <% if joined %>
+      <span class="browse-room__joined">Joined</span>
+    <% else %>
+      <%= button_to room_membership_path(room), method: :post, class: "btn settings-save" do %>
+        Join
+      <% end %>
     <% end %>
   </div>
 </div>

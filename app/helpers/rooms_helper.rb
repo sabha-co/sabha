@@ -16,6 +16,14 @@ module RoomsHelper
     end
   end
 
+  def browse_room_type_label(room)
+    case room
+    when Rooms::Closed then "Private"
+    when Rooms::Forum then "Forum"
+    else "Open"
+    end
+  end
+
   def dm_presence_label(status)
     case status
     when :active then "Here now"
