@@ -364,21 +364,24 @@
 }
 
 .message__event-separator {
+  column-gap: 12px;
+  display: grid;
   grid-area: event;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 400;
   text-transform: none;
-  color: var(--color-text-muted);
+  color: var(--color-text-subtle);
   padding-block: 0.25rem;
 
   span {
     background-color: transparent;
   }
 
+  /* Comp draws hairlines running to both edges of the event line */
   &::after,
   &::before {
-    display: none;
+    border-top: 1px solid var(--color-border);
   }
 }
 
