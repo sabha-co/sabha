@@ -22,6 +22,11 @@
   border-radius: 12px;
   padding-inline: 18px;
 
+  /* Sibling cards keep the comp's 16px rhythm without needing a label row */
+  & + & {
+    margin-block-start: 16px;
+  }
+
   /* A text button at a row's end keeps its shape instead of squashing
      against the row text */
   .setting-row .btn {
@@ -100,6 +105,65 @@
   color: var(--color-text-subtle);
   font-size: 0.75rem;
   margin: 6px 0 0;
+}
+
+/* Invitations: join-link card internals. The head and the URL row form one
+   group so the card's hairlines fall only before the setting rows below. */
+.invite-link__head {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.invite-status {
+  border-radius: 5px;
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  text-transform: uppercase;
+}
+
+.invite-status--alert {
+  background-color: color-mix(in srgb, var(--color-alert) 14%, transparent);
+  color: var(--color-alert);
+}
+
+.invite-status--active {
+  background-color: color-mix(in srgb, var(--color-positive) 14%, transparent);
+  color: var(--color-positive);
+}
+
+.invite-url-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 12px;
+
+  .btn {
+    flex-shrink: 0;
+  }
+}
+
+.invite-url-input {
+  background-color: var(--color-bg-sunk);
+  border: 1px solid var(--color-border-dark);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.84375rem;
+  min-inline-size: 12ch;
+  padding: 9px 12px;
+}
+
+.settings-footnote {
+  color: var(--color-text-subtle);
+  font-size: 0.78125rem;
+  line-height: 1.55;
+  margin: 14px 0 0;
 }
 
 /* Accent save/submit chip */

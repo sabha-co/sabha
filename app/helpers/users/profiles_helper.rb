@@ -11,8 +11,8 @@ module Users::ProfilesHelper
     tag.button "Save changes", class: "btn settings-save", type: "submit"
   end
 
-  def web_share_session_button(url, title, text, &)
-    tag.button class: "btn", hidden: true, data: {
+  def web_share_session_button(url, title, text, btn_class: "btn", &)
+    tag.button class: btn_class, hidden: true, data: {
       controller: "web-share", action: "web-share#share",
       web_share_url_value: url,
       web_share_text_value: text,

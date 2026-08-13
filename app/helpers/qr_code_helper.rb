@@ -1,8 +1,8 @@
 module QrCodeHelper
-  def link_to_zoom_qr_code(url, &)
+  def link_to_zoom_qr_code(url, btn_class: "btn", &)
     id = Base64.urlsafe_encode64(url)
 
-    link_to qr_code_path(id), class: "btn", data: {
+    link_to qr_code_path(id), class: btn_class, data: {
       lightbox_target: "image", action: "lightbox#open", lightbox_url_value: qr_code_path(id) }, &
   end
 end
