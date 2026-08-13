@@ -244,7 +244,8 @@
   --btn-background: transparent;
   --btn-border-color: transparent;
   --btn-border-radius: var(--border-radius-md);
-  --btn-padding: var(--space-row) 1.2ch;
+  /* Tool rows sit tighter than room rows (comp: 34px vs 40px) */
+  --btn-padding: 7px 1.2ch;
   --hover-color: transparent;
   --hover-filter: none;
 
@@ -371,6 +372,15 @@
   color: var(--color-text-subtle);
   font-size: 0.6875rem;
   letter-spacing: 0.07em;
+}
+
+/* Fixed 20px glyph column so #, lock, and forum glyphs all align the names
+   at the same x (comp) */
+.room__glyph {
+  display: inline-flex;
+  inline-size: 20px;
+  justify-content: center;
+  margin-inline-end: 3px;
 }
 
 /* Footer: the signed-in user chip (avatar + name + status) with quiet tools
@@ -655,17 +665,17 @@
 
   /* DM rows reuse the room-row unread badge; it replaces the plain dot */
   .notification-badge {
-    background-color: var(--color-negative);
-    border-radius: 1em;
-    box-sizing: content-box;
-    color: white;
+    background-color: var(--color-accent-brand);
+    border-radius: 9px;
+    color: var(--color-text-reversed);
     flex-shrink: 0;
-    font-size: 0.65em;
-    font-weight: 700;
-    line-height: 1;
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    line-height: 1.4;
     margin-inline-start: auto;
     min-inline-size: 1.3em;
-    padding: 0.2em 0.35em;
+    padding: 1px 7px;
     text-align: center;
     animation: badge-in 200ms cubic-bezier(0.25, 1, 0.5, 1) both;
   }
@@ -688,6 +698,8 @@
   --column-gap: 0.5em;
   --row-gap: 0.5em;
 
+  /* Comp: a hairline separates the tool block from the room sections */
+  border-block-start: 1px solid var(--color-border-dark);
   padding-top: var(--block-space-half);
   padding-bottom: var(--block-space-half);
   padding-inline: var(--sidebar-inline-space);
@@ -697,8 +709,8 @@
     font-size: var(--font-size-small);
   }
 
+  /* Rows stack flush — the 9px row padding is the breathing room (comp) */
   .rooms-list {
-    row-gap: 0.5em;
     padding-bottom: var(--block-space);
   }
 }
@@ -816,19 +828,20 @@
     font-weight: 600;
   }
 
+  /* Unread count rides the accent, not red — red stays destructive-only */
   .notification-badge {
     margin-left: auto;
     flex-shrink: 0;
-    background-color: var(--color-negative);
-    color: white;
-    font-size: 0.65em;
-    font-weight: 700;
-    line-height: 1;
+    background-color: var(--color-accent-brand);
+    color: var(--color-text-reversed);
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    line-height: 1.4;
     min-width: 1.3em;
-    padding: 0.2em 0.35em;
-    border-radius: 1em;
+    padding: 1px 7px;
+    border-radius: 9px;
     text-align: center;
-    box-sizing: content-box;
     animation: badge-in 200ms cubic-bezier(0.25, 1, 0.5, 1) both;
   }
 

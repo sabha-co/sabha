@@ -81,7 +81,7 @@
                 data-collapsible-section-target="toggle"
                 data-action="collapsible-section#toggle">
           <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
-          <h1 class="txt-small font-semibold txt-label sidebar__label">Favorites</h1>
+          <h1 class="font-semibold txt-label sidebar__label">Favorites</h1>
           <% if @starred_memberships.size.positive? %>
             <span class="sidebar__label-count"><%= @starred_memberships.size %></span>
           <% end %>
@@ -94,7 +94,7 @@
 
       <div class="flex items-center justify-between gap-half mb-2">
         <span class="flex items-center gap-half">
-          <h1 class="txt-small font-semibold txt-label sidebar__label">Rooms</h1>
+          <h1 class="font-semibold txt-label sidebar__label">Rooms</h1>
           <% if @shared_memberships.size.positive? %>
             <span class="sidebar__label-count"><%= @shared_memberships.size %></span>
           <% end %>
@@ -121,7 +121,7 @@
 
       <% if @forum_memberships.any? %>
         <div class="flex items-center gap-half mb-2">
-          <h1 class="txt-small font-semibold txt-label sidebar__label">Forums</h1>
+          <h1 class="font-semibold txt-label sidebar__label">Forums</h1>
           <span class="sidebar__label-count"><%= @forum_memberships.size %></span>
         </div>
         <div data-controller="sorted-list" <%= all_rooms_sort_order %>
@@ -136,7 +136,7 @@
       <% if show_dm_section?(@direct_memberships) %>
         <div class="flex items-center justify-between gap-half mb-2">
           <span class="flex items-center gap-half">
-            <h1 class="txt-small font-semibold txt-label sidebar__label">Direct messages</h1>
+            <h1 class="font-semibold txt-label sidebar__label">Direct messages</h1>
             <% if @direct_memberships.size.positive? %>
               <span class="sidebar__label-count"><%= @direct_memberships.size %></span>
             <% end %>
