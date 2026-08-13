@@ -232,6 +232,14 @@ class User < ApplicationRecord
            .count
   end
 
+  # Sidebar rooms both users actively belong to. DMs and sub-rooms would pad
+  # the number without saying anything about shared spaces.
+  def shared_room_count_with(user)
+    memberships.shared.active_rooms
+               .where(room_id: user.memberships.shared.select(:room_id))
+               .count
+  end
+
   private
     def deactivate_direct_rooms
       Membership.where(user_id: id).direct_rooms.each do |membership|

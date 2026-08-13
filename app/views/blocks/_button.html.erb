@@ -1,7 +1,7 @@
 <% if user %>
   <% blocked = Current.user.blocked?(user) %>
   <%= button_to user_block_path(user, return_to: request.path),
-        class: "btn",
+        class: local_assigns.fetch(:btn_class, "btn"),
         method: blocked ? :delete : :post,
         title: blocked ? "Unblock this user" : "Block this user",
         data: {

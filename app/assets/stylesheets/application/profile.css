@@ -1,0 +1,211 @@
+/* Profile page — an in-shell reading column: identity hero, action row,
+   stat cards, recent messages, and the staff moderation card. */
+body.profile #main-content {
+  justify-content: flex-start;
+}
+
+.profile-page {
+  inline-size: 100%;
+  margin-inline: auto;
+  max-inline-size: 720px;
+  padding: 34px 30px 60px;
+
+  @media (max-width: 1023.9px) {
+    padding: 24px 20px 48px;
+  }
+}
+
+.profile-hero {
+  display: flex;
+  gap: 20px;
+}
+
+.profile-hero__avatar {
+  align-self: flex-start;
+  display: block;
+  flex-shrink: 0;
+  position: relative;
+
+  .avatar {
+    --avatar-size: 88px;
+  }
+}
+
+.profile-hero__dot {
+  block-size: 18px;
+  border: 3px solid var(--color-bg);
+  bottom: 1px;
+  inline-size: 18px;
+  position: absolute;
+  right: 1px;
+  z-index: 1;
+}
+
+.profile-hero__body {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.profile-hero__name-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.profile-hero__name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.profile-hero__glyph {
+  color: var(--color-text-muted);
+}
+
+.profile-hero__meta {
+  color: var(--color-text-muted);
+  font-size: 0.84375rem;
+  margin: 3px 0 0;
+}
+
+.profile-hero__email {
+  color: inherit;
+}
+
+.profile-hero__bio {
+  font-size: 0.90625rem;
+  line-height: 1.6;
+  margin: 12px 0 0;
+}
+
+.profile-hero__social {
+  margin-block-start: 12px;
+}
+
+.profile-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 16px;
+}
+
+.profile-stats {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-block-start: 26px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-stat {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+}
+
+.profile-stat__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.profile-stat__label {
+  color: var(--color-text-subtle);
+  font-size: 0.71875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.profile-section-label {
+  color: var(--color-text-subtle);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  margin: 26px 0 8px;
+  text-transform: uppercase;
+}
+
+.profile-recent {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.profile-recent__row {
+  border-block-end: 1px solid var(--color-border);
+  color: inherit;
+  display: block;
+  padding: 13px 16px;
+  text-decoration: none;
+
+  &:last-child {
+    border-block-end: none;
+  }
+
+  &:hover {
+    background-color: var(--color-selected);
+  }
+}
+
+.profile-recent__meta {
+  align-items: baseline;
+  display: flex;
+  gap: 8px;
+}
+
+.profile-recent__room {
+  color: var(--color-accent-brand);
+  font-size: 0.78125rem;
+  font-weight: 600;
+}
+
+.profile-recent__time {
+  color: var(--color-text-subtle);
+  font-size: 0.71875rem;
+}
+
+.profile-recent__text {
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-block-start: 2px;
+}
+
+.profile-card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  margin-block-start: 16px;
+  padding: 16px;
+}
+
+.profile-card__title {
+  font-size: 0.90625rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.profile-card__body {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  margin: 5px 0 0;
+}
+
+.profile-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 12px;
+}
+
+.member-badge--negative {
+  --badge-color: var(--color-negative);
+}

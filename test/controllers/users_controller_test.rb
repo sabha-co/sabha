@@ -22,6 +22,34 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
+  test "show renders the profile inside the app shell" do
+    sign_in :david
+    get user_url(users(:jason))
+
+    assert_response :ok
+    assert_select ".navbar-title", text: "Profile"
+    assert_select ".profile-hero__name", text: users(:jason).name
+    assert_select ".profile-stat__label", text: "Shared rooms"
+    assert_select ".profile-card__title", text: "Moderation"
+  end
+
+  test "show labels the third stat Rooms on your own profile and hides moderation" do
+    sign_in :david
+    get user_url(users(:david))
+
+    assert_select ".profile-stat__label", text: "Rooms"
+    assert_select ".profile-card__title", text: "Moderation", count: 0
+  end
+
+  test "show as a non-staff member offers actions without moderation" do
+    sign_in :kevin
+    get user_url(users(:david))
+
+    assert_select ".profile-hero__actions .btn", text: "Message"
+    assert_select ".profile-hero__actions .btn", text: "Block"
+    assert_select ".profile-card__title", text: "Moderation", count: 0
+  end
+
   test "new redirects to sso when SSO auth enabled" do
     ENV["AUTH_METHOD"] = "sso"
 

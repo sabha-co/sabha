@@ -1,6 +1,18 @@
 require "test_helper"
 
 class UserTest < ActiveSupport::TestCase
+  test "shared_room_count_with counts sidebar rooms both users belong to" do
+    assert_equal 4, users(:david).shared_room_count_with(users(:jason))
+    assert_equal 4, users(:jason).shared_room_count_with(users(:david))
+    assert_equal 2, users(:david).shared_room_count_with(users(:kevin))
+  end
+
+  test "shared_room_count_with ignores direct rooms and inactive memberships" do
+    # David and Kevin share a DM plus designers and hq
+    memberships(:kevin_designers).deactivate
+    assert_equal 1, users(:david).shared_room_count_with(users(:kevin))
+  end
+
   test "user does not prevent very long passwords" do
     users(:david).update(password: "secret" * 50)
     assert users(:david).valid?
