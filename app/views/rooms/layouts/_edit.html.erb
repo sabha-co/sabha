@@ -1,15 +1,20 @@
-<% @page_title = "Edit settings for #{room_display_name(room)}" %>
+<% @page_title = "Settings for #{room_display_name(room)}" %>
+<% @body_class = "sidebar room-settings" %>
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to_last_room_visited %>
-  </div>
+  <%= link_back_to room_path(room) %>
+  <h1 class="navbar-title"><%= room.direct? ? "Conversation settings" : "Room settings" %></h1>
+  <span class="navbar-count"><%= room_display_name(room) %></span>
+  <div class="flex-item-grow"></div>
 <% end %>
 
 <% membership = @membership %>
 
-<section class="panel" style="view-transition-name: edit-room-<%= room.id %>">
-  <%= yield %>
+<section class="room-settings-page" style="view-transition-name: edit-room-<%= room.id %>">
+  <div class="settings-card room-settings-card">
+    <%= yield %>
+  </div>
 
   <% if membership && !room.thread? %>
     <span class="settings-label">Notifications</span>

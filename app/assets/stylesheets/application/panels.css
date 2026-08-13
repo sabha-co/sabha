@@ -38,13 +38,67 @@
 }
 
 /* Room-edit tabs ride the shared segmented-control look */
+/* Room settings — an in-shell column: tab pill, then the settings cards */
+body.room-settings #main-content {
+  justify-content: flex-start;
+}
+
+.room-settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-inline-size: 676px;
+  padding: 16px 18px 40px;
+
+  [role="tabpanel"]:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* The stack's gap does the spacing between labelled cards; the label hugs
+     its own card instead */
+  .settings-label {
+    margin-block-end: -10px;
+  }
+}
+
+/* The name/description card (labels + inputs bring their own rhythm, so no
+   per-child hairlines here) */
+.room-settings-card {
+  padding-block: 18px;
+
+  > * {
+    padding-block: 0;
+  }
+
+  > * + * {
+    border-block-start: none;
+  }
+}
+
+.room-settings-form__submit {
+  margin-block-start: 18px;
+}
+
+.room-settings-form__name {
+  font-size: 1.1875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.setting-row--disabled {
+  opacity: 0.55;
+}
+
 .room-tabs {
   align-items: center;
+  align-self: flex-start;
   background-color: var(--color-border);
   border-radius: var(--border-radius-pill);
   display: inline-flex;
   gap: 2px;
-  margin-block-end: var(--block-space);
   padding: 3px;
 }
 

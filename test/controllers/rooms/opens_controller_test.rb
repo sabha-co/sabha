@@ -177,15 +177,20 @@ class Rooms::OpensControllerTest < ActionDispatch::IntegrationTest
 
   # Tabbed edit layout
 
-  test "edit renders tabbed layout with three tabs" do
+  test "edit renders the two-tab settings layout inside the shell" do
     get edit_rooms_open_url(rooms(:pets))
     assert_response :success
+    assert_select ".navbar-title", text: "Room settings"
     assert_select '[role="tablist"]', 1
-    assert_select '[role="tab"]', 3
-    assert_select '[role="tabpanel"]', 3
-    assert_select '[role="tab"]', text: /About/
-    assert_select '[role="tab"]', text: /Members/
+    assert_select '[role="tab"]', 2
+    assert_select '[role="tabpanel"]', 2
     assert_select '[role="tab"]', text: /Settings/
+    assert_select '[role="tab"]', text: /Members/
+    assert_select '[role="tab"]', text: /About/, count: 0
+    # The name form and the access toggles live together in the Settings tab
+    assert_select "#tab-settings input#room_name"
+    assert_select "#tab-settings .setting-row__title", text: "Open to everyone"
+    assert_select "#tab-settings .setting-row__title", text: "Add new members automatically"
   end
 
   # Creator update permission tests

@@ -1,54 +1,38 @@
-<% @page_title = "Edit settings for #{room_display_name(room)}" %>
+<% @page_title = "Settings for #{room_display_name(room)}" %>
+<% @body_class = "sidebar room-settings" %>
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back_to room_path(room) %>
-  </div>
+  <%= link_back_to room_path(room) %>
+  <h1 class="navbar-title">Room settings</h1>
+  <span class="navbar-count"><%= room_display_name(room) %></span>
+  <div class="flex-item-grow"></div>
 <% end %>
 
 <% membership = @membership %>
-<% can_administer = Current.user.can_administer?(room) %>
 
-<section class="panel" style="view-transition-name: edit-room-<%= room.id %>"
+<section class="room-settings-page" style="view-transition-name: edit-room-<%= room.id %>"
          data-controller="tabs" <%= tag.attributes("data-tabs-initial-value": params[:tab]) if params[:tab].present? %>>
-  <% unless can_administer %>
-    <div class="pad txt-align-center">
-      <h1 class="txt-x-large margin-none"><%= room.name %></h1>
-      <% if room.description.present? %>
-        <p class="txt-deemphasize margin-none margin-block-half"><%= room.description %></p>
-      <% end %>
-    </div>
-    <hr class="separator full-width margin-none" style="--border-style: solid">
-  <% end %>
-
   <div class="room-tabs" role="tablist">
-    <% if can_administer %>
-      <button role="tab" aria-controls="tab-about" aria-selected="true" tabindex="0"
-              data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
-        About
-      </button>
-    <% end %>
-    <button role="tab" aria-controls="tab-members" aria-selected="<%= !can_administer %>" tabindex="<%= can_administer ? -1 : 0 %>"
-            data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
-      Members (<span id="room_<%= room.id %>_member_count"><%= room.active_member_count %></span>)
-    </button>
-    <button role="tab" aria-controls="tab-settings" aria-selected="false" tabindex="-1"
+    <button role="tab" aria-controls="tab-settings" aria-selected="true" tabindex="0"
             data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
       Settings
     </button>
+    <button role="tab" aria-controls="tab-members" aria-selected="false" tabindex="-1"
+            data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
+      Members (<span id="room_<%= room.id %>_member_count"><%= room.active_member_count %></span>)
+    </button>
   </div>
 
-  <% if can_administer %>
-    <div id="tab-about" role="tabpanel" data-tabs-target="panel">
+  <div id="tab-settings" role="tabpanel" data-tabs-target="panel">
+    <div class="settings-card room-settings-card">
       <%= yield %>
     </div>
-  <% end %>
 
-  <div id="tab-members" role="tabpanel" data-tabs-target="panel" <%= "hidden" if can_administer %>>
-    <%= render "rooms/layouts/members_panel", room: room %>
+    <%= render "rooms/layouts/settings_panel", room: room, membership: membership %>
   </div>
 
-  <div id="tab-settings" role="tabpanel" data-tabs-target="panel" hidden>
-    <%= render "rooms/layouts/settings_panel", room: room, membership: membership %>
+  <div id="tab-members" role="tabpanel" data-tabs-target="panel" hidden>
+    <%= render "rooms/layouts/members_panel", room: room %>
   </div>
 </section>

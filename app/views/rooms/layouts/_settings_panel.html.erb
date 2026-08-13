@@ -1,3 +1,57 @@
+<% can_administer = Current.user.can_administer?(room) %>
+
+<% if can_administer && room.convertible? %>
+  <div class="settings-card">
+    <%= form_with url: room_access_path(room), method: :patch, data: { controller: "form" } do %>
+      <%= hidden_field_tag :open, room.is_a?(Rooms::Open) ? "0" : "1" %>
+      <label class="setting-row">
+        <span class="setting-row__text">
+          <span class="setting-row__title">Open to everyone</span>
+          <span class="txt-small txt-muted">
+            <% if room.is_a?(Rooms::Open) %>
+              Anyone in the community can find this room and read it.
+            <% else %>
+              Invite only. It stays out of Browse rooms for everyone else.
+            <% end %>
+          </span>
+        </span>
+        <span class="switch">
+          <input type="checkbox" class="switch__input" <%= "checked" if room.is_a?(Rooms::Open) %> data-action="change->form#submit">
+          <span class="switch__btn round"></span>
+          <span class="for-screen-reader"><%= room.is_a?(Rooms::Open) ? "Make this room invite-only" : "Let anyone join this room" %></span>
+        </span>
+      </label>
+    <% end %>
+
+    <% if room.is_a?(Rooms::Open) %>
+      <%= form_with model: room, data: { controller: "form" } do |form| %>
+        <label class="setting-row">
+          <span class="setting-row__text">
+            <span class="setting-row__title">Add new members automatically</span>
+            <span class="txt-small txt-muted">Everyone who joins the community lands in this room too.</span>
+          </span>
+          <span class="switch">
+            <%= form.check_box :auto_join, class: "switch__input", data: { action: "change->form#submit" } %>
+            <span class="switch__btn round"></span>
+            <span class="for-screen-reader"><%= room.auto_join? ? "Stop adding new members automatically" : "Add new members automatically" %></span>
+          </span>
+        </label>
+      <% end %>
+    <% else %>
+      <div class="setting-row setting-row--disabled">
+        <span class="setting-row__text">
+          <span class="setting-row__title">Add new members automatically</span>
+          <span class="txt-small txt-muted">Everyone who joins the community lands in this room too — open the room to turn this on.</span>
+        </span>
+        <span class="switch">
+          <input type="checkbox" class="switch__input" disabled>
+          <span class="switch__btn round"></span>
+        </span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
 <% if membership %>
   <span class="settings-label">Notifications</span>
   <div class="settings-card">
@@ -8,32 +62,35 @@
       <%= render "rooms/involvements/hide_toggle", room: room, is_hidden: false %>
     <% end %>
   </div>
-
-  <span class="settings-label">Membership</span>
-  <div class="settings-card">
-    <div class="setting-row">
-      <span class="setting-row__text">
-        <span class="setting-row__title">Leave this room</span>
-        <span class="txt-small txt-muted">It disappears from your sidebar. Rejoining starts your unread count fresh.</span>
-      </span>
-      <%= button_to room_membership_path(room), method: :delete,
-            class: "btn settings-chip-btn flex-item-no-shrink",
-            data: { turbo_confirm: "Leave #{room_display_name(room)}?" } do %>
-        Leave
-      <% end %>
-    </div>
-  </div>
 <% end %>
 
-<% if Current.user.can_administer?(room) && !room.original? %>
-  <span class="settings-label">Danger zone</span>
+<% leavable = membership.present? %>
+<% deletable = can_administer && !room.original? %>
+<% if leavable || deletable %>
+  <span class="settings-label">Membership</span>
   <div class="settings-card">
-    <div class="setting-row">
-      <span class="setting-row__text">
-        <span class="setting-row__title txt-negative">Delete this room</span>
-        <span class="txt-small txt-muted">Every message in it goes too. This can't be undone.</span>
-      </span>
-      <%= button_to_delete_room room %>
-    </div>
+    <% if leavable %>
+      <div class="setting-row">
+        <span class="setting-row__text">
+          <span class="setting-row__title">Leave this room</span>
+          <span class="txt-small txt-muted">It disappears from your sidebar. Rejoining starts your unread count fresh.</span>
+        </span>
+        <%= button_to room_membership_path(room), method: :delete,
+              class: "btn settings-chip-btn flex-item-no-shrink",
+              data: { turbo_confirm: "Leave #{room_display_name(room)}?" } do %>
+          Leave
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if deletable %>
+      <div class="setting-row">
+        <span class="setting-row__text">
+          <span class="setting-row__title txt-negative">Delete this room</span>
+          <span class="txt-small txt-muted">Every message in it goes too. This can't be undone.</span>
+        </span>
+        <%= button_to_delete_room room %>
+      </div>
+    <% end %>
   </div>
 <% end %>

@@ -1,30 +1,32 @@
 <%= form_with model: room, data: { controller: "form" } do |form| %>
-  <div class="flex flex-column gap">
-    <% if Current.user.can_administer?(room) %>
-      <div class="flex align-center gap">
-        <label class="flex align-center gap flex-item-grow input input--actor">
-          <%= form.text_field :name, name: "room[name]", id: "room_name", class: "input txt-large",
-                required: true, autofocus: true, placeholder: "Name the room",
-                data: { turbo_permanent: true, action: "keydown.enter->form#submit:prevent" } %>
-          <%= icon_tag "chat-bubble" %>
-        </label>
+  <% if Current.user.can_administer?(room) %>
+    <div class="settings-field">
+      <div class="settings-field__label">
+        <label for="room_name">Name</label>
       </div>
-
-      <div class="flex align-start gap">
-        <label class="flex align-center gap flex-item-grow input input--actor">
-          <%= form.text_area :description, name: "room[description]", rows: 2, maxlength: 280, class: "input txt-medium",
-                placeholder: "What's this room about?" %>
-        </label>
-      </div>
-
-      <%= submit_room_button_tag %>
-    <% else %>
-      <h1 class="flex-item-grow txt-x-large">
-        <%= room.name %>
-      </h1>
-      <% if room.description.present? %>
-        <p class="txt-deemphasize margin-none"><%= room.description %></p>
+      <%= form.text_field :name, name: "room[name]", id: "room_name", class: "input",
+            required: true, autofocus: true, placeholder: "Name the room",
+            data: { turbo_permanent: true, action: "keydown.enter->form#submit:prevent" } %>
+      <% unless room.sub_room? %>
+        <p class="settings-field__hint">Renaming posts a line in the room so nobody wonders what happened.</p>
       <% end %>
+    </div>
+
+    <div class="settings-field">
+      <div class="settings-field__label">
+        <label for="room_description">Description</label>
+      </div>
+      <%= form.text_area :description, name: "room[description]", id: "room_description", rows: 2, maxlength: 280, class: "input",
+            placeholder: "What's this room about?" %>
+    </div>
+
+    <div class="room-settings-form__submit">
+      <%= submit_room_button_tag %>
+    </div>
+  <% else %>
+    <h1 class="room-settings-form__name"><%= room.name %></h1>
+    <% if room.description.present? %>
+      <p class="txt-deemphasize margin-none margin-block-half"><%= room.description %></p>
     <% end %>
-  </div>
+  <% end %>
 <% end %>
