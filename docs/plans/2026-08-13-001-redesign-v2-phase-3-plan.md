@@ -81,6 +81,50 @@ The comp's Search is a command-palette overlay, not a page: floating card near t
 
 ---
 
+## Round 2 — full-page screens the phase plans missed (owner-approved 2026-08-13)
+
+A second audit after WS1–WS6 shipped found four screens the Desktop comp draws that never got the v2 shell: they still render as v1 floating `.panel` cards under the transparent fixed nav, with no sidebar. All four are comped; none were itemized in any phase. The owner approved closing all four. The shared move is the one the settings shell proved: give each screen `@body_class = "sidebar …"`, the sidebar frame, an in-flow navbar (title + subtitle + trailing action — the comp's 54px header bar *is* our navbar), and a max-width content column. Content largely exists; this is shell + layout work with a few flagged data touches.
+
+### WS7 — Profile page (`users#show`)
+
+The comp: an in-shell 720px reading column. Identity header — 88px radius-22 avatar with an 18px presence dot, name 24/700 with role glyph and uppercase badge chip, "‹ Back" quiet accent link above, presence line "Here now · joined {Mon YYYY}", bio at 14.5/1.6. Action row: **Message** (accent primary), **All messages** (outlined), **Block/Unblock** (outlined; negative fg when it reads Unblock). Stats: three bordered radius-12 cards. RECENT MESSAGES section label + a bordered card list (accent room link + compact time, message text; row links to the message). Staff-only **Moderation** card (Deactivate quiet / Ban negative) with the existing explainer copy.
+
+- Rebuild `users/show` inside the shell; bot / banned / deactivated variants keep their reduced content in the same column.
+- Stats mapping: MESSAGES = `total_message_count`; **DAY STREAK** stays day (comp says WEEK STREAK — we track day streaks; recorded deviation, not a new computation); third card = **SHARED ROOMS** (flagged: one new count query — rooms where both users hold active memberships) since "joined" moves into the presence line per comp.
+- Kept beyond the comp: social links, admin-only email link, the pencil→settings link on your own profile.
+- The buried "All messages from X" footer link becomes the action-row button.
+
+### WS8 — Members directory (`accounts/users#index`)
+
+- Shell + navbar: back, "Members" title, count-line subtitle, trailing **Manage badges** accent text link (admins). The v1 icon buttons (badges/bots/home) drop — bots live in the settings shell now.
+- Toolbar row under the navbar: the existing debounced search field + the existing status segmented control (staff).
+- Content: 820px column; role sections become bordered radius-12 cards with hairline-divided rows (the row innards are already v2 from the role-menu work — untouched, as is the `account_users` turbo-frame + manage dialog).
+
+### WS9 — Browse rooms (`rooms/browse#index`)
+
+- Shell + navbar: "Browse rooms" title, subtitle, trailing **New room** accent button (replaces the off-token green).
+- Content: 760px column; the card list and "Show 20 more" pagination already ride `.browse-card`/`.list-row`.
+- **Flagged query change (follow the comp):** the comp lists *every* visible room — "Every room you can see, joined or not" — with joined rooms showing a quiet **Joined** state instead of the accent **Join** button. Extend the browse scope to include joined rooms; row title links into the room; Joined renders as a non-destructive quiet chip (leaving stays in room settings — the comp's toggle-to-leave is not worth the accident risk).
+
+### WS10 — Room settings (`rooms/{opens,closeds,forums}#edit` via `layouts/_tabbed_edit`; directs/threads via `layouts/_edit`)
+
+- Shell for both layout partials + navbar: "‹ {room name}" back + "Room settings" title. Content column 640px.
+- **Tab consolidation per comp: two tabs, not three.** The comp's Settings tab holds the name/description card ("Renaming posts a line in the room so nobody wonders what happened." helper), the access card (Open-to-everyone + Add-new-members-automatically toggles, auto-join disabled-looking when closed), and one Leave/Delete card (Leave quiet row, Delete negative row, delete disabled on the original room). Today About (form) / Members / Settings are three tabs with the access toggle living at the top of the *Members* panel — merge About into Settings and move the access toggles there. Notifications (involvement select + hide toggle) stays in the Settings tab — app content the comp doesn't draw, kept.
+- Members tab: "Add someone by name" input + "In this room" bordered card (count header, member rows with Remove) — restyle the existing `member-toggle` machinery, don't rewrite it.
+- Non-admins: name/description read-only, Members + Settings tabs as today, inside the shell.
+- Directs/threads keep the untabbed `_edit` — same shell and column, existing content (notifications, block toggle, delete conversation).
+
+### Round 2 sequencing
+
+7. **WS7 Profile** — biggest visible gap, self-contained.
+8. **WS8 Members** — quick re-shell.
+9. **WS9 Browse** — quick re-shell + the flagged scope change.
+10. **WS10 Room settings** — last; the tab consolidation is the largest interior change.
+
+Not gaps (recorded as intentional): email unsubscribe pages, incompatible-browser, join/first-run, push-subscriptions dev page, and the About page — none are drawn in the comps; they stay token-inheriting cards.
+
+---
+
 ## Sequencing & commit boundaries
 
 1. **WS2 member pill** (small, immediate — restores a comp element the header rebuild dropped).
@@ -89,6 +133,7 @@ The comp's Search is a command-palette overlay, not a page: floating card near t
 4. **WS4 detail polish** (small series; status-field item gated on decision #4).
 5. **WS5 DM split view** — after owner confirms (#2).
 6. **WS6 settings consolidation** — after owner confirms (#3); last, biggest shell change.
+7. **WS7–WS10** — Round 2 per its own sequencing above.
 
 Each workstream = one commit or a small bisectable series on `redesign-v2` (still unpushed; push/PR only on explicit approval).
 
