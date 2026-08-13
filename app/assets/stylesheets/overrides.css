@@ -28,6 +28,11 @@
     pointer-events: auto;
     visibility: visible;
   }
+
+  /* Flat rows tint as a unit while the pointer is on them */
+  .message:not(.message--mentioned):is(:hover, :focus-within) {
+    background-color: var(--color-bg-hover);
+  }
 }
 
 /* Touch keeps the one-menu model: no floating bar, no quick reactions —
@@ -86,9 +91,4 @@
   justify-content: end;
 }
 
-.message--emoji:not(:has(.composer--edit)).message--me .message__body-content {
-  padding: var(--content-padding-block) 0 var(--content-padding-block)
-    var(--content-padding-inline);
-  text-align: left;
-}
 
