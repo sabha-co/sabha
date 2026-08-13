@@ -157,6 +157,19 @@
   font-weight: 600;
 }
 
+/* Quiet accent text action at the bar's end ("Manage badges") */
+.navbar-text-link {
+  color: var(--color-accent-brand);
+  flex-shrink: 0;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 /* Bar action buttons are quiet icon buttons, not pills */
 #nav .navbar-actions .btn {
   --btn-background: transparent;

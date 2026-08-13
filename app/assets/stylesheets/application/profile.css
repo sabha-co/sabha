@@ -151,7 +151,7 @@ body.profile #main-content {
   }
 
   &:hover {
-    background-color: var(--color-selected);
+    background-color: var(--color-bg-hover);
   }
 }
 

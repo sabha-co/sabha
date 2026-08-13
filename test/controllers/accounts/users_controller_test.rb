@@ -10,6 +10,22 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "index renders inside the app shell with the admin badges link" do
+    get account_users_url
+
+    assert_select ".navbar-title", text: "Members"
+    assert_select ".navbar-text-link", text: "Manage badges"
+    assert_select ".members-page .members-toolbar input[name=query]"
+    assert_select "#administrators_section.role-section"
+  end
+
+  test "index hides the badges link from non-admins" do
+    sign_in :kevin
+    get account_users_url
+
+    assert_select ".navbar-text-link", count: 0
+  end
+
   test "edit renders the manage-member dialog content" do
     get edit_account_user_url(users(:kevin))
 

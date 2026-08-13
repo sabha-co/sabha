@@ -125,11 +125,6 @@
   }
 }
 
-.settings-layout .panel--members .members-list {
-  max-block-size: calc(100dvh - 20rem);
-  overflow-y: auto;
-}
-
 /* Members directory: small-caps heading above a bordered card of list rows.
    The card keeps the {role}s_section id — Turbo Streams append rows to it. */
 .role-section-group:not(:has([id^="user_"])) {
@@ -184,23 +179,50 @@
   text-transform: uppercase;
 }
 
-/* Member management responsive styles */
-.panel--members {
-  --panel-width: 68ch;
+/* Members directory page — an in-shell column: toolbar row (search + status
+   tabs), then the role-section cards */
+body.members #main-content {
+  justify-content: flex-start;
 }
 
-.panel--members .member-row {
+.members-page {
+  padding: 0 18px 28px;
+}
+
+.members-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-block: 14px 12px;
+}
+
+.members-toolbar__form {
+  flex: 1;
+  max-inline-size: 340px;
+  min-inline-size: 220px;
+}
+
+.members-toolbar__search {
+  inline-size: 100%;
+}
+
+.members-list {
+  max-inline-size: 820px;
+}
+
+.members-page .member-row {
   flex-wrap: nowrap;
 }
 
 /* The quick-profile popup lives inside details.avatar, which clips to a circle
    via overflow: hidden. Let the details overflow so its absolutely-positioned
    .popup-menu renders outside the avatar; summary.avatar still clips the image. */
-.panel--members .member-row details.avatar {
+.members-page .member-row details.avatar {
   overflow: visible;
 }
 
-.panel--members .member-row .member-controls {
+.members-page .member-row .member-controls {
   flex-shrink: 0;
 }
 
@@ -231,24 +253,15 @@
 .status--offline { background-color: var(--color-border-darker); }
 
 @media (max-width: 480px) {
-  .panel--members .member-row {
+  .members-page .member-row {
     flex-wrap: wrap;
     gap: 0.5rem;
   }
 
-  .panel--members .member-row .member-controls {
+  .members-page .member-row .member-controls {
     flex-basis: 100%;
     flex-shrink: 1;
     justify-content: flex-end;
-  }
-
-  .panel--members .members-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .panel--members .members-header input[type="search"] {
-    width: 100%;
   }
 }
 

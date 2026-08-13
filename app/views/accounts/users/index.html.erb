@@ -1,62 +1,42 @@
 <% @page_title = "Members" %>
+<% @body_class = "sidebar members" %>
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_to account_path, class: "btn" do %>
-      <%= icon_tag "arrow-left" %>
-      <span class="for-screen-reader">Back</span>
-    <% end %>
-  </div>
-
-  <div class="flex align-center gap flex-item-justify-end">
-    <% if Current.user.can_administer? %>
-      <%= link_to account_badges_path, class: "btn" do %>
-        <%= icon_tag "tag" %>
-        <span class="for-screen-reader">Manage badges</span>
-      <% end %>
-
-      <%= link_to account_bots_path, class: "btn", style: "view-transition-name: chat-bots" do %>
-        <%= icon_tag "bot" %>
-        <span class="for-screen-reader">Set up chat bots</span>
-      <% end %>
-    <% end %>
-
-    <%= link_to root_path, class: "btn" do %>
-      <%= icon_tag "home" %>
-      <span class="for-screen-reader">Home</span>
-    <% end %>
-  </div>
+  <%= link_back %>
+  <h1 class="navbar-title">Members</h1>
+  <span class="navbar-count"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</span>
+  <div class="flex-item-grow"></div>
+  <% if Current.user.can_administer? %>
+    <%= link_to "Manage badges", account_badges_path, class: "navbar-text-link" %>
+  <% end %>
 <% end %>
 
-<section class="panel panel--members flex flex-column gap">
-  <div class="members-header flex align-center justify-between gap">
-    <div>
-      <h2 class="settings-header__title margin-none" style="font-size: 1.25rem;">Members</h2>
-      <p class="txt-small txt-muted margin-none"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</p>
-    </div>
-    <%= form_with url: account_users_path, method: :get, data: { turbo_frame: "account_users", controller: "form" } do |f| %>
+<section class="members-page">
+  <div class="members-toolbar">
+    <%= form_with url: account_users_path, method: :get, data: { turbo_frame: "account_users", controller: "form" }, class: "members-toolbar__form" do |f| %>
       <%= f.search_field :query,
             value: params[:query],
-            class: "input txt-small",
+            class: "input txt-small members-toolbar__search",
             placeholder: "Search members",
             data: { action: "input->form#debouncedSubmit" } %>
     <% end %>
-  </div>
 
-  <% if Current.user.staff? && (@deactivated_count.to_i > 0 || @banned_count.to_i > 0 || @filtering_deactivated || @filtering_banned) %>
-    <nav class="segmented-control" aria-label="Member status">
-      <%= link_to "All", account_users_path,
-            class: class_names("segmented-control__btn", "member-status-tab", "member-status-tab--active": !@filtering_deactivated && !@filtering_banned, "segmented-control__btn--active": !@filtering_deactivated && !@filtering_banned) %>
-      <% if @deactivated_count.to_i > 0 || @filtering_deactivated %>
-        <%= link_to "Deactivated (#{@deactivated_count.to_i})", account_users_path(status: "deactivated"),
-              class: class_names("segmented-control__btn", "member-status-tab", "member-status-tab--active": @filtering_deactivated, "segmented-control__btn--active": @filtering_deactivated) %>
-      <% end %>
-      <% if @banned_count.to_i > 0 || @filtering_banned %>
-        <%= link_to "Banned (#{@banned_count.to_i})", account_users_path(status: "banned"),
-              class: class_names("segmented-control__btn", "member-status-tab", "member-status-tab--active": @filtering_banned, "segmented-control__btn--active": @filtering_banned) %>
-      <% end %>
-    </nav>
-  <% end %>
+    <% if Current.user.staff? && (@deactivated_count.to_i > 0 || @banned_count.to_i > 0 || @filtering_deactivated || @filtering_banned) %>
+      <nav class="segmented-control" aria-label="Member status">
+        <%= link_to "All", account_users_path,
+              class: class_names("segmented-control__btn", "member-status-tab", "member-status-tab--active": !@filtering_deactivated && !@filtering_banned, "segmented-control__btn--active": !@filtering_deactivated && !@filtering_banned) %>
+        <% if @deactivated_count.to_i > 0 || @filtering_deactivated %>
+          <%= link_to "Deactivated (#{@deactivated_count.to_i})", account_users_path(status: "deactivated"),
+                class: class_names("segmented-control__btn", "member-status-tab", "member-status-tab--active": @filtering_deactivated, "segmented-control__btn--active": @filtering_deactivated) %>
+        <% end %>
+        <% if @banned_count.to_i > 0 || @filtering_banned %>
+          <%= link_to "Banned (#{@banned_count.to_i})", account_users_path(status: "banned"),
+                class: class_names("segmented-control__btn", "member-status-tab", "member-status-tab--active": @filtering_banned, "segmented-control__btn--active": @filtering_banned) %>
+        <% end %>
+      </nav>
+    <% end %>
+  </div>
 
   <div class="flex flex-column gap members-list">
     <turbo-frame id="account_users">
