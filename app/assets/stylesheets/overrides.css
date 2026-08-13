@@ -1,39 +1,7 @@
-/* On mobile, restore tighter body font-size to save space */
-@media (max-width: 120ch) {
-  body {
-    font-size: 0.95rem;
-  }
-}
-
-.quick-boosts {
-  font-size: 1rem;
-}
-
-.message__day-separator {
-  font-weight: 700;
-}
-
-.room {
-  font-weight: 400;
-  font-size: var(--font-size-small);
-  margin-inline-end: inherit;
-}
-
-.rooms__new-btn {
-  margin-inline-end: auto !important;
-}
-
 /* Soft ring, matching the monogram avatars' 15%-alpha ring — a solid black
    ring reads too heavy on the square shape */
 .avatar > img {
   box-shadow: 0 0 0 1px oklch(var(--lch-always-black) / 0.15);
-}
-
-.avatar--icon img {
-  box-shadow:
-    rgb(255, 255, 255) 0px 0px 0px 0px,
-    rgb(0, 0, 0) 0px 0px 0px 0px,
-    rgba(0, 0, 0, 0) 0px 0px 0px 0px;
 }
 
 .account-logo > img {

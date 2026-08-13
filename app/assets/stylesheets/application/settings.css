@@ -367,15 +367,3 @@ body.settings #main-content {
   }
 }
 
-/* Staff-only chip beside admin-gated items */
-.chip-staff {
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  color: var(--color-text-subtle);
-  flex: none;
-  font-size: 0.59375rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 1px 5px;
-  text-transform: uppercase;
-}

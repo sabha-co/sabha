@@ -804,6 +804,7 @@
   --hover-filter: none;
 
   color: var(--color-text-muted);
+  font-size: 0.875rem;
   font-weight: normal;
   justify-content: start;
   max-inline-size: 100%;
@@ -840,10 +841,6 @@
   &.unread {
     color: var(--color-text);
     font-weight: 600;
-  }
-
-  .searches-list & {
-    border-radius: 0.5em;
   }
 
   @media (any-hover: hover) {

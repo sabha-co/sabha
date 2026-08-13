@@ -300,14 +300,20 @@
   margin-block: var(--message-space);
   visibility: hidden;
 
+  /* Comp treatment: a quiet bordered pill between hairlines */
   time,
   span {
-    background-color: var(--color-bg-sunk);
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border-dark);
+    color: var(--color-text-muted);
+    font-size: 0.71875rem;
+    padding: 2px 12px;
+    text-transform: none;
   }
 
   &::after,
   &::before {
-    border-top: 2px solid var(--color-border);
+    border-top: 1px solid var(--color-border);
   }
 
   .message--first-of-day & {

@@ -299,9 +299,6 @@
   font-weight: 400;
 }
 
-.forum-post-gated,
-.forum-post-missing { padding: 2.5rem 1.5rem; }
-
 /* --- empty state ----------------------------------------------------- */
 .forum__empty {
   padding: 3rem 1.5rem;
