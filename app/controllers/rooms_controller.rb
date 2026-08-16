@@ -23,7 +23,7 @@ class RoomsController < ApplicationController
 
     return render_forum_gallery if @room.forum?
 
-    load_dm_conversations if @room.direct?
+    load_dm_conversations(open_room: @room) if @room.direct?
     @messages = find_messages
   end
 

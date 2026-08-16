@@ -21,12 +21,23 @@
   <% end %>
 <% end %>
 
+<% if @pinned_dm_membership %>
+  <div class="dm-list dm-list--pinned">
+    <%= render "inboxes/direct_messages/conversation",
+               membership: @pinned_dm_membership,
+               direct_room_members: @direct_room_members,
+               member_statuses: @direct_member_statuses,
+               current: true %>
+  </div>
+<% end %>
+
 <div id="inbox"
      class="dm-list"
      data-controller="dm-list"
      data-dm-list-target="conversations"
      data-dm-list-loading-class="dm-conversation--loading"
-     data-dm-list-page-url-value="<%= inbox_direct_messages_url %>">
+     data-dm-list-page-url-value="<%= inbox_direct_messages_url %>"
+     data-dm-list-pinned-room-id-value="<%= @pinned_dm_membership&.room_id %>">
   <%= render "inboxes/direct_messages/items" %>
 </div>
 

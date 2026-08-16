@@ -8,7 +8,7 @@
    end %>
 <% notifications_count = membership.unread_notifications_count.to_i %>
 <%= link_to room_path(membership.room),
-            class: ["list-row", "dm-conversation", "unread": membership.unread?],
+            class: ["list-row", "dm-conversation", "unread": membership.unread?, "dm-conversation--current": local_assigns[:current]],
             id: dom_id(membership.room, :dm_inbox),
             data: { room_id: membership.room_id, dm_list_target: "conversation" } do %>
   <div class="dm-conversation__avatar list-row__avatar">

@@ -6,14 +6,24 @@ const PAGE_SIZE = 10
 export default class extends Controller {
   static targets = ["conversations", "conversation"]
   static classes = ["loading"]
-  static values = { pageUrl: String }
+  static values = { pageUrl: String, pinnedRoomId: String }
 
   #paginator
 
   // Runs for every row present at connect and for stream-inserted rows, so
   // the open conversation stays highlighted across live updates
-  conversationTargetConnected() {
+  conversationTargetConnected(element) {
     this.#markCurrentConversation()
+    this.#dropPinnedDuplicate(element)
+  }
+
+  // The open conversation is pinned above the list when it's fallen off the
+  // first page. If pagination later loads that same room into the list, drop the
+  // in-list copy so it isn't shown twice.
+  #dropPinnedDuplicate(element) {
+    if (this.pinnedRoomIdValue && element.dataset.roomId === this.pinnedRoomIdValue) {
+      element.remove()
+    }
   }
 
   #markCurrentConversation() {

@@ -68,4 +68,36 @@ class Rooms::DirectSplitTest < ActionDispatch::IntegrationTest
     assert_select "#inbox .dm-conversation[id=?]",
                   ActionView::RecordIdentifier.dom_id(rooms(:david_and_jason), :dm_inbox)
   end
+
+  test "an open conversation that's fallen off the first page is pinned above the rail" do
+    # Give david more recent DMs than a page holds, so an older one drops off.
+    stale = create_direct_with("old-friend@example.com")
+    stale.update!(last_active_at: 1.year.ago)
+
+    10.times do |i|
+      create_direct_with("pal#{i}@example.com").update!(last_active_at: i.minutes.ago)
+    end
+
+    get room_url(stale)
+
+    assert_response :success
+    dom = ActionView::RecordIdentifier.dom_id(stale, :dm_inbox)
+    # Pinned above the paginated list and marked current...
+    assert_select ".dm-list--pinned .dm-conversation.dm-conversation--current[id=?]", dom
+    # ...and not duplicated inside the paginated first page.
+    assert_select "#inbox .dm-conversation[id=?]", dom, count: 0
+  end
+
+  test "an open conversation on the first page is not pinned" do
+    get room_url(rooms(:david_and_kevin))
+
+    assert_response :success
+    assert_select ".dm-list--pinned", count: 0
+  end
+
+  private
+    def create_direct_with(email)
+      other = User.create!(name: email.split("@").first, email_address: email, password: "secret123456")
+      Current.set(user: users(:david)) { Rooms::Direct.find_or_create_for([ users(:david), other ]) }
+    end
 end
