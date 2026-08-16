@@ -29,8 +29,18 @@ class Autocompletable::UsersController < ApplicationController
     end
 
     def users_scope
-      base = room ? room.mentionable_users : User.all
-      base.active.without_default_names.recent_posters_first(room&.id).with_attached_avatar
+      mentionable_base.active.without_default_names.recent_posters_first(room&.id).with_attached_avatar
+    end
+
+    # A provisional DM has no room yet, so its composer scopes the mention picker to
+    # the chosen recipients via user_ids — matching what room.mentionable_users
+    # returns once the DM exists. Without it the picker falls back to every user and
+    # lets you "mention" a non-member, rendering a mention that never notifies them.
+    def mentionable_base
+      return room.mentionable_users if room
+      return User.where(id: params[:user_ids]) if params[:user_ids].present?
+
+      User.all
     end
 
     def add_everyone_mention_if_applicable(users)

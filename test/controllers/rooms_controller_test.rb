@@ -15,6 +15,19 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "show renders the direct-message nav header" do
+    room = rooms(:david_and_kevin)
+
+    get room_url(room)
+
+    assert_response :success
+    # The recipient titles the conversation, and the header links to the room's
+    # settings — the same header the provisional compose surface renders (room: nil).
+    assert_select "a.room--current[href=?]", edit_rooms_direct_path(room) do
+      assert_select "h1.room__contents", text: /#{users(:kevin).name}/
+    end
+  end
+
   test "composer carries the @everyone confirm threshold, member count, and cap flag" do
     room = rooms(:pets)
 

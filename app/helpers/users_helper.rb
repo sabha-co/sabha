@@ -1,6 +1,6 @@
 module UsersHelper
-  def button_to_direct_room_with(user)
-    button_to rooms_directs_path(user_ids: [ user.id ]), class: "btn btn--primary full-width txt--large" do
+  def link_to_direct_room_with(user)
+    link_to new_rooms_direct_path(user_ids: [ user.id ]), class: "btn btn--primary full-width txt--large", data: { turbo_frame: "_top" } do
       image_tag("messages.svg")
     end
   end

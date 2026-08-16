@@ -16,7 +16,7 @@
       </div>
     </div>
     <% if user.active? %>
-      <%= button_to_direct_room_with user %>
+      <%= link_to_direct_room_with user %>
     <% end %>
 
   <% elsif user.active? %>
@@ -63,7 +63,7 @@
         <span>View profile</span>
       <% end %>
       <% if user != Current.user && Current.user.can_direct_message?(user) %>
-        <%= link_to rooms_directs_path(user_ids: [user.id]), class: "btn btn--reversed txt-small", data: { turbo_frame: "_top", turbo_method: :post } do %>
+        <%= link_to new_rooms_direct_path(user_ids: [user.id]), class: "btn btn--reversed txt-small", data: { turbo_frame: "_top" } do %>
           <%= icon_tag "messages" %>
           <span>Direct message</span>
         <% end %>

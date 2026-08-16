@@ -67,6 +67,18 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "user_ids scopes suggestions to the chosen recipients (provisional DM mention picker)" do
+    # A provisional DM has no room yet, so its composer scopes @-mentions to the
+    # recipients. A non-recipient must not surface — selecting one would render a
+    # mention that never notifies them once the DM is created.
+    get autocompletable_users_url(user_ids: [ users(:jz).id ], format: :json), params: { query: "" }
+
+    assert_response :success
+    ids = response.parsed_body.map { |u| u["value"] }
+    assert_includes ids, users(:jz).id
+    assert_not_includes ids, users(:kevin).id
+  end
+
   test "blank query returns recent users (mention picker default)" do
     get autocompletable_users_url(format: :json), params: { query: "" }
 

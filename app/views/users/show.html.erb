@@ -34,7 +34,7 @@
 
     <% if @user.active? %>
       <div class="flex justify-center">
-        <%= button_to_direct_room_with @user %>
+        <%= link_to_direct_room_with @user %>
       </div>
     <% end %>
 
@@ -86,7 +86,7 @@
     <% can_dm = Current.user.can_direct_message?(@user) %>
     <% if can_dm %>
       <div class="flex justify-center">
-        <%= link_to rooms_directs_path(user_ids: [@user.id]), class: "btn btn--reversed", data: { turbo_frame: "_top", turbo_method: :post } do %>
+        <%= link_to new_rooms_direct_path(user_ids: [@user.id]), class: "btn btn--reversed", data: { turbo_frame: "_top" } do %>
           <%= icon_tag "messages" %>
           <span>Message <%= @user.name.split.first %></span>
         <% end %>
