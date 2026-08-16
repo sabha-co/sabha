@@ -109,8 +109,13 @@ export default class extends Controller {
         event.detail.render = async (streamElement) => {
           const didScroll = await this.#scrollManager.autoscroll(false, async () => {
             this.#streaming = true
-            await render(streamElement)
-            this.#streaming = false
+            try {
+              await render(streamElement)
+            } finally {
+              // Always clear the flag — a throwing render must not leave every
+              // later message target marked as newly streamed.
+              this.#streaming = false
+            }
             await nextEventLoopTick()
 
             this.#positionLastMessage()
