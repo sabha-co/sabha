@@ -8,6 +8,7 @@ export default class extends Controller {
   static values = { autoSrc: String }
 
   connect() {
+    this.frameTarget.addEventListener("turbo:before-fetch-request", this.#onFetchStart)
     this.frameTarget.addEventListener("turbo:frame-load", this.#onFrameLoad)
     this.#wideViewport = window.matchMedia("(min-width: 1280px)")
     this.#wideViewport.addEventListener("change", this.#onViewportChange)
@@ -15,6 +16,7 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this.frameTarget.removeEventListener("turbo:before-fetch-request", this.#onFetchStart)
     this.frameTarget.removeEventListener("turbo:frame-load", this.#onFrameLoad)
     this.#wideViewport.removeEventListener("change", this.#onViewportChange)
     clearTimeout(this.#closeTimer)
@@ -38,24 +40,23 @@ export default class extends Controller {
     // clears it again (see #onFrameLoad)
     if (this.#showsRoster) localStorage.setItem(ROSTER_DISMISSED_KEY, "1")
 
+    this.#dismissPending()
     document.body.classList.remove("thread-panel-open")
-    this.#closeTimer = setTimeout(() => {
-      this.element.setAttribute("hidden", "")
-      this.frameTarget.innerHTML = ""
-    }, TRANSITION_DURATION)
+    this.#closeTimer = setTimeout(() => this.#teardown(), TRANSITION_DURATION)
   }
 
   #closeTimer
   #autoLoaded = false
+  #staleDismiss = false
   #wideViewport
 
   // The ambient roster shouldn't swallow the screen when the viewport narrows
   // into overlay territory — snap it away, without recording a dismissal.
   #onViewportChange = (event) => {
     if (!event.matches && this.#showsRoster && this.#isOpen) {
+      this.#dismissPending()
       document.body.classList.remove("thread-panel-open")
-      this.element.setAttribute("hidden", "")
-      this.frameTarget.innerHTML = ""
+      this.#teardown()
     }
   }
 
@@ -68,9 +69,9 @@ export default class extends Controller {
   // Skip transition on navigation — instant close so layout is clean before Turbo replaces the page
   closeOnNavigation() {
     if (this.#isOpen) {
+      this.#dismissPending()
       document.body.classList.remove("thread-panel-open")
-      this.element.setAttribute("hidden", "")
-      this.frameTarget.innerHTML = ""
+      this.#teardown()
     }
   }
 
@@ -78,10 +79,36 @@ export default class extends Controller {
     return document.body.classList.contains("thread-panel-open")
   }
 
+  // A fresh load into the panel means something wants it open (a thread click or
+  // the header reopening the roster), so it supersedes any pending dismissal.
+  #onFetchStart = () => {
+    this.#staleDismiss = false
+  }
+
   #onFrameLoad = () => {
+    // The panel was closed while this load was still in flight — its response
+    // arriving now must not reopen the panel.
+    if (this.#staleDismiss) {
+      this.#staleDismiss = false
+      this.#autoLoaded = false
+      return
+    }
+
     if (this.#showsRoster && !this.#autoLoaded) localStorage.removeItem(ROSTER_DISMISSED_KEY)
     this.#autoLoaded = false
     this.open()
+  }
+
+  // Mark any in-flight roster/thread load as stale so its frame-load is ignored,
+  // and drop the src so nothing reloads it later.
+  #dismissPending() {
+    this.#staleDismiss = true
+  }
+
+  #teardown() {
+    this.element.setAttribute("hidden", "")
+    this.frameTarget.innerHTML = ""
+    this.frameTarget.removeAttribute("src")
   }
 
   // Wide screens dock the room roster by default; the reader's dismissal
