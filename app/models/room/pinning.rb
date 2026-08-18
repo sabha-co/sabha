@@ -28,7 +28,7 @@ module Room::Pinning
         partial: "rooms/pinned_strip", locals: { room: self }
       )
 
-      Message.where(id: saved_change_to_pinned_message_id.compact).find_each do |message|
+      Message.where(id: saved_change_to_pinned_message_id.compact).each do |message|
         Turbo::StreamsChannel.broadcast_replace_to(
           self, :messages,
           target: ActionView::RecordIdentifier.dom_id(message, :pinning),
