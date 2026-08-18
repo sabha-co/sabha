@@ -1090,6 +1090,15 @@ body.searches .message-area:not(:has(.message)):not(:has(.dm-conversation)):not(
   --color-accent-brand: oklch(var(--lch-accent-lift));
 }
 
+/* Scrollbar: the global rule (base.css) sets `scrollbar-color` explicitly on
+   every element via `*`, so a value only inherited from the sidebar root loses
+   the cascade on the real scroll container (.sidebar__container). Target the
+   scope's descendants directly to beat `*` — a hue-neutral translucent white
+   that recedes into the dark rail in both modes. Width stays thin (inherited). */
+#sidebar[data-contrast="true"] * {
+  scrollbar-color: oklch(100% 0 0 / 0.20) transparent;
+}
+
 /* Cold-start skeleton for the lazy sidebar frame (users/sidebars/_skeleton).
    Theme-agnostic bars (text colour at low alpha reads on light or dark ground);
    a gentle pulse, disabled under reduced-motion. */
