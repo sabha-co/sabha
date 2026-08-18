@@ -85,3 +85,35 @@ the current user has already used (accent tint, `reaction_bar_controller`) and
 turn a click on a highlighted one into a removal, so the bar reads as a live
 toggle. Another addition beyond the redlines, in the same spirit as marking a
 chip as yours.
+
+---
+
+## Composer format bar omits the `#` control
+
+- **Date:** 2026-08-18
+- **Decided by:** owner
+- **Area:** composer format bar (`app/javascript/controllers/composer_controller.js`, `app/views/rooms/_composer_fields.html.erb`, `app/assets/stylesheets/application/composer.css`)
+
+**Handoff spec** (`Sabha v2 Component Redlines`, composer format bar; `Sabha Desktop v2` composer; README "Composer"): the bar reads `B I S </> | @ #` — after the divider, both an `@` mention insert and a `#` insert.
+
+**What we shipped:** the bar renders `B I S </> | @`. The editor supplies B/I/S/`</>`; `insertFormatBarExtras` grafts the `@` mention button (`composer__mention-btn`). There is no `#` glyph.
+
+**Why:** `@` backs a real feature — user mentions parsed from the body (`Message::Mentionee`). There is no `#room`/channel-reference syntax in messages: nothing parses or links a `#name` token, so a `#` button would insert a character with no behaviour behind it. Wiring it up means building room-reference autocomplete, parsing and linking — a feature, not a reskin.
+
+**Trade-off accepted:** the format bar is one glyph short of the comp until room references exist as a feature.
+
+---
+
+## Original room shows no delete control instead of a disabled one
+
+- **Date:** 2026-08-18
+- **Decided by:** owner
+- **Area:** room settings (`app/views/rooms/layouts/_settings_panel.html.erb`, `app/models/room.rb`)
+
+**Handoff spec** (`Sabha Desktop v2`, room settings): the Delete control is always present; on the original room it renders visually disabled (not-allowed cursor, ~50% opacity, muted colour) alongside the line "The original room can't be deleted — it is where every new member lands."
+
+**What we shipped:** `_settings_panel` computes `deletable = can_administer && !room.original?` and renders the delete row only when `deletable`. On the original room the row — and its explanation — is omitted entirely. The rule itself is enforced server-side (`Room#destroy` raises `CannotDeleteOriginalError` when `original?`).
+
+**Why:** a permanently-disabled control the admin can never act on reads as dead chrome; omitting it keeps the settings surface to actions that actually do something.
+
+**Trade-off accepted:** the "why can't I delete this room" answer no longer surfaces in the settings UI — it appears only as the server error if a delete is otherwise attempted. Low-harm: the original room is self-evidently the shared landing room.
