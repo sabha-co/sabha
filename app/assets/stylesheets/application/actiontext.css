@@ -48,7 +48,7 @@ lexxy-editor {
 
   border: 1px solid var(--color-border-dark);
   border-radius: 0.8em;
-  box-shadow: var(--shadow-base);
+  box-shadow: var(--shadow-pop);
   font-size: max(15px, 0.95em);
   max-block-size: min(45vh, 15em);
   max-inline-size: min(34ch, calc(100vw - 2rem));
