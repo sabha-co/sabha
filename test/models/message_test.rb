@@ -598,6 +598,51 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal false, truncated
   end
 
+  # boost_groups (display grouping over the loaded association)
+
+  test "boost_groups aggregates boosts by content, count DESC then earliest ASC" do
+    message = messages(:bender_message)
+    Boost.create!(message: message, booster: users(:jz),     content: "❤️", created_at: 1.hour.ago)
+    Boost.create!(message: message, booster: users(:david),  content: "👍", created_at: 30.minutes.ago)
+    Boost.create!(message: message, booster: users(:jason),  content: "👍", created_at: 5.minutes.ago)
+    Boost.create!(message: message, booster: users(:rachel), content: "🚀", created_at: 20.minutes.ago)
+    Boost.create!(message: message, booster: users(:nsa),    content: "🚀", created_at: 10.minutes.ago)
+
+    # Read off a fresh load, like the preloaded association the message list uses
+    # (creating boosts out-of-band leaves the in-memory association stale).
+    groups = message.reload.boost_groups
+    assert_equal [ "👍", "🚀", "❤️" ], groups.map(&:content)
+    assert_equal [ 2, 2, 1 ], groups.map(&:count)
+    assert_equal [ users(:rachel), users(:nsa) ], groups.second.boosters
+  end
+
+  test "boost_groups returns no groups when there are no boosts" do
+    assert_equal [], messages(:bender_message).boost_groups
+  end
+
+  test "boost_groups batches booster loading rather than one query per reaction" do
+    message = messages(:bender_message)
+    %i[ jason david jz rachel nsa ].each do |handle|
+      Boost.create!(message: message, booster: users(handle), content: "🚀")
+    end
+
+    # A standalone render (broadcast / turbo response) has the association
+    # unloaded — booster loading must not scale with the reaction count.
+    fresh = Message.find(message.id)
+
+    queries = 0
+    counter = lambda do |_name, _start, _finish, _id, payload|
+      queries += 1 unless payload[:name] == "SCHEMA" ||
+        payload[:sql].match?(/\A\s*(BEGIN|COMMIT|SAVEPOINT|RELEASE|PRAGMA)/i)
+    end
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+      fresh.boost_groups.each { |group| group.boosters.map(&:name) }
+    end
+
+    assert_operator queries, :<=, 3,
+      "boost_groups issued #{queries} queries for 5 boosters — booster loads aren't batched (N+1)"
+  end
+
   # ----- Email bundle candidates -----
 
   test "mention to an away user with all flags on creates a kind=mention BundleItem" do

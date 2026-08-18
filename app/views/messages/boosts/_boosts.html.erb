@@ -1,10 +1,20 @@
 <%# locals: (message:) -%>
-<%= turbo_frame_tag message, :boosting do %>
-  <div class="boosts flex flex-wrap align-center gap full-width" style="--column-gap: 0.4ch; --row-gap: 0">
-    <div class="flex-inline flex-wrap gap message__boosts" id="<%= dom_id(message, :boosts) %>">
-      <%= render partial: "messages/boosts/boost", collection: message.boosts, cached: -> boost { [ boost, boost.booster ] } %>
-    </div>
+<%# The frame always renders (even empty) so the replace broadcast can target it,
+    but the chip row and its trailing "+" only appear once the message has
+    reactions — the first reaction is added from the hover bar / overflow menu. %>
+<%# data-boost-revision orders competing full-frame replacements (the submitter's
+    direct response, the broadcast, and other people's concurrent reactions) so a
+    stale snapshot can't overwrite newer committed state — see the boost_revision
+    initializer. It's the message's updated_at, bumped on every boost change. %>
+<%= turbo_frame_tag message, :boosting, data: { boost_revision: message.updated_at.strftime("%s%6N") } do %>
+  <% if message.boosts.any? %>
+    <div class="boosts flex flex-wrap align-center gap full-width" style="--column-gap: 0.4ch; --row-gap: 0">
+      <div class="flex-inline flex-wrap gap message__boosts" id="<%= dom_id(message, :boosts) %>">
+        <%# One chip per distinct reaction (message#boost_groups), avatars stacked. %>
+        <%= render partial: "messages/boosts/boost", collection: message.boost_groups, as: :group, locals: { message: message } %>
+      </div>
 
-    <%= render "messages/boosts/add_boost", message: message %>
-  </div>
+      <%= render "messages/boosts/add_boost", message: message %>
+    </div>
+  <% end %>
 <% end %>

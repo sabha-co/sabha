@@ -1,4 +1,4 @@
-<%# Replace the whole grouped container: a new boost may start a fresh chip or
-    just add an avatar to an existing one. %>
+<%# Removing a boost may drop an avatar from a chip or remove the chip entirely;
+    replace the whole grouped container to reflect either. %>
 <%= turbo_stream.replace_all "[id='#{dom_id(@message, :boosting)}']",
       partial: "messages/boosts/boosts", locals: { message: @message } %>

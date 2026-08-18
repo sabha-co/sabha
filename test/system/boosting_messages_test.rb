@@ -54,16 +54,14 @@ class BoostingMessagesTest < ApplicationSystemTestCase
     assert_reaction_picker_closed
   end
 
-  test "deleting a boost" do
+  test "removing your reaction by clicking your own chip" do
     using_session("David") do
       sign_in "david@37signals.com"
       join_room rooms(:designers)
 
-      within "#" + dom_id(boosts(:first)) do
-        find("span", text: "Hello").click
-        assert_selector "button", text: "Delete this boost", wait: 5
-        click_on "Delete this boost"
-      end
+      # boosts(:first) is David's "Hello" on messages(:first); clicking the chip
+      # he's in toggles it back off.
+      find(".boost--mine .boost__toggle", text: "Hello").click
 
       assert_no_text "Hello"
     end

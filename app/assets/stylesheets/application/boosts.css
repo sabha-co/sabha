@@ -1,33 +1,44 @@
 /* Container */
 .boosts {
-  --boost-border-color: var(--color-border-dark);
   position: relative;
   left: -2px;
 }
 
-/* Item: 23px pill chip, 17px reactor avatar, accent-tinted when yours */
+/* A grouped reaction chip: stacked reactor avatars then the emoji, in a 23px
+   pill. Accent-tinted when the current user is in the group — boost--mine is
+   stamped client-side (boost_toggle_controller) so the broadcast HTML stays the
+   same for every viewer. The two hidden forms are the add/remove paths. */
 .boost {
+  display: inline-flex;
+  margin-block-start: calc(var(--block-space-half) / 2);
+}
+
+.boost__form {
+  display: none;
+}
+
+.boost__toggle {
+  --boost-border-color: var(--color-border-dark);
+
+  align-items: center;
+  appearance: none;
+  background-color: transparent;
   border: 1px solid var(--boost-border-color);
   border-radius: var(--border-radius-pill);
-  margin-block-start: calc(var(--block-space-half) / 2);
-  min-block-size: 23px;
-  opacity: 1;
-  padding: 0.1em 0.5em 0.1em 0.15em;
-  transition: opacity 100ms ease-in-out, box-shadow 150ms cubic-bezier(0.25, 1, 0.5, 1);
+  color: var(--color-text);
   cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  gap: 6px;
+  line-height: 1;
+  min-block-size: 23px;
+  padding: 2px 8px 2px 3px;
+  transition: box-shadow 150ms cubic-bezier(0.25, 1, 0.5, 1), background-color 150ms ease;
 
-  &.boost--mine {
+  .boost--mine & {
     --boost-border-color: var(--color-selected-dark);
 
     background-color: var(--color-selected);
-  }
-
-  .boost__action {
-    margin-block-start: 0;
-  }
-
-  .btn:not(.avatar):not(.popup-menu .btn) {
-    font-size: 0.55rem;
   }
 
   @media (any-hover: hover) {
@@ -41,40 +52,74 @@
   &:active {
     transform: scale(0.97);
   }
-}
 
-.btn:is(.boost__action) {
-  --btn-border-color: var(--boost-border-color);
-
-  font-size: 0.66em;
-  margin-block-start: calc(var(--block-space-half) / 2);
-
-  @media (any-hover: hover) {
-    &:where(:not(:active):hover) {
-      --boost-border-color: var(--color-border-darker)
-    }
+  &:focus-visible {
+    outline: 2px solid var(--color-accent-brand);
+    outline-offset: 2px;
   }
 }
 
-.btn:is(.boost__delete) {
-  display: none;
-
-  .expanded & {
-    display: flex;
-  }
+/* Reactor avatars: 17px, overlapping −5, ringed in the chip's ground so the
+   stack reads as separate discs */
+.boost__avatars {
+  display: inline-flex;
 }
 
 .boost__avatar {
-  --avatar-size: 17px;
+  block-size: 17px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--color-bg);
+  inline-size: 17px;
+  object-fit: cover;
 
-  inline-size: auto;
+  & + & {
+    margin-inline-start: -5px;
+  }
+
+  .boost--mine & {
+    box-shadow: 0 0 0 1.5px var(--color-selected);
+  }
 }
 
-/* Variants */
-.boost--deleting {
-  animation: scale-fade-out 0.15s both;
+.boost__content {
+  font-size: 0.8125rem;
 }
 
+.boost__overflow {
+  color: var(--color-text-subtle);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+/* Trailing pill that opens the reaction picker */
+.boost__add {
+  align-items: center;
+  background-color: transparent;
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--border-radius-pill);
+  color: var(--color-text-subtle);
+  display: inline-flex;
+  font-size: 0.8125rem;
+  justify-content: center;
+  line-height: 1;
+  margin-block-start: calc(var(--block-space-half) / 2);
+  min-block-size: 23px;
+  padding: 2px 9px;
+
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) {
+      border-color: var(--color-border-darker);
+      color: var(--color-text);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent-brand);
+    outline-offset: 2px;
+  }
+}
+
+/* Larger glyph for the picker grid and the quick-reaction bar */
 .boost-character {
   font-size: 1.3rem;
   transition: transform 150ms cubic-bezier(0.25, 1, 0.5, 1);

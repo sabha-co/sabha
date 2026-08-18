@@ -225,6 +225,10 @@ Rails.application.routes.draw do
   resources :messages do
     scope module: "messages" do
       resources :boosts
+      # Toggling a grouped reaction chip off deletes the current user's boost for
+      # one emoji, addressed by content rather than id so any viewer can remove
+      # their own.
+      delete "boosts", to: "boosts#destroy", as: nil
       resource :bookmark, only: %i[ create destroy ]
     end
   end

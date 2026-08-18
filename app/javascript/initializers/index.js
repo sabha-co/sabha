@@ -1,4 +1,5 @@
 import "initializers/autocomplete"
+import "initializers/boost_revision"
 import "initializers/current"
 import "initializers/rich_text"
 import "initializers/highlight"

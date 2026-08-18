@@ -1,30 +1,35 @@
-<%# locals: (boost:) -%>
-<% cache [ boost, boost.booster ] do %>
-  <div id="<%= dom_id(boost) %>"
-      class="boost boost-item flex-inline postion--relative max-width align-center fill-white gap"
-      data-controller="boost-delete boost-repeat" data-action="click->boost-repeat#perform click->boost-delete#reveal" 
-      data-boost-delete-perform-class="boost--deleting" data-boost-delete-reveal-class="expanded" 
-      data-boost-delete-booster-id-value="<%=boost.booster.id %>" data-boost-repeat-booster-id-param="<%=boost.booster.id %>">
-    
-    <figure class="avatar boost__avatar flex-item-no-shrink" data-stop-propagation="true">
-      <%= render 'users/popup', user: boost.booster %>
-    </figure>
-
-    <%= tag.span boost.content, role: "button", 
-                 class: [ "txt-small", { "txt-medium": boost.content.all_emoji? } ],
-                 data: { action: "keydown.enter->boost-delete#reveal:prevent", boost_delete_target: "content" } %>
-
-    <%= form_with model: [ boost.message, Boost.new ], html: { hidden: true }, 
-                  data: { turbo_frame: dom_id(boost.message, :boosting), boost_repeat_target: "form"}  do %>
-      <%= hidden_field_tag "source_boost_id", boost.id %>
-      <%= hidden_field_tag "boost[content]", boost.content %>
+<%# locals: (group:, message:) -%>
+<%# One grouped reaction chip: the reactors' avatars stacked, then the emoji.
+    Clicking toggles the current user's own reaction on or off — whether it's
+    "mine" is stamped client-side (boost_toggle_controller) so the broadcast HTML
+    stays identical for every viewer. The two hidden forms are the add and remove
+    paths the controller submits between. %>
+<% shown = group.boosters.first(Boost::AVATARS_SHOWN)
+   extra = group.count - shown.size
+   reactor_names = shown.map(&:name)
+   reactor_names << "#{extra} #{'other'.pluralize(extra)}" if extra.positive? -%>
+<div class="boost" data-controller="boost-toggle"
+     data-boost-toggle-content-value="<%= group.content %>"
+     data-boost-toggle-booster-ids-value="<%= group.boosters.map(&:id).to_json %>">
+  <button type="button" class="boost__toggle" data-action="boost-toggle#toggle" aria-pressed="false"
+          aria-label="<%= reactor_names.to_sentence %> reacted with <%= group.content %>">
+    <span class="boost__avatars flex-item-no-shrink" aria-hidden="true">
+      <% shown.each do |booster| %>
+        <%= avatar_image_tag booster, size: 34, class: "boost__avatar" %>
+      <% end %>
+    </span>
+    <span class="boost__content"><%= group.content %></span>
+    <% if extra.positive? %>
+      <span class="boost__overflow">+<%= extra %></span>
     <% end %>
-    
-    <%= button_to message_boost_path(boost.message, boost), method: :delete, data: { action: "boost-delete#perform", boost_delete_target: "button", stop_propagation: true },
-          class: "btn btn--negative flex-item-justify-end boost__delete" do %>
-      <%= icon_tag "minus" %>
-      <span class="for-screen-reader">Delete this boost</span>
-    <% end %>
-  </div>
-  <span id="delete_boost_accessible_label" class="for-screen-reader">Press enter to delete this boost</span>
-<% end %>
+  </button>
+
+  <%= form_with model: [ message, Boost.new ], html: { class: "boost__form", data: { boost_toggle_target: "addForm" } } do %>
+    <%= hidden_field_tag "boost[content]", group.content %>
+  <% end %>
+
+  <%= button_to message_boosts_path(message), method: :delete, params: { content: group.content },
+        form: { class: "boost__form", data: { boost_toggle_target: "removeForm" } } do %>
+    <span class="for-screen-reader">Remove your <%= group.content %> reaction</span>
+  <% end %>
+</div>

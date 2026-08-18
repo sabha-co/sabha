@@ -1,6 +1,10 @@
 class Boost < ApplicationRecord
   Group = Data.define(:content, :count, :boosters, :truncated)
 
+  # How many reactor avatars a grouped chip stacks before collapsing the rest
+  # into a trailing "+N".
+  AVATARS_SHOWN = 5
+
   belongs_to :message, touch: true
   belongs_to :booster, class_name: "User", default: -> { Current.user }
 
@@ -8,19 +12,25 @@ class Boost < ApplicationRecord
 
   scope :ordered, -> { order(:created_at) }
 
-  after_create_commit :broadcast_create
+  # One registration for both events: Rails silently drops one of two commit
+  # callbacks that share a method name across different events.
+  after_commit :broadcast_boosts, on: %i[ create destroy ]
   after_create_commit :dispatch_boost_notification
   before_destroy :delete_notification
-  after_destroy_commit :broadcast_removal
   after_destroy_commit :broadcast_notification_removal
 
   private
-    def broadcast_create
-      targets = "[id='#{boosts_target}']"
-      rendering = { partial: "messages/boosts/boost", locals: { boost: self } }
+    # Reactions render grouped by emoji, so a single boost changing shifts the
+    # whole chip row (a new chip, an extra avatar, or a chip disappearing).
+    # Replace the entire container rather than append/remove one chip — replace
+    # is idempotent, so the author receiving both the direct response and this
+    # broadcast just re-renders the same row.
+    def broadcast_boosts
+      targets = "[id='#{boosts_frame_id}']"
+      rendering = { partial: "messages/boosts/boosts", locals: { message: message } }
 
-      Turbo::StreamsChannel.broadcast_action_to(message.room, :messages, action: :append, targets: targets, **rendering)
-      Turbo::StreamsChannel.broadcast_action_to(Account.sole, :inbox, action: :append, targets: targets, **rendering)
+      Turbo::StreamsChannel.broadcast_action_to(message.room, :messages, action: :replace, targets: targets, **rendering)
+      Turbo::StreamsChannel.broadcast_action_to(Account.sole, :inbox, action: :replace, targets: targets, **rendering)
     end
 
     def dispatch_boost_notification
@@ -59,14 +69,9 @@ class Boost < ApplicationRecord
       @destroyed_notification[:user].broadcast_activity_indicator
     end
 
-    def broadcast_removal
-      targets = "[id='boost_#{id}']"
-
-      Turbo::StreamsChannel.broadcast_action_to(message.room, :messages, action: :remove, targets: targets)
-      Turbo::StreamsChannel.broadcast_action_to(Account.sole, :inbox, action: :remove, targets: targets)
-    end
-
-    def boosts_target
-      "boosts_message_#{message.client_message_id}"
+    # Matches turbo_frame_tag(message, :boosting) — the message dom key is its
+    # client_message_id (Message#to_key).
+    def boosts_frame_id
+      "boosting_message_#{message.client_message_id}"
     end
 end

@@ -1,8 +1,7 @@
-<%= turbo_frame_tag message, :new_boost do %>
-  <div class="flex-inline message__boost-inline">
-    <%= link_to new_message_boost_path(message), class: "boost__action txt-small btn", data: { turbo_frame: "reaction_picker" } do %>
-      <%= icon_tag "boost" %>
-      <span class="for-screen-reader">Add a boost</span>
-    <% end %>
-  </div>
+<%# locals: (message:) -%>
+<%# The trailing pill that opens the reaction picker. The whole boosts container
+    is replaced on every change, so this no longer needs its own frame. %>
+<%= link_to new_message_boost_path(message), class: "boost__add",
+      data: { turbo_frame: "reaction_picker" }, aria: { label: "Add a reaction" } do %>
+  <span aria-hidden="true">+</span>
 <% end %>

@@ -157,6 +157,29 @@ class Message < ApplicationRecord
     [ groups, boosts.count, truncated ]
   end
 
+  # Groups the (preloaded) boosts by emoji for display — one chip per distinct
+  # reaction, boosters oldest-first within a group, groups ordered by count DESC
+  # then earliest reaction ASC. Works off the loaded association so rendering the
+  # message list stays free of the per-message queries boost_summary issues.
+  def boost_groups
+    # The message list preloads boosts + boosters; standalone renders (the boost
+    # broadcast and the create/destroy responses) don't, so pull boosters in one
+    # query there rather than one per reaction. Reuse the preloaded association
+    # when it's already loaded so the list stays a no-extra-query render.
+    source = boosts.loaded? ? boosts : boosts.includes(:booster)
+
+    grouped = source.group_by(&:content).values.map do |group_boosts|
+      ordered = group_boosts.sort_by(&:created_at)
+      Boost::Group.new(
+        content: ordered.first.content,
+        count: ordered.size,
+        boosters: ordered.map(&:booster),
+        truncated: false
+      )
+    end
+    grouped.each_with_index.sort_by { |group, index| [ -group.count, index ] }.map(&:first)
+  end
+
   def thread_participants_for(thread)
     @thread_participants&.fetch(thread.id, nil)
   end
