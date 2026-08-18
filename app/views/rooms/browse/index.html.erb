@@ -7,7 +7,8 @@
   <span class="navbar-count">Every room you can see, joined or not</span>
   <div class="flex-item-grow"></div>
   <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
-    <%= link_to "New room", new_rooms_open_path, class: "btn settings-save flex-item-no-shrink" %>
+    <%= link_to "New room", new_rooms_open_path, class: "btn settings-save flex-item-no-shrink",
+          data: { turbo_frame: "new_room" } %>
   <% end %>
 <% end %>
 

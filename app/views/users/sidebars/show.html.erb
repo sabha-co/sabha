@@ -102,8 +102,9 @@
         <div class="flex items-center gap-half">
           <%= render "users/sidebars/all_rooms_actions" %>
           <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
-            <%= link_to new_rooms_open_path, class: "btn btn--small", aria: { label: "New Room" } do %>
-              <%= icon_tag "add", style: "view-transition-name: new-room" %>
+            <%= link_to new_rooms_open_path, class: "btn btn--small", aria: { label: "New Room" },
+                  data: { turbo_frame: "new_room" } do %>
+              <%= icon_tag "add" %>
               <span class="for-screen-reader">New Room</span>
             <% end %>
           <% end %>

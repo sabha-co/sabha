@@ -1,0 +1,11 @@
+<%# The New room dialog: one scrim dialog mounted in the layout. The sidebar +
+    and Browse's New room open it by loading the create form into the frame; the
+    frame load pops the dialog. Submitting a valid room breaks out to the top and
+    lands on the new room. %>
+<dialog id="new_room_dialog" class="scrim-dialog scrim-dialog--new-room" aria-label="New room"
+        data-controller="dialog"
+        data-action="click->dialog#closeOnScrim
+                     turbo:submit-end->dialog#closeOnSubmit
+                     turbo:before-cache@document->dialog#close">
+  <%= turbo_frame_tag "new_room", data: { action: "turbo:frame-load->dialog#open" } %>
+</dialog>

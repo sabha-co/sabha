@@ -1,11 +1,10 @@
-<% @page_title = "New chat room" %>
+<% @page_title = "New room" %>
 
-<% content_for :nav do %>
-  <div class="flex-item-justify-start">
-    <%= link_back %>
-  </div>
-<% end %>
+<%= turbo_frame_tag "new_room" do %>
+  <header class="scrim-dialog__header scrim-dialog__header--titled">
+    <span class="scrim-dialog__title">New room</span>
+    <button type="button" class="scrim-dialog__close" data-action="dialog#close" aria-label="Close">✕</button>
+  </header>
 
-<section class="panel txt-align-center" style="view-transition-name: <%= local_assigns[:view_transition_name] || "new-room" %>">
   <%= yield %>
-</section>
+<% end %>

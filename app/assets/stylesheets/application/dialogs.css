@@ -30,8 +30,46 @@
   padding: 12px 14px;
 }
 
+/* Header with a title and a trailing ✕ close */
+.scrim-dialog__header--titled {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  padding: 16px 18px;
+}
+
+.scrim-dialog__title {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.scrim-dialog__close {
+  background: none;
+  border: 0;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  line-height: 1;
+  padding: 4px;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
 .scrim-dialog__body {
   padding: 14px;
+}
+
+/* Footer action bar: right-aligned buttons over a hairline */
+.scrim-dialog__footer {
+  align-items: center;
+  border-block-start: 1px solid var(--color-border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 14px 18px;
 }
 
 /* Small-caps section eyebrow inside the card */
@@ -198,6 +236,32 @@
 
   margin-block-start: min(96px, 14dvh);
   overflow: hidden;
+}
+
+/* New room: a form dialog parked near the top of the viewport */
+.scrim-dialog--new-room {
+  --dialog-width: 460px;
+
+  margin-block-start: min(88px, 12dvh);
+  /* Short viewports: scroll the card rather than letting the footer fall
+     off-screen. */
+  max-block-size: calc(100dvh - min(88px, 12dvh) - var(--block-space));
+  overflow-y: auto;
+
+  .scrim-dialog__body {
+    padding: 18px;
+  }
+
+  /* The auto-join toggle sits in its own bordered box */
+  .new-room-autojoin {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+
+    .setting-row {
+      padding-block: 0;
+    }
+  }
 }
 
 .search-palette__field {
