@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_13_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_18_120000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -29,7 +29,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_13_000001) do
   create_table "accounts", force: :cascade do |t|
     t.boolean "active", default: true
     t.datetime "created_at", null: false
-    t.text "custom_styles"
     t.boolean "email_notifications_enabled", default: false, null: false
     t.string "name", null: false
     t.json "settings"
