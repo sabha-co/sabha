@@ -8,6 +8,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
   test "show is accessible to admins" do
     get account_url
     assert_response :ok
+    assert_select "a[href=?]", edit_account_path
   end
 
   test "show is accessible to non-admins as the about page" do
@@ -16,6 +17,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
 
     get account_url
     assert_response :success
+    assert_select "a[href=?]", edit_account_path, count: 0
   end
 
   test "edit" do

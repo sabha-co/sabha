@@ -34,6 +34,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   test "activity returns success" do
     get inbox_activity_index_url
     assert_response :success
+    assert_select "h1.navbar-title", text: "Activity"
   end
 
   test "activity touches activity_seen_at so the sidebar dot clears" do
@@ -320,6 +321,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   test "direct_messages returns success" do
     get inbox_direct_messages_url
     assert_response :success
+    assert_select "h1.navbar-title", text: /Direct Messages/
   end
 
   test "direct_messages shows DM rooms for current user" do
@@ -371,6 +373,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   test "threads returns success" do
     get inbox_threads_url
     assert_response :success
+    assert_select "h1.navbar-title", text: "Threads"
   end
 
   test "threads shows parent messages of threads user has visible membership in" do
@@ -512,6 +515,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   test "bookmarks returns success" do
     get inbox_bookmarks_url
     assert_response :success
+    assert_select "h1.navbar-title", text: "Bookmarks"
   end
 
   test "bookmarks shows bookmarked messages for current user" do

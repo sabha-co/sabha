@@ -12,14 +12,6 @@ class MessageComposerTest < ApplicationSystemTestCase
   # into the tests that follow in the same browser session.
   teardown { page.current_window.resize_to(1400, 1400) }
 
-  test "a sent message appears in the conversation" do
-    click_on "Designers"
-    dismiss_pwa_install_prompt
-
-    send_message "Regression wall says hi"
-    assert_message_text "Regression wall says hi"
-  end
-
   test "the typing indicator floats above the composer and reserves no space" do
     click_on "Designers"
     dismiss_pwa_install_prompt

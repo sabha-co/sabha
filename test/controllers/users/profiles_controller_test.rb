@@ -31,12 +31,13 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_select "a.settings-nav__switch[href=?]", edit_account_path, text: /Community settings/
   end
 
-  test "non-admins get no community settings switch" do
+  test "non-admins see their email and get no community settings switch" do
     sign_in :kevin
 
     get user_profile_url
 
     assert_response :success
+    assert_select "input[value=?]", users(:kevin).email_address
     assert_select ".settings-nav__switch", count: 0
   end
 

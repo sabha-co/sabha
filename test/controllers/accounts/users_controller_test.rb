@@ -23,7 +23,10 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     sign_in :kevin
     get account_users_url
 
+    assert_response :success
     assert_select ".navbar-text-link", count: 0
+    assert_match users(:david).name, response.body
+    assert_match users(:jason).name, response.body
   end
 
   test "edit renders the manage-member dialog content" do

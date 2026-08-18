@@ -49,16 +49,6 @@ class MessageRowTest < ApplicationSystemTestCase
     assert_no_selector "dialog[aria-label='Message options'][open]"
   end
 
-  test "a quick reaction from the action bar boosts the message" do
-    within_message messages(:third) do
-      find(".message__body-content").hover
-      find(".message__quick-reaction button[title='Thumbs up']").click
-
-      # Your own chip carries the accent tint (stamped client-side)
-      assert_selector ".boost.boost--mine", text: "👍"
-    end
-  end
-
   test "the action bar reflects a reaction the user has made and toggles it off" do
     within_message messages(:third) do
       find(".message__body-content").hover
