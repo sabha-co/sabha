@@ -37,7 +37,7 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     # The recipient titles the conversation, and the header links to the room's settings.
-    assert_select ".navbar-dm h1.navbar-title a[href=?]", edit_room_path(room), text: /#{users(:kevin).name}/
+    assert_select ".navbar-dm h1.navbar-title a[href=?]", edit_rooms_direct_path(room), text: /#{users(:kevin).name}/
   end
 
   test "composer carries the @everyone confirm threshold, member count, and cap flag" do

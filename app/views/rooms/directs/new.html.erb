@@ -8,9 +8,11 @@
   <% @page_title = names %>
   <% @body_class = "sidebar" %>
 
-  <%= render "rooms/directs/header", title: names, room: nil %>
+  <%= render "rooms/directs/header", recipients: others, title: names %>
 
   <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+  <%# Carry the DM conversation rail beside the compose surface, like a live direct room %>
+  <% content_for :list_rail, render("inboxes/direct_messages/rail") %>
 
   <div id="message-area" class="message-area" contents>
     <div class="messages flex flex-column align-center gap txt-align-center pad" aria-live="polite">

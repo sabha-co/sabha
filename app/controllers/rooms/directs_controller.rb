@@ -20,6 +20,7 @@ class Rooms::DirectsController < RoomsController
       redirect_to room_url(existing)
     else
       @recipients = selected_users
+      load_dm_conversations
     end
   end
 
@@ -39,6 +40,7 @@ class Rooms::DirectsController < RoomsController
     # A blank or invalid first message created nothing (the transaction rolled back
     # the just-opened DM). Re-render the provisional surface so the composer stays.
     @recipients = selected_users
+    load_dm_conversations
     render :new, status: :unprocessable_entity
   end
 

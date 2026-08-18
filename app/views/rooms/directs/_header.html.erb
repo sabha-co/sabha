@@ -1,29 +1,30 @@
-<%# locals: (title:, room: nil, membership: nil) -%>
-<%# The DM surface header — shared by the live conversation (rooms/show/_nav) and
-    the provisional compose surface (rooms/directs/new). With a persisted room the
-    title links to its settings and the edit + involvement controls show; the
-    provisional surface (room: nil) has nothing to edit or follow yet. %>
+<%# locals: (recipients:, title:) -%>
+<%# The provisional DM header, shown while composing a not-yet-created
+    conversation (rooms/directs/new). It names the chosen recipients in the
+    redesign navbar but has nothing to edit or follow yet — the live
+    conversation's header lives in rooms/show/_nav. %>
 <% content_for :nav do %>
-  <%= account_logo_tag if Current.account.logo.attached? %>
-  <%= link_back_to_or_referrer inbox_direct_messages_path %>
+  <%# The rail replaces this affordance at split widths (CSS hides it) %>
+  <span class="dm-back"><%= link_back_to_or_referrer inbox_direct_messages_path %></span>
 
-  <% heading = tag.h1 class: "room__contents txt-medium overflow-ellipsis" do %>
-    <span class="for-screen-reader">Direct message with</span>
-    <%= title %>
-  <% end %>
+  <div class="navbar-dm">
+    <span class="avatar navbar-dm__avatar">
+      <% if recipients.many? %>
+        <div class="avatar__group">
+          <% recipients.first(4).each do |recipient| %>
+            <span class="avatar"><%= avatar_image_tag(recipient, size: 20, loading: :lazy) %></span>
+          <% end %>
+        </div>
+      <% else %>
+        <%= avatar_image_tag(recipients.first, size: 30) %>
+      <% end %>
+    </span>
 
-  <% if room %>
-    <%= link_to heading, edit_room_path(room), class: "btn btn--reversed btn--faux room--current" %>
-    <%= link_to_edit_room(room) %>
-
-    <% unless hotwire_native_app? %>
-      <div class="flex gap-half align-center navbar-actions">
-        <%= turbo_frame_tag dom_id(room, :involvement) do %>
-          <%= button_to_change_involvement(room, membership.involvement) %>
-        <% end %>
-      </div>
-    <% end %>
-  <% else %>
-    <div class="btn btn--reversed btn--faux room--current"><%= heading %></div>
-  <% end %>
+    <div class="navbar-dm__text">
+      <h1 class="navbar-title">
+        <span class="for-screen-reader">Direct message with</span>
+        <%= title %>
+      </h1>
+    </div>
+  </div>
 <% end %>
