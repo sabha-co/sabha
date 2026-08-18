@@ -6,6 +6,10 @@ class Inboxes::BookmarksController < ApplicationController
   def index
     @bookmarks = find_bookmarks
 
-    render partial: "items" if paginating?
+    if paginating?
+      render partial: "items"
+    else
+      @bookmarks_count = Inbox::BookmarksQuery.new(Current.user).call.count
+    end
   end
 end

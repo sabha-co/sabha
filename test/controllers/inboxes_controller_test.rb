@@ -272,7 +272,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     get inbox_activity_index_url
 
     assert_select "[data-activity-unread='true']", count: 0
-    assert_select ".navbar-count", count: 0
+    assert_select ".navbar-count", text: "All caught up"
   end
 
   test "activity rows carry bucket markers and compact timestamps" do
@@ -526,6 +526,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     get inbox_bookmarks_url
     assert_response :success
     assert_match "Bookmarked message marker", response.body
+    assert_select ".navbar-count", text: "1 saved"
   end
 
   test "bookmarks render as cards with the saved time and an inline remove" do

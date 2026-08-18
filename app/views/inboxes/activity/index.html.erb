@@ -5,7 +5,7 @@
   </div>
 <% end %>
 <%= render "inboxes/nav", title: "Activity",
-      count: (@unread_activity_count.to_i.positive? ? "#{@unread_activity_count} unread" : nil),
+      count: (@unread_activity_count.to_i.positive? ? "#{@unread_activity_count} unread" : "All caught up"),
       actions: mark_all_read do %>
   <%= render "inboxes/activity/filter" %>
 <% end %>

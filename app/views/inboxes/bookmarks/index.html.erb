@@ -1,5 +1,6 @@
 <% @page_title = "Bookmarks" %>
-<%= render "inboxes/nav", title: "Bookmarks" %>
+<%= render "inboxes/nav", title: "Bookmarks",
+      count: (@bookmarks_count.to_i.positive? ? "#{@bookmarks_count} saved" : nil) %>
 
 <% content_for :messages do %>
   <%= search_results_tag("inbox", inbox_bookmarks_url, highlight_mentions: true, date_separator: false, thread_messages: false) do %>
