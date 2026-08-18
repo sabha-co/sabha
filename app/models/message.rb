@@ -131,7 +131,8 @@ class Message < ApplicationRecord
   # Caps are applied in SQL (GROUP BY + per-group LIMIT) so a heavily-reacted
   # message never materializes more than ~limit × boosters_limit rows in Ruby.
   # Issues O(distinct_emoji) queries by design — bounded by `limit + 1` —
-  # SQLite portability rules out a single `array_agg`.
+  # SQLite portability rules out a single `array_agg`. boost_groups is the
+  # in-memory sibling used by the web render; keep their ranking rules in step.
   def boost_summary(limit: 50, boosters_limit: 100)
     ranked = boosts.group(:content)
                    .reorder(Arel.sql("COUNT(*) DESC, MIN(created_at) ASC"))
@@ -157,10 +158,14 @@ class Message < ApplicationRecord
     [ groups, boosts.count, truncated ]
   end
 
-  # Groups the (preloaded) boosts by emoji for display — one chip per distinct
-  # reaction, boosters oldest-first within a group, groups ordered by count DESC
-  # then earliest reaction ASC. Works off the loaded association so rendering the
-  # message list stays free of the per-message queries boost_summary issues.
+  # The in-memory sibling of boost_summary: one chip per distinct reaction,
+  # boosters oldest-first within a group, groups ordered by count DESC then
+  # earliest reaction ASC — the same ranking rule, kept in step. This variant
+  # groups in Ruby off the loaded association so rendering the message list stays
+  # free of the per-message queries boost_summary issues, and is intentionally
+  # uncapped: the web preloads the whole set and a message's distinct-emoji count
+  # is naturally small. boost_summary is the SQL-capped variant for the API's
+  # unbounded callers.
   def boost_groups
     # The message list preloads boosts + boosters; standalone renders (the boost
     # broadcast and the create/destroy responses) don't, so pull boosters in one
@@ -168,16 +173,18 @@ class Message < ApplicationRecord
     # when it's already loaded so the list stays a no-extra-query render.
     source = boosts.loaded? ? boosts : boosts.includes(:booster)
 
-    grouped = source.group_by(&:content).values.map do |group_boosts|
-      ordered = group_boosts.sort_by(&:created_at)
-      Boost::Group.new(
-        content: ordered.first.content,
-        count: ordered.size,
-        boosters: ordered.map(&:booster),
-        truncated: false
-      )
-    end
-    grouped.each_with_index.sort_by { |group, index| [ -group.count, index ] }.map(&:first)
+    # The association is ordered by created_at, so each group is already
+    # oldest-first and group.first is the earliest reaction of that emoji.
+    source.group_by(&:content).values
+          .sort_by { |group| [ -group.size, group.first.created_at ] }
+          .map do |group|
+            Boost::Group.new(
+              content: group.first.content,
+              count: group.size,
+              boosters: group.map(&:booster),
+              truncated: false
+            )
+          end
   end
 
   def thread_participants_for(thread)
