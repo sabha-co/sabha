@@ -3,6 +3,7 @@
     — not the full message. Boosts render through notifications/_boost. %>
 <div id="<%= dom_id(notification) %>" class="message notification--activity"
      data-message-id="<%= notification.id %>"
+     data-activity-type="<%= notification.activity_type %>"
      data-sort-value="<%= notification.created_at.to_fs(:epoch) %>"
      data-activity-bucket="<%= activity_bucket(notification) %>"
      data-activity-unread="<%= activity_unread?(notification) %>"

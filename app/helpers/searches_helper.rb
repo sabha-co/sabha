@@ -1,7 +1,12 @@
 module SearchesHelper
-  def search_results_tag(dom_id, paginator_url, highlight_mentions: true, date_separator: true, thread_messages: true, &)
+  # active_filter, when set, is the activity_type the Activity feed is showing
+  # (mention/thread_reply/boost). It rides the container so CSS can hide any
+  # off-filter row that arrives on the live stream — the paginated render is
+  # already server-filtered, so this only touches live appends.
+  def search_results_tag(dom_id, paginator_url, highlight_mentions: true, date_separator: true, thread_messages: true, active_filter: nil, &)
     tag.div id: dom_id, class: "messages searches__results", data: {
       controller: "search-results",
+      active_filter: active_filter,
       search_results_target: "messages",
       search_results_first_of_day_class: date_separator ? "message--first-of-day" : "",
       search_results_me_class: "message--me",

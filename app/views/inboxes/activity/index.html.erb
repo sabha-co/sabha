@@ -11,7 +11,7 @@
 <% end %>
 
 <% content_for :messages do %>
-  <%= search_results_tag("inbox", inbox_activity_index_url(filter: params[:filter]), highlight_mentions: true, thread_messages: false) do %>
+  <%= search_results_tag("inbox", inbox_activity_index_url(filter: params[:filter]), highlight_mentions: true, thread_messages: false, active_filter: Inbox::ActivityQuery::FILTERS[params[:filter]]) do %>
     <%= render "notifications/list", notifications: @notifications %>
   <% end %>
   <%= turbo_stream_from Current.user, :inbox_activity %>

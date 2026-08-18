@@ -1,6 +1,7 @@
 <%# locals: (notification:, timestamp_style: :compact) -%>
 <div id="<%= dom_id(notification) %>" class="message notification--boost"
      data-message-id="<%= notification.id %>"
+     data-activity-type="boost"
      data-sort-value="<%= notification.created_at.to_fs(:epoch) %>"
      data-activity-bucket="<%= activity_bucket(notification) %>"
      data-activity-unread="<%= activity_unread?(notification) %>"

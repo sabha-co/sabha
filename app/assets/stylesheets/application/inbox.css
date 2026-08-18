@@ -263,3 +263,13 @@ body.inbox [data-activity-unread="true"] {
 .thread-card .thread__avatar + .thread__avatar {
   margin-inline-start: -5px;
 }
+
+/* Filter-aware live streaming: the paginated Activity feed is server-filtered,
+   but a live notification arrives on the inbox stream regardless of the active
+   tab. When a filter is set on the container, hide any appended row whose
+   activity type doesn't match — so a boost can't flash into the Mentions tab. */
+#inbox[data-active-filter="mention"] [data-activity-type]:not([data-activity-type="mention"]),
+#inbox[data-active-filter="thread_reply"] [data-activity-type]:not([data-activity-type="thread_reply"]),
+#inbox[data-active-filter="boost"] [data-activity-type]:not([data-activity-type="boost"]) {
+  display: none;
+}
