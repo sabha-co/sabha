@@ -995,9 +995,11 @@ img.message__attachment {
   }
 }
 
+/* Grouped follow-on (same author, <5 min): body only — the whole meta line and
+   the avatar drop out, the gutter stays. The action bar is a sibling of the
+   heading, so hover actions survive. */
 .message--threaded {
-  .message__author,
-  .message__badge,
+  .message__heading,
   .message__avatar {
     display: none;
   }
