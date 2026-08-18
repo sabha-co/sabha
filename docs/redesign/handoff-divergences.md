@@ -27,3 +27,8 @@ Aligned to the handoff (one chip per emoji, stacked reactor avatars, accent tint
 - **Handoff:** a centered 320px modal over a dimmed scrim, click-to-open.
 - **Shipped:** a `<details>` popover (`popup_controller`) anchored to the avatar, lazy-loading the profile, no scrim.
 - **Why:** a profile peek should stay tied to the avatar and leave the conversation visible; a full-scrim modal (how the prototype demoed any popup) pulls focus off the page for a lightweight lookup.
+
+## New room name — pre-filled default (vs. placeholder-empty)
+- **Handoff:** an empty name field showing the placeholder "Name the room".
+- **Shipped:** the field is pre-filled with a type default ("New room" / "New forum", from `DEFAULT_ROOM_NAME`/`DEFAULT_FORUM_NAME`) and autofocused; the placeholder never renders while a value is present.
+- **Why:** a room is creatable in one action with a sensible, type-named default rather than blocking on an empty `required` field, so an un-renamed room still reads sensibly in the sidebar. **Trade-off:** the placeholder is inert, and the user edits an existing value rather than typing into an empty field.

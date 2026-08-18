@@ -6,12 +6,14 @@ class Rooms::OpensController < RoomsController
   before_action :force_room_type, only: %i[ edit update ]
   before_action :ensure_permission_to_create_rooms, only: %i[ new create ]
 
+  DEFAULT_ROOM_NAME = "New room"
+
   def show
     redirect_to room_url(@room)
   end
 
   def new
-    @room = Rooms::Open.new
+    @room = Rooms::Open.new(name: DEFAULT_ROOM_NAME)
   end
 
   def create
