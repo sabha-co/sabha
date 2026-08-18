@@ -38,7 +38,7 @@ module ApplicationHelper
   end
 
   def body_classes
-    [ @body_class, admin_body_class, account_logo_body_class, workspace_selector_body_class, workspace_banner_body_class ].compact.join(" ")
+    [ @body_class, admin_body_class, staff_body_class, account_logo_body_class, workspace_selector_body_class, workspace_banner_body_class ].compact.join(" ")
   end
 
   def link_back
@@ -73,6 +73,12 @@ module ApplicationHelper
   private
     def admin_body_class
       "admin" if Current.user&.can_administer?
+    end
+
+    # Gates staff-only affordances (e.g. the pinned-strip unpin / message Pin
+    # control) in CSS, since Turbo broadcasts render those partials viewer-less.
+    def staff_body_class
+      "staff" if Current.user&.staff?
     end
 
     def account_logo_body_class

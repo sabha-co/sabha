@@ -17,6 +17,10 @@
 <%= message_area_tag(@room) do %>
   <%= render "messages/template" %>
 
+  <% if @room.pinnable? %>
+    <%= render "rooms/pinned_strip", room: @room %>
+  <% end %>
+
   <%= messages_tag(@room) do %>
     <%= render "rooms/show/welcome", room: @room %>
     <%= render "rooms/show/block_notice", room: @room %>

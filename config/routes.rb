@@ -173,6 +173,7 @@ Rails.application.routes.draw do
   resources :rooms do
     resources :messages do
       resources :unreads, only: %i[ create ], module: "messages"
+      resource :pin, only: %i[ create destroy ], module: "messages"
     end
 
     scope module: "rooms" do

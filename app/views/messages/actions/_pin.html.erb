@@ -1,0 +1,19 @@
+<%# locals: (message:) -%>
+<%# The wrapper is the live-flip target (Pin ↔ Unpin). Rendered viewer-less over
+    the room stream, so no Current.user here — the item is gated to staff in CSS
+    via the `.staff` body class. Room-type checks are viewer-independent. %>
+<%= tag.div id: dom_id(message, :pinning), class: "message__pin-item" do %>
+  <% if message.room.pinnable? %>
+    <% if message.pinned? %>
+      <%= button_to room_message_pin_path(message.room, message), method: :delete,
+            class: "btn message__action-btn full-width" do %>
+        <span>Unpin</span>
+      <% end %>
+    <% else %>
+      <%= button_to room_message_pin_path(message.room, message), method: :post,
+            class: "btn message__action-btn full-width" do %>
+        <span>Pin</span>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

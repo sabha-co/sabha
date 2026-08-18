@@ -110,6 +110,8 @@
         <%= render "messages/actions/bookmark", message: message %>
 
         <% if current_room.present? %>
+          <%= render "messages/actions/pin", message: message %>
+
           <%= button_to room_message_unreads_path(current_room, message), class: "btn message__action-btn full-width" do %>
             <span>Mark unread</span>
           <% end %>

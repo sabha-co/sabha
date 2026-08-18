@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_18_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_18_153000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -236,6 +236,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_18_120000) do
     t.string "name"
     t.integer "parent_message_id"
     t.integer "parent_room_id"
+    t.integer "pinned_message_id"
     t.string "slug"
     t.string "sortable_name"
     t.string "type", null: false
@@ -244,6 +245,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_18_120000) do
     t.index ["parent_message_id"], name: "index_rooms_on_parent_message_id_unique_thread", unique: true, where: "type = 'Rooms::Thread' AND parent_message_id IS NOT NULL"
     t.index ["parent_room_id", "active", "created_at"], name: "index_rooms_on_parent_room_and_created", where: "parent_room_id IS NOT NULL"
     t.index ["parent_room_id", "active", "last_active_at"], name: "index_rooms_on_parent_room_and_activity", where: "parent_room_id IS NOT NULL"
+    t.index ["pinned_message_id"], name: "index_rooms_on_pinned_message_id"
     t.index ["slug"], name: "index_rooms_on_slug", unique: true, where: "slug IS NOT NULL"
   end
 
@@ -413,6 +415,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_18_120000) do
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "push_subscriptions", "users"
+  add_foreign_key "rooms", "messages", column: "pinned_message_id", on_delete: :nullify
   add_foreign_key "searches", "users"
   add_foreign_key "searches", "users", column: "creator_id"
   add_foreign_key "sessions", "users"
