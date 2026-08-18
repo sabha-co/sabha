@@ -42,10 +42,14 @@ export default class extends Controller {
 
     this.#dismissPending()
     document.body.classList.remove("thread-panel-open")
-    this.#closeTimer = setTimeout(() => this.#teardown(), TRANSITION_DURATION)
+    const generation = ++this.#closeGeneration
+    this.#closeTimer = setTimeout(() => {
+      if (generation === this.#closeGeneration) this.#teardown()
+    }, TRANSITION_DURATION)
   }
 
   #closeTimer
+  #closeGeneration = 0
   #autoLoaded = false
   #staleDismiss = false
   #wideViewport
@@ -81,7 +85,11 @@ export default class extends Controller {
 
   // A fresh load into the panel means something wants it open (a thread click or
   // the header reopening the roster), so it supersedes any pending dismissal.
+  // Cancel a pending close too — otherwise its teardown can empty this frame and
+  // drop its src mid-flight, before the reopen's load lands.
   #onFetchStart = () => {
+    clearTimeout(this.#closeTimer)
+    this.#closeGeneration++
     this.#staleDismiss = false
   }
 

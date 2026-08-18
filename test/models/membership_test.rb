@@ -1104,6 +1104,21 @@ class MembershipTest < ActiveSupport::TestCase
       action: "append", target: :shared_rooms
   end
 
+  test "starring a forum membership removes it from the forums list, not the shared list" do
+    forum = rooms(:help_desk)
+    membership = forum.memberships.create!(user: users(:kevin), involvement: :everything, starred: false)
+    ActionCable.server.pubsub.clear
+
+    membership.update!(starred: true)
+
+    # An unstarred forum sits in the forums list — remove must target that node,
+    # or the forum lingers there while a duplicate appears under Favorites.
+    assert_rendered_turbo_stream_broadcast membership.user, :rooms,
+      action: "remove", target: [ forum, "forum_rooms_list_node" ]
+    assert_rendered_turbo_stream_broadcast membership.user, :rooms,
+      action: "append", target: :starred_rooms
+  end
+
   test "non-star updates do not broadcast a star change" do
     ActionCable.server.pubsub.clear
 

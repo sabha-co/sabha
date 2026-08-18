@@ -8,10 +8,17 @@ export default class extends Controller {
   static values = { url: String, starred: Boolean }
   static targets = [ "label" ]
 
+  #persisted
+  #syncing = false
+
+  connect() {
+    this.#persisted = this.starredValue
+  }
+
   toggle() {
     this.starredValue = !this.starredValue
     this.#render()
-    this.#persist()
+    this.#sync()
   }
 
   #render() {
@@ -22,14 +29,34 @@ export default class extends Controller {
     }
   }
 
-  #persist() {
-    fetch(this.urlValue, {
-      method: this.starredValue ? "POST" : "DELETE",
-      headers: {
-        "X-CSRF-Token": document.querySelector("meta[name=csrf-token]").content,
-        "Accept": "text/vnd.turbo-stream.html"
-      },
-      credentials: "same-origin"
-    })
+  // One request at a time, always sending the latest desired state — so rapid
+  // toggles can't reach Rails out of order and collapse to the trailing state.
+  async #sync() {
+    if (this.#syncing) return
+    this.#syncing = true
+
+    try {
+      while (this.starredValue !== this.#persisted) {
+        const desired = this.starredValue
+        const response = await fetch(this.urlValue, {
+          method: desired ? "POST" : "DELETE",
+          headers: {
+            "X-CSRF-Token": document.querySelector("meta[name=csrf-token]").content,
+            "Accept": "text/vnd.turbo-stream.html"
+          },
+          credentials: "same-origin"
+        })
+        if (!response.ok) throw new Error(`Star toggle failed: ${response.status}`)
+        this.#persisted = desired
+      }
+    } catch (error) {
+      console.warn("[StarToggle]", error)
+      // The write didn't land — snap the button back to what the server still
+      // holds so it can't sit opposite the real membership.
+      this.starredValue = this.#persisted
+      this.#render()
+    } finally {
+      this.#syncing = false
+    }
   }
 }

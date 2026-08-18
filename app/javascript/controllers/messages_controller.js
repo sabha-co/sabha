@@ -228,11 +228,24 @@ export default class extends Controller {
         body: pending.formData,
         credentials: "same-origin"
       })
-      if (!response.ok) throw new Error(`Send failed: ${response.status}`)
+
+      // A followed auth redirect answers 200 with a login page, and a rejected
+      // send answers 200 HTML — neither is a real create. Only a non-redirected
+      // Turbo Stream counts. The saved payload and optimistic node stay put until
+      // that stream has rendered, so a failure here still has something to retry.
+      const contentType = response.headers.get("content-type") || ""
+      if (!response.ok || response.redirected || !contentType.includes("text/vnd.turbo-stream.html")) {
+        throw new Error(`Send failed: ${response.status}`)
+      }
+
+      Turbo.renderStreamMessage(await response.text())
 
       this.#pendingSends.delete(clientMessageId)
-      document.getElementById(`message_${clientMessageId}`)?.remove()
-      Turbo.renderStreamMessage(await response.text())
+      // The stream's append replaced the optimistic node in place (both share
+      // message_<client_message_id>); only strip one that never got its real
+      // render — the real message carries data-message-id.
+      const rendered = document.getElementById(`message_${clientMessageId}`)
+      if (rendered && !rendered.dataset.messageId) rendered.remove()
     } catch (error) {
       console.warn("[MessageRetry]", error)
       this.#clientMessage.failed(clientMessageId, true)

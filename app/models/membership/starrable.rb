@@ -12,16 +12,22 @@ module Membership::Starrable
   end
 
   def sidebar_list_name
-    if starred?
-      :starred_rooms
-    elsif room.forum?
-      :forum_rooms
-    else
-      :shared_rooms
-    end
+    sidebar_list_name_for(starred?)
   end
 
   private
+    # The sidebar list a membership belongs in for a given starred state.
+    # Forums live in their own list, so an unstarred forum is not a shared room.
+    def sidebar_list_name_for(starred)
+      if starred
+        :starred_rooms
+      elsif room.forum?
+        :forum_rooms
+      else
+        :shared_rooms
+      end
+    end
+
     def starred_only_for_shared_visible_rooms
       if room.direct? || room.thread?
         errors.add(:starred, "is not allowed for direct or thread rooms")
@@ -38,7 +44,7 @@ module Membership::Starrable
     def broadcast_star_change
       return if involved_in_invisible? || room.direct? || room.thread?
 
-      old_list = starred_before_last_save ? :starred_rooms : :shared_rooms
+      old_list = sidebar_list_name_for(starred_before_last_save)
 
       Turbo::StreamsChannel.broadcast_remove_to(
         user, :rooms,
