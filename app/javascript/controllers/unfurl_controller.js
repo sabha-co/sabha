@@ -27,12 +27,20 @@ export default class extends Controller {
     }
   }
 
+  // Prefix the SaaS workspace path (exposed by the base-path meta tag) so the POST
+  // stays inside the tenant. A bare /unfurl_link drops the workspace prefix and
+  // redirects to the workspace picker, silently failing the unfurl.
+  get #unfurlLinkPath() {
+    const basePath = document.querySelector('meta[name="base-path"]')?.content || ""
+    return `${basePath}/unfurl_link`
+  }
+
   async #fetchOpengraphMetadata(url) {
     this.#abortController?.abort()
     this.#abortController = new AbortController()
 
     try {
-      const response = await post("/unfurl_link", {
+      const response = await post(this.#unfurlLinkPath, {
         body: { url },
         contentType: "application/json",
         signal: this.#abortController.signal

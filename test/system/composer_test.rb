@@ -81,13 +81,7 @@ class ComposerTest < ApplicationSystemTestCase
   end
 
   test "pasting a URL unfurls an opengraph preview" do
-    metadata = Opengraph::Metadata.new(
-      title: "Example Site",
-      url: "https://example.com/article",
-      description: "An example article",
-      image: ""
-    )
-    Opengraph::Metadata.stubs(:from_url).returns(metadata)
+    stub_unfurl "Example Site", "https://example.com/article"
 
     paste_in_composer "https://example.com/article"
 
@@ -100,8 +94,32 @@ class ComposerTest < ApplicationSystemTestCase
     assert_selector last_message_selector(".og-embed__title"), text: "Example Site"
   end
 
+  test "pasting a URL while editing unfurls a preview that persists" do
+    message = Message.create! room: rooms(:hq), body: "Original", client_message_id: "edit-unfurl", creator: users(:david)
+    join_room rooms(:hq)
+
+    stub_unfurl "Example Site", "https://example.com/article"
+
+    within_message message do
+      reveal_message_actions
+      click_on "Edit"
+      assert_selector ".message__body-content--editing lexxy-editor"
+    end
+
+    paste_in_edit_editor "https://example.com/article"
+    assert_selector ".message__body-content--editing .og-embed__title", text: "Example Site", wait: 10
+    click_on "Save changes"
+
+    assert_selector last_message_selector(".og-embed__title"), text: "Example Site"
+  end
+
   private
     def last_message_selector(inner)
       ".message:last-of-type .message__body #{inner}"
+    end
+
+    def stub_unfurl(title, url, description: "An example article")
+      metadata = Opengraph::Metadata.new(title:, url:, description:, image: "")
+      Opengraph::Metadata.stubs(:from_url).returns(metadata)
     end
 end

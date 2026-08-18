@@ -23,7 +23,7 @@
                     aria: { multiline: "true", label: "Edit message" },
                     autofocus: true,
                     "permitted-attachment-types": "application/vnd.sabha.mention application/vnd.actiontext.opengraph-embed",
-                    data: { action: rich_text_data_actions } do %>
+                    data: { controller: "unfurl", action: "#{rich_text_data_actions} lexxy:insert-link->unfurl#unfurl" } do %>
                 <%= mention_prompt_tag autocompletable_users_path(room_id: @room&.id) %>
               <% end %>
             </div>

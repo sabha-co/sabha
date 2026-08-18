@@ -41,20 +41,31 @@ module RichTextEditorHelper
     assert_no_selector "#composer lexxy-editor .lexxy-editor__content", text: /./
   end
 
-  # Simulates pasting plain text into the composer so tests can exercise the
-  # paste-driven flows (e.g. a bare URL that unfurls into an embed).
+  # Simulates pasting plain text so tests can exercise the paste-driven flows (e.g.
+  # a bare URL that unfurls into an embed).
   def paste_in_composer(text)
-    composer_editor.click
+    paste_into composer_editor, text
+  end
 
-    page.execute_script(<<~JS, text)
-      const content = document.querySelector("#composer lexxy-editor .lexxy-editor__content")
-      const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: new DataTransfer() })
-      event.clipboardData.setData("text/plain", arguments[0])
-      content.dispatchEvent(event)
-    JS
+  # The edit form renders its own lexxy-editor, so pasting while editing must target
+  # that instance rather than the main composer.
+  def paste_in_edit_editor(text)
+    paste_into find(".message__body-content--editing lexxy-editor .lexxy-editor__content"), text
   end
 
   def assert_edit_editor_text(text)
     assert_selector ".message__body-content--editing lexxy-editor", text: text
   end
+
+  private
+    def paste_into(content, text)
+      content.click
+
+      page.execute_script(<<~JS, content, text)
+        const content = arguments[0]
+        const event = new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData: new DataTransfer() })
+        event.clipboardData.setData("text/plain", arguments[1])
+        content.dispatchEvent(event)
+      JS
+    end
 end
