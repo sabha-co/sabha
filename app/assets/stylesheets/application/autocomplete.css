@@ -38,26 +38,26 @@ action-text-attachment[content-type~="application/vnd.sabha.mention"] {
   margin: 0;
   padding: 0;
   position: relative;
-  vertical-align: middle;
+  vertical-align: baseline;
 }
 
 .mention {
-  --avatar-size: 1.1em;
+  --avatar-size: 1em;
   --avatar-border-radius: var(--avatar-size);
 
-  align-items: center;
+  align-items: baseline;
   color: inherit;
   display: inline-flex;
   font-weight: 600;
   line-height: var(--avatar-size);
   margin: 0;
   position: relative;
-  vertical-align: middle;
+  vertical-align: baseline;
 
   .mention__summary {
     --hover-size: 0;
 
-    align-items: center;
+    align-items: baseline;
     cursor: pointer;
     display: inline-flex;
     gap: calc(var(--inline-space) / 3);
@@ -68,6 +68,7 @@ action-text-attachment[content-type~="application/vnd.sabha.mention"] {
   }
 
   .avatar {
+    align-self: center;
     aspect-ratio: 1;
     block-size: var(--avatar-size);
     border-radius: var(--avatar-border-radius);
