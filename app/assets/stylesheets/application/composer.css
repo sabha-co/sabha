@@ -256,18 +256,24 @@
   }
 }
 
-/* Typing indicator: a reserved 22px row pinned above the composer card and
-   outside the message scroller — always present, even empty, so the composer
-   never shifts when someone starts or stops typing */
+/* Typing indicator: floats in a 22px strip just above the composer card,
+   overlapping the bottom of the message canvas. Absolutely positioned, so it
+   reserves no layout space when idle and never shifts the composer when someone
+   starts or stops typing. It paints the canvas background so the dots and label
+   stay legible over whatever message sits behind them. */
 .typing-indicator {
   align-items: center;
+  background-color: var(--color-bg);
   block-size: 22px;
   color: var(--color-text-subtle);
   display: flex;
-  flex: none;
   gap: 0.75ch;
+  inset-block-end: 100%;
+  inset-inline: 0;
   opacity: var(--indicator-opacity, 0);
   overflow: hidden;
+  pointer-events: none;
+  position: absolute;
   transition: opacity 250ms cubic-bezier(0.25, 1, 0.5, 1);
 
   /* Align the label with the composer card, past the search button */

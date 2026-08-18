@@ -7,9 +7,9 @@
     Mentions resolve against the parent room roster (Rooms::Thread#mentionable_users). %>
 <% unless Current.user.blocked_in?(parent_message.room) %>
   <div class="composer composer--thread flex flex-column position-relative">
-    <%# Reserved row kept even with no typing data, so the swap to the real
-        panel after the first reply doesn't shift the composer %>
-    <div class="typing-indicator" aria-hidden="true"></div>
+    <%# No typing indicator here: it's an out-of-flow overlay in the real panel,
+        so its absence doesn't shift the composer when this provisional panel
+        swaps for the real one after the first reply. %>
     <%= form_with model: Message.new, url: rooms_threads_path, id: "thread-composer",
           class: "margin-block flex-item-grow contain",
           data: {

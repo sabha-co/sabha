@@ -20,13 +20,20 @@ class MessageComposerTest < ApplicationSystemTestCase
     assert_message_text "Regression wall says hi"
   end
 
-  test "the typing indicator is a reserved static row so the composer never shifts" do
+  test "the typing indicator floats above the composer and reserves no space" do
     click_on "Designers"
     dismiss_pwa_install_prompt
 
     row = find(".composer .typing-indicator", visible: :all)
-    assert_equal "static", row.evaluate_script("getComputedStyle(this).position")
+    # Out-of-flow overlay: it never contributes height, so the composer can't
+    # shift when someone starts or stops typing.
+    assert_equal "absolute", row.evaluate_script("getComputedStyle(this).position")
     assert_equal 22, row.evaluate_script("Math.round(this.getBoundingClientRect().height)")
+
+    # It floats above the composer card rather than pushing it down.
+    card_top = find(".composer .composer__row").evaluate_script("Math.round(this.getBoundingClientRect().top)")
+    row_bottom = row.evaluate_script("Math.round(this.getBoundingClientRect().bottom)")
+    assert_operator row_bottom, :<=, card_top + 1
   end
 
   test "send carries the accent state only while the draft is non-empty" do

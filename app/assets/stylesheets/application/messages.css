@@ -50,8 +50,10 @@
   font-size: 0.78125rem;
   font-weight: 600;
   gap: 6px;
-  /* --footer-height understates the composer card; clear it with margin */
-  inset-block-end: calc(var(--footer-height) + 5em);
+  /* --footer-height understates the composer card, and the typing indicator is
+     now an out-of-flow overlay that no longer pads the composer — clear the card
+     with a larger margin so the pill floats above it */
+  inset-block-end: calc(var(--footer-height) + 6.25em);
   inset-inline-start: 50%;
   outline: 0 solid var(--color-selected-dark);
   position: absolute;
