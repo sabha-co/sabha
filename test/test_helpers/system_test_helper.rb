@@ -1,12 +1,13 @@
 module SystemTestHelper
   def sign_in(email_address, password = "secret123456")
+    # Unauthenticated root redirects straight to the sign-in form (no interstitial
+    # "Sign In" link), and the password form's submit button reads "Sign in".
     visit root_url
-    click_on "Sign In"
 
     fill_in "email_address", with: email_address
     fill_in "password", with: password
 
-    click_on "log_in"
+    click_on "Sign in"
     wait_for_network_idle!
     assert_selector ".rooms", wait: 5  # Wait for sidebar to load
   end

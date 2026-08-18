@@ -2,11 +2,18 @@ class ActionText::Attachment::OpengraphEmbed
   include ActiveModel::Model
 
   OPENGRAPH_EMBED_CONTENT_TYPE = "application/vnd.actiontext.opengraph-embed"
+  TWITTER_AVATAR_URL_PREFIX = "https://pbs.twimg.com/profile_images"
+
+  # An embed with no link is a broken embed — bail rather than render a
+  # self-referential nil-href link. Guards the case where attributes_from_content
+  # finds nothing (e.g. a renamed og-embed class), so `attachment if valid?`
+  # actually returns nil.
+  validates :href, presence: true
 
   class << self
     def from_node(node)
       if node["content-type"]
-        if matches = node["content-type"].match(OPENGRAPH_EMBED_CONTENT_TYPE)
+        if node["content-type"].match(OPENGRAPH_EMBED_CONTENT_TYPE)
           attachment = new(attributes_from_node(node))
           attachment if attachment.valid?
         end
@@ -14,17 +21,42 @@ class ActionText::Attachment::OpengraphEmbed
     end
 
     private
+      # Trix serialized the embed's details as attributes of the
+      # <action-text-attachment> node. Lexxy only serializes the sgid, content
+      # and content-type, so newer attachments carry the details in their
+      # content markup instead.
       def attributes_from_node(node)
+        if node["href"].present?
+          {
+            href: node["href"],
+            url: node["url"],
+            filename: node["filename"],
+            description: node["caption"]
+          }
+        else
+          attributes_from_content(node["content"].to_s)
+        end
+      end
+
+      def attributes_from_content(content)
+        fragment = Nokogiri::HTML.fragment(content)
+        title = fragment.at_css(".og-embed__title")
+        link = title&.at_css("a")
+
         {
-          href: node["href"],
-          url: node["url"],
-          filename: node["filename"],
-          description: node["caption"]
+          href: link&.[]("href"),
+          url: fragment.at_css(".og-embed__image img")&.[]("src"),
+          filename: (link || title)&.text&.strip,
+          description: fragment.at_css(".og-embed__description")&.text&.strip
         }
       end
   end
 
   attr_accessor :href, :url, :filename, :description
+
+  def twitter_avatar?
+    url.to_s.start_with?(TWITTER_AVATAR_URL_PREFIX)
+  end
 
   def attachable_content_type
     OPENGRAPH_EMBED_CONTENT_TYPE
@@ -35,10 +67,6 @@ class ActionText::Attachment::OpengraphEmbed
   end
 
   def to_partial_path
-    "action_text/attachables/opengraph_embed"
-  end
-
-  def to_trix_content_attachment_partial_path
     "action_text/attachables/opengraph_embed"
   end
 end

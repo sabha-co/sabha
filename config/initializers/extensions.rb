@@ -13,7 +13,7 @@ end
 # These files only reference deferred constants inside method bodies (not at class scope),
 # so they work fine loading after eager load.
 Rails.application.config.after_initialize do
-  %w[ action_text_attachables actiontext_opengraph_embeds active_storage_analyze_job_suppress_broadcasts active_storage_direct_upload_expiry string ].each do |name|
+  %w[ action_text_attachables actiontext_opengraph_embeds action_text_allowed_tags active_storage_analyze_job_suppress_broadcasts active_storage_direct_upload_expiry string ].each do |name|
     require "rails_ext/#{name}"
   end
 end

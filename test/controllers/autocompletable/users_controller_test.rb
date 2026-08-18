@@ -87,6 +87,28 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
     assert response.parsed_body.size > 0, "blank query should populate the @-mention picker"
   end
 
+  test "mention prompt (html) returns lexxy-prompt-item elements filtered by `filter`" do
+    get autocompletable_users_url(room_id: rooms(:hq).id, format: :html), params: { filter: "da" }
+
+    assert_response :success
+    assert_match %r{<lexxy-prompt-item[^>]*sgid=}, response.body
+    assert_match %r{<template type="menu">}, response.body
+    assert_match %r{class="mention"}, response.body
+    assert_match %r{David}, response.body
+  end
+
+  test "mention prompt offers @everyone to an admin in an open room when it matches the filter" do
+    room = Rooms::Open.create_for({ name: "Open Space", creator: users(:david) }, users: [ users(:david) ])
+
+    get autocompletable_users_url(room_id: room.id, format: :html), params: { filter: "every" }
+    assert_response :success
+    assert_match %r{mention--everyone}, response.body
+
+    get autocompletable_users_url(room_id: room.id, format: :html), params: { filter: "zzz" }
+    assert_response :success
+    assert_no_match %r{mention--everyone}, response.body
+  end
+
   test "exact first name matches appear before partial matches" do
     davidson = User.create!(name: "Davidson Smith", email_address: "davidson@example.com", password: "secret123456", verified_at: 1.day.ago)
 

@@ -137,7 +137,7 @@ export default class extends Controller {
   }
 
   async editMyLastMessage() {
-    const composerSelector = this.element.closest("#thread-message-area") ? "#thread-composer trix-editor" : "#composer trix-editor"
+    const composerSelector = this.element.closest("#thread-message-area") ? "#thread-composer lexxy-editor" : "#composer lexxy-editor"
     const editor = document.querySelector(composerSelector)
 
     // Only act when our own composer or message area has focus — prevents
@@ -146,7 +146,7 @@ export default class extends Controller {
     const focused = document.activeElement
     if (!editor?.contains(focused) && !this.element.contains(focused)) return
 
-    const editorEmpty = editor && editor.matches(":empty")
+    const editorEmpty = editor && editor.isBlank
 
     if (editorEmpty && this.#paginator.upToDate) {
       this.#myLastMessage?.querySelector(".message__edit-btn")?.click()

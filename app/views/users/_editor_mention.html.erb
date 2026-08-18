@@ -1,0 +1,5 @@
+<%# The simple inline chip Lexxy shows for a mention *inside the editor* — both when
+    inserting one via the @-prompt and when editing a stored message. Everything here
+    is phrasing content so it stays within Lexxy's <p>; the interactive click-to-profile
+    popup (users/mention) is only for display, not for the composer. %>
+<span class="mention" sgid="<%= user.attachable_sgid %>"><%= avatar_tag user %> <%= user.name %></span>

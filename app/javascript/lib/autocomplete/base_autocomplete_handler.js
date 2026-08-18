@@ -120,7 +120,10 @@ export default class BaseAutocompleteHandler {
 
   #fetchAutocompletables(url) {
     if (url) {
-      return fetch(url, { as: "json" }).then(response => response.json())
+      // Request JSON explicitly: the same endpoint also serves HTML prompt items
+      // to the rich text editor's mention prompt, and `as: "json"` is not a fetch
+      // option (it sent Accept: */*, which now negotiates to HTML).
+      return fetch(url, { headers: { Accept: "application/json" } }).then(response => response.json())
     } else {
       return Promise.resolve()
     }

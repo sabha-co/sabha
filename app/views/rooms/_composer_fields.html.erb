@@ -14,17 +14,19 @@
         <%= icon_tag "messages-outlined", class: "composer__input-hint", style: "view-transition-name: #{hint_transition};" %>
 
         <div class="flex flex-column flex-item-grow min-width gap">
+          <% mention_src = autocompletable_users_path(room_id: autocomplete_room&.id, user_ids: mention_user_ids) %>
           <% body_options = {
-               rows: 1, class: "input", style: "order: -1",
+               rows: 1, class: "input lexxy-content", style: "order: -1",
                aria: { multiline: "true", label: label },
+               "permitted-attachment-types": "application/vnd.sabha.mention application/vnd.actiontext.opengraph-embed",
                data: {
-                 controller: "rich-autocomplete",
-                 action: rich_text_data_actions,
-                 rich_autocomplete_url_value: autocompletable_users_path(room_id: autocomplete_room&.id, user_ids: mention_user_ids),
-                 permitted_attachment_types: "application/vnd.actiontext.opengraph-embed",
+                 controller: "unfurl",
+                 action: "#{rich_text_data_actions} lexxy:insert-link->unfurl#unfurl",
                  composer_target: "text" } } %>
           <% body_options[:id] = body_id if body_id %>
-          <%= form.rich_text_area :body, **body_options %>
+          <%= form.rich_text_area :body, **body_options do %>
+            <%= mention_prompt_tag mention_src %>
+          <% end %>
         </div>
 
         <% if attachments %>

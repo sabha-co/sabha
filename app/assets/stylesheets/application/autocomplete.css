@@ -33,18 +33,12 @@
   }
 }
 
-[data-trix-content-type~="application/vnd.sabha.mention"] {
+action-text-attachment[content-type~="application/vnd.sabha.mention"] {
   display: inline-flex;
   margin: 0;
   padding: 0;
   position: relative;
   vertical-align: middle;
-
-  .attachment__toolbar {
-    inset-block-start: 0;
-    inset-inline-start: 0;
-    z-index: 2;
-  }
 }
 
 .mention {
@@ -59,10 +53,6 @@
   margin: 0;
   position: relative;
   vertical-align: middle;
-
-  details {
-    overflow: visible;
-  }
 
   .mention__summary {
     --hover-size: 0;

@@ -189,7 +189,10 @@
     animation: message-arrive 250ms cubic-bezier(0.25, 1, 0.5, 1) both;
   }
 
-  &:has([open]) {
+  /* Lift paint containment and stacking whenever a popup opens inside the message
+     so its menu can escape the row — [open] is the <details> popup, [data-open] is
+     the inline @mention popup. */
+  &:has([open], [data-open]) {
     content-visibility: visible;
     contain: none;
     z-index: 1;
@@ -728,12 +731,16 @@ img.message__attachment {
   padding: var(--inline-space-half);
   position: absolute;
 
-  [open] > & {
+  /* [data-open] is the inline @mention popup (mention-popup controller); [open]
+     is every <details>-based popup */
+  [open] > &,
+  [data-open] > & {
     display: block;
     animation: popup-in 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  [open] > &.is-closing {
+  [open] > &.is-closing,
+  [data-open] > &.is-closing {
     animation: popup-out var(--popup-close-dur) cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
@@ -858,7 +865,7 @@ img.message__attachment {
   padding: var(--block-space);
 }
 
-.trix-content .message__avatar-menu {
+.lexxy-content .message__avatar-menu {
   padding: var(--block-space);
 }
 
@@ -960,7 +967,7 @@ img.message__attachment {
     padding: var(--content-padding-block) 0 var(--content-padding-block) var(--content-padding-inline);
     text-shadow: 0 0 3px var(--color-text-reversed);
 
-    .trix-content {
+    .lexxy-content {
       font-size: 2.4em;
       line-height: 1.4;
     }
