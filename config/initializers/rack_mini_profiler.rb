@@ -6,7 +6,7 @@ if Rails.env.development?
   Rack::MiniProfilerRails.initialize!(Rails.application)
 
   # Start hidden by default (press Alt+P to toggle)
-  Rack::MiniProfiler.config.start_hidden = false
+  Rack::MiniProfiler.config.start_hidden = true
 
   # Allow all users in development
   Rack::MiniProfiler.config.authorization_mode = :allow_all
