@@ -1,6 +1,6 @@
 # Plan: Sabha v2 redesign — Phase 3 (audit gap closure)
 
-**Status:** draft (review) · **Date:** 2026-08-13 · **Builds on:** Phase 2 (`redesign-v2`, complete except the composer emoji button, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
+**Status:** draft (review) · **Date:** 2026-08-13 · **Builds on:** Phase 2 (`redesign-v2`, complete, unpushed) · **Source of truth:** `~/dev/design_handoff_sabha_v2` (design references, not code)
 
 > **What this is.** After Phase 2 closed out, a full screen-by-screen audit compared the running app against every surface the handoff draws (all twelve Desktop screens, the States and Auth prototypes, and the redline markup — including states the rendered comps hide, which is how the header member pill was missed the first time). The core surfaces match. What remains is a concrete list: two shape-level divergences (search, DMs), one IA divergence (settings), one header element, an inbox polish cluster, and a handful of details. Phase 3 closes that list.
 
@@ -96,7 +96,7 @@ The comp: an in-shell 720px reading column. Identity header — 88px radius-22 a
 
 ### WS8 — Members directory (`accounts/users#index`)
 
-- Shell + navbar: back, "Members" title, count-line subtitle, trailing **Manage badges** accent text link (admins). The v1 icon buttons (badges/bots/home) drop — bots live in the settings shell now.
+- Shell + navbar: "Members" title, count-line subtitle, trailing **Manage badges** accent text link (admins). The v1 icon buttons (badges/bots/home) drop — bots live in the settings shell now.
 - Toolbar row under the navbar: the existing debounced search field + the existing status segmented control (staff).
 - Content: 820px column; role sections become bordered radius-12 cards with hairline-divided rows (the row innards are already v2 from the role-menu work — untouched, as is the `account_users` turbo-frame + manage dialog).
 
@@ -109,7 +109,7 @@ The comp: an in-shell 720px reading column. Identity header — 88px radius-22 a
 ### WS10 — Room settings (`rooms/{opens,closeds,forums}#edit` via `layouts/_tabbed_edit`; directs/threads via `layouts/_edit`)
 
 - Shell for both layout partials + navbar: "‹ {room name}" back + "Room settings" title. Content column 640px.
-- **Tab consolidation per comp: two tabs, not three.** The comp's Settings tab holds the name/description card ("Renaming posts a line in the room so nobody wonders what happened." helper), the access card (Open-to-everyone + Add-new-members-automatically toggles, auto-join disabled-looking when closed), and one Leave/Delete card (Leave quiet row, Delete negative row, delete disabled on the original room). Today About (form) / Members / Settings are three tabs with the access toggle living at the top of the *Members* panel — merge About into Settings and move the access toggles there. Notifications (involvement select + hide toggle) stays in the Settings tab — app content the comp doesn't draw, kept.
+- **Tab consolidation per comp: two tabs, not three.** The comp's Settings tab holds the name/description card ("Renaming posts a line in the room so nobody wonders what happened." helper), the access card (Open-to-everyone + Add-new-members-automatically toggles, auto-join disabled-looking when closed), and one Leave/Delete card (Leave quiet row, Delete negative row, the Delete row omitted entirely on the original room). Today About (form) / Members / Settings are three tabs with the access toggle living at the top of the *Members* panel — merge About into Settings and move the access toggles there. Notifications (involvement select + hide toggle) stays in the Settings tab — app content the comp doesn't draw, kept.
 - Members tab: "Add someone by name" input + "In this room" bordered card (count header, member rows with Remove) — restyle the existing `member-toggle` machinery, don't rewrite it.
 - Non-admins: name/description read-only, Members + Settings tabs as today, inside the shell.
 - Directs/threads keep the untabbed `_edit` — same shell and column, existing content (notifications, block toggle, delete conversation).
@@ -145,8 +145,18 @@ Each workstream = one commit or a small bisectable series on `redesign-v2` (stil
 
 ## Out of scope (record, don't silently drop)
 
-- **Huddles** (header chip, banner, panel) and the **pinned-messages bar** — deferred features; header slots stay free.
-- **Composer format bar, @/# inserts, emoji button** — await the Trix→Lexxy migration.
-- **Forum post as a full page** with header Copy link/Follow/Reopen — the post stays in the wide contextual panel (owner call recorded in Phase 2 / WS2).
-- **Server-side message grouping** — stays client-side.
+> **Verified against the working tree 2026-08-18.** Two deferrals have since shipped (struck through); the rest still stand. Status notes inline.
+
+- ~~**Composer format bar, @/# inserts, emoji button** — await the Trix→Lexxy migration.~~ **✅ SHIPPED.** The Trix→Lexxy migration merged into `redesign-v2` (PR #163, `b0b5aa1`), so this is no longer blocked: the persistent format bar is Lexxy's own always-on toolbar (B/I/S/`</>`) with a grafted `@`-insert (`composer_controller.js#insertFormatBarExtras`), the emoji button is `composer__emoji-btn` (`_composer_fields.html.erb`), and markdown input is live. The "mini-composer only got bigger tap targets" caveat is superseded.
+- ~~**pinned-messages bar** — deferred feature; header slot stays free.~~ **✅ SHIPPED (2026-08-18).** Single pin per room via a nullable `rooms.pinned_message_id` column (FK `on_delete: :nullify`) — no separate table, since one pin needs no join/attribution row; `Message::Pinnable#pin!`/`#unpin!` replace-on-set, `Room::Pinning#pinnable?` gates room types. Staff-only (`User#staff?`), rendered as the handoff's neutral strip under the header (`--color-bg-sunk` + hairline, accent "Pinned" label, ellipsis-truncated text). The whole strip links to the pinned message (scroll-to); pin/unpin lives in the message ⋯ dropdown. Live over the room stream; staff affordances gated by a `.staff` body class since broadcasts render viewer-less. Files: `Messages::PinsController`, `Message::Pinnable`, `Room::Pinning`, `rooms/_pinned_strip`, `messages/actions/_pin`, `pins.css`.
+- **Huddles** (header chip, banner, panel) — deferred feature; header slot stays free. **Still deferred (2026-08-18):** zero implementation — no model/route/migration/gem/JS/CSS. Huddles was *un-deferred* on 2026-08-15 (requirements brainstorm `docs/brainstorms/2026-08-15-huddles-requirements.md` done + confirmed), but it is not yet planned or built. The header "slot" is the `navbar-actions` layout area, not a stubbed element.
+- **Forum post as a full page** with header Copy link/Follow/Reopen — the post stays in the wide contextual panel (owner call recorded in Phase 2 / WS2). **Still deferred (2026-08-18):** verified — a post renders only as a gallery card or the `thread_panel_frame` side panel; `resources :posts, only: :show` renders `layout: false`, deep links open the panel over the gallery. No full-page route/template.
+- **Server-side message grouping** — stays client-side. **Still deferred / deliberate (2026-08-18):** verified — grouping/threading stays in `message_formatter.js`; the server emits no threaded/continuation flag, not even a first-paint hint.
 - **Error-page typeface** — system stack accepted for static pages.
+
+### Smaller reskin-scope deferrals (verified 2026-08-18)
+
+- ~~**Filter-aware Activity streaming** — an off-filter live notification appends until reload.~~ **✅ SHIPPED.** Commit `d32d343` added `data-active-filter` on `#inbox` + `inbox.css:271-273`, which hide off-filter live rows (they still land in the DOM but are visually suppressed). The "appends until reload" symptom is gone.
+- **Optimistic reaction insert** and **search-in-card** — **still deferred (2026-08-18):** the aggregated grouped chips shipped, but reactions still take a server round-trip through the `:boosting` Turbo frame (no optimistic insert); there is no search-in-card (only the separate global ⌘K search palette).
+- **Fully-live thread cards** — the "N new" pill + follow state are page-load snapshots. **Still deferred (2026-08-18)**, with one advance: a brand-new *followed* thread now broadcasts into the inbox as a live card (`20176ea`), so card *arrival* is live — but the pill and follow-state *within* a card are still snapshots (a per-viewer `inbox_threads` rework remains deferred). Reply count/last-reply already update live via the embedded footer.
+- **Live-huddle dot in the collapsed rail** — **still deferred (2026-08-18):** the rail carries only unread-activity/DM dots and presence; no live/huddle dot. Ties into Huddles.
