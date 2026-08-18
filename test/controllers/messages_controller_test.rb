@@ -65,7 +65,9 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     message = Message.last
 
     assert_no_difference -> { Message.count } do
-      post room_messages_url(@room, format: :turbo_stream), params: params
+      assert_turbo_stream_broadcasts [ @room, :messages ], count: 0 do
+        post room_messages_url(@room, format: :turbo_stream), params: params
+      end
     end
 
     assert_response :success

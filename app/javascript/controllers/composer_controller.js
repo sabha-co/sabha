@@ -10,6 +10,7 @@ export default class extends Controller {
   static outlets = [ "messages" ]
 
   #files = []
+  #pendingClientIds = []
 
   connect() {
     if (!this.#usingTouchDevice) {
@@ -77,10 +78,12 @@ export default class extends Controller {
   submitEnd(event) {
     if (!this.hasMessagesOutlet) return
 
+    const clientMessageId = this.#pendingClientIds.shift() || this.clientidTarget.value
+
     if (event.detail.success) {
-      this.messagesOutlet.resolvePendingMessage(this.clientidTarget.value)
+      this.messagesOutlet.resolvePendingMessage(clientMessageId)
     } else {
-      this.messagesOutlet.failPendingMessage(this.clientidTarget.value)
+      this.messagesOutlet.failPendingMessage(clientMessageId)
     }
   }
 
@@ -191,6 +194,7 @@ export default class extends Controller {
       // Captured before reset so a failed send can be retried as-submitted
       if (this.hasMessagesOutlet) {
         this.messagesOutlet.rememberPendingMessage(clientMessageId, this.element.action, new FormData(this.element))
+        this.#pendingClientIds.push(clientMessageId)
       }
 
       this.element.requestSubmit()
@@ -241,7 +245,7 @@ export default class extends Controller {
   }
 
   #generateClientId() {
-    return Math.random().toString(36).slice(2)
+    return crypto.randomUUID()
   }
 
   #reset() {

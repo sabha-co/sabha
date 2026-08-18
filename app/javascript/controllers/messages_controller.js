@@ -190,6 +190,13 @@ export default class extends Controller {
 
   resolvePendingMessage(clientMessageId) {
     this.#pendingSends.delete(clientMessageId)
+
+    // The real message shares the optimistic node's id (Message#to_key is the
+    // client_message_id), so the create stream's append already replaces it by
+    // id. Only clear a node still awaiting its server render — real messages
+    // carry data-message-id — so a late submit-end never deletes the real one.
+    const pending = document.getElementById(`message_${clientMessageId}`)
+    if (pending && !pending.dataset.messageId) pending.remove()
   }
 
   failPendingMessage(clientMessageId) {
@@ -224,6 +231,7 @@ export default class extends Controller {
       if (!response.ok) throw new Error(`Send failed: ${response.status}`)
 
       this.#pendingSends.delete(clientMessageId)
+      document.getElementById(`message_${clientMessageId}`)?.remove()
       Turbo.renderStreamMessage(await response.text())
     } catch (error) {
       console.warn("[MessageRetry]", error)
