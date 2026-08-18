@@ -4,7 +4,7 @@
 <%= link_to_room room,
       id: dom_id(room, dom_prefix(list_name, :list_node_link)),
       class: [ "room btn txt-nowrap flex-item-grow", "unread": membership.unread?, "badge": notifications_count > 0 ] do %>
-  <span class="overflow-ellipsis"><span class="room__glyph"><%= room_type_indicator(room) %></span> <span class="room__name"><%= room_display_name(room) %></span></span>
+  <span class="overflow-ellipsis"><span class="room__glyph"><%= room_type_indicator(room) %></span><span class="room__name"><%= room_display_name(room) %></span></span>
   <% if notifications_count > 0 %><span class="notification-badge"><%= notifications_count %></span><% end %>
   <% if membership.involved_in_nothing? %><span class="muted-indicator"><%= icon_tag "bell-off" %></span><% end %>
 <% end %>
