@@ -156,7 +156,7 @@ Community-oriented chat. Users are members of online communities — hobbyist gr
 - **Anti-references:** Discord feature overload, generic SaaS dashboards, dark-themed gamer aesthetics.
 - **Theme:** Light and dark mode via OKLch tokens. Light mode is the primary experience.
 - **Color:** Indigo is the default brand accent for interactive elements (links, selection, primary actions), with five selectable workspace accents (indigo/ink/forest/rust/plum) bound via `[data-accent]`. Warm earth tones for avatars/identity, cool grays for structure. Red reserved for destructive/negative actions. Tokens are declared once in `app/assets/stylesheets/application/colors.css` (primitives → semantic → scopes); components read only the semantic `--color-*` layer.
-- **Typography:** System font stack, 6-level size scale. Let the text breathe.
+- **Typography:** Self-hosted Instrument Sans for UI and body, JetBrains Mono for code, each over a system-font fallback stack (see `app/assets/stylesheets/application/base.css`). 6-level size scale. Let the text breathe.
 
 ### Design Principles
 1. **Clarity over cleverness** — Every element should be immediately understandable. No mystery meat navigation, no hidden features behind gestures.
