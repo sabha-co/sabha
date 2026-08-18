@@ -69,7 +69,7 @@ class MessageComposerTest < ApplicationSystemTestCase
     ], labels
   end
 
-  test "on a phone the composer keeps 44px tap targets with formatting behind the toggle" do
+  test "on a phone the composer keeps 44px tap targets and reveals the format bar on focus" do
     page.current_window.resize_to(390, 800)
 
     find("#sidebar-toggle").click
@@ -77,14 +77,16 @@ class MessageComposerTest < ApplicationSystemTestCase
     dismiss_pwa_install_prompt
 
     # The tools row meets the 44px minimum tap target.
-    %w[.composer__send-btn .composer__rich-text-btn .composer__attachment-btn].each do |selector|
+    %w[.composer__send-btn .composer__emoji-btn .composer__attachment-btn].each do |selector|
       height = find(selector).evaluate_script("Math.round(this.getBoundingClientRect().height)")
       assert_operator height, :>=, 44, "#{selector} is #{height}px tall, below the 44px minimum"
     end
 
-    # Formatting is reachable but tucked behind the toggle, not shown inline.
-    assert_no_selector ".composer--rich-text"
-    find(".composer__rich-text-btn").click
-    assert_selector ".composer--rich-text"
+    # The format bar reveals only while the field has focus. The composer
+    # auto-focuses on load, so blur it first to observe the resting (hidden) state.
+    page.execute_script("document.activeElement?.blur()")
+    assert_no_selector "#composer lexxy-toolbar", visible: true
+    composer_editor.click
+    assert_selector "#composer lexxy-toolbar", visible: true
   end
 end

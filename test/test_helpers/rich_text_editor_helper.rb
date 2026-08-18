@@ -21,12 +21,6 @@ module RichTextEditorHelper
     composer_editor.send_keys(*keys)
   end
 
-  # The rich text button is only displayed for fine-pointer devices, a media
-  # query headless Chrome doesn't satisfy, so click it directly.
-  def toggle_rich_text_toolbar
-    page.execute_script("document.querySelector('#composer .composer__rich-text-btn').click()")
-  end
-
   # Waits for the suggestion to appear, then commits the selected one with Tab.
   def pick_mention(name)
     assert_selector ".lexxy-prompt-menu__item", text: name

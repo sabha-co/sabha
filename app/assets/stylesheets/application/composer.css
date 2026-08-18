@@ -11,13 +11,20 @@
 }
 
 /* Attachments */
-.composer__attachment-btn {
-  --hover-filter: brightness(0.85);
-  margin-inline-end: -0.5em;
+/* Tools row buttons: bare 18px glyphs at subtle ink (comp), no button box;
+   hover lifts them to full ink rather than showing a surface. */
+.composer__attachment-btn,
+.composer__emoji-btn,
+.composer__search-btn {
+  --btn-color: var(--color-text-subtle);
+  --btn-padding: 0;
+  --btn-size: 18px;
+  --icon-size: 18px;
 
   @media (any-hover: hover) {
     &:where(:not(:active):hover) {
-      filter: var(--hover-filter);
+      --btn-color: var(--color-text);
+      background-color: transparent;
       box-shadow: none;
     }
   }
@@ -101,9 +108,17 @@
   }
 }
 
-/* Tools row: attach and rich-text toggle left, Send flush right */
+/* Tools row: attach · emoji · search left, Send flush right; 12px gap and
+   6/12/10 padding (comp) */
 .composer__tools {
-  margin-block-start: 0.25em;
+  gap: 12px;
+  padding: 6px 12px 10px;
+}
+
+/* The emoji control wraps its trigger and the scrim dialog so the dialog can
+   sit in the composer's flow without stretching the tools row */
+.composer__emoji {
+  display: inline-flex;
 }
 
 .composer__send-btn {
@@ -124,19 +139,96 @@
   }
 }
 
-/* The composer grows with the draft to ~8 lines, then scrolls */
-.composer trix-editor.input {
-  max-block-size: 12rem;
-  overflow-y: auto;
+/* The card follows the comp's row rhythm: no padding on the card itself
+   (--input-padding: 0 in the view), each row carries its own — format bar 8/14,
+   input 13/14, tools 6/12/10 — so the single-line composer stays compact. */
+.composer lexxy-editor.input {
+  display: flex;
+  flex-direction: column;
 
-  /* Comp: 15px message text in the field. The 16px input floor exists to
-     stop iOS focus-zoom, which only matters on coarse pointers. */
+  /* Comp: 15px message text, 13/14 padding, grows to ~8 lines then scrolls. The
+     16px input floor exists to stop iOS focus-zoom, only relevant on coarse
+     pointers. */
+  .lexxy-editor__content {
+    max-block-size: 12rem;
+    overflow-y: auto;
+    padding: 13px 14px;
+  }
+
   @media (pointer: fine) {
     font-size: 0.9375rem;
   }
+
+  /* Format bar: bare 13px glyphs at 15px gaps under a hairline, 8/14 padding
+     (comp). The @ insert is grafted on in composer#insertFormatBarExtras. */
+  lexxy-toolbar {
+    --lexxy-toolbar-gap: 15px;
+    --lexxy-toolbar-button-size: 13px;
+    --lexxy-toolbar-icon-size: 13px;
+
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-block-end: 1px solid var(--color-border);
+    border-radius: 0;
+    color: var(--color-text-subtle);
+    display: flex;
+    order: -1;
+    padding: 8px 14px;
+
+    /* Curate to the handoff set (B I S </>): hide everything Lexxy offers, then
+       re-show just those four. The @ insert (.composer__mention-btn, grafted on
+       in composer#insertFormatBarExtras) shows too; attachments and emoji live
+       in the tools row below. */
+    .lexxy-editor__toolbar-button,
+    .lexxy-editor__toolbar-dropdown {
+      display: none;
+    }
+
+    button[name="bold"],
+    button[name="italic"],
+    button[name="strikethrough"],
+    button[name="code"],
+    .composer__mention-btn {
+      display: grid;
+    }
+
+    /* Bare glyphs like the comp — no button surface; hover lifts the subtle
+       glyph to full ink. */
+    .lexxy-editor__toolbar-button:hover,
+    .composer__mention-btn:hover {
+      background-color: transparent;
+      color: var(--color-text);
+    }
+  }
 }
 
-/* Rich text editor styling for all devices */
+/* Phones: the resting composer stays one compact card; the format bar reveals
+   once the field has focus (handoff). */
+@media (max-width: 499.9px) {
+  .composer lexxy-editor.input lexxy-toolbar {
+    display: none;
+  }
+
+  .composer:focus-within lexxy-editor.input lexxy-toolbar {
+    display: flex;
+  }
+}
+
+/* The @ insert grafted onto the bar (composer#insertFormatBarExtras) is a text
+   glyph rather than a masked icon, so it carries its own sizing; the leading
+   hairline is the handoff's B/I/S/</> | @ group divider. */
+.composer__mention-btn {
+  border-inline-start: 1px solid var(--color-border);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding-inline-start: 8px;
+}
+
+/* The toggle-driven toolbar for the surfaces that keep it: the message-edit
+   form and the forum post composer (forum_body_controller). The chat composers
+   above show their bar persistently instead. */
 .composer--rich-text {
   lexxy-toolbar {
     display: flex;
@@ -144,32 +236,6 @@
 
   lexxy-editor.input {
     margin-block-start: var(--block-space-half);
-  }
-}
-
-/* In the message composer the toolbar goes below the text, on the same row as
-   the surrounding action buttons, like the old Trix toolbar did. The edit
-   composer keeps it on top. */
-#composer.composer--rich-text lexxy-editor.input {
-  display: flex;
-  flex-direction: column;
-
-  /* Sit the toolbar row on the same baseline as the composer's round buttons,
-     which pull themselves down with negative margins */
-  margin-block-end: -0.25em;
-
-  .lexxy-editor__content {
-    order: -1;
-  }
-
-  lexxy-toolbar {
-    margin-block-start: 0.4em;
-
-    /* Dropdowns open upward — the toolbar sits at the bottom of the screen */
-    [data-dropdown-panel] {
-      inset-block-start: auto;
-      inset-block-end: 100%;
-    }
   }
 }
 
@@ -271,11 +337,11 @@
   }
 }
 
-/* Phone: the composer stays one compact card, but its controls grow to 44px
-   tap targets. Formatting already lives behind the rich-text toggle — the
-   persistent format bar is deferred to the Lexxy migration. */
+/* Phone: the composer stays one compact card (the format bar reveals on focus),
+   but its tools-row controls grow to 44px tap targets. */
 @media (max-width: 499.9px) {
   .composer__attachment-btn,
+  .composer__emoji-btn,
   .composer__rich-text-btn,
   .composer__search-btn {
     display: inline-flex;

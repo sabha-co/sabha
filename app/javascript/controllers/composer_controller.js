@@ -4,7 +4,6 @@ import { onNextEventLoopTick, nextFrame } from "helpers/timing_helpers"
 import { escapeHTML } from "helpers/dom_helpers"
 
 export default class extends Controller {
-  static classes = ["toolbar"]
   static targets = [ "clientid", "fields", "fileList", "text", "everyoneConfirm", "everyoneConfirmCount", "everyoneConfirmRoomWide" ]
   static values = { roomId: Number, directUploadUrl: String, everyoneConfirmThreshold: Number, everyoneMemberCount: Number, everyoneCapped: Boolean }
   static outlets = [ "messages" ]
@@ -13,6 +12,8 @@ export default class extends Controller {
   #pendingClientIds = []
 
   connect() {
+    this.insertFormatBarExtras()
+
     if (!this.#usingTouchDevice) {
       onNextEventLoopTick(() => this.textTarget.focus())
     }
@@ -44,7 +45,6 @@ export default class extends Controller {
   #send() {
     this.#submitFiles()
     this.#submitMessage()
-    this.collapseToolbar()
     this.textTarget.focus()
   }
 
@@ -92,13 +92,44 @@ export default class extends Controller {
     this.element.classList.toggle("composer--drafting", this.#validInput())
   }
 
-  toggleToolbar() {
-    this.element.classList.toggle(this.toolbarClass)
-    this.textTarget.focus()
+  // The persistent format bar is Lexxy's own toolbar; graft the @-mention insert
+  // onto it (Lexxy has no native mention button). Lexxy upgrades the editor and
+  // builds the toolbar client-side after we connect, so wait for it to appear.
+  insertFormatBarExtras() {
+    const toolbar = this.textTarget.querySelector("lexxy-toolbar")
+    if (toolbar) return this.#graftMentionButton(toolbar)
+
+    const observer = new MutationObserver(() => {
+      const bar = this.textTarget.querySelector("lexxy-toolbar")
+      if (bar) {
+        observer.disconnect()
+        this.#graftMentionButton(bar)
+      }
+    })
+    observer.observe(this.textTarget, { childList: true, subtree: true })
   }
 
-  collapseToolbar() {
-    this.element.classList.remove(this.toolbarClass)
+  #graftMentionButton(toolbar) {
+    if (toolbar.querySelector(".composer__mention-btn")) return
+
+    const button = document.createElement("button")
+    button.type = "button"
+    button.title = "Mention someone"
+    button.className = "lexxy-editor__toolbar-button lexxy-editor__toolbar-group-end composer__mention-btn"
+    button.innerHTML = '<span aria-hidden="true">@</span><span class="for-screen-reader">Mention someone</span>'
+    // Keep the editor focused so the inserted "@" lands at the caret
+    button.addEventListener("mousedown", (event) => event.preventDefault())
+    button.addEventListener("click", () => this.insertMention())
+    toolbar.appendChild(button)
+  }
+
+  insertMention() {
+    this.#insertIntoEditor("@")
+  }
+
+  // Paired with dialog#close on the emoji grid buttons (see _composer_fields)
+  insertEmoji(event) {
+    this.#insertIntoEditor(event.params.emoji)
   }
 
   replaceMessageContent(content) {
@@ -111,16 +142,26 @@ export default class extends Controller {
     // Runs in the capture phase (see rich_text_data_actions) so it can submit on
     // Enter before the editor turns the keystroke into a newline. Bail while a
     // mention prompt is open so Enter commits the highlighted suggestion instead.
+    // The format bar is always on now, so Enter still sends (Shift+Enter is the
+    // newline); only bail out for the open prompt and IME composition.
     if (event.key != "Enter" || this.textTarget.hasOpenPrompt) return
 
-    const toolbarVisible = this.element.classList.contains(this.toolbarClass)
     const metaEnter = event.metaKey || event.ctrlKey
     const plainEnter = !event.shiftKey && !event.isComposing
 
-    if (!this.#usingTouchDevice && (metaEnter || (plainEnter && !toolbarVisible))) {
+    if (!this.#usingTouchDevice && (metaEnter || plainEnter)) {
       event.stopPropagation()
       this.submit(event)
     }
+  }
+
+  // Route programmatic inserts through the editor's contenteditable so Lexxy
+  // processes them like typing — the "@" opens the mention prompt, an emoji
+  // lands as text — and the caret/selection stay correct.
+  #insertIntoEditor(text) {
+    const content = this.textTarget.querySelector(".lexxy-editor__content")
+    content.focus()
+    document.execCommand("insertText", false, text)
   }
 
   filePicked(event) {

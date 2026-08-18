@@ -1,17 +1,17 @@
-<%# locals: (form:, autocomplete_room: nil, label:, send_label:, body_id: nil, toolbar_toggle: false, attachments: true, search_path: nil, placeholder: nil, mention_user_ids: nil) -%>
+<%# locals: (form:, autocomplete_room: nil, label:, send_label:, body_id: nil, attachments: true, search_path: nil, placeholder: nil, mention_user_ids: nil) -%>
 <%# The shared input card for every chat composer — the main room composer, a
     thread reply, and a provisional (not-yet-created) thread reply. Callers supply
     the form builder plus the bits that vary: the room to autocomplete @-mentions
-    against, the aria/send labels, and whether to show the rich-text toolbar toggle
-    (main composer only). The card stacks format bar (Lexxy toolbar, when toggled)
-    over the input over the tools row; the surrounding chrome (typing indicator,
-    everyone-confirm, hidden fields) stays in each caller since it differs per
-    context. %>
+    against, the aria/send labels, and the optional search shortcut. The card
+    stacks the always-on format bar (Lexxy's toolbar, B/I/S/code + an @ insert)
+    over the input over the tools row (attach · emoji · search · send); the
+    surrounding chrome (typing indicator, everyone-confirm, hidden fields) stays in
+    each caller since it differs per context. %>
 <fieldset data-composer-target="fields" contents>
   <div class="flex flex-column">
     <div class="composer__filelist flex flex--align-center gap flex-wrap" data-composer-target="fileList"></div>
 
-    <div class="composer__input input input--actor fill-white min-width flex flex-column" style="--input-border-radius: 1.3rem">
+    <div class="composer__input input input--actor fill-white min-width flex flex-column" style="--input-border-radius: 12px; --input-padding: 0">
       <% mention_src = autocompletable_users_path(room_id: autocomplete_room&.id, user_ids: mention_user_ids) %>
       <% body_options = {
            rows: 1, class: "input lexxy-content",
@@ -36,12 +36,30 @@
           </label>
         <% end %>
 
-        <% if toolbar_toggle %>
-          <button class="btn btn--borderless txt-small flex-item-no-shrink composer__rich-text-btn" type="button" data-action="composer#toggleToolbar">
-            <%= icon_tag "text-options" %>
-            <span class="for-screen-reader">Rich text</span>
+        <%# Emoji reuses the reaction grid in a scrim dialog; picking one closes the
+            dialog first (releasing the modal focus trap) so the character lands in
+            the editor at the caret. %>
+        <span class="composer__emoji flex-item-no-shrink" data-controller="dialog" data-action="click->dialog#closeOnScrim">
+          <button type="button" class="btn btn--borderless txt-small composer__emoji-btn" data-action="dialog#open" aria-haspopup="dialog">
+            <%= icon_tag "reaction" %>
+            <span class="for-screen-reader">Insert an emoji</span>
           </button>
-        <% end %>
+
+          <dialog class="scrim-dialog composer__emoji-dialog" data-dialog-target="modal" aria-label="Insert an emoji">
+            <div class="scrim-dialog__body">
+              <span class="scrim-dialog__label">Emoji</span>
+              <div class="reaction-grid">
+                <% EmojiHelper::REACTIONS.each do |character, title| %>
+                  <button type="button" class="btn reaction-grid__btn" title="<%= title %>"
+                          data-action="dialog#close composer#insertEmoji" data-composer-emoji-param="<%= character %>">
+                    <figure class="margin-none boost-character"><%= character %></figure>
+                    <span class="for-screen-reader"><%= title %></span>
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          </dialog>
+        </span>
 
         <% if search_path %>
           <%= link_to search_path, class: "btn btn--borderless txt-small flex-item-no-shrink composer__search-btn",

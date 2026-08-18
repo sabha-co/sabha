@@ -130,7 +130,7 @@ module RoomsHelper
         controller: "composer drop-target",
         action: composer_data_actions(connection_monitor: connection_monitor),
         composer_messages_outlet: "##{message_area_id}",
-        composer_toolbar_class: "composer--rich-text", composer_room_id_value: room.id,
+        composer_room_id_value: room.id,
         composer_direct_upload_url_value: rails_direct_uploads_url,
         composer_everyone_confirm_threshold_value: Rails.configuration.x.everyone_mention.confirm_threshold,
         composer_everyone_member_count_value: (room.active_member_count if room.is_a?(Rooms::Open)) || 0,

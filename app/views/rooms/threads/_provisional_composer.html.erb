@@ -15,7 +15,6 @@
           data: {
             controller: "composer drop-target",
             action: composer_data_actions(connection_monitor: false),
-            composer_toolbar_class: "composer--rich-text",
             composer_direct_upload_url_value: rails_direct_uploads_url,
             turbo_frame: "thread_panel_frame" } do |form| %>
       <%= hidden_field_tag :parent_message_id, parent_message.id %>

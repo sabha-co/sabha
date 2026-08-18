@@ -6,12 +6,44 @@ class ComposerTest < ApplicationSystemTestCase
     join_room rooms(:hq)
   end
 
-  test "enter sends the message when the toolbar is collapsed" do
+  test "enter sends the message; shift+enter is a newline" do
     type_in_composer "A quick reply"
     press_in_composer :enter
 
     assert_message_text "A quick reply"
     assert_composer_empty
+
+    # The persistent format bar no longer flips Enter to a newline — Shift is the
+    # newline, plain Enter still sends.
+    type_in_composer "line one"
+    press_in_composer :shift, :enter
+    type_in_composer "line two"
+
+    assert_composer_text "line one"
+    assert_no_selector ".message__body", text: "line one"
+  end
+
+  test "the format bar's @ button opens the mention prompt" do
+    find("#composer .composer__mention-btn").click
+    # The button drops the "@"; typing narrows the open prompt like normal.
+    press_in_composer "Jas"
+    pick_mention "Jason"
+    click_on "send"
+
+    assert_selector last_message_selector(".mention"), text: "Jason"
+    assert_equal [ users(:jason) ], rooms(:hq).messages.ordered.last.mentionees
+  end
+
+  test "the emoji button inserts an emoji into the composer" do
+    find("#composer .composer__emoji-btn").click
+
+    within "#composer .composer__emoji-dialog" do
+      find(".reaction-grid__btn[title='Fire']").click
+    end
+
+    assert_composer_text "🔥"
+    click_on "send"
+    assert_message_text "🔥"
   end
 
   test "mentioning a user with @ inserts a mention that persists" do
