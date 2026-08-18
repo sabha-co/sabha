@@ -1,4 +1,4 @@
-module Room::Pinnable
+module Room::Pinning
   extend ActiveSupport::Concern
 
   included do

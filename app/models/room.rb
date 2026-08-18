@@ -1,5 +1,5 @@
 class Room < ApplicationRecord
-  include Announceable, Pinnable, Restorable, Sortable, Deactivatable
+  include Announceable, Pinning, Restorable, Sortable, Deactivatable
 
   CannotDeleteOriginalError = Class.new(StandardError)
 
