@@ -3,7 +3,6 @@
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <% content_for :nav do %>
-  <%= link_back %>
   <h1 class="navbar-title">Members</h1>
   <span class="navbar-count"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</span>
   <div class="flex-item-grow"></div>
