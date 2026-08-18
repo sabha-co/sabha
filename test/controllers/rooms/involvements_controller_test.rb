@@ -13,46 +13,71 @@ class Rooms::InvolvementsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update involvement sends turbo update when going invisible" do
+    room = rooms(:watercooler)
+
     # When going invisible: 1 broadcast for sidebar section + 3 for removal (one
     # per sidebar section) + 1 for hidden_rooms append = 5
     assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 5 do
-    assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "everything", to: "invisible" do
-      put room_involvement_url(rooms(:watercooler)), params: { involvement: "invisible" }
-      assert_redirected_to room_involvement_url(rooms(:watercooler))
+      assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "everything", to: "invisible" do
+        put room_involvement_url(room), params: { involvement: "invisible" }
+        assert_redirected_to room_involvement_url(room)
+      end
     end
+
+    assert_rendered_turbo_stream_broadcast users(:david), :rooms,
+      action: "replace", target: [ room, "shared_rooms_list_node" ]
+    %w[starred_rooms shared_rooms forum_rooms].each do |list_name|
+      assert_rendered_turbo_stream_broadcast users(:david), :rooms,
+        action: "remove", target: [ room, "#{list_name}_list_node" ]
     end
+    assert_rendered_turbo_stream_broadcast users(:david), :rooms,
+      action: "append", target: "hidden_rooms"
   end
 
   test "update involvement sends turbo update when returning to visible" do
+    room = rooms(:watercooler)
+
     # First make it invisible
     memberships(:david_watercooler).update!(involvement: "invisible")
 
     # When returning to visible: 1 broadcast for sidebar section + 1 for append + 1 for hidden_rooms removal = 3
     assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 3 do
-    assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "invisible", to: "everything" do
-      put room_involvement_url(rooms(:watercooler)), params: { involvement: "everything" }
-      assert_redirected_to room_involvement_url(rooms(:watercooler))
+      assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "invisible", to: "everything" do
+        put room_involvement_url(room), params: { involvement: "everything" }
+        assert_redirected_to room_involvement_url(room)
+      end
     end
-    end
+
+    assert_rendered_turbo_stream_broadcast users(:david), :rooms,
+      action: "replace", target: [ room, "shared_rooms_list_node" ]
+    assert_rendered_turbo_stream_broadcast users(:david), :rooms,
+      action: "remove", target: [ room, :hidden_room ]
+    assert_rendered_turbo_stream_broadcast users(:david), :rooms,
+      action: "append", target: "shared_rooms"
   end
 
   test "updating involvement does not send extra turbo update when changing between visible states" do
+    room = rooms(:watercooler)
+
     # 1 broadcast for the correct sidebar section (starred_rooms or shared_rooms)
     assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 1 do
-    assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "everything", to: "mentions" do
-      put room_involvement_url(rooms(:watercooler)), params: { involvement: "mentions" }
-      assert_redirected_to room_involvement_url(rooms(:watercooler))
+      assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "everything", to: "mentions" do
+        put room_involvement_url(room), params: { involvement: "mentions" }
+        assert_redirected_to room_involvement_url(room)
+      end
     end
-    end
+
+    assert_rendered_turbo_stream_broadcast users(:david), :rooms,
+      action: "replace", target: [ room, "starred_rooms_list_node" ]
   end
 
   test "updating involvement does not send extra turbo update for direct rooms" do
     # Direct rooms skip sidebar broadcasts entirely
     assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 0 do
-    assert_changes -> { memberships(:david_david_and_jason).reload.involvement }, from: "everything", to: "nothing" do
-      put room_involvement_url(rooms(:david_and_jason)), params: { involvement: "nothing" }
-      assert_redirected_to room_involvement_url(rooms(:david_and_jason))
-    end
+      assert_changes -> { memberships(:david_david_and_jason).reload.involvement }, from: "everything", to: "nothing" do
+        put room_involvement_url(rooms(:david_and_jason)), params: { involvement: "nothing" }
+        assert_redirected_to room_involvement_url(rooms(:david_and_jason))
+      end
     end
   end
 

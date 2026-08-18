@@ -41,10 +41,13 @@ class BroadcastInboxThreadsJobTest < ActiveJob::TestCase
       )
     end
 
-    html = streams.map(&:to_html).join
-    assert_includes html, "thread-card", "first reply should render the thread card, not a plain message row"
-    assert_includes html, "1 new", "a following viewer's card carries the per-viewer unread badge"
-    assert_includes html, "thread-panel__follow", "the follow control renders in the recipient's context (Current.user set)"
+    assert_equal 1, streams.size
+    stream = streams.first
+    assert_equal "append", stream["action"]
+    assert_equal "inbox", stream["target"]
+    assert stream.at_css(".thread-card"), "first reply should render a thread card"
+    assert_equal "1 new", stream.at_css(".thread-card__new")&.text&.strip
+    assert stream.at_css(".thread-panel__follow"), "follow control should render in the recipient's context"
   end
 
   test "handles missing thread or parent message gracefully" do

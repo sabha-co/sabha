@@ -13,6 +13,10 @@ class Accounts::InvitationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input#invite_url[value=?]", join_url(accounts(:signal).join_code.code)
     assert_select "form[action=?]", account_join_code_path
     assert_select "input[type=hidden][name=?]", "account[settings][allow_users_to_create_invite_links]"
+
+    toggle = css_select("label.setting-row").find { |element| element.text.include?("Allow everyone to create invite links") }
+    assert toggle, "expected the visible invite-links toggle"
+    assert_select toggle, "input.switch__input[type=checkbox]", count: 1
   end
 
   test "non-admins cannot access invitations" do

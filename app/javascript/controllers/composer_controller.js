@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { Lexical } from "lexxy"
 import FileUploader from "models/file_uploader"
 import { onNextEventLoopTick, nextFrame } from "helpers/timing_helpers"
 import { escapeHTML } from "helpers/dom_helpers"
@@ -148,8 +149,13 @@ export default class extends Controller {
 
     const metaEnter = event.metaKey || event.ctrlKey
     const plainEnter = !event.shiftKey && !event.isComposing
+    const shiftEnter = event.shiftKey && !metaEnter && !event.isComposing
 
-    if (!this.#usingTouchDevice && (metaEnter || plainEnter)) {
+    if (!this.#usingTouchDevice && shiftEnter) {
+      event.stopPropagation()
+      event.preventDefault()
+      this.textTarget.editor.dispatchCommand(Lexical.INSERT_PARAGRAPH_COMMAND)
+    } else if (!this.#usingTouchDevice && (metaEnter || plainEnter)) {
       event.stopPropagation()
       this.submit(event)
     }

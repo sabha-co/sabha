@@ -8,21 +8,16 @@ class OtpInputTest < ApplicationSystemTestCase
   test "the client normalizer matches the server's OtpCode.sanitize" do
     visit new_session_path
 
-    result = page.evaluate_async_script(<<~JS)
-      const done = arguments[0]
+    inputs = [ "aob", "aib", "alb", "ABC 123", "A-B-C-1-2-3", nil ]
+    client_results = page.evaluate_async_script(<<~JS, inputs)
+      const inputs = arguments[0]
+      const done = arguments[1]
       import("models/otp_code").then(({ sanitize }) => {
-        done([
-          sanitize("aob"),         // uppercase, O->0
-          sanitize("aib"),         // I->1
-          sanitize("alb"),         // L->1
-          sanitize("ABC 123"),     // strip spaces
-          sanitize("A-B-C-1-2-3"), // strip dashes
-          sanitize(null)           // nil-safe
-        ])
+        done(inputs.map((input) => sanitize(input)))
       })
     JS
 
-    assert_equal [ "A0B", "A1B", "A1B", "ABC123", "ABC123", "" ], result
+    assert_equal inputs.map { |input| OtpCode.sanitize(input) }, client_results
   end
 
   test "cells normalize on input, advance focus, spread a paste, and mirror the hidden code" do
@@ -41,12 +36,13 @@ class OtpInputTest < ApplicationSystemTestCase
       # Focus advanced to the second cell.
       assert_equal "Character 2 of 6", page.evaluate_script("document.activeElement.getAttribute('aria-label')")
 
-      # A multi-character input (paste or OS autofill landing in one cell)
-      # spreads across the cells and mirrors into the hidden `code` field.
+      # A paste flows through the controller's clipboard handler, spreads across
+      # the cells, and mirrors into the hidden `code` field.
       page.execute_script(<<~JS, cells.first.native)
         const cell = arguments[0]
-        cell.value = "abcd12"
-        cell.dispatchEvent(new Event("input", { bubbles: true }))
+        const clipboardData = new DataTransfer()
+        clipboardData.setData("text/plain", "abcd12")
+        cell.dispatchEvent(new ClipboardEvent("paste", { bubbles: true, cancelable: true, clipboardData }))
       JS
 
       assert_equal %w[A B C D 1 2], all(".otp__cell").map(&:value)

@@ -16,10 +16,10 @@ class ComposerTest < ApplicationSystemTestCase
     # The persistent format bar no longer flips Enter to a newline — Shift is the
     # newline, plain Enter still sends.
     type_in_composer "line one"
-    press_in_composer :shift, :enter
+    press_in_composer [ :shift, :enter ]
     type_in_composer "line two"
 
-    assert_composer_text "line one"
+    assert_match(/\Aline one\n+line two\n*\z/, composer_editor.evaluate_script("this.innerText"))
     assert_no_selector ".message__body", text: "line one"
   end
 
