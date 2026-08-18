@@ -65,8 +65,12 @@
           below it separates it from the discussion. Its count updates live via
           Message::Threadable#update_thread_reply_count. %>
       <% if is_forum_opening %>
+        <% replies_count = message.room.replies_count %>
+        <%# The span renders empty until the first reply so CSS keeps the whole
+            divider hidden; the reply-count broadcast (Message::Threadable
+            #update_thread_reply_count) fills this span and reveals it. %>
         <h2 id="<%= dom_id(message.room, :replies_separator) %>" class="message-separator message__replies-separator">
-          <span id="<%= dom_id(message.room, :replies_separator) %>_count" class="message__replies-count"><%= pluralize(message.room.replies_count, "reply", "replies") %></span>
+          <span id="<%= dom_id(message.room, :replies_separator) %>_count" class="message__replies-count"><%= pluralize(replies_count, "reply", "replies") unless replies_count.zero? %></span>
         </h2>
       <% end %>
     <% end %>

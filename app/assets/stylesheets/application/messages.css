@@ -352,6 +352,10 @@
 
   span {
     background-color: transparent;
+    /* Reset the pill chrome that leaks in from .message-separator (border-radius)
+       and .message__day-separator (border) — this divider is a flat label. */
+    border: 0;
+    border-radius: 0;
     padding: 0;
   }
 
@@ -359,6 +363,13 @@
   &::before {
     display: none;
   }
+}
+
+/* Hidden until the first reply exists: the count span renders empty at zero, and
+   the reply-count broadcast fills it (Message::Threadable#update_thread_reply_count),
+   which flips :has() and reveals the divider without re-rendering it. */
+.message__replies-separator:not(:has(.message__replies-count:not(:empty))) {
+  display: none;
 }
 
 .message__day-separator--parent {
