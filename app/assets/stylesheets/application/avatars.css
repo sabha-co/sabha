@@ -123,6 +123,24 @@
   --avatar-size: var(--btn-size);
 }
 
+/* Initial fallback when no logo is uploaded — the accent-tinted tile the
+   sidebar header uses, sized to fill the avatar box. */
+.account-logo__initial {
+  align-items: center;
+  aspect-ratio: 1;
+  background-color: var(--color-accent-brand);
+  border-radius: var(--avatar-border-radius);
+  box-shadow: 0 0 0 1px oklch(var(--lch-always-black) / 0.15);
+  color: var(--color-text-reversed);
+  display: flex;
+  font-size: calc(var(--avatar-size, 5ch) / 2);
+  font-weight: 700;
+  grid-area: 1 / 1;
+  inline-size: var(--avatar-size, 5ch);
+  justify-content: center;
+  text-transform: uppercase;
+}
+
 /* Monogram avatars for users without images */
 .avatar-monogram {
   /* Match the same structure as .avatar */

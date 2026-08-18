@@ -1,7 +1,17 @@
 module AccountsHelper
+  # Mirrors the sidebar header and the SaaS workspace selector: an uploaded logo
+  # renders as an image, otherwise we draw the account's initial rather than the
+  # generic stock icon the logo route would otherwise serve.
   def account_logo_tag(style: nil)
     link_to root_path do
-      tag.figure image_tag(fresh_account_logo_path, alt: "Account logo", size: 300), class: "account-logo avatar #{style}"
+      tag.figure class: "account-logo avatar #{style}" do
+        if Current.account.logo.attached?
+          image_tag fresh_account_logo_path, alt: "Account logo", size: 300
+        else
+          tag.span(Current.account.name.first, class: "account-logo__initial", aria: { hidden: "true" }) +
+            tag.span(Current.account.name, class: "for-screen-reader")
+        end
+      end
     end
   end
 
