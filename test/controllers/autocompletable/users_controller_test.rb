@@ -67,12 +67,46 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "user_ids scopes suggestions to the chosen recipients (provisional DM mention picker)" do
+    # A provisional DM has no room yet, so its composer scopes @-mentions to the
+    # recipients. A non-recipient must not surface — selecting one would render a
+    # mention that never notifies them once the DM is created.
+    get autocompletable_users_url(user_ids: [ users(:jz).id ], format: :json), params: { query: "" }
+
+    assert_response :success
+    ids = response.parsed_body.map { |u| u["value"] }
+    assert_includes ids, users(:jz).id
+    assert_not_includes ids, users(:kevin).id
+  end
+
   test "blank query returns recent users (mention picker default)" do
     get autocompletable_users_url(format: :json), params: { query: "" }
 
     assert_response :success
     assert response.parsed_body.is_a?(Array)
     assert response.parsed_body.size > 0, "blank query should populate the @-mention picker"
+  end
+
+  test "mention prompt (html) returns lexxy-prompt-item elements filtered by `filter`" do
+    get autocompletable_users_url(room_id: rooms(:hq).id, format: :html), params: { filter: "da" }
+
+    assert_response :success
+    assert_match %r{<lexxy-prompt-item[^>]*sgid=}, response.body
+    assert_match %r{<template type="menu">}, response.body
+    assert_match %r{class="mention"}, response.body
+    assert_match %r{David}, response.body
+  end
+
+  test "mention prompt offers @everyone to an admin in an open room when it matches the filter" do
+    room = Rooms::Open.create_for({ name: "Open Space", creator: users(:david) }, users: [ users(:david) ])
+
+    get autocompletable_users_url(room_id: room.id, format: :html), params: { filter: "every" }
+    assert_response :success
+    assert_match %r{mention--everyone}, response.body
+
+    get autocompletable_users_url(room_id: room.id, format: :html), params: { filter: "zzz" }
+    assert_response :success
+    assert_no_match %r{mention--everyone}, response.body
   end
 
   test "exact first name matches appear before partial matches" do

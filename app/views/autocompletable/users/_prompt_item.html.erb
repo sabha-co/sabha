@@ -1,0 +1,19 @@
+<lexxy-prompt-item search="<%= [ user.name, user.ascii_name ].compact.uniq.join(" ") %>" sgid="<%= user.attachable_sgid %>">
+  <template type="menu">
+    <span class="autocomplete__item flex align-center gap unpad">
+      <% unless user.is_a?(Everyone) %><%= avatar_tag user %><% end %>
+      <span class="autocompletable__name"><%= user.name %></span>
+    </span>
+  </template>
+  <template type="editor">
+    <%# The editor shows a simple inline chip while composing (all phrasing content,
+        safe inside Lexxy's <p>); the stored attachment re-renders as the interactive
+        users/mention popup on display. This is the same chip the editor adapter loads
+        when editing a stored mention (see User::Mentionable#to_editor_content_attachment_partial_path). %>
+    <% if user.is_a?(Everyone) %>
+      <%= render "everyone/mention", everyone: user %>
+    <% else %>
+      <%= render "users/editor_mention", user: user %>
+    <% end %>
+  </template>
+</lexxy-prompt-item>

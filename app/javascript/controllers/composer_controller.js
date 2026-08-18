@@ -102,21 +102,23 @@ export default class extends Controller {
   }
 
   replaceMessageContent(content) {
-    const editor = this.textTarget.editor
-
-    editor.recordUndoEntry("Format reply")
-    editor.setSelectedRange([0, editor.getDocument().toString().length])
-    editor.deleteInDirection("forward")
-    editor.insertHTML(content)
-    editor.setSelectedRange([editor.getDocument().toString().length - 1])
+    this.textTarget.value = content
+    this.textTarget.focus()
+    this.textTarget.selection.placeCursorAtTheEnd()
   }
 
   submitByKeyboard(event) {
+    // Runs in the capture phase (see rich_text_data_actions) so it can submit on
+    // Enter before the editor turns the keystroke into a newline. Bail while a
+    // mention prompt is open so Enter commits the highlighted suggestion instead.
+    if (event.key != "Enter" || this.textTarget.hasOpenPrompt) return
+
     const toolbarVisible = this.element.classList.contains(this.toolbarClass)
-    const metaEnter = event.key == "Enter" && (event.metaKey || event.ctrlKey)
-    const plainEnter = event.keyCode == 13 && !event.shiftKey && !event.isComposing
+    const metaEnter = event.metaKey || event.ctrlKey
+    const plainEnter = !event.shiftKey && !event.isComposing
 
     if (!this.#usingTouchDevice && (metaEnter || (plainEnter && !toolbarVisible))) {
+      event.stopPropagation()
       this.submit(event)
     }
   }
@@ -203,7 +205,7 @@ export default class extends Controller {
   }
 
   #validInput() {
-    return this.textTarget.textContent.trim().length > 0
+    return !this.textTarget.isBlank
   }
 
   async #submitFiles() {

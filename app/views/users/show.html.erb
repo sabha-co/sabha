@@ -28,7 +28,7 @@
         <p class="profile-hero__meta"><%= @user.active? ? "Posts through the API" : "No longer active" %></p>
         <% if @user.active? %>
           <div class="profile-hero__actions">
-            <%= button_to rooms_directs_path(user_ids: [ @user.id ]), class: "btn settings-save" do %>
+            <%= link_to new_rooms_direct_path(user_ids: [ @user.id ]), class: "btn settings-save", data: { turbo_frame: "_top" } do %>
               Message
             <% end %>
           </div>
@@ -77,7 +77,7 @@
 
         <div class="profile-hero__actions">
           <% if Current.user.can_direct_message?(@user) %>
-            <%= button_to rooms_directs_path(user_ids: [ @user.id ]), class: "btn settings-save" do %>
+            <%= link_to new_rooms_direct_path(user_ids: [ @user.id ]), class: "btn settings-save", data: { turbo_frame: "_top" } do %>
               Message
             <% end %>
           <% end %>

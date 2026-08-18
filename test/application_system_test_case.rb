@@ -1,6 +1,7 @@
 require "test_helper"
 require "capybara/cuprite"
 require_relative "test_helpers/system_test_helper"
+require_relative "test_helpers/rich_text_editor_helper"
 
 WebMock.disable!
 
@@ -30,6 +31,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   driven_by :cuprite
 
   include SystemTestHelper
+  include RichTextEditorHelper
 
   def pause
     page.driver.pause

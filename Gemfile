@@ -25,6 +25,9 @@ gem "importmap-rails"
 gem "turbo-rails"
 gem "stimulus-rails"
 
+# Rich text
+gem "lexxy", "~> 0.9.24"
+
 # Real-time WebSocket server (core gem avoids gRPC dependency since we use HTTP RPC mode)
 # Sourced from our fork for the presence-leave id string-cast fix, until it ships upstream.
 gem "anycable-rails-core", github: "ashwin47/anycable-rails", branch: "presence-leave-cast-id"

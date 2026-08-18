@@ -10,6 +10,13 @@ export function escapeHTML(html) {
   return div.innerHTML
 }
 
+// escapeHTML escapes &, < and > (enough for text nodes) but not quotes, so it is
+// unsafe for values interpolated into a quoted HTML attribute. This escapes those
+// too.
+export function escapeAttribute(value) {
+  return escapeHTML(value).replaceAll('"', "&quot;").replaceAll("'", "&#39;")
+}
+
 export function parseHTMLFragment(html) {
   const template = document.createElement("template")
   template.innerHTML = html

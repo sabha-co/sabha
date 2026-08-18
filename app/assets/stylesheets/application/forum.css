@@ -58,7 +58,7 @@
 
 /* The body reuses the composer's rich input shell; give it room to read as a
    post body rather than a one-line chat message. */
-.forum-compose__body trix-editor {
+.forum-compose__body lexxy-editor {
   min-block-size: 6em;
 }
 

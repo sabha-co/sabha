@@ -1,17 +1,23 @@
-<div class="mention" sgid="<%= user.attachable_sgid %>">
-  <%= tag.details class: "position-relative",
-                  data: { controller: "popup",
-                          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside",
-                          popup_orientation_top_class: "popup-orientation-top" } do %>
-    <summary class="mention__summary">
-      <%= avatar_tag user, loading: :lazy %>
-      <span class="mention__name"><%= user.name %></span>
-    </summary>
+<%# Inline @mention. It renders inside the <p> paragraphs Lexxy produces, so every
+    element here is phrasing content (span/img/turbo-frame) — a <div> or <details>
+    would make the browser split the paragraph. The click-to-profile popup is driven
+    by the mention-popup controller, an inline-safe cousin of the <details>-based
+    popup controller: it toggles a data-open attribute instead of the <details open>
+    property. %>
+<span class="mention" sgid="<%= user.attachable_sgid %>"
+      data-controller="mention-popup"
+      data-mention-popup-orientation-top-class="popup-orientation-top"
+      data-action="keydown.esc->mention-popup#close click@document->mention-popup#closeOnClickOutside">
+  <span class="mention__summary" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false"
+        data-mention-popup-target="summary"
+        data-action="click->mention-popup#toggle keydown.enter->mention-popup#toggle keydown.space->mention-popup#toggle">
+    <%= avatar_tag user, loading: :lazy %>
+    <span class="mention__name"><%= user.name %></span>
+  </span>
 
-    <div class="popup-menu message__avatar-menu border shadow" data-popup-target="menu">
-      <%= turbo_frame_tag dom_id(user, :message_profile), src: mention_profile_path(user), loading: :lazy do %>
-        Loading...
-      <% end %>
-    </div>
-  <% end %>
-</div>
+  <span class="popup-menu message__avatar-menu border shadow" data-mention-popup-target="menu">
+    <%= turbo_frame_tag dom_id(user, :message_profile), src: mention_profile_path(user), loading: :lazy do %>
+      Loading...
+    <% end %>
+  </span>
+</span>

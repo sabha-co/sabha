@@ -6,7 +6,7 @@
 </header>
 
 <% if Current.user.can_create_direct_messages? %>
-  <%= form_with url: rooms_directs_path, class: "dm-compose" do |form| %>
+  <%= form_with url: new_rooms_direct_path, method: :get, class: "dm-compose", data: { turbo_frame: "_top" } do |form| %>
     <section class="autocomplete__container dm-compose__container">
       <div class="autocomplete__input input flex flex-wrap position-relative"
           data-controller="autocomplete" data-autocomplete-url-value="<%= autocompletable_users_path %>">
