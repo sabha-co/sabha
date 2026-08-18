@@ -40,11 +40,18 @@ class EveryoneConfirmTest < ApplicationSystemTestCase
   end
 
   private
+    # Inject an @everyone mention straight into the editor (this test exercises the
+    # confirm gate, not the mention prompt). The attachment renders the
+    # everyone/mention partial as its editor content, so `.mention--everyone` — what
+    # the composer keys off — lands in the DOM, and it persists as a real mention.
     def compose_everyone
-      assert_selector "trix-editor"
-      page.execute_script(<<~JS)
-        const editor = document.querySelector("trix-editor").editor
-        editor.insertHTML('<span class="mention mention--everyone" sgid="everyone">@everyone</span> ')
-      JS
+      assert_selector "#composer lexxy-editor"
+
+      everyone = Everyone.new
+      content = ApplicationController.render(partial: "everyone/mention", locals: { everyone: everyone })
+      attachment = %(<p><action-text-attachment sgid="#{everyone.attachable_sgid}" content-type="application/vnd.sabha.mention" content="#{CGI.escapeHTML(content)}"></action-text-attachment> </p>)
+
+      fill_in_rich_text_area "message_body", with: attachment
+      assert_selector "#composer .mention--everyone"
     end
 end

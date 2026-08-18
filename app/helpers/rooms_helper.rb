@@ -117,14 +117,14 @@ module RoomsHelper
     def composer_data_actions(connection_monitor: true)
       drag_and_drop_actions = "drop-target:drop@window->composer#dropFiles"
 
-      trix_attachment_actions = "trix-file-accept->composer#preventAttachment"
-      trix_attachment_actions += " refresh-room:online@window->composer#online" if connection_monitor
+      attachment_actions = "lexxy:file-accept->composer#preventAttachment"
+      attachment_actions += " refresh-room:online@window->composer#online" if connection_monitor
 
       remaining_actions =
         "typing-notifications#stop paste->composer#pasteFiles turbo:submit-end->composer#submitEnd"
       remaining_actions += " refresh-room:offline@window->composer#offline" if connection_monitor
 
-      [ drop_target_actions, drag_and_drop_actions, trix_attachment_actions, remaining_actions ].join(" ")
+      [ drop_target_actions, drag_and_drop_actions, attachment_actions, remaining_actions ].join(" ")
     end
 
     # round_for_mobile(123)             # => "123"

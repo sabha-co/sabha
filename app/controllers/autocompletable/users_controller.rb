@@ -1,14 +1,35 @@
 class Autocompletable::UsersController < ApplicationController
   include SubRoomAccessible
 
+  # The mention prompt shows a short, tap-friendly menu; the DM recipient picker
+  # loads a longer list and filters it client-side.
+  MENTION_PROMPT_LIMIT = 5
+  RECIPIENT_PICKER_LIMIT = 20
+
   def index
-    @users = find_autocompletable_users
-    @users = add_everyone_mention_if_applicable(@users)
+    @users = add_everyone_mention_if_applicable(find_autocompletable_users)
+
+    respond_to do |format|
+      format.html { render layout: false } # <lexxy-prompt-item> elements for the mention prompt
+      format.json
+    end
   end
 
   private
     def find_autocompletable_users
-      params[:query].present? ? users_scope.matching(params[:query]) : users_scope.limit(20)
+      query.present? ? users_scope.matching(query, limit: result_limit) : users_scope.limit(result_limit)
+    end
+
+    # The mention prompt sends `filter`; the DM recipient picker sends `query`
+    # and needs the fuller list to filter against in the browser.
+    def result_limit
+      params.key?(:filter) ? MENTION_PROMPT_LIMIT : RECIPIENT_PICKER_LIMIT
+    end
+
+    # The rich text editor's mention prompt filters with `filter`, the DM
+    # recipient autocomplete inputs with `query`.
+    def query
+      params[:filter].presence || params[:query].presence
     end
 
     def room
@@ -44,10 +65,16 @@ class Autocompletable::UsersController < ApplicationController
     end
 
     def add_everyone_mention_if_applicable(users)
-      # Only show @everyone for admins in open rooms
+      # Only show @everyone for admins in open rooms, and only when it matches the
+      # filter (the mention prompt filters server-side, so it can't drop it later).
       return users unless Current.user&.administrator?
       return users unless room&.is_a?(Rooms::Open)
+      return users unless everyone_matches_query?
 
       users + [ Everyone.new ]
+    end
+
+    def everyone_matches_query?
+      query.blank? || "everyone".include?(query.downcase.delete("@"))
     end
 end

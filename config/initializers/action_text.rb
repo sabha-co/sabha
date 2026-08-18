@@ -5,7 +5,16 @@
 # ActionText::Attachment::ATTRIBUTES — keep flowing through.
 module SabhaActionTextSafelist
   EXTRA_TAGS = %w[details summary section turbo-frame].freeze
-  EXTRA_ATTRIBUTES = %w[id data-controller data-action data-popup-orientation-top-class data-popup-target style].freeze
+  # data-popup-* drives the <details>-based popup; data-mention-popup-* and
+  # role/tabindex/aria-expanded drive the inline @mention popup (mention-popup
+  # controller), which renders inside a message body and so must survive this
+  # sanitizer or the trigger is neither focusable nor wired to its menu.
+  EXTRA_ATTRIBUTES = %w[
+    id role tabindex aria-expanded aria-haspopup style
+    data-controller data-action
+    data-popup-orientation-top-class data-popup-target
+    data-mention-popup-orientation-top-class data-mention-popup-target
+  ].freeze
 
   def sanitizer_allowed_tags
     super + EXTRA_TAGS

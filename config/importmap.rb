@@ -7,8 +7,7 @@ pin "@rails/actioncable", to: "actioncable.esm.js"
 pin "@rails/activestorage", to: "activestorage.esm.js"
 pin "@anycable/web", to: "https://esm.sh/@anycable/web@1.1.0"
 pin "@rails/request.js", to: "@rails--request.js" # @0.0.8
-pin "trix" # @2.1.16
-pin "@rails/actiontext", to: "actiontext.js"
+pin "lexxy", to: "lexxy.js"
 pin "highlight.js", to: "highlight.js/core.js"
 pin "@hotwired/hotwire-native-bridge", to: "@hotwired--hotwire-native-bridge.js" # @1.0.0
 

@@ -72,6 +72,15 @@ class Everyone
     "everyone/mention"
   end
 
+  # See User::Mentionable#attachable_content_type — the editor drops the @everyone
+  # mention on edit if the regenerated node falls back to octet-stream.
+  def attachable_content_type
+    User::Mentionable::CONTENT_TYPE
+  end
+
+  # Rails' editor adapter renders this when loading a stored @everyone mention back
+  # into the composer. The everyone/mention chip is already phrasing-safe, so the
+  # editor and display share it.
   def to_editor_content_attachment_partial_path
     "everyone/mention"
   end
