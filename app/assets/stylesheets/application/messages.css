@@ -426,6 +426,11 @@
   --avatar-border-size: 1px;
   --avatar-size: 36px;
 
+  /* Avatar shrinks with the row as the shell narrows: 34px at
+     tablet-portrait, 32px on phones. */
+  @media (max-width: 833.9px) { --avatar-size: 34px; }
+  @media (max-width: 499.9px) { --avatar-size: 32px; }
+
   grid-area: avatar;
   z-index: 2;
   display: flex;
@@ -651,6 +656,10 @@
   border-radius: 0.66em;
   color: var(--message-color, var(--color-text-lighter));
   font-size: 0.9375rem;
+  /* Body trims to 14.5px at tablet-portrait, then returns to 15px on
+     phones where the column is full-width and reads best larger. */
+  @media (max-width: 833.9px) { font-size: 0.90625rem; }
+  @media (max-width: 499.9px) { font-size: 0.9375rem; }
   line-height: 1.55;
   font-weight: 400;
   inline-size: 100%;

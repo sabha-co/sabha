@@ -124,7 +124,7 @@
 .composer__send-btn {
   --btn-background: var(--color-bg-hover);
   --btn-border-color: transparent;
-  --btn-border-radius: var(--border-radius-md);
+  --btn-border-radius: 8px;
   --btn-color: var(--color-text-subtle);
   --btn-padding: 0.44em 1em;
 

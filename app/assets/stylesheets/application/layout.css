@@ -15,6 +15,12 @@ body {
   grid-template-rows: min-content 1fr;
   max-block-size: 100dvh;
 
+  /* The header trims 2px below tablet-portrait so it stays proportional
+     as the shell narrows. */
+  @media (max-width: 833.9px) {
+    --navbar-height: 52px;
+  }
+
   /* Sidebar states: docked >=1280 (272px wide desktop, 240px narrow),
      a 60px icon rail 834-1279 that expands over the content on demand,
      and an off-canvas drawer below 834. */

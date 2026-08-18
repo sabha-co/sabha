@@ -128,14 +128,13 @@ body.inbox [data-activity-unread="true"] {
 .thread-card__head {
   align-items: center;
   display: flex;
-  gap: 12px;
-  justify-content: space-between;
+  gap: 9px;
 }
 
 .thread-card__room {
   color: var(--color-link);
-  font-size: 0.9375rem;
-  font-weight: 700;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-decoration: none;
 
   @media (any-hover: hover) {
@@ -145,19 +144,20 @@ body.inbox [data-activity-unread="true"] {
   }
 }
 
-.thread-card__byline {
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
-  margin: 0;
+.thread-card__starter {
+  color: var(--color-text-subtle);
+  font-size: 0.78125rem;
+  white-space: nowrap;
 }
 
+/* The unseen-reply badge sits at the right edge of the head row. */
 .thread-card__new {
-  background-color: color-mix(in oklch, var(--color-accent-brand) 14%, transparent);
-  border-radius: 999px;
-  color: var(--color-accent-brand);
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-inline-start: 6px;
+  background-color: var(--color-accent-brand);
+  border-radius: 9px;
+  color: var(--color-text-reversed);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  margin-inline-start: auto;
   padding: 1px 8px;
   white-space: nowrap;
 }
@@ -167,6 +167,19 @@ body.inbox [data-activity-unread="true"] {
   font-size: 0.9375rem;
   line-height: 1.5;
   text-decoration: none;
+}
+
+/* Foot row: the reply facepile takes the space so the follow toggle lands
+   at the far right. */
+.thread-card__foot {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.thread-card__foot .threads {
+  flex: 1;
+  min-inline-size: 0;
 }
 
 /* Bookmarks: each saved message is a card — where and when it was saved over
@@ -223,7 +236,7 @@ body.inbox [data-activity-unread="true"] {
 }
 
 .bookmark-card__avatar {
-  --avatar-size: 28px;
+  --avatar-size: 32px;
 
   flex-shrink: 0;
 }
@@ -255,13 +268,13 @@ body.inbox [data-activity-unread="true"] {
 }
 
 .thread-card .thread__avatar {
-  --avatar-size: 18px;
+  --avatar-size: 22px;
 
   box-shadow: 0 0 0 2px var(--color-bg);
 }
 
 .thread-card .thread__avatar + .thread__avatar {
-  margin-inline-start: -5px;
+  margin-inline-start: -7px;
 }
 
 /* Filter-aware live streaming: the paginated Activity feed is server-filtered,

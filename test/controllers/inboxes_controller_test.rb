@@ -410,10 +410,10 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".thread-card" do
-      assert_select "a.thread-card__room"
-      assert_select ".thread-card__byline strong", text: @jason.name
+      assert_select ".thread-card__head a.thread-card__room"
+      assert_select ".thread-card__head .thread-card__starter strong", text: @jason.name
       assert_select "a.thread-card__root"
-      assert_select "form[action=?]", rooms_thread_membership_path(thread)
+      assert_select ".thread-card__foot form[action=?]", rooms_thread_membership_path(thread)
     end
   end
 
