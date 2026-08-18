@@ -31,16 +31,22 @@ class BroadcastInboxThreadsJob < ApplicationJob
       next unless user
 
       if is_first_message
-        Turbo::StreamsChannel.broadcast_append_to(
-          [ user, :inbox_threads ],
-          target: "inbox",
-          partial: "messages/message",
-          locals: {
-            message: parent_message,
-            timestamp_style: :long_datetime,
-            show_date_separator: true
-          }
-        )
+        # A brand-new followed thread joins the inbox as a proper card, matching
+        # a reload. Its follow control and unread badge are per-viewer (they read
+        # Current.user), so render inside the recipient's context — a thread
+        # member sees "1 new", a parent-room member who doesn't follow sees none.
+        Current.set(user: user) do
+          Turbo::StreamsChannel.broadcast_append_to(
+            [ user, :inbox_threads ],
+            target: "inbox",
+            partial: "inboxes/threads/thread_card",
+            locals: {
+              message: parent_message_with_threads,
+              thread: thread,
+              unread: thread_user_ids.include?(user_id) ? 1 : 0
+            }
+          )
+        end
       else
         Turbo::StreamsChannel.broadcast_replace_to(
           [ user, :inbox_threads ],

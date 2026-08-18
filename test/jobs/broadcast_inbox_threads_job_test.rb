@@ -27,6 +27,26 @@ class BroadcastInboxThreadsJobTest < ActiveJob::TestCase
     end
   end
 
+  test "the first reply appends a per-viewer thread card, not a plain message row" do
+    thread = Rooms::Thread.create!(parent_message: @parent_message, creator: @david)
+    thread.follow!(@jason) # a visible follower, so the card badges the unread reply
+    thread_message = thread.messages.create!(creator: @david, body: "Thread reply")
+
+    streams = capture_turbo_stream_broadcasts [ @jason, :inbox_threads ] do
+      BroadcastInboxThreadsJob.perform_now(
+        thread_id: thread.id,
+        parent_message_id: @parent_message.id,
+        message_id: thread_message.id,
+        creator_id: @david.id
+      )
+    end
+
+    html = streams.map(&:to_html).join
+    assert_includes html, "thread-card", "first reply should render the thread card, not a plain message row"
+    assert_includes html, "1 new", "a following viewer's card carries the per-viewer unread badge"
+    assert_includes html, "thread-panel__follow", "the follow control renders in the recipient's context (Current.user set)"
+  end
+
   test "handles missing thread or parent message gracefully" do
     # The job's guard is `return unless thread && parent_message` — exercising
     # both nils in a single test pins the early-return without producing one
