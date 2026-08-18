@@ -11,7 +11,7 @@ class Inboxes::DirectMessagesController < ApplicationController
       @direct_room_members = Rooms::Direct.members_for_display_by_room(
         @memberships.map(&:room_id), excluding: Current.user
       )
-      @direct_member_statuses = direct_member_statuses(@direct_room_members)
+      @direct_member_statuses = one_on_one_member_statuses(@direct_room_members)
       render partial: "items"
     else
       session[:inbox_last_loaded_dms_created_at] = Time.current.iso8601

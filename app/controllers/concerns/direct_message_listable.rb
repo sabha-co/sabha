@@ -11,7 +11,7 @@ module DirectMessageListable
       room_ids << @pinned_dm_membership.room_id if @pinned_dm_membership
 
       @direct_room_members = Rooms::Direct.members_for_display_by_room(room_ids, excluding: Current.user)
-      @direct_member_statuses = direct_member_statuses(@direct_room_members)
+      @direct_member_statuses = one_on_one_member_statuses(@direct_room_members)
     end
 
     # The open conversation is pinned above the rail when it's dropped off the
@@ -25,7 +25,9 @@ module DirectMessageListable
       Current.user.memberships.visible.find_by(room_id: open_room.id)
     end
 
-    def direct_member_statuses(direct_room_members)
+    # Presence only for the 1:1 rows — a group DM has no single "other person"
+    # to dot. The all-members variant is SidebarMemberships#direct_member_statuses.
+    def one_on_one_member_statuses(direct_room_members)
       Membership.activity_statuses_for(
         direct_room_members.values.select(&:one?).map { |members| members.first.id }
       )
