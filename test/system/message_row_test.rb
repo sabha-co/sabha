@@ -59,6 +59,24 @@ class MessageRowTest < ApplicationSystemTestCase
     end
   end
 
+  test "the action bar reflects a reaction the user has made and toggles it off" do
+    within_message messages(:third) do
+      find(".message__body-content").hover
+      find(".message__quick-reaction button[title='Thumbs up']").click
+
+      # The reaction lands and its quick-reaction now reads as active.
+      assert_selector ".boost.boost--mine", text: "👍"
+      assert_selector ".message__quick-reaction--active button[title='Thumbs up']"
+
+      # Clicking the active quick-reaction removes the reaction again.
+      find(".message__body-content").hover
+      find(".message__quick-reaction--active button[title='Thumbs up']").click
+
+      assert_no_selector ".boost", text: "👍"
+      assert_no_selector ".message__quick-reaction--active"
+    end
+  end
+
   private
     # The reveal is opacity/visibility-based, which Capybara's :visible filter
     # ignores, so assert on computed style.

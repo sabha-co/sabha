@@ -715,6 +715,13 @@ img.message__attachment {
   display: inline-flex;
 }
 
+/* The quick reaction carries the accent tint while the current user is already
+   in that reaction (reaction_bar_controller); clicking it then removes theirs. */
+.message__quick-reaction--active .message__bar-btn {
+  --btn-background: var(--color-selected);
+  --btn-border-color: var(--color-selected-dark);
+}
+
 .message__reply-label {
   font-size: 0.8rem;
   font-weight: 600;

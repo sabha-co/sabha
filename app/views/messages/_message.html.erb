@@ -30,7 +30,7 @@
 
       <turbo-frame id="<%= dom_id(message, :edit) %>">
         <div class="message__body">
-          <div class="message__body-content">
+          <div class="message__body-content" data-controller="reaction-bar">
             <div class="message__meta">
               <h3 class="message__heading">
                 <%= link_to user_path(message.creator), class: "message__author txt-undecorated", title: message.creator.title, data: { turbo_frame: "_top" } do %>
