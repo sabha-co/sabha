@@ -14,7 +14,10 @@ class Rooms::DirectsController < RoomsController
     # memberships, and never touches the other person's sidebar. A cached "Message
     # X" link can outlive the empty state, so if a DM already exists, show it
     # rather than a provisional surface that would hide the conversation.
-    return @room = Rooms::Direct.new if selected_users_ids.none?
+    # With no recipients yet, send people to the inbox, whose rail carries the
+    # "New message to…" compose — the one new-DM picker — instead of swapping a
+    # picker into the sidebar in place of the conversation list.
+    return redirect_to inbox_direct_messages_path if selected_users_ids.none?
 
     if existing = Rooms::Direct.for(selected_users)
       redirect_to room_url(existing)

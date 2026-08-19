@@ -130,21 +130,19 @@
             <% end %>
           </span>
           <% if can_create_dms? %>
-            <%= link_to new_rooms_direct_path, class: "btn btn--small", aria: { label: "New direct message" }, data: { turbo_frame: "direct_rooms_control" } do %>
+            <%= link_to inbox_direct_messages_path, class: "btn btn--small", aria: { label: "New direct message" } do %>
               <%= icon_tag "add" %>
               <span class="for-screen-reader">New direct message</span>
             <% end %>
           <% end %>
         </div>
-        <turbo-frame id="direct_rooms_control" target="_top">
-          <div class="directs gap">
-            <div id="direct_rooms" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
-                 data-sorted-list-order-value="desc"
-                 data-action="rooms-list:unread@window->sorted-list#reSort">
-              <%= render partial: "users/sidebars/rooms/direct", collection: @direct_memberships, as: :membership, cached: true %>
-            </div>
+        <div class="directs gap">
+          <div id="direct_rooms" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
+               data-sorted-list-order-value="desc"
+               data-action="rooms-list:unread@window->sorted-list#reSort">
+            <%= render partial: "users/sidebars/rooms/direct", collection: @direct_memberships, as: :membership, cached: true %>
           </div>
-        </turbo-frame>
+        </div>
       <% end %>
     </div>
 

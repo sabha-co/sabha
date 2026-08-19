@@ -132,16 +132,6 @@ suggestion-option {
 
 .autocomplete__container {
   --input-padding: 0.3em 0;
-
-  @media (min-width: 1024px) {
-    /* Sidebar-specific sizing — only constrain when inside the sidebar new-DM form */
-    .directs--new & {
-      max-inline-size: calc(
-        var(--sidebar-width) - (var(--btn-size) * 2) - (var(--column-gap) * 2) -
-          (var(--sidebar-inline-space) * 2)
-      );
-    }
-  }
 }
 
 .autocomplete__input {

@@ -547,11 +547,6 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-
-  &.directs--new {
-    --column-gap: var(--inline-space);
-    --row-gap: 2px;
-  }
 }
 
 .directs--edit {

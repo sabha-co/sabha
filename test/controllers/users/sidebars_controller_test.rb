@@ -24,6 +24,13 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:pets), "starred_rooms_list_node")}", count: 0
   end
 
+  test "the new direct message button opens the inbox compose rather than an inline sidebar picker" do
+    get user_sidebar_url
+
+    assert_select "a[href=?][aria-label=?]", inbox_direct_messages_path, "New direct message"
+    assert_select "a[data-turbo-frame='direct_rooms_control']", count: 0
+  end
+
   test "renders readable direct-message names — full name for one-on-one, comma-joined first names for groups" do
     one_on_one = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:rachel) ])
     group = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:rachel), users(:jason) ])

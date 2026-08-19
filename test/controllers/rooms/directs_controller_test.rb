@@ -9,10 +9,9 @@ class Rooms::DirectsControllerTest < ActionDispatch::IntegrationTest
   # New action tests
   # ===================
 
-  test "new without user_ids renders the picker" do
+  test "new without user_ids redirects to the direct message inbox rather than an inline picker" do
     get new_rooms_direct_url
-    assert_response :success
-    assert_select "turbo-frame#direct_rooms_control"
+    assert_redirected_to inbox_direct_messages_path
   end
 
   test "new with user_ids renders a provisional compose surface and writes nothing" do
@@ -115,7 +114,7 @@ class Rooms::DirectsControllerTest < ActionDispatch::IntegrationTest
     sign_in :david  # admin user
 
     get new_rooms_direct_url
-    assert_response :success
+    assert_redirected_to inbox_direct_messages_path
 
     post rooms_directs_url, params: { user_ids: [ users(:jz).id ], message: { body: "Hi" } }
     assert_redirected_to room_url(Rooms::Direct.last)

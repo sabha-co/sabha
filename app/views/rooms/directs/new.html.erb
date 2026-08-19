@@ -1,56 +1,27 @@
-<%# @recipients is set only once names are chosen (Rooms::DirectsController#new): a
-    provisional compose surface that writes nothing until the first message is sent.
-    Otherwise this is the sidebar "New DM" picker, whose submit reveals this same
-    surface for the chosen users rather than creating the room. %>
-<% if @recipients %>
-  <% others = @recipients.without(Current.user) %>
-  <% names = others.map(&:name).to_sentence %>
-  <% @page_title = names %>
-  <% @body_class = "sidebar" %>
+<%# The provisional compose surface, reached once recipients are chosen
+    (Rooms::DirectsController#new). It writes nothing until the first message is
+    sent; a recipient-less new redirects to the inbox, so @recipients is always
+    present here. %>
+<% others = @recipients.without(Current.user) %>
+<% names = others.map(&:name).to_sentence %>
+<% @page_title = names %>
+<% @body_class = "sidebar" %>
 
-  <%= render "rooms/directs/header", recipients: others, title: names %>
+<%= render "rooms/directs/header", recipients: others, title: names %>
 
-  <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
-  <%# Carry the DM conversation rail beside the compose surface, like a live direct room %>
-  <% content_for :list_rail, render("inboxes/direct_messages/rail") %>
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+<%# Carry the DM conversation rail beside the compose surface, like a live direct room %>
+<% content_for :list_rail, render("inboxes/direct_messages/rail") %>
 
-  <div id="message-area" class="message-area" contents>
-    <div class="messages flex flex-column align-center gap txt-align-center pad" aria-live="polite">
-      <% others.each do |recipient| %>
-        <div class="avatar avatar--large"><%= avatar_image_tag(recipient, alt: "") %></div>
-      <% end %>
-      <p class="txt-medium txt-muted margin-none">
-        This is the start of your conversation with <%= names %>.
-      </p>
-    </div>
+<div id="message-area" class="message-area" contents>
+  <div class="messages flex flex-column align-center gap txt-align-center pad" aria-live="polite">
+    <% others.each do |recipient| %>
+      <div class="avatar avatar--large"><%= avatar_image_tag(recipient, alt: "") %></div>
+    <% end %>
+    <p class="txt-medium txt-muted margin-none">
+      This is the start of your conversation with <%= names %>.
+    </p>
   </div>
+</div>
 
-  <%= render "rooms/directs/provisional_composer", recipients: @recipients %>
-<% else %>
-  <turbo-frame id="direct_rooms_control" target="_top">
-    <div class="directs directs--new flex flex-column gap">
-      <%= form_with url: new_rooms_direct_path, method: :get,
-            class: "flex gap flex-item-grow",
-            data: { turbo_frame: "_top", controller: "form", action: "keydown.esc->form#cancel" } do |form| %>
-        <%= link_to user_sidebar_path, class: "btn flex-item-no-shrink d-hotwire-native-none", data: { turbo_frame: "user_sidebar", form_target: "cancel" } do %>
-          <%= icon_tag "arrow-left" %>
-          <span class="for-screen-reader">Cancel changes</span>
-        <% end %>
-
-        <section class="autocomplete__container unpad input input--actor">
-          <div class="autocomplete__input input flex flex-wrap position-relative flex-item-grow"
-              data-controller="autocomplete" data-autocomplete-url-value="<%= autocompletable_users_path %>">
-            <%= render "users/autocompletables/user_select", form: form, placeholder: nil %>
-          </div>
-        </section>
-
-        <%= button_tag class: "btn btn--reversed flex-item-no-shrink", type: "submit" do %>
-          <%= icon_tag "check" %>
-          <span class="for-screen-reader">Start direct message</span>
-        <% end %>
-      <% end %>
-
-      <span class="txt-small translucent pad-inline-half center">Type names to start a conversation…</span>
-    </div>
-  </turbo-frame>
-<% end %>
+<%= render "rooms/directs/provisional_composer", recipients: @recipients %>
