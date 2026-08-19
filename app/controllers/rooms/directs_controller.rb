@@ -36,7 +36,7 @@ class Rooms::DirectsController < RoomsController
     redirect_to room_url(@message.room)
   rescue ActiveRecord::RecordInvalid, Rooms::Direct::BlankMessageError
     # A blank or invalid first message created nothing (the transaction rolled back
-    # the just-opened DM). Re-render the provisional surface so the composer stays.
+    # the just-opened DM). Re-render the compose screen so the picker and composer stay.
     @recipients = selected_users
     load_dm_conversations
     render :new, status: :unprocessable_entity
