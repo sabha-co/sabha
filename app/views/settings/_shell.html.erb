@@ -19,7 +19,7 @@
       <h2 class="settings-nav__title"><%= community ? "Community" : "Your settings" %></h2>
       <p class="settings-nav__sub">
         <span class="settings-nav__sub-name"><%= community ? Current.account.name : Current.user.name %></span>
-        <% if community %><span class="settings-nav__chip">Admin only</span><% end %>
+        <% if community && Current.user.can_administer? %><span class="settings-nav__chip">Admin only</span><% end %>
       </p>
     </header>
 

@@ -16,13 +16,11 @@ class Accounts::PermissionsControllerTest < ActionDispatch::IntegrationTest
     assert_visible_toggle "Must be admin to start DMs"
   end
 
-  test "show carries the community email toggles" do
+  test "community email toggles live on identity, not permissions" do
     get account_permissions_url
 
-    assert_select "input[type=hidden][name=?]", "account[email_notifications_enabled]"
-    assert_select "input[type=hidden][name=?]", "account[weekly_digest_enabled]"
-    assert_visible_toggle "Send missed-notification emails"
-    assert_visible_toggle "Send the weekly community digest"
+    assert_select "input[type=hidden][name=?]", "account[email_notifications_enabled]", count: 0
+    assert_select "input[type=hidden][name=?]", "account[weekly_digest_enabled]", count: 0
   end
 
   test "the invite-links toggle lives on invitations, not permissions" do

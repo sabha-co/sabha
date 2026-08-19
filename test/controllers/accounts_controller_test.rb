@@ -11,13 +11,16 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", edit_account_path
   end
 
-  test "show is accessible to non-admins as the about page" do
+  test "show gives non-admins a read-only Identity settings pane" do
     sign_in :kevin
     assert users(:kevin).member?
 
     get account_url
     assert_response :success
+    assert_select ".settings-nav__item[aria-current=page]", text: "Identity"
+    assert_select ".settings-card", text: /Only administrators can change/
     assert_select "a[href=?]", edit_account_path, count: 0
+    assert_select ".settings-split__content form", count: 0
   end
 
   test "edit" do
@@ -28,17 +31,18 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
   test "edit renders inside the settings shell with Identity current" do
     get edit_account_url
 
-    assert_select ".settings-nav__item", count: 5
+    assert_select ".settings-nav__item", count: 6
     assert_select ".settings-nav__item[aria-current=page]", text: "Identity"
     assert_select "a.settings-nav__switch[href=?]", user_profile_path, text: /Your settings/
     assert_select "input[name=?]", "account[settings][accent]"
   end
 
-  test "the restriction toggles moved off the identity page" do
+  test "identity exposes the account-level email switches but not restrictions" do
     get edit_account_url
 
     assert_select "input[type=hidden][name=?]", "account[settings][restrict_room_creation_to_administrators]", count: 0
-    assert_select "input[type=hidden][name=?]", "account[email_notifications_enabled]", count: 0
+    assert_select "input[type=hidden][name=?]", "account[email_notifications_enabled]", count: 1
+    assert_select "input[type=hidden][name=?]", "account[weekly_digest_enabled]", count: 1
   end
 
   test "update returns to the settings page it came from" do

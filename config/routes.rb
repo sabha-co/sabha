@@ -116,6 +116,7 @@ Rails.application.routes.draw do
         resource :profile
         resource :appearance, only: :show
         resource :account_data, only: :show
+        resource :invitations, only: :show
         resource :avatar_shuffle, only: :create
         resource :email_change, only: :destroy
         resource :invite_link, only: :create

@@ -74,7 +74,7 @@
     <%= render "accounts/setting_toggle", account: @account, scope: :settings,
           attribute: :allow_users_to_create_invite_links,
           title:     "Allow everyone to create invite links",
-          hint:      "Off means only admins can generate invite URLs." %>
+          hint:      "Off means only admins can generate invite URLs, and existing personal links stop working immediately." %>
   </div>
 
   <p class="settings-footnote">There is no email invitation queue &mdash; people join by opening a link, so nothing is pending here.</p>

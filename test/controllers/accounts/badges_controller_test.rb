@@ -19,12 +19,22 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
 
   test "create badge" do
     assert_difference -> { Badge.count }, 1 do
-      post account_badges_url, params: { badge: { name: "New", color: "#FF0000" } }
+      post account_badges_url, params: { badge: { name: "New", icon: "✦", color: "#FF0000" } }
     end
 
     assert_redirected_to account_badges_url
     assert_equal "New", Badge.last.name
+    assert_equal "✦", Badge.last.icon
     assert_equal "#FF0000", Badge.last.color
+  end
+
+  test "index provides an icon field and renders badge icons" do
+    badges(:founder).update!(icon: "✦")
+
+    get account_badges_url
+
+    assert_select "input[name='badge[icon]'][maxlength='50']"
+    assert_select "#badge_#{badges(:founder).id}", text: /✦ Founder/
   end
 
   test "create badge with invalid params" do

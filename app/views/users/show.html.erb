@@ -54,7 +54,7 @@
             <span class="profile-hero__glyph" title="Moderator"><%= icon_tag "shield" %></span>
           <% end %>
           <% if @user.badge %>
-            <span class="member-badge" <%= tag.attributes(style: "--badge-color: #{@user.badge.color}") if @user.badge.color.present? %>><%= @user.badge.name %></span>
+            <%= badge_tag @user.badge %>
           <% end %>
         </div>
 

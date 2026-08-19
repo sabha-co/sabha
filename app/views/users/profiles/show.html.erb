@@ -73,6 +73,22 @@
         <% end %>
       </div>
 
+      <% unless Sabha.saas? %>
+        <div class="settings-field">
+          <div class="settings-field__label">
+            <label for="user_password">Password</label>
+          </div>
+          <%= form.password_field :password, class: "input", autocomplete: "new-password", minlength: User::MINIMUM_PASSWORD_LENGTH,
+                placeholder: "Leave blank to keep your current password" %>
+          <p class="settings-field__hint">Optional. Use at least <%= User::MINIMUM_PASSWORD_LENGTH %> characters to change it.</p>
+        </div>
+      <% end %>
+
+      <div class="settings-field">
+        <div class="settings-field__label">Links</div>
+        <p class="settings-field__hint">A handle is enough for X and LinkedIn. Website needs a full address.</p>
+      </div>
+
       <div class="settings-field">
         <div class="settings-field__label">
           <label for="user_twitter_url">X profile</label>

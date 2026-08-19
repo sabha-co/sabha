@@ -1,0 +1,13 @@
+<% @page_title = "Invitations" %>
+
+<%= render layout: "settings/shell", locals: { section: :personal_invitations } do %>
+  <header class="settings-header">
+    <div class="settings-header__scope">Your settings</div>
+    <h1 class="settings-header__title">Invitations</h1>
+    <p class="settings-header__blurb">Your personal link to invite people to <%= Current.account.name %>.</p>
+  </header>
+
+  <div class="settings-card">
+    <%= render "users/profiles/invite_link" %>
+  </div>
+<% end %>

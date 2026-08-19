@@ -16,7 +16,7 @@
       <% if user.bot? %>
         <span class="member-badge" title="Bot"><%= icon_tag "bot" %> Bot</span>
       <% elsif user.badge %>
-        <span class="member-badge" <%= tag.attributes(style: "--badge-color: #{user.badge.color}") if user.badge.color.present? %>><%= user.badge.name %></span>
+        <%= badge_tag user.badge %>
       <% end %>
     </div>
     <div class="list-row__subtitle">

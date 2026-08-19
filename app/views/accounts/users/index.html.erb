@@ -1,17 +1,13 @@
 <% @page_title = "Members" %>
-<% @body_class = "sidebar members" %>
-<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
-<% content_for :nav do %>
-  <h1 class="navbar-title">Members</h1>
-  <span class="navbar-count"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</span>
-  <div class="flex-item-grow"></div>
-  <% if Current.user.can_administer? %>
-    <%= link_to "Manage badges", account_badges_path, class: "navbar-text-link" %>
-  <% end %>
-<% end %>
+<%= render layout: "settings/shell", locals: { section: :members } do %>
+  <header class="settings-header">
+    <div class="settings-header__scope">Community settings</div>
+    <h1 class="settings-header__title">Members</h1>
+    <p class="settings-header__blurb"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</p>
+  </header>
 
-<section class="members-page">
+  <section class="members-page">
   <div class="members-toolbar">
     <%= form_with url: account_users_path, method: :get, data: { turbo_frame: "account_users", controller: "form" }, class: "members-toolbar__form" do |f| %>
       <%= f.search_field :query,
@@ -103,10 +99,11 @@
       <% end %>
     </turbo-frame>
   </div>
-</section>
+  </section>
 
-<dialog id="manage_member_dialog" class="scrim-dialog" style="--dialog-width: 290px" aria-label="Manage member"
-        data-controller="dialog"
-        data-action="click->dialog#closeOnScrim turbo:submit-end->dialog#closeOnSubmit">
-  <%= turbo_frame_tag "manage_member", data: { action: "turbo:frame-load->dialog#open" } %>
-</dialog>
+  <dialog id="manage_member_dialog" class="scrim-dialog" style="--dialog-width: 290px" aria-label="Manage member"
+          data-controller="dialog"
+          data-action="click->dialog#closeOnScrim turbo:submit-end->dialog#closeOnSubmit">
+    <%= turbo_frame_tag "manage_member", data: { action: "turbo:frame-load->dialog#open" } %>
+  </dialog>
+<% end %>

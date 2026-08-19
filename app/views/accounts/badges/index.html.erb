@@ -19,6 +19,8 @@
     <%= form_with url: account_badges_path, method: :post, class: "flex align-center gap" do |form| %>
       <%= form.text_field :name, name: "badge[name]", class: "input txt-small flex-item-grow", placeholder: "New badge name", required: true,
             maxlength: 10, style: "min-width: 0;" %>
+      <%= form.text_field :icon, name: "badge[icon]", class: "input txt-small", placeholder: "✦", title: "Badge icon", maxlength: 50,
+            style: "width: 4ch;" %>
       <%= form.color_field :color, name: "badge[color]", class: "input txt-small", title: "Badge color",
             style: "width: 3ch; padding: 0.25rem;" %>
       <%= form.button class: "btn btn--reversed txt-small", type: "submit" do %>

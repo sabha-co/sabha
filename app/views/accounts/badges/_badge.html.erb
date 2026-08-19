@@ -3,7 +3,7 @@
   <% if badge.color.present? %>
     <span class="badge-color flex-item-no-shrink" style="background: <%= badge.color %>; width: 1em; height: 1em; border-radius: 50%;"></span>
   <% end %>
-  <span class="flex-item-grow"><%= badge.name %></span>
+  <span class="flex-item-grow"><%= badge_label(badge) %></span>
   <span class="txt-x-small txt-muted flex-item-no-shrink"><%= pluralize(badge.users.length, "member") %></span>
 
   <%= button_to account_badge_path(badge), method: :delete, class: "btn txt-small flex-item-no-shrink btn--negative", data: {

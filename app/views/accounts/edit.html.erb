@@ -77,6 +77,23 @@
     <% end %>
   </div>
 
+  <% unless Sabha.email_globally_disabled? %>
+    <span class="settings-label">Email from this community</span>
+    <div class="settings-card">
+      <%= render "accounts/setting_toggle", account: @account,
+            attribute: :email_notifications_enabled,
+            title:     "Send missed-notification emails",
+            hint:      "Email members a recap when they miss a mention or DM while away.",
+            disabled:  !Sabha.email_configured? %>
+
+      <%= render "accounts/setting_toggle", account: @account,
+            attribute: :weekly_digest_enabled,
+            title:     "Send the weekly community digest",
+            hint:      "Send a weekly recap to members who opted in.",
+            disabled:  !Sabha.email_configured? %>
+    </div>
+  <% end %>
+
   <span class="settings-label">Members</span>
   <div class="settings-card">
     <%= link_to account_users_path, class: "setting-row txt-undecorated" do %>

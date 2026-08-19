@@ -3,7 +3,7 @@ class Accounts::BotsController < ApplicationController
   before_action :set_bot, only: %i[ show edit update destroy ]
 
   def index
-    @bots = User.active_bots.ordered
+    @bots = User.active_bots.ordered.includes(:webhook)
     @bot_invite_code = Current.account.active_bot_invite_code
   end
 

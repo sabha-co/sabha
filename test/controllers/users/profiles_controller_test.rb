@@ -21,7 +21,7 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
   test "show renders inside the settings shell with Profile current" do
     get user_profile_url
 
-    assert_select ".settings-nav__item", count: 4
+    assert_select ".settings-nav__item", count: 5
     assert_select ".settings-nav__item[aria-current=page]", text: "Profile"
   end
 
@@ -45,6 +45,31 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
     get user_profile_url
 
     assert_select "[data-action*=?]", "theme#setLight", count: 0
+  end
+
+  test "show includes an optional password field" do
+    get user_profile_url
+
+    assert_select ".settings-field__label", text: "Links"
+    assert_select ".settings-field__hint", text: /full address/, count: 1
+    assert_select "input[type=password][name='user[password]'][minlength='8']", count: 1
+  end
+
+  test "optional password updates without changing the email address" do
+    patch user_profile_url, params: { user: { password: "new secure password" } }
+
+    assert_redirected_to user_profile_url
+    assert @user.reload.authenticate("new secure password")
+  end
+
+  test "optional profile fields can be cleared" do
+    @user.update!(status_message: "Working", personal_url: "https://example.com")
+
+    patch user_profile_url, params: { user: { status_message: "", personal_url: "" } }
+
+    assert_redirected_to user_profile_url
+    assert_equal "", @user.reload.status_message
+    assert_equal "", @user.personal_url
   end
 
   test "status message saves from the profile form and is distinct from bio" do

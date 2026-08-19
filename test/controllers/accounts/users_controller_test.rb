@@ -10,11 +10,12 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "index renders inside the app shell with the admin badges link" do
+  test "index renders as the Members pane in the settings shell" do
     get account_users_url
 
-    assert_select ".navbar-title", text: "Members"
-    assert_select ".navbar-text-link", text: "Manage badges"
+    assert_select ".settings-nav__item[aria-current=page]", text: "Members"
+    assert_select ".settings-header__title", text: "Members"
+    assert_select ".navbar-title", text: "Settings"
     assert_select ".members-page .members-toolbar input[name=query]"
     assert_select "#administrators_section.role-section"
   end
@@ -24,7 +25,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     get account_users_url
 
     assert_response :success
-    assert_select ".navbar-text-link", count: 0
+    assert_select ".settings-nav__item", text: "Badges", count: 0
     assert_match users(:david).name, response.body
     assert_match users(:jason).name, response.body
   end

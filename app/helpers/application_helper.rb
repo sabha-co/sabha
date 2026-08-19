@@ -37,6 +37,15 @@ module ApplicationHelper
     tag.span class: class_names("icon icon--#{name}", options.delete(:class)), "aria-hidden": true, **options
   end
 
+  def badge_label(badge)
+    safe_join([ badge.icon.presence, badge.name ].compact, " ")
+  end
+
+  def badge_tag(badge, class_name: "member-badge")
+    tag.span badge_label(badge), class: class_name,
+        style: ("--badge-color: #{badge.color}; color: #{badge.color}" if badge.color.present?)
+  end
+
   def body_classes
     [ @body_class, admin_body_class, staff_body_class, account_logo_body_class, workspace_selector_body_class, workspace_banner_body_class ].compact.join(" ")
   end
