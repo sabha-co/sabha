@@ -75,6 +75,9 @@ class Message::PinnableTest < ActiveSupport::TestCase
       action: "replace", target: [ @room, :pinned ]
     assert_rendered_turbo_stream_broadcast @room, :messages,
       action: "replace", target: [ @message, :pinning ]
+    streams = ActionCable.server.pubsub.broadcasts("#{@room.to_gid_param}:messages").collect { |broadcast| JSON.parse(broadcast) }.join
+    assert_select Nokogiri::HTML.fragment(streams),
+      %(turbo-stream[action="update"][targets="[data-room-pinning-id='#{@room.id}'] .message__pin-label"])
   end
 
   test "unpinning broadcasts the cleared strip" do

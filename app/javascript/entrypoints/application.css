@@ -28,8 +28,9 @@
   --color-border-dark: oklch(var(--lch-line));
   --color-border-darker: oklch(var(--lch-gray-darker));
   --color-border-darkest: oklch(var(--lch-gray-darkest));
+  --control-border: oklch(var(--lch-control));
   --color-accent-brand: oklch(var(--lch-accent));
-  --color-link: oklch(var(--lch-accent));
+  --color-link: var(--color-accent-brand);
   --color-selected: oklch(var(--lch-accent-bg));
   --color-selected-dark: oklch(var(--lch-accent-bd));
   --color-negative: oklch(var(--lch-red));

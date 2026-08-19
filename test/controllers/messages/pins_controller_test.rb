@@ -54,6 +54,27 @@ class Messages::PinsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".pinned-bar .pinned-bar__text", text: /#{Regexp.escape(@message.plain_text_body)}/
   end
 
+  test "pin menu labels state whether pinning replaces the current pin" do
+    cache_store = ActionController::Base.cache_store
+    perform_caching = ActionController::Base.perform_caching
+    ActionController::Base.cache_store = ActiveSupport::Cache::MemoryStore.new
+    ActionController::Base.perform_caching = true
+
+    sign_in :david
+
+    get room_url(@room)
+    assert_select "##{dom_id(@message, :pinning)}", text: "Pin to room"
+
+    @message.pin!
+
+    get room_url(@room)
+    assert_select "##{dom_id(@message, :pinning)}", text: "Unpin from room"
+    assert_select "##{dom_id(messages(:second), :pinning)}", text: "Pin instead of current"
+  ensure
+    ActionController::Base.cache_store = cache_store
+    ActionController::Base.perform_caching = perform_caching
+  end
+
   test "cannot pin a message in a direct room" do
     sign_in :david
     dm = rooms(:david_and_jason)

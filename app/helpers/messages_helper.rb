@@ -159,6 +159,7 @@ module MessagesHelper
   def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false, composer_id: "composer", forum_replies_count: nil)
     [
       message,
+      message.room,
       room_id,
       message.bookmarked_by?(Current.user),
       message.creator,

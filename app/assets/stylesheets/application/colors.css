@@ -82,6 +82,8 @@
   --color-negative: oklch(var(--lch-red));
   --color-positive: oklch(var(--lch-green));
   --color-alert: oklch(var(--lch-orange));
+  --color-message-mentioned: oklch(var(--lch-red) / 0.09);
+  --color-message-mentioned-hover: oklch(var(--lch-red) / 0.14);
 
   /* Elevation */
   --shadow-raise: 0 1px 2px oklch(var(--lch-always-black) / 0.04);
@@ -155,6 +157,8 @@
     --lch-accent: var(--lch-accent-lift);
     --lch-accent-bg: var(--lch-accent-lift) / 0.15;
     --lch-accent-bd: var(--lch-accent-lift) / 0.34;
+    --color-message-mentioned: oklch(var(--lch-red) / 0.18);
+    --color-message-mentioned-hover: oklch(var(--lch-red) / 0.24);
   }
 }
 
@@ -180,4 +184,6 @@
   --lch-accent: var(--lch-accent-lift);
   --lch-accent-bg: var(--lch-accent-lift) / 0.15;
   --lch-accent-bd: var(--lch-accent-lift) / 0.34;
+  --color-message-mentioned: oklch(var(--lch-red) / 0.18);
+  --color-message-mentioned-hover: oklch(var(--lch-red) / 0.24);
 }

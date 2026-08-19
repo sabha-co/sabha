@@ -5,6 +5,11 @@ require "application_system_test_case"
 # Single-session on purpose — no cross-client delivery, so it stays reliable.
 class MessageRowTest < ApplicationSystemTestCase
   setup do
+    @mention = rooms(:designers).messages.create!(
+      creator: users(:jason),
+      body: "<div>Hi #{mention_attachment_for(:kevin)}</div>",
+      client_message_id: "message_row_mention_label"
+    )
     sign_in "kevin@37signals.com"
     # Navigate by sidebar click rather than join_room's visit — same reasoning
     # as message_composer_test, it avoids the post-visit stream-source race.
@@ -33,6 +38,32 @@ class MessageRowTest < ApplicationSystemTestCase
 
     message.find(".message__author").evaluate_script("this.focus()")
     assert_message_actions_revealed message
+  end
+
+  test "a message that mentions the signed-in user has a wash and meta label" do
+    message = find("##{dom_id(@mention)}")
+
+    assert_selector "##{dom_id(@mention)}.message--mentioned"
+    within message do
+      assert_text /mentioned you/i
+    end
+    unmentioned_message = find("##{dom_id(messages(:third))}")
+    assert_no_selector "##{dom_id(messages(:third))}.message--mentioned"
+    within unmentioned_message do
+      assert_no_selector ".message__mention-label", visible: :visible
+    end
+    mention_wash = page.evaluate_script(<<~JS)
+      (() => {
+        const swatch = document.createElement("div")
+        swatch.style.backgroundColor = "var(--color-message-mentioned)"
+        document.body.append(swatch)
+        const color = getComputedStyle(swatch).backgroundColor
+        swatch.remove()
+        return color
+      })()
+    JS
+    assert_equal mention_wash, message.evaluate_script("getComputedStyle(this).backgroundColor")
+    assert_not_equal mention_wash, unmentioned_message.evaluate_script("getComputedStyle(this).backgroundColor")
   end
 
   test "the options menu opens as an anchored popover and closes when an item is chosen" do

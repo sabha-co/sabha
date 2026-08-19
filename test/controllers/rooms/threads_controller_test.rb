@@ -213,6 +213,19 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#thread_panel_frame"
   end
 
+  test "show includes the mention label in a thread parent message" do
+    parent_message = @room.messages.create!(
+      body: "<div>Hi #{mention_attachment_for(:david)}</div>",
+      creator: @jason,
+      client_message_id: "thread_parent_mention_label"
+    )
+    thread = Rooms::Thread.create_for({ parent_message_id: parent_message.id, creator: @david }, users: [ @david, @jason ])
+
+    get rooms_thread_url(thread)
+
+    assert_select "##{dom_id(parent_message)} .message__mention-label", text: "mentioned you"
+  end
+
   test "show requires access to the parent room" do
     parent_message = @room.messages.create!(
       body: "Parent for access test",

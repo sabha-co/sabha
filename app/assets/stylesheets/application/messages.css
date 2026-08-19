@@ -566,6 +566,16 @@
   }
 }
 
+.message__mention-label {
+  color: var(--color-text-subtle);
+  display: none;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .message__permalink {
   color: var(--color-text-subtle);
   font-size: 0.71875rem;
@@ -995,7 +1005,17 @@ img.message__attachment {
 }
 
 .message--mentioned {
-  background-color: color-mix(in srgb, var(--color-negative) 7%, transparent);
+  background-color: var(--color-message-mentioned);
+
+  .message__mention-label {
+    display: inline-flex;
+  }
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: var(--color-message-mentioned-hover);
+    }
+  }
 
   &.message--mentioned-unread .message__body-content {
     animation: wiggle 0.4s both;

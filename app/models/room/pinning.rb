@@ -28,6 +28,13 @@ module Room::Pinning
         partial: "rooms/pinned_strip", locals: { room: self }
       )
 
+      Turbo::StreamsChannel.broadcast_action_to(
+        self, :messages,
+        action: :update,
+        targets: "[data-room-pinning-id='#{id}'] .message__pin-label",
+        html: pinned_message_id? ? "Pin instead of current" : "Pin to room"
+      )
+
       Message.where(id: saved_change_to_pinned_message_id.compact).each do |message|
         Turbo::StreamsChannel.broadcast_replace_to(
           self, :messages,
