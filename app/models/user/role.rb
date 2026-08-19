@@ -9,6 +9,10 @@ module User::Role
     administrator? || self == record&.creator || record&.new_record?
   end
 
+  def can_manage_account?
+    administrator?
+  end
+
   def can_moderate?
     staff?
   end

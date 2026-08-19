@@ -21,6 +21,13 @@ class User::RoleTest < ActiveSupport::TestCase
     assert_not another_member.can_administer?(rooms(:designers))
   end
 
+  test "can_manage_account? is administrators only" do
+    assert User.new(role: :administrator).can_manage_account?
+
+    assert_not User.new(role: :moderator).can_manage_account?
+    assert_not User.new(role: :member).can_manage_account?
+  end
+
   test "bannable_by? rejects self, non-admins, and already-banned users" do
     admin = users(:david)
     other = users(:kevin)

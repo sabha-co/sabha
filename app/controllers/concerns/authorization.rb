@@ -5,7 +5,7 @@ module Authorization
     end
 
     def ensure_can_manage_account
-      return if Current.user.can_administer?
+      return if Current.user.can_manage_account?
 
       render_forbidden \
         title: "Administrators only",
