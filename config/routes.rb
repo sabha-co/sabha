@@ -183,6 +183,7 @@ Rails.application.routes.draw do
         get :notifications_ready, on: :member
       end
       resource :star, only: %i[ create destroy ]
+      resource :read, only: :create
       resource :membership, only: %i[ create destroy ]
       resource :roster, only: :show
       resources :members, only: %i[ index create destroy ]
