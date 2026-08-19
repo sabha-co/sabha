@@ -4,35 +4,45 @@
   <header class="settings-header">
     <div class="settings-header__scope">Community settings</div>
     <h1 class="settings-header__title">Bots &amp; webhooks</h1>
-    <p class="settings-header__blurb">Bots post messages and respond to mentions via the API. <%= link_to "API docs", skill_path, target: "_blank", class: "txt-underlined" %></p>
+    <p class="settings-header__blurb">API clients that post into rooms with a bearer key. <%= link_to "API docs", skill_path, target: "_blank", class: "txt-underlined" %></p>
   </header>
 
-  <div class="flex flex-column gap" style="view-transition-name: chat-bots">
-    <% if @bots.any? %>
-      <menu class="flex flex-column gap-half margin-none pad-none">
-        <%= render partial: "accounts/bots/bot", collection: @bots %>
-      </menu>
-    <% end %>
+  <div class="settings-card">
+    <div id="bots_list" class="bots-list">
+      <% if @bots.any? %>
+        <%= render partial: "accounts/bots/bot", collection: @bots, as: :bot %>
+      <% else %>
+        <%= render "accounts/bots/empty" %>
+      <% end %>
+    </div>
 
-    <div class="flex flex-column gap">
-      <h2 class="txt-small txt-muted margin-none"><strong>Add a bot</strong></h2>
-
-      <div class="fill-shade border-radius pad flex align-center gap">
-        <div class="flex-item-grow min-width">
-          <div class="txt-small"><strong>Create manually</strong></div>
-          <div class="txt-x-small txt-muted">Set up a bot yourself with a name. Add a webhook URL later if you need HTTP delivery.</div>
-        </div>
-        <%= link_to new_account_bot_path, class: "btn btn--primary btn--small flex-item-no-shrink", aria: { label: "Create a bot manually" } do %>
-          <%= icon_tag "add" %>
-          <span>Create bot</span>
-        <% end %>
-      </div>
-
-      <div class="fill-shade border-radius pad flex flex-column gap-half">
-        <div class="txt-small"><strong>Invite URL</strong></div>
-        <div class="txt-x-small txt-muted">Generate a one-time URL to register a bot via the API using <%= link_to "Openclaw plugin.", "https://github.com/sabha-co/openclaw-sabha?tab=readme-ov-file#install", target: "_blank", class: "txt-underlined" %></div>
-        <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code %>
-      </div>
+    <div class="bot-footer">
+      <div class="bot-footer__text">Bots post through the API with a bearer key and can be scoped to individual rooms.</div>
+      <%= link_to new_account_bot_path, class: "btn settings-chip-btn", data: { turbo_frame: "bot_editor" } do %>
+        <%= icon_tag "add" %><span>Add bot</span>
+      <% end %>
     </div>
   </div>
+
+  <span class="settings-label">Register via API</span>
+  <div class="settings-card">
+    <div class="settings-field">
+      <div class="settings-field__label"><label>Invite URL</label></div>
+      <p class="settings-field__hint">Generate a one-time URL to register a bot through the API using the <%= link_to "Openclaw plugin", "https://github.com/sabha-co/openclaw-sabha?tab=readme-ov-file#install", target: "_blank", class: "txt-underlined" %>.</p>
+      <%= render "accounts/bot_invite_codes/bot_invite_code", bot_invite_code: @bot_invite_code %>
+    </div>
+  </div>
+
+  <%# Dialogs mounted once; their content loads into these frames. %>
+  <dialog id="bot_editor_dialog" class="scrim-dialog scrim-dialog--bot-editor" aria-label="Bot editor"
+          data-controller="dialog"
+          data-action="click->dialog#closeOnScrim turbo:submit-end->dialog#closeOnSubmit turbo:before-cache@document->dialog#close">
+    <%= turbo_frame_tag "bot_editor", data: { action: "turbo:frame-load->dialog#open" } %>
+  </dialog>
+
+  <dialog id="bot_key_dialog" class="scrim-dialog scrim-dialog--bot-key" aria-label="Bearer key"
+          data-controller="dialog"
+          data-action="click->dialog#closeOnScrim turbo:before-cache@document->dialog#close">
+    <%= turbo_frame_tag "bot_key" %>
+  </dialog>
 <% end %>

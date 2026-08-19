@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_18_153000) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_19_183231) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -348,6 +348,8 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_18_153000) do
     t.string "avatar_url"
     t.integer "badge_id"
     t.text "bio"
+    t.string "bot_key_digest"
+    t.datetime "bot_key_rotated_at"
     t.string "bot_token"
     t.datetime "created_at", null: false
     t.integer "current_streak", default: 0, null: false
@@ -371,6 +373,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_18_153000) do
     t.string "webhook_secret"
     t.bigint "workspace_membership_id"
     t.index ["badge_id"], name: "index_users_on_badge_id"
+    t.index ["bot_key_digest"], name: "index_users_on_bot_key_digest", unique: true
     t.index ["bot_token"], name: "index_users_on_bot_token", unique: true
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
     t.index ["workspace_membership_id"], name: "index_users_on_workspace_membership_id"

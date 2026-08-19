@@ -1,0 +1,13 @@
+<%# locals: (bot:, heading:, body:) %>
+<div class="scrim-dialog__header scrim-dialog__header--titled" data-controller="auto-dialog">
+  <h2 class="scrim-dialog__title"><%= heading %></h2>
+</div>
+<div class="scrim-dialog__body">
+  <div class="bot-key">
+    <span class="bot-key__value"><%= bot.plaintext_bot_key %></span>
+    <%= button_to_copy_to_clipboard(bot.plaintext_bot_key) do %>Copy<% end %>
+  </div>
+  <p class="txt-small txt-muted"><%= body %></p>
+  <p class="txt-small txt-muted">For <strong><%= bot.name %></strong> · send it as <code>Authorization: Bearer …</code></p>
+  <button type="button" class="btn settings-save bot-key__done" data-action="dialog#close">Done</button>
+</div>

@@ -1,17 +1,29 @@
-<li>
-  <%= link_to account_bot_path(bot), class: "flex align-center gap pad-block-half pad-inline fill-shade border-radius txt-undecorated", style: "view-transition-name: chat-bot-#{ bot.id }" do %>
-    <figure class="avatar flex-item-no-shrink" style="--avatar-size: 2.4em;">
-      <%= avatar_tag bot, loading: :lazy %>
-    </figure>
+<div class="bot-row" id="<%= dom_id(bot) %>" data-controller="dialog" data-action="turbo:submit-end->dialog#closeOnSubmit">
+  <figure class="avatar bot-row__avatar"><%= avatar_tag bot, loading: :lazy %></figure>
 
-    <div class="min-width flex-item-grow">
-      <div class="overflow-ellipsis txt-small"><strong><%= bot.name %></strong> <span class="txt-x-small txt-muted" title="Bot"><%= icon_tag "bot" %></span></div>
-      <div class="txt-x-small txt-muted"><%= pluralize(bot.rooms.without_directs.without_threads.count, "room") %></div>
-      <% if bot.webhook_url.present? %>
-        <div class="bot-webhook-url overflow-ellipsis txt-x-small txt-muted"><%= bot.webhook_url %></div>
-      <% end %>
+  <div class="bot-row__body">
+    <div class="bot-row__name"><%= bot.name %> <span class="bot-tag">bot</span></div>
+    <div class="bot-row__meta"><%= bot_rooms_summary(bot) %></div>
+    <div class="bot-row__hook"><%= bot_webhook_summary(bot) %></div>
+  </div>
+
+  <div class="bot-row__actions">
+    <%= link_to "Edit", edit_account_bot_path(bot), class: "bot-action", data: { turbo_frame: "bot_editor" } %>
+    <%= button_to "Rotate key", account_bot_key_path(bot), method: :put, class: "bot-action" %>
+    <button type="button" class="bot-action bot-action--danger" data-action="dialog#open">Remove</button>
+  </div>
+
+  <dialog class="scrim-dialog scrim-dialog--bot-remove" aria-label="Remove <%= bot.name %>"
+          data-dialog-target="modal" data-action="click->dialog#closeOnScrim">
+    <div class="scrim-dialog__header scrim-dialog__header--titled">
+      <h2 class="scrim-dialog__title">Remove <%= bot.name %>?</h2>
     </div>
-
-    <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
-  <% end %>
-</li>
+    <div class="scrim-dialog__body">
+      <div class="bot-remove-warning">Its key stops working immediately and any integration using it will start failing. Messages it already posted stay in their rooms.</div>
+      <div class="scrim-dialog__footer">
+        <button type="button" class="btn" data-action="dialog#close">Cancel</button>
+        <%= button_to "Remove bot", account_bot_path(bot), method: :delete, class: "btn btn--negative" %>
+      </div>
+    </div>
+  </dialog>
+</div>

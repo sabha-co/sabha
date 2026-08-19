@@ -152,26 +152,6 @@ columns:
   - *7
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
-    name: custom_styles
-    cast_type: &12 !ruby/object:ActiveRecord::Type::Text
-      true: t
-      false: f
-      precision:
-      scale:
-      limit:
-    sql_type_metadata: &13 !ruby/object:ActiveRecord::ConnectionAdapters::SqlTypeMetadata
-      sql_type: TEXT
-      type: :text
-      limit:
-      precision:
-      scale:
-    'null': true
-    default:
-    default_function:
-    collation:
-    comment:
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
-    auto_increment:
     name: email_notifications_enabled
     cast_type: *8
     sql_type_metadata: *9
@@ -181,7 +161,7 @@ columns:
     collation:
     comment:
   - *10
-  - &14 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+  - &12 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: name
     cast_type: *5
@@ -234,8 +214,18 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: body
-    cast_type: *12
-    sql_type_metadata: *13
+    cast_type: &17 !ruby/object:ActiveRecord::Type::Text
+      true: t
+      false: f
+      precision:
+      scale:
+      limit:
+    sql_type_metadata: &18 !ruby/object:ActiveRecord::ConnectionAdapters::SqlTypeMetadata
+      sql_type: TEXT
+      type: :text
+      limit:
+      precision:
+      scale:
     'null': true
     default:
     default_function:
@@ -243,17 +233,17 @@ columns:
     comment:
   - *7
   - *10
-  - *14
-  - &17 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+  - *12
+  - &15 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: record_id
-    cast_type: &15 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer
+    cast_type: &13 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer
       precision:
       scale:
       limit:
       max: 9223372036854775808
       min: -9223372036854775808
-    sql_type_metadata: &16 !ruby/object:ActiveRecord::ConnectionAdapters::SqlTypeMetadata
+    sql_type_metadata: &14 !ruby/object:ActiveRecord::ConnectionAdapters::SqlTypeMetadata
       sql_type: bigint
       type: :integer
       limit:
@@ -264,7 +254,7 @@ columns:
     default_function:
     collation:
     comment:
-  - &18 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+  - &16 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: record_type
     cast_type: *5
@@ -279,8 +269,8 @@ columns:
   - &19 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: blob_id
-    cast_type: *15
-    sql_type_metadata: *16
+    cast_type: *13
+    sql_type_metadata: *14
     'null': false
     default:
     default_function:
@@ -288,15 +278,15 @@ columns:
     comment:
   - *7
   - *10
-  - *14
-  - *17
-  - *18
+  - *12
+  - *15
+  - *16
   active_storage_blobs:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: byte_size
-    cast_type: *15
-    sql_type_metadata: *16
+    cast_type: *13
+    sql_type_metadata: *14
     'null': false
     default:
     default_function:
@@ -347,8 +337,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: metadata
-    cast_type: *12
-    sql_type_metadata: *13
+    cast_type: *17
+    sql_type_metadata: *18
     'null': true
     default:
     default_function:
@@ -459,7 +449,7 @@ columns:
     collation:
     comment:
   - *10
-  - *14
+  - *12
   - *11
   bans:
   - *7
@@ -890,8 +880,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: creator_id
-    cast_type: *15
-    sql_type_metadata: *16
+    cast_type: *13
+    sql_type_metadata: *14
     'null': false
     default:
     default_function:
@@ -900,8 +890,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: description
-    cast_type: *12
-    sql_type_metadata: *13
+    cast_type: *17
+    sql_type_metadata: *18
     'null': true
     default:
     default_function:
@@ -961,6 +951,16 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: parent_room_id
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: pinned_message_id
     cast_type: *3
     sql_type_metadata: *4
     'null': true
@@ -1133,8 +1133,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: last_payload
-    cast_type: *12
-    sql_type_metadata: *13
+    cast_type: *17
+    sql_type_metadata: *18
     'null': true
     default:
     default_function:
@@ -1182,8 +1182,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: delta
-    cast_type: *15
-    sql_type_metadata: *16
+    cast_type: *13
+    sql_type_metadata: *14
     'null': false
     default:
     default_function:
@@ -1235,8 +1235,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: bytes_stored
-    cast_type: *15
-    sql_type_metadata: *16
+    cast_type: *13
+    sql_type_metadata: *14
     'null': false
     default: 0
     default_function:
@@ -1247,8 +1247,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: last_entry_id
-    cast_type: *15
-    sql_type_metadata: *16
+    cast_type: *13
+    sql_type_metadata: *14
     'null': true
     default:
     default_function:
@@ -1394,8 +1394,28 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: bio
-    cast_type: *12
-    sql_type_metadata: *13
+    cast_type: *17
+    sql_type_metadata: *18
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: bot_key_digest
+    cast_type: *5
+    sql_type_metadata: *6
+    'null': true
+    default:
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: bot_key_rotated_at
+    cast_type: *1
+    sql_type_metadata: *2
     'null': true
     default:
     default_function:
@@ -1463,7 +1483,7 @@ columns:
     default_function:
     collation:
     comment:
-  - *14
+  - *12
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: password_digest
@@ -1487,8 +1507,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: preferences
-    cast_type: *12
-    sql_type_metadata: *13
+    cast_type: *17
+    sql_type_metadata: *18
     'null': true
     default: "{}"
     default_function:
@@ -1511,6 +1531,16 @@ columns:
     sql_type_metadata: *4
     'null': false
     default: 0
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
+    name: status_message
+    cast_type: *5
+    sql_type_metadata: *6
+    'null': true
+    default:
     default_function:
     collation:
     comment:
@@ -1587,8 +1617,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: workspace_membership_id
-    cast_type: *15
-    sql_type_metadata: *16
+    cast_type: *13
+    sql_type_metadata: *14
     'null': true
     default:
     default_function:
@@ -1610,8 +1640,8 @@ columns:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: payload
-    cast_type: *12
-    sql_type_metadata: *13
+    cast_type: *17
+    sql_type_metadata: *18
     'null': true
     default:
     default_function:
@@ -2138,6 +2168,22 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: messages
+    name: index_messages_on_client_message_id
+    unique: true
+    columns:
+    - client_message_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: messages
     name: index_messages_on_created_at
     unique: false
     columns:
@@ -2477,6 +2523,22 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: rooms
+    name: index_rooms_on_pinned_message_id
+    unique: false
+    columns:
+    - pinned_message_id
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: rooms
     name: index_rooms_on_slug
     unique: true
     columns:
@@ -2761,6 +2823,22 @@ indexes:
     valid: true
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: users
+    name: index_users_on_bot_key_digest
+    unique: true
+    columns:
+    - bot_key_digest
+    lengths: {}
+    orders: {}
+    opclasses: {}
+    where:
+    type:
+    using:
+    include:
+    nulls_not_distinct:
+    comment:
+    valid: true
+  - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
+    table: users
     name: index_users_on_bot_token
     unique: true
     columns:
@@ -2825,4 +2903,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260716000001
+version: 20260819183231

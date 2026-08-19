@@ -1,6 +1,6 @@
 class Accounts::BotsController < ApplicationController
   before_action :ensure_can_manage_account
-  before_action :set_bot, only: %i[ show edit update destroy ]
+  before_action :set_bot, only: %i[ edit update destroy ]
 
   def index
     @bots = User.active_bots.ordered.includes(:webhook)
@@ -9,35 +9,52 @@ class Accounts::BotsController < ApplicationController
 
   def new
     @bot = User.active_bots.new
-  end
-
-  def create
-    @bot = User.create_bot! bot_params
-    redirect_to account_bot_url(@bot)
-  rescue ActiveRecord::RecordInvalid => e
-    @bot = e.record.is_a?(User) ? e.record : User.active_bots.new(bot_params.except(:webhook_url))
-    flash.now[:alert] = e.record.errors.full_messages.to_sentence
-    render :new, status: :unprocessable_entity
-  end
-
-  def show
-    @rooms_count = @bot.room_memberships.count
+    load_editor
   end
 
   def edit
+    load_editor(selected_room_ids: @bot.room_memberships.map(&:room_id))
+  end
+
+  def create
+    @bot = User.active_bots.new(name: editor_name)
+    return render_editor(:new) unless @bot.valid?(:editor)
+
+    @bot = User.create_bot!(name: editor_name, webhook_url: bot_params[:webhook_url])
+    @bot.sync_rooms!(submitted_room_ids, actor: Current.user)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to account_bots_url, notice: "#{@bot.name} created" }
+    end
+  rescue ActiveRecord::RecordInvalid => e
+    absorb_record_errors(e)
+    render_editor(:new)
   end
 
   def update
-    @bot.update_bot! bot_params
-    redirect_to account_bot_url(@bot)
+    @bot.name = editor_name
+    return render_editor(:edit) unless @bot.valid?(:editor)
+
+    @bot.update_bot!(name: editor_name, webhook_url: bot_params[:webhook_url])
+    @bot.sync_rooms!(submitted_room_ids, actor: Current.user)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to account_bots_url, notice: "#{@bot.name} updated" }
+    end
   rescue ActiveRecord::RecordInvalid => e
-    flash.now[:alert] = e.record.errors.full_messages.to_sentence
-    render :edit, status: :unprocessable_entity
+    absorb_record_errors(e)
+    render_editor(:edit)
   end
 
   def destroy
     @bot.deactivate
-    redirect_to account_bots_url
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to account_bots_url, notice: "#{@bot.name} removed" }
+    end
   end
 
   private
@@ -46,6 +63,38 @@ class Accounts::BotsController < ApplicationController
     end
 
     def bot_params
-      params.require(:user).permit(:name, :avatar, :webhook_url)
+      params.require(:user).permit(:name, :webhook_url, room_ids: [])
+    end
+
+    def editor_name
+      bot_params[:name].to_s.strip
+    end
+
+    def submitted_room_ids
+      Array(bot_params[:room_ids]).reject(&:blank?)
+    end
+
+    def absorb_record_errors(error)
+      if error.record.is_a?(Webhook)
+        # Surface the webhook's own message (bad format, unresolvable host, or a
+        # private-network target) under the webhook field rather than a generic line.
+        error.record.errors[:url].each { |message| @bot.errors.add(:webhook_url, message) }
+      elsif error.record != @bot
+        @bot.errors.merge!(error.record.errors)
+      end
+    end
+
+    def render_editor(template)
+      @bot.name = editor_name
+      load_editor(selected_room_ids: submitted_room_ids)
+      # A failed editor submit replaces the dialog's frame with the re-rendered
+      # form, so it must answer as HTML even when the request preferred a stream.
+      render template, status: :unprocessable_entity, formats: :html
+    end
+
+    def load_editor(selected_room_ids: [])
+      @rooms = Room.active.without_directs.without_threads.ordered
+      @selected_room_ids = selected_room_ids.map(&:to_i).to_set
+      @webhook_url = params[:user].present? ? bot_params[:webhook_url] : @bot.webhook_url
     end
 end

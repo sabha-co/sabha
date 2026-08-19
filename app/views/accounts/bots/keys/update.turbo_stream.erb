@@ -1,0 +1,10 @@
+<%= turbo_stream.replace dom_id(@bot) do %>
+  <%= render "accounts/bots/bot", bot: @bot %>
+<% end %>
+<%= turbo_stream.update "bot_key" do %>
+  <%= render "accounts/bots/key", bot: @bot, heading: "New bearer key",
+        body: "The previous key stopped working. Update it wherever the bot runs." %>
+<% end %>
+<%= turbo_stream.prepend "main-content" do %>
+  <%= render "shared/toast", message: "New bearer key for #{@bot.name}" %>
+<% end %>

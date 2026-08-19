@@ -1,17 +1,3 @@
-<% @page_title = "New chat bot" %>
-
-<%= render layout: "settings/shell", locals: { section: :bots } do %>
-<div class="flex flex-column gap">
-  <p class="margin-none"><%= link_to "‹ All bots", account_bots_path, class: "txt-small txt-muted txt-undecorated" %></p>
-  <div class="pad-inline flex flex-column gap-half">
-    <h1 class="margin-none txt-large"><strong>Create a chat bot</strong></h1>
-    <p class="txt-small txt-muted margin-none">Post messages to rooms via the API, receive events in real-time.</p>
-  </div>
-
-  <hr class="separator full-width" style="--border-style: solid">
-
-  <%= form_with model: @bot, url: account_bots_path, class: "flex flex-column gap" do |form| %>
-    <%= render "accounts/bots/form", form: form, bot: @bot %>
-  <% end %>
-</div>
+<%= turbo_frame_tag "bot_editor" do %>
+  <%= render "accounts/bots/editor" %>
 <% end %>

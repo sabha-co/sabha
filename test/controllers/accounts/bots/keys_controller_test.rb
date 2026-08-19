@@ -6,9 +6,12 @@ class Accounts::Bots::KeysControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update" do
-    assert_changes -> { users(:bender).reload.bot_token } do
-      put account_bot_key_url(users(:bender))
-      assert_redirected_to account_bots_url
+    assert_changes -> { users(:bender).reload.bot_key_digest } do
+      put account_bot_key_url(users(:bender)), as: :turbo_stream
     end
+
+    assert_response :success
+    assert_match "New bearer key", @response.body
+    assert_match(/sabha_bot_/, @response.body)
   end
 end

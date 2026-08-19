@@ -1,0 +1,11 @@
+<%= turbo_stream.remove "bots_empty" %>
+<%= turbo_stream.append "bots_list" do %>
+  <%= render "accounts/bots/bot", bot: @bot %>
+<% end %>
+<%= turbo_stream.update "bot_key" do %>
+  <%= render "accounts/bots/key", bot: @bot, heading: "Bot created",
+        body: "Copy this into the bot before you close it — the key isn't shown again." %>
+<% end %>
+<%= turbo_stream.prepend "main-content" do %>
+  <%= render "shared/toast", message: "#{@bot.name} created" %>
+<% end %>

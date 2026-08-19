@@ -95,7 +95,9 @@ class User < ApplicationRecord
 
   scope :without_default_names, -> { where.not(name: DEFAULT_NAME) }
 
-  before_validation :set_default_name
+  # The bot editor validates an explicit name in the :editor context, so don't
+  # auto-fill a blank there — every other path keeps the default.
+  before_validation :set_default_name, unless: -> { validation_context == :editor }
   before_validation :normalize_social_urls
   before_save :transliterate_name, if: :name_changed?
   after_create_commit :grant_membership_to_auto_join_rooms

@@ -164,6 +164,247 @@
   margin: 14px 0 0;
 }
 
+/* ---------------------------------------------------------------------------
+   Bots & webhooks — a settings-card list of rows with inline actions, plus the
+   editor / bearer-key / remove dialogs. The list wrapper takes no block padding
+   of its own; each row supplies its own padding and the hairline between rows.
+   --------------------------------------------------------------------------- */
+.settings-card > .bots-list {
+  padding-block: 0;
+}
+
+.bots-list > .bot-row {
+  padding-block: 14px;
+}
+
+.bots-list > .bot-row + .bot-row,
+.bots-list > .bot-empty {
+  border-block-start: 1px solid var(--color-border);
+}
+
+.bot-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.bot-row__avatar {
+  --avatar-size: 32px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.bot-row__body {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.bot-row__name {
+  align-items: center;
+  display: flex;
+  font-size: 0.875rem;
+  font-weight: 600;
+  gap: 7px;
+}
+
+.bot-tag {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-subtle);
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 1px 5px;
+  text-transform: uppercase;
+}
+
+.bot-row__meta,
+.bot-row__hook {
+  color: var(--color-text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bot-row__meta {
+  font-size: 0.78125rem;
+  margin-block-start: 2px;
+}
+
+.bot-row__hook {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  margin-block-start: 3px;
+}
+
+.bot-row__actions {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: 14px;
+
+  form {
+    display: flex;
+    margin: 0;
+  }
+}
+
+.bot-action {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  padding: 0;
+  text-decoration: none;
+  white-space: nowrap;
+  --hover-size: 0;
+}
+
+.bot-action--danger {
+  color: var(--color-text-subtle);
+
+  &:hover {
+    color: var(--color-negative);
+  }
+}
+
+.bot-empty {
+  padding-block: 32px;
+  text-align: center;
+}
+
+.bot-empty__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.bot-empty__body {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  margin: 6px auto 0;
+  max-inline-size: 42ch;
+}
+
+.bot-footer {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+
+  .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+.bot-footer__text {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* Dialogs */
+.scrim-dialog--bot-editor {
+  --dialog-width: 480px;
+}
+
+.scrim-dialog--bot-key {
+  --dialog-width: 440px;
+}
+
+.scrim-dialog--bot-remove {
+  --dialog-width: 400px;
+}
+
+/* Room multi-select chips: a hidden checkbox fills the label on :checked. */
+.room-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.room-chip {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 6px 11px;
+
+  &:has(:checked) {
+    background-color: var(--color-selected);
+    border-color: var(--color-accent-brand);
+    color: var(--color-accent-brand);
+  }
+
+  &:has(:focus-visible) {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+}
+
+/* Bearer-key dialog */
+.bot-key {
+  align-items: center;
+  background-color: var(--color-bg-sunk);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  display: flex;
+  gap: 10px;
+  padding: 12px 13px;
+}
+
+.bot-key__value {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.78125rem;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bot-key__done {
+  inline-size: 100%;
+  justify-content: center;
+  margin-block-start: 14px;
+}
+
+/* Destructive remove dialog: keep the danger fill on the confirm button, which
+   the footer's quiet-button rule would otherwise flatten. */
+.bot-remove-warning {
+  background-color: var(--color-bg-negative);
+  border-radius: 10px;
+  color: var(--color-text-lighter);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  padding: 13px 14px;
+}
+
+.scrim-dialog--bot-remove .scrim-dialog__footer .btn--negative {
+  --btn-background: var(--color-negative);
+  --btn-border-color: var(--color-negative);
+  --btn-color: var(--color-text-reversed);
+}
+
+/* Inline field validation (first use in the app) */
+.input--negative {
+  --input-border-color: var(--color-negative);
+}
+
+.field-error {
+  color: var(--color-negative);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin: 6px 0 0;
+}
+
 /* Accent save/submit chip */
 .btn.settings-save {
   --btn-background: var(--color-accent-brand);

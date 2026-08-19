@@ -1,0 +1,9 @@
+<%= turbo_stream.remove dom_id(@bot) %>
+<% if User.active_bots.none? %>
+  <%= turbo_stream.append "bots_list" do %>
+    <%= render "accounts/bots/empty" %>
+  <% end %>
+<% end %>
+<%= turbo_stream.prepend "main-content" do %>
+  <%= render "shared/toast", message: "#{@bot.name} removed" %>
+<% end %>

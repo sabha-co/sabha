@@ -1,0 +1,8 @@
+<%# locals: (message:, tone: :positive) %>
+<div class="flash" data-controller="element-removal" data-action="animationend->element-removal#remove">
+  <div class="flash__inner" style="<%= "--flash-background: var(--color-negative)" if tone == :negative %>">
+    <%= icon_tag(tone == :negative ? "alert" : "check") %>
+    <span><%= message %></span>
+  </div>
+  <span class="for-screen-reader" role="alert" aria-atomic="true"><%= message %></span>
+</div>

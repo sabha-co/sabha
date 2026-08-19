@@ -73,14 +73,11 @@ Rails.application.routes.draw do
       end
       resources :badges, only: [ :index, :create, :update, :destroy ]
 
-      resources :bots do
+      resources :bots, except: :show do
         scope module: "bots" do
           resource :key, only: :update
           resource :avatar, only: :destroy
           resource :avatar_shuffle, only: :create
-          resources :rooms, only: %i[ index ], controller: "room_permissions" do
-            resource :permission, only: %i[ show create update destroy ], controller: "room_permissions"
-          end
         end
       end
 

@@ -1,15 +1,13 @@
 require "test_helper"
 
 class User::BotTest < ActiveSupport::TestCase
-  test "create bot" do
-    token = "5M0aLYwQyBXOXa5Wsz6NZb11EE4tW2"
-    SecureRandom.stubs(:alphanumeric).returns(token)
-
-    uuid = "3574925f-479d-44f8-82b7-fc039af5367c"
-    Random.stubs(:uuid).returns(uuid)
-
+  test "create bot mints a shown-once sabha key" do
     bot = User.create_bot!(name: "Bender")
-    assert_equal "#{bot.id}-#{token}", bot.bot_key
+
+    assert_match(/\Asabha_bot_[0-9a-f]{32}\z/, bot.plaintext_bot_key)
+    assert_equal bot.plaintext_bot_key, bot.bot_key
+    assert_equal bot, User.authenticate_bot(bot.bot_key)
+    assert_nil User.find(bot.id).bot_key, "the key is not recoverable after the mint window"
   end
 
   test "create_bot! always generates webhook_secret even without webhook_url" do
@@ -24,23 +22,31 @@ class User::BotTest < ActiveSupport::TestCase
     assert_match(/\Awhsec_/, bot.webhook_secret)
   end
 
-  test "reset bot key" do
-    first_token = "5M0aLYwQyBXOXa5Wsz6NZb11EE4tW2"
-    SecureRandom.stubs(:alphanumeric).returns(first_token)
-
+  test "reset bot key mints a new key and retires the old one" do
     bot = User.create_bot!(name: "Bender")
-    assert_equal "#{bot.id}-#{first_token}", bot.bot_key
-
-    second_token = "R4kme9anwWRuz3sSoBXiB8Li8ioZPP"
-    SecureRandom.stubs(:alphanumeric).returns(second_token)
+    old_key = bot.bot_key
 
     bot.reset_bot_key
-    assert_equal "#{bot.id}-#{second_token}", bot.bot_key
+    new_key = bot.bot_key
+
+    assert_not_equal old_key, new_key
+    assert_match(/\Asabha_bot_/, new_key)
+    assert_equal bot, User.authenticate_bot(new_key)
+    assert_nil User.authenticate_bot(old_key), "the previous key stops working immediately"
   end
 
   test "authenticate" do
     bot = User.create_bot!(name: "Bender")
     assert User.authenticate_bot(bot.bot_key)
+  end
+
+  test "authenticate accepts a legacy id-token key from before the digest cutover" do
+    # Fixture bots carry a bot_token and no digest, standing in for bots minted
+    # before the cutover; their derivable "<id>-<token>" key must still work.
+    bot = users(:bender)
+    assert bot.bot_token.present?
+    assert_nil bot.bot_key_digest
+    assert_equal bot, User.authenticate_bot(bot.bot_key)
   end
 
   test "authenticate fails with empty token" do

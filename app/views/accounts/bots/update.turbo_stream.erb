@@ -1,0 +1,6 @@
+<%= turbo_stream.replace dom_id(@bot) do %>
+  <%= render "accounts/bots/bot", bot: @bot %>
+<% end %>
+<%= turbo_stream.prepend "main-content" do %>
+  <%= render "shared/toast", message: "#{@bot.name} updated" %>
+<% end %>

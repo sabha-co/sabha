@@ -1,0 +1,42 @@
+<div class="scrim-dialog__header scrim-dialog__header--titled">
+  <h2 class="scrim-dialog__title"><%= @bot.persisted? ? "Edit bot" : "New bot" %></h2>
+  <button type="button" class="scrim-dialog__close" data-action="dialog#close" aria-label="Close">&times;</button>
+</div>
+
+<%= form_with model: @bot, url: (@bot.persisted? ? account_bot_path(@bot) : account_bots_path),
+      class: "scrim-dialog__body", data: { controller: "bot-editor" } do |form| %>
+  <div class="settings-field">
+    <div class="settings-field__label"><label for="user_name">Name</label></div>
+    <%= form.text_field :name, autofocus: true, placeholder: "Proof Bot",
+          class: [ "input", ("input--negative" if @bot.errors[:name].any?) ],
+          aria: { invalid: @bot.errors[:name].any? },
+          data: { bot_editor_target: "name", action: "input->bot-editor#validate" } %>
+    <% if @bot.errors[:name].any? %><p class="field-error"><%= @bot.errors[:name].first %></p><% end %>
+  </div>
+
+  <div class="settings-field">
+    <div class="settings-field__label"><label for="user_webhook_url">Webhook URL</label></div>
+    <%= form.url_field :webhook_url, value: @webhook_url, placeholder: "https://example.com/sabha/webhook — optional",
+          class: [ "input", ("input--negative" if @bot.errors[:webhook_url].any?) ],
+          aria: { invalid: @bot.errors[:webhook_url].any? } %>
+    <% if @bot.errors[:webhook_url].any? %><p class="field-error"><%= @bot.errors[:webhook_url].first %></p><% end %>
+  </div>
+
+  <div class="settings-field">
+    <div class="settings-field__label"><label>Rooms</label></div>
+    <div class="room-chips">
+      <% @rooms.each do |room| %>
+        <%= render "accounts/bots/room_chip", room: room, selected: @selected_room_ids.include?(room.id) %>
+      <% end %>
+    </div>
+    <p class="settings-field__hint">
+      <% if @selected_room_ids.any? %><%= pluralize(@selected_room_ids.size, "room") %><% else %>Pick at least one room, or the key can authenticate but not post.<% end %>
+    </p>
+  </div>
+
+  <div class="scrim-dialog__footer">
+    <button type="button" class="btn" data-action="dialog#close">Cancel</button>
+    <%= form.button (@bot.persisted? ? "Save changes" : "Create bot"), type: "submit",
+          class: "btn settings-save", data: { bot_editor_target: "submit" } %>
+  </div>
+<% end %>

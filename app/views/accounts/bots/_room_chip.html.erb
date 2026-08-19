@@ -1,0 +1,5 @@
+<%# locals: (room:, selected:) %>
+<label class="room-chip">
+  <%= check_box_tag "user[room_ids][]", room.id, selected, id: nil, class: "for-screen-reader" %>
+  <span class="room-chip__label"><%= room.name %></span>
+</label>
