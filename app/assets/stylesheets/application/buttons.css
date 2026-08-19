@@ -11,11 +11,13 @@
 .btn {
   align-items: center;
   background-color: var(--btn-background, var(--color-text-reversed));
-  /* Default pill shape. A census of ~210 .btn render sites (2026-08-19) found
-     many rely on this default, while every v2 surface already overrides it
-     locally. Do not flip this to a rect default without auditing each site; if
-     a single button should be a rounded rect, override that button explicitly. */
-  border-radius: var(--btn-border-radius, 2em);
+  /* Radius is the one button dimension pinned in px — an 8px corner stays
+     constant across sizes and matches every v2 surface's local override,
+     while padding/font/hit-area stay relative so zoom scales them. Pills are
+     now an explicit opt-in (--btn-border-radius: 999px, e.g.
+     .message-area__return-to-latest); circle and avatar buttons override this
+     separately below. */
+  border-radius: var(--btn-border-radius, 8px);
   border: var(--btn-border-size, 1px) solid var(--btn-border-color, var(--color-border-darker));
   color: var(--btn-color, var(--color-text));
   cursor: pointer;
