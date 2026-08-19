@@ -95,16 +95,18 @@
       </footer>
     </main>
 
-    <aside id="thread-panel" hidden aria-label="Thread"
-           data-controller="thread-panel"
-           data-thread-panel-auto-src-value="<%= content_for(:auto_panel_src) %>"
-           data-action="keydown@document->thread-panel#closeOnEscape turbo:before-visit@document->thread-panel#closeOnNavigation">
-      <%# A deep-linked post (gallery visited as ?post=<slug>) eager-loads its
-          panel here; the frame-load opens the panel over the gallery. %>
-      <%= turbo_frame_tag "thread_panel_frame",
-            src: (@deep_linked_post && rooms_post_path(@deep_linked_post, message_id: params[:message_id])),
-            data: { thread_panel_target: "frame" } %>
-    </aside>
+    <div class="thread-panel-controller" data-controller="thread-panel"
+         data-action="keydown@document->thread-panel#closeOnEscape turbo:before-visit@document->thread-panel#closeOnNavigation turbo:before-cache@document->thread-panel#closeOnNavigation">
+      <aside id="thread-panel" hidden aria-label="Thread" data-thread-panel-target="panel">
+        <%# A deep-linked post (gallery visited as ?post=<slug>) eager-loads its
+            panel here; the frame-load opens the panel over the gallery. %>
+        <%= turbo_frame_tag "thread_panel_frame",
+              src: (@deep_linked_post && rooms_post_path(@deep_linked_post, message_id: params[:message_id])),
+              data: { thread_panel_target: "frame" } %>
+      </aside>
+      <button type="button" class="thread-panel__scrim" aria-label="Close panel"
+              data-action="click->thread-panel#close"></button>
+    </div>
 
     <template id="sidebar-slot" hidden>
       <%= yield :sidebar %>

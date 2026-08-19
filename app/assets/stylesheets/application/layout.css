@@ -117,28 +117,43 @@ body {
   }
 }
 
-/* Contextual right panel: three-column grid when open (desktop only).
-   Thread, room and profile panels read as a fixed 360px rail; a forum post
-   is a reading column, so it takes the wider 680 measure instead (clamped so
-   the main column survives on narrow desktops). --thread-width is the single
-   source of truth so anything else that needs the panel's width (e.g. the
-   fixed nav offset) stays in sync. */
-@media (min-width: 1024px) {
-  body:has(#thread-panel:not([hidden])) {
-    --thread-width: 360px;
+/* Contextual panels dock only after their own width fits beside the sidebar and
+   a readable transcript. Room info earns a 288px column at 1160px; threads
+   need their 360px column at 1232px. Until then, thread_panel.css keeps them
+   as overlays so the transcript retains its full measure. */
+@media (min-width: 1160px) {
+  body:has(#thread-panel:not([hidden]) .roster) {
+    --thread-width: 288px;
 
-    /* The panel owns its full column height — it carries its own 54px header,
-       so the main bar must not span across it. */
     grid-template-areas:
       "sidebar nav thread"
       "sidebar main thread";
     grid-template-columns: var(--sidebar-width) 1fr var(--thread-width);
   }
+}
 
+@media (min-width: 1232px) {
+  body:has(#thread-panel:not([hidden])):not(:has(#thread-panel .roster)):not(:has(#thread-panel .forum-post-header)) {
+    --thread-width: 360px;
+
+    grid-template-areas:
+      "sidebar nav thread"
+      "sidebar main thread";
+    grid-template-columns: var(--sidebar-width) 1fr var(--thread-width);
+  }
+}
+
+/* A forum post is a reading column, not a thread. Keep its existing wider
+   clamp and inline treatment. */
+@media (min-width: 1024px) {
   body:has(#thread-panel:not([hidden]) .forum-post-header) {
     --thread-width: clamp(360px, 42vw, 680px);
-  }
 
+    grid-template-areas:
+      "sidebar nav thread"
+      "sidebar main thread";
+    grid-template-columns: var(--sidebar-width) 1fr var(--thread-width);
+  }
 }
 
 #thread-panel {
@@ -162,13 +177,6 @@ body {
     grid-template-columns: var(--sidebar-width) 272px minmax(0, 1fr);
   }
 
-  body:has(#list-rail):has(#thread-panel:not([hidden])) {
-    grid-template-areas:
-      "sidebar rail nav thread"
-      "sidebar rail main thread";
-    grid-template-columns: var(--sidebar-width) 272px minmax(0, 1fr) var(--thread-width);
-  }
-
   #list-rail {
     background-color: var(--color-bg);
     border-inline-end: 1px solid var(--color-border);
@@ -184,6 +192,24 @@ body {
 
   body:has(#list-rail) .dm-back {
     display: none;
+  }
+}
+
+@media (min-width: 1160px) {
+  body:has(#list-rail):has(#thread-panel:not([hidden]) .roster) {
+    grid-template-areas:
+      "sidebar rail nav thread"
+      "sidebar rail main thread";
+    grid-template-columns: var(--sidebar-width) 272px minmax(0, 1fr) var(--thread-width);
+  }
+}
+
+@media (min-width: 1232px) {
+  body:has(#list-rail):has(#thread-panel:not([hidden])):not(:has(#thread-panel .roster)):not(:has(#thread-panel .forum-post-header)) {
+    grid-template-areas:
+      "sidebar rail nav thread"
+      "sidebar rail main thread";
+    grid-template-columns: var(--sidebar-width) 272px minmax(0, 1fr) var(--thread-width);
   }
 }
 

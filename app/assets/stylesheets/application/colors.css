@@ -84,11 +84,13 @@
   --color-alert: oklch(var(--lch-orange));
   --color-message-mentioned: oklch(var(--lch-red) / 0.09);
   --color-message-mentioned-hover: oklch(var(--lch-red) / 0.14);
+  --color-scrim: oklch(var(--lch-always-black) / 0.16);
 
   /* Elevation */
   --shadow-raise: 0 1px 2px oklch(var(--lch-always-black) / 0.04);
   --shadow-pop: 0 3px 12px oklch(var(--lch-always-black) / 0.1);
   --shadow-overlay: 0 12px 40px oklch(var(--lch-always-black) / 0.28);
+  --shadow-panel: -18px 0 44px oklch(var(--lch-always-black) / 0.2);
 }
 
 /* Accent scopes — one selectable hue per workspace; indigo is the default.
