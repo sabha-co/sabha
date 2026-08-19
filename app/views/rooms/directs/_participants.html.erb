@@ -1,11 +1,27 @@
 <div class="directs--edit margin-block-end">
   <% users.each do |user| %>
+    <% status = statuses&.dig(user.id) %>
     <div class="member flex flex-column gap fill-shade pad border-radius">
       <figure class="avatar center" style="--avatar-size: 10ch;">
         <%= avatar_link_tag user, loading: :lazy %>
       </figure>
 
       <strong><%= user.name %></strong>
+      <span class="member__status flex align-center gap-half txt-small txt-muted">
+        <% if status %><span class="status-dot status--<%= status %>" aria-hidden="true"></span><% end %>
+        <%= dm_presence_label(status) %>
+      </span>
     </div>
   <% end %>
 </div>
+
+<%# A direct message is its member set (members_hash) — there's no add/remove in
+    place; expanding means starting a separate conversation. %>
+<p class="directs__identity txt-small txt-muted">
+  This conversation is just these people. To include someone else, start a new one — a direct message is defined by who's in it.
+</p>
+
+<%= link_to new_rooms_direct_path(user_ids: users.map(&:id), add_people: true),
+      class: "btn directs__expand margin-block-start", data: { turbo_frame: "_top" } do %>
+  <%= icon_tag "add" %> Start one with more people
+<% end %>

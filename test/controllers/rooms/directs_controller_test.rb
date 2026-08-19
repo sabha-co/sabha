@@ -92,6 +92,38 @@ class Rooms::DirectsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "new with add_people renders the compose even when the DM already exists, keeping the set pre-seeded" do
+    # "Start one with more people" opens the compose seeded with an existing set so
+    # the user can add to it — the singleton redirect must not fire here.
+    assert_no_difference -> { Rooms::Direct.count } do
+      get new_rooms_direct_url(user_ids: [ users(:kevin).id ], add_people: true)
+    end
+
+    assert_response :success
+    assert_select "form.dm-new"
+    assert_select "select[name='user_ids[]'] option[value=?][selected]", users(:kevin).id.to_s
+  end
+
+  # ===================
+  # Edit (participants panel) tests
+  # ===================
+
+  test "group participants panel renders per-member presence, the member-set copy, and Start one with more people" do
+    group = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:jason), users(:kevin) ])
+
+    get edit_rooms_direct_url(group)
+
+    assert_response :success
+    assert_select ".member__status", count: 2      # one presence line per other member
+    assert_select ".directs__identity"             # the member-set-identity copy
+    assert_select "a.directs__expand" do |links|
+      href = links.first["href"]
+      assert_includes href, "add_people=true"
+      assert_includes href, users(:jason).id.to_s
+      assert_includes href, users(:kevin).id.to_s
+    end
+  end
+
   test "destroy only allowed for all room users" do
     sign_in :kevin
 

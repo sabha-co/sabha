@@ -13,8 +13,10 @@ class Rooms::DirectsController < RoomsController
     # abandoned conversation leaves no room, no memberships, and never touches
     # the other person's sidebar. A cached "Message X" link can outlive the
     # empty state, so if a DM already exists for the seeded recipients, open it
-    # rather than a compose screen that would hide the conversation.
-    if selected_users_ids.any? && (existing = Rooms::Direct.for(selected_users))
+    # rather than a compose screen that would hide the conversation. add_people
+    # opts out of that redirect: "Start one with more people" seeds the current
+    # group so you can add to it, and would otherwise just bounce back to it.
+    if selected_users_ids.any? && !params[:add_people] && (existing = Rooms::Direct.for(selected_users))
       redirect_to room_url(existing)
     else
       @recipients = selected_users
@@ -44,6 +46,9 @@ class Rooms::DirectsController < RoomsController
 
   def edit
     @users = @room.users.many? ? @room.users.without(Current.user) : @room.users
+    # The same presence signal the live header and sidebar read, fetched once for
+    # the whole roster so each card shows the status, not a second source.
+    @member_statuses = Membership.activity_statuses_for(@users.map(&:id))
   end
 
   def destroy
