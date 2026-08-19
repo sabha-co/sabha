@@ -42,7 +42,13 @@ class Accounts::UsersController < ApplicationController
     notify_bots(@user, :deleted)
 
     respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.remove(@user) }
+      format.turbo_stream do
+        if turbo_frame_request?
+          render turbo_stream: turbo_stream.remove(@user)
+        else
+          redirect_to user_url(@user)
+        end
+      end
       format.html { redirect_to account_users_url }
     end
   end

@@ -9,7 +9,13 @@ class Accounts::Users::ReactivationsController < ApplicationController
     end
 
     respond_to do |format|
-      format.turbo_stream
+      format.turbo_stream do
+        if turbo_frame_request?
+          render :create
+        else
+          redirect_to user_url(@user)
+        end
+      end
       format.html { redirect_to account_users_url }
     end
   end

@@ -195,6 +195,25 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert user.reload.deactivated?
   end
 
+  test "destroy from the member list removes the row" do
+    user = users(:kevin)
+
+    delete account_user_url(user), as: :turbo_stream, headers: { "Turbo-Frame" => "manage_member" }
+
+    assert_response :success
+    assert_match %r{turbo-stream action="remove" target="user_#{user.id}"}, response.body
+    assert user.reload.deactivated?
+  end
+
+  test "destroy from a profile redirects back to the profile to reflect the change" do
+    user = users(:kevin)
+
+    delete account_user_url(user), as: :turbo_stream
+
+    assert_redirected_to user_url(user)
+    assert user.reload.deactivated?
+  end
+
   test "non-admins cannot access deactivated filter" do
     sign_in :kevin
 
@@ -244,6 +263,27 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     post account_user_reactivation_url(user)
 
     assert_redirected_to account_users_url
+    assert user.reload.active?
+  end
+
+  test "reactivate from the member list removes the row" do
+    user = users(:kevin)
+    user.deactivate
+
+    post account_user_reactivation_url(user), as: :turbo_stream, headers: { "Turbo-Frame" => "account_users" }
+
+    assert_response :success
+    assert_match %r{turbo-stream action="remove" target="user_#{user.id}"}, response.body
+    assert user.reload.active?
+  end
+
+  test "reactivate from a profile redirects back to the profile to reflect the change" do
+    user = users(:kevin)
+    user.deactivate
+
+    post account_user_reactivation_url(user), as: :turbo_stream
+
+    assert_redirected_to user_url(user)
     assert user.reload.active?
   end
 
