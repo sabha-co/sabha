@@ -4,12 +4,16 @@
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 <% content_for :list_rail, render("inboxes/direct_messages/rail") %>
 
-<%= render layout: "inboxes/nav", locals: { title: tag.span("Direct Messages", class: "hide-on-mobile") + tag.span("DMs", class: "hide-on-desktop") } do %>
-  <%= button_to inbox_clearance_path(scope: "direct_messages"), class: "btn", title: "Mark all DMs as read",
-      data: { turbo_confirm: "Mark all DMs as read?" } do %>
-    <%= icon_tag "check" %>
-  <% end %>
+<% mark_all_read = capture do %>
+  <div class="navbar-actions">
+    <%= button_to "Mark all read", inbox_clearance_path(scope: "direct_messages"), class: "btn txt-small",
+        data: { turbo_confirm: "Mark all DMs as read?" } %>
+  </div>
 <% end %>
+
+<%= render "inboxes/nav",
+      title: tag.span("Direct Messages", class: "hide-on-mobile") + tag.span("DMs", class: "hide-on-desktop"),
+      actions: mark_all_read %>
 
 <%# Split widths show this beside the rail; below them the rail is the screen %>
 <div class="dm-empty-pane">
