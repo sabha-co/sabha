@@ -154,7 +154,7 @@
 }
 
 .forum-tag--solved {
-  background: oklch(var(--lch-green) / 0.14);
+  background: color-mix(in srgb, var(--color-positive) 14%, transparent);
   color: var(--color-positive);
 }
 

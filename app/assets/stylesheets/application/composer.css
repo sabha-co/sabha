@@ -127,6 +127,8 @@
   --btn-border-radius: 8px;
   --btn-color: var(--color-text-subtle);
   --btn-padding: 0.44em 1em;
+  --hover-color: transparent;
+  --hover-filter: none;
 
   font-size: 0.8125rem;
   font-weight: 600;

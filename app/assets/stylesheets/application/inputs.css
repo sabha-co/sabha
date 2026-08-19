@@ -366,6 +366,7 @@ input[type="radio"]:disabled::after {
   .switch__input:disabled + & {
     background-color: var(--color-border-darker) !important;
     cursor: not-allowed;
+    opacity: 0.4;
   }
 
   .switch__input:checked + & {

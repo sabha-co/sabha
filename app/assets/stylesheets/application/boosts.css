@@ -18,7 +18,7 @@
 }
 
 .boost__toggle {
-  --boost-border-color: var(--color-border-dark);
+  --boost-border-color: var(--color-border);
 
   align-items: center;
   appearance: none;
@@ -55,7 +55,6 @@
 
   &:focus-visible {
     outline: 2px solid var(--color-accent-brand);
-    outline-offset: 2px;
   }
 }
 
@@ -113,6 +112,8 @@
     }
   }
 
+  /* Anchor, not a .btn, so the base focus rule doesn't reach it — keep an
+     explicit offset to match the app-wide 2px keyboard ring. */
   &:focus-visible {
     outline: 2px solid var(--color-accent-brand);
     outline-offset: 2px;

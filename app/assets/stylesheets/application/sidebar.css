@@ -222,7 +222,6 @@
 
   &:focus-visible {
     outline: 2px solid var(--color-accent-brand);
-    outline-offset: 2px;
   }
 
   &.has-unread-activity::after,
@@ -318,6 +317,7 @@
 /* Fixed 20px glyph column so #, lock, and forum glyphs all align the names
    at the same x (comp) */
 .room__glyph {
+  color: var(--color-text-subtle);
   display: inline-flex;
   inline-size: 20px;
   justify-content: center;
@@ -627,7 +627,7 @@
     flex-shrink: 0;
     font-size: 0.6875rem;
     font-variant-numeric: tabular-nums;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.4;
     margin-inline-start: auto;
     min-inline-size: 1.3em;
@@ -669,17 +669,6 @@
   .rooms-list {
     padding-bottom: var(--block-space);
   }
-}
-
-/* Reduce spacing between star icon and edge */
-[data-type="list_node"] {
-  padding-inline-end: 0; /* Remove padding on the right side */
-}
-
-/* Style for the star button container */
-[data-type="list_node"] .txt-small {
-  margin-inline-start: 0; /* Reset left margin to maintain spacing with timestamp */
-  margin-inline-end: -1ch; /* Pull from the right side only */
 }
 
 .rooms__new-btn {
@@ -799,7 +788,7 @@
     color: var(--color-text-reversed);
     font-size: 0.6875rem;
     font-variant-numeric: tabular-nums;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.4;
     min-width: 1.3em;
     padding: 1px 7px;
@@ -988,9 +977,11 @@ body.searches .message-area:not(:has(.message)):not(:has(.dm-conversation)):not(
   }
 
   .options-btn {
-    aspect-ratio: unset;
-    block-size: auto;
-    border-radius: 0.3em;
+    aspect-ratio: 1;
+    block-size: 20px;
+    border-radius: var(--border-radius-sm);
+    inline-size: 20px;
+    padding: 0;
   }
 
   .actions-menu {

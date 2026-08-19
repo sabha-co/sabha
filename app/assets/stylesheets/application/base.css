@@ -90,7 +90,7 @@ b, strong {
   &:where(:not(:active)):focus-visible {
     outline-width: var(--outline-size);
     outline-color: var(--outline-color, var(--color-link));
-    outline-offset: var(--outline-offset, calc(var(--outline-size) * 2));
+    outline-offset: var(--outline-offset, var(--outline-size));
   }
 
   /* Pressing */

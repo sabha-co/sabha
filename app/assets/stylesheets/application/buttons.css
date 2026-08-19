@@ -11,6 +11,10 @@
 .btn {
   align-items: center;
   background-color: var(--btn-background, var(--color-text-reversed));
+  /* Default pill shape. A census of ~210 .btn render sites (2026-08-19) found
+     many rely on this default, while every v2 surface already overrides it
+     locally. Do not flip this to a rect default without auditing each site; if
+     a single button should be a rounded rect, override that button explicitly. */
   border-radius: var(--btn-border-radius, 2em);
   border: var(--btn-border-size, 1px) solid var(--btn-border-color, var(--color-border-darker));
   color: var(--btn-color, var(--color-text));

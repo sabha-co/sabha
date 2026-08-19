@@ -270,7 +270,7 @@
   span {
     padding: 0.66em 2.33ch;
     background-color: var(--color-bg-sunk);
-    border-radius: 3em;
+    border-radius: var(--border-radius-pill);
   }
 
   &::after,
@@ -313,7 +313,7 @@
   time,
   span {
     background-color: var(--color-bg);
-    border: 1px solid var(--color-border-dark);
+    border: 1px solid var(--color-border);
     color: var(--color-text-muted);
     font-size: 0.71875rem;
     padding: 2px 12px;
@@ -667,7 +667,7 @@
    variants (mention, failed) paint the row, not a chip around the text. */
 .message__body-content {
   background-color: var(--message-background, transparent);
-  border-radius: 0.66em;
+  border-radius: var(--border-radius-md);
   color: var(--message-color, var(--color-text-lighter));
   font-size: 0.9375rem;
   /* Body trims to 14.5px at tablet-portrait, then returns to 15px on
@@ -988,12 +988,12 @@ img.message__attachment {
 /* Welcome message (new member joined) */
 .message--welcome {
   .message__welcome {
-    background-color: oklch(var(--lch-green) / 0.08);
-    border-radius: 0.66em;
+    background-color: color-mix(in srgb, var(--color-positive) 8%, transparent);
+    border-radius: var(--border-radius-md);
     padding: var(--content-padding-block) var(--content-padding-inline);
 
     @media (prefers-color-scheme: dark) {
-      background-color: oklch(var(--lch-green) / 0.15);
+      background-color: color-mix(in srgb, var(--color-positive) 15%, transparent);
     }
   }
 

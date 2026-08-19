@@ -95,8 +95,6 @@ body.session {
 }
 
 .auth-card__field .input {
-  --input-border-color: var(--color-border);
-
   background-color: var(--color-bg);
   border-radius: 9px;
   inline-size: 100%;

@@ -93,8 +93,6 @@
 }
 
 .settings-field .input {
-  --input-border-color: var(--color-border);
-
   background-color: var(--color-bg);
   border-radius: 8px;
   inline-size: 100%;
