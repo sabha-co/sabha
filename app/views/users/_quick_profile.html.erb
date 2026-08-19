@@ -62,7 +62,12 @@
         <%= icon_tag "person" %>
         <span>View profile</span>
       <% end %>
-      <% if user != Current.user && Current.user.can_direct_message?(user) %>
+      <% if user == Current.user %>
+        <%= link_to user_profile_path, class: "btn btn--reversed txt-small", data: { turbo_frame: "_top" } do %>
+          <%= icon_tag "pencil" %>
+          <span>Edit profile</span>
+        <% end %>
+      <% elsif Current.user.can_direct_message?(user) %>
         <%= link_to new_rooms_direct_path(user_ids: [user.id]), class: "btn btn--reversed txt-small", data: { turbo_frame: "_top" } do %>
           <%= icon_tag "messages" %>
           <span>Direct message</span>

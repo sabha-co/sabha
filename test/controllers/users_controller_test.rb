@@ -47,7 +47,19 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_select ".profile-hero__actions .btn", text: "Message"
     assert_select ".profile-hero__actions .btn", text: "Block"
+    assert_select ".profile-hero__actions a[href=?]", user_profile_path, count: 0
     assert_select ".profile-card__title", text: "Moderation", count: 0
+  end
+
+  test "show presents your own profile with a single labeled Edit profile action in the hero" do
+    sign_in :david
+    get user_url(users(:david))
+
+    assert_select ".profile-hero__actions a[href=?]", user_profile_path, text: /Edit profile/
+    assert_select ".profile-hero__actions .btn", text: "Message", count: 0
+    assert_select ".profile-hero__actions .btn", text: "Block", count: 0
+    assert_select ".profile-hero__actions a", text: "All messages"
+    assert_select ".for-screen-reader", text: "Edit my profile", count: 0
   end
 
   test "new redirects to sso when SSO auth enabled" do

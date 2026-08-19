@@ -5,13 +5,6 @@
 <% content_for :nav do %>
   <%= link_back %>
   <h1 class="navbar-title">Profile</h1>
-  <div class="flex-item-grow"></div>
-  <% if Current.user == @user %>
-    <%= link_to user_profile_path, class: "btn" do %>
-      <%= icon_tag "pencil" %>
-      <span class="for-screen-reader">Edit my profile</span>
-    <% end %>
-  <% end %>
 <% end %>
 
 <section class="profile-page">
@@ -76,7 +69,12 @@
         <% end %>
 
         <div class="profile-hero__actions">
-          <% if Current.user.can_direct_message?(@user) %>
+          <% if Current.user == @user %>
+            <%= link_to user_profile_path, class: "btn settings-save" do %>
+              <%= icon_tag "pencil" %>
+              Edit profile
+            <% end %>
+          <% elsif Current.user.can_direct_message?(@user) %>
             <%= link_to new_rooms_direct_path(user_ids: [ @user.id ]), class: "btn settings-save", data: { turbo_frame: "_top" } do %>
               Message
             <% end %>
