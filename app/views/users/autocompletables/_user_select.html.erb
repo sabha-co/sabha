@@ -5,5 +5,5 @@
 <%= form.text_field "user_ids_input",
       placeholder: placeholder,
       autocomplete: "off", autocorrect: "off", "data-1p-ignore": "true",
-      class: "autocomplete__input input flex flex-wrap position-relative",
+      class: "autocomplete__input input",
       data: { autocomplete_target: "input", action: "input->autocomplete#search keydown->autocomplete#didPressKey" } %>

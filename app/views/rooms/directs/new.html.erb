@@ -31,7 +31,7 @@
     <div class="dm-new__to">
       <label class="dm-new__to-label" for="user_ids_input">To</label>
       <section class="autocomplete__container flex-item-grow">
-        <div class="autocomplete__input input flex flex-wrap position-relative"
+        <div class="autocomplete__input input input--actor flex flex-wrap align-center position-relative"
             data-controller="autocomplete" data-autocomplete-url-value="<%= autocompletable_users_path %>">
           <%= render "users/autocompletables/user_select", form: form, placeholder: "Search people by name", selected: others %>
         </div>
