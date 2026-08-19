@@ -11,10 +11,8 @@
   }
 
   /*
-   * Empty state layout: switches from display:contents to a flex column so
-   * the DM compose form stays pinned at the top while the empty state message
-   * centers in the remaining space. Uses order to place compose (from yielded
-   * content) above the empty state (which comes first in the DOM).
+   * Empty state layout: switches from display:contents to a flex column so the
+   * empty state message centers in the remaining space.
    */
   &:not(:has(.message)):not(:has(.dm-conversation)):not(:has(.thread-card)):not(:has(.bookmark-card)) {
     --opacity: 0.2;
@@ -30,10 +28,6 @@
       place-items: center;
       animation: empty-state-in 350ms cubic-bezier(0.25, 1, 0.5, 1) both;
       order: 1;
-    }
-
-    .dm-compose {
-      order: 0;
     }
   }
 }

@@ -3,23 +3,13 @@
     paginator target. %>
 <header class="dm-rail__header">
   <h2 class="dm-rail__title">Direct messages</h2>
-</header>
-
-<% if Current.user.can_create_direct_messages? %>
-  <%= form_with url: new_rooms_direct_path, method: :get, class: "dm-compose", data: { turbo_frame: "_top" } do |form| %>
-    <section class="autocomplete__container dm-compose__container">
-      <div class="autocomplete__input input flex flex-wrap position-relative"
-          data-controller="autocomplete" data-autocomplete-url-value="<%= autocompletable_users_path %>">
-        <%= render "users/autocompletables/user_select", form: form, placeholder: "New message to…" %>
-      </div>
-    </section>
-
-    <%= button_tag class: "btn btn--reversed dm-compose__submit", type: "submit" do %>
-      <%= icon_tag "arrow-right" %>
-      <span class="for-screen-reader">Start conversation</span>
+  <% if can_create_dms? %>
+    <%= link_to new_rooms_direct_path, class: "btn btn--small", aria: { label: "New direct message" }, data: { turbo_frame: "_top" } do %>
+      <%= icon_tag "add" %>
+      <span class="for-screen-reader">New direct message</span>
     <% end %>
   <% end %>
-<% end %>
+</header>
 
 <% if @pinned_dm_membership %>
   <div class="dm-list dm-list--pinned">
@@ -46,7 +36,7 @@
     <h3 class="empty-state__title">No conversations yet</h3>
     <p class="empty-state__body">
       <%= Current.user.can_create_direct_messages? ?
-            "Direct messages are private to the people in them. Type a name above to start one." :
+            "Direct messages are private to the people in them. Use the + above to start one." :
             "Direct messages are private to the people in them." %>
     </p>
   </div>

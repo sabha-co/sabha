@@ -1,14 +1,7 @@
-/*
- * The first element under the header bar (compose form or the list itself)
- * takes the same top inset so the two layouts start at one rhythm.
- */
-.dm-list,
-.dm-compose {
-  --dm-content-inset: var(--inline-space);
-}
-
 /* DM Inbox conversation list — hairline-divided list rows */
 .dm-list {
+  --dm-content-inset: var(--inline-space);
+
   display: flex;
   flex-direction: column;
   padding: var(--inline-space);
@@ -16,32 +9,6 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-}
-
-/* DM compose form — sits above the dm-list, outside of it */
-.dm-compose {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem var(--inline-space);
-  padding-block-start: var(--dm-content-inset);
-  border-radius: 0.66em;
-  position: relative;
-  z-index: 1;
-
-  /* When compose form is present, dm-list doesn't need navbar offset */
-  ~ .dm-list {
-    padding-block-start: 0.5rem;
-    border-block-start: 1px solid var(--color-border-dark);
-  }
-}
-
-.dm-compose__container {
-  flex: 1;
-}
-
-.dm-compose__submit {
-  flex-shrink: 0;
 }
 
 /* Rows ride the shared .list-row rhythm (patterns.css); these rules carry
@@ -145,6 +112,7 @@
   border-block-end: 1px solid var(--color-border);
   display: flex;
   flex-shrink: 0;
+  justify-content: space-between;
   padding-inline: 16px;
 }
 
@@ -160,26 +128,6 @@
 }
 
 #list-rail {
-  .dm-compose {
-    --dm-content-inset: 0;
-
-    /* Grid, not flex: minmax(0, 1fr) pins the picker to the leftover width
-       regardless of pill/input intrinsic size, so the submit arrow can never
-       be pushed past the rail edge (selected pills ellipsize instead). */
-    display: grid;
-    flex-shrink: 0;
-    grid-template-columns: minmax(0, 1fr) auto;
-    padding: 10px 12px;
-
-    .autocomplete__input {
-      min-inline-size: 0;
-    }
-
-    .autocomplete__list {
-      max-inline-size: 100%;
-    }
-  }
-
   .dm-list {
     --dm-content-inset: 0;
 
@@ -187,10 +135,80 @@
     min-block-size: 0;
     padding: 8px;
   }
+}
 
-  .dm-compose ~ .dm-list {
-    padding-block-start: 8px;
-  }
+/* New message compose screen: an editable To: picker over a first-message
+   composer, filling the DM main pane. */
+.dm-new {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+}
+
+.dm-new__to {
+  align-items: flex-start;
+  border-block-end: 1px solid var(--color-border);
+  display: flex;
+  flex-shrink: 0;
+  gap: 12px;
+  padding: 11px 18px;
+}
+
+.dm-new__to-label {
+  color: var(--color-text-subtle);
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  padding-block-start: 7px;
+}
+
+.dm-new__hero {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.dm-new__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.dm-new__blurb {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 8px auto 0;
+  max-inline-size: 38ch;
+}
+
+.dm-new__composer {
+  align-items: center;
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  margin: 6px 20px 18px;
+  padding: 4px 10px 4px 4px;
+}
+
+.dm-new__input {
+  background: transparent;
+  border: none;
+  flex: 1;
+  font-family: inherit;
+  font-size: 15px;
+  min-inline-size: 0;
+  outline: none;
+  padding: 13px 14px;
+}
+
+.dm-new__send {
+  flex-shrink: 0;
 }
 
 /* The inbox's select-a-conversation pane (split widths only — below them

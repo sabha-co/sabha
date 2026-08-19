@@ -1,4 +1,4 @@
-<select name="user_ids[]" data-autocomplete-target="select" data-template-id="autocompletable-user" multiple="true" hidden required></select>
+<select name="user_ids[]" data-autocomplete-target="select" data-template-id="autocompletable-user" multiple="true" hidden required><% Array(local_assigns[:selected]).each do |user| %><option value="<%= user.id %>" selected data-avatar-url="<%= user_image_path(user) %>"><%= user.name %></option><% end %></select>
 
 <%= render "users/autocompletables/template" %>
 

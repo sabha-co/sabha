@@ -24,10 +24,10 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:pets), "starred_rooms_list_node")}", count: 0
   end
 
-  test "the new direct message button opens the inbox compose rather than an inline sidebar picker" do
+  test "the sidebar direct-messages button opens the DM index, not an inline picker" do
     get user_sidebar_url
 
-    assert_select "a[href=?][aria-label=?]", inbox_direct_messages_path, "New direct message"
+    assert_select "a[href=?][aria-label=?]", inbox_direct_messages_path, "Direct messages"
     assert_select "a[data-turbo-frame='direct_rooms_control']", count: 0
   end
 

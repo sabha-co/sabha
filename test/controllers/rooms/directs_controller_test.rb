@@ -9,18 +9,25 @@ class Rooms::DirectsControllerTest < ActionDispatch::IntegrationTest
   # New action tests
   # ===================
 
-  test "new without user_ids redirects to the direct message inbox rather than an inline picker" do
+  test "new without user_ids renders the compose screen with an empty recipient picker and composer" do
     get new_rooms_direct_url
-    assert_redirected_to inbox_direct_messages_path
+    assert_response :success
+    assert_select "form.dm-new[action=?]", rooms_directs_path
+    assert_select "form.dm-new select[name='user_ids[]'][multiple]"
+    assert_select "form.dm-new select[name='user_ids[]'] option", count: 0
+    assert_select "form.dm-new [name='message[body]']"
+    assert_select ".dm-new__title", text: "Who is this for?"
   end
 
-  test "new with user_ids renders a provisional compose surface and writes nothing" do
+  test "new with user_ids pre-seeds the recipient picker and writes nothing" do
     assert_no_difference [ -> { Rooms::Direct.count }, -> { Membership.count }, -> { Message.count } ] do
       get new_rooms_direct_url(user_ids: [ users(:jz).id ])
     end
 
     assert_response :success
-    assert_select "form#composer[action=?]", rooms_directs_path
+    assert_select "form.dm-new[action=?]", rooms_directs_path
+    assert_select "select[name='user_ids[]'] option[value=?][selected]", users(:jz).id.to_s, text: users(:jz).name
+    assert_select ".dm-new__title", text: "No messages yet"  # server renders the picked state, no flash
   end
 
   test "new with user_ids for an existing DM redirects to it (stale link)" do
@@ -114,7 +121,7 @@ class Rooms::DirectsControllerTest < ActionDispatch::IntegrationTest
     sign_in :david  # admin user
 
     get new_rooms_direct_url
-    assert_redirected_to inbox_direct_messages_path
+    assert_response :success
 
     post rooms_directs_url, params: { user_ids: [ users(:jz).id ], message: { body: "Hi" } }
     assert_redirected_to room_url(Rooms::Direct.last)

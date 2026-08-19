@@ -9,17 +9,12 @@ class Rooms::DirectsController < RoomsController
   before_action :ensure_permission_to_create_direct_messages, only: %i[ new create ]
 
   def new
-    # With recipients chosen, this doubles as the provisional compose surface: it
-    # writes nothing, so a started-but-abandoned conversation leaves no room, no
-    # memberships, and never touches the other person's sidebar. A cached "Message
-    # X" link can outlive the empty state, so if a DM already exists, show it
-    # rather than a provisional surface that would hide the conversation.
-    # With no recipients yet, send people to the inbox, whose rail carries the
-    # "New message to…" compose — the one new-DM picker — instead of swapping a
-    # picker into the sidebar in place of the conversation list.
-    return redirect_to inbox_direct_messages_path if selected_users_ids.none?
-
-    if existing = Rooms::Direct.for(selected_users)
+    # The new-message compose screen. It writes nothing, so a started-but-
+    # abandoned conversation leaves no room, no memberships, and never touches
+    # the other person's sidebar. A cached "Message X" link can outlive the
+    # empty state, so if a DM already exists for the seeded recipients, open it
+    # rather than a compose screen that would hide the conversation.
+    if selected_users_ids.any? && (existing = Rooms::Direct.for(selected_users))
       redirect_to room_url(existing)
     else
       @recipients = selected_users

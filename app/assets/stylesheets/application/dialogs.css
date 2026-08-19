@@ -273,16 +273,16 @@
   .scrim-dialog__body {
     padding: 18px;
   }
+}
 
-  /* The auto-join toggle sits in its own bordered box */
-  .new-room-autojoin {
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    padding: 12px 14px;
+/* The auto-join toggle sits in its own bordered box */
+.scrim-dialog--new-room .new-room-autojoin {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 12px 14px;
 
-    .setting-row {
-      padding-block: 0;
-    }
+  .setting-row {
+    padding-block: 0;
   }
 }
 
