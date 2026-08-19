@@ -1,5 +1,5 @@
 class Accounts::BotsController < ApplicationController
-  before_action :ensure_can_administer
+  before_action :ensure_can_manage_account
   before_action :set_bot, only: %i[ show edit update destroy ]
 
   def index

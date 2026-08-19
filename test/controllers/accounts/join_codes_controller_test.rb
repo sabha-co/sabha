@@ -22,7 +22,7 @@ class Accounts::JoinCodesControllerTest < ActionDispatch::IntegrationTest
   test "only administrators can create new join codes" do
     sign_in :jz
     post account_join_code_url
-    assert_redirected_to root_path
+    assert_response :forbidden
   end
 
   test "update toggles join code expiration off and back on and returns to invitations" do
@@ -44,6 +44,6 @@ class Accounts::JoinCodesControllerTest < ActionDispatch::IntegrationTest
   test "only administrators can toggle join code expiration" do
     sign_in :jz
     patch account_join_code_url
-    assert_redirected_to root_path
+    assert_response :forbidden
   end
 end

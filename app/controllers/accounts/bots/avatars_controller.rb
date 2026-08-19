@@ -1,5 +1,5 @@
 class Accounts::Bots::AvatarsController < ApplicationController
-  before_action :ensure_can_administer
+  before_action :ensure_can_manage_account
   before_action :set_bot
 
   def destroy

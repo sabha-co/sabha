@@ -1,7 +1,7 @@
 class Accounts::UsersController < ApplicationController
   include NotifyBots
 
-  before_action :ensure_can_administer, only: %i[edit update destroy]
+  before_action :ensure_can_manage_account, only: %i[edit update destroy]
   before_action :set_user, only: %i[edit update destroy]
   before_action :load_status_counts, only: :index, if: -> { Current.user.staff? }
 

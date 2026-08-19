@@ -15,7 +15,9 @@ class Accounts::Bots::RoomPermissionsControllerTest < ActionDispatch::Integratio
   test "index requires admin" do
     sign_in :kevin
     get account_bot_rooms_url(@bot)
-    assert_redirected_to root_url
+    assert_response :forbidden
+    assert_select ".empty-state__title", text: "Administrators only"
+    assert_select "a[href=?]", account_path, text: "Back to community settings"
   end
 
   test "show for room bot is in" do

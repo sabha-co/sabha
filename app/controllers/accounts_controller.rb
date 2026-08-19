@@ -1,5 +1,5 @@
 class AccountsController < ApplicationController
-  before_action :ensure_can_administer, only: %i[edit update]
+  before_action :ensure_can_manage_account, only: %i[edit update]
   before_action :set_account
 
   def show

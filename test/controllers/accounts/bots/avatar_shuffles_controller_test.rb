@@ -16,6 +16,6 @@ class Accounts::Bots::AvatarShufflesControllerTest < ActionDispatch::Integration
     assert_no_changes -> { users(:bender).reload.avatar_seed } do
       post account_bot_avatar_shuffle_url(users(:bender))
     end
-    assert_redirected_to root_url
+    assert_response :forbidden
   end
 end

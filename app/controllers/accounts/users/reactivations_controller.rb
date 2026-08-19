@@ -1,5 +1,5 @@
 class Accounts::Users::ReactivationsController < ApplicationController
-  before_action :ensure_can_administer
+  before_action :ensure_can_manage_account
 
   def create
     @user = User.find(params[:user_id])

@@ -14,7 +14,26 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
   test "non-admins cannot index badges" do
     sign_in :kevin
     get account_badges_url
-    assert_redirected_to root_path
+
+    assert_response :forbidden
+    assert_select ".empty-state__title", text: "Administrators only"
+    assert_select "a[href=?]", account_path, text: "Back to community settings"
+  end
+
+  test "non-admin badge requests stay bare for Turbo frames, non-HTML GETs, and mutations" do
+    sign_in :kevin
+
+    get account_badges_url, headers: { "Turbo-Frame" => "settings-panel" }
+    assert_response :forbidden
+    assert_select ".empty-state__title", count: 0
+
+    get account_badges_url(format: :json)
+    assert_response :forbidden
+    assert_equal "", response.body
+
+    post account_badges_url, params: { badge: { name: "Hack", color: "#000" } }
+    assert_response :forbidden
+    assert_select ".empty-state__title", count: 0
   end
 
   test "create badge" do
@@ -74,7 +93,7 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
     sign_in :kevin
     patch account_badge_url(badges(:founder)), params: { badge: { name: "Hacked" } }
 
-    assert_redirected_to root_path
+    assert_response :forbidden
     assert_equal "Founder", badges(:founder).reload.name
   end
 
@@ -95,7 +114,7 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
       post account_badges_url, params: { badge: { name: "Hack", color: "#000" } }
     end
 
-    assert_redirected_to root_path
+    assert_response :forbidden
   end
 
   test "non-admins cannot destroy badges" do
@@ -105,6 +124,6 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
       delete account_badge_url(badges(:founder))
     end
 
-    assert_redirected_to root_path
+    assert_response :forbidden
   end
 end

@@ -2,7 +2,7 @@ class Accounts::LogosController < ApplicationController
   include ActiveStorage::Streaming, ActionView::Helpers::AssetUrlHelper
 
   allow_unauthenticated_access only: :show
-  before_action :ensure_can_administer, only: :destroy
+  before_action :ensure_can_manage_account, only: :destroy
 
   def show
     if stale?(etag: Current.account)

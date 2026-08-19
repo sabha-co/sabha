@@ -1,5 +1,5 @@
 class Accounts::BadgesController < ApplicationController
-  before_action :ensure_can_administer
+  before_action :ensure_can_manage_account
   before_action :set_badge, only: %i[update destroy]
 
   def index

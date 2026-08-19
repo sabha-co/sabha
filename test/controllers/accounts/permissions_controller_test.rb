@@ -33,7 +33,9 @@ class Accounts::PermissionsControllerTest < ActionDispatch::IntegrationTest
     sign_in :kevin
 
     get account_permissions_url
-    assert_redirected_to root_path
+    assert_response :forbidden
+    assert_select ".empty-state__title", text: "Administrators only"
+    assert_select "a[href=?]", account_path, text: "Back to community settings"
   end
 
   private

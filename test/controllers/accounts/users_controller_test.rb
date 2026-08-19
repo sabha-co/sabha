@@ -55,7 +55,9 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
 
     get edit_account_user_url(users(:jz))
 
-    assert_redirected_to root_path
+    assert_response :forbidden
+    assert_select ".empty-state__title", text: "Administrators only"
+    assert_select "a[href=?]", account_path, text: "Back to community settings"
   end
 
   test "index search finds users by name" do
@@ -213,14 +215,14 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     sign_in :kevin
 
     patch account_user_url(users(:jz)), params: { user: { role: "administrator" } }
-    assert_redirected_to root_path
+    assert_response :forbidden
   end
 
   test "non-admins cannot destroy users" do
     sign_in :kevin
 
     delete account_user_url(users(:jz))
-    assert_redirected_to root_path
+    assert_response :forbidden
   end
 
   test "index shows deactivated users when filtering by status" do
@@ -253,7 +255,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
 
     post account_user_reactivation_url(user)
 
-    assert_redirected_to root_path
+    assert_response :forbidden
     assert user.reload.deactivated?
   end
 

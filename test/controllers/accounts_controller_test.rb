@@ -59,7 +59,9 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert users(:kevin).member?
 
     get edit_account_url
-    assert_redirected_to root_path
+    assert_response :forbidden
+    assert_select ".empty-state__title", text: "Administrators only"
+    assert_select "a[href=?]", account_path, text: "Back to community settings"
   end
 
   test "update" do
@@ -76,7 +78,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert users(:kevin).member?
 
     put account_url, params: { account: { name: "Different" } }
-    assert_redirected_to root_path
+    assert_response :forbidden
   end
 
   test "admin can pick a workspace accent" do
@@ -124,7 +126,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
 
     put account_url, params: { account: { email_notifications_enabled: true } }
 
-    assert_redirected_to root_path
+    assert_response :forbidden
     assert_not accounts(:signal).reload.email_notifications_enabled?
   end
 

@@ -1,5 +1,5 @@
 class Accounts::JoinCodesController < ApplicationController
-  before_action :ensure_can_administer
+  before_action :ensure_can_manage_account
 
   def create
     Current.account.reset_join_code

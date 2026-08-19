@@ -4,6 +4,16 @@ module Authorization
       redirect_to root_path unless Current.user.can_administer?
     end
 
+    def ensure_can_manage_account
+      return if Current.user.can_administer?
+
+      render_forbidden \
+        title: "Administrators only",
+        message: "Community settings are limited to administrators. Ask an administrator if you need a change.",
+        back_to: account_path,
+        back_label: "Back to community settings"
+    end
+
     def ensure_administrator
       head :forbidden unless Current.user.administrator?
     end
