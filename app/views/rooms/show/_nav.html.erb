@@ -57,10 +57,6 @@
         <% end %>
       <% end %>
     </h1>
-
-    <% if (privacy_label = room_privacy_label(room)) %>
-      <span class="navbar-access"><%= privacy_label %></span>
-    <% end %>
   <% end %>
 
   <% unless room.thread? || room.direct? %>

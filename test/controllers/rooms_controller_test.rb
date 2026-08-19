@@ -40,29 +40,6 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".navbar-dm h1.navbar-title a[href=?]", edit_rooms_direct_path(room), text: /#{users(:kevin).name}/
   end
 
-  test "show names open room access in the nav header" do
-    get room_url(rooms(:pets))
-
-    assert_response :success
-    assert_select ".navbar-access", text: "Open to members"
-  end
-
-  test "show names private room access in the nav header" do
-    get room_url(rooms(:designers))
-
-    assert_response :success
-    assert_select ".navbar-access", text: "Private · invite only"
-  end
-
-  test "show omits the access label for forums" do
-    forum = Rooms::Forum.create_for({ name: "Privacy forum", creator: users(:david) }, users: users(:david))
-
-    get room_url(forum)
-
-    assert_response :success
-    assert_select ".navbar-access", count: 0
-  end
-
   test "composer carries the @everyone confirm threshold, member count, and cap flag" do
     room = rooms(:pets)
 
