@@ -30,10 +30,6 @@ body {
     }
 
     @media (min-width: 1280px) {
-      --sidebar-width: 240px;
-    }
-
-    @media (min-width: 1440px) {
       --sidebar-width: 272px;
     }
   }
