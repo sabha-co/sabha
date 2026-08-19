@@ -380,9 +380,74 @@ layout ambition.
 |---|---|---|---|
 | Slack | Block Kit — JSON block/element tree, `action_id` per element | `block_actions` to a request URL, whole message included | very high; a UI framework with its own builder |
 | Discord | Message components — action rows of buttons/selects, `custom_id` (100 chars) | interaction with `custom_id` | moderate; grew into Components v2 |
-| Mattermost | `actions` array in a message attachment; each names an integration URL + `context` | POST to the integration URL | low; closest to #244, no pre-registration |
+| Mattermost | `attachments[].actions[]` (button/select) with a per-control `integration: {url, context}`; newer `mm_blocks` with an `action_id` → actions registry | POST to the integration URL; **sync** `{update, ephemeral_text}` response | low → moderate; see code-verified notes below |
+| Zulip | three hardcoded widgets (poll, todo, zform) in an append-only `SubMessage` log | none for poll/todo (server is a relay); zform sends a canned chat reply | low; not extensible |
 | Telegram | Inline keyboards, `callback_data` (64 bytes) | echoed to the bot | very low |
 | once-campfire #247 | flat `actions` + selection modes + appearance | `type: "action"` + `id` + `selected` | started low, ended moderate |
+
+**Mattermost, Zulip, Buzz — code-verified** (local clones at `~/dev/mattermost`,
+`~/dev/zulip`, `~/dev/buzz`, checked 2026-08-19)
+
+- **Mattermost — yes, two generations, and the closest cousin to what we're weighing.**
+  - *Legacy attachment actions:* `props.attachments[].actions[]` — `id`, `name`,
+    `type: button|select`, `style` (six names or any `#RRGGBB`), `options`, and an
+    `integration: {url, context}` **per control**
+    (`server/public/model/integration_action.go`, `message_attachment.go`).
+  - *`mm_blocks`* (feature-flagged): native blocks — `text`, `button`, `static_select`,
+    `image`, `divider`, `container`, `column_set`, `collapsible` — that also ingest Slack Block
+    Kit (`props.blocks`) and Adaptive Cards (`props.cards`). Controls carry only an
+    `action_id`; a sibling `props.mm_blocks_actions` registry maps id → `{type:
+    external|openURL, url, context}` (`mm_blocks_actions.go`). Secrets are stripped before the
+    post reaches clients.
+  - *Storage:* everything in the post's `Props` JSON — no sibling table; the four payload
+    kinds are mutually exclusive per post (`post.go`).
+  - *Round-trip:* `POST /api/v4/posts/{post_id}/actions/{action_id}` (`api4/integration_action.go`).
+    Session + read permission on the post; **the clicked action is looked up on the stored
+    post and 404s if absent** (`GetAction` / `GetMmBlocksActionSpec`) — the same forgery guard
+    as KD8; a per-click ECDSA-signed `trigger_id`; POSTs `{user_id, channel_id, post_id,
+    trigger_id, type, context}`. Response is **synchronous**: `{update: <post>,
+    ephemeral_text, goto_location}` — the integration rewrites the post from its HTTP
+    response (`app/integration_action.go`). Dialogs (`OpenInteractiveDialog`) are the async
+    escape hatch.
+  - *Per-user state:* **none** — the integration owns it; the server even clones the context
+    per click so one user's `selected_option` can't leak to the next.
+  - *Rendering:* client-side; write-time validation is mostly advisory (`ValidateProps` only
+    logs) — except `mm_blocks_actions`, which is hard-validated and **frozen on edit** because
+    "`from_bot` on the original post is user-forgeable" (the concern behind our KD3).
+    Integrations may supply colors, icons, thumbnails. Humans *can* author `attachments`
+    actions via the API unless hardened mode is on.
+  - *Limits:* 50 actions/post, action ids `[A-Za-z0-9_-]`, client caps 100 blocks / depth 32.
+- **Zulip — widgets, not bot buttons.** Exactly three widget types, hardcoded: **poll, todo,
+  zform** (`web/src/widget_schema.ts`, `zerver/lib/widget.py`). No generic
+  "button → webhook."
+  - `/poll` and `/todo` are parsed from message text and stored as **`SubMessage` rows** — an
+    append-only per-message log (`zerver/models/messages.py`). A vote is `POST /json/submessage`
+    → validated against a schema keyed off the stored widget type (first submessage must come
+    from the message sender; question edits are author-only) → row appended → broadcast. **The
+    server never contacts a bot**; clients replay the log, and per-user vote state lives in
+    those rows. Web-only rendering.
+  - **`zform`** is the one bot-facing widget (undocumented `widget_content` param /
+    outgoing-webhook response field): `{heading, choices: [{short_name, long_name, reply}]}`.
+    Clicking a choice **sends an ordinary chat message** carrying `reply` and @-mentioning the
+    bot (`web/src/zform.ts`) — the callback is a synthesized message. No colors/icons/markup,
+    no ephemeral, no modals; bots and humans author widgets alike.
+- **Buzz — nothing.** Nostr-relay-based (Rust + Tauri/React + Flutter); ~130 event kinds
+  (`crates/buzz-core/src/kind.rs`) and none for controls on a message. Nearest: emoji
+  reactions, forum upvotes, and **workflow approval gates that are designed but stubbed** —
+  kinds 46010–46031 and a `workflow_approvals` table exist, but the executor logs *"approval
+  gate — not yet implemented, marking as failed"* (`crates/buzz-workflow/src/lib.rs`) and the
+  desktop card says "Approval actions are not yet available." Bots are Nostr agents that
+  *react to* messages via YAML workflows; they cannot *attach controls to* one.
+
+*What this adds:* both real implementations agree with KD5 / #244 — Mattermost holds no
+per-user state, and Zulip's per-user state is a server-owned widget, not a bot feature; nobody
+ships #247's "bot buttons + server-side per-user selections." Mattermost's `action_id` +
+separate actions registry is a middle ground for OQ1 (controls stay flat; the destination
+isn't on the control — which we get for free since the destination is always the authoring
+bot). Mattermost's click validation is KD8, and its sync `update` response is what the KD4
+fast-follow would look like. Zulip's zform shows an even smaller primitive than a webhook
+callback — "clicking sends a canned reply message" — probably too lossy for us (no
+idempotency, pollutes the room), but it is the floor.
 
 ---
 
@@ -397,7 +462,15 @@ layout ambition.
 - once-campfire PR #239 (bot self-edit, merged) and #210 (first-class polls, open, the
   competing shape)
 - Slack Block Kit reference (blocks, elements, `block_actions` payload)
-- Discord message components; Mattermost interactive messages; Telegram inline keyboards
+- Discord message components; Telegram inline keyboards
+- Mattermost (`~/dev/mattermost`): `server/public/model/integration_action.go`,
+  `mm_blocks_actions.go`, `post.go`, `server/channels/api4/integration_action.go`,
+  `server/channels/app/integration_action.go`, `webapp/platform/types/src/mm_blocks.ts`
+- Zulip (`~/dev/zulip`): `zerver/lib/widget.py`, `zerver/views/submessage.py`,
+  `zerver/actions/submessage.py`, `zerver/lib/validator.py`, `zerver/models/messages.py`,
+  `web/src/zform.ts`, `docs/subsystems/widgets.md`
+- Buzz (`~/dev/buzz`): `ARCHITECTURE.md`, `crates/buzz-core/src/kind.rs`,
+  `crates/buzz-workflow/src/lib.rs`, `desktop/src/features/workflows/ui/WorkflowApprovalCard.tsx`
 - Sabha: `docs/features/BOT_INTEGRATION.md`, `app/views/skills/show.text.erb`,
   `app/models/bot/event_payload.rb`, `app/models/webhook.rb`, `app/jobs/bot/webhook_job.rb`,
   `app/channels/bot_events_channel.rb`, `app/controllers/api/bots/messages_controller.rb`
