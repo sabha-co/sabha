@@ -1005,14 +1005,16 @@ img.message__attachment {
 }
 
 .message--mentioned {
-  background-color: var(--color-message-mentioned);
+  .message__body-content {
+    background-color: var(--color-message-mentioned);
+  }
 
   .message__mention-label {
     display: inline-flex;
   }
 
   @media (any-hover: hover) {
-    &:hover {
+    &:hover .message__body-content {
       background-color: var(--color-message-mentioned-hover);
     }
   }
