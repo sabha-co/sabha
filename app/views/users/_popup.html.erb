@@ -1,16 +1,15 @@
-<%# locals: (user:, boundary: nil) -%>
-<% cache [user, "popup", boundary, user.updated_at] do %>
-  <%= tag.details class: "position-relative avatar",
-                  data: { controller: "popup",
-                          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside",
-                          popup_orientation_top_class: "popup-orientation-top",
-                          popup_boundary_value: boundary } do %>
-    <summary class="btn avatar">
+<%# locals: (user:) -%>
+<% cache [user, "popup", user.updated_at] do %>
+  <%= tag.div class: "avatar position-relative", data: { controller: "popover", popover_placement_value: "bottom-start" } do %>
+    <button type="button" class="btn avatar" aria-expanded="false"
+        data-popover-target="trigger" data-action="popover#toggle">
       <%= avatar_tag user, loading: :lazy %>
-    </summary>
+    </button>
 
-    <div class="popup-menu message__avatar-menu border shadow" data-popup-target="menu">
-      <%= turbo_frame_tag dom_id(user, :message_profile), 
+    <div popover class="anchored-popover message__avatar-menu" aria-label="<%= user.name %>"
+        data-popover-target="menu"
+        data-action="toggle->popover#toggled turbo:frame-load->popover#reposition">
+      <%= turbo_frame_tag dom_id(user, :message_profile),
                           data: { turbo_frame_src: mention_profile_path(user) } do %>
         <div class="txt-align-center pad">
           <div class="spinner"></div>

@@ -242,13 +242,6 @@ body.members #main-content {
   flex-wrap: nowrap;
 }
 
-/* The quick-profile popup lives inside details.avatar, which clips to a circle
-   via overflow: hidden. Let the details overflow so its absolutely-positioned
-   .popup-menu renders outside the avatar; summary.avatar still clips the image. */
-.members-page .member-row details.avatar {
-  overflow: visible;
-}
-
 .members-page .member-row .member-controls {
   flex-shrink: 0;
 }

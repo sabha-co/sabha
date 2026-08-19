@@ -1,22 +1,21 @@
 <%# locals: (message:) -%>
 
 <div class="message__actions">
-  <%= tag.div class: "position-relative", data: { controller: "dialog" } do %>
-    <button type="button" class="btn message__action-btn message__bar-btn message__options-btn options-btn" data-action="dialog#open">
+  <%= tag.div class: "position-relative", data: { controller: "popover", popover_row_value: ".message" } do %>
+    <button type="button" class="btn message__action-btn message__bar-btn message__options-btn options-btn"
+        aria-expanded="false" data-popover-target="trigger" data-action="popover#toggle">
       <%= icon_tag "menu-dots-horizontal" %>
       <span class="for-screen-reader">Message options</span>
     </button>
 
-    <dialog class="scrim-dialog scrim-dialog--menu" aria-label="Message options"
-        data-dialog-target="modal"
-        data-action="click->dialog#closeOnScrim click->dialog#closeOnMenuAction turbo:submit-end->dialog#closeOnSubmit">
-      <div class="message-menu">
-        <%= link_to new_message_boost_path(message),
-              class: "btn message__action-btn full-width message__boost-btn",
-              data: { turbo_frame: "reaction_picker" } do %>
-          <span>Add reaction</span>
-        <% end %>
-      </div>
-    </dialog>
+    <div popover class="anchored-popover message-menu" aria-label="Message options"
+        data-popover-target="menu"
+        data-action="toggle->popover#toggled click->popover#closeOnAction turbo:submit-end->popover#closeOnSubmit">
+      <%= link_to new_message_boost_path(message),
+            class: "btn message__action-btn full-width message__boost-btn",
+            data: { turbo_frame: "reaction_picker" } do %>
+        <span>Add reaction</span>
+      <% end %>
+    </div>
   <% end %>
 </div>

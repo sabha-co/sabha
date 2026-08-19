@@ -170,17 +170,14 @@
 
   /* content-visibility:auto implies paint containment, which would clip the
      floating action bar and the popup menus — lift it whenever any shows.
-     [open] is the <details> popup, [data-open] is the inline @mention popup. */
+     [open] is the <details> popup, [data-open] is the inline @mention popup;
+     :popover-open keeps the bar up while a top-layer anchored menu is open. */
   &:hover,
   &:focus-within,
-  &:has([open], [data-open]) {
+  &:has([open], [data-open], :popover-open) {
     content-visibility: visible;
     contain: none;
     z-index: 1;
-  }
-
-  &:has([open]) [open] .popup-menu {
-    display: block;
   }
 
   &:has(.boost-item) {
@@ -447,24 +444,15 @@
   display: flex;
   box-shadow: 0 0 0 var(--hover-size) var(--color-bg);
 
-  /* Avatar wrappers inherit overflow:hidden from .avatar; let the user popup
-     escape so the absolutely-positioned .popup-menu inside <details> renders
-     outside the avatar's bounding box. The <span class="btn avatar"> around
-     the image still clips it to the rounded shape. */
+  /* Avatar wrappers inherit overflow:hidden from .avatar; keep the wrapper
+     open so the hover ring isn't clipped. The <button class="btn avatar">
+     around the image still clips it to the rounded shape. */
   overflow: visible;
-
-  details.avatar {
-    overflow: visible;
-  }
 }
 
 .thread__avatar,
 .boost__avatar {
   overflow: visible;
-
-  details.avatar {
-    overflow: visible;
-  }
 }
 
 .message__avatar.avatar--stacked {
@@ -883,7 +871,10 @@ img.message__attachment {
 }
 
 
-.message__avatar-menu {
+/* Scoped to .popup-menu: this absolute positioning belongs to the details-based
+   mention popup only — the quick profile is an .anchored-popover now and places
+   itself from the trigger rect (popover_controller). */
+.popup-menu.message__avatar-menu {
   --block-space: 1rem;
   --arrow-size: 1.1em;
   --avatar-border-size: 1px;

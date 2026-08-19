@@ -35,18 +35,76 @@ class MessageRowTest < ApplicationSystemTestCase
     assert_message_actions_revealed message
   end
 
-  test "the options menu opens as a dialog and closes when an item is chosen" do
+  test "the options menu opens as an anchored popover and closes when an item is chosen" do
     within_message messages(:third) do
       reveal_message_actions
     end
 
-    assert_selector "dialog[aria-label='Message options'][open]"
+    assert_selector ".message-menu", visible: :visible
+    assert_no_selector "dialog[aria-label='Message options'][open]"
+    assert_selector ".options-btn[aria-expanded='true']"
 
-    within "dialog[aria-label='Message options'][open]" do
+    within ".message-menu" do
       click_on "Copy link"
     end
 
-    assert_no_selector "dialog[aria-label='Message options'][open]"
+    assert_no_selector ".message-menu", visible: :visible
+    assert_no_selector ".options-btn[aria-expanded='true']"
+  end
+
+  test "the options menu anchors to its trigger inside the viewport" do
+    within_message messages(:third) do
+      reveal_message_actions
+    end
+    assert_selector ".message-menu", visible: :visible
+
+    anchored = page.evaluate_script(<<~JS)
+      (() => {
+        const trigger = document.querySelector(".options-btn[aria-expanded='true']")
+        const menu = trigger.closest("[data-controller~='popover']").querySelector(".message-menu")
+        const t = trigger.getBoundingClientRect(), m = menu.getBoundingClientRect()
+        const rightAligned = Math.abs(t.right - m.right) < 2
+        const inViewport = m.left >= 10 && m.top >= 10 &&
+          m.right <= window.innerWidth - 10 && m.bottom <= window.innerHeight - 10
+        return rightAligned && inViewport
+      })()
+    JS
+    assert anchored, "expected the menu right-aligned to its trigger and clamped inside the viewport"
+  end
+
+  test "right-clicking a message opens its options menu" do
+    find(".message", text: "Third time's a charm.").right_click
+
+    assert_selector ".message-menu", visible: :visible
+  end
+
+  test "the options menu closes on outside click and on Escape" do
+    within_message messages(:third) do
+      reveal_message_actions
+    end
+    assert_selector ".message-menu", visible: :visible
+
+    find("#nav").click
+    assert_no_selector ".message-menu", visible: :visible
+
+    within_message messages(:third) do
+      reveal_message_actions
+    end
+    assert_selector ".message-menu", visible: :visible
+
+    find("body").send_keys :escape
+    assert_no_selector ".message-menu", visible: :visible
+  end
+
+  test "clicking a message avatar opens the quick profile as an anchored popover" do
+    within_message messages(:third) do
+      find(".message__avatar button.avatar").click
+    end
+
+    assert_selector ".message__avatar-menu .quick-profile", visible: :visible
+
+    find("#nav").click
+    assert_no_selector ".message__avatar-menu .quick-profile", visible: :visible
   end
 
   test "the action bar reflects a reaction the user has made and toggles it off" do

@@ -1,7 +1,7 @@
 <%# locals: (user:) %>
 <%= turbo_frame_tag dom_id(user), class: "list-row member-row #{"banned" if user.banned?}" do %>
   <span class="member-row__avatar list-row__avatar">
-    <%= render "users/popup", user: user, boundary: ".members-list" %>
+    <%= render "users/popup", user: user %>
     <% unless user.bot? %>
       <span class="member-row__dot status-dot <%= activity_status_class(user) %>" aria-hidden="true"></span>
     <% end %>

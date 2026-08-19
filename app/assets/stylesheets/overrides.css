@@ -23,7 +23,7 @@
     visibility: hidden;
   }
 
-  .message:is(:hover, :focus-within, :has([open])) .message__meta .message__actions {
+  .message:is(:hover, :focus-within, :has([open], :popover-open)) .message__meta .message__actions {
     opacity: 1;
     pointer-events: auto;
     visibility: visible;
@@ -54,7 +54,7 @@
     opacity: 0.5;
   }
 
-  .message__options-btn[open] {
+  .message__options-btn[aria-expanded="true"] {
     opacity: 1;
   }
 }

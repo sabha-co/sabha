@@ -1,3 +1,61 @@
+/* Anchored popover: the one dropdown primitive (v2.1) — the message ⋯, the
+   room-row ⋯ and the quick profile all ride it. Rendered in the browser's top
+   layer via [popover], so no scroll container, containment root or z-index
+   stack can clip it; popover_controller does the anchoring (trigger rect,
+   flip above when it won't fit below, 12px viewport clamp). It stays hidden
+   until the controller places it — the popover toggle event arrives async, so
+   without this it could paint one frame at an unpositioned spot. */
+.anchored-popover {
+    background-color: var(--color-bg-raised);
+    border: 1px solid var(--color-border-darker);
+    border-radius: 10px;
+    box-shadow: var(--shadow-pop);
+    color: var(--color-text);
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    visibility: hidden;
+
+    &.anchored-popover--placed {
+        animation: popup-in 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        visibility: visible;
+    }
+}
+
+/* Message-options menu: a narrow card of plain label rows */
+.message-menu {
+    display: flex;
+    flex-direction: column;
+    inline-size: 230px;
+    padding: 6px;
+}
+
+.message-menu .btn {
+    --btn-background: transparent;
+    --btn-border-color: transparent;
+    --btn-border-radius: 9px;
+    --btn-padding: 9px 12px;
+    --hover-color: transparent;
+    --hover-filter: none;
+
+    font-size: 0.875rem;
+    font-weight: 400;
+    inline-size: 100%;
+    justify-content: flex-start;
+    text-align: start;
+
+    @media (any-hover: hover) {
+        &:hover {
+            background-color: var(--color-bg-hover);
+        }
+    }
+}
+
+.message-menu .message-menu__danger {
+    color: var(--color-negative);
+}
+
 .options-btn {
     opacity: 0.5;
 
@@ -13,6 +71,13 @@
         & [open] {
             opacity: 1;
         }
+    }
+
+    /* The trigger stays lit while its menu is open */
+    &[aria-expanded="true"] {
+        --btn-background: var(--color-bg-hover);
+
+        opacity: 1;
     }
 }
 
