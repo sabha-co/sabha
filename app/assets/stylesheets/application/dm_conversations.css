@@ -165,8 +165,10 @@
 
 .dm-new__hero {
   flex: 1;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
   text-align: center;
 }
