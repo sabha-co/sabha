@@ -16,7 +16,7 @@
       <%= render partial: "rooms/closeds/user", collection: @preview_members, as: :user, locals: { room: room, selected: true, dom_id_prefix: "preview_member" } %>
       <% remaining = room.active_member_count - @preview_members.size %>
       <% if remaining > 0 %>
-        <li class="txt-small txt-deemphasize txt-align-center margin-none" data-filter-target="summary">
+        <li class="txt-small txt-subtle txt-align-center margin-none" data-filter-target="summary">
           and <%= pluralize(remaining, "more member") %>
         </li>
       <% end %>

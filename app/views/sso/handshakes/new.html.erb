@@ -1,16 +1,20 @@
 <% content_for :title, "Signing you in" %>
 
-<section class="text-center flex flex-col items-center gap-3">
-  <div class="spinner h-7 w-7" aria-hidden="true"></div>
-  <h1 class="text-lg font-medium">Signing you in…</h1>
-  <p class="text-sm opacity-70">Redirecting to your single sign-on provider.</p>
+<section class="auth-card">
+  <header class="auth-card__header">
+    <div class="spinner" aria-hidden="true" style="font-size: 1.5rem;"></div>
+    <div>
+      <h1 class="auth-card__title">Signing you in…</h1>
+      <p class="auth-card__blurb">Redirecting to your single sign-on provider.</p>
+    </div>
+  </header>
 
   <%= auto_submit_form_with url: @provider_action, method: :get, data: { turbo: false } do |form| %>
     <% @provider_params.each do |name, value| %>
       <%= form.hidden_field name, value: value %>
     <% end %>
     <noscript>
-      <%= form.submit "Continue to sign-in", class: "btn mt-2" %>
+      <%= form.submit "Continue to sign-in", class: "btn auth-card__submit" %>
     </noscript>
   <% end %>
 </section>

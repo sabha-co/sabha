@@ -1,4 +1,4 @@
-<% @page_title = "Push notification subscriptions" %>
+<% @page_title = "Push notifications" %>
 
 <% content_for :nav do %>
   <div class="flex-item-justify-start">
@@ -6,11 +6,18 @@
   </div>
 <% end %>
 
-<section class="panel panel--wide flex flex-column gap">
-  <h1 class="txt-align-center txt-large margin-none">Push Notification Subscriptions</h1>
-  <div class="pad-inline fill-shade border-radius" id="push_subscriptions">
-    <menu class="pad flex flex-column gap">
+<section class="panel panel--wide">
+  <header class="settings-header">
+    <div class="settings-header__scope">Your settings</div>
+    <h1 class="settings-header__title">Push notifications</h1>
+    <p class="settings-header__blurb">Devices signed up to receive push notifications from <%= Branding.contextual_app_name %>.</p>
+  </header>
+
+  <div class="settings-card" id="push_subscriptions">
+    <% if @push_subscriptions.any? %>
       <%= render partial: "users/push_subscriptions/push_subscription", collection: @push_subscriptions %>
-    </menu>
+    <% else %>
+      <p class="txt-small txt-muted margin-none">No devices are subscribed yet. Enable push notifications from your notification settings.</p>
+    <% end %>
   </div>
 </section>

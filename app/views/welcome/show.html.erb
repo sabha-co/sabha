@@ -4,23 +4,11 @@
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <div id="message-area" class="message-area">
-  <div class="message-area--empty min-width center">
-    <div class="center pad" style="max-width: 28rem; margin: 0 auto;">
-      <figure class="center" style="margin-bottom: 1.5rem; text-align: center;">
-        <%= icon_tag "messages-empty", class: "translucent", style: "--icon-size: 6rem; opacity: 0.3;" %>
-        <span class="for-screen-reader"><%= Current.user.name %></span>
-      </figure>
-
-      <div class="center" style="text-align: center;">
-        <h2 class="txt-large" style="margin-bottom: 0.5rem; font-weight: 600;">Welcome to <%= Branding.contextual_app_name %></h2>
-        <p class="txt-muted" style="margin-bottom: 2rem; line-height: 1.5;">
-          You haven't joined any rooms in <%= Branding.contextual_app_name %> yet. Join or create one to start chatting.
-        </p>
-
-        <div class="flex gap center" style="justify-content: center; flex-wrap: wrap;">
-          <%= link_to "Create a Room", new_rooms_open_path, class: "btn btn--reversed", style: "--btn-border-radius: 0.5em; padding: 0.75rem 1.5rem;" %>
-        </div>
-      </div>
+  <div class="message-area--empty">
+    <div class="empty-state">
+      <h1 class="empty-state__title">Welcome to <%= Branding.contextual_app_name %></h1>
+      <p class="empty-state__body">You haven't joined any rooms yet. Join or create one to start chatting.</p>
+      <%= link_to "Create a room", new_rooms_open_path, class: "btn empty-state__action" %>
     </div>
   </div>
 </div>

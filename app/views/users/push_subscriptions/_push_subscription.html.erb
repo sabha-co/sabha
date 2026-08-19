@@ -1,22 +1,14 @@
-<li class="flex flex-column margin-none membership-item">
-  <span class="overflow-ellipsis txt-primary txt-undecorated">
-    <% agent = UserAgent.parse(push_subscription.user_agent) %>
-    <strong><%= agent.browser %> <%= agent.version %> on <%= agent.platform %></strong><br>
-  </span>
+<% agent = UserAgent.parse(push_subscription.user_agent) %>
+<div class="flex align-center gap membership-item">
+  <div class="flex-item-grow min-width">
+    <div class="txt-small"><strong><%= agent.browser %> <%= agent.version %> on <%= agent.platform %></strong></div>
+    <div class="txt-x-small txt-muted overflow-ellipsis"><%= push_subscription.endpoint %></div>
+  </div>
 
-  <span class="flex align-start gap txt-small">
-    <span><%= push_subscription.endpoint %></span>
-
-    <span class="flex align-center gap">
-      <%= button_to user_push_subscription_test_notifications_path(push_subscription), class: "btn btn--reversed" do %>
-        <%= icon_tag "notification-bell-everything" %>
-        <span class="for-screen-reader">Send test notification</span>
-      <% end %>
-
-      <%= button_to user_push_subscription_path(push_subscription), method: :delete, class: "btn btn--negative" do %>
-        <%= icon_tag "minus" %>
-        <span class="for-screen-reader">Delete subscription</span>
-      <% end %>
-    </span>
-  </span>
-</li>
+  <div class="flex align-center gap-half flex-item-no-shrink">
+    <%= button_to "Test", user_push_subscription_test_notifications_path(push_subscription), class: "btn settings-chip-btn" %>
+    <%= button_to "Remove", user_push_subscription_path(push_subscription), method: :delete,
+          class: "btn settings-chip-btn settings-chip-btn--negative",
+          form: { data: { turbo_confirm: "Remove this device from push notifications?" } } %>
+  </div>
+</div>

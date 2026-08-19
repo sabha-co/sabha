@@ -1,8 +1,15 @@
 <% content_for :title, "Single sign-on failed" %>
 
-<main class="session__main">
-  <section class="session__card">
-    <h1>Single sign-on failed</h1>
-    <p><%= @message || "Unable to sign in with single sign-on." %></p>
-  </section>
-</main>
+<section class="auth-card">
+  <header class="auth-card__header">
+    <%= link_to root_path, class: "auth-card__logo" do %>
+      <%= image_tag fresh_account_logo_path, alt: Branding.contextual_app_name %>
+    <% end %>
+    <div>
+      <h1 class="auth-card__title">Single sign-on failed</h1>
+      <p class="auth-card__blurb"><%= @message || "We couldn't sign you in with single sign-on." %></p>
+    </div>
+  </header>
+
+  <%= link_to "Back to sign in", new_session_path, class: "btn auth-card__action--quiet" %>
+</section>
