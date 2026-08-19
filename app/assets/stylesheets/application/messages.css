@@ -110,6 +110,11 @@
      is content-sized, and content-visibility's remembered widths keep rows at
      the pre-panel width when the thread/roster column narrows the area. */
   grid-template-columns: minmax(0, 1fr);
+  /* A vertical stream never scrolls sideways: clip the cross axis so nothing
+     (a wide embed, a stray absolutely-positioned child) can raise a horizontal
+     scrollbar. overflow-y:auto alone computes overflow-x to auto, which is what
+     let the bar appear. Code blocks keep their own inner overflow-x:auto. */
+  overflow-x: clip;
   overflow-y: auto;
   overscroll-behavior: contain;
   position: relative;
