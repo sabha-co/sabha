@@ -122,14 +122,30 @@
   font-weight: 600;
 }
 
+/* A quiet glyph, not a pill: strip the inherited .btn chrome (white fill,
+   border, 2em radius) down to a subtle ✕ that fills in softly on hover. */
 .thread-panel__close {
+  --btn-background: transparent;
+  --btn-border-color: transparent;
+  --btn-border-radius: 7px;
+  --btn-color: var(--color-text-subtle);
+  --btn-padding: 3px 7px;
+  --hover-color: transparent;
+  --hover-filter: none;
+
   flex-shrink: 0;
-  font-size: 1.25em;
+  font-size: 0.9375rem;
   line-height: 1;
-  padding: 0.15em 0.4em;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @media (any-hover: hover) {
+    &:hover {
+      --btn-background: var(--color-bg-hover);
+      --btn-color: var(--color-text);
+    }
+  }
 }
 
 /* Turbo frame — flex child to contain scrolling content */

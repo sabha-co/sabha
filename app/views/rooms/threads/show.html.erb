@@ -11,7 +11,7 @@
     <%# Follow state sits in the header as a chip — reachable without a menu %>
     <%= render "rooms/threads/follow_control", thread: @room %>
 
-    <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close thread">&times;</button>
+    <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close thread">&#x2715;</button>
   </div>
 
   <%= message_area_tag(@room, id: "thread-message-area") do %>
