@@ -11,7 +11,7 @@ module RoomsHelper
       class: "btn",
       aria: { label: "Who's in #{room_display_name(room)}" },
       data: { turbo_frame: "thread_panel_frame", room_id: room.id } do
-        icon_tag("info", style: "--icon-size: 18px") +
+        icon_tag("info", style: "--icon-size: 14px") +
         tag.span("Room details", class: "for-screen-reader")
     end
   end

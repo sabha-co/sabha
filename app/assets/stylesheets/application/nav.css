@@ -203,12 +203,36 @@
   }
 }
 
-/* Bar action buttons are quiet icon buttons, not pills */
+/* Bar action buttons are quiet icon buttons, not pills: transparent at rest,
+   a soft bg fill on hover — the same idiom as every other quiet icon button,
+   not the default .btn's border-darker ring. */
 #nav .navbar-actions .btn {
   --btn-background: transparent;
   --btn-border-color: transparent;
+  --hover-color: transparent;
+  --hover-filter: none;
 
   color: var(--color-text-muted);
+
+  @media (any-hover: hover) {
+    &:hover {
+      --btn-background: var(--color-bg-hover);
+
+      color: var(--color-text);
+    }
+  }
+}
+
+/* The right-side action icons ride the design's quiet scale: a 17px bell
+   (the shared involvement image ships larger) and an info glyph in the
+   lighter subtle tone the bar glyph already uses, not the heavier muted. */
+#nav .navbar-actions img {
+  block-size: 17px;
+  inline-size: 17px;
+}
+
+#nav .navbar-actions .icon--info {
+  color: var(--color-text-subtle);
 }
 
 .top-banner {
