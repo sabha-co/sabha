@@ -125,12 +125,20 @@ body.session {
   --btn-border-radius: 9px;
   --btn-color: var(--color-text-lighter);
   --btn-padding: 12px;
+  --hover-color: transparent;
+  --hover-filter: none;
 
   font-size: 0.875rem;
   font-weight: 600;
   inline-size: 100%;
   justify-content: center;
   margin-block-start: 18px;
+
+  @media (any-hover: hover) {
+    &:hover {
+      --btn-background: var(--color-bg-hover);
+    }
+  }
 }
 
 /* Centred small print under an action */
@@ -268,11 +276,19 @@ body.session {
   --btn-border-radius: 8px;
   --btn-color: var(--color-text-muted);
   --btn-padding: 6px 11px;
+  --hover-color: transparent;
+  --hover-filter: none;
 
   flex-shrink: 0;
   font-size: 0.78125rem;
   font-weight: 600;
   position: relative;
+
+  @media (any-hover: hover) {
+    &:hover {
+      --btn-background: var(--color-bg-hover);
+    }
+  }
 
   input[type="file"] {
     cursor: pointer;

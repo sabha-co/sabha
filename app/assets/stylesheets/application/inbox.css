@@ -224,10 +224,18 @@ body.inbox [data-activity-unread="true"] {
 .bookmark-card__remove {
   --btn-background: transparent;
   --btn-border-color: var(--color-border);
+  --hover-color: transparent;
+  --hover-filter: none;
 
   color: var(--color-text-muted);
   font-size: 0.75rem;
   font-weight: 600;
+
+  @media (any-hover: hover) {
+    &:hover {
+      --btn-background: var(--color-bg-hover);
+    }
+  }
 }
 
 .bookmark-card__message {

@@ -117,9 +117,17 @@
   --btn-border-radius: 7px;
   --btn-color: var(--color-text-muted);
   --btn-padding: 5px 10px;
+  --hover-color: transparent;
+  --hover-filter: none;
 
   font-size: 0.75rem;
   font-weight: 600;
+
+  @media (any-hover: hover) {
+    &:hover {
+      --btn-background: var(--color-bg-hover);
+    }
+  }
 }
 
 /* A quiet glyph, not a pill: strip the inherited .btn chrome (white fill,

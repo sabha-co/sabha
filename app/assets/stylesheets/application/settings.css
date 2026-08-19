@@ -185,10 +185,19 @@
   --btn-border-radius: 8px;
   --btn-color: var(--color-text-muted);
   --btn-padding: 7px 13px;
+  --hover-color: transparent;
+  --hover-filter: none;
 
   font-size: 0.8125rem;
   font-weight: 600;
   position: relative;
+
+  /* Soft fill on hover, not the default .btn border-darker ring */
+  @media (any-hover: hover) {
+    &:hover {
+      --btn-background: var(--color-bg-hover);
+    }
+  }
 
   input[type="file"] {
     cursor: pointer;
