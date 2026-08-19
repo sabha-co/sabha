@@ -584,6 +584,13 @@
   text-decoration: none;
   transition: background-color 150ms ease-out;
 
+  /* The group stack is authored entirely in ch — box, tiles, and overlap
+     offsets alike — so scaling its font-size shrinks the whole stack uniformly
+     to sit inside the single-avatar footprint instead of overpowering it. */
+  .avatar__group {
+    font-size: 0.7em;
+  }
+
   .avatar .avatar__group {
     .avatar {
       margin-inline: 0;
