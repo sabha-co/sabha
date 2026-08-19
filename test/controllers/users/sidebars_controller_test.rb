@@ -24,6 +24,61 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:pets), "starred_rooms_list_node")}", count: 0
   end
 
+  test "profile flyout renders administrator destinations and keeps the workspace settings gear" do
+    accounts(:signal).settings.allow_users_to_create_invite_links = false
+    accounts(:signal).save!
+
+    get user_sidebar_url
+
+    assert_select ".sidebar__profile-popover" do
+      assert_select "a[href=?]", user_path(users(:david)), text: "Profile"
+      assert_select "a[href=?]", user_profile_path, text: "Settings"
+      assert_select "a[href=?]", user_appearance_path, text: "Appearance"
+      assert_select "a[href=?]", account_invitations_path, text: "Invitations"
+      assert_select "a[href=?]", edit_account_path, text: "Community settings"
+      assert_select "form[action=?][data-controller~='sessions']", session_path do
+        assert_select "input[type='hidden'][name='push_subscription_endpoint'][data-sessions-target='pushSubscriptionEndpoint']"
+        assert_select "button[data-action~='sessions#logout:prevent']", text: "Log out"
+      end
+      assert_select ".sidebar__profile-presence", count: 0
+    end
+
+    assert_select ".sidebar__workspace a[href=?][title=?]", edit_account_path, "Community settings"
+    assert_select ".sidebar__footer > .sidebar__profile", count: 1
+    assert_select ".sidebar__footer > *", count: 1
+  end
+
+  test "profile flyout renders member destinations when personal invitations are allowed" do
+    sign_in :kevin
+
+    get user_sidebar_url
+
+    assert_select ".sidebar__profile-popover" do
+      assert_select "a[href=?]", user_path(users(:kevin)), text: "Profile"
+      assert_select "a[href=?]", user_profile_path, text: "Settings"
+      assert_select "a[href=?]", user_appearance_path, text: "Appearance"
+      assert_select "a[href=?]", account_path, text: "Invitations"
+      assert_select "a", text: "Community settings", count: 0
+      assert_select "form[action=?] button", session_path, text: "Log out"
+    end
+
+    assert_select ".sidebar__workspace a[title=?]", "Community settings", count: 0
+  end
+
+  test "profile flyout hides invitations when member invite links are disabled" do
+    accounts(:signal).settings.allow_users_to_create_invite_links = false
+    accounts(:signal).save!
+    sign_in :kevin
+
+    get user_sidebar_url
+
+    assert_select ".sidebar__profile-popover" do
+      assert_select "a", text: "Invitations", count: 0
+      assert_select "a", text: "Community settings", count: 0
+      assert_select "form[action=?] button", session_path, text: "Log out"
+    end
+  end
+
   test "unread directs" do
     rooms(:david_and_jason).messages.create! client_message_id: 999, body: "Hello", creator: users(:jason)
 

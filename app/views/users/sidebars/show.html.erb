@@ -25,10 +25,11 @@
         <span class="sidebar__workspace-sub"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</span>
       </span>
 
-      <% account_tool_label = Current.user&.staff? ? "Settings" : "About" %>
-      <%= link_to account_path, class: "btn sidebar__footer-item", title: account_tool_label do %>
-        <%= icon_tag "gear" %>
-        <span class="for-screen-reader"><%= account_tool_label %></span>
+      <% if Current.user.can_administer? %>
+        <%= link_to edit_account_path, class: "btn sidebar__workspace-action", title: "Community settings" do %>
+          <%= icon_tag "gear" %>
+          <span class="for-screen-reader">Community settings</span>
+        <% end %>
       <% end %>
     </header>
 
@@ -148,30 +149,7 @@
     </div>
 
     <footer class="sidebar__footer">
-      <%= link_to user_profile_path, class: "sidebar__me", title: Current.user.name do %>
-        <span class="sidebar__me-avatar">
-          <figure class="avatar" style="--avatar-size: 32px;">
-            <%= avatar_image_tag(Current.user, size: 32, style: "view-transition-name: avatar-#{Current.user.id}", loading: :lazy) %>
-          </figure>
-          <span class="status-dot status--active sidebar__me-dot" aria-hidden="true"></span>
-        </span>
-        <span class="sidebar__me-info">
-          <span class="sidebar__me-name"><%= Current.user.name %></span>
-          <span class="sidebar__me-status"><%= Current.user.status_message.presence || "Here now" %></span>
-        </span>
-      <% end %>
-
-      <button class="btn sidebar__footer-item" title="Switch theme" data-action="theme#toggle">
-        <%= icon_tag "moon", class: "theme-toggle__moon" %>
-        <%= icon_tag "sun", class: "theme-toggle__sun" %>
-        <span class="for-screen-reader">Switch between light and dark themes</span>
-      </button>
-
-      <% account_tool_label = Current.user&.staff? ? "Settings" : "About" %>
-      <%= link_to account_path, class: "btn sidebar__footer-item", title: account_tool_label do %>
-        <%= icon_tag Current.user&.staff? ? "crown" : "world" %>
-        <span class="for-screen-reader"><%= account_tool_label %></span>
-      <% end %>
+      <%= render "users/sidebars/profile_menu" %>
     </footer>
     </div>
 

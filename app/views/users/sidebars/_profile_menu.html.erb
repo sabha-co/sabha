@@ -1,0 +1,55 @@
+<%= tag.div class: "sidebar__profile",
+      data: { controller: "popover", popover_placement_value: "bottom-start", action: "resize@window->popover#reposition" } do %>
+  <button type="button" class="sidebar__me" title="Open profile menu"
+          aria-haspopup="true" aria-expanded="false"
+          data-popover-target="trigger" data-action="popover#toggle">
+    <span class="sidebar__me-avatar">
+      <figure class="avatar" style="--avatar-size: 32px;">
+        <%= avatar_image_tag(Current.user, size: 32, style: "view-transition-name: avatar-#{Current.user.id}", loading: :lazy) %>
+      </figure>
+      <span class="status-dot status--active sidebar__me-dot" aria-hidden="true"></span>
+    </span>
+    <span class="sidebar__me-info">
+      <span class="sidebar__me-name"><%= Current.user.name %></span>
+      <span class="sidebar__me-status"><%= Current.user.email_address %></span>
+    </span>
+    <span class="sidebar__me-caret" aria-hidden="true"><%= icon_tag "caret-down" %></span>
+  </button>
+
+  <%= popover_menu_tag "sidebar__profile-popover", aria: { label: "Profile menu" } do %>
+    <%= link_to user_path(Current.user), class: "sidebar__profile-summary" do %>
+      <figure class="avatar" style="--avatar-size: 38px;">
+        <%= avatar_image_tag(Current.user, size: 38, loading: :lazy) %>
+      </figure>
+      <span class="sidebar__profile-summary-info">
+        <strong class="overflow-ellipsis"><%= Current.user.name %></strong>
+        <span class="overflow-ellipsis"><%= Current.user.email_address %></span>
+      </span>
+      <span class="sidebar__profile-summary-arrow" aria-hidden="true">&rsaquo;</span>
+    <% end %>
+
+    <span class="sidebar__profile-divider" aria-hidden="true"></span>
+
+    <%= link_to "Profile", user_path(Current.user), class: "sidebar__profile-menu-item" %>
+    <%= link_to "Settings", user_profile_path, class: "sidebar__profile-menu-item" %>
+    <%= link_to "Appearance", user_appearance_path, class: "sidebar__profile-menu-item" %>
+
+    <% if Current.account.settings.allow_users_to_create_invite_links? || Current.user.can_administer? %>
+      <% invitations_path = Current.user.can_administer? ? account_invitations_path : account_path %>
+      <%= link_to "Invitations", invitations_path, class: "sidebar__profile-menu-item" %>
+    <% end %>
+
+    <% if Current.user.can_administer? %>
+      <%= link_to "Community settings", edit_account_path, class: "sidebar__profile-menu-item" %>
+    <% end %>
+
+    <span class="sidebar__profile-divider" aria-hidden="true"></span>
+
+    <%= form_with url: session_path, method: :delete, class: "sidebar__profile-logout", data: { controller: "sessions" } do %>
+      <%= hidden_field_tag :push_subscription_endpoint, nil, data: { sessions_target: "pushSubscriptionEndpoint" } %>
+      <button class="sidebar__profile-menu-item txt-negative" data-action="sessions#logout:prevent">
+        Log out
+      </button>
+    <% end %>
+  <% end %>
+<% end %>

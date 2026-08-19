@@ -17,6 +17,15 @@
     position: fixed;
     visibility: hidden;
 
+    /* Take the popover out of layout while closed. The per-menu display:flex
+       below is author-origin and so overrides the UA [popover]:not(:popover-open)
+       display:none — without this, every closed menu stays a fixed, off-canvas
+       box that enlarges the scroll area and shows a horizontal scrollbar. The
+       controller only measures the menu once it's open, so this is safe. */
+    &:not(:popover-open) {
+        display: none;
+    }
+
     &.anchored-popover--placed {
         animation: popup-in 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
         visibility: visible;
@@ -94,6 +103,88 @@
 
 .room-menu .room-menu__negative {
     color: var(--color-negative);
+}
+
+/* Profile flyout: the footer row is its only trigger. The shared popover
+   controller flips it upward from the bottom edge and keeps it in the top
+   layer when the sidebar is a drawer or compact rail. */
+.sidebar__profile-popover {
+    display: flex;
+    flex-direction: column;
+    inline-size: min(256px, calc(100vw - 24px));
+    max-block-size: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.sidebar__profile-summary {
+    align-items: center;
+    border-radius: 9px;
+    color: var(--color-text);
+    display: flex;
+    gap: 11px;
+    min-inline-size: 0;
+    padding: 9px 10px 11px;
+    text-decoration: none;
+}
+
+.sidebar__profile-summary-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    font-size: 0.75rem;
+    min-inline-size: 0;
+}
+
+.sidebar__profile-summary-info strong {
+    font-size: 0.875rem;
+}
+
+.sidebar__profile-summary-info span,
+.sidebar__profile-summary-arrow {
+    color: var(--color-text-subtle);
+}
+
+.sidebar__profile-divider {
+    border-block-start: 1px solid var(--color-border);
+    display: block;
+    margin: 4px 2px;
+}
+
+.sidebar__profile-menu-item {
+    align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    color: var(--color-text);
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    font-size: 0.84375rem;
+    inline-size: 100%;
+    min-block-size: 34px;
+    padding: 0 10px;
+    text-align: start;
+    text-decoration: none;
+}
+
+.sidebar__profile-summary,
+.sidebar__profile-menu-item {
+    &:focus-visible {
+        outline: 2px solid var(--color-accent-brand);
+        outline-offset: 2px;
+    }
+
+    @media (any-hover: hover) {
+        &:hover {
+            background-color: var(--color-bg-hover);
+        }
+    }
+}
+
+.sidebar__profile-logout {
+    margin: 0;
 }
 
 .options-btn {

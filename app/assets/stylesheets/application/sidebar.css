@@ -102,12 +102,14 @@
     }
 
     /* The chip collapses to just the avatar in the rail */
-    .sidebar__me {
+    .sidebar__profile {
       flex: initial;
-      padding: 4px;
     }
 
-    .sidebar__me-info {
+    .sidebar__me { padding: 4px; }
+
+    .sidebar__me-info,
+    .sidebar__me-caret {
       display: none;
     }
   }
@@ -322,14 +324,12 @@
   margin-inline-end: 11px;
 }
 
-/* Footer: the signed-in user chip (avatar + name + status) with quiet tools
-   on the right, over a hairline */
+/* Footer: the signed-in user chip is the one trigger for the profile flyout. */
 .sidebar__footer {
   align-items: center;
   background-color: var(--color-bg-sunk);
   border-block-start: 1px solid var(--color-border-dark);
   display: flex;
-  gap: 2px;
   inset-block-end: 0;
   margin-block-start: auto;
   padding-block: 8px calc(8px + env(safe-area-inset-bottom));
@@ -338,16 +338,31 @@
   z-index: 2;
 }
 
+.sidebar__profile {
+  flex: 1;
+  min-inline-size: 0;
+}
+
 .sidebar__me {
   align-items: center;
   border-radius: var(--border-radius-md);
   color: var(--color-text);
+  cursor: pointer;
   display: flex;
-  flex: 1;
   gap: 10px;
+  inline-size: 100%;
   min-inline-size: 0;
   padding: 4px 6px;
-  text-decoration: none;
+  text-align: start;
+
+  &[aria-expanded="true"] {
+    background-color: var(--color-bg-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent-brand);
+    outline-offset: 2px;
+  }
 
   @media (any-hover: hover) {
     &:hover {
@@ -374,6 +389,7 @@
 .sidebar__me-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-inline-size: 0;
 }
 
@@ -395,7 +411,19 @@
   white-space: nowrap;
 }
 
-.sidebar__footer-item {
+.sidebar__me-caret {
+  color: var(--color-text-subtle);
+  display: flex;
+  flex-shrink: 0;
+  transform: rotate(180deg);
+
+  & svg {
+    block-size: 12px;
+    inline-size: 12px;
+  }
+}
+
+.sidebar__workspace-action {
   --btn-background: transparent;
   --btn-border-color: transparent;
   --btn-padding: 0.35em;
@@ -414,20 +442,6 @@
   }
 }
 
-/* The theme toggle shows the appearance you'd switch TO: moon under the light
-   theme, sun under dark. Keyed off :root (the app theme), not the sidebar's
-   own contrast surface. */
-.theme-toggle__sun {
-  display: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .theme-toggle__moon { display: none; }
-  :root:not([data-theme="light"]) .theme-toggle__sun { display: inline-block; }
-}
-
-:root[data-theme="dark"] .theme-toggle__moon { display: none; }
-:root[data-theme="dark"] .theme-toggle__sun { display: inline-block; }
 
 .sidebar__toggle {
   /* Vertically centered on the header bar it floats over */
