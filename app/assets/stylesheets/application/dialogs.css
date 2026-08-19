@@ -72,6 +72,33 @@
   padding: 14px 18px;
 }
 
+/* Footer buttons ride the 8px rounded-rect scale, not the default .btn pill.
+   The primary (.settings-save) brings its own accent fill; the bare .btn is
+   the secondary (Cancel) — a quiet outlined rect matching the primary's
+   geometry, muted until hover. */
+.scrim-dialog__footer .btn {
+  --btn-border-radius: 8px;
+
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.scrim-dialog__footer .btn:not(.settings-save) {
+  --btn-background: transparent;
+  --btn-border-color: var(--color-border);
+  --btn-color: var(--color-text-muted);
+  --btn-padding: 9px 15px;
+  --hover-color: transparent;
+  --hover-filter: none;
+
+  @media (any-hover: hover) {
+    &:hover {
+      --btn-background: var(--color-bg-hover);
+      --btn-color: var(--color-text);
+    }
+  }
+}
+
 /* Small-caps section eyebrow inside the card */
 .scrim-dialog__label {
   color: var(--color-text-subtle);
