@@ -18,6 +18,7 @@
   &:disabled {
     cursor: not-allowed;
     color: var(--color-border-darker);
+    background-color: var(--color-bg-sunk);
     filter: brightness(1);
   }
 
