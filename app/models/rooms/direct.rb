@@ -82,6 +82,19 @@ class Rooms::Direct < Room
       .reject { |u| u.id == excluding.id }
   end
 
+  # Formats a direct room's other members into a display label. The one source
+  # the sidebar, live header, and composer placeholder all read so their names
+  # can't drift. short: comma-joins first names for groups so they fit a narrow
+  # rail; otherwise full names are joined into a sentence. One-on-one rooms keep
+  # the other member's full name either way.
+  def self.display_label(members, short: false)
+    if short && members.many?
+      members.map { |member| member.name.split.first }.join(", ")
+    else
+      members.map(&:name).to_sentence
+    end
+  end
+
   # Batch load members for multiple rooms, returning { room_id => [users] }
   # Excludes the given user from each room's member list
   def self.members_for_display_by_room(room_ids, excluding:)

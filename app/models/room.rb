@@ -373,10 +373,10 @@ class Room < ApplicationRecord
     end
   end
 
-  def display_name(for_user: nil)
+  def display_name(for_user: nil, short: false)
     if direct?
       # Use Ruby select/map instead of pluck to leverage preloaded users
-      users.reject { |u| u == for_user }.map(&:name).to_sentence.presence || for_user&.name
+      Rooms::Direct.display_label(users.reject { |u| u == for_user }, short: short).presence || for_user&.name
     elsif thread?
       # A chat thread shows its given name if it was renamed, else the thread
       # glyph plus the name of the room it was spawned in.

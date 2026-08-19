@@ -24,6 +24,24 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:pets), "starred_rooms_list_node")}", count: 0
   end
 
+  test "renders readable direct-message names — full name for one-on-one, comma-joined first names for groups" do
+    one_on_one = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:rachel) ])
+    group = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:rachel), users(:jason) ])
+
+    get user_sidebar_url
+
+    one_on_one_author = css_select("##{ActionView::RecordIdentifier.dom_id(one_on_one, :list)} .direct__author").first
+    assert one_on_one_author, "expected the one-on-one DM row to render"
+    assert_includes one_on_one_author.text, "Rachel Green"
+
+    group_author = css_select("##{ActionView::RecordIdentifier.dom_id(group, :list)} .direct__author").first
+    assert group_author, "expected the group DM row to render"
+    assert_includes group_author.text, "Rachel"
+    assert_includes group_author.text, "Jason"
+    assert_not_includes group_author.text, "Green"  # first names only
+    assert_not_includes group_author.text, "+"      # not the old initials style
+  end
+
   test "profile flyout renders administrator destinations and keeps the workspace settings gear" do
     accounts(:signal).settings.allow_users_to_create_invite_links = false
     accounts(:signal).save!

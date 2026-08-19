@@ -53,6 +53,26 @@ class Rooms::DirectGroupTest < ActiveSupport::TestCase
     assert_equal "David", display_name
   end
 
+  test "group DM short display name comma-joins first names only" do
+    room = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:rachel), users(:jason) ])
+
+    label = room.display_name(for_user: users(:david), short: true)
+
+    assert_includes label, "Rachel"
+    assert_includes label, "Jason"
+    assert_not_includes label, "Green"  # first name only — full names overflow the rail
+    assert_not_includes label, "David"  # excludes the viewer
+    assert_includes label, ","          # Slack-style comma join
+    assert_not_includes label, " and "  # not to_sentence's connector
+  end
+
+  test "one-on-one short display name keeps the other member's full name" do
+    room = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:rachel) ])
+
+    assert_equal "Rachel Green", room.display_name(for_user: users(:david), short: true)
+    assert_equal "Rachel Green", room.display_name(for_user: users(:david))
+  end
+
   test "idempotent room creation via find_or_create_for" do
     # Create room via create_for first (use users without existing fixture DMs)
     room1 = Rooms::Direct.create_for({ creator: users(:jz) }, users: [ users(:jz), users(:rachel) ])
