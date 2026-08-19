@@ -33,8 +33,7 @@
       overflow: hidden;
     }
 
-    .sidebar__workspace,
-    .sidebar__filter {
+    .sidebar__workspace {
       display: none;
     }
 
@@ -64,8 +63,8 @@
 
     /* The full room sections wait inside the expanded overlay, but the top of
        the main Rooms list previews here as compact glyph rows so unread rooms
-       stay one glance away. Favorites, forums, DMs, section headers and stars
-       all collapse; the rows themselves are reused, so their live unread
+       stay one glance away. Favorites, forums, DMs, section headers and row
+       menus all collapse; the rows themselves are reused, so their live unread
        badges keep updating. */
     .rooms {
       gap: 2px;
@@ -77,7 +76,7 @@
     }
 
     .rail-rooms .room-row:nth-child(n+5),
-    .rail-rooms .room-row .star,
+    .rail-rooms .room-row .room-row__menu-btn,
     .rail-rooms .room__name,
     .rail-rooms .muted-indicator {
       display: none;
@@ -186,53 +185,6 @@
   white-space: nowrap;
 }
 
-/* Filter field: narrows the room/person rows as you type (sidebar_filter) */
-.sidebar__filter {
-  padding: 0 12px 10px;
-}
-
-.sidebar__filter-field {
-  align-items: center;
-  background-color: var(--color-bg-raised);
-  border: 1px solid var(--color-border-dark);
-  border-radius: 9px;
-  display: flex;
-  gap: 8px;
-  padding: 7px 10px;
-
-  &:focus-within {
-    border-color: var(--color-accent-brand);
-  }
-}
-
-.sidebar__filter-icon {
-  --icon-size: 14px;
-
-  color: var(--color-text-subtle);
-}
-
-.sidebar__filter-input {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  color: var(--color-text);
-  flex: 1;
-  /* 16px floor keeps touch browsers from zooming the field; the comp's
-     13.5px applies where zoom-on-focus isn't a behavior */
-  font-size: max(16px, 0.84375rem);
-  min-inline-size: 0;
-  outline: none;
-  padding: 0;
-
-  @media (hover: hover) and (pointer: fine) {
-    font-size: 0.84375rem;
-  }
-
-  &::placeholder {
-    color: var(--color-text-subtle);
-  }
-}
-
 /* Tool block: full-width rows above the room sections */
 .sidebar__menu {
   display: flex;
@@ -301,21 +253,6 @@
   font-size: 0.6875rem;
   font-weight: 600;
   opacity: 0.75;
-}
-
-/* Quiet accent row closing the rooms list */
-.sidebar__browse-all {
-  color: var(--color-accent-brand);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  padding: 6px 1.2ch;
-  text-decoration: none;
-
-  @media (any-hover: hover) {
-    &:hover {
-      text-decoration: underline;
-    }
-  }
 }
 
 /* Presence on 1:1 DM rows: the roster's connected signal as a corner dot */
@@ -786,32 +723,26 @@
     background-color: var(--color-selected);
   }
 
-  form:has(.btn.star) {
-    display: flex;
-    align-items: center;
-    margin: 0;
-  }
+  /* The ⋯ trigger reveals on row hover/focus and stays while its menu is
+     open; right-clicking the row opens the same menu (popover_controller). */
+  .room-row__menu-btn {
+    --btn-padding: 4px;
 
-  .btn.star {
     border: 0;
-    padding: 0;
-    margin: 0;
-    line-height: 1;
     background: transparent;
     flex-shrink: 0;
-    opacity: 0.4;
-    transition: opacity 0.15s ease;
+    line-height: 1;
+    margin-inline-end: 2px;
+
+    @media (any-hover: hover) and (pointer: fine) {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
   }
 
-  .btn.star:hover {
-    opacity: 0.8;
-  }
-
-  .btn.star.starred {
-    opacity: 0.7;
-  }
-
-  .btn.star.starred:hover {
+  &:hover .room-row__menu-btn,
+  &:focus-within .room-row__menu-btn,
+  .room-row__menu-btn[aria-expanded="true"] {
     opacity: 1;
   }
 

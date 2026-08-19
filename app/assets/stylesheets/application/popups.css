@@ -56,6 +56,46 @@
     color: var(--color-negative);
 }
 
+/* Room-row ⋯ menu: a narrower card; Leave sits apart behind a hairline */
+.room-menu {
+    display: flex;
+    flex-direction: column;
+    inline-size: 208px;
+    padding: 5px;
+}
+
+.room-menu .btn {
+    --btn-background: transparent;
+    --btn-border-color: transparent;
+    --btn-border-radius: 7px;
+    --btn-padding: 5px 10px;
+    --hover-color: transparent;
+    --hover-filter: none;
+
+    font-size: 0.84375rem;
+    font-weight: 400;
+    inline-size: 100%;
+    justify-content: flex-start;
+    min-block-size: 30px;
+    text-align: start;
+
+    @media (any-hover: hover) {
+        &:hover {
+            background-color: var(--color-bg-hover);
+        }
+    }
+}
+
+.room-menu__leave {
+    border-block-start: 1px solid var(--color-border);
+    margin-block-start: 4px;
+    padding-block-start: 4px;
+}
+
+.room-menu .room-menu__negative {
+    color: var(--color-negative);
+}
+
 .options-btn {
     opacity: 0.5;
 

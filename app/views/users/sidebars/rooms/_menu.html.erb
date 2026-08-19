@@ -1,0 +1,28 @@
+<%# locals: (membership:) -%>
+<% room = membership.room %>
+<% muted = membership.involved_in_nothing? %>
+
+<%= tag.div class: "position-relative", data: { controller: "popover", popover_row_value: ".room-row" } do %>
+  <button type="button" class="btn options-btn room-row__menu-btn" aria-expanded="false"
+      data-popover-target="trigger" data-action="popover#toggle">
+    <%= icon_tag "menu-dots-horizontal" %>
+    <span class="for-screen-reader"><%= room.name %> options</span>
+  </button>
+
+  <%= popover_menu_tag "room-menu", aria: { label: "#{room.name} options" } do %>
+    <%= button_to membership.starred? ? "Remove from favorites" : "Add to favorites",
+          room_star_path(room), method: membership.starred? ? :delete : :post, class: "btn" %>
+
+    <%= button_to muted ? "Unmute room" : "Mute room",
+          room_involvement_path(room, involvement: muted ? room.default_involvement : "nothing", from_sidebar: true),
+          method: :put, class: "btn" %>
+
+    <%= button_to "Mark as read", room_read_path(room), class: "btn" %>
+
+    <%= tag.button "Copy link", class: "btn", data: { controller: "copy-to-clipboard", action: "copy-to-clipboard#copy",
+          copy_to_clipboard_success_class: "btn--success", copy_to_clipboard_content_value: room_url(room) } %>
+
+    <%= button_to "Leave room", room_membership_path(room), method: :delete,
+          class: "btn room-menu__negative", form_class: "room-menu__leave" %>
+  <% end %>
+<% end %>

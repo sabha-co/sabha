@@ -6,15 +6,13 @@
       <%= avatar_tag user, loading: :lazy %>
     </button>
 
-    <div popover class="anchored-popover message__avatar-menu" aria-label="<%= user.name %>"
-        data-popover-target="menu"
-        data-action="toggle->popover#toggled turbo:frame-load->popover#reposition">
+    <%= popover_menu_tag "message__avatar-menu", action: "turbo:frame-load->popover#reposition", aria: { label: user.name } do %>
       <%= turbo_frame_tag dom_id(user, :message_profile),
                           data: { turbo_frame_src: mention_profile_path(user) } do %>
         <div class="txt-align-center pad">
           <div class="spinner"></div>
         </div>
       <% end %>
-    </div>
+    <% end %>
   <% end %>
 <% end %>

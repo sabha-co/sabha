@@ -8,14 +8,12 @@
       <span class="for-screen-reader">Message options</span>
     </button>
 
-    <div popover class="anchored-popover message-menu" aria-label="Message options"
-        data-popover-target="menu"
-        data-action="toggle->popover#toggled click->popover#closeOnAction turbo:submit-end->popover#closeOnSubmit">
+    <%= popover_menu_tag "message-menu", aria: { label: "Message options" } do %>
       <%= link_to new_message_boost_path(message),
             class: "btn message__action-btn full-width message__boost-btn",
             data: { turbo_frame: "reaction_picker" } do %>
         <span>Add reaction</span>
       <% end %>
-    </div>
+    <% end %>
   <% end %>
 </div>

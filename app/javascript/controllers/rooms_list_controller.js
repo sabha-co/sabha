@@ -70,6 +70,9 @@ export default class extends Controller {
         room.dataset.sortedListPriority = "1"
       }
       room.classList.remove(this.unreadClass, this.badgeClass)
+      // The numeric count is server-rendered; classes only drive the dot, so
+      // a read row would keep a stale count until its next re-render.
+      room.querySelector(".notification-badge")?.remove()
       if (Current.room?.id === roomId) {
         this.#keepCurrentRoomUnread = false
       }

@@ -33,7 +33,7 @@ class Rooms::StarsControllerTest < ActionDispatch::IntegrationTest
       target: [ room, "shared_rooms_list_node" ]
     assert_rendered_turbo_stream_broadcast users(:david), :rooms, action: "append", target: "starred_rooms" do
       assert_select "##{ActionView::RecordIdentifier.dom_id(room, "starred_rooms_list_node")}" do
-        assert_select ".btn.star.starred", count: 1
+        assert_select ".room-menu button", text: "Remove from favorites", count: 1
       end
     end
   end
@@ -50,8 +50,8 @@ class Rooms::StarsControllerTest < ActionDispatch::IntegrationTest
       target: [ room, "starred_rooms_list_node" ]
     assert_rendered_turbo_stream_broadcast users(:david), :rooms, action: "append", target: "shared_rooms" do
       assert_select "##{ActionView::RecordIdentifier.dom_id(room, "shared_rooms_list_node")}" do
-        assert_select ".btn.star", count: 1
-        assert_select ".btn.star.starred", count: 0
+        assert_select ".room-menu button", text: "Add to favorites", count: 1
+        assert_select ".room-menu button", text: "Remove from favorites", count: 0
       end
     end
   end

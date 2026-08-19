@@ -2,14 +2,15 @@ module SystemTestHelper
   # turbo-rails patches #visit to iterate the page's cable-stream sources and
   # await [connected] — holding node references across the wait. The sidebar
   # frame deliberately reloads itself (refresh-room:visible), so those nodes
-  # can be destroyed mid-iteration, surfacing as ObsoleteNode from a plain
-  # visit. Same class of race wait_for_cable_connection tolerates; retry the
-  # visit a couple of times before treating it as real.
+  # can be destroyed mid-iteration, surfacing as ObsoleteNode — or, when the
+  # await lands on a replaced node, as ExpectationNotMet — from a plain visit.
+  # Same class of race join_room tolerates; retry the visit a couple of times
+  # before treating it as real.
   def visit(*args)
     attempts = 0
     begin
       super
-    rescue Capybara::Cuprite::ObsoleteNode
+    rescue Capybara::Cuprite::ObsoleteNode, Capybara::ExpectationNotMet
       attempts += 1
       retry if attempts < 3
       raise

@@ -1,5 +1,4 @@
 <% room = local_assigns[:room] || local_assigns[:membership].room %>
-<% starred = local_assigns[:membership]&.starred? %>
 
 <div id="<%= dom_id(room, dom_prefix(list_name, :list_node)) %>"
      data-sorted-list-target="item"
@@ -11,14 +10,6 @@
   <%= render "users/sidebars/rooms/shared_link", list_name: list_name, membership: local_assigns[:membership] %>
 
   <% if local_assigns[:membership] %>
-    <% if starred %>
-      <%= button_to room_star_path(room), method: :delete, class: "btn star starred", aria: { label: "Unstar #{room.name}" } do %>
-        <%= icon_tag "star" %>
-      <% end %>
-    <% else %>
-      <%= button_to room_star_path(room), method: :post, class: "btn star", aria: { label: "Star #{room.name}" } do %>
-        <%= icon_tag "star-outline" %>
-      <% end %>
-    <% end %>
+    <%= render "users/sidebars/rooms/menu", membership: local_assigns[:membership] %>
   <% end %>
 </div>
