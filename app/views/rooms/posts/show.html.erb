@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "thread_panel_frame" do %>
-  <div class="thread-panel__header">
+  <div class="thread-panel__header" data-panel-kind="forum">
     <%= render "rooms/forums/post_header", post: @post, context: :panel %>
     <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close post">&#x2715;</button>
   </div>

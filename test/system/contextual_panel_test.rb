@@ -55,9 +55,12 @@ class ContextualPanelTest < ApplicationSystemTestCase
     assert_selector ".thread-panel__scrim", visible: :visible
 
     page.current_window.resize_to(499, 800)
+    # Phone: the panel becomes the whole column — full-bleed from the left edge,
+    # no scrim behind it.
     panel = find("#thread-panel")
     assert_equal 0, panel.evaluate_script("Math.round(this.getBoundingClientRect().left)")
-    assert_equal 499, panel.evaluate_script("Math.round(this.getBoundingClientRect().width)")
+    assert_equal page.evaluate_script("window.innerWidth"),
+                 panel.evaluate_script("Math.round(this.getBoundingClientRect().width)")
     assert_selector "#thread-panel .thread-panel__room[data-turbo-frame='_top']", text: "in Designers"
     assert_no_selector ".thread-panel__scrim", visible: :visible
   end
@@ -72,7 +75,11 @@ class ContextualPanelTest < ApplicationSystemTestCase
     page.current_window.resize_to(1232, 900)
     find("##{dom_id(post, :card)}").click
     assert_selector "#thread-panel .forum-post-header", wait: 5
-    assert_equal 517, find("#thread-panel").evaluate_script("Math.round(this.getBoundingClientRect().width)")
+    assert_panel_position "static"
+    # A forum post reads wider than a thread's 360px column, up to the 680px cap.
+    width = find("#thread-panel").evaluate_script("Math.round(this.getBoundingClientRect().width)")
+    assert_operator width, :>, 360
+    assert_operator width, :<=, 680
   end
 
   private

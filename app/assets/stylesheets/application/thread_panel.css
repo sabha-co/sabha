@@ -15,7 +15,10 @@
   display: none !important;
 }
 
-/* Panels overlay from the right until layout.css gives their current kind an
+/* Each panel declares its kind server-side as data-panel-kind on its header
+   (roster | thread | forum); every dock breakpoint, width and scrim rule below
+   keys off that marker rather than sniffing the loaded content's classes.
+   Panels overlay from the right until layout.css gives their current kind an
    inline grid column. The room-info panel is narrower than a thread. */
 @media (min-width: 500px) {
   #thread-panel {
@@ -28,7 +31,7 @@
     z-index: 10;
   }
 
-  #thread-panel:has(.roster) {
+  #thread-panel:has([data-panel-kind="roster"]) {
     inline-size: 288px;
   }
 
@@ -39,7 +42,7 @@
 
 /* Forum posts keep the wider reading measure below their desktop column. */
 @media (min-width: 500px) and (max-width: 1023.9px) {
-  #thread-panel:has(.forum-post-header) {
+  #thread-panel:has([data-panel-kind="forum"]) {
     inline-size: min(560px, 100vw);
   }
 }
@@ -62,7 +65,7 @@
 }
 
 @media (min-width: 1160px) {
-  body:has(#thread-panel:not([hidden]) .roster) #thread-panel {
+  body:has(#thread-panel:not([hidden]) [data-panel-kind="roster"]) #thread-panel {
     block-size: auto;
     box-shadow: none;
     inline-size: var(--thread-width);
@@ -73,7 +76,7 @@
 }
 
 @media (min-width: 1232px) {
-  body:has(#thread-panel:not([hidden])):not(:has(#thread-panel .roster)):not(:has(#thread-panel .forum-post-header)) #thread-panel {
+  body:has(#thread-panel:not([hidden]) [data-panel-kind="thread"]) #thread-panel {
     block-size: auto;
     box-shadow: none;
     inline-size: var(--thread-width);
@@ -84,7 +87,7 @@
 }
 
 @media (min-width: 1024px) {
-  body:has(#thread-panel:not([hidden]) .forum-post-header) #thread-panel {
+  body:has(#thread-panel:not([hidden]) [data-panel-kind="forum"]) #thread-panel {
     block-size: auto;
     box-shadow: none;
     inline-size: var(--thread-width);
@@ -106,19 +109,19 @@
 }
 
 @media (min-width: 500px) and (max-width: 1159.9px) {
-  body.thread-panel-open:has(#thread-panel .roster) .thread-panel__scrim {
+  body.thread-panel-open:has(#thread-panel [data-panel-kind="roster"]) .thread-panel__scrim {
     display: block;
   }
 }
 
 @media (min-width: 500px) and (max-width: 1231.9px) {
-  body.thread-panel-open:has(#thread-panel:not([hidden])):not(:has(#thread-panel .roster)):not(:has(#thread-panel .forum-post-header)) .thread-panel__scrim {
+  body.thread-panel-open:has(#thread-panel [data-panel-kind="thread"]) .thread-panel__scrim {
     display: block;
   }
 }
 
 @media (min-width: 500px) and (max-width: 1023.9px) {
-  body.thread-panel-open:has(#thread-panel .forum-post-header) .thread-panel__scrim {
+  body.thread-panel-open:has(#thread-panel [data-panel-kind="forum"]) .thread-panel__scrim {
     display: block;
   }
 }

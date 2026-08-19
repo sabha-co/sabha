@@ -7,7 +7,7 @@
 <%= turbo_frame_tag "thread_panel_frame" do %>
   <% parent_message = @parent_message %>
   <%= turbo_stream_from parent_message, :thread %>
-  <div class="thread-panel__header">
+  <div class="thread-panel__header" data-panel-kind="thread">
     <h2 class="thread-panel__title">
       <span class="thread-panel__name"><%= icon_tag "thread", class: "thread-panel__icon" %><span class="thread-panel__hash" aria-hidden="true">#</span> Thread</span>
       <%= link_to room_at_message_path(parent_message.room, parent_message), class: "thread-panel__room", data: { turbo_frame: "_top" } do %>

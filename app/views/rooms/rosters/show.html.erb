@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "thread_panel_frame" do %>
-  <div class="thread-panel__header">
+  <div class="thread-panel__header" data-panel-kind="roster">
     <h2 class="thread-panel__title">
       <span class="thread-panel__name"><%= room_type_indicator(@room) %> <%= room_display_name(@room) %></span>
     </h2>
