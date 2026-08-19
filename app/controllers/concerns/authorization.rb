@@ -14,10 +14,6 @@ module Authorization
         back_label: "Back to community settings"
     end
 
-    def ensure_administrator
-      head :forbidden unless Current.user.administrator?
-    end
-
     # A 403 a human reaches by navigating — a stale or disabled link — gets a
     # styled, in-app page that explains the wall and offers a way back. Every
     # other 403 stays a bare status, which is what those callers expect: form
