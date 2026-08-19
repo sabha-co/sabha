@@ -157,11 +157,6 @@ legend {
   }
 }
 
-.dialog__close {
-  position: absolute;
-  inset: calc(var(--block-space) * 1.5) var(--inline-space) auto auto;
-}
-
 /* Misc */
 menu {
   outline: 0;

@@ -15,28 +15,18 @@
     </div>
   <% end %>
 
-  <dialog data-notifications-target="notAllowedNotice" class="dialog pad center center-block border-radius border shadow" style="--inline-space: var(--block-space)" aria-label="Notifications aren't allowed">
-    <div class="flex flex-column txt-align-center">
-      <span class="btn btn--faux center txt-x-large">
-        <%= icon_tag "notification-bell-alert", style: "--icon-size: 3rem" %>
-        <span class="for-screen-reader">Notification warning</span>
-      </span>
+  <dialog data-notifications-target="notAllowedNotice" class="scrim-dialog"
+      style="--dialog-width: 380px" aria-label="Notifications aren't allowed"
+      data-controller="dialog" data-action="click->dialog#closeOnScrim">
+    <header class="scrim-dialog__header scrim-dialog__header--titled">
+      <span class="scrim-dialog__title">Notifications aren't allowed</span>
+      <button type="button" class="scrim-dialog__close" data-action="dialog#close" aria-label="Close" autofocus="true">✕</button>
+    </header>
 
-      <section>
-        <h1 class="txt-large margin-none">Notifications aren't allowed</h1>
-        <div class="txt-align-start margin-block-start">
-          <%= render partial: "pwa/browser_settings" %>
-          <%= render partial: "pwa/system_settings" %>
-          <%= render partial: "pwa/install_instructions" %>
-        </div>
-      </section>
-
-      <form method="dialog" class="flex align-center gap center">
-        <button class="btn dialog__close" autofocus="true">
-          <span class="for-screen-reader">Close</span>
-          <%= icon_tag "close" %>
-        </button>
-      </form>
+    <div class="scrim-dialog__body">
+      <%= render partial: "pwa/browser_settings" %>
+      <%= render partial: "pwa/system_settings" %>
+      <%= render partial: "pwa/install_instructions" %>
     </div>
   </dialog>
 </div>
