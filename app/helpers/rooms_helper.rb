@@ -24,6 +24,13 @@ module RoomsHelper
     end
   end
 
+  def room_privacy_label(room)
+    case room
+    when Rooms::Open then "Open to members"
+    when Rooms::Closed then "Private · invite only"
+    end
+  end
+
   def dm_presence_label(status)
     case status
     when :active then "Here now"

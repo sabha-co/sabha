@@ -49,6 +49,16 @@
   }
 }
 
+/* Make membership access explicit alongside the room name; the glyph remains
+   a compact type cue, while this supplies the readable privacy meaning. */
+.navbar-access {
+  color: var(--color-text-subtle);
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* DM header: avatar with presence dot, then name over the presence line */
 .navbar-dm {
   align-items: center;
