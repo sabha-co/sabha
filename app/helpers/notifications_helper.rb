@@ -10,6 +10,12 @@ module NotificationsHelper
     }
   end
 
+  # Unread badges cap at 99+ so a busy room's count can't stretch the pill
+  # past its rounded shape.
+  def unread_badge_count(count)
+    count > 99 ? "99+" : count
+  end
+
   # The corner-badge glyph for a non-boost activity row. Boosts render through
   # their own grouped partial, so only mentions and replies reach here.
   def activity_glyph(notification)

@@ -48,7 +48,7 @@
       <%= local_datetime_tag membership.room.last_active_at, style: :compact %>
     </span>
     <% if notifications_count > 0 %>
-      <span class="dm-conversation__count"><%= notifications_count %></span>
+      <span class="dm-conversation__count"><%= unread_badge_count(notifications_count) %></span>
     <% elsif membership.unread? %>
       <span class="dm-conversation__badge"></span>
     <% end %>

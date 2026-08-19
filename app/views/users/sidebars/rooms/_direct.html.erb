@@ -36,6 +36,6 @@
       </span>
     </span>
 
-    <% if notifications_count > 0 %><span class="notification-badge"><%= notifications_count %></span><% end %>
+    <% if notifications_count > 0 %><span class="notification-badge"><%= unread_badge_count(notifications_count) %></span><% end %>
   <% end %>
 <% end %>
