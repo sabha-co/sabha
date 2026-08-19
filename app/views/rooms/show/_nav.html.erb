@@ -35,15 +35,20 @@
 
       <div class="navbar-dm__text">
         <h1 class="navbar-title">
-          <%= link_to edit_room_path(room) do %>
-            <span class="for-screen-reader">Direct message with</span>
+          <% if dm_other %>
+            <%= link_to edit_room_path(room) do %>
+              <span class="for-screen-reader">Direct message with</span>
+              <%= room_display_name(room) %>
+            <% end %>
+          <% else %>
+            <span class="for-screen-reader">Group conversation with</span>
             <%= room_display_name(room) %>
           <% end %>
         </h1>
+        <%# A group's count lives in the "N people" pill (navbar-actions), which
+            also opens the participants panel — so no static subline here. %>
         <% if dm_other %>
           <span class="navbar-dm__status"><%= dm_presence_label(dm_status) %></span>
-        <% elsif dm_members.many? %>
-          <span class="navbar-dm__status"><%= pluralize(room.active_member_count, "member") %></span>
         <% end %>
       </div>
     </div>
@@ -72,6 +77,10 @@
     <div class="flex gap-half align-center navbar-actions">
       <% if dm_other %>
         <%= link_to "View profile", user_path(dm_other), class: "btn navbar-view-profile" %>
+      <% elsif dm_members.many? %>
+        <%= link_to edit_room_path(room), class: "btn navbar-view-profile navbar-people" do %>
+          <%= icon_tag "person" %><%= pluralize(room.active_member_count, "person") %>
+        <% end %>
       <% end %>
 
       <% unless room.thread? %>

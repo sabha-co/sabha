@@ -40,6 +40,27 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".navbar-dm h1.navbar-title a[href=?]", edit_rooms_direct_path(room), text: /#{users(:kevin).name}/
   end
 
+  test "one-on-one DM header keeps View profile and shows no participants pill" do
+    room = rooms(:david_and_kevin)
+
+    get room_url(room)
+
+    assert_response :success
+    assert_select ".navbar-actions a", text: "View profile"
+    assert_select ".navbar-actions a[href=?]", edit_rooms_direct_path(room), count: 0
+  end
+
+  test "group DM header shows an N-people pill to the participants panel and a plain name" do
+    group = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), users(:jason), users(:kevin) ])
+
+    get room_url(group)
+
+    assert_response :success
+    assert_select ".navbar-dm h1.navbar-title a", false, "the group name is plain text, not a link"
+    assert_select ".navbar-actions a[href=?]", edit_rooms_direct_path(group)
+    assert_select ".navbar-actions", text: /\d+ people/
+  end
+
   test "composer carries the @everyone confirm threshold, member count, and cap flag" do
     room = rooms(:pets)
 
