@@ -12,7 +12,7 @@ module Sidebar
     @starred_memberships  = sidebar.starred
     @shared_memberships   = sidebar.shared
     @forum_memberships    = sidebar.forums
-    @member_count         = User.without_bots.active.verified.count
+    @member_count         = User.member_count
   end
 
   def broadcast_sidebar_room_added(user, room, formats: nil)

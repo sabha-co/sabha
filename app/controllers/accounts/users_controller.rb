@@ -6,7 +6,7 @@ class Accounts::UsersController < ApplicationController
   before_action :load_status_counts, only: :index, if: -> { Current.user.staff? }
 
   def index
-    @member_count = User.without_bots.active.verified.count
+    @member_count = User.member_count
 
     if searching?
       search_users

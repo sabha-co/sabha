@@ -162,20 +162,10 @@ class UsersController < ApplicationController
     end
 
     def set_member_counts
-      @online_user_count_extended = Rails.cache.fetch(tenant_cache_key("users/online_count_extended"), expires_in: 5.minutes) do
+      @online_user_count_extended = Rails.cache.fetch(ApplicationRecord.tenant_cache_key("users/online_count_extended"), expires_in: 5.minutes) do
         Membership.online_user_count(since: Membership::Connectable::ACTIVITY_TIERS[:recently_active])
       end
-      @member_count = Rails.cache.fetch(tenant_cache_key("users/member_count"), expires_in: 5.minutes) do
-        User.active.verified.count
-      end
-    end
-
-    def tenant_cache_key(key)
-      if Sabha.saas? && ApplicationRecord.current_tenant.present?
-        "#{ApplicationRecord.current_tenant}/#{key}"
-      else
-        key
-      end
+      @member_count = User.member_count
     end
 
     # Check if user is globally authenticated in SaaS mode (but not yet a workspace member)

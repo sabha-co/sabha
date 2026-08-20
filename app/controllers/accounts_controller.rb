@@ -3,7 +3,7 @@ class AccountsController < ApplicationController
   before_action :set_account
 
   def show
-    @member_count = User.without_bots.active.verified.count
+    @member_count = User.member_count
     @room_count = Room.where(type: %w[Rooms::Open Rooms::Closed Rooms::Forum]).count
   end
 

@@ -6,6 +6,18 @@ class User < ApplicationRecord
 
   serialize :preferences, coder: JSON
 
+  # The workspace member count shown in the sidebar header, the account settings
+  # overview, the members directory, and the signup page. Bots are excluded — they
+  # get their own management page and never appear in the members list, so the
+  # count matches the people actually shown. Cached for 5 minutes (membership
+  # changes slowly) on one tenant-scoped key, so every surface reads the same
+  # value and none re-counts per request.
+  def self.member_count
+    Rails.cache.fetch(tenant_cache_key("users/member_count"), expires_in: 5.minutes) do
+      without_bots.active.verified.count
+    end
+  end
+
   def self.sign_in_with_sso!(payload)
     record = SingleSignOnRecord.find_or_provision!(payload)
     record.require_activation!(payload)

@@ -966,4 +966,15 @@ class UserTest < ActiveSupport::TestCase
     assert_equal message, member.reachable_message(message.id), "a forum member reaches the post message"
     assert_raises(ActiveRecord::RecordNotFound) { outsider.reachable_message(message.id) }
   end
+
+  test "member_count counts active verified people and excludes bots" do
+    assert_equal User.without_bots.active.verified.count, User.member_count
+
+    baseline = User.member_count
+    User.create!(name: "Helper Bot", role: :bot, email_address: "helper-bot@example.com", verified_at: 1.day.ago)
+    assert_equal baseline, User.member_count, "a bot must not count as a member"
+
+    User.create!(name: "New Person", email_address: "new-person@example.com", verified_at: 1.day.ago)
+    assert_equal baseline + 1, User.member_count, "a verified person counts as a member"
+  end
 end

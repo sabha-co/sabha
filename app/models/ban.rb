@@ -16,11 +16,7 @@ class Ban < ApplicationRecord
   end
 
   def self.cache_key
-    if Sabha.saas? && ApplicationRecord.current_tenant.present?
-      "#{ApplicationRecord.current_tenant}/banned_ips"
-    else
-      "banned_ips"
-    end
+    tenant_cache_key("banned_ips")
   end
 
   private
