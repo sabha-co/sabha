@@ -43,13 +43,13 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".empty-state__title", count: 0
   end
 
-  test "new renders the editor form with the full palette" do
+  test "new renders the editor form with a colour picker" do
     get new_account_badge_url
 
     assert_response :success
     assert_select "turbo-frame#badge_editor"
     assert_select "h2", text: "New badge"
-    assert_select ".swatch-grid .swatch", count: Badge::COLORS.size
+    assert_select "input[type=color][name='badge[color]']"
   end
 
   test "edit renders the prefilled editor" do
@@ -88,9 +88,9 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".field-error"
   end
 
-  test "create badge with an off-palette colour is rejected" do
+  test "create badge with an invalid colour is rejected" do
     assert_no_difference -> { Badge.count } do
-      post account_badges_url, params: { badge: { name: "Test", color: "#123456" } }
+      post account_badges_url, params: { badge: { name: "Test", color: "red" } }
     end
 
     assert_response :unprocessable_entity

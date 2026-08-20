@@ -26,23 +26,17 @@ class BadgeTest < ActiveSupport::TestCase
     assert duplicate.errors[:name].any?
   end
 
-  test "color must be one of the palette hues" do
-    badge = Badge.new(name: "Test", color: "#123456")
+  test "color must be a valid hex" do
+    badge = Badge.new(name: "Test", color: "red")
     assert_not badge.valid?
     assert badge.errors[:color].any?
 
-    badge.color = Badge::COLORS.first
+    badge.color = "#123456"
     assert badge.valid?
   end
 
   test "defaults to the default palette colour" do
     assert_equal Badge::DEFAULT_COLOR, Badge.new.color
-  end
-
-  test "nearest_palette_color snaps an off-palette hex to the closest hue" do
-    assert_equal "#8257E0", Badge.nearest_palette_color("#8055DD")
-    assert_equal Badge::DEFAULT_COLOR, Badge.nearest_palette_color(nil)
-    assert_equal Badge::DEFAULT_COLOR, Badge.nearest_palette_color("not-a-hex")
   end
 
   test "ordered scope sorts by definition order" do

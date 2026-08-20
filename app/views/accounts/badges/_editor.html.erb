@@ -28,15 +28,8 @@
       <label>Colour</label>
       <span class="badge-hex" data-badge-editor-target="hex"><%= @badge.color %></span>
     </div>
-    <div class="swatch-grid">
-      <% Badge::COLORS.each do |hue| %>
-        <label class="swatch" style="--swatch-color: <%= hue %>">
-          <%= form.radio_button :color, hue, checked: @badge.color == hue,
-                class: "swatch__input", data: { badge_editor_target: "swatch", action: "change->badge-editor#update" } %>
-          <span class="swatch__chip" aria-hidden="true"></span>
-        </label>
-      <% end %>
-    </div>
+    <%= form.color_field :color, class: "color-picker",
+          data: { badge_editor_target: "picker", action: "input->badge-editor#update" } %>
   </div>
 
   <div class="scrim-dialog__footer">

@@ -617,40 +617,29 @@
   font-family: var(--font-mono);
 }
 
-/* Eight fixed hues; the selected swatch takes a 2px ring in its own hue. */
-.swatch-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 9px;
-}
-
-.swatch {
+/* Free colour picker: the native swatch styled to the 36px field height. */
+.color-picker {
+  background: var(--color-bg);
+  block-size: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
   cursor: pointer;
-  display: inline-flex;
-}
+  inline-size: 100%;
+  padding: 4px;
 
-.swatch__input {
-  opacity: 0;
-  pointer-events: none;
-  position: absolute;
-}
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
 
-.swatch__chip {
-  background-color: var(--swatch-color);
-  block-size: 30px;
-  border-radius: 9px;
-  box-shadow: 0 0 0 2px var(--color-bg-raised) inset, 0 0 0 2px transparent;
-  inline-size: 30px;
-  transition: box-shadow 120ms ease;
-}
+  &::-webkit-color-swatch {
+    border: none;
+    border-radius: 5px;
+  }
 
-.swatch:has(:checked) .swatch__chip {
-  box-shadow: 0 0 0 2px var(--color-bg-raised) inset, 0 0 0 2px var(--swatch-color);
-}
-
-.swatch:has(:focus-visible) .swatch__chip {
-  outline: 2px solid var(--color-link);
-  outline-offset: 2px;
+  &::-moz-color-swatch {
+    border: none;
+    border-radius: 5px;
+  }
 }
 
 .badge-remove-warning {

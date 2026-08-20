@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // the colour label, and the confirm button stays inert until the name is
 // non-empty. The server enforces the same rules.
 export default class extends Controller {
-  static targets = [ "name", "counter", "preview", "hex", "swatch", "submit" ]
+  static targets = [ "name", "counter", "preview", "hex", "picker", "submit" ]
 
   connect() {
     this.update()
@@ -26,6 +26,6 @@ export default class extends Controller {
   }
 
   get #selectedColor() {
-    return this.swatchTargets.find(swatch => swatch.checked)?.value
+    return this.hasPickerTarget ? this.pickerTarget.value : undefined
   }
 }
