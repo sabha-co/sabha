@@ -23,6 +23,6 @@
           copy_to_clipboard_success_class: "btn--success", copy_to_clipboard_content_value: room_url(room) } %>
 
     <%= button_to "Leave room", room_membership_path(room), method: :delete,
-          class: "btn room-menu__negative", form_class: "room-menu__leave" %>
+          class: "btn room-menu__negative", form_class: "room-menu__separated" %>
   <% end %>
 <% end %>

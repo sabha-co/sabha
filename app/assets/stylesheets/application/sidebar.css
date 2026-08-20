@@ -71,7 +71,14 @@
       padding-inline: 6px;
     }
 
-    .rooms > *:not(.rail-rooms) {
+    /* Only the main Rooms list previews in the rail. Its list now lives inside
+       the collapsible #rooms_section, so keep that wrapper and drop its header;
+       favorites, forums, DMs and the hidden frame stay culled. */
+    .rooms > *:not(#rooms_section) {
+      display: none;
+    }
+
+    #rooms_section > *:not([data-collapsible-section-target="content"]) {
       display: none;
     }
 
@@ -592,6 +599,12 @@
     }
   }
 
+  /* Two overlapping tiles for a group DM; the upper tile is ringed in the
+     sidebar ground so it reads as a separate avatar over the one behind it. */
+  .avatar__group > :last-child .avatar {
+    box-shadow: 0 0 0 2px var(--color-bg-sunk);
+  }
+
   @media (any-hover: hover) {
     &:where(:not(:active):hover) {
       background-color: var(--color-bg-hover);
@@ -697,6 +710,16 @@
   width: 100%;
 }
 
+/* Rooms and Direct messages carry header actions (⋯, ＋) beside the label, so
+   their collapse toggle sizes to its content rather than filling the row. */
+.sidebar__section-toggle {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
 .favorites-toggle__icon {
   display: flex;
   align-items: center;
@@ -707,6 +730,12 @@
   .icon {
     --icon-size: 0.55em;
     opacity: 0.5;
+  }
+
+  /* Non-collapsible sections (Forums) render this box empty to hold the caret
+     column open so their label aligns with the collapsible headers. */
+  &:empty {
+    inline-size: 0.55em;
   }
 }
 
@@ -1035,6 +1064,26 @@ body.searches .message-area:not(:has(.message)):not(:has(.dm-conversation)):not(
    that recedes into the dark rail in both modes. Width stays thin (inherited). */
 #sidebar[data-contrast="true"] * {
   scrollbar-color: oklch(100% 0 0 / 0.20) transparent;
+}
+
+/* Anchored popovers (row ⋯ menu, profile flyout) render in the top layer but
+   inherit custom properties from their DOM home inside the contrast sidebar,
+   which would paint them dark. They are page-surface menus, so rebind the
+   tokens the contrast scope overrode back to the theme primitives — white in
+   light mode, converging with the sidebar again in dark. */
+#sidebar[data-contrast="true"] .anchored-popover {
+  --color-bg: oklch(var(--lch-white));
+  --color-bg-raised: oklch(var(--lch-raise));
+  --color-bg-sunk: oklch(var(--lch-sunk));
+  --color-bg-hover: oklch(var(--lch-hover));
+  --color-text: oklch(var(--lch-ink));
+  --color-text-lighter: oklch(var(--lch-ink-1));
+  --color-text-muted: oklch(var(--lch-ink-2));
+  --color-text-subtle: oklch(var(--lch-ink-3));
+  --color-border: oklch(var(--lch-line-2));
+  --color-border-dark: oklch(var(--lch-line));
+  --color-selected: oklch(var(--lch-accent-bg));
+  --color-accent-brand: oklch(var(--lch-accent));
 }
 
 /* Cold-start skeleton for the lazy sidebar frame (users/sidebars/_skeleton).

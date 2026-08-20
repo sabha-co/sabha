@@ -9,7 +9,9 @@
      class="room-row flex align-center gap-half">
   <%= render "users/sidebars/rooms/shared_link", list_name: list_name, membership: local_assigns[:membership] %>
 
-  <% if local_assigns[:membership] %>
+  <%# Forums carry no row menu — they are community-wide auto-join rooms, so
+      Leave/Favorite/Mute don't apply the way they do to ordinary rooms. %>
+  <% if local_assigns[:membership] && !room.forum? %>
     <%= render "users/sidebars/rooms/menu", membership: local_assigns[:membership] %>
   <% end %>
 </div>

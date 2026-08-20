@@ -30,17 +30,23 @@
 
     <span class="sidebar__profile-divider" aria-hidden="true"></span>
 
-    <%= link_to "Profile", user_path(Current.user), class: "sidebar__profile-menu-item" %>
-    <%= link_to "Settings", user_profile_path, class: "sidebar__profile-menu-item" %>
-    <%= link_to "Appearance", user_appearance_path, class: "sidebar__profile-menu-item" %>
+    <%= link_to "View profile", user_path(Current.user), class: "sidebar__profile-menu-item" %>
+    <%= link_to "Your settings", user_profile_path, class: "sidebar__profile-menu-item" %>
+    <%= link_to user_appearance_path, class: "sidebar__profile-menu-item" do %>
+      <span>Appearance</span>
+      <span class="sidebar__profile-menu-hint" data-theme-target="currentTheme">Light</span>
+    <% end %>
 
     <% if Current.account.settings.allow_users_to_create_invite_links? || Current.user.can_administer? %>
       <% invitations_path = Current.user.can_administer? ? account_invitations_path : account_path %>
       <%= link_to "Invitations", invitations_path, class: "sidebar__profile-menu-item" %>
     <% end %>
 
-    <% if Current.user.can_administer? %>
-      <%= link_to "Community settings", edit_account_path, class: "sidebar__profile-menu-item" %>
+    <% if Current.user.staff? %>
+      <%= link_to (Current.user.can_manage_account? ? edit_account_path : account_path), class: "sidebar__profile-menu-item" do %>
+        <span>Community settings</span>
+        <span class="sidebar__profile-menu-chip">STAFF</span>
+      <% end %>
     <% end %>
 
     <span class="sidebar__profile-divider" aria-hidden="true"></span>

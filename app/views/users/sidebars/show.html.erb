@@ -83,34 +83,52 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-half mb-2">
-        <span class="flex items-center gap-half">
-          <h1 class="font-semibold txt-label sidebar__label">Rooms</h1>
-          <% if @shared_memberships.size.positive? %>
-            <span class="sidebar__label-count"><%= @shared_memberships.size %></span>
-          <% end %>
-        </span>
-        <div class="flex items-center gap-half">
-          <%= render "users/sidebars/all_rooms_actions" %>
-          <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
-            <%= link_to new_rooms_open_path, class: "btn btn--small", aria: { label: "New Room" },
-                  data: { turbo_frame: "new_room" } do %>
-              <%= icon_tag "add" %>
-              <span class="for-screen-reader">New Room</span>
+      <div id="rooms_section"
+           data-controller="collapsible-section"
+           data-collapsible-section-key-value="rooms"
+           class="flex position-relative flex-col gap">
+        <div class="flex items-center justify-between gap-half mb-2">
+          <button type="button" class="sidebar__section-toggle"
+                  aria-expanded="true"
+                  data-collapsible-section-target="toggle"
+                  data-action="collapsible-section#toggle">
+            <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
+            <h1 class="font-semibold txt-label sidebar__label">Rooms</h1>
+            <% if @shared_memberships.size.positive? %>
+              <span class="sidebar__label-count"><%= @shared_memberships.size %></span>
             <% end %>
-          <% end %>
+          </button>
+          <div class="flex items-center gap-half">
+            <%= render "users/sidebars/all_rooms_actions" %>
+            <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
+              <%= link_to new_rooms_open_path, class: "btn btn--small", aria: { label: "New Room" },
+                    data: { turbo_frame: "new_room" } do %>
+                <%= icon_tag "add" %>
+                <span class="for-screen-reader">New Room</span>
+              <% end %>
+            <% end %>
+          </div>
         </div>
-      </div>
-      <div data-controller="sorted-list" <%= all_rooms_sort_order %>
-           data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
-           class="rail-rooms flex position-relative flex-col rooms-list">
-        <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @shared_memberships %>
+        <div data-collapsible-section-target="content" class="flex flex-col">
+          <div data-controller="sorted-list" <%= all_rooms_sort_order %>
+               data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
+               class="rail-rooms flex position-relative flex-col rooms-list">
+            <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @shared_memberships %>
+          </div>
+        </div>
       </div>
 
       <% if @forum_memberships.any? %>
+        <%# Forums stays always-open (no collapse), but reserves the caret column
+            so its label lines up with the collapsible sections above and below. %>
         <div class="flex items-center gap-half mb-2">
-          <h1 class="font-semibold txt-label sidebar__label">Forums</h1>
-          <span class="sidebar__label-count"><%= @forum_memberships.size %></span>
+          <span class="sidebar__section-toggle">
+            <span class="favorites-toggle__icon" aria-hidden="true"></span>
+            <h1 class="font-semibold txt-label sidebar__label">Forums</h1>
+            <% if @forum_memberships.size.positive? %>
+              <span class="sidebar__label-count"><%= @forum_memberships.size %></span>
+            <% end %>
+          </span>
         </div>
         <div data-controller="sorted-list" <%= all_rooms_sort_order %>
              data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
@@ -122,25 +140,34 @@
       <%= turbo_frame_tag :hidden_rooms %>
 
       <% if show_dm_section?(@direct_memberships) %>
-        <div class="flex items-center justify-between gap-half mb-2">
-          <span class="flex items-center gap-half">
-            <h1 class="font-semibold txt-label sidebar__label">Direct messages</h1>
-            <% if @direct_memberships.size.positive? %>
-              <span class="sidebar__label-count"><%= @direct_memberships.size %></span>
+        <div id="direct_messages_section"
+             data-controller="collapsible-section"
+             data-collapsible-section-key-value="direct-messages"
+             class="flex position-relative flex-col gap">
+          <div class="flex items-center justify-between gap-half mb-2">
+            <button type="button" class="sidebar__section-toggle"
+                    aria-expanded="true"
+                    data-collapsible-section-target="toggle"
+                    data-action="collapsible-section#toggle">
+              <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
+              <h1 class="font-semibold txt-label sidebar__label">Direct messages</h1>
+              <% if @direct_memberships.size.positive? %>
+                <span class="sidebar__label-count"><%= @direct_memberships.size %></span>
+              <% end %>
+            </button>
+            <% if can_create_dms? %>
+              <%= link_to inbox_direct_messages_path, class: "btn btn--small", aria: { label: "Direct messages" } do %>
+                <%= icon_tag "add" %>
+                <span class="for-screen-reader">New direct message</span>
+              <% end %>
             <% end %>
-          </span>
-          <% if can_create_dms? %>
-            <%= link_to inbox_direct_messages_path, class: "btn btn--small", aria: { label: "Direct messages" } do %>
-              <%= icon_tag "add" %>
-              <span class="for-screen-reader">New direct message</span>
-            <% end %>
-          <% end %>
-        </div>
-        <div class="directs gap">
-          <div id="direct_rooms" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
-               data-sorted-list-order-value="desc"
-               data-action="rooms-list:unread@window->sorted-list#reSort">
-            <%= render partial: "users/sidebars/rooms/direct", collection: @direct_memberships, as: :membership, cached: true %>
+          </div>
+          <div data-collapsible-section-target="content" class="directs gap">
+            <div id="direct_rooms" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
+                 data-sorted-list-order-value="desc"
+                 data-action="rooms-list:unread@window->sorted-list#reSort">
+              <%= render partial: "users/sidebars/rooms/direct", collection: @direct_memberships, as: :membership, cached: true %>
+            </div>
           </div>
         </div>
       <% end %>

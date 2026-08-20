@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["lightButton", "darkButton", "autoButton"]
+  static targets = ["lightButton", "darkButton", "autoButton", "currentTheme"]
 
   connect() {
     this.applyTheme()
@@ -78,6 +78,11 @@ export default class extends Controller {
     }
     if (this.hasAutoButtonTarget) {
       this.autoButtonTarget.setAttribute("aria-selected", isAuto)
+    }
+
+    if (this.hasCurrentThemeTarget) {
+      const label = isDark ? "Dark" : isAuto ? "System" : "Light"
+      this.currentThemeTargets.forEach((target) => (target.textContent = label))
     }
   }
 }

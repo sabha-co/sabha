@@ -14,7 +14,7 @@
         } do %>
     <% if members.many? %>
       <div class="avatar__group">
-        <% members.first(4).each do |member| %>
+        <% members.first(2).each do |member| %>
           <span class="avatar">
             <%= avatar_image_tag(member, size: 20, loading: :lazy) %>
           </span>

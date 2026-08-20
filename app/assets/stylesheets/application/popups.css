@@ -95,7 +95,8 @@
     }
 }
 
-.room-menu__leave {
+/* An item set apart from the rest by a hairline — Leave room, Mark all as seen. */
+.room-menu__separated {
     border-block-start: 1px solid var(--color-border);
     margin-block-start: 4px;
     padding-block-start: 4px;
@@ -181,6 +182,24 @@
             background-color: var(--color-bg-hover);
         }
     }
+}
+
+/* Right-aligned trailing meta on a menu item: the Appearance theme hint and
+   the Community-settings STAFF chip. */
+.sidebar__profile-menu-hint {
+    color: var(--color-text-subtle);
+    margin-inline-start: auto;
+}
+
+.sidebar__profile-menu-chip {
+    background: var(--color-selected);
+    border-radius: 5px;
+    color: var(--color-accent-brand);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin-inline-start: auto;
+    padding: 2px 6px;
 }
 
 .sidebar__profile-logout {

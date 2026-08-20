@@ -27,8 +27,8 @@ class SidebarNavigationTest < ApplicationSystemTestCase
 
     assert_selector ".sidebar__me[aria-expanded='true']"
     within ".sidebar__profile-popover" do
-      assert_link "Profile"
-      assert_link "Settings"
+      assert_link "View profile"
+      assert_link "Your settings"
       assert_link "Appearance"
       assert_link "Invitations"
       assert_no_link "Community settings"
