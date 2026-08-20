@@ -493,6 +493,28 @@
     }
   }
 
+  /* Drawer breakpoint: the toggle floats out over the light content header,
+     not the dark rail (an open drawer hides it — the close X takes over). It
+     lives inside #sidebar[data-contrast], whose scope repaints --color-text
+     white; over the header that's an invisible glyph and dot on a white circle.
+     Rebind --color-text to the page's own ink (theme-aware, and read by both the
+     icon's currentColor and the unread ::after) and drop the button chrome so it
+     reads as a borderless header glyph. */
+  @media (max-width: 833.9px) {
+    --btn-background: transparent;
+    --btn-border-color: transparent;
+    --color-text: oklch(var(--lch-ink));
+    /* Same page-surface rebind for the hover pill, so it matches the rail's
+       hover treatment below rather than the default glyph-darken. */
+    --color-bg-hover: oklch(var(--lch-hover));
+
+    @media (any-hover: hover) {
+      &:hover {
+        background-color: var(--color-bg-hover);
+      }
+    }
+  }
+
   @media (min-width: 834px) and (max-width: 1279.9px) {
     --btn-background: transparent;
     --btn-border-color: transparent;
