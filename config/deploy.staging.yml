@@ -1,0 +1,17 @@
+# Kamal overlay for staging.sabha.co (self-hosted single-tenant).
+#
+# Kamal deep-merges this file over config/deploy.yml when you pass -d staging,
+# so staging inherits the entire self-hosted base (servers, registry, builder,
+# env, volumes, the AnyCable accessory, aliases) and only overrides what differs
+# below. SERVER_IP + PROXY_HOST come from the environment (staging.sabha.co).
+#
+# Deploy:      set -a && source .env.staging && set +a && kamal deploy -d staging
+# First setup: set -a && source .env.staging && set +a && kamal setup  -d staging
+# In CI this runs from .github/workflows/deploy_staging.yml.
+
+# Explicit /up healthcheck for the web proxy (the base leaves it at the default).
+proxy:
+  healthcheck:
+    interval: 1
+    path: /up
+    timeout: 3

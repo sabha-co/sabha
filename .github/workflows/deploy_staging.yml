@@ -1,0 +1,161 @@
+name: Deploy to staging
+
+# Deploys the redesign-v2 branch to staging.sabha.co (self-hosted single-tenant)
+# once the Test suite passes on a push to redesign-v2. Lives on the default
+# branch (main) so workflow_run + the manual dispatch button work — a
+# push-triggered workflow only fires from the branch it's pushed to, so it
+# couldn't live on main and watch redesign-v2. Manual runs can provision a fresh
+# server (run_setup) or reboot AnyCable after rotating ANYCABLE_SECRET.
+
+on:
+  workflow_run:
+    workflows: ["Test"]
+    branches: [redesign-v2]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_setup:
+        description: 'Run kamal setup before deploy (first-time provisioning)'
+        required: false
+        default: false
+        type: boolean
+      reboot_anycable:
+        description: 'Reboot AnyCable (required after rotating ANYCABLE_SECRET)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy with Kamal
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Deploy on a successful *push* run of Test (skip the PR run so a redesign-v2
+    # PR doesn't double-deploy), or on a manual dispatch.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    env:
+      # staging.sabha.co resolves here. Kept inline rather than in secrets
+      # because it isn't one: the IP is public via the staging.sabha.co DNS
+      # record.
+      SERVER_IP: 139.59.41.178
+      PROXY_HOST: staging.sabha.co
+    steps:
+      - name: Check out the tested commit
+        uses: actions/checkout@v7
+        with:
+          # The exact SHA Test passed on; falls back to the branch tip for a
+          # manual dispatch (workflow_run.head_sha is empty then). Never the
+          # default branch — that would deploy main to staging.
+          ref: ${{ github.event.workflow_run.head_sha || 'redesign-v2' }}
+
+      - name: Get short SHA
+        id: short-sha
+        run: echo "sha=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '4.0.5'
+          bundler-cache: true
+
+      - name: Cache Kamal gem
+        id: kamal-cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.tool_cache }}/kamal-gems
+          key: kamal-gem-${{ runner.os }}-ruby-4.0.5
+
+      - name: Install Kamal
+        run: |
+          echo "GEM_HOME=${{ runner.tool_cache }}/kamal-gems" >> $GITHUB_ENV
+          echo "${{ runner.tool_cache }}/kamal-gems/bin" >> $GITHUB_PATH
+          export GEM_HOME="${{ runner.tool_cache }}/kamal-gems"
+          if [ "${{ steps.kamal-cache.outputs.cache-hit }}" != "true" ]; then
+            gem install kamal
+          fi
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host key to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "StrictHostKeyChecking=no" >> ~/.ssh/config
+          ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
+
+      - name: Set deployment timestamp
+        run: echo "DEPLOY_TIME=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_ENV
+
+      - name: Create Kamal secrets file
+        run: |
+          mkdir -p .kamal
+          cat > .kamal/secrets.staging << 'EOF'
+          KAMAL_REGISTRY_PASSWORD=${{ secrets.DOCKER_PASSWORD }}
+
+          SERVER_IP=${{ env.SERVER_IP }}
+          PROXY_HOST=${{ env.PROXY_HOST }}
+
+          APP_VERSION=${{ steps.short-sha.outputs.sha }}
+          LAST_DEPLOY=${{ env.DEPLOY_TIME }}
+          SECRET_KEY_BASE=${{ secrets.STAGING_SECRET_KEY_BASE }}
+          ANYCABLE_SECRET=${{ secrets.STAGING_ANYCABLE_SECRET }}
+
+          COOKIE_DOMAIN=staging.sabha.co
+          APP_HOST=staging.sabha.co
+          APP_NAME=Sabha (staging)
+          APP_SHORT_NAME=Sabha
+          APP_DESCRIPTION=Sabha staging environment
+          SUPPORT_EMAIL=support@sabha.co
+          MAILER_FROM_NAME=Sabha Staging
+          MAILER_FROM_EMAIL=staging@sabha.co
+          THEME_COLOR=
+          BACKGROUND_COLOR=
+          UMAMI_WEBSITE_ID=
+          UMAMI_HOST=
+          CSP_FRAME_ANCESTORS=
+
+          VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+
+          CLOUDFLARE_TURNSTILE_SITE_KEY=${{ secrets.CLOUDFLARE_TURNSTILE_SITE_KEY }}
+          CLOUDFLARE_TURNSTILE_SECRET_KEY=${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}
+          EOF
+
+      - name: Run Kamal setup (first-time provisioning)
+        if: ${{ github.event.inputs.run_setup == 'true' }}
+        run: kamal setup -d staging
+        env:
+          KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+      - name: Deploy with Kamal
+        if: ${{ github.event.inputs.run_setup != 'true' }}
+        run: kamal deploy -d staging
+        env:
+          KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+      # Accessories keep their own container lifecycle, so `kamal deploy` never
+      # re-uploads their env — AnyCable holds whatever ANYCABLE_SECRET it booted
+      # with until it's rebooted. Opt-in via manual dispatch after rotating it.
+      - name: Reboot AnyCable to sync secrets
+        if: ${{ github.event.inputs.reboot_anycable == 'true' }}
+        run: kamal accessory reboot anycable -d staging
+        env:
+          KAMAL_REGISTRY_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+      - name: Notify deploy channel
+        if: ${{ env.DEPLOY_BOT_URL != '' }}
+        env:
+          DEPLOY_BOT_URL: ${{ secrets.DEPLOY_BOT_URL }}
+        run: |
+          curl -s -X POST "$DEPLOY_BOT_URL" \
+            -d "Deployed ${{ steps.short-sha.outputs.sha }} to staging by ${{ github.actor }} at ${{ env.DEPLOY_TIME }}"
