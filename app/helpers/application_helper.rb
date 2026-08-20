@@ -37,12 +37,8 @@ module ApplicationHelper
     tag.span class: class_names("icon icon--#{name}", options.delete(:class)), "aria-hidden": true, **options
   end
 
-  def badge_label(badge)
-    badge.name
-  end
-
   def badge_tag(badge, class_name: "member-badge")
-    tag.span badge.name, class: class_name, style: "--badge-color: #{badge.color}; color: #{badge.color}"
+    tag.span badge.name, class: class_name, style: "--badge-color: #{badge.color}"
   end
 
   def badge_holders_summary(badge)

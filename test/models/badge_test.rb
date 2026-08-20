@@ -14,14 +14,14 @@ class BadgeTest < ActiveSupport::TestCase
   end
 
   test "name is trimmed and upper-cased on save" do
-    badge = Badge.create!(name: "  crew  ", color: Badge::COLORS.first)
+    badge = Badge.create!(name: "  crew  ", color: "#8257E0")
     assert_equal "CREW", badge.name
   end
 
   test "name must be unique, case-insensitively" do
-    Badge.create!(name: "Crew", color: Badge::COLORS.first)
+    Badge.create!(name: "Crew", color: "#8257E0")
 
-    duplicate = Badge.new(name: "crew", color: Badge::COLORS.second)
+    duplicate = Badge.new(name: "crew", color: "#4F52D9")
     assert_not duplicate.valid?
     assert duplicate.errors[:name].any?
   end
@@ -35,13 +35,13 @@ class BadgeTest < ActiveSupport::TestCase
     assert badge.valid?
   end
 
-  test "defaults to the default palette colour" do
+  test "defaults to the default colour" do
     assert_equal Badge::DEFAULT_COLOR, Badge.new.color
   end
 
   test "ordered scope sorts by definition order" do
-    first = Badge.create!(name: "Alpha", color: Badge::COLORS.first)
-    second = Badge.create!(name: "Beta", color: Badge::COLORS.second)
+    first = Badge.create!(name: "Alpha", color: "#8257E0")
+    second = Badge.create!(name: "Beta", color: "#4F52D9")
 
     ordered = Badge.ordered.to_a
     assert_operator ordered.index(first), :<, ordered.index(second)

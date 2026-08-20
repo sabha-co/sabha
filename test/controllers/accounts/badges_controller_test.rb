@@ -38,7 +38,7 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
     assert_equal "", response.body
 
-    post account_badges_url, params: { badge: { name: "Hack", color: Badge::COLORS.first } }
+    post account_badges_url, params: { badge: { name: "Hack", color: "#8257E0" } }
     assert_response :forbidden
     assert_select ".empty-state__title", count: 0
   end
@@ -135,7 +135,7 @@ class Accounts::BadgesControllerTest < ActionDispatch::IntegrationTest
     sign_in :kevin
 
     assert_no_difference -> { Badge.count } do
-      post account_badges_url, params: { badge: { name: "Hack", color: Badge::COLORS.first } }
+      post account_badges_url, params: { badge: { name: "Hack", color: "#8257E0" } }
     end
 
     assert_response :forbidden

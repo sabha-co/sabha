@@ -27,7 +27,7 @@
           <%= form.button type: "submit",
                 class: "btn badge-chip #{"badge-chip--current" if @user.badge == badge}",
                 style: ("--badge-color: #{badge.color}" if badge.color.present?) do %>
-            <%= badge_label(badge) %>
+            <%= badge.name %>
           <% end %>
         <% end %>
       <% end %>
