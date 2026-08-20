@@ -1,0 +1,9 @@
+<%= turbo_stream.remove dom_id(@badge) %>
+<% if Badge.none? %>
+  <%= turbo_stream.append "badges_list" do %>
+    <%= render "accounts/badges/empty" %>
+  <% end %>
+<% end %>
+<%= turbo_stream.prepend "main-content" do %>
+  <%= render "shared/toast", message: "#{@badge.name} removed" %>
+<% end %>

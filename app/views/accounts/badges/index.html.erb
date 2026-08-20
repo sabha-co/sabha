@@ -7,25 +7,27 @@
     <p class="settings-header__blurb">One badge per person, shown beside their name everywhere. Names cap at 10 characters.</p>
   </header>
 
-  <div class="flex flex-column gap">
-    <% if @badges.any? %>
-      <menu id="badges_list" class="flex flex-column gap-half margin-none pad-none">
-        <%= render partial: "accounts/badges/badge", collection: @badges %>
-      </menu>
-    <% else %>
-      <p class="txt-small txt-muted">No badges yet. Create one below to get started.</p>
-    <% end %>
-
-    <%= form_with url: account_badges_path, method: :post, class: "flex align-center gap" do |form| %>
-      <%= form.text_field :name, name: "badge[name]", class: "input txt-small flex-item-grow", placeholder: "New badge name", required: true,
-            maxlength: 10, style: "min-width: 0;" %>
-      <%= form.text_field :icon, name: "badge[icon]", class: "input txt-small", placeholder: "✦", title: "Badge icon", maxlength: 50,
-            style: "width: 4ch;" %>
-      <%= form.color_field :color, name: "badge[color]", class: "input txt-small", title: "Badge color",
-            style: "width: 3ch; padding: 0.25rem;" %>
-      <%= form.button class: "btn btn--reversed txt-small", type: "submit" do %>
-        <%= icon_tag "add" %>
+  <div class="settings-card">
+    <div id="badges_list" class="badges-list">
+      <% if @badges.any? %>
+        <%= render partial: "accounts/badges/badge", collection: @badges, as: :badge %>
+      <% else %>
+        <%= render "accounts/badges/empty" %>
       <% end %>
-    <% end %>
+    </div>
+
+    <div class="badge-footer">
+      <div class="badge-footer__text">Assign a badge from the role menu on any member in the directory.</div>
+      <%= link_to new_account_badge_path, class: "btn settings-chip-btn", data: { turbo_frame: "badge_editor" } do %>
+        <%= icon_tag "add" %><span>New badge</span>
+      <% end %>
+    </div>
   </div>
+
+  <%# Editor dialog mounted once; new/edit load their form into this frame. %>
+  <dialog id="badge_editor_dialog" class="scrim-dialog scrim-dialog--badge-editor" aria-label="Badge editor"
+          data-controller="dialog"
+          data-action="click->dialog#closeOnScrim turbo:submit-end->dialog#closeOnSubmit turbo:before-cache@document->dialog#close">
+    <%= turbo_frame_tag "badge_editor", data: { action: "turbo:frame-load->dialog#open" } %>
+  </dialog>
 <% end %>

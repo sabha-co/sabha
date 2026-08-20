@@ -1,0 +1,6 @@
+<%= turbo_stream.replace dom_id(@badge) do %>
+  <%= render "accounts/badges/badge", badge: @badge %>
+<% end %>
+<%= turbo_stream.prepend "main-content" do %>
+  <%= render "shared/toast", message: "#{@badge.name} updated" %>
+<% end %>

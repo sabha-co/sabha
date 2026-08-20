@@ -1,13 +1,25 @@
 <%# locals: (badge:) %>
-<li id="<%= dom_id(badge) %>" class="flex align-center gap">
-  <% if badge.color.present? %>
-    <span class="badge-color flex-item-no-shrink" style="background: <%= badge.color %>; width: 1em; height: 1em; border-radius: 50%;"></span>
-  <% end %>
-  <span class="flex-item-grow"><%= badge_label(badge) %></span>
-  <span class="txt-x-small txt-muted flex-item-no-shrink"><%= pluralize(badge.users.length, "member") %></span>
+<div class="badge-row" id="<%= dom_id(badge) %>" data-controller="dialog" data-action="turbo:submit-end->dialog#closeOnSubmit">
+  <span class="member-badge badge-row__chip" style="--badge-color: <%= badge.color %>"><%= badge.name %></span>
+  <span class="badge-row__holders"><%= badge_holders_summary(badge) %></span>
+  <span class="badge-row__hex"><%= badge.color %></span>
 
-  <%= button_to account_badge_path(badge), method: :delete, class: "btn txt-small flex-item-no-shrink btn--negative", data: {
-        turbo_confirm: "Delete this badge? It will be removed from all members." } do %>
-    <%= icon_tag "minus" %>
-  <% end %>
-</li>
+  <div class="badge-row__actions">
+    <%= link_to "Edit", edit_account_badge_path(badge), class: "badge-action", data: { turbo_frame: "badge_editor" } %>
+    <button type="button" class="badge-action badge-action--danger" data-action="dialog#open">Delete</button>
+  </div>
+
+  <dialog class="scrim-dialog scrim-dialog--badge-remove" aria-label="Delete <%= badge.name %>"
+          data-dialog-target="modal" data-action="click->dialog#closeOnScrim">
+    <div class="scrim-dialog__header scrim-dialog__header--titled">
+      <h2 class="scrim-dialog__title">Delete <%= badge.name %>?</h2>
+    </div>
+    <div class="scrim-dialog__body">
+      <div class="badge-remove-warning"><%= badge_deletion_impact(badge) %></div>
+      <div class="scrim-dialog__footer">
+        <button type="button" class="btn" data-action="dialog#close">Cancel</button>
+        <%= button_to "Delete badge", account_badge_path(badge), method: :delete, class: "btn btn--negative" %>
+      </div>
+    </div>
+  </dialog>
+</div>

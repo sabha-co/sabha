@@ -456,6 +456,218 @@
   --btn-color: var(--color-text-reversed);
 }
 
+/* ---------------------------------------------------------------------------
+   Badges — a settings-card of definition rows (chip · holders · hex · actions),
+   an editor dialog led by a live chip preview over hue swatches, and a
+   destructive delete dialog that names the holders. The chip reuses
+   .member-badge everywhere it renders.
+   --------------------------------------------------------------------------- */
+.settings-card > .badges-list {
+  padding-block: 0;
+}
+
+.badges-list > .badge-row {
+  padding-block: 13px;
+}
+
+.badges-list > .badge-row + .badge-row {
+  border-block-start: 1px solid var(--color-border);
+}
+
+.badge-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.badge-row__chip {
+  flex-shrink: 0;
+}
+
+.badge-row__holders {
+  color: var(--color-text-muted);
+  flex: 1;
+  font-size: 0.8125rem;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge-row__hex {
+  color: var(--color-text-subtle);
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.badge-row__actions {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: 14px;
+
+  form {
+    display: flex;
+    margin: 0;
+  }
+}
+
+.badge-action {
+  --hover-size: 0;
+
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  padding: 0;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.badge-action--danger {
+  color: var(--color-text-subtle);
+
+  &:hover {
+    color: var(--color-negative);
+  }
+}
+
+.badge-footer {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+
+  .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+.badge-footer__text {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.badges-empty {
+  padding-block: 32px;
+  text-align: center;
+}
+
+.badges-empty__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.badges-empty__body {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  margin: 6px auto 0;
+  max-inline-size: 46ch;
+}
+
+.scrim-dialog--badge-editor {
+  --dialog-width: 440px;
+}
+
+.scrim-dialog--badge-editor .scrim-dialog__body {
+  padding: 16px 18px;
+}
+
+.scrim-dialog--badge-editor .scrim-dialog__footer {
+  margin-block-start: 16px;
+  padding: 14px 0 0;
+}
+
+.scrim-dialog--badge-remove {
+  --dialog-width: 400px;
+}
+
+/* The chip preview leads the form — it's the whole point of the dialog. */
+.badge-preview-wrap {
+  align-items: center;
+  background-color: var(--color-bg-sunk);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  margin-block-end: 18px;
+  padding: 22px;
+}
+
+.badge-preview {
+  font-size: 0.75rem;
+  padding: 3px 9px;
+}
+
+.badge-counter,
+.badge-hex {
+  color: var(--color-text-subtle);
+  font-size: 0.71875rem;
+  font-weight: 600;
+}
+
+.badge-hex {
+  font-family: var(--font-mono);
+}
+
+/* Eight fixed hues; the selected swatch takes a 2px ring in its own hue. */
+.swatch-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.swatch {
+  cursor: pointer;
+  display: inline-flex;
+}
+
+.swatch__input {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.swatch__chip {
+  background-color: var(--swatch-color);
+  block-size: 30px;
+  border-radius: 9px;
+  box-shadow: 0 0 0 2px var(--color-bg-raised) inset, 0 0 0 2px transparent;
+  inline-size: 30px;
+  transition: box-shadow 120ms ease;
+}
+
+.swatch:has(:checked) .swatch__chip {
+  box-shadow: 0 0 0 2px var(--color-bg-raised) inset, 0 0 0 2px var(--swatch-color);
+}
+
+.swatch:has(:focus-visible) .swatch__chip {
+  outline: 2px solid var(--color-link);
+  outline-offset: 2px;
+}
+
+.badge-remove-warning {
+  background-color: var(--color-bg-negative);
+  border-radius: 10px;
+  color: var(--color-text-lighter);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  padding: 13px 14px;
+}
+
+.scrim-dialog--badge-remove .scrim-dialog__footer .btn--negative {
+  --btn-background: var(--color-negative);
+  --btn-border-color: var(--color-negative);
+  --btn-color: var(--color-text-reversed);
+}
+
 /* Inline field validation: red border plus the matching 3px negative ring. */
 .input--negative {
   --input-border-color: var(--color-negative);

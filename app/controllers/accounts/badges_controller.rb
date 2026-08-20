@@ -1,35 +1,48 @@
 class Accounts::BadgesController < ApplicationController
   before_action :ensure_can_manage_account
-  before_action :set_badge, only: %i[update destroy]
+  before_action :set_badge, only: %i[ edit update destroy ]
 
   def index
     @badges = Badge.ordered.includes(:users)
+  end
+
+  def new
+    @badge = Badge.new
+  end
+
+  def edit
   end
 
   def create
     @badge = Badge.new(badge_params)
 
     if @badge.save
-      redirect_to account_badges_url
+      respond_to do |format|
+        format.turbo_stream
+        format.html { redirect_to account_badges_url, notice: "#{@badge.name} created" }
+      end
     else
-      redirect_to account_badges_url, alert: @badge.errors.full_messages.join(", ")
+      render :new, status: :unprocessable_entity, formats: :html
     end
   end
 
   def update
     if @badge.update(badge_params)
-      redirect_to account_badges_url
+      respond_to do |format|
+        format.turbo_stream
+        format.html { redirect_to account_badges_url, notice: "#{@badge.name} updated" }
+      end
     else
-      redirect_to account_badges_url, alert: @badge.errors.full_messages.join(", ")
+      render :edit, status: :unprocessable_entity, formats: :html
     end
   end
 
   def destroy
-    @badge.destroy
+    @badge.destroy!
 
     respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.remove(@badge) }
-      format.html { redirect_to account_badges_url, status: :see_other }
+      format.turbo_stream
+      format.html { redirect_to account_badges_url, status: :see_other, notice: "#{@badge.name} removed" }
     end
   end
 
@@ -39,6 +52,6 @@ class Accounts::BadgesController < ApplicationController
     end
 
     def badge_params
-      params.require(:badge).permit(:name, :icon, :color)
+      params.require(:badge).permit(:name, :color)
     end
 end

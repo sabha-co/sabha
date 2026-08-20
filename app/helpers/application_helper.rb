@@ -38,12 +38,24 @@ module ApplicationHelper
   end
 
   def badge_label(badge)
-    safe_join([ badge.icon.presence, badge.name ].compact, " ")
+    badge.name
   end
 
   def badge_tag(badge, class_name: "member-badge")
-    tag.span badge_label(badge), class: class_name,
-        style: ("--badge-color: #{badge.color}; color: #{badge.color}" if badge.color.present?)
+    tag.span badge.name, class: class_name, style: "--badge-color: #{badge.color}; color: #{badge.color}"
+  end
+
+  def badge_holders_summary(badge)
+    names = badge.users.map(&:name)
+    names.any? ? names.join(", ") : "No one yet"
+  end
+
+  def badge_deletion_impact(badge)
+    case badge.users.length
+    when 0 then "No one has it, so nothing else changes."
+    when 1 then "One person has it — they keep their role, they just lose the chip."
+    else "#{badge.users.length} people have it — they keep their roles, they just lose the chip."
+    end
   end
 
   def body_classes

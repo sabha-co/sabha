@@ -1,0 +1,47 @@
+<div class="scrim-dialog__header scrim-dialog__header--titled">
+  <h2 class="scrim-dialog__title"><%= @badge.persisted? ? "Edit badge" : "New badge" %></h2>
+  <button type="button" class="scrim-dialog__close" data-action="dialog#close" aria-label="Close">&times;</button>
+</div>
+
+<%= form_with model: @badge, url: (@badge.persisted? ? account_badge_path(@badge) : account_badges_path),
+      class: "scrim-dialog__body", data: { controller: "badge-editor" } do |form| %>
+  <div class="badge-preview-wrap">
+    <span class="member-badge badge-preview" data-badge-editor-target="preview"
+          style="--badge-color: <%= @badge.color %>"><%= @badge.name.presence || "BADGE" %></span>
+  </div>
+
+  <div class="settings-field">
+    <div class="settings-field__label">
+      <label for="badge_name">Name</label>
+      <span class="badge-counter" data-badge-editor-target="counter"><%= @badge.name.to_s.length %>/10</span>
+    </div>
+    <%= form.text_field :name, autofocus: true, placeholder: "STEWARD", maxlength: 10,
+          class: [ "input", ("input--negative" if @badge.errors[:name].any?) ],
+          aria: { invalid: @badge.errors[:name].any? },
+          data: { badge_editor_target: "name", action: "input->badge-editor#update" } %>
+    <% if @badge.errors[:name].any? %><p class="field-error"><%= @badge.errors[:name].first %></p><% end %>
+    <p class="settings-field__hint">Shown in caps everywhere. Ten characters is the cap — it sits beside a name, not under it.</p>
+  </div>
+
+  <div class="settings-field">
+    <div class="settings-field__label">
+      <label>Colour</label>
+      <span class="badge-hex" data-badge-editor-target="hex"><%= @badge.color %></span>
+    </div>
+    <div class="swatch-grid">
+      <% Badge::COLORS.each do |hue| %>
+        <label class="swatch" style="--swatch-color: <%= hue %>">
+          <%= form.radio_button :color, hue, checked: @badge.color == hue,
+                class: "swatch__input", data: { badge_editor_target: "swatch", action: "change->badge-editor#update" } %>
+          <span class="swatch__chip" aria-hidden="true"></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="scrim-dialog__footer">
+    <button type="button" class="btn" data-action="dialog#close">Cancel</button>
+    <%= form.button (@badge.persisted? ? "Save changes" : "Create badge"), type: "submit",
+          class: "btn settings-save", data: { badge_editor_target: "submit" } %>
+  </div>
+<% end %>

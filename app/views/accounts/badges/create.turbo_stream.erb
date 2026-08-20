@@ -1,0 +1,7 @@
+<%= turbo_stream.remove "badges_empty" %>
+<%= turbo_stream.append "badges_list" do %>
+  <%= render "accounts/badges/badge", badge: @badge %>
+<% end %>
+<%= turbo_stream.prepend "main-content" do %>
+  <%= render "shared/toast", message: "#{@badge.name} created" %>
+<% end %>
