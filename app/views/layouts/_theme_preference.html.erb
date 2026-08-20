@@ -10,6 +10,10 @@
       document.documentElement.setAttribute("data-theme", "light")
       document.documentElement.style.colorScheme = "light"
     }
+
+    if (localStorage.getItem("density") === "compact") {
+      document.documentElement.setAttribute("data-density", "compact")
+    }
   })()
 </script>
 <meta name="color-scheme" content="light dark">

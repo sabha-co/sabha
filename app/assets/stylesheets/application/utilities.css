@@ -7,9 +7,9 @@
   --block-space-half: calc(var(--block-space) / 2);
   --block-space-double: calc(var(--block-space) * 2);
 
-  /* Density: vertical rhythm for repeated rows (comfortable values) */
+  /* Density: vertical rhythm for repeated sidebar rows (comfortable value).
+     The compact skin narrows --space-row below; the 32px row floor holds. */
   --space-row: 9px;
-  --space-msg: 15px;
 
   /* Corner radius scale. Named --border-radius-* rather than --radius-*
      because Tailwind's rounded-* utilities resolve var(--radius-sm/md/lg)
@@ -19,6 +19,13 @@
   --border-radius-md: 9px;
   --border-radius-lg: 12px;
   --border-radius-pill: 999px;
+}
+
+/* Compact density: a per-device skin set by density_controller (stamped
+   pre-paint in layouts/_theme_preference). Only tightens the sidebar row
+   padding — the 32px min-height on .room-row keeps touch targets intact. */
+:root[data-density="compact"] {
+  --space-row: 4px;
 }
 
 /* Text */

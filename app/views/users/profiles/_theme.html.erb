@@ -3,15 +3,9 @@
     <span class="setting-row__title">Theme</span>
     <span class="txt-small txt-muted">System preference, or pick one</span>
   </span>
-  <div class="segmented-control" role="group" aria-label="Theme">
-    <button type="button" class="segmented-control__btn" data-action="theme#setLight" data-theme-target="lightButton" aria-selected="false">
-      Light
-    </button>
-    <button type="button" class="segmented-control__btn" data-action="theme#setDark" data-theme-target="darkButton" aria-selected="false">
-      Dark
-    </button>
-    <button type="button" class="segmented-control__btn" data-action="theme#setAuto" data-theme-target="autoButton" aria-selected="false">
-      System
-    </button>
-  </div>
+  <%= segmented_control_tag controller: "theme", label: "Theme", options: [
+        { label: "Light", action: "setLight", target: "lightButton" },
+        { label: "Dark", action: "setDark", target: "darkButton" },
+        { label: "System", action: "setAuto", target: "autoButton" }
+      ] %>
 </div>

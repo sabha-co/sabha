@@ -13,6 +13,13 @@ class Users::AppearancesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-controller=theme] [data-action*=?]", "theme#setLight"
   end
 
+  test "show renders the density control inside the settings shell" do
+    get user_appearance_url
+
+    assert_response :success
+    assert_select "[data-controller=density] [data-action*=?]", "density#setCompact"
+  end
+
   test "show lists the personal sections in the shell nav" do
     get user_appearance_url
 

@@ -1,0 +1,10 @@
+<div class="setting-row" data-controller="density">
+  <span class="setting-row__text">
+    <span class="setting-row__title">Density</span>
+    <span class="txt-small txt-muted">Row spacing in the sidebar</span>
+  </span>
+  <%= segmented_control_tag controller: "density", label: "Density", options: [
+        { label: "Comfortable", action: "setComfortable", target: "comfortableButton", selected: true },
+        { label: "Compact", action: "setCompact", target: "compactButton" }
+      ] %>
+</div>

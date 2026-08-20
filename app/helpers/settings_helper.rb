@@ -28,4 +28,18 @@ module SettingsHelper
   def community_settings_section?(section)
     community_settings_sections.any? { |key, _, _| key == section }
   end
+
+  # A segmented button group wired to a Stimulus controller — the appearance
+  # toggles (theme, density) ride this. Each option is
+  # { label:, action:, target:, selected: false }, mapping to controller#action
+  # and controller-target; the controller flips aria-selected on connect.
+  def segmented_control_tag(controller:, label:, options:)
+    tag.div role: "group", class: "segmented-control", aria: { label: label } do
+      safe_join(options.map { |option|
+        tag.button option[:label], type: "button", class: "segmented-control__btn",
+          aria: { selected: option.fetch(:selected, false) },
+          data: { action: "#{controller}##{option[:action]}", "#{controller}_target" => option[:target] }
+      })
+    end
+  end
 end

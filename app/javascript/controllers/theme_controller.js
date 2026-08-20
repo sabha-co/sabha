@@ -4,26 +4,20 @@ export default class extends Controller {
   static targets = ["lightButton", "darkButton", "autoButton", "currentTheme"]
 
   connect() {
-    this.applyTheme()
-    this.updateButtons()
+    this.#apply()
+    this.#updateButtons()
   }
 
   setLight() {
-    localStorage.setItem("theme", "light")
-    this.applyTheme()
-    this.updateButtons()
+    this.#store("light")
   }
 
   setDark() {
-    localStorage.setItem("theme", "dark")
-    this.applyTheme()
-    this.updateButtons()
+    this.#store("dark")
   }
 
   setAuto() {
-    localStorage.setItem("theme", "auto")
-    this.applyTheme()
-    this.updateButtons()
+    this.#store("auto")
   }
 
   // The footer toggle flips the effective appearance to an explicit choice;
@@ -32,10 +26,16 @@ export default class extends Controller {
     const explicit = document.documentElement.getAttribute("data-theme")
     const effectivelyDark = explicit ? explicit === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches
 
-    effectivelyDark ? this.setLight() : this.setDark()
+    this.#store(effectivelyDark ? "light" : "dark")
   }
 
-  applyTheme() {
+  #store(theme) {
+    localStorage.setItem("theme", theme)
+    this.#apply()
+    this.#updateButtons()
+  }
+
+  #apply() {
     const theme = localStorage.getItem("theme")
     const currentTheme = document.documentElement.getAttribute("data-theme") || "light"
     const newTheme = theme === "dark" ? "dark" : (theme === "auto" ? "auto" : "light")
@@ -64,7 +64,7 @@ export default class extends Controller {
     }
   }
 
-  updateButtons() {
+  #updateButtons() {
     const theme = localStorage.getItem("theme")
     const isLight = !theme || theme === "light"
     const isDark = theme === "dark"
