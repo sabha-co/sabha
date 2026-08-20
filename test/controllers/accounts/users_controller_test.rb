@@ -35,7 +35,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     get edit_account_user_url(users(:kevin))
 
     assert_response :success
-    assert_select "turbo-frame#manage_member_user_#{users(:kevin).id}" do
+    assert_select "turbo-frame#manage_member" do
       assert_select ".role-option", count: 3
       assert_select ".role-option--current", text: /Member/
       assert_select ".badge-chip", text: "Founder"

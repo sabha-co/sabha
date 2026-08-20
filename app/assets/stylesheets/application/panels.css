@@ -163,12 +163,6 @@ body.room-settings #main-content {
   overflow: hidden;
 }
 
-/* Lift the corner clip while a role menu is open so the anchored popup can
-   escape the card rather than being cropped at its edge. */
-.members-roster:has(.member-role[open]) {
-  overflow: visible;
-}
-
 /* Groups with no one in them are omitted rather than shown empty. */
 .members-roster__group:not(:has(turbo-frame[id^="user_"])) {
   display: none;
@@ -271,7 +265,10 @@ body.members #main-content {
 }
 
 .members-page {
-  padding: 0 18px 28px;
+  /* No horizontal padding: the settings shell's inner already insets the
+     column, and adding more here pushes the toolbar and roster out of line
+     with the settings-header above them. */
+  padding: 0 0 28px;
 }
 
 .members-toolbar {
@@ -310,16 +307,8 @@ body.members #main-content {
   justify-content: flex-end;
 }
 
-.member-role {
-  position: relative;
-}
-
-/* Lift the open menu above later rows and their controls. */
-.member-role[open] {
-  z-index: 30;
-}
-
-/* Ghost button — border and fill appear on hover or while open only. */
+/* Ghost button that opens the manage-member modal — border and fill appear on
+   hover only. */
 .member-role__control {
   align-items: center;
   border: 1px solid transparent;
@@ -330,12 +319,8 @@ body.members #main-content {
   font-size: 0.78125rem;
   font-weight: 600;
   gap: 6px;
-  list-style: none;
   padding: 5px 10px;
-}
-
-.member-role__control::-webkit-details-marker {
-  display: none;
+  text-decoration: none;
 }
 
 @media (any-hover: hover) {
@@ -343,11 +328,6 @@ body.members #main-content {
     background-color: var(--color-bg-hover);
     border-color: var(--color-border);
   }
-}
-
-.member-role[open] .member-role__control {
-  background-color: var(--color-bg-hover);
-  border-color: var(--color-border);
 }
 
 .member-role__caret {
@@ -361,34 +341,6 @@ body.members #main-content {
   font-size: 0.78125rem;
   font-weight: 600;
   padding: 5px 10px;
-}
-
-/* The anchored role menu — a right-aligned popup card, no speech arrow. */
-.member-role__menu {
-  --border-color: var(--color-border);
-
-  inline-size: 258px;
-  inset-block-start: calc(100% + 6px);
-  inset-inline-end: 0;
-  padding: 4px;
-
-  /* No speech arrow — this is a plain menu card, not a tooltip. */
-  &::before,
-  &::after {
-    display: none;
-  }
-}
-
-.member-role--flip-up .member-role__menu {
-  inset-block-end: calc(100% + 6px);
-  inset-block-start: auto;
-}
-
-.member-role__loading {
-  align-items: center;
-  display: flex;
-  justify-content: center;
-  padding: 24px;
 }
 
 /* Lazy-page sentinel — three placeholder rows on the real row rhythm, fading
@@ -500,15 +452,11 @@ body.browse #main-content {
 .status--offline { background-color: var(--color-border-darker); }
 
 @media (max-width: 480px) {
-  .members-page .member-row {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
+  /* Keep the row on one line — the compact role control sizes to its content
+     rather than reserving the desktop 130px alignment column, so the name
+     keeps room and nothing wraps to an awkward second line. */
   .members-page .member-row .member-controls {
-    flex-basis: 100%;
-    flex-shrink: 1;
-    justify-content: flex-end;
+    inline-size: auto;
   }
 }
 

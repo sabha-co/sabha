@@ -133,4 +133,10 @@
     </turbo-frame>
   </div>
   </section>
+
+  <dialog id="manage_member_dialog" class="scrim-dialog" style="--dialog-width: 290px" aria-label="Manage member"
+          data-controller="dialog"
+          data-action="click->dialog#closeOnScrim turbo:submit-end->dialog#closeOnSubmit">
+    <%= turbo_frame_tag "manage_member", data: { action: "turbo:frame-load->dialog#open" } %>
+  </dialog>
 <% end %>
