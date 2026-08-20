@@ -27,6 +27,7 @@ bun.lock
 .bundle/
 .env
 .env.multitenant
+.env.staging
 dump.rdb
 
 # Ignore master key for decrypting credentials (if used)
