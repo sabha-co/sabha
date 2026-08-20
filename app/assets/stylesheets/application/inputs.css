@@ -38,13 +38,31 @@
     -webkit-box-shadow: 0 0 0px 1000px var(--color-selected) inset;
   }
 
-  &:where(:not(:active)):focus {
-    --input-border-color: var(--color-selected-dark);
-    --hover-color: var(--color-selected-dark);
-    --outline-size: 0;
+}
 
-    filter: var(--hover-filter);
-    box-shadow: 0 0 0 var(--hover-size) var(--hover-color);
+/* The v2.1 field primitive: hover darkens the border, focus paints the accent
+   border plus a 3px accent-bd ring. The composer and search "actor" inputs draw
+   their own border and glow, and the message editor (.lexxy-content) rides
+   inside one, so all three opt out. Fields sit at 14px, bumping to 16px under
+   the mobile drawer so iOS Safari never zooms in on focus. */
+.input:not(.input--actor):not(.lexxy-content) {
+  font-size: 14px;
+  padding: 9px 11px;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-text-subtle);
+  }
+
+  &:focus-visible {
+    border-color: var(--color-accent-brand);
+    box-shadow: 0 0 0 3px var(--color-selected-dark);
+    outline: none;
+  }
+}
+
+@media (max-width: 833px) {
+  .input:not(.input--actor):not(.lexxy-content) {
+    font-size: 16px;
   }
 }
 

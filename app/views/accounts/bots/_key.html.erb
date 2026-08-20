@@ -3,11 +3,11 @@
   <h2 class="scrim-dialog__title"><%= heading %></h2>
 </div>
 <div class="scrim-dialog__body">
+  <p class="txt-small txt-muted bot-key__lead"><%= body %></p>
   <div class="bot-key">
     <span class="bot-key__value"><%= bot.plaintext_bot_key %></span>
-    <%= button_to_copy_to_clipboard(bot.plaintext_bot_key) do %>Copy<% end %>
+    <%= button_to_copy_to_clipboard(bot.plaintext_bot_key, btn_class: "btn btn--plain bot-key__copy") do %>Copy<% end %>
   </div>
-  <p class="txt-small txt-muted"><%= body %></p>
-  <p class="txt-small txt-muted">For <strong><%= bot.name %></strong> · send it as <code>Authorization: Bearer …</code></p>
+  <p class="txt-small txt-muted">For <strong><%= bot.name %></strong> · send it as <span class="key-scheme">Authorization: Bearer …</span></p>
   <button type="button" class="btn settings-save bot-key__done" data-action="dialog#close">Done</button>
 </div>

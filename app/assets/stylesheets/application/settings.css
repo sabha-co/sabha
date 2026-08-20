@@ -46,6 +46,13 @@
   .setting-row {
     padding-block: 0;
   }
+
+  /* ...except a setting-row that IS a direct child (no form wrapper to carry the
+     14px), which the reset above would otherwise strip to a flush, padding-less
+     row. */
+  > .setting-row {
+    padding-block: 14px;
+  }
 }
 
 /* Page header: scope eyebrow, title, one-line blurb */
@@ -86,8 +93,8 @@
   align-items: center;
   color: var(--color-text-muted);
   display: flex;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.78125rem;
+  font-weight: 700;
   justify-content: space-between;
   margin-block-end: 6px;
 }
@@ -101,8 +108,14 @@
 
 .settings-field__hint {
   color: var(--color-text-subtle);
-  font-size: 0.75rem;
+  font-size: 0.78125rem;
   margin: 6px 0 0;
+}
+
+/* The bot invite-code row is a bare flex row rendered straight under its
+   explainer, so give it a clear break from the hint above it. */
+.settings-field #bot_invite_code {
+  margin-block-start: 14px;
 }
 
 /* Invitations: join-link card internals. The head and the URL row form one
@@ -311,7 +324,21 @@
 
 /* Dialogs */
 .scrim-dialog--bot-editor {
-  --dialog-width: 480px;
+  --dialog-width: 560px;
+}
+
+/* Align the field column's side padding with the titled header (18px) so the
+   title and inputs share one left edge, and tighten the gap under the header. */
+.scrim-dialog--bot-editor .scrim-dialog__body {
+  padding: 12px 18px;
+}
+
+/* The footer sits inside the padded form body, so it drops its own side padding
+   (the body already insets 18px, lining the buttons up with the fields) and adds
+   a top gap so the divider isn't glued to the room hint. */
+.scrim-dialog--bot-editor .scrim-dialog__footer {
+  margin-block-start: 16px;
+  padding: 14px 0 0;
 }
 
 .scrim-dialog--bot-key {
@@ -330,12 +357,17 @@
 }
 
 .room-chip {
+  align-items: center;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 999px;
+  color: var(--color-text-muted);
   cursor: pointer;
-  font-size: 0.8125rem;
+  display: inline-flex;
+  font-size: 0.78125rem;
   font-weight: 600;
-  padding: 6px 11px;
+  line-height: 1;
+  min-block-size: 30px;
+  padding: 0 12px;
 
   &:has(:checked) {
     background-color: var(--color-selected);
@@ -349,7 +381,24 @@
   }
 }
 
-/* Bearer-key dialog */
+/* The "#" channel sigil is decorative — it inherits the chip color, so it turns
+   accent along with the label when selected, and stays out of the form value. */
+.room-chip__label::before {
+  content: "#";
+}
+
+/* Bearer-key dialog: the title flows straight into the lead line with no rule,
+   matching the design (the shared header border is dropped for this dialog). */
+.scrim-dialog--bot-key .scrim-dialog__header {
+  border-block-end: none;
+  padding-block-end: 4px;
+}
+
+.bot-key__lead {
+  line-height: 1.5;
+  margin-block-end: 14px;
+}
+
 .bot-key {
   align-items: center;
   background-color: var(--color-bg-sunk);
@@ -357,6 +406,7 @@
   border-radius: 10px;
   display: flex;
   gap: 10px;
+  margin-block-end: 12px;
   padding: 12px 13px;
 }
 
@@ -368,6 +418,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Copy reads as an accent text-link inside the key field, not a bordered button. */
+.bot-key__copy {
+  color: var(--color-accent-brand);
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+/* The auth-scheme hint is inline mono that flows with the muted sentence around
+   it — no boxed <code> treatment. */
+.key-scheme {
+  font-family: var(--font-mono);
 }
 
 .bot-key__done {
@@ -393,14 +456,15 @@
   --btn-color: var(--color-text-reversed);
 }
 
-/* Inline field validation (first use in the app) */
+/* Inline field validation: red border plus the matching 3px negative ring. */
 .input--negative {
   --input-border-color: var(--color-negative);
+  box-shadow: 0 0 0 3px var(--color-bg-negative);
 }
 
 .field-error {
   color: var(--color-negative);
-  font-size: 0.75rem;
+  font-size: 0.78125rem;
   font-weight: 600;
   margin: 6px 0 0;
 }
