@@ -15,3 +15,12 @@ proxy:
     interval: 1
     path: /up
     timeout: 3
+
+# Use a Docker-managed named volume instead of the base's /disk/sabha host
+# bind-mount. Docker initializes a named volume with the image's ownership
+# (the non-root `sabha` user), so storage is writable with no server-side chown
+# — the bind-mount over /rails/storage would land root-owned and unwritable on a
+# fresh box. Fine for an ephemeral staging box; the volume persists across
+# redeploys.
+volumes:
+  - "sabha_storage:/rails/storage"
