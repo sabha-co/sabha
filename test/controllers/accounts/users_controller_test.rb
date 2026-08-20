@@ -15,7 +15,8 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
 
     assert_select ".settings-nav__item[aria-current=page]", text: "Members"
     assert_select ".settings-header__title", text: "Members"
-    assert_select ".navbar-title", text: "Settings"
+    # v2.1 settings lead with the content header — no top chrome bar.
+    assert_select ".navbar-title", false
     assert_select ".members-page .members-toolbar input[name=query]"
     assert_select "#administrators_section.role-section"
   end
@@ -34,7 +35,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     get edit_account_user_url(users(:kevin))
 
     assert_response :success
-    assert_select "turbo-frame#manage_member" do
+    assert_select "turbo-frame#manage_member_user_#{users(:kevin).id}" do
       assert_select ".role-option", count: 3
       assert_select ".role-option--current", text: /Member/
       assert_select ".badge-chip", text: "Founder"

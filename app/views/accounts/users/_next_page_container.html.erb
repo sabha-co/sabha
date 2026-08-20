@@ -1,4 +1,13 @@
 <%= turbo_frame_tag :next_page_container, loading: :lazy,
-      src: account_users_path(page: page, format: :turbo_stream), class: "flex center" do %>
-  <div class="spinner center"></div>
+      src: account_users_path(page: page, format: :turbo_stream), class: "members-skeleton" do %>
+  <% 3.times do |i| %>
+    <div class="member-skeleton" style="--row: <%= i %>" aria-hidden="true">
+      <span class="member-skeleton__avatar"></span>
+      <span class="member-skeleton__lines">
+        <span class="member-skeleton__bar member-skeleton__bar--name"></span>
+        <span class="member-skeleton__bar member-skeleton__bar--sub"></span>
+      </span>
+      <span class="member-skeleton__role"></span>
+    </div>
+  <% end %>
 <% end %>

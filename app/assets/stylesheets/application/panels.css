@@ -154,28 +154,86 @@ body.room-settings #main-content {
 
 /* Members directory: small-caps heading above a bordered card of list rows.
    The card keeps the {role}s_section id — Turbo Streams append rows to it. */
-.role-section-group:not(:has([id^="user_"])) {
+/* Members directory — one bordered roster card. Role groups are sunk header
+   bands inside it, not separate cards, so the page reads as a single list. */
+.members-roster {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* Lift the corner clip while a role menu is open so the anchored popup can
+   escape the card rather than being cropped at its edge. */
+.members-roster:has(.member-role[open]) {
+  overflow: visible;
+}
+
+/* Groups with no one in them are omitted rather than shown empty. */
+.members-roster__group:not(:has(turbo-frame[id^="user_"])) {
   display: none;
 }
 
-.role-section {
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+.members-roster__band {
+  align-items: baseline;
+  background-color: var(--color-bg-sunk);
+  border-block: 1px solid var(--color-border);
+  display: flex;
+  gap: 8px;
+  padding: 9px 15px;
 }
 
-.role-section__heading,
-.role-section-header {
+/* The first band rides the card's own top border rather than doubling it. */
+.members-roster > :first-child .members-roster__band,
+.members-roster > .members-roster__band:first-child {
+  border-block-start: 0;
+}
+
+.members-roster__band-label {
   color: var(--color-text-subtle);
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.07em;
-  padding: 0 2px 8px;
   text-transform: uppercase;
 }
 
-.banned strong {
-  text-decoration: line-through;
-  opacity: 0.6;
+.members-roster__band-count {
+  color: var(--color-text-subtle);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rows sit directly on the card; the band carries the separation. */
+.role-section {
+  border: 0;
+  border-radius: 0;
+}
+
+/* Deactivated and banned rows gray the NAME only — the avatar stays at full
+   opacity so a dimmed row never reads as still loading. */
+.is-deactivated .list-row__title strong,
+.is-banned .list-row__title strong {
+  color: var(--color-text-subtle);
+}
+
+.status-chip {
+  border-radius: 4px;
+  flex: none;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+
+.status-chip--deactivated {
+  background-color: var(--color-bg-sunk);
+  color: var(--color-text-subtle);
+}
+
+.status-chip--banned {
+  background-color: var(--color-bg-negative);
+  color: var(--color-negative);
 }
 
 /* Member row extras on the shared .list-row rhythm */
@@ -242,8 +300,154 @@ body.members #main-content {
   flex-wrap: nowrap;
 }
 
-.members-page .member-row .member-controls {
-  flex-shrink: 0;
+/* Role control lives in a fixed column so every caret lines up on the right. */
+.member-controls {
+  align-items: center;
+  display: flex;
+  flex: none;
+  gap: 8px;
+  inline-size: 130px;
+  justify-content: flex-end;
+}
+
+.member-role {
+  position: relative;
+}
+
+/* Lift the open menu above later rows and their controls. */
+.member-role[open] {
+  z-index: 30;
+}
+
+/* Ghost button — border and fill appear on hover or while open only. */
+.member-role__control {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.78125rem;
+  font-weight: 600;
+  gap: 6px;
+  list-style: none;
+  padding: 5px 10px;
+}
+
+.member-role__control::-webkit-details-marker {
+  display: none;
+}
+
+@media (any-hover: hover) {
+  .member-role__control:hover {
+    background-color: var(--color-bg-hover);
+    border-color: var(--color-border);
+  }
+}
+
+.member-role[open] .member-role__control {
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border);
+}
+
+.member-role__caret {
+  font-size: 0.5625rem;
+  opacity: 0.7;
+}
+
+/* Your own row, or a viewer who can't act — the role renders as plain text. */
+.member-role__readonly {
+  color: var(--color-text-subtle);
+  font-size: 0.78125rem;
+  font-weight: 600;
+  padding: 5px 10px;
+}
+
+/* The anchored role menu — a right-aligned popup card, no speech arrow. */
+.member-role__menu {
+  --border-color: var(--color-border);
+
+  inline-size: 258px;
+  inset-block-start: calc(100% + 6px);
+  inset-inline-end: 0;
+  padding: 4px;
+
+  /* No speech arrow — this is a plain menu card, not a tooltip. */
+  &::before,
+  &::after {
+    display: none;
+  }
+}
+
+.member-role--flip-up .member-role__menu {
+  inset-block-end: calc(100% + 6px);
+  inset-block-start: auto;
+}
+
+.member-role__loading {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* Lazy-page sentinel — three placeholder rows on the real row rhythm, fading
+   away, so the incoming frame swaps in where they sat instead of pushing the
+   list down. The frame needs its own box (turbo-frame is display:contents by
+   default) or Turbo's lazy IntersectionObserver has nothing to observe and the
+   next page never loads. */
+.members-skeleton {
+  display: block;
+}
+
+.member-skeleton {
+  align-items: center;
+  border-block-end: 1px solid var(--color-border);
+  display: flex;
+  gap: 11px;
+  opacity: calc(1 - var(--row) * 0.35);
+  padding: 12px 15px;
+}
+
+.member-skeleton:last-child {
+  border-block-end: 0;
+}
+
+.member-skeleton__avatar {
+  background-color: var(--color-bg-sunk);
+  block-size: 32px;
+  border-radius: 50%;
+  flex: none;
+  inline-size: 32px;
+}
+
+.member-skeleton__lines {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.member-skeleton__bar {
+  background-color: var(--color-bg-sunk);
+  block-size: 9px;
+  border-radius: 5px;
+}
+
+.member-skeleton__bar--name {
+  inline-size: 40%;
+}
+
+.member-skeleton__bar--sub {
+  inline-size: 26%;
+}
+
+.member-skeleton__role {
+  background-color: var(--color-bg-sunk);
+  block-size: 24px;
+  border-radius: 8px;
+  flex: none;
+  inline-size: 92px;
 }
 
 /* Browse rooms: an in-shell column holding a bordered card of list rows */

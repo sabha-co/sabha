@@ -33,77 +33,104 @@
     <% end %>
   </div>
 
-  <div class="flex flex-column gap members-list">
+  <div class="members-list">
     <turbo-frame id="account_users">
       <% if @searching %>
         <% if @users.any? %>
-          <p class="txt-small txt-muted margin-block-half"><%= pluralize(@users.size, "result") %></p>
-          <div class="role-section">
-            <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+          <div class="members-roster">
+            <div class="members-roster__band">
+              <span class="members-roster__band-label">Results</span>
+              <span class="members-roster__band-count"><%= @users.size %></span>
+            </div>
+            <div class="role-section">
+              <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+            </div>
           </div>
         <% else %>
           <div class="empty-state">
             <p class="empty-state__title">No one matches <% if params[:query].present? %>&ldquo;<%= params[:query] %>&rdquo;<% else %>your search<% end %></p>
-            <p class="empty-state__body">Search runs on names only, and only over people you can see. Deactivated accounts are staff-visible.</p>
+            <p class="empty-state__body">Search runs on names, and only over people you can see. Deactivated accounts are staff-visible.</p>
           </div>
         <% end %>
       <% elsif @filtering_deactivated %>
         <% if @users.any? %>
-          <div class="role-section">
-            <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+          <div class="members-roster">
+            <div class="members-roster__band">
+              <span class="members-roster__band-label">Deactivated</span>
+              <span class="members-roster__band-count"><%= @users.size %></span>
+            </div>
+            <div class="role-section">
+              <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+            </div>
           </div>
         <% else %>
-          <p class="txt-small txt-muted">No deactivated members</p>
+          <div class="empty-state">
+            <p class="empty-state__title">No deactivated accounts</p>
+            <p class="empty-state__body">Deactivated members can no longer sign in, but everything they wrote stays visible.</p>
+          </div>
         <% end %>
       <% elsif @filtering_banned %>
         <% if @users.any? %>
-          <div class="role-section">
-            <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+          <div class="members-roster">
+            <div class="members-roster__band">
+              <span class="members-roster__band-label">Banned</span>
+              <span class="members-roster__band-count"><%= @users.size %></span>
+            </div>
+            <div class="role-section">
+              <%= render partial: "accounts/users/user", collection: @users, as: :user %>
+            </div>
           </div>
         <% else %>
-          <p class="txt-small txt-muted">No banned members</p>
+          <div class="empty-state">
+            <p class="empty-state__title">No banned accounts</p>
+            <p class="empty-state__body">Banning removes the person and deletes everything they posted.</p>
+          </div>
         <% end %>
       <% else %>
-        <div class="role-section-group">
-          <div class="flex align-center justify-between role-section-header">
-            <p class="role-section__heading margin-none">Administrators</p>
+        <div class="members-roster">
+          <div class="members-roster__group">
+            <div class="members-roster__band">
+              <span class="members-roster__band-label">Administrators</span>
+              <span class="members-roster__band-count"><%= @administrators.size %></span>
+            </div>
+            <div id="administrators_section" class="role-section">
+              <%= render partial: "accounts/users/user", collection: @administrators, as: :user %>
+            </div>
           </div>
-          <div id="administrators_section" class="role-section">
-            <%= render partial: "accounts/users/user", collection: @administrators, as: :user %>
-          </div>
-        </div>
 
-        <div class="role-section-group">
-          <p class="role-section__heading margin-none role-section-header">Moderators</p>
-          <div id="moderators_section" class="role-section">
-            <%= render partial: "accounts/users/user", collection: @moderators, as: :user %>
+          <div class="members-roster__group">
+            <div class="members-roster__band">
+              <span class="members-roster__band-label">Moderators</span>
+              <span class="members-roster__band-count"><%= @moderators.size %></span>
+            </div>
+            <div id="moderators_section" class="role-section">
+              <%= render partial: "accounts/users/user", collection: @moderators, as: :user %>
+            </div>
           </div>
-        </div>
 
-        <div class="role-section-group">
-          <p class="role-section__heading margin-none role-section-header">Members</p>
-          <div id="members_section" class="role-section">
-            <%= render partial: "accounts/users/user", collection: @members, as: :user %>
-            <%= render "accounts/users/next_page_container", page: @page.next_param unless @page.last? %>
+          <div class="members-roster__group">
+            <div class="members-roster__band">
+              <span class="members-roster__band-label">Members</span>
+              <span class="members-roster__band-count"><%= @members_total %></span>
+            </div>
+            <div id="members_section" class="role-section">
+              <%= render partial: "accounts/users/user", collection: @members, as: :user %>
+              <%= render "accounts/users/next_page_container", page: @page.next_param unless @page.last? %>
+            </div>
           </div>
-        </div>
 
-        <% if @bots&.any? %>
-          <div class="role-section-group">
-            <p class="role-section__heading margin-none role-section-header">Bots</p>
+          <div class="members-roster__group">
+            <div class="members-roster__band">
+              <span class="members-roster__band-label">Bots</span>
+              <span class="members-roster__band-count"><%= @bots&.size.to_i %></span>
+            </div>
             <div id="bots_section" class="role-section">
               <%= render partial: "accounts/users/user", collection: @bots, as: :user %>
             </div>
           </div>
-        <% end %>
+        </div>
       <% end %>
     </turbo-frame>
   </div>
   </section>
-
-  <dialog id="manage_member_dialog" class="scrim-dialog" style="--dialog-width: 290px" aria-label="Manage member"
-          data-controller="dialog"
-          data-action="click->dialog#closeOnScrim turbo:submit-end->dialog#closeOnSubmit">
-    <%= turbo_frame_tag "manage_member", data: { action: "turbo:frame-load->dialog#open" } %>
-  </dialog>
 <% end %>

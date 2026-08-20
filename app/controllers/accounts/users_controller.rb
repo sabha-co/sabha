@@ -120,6 +120,7 @@ class Accounts::UsersController < ApplicationController
       @moderators = scope.where(role: :moderator).to_a
 
       members = scope.where(role: :member)
+      @members_total = members.count
       set_page_and_extract_portion_from members, per_page: 25
       @members = @page.records
 

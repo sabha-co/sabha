@@ -47,9 +47,13 @@ class ManagingMembersTest < ApplicationSystemTestCase
 
     open_manage_dialog users(:kevin)
 
-    # A bare keyboard escape — element-targeted send_keys clicks the card to
-    # focus it, which would land on a role row.
-    page.driver.browser.keyboard.type(:Escape)
+    # Escape from within the open menu closes it without touching the role.
+    # Focusing a role option (not clicking it) puts focus inside the <details>
+    # so the keydown reaches the popup controller — mirroring a keyboard user
+    # tabbing into the menu and pressing Escape.
+    within ".member-role[open]" do
+      find(".role-option", match: :first).send_keys(:escape)
+    end
 
     assert_manage_dialog_closed
     assert_equal role_before, users(:kevin).reload.role
@@ -58,17 +62,17 @@ class ManagingMembersTest < ApplicationSystemTestCase
   private
     def open_manage_dialog(user)
       within "turbo-frame#" + dom_id(user) do
-        click_on "Manage"
+        find("summary.member-role__control").click
       end
 
-      assert_selector "#manage_member_dialog[open]"
+      assert_selector ".member-role[open]"
     end
 
     def within_manage_dialog(&block)
-      within "#manage_member_dialog", &block
+      within ".member-role[open]", &block
     end
 
     def assert_manage_dialog_closed
-      assert_no_selector "#manage_member_dialog[open]"
+      assert_no_selector ".member-role[open]"
     end
 end

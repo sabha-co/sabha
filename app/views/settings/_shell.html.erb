@@ -8,10 +8,9 @@
 
 <% @body_class = "sidebar settings" %>
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
-<% content_for :nav do %>
-  <h1 class="navbar-title">Settings</h1>
-  <div class="flex-item-grow"></div>
-<% end %>
+<%# No top chrome bar: v2.1 settings lead with the content header itself. The
+    #nav bar only survives below the docked-sidebar breakpoint, where it gives
+    the sidebar hamburger a home (see settings.css). %>
 
 <section class="settings-split">
   <nav class="settings-nav" aria-label="Settings sections">

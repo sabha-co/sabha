@@ -782,6 +782,16 @@ body.settings #main-content {
   overflow: hidden;
 }
 
+/* v2.1 settings have no top chrome bar — the content header is the top-most
+   element. Above the docked-sidebar breakpoint there is no hamburger, so the
+   bar is pure redundant chrome and collapses away; below it the bare bar stays
+   to host the sidebar toggle. */
+@media (min-width: 1280px) {
+  body.settings #nav {
+    display: none;
+  }
+}
+
 .settings-split {
   display: flex;
   flex: 1 1 auto;
