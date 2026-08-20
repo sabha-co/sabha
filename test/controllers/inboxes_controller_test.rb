@@ -508,6 +508,22 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_operator thread_preload_queries, :<=, 1
   end
 
+  test "threads render stays query-bounded as the card count grows (no per-card creator or follow N+1)" do
+    room = rooms(:pets)
+    room.memberships.find_by(user: @david).update!(involvement: :everything)
+
+    create_accessible_thread_parents(room, count: 2, prefix: "few")
+    few = count_total_queries { get inbox_threads_url; assert_response :success }
+
+    create_accessible_thread_parents(room, count: 4, prefix: "many") # 6 total now
+    many = count_total_queries { get inbox_threads_url; assert_response :success }
+
+    # Tripling the cards must not scale queries. A per-card creator lookup or
+    # per-card followed_by? would add ~1–2 queries per extra card (~8 here); the
+    # batched preload + follow set keep the delta flat.
+    assert_operator many - few, :<=, 2, "threads inbox issues per-card queries (#{few} → #{many})"
+  end
+
   # ===================
   # Bookmarks tests
   # ===================
@@ -770,6 +786,19 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
           client_message_id: "#{prefix}_reply_#{i}"
         )
       end
+    end
+
+    def count_total_queries
+      count = 0
+      callback = lambda do |_name, _started, _finished, _id, payload|
+        next if payload[:cached] || payload[:name] == "SCHEMA"
+        next if payload[:sql].match?(/\A(?:BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i)
+        count += 1
+      end
+      ActiveRecord::Base.uncached do
+        ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { yield }
+      end
+      count
     end
 
     def count_thread_association_queries

@@ -46,6 +46,18 @@ class Room::RosterTest < ActiveSupport::TestCase
     assert_equal total - 2, roster.offline_count
   end
 
+  test "here_now preloads badges so rendering role badges issues no per-member query" do
+    place memberships(:jz_designers),    connections: 1, connected_at: 1.minute.ago
+    place memberships(:jason_designers), connections: 1, connected_at: 1.minute.ago
+
+    here_now = Room::Roster.new(@room).here_now
+    assert_operator here_now.size, :>=, 2
+
+    assert_no_queries do
+      here_now.each(&:badge)
+    end
+  end
+
   private
     def place(membership, attributes)
       membership.update!(attributes)

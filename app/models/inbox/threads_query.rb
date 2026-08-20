@@ -17,21 +17,48 @@ class Inbox::ThreadsQuery
            .count
   end
 
+  # The thread-room ids the reader follows, across the whole page — one query so
+  # the cards can render the follow control without a per-card `followed_by?`.
+  # Follower semantics match Room::Followable#followed_by?: an active,
+  # non-invisible membership on the thread room.
+  def self.followed_thread_room_ids(user, messages)
+    thread_room_ids = messages.flat_map { |m| m.threads.select(&:active?).map(&:id) }
+    return Set.new if thread_room_ids.empty?
+
+    Membership.active
+              .where.not(involvement: "invisible")
+              .where(room_id: thread_room_ids, user_id: user.id)
+              .pluck(:room_id)
+              .to_set
+  end
+
   def initialize(user)
     @user = user
   end
 
   def call
+    accessible_thread_parents
+      .for_display
+      .includes(threads: :creator)
+      .order(thread_activity_order)
+  end
+
+  # The total accessible-thread count for the header badge. Runs the same
+  # accessible-parents subquery as #call, but without for_display's eager-load
+  # tree or the activity ordering — neither affects a COUNT.
+  def count
+    accessible_thread_parents.count
+  end
+
+  private
+
+  def accessible_thread_parents
     Message.active
            .without_events
            .joins(:room)
            .where.not(rooms: { type: "Rooms::Thread" })
            .where("messages.id IN (#{accessible_thread_parent_ids_sql})")
-           .for_display
-           .order(thread_activity_order)
   end
-
-  private
 
   attr_reader :user
 

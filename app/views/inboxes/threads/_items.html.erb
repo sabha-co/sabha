@@ -1,6 +1,6 @@
 <% @messages.each do |message| %>
   <% thread = message.threads.detect { |t| t.active? && t.messages_count.to_i > 0 } %>
   <% if thread %>
-    <%= render "inboxes/threads/thread_card", message: message, thread: thread, unread: @thread_unread[thread.id].to_i %>
+    <%= render "inboxes/threads/thread_card", message: message, thread: thread, unread: @thread_unread[thread.id].to_i, followed: @thread_followed.include?(thread.id) %>
   <% end %>
 <% end %>

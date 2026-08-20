@@ -167,24 +167,37 @@ class Message < ApplicationRecord
   # is naturally small. boost_summary is the SQL-capped variant for the API's
   # unbounded callers.
   def boost_groups
-    # The message list preloads boosts + boosters; standalone renders (the boost
-    # broadcast and the create/destroy responses) don't, so pull boosters in one
-    # query there rather than one per reaction. Reuse the preloaded association
-    # when it's already loaded so the list stays a no-extra-query render.
-    source = boosts.loaded? ? boosts : boosts.includes(:booster)
+    # Memoized: a reaction toggle re-renders this container to two streams (room
+    # + inbox) off the same message instance, so the grouping — and its
+    # boosts+boosters query on the standalone path — runs once, not per render.
+    @boost_groups ||= begin
+      # The message list preloads boosts + boosters; standalone renders (the boost
+      # broadcast and the create/destroy responses) don't, so pull boosters in one
+      # query there rather than one per reaction. Reuse the preloaded association
+      # when it's already loaded so the list stays a no-extra-query render.
+      source = boosts.loaded? ? boosts : boosts.includes(:booster)
 
-    # The association is ordered by created_at, so each group is already
-    # oldest-first and group.first is the earliest reaction of that emoji.
-    source.group_by(&:content).values
-          .sort_by { |group| [ -group.size, group.first.created_at ] }
-          .map do |group|
-            Boost::Group.new(
-              content: group.first.content,
-              count: group.size,
-              boosters: group.map(&:booster),
-              truncated: false
-            )
-          end
+      # The association is ordered by created_at, so each group is already
+      # oldest-first and group.first is the earliest reaction of that emoji.
+      source.group_by(&:content).values
+            .sort_by { |group| [ -group.size, group.first.created_at ] }
+            .map do |group|
+              Boost::Group.new(
+                content: group.first.content,
+                count: group.size,
+                boosters: group.map(&:booster),
+                truncated: false
+              )
+            end
+    end
+  end
+
+  # Drops the memoized grouping so the next #boost_groups recomputes. A reaction
+  # commit re-renders the chip container off the boost's message instance twice
+  # (room + inbox stream); resetting once per toggle keeps that instance fresh
+  # across sequential toggles while the two renders still share one query.
+  def reset_boost_groups
+    @boost_groups = nil
   end
 
   def thread_participants_for(thread)

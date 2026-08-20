@@ -1,9 +1,11 @@
-<%# locals: (thread:) %>
+<%# locals: (thread:, followed: Current.user && thread.followed_by?(Current.user)) %>
 <%# Follow/Unfollow flips in place inside this frame, so the state change is
     visible immediately without reloading the panel. Rendered per-viewer (needs
-    Current.user), so it never rides a viewer-less broadcast. %>
+    Current.user), so it never rides a viewer-less broadcast. `followed` defaults
+    to a per-render `followed_by?` for the single-render sites; the threads inbox
+    passes the state it already batch-loaded. %>
 <%= turbo_frame_tag dom_id(thread, :follow), class: "flex-item-no-shrink" do %>
-  <% if Current.user && thread.followed_by?(Current.user) %>
+  <% if Current.user && followed %>
     <%= button_to rooms_thread_membership_path(thread), method: :delete, class: "btn thread-panel__follow" do %>
       <span>Unfollow</span>
     <% end %>

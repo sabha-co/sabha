@@ -706,6 +706,16 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal users(:david).id, item.bundle.user_id
   end
 
+  test "boost_groups memoizes so a two-stream broadcast issues its boosters query once" do
+    messages(:first).boosts.create!(content: "🎉", booster: users(:kevin))
+    fresh = Message.find(messages(:first).id) # boosts association not preloaded
+
+    fresh.boost_groups # first call issues the boosts+boosters query
+    assert_no_queries do
+      fresh.boost_groups
+    end
+  end
+
   private
     def create_new_message_in(room)
       room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "123")

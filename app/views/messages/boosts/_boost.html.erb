@@ -4,6 +4,11 @@
     "mine" is stamped client-side (boost_toggle_controller) so the broadcast HTML
     stays identical for every viewer. The two hidden forms are the add and remove
     paths the controller submits between. %>
+<%# Cached per chip so a toggle re-renders only the emoji that changed — the
+    other chips in the replaced container reuse their cached HTML. Keyed on the
+    boosters (avatars + names bust on change), the count (the "+N" overflow), and
+    the message (the form action paths). %>
+<% cache [ message, group.content, group.count, group.boosters ] do %>
 <% shown = group.boosters.first(Boost::AVATARS_SHOWN)
    extra = group.count - shown.size
    reactor_names = shown.map(&:name)
@@ -33,3 +38,4 @@
     <span class="for-screen-reader">Remove your <%= group.content %> reaction</span>
   <% end %>
 </div>
+<% end %>

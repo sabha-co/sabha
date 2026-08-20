@@ -1,4 +1,4 @@
-<%# locals: (message:, thread:, unread: 0) -%>
+<%# locals: (message:, thread:, unread: 0, followed:) -%>
 <%# A followed thread as a card: the room and who started it on the head row, the
     root message, then the reply facepile with the follow toggle at the end of the
     foot row. Reply count and last-reply ride the embedded messages/threads target,
@@ -23,6 +23,6 @@
 
   <div class="thread-card__foot">
     <%= render "messages/threads", message: message %>
-    <%= render "rooms/threads/follow_control", thread: thread %>
+    <%= render "rooms/threads/follow_control", thread: thread, followed: followed %>
   </div>
 </div>

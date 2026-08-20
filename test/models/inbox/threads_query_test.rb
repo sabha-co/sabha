@@ -31,4 +31,35 @@ class Inbox::ThreadsQueryTest < ActiveSupport::TestCase
     assert_equal({ thread.id => 2 }, Inbox::ThreadsQuery.unseen_reply_counts(follower, [ parent ]))
     assert_equal({}, Inbox::ThreadsQuery.unseen_reply_counts(users(:jz), [ parent ]))
   end
+
+  test "followed_thread_room_ids returns the follower's thread rooms and skips non-members" do
+    assert_equal Set[@thread.id], Inbox::ThreadsQuery.followed_thread_room_ids(@user, [ @parent_message ])
+    assert_equal Set.new, Inbox::ThreadsQuery.followed_thread_room_ids(users(:jz), [ @parent_message ])
+  end
+
+  test "followed_thread_room_ids excludes an invisible (left) membership" do
+    @thread.memberships.find_by(user: @user).update!(involvement: :invisible)
+
+    assert_equal Set.new, Inbox::ThreadsQuery.followed_thread_room_ids(@user, [ @parent_message ])
+  end
+
+  test "followed_thread_room_ids batches the follow lookup into one query" do
+    messages = Inbox::ThreadsQuery.new(@user).call.to_a
+
+    assert_queries_count 1 do
+      Inbox::ThreadsQuery.followed_thread_room_ids(@user, messages)
+    end
+  end
+
+  test "call preloads thread creators so cards render without an N+1" do
+    messages = Inbox::ThreadsQuery.new(@user).call.to_a
+
+    assert_no_queries do
+      messages.each { |m| m.threads.each(&:creator) }
+    end
+  end
+
+  test "count returns the number of accessible thread parents" do
+    assert_equal Inbox::ThreadsQuery.new(@user).call.to_a.size, Inbox::ThreadsQuery.new(@user).count
+  end
 end

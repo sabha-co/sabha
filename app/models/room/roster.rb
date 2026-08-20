@@ -39,6 +39,6 @@ class Room::Roster
       return [] if ids.empty?
 
       @room.visible_users.active.where(id: ids)
-           .includes(avatar_attachment: :blob).ordered.to_a
+           .includes(:badge, avatar_attachment: :blob).ordered.to_a
     end
 end

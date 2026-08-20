@@ -43,7 +43,10 @@ class BroadcastInboxThreadsJob < ApplicationJob
             locals: {
               message: parent_message_with_threads,
               thread: thread,
-              unread: thread_user_ids.include?(user_id) ? 1 : 0
+              unread: thread_user_ids.include?(user_id) ? 1 : 0,
+              # A visible thread member is exactly a follower, so the follow
+              # control renders without a per-recipient `followed_by?` query.
+              followed: thread_user_ids.include?(user_id)
             }
           )
         end

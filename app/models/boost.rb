@@ -26,6 +26,10 @@ class Boost < ApplicationRecord
     # is idempotent, so the author receiving both the direct response and this
     # broadcast just re-renders the same row.
     def broadcast_boosts
+      # This commit changed the reactions, so drop any grouping memoized on the
+      # message instance before the two stream renders recompute it once.
+      message.reset_boost_groups
+
       targets = "[id='#{boosts_frame_id}']"
       rendering = { partial: "messages/boosts/boosts", locals: { message: message } }
 
