@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_19_183231) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_21_084230) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -205,7 +205,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_19_183231) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["actor_id"], name: "index_notifications_on_actor_id"
-    t.index ["boost_id"], name: "index_notifications_on_boost_id", where: "boost_id IS NOT NULL"
+    t.index ["boost_id"], name: "index_notifications_on_boost_id", unique: true, where: "boost_id IS NOT NULL"
     t.index ["message_id", "user_id", "activity_type"], name: "index_notifications_on_message_user_type", unique: true, where: "boost_id IS NULL"
     t.index ["message_id"], name: "index_notifications_on_message_id"
     t.index ["user_id", "created_at"], name: "index_notifications_on_user_created"

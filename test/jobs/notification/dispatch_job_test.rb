@@ -62,6 +62,25 @@ class Notification::DispatchJobTest < ActiveSupport::TestCase
       "DemoMode must short-circuit before any notification side effect"
   end
 
+  test "dispatching the same boost twice creates only one notification" do
+    message = @room.messages.create!(
+      body: "Dispatch idempotency",
+      creator: @creator,
+      client_message_id: "dispatch_boost_idempotent"
+    )
+    booster = users(:jason)
+    message.boosts.create!(content: "🎯", booster: booster)
+    clear_enqueued_jobs
+    Notification.where(message: message, activity_type: "boost").destroy_all
+
+    # A boost notifies its creator exactly once; a duplicate dispatch must find
+    # the existing row (via the unique boost_id index) rather than raise or add
+    # a second one.
+    assert_difference -> { Notification.where(message: message, activity_type: "boost").count }, 1 do
+      2.times { Notification::DispatchJob.perform_now(message, only: :boost, actor: booster) }
+    end
+  end
+
   test "boost dispatch via job creates a Notification row matching the inline path" do
     parent = @room.messages.create!(
       body: "Boost target via dispatch",

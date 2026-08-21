@@ -444,13 +444,18 @@ class Message < ApplicationRecord
       boost = boosts.find_by(booster_id: actor.id)
       return unless boost
 
-      notification = Notification.create!(
-        user_id: creator_id,
-        message_id: id,
-        actor_id: actor.id,
-        activity_type: "boost",
-        boost_id: boost.id
-      )
+      # Idempotent on boost_id: rapid re-reactions can enqueue several dispatch
+      # jobs that all resolve to the same surviving boost, and a boost notifies
+      # its single recipient (the creator) exactly once. create_or_find_by leans
+      # on the unique index to settle the race, so a duplicate job finds the
+      # existing row instead of adding a second.
+      notification = Notification.create_or_find_by!(boost_id: boost.id) do |n|
+        n.user_id = creator_id
+        n.message_id = id
+        n.actor_id = actor.id
+        n.activity_type = "boost"
+      end
+      return unless notification.previously_new_record?
 
       Turbo::StreamsChannel.broadcast_append_to(
         [ notification.user, :inbox_activity ],
