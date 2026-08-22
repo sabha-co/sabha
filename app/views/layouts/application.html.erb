@@ -43,7 +43,6 @@
 
     <%= yield :head %>
 
-    <%= cloudflare_turnstile_script_tag %>
     <%= umami_analytics_tag %>
   </head>
 
@@ -108,11 +107,7 @@
               data-action="click->thread-panel#close"></button>
     </div>
 
-    <template id="sidebar-slot" hidden>
-      <%= yield :sidebar %>
-    </template>
-
-    <aside id="sidebar" data-contrast="true" data-controller="toggle-class" data-toggle-class-toggle-class="open" data-toggle-class-close-on-escape-value="true" data-toggle-class-focus-trap-value="true" data-toggle-class-initial-focus-selector-value="#room-search" <%= "data-turbo-permanent" unless Sabha.saas? %>>
+    <aside id="sidebar" data-contrast="true" data-controller="toggle-class" data-toggle-class-toggle-class="open" data-toggle-class-close-on-escape-value="true" data-toggle-class-focus-trap-value="true" data-toggle-class-initial-focus-selector-value="#room-search">
       <%= yield :sidebar %>
     </aside>
 

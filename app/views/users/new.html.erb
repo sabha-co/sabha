@@ -1,6 +1,11 @@
 <% @page_title = "Sign up" %>
 <% @body_class = "signup" %>
 
+<%# Turnstile's script carries data-turbo-track="reload"; loading it only where
+    the widget renders keeps it off every other page, where it would otherwise
+    force a full reload on every Turbo Drive navigation. %>
+<% content_for :head, cloudflare_turnstile_script_tag %>
+
 <div class="auth-ground">
   <section class="auth-card <%= "shake" if flash[:alert] %>">
     <header class="auth-card__header">

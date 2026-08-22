@@ -20,6 +20,24 @@ class SidebarNavigationTest < ApplicationSystemTestCase
     assert_selector ".composer"              # and its composer is present
   end
 
+  # The sidebar is a data-turbo-permanent frame: a room visit swaps the page
+  # body but Turbo transplants the live sidebar node rather than re-rendering
+  # it, so its scroll/unread/collapse state (and a cold-start skeleton refetch)
+  # are never lost. Probe the actual DOM node to prove it's the same element.
+  test "the sidebar frame persists across room navigation instead of reloading" do
+    assert_selector "#user_sidebar", visible: :all
+    page.execute_script("document.querySelector('#user_sidebar').dataset.persistProbe = 'kept'")
+
+    click_on "Designers"
+    dismiss_pwa_install_prompt
+    assert_selector ".message", minimum: 1   # the visit completed
+
+    # Same node carried across the visit → the JS-set probe survives and the
+    # lazy skeleton never reappears.
+    assert_selector "#user_sidebar[data-persist-probe='kept']", visible: :all
+    assert_no_selector "#user_sidebar[src] .sidebar-skeleton"
+  end
+
   test "the footer profile row opens its anchored flyout" do
     trigger = find(".sidebar__me")
 
