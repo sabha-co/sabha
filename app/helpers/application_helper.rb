@@ -42,8 +42,8 @@ module ApplicationHelper
   end
 
   def badge_holders_summary(badge)
-    names = badge.users.map(&:name)
-    names.any? ? names.join(", ") : "No one yet"
+    count = badge.users.count
+    count.zero? ? "No one yet" : pluralize(count, "person")
   end
 
   def badge_deletion_impact(badge)
