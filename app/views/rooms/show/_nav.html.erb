@@ -65,8 +65,8 @@
   <% end %>
 
   <% unless room.thread? || room.direct? %>
-    <%= link_to account_users_path, class: "navbar-members",
-          aria: { label: "#{pluralize(room.active_member_count, "member")} — see everyone in #{Current.account.name}" } do %>
+    <%= link_to room_members_path(room), class: "navbar-members",
+          aria: { label: "#{pluralize(room.active_member_count, "member")} — see everyone in #{room_display_name(room)}" } do %>
       <%= icon_tag "person" %><%= room.active_member_count %>
     <% end %>
   <% end %>
