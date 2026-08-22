@@ -74,7 +74,7 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
       assert_select "a[href=?] span", user_appearance_path, text: "Appearance"
       assert_select "a", text: "Invitations", count: 0
       assert_select "a[href=?] span", edit_account_path, text: "Community settings"
-      assert_select "a[href=?] .sidebar__profile-menu-chip", edit_account_path, text: "STAFF"
+      assert_select "a[href=?] .sidebar__profile-menu-chip", edit_account_path, text: "Admin"
       assert_select "form[action=?][data-controller~='sessions']", session_path do
         assert_select "input[type='hidden'][name='push_subscription_endpoint'][data-sessions-target='pushSubscriptionEndpoint']"
         assert_select "button[data-action~='sessions#logout:prevent']", text: "Log out"

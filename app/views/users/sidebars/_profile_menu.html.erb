@@ -43,7 +43,7 @@
     <% if Current.user.staff? %>
       <%= link_to (Current.user.can_manage_account? ? edit_account_path : account_path), class: "sidebar__profile-menu-item" do %>
         <span>Community settings</span>
-        <span class="sidebar__profile-menu-chip">STAFF</span>
+        <span class="sidebar__profile-menu-chip"><%= Current.user.administrator? ? "Admin" : "Mod" %></span>
       <% end %>
     <% end %>
 
