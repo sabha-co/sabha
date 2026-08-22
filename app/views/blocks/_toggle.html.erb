@@ -5,16 +5,16 @@
                 data: { controller: "form" } do %>
     <div class="setting-row">
       <span class="setting-row__text">
-        <span class="setting-row__title" id="block_user_label">Block messages from this user</span>
+        <span class="setting-row__title">Block messages from this user</span>
         <span class="txt-small txt-muted">They won't be told, and you can undo it here.</span>
       </span>
       <label class="switch">
         <input type="checkbox"
                class="switch__input"
-               aria-labelledby="block_user_label"
                <%= "checked" if is_blocked %>
                data-action="change->form#submit">
         <span class="switch__btn round"></span>
+        <span class="for-screen-reader">Block messages from this user</span>
       </label>
     </div>
   <% end %>

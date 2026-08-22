@@ -58,12 +58,13 @@
       <div class="settings-field new-room-autojoin" data-room-form-target="autoJoinOption" <%= "hidden" unless default_type == "open" %>>
         <div class="setting-row">
           <span class="setting-row__text">
-            <span class="setting-row__title" id="new_room_autojoin_label">Add new members automatically</span>
+            <span class="setting-row__title">Add new members automatically</span>
             <span class="txt-small txt-muted">Everyone who joins the community lands in this room too.</span>
           </span>
           <label class="switch">
-            <%= form.check_box :auto_join, name: "room[auto_join]", class: "switch__input", aria: { labelledby: "new_room_autojoin_label" } %>
+            <%= form.check_box :auto_join, name: "room[auto_join]", class: "switch__input" %>
             <span class="switch__btn round"></span>
+            <span class="for-screen-reader">Add new members automatically</span>
           </label>
         </div>
       </div>

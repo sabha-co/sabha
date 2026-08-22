@@ -6,7 +6,7 @@
 
   <div class="setting-row">
     <span class="setting-row__text">
-      <span class="setting-row__title" id="notification_<%= attribute %>_label"><%= title %></span>
+      <span class="setting-row__title"><%= title %></span>
       <% if hint %>
         <span class="txt-small txt-muted"><%= hint %></span>
       <% end %>
@@ -14,11 +14,11 @@
     <label class="switch">
       <input type="checkbox"
              class="switch__input"
-             aria-labelledby="notification_<%= attribute %>_label"
              <%= "checked" if current %>
              <%= "disabled" if disabled %>
              data-action="change->form#submit">
       <span class="switch__btn"></span>
+      <span class="for-screen-reader"><%= title %></span>
     </label>
   </div>
 <% end %>
