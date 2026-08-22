@@ -31,7 +31,11 @@
                 workspace_sortable_target: "item",
                 workspace_id: workspace.external_id,
                 action: "dragstart->workspace-sortable#dragstart dragover->workspace-sortable#dragover dragend->workspace-sortable#dragend",
-                turbo_prefetch: "false"
+                # Switching workspaces crosses a tenant boundary: force a full
+                # load so Current, the tenant-scoped cable stream, and the
+                # turbo-permanent sidebar are all rebuilt for the new workspace
+                # instead of the permanent frame carrying the old tenant across.
+                turbo: false
               },
               "aria-label": "Switch to #{workspace.name}#{workspace.current? ? ' (current)' : ''}",
               "aria-current": (workspace.current? ? "page" : nil) do %>
