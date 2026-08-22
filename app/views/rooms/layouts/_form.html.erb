@@ -1,4 +1,4 @@
-<%= form_with model: room, data: { controller: "form" } do |form| %>
+<%= form_with model: room, data: { controller: "form", action: "input->form#refreshDirty" } do |form| %>
   <% if Current.user.can_administer?(room) %>
     <div class="settings-field">
       <div class="settings-field__label">
@@ -21,7 +21,7 @@
     </div>
 
     <div class="room-settings-form__submit">
-      <%= submit_room_button_tag %>
+      <%= submit_room_button_tag(dirty_gated: true) %>
     </div>
   <% else %>
     <h1 class="room-settings-form__name"><%= room.name %></h1>

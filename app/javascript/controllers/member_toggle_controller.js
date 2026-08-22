@@ -4,11 +4,12 @@ import { normalize } from "lib/autocomplete/utils"
 
 export default class extends Controller {
   static values = { membersUrl: String, availableUsers: Array }
-  static targets = [ "input" ]
+  static targets = [ "input", "error" ]
 
   search() {
     const query = this.hasInputTarget ? this.inputTarget.value.trim() : ""
 
+    this.#clearError()
     this.#clearSearchResults()
 
     if (query.length >= 2) {
@@ -20,6 +21,8 @@ export default class extends Controller {
     const checkbox = event.target
     const item = checkbox.closest("[data-filter-target='item']")
     const userId = checkbox.value
+
+    this.#clearError()
 
     if (checkbox.checked) {
       await this.#addMember(userId, item, checkbox)
@@ -63,10 +66,12 @@ export default class extends Controller {
       if (!response.ok) {
         checkbox.checked = true
         item.removeAttribute("data-filter-default")
+        this.#showError("Someone has to stay in the room.")
       }
     } catch {
       checkbox.checked = true
       item.removeAttribute("data-filter-default")
+      this.#showError("Couldn't remove them. Try again.")
     }
   }
 
@@ -88,6 +93,16 @@ export default class extends Controller {
 
   #removeFromAvailable(userId) {
     this.availableUsersValue = this.availableUsersValue.filter(u => u.id !== parseInt(userId))
+  }
+
+  #showError(message) {
+    if (!this.hasErrorTarget) return
+    this.errorTarget.textContent = message
+    this.errorTarget.hidden = false
+  }
+
+  #clearError() {
+    if (this.hasErrorTarget) this.errorTarget.hidden = true
   }
 
   #userHTML(user) {

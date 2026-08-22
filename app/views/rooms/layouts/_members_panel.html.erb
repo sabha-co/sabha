@@ -12,6 +12,8 @@
            data-member-toggle-target="input"
            data-action="input->filter#filter input->member-toggle#search search->filter#filter">
 
+    <p class="field-error margin-block-half" data-member-toggle-target="error" role="alert" hidden></p>
+
     <menu id="room_<%= room.id %>_preview_members" class="flex flex-column gap margin-none pad fill-shade border-radius">
       <%= render partial: "rooms/closeds/user", collection: @preview_members, as: :user, locals: { room: room, selected: true, dom_id_prefix: "preview_member" } %>
       <% remaining = room.active_member_count - @preview_members.size %>

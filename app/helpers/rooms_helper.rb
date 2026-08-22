@@ -77,8 +77,9 @@ module RoomsHelper
     end
   end
 
-  def submit_room_button_tag(label = "Save changes")
-    button_tag label, class: "btn settings-save", type: "submit"
+  def submit_room_button_tag(label = "Save changes", dirty_gated: false)
+    button_tag label, class: "btn settings-save", type: "submit",
+      disabled: dirty_gated, data: (dirty_gated ? { form_target: "submit" } : {})
   end
 
   def composer_form_tag(room, form_id: "composer", message_area_id: "message-area", connection_monitor: true, &)
