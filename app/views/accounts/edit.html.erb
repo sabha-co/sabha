@@ -37,8 +37,9 @@
         <% end %>
 
         <% if @account.logo.attached? %>
-          <%= button_to fresh_account_logo_path, method: :delete, class: "btn settings-chip-btn settings-chip-btn--negative" do %>
-            Remove
+          <%= button_to fresh_account_logo_path, method: :delete, class: "btn settings-chip-btn settings-chip-btn--negative", title: "Remove logo", aria: { label: "Remove logo" } do %>
+            <%= icon_tag "trash" %>
+            <span class="for-screen-reader">Remove logo</span>
           <% end %>
         <% end %>
       </div>
