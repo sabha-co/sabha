@@ -22,13 +22,18 @@
 
       <span class="sidebar__workspace-info">
         <span class="sidebar__workspace-name"><%= Current.account.name %></span>
-        <span class="sidebar__workspace-sub"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</span>
+        <%= link_to account_users_path, class: "sidebar__workspace-sub", title: "View members" do %><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now<% end %>
       </span>
 
       <% if Current.user.can_administer? %>
         <%= link_to edit_account_path, class: "btn sidebar__workspace-action", title: "Community settings" do %>
           <%= icon_tag "gear" %>
           <span class="for-screen-reader">Community settings</span>
+        <% end %>
+      <% else %>
+        <%= link_to account_path, class: "btn sidebar__workspace-action", title: "About this community" do %>
+          <%= icon_tag "info" %>
+          <span class="for-screen-reader">About this community</span>
         <% end %>
       <% end %>
     </header>
