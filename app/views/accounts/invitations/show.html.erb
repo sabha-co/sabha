@@ -50,17 +50,17 @@
     </div>
 
     <%= form_with url: account_join_code_path, method: :patch, data: { controller: "form" } do %>
-      <label class="setting-row">
+      <div class="setting-row">
         <span class="setting-row__text">
           <span class="setting-row__title">Expire this link</span>
           <span class="txt-small txt-muted"><%= join_code.expires? ? "#{join_code.expiry_display}." : "It works until you regenerate it." %></span>
         </span>
-        <span class="switch">
+        <label class="switch">
           <input type="checkbox" class="switch__input" <%= "checked" if join_code.expires? %> data-action="change->form#submit">
           <span class="switch__btn round"></span>
           <span class="for-screen-reader"><%= join_code.expires? ? "Make this link permanent" : "Set this link to expire" %></span>
-        </span>
-      </label>
+        </label>
+      </div>
     <% end %>
 
     <div class="setting-row">

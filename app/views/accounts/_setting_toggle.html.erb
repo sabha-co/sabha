@@ -10,18 +10,19 @@
     <%= form.hidden_field attribute, value: !current %>
   <% end %>
 
-  <label class="setting-row">
+  <div class="setting-row">
     <span class="setting-row__text">
-      <span class="setting-row__title"><%= title %></span>
+      <span class="setting-row__title" id="setting_<%= attribute %>_label"><%= title %></span>
       <span class="txt-small txt-muted"><%= hint %></span>
     </span>
-    <span class="switch">
+    <label class="switch">
       <input type="checkbox"
              class="switch__input"
+             aria-labelledby="setting_<%= attribute %>_label"
              <%= "checked" if current %>
              <%= "disabled" if disabled %>
              data-action="change->form#submit">
       <span class="switch__btn"></span>
-    </span>
-  </label>
+    </label>
+  </div>
 <% end %>

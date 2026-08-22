@@ -336,12 +336,22 @@ input[type="radio"]:disabled::after {
    Whole row is the click target. */
 .setting-row {
   align-items: center;
-  cursor: pointer;
+  cursor: default;
   display: flex;
   gap: var(--inline-space);
   justify-content: space-between;
   padding-block: var(--block-space-half);
   text-align: start;
+}
+
+/* Link/button rows navigate as a whole, so the pointer covers the text too. A
+   toggle row is a <label>, but its descriptive text is content, not a control —
+   the pointer belongs on the switch (.switch__btn carries its own), so the row
+   itself keeps the default arrow. A plain <div> row (the accent picker) does the
+   same. */
+a.setting-row,
+button.setting-row {
+  cursor: pointer;
 }
 
 .setting-row__text {

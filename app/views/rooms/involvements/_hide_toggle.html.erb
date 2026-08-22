@@ -1,16 +1,17 @@
 <%= form_with url: room_involvement_path(room, return_to: request.path), method: :put, data: { controller: "form", turbo: false } do %>
   <%= hidden_field_tag :involvement, is_hidden ? "mentions" : "invisible" %>
-  <label class="setting-row">
+  <div class="setting-row">
     <span class="setting-row__text">
-      <span class="setting-row__title">Hide from sidebar</span>
+      <span class="setting-row__title" id="hide_from_sidebar_label">Hide from sidebar</span>
       <span class="txt-small txt-muted">The room stays joined, it just stops taking up space.</span>
     </span>
-    <span class="switch">
+    <label class="switch">
       <input type="checkbox"
              class="switch__input"
+             aria-labelledby="hide_from_sidebar_label"
              <%= "checked" if is_hidden %>
              data-action="change->form#submit">
       <span class="switch__btn round"></span>
-    </span>
-  </label>
+    </label>
+  </div>
 <% end %>

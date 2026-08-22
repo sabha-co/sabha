@@ -4,20 +4,21 @@
 <%= form_with model: settings, url: user_notification_settings_path(user_id: "me"), method: :patch, scope: :user_notification_settings, data: { controller: "form" } do |form| %>
   <%= form.hidden_field attribute, value: !current %>
 
-  <label class="setting-row">
+  <div class="setting-row">
     <span class="setting-row__text">
-      <span class="setting-row__title"><%= title %></span>
+      <span class="setting-row__title" id="notification_<%= attribute %>_label"><%= title %></span>
       <% if hint %>
         <span class="txt-small txt-muted"><%= hint %></span>
       <% end %>
     </span>
-    <span class="switch">
+    <label class="switch">
       <input type="checkbox"
              class="switch__input"
+             aria-labelledby="notification_<%= attribute %>_label"
              <%= "checked" if current %>
              <%= "disabled" if disabled %>
              data-action="change->form#submit">
       <span class="switch__btn"></span>
-    </span>
-  </label>
+    </label>
+  </div>
 <% end %>

@@ -4,7 +4,7 @@
   <div class="settings-card">
     <%= form_with url: room_access_path(room), method: :patch, data: { controller: "form" } do %>
       <%= hidden_field_tag :open, room.is_a?(Rooms::Open) ? "0" : "1" %>
-      <label class="setting-row">
+      <div class="setting-row">
         <span class="setting-row__text">
           <span class="setting-row__title">Open to everyone</span>
           <span class="txt-small txt-muted">
@@ -15,27 +15,27 @@
             <% end %>
           </span>
         </span>
-        <span class="switch">
+        <label class="switch">
           <input type="checkbox" class="switch__input" <%= "checked" if room.is_a?(Rooms::Open) %> data-action="change->form#submit">
           <span class="switch__btn round"></span>
           <span class="for-screen-reader"><%= room.is_a?(Rooms::Open) ? "Make this room invite-only" : "Let anyone join this room" %></span>
-        </span>
-      </label>
+        </label>
+      </div>
     <% end %>
 
     <% if room.is_a?(Rooms::Open) %>
       <%= form_with model: room, data: { controller: "form" } do |form| %>
-        <label class="setting-row">
+        <div class="setting-row">
           <span class="setting-row__text">
             <span class="setting-row__title">Add new members automatically</span>
             <span class="txt-small txt-muted">Everyone who joins the community lands in this room too.</span>
           </span>
-          <span class="switch">
+          <label class="switch">
             <%= form.check_box :auto_join, class: "switch__input", data: { action: "change->form#submit" } %>
             <span class="switch__btn round"></span>
             <span class="for-screen-reader"><%= room.auto_join? ? "Stop adding new members automatically" : "Add new members automatically" %></span>
-          </span>
-        </label>
+          </label>
+        </div>
       <% end %>
     <% else %>
       <div class="setting-row setting-row--disabled">
