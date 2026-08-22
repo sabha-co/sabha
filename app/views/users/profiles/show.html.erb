@@ -13,7 +13,7 @@
     <div class="auth-card__alert" style="margin: 0 0 16px;"><div><%= flash[:alert] %></div></div>
   <% end %>
 
-  <div class="settings-card" style="view-transition-name: avatar-<%= @user.id %>">
+  <div class="settings-card">
     <div class="settings-avatar-row" data-controller="upload-preview">
       <%= profile_form_with @user do |form| %>
         <label class="btn avatar input--file">

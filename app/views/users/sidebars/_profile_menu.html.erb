@@ -5,7 +5,7 @@
           data-popover-target="trigger" data-action="popover#toggle">
     <span class="sidebar__me-avatar">
       <figure class="avatar" style="--avatar-size: 32px;">
-        <%= avatar_image_tag(Current.user, size: 32, style: "view-transition-name: avatar-#{Current.user.id}", loading: :lazy) %>
+        <%= avatar_image_tag(Current.user, size: 32, loading: :lazy) %>
       </figure>
       <span class="status-dot status--active sidebar__me-dot" aria-hidden="true"></span>
     </span>
