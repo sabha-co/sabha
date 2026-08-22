@@ -5,7 +5,7 @@ module SettingsHelper
       [ :appearance, "Appearance", user_appearance_path ],
       [ :notifications, "Notifications", edit_user_notification_settings_path ],
       *(Current.account.settings.allow_users_to_create_invite_links? ? [ [ :personal_invitations, "Invitations", user_invitations_path ] ] : []),
-      [ :account_data, "Account", user_account_data_path ]
+      [ :account, "Account", user_account_path ]
     ]
   end
 

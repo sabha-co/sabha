@@ -1,12 +1,12 @@
 require "test_helper"
 
-class Users::AccountDataControllerTest < ActionDispatch::IntegrationTest
+class Users::AccountsControllerTest < ActionDispatch::IntegrationTest
   setup do
     sign_in :david
   end
 
   test "show renders session transfer and sign-out inside the settings shell" do
-    get user_account_data_url
+    get user_account_url
 
     assert_response :success
     assert_select ".settings-nav__item[aria-current=page]", text: "Account"
