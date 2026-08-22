@@ -18,15 +18,13 @@ class CacheTenantingTest < ActiveSupport::TestCase
   end
 
   test "tenant_cache_key includes tenant prefix in SaaS mode" do
-    controller = UsersController.new
-
     ApplicationRecord.with_tenant(@tenant_a) do
-      key = controller.send(:tenant_cache_key, "users/online_count")
+      key = ApplicationRecord.tenant_cache_key("users/online_count")
       assert_equal "#{@tenant_a}/users/online_count", key
     end
 
     ApplicationRecord.with_tenant(@tenant_b) do
-      key = controller.send(:tenant_cache_key, "users/online_count")
+      key = ApplicationRecord.tenant_cache_key("users/online_count")
       assert_equal "#{@tenant_b}/users/online_count", key
     end
   end
@@ -54,11 +52,9 @@ class CacheTenantingTest < ActiveSupport::TestCase
   end
 
   test "tenant_cache_key returns raw key without tenant context" do
-    controller = UsersController.new
-
     # Without tenant context, key should still work (for self-hosted mode)
     ApplicationRecord.without_tenant do
-      key = controller.send(:tenant_cache_key, "users/online_count")
+      key = ApplicationRecord.tenant_cache_key("users/online_count")
       assert_equal "users/online_count", key
     end
   end

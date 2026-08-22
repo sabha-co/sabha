@@ -31,7 +31,7 @@ class Rooms::DirectSplitTest < ActionDispatch::IntegrationTest
 
     get room_url(group)
 
-    assert_select ".navbar-dm__status", text: "3 members"
+    assert_select "a.navbar-people", text: /3 people/
     assert_select "a", text: "View profile", count: 0
   end
 
