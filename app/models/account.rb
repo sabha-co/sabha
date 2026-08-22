@@ -6,7 +6,7 @@ class Account < ApplicationRecord
 
   # The workspace accent drives every interactive tint via [data-accent] on the
   # html element (see app/assets/stylesheets/application/colors.css).
-  ACCENTS = %w[indigo ink forest rust plum].freeze
+  ACCENTS = %w[indigo ink forest rust plum teal ocean amber].freeze
 
   InvalidLogoType = Class.new(StandardError)
 

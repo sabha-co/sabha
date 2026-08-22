@@ -796,11 +796,11 @@
   --btn-color: var(--color-negative);
 }
 
-/* Accent picker: five paint-chip swatches, ring on the chosen one */
+/* Accent picker: eight paint-chip swatches in a 4×2 grid, ring on the chosen one */
 .accent-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: grid;
+  gap: 14px 18px;
+  grid-template-columns: repeat(4, max-content);
 }
 
 .accent-swatch {

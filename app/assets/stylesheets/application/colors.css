@@ -133,6 +133,27 @@
   --lch-accent-lift: 71.8% 0.110 317;
 }
 
+:root[data-accent="teal"] {
+  --lch-accent: 50% 0.095 192;
+  --lch-accent-bg: 95.2% 0.015 192;
+  --lch-accent-bd: 88.4% 0.032 192;
+  --lch-accent-lift: 73.5% 0.105 192;
+}
+
+:root[data-accent="ocean"] {
+  --lch-accent: 50% 0.150 253;
+  --lch-accent-bg: 95.3% 0.019 253;
+  --lch-accent-bd: 88.6% 0.045 253;
+  --lch-accent-lift: 67% 0.130 253;
+}
+
+:root[data-accent="amber"] {
+  --lch-accent: 52% 0.110 80;
+  --lch-accent-bg: 95.2% 0.016 80;
+  --lch-accent-bd: 88.2% 0.036 80;
+  --lch-accent-lift: 74% 0.120 80;
+}
+
 /* Dark scopes — bind the --dark-* primitives declared above. Keep the two
    blocks identical; values belong in the --dark-* declarations, never here.
    These come after the accent scopes so the accent lift wins on dark. */

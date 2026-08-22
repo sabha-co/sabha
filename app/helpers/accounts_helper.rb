@@ -28,7 +28,10 @@ module AccountsHelper
     "ink"    => "#2F3542",
     "forest" => "#1F6F52",
     "rust"   => "#A64B28",
-    "plum"   => "#7B3F8F"
+    "plum"   => "#7B3F8F",
+    "teal"   => "#007471",
+    "ocean"  => "#0963B5",
+    "amber"  => "#8A6000"
   }.freeze
 
   def accent_swatch_color(accent)
