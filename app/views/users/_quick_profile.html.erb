@@ -2,35 +2,48 @@
 <div class="quick-profile flex flex-column gap">
   <% if user.bot? %>
     <div class="flex align-start gap">
-      <div class="avatar avatar--small">
-        <%= avatar_image_tag(user, alt: "") %>
-      </div>
-      <div class="flex flex-column gap-half">
+      <span class="quick-profile__avatar">
+        <span class="avatar"><%= avatar_image_tag(user, alt: "") %></span>
+      </span>
+      <div class="flex flex-column gap-half" style="min-width: 0;">
         <div class="flex align-center gap-half">
           <strong class="txt-medium"><%= user.name %></strong>
-          <span class="txt-x-small txt-muted" title="Bot"><%= icon_tag "bot" %></span>
+          <%= render "users/role_badge", user: user %>
         </div>
-        <% if !user.active? %>
-          <span class="txt-small txt-muted">No longer active</span>
+        <% if user.bio.present? %>
+          <p class="txt-small txt-lighter margin-none" style="line-height: 1.35;"><%= auto_link truncate(user.bio, length: 80) %></p>
         <% end %>
+        <span class="txt-x-small txt-muted">Added <%= user.joined_at.strftime("%b %Y") %><%= " · webhook configured" if user.webhook.present? %></span>
       </div>
     </div>
-    <% if user.active? %>
-      <%= link_to_direct_room_with user %>
-    <% end %>
+
+    <div class="flex align-center gap">
+      <%= link_to user_path(user), class: "btn txt-small", data: { turbo_frame: "_top" } do %>
+        <%= icon_tag "person" %>
+        <span>View profile</span>
+      <% end %>
+      <% if Current.user.administrator? %>
+        <%= link_to edit_account_bot_path(user), class: "btn btn--reversed txt-small", data: { turbo_frame: "_top" } do %>
+          <%= icon_tag "gear" %>
+          <span>Manage bot</span>
+        <% end %>
+      <% elsif user.active? %>
+        <%= link_to_direct_room_with user %>
+      <% end %>
+    </div>
 
   <% elsif user.active? %>
     <div class="flex align-start gap">
-      <%= link_to user_path(user), data: { turbo_frame: "_top" } do %>
-        <div class="avatar avatar--small">
+      <span class="quick-profile__avatar">
+        <%= link_to user_path(user), class: "avatar", data: { turbo_frame: "_top" } do %>
           <%= avatar_image_tag(user, alt: "") %>
-        </div>
-      <% end %>
+        <% end %>
+        <% if (dot_class = online_status_class(user)) %>
+          <span class="quick-profile__dot <%= dot_class %>" aria-hidden="true"></span>
+        <% end %>
+      </span>
       <div class="flex flex-column gap-half" style="min-width: 0;">
         <div class="flex align-center gap-half">
-          <% if (dot_class = online_status_class(user)) %>
-            <span class="status-dot <%= dot_class %>" aria-hidden="true"></span>
-          <% end %>
           <strong class="txt-medium">
             <%= link_to user.name, user_path(user), title: user.title, class: "txt-undecorated txt-primary", data: { turbo_frame: "_top" } %>
           </strong>
@@ -42,19 +55,15 @@
       </div>
     </div>
 
-    <div class="flex flex-column gap-half">
-      <div class="flex align-center justify-space-between pad-block-half border-top border-bottom">
-        <span class="txt-x-small txt-muted txt-label">Joined <%= user.joined_at.strftime("%b %Y") %></span>
-        <% if user.has_social_links? %>
-          <span class="flex align-center gap-half">
-            <%= render "users/social_links", user: user %>
-          </span>
-        <% end %>
-      </div>
-
+    <div class="flex align-center justify-space-between pad-block-half border-top">
       <div class="flex gap">
-        <%= render "users/user_stats", user: user, message_count: user.total_message_count, streak: user.current_streak %>
+        <%= render "users/user_stats", user: user, message_count: user.total_message_count, streak: user.current_streak, show_joined: true %>
       </div>
+      <% if user.has_social_links? %>
+        <span class="flex align-center gap-half">
+          <%= render "users/social_links", user: user %>
+        </span>
+      <% end %>
     </div>
 
     <div class="flex align-center gap">
@@ -77,13 +86,20 @@
 
   <% else %>
     <div class="flex align-start gap">
-      <div class="avatar avatar--small">
-        <%= avatar_image_tag(user, alt: "") %>
-      </div>
+      <span class="quick-profile__avatar quick-profile__avatar--muted">
+        <span class="avatar"><%= avatar_image_tag(user, alt: "") %></span>
+      </span>
       <div class="flex flex-column gap-half">
         <strong class="txt-medium"><%= user.name %></strong>
         <span class="txt-small txt-muted">No longer active</span>
       </div>
+    </div>
+
+    <div class="flex align-center gap">
+      <%= link_to user_path(user), class: "btn txt-small", data: { turbo_frame: "_top" } do %>
+        <%= icon_tag "person" %>
+        <span>View profile</span>
+      <% end %>
     </div>
   <% end %>
 </div>

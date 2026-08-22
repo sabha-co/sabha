@@ -4,6 +4,35 @@
   width: 320px;
 }
 
+/* Avatar frame: a non-clipping wrapper so the presence dot can overhang the
+   avatar's rounded corner (the .avatar itself is overflow:hidden). */
+.quick-profile__avatar {
+  --avatar-size: 52px;
+  position: relative;
+  flex: none;
+  display: inline-flex;
+}
+
+.quick-profile__avatar--muted {
+  opacity: 0.55;
+}
+
+.quick-profile__dot {
+  position: absolute;
+  inset-inline-end: -2px;
+  inset-block-end: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid var(--color-bg);
+  box-sizing: border-box;
+}
+
+/* Footer actions share the width evenly. */
+.quick-profile > .flex > .btn {
+  flex: 1;
+}
+
 /* Social link base styles (full profile page) */
 .social-link {
   display: flex;
@@ -27,13 +56,12 @@
 
 /* Social link compact styles (quick profile popup) */
 .quick-profile .social-link {
-  width: 44px;
-  height: 44px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   background: transparent;
   border: none;
-  opacity: 0.5;
-  transition: opacity 120ms ease, background-color 120ms ease;
+  transition: background-color 120ms ease;
 }
 
 .quick-profile .social-link img {
@@ -43,7 +71,6 @@
 }
 
 .quick-profile .social-link:hover {
-  opacity: 1;
   background: var(--color-border);
 }
 
