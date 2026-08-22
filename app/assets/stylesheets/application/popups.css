@@ -168,6 +168,12 @@
     padding: 0 10px;
     text-align: start;
     text-decoration: none;
+
+    /* Logout is a <button>, so the base reset would ring it with a hover
+       box-shadow the sibling <a> rows never get. Drop it so every row hovers
+       with the same flat fill. */
+    --hover-size: 0;
+    --hover-filter: none;
 }
 
 .sidebar__profile-summary,

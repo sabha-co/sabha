@@ -368,6 +368,11 @@
   padding: 4px 6px;
   text-align: start;
 
+  /* A <button>, so the base reset would ring it with a hover box-shadow the
+     sidebar's <a> room rows never get. Drop it for a matching flat fill. */
+  --hover-size: 0;
+  --hover-filter: none;
+
   &[aria-expanded="true"] {
     background-color: var(--color-bg-hover);
   }
