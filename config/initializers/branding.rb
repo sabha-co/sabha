@@ -100,8 +100,8 @@ Rails.application.configure do
   config.x.branding.mailer_from_name = ENV.fetch("MAILER_FROM_NAME") { config.x.branding.app_name }
   config.x.branding.mailer_from_email = ENV.fetch("MAILER_FROM_EMAIL") { config.x.branding.support_email }
 
-  config.x.branding.theme_color = ENV.fetch("THEME_COLOR", "#1d4ed8")
-  config.x.branding.background_color = ENV.fetch("BACKGROUND_COLOR", "#ffffff")
+  config.x.branding.theme_color = ENV.fetch("THEME_COLOR", "#1d4ed8").presence || "#1d4ed8"
+  config.x.branding.background_color = ENV.fetch("BACKGROUND_COLOR", "#ffffff").presence || "#ffffff"
 
   config.x.branding.umami_website_id = ENV.fetch("UMAMI_WEBSITE_ID", nil)
   config.x.branding.umami_host = ENV.fetch("UMAMI_HOST", "cloud.umami.is")
