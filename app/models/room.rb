@@ -209,6 +209,13 @@ class Room < ApplicationRecord
     users
   end
 
+  # The community members who could still be added here — everyone active and
+  # verified who isn't already in the room. Mirrors mentionable_users as the
+  # membership picker's counterpart.
+  def addable_users
+    User.active.verified.where.not(id: visible_users.active.select(:id))
+  end
+
   def active_member_count
     Rails.cache.fetch(active_member_count_cache_key, expires_in: 5.minutes) do
       memberships.visible.joins(:user).merge(User.active).count

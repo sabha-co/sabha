@@ -1,0 +1,13 @@
+<% if @members.any? %>
+  <div class="member-tab-group-label txt-x-small txt-muted txt-label">In this room</div>
+  <%= render partial: "rooms/members/member_row", collection: @members, as: :user, locals: { room: @room, editable: @editable } %>
+<% end %>
+
+<% if @addables&.any? %>
+  <div class="member-tab-group-label txt-x-small txt-muted txt-label">Add to room</div>
+  <%= render partial: "rooms/members/addable_user", collection: @addables, as: :user, locals: { room: @room } %>
+<% end %>
+
+<% if @members.none? && @addables.blank? %>
+  <div class="txt-small txt-subtle txt-align-center pad">No one matches</div>
+<% end %>

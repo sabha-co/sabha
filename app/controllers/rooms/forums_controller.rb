@@ -25,7 +25,6 @@ class Rooms::ForumsController < RoomsController
   end
 
   def edit
-    load_users_for_access_management
   end
 
   def update

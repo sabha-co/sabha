@@ -1,10 +1,8 @@
 <%= turbo_frame_tag :room_members do %>
-  <%= user_filter_menu_tag do %>
-    <%= user_filter_search_tag if @room.active_member_count > 20 %>
-
+  <div class="member-tab-list">
     <div id="room_members_list" contents>
-      <%= render partial: "rooms/threads/user", collection: @members, as: :user, locals: { room: @room } %>
+      <%= render partial: "rooms/members/member_row", collection: @members, as: :user, locals: { room: @room, editable: @editable } %>
       <%= render "rooms/members/next_page_container", page: @page.next_param unless @page.last? %>
     </div>
-  <% end %>
+  </div>
 <% end %>

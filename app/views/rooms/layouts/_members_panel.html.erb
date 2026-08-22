@@ -1,32 +1,26 @@
-<% if Current.user.can_administer?(room) && room.sidebar_room? %>
-  <div data-controller="filter member-toggle"
-       data-member-toggle-members-url-value="<%= room_members_path(room) %>"
-       data-member-toggle-available-users-value="<%= @available_users_json.to_json %>">
+<div data-controller="member-editor" data-member-editor-members-url-value="<%= room_members_path(room) %>">
+  <% if Current.user.can_administer?(room) && room.is_a?(Rooms::Closed) %>
     <input type="search"
            autocorrect="off"
            autocomplete="off"
            data-1p-ignore="true"
            class="input fill full-width margin-block"
            placeholder="Find people to add or remove"
-           data-filter-target="input"
-           data-member-toggle-target="input"
-           data-action="input->filter#filter input->member-toggle#search search->filter#filter">
+           data-member-editor-target="input"
+           data-action="input->member-editor#search">
 
-    <p class="field-error margin-block-half" data-member-toggle-target="error" role="alert" hidden></p>
+    <p class="field-error margin-block-half" data-member-editor-target="error" role="alert" hidden></p>
 
-    <menu id="room_<%= room.id %>_preview_members" class="flex flex-column gap margin-none pad fill-shade border-radius">
-      <%= render partial: "rooms/closeds/user", collection: @preview_members, as: :user, locals: { room: room, selected: true, dom_id_prefix: "preview_member" } %>
-      <% remaining = room.active_member_count - @preview_members.size %>
-      <% if remaining > 0 %>
-        <li class="txt-small txt-subtle txt-align-center margin-none" data-filter-target="summary">
-          and <%= pluralize(remaining, "more member") %>
-        </li>
-      <% end %>
-      <%= render partial: "rooms/closeds/user", collection: @remaining_members, as: :user, locals: { room: room, selected: true, default_hidden: true } %>
-    </menu>
-  </div>
-<% else %>
-  <menu class="flex flex-column gap margin-none pad fill-shade border-radius">
-    <%= render partial: "rooms/threads/user", collection: @preview_members, as: :user, locals: { room: room } %>
-  </menu>
-<% end %>
+    <div class="member-tab-list margin-block-half" data-member-editor-target="results" hidden></div>
+  <% elsif Current.user.can_administer?(room) && room.is_a?(Rooms::Open) %>
+    <p class="txt-small txt-muted margin-block-half">Anyone in the community can join this room, so its members aren't managed here. Make the room private to choose who's in it.</p>
+  <% end %>
+
+  <%# Eager, not lazy: this frame starts inside the hidden Members tab panel, so a
+      lazy frame never intersects the viewport and never loads. Eager fetches on
+      connect regardless of visibility, so the roster is ready by the time the tab
+      is opened. %>
+  <%= turbo_frame_tag :room_members, src: room_members_path(room), data: { member_editor_target: "roster" } do %>
+    <div class="txt-align-center pad"><div class="spinner"></div></div>
+  <% end %>
+</div>

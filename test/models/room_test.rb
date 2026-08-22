@@ -269,6 +269,14 @@ class RoomTest < ActiveSupport::TestCase
     end
   end
 
+  test "addable_users excludes current members and unverified bots" do
+    room = rooms(:designers)
+
+    assert_includes room.addable_users, users(:rachel)
+    assert_not_includes room.addable_users, users(:jason)
+    assert_not_includes room.addable_users, users(:bender)
+  end
+
   test "accept_join! grants membership and posts joined event" do
     room = rooms(:pets)
     user = users(:kevin)

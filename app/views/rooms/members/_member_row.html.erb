@@ -1,0 +1,23 @@
+<%# locals: (user:, room:, editable: false) -%>
+<div class="list-row" data-member-editor-target="member" data-member-id="<%= user.id %>">
+  <figure class="list-row__avatar avatar">
+    <%= avatar_image_tag user, alt: "" %>
+  </figure>
+
+  <div class="list-row__body">
+    <span class="list-row__title">
+      <%= user.name %><% if user == Current.user %> <span class="txt-x-small txt-muted">(you)</span><% end %>
+    </span>
+  </div>
+
+  <% if user == room.creator %>
+    <span class="roster-chip flex-item-no-shrink">Creator</span>
+  <% end %>
+
+  <% if editable && user != Current.user %>
+    <div class="list-row__trailing">
+      <%= button_tag "Remove", type: "button", class: "btn settings-chip-btn flex-item-no-shrink",
+            data: { action: "member-editor#remove", user_id: user.id } %>
+    </div>
+  <% end %>
+</div>
