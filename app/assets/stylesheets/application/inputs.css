@@ -360,6 +360,19 @@ input[type="radio"]:disabled::after {
   margin-inline-start: var(--block-space);
 }
 
+/* On the narrowest phones a wide trailing control — a three-option segmented
+   control — plus its label can exceed the row width. Let the row wrap so the
+   control drops to its own line, right-aligned, instead of overflowing. */
+@media (max-width: 480px) {
+  .setting-row {
+    flex-wrap: wrap;
+  }
+
+  .setting-row > .segmented-control {
+    margin-inline-start: auto;
+  }
+}
+
 .switch__btn {
   background-color: var(--color-border-darker);
   border-radius: 2em;
