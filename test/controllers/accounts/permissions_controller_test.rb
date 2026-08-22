@@ -40,7 +40,7 @@ class Accounts::PermissionsControllerTest < ActionDispatch::IntegrationTest
 
   private
     def assert_visible_toggle(title)
-      row = css_select("label.setting-row").find { |element| element.text.include?(title) }
+      row = css_select(".setting-row").find { |element| element.text.include?(title) }
 
       assert row, "expected a visible setting row for #{title.inspect}"
       assert_select row, "input.switch__input[type=checkbox]", count: 1
