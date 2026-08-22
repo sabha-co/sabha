@@ -304,10 +304,40 @@
   margin: 0 0 14px;
 }
 
-/* Favourite + Settings sit as two equal buttons under the description. */
+/* Favourite + Settings sit as two equal buttons under the description; the
+   involvement toggle wraps to its own full-width row beneath them. */
 .roster__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+/* The involvement toggle, moved here from the room header, is dressed to match
+   the action buttons. Its inner turbo-frame is swapped live on toggle, so the
+   styling hangs on this wrapper and the button, not the frame. */
+.roster__involvement {
+  flex-basis: 100%;
+}
+
+.roster__involvement .btn {
+  --btn-background: transparent;
+  --btn-border-color: var(--color-border);
+
+  color: var(--color-text-muted);
+  font-size: 0.78125rem;
+  inline-size: 100%;
+  padding: 7px;
+
+  @media (any-hover: hover) {
+    &:hover {
+      --btn-background: var(--color-bg-hover);
+    }
+  }
+}
+
+.roster__involvement img {
+  block-size: 17px;
+  inline-size: 17px;
 }
 
 .roster__action {

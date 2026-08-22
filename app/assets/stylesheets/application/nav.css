@@ -235,6 +235,18 @@
   color: var(--color-text-subtle);
 }
 
+/* The involvement toggle (DMs only up here) rides the bar as an icon; its level
+   label is hidden — it overflowed the mobile header — and surfaced in the roster
+   panel instead. Visually hidden, still read aloud. */
+#nav .navbar-actions .btn:is(.mentions, .everything, .nothing, .invisible) span {
+  block-size: 1px;
+  clip-path: inset(50%);
+  inline-size: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+}
+
 .top-banner {
   display: flex;
   align-items: center;

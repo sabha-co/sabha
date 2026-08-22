@@ -28,6 +28,12 @@
       <%= link_to edit_room_path(@room), class: "roster__action", data: { turbo_frame: "_top" } do %>
         <%= icon_tag "gear" %> Settings
       <% end %>
+
+      <% unless @room.sub_room? %>
+        <div class="roster__involvement">
+          <%= render "rooms/involvements/involvement", room: @room, involvement: @membership.involvement, from_sidebar: false %>
+        </div>
+      <% end %>
     </div>
 
     <% if @roster.any_present? %>

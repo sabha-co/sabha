@@ -84,11 +84,16 @@
       <% end %>
 
       <% unless room.thread? %>
-        <%= turbo_frame_tag dom_id(room, :involvement) do %>
-          <%= button_to_change_involvement(room, @membership.involvement) %>
+        <% if room.direct? %>
+          <%# DMs have no roster panel, so the toggle rides the bar as an icon
+              (its level label is hidden by CSS to spare the mobile header). %>
+          <%= turbo_frame_tag dom_id(room, :involvement) do %>
+            <%= button_to_change_involvement(room, @membership.involvement) %>
+          <% end %>
+        <% else %>
+          <%# The involvement toggle now lives inside the roster panel. %>
+          <%= link_to_room_roster(room) %>
         <% end %>
-
-        <%= link_to_room_roster(room) unless room.direct? %>
       <% end %>
     </div>
   <% end %>
