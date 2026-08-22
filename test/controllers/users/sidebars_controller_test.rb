@@ -69,10 +69,10 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     get user_sidebar_url
 
     assert_select ".sidebar__profile-popover" do
-      assert_select "a[href=?]", user_path(users(:david)), text: "View profile"
+      assert_select "a.sidebar__profile-summary[href=?]", user_path(users(:david))
       assert_select "a[href=?]", user_profile_path, text: "Your settings"
       assert_select "a[href=?] span", user_appearance_path, text: "Appearance"
-      assert_select "a[href=?]", account_invitations_path, text: "Invitations"
+      assert_select "a", text: "Invitations", count: 0
       assert_select "a[href=?] span", edit_account_path, text: "Community settings"
       assert_select "a[href=?] .sidebar__profile-menu-chip", edit_account_path, text: "STAFF"
       assert_select "form[action=?][data-controller~='sessions']", session_path do
@@ -93,10 +93,10 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     get user_sidebar_url
 
     assert_select ".sidebar__profile-popover" do
-      assert_select "a[href=?]", user_path(users(:kevin)), text: "View profile"
+      assert_select "a.sidebar__profile-summary[href=?]", user_path(users(:kevin))
       assert_select "a[href=?]", user_profile_path, text: "Your settings"
       assert_select "a[href=?] span", user_appearance_path, text: "Appearance"
-      assert_select "a[href=?]", account_path, text: "Invitations"
+      assert_select "a[href=?]", user_invitations_path, text: "Invitations"
       assert_select "a", text: "Community settings", count: 0
       assert_select "form[action=?] button", session_path, text: "Log out"
     end
