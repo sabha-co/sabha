@@ -6,9 +6,11 @@ class AddBotKeyDigestToUsers < ActiveRecord::Migration[8.2]
   # bots keep authenticating unchanged: we backfill the digest of their current
   # derivable key, so the key they already hold still hashes to a match.
   def up
-    add_column :users, :bot_key_digest, :string
-    add_column :users, :bot_key_rotated_at, :datetime
-    add_index :users, :bot_key_digest, unique: true
+    # Guarded so a tenant DB that already carries the column (created from a
+    # newer schema, or drifted) doesn't abort the whole fleet migrate.
+    add_column :users, :bot_key_digest, :string unless column_exists?(:users, :bot_key_digest)
+    add_column :users, :bot_key_rotated_at, :datetime unless column_exists?(:users, :bot_key_rotated_at)
+    add_index :users, :bot_key_digest, unique: true unless index_exists?(:users, :bot_key_digest)
 
     # bot_token is set only on bots, so its presence identifies them without
     # coupling this migration to the role enum.
