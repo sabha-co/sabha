@@ -112,10 +112,74 @@
   margin: 6px 0 0;
 }
 
+/* Grouped card (Profile): section headings break one long form into Identity,
+   About, Links, and Password, divided by a hairline. Fields inside a group are
+   evenly spaced; a .settings-fields row pairs two fields side by side, folding
+   to one column on narrow widths. */
+.settings-group + .settings-group {
+  border-block-start: 1px solid var(--color-border);
+  margin-block-start: 16px;
+  padding-block-start: 16px;
+}
+
+.settings-group > * + * {
+  margin-block-start: 14px;
+}
+
+.settings-group__heading {
+  font-size: 0.78125rem;
+  font-weight: 700;
+}
+
+.settings-fields {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Grid gap owns the spacing between paired fields */
+.settings-fields > .settings-field + .settings-field {
+  margin-block-start: 0;
+}
+
+@media (max-width: 480px) {
+  .settings-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settings-actions {
+  margin-block-start: 18px;
+}
+
+/* QR code shown in a Show-code scrim dialog (session transfer, invite link) */
+.settings-qr {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: block;
+  inline-size: 100%;
+  margin-block-end: 12px;
+}
+
 /* The bot invite-code row is a bare flex row rendered straight under its
    explainer, so give it a clear break from the hint above it. */
 .settings-field #bot_invite_code {
   margin-block-start: 14px;
+}
+
+/* Personal invite link lives in a turbo-frame (regenerated in place). Give the
+   frame its own block box — turbo-frame is display:contents globally — so the
+   card's 14px block padding lands on the content, and draw the hairline between
+   the link group and the actions row ourselves (the card only spaces its own
+   direct children, and the frame is a single one). */
+.invite-frame {
+  display: block;
+}
+
+.invite-frame > .invite-link + .setting-row {
+  border-block-start: 1px solid var(--color-border);
+  margin-block-start: 14px;
+  padding-block-start: 14px;
 }
 
 /* Invitations: join-link card internals. The head and the URL row form one

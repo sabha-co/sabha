@@ -1,6 +1,7 @@
 <% @page_title = "Invitations" %>
 <% join_code = @account.join_code %>
 <% url = join_url(join_code.code) %>
+<% qr_id = Base64.urlsafe_encode64(url) %>
 
 <%= render layout: "settings/shell", locals: { section: :invitations } do %>
   <header class="settings-header">
@@ -10,7 +11,7 @@
   </header>
 
   <div class="settings-card">
-    <div class="invite-link">
+    <div class="invite-link" data-controller="dialog">
       <div class="invite-link__head">
         <span class="setting-row__text">
           <span class="setting-row__title" id="invite_label">Join link</span>
@@ -29,20 +30,23 @@
       <div class="invite-url-row">
         <input type="text" class="invite-url-input" id="invite_url" value="<%= url %>" aria-labelledby="invite_label" readonly>
 
-        <%= button_to_copy_to_clipboard(url, btn_class: "btn settings-chip-btn") do %>
+        <%= button_to_copy_to_clipboard(url, btn_class: "btn settings-chip-btn", toast: "Join link copied") do %>
           Copy
         <% end %>
 
-        <%= link_to_zoom_qr_code(url, btn_class: "btn settings-chip-btn") do %>
+        <button type="button" class="btn settings-chip-btn" data-action="dialog#open">
           <%= icon_tag "qr-code" %>
           <span class="for-screen-reader">Show join link QR code</span>
-        <% end %>
+        </button>
 
         <%= web_share_session_button(url, "Link to join #{Current.account.name}", "Hit this link to join me in #{Current.account.name} and start chatting.", btn_class: "btn settings-chip-btn") do %>
           <%= icon_tag "share" %>
           <span class="for-screen-reader">Share join link</span>
         <% end %>
       </div>
+
+      <%= render "shared/qr_dialog", qr_id: qr_id, title: "Scan to join",
+            note: "Scan from another device to join #{Current.account.name}." %>
     </div>
 
     <%= form_with url: account_join_code_path, method: :patch, data: { controller: "form" } do %>

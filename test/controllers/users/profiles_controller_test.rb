@@ -47,19 +47,27 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_select "[data-action*=?]", "theme#setLight", count: 0
   end
 
-  test "show includes an optional password field" do
+  test "profile fields are grouped into labelled sections" do
     get user_profile_url
 
-    assert_select ".settings-field__label", text: "Links"
-    assert_select ".settings-field__hint", text: /full address/, count: 1
-    assert_select "input[type=password][name='user[password]'][minlength='8']", count: 1
+    %w[ Identity About Links ].each do |heading|
+      assert_select ".settings-group__heading", text: heading
+    end
+    assert_select ".settings-fields", minimum: 2
   end
 
-  test "optional password updates without changing the email address" do
-    patch user_profile_url, params: { user: { password: "new secure password" } }
+  test "show renders the Links group with its hint" do
+    get user_profile_url
 
-    assert_redirected_to user_profile_url
-    assert @user.reload.authenticate("new secure password")
+    assert_select ".settings-group__heading", text: "Links"
+    assert_select ".settings-field__hint", text: /full address/, count: 1
+  end
+
+  test "the password field is not on the profile page" do
+    get user_profile_url
+
+    assert_select ".settings-group__heading", text: "Password", count: 0
+    assert_select "input[type=password]", count: 0
   end
 
   test "optional profile fields can be cleared" do

@@ -1,33 +1,32 @@
 <% url = session_transfer_url(user.transfer_id) %>
+<% qr_id = Base64.urlsafe_encode64(url) %>
 
-<div class="flex flex-column gap" style="--row-gap: 0.5em">
-  <div class="setting-row" style="padding-block: 0;">
-    <span class="setting-row__text">
-      <span class="setting-row__title" id="session_transfer_label">
-        <% if Current.user != user %>
-          Share to get them back into their account
-        <% else %>
-          Sign in on another device
-        <% end %>
-      </span>
-      <span class="txt-small txt-muted">Transfer this session with a private link or QR code.</span>
+<div class="setting-row" data-controller="copy-to-clipboard dialog"
+     data-copy-to-clipboard-content-value="<%= url %>"
+     data-copy-to-clipboard-label-value="Copied">
+  <span class="setting-row__text">
+    <span class="setting-row__title" id="session_transfer_label">
+      <% if Current.user != user %>
+        Share to get them back into their account
+      <% else %>
+        Sign in on another device
+      <% end %>
     </span>
+    <span class="txt-small txt-muted">Transfer this session with a QR code, or copy the link.</span>
+  </span>
 
-    <div class="flex align-center gap-half flex-item-no-shrink">
-      <%= link_to_zoom_qr_code(url) do %>
-        <span class="for-screen-reader">Show auto-login QR code</span>
-        <%= icon_tag "qr-code" %>
-      <% end %>
+  <div class="flex align-center gap-half flex-item-no-shrink">
+    <button class="btn settings-chip-btn" data-action="copy-to-clipboard#copy">
+      <span data-copy-to-clipboard-target="label">Copy link</span>
+    </button>
 
-      <%= button_to_copy_to_clipboard(url) do %>
-        <span class="for-screen-reader">Copy auto-login link</span>
-        <%= icon_tag "copy-paste" %>
-      <% end %>
-
-      <%= web_share_session_button(url, "Your sign-in link", "This is your own private sign-in URL, DO NOT SHARE IT. Use it to sign-in on another device or if you get locked out.") do %>
-        <span class="for-screen-reader">Share auto-login link</span>
-        <%= icon_tag "share" %>
-      <% end %>
-    </div>
+    <button type="button" class="btn settings-chip-btn" data-action="dialog#open">Show code</button>
   </div>
+
+  <%= render "shared/qr_dialog", qr_id: qr_id, title: "Scan to sign in",
+        note: "Scan from another device. The link is single-use and expires in 5 minutes." %>
+
+  <template data-copy-to-clipboard-target="toast">
+    <%= render "shared/toast", message: "Sign-in link copied — it expires in 5 minutes" %>
+  </template>
 </div>

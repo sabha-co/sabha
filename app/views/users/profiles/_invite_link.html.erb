@@ -1,39 +1,60 @@
-<%= turbo_frame_tag "invite_link" do %>
+<%= turbo_frame_tag "invite_link", class: "invite-frame" do %>
   <% invite_link = Current.user.active_invite_link %>
   <% if invite_link %>
     <% url = join_url(invite_link.code) %>
-    <div class="flex flex-column gap">
-      <strong class="txt-align-center">Share this link to invite friends</strong>
+    <% qr_id = Base64.urlsafe_encode64(url) %>
+    <div class="invite-link" data-controller="dialog">
+      <div class="invite-link__head">
+        <span class="setting-row__text">
+          <span class="setting-row__title" id="invite_label">Your invite link</span>
+          <span class="txt-small txt-muted">Anyone with this link can join <%= Current.account.name %>.</span>
+        </span>
+        <% if invite_link.expires? %>
+          <span class="invite-status invite-status--alert"><%= invite_link.expiry_display %></span>
+        <% else %>
+          <span class="invite-status invite-status--active">Active</span>
+        <% end %>
+      </div>
 
-      <label for="invite_link_url" class="for-screen-reader">Your personal invite link</label>
-      <input type="text" class="input fill-white" value="<%= url %>" id="invite_link_url" readonly>
+      <div class="invite-url-row">
+        <input type="text" class="invite-url-input" id="invite_url" value="<%= url %>" aria-labelledby="invite_label" readonly>
 
-      <div class="flex align-center center gap">
-        <%= button_to_copy_to_clipboard(url) do %>
-          <span class="for-screen-reader">Copy invite link</span>
-          <%= icon_tag "copy-paste" %>
+        <%= button_to_copy_to_clipboard(url, btn_class: "btn settings-chip-btn", toast: "Invite link copied") do %>
+          Copy
         <% end %>
 
-        <%= web_share_session_button(url, "Join me in #{Current.account.name}", "Use this link to join me in #{Current.account.name}!") do %>
-          <span class="for-screen-reader">Share invite link</span>
+        <button type="button" class="btn settings-chip-btn" data-action="dialog#open">
+          <%= icon_tag "qr-code" %>
+          <span class="for-screen-reader">Show invite QR code</span>
+        </button>
+
+        <%= web_share_session_button(url, "Join me in #{Current.account.name}", "Use this link to join me in #{Current.account.name}!", btn_class: "btn settings-chip-btn") do %>
           <%= icon_tag "share" %>
-        <% end %>
-
-        <%= button_to user_invite_link_path, method: :post, class: "btn", title: "Generate new link" do %>
-          <span class="for-screen-reader">Generate new invite link</span>
-          <%= icon_tag "refresh" %>
+          <span class="for-screen-reader">Share invite link</span>
         <% end %>
       </div>
 
-      <div class="txt-small txt-de-emph txt-align-center">
-        <%= invite_link.expiry_display %>
-      </div>
+      <%= render "shared/qr_dialog", qr_id: qr_id, title: "Scan to join",
+            note: "Scan from another device to join #{Current.account.name}." %>
+    </div>
+
+    <div class="setting-row">
+      <span class="setting-row__text">
+        <span class="setting-row__title">Generate a new link</span>
+        <span class="txt-small txt-muted">The current link stops working immediately. There is no undo.</span>
+      </span>
+      <%= button_to user_invite_link_path, method: :post, class: "btn settings-chip-btn settings-chip-btn--negative flex-item-no-shrink" do %>
+        Regenerate
+      <% end %>
     </div>
   <% else %>
-    <div class="flex flex-column gap txt-align-center">
-      <strong>Invite friends to <%= Current.account.name %></strong>
-      <%= button_to user_invite_link_path, method: :post, class: "btn txt-small center" do %>
-        Create Invite Link
+    <div class="setting-row">
+      <span class="setting-row__text">
+        <span class="setting-row__title">Invite people to <%= Current.account.name %></span>
+        <span class="txt-small txt-muted">Create a personal link others can use to join.</span>
+      </span>
+      <%= button_to user_invite_link_path, method: :post, class: "btn settings-chip-btn flex-item-no-shrink" do %>
+        Create link
       <% end %>
     </div>
   <% end %>

@@ -1,0 +1,14 @@
+<%# locals: (qr_id:, title:, note:) %>
+<%# Scan-to-continue QR shown in a scrim dialog. Render inside an element that
+    carries data-controller="dialog"; a sibling button opens it via dialog#open. %>
+<dialog class="scrim-dialog" style="--dialog-width: 320px" aria-label="<%= title %>"
+        data-dialog-target="modal" data-action="click->dialog#closeOnScrim">
+  <header class="scrim-dialog__header scrim-dialog__header--titled">
+    <span class="scrim-dialog__title"><%= title %></span>
+    <button type="button" class="scrim-dialog__close" data-action="dialog#close" aria-label="Close">&times;</button>
+  </header>
+  <div class="scrim-dialog__body">
+    <img src="<%= qr_code_path(qr_id) %>" alt="<%= title %>" class="settings-qr">
+    <p class="txt-small txt-muted margin-none"><%= note %></p>
+  </div>
+</dialog>
