@@ -20,6 +20,11 @@ module Saas
         redirect_to settings_export_path,
           notice: "An export was already requested. Check your inbox for the download link, or try again shortly."
       end
+
+      private
+        def ensure_administrator
+          head :forbidden unless Current.user.can_administer?
+        end
     end
   end
 end
