@@ -30,16 +30,14 @@
 
     <span class="sidebar__profile-divider" aria-hidden="true"></span>
 
-    <%= link_to "View profile", user_path(Current.user), class: "sidebar__profile-menu-item" %>
     <%= link_to "Your settings", user_profile_path, class: "sidebar__profile-menu-item" %>
     <%= link_to user_appearance_path, class: "sidebar__profile-menu-item" do %>
       <span>Appearance</span>
       <span class="sidebar__profile-menu-hint" data-theme-target="currentTheme">Light</span>
     <% end %>
 
-    <% if Current.account.settings.allow_users_to_create_invite_links? || Current.user.can_administer? %>
-      <% invitations_path = Current.user.can_administer? ? account_invitations_path : account_path %>
-      <%= link_to "Invitations", invitations_path, class: "sidebar__profile-menu-item" %>
+    <% if Current.account.settings.allow_users_to_create_invite_links? %>
+      <%= link_to "Invitations", user_invitations_path, class: "sidebar__profile-menu-item" %>
     <% end %>
 
     <% if Current.user.staff? %>
