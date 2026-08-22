@@ -1,10 +1,9 @@
 class AccountsController < ApplicationController
   before_action :ensure_can_manage_account, only: %i[edit update]
   before_action :set_account
+  before_action :set_community_counts, only: %i[show edit]
 
   def show
-    @member_count = User.member_count
-    @room_count = Room.where(type: %w[Rooms::Open Rooms::Closed Rooms::Forum]).count
   end
 
   def edit
@@ -21,6 +20,11 @@ class AccountsController < ApplicationController
   private
     def set_account
       @account = Current.account
+    end
+
+    def set_community_counts
+      @member_count = User.member_count
+      @room_count = Room.where(type: %w[Rooms::Open Rooms::Closed Rooms::Forum]).count
     end
 
     def account_params

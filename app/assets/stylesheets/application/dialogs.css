@@ -252,6 +252,21 @@
   color: var(--color-negative);
 }
 
+/* Rename community: a titled confirmation-style form dialog. One field, so the
+   body aligns to the 18px header/footer inset and the actions sit under the
+   hint without a section divider. */
+.scrim-dialog--rename {
+  --dialog-width: 440px;
+
+  .scrim-dialog__body {
+    padding: 18px;
+  }
+
+  .scrim-dialog__footer {
+    border-block-start: 0;
+  }
+}
+
 /* ⌘K search palette: a wide card parked near the top of the viewport */
 .scrim-dialog--palette {
   --dialog-width: 640px;

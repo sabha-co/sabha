@@ -4,7 +4,7 @@
   <header class="settings-header">
     <div class="settings-header__scope">Community settings</div>
     <h1 class="settings-header__title">Identity</h1>
-    <p class="settings-header__blurb">The name and logo members see throughout <%= @account.name %>.</p>
+    <p class="settings-header__blurb">How <%= @account.name %> introduces itself. Administrators keep this up to date.</p>
   </header>
 
   <div class="settings-card" style="view-transition-name: account-settings">
@@ -12,7 +12,7 @@
       <%= account_logo_tag style: "account-logo--display" %>
       <div>
         <strong><%= @account.name %></strong>
-        <div class="txt-small txt-muted"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> online · <%= pluralize(@room_count, "room") %></div>
+        <div class="txt-small txt-muted"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now · <%= pluralize(@room_count, "room") %></div>
       </div>
     </div>
 

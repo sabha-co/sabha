@@ -4,10 +4,11 @@
   <header class="settings-header">
     <div class="settings-header__scope">Community settings</div>
     <h1 class="settings-header__title">Identity</h1>
-    <p class="settings-header__blurb">Name and logo. Changes here are seen by every member.</p>
+    <p class="settings-header__blurb">Name, logo, accent, and how the community introduces itself. Changes here are seen by all <%= pluralize(@member_count, "member") %>.</p>
   </header>
 
-  <div class="settings-card" style="view-transition-name: account-settings">
+  <div class="settings-card" style="view-transition-name: account-settings"
+       data-controller="dialog" data-action="turbo:submit-end->dialog#closeOnSubmit">
     <div class="settings-avatar-row" data-controller="upload-preview">
       <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
         <label class="btn avatar input--file account-logo">
@@ -18,7 +19,14 @@
         </label>
       <% end %>
 
+      <div class="flex-item-grow">
+        <strong><%= @account.name %></strong>
+        <div class="txt-small txt-muted"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now · <%= pluralize(@room_count, "room") %></div>
+      </div>
+
       <div class="flex align-center gap-half">
+        <button type="button" class="btn settings-chip-btn" data-action="dialog#open">Rename</button>
+
         <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
           <label class="btn settings-chip-btn">
             Replace logo
@@ -36,19 +44,30 @@
       </div>
     </div>
 
-    <%= form_with model: @account, data: { controller: "form" } do |form| %>
-      <div class="settings-field">
-        <div class="settings-field__label">
-          <label for="account_name">Name</label>
-        </div>
-        <%= form.text_field :name, class: "input", autocomplete: "off", placeholder: "Name this account",
-              data: { action: "keydown.enter->form#submit" } %>
+    <p class="txt-small txt-muted margin-none">The name is shown on the join page, in link previews, and in every email. The join code lives in Invitations.</p>
+
+    <dialog class="scrim-dialog scrim-dialog--rename" data-dialog-target="modal" data-action="click->dialog#closeOnScrim">
+      <div class="scrim-dialog__header scrim-dialog__header--titled">
+        <h2 class="scrim-dialog__title">Rename community</h2>
+        <button type="button" class="scrim-dialog__close" data-action="dialog#close" aria-label="Close">&times;</button>
       </div>
 
-      <div class="settings-field">
-        <%= form.button "Save changes", class: "btn settings-save", type: "submit" %>
-      </div>
-    <% end %>
+      <%= form_with model: @account, class: "scrim-dialog__body", data: { controller: "rename" } do |form| %>
+        <div class="settings-field">
+          <div class="settings-field__label">
+            <label for="account_name">Community name</label>
+          </div>
+          <%= form.text_field :name, autofocus: true, autocomplete: "off", class: "input",
+                data: { rename_target: "field", action: "input->rename#update" } %>
+          <p class="settings-field__hint">Everyone sees the new name immediately, and it replaces the old one on the join page, in link previews, and in every email already sent.</p>
+        </div>
+
+        <div class="scrim-dialog__footer">
+          <button type="button" class="btn" data-action="dialog#close">Cancel</button>
+          <%= form.button "Save name", type: "submit", class: "btn settings-save", data: { rename_target: "submit" } %>
+        </div>
+      <% end %>
+    </dialog>
   </div>
 
   <span class="settings-label">Appearance</span>
@@ -78,7 +97,7 @@
   </div>
 
   <% unless Sabha.email_globally_disabled? %>
-    <span class="settings-label">Email from this community</span>
+    <span class="settings-label">Email from this community <span class="version-badge">Beta</span></span>
     <div class="settings-card">
       <%= render "accounts/setting_toggle", account: @account,
             attribute: :email_notifications_enabled,
@@ -93,15 +112,4 @@
             disabled:  !Sabha.email_configured? %>
     </div>
   <% end %>
-
-  <span class="settings-label">Members</span>
-  <div class="settings-card">
-    <%= link_to account_users_path, class: "setting-row txt-undecorated" do %>
-      <span class="setting-row__text">
-        <span class="setting-row__title">Manage members</span>
-        <span class="txt-small txt-muted">Roles, badges, deactivations, and bans</span>
-      </span>
-      <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
-    <% end %>
-  </div>
 <% end %>
