@@ -1,0 +1,10 @@
+<div class="setting-row" data-controller="typeface">
+  <span class="setting-row__text">
+    <span class="setting-row__title">Typeface</span>
+    <span class="txt-small txt-muted">The bundled font, or your system's</span>
+  </span>
+  <%= segmented_control_tag controller: "typeface", label: "Typeface", options: [
+        { label: "Default", action: "setOff", target: "offButton", selected: true },
+        { label: "System", action: "setOn", target: "onButton" }
+      ] %>
+</div>

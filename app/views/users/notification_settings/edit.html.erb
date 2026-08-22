@@ -33,15 +33,23 @@
             <%= render "users/notification_settings/toggle",
                   settings:  @settings,
                   attribute: :missed_email_enabled,
-                  title:     "Email me when I'm mentioned or sent a DM while I'm away" %>
+                  title:     "Email for missed messages",
+                  hint:      "Only when you were away and something needed you" %>
 
-            <%= form_with model: @settings, url: user_notification_settings_path(user_id: "me"), method: :patch, scope: :user_notification_settings, data: { controller: "form" } do |form| %>
-              <div class="flex align-center flex-wrap gap-half">
-                <span class="txt-small txt-muted">Bundle into</span>
-                <%= form.select :email_frequency,
-                      [["one hourly email", "hourly"], ["one daily email", "daily"]], {},
-                      class: "input txt-small", style: "inline-size: auto; min-inline-size: 12em;",
-                      data: { action: "change->form#submit" } %>
+            <%= form_with model: @settings, url: user_notification_settings_path(user_id: "me"), method: :patch, scope: :user_notification_settings do %>
+              <div class="setting-row">
+                <span class="setting-row__text">
+                  <span class="setting-row__title">How often</span>
+                  <span class="txt-small txt-muted">Missed messages are batched into one email per window.</span>
+                </span>
+                <div role="group" class="segmented-control" aria-label="Email frequency">
+                  <% %w[ hourly daily ].each do |frequency| %>
+                    <button type="submit" name="user_notification_settings[email_frequency]" value="<%= frequency %>"
+                            class="segmented-control__btn" aria-selected="<%= @settings.email_frequency == frequency %>">
+                      <%= frequency.capitalize %>
+                    </button>
+                  <% end %>
+                </div>
               </div>
             <% end %>
           <% else %>
@@ -57,7 +65,8 @@
             <%= render "users/notification_settings/toggle",
                   settings:  @settings,
                   attribute: :weekly_digest_subscribed,
-                  title:     "Receive the weekly community digest" %>
+                  title:     "Weekly digest",
+                  hint:      "A Monday summary of what happened in your rooms" %>
           <% else %>
             <p class="txt-small txt-muted margin-none">
               The weekly community digest is turned off for this workspace.
@@ -76,7 +85,7 @@
 
   <span class="settings-label">Per-room notifications</span>
   <div class="settings-card">
-    <p class="txt-small txt-muted margin-none">Choose how closely you follow each room. Use the bell button to set your involvement level.</p>
+    <p class="txt-small txt-muted margin-none">Starred rooms first, then everything you follow. The bell in a room header sets the same thing.</p>
 
     <menu class="flex flex-column gap-half margin-none" style="padding: 0;">
       <%= render partial: "users/notification_settings/membership", collection: @memberships %>

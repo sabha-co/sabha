@@ -5,7 +5,7 @@ module Rooms::InvolvementsHelper
       role: "checkbox", aria: { checked: true, labelledby: dom_id(room, :involvement_label) }, tabindex: 0,
       class: "btn #{involvement}" do
         image_tag("notification-bell-#{involvement}.svg", aria: { hidden: "true" }, size: 20) +
-        tag.span(HUMANIZE_INVOLVEMENT[involvement], class: "for-screen-reader", id: dom_id(room, :involvement_label))
+        tag.span(HUMANIZE_INVOLVEMENT[involvement], id: dom_id(room, :involvement_label))
     end
   end
 

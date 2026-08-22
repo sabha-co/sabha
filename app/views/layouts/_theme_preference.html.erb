@@ -14,6 +14,14 @@
     if (localStorage.getItem("density") === "compact") {
       document.documentElement.setAttribute("data-density", "compact")
     }
+
+    if (localStorage.getItem("typeface") === "system") {
+      document.documentElement.setAttribute("data-typeface", "system")
+    }
+
+    if (localStorage.getItem("sidebar") === "match") {
+      document.documentElement.setAttribute("data-sidebar", "match")
+    }
   })()
 </script>
 <meta name="color-scheme" content="light dark">

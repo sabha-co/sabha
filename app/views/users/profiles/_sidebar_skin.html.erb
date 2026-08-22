@@ -1,0 +1,10 @@
+<div class="setting-row" data-controller="sidebar-skin">
+  <span class="setting-row__text">
+    <span class="setting-row__title">Sidebar</span>
+    <span class="txt-small txt-muted">Dark for contrast, or matched to the page</span>
+  </span>
+  <%= segmented_control_tag controller: "sidebar-skin", label: "Sidebar", options: [
+        { label: "Contrast", action: "setOff", target: "offButton", selected: true },
+        { label: "Match", action: "setOn", target: "onButton" }
+      ] %>
+</div>

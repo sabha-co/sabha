@@ -39,7 +39,7 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     get edit_user_notification_settings_url(user_id: "me")
 
     assert_select "input[name='user_notification_settings[missed_email_enabled]']", count: 0
-    assert_select "select[name='user_notification_settings[email_frequency]']", count: 0
+    assert_select "button[name='user_notification_settings[email_frequency]']", count: 0
     assert_match(/Missed-notification email is turned off for this workspace/, @response.body)
   end
 
@@ -111,7 +111,9 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     get edit_user_notification_settings_url(user_id: "me")
 
     assert_select "input[name='user_notification_settings[missed_email_enabled]']", count: 1
-    assert_select "select[name='user_notification_settings[email_frequency]']", count: 1
+    assert_select "button[name='user_notification_settings[email_frequency]']", count: 2
+    assert_select "button[name='user_notification_settings[email_frequency]'][value=hourly]"
+    assert_select "button[name='user_notification_settings[email_frequency]'][value=daily]"
     assert_select "input[name='user_notification_settings[weekly_digest_subscribed]']", count: 1
   end
 

@@ -35,6 +35,13 @@
   --hover-filter: brightness(1);
 }
 
+/* Typeface preference (per-device, set by the typeface controller): "System"
+   drops the bundled Instrument Sans and falls back to the platform UI stack.
+   Default (attribute absent) keeps the webfont. Mono is unaffected. */
+:root[data-typeface="system"] {
+  --font-family: -apple-system, BlinkMacSystemFont, Aptos, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
 html, body {
   -webkit-text-size-adjust: none;
   background-color: var(--color-bg);
@@ -138,6 +145,17 @@ legend {
 
 .membership-item:has(.btn.invisible) {
   opacity: 0.5;
+}
+
+/* Starred marker in the per-room notification list — mirrors the sidebar's
+   starred-first ordering with a small amber flag. */
+.membership-item__starred {
+  color: var(--color-alert);
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* Dialogs */

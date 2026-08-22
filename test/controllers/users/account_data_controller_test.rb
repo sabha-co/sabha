@@ -9,7 +9,7 @@ class Users::AccountDataControllerTest < ActionDispatch::IntegrationTest
     get user_account_data_url
 
     assert_response :success
-    assert_select ".settings-nav__item[aria-current=page]", text: "Account & data"
+    assert_select ".settings-nav__item[aria-current=page]", text: "Account"
     assert_select "#session_transfer_label"
     assert_select "form[action=?]", session_path do
       assert_select "input[name=_method][value=delete]"

@@ -1,8 +1,10 @@
 <% indent = [local_assigns[:indent].to_i, 3].min %>
 <li class="flex align-center gap margin-none min-width membership-item" style="padding-left: calc(var(--block-space) * <%= indent %>)">
-  <%= link_to room_path(membership.room), class: "overflow-ellipsis fill-shade txt-primary txt-undecorated" do %>
-    <strong><%= room_display_name(membership.room) %></strong>
+  <%= link_to room_path(membership.room), class: "overflow-ellipsis txt-primary txt-undecorated" do %>
+    <span class="room__glyph"><%= room_type_indicator(membership.room) %></span><strong><%= room_display_name(membership.room) %></strong>
   <% end %>
+
+  <% if membership.starred? %><span class="membership-item__starred">Starred</span><% end %>
 
   <hr class="separator" aria-hidden="true">
 

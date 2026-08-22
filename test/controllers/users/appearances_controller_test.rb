@@ -17,15 +17,29 @@ class Users::AppearancesControllerTest < ActionDispatch::IntegrationTest
     get user_appearance_url
 
     assert_response :success
-    assert_select "[data-controller=density] [data-action*=?]", "density#setCompact"
+    assert_select "[data-controller=density] [data-action*=?]", "density#setOn"
+  end
+
+  test "show renders the typeface control inside the settings shell" do
+    get user_appearance_url
+
+    assert_response :success
+    assert_select "[data-controller=typeface] [data-action*=?]", "typeface#setOn"
+  end
+
+  test "show renders the sidebar skin control inside the settings shell" do
+    get user_appearance_url
+
+    assert_response :success
+    assert_select "[data-controller=sidebar-skin] [data-action*=?]", "sidebar-skin#setOn"
   end
 
   test "show lists the personal sections in the shell nav" do
     get user_appearance_url
 
-    assert_select ".settings-nav__item", count: 4
     assert_select ".settings-nav__item", text: "Profile"
+    assert_select ".settings-nav__item", text: "Appearance"
     assert_select ".settings-nav__item", text: "Notifications"
-    assert_select ".settings-nav__item", text: "Account & data"
+    assert_select ".settings-nav__item", text: "Account"
   end
 end
