@@ -1,20 +1,19 @@
 module DnsTestHelper
+  # Surfguard resolves hostnames through Resolv.getaddresses, so stub that.
+  # (Numeric-literal hosts go through Socket.getaddrinfo instead and don't need
+  # a stub -- the tests here all use hostnames.)
   def stub_dns_resolution(*ips)
-    dns_mock = mock("dns")
-    dns_mock.stubs(:each_address).multiple_yields(*ips)
-    Resolv::DNS.stubs(:open).yields(dns_mock)
+    Resolv.stubs(:getaddresses).returns(ips)
   end
 
-  # Stubs a sequence of DNS resolutions across successive Resolv::DNS.open
-  # calls. Use to simulate DNS rebinding: pass [public_ip] then [private_ip]
-  # to make the first resolve return the safe IP that passes validation, and
-  # the second (rebound) call return the malicious one.
+  # Stubs a sequence of DNS resolutions across successive lookups. Use to
+  # simulate DNS rebinding: pass [public_ip] then [private_ip] to make the first
+  # resolve return the safe IP that passes validation, and the second (rebound)
+  # call return the malicious one.
   def stub_dns_resolution_sequence(*ip_sets)
-    expectation = Resolv::DNS.stubs(:open)
+    expectation = Resolv.stubs(:getaddresses)
     ip_sets.each do |ips|
-      dns_mock = mock("dns")
-      dns_mock.stubs(:each_address).multiple_yields(*Array(ips))
-      expectation = expectation.yields(dns_mock).then
+      expectation = expectation.returns(Array(ips)).then
     end
   end
 end

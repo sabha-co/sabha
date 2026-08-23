@@ -8,13 +8,13 @@ class Opengraph::Fetch
   class TooManyRedirectsError < StandardError; end
   class RedirectDeniedError < StandardError; end
 
-  def fetch_document(url, ip: SsrfProtection.resolve!(url.host))
+  def fetch_document(url, ip: RestrictedHTTP::PrivateNetworkGuard.resolve_public_ip!(url.host))
     request(url, Net::HTTP::Get, ip: ip) do |response|
       return body_if_acceptable(response)
     end
   end
 
-  def fetch_content_type(url, ip: SsrfProtection.resolve!(url.host))
+  def fetch_content_type(url, ip: RestrictedHTTP::PrivateNetworkGuard.resolve_public_ip!(url.host))
     request(url, Net::HTTP::Head, ip: ip) do |response|
       return response["Content-Type"]
     end
@@ -40,7 +40,7 @@ class Opengraph::Fetch
     def resolve_redirect(location)
       url = URI.parse(location)
       raise RedirectDeniedError unless url.is_a?(URI::HTTP)
-      [ url, SsrfProtection.resolve!(url.host) ]
+      [ url, RestrictedHTTP::PrivateNetworkGuard.resolve_public_ip!(url.host) ]
     end
 
     def body_if_acceptable(response)
