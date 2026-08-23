@@ -14,7 +14,9 @@
    * Empty state layout: switches from display:contents to a flex column so the
    * empty state message centers in the remaining space.
    */
-  &:not(:has(.message)):not(:has(.dm-conversation)):not(:has(.thread-card)):not(:has(.bookmark-card)) {
+  &:not(:has(.message)):not(:has(.dm-conversation)):not(:has(.thread-card)):not(
+      :has(.bookmark-card)
+    ) {
     --opacity: 0.2;
 
     block-size: 100vh;
@@ -94,7 +96,6 @@
 .messages {
   --message-column-gap: 0.66ch;
   --message-row-gap: 0.1em;
-  --message-space: 1.33em;
 
   contain: layout style;
   display: grid;
@@ -112,7 +113,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   position: relative;
-  row-gap: var(--message-space);
+  row-gap: var(--message-row-gap);
 }
 
 .message {
@@ -154,7 +155,9 @@
   animation: message-fallback-show 0s 2s forwards;
 
   @keyframes message-fallback-show {
-    to { visibility: visible; }
+    to {
+      visibility: visible;
+    }
   }
 
   &.message--formatted {
@@ -186,7 +189,9 @@
   }
 
   + .message--threaded {
-    margin-block-start: calc((var(--message-space) + (var(--message-row-gap) * 2) - 2px) * -1);
+    margin-block-start: calc(
+      (var(--message-space) + (var(--message-row-gap) * 2) - 2px) * -1
+    );
   }
 
   &.message--failed .message__body-content {
@@ -227,7 +232,11 @@
 
 .message__failed-retry {
   --btn-background: transparent;
-  --btn-border-color: color-mix(in srgb, var(--color-negative) 40%, transparent);
+  --btn-border-color: color-mix(
+    in srgb,
+    var(--color-negative) 40%,
+    transparent
+  );
   --btn-border-radius: 6px;
   --btn-color: var(--color-negative);
   --btn-padding: 2px 9px;
@@ -239,7 +248,11 @@
 
   @media (any-hover: hover) {
     &:hover {
-      background-color: color-mix(in srgb, var(--color-negative) 12%, transparent);
+      background-color: color-mix(
+        in srgb,
+        var(--color-negative) 12%,
+        transparent
+      );
     }
   }
 }
@@ -281,16 +294,17 @@
   span {
     background-color: var(--color-bg-sunk);
   }
-  
+
   &:first-of-type {
-     grid-area: loading_up;
+    grid-area: loading_up;
   }
 
   &:last-of-type {
-     grid-area: loading_down;
+    grid-area: loading_down;
   }
 
-  .message--loading-up &:first-of-type, .message--loading-down &:last-of-type {
+  .message--loading-up &:first-of-type,
+  .message--loading-down &:last-of-type {
     display: block;
     visibility: visible;
   }
@@ -309,7 +323,7 @@
     background-color: var(--color-bg);
     border: 1px solid var(--color-border);
     color: var(--color-text-muted);
-    font-size: 0.71875rem;
+    font-size: var(--font-size-x-small);
     padding: 2px 12px;
     text-transform: none;
   }
@@ -328,7 +342,8 @@
 .message__new-separator + .message__day-separator {
   display: grid !important;
   visibility: visible !important;
-  margin-top: 0; /* Reduce top margin since it's right after the NEW separator */
+  margin-top: 0;
+  /* Reduce top margin since it's right after the NEW separator */
 }
 
 /* The "N replies" divider under a post's opening message reads as a quiet
@@ -415,7 +430,8 @@
   }
 
   &::before {
-    border-top: 1px solid color-mix(in oklch, var(--color-negative) 50%, transparent);
+    border-top: 1px solid
+      color-mix(in oklch, var(--color-negative) 50%, transparent);
     content: "";
     flex: 1;
   }
@@ -435,8 +451,13 @@
 
   /* Avatar shrinks with the row as the shell narrows: 34px at
      tablet-portrait, 32px on phones. */
-  @media (max-width: 833.9px) { --avatar-size: 34px; }
-  @media (max-width: 499.9px) { --avatar-size: 32px; }
+  @media (max-width: 833.9px) {
+    --avatar-size: 34px;
+  }
+
+  @media (max-width: 499.9px) {
+    --avatar-size: 32px;
+  }
 
   grid-area: avatar;
   z-index: 2;
@@ -480,7 +501,8 @@
     white-space: nowrap;
   }
 
-  .message__original-room, .message__room {
+  .message__original-room,
+  .message__room {
     a {
       color: inherit;
       text-decoration: none;
@@ -527,13 +549,12 @@
     min-inline-size: 0;
     flex: 1;
   }
-
 }
 
 /* Meta line: author 14.5/700, time and "(edited)" 11.5 subtle */
 .message__author {
   color: var(--color-text);
-  font-size: 0.90625rem;
+  font-size: var(--font-size-medium);
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -618,7 +639,9 @@
     border-radius: 999px;
     background-color: var(--color-bg);
     flex-wrap: wrap;
-    transition: background-color 150ms ease-out, border-color 150ms ease-out;
+    transition:
+      background-color 150ms ease-out,
+      border-color 150ms ease-out;
 
     @media (any-hover: hover) {
       &:where(:not(:active):hover) {
@@ -664,10 +687,17 @@
   border-radius: var(--border-radius-md);
   color: var(--message-color, var(--color-text-lighter));
   font-size: 0.9375rem;
+
   /* Body trims to 14.5px at tablet-portrait, then returns to 15px on
      phones where the column is full-width and reads best larger. */
-  @media (max-width: 833.9px) { font-size: 0.90625rem; }
-  @media (max-width: 499.9px) { font-size: 0.9375rem; }
+  @media (max-width: 833.9px) {
+    font-size: 0.90625rem;
+  }
+
+  @media (max-width: 499.9px) {
+    font-size: 0.9375rem;
+  }
+
   line-height: 1.55;
   font-weight: 400;
   inline-size: 100%;
@@ -719,7 +749,8 @@ img.message__attachment {
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow-pop);
-    inline-size: max-content; /* shrink-to-fit under-measures the flex row */
+    inline-size: max-content;
+    /* shrink-to-fit under-measures the flex row */
     inset-block-start: -12px;
     inset-inline-end: 0;
     padding: 3px;
@@ -823,34 +854,37 @@ img.message__attachment {
 
   [open] > &.is-closing,
   [data-open] > &.is-closing {
-    animation: popup-out var(--popup-close-dur) cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: popup-out var(--popup-close-dur) cubic-bezier(0.22, 1, 0.36, 1)
+      both;
   }
 
   &::before {
-     aspect-ratio: 2;
-     background: var(--border-color);
-     clip-path: polygon(50% 0, 100% 100%, 0 100%);
-     inline-size: var(--arrow-size);
-     content: "";
-     display: block;
-     inset-block-start: calc(var(--arrow-size) / -2);
-     inset-inline-start: 50%;
-     position: absolute;
-     transform: translateX(-50%);
-   }
-  
+    aspect-ratio: 2;
+    background: var(--border-color);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    inline-size: var(--arrow-size);
+    content: "";
+    display: block;
+    inset-block-start: calc(var(--arrow-size) / -2);
+    inset-inline-start: 50%;
+    position: absolute;
+    transform: translateX(-50%);
+  }
+
   &::after {
-     aspect-ratio: 2;
-     background: var(--color-bg);
-     clip-path: polygon(50% 0, 100% 100%, 0 100%);
-     inline-size: var(--arrow-size);
-     content: "";
-     display: block;
-     inset-block-start: calc((var(--arrow-size) / -2) + var(--border-size) * 1.5);
-     inset-inline-start: 50%;
-     position: absolute;
-     transform: translateX(-50%);
-   }
+    aspect-ratio: 2;
+    background: var(--color-bg);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    inline-size: var(--arrow-size);
+    content: "";
+    display: block;
+    inset-block-start: calc(
+      (var(--arrow-size) / -2) + var(--border-size) * 1.5
+    );
+    inset-inline-start: 50%;
+    position: absolute;
+    transform: translateX(-50%);
+  }
 
   /*@media (max-width: 100ch) {*/
   /*  inset-block-start: calc(var(--btn-size) / 1.5);*/
@@ -879,7 +913,6 @@ img.message__attachment {
   }
 }
 
-
 /* Scoped to .popup-menu: this absolute positioning belongs to the details-based
    mention popup only — the quick profile is an .anchored-popover now and places
    itself from the trigger rect (popover_controller). */
@@ -890,26 +923,37 @@ img.message__attachment {
 
   inline-size: fit-content;
   width: 20ch;
-  padding: calc(var(--block-space) * 2/3);
-  
-  inset: calc(var(--avatar-size) + var(--avatar-border-size) * 2 + var(--arrow-size) / 2) auto auto auto;
+  padding: calc(var(--block-space) * 2 / 3);
+
+  inset: calc(
+      var(--avatar-size) + var(--avatar-border-size) * 2 + var(--arrow-size) / 2
+    )
+    auto auto auto;
   transform-origin: top left;
   z-index: 4;
 
   &::before {
-     inset-block-start: calc(var(--arrow-size) / -2);
-     inset-inline-start: 0;
-     transform: translateX(calc(var(--avatar-size) / 2 + var(--arrow-size) / -2));
-   }
-  
-  &::after {
-     inset-block-start: calc((var(--arrow-size) / -2) + var(--border-size) * 1.5);
-     inset-inline-start: 0;
-     transform: translateX(calc(var(--avatar-size) / 2 + var(--arrow-size) / -2));
+    inset-block-start: calc(var(--arrow-size) / -2);
+    inset-inline-start: 0;
+    transform: translateX(
+      calc(var(--avatar-size) / 2 + var(--arrow-size) / -2)
+    );
   }
-  
+
+  &::after {
+    inset-block-start: calc(
+      (var(--arrow-size) / -2) + var(--border-size) * 1.5
+    );
+    inset-inline-start: 0;
+    transform: translateX(
+      calc(var(--avatar-size) / 2 + var(--arrow-size) / -2)
+    );
+  }
+
   .popup-orientation-top & {
-    inset-block-end: calc(var(--avatar-size) + var(--avatar-border-size) * 2 + var(--arrow-size) / 2);
+    inset-block-end: calc(
+      var(--avatar-size) + var(--avatar-border-size) * 2 + var(--arrow-size) / 2
+    );
     inset-block-start: auto;
     transform-origin: bottom left;
   }
@@ -987,7 +1031,11 @@ img.message__attachment {
     padding: var(--content-padding-block) var(--content-padding-inline);
 
     @media (prefers-color-scheme: dark) {
-      background-color: color-mix(in srgb, var(--color-positive) 15%, transparent);
+      background-color: color-mix(
+        in srgb,
+        var(--color-positive) 15%,
+        transparent
+      );
     }
   }
 

@@ -63,6 +63,8 @@
 .justify-center { justify-content: center; }
 .justify-space-between { justify-content: space-between; }
 
+.content-around { align-content: space-around; }
+
 .align-center { align-items: center; }
 .align-start { align-items: start; }
 .align-end { align-items: end; }
@@ -84,6 +86,11 @@
 .gap {
   column-gap: var(--column-gap, var(--inline-space));
   row-gap: var(--row-gap, var(--block-space));
+}
+
+.gap-min {
+  column-gap: 0.1rem;
+  row-gap: 0.1rem;
 }
 
 .gap-half {

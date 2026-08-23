@@ -69,6 +69,7 @@
   --color-text-reversed: oklch(var(--lch-white));
 
   --color-border: oklch(var(--lch-line-2));
+  --color-border-subtle: oklch(var(--lch-ink-2));
   --color-border-dark: oklch(var(--lch-line));
   --color-border-darker: oklch(var(--lch-gray-darker));
   --color-border-darkest: oklch(var(--lch-gray-darkest));

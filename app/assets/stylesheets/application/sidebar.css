@@ -39,7 +39,9 @@
 
     .sidebar__menu {
       /* clear the rail's pinned expand button */
-      padding-block-start: calc(var(--block-space-half) + var(--btn-size) + var(--block-space-half));
+      padding-block-start: calc(
+        var(--block-space-half) + var(--btn-size) + var(--block-space-half)
+      );
       padding-inline: 6px;
     }
 
@@ -82,7 +84,7 @@
       display: none;
     }
 
-    .rail-rooms .room-row:nth-child(n+5),
+    .rail-rooms .room-row:nth-child(n + 5),
     .rail-rooms .room-row .room-row__menu-btn,
     .rail-rooms .room__name,
     .rail-rooms .muted-indicator {
@@ -113,7 +115,9 @@
       flex: initial;
     }
 
-    .sidebar__me { padding: 4px; }
+    .sidebar__me {
+      padding: 4px;
+    }
 
     .sidebar__me-info,
     .sidebar__me-caret {
@@ -176,7 +180,7 @@
 }
 
 .sidebar__workspace-name {
-  font-size: 0.9375rem;
+  font-size: var(--font-size-medium);
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.25;
@@ -186,9 +190,9 @@
 }
 
 .sidebar__workspace-sub {
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   display: block;
-  font-size: 0.71875rem;
+  font-size: var(--font-size-x-small);
   line-height: 1.3;
   overflow: hidden;
   text-decoration: none;
@@ -205,7 +209,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-block: calc(var(--block-space) + env(safe-area-inset-top)) var(--block-space-half);
+  padding-block: calc(var(--block-space) + env(safe-area-inset-top))
+    var(--block-space-half);
   padding-inline: calc(var(--sidebar-inline-space) / 2);
 }
 
@@ -286,9 +291,10 @@
 
 /* Shortcut hint on the Search row — only where a keyboard is likely */
 .sidebar__menu-kbd {
-  border: 1px solid var(--color-border);
+  border: 1.5px solid var(--color-border-subtle);
   border-radius: 5px;
   color: var(--color-text-subtle);
+  background-color: var(--color-bg-raised);
   display: none;
   font-family: inherit;
   font-size: 0.6875rem;
@@ -320,10 +326,19 @@
   }
 }
 
+.sidebar__container .options-btn {
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: transparent;
+      color: var(--color-text);
+    }
+  }
+}
+
 /* Section labels */
 .sidebar__label {
-  color: var(--color-text-subtle);
-  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-x-small);
   letter-spacing: 0.07em;
 }
 
@@ -459,7 +474,6 @@
     }
   }
 }
-
 
 .sidebar__toggle {
   /* Vertically centered on the header bar it floats over */
@@ -716,6 +730,12 @@
   /* Rows stack flush — the 9px row padding is the breathing room (comp) */
   .rooms-list {
     padding-bottom: var(--block-space);
+
+    & #shared_rooms {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
   }
 }
 
@@ -777,6 +797,7 @@
   align-items: center;
   border-radius: 8px;
   min-block-size: 32px;
+  padding-right: 0.5rem;
   transition: background-color 150ms ease-out;
 
   /* The whole row — star included — is one hover/current unit (comp) */
@@ -841,7 +862,7 @@
 
   &[aria-current="page"] {
     color: var(--color-accent-brand);
-    font-weight: 600;
+    font-weight: 700;
   }
 
   /* Unread count rides the accent, not red — red stays destructive-only */
@@ -869,7 +890,7 @@
 
   &.unread {
     color: var(--color-text);
-    font-weight: 600;
+    font-weight: 700;
   }
 
   &:active:not(:disabled) {
@@ -1016,7 +1037,10 @@ body.searches .searches__results {
 
 /* The generic empty state forces a 100vh flex column for the DM compose
    layout; under the top-mounted bar it should just fill the leftover column. */
-body.searches .message-area:not(:has(.message)):not(:has(.dm-conversation)):not(:has(.thread-card)) {
+body.searches
+  .message-area:not(:has(.message)):not(:has(.dm-conversation)):not(
+    :has(.thread-card)
+  ) {
   block-size: auto;
   flex: 1;
   min-block-size: 0;
@@ -1077,16 +1101,16 @@ body.searches .message-area:not(:has(.message)):not(:has(.dm-conversation)):not(
    the sidebar-skin preference stamps data-sidebar="match" on <html> — then the
    sidebar drops the scope and inherits the page theme. */
 html:not([data-sidebar="match"]) #sidebar[data-contrast="true"] {
-  --color-bg: oklch(21% 0.010 277);
+  --color-bg: oklch(21% 0.01 277);
   --color-bg-raised: oklch(24% 0.012 271);
-  --color-bg-sunk: oklch(21% 0.010 277);
+  --color-bg-sunk: oklch(21% 0.01 277);
   --color-bg-hover: oklch(26.5% 0.013 273);
   --color-text: oklch(100% 0 0);
   --color-text-lighter: oklch(92.7% 0.009 265);
   --color-text-muted: oklch(73% 0.017 263);
-  --color-text-subtle: oklch(57.2% 0.020 264);
+  --color-text-subtle: oklch(57.2% 0.02 264);
   --color-border-dark: oklch(28.2% 0.013 273);
-  --color-selected: oklch(100% 0 0 / 0.10);
+  --color-selected: oklch(100% 0 0 / 0.1);
   /* The workspace accent, lifted for the dark ground (colors.css sets the
      per-accent lift on :root). */
   --color-accent-brand: oklch(var(--lch-accent-lift));
@@ -1098,7 +1122,7 @@ html:not([data-sidebar="match"]) #sidebar[data-contrast="true"] {
    scope's descendants directly to beat `*` — a hue-neutral translucent white
    that recedes into the dark rail in both modes. Width stays thin (inherited). */
 html:not([data-sidebar="match"]) #sidebar[data-contrast="true"] * {
-  scrollbar-color: oklch(100% 0 0 / 0.20) transparent;
+  scrollbar-color: oklch(100% 0 0 / 0.2) transparent;
 }
 
 /* Anchored popovers (row ⋯ menu, profile flyout) render in the top layer but
@@ -1106,7 +1130,9 @@ html:not([data-sidebar="match"]) #sidebar[data-contrast="true"] * {
    which would paint them dark. They are page-surface menus, so rebind the
    tokens the contrast scope overrode back to the theme primitives — white in
    light mode, converging with the sidebar again in dark. */
-html:not([data-sidebar="match"]) #sidebar[data-contrast="true"] .anchored-popover {
+html:not([data-sidebar="match"])
+  #sidebar[data-contrast="true"]
+  .anchored-popover {
   --color-bg: oklch(var(--lch-white));
   --color-bg-raised: oklch(var(--lch-raise));
   --color-bg-sunk: oklch(var(--lch-sunk));
@@ -1157,13 +1183,27 @@ html:not([data-sidebar="match"]) #sidebar[data-contrast="true"] .anchored-popove
   inline-size: 60%;
 }
 
-.sidebar-skeleton__row:nth-child(2) .sidebar-skeleton__bar { inline-size: 44%; }
-.sidebar-skeleton__row:nth-child(3) .sidebar-skeleton__bar { inline-size: 68%; }
-.sidebar-skeleton__row:nth-child(4) .sidebar-skeleton__bar { inline-size: 38%; }
+.sidebar-skeleton__row:nth-child(2) .sidebar-skeleton__bar {
+  inline-size: 44%;
+}
+
+.sidebar-skeleton__row:nth-child(3) .sidebar-skeleton__bar {
+  inline-size: 68%;
+}
+
+.sidebar-skeleton__row:nth-child(4) .sidebar-skeleton__bar {
+  inline-size: 38%;
+}
 
 @keyframes skeleton-pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
