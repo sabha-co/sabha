@@ -79,6 +79,8 @@ module Message::SearchIndex
   # Postgres's english config strips them, FTS5's porter keeps them.
   def search(relation, query)
     query = normalize(query)
+    return relation.none if query.blank?
+
     if postgresql?
       relation.where("messages.body_search @@ plainto_tsquery('english', ?)", query).ordered
     else

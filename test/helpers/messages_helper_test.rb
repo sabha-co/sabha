@@ -28,6 +28,15 @@ class MessagesHelperTest < ActionView::TestCase
     assert_equal room_at_message_path(message.room, message), message_permalink_path(message)
   end
 
+  test "a message inside a chat thread permalinks to the parent message's anchor" do
+    parent = messages(:first)
+    thread = Rooms::Thread.find_or_create_for(parent, creator: users(:david))
+    reply = Current.set(user: users(:david)) { thread.messages.create!(body: "<div>a thread reply</div>") }
+
+    assert_equal room_at_message_path(parent.room, parent), message_permalink_path(reply)
+    assert_equal room_at_message_url(parent.room, parent), message_permalink_url(reply)
+  end
+
   test "a forum post's opening message url-permalinks to the gallery deep-link, no reply anchor" do
     post = create_forum_post(title: "How do I export?")
 
