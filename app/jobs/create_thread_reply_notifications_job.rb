@@ -14,12 +14,7 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
     return unless container
     return if container.direct?
 
-    # Followers of this thread/post, plus members who opted into "everything" on
-    # the container (a chat thread's parent room, or a forum post's forum). Same
-    # recipient logic as BroadcastInboxThreadsJob.
-    room_user_ids = room.memberships.active.visible.pluck(:user_id)
-    container_user_ids = container.memberships.active.involved_in_everything.pluck(:user_id)
-    all_user_ids = (room_user_ids + container_user_ids).uniq - [ creator_id ]
+    all_user_ids = room.reply_recipient_ids(excluding: creator_id)
 
     return if all_user_ids.empty?
 

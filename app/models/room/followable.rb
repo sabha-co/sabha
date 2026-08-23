@@ -16,6 +16,16 @@ module Room::Followable
     user.present? && memberships.active.where.not(involvement: "invisible").exists?(user_id: user.id)
   end
 
+  # Who hears about a reply here: this sub-room's followers (active, non-invisible
+  # members) unioned with the parent room's "everything" members, minus the
+  # excluded user (the reply's author). Both CreateThreadReplyNotificationsJob and
+  # BroadcastInboxThreadsJob deliver to exactly this set.
+  def reply_recipient_ids(excluding:)
+    follower_ids = memberships.active.visible.pluck(:user_id)
+    everything_ids = parent_room.memberships.active.involved_in_everything.pluck(:user_id)
+    (follower_ids + everything_ids).uniq - Array(excluding)
+  end
+
   # A member becomes a follower the moment they reply — lazily, so a sub-room
   # never fans a membership row out to every member. Idempotent and self-healing:
   # it (re)activates a dropped membership and lifts an invisible one back to
