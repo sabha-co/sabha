@@ -4,7 +4,7 @@ class API::Bots::SearchesController < API::Bots::BaseController
   before_action :parse_pagination_params, only: :show
 
   def show
-    query = sanitize_query(params[:q])
+    query = Message::SearchIndex.normalize(params[:q])
     return render_validation_error("Query parameter 'q' is required") if query.blank?
 
     room_ids = Array(params[:room_ids])
@@ -29,9 +29,4 @@ class API::Bots::SearchesController < API::Bots::BaseController
     @messages = messages.first(@limit)
     @next_cursor = build_cursor(@messages.last) if @has_more
   end
-
-  private
-    def sanitize_query(value)
-      value.to_s.gsub(/[^[:word:]]/, " ").strip
-    end
 end

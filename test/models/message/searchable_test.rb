@@ -34,6 +34,15 @@ class Message::SearchableTest < ActiveSupport::TestCase
     assert_equal [ message ], rooms(:designers).messages.search("run")
   end
 
+  test "raw operator and punctuation characters are normalized away at the search boundary" do
+    message = rooms(:designers).messages.create! body: "My hovercraft is full of eels", client_message_id: "raw", creator: users(:david)
+
+    # An unterminated quote is FTS5 phrase syntax and would raise if it reached
+    # the index; the scope must reduce the query to bare tokens first.
+    assert_equal [ message ], rooms(:designers).messages.search('"eels')
+    assert_equal [ message ], rooms(:designers).messages.search("full-of-eels")
+  end
+
   test "stopword-only queries diverge by engine — the one documented difference" do
     message = rooms(:designers).messages.create! body: "who goes there", client_message_id: "stop", creator: users(:david)
 
