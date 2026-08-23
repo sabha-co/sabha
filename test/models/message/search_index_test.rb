@@ -22,6 +22,16 @@ class Message::SearchIndexTest < ActiveSupport::TestCase
     assert_equal [ message ], rooms(:designers).messages.search("hovercraft")
   end
 
+  test "normalize reduces a query to bare word tokens and is idempotent" do
+    assert_equal "full of eels", Message::SearchIndex.normalize("full-of-eels!")
+    assert_equal "eels", Message::SearchIndex.normalize('"eels')
+    assert_equal "", Message::SearchIndex.normalize("  -–  ")
+    assert_equal "", Message::SearchIndex.normalize(nil)
+
+    once = Message::SearchIndex.normalize("full-of-eels!")
+    assert_equal once, Message::SearchIndex.normalize(once)
+  end
+
   test "clear! empties the index, and it repopulates on the next write" do
     rooms(:designers).messages.create!(
       body: "clearable hovercraft", client_message_id: "clear", creator: users(:david)

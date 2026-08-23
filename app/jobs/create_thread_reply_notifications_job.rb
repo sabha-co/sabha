@@ -40,17 +40,9 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
     )
 
     # Broadcast to each recipient's activity stream
-    Notification.where(message_id: message_id, activity_type: "thread_reply", user_id: recipient_ids)
-                .with_message_and_creator
-                .each do |notification|
-      Turbo::StreamsChannel.broadcast_append_to(
-        [ notification.user, :inbox_activity ],
-        target: "inbox",
-        partial: "notifications/notification",
-        locals: { notification: notification, timestamp_style: :long_datetime }
-      )
-      notification.user.broadcast_activity_indicator
-    end
+    Notification.append_and_broadcast(
+      Notification.where(message_id: message_id, activity_type: "thread_reply", user_id: recipient_ids)
+    )
   end
 
   private

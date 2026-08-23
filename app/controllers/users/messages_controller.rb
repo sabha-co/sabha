@@ -45,6 +45,6 @@ class Users::MessagesController < ApplicationController
     end
 
     def query
-      params[:q]&.gsub(/[^[:word:]]/, " ")
+      Message::SearchIndex.normalize(params[:q])
     end
 end

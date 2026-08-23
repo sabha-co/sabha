@@ -8,27 +8,11 @@ module MessagesHelper
   end
 
   def message_permalink_path(message)
-    room = message.room
-    if post = message.forum_post
-      message_id = message.id unless forum_opening_message?(message)
-      room_path(post.parent_room, post: post.slug, message_id:)
-    elsif room.thread? && (parent = room.parent_message)
-      room_at_message_path(parent.room, parent)
-    else
-      room_at_message_path(room, message)
-    end
+    message_permalink(message, only_path: true)
   end
 
   def message_permalink_url(message)
-    room = message.room
-    if post = message.forum_post
-      message_id = message.id unless forum_opening_message?(message)
-      room_url(post.parent_room, post: post.slug, message_id:)
-    elsif room.thread? && (parent = room.parent_message)
-      room_at_message_url(parent.room, parent)
-    else
-      room_at_message_url(room, message)
-    end
+    message_permalink(message, only_path: false)
   end
 
   def message_area_tag(room, id: "message-area", presence: true, &)
@@ -173,6 +157,21 @@ module MessagesHelper
   end
 
   private
+    # Shared resolver for message_permalink_path / _url — the same three-branch
+    # decision (forum post / chat thread / plain room). only_path toggles between
+    # a path and a full URL, the sole difference between the two public helpers.
+    def message_permalink(message, only_path:)
+      room = message.room
+      if post = message.forum_post
+        message_id = message.id unless forum_opening_message?(message)
+        room_url(post.parent_room, post: post.slug, message_id:, only_path:)
+      elsif room.thread? && (parent = room.parent_message)
+        room_at_message_url(parent.room, parent, only_path:)
+      else
+        room_at_message_url(room, message, only_path:)
+      end
+    end
+
     def messages_actions
       "turbo:before-stream-render@document->messages#beforeStreamRender keydown.up@document->messages#editMyLastMessage"
     end
