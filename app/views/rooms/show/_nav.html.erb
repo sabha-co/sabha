@@ -28,7 +28,7 @@
         <% else %>
           <%= avatar_image_tag(dm_other || Current.user, size: 30) %>
           <% if dm_status %>
-            <span class="status-dot status--<%= dm_status %> navbar-dm__dot" aria-hidden="true"></span>
+            <%= presence_dot_tag dm_other, dm_status, surface: :nav %>
           <% end %>
         <% end %>
       </span>

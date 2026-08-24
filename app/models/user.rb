@@ -2,7 +2,7 @@ class User < ApplicationRecord
   DEFAULT_NAME = "New Member"
   MINIMUM_PASSWORD_LENGTH = 8
 
-  include Avatar, Bannable, Blockable, Bot, DicebearAvatar, EmailChangeable, Mentionable, Notifiable, PasswordAuthable, Role, SaasBridged, Streakable, Transferable, Verifiable
+  include Avatar, Bannable, Blockable, Bot, DicebearAvatar, EmailChangeable, Mentionable, Notifiable, PasswordAuthable, Presence, Role, SaasBridged, Streakable, Transferable, Verifiable
 
   serialize :preferences, coder: JSON
 

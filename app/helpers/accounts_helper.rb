@@ -54,4 +54,69 @@ module AccountsHelper
     status = @activity_statuses&.dig(user.id)
     STATUS_CSS_CLASSES[status] unless status.nil? || status == :offline
   end
+
+  # Manual presence and inferred idleness share the amber dot on purpose: the
+  # distinction between "I said I'm away" and "you stopped typing" is ours to
+  # act on, not something a reader of the dot needs to arbitrate.
+  PRESENCE_DOT_CSS_CLASSES = {
+    active:  "status--active",
+    idle:    "status--away",
+    away:    "status--away",
+    dnd:     "status--dnd",
+    offline: "status--offline"
+  }.freeze
+
+  PRESENCE_DOT_LABELS = {
+    active:  "Available",
+    idle:    "Away",
+    away:    "Away",
+    dnd:     "Do not disturb",
+    offline: "Offline"
+  }.freeze
+
+  # Every place a dot can appear, and the class that positions it there. The
+  # subject's broadcast replays this whole list because the server has no idea
+  # which of these the viewer happens to have on screen — Turbo drops the actions
+  # whose target isn't present. Holding the positioning class here is what lets a
+  # rebroadcast dot land in the sidebar footer or a directory row without either
+  # one being flattened into a single shared shape.
+  PRESENCE_DOT_SURFACES = {
+    sidebar:       "sidebar__me-dot",
+    direct:        "direct__presence",
+    conversation:  "dm-conversation__presence",
+    nav:           "navbar-dm__dot",
+    member:        "member-row__dot",
+    participant:   nil,
+    quick_profile: "quick-profile__dot",
+    profile_hero:  "profile-hero__dot"
+  }.freeze
+
+  # What each choosable state looks like when nothing is second-guessing it —
+  # the picker shows intent, not the resolved dot, so "Available" stays green
+  # there even while the person reading it has already gone idle.
+  PRESENCE_STATE_DOTS = { "available" => :active, "away" => :away, "do_not_disturb" => :dnd }.freeze
+
+  def presence_dot_class(dot)
+    PRESENCE_DOT_CSS_CLASSES[dot]
+  end
+
+  def presence_dot_label(dot)
+    PRESENCE_DOT_LABELS[dot]
+  end
+
+  def presence_dot_id(user, surface)
+    dom_id user, "presence_dot_#{surface}"
+  end
+
+
+  # Renders nothing at all when the dot is nil (deactivated/banned), so their
+  # status chip stays the only claim made about them.
+  def presence_dot_tag(user, dot, surface:)
+    return if dot.nil?
+
+    tag.span id: presence_dot_id(user, surface),
+             class: [ "status-dot", presence_dot_class(dot), PRESENCE_DOT_SURFACES.fetch(surface) ],
+             aria: { label: "#{user.name} is #{presence_dot_label(dot).downcase}" },
+             role: "img"
+  end
 end

@@ -7,11 +7,13 @@
       <figure class="avatar" style="--avatar-size: 32px;">
         <%= avatar_image_tag(Current.user, size: 32, loading: :lazy) %>
       </figure>
-      <span class="status-dot status--active sidebar__me-dot" aria-hidden="true"></span>
+      <%= presence_dot_tag Current.user, Current.user.own_presence_dot, surface: :sidebar %>
     </span>
     <span class="sidebar__me-info">
       <span class="sidebar__me-name"><%= Current.user.name %></span>
-      <span class="sidebar__me-status"><%= Current.user.email_address %></span>
+      <span class="sidebar__me-status" id="<%= dom_id Current.user, :presence_label %>">
+        <%= presence_dot_label Current.user.own_presence_dot %>
+      </span>
     </span>
     <span class="sidebar__me-caret" aria-hidden="true"><%= icon_tag "caret-down" %></span>
   </button>
@@ -26,6 +28,29 @@
         <span class="overflow-ellipsis"><%= Current.user.email_address %></span>
       </span>
       <span class="sidebar__profile-summary-arrow" aria-hidden="true">&rsaquo;</span>
+    <% end %>
+
+    <span class="sidebar__profile-divider" aria-hidden="true"></span>
+
+    <%# click->popover#hold keeps the menu open through the click itself; only
+        turbo:submit-end closes it, so a rejected change stays visible. %>
+    <%= form_with url: user_presence_path, method: :patch, class: "sidebar__presence",
+          data: { action: "click->popover#hold" } do %>
+      <div role="radiogroup" aria-label="Presence">
+        <% User.presences.each_key do |state| %>
+          <% selected = Current.user.presence == state %>
+          <button type="submit" name="user[presence]" value="<%= state %>"
+                  role="radio" aria-checked="<%= selected %>"
+                  class="sidebar__profile-menu-item sidebar__presence-option">
+            <span class="status-dot <%= presence_dot_class AccountsHelper::PRESENCE_STATE_DOTS.fetch(state) %>" aria-hidden="true"></span>
+            <span><%= presence_dot_label AccountsHelper::PRESENCE_STATE_DOTS.fetch(state) %></span>
+            <% if selected %>
+              <span class="sidebar__profile-menu-hint" aria-hidden="true"><%= icon_tag "check" %></span>
+            <% end %>
+          </button>
+        <% end %>
+      </div>
+      <p class="sidebar__presence-hint">Do not disturb shows your status only — notifications are unchanged.</p>
     <% end %>
 
     <span class="sidebar__profile-divider" aria-hidden="true"></span>

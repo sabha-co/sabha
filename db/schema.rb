@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_08_21_084230) do
+ActiveRecord::Schema[8.2].define(version: 2026_08_24_090000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -354,6 +354,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_21_084230) do
     t.datetime "created_at", null: false
     t.integer "current_streak", default: 0, null: false
     t.string "email_address"
+    t.datetime "last_active_at"
     t.datetime "last_authenticated_at"
     t.string "linkedin_url"
     t.string "linkedin_username"
@@ -361,6 +362,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_21_084230) do
     t.string "password_digest"
     t.string "personal_url"
     t.text "preferences", default: "{}"
+    t.integer "presence", default: 0, null: false
     t.integer "role", default: 0, null: false
     t.integer "status", default: 0, null: false
     t.string "status_message"

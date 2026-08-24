@@ -81,6 +81,14 @@ export default class extends Controller {
     if (event.detail.success) this.close()
   }
 
+  // Opt a submitting control out of closing the menu on the way down, so
+  // closeOnSubmit is the only thing that decides — a rejected change then leaves
+  // the menu open with the previous choice still showing, instead of vanishing
+  // and quietly keeping the old value.
+  hold(event) {
+    event.stopPropagation()
+  }
+
   // Frames marked with data-turbo-frame-src load on first open, not page load
   #loadLazyFrame() {
     const frame = this.menuTarget.querySelector("turbo-frame[data-turbo-frame-src]")

@@ -1,6 +1,8 @@
 <%= sidebar_turbo_frame_tag do %>
   <%= turbo_stream_from Current.account, :rooms %>
   <%= turbo_stream_from Current.user, :rooms %>
+  <%# The subject's own stream — this one carries your footer dot. Other people's
+      dots in this sidebar subscribe per row, next to the dot itself. %>
 
   <div data-controller="unread-indicator"
        data-unread-indicator-indicators-value='[{"selector":".direct.unread","class":"has-unread-dms","target":"dms"}]'

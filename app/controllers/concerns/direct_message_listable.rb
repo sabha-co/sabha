@@ -28,8 +28,8 @@ module DirectMessageListable
     # Presence only for the 1:1 rows — a group DM has no single "other person"
     # to dot. The all-members variant is SidebarMemberships#direct_member_statuses.
     def one_on_one_member_statuses(direct_room_members)
-      Membership.activity_statuses_for(
-        direct_room_members.values.select(&:one?).map { |members| members.first.id }
+      User.presence_dots_for(
+        direct_room_members.values.select(&:one?).map(&:first)
       )
     end
 end

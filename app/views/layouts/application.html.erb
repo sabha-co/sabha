@@ -46,7 +46,15 @@
     <%= umami_analytics_tag %>
   </head>
 
-  <body class="<%= body_classes %>" data-controller="local-time lightbox page-title theme">
+  <body class="<%= body_classes %>" data-controller="local-time lightbox page-title theme idle">
+    <%# One presence subscription for the whole workspace, and deliberately here
+        rather than beside each dot. A dot for the same person routinely renders
+        in both the sidebar frame and the main document, which are separate
+        requests that cannot dedupe against each other — and a duplicate
+        subscription is never confirmed by the server, leaving Action Cable's
+        guarantor resubscribing it every 500ms for the life of the tab. One
+        stream in the layout makes that impossible by construction. %>
+    <%= turbo_stream_from Current.account, :presence if Current.user %>
     <% if DemoMode.enabled? %>
       <%= render "shared/top_banner", style: :warning, label: "Demo Mode", text: "This server resets #{DemoMode.reset_interval}. Data is not persisted." %>
     <% end %>

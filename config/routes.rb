@@ -111,6 +111,7 @@ Rails.application.routes.draw do
         resource :sidebar, only: :show
         resources :hidden_rooms, only: :index
         resource :profile
+        resource :presence, only: :update
         resource :appearance, only: :show
         resource :account, only: :show
         resource :invitations, only: :show

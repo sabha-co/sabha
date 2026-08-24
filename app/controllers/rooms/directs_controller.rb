@@ -48,7 +48,7 @@ class Rooms::DirectsController < RoomsController
     @users = @room.users.many? ? @room.users.without(Current.user) : @room.users
     # The same presence signal the live header and sidebar read, fetched once for
     # the whole roster so each card shows the status, not a second source.
-    @member_statuses = Membership.activity_statuses_for(@users.map(&:id))
+    @member_statuses = User.presence_dots_for(@users)
   end
 
   def destroy

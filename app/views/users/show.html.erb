@@ -34,8 +34,10 @@
       <span class="profile-hero__avatar" style="view-transition-name: avatar-<%= @user.id %>">
         <span class="avatar"><%= avatar_image_tag(@user, alt: "") %></span>
         <%# You're by definition here while looking at your own profile %>
-        <% status = Current.user == @user ? :active : (@activity_statuses[@user.id] || :offline) %>
-        <span class="status-dot <%= AccountsHelper::STATUS_CSS_CLASSES[status] %> profile-hero__dot" aria-hidden="true"></span>
+        <% dot = Current.user == @user ? @user.own_presence_dot : @user.presence_dot_now %>
+        <% if dot %>
+          <%= presence_dot_tag @user, dot, surface: :profile_hero %>
+        <% end %>
       </span>
 
       <div class="profile-hero__body">
@@ -52,7 +54,7 @@
         </div>
 
         <p class="profile-hero__meta">
-          <%= dm_presence_label(status) %> · joined <%= @user.joined_at.strftime("%b %Y") %>
+          <%= dm_presence_label(dot) %> · joined <%= @user.joined_at.strftime("%b %Y") %>
           <% if Current.user.can_administer? %>
             · <%= mail_to @user.email_address, class: "txt-undecorated profile-hero__email" %>
           <% end %>

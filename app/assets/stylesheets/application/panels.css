@@ -474,6 +474,7 @@ body.browse #main-content {
 
 .status--active  { background-color: var(--color-positive); }
 .status--away    { background-color: var(--color-alert); }
+.status--dnd     { background-color: var(--color-negative); }
 .status--offline { background-color: var(--color-border-darker); }
 
 @media (max-width: 480px) {

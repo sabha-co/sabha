@@ -3,7 +3,7 @@
 <%# Broadcast re-renders pass no statuses map — fall back to a single lookup
     so live-updated rows keep their presence dot. %>
 <% presence = if members.one?
-     statuses = local_assigns[:member_statuses] || Membership.activity_statuses_for([ members.first.id ])
+     statuses = local_assigns[:member_statuses] || User.presence_dots_for([ members.first ])
      statuses[members.first.id]
    end %>
 <% notifications_count = membership.unread_notifications_count.to_i %>
@@ -24,7 +24,7 @@
       <span class="avatar">
         <%= avatar_image_tag(members.first || Current.user, size: 48, loading: :lazy) %>
         <% if presence %>
-          <span class="status-dot status--<%= presence %> dm-conversation__presence" aria-hidden="true"></span>
+          <%= presence_dot_tag members.first, presence, surface: :conversation %>
         <% end %>
       </span>
     <% end %>

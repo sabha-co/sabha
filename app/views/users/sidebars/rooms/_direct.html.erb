@@ -24,7 +24,7 @@
       <span class="avatar direct__avatar">
         <%= avatar_image_tag(members.first, size: 48, loading: :lazy) %>
         <% if presence %>
-          <span class="status-dot status--<%= presence %> direct__presence" aria-hidden="true"></span>
+          <%= presence_dot_tag members.first, presence, surface: :direct %>
         <% end %>
       </span>
     <% end %>

@@ -323,4 +323,44 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to account_users_url
     assert user.reload.active?
   end
+
+  test "a member's row shows their resolved presence dot and label" do
+    users(:jason).update! presence: :do_not_disturb, last_active_at: 1.minute.ago
+
+    get account_users_url
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:jason), :presence_dot_member)}.status--dnd"
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:jason))} .list-row__subtitle", text: /Do not disturb/
+  end
+
+  test "an available member who has gone quiet reads as away, not available" do
+    user = users(:jason)
+    user.update! presence: :available, last_active_at: 30.minutes.ago
+    user.memberships.first.update! connections: 1, connected_at: Time.current
+
+    get account_users_url
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(user, :presence_dot_member)}.status--away"
+  end
+
+  test "an unreachable member is greyed regardless of what they chose" do
+    users(:jason).update! presence: :available, last_active_at: 2.hours.ago
+
+    get account_users_url
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:jason), :presence_dot_member)}.status--offline"
+  end
+
+  test "your own row makes no claim about your presence" do
+    get account_users_url
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:david), :presence_dot_member)}", count: 0
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:david))} .list-row__subtitle", text: /Joined/
+  end
+
+  test "each other member's row subscribes to that member's own stream" do
+    get account_users_url
+
+    assert_select "turbo-cable-stream-source[signed-stream-name]", minimum: 1
+  end
 end

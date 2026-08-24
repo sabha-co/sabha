@@ -24,16 +24,14 @@ module RoomsHelper
     end
   end
 
-  def dm_presence_label(status)
-    case status
-    when :active then "Here now"
-    when :away then "Away"
-    else "Offline"
-    end
+  # Deliberately not "Here now": presence is what someone chose, and idleness is
+  # inferred — neither one earns a claim about where they're sitting.
+  def dm_presence_label(dot)
+    presence_dot_label(dot) || "Offline"
   end
 
   def direct_member_status(user)
-    Membership.activity_statuses_for([ user.id ])[user.id]
+    user.presence_dot_now
   end
 
   def link_back_to_last_room_visited

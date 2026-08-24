@@ -38,8 +38,8 @@
         <%= link_to user_path(user), class: "avatar", data: { turbo_frame: "_top" } do %>
           <%= avatar_image_tag(user, alt: "") %>
         <% end %>
-        <% if (dot_class = online_status_class(user)) %>
-          <span class="quick-profile__dot <%= dot_class %>" aria-hidden="true"></span>
+        <% if (dot = user.presence_dot_now) %>
+          <%= presence_dot_tag user, dot, surface: :quick_profile %>
         <% end %>
       </span>
       <div class="flex flex-column gap-half" style="min-width: 0;">

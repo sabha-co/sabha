@@ -143,6 +143,11 @@ class Accounts::UsersController < ApplicationController
     def preload_activity(users)
       @activity_statuses = Membership.activity_statuses_for(users.map(&:id))
       @activity_statuses[Current.user.id] = :active # You're viewing the page, so you're online
+
+      # The dots read this instead: what people chose, resolved against whether
+      # they're reachable. The socket statuses above still order the list and
+      # feed the online count, which are questions about connections, not intent.
+      @presence_dots = User.presence_dots_for(users)
     end
 
     def sort_by_activity(users)

@@ -212,6 +212,35 @@
     margin: 0;
 }
 
+/* Presence picker: ordinary menu rows carrying a dot, so the section reads as
+   part of the menu rather than a control panel bolted into it. */
+.sidebar__presence {
+    margin: 0;
+}
+
+.sidebar__presence-option {
+    gap: 8px;
+
+    /* The dot inherits .status-dot's em sizing; the rows are small enough that
+       it would otherwise read as a speck. */
+    & .status-dot {
+        block-size: 8px;
+        inline-size: 8px;
+    }
+
+    &[aria-checked="true"] {
+        font-weight: 600;
+    }
+}
+
+.sidebar__presence-hint {
+    color: var(--color-text-subtle);
+    font-size: 0.6875rem;
+    line-height: 1.35;
+    margin: 2px 0 4px;
+    padding-inline: 10px;
+}
+
 .options-btn {
     opacity: 0.5;
 

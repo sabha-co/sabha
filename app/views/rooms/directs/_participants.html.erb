@@ -8,7 +8,9 @@
 
       <strong><%= user.name %></strong>
       <span class="member__status flex align-center gap-half txt-small txt-muted">
-        <% if status %><span class="status-dot status--<%= status %>" aria-hidden="true"></span><% end %>
+        <% if status %>
+          <%= presence_dot_tag user, status, surface: :participant %>
+        <% end %>
         <%= dm_presence_label(status) %>
       </span>
     </div>
