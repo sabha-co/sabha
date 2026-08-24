@@ -115,7 +115,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   position: relative;
-  row-gap: var(--message-row-gap);
+  row-gap: var(--message-space);
 }
 
 /* Compact density tightens the message stream too, not just the sidebar (owner
