@@ -1,5 +1,15 @@
 <turbo-frame id="composer-frame">
-  <span class="composer__input input input--actor shake margin-block-end txt-negative txt-align-center" style="--input-border-color: var(--color-negative)">
-      <span>Sorry, you cannot message this user</span>
-  </span>
+  <%# Read-only composer card replacing the live one — see
+      rooms/show/_composer_not_allowed and .composer--read-only in composer.css %>
+  <div class="composer--read-only composer__input input input--actor flex flex-column margin-block-end"
+      style="--input-border-radius: 12px; --input-padding: 0">
+    <p class="composer__reason">Sorry, you cannot message this user</p>
+
+    <div class="composer__tools flex align-center full-width">
+      <span class="btn composer__send-btn flex-item-no-shrink" aria-hidden="true">
+        <span>Send</span>
+        <%= icon_tag "arrow-up-right" %>
+      </span>
+    </div>
+  </div>
 </turbo-frame>

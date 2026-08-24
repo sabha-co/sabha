@@ -138,6 +138,9 @@ suggestion-option {
   --input-padding: 0.3em !important;
 
   flex: 1;
+  /* Keep a visible affordance once recipient pills crowd the row
+     (v2.1 DM picker) */
+  min-inline-size: 7.5rem;
   gap: var(--input-padding);
 }
 

@@ -47,9 +47,8 @@
   font-weight: 600;
   gap: 6px;
   /* --footer-height understates the composer card, and the typing indicator is
-     now an out-of-flow overlay that no longer pads the composer — clear the card
-     with a larger margin so the pill floats above it */
-  inset-block-end: calc(var(--footer-height) + 6.25em);
+     a reserved 22px row above it — clear both so the pill floats clear */
+  inset-block-end: calc(var(--footer-height) + 6.25em + 22px);
   inset-inline-start: 50%;
   outline: 0 solid var(--color-selected-dark);
   position: absolute;
@@ -112,6 +111,15 @@
 .messages {
   --message-column-gap: 0.66ch;
   --message-row-gap: 0.1em;
+  /* Row rhythm (v2.1): --message-space separates day/unread separators and
+     drives the threaded pull-up; --msgpad is the per-row block padding (15px
+     comfortable, 9px compact — Desktop v2.1 rows ride `var(--msgpad) 20px`);
+     grouped runs tighten to 0.35em / 0.15em (Message Area density table).
+     Compact values follow the :root[data-density="compact"] toggle used in
+     utilities.css. */
+  --message-grouped-gap: 0.35em;
+  --message-space: 0.9375rem;
+  --msgpad: 0.9375rem;
 
   contain: layout style;
   display: grid;
@@ -132,6 +140,12 @@
   row-gap: var(--message-row-gap);
 }
 
+:root[data-density="compact"] .messages {
+  --message-grouped-gap: 0.15em;
+  --message-space: 0.5625rem;
+  --msgpad: 0.5625rem;
+}
+
 .message {
   --content-padding-block: 0.66rem;
   --content-padding-inline: calc(var(--inline-space) * 1.5);
@@ -149,6 +163,9 @@
     "avatar body body"
     "replies_sep replies_sep replies_sep"
     "loading_down loading_down loading_down";
+  /* Redline row rhythm: 15px block padding (9px compact) with the fluid
+     1ch + 1vw inline gutter; the avatar keeps its 36px track and 12px gap */
+  padding-block: var(--msgpad);
   padding-inline: calc(var(--inline-space) + 1vw);
   position: relative;
   row-gap: var(--message-row-gap);
@@ -205,8 +222,14 @@
   }
 
   + .message--threaded {
+    /* Grouped runs pull up over both rows' block padding so a run reads tight:
+       the design's grouped gap is 0.35em comfortable / 0.15em compact (Message
+       Area density table) */
     margin-block-start: calc(
-      (var(--message-space) + (var(--message-row-gap) * 2) - 2px) * -1
+      (
+        var(--msgpad) * 2 + (var(--message-row-gap) * 2) -
+          var(--message-grouped-gap)
+      ) * -1
     );
   }
 
@@ -560,7 +583,6 @@
   }
 
   .message__heading {
-    align-items: center;
     column-gap: 7px;
     display: inline-flex;
     margin: 0;
@@ -572,7 +594,7 @@
 /* Meta line: author 14.5/700, time and "(edited)" 11.5 subtle */
 .message__author {
   color: var(--color-text);
-  font-size: var(--font-size-medium);
+  font-size: 0.90625rem;
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -836,6 +858,24 @@ img.message__attachment {
   }
 }
 
+/* Hairline 1×16 between the ＋ picker and Reply in the floating hover bar
+   (redlines hover-bar anatomy). Touch keeps the collapsed Reply + overflow
+   bar, so the divider only exists on pointer devices. */
+.message__actions-divider {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .message__actions .message__actions-divider {
+    align-self: center;
+    background-color: var(--color-border);
+    block-size: 16px;
+    display: block;
+    flex-shrink: 0;
+    inline-size: 1px;
+  }
+}
+
 .bookmark-indicator--active {
   animation: bookmark-pop 250ms cubic-bezier(0.25, 1, 0.5, 1) both;
 }
@@ -1064,23 +1104,21 @@ img.message__attachment {
   }
 }
 
+/* Redlines: a full-bleed red wash on the message row itself (padding-box, the
+   whole width) — not a chip around the text. Hover deepens the same wash
+   rather than swapping to the normal hover surface, so the row never stops
+   reading as mentioned. The v2.1 pass dropped the --mentioned-unread wiggle. */
 .message--mentioned {
-  .message__body-content {
-    background-color: var(--color-message-mentioned);
-  }
+  background-color: var(--color-message-mentioned);
 
   .message__mention-label {
     display: inline-flex;
   }
 
   @media (any-hover: hover) {
-    &:hover .message__body-content {
+    &:hover {
       background-color: var(--color-message-mentioned-hover);
     }
-  }
-
-  &.message--mentioned-unread .message__body-content {
-    animation: wiggle 0.4s both;
   }
 }
 

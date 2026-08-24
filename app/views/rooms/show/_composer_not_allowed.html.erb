@@ -1,15 +1,26 @@
+<%# Read-only composer (redlines state "Read-only"): keep the card, sink its
+    surface, drop the tools, replace the placeholder with one line of reason,
+    render Send inert. See .composer--read-only in composer.css. %>
 <% content_for :footer do %>
-  <div class="composer flex align-end gap position-relative">
+  <div class="composer">
     <turbo-frame id="composer-frame">
-      <span class="composer__input input input--actor shake margin-block-end txt-negative txt-align-center" style="--input-border-color: var(--color-negative)">
-          <span>
-            <% if Current.user.blocked?(room.roommate_to(Current.user)) %>
-              You blocked this user and now you cannot message each other
-            <% else %>
-              You cannot message this user
-            <% end %>
+      <div class="composer--read-only composer__input input input--actor flex flex-column"
+          style="--input-border-radius: 12px; --input-padding: 0">
+        <p class="composer__reason">
+          <% if Current.user.blocked?(room.roommate_to(Current.user)) %>
+            You blocked this user and now you cannot message each other
+          <% else %>
+            You cannot message this user
+          <% end %>
+        </p>
+
+        <div class="composer__tools flex align-center full-width">
+          <span class="btn composer__send-btn flex-item-no-shrink" aria-hidden="true">
+            <span>Send</span>
+            <%= icon_tag "arrow-up-right" %>
           </span>
-      </span>
-    </turbo-frame>    
+        </div>
+      </div>
+    </turbo-frame>
   </div>
 <% end %>

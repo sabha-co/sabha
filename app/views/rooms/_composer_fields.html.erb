@@ -1,10 +1,10 @@
-<%# locals: (form:, autocomplete_room: nil, label:, send_label:, body_id: nil, attachments: true, search_path: nil, placeholder: nil, mention_user_ids: nil) -%>
+<%# locals: (form:, autocomplete_room: nil, label:, send_label:, body_id: nil, attachments: true, placeholder: nil, mention_user_ids: nil) -%>
 <%# The shared input card for every chat composer — the main room composer, a
     thread reply, and a provisional (not-yet-created) thread reply. Callers supply
     the form builder plus the bits that vary: the room to autocomplete @-mentions
-    against, the aria/send labels, and the optional search shortcut. The card
-    stacks the always-on format bar (Lexxy's toolbar, B/I/S/code + an @ insert)
-    over the input over the tools row (attach · emoji · search · send); the
+    against and the aria/send labels. The card stacks the always-on format bar
+    (Lexxy's toolbar, B/I/S/code + an @ insert) over the input over the tools row
+    (attach · emoji · send); search lives in the ⌘K palette, not here. The
     surrounding chrome (typing indicator, everyone-confirm, hidden fields) stays in
     each caller since it differs per context. %>
 <fieldset data-composer-target="fields" contents>
@@ -61,14 +61,6 @@
           </dialog>
         </span>
 
-        <% if search_path %>
-          <%= link_to search_path, class: "btn btn--borderless txt-small flex-item-no-shrink composer__search-btn",
-                style: "view-transition-name: input-switcher",
-                data: { controller: "search-palette", action: "search-palette#open" } do %>
-            <%= icon_tag "search" %>
-            <span class="for-screen-reader">Search</span>
-          <% end %>
-        <% end %>
 
         <%# No for-screen-reader span — with the icon it would trip the
             circle-button treatment in buttons.css; the aria-label names it. %>

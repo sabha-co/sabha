@@ -1,5 +1,5 @@
 const REFRESH_INTERVAL = 1000
-const TYPING_TIMEOUT = 5000
+const TYPING_TIMEOUT = 4000
 
 export default class TypingTracker {
   constructor(callback) {

@@ -1,15 +1,25 @@
 <%# locals: (room:) -%>
 <%# The wrapper is always present (even with nothing pinned) so the Pin model can
-    replace it live over the room stream. The bar is a link that jumps to the
-    pinned message; unpinning is done from that message's ⋯ dropdown. Rendered
-    viewer-less, so no Current.user here. %>
+    replace it live over the room stream. The bar links to the pinned message;
+    Unpin sits flush right, reusing the same route the message ⋯ pin action
+    posts to. Rendered viewer-less, so no Current.user here — the control is
+    gated to staff in CSS via the `.staff` body class, exactly like the ⋯
+    item (see pins.css). %>
 <%= tag.div id: dom_id(room, :pinned), class: "pinned-strip" do %>
   <% if (message = room.pinned_message) %>
     <% preview = message.plain_text_body.presence || "Attachment" %>
-    <%= link_to message_permalink_path(message), class: "pinned-bar", title: preview do %>
-      <span class="pinned-bar__label">Pinned</span>
-      <span class="pinned-bar__text"><%= truncate(preview, length: 140) %></span>
-      <span class="pinned-bar__chevron" aria-hidden="true">›</span>
-    <% end %>
+    <div class="pinned-bar">
+      <%= link_to message_permalink_path(message), class: "pinned-bar__link", title: preview do %>
+        <span class="pinned-bar__label">Pinned</span>
+        <span class="pinned-bar__text"><%= truncate(preview, length: 140) %></span>
+        <span class="pinned-bar__chevron" aria-hidden="true">›</span>
+      <% end %>
+      <% if room.pinnable? %>
+        <%= button_to room_message_pin_path(room, message), method: :delete,
+              class: "btn pinned-bar__unpin" do %>
+          <span>Unpin</span>
+        <% end %>
+      <% end %>
+    </div>
   <% end %>
 <% end %>

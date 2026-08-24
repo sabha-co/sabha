@@ -52,7 +52,7 @@ class Rooms::InvolvementSettingsTest < ActionDispatch::IntegrationTest
     room = rooms(:hq)
     membership = memberships(:david_hq)
 
-    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 5 do
+    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 6 do
       put room_involvement_url(room), params: { involvement: "invisible", return_to: edit_room_path(room) }
     end
 

@@ -1,27 +1,31 @@
-/* Pinned message strip — the handoff's bar under the room header. Neutral sunk
-   surface with a hairline, an accent "Pinned" label, and the message text
-   truncated. The whole bar links to the pinned message (scroll-to); unpinning
-   lives in that message's ⋯ dropdown. */
-.pinned-strip {
-  display: contents;
-}
-
+/* Pinned message strip — the handoff's single-pin bar under the room header:
+   "Pinned" label, the pin, then Unpin flush right (CHANGELOG v2.1, Pins).
+   Neutral sunk surface with a hairline; the message text links to the pinned
+   message (scroll-to). */
 .pinned-bar {
   align-items: center;
   background-color: var(--color-bg-sunk);
   border-block-end: 1px solid var(--color-border-dark);
-  color: inherit;
   display: flex;
   flex-shrink: 0;
   gap: 9px;
   padding: 8px 18px;
-  text-decoration: none;
 
   @media (any-hover: hover) {
     &:hover {
       background-color: var(--color-bg-hover);
     }
   }
+}
+
+.pinned-bar__link {
+  align-items: center;
+  color: inherit;
+  display: flex;
+  flex: 1;
+  gap: 9px;
+  min-inline-size: 0;
+  text-decoration: none;
 }
 
 .pinned-bar__label {
@@ -45,6 +49,24 @@
   flex-shrink: 0;
   font-size: 15px;
   line-height: 1;
+}
+
+/* Flush-right Unpin — same route and turbo behaviour as the ⋯ pin action.
+   Broadcasts render viewer-less, so gate to staff via the `.staff` body
+   class rather than Current.user in the partial. */
+.pinned-bar__unpin {
+  --btn-background: transparent;
+  --btn-border-color: transparent;
+  --btn-color: var(--color-text-muted);
+  --btn-padding: 2px 8px;
+
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+body:not(.staff) .pinned-bar__unpin {
+  display: none;
 }
 
 /* The dropdown Pin / Unpin control is staff-only. Turbo broadcasts render the
