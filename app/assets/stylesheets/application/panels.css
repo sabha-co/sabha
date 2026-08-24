@@ -248,15 +248,12 @@ body.room-settings #main-content {
 .member-badge {
   --badge-color: var(--color-accent-brand);
 
-  align-items: center;
   background-color: color-mix(in srgb, var(--badge-color) 14%, transparent);
   border-radius: 4px;
   color: var(--badge-color);
-  display: inline-flex;
   flex: none;
   font-size: 0.625rem;
   font-weight: 700;
-  gap: 4px;
   letter-spacing: 0.03em;
   padding: 1px 6px;
   text-transform: uppercase;

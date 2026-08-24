@@ -4,9 +4,8 @@
       data-controller="typing-notifications"
       data-typing-notifications-active-class="typing-indicator--active"
       data-typing-notifications-room-id-value="<%= room.id %>">
-    <%# Reserved 22px row above the card — always occupies space (even idle) so
-        the composer never shifts when someone starts or stops typing; see
-        .typing-indicator in composer.css %>
+    <%# Overlay strip: floats just above the composer card while someone is
+        typing and reserves no space when idle, so the composer never shifts %>
     <div class="typing-indicator" aria-live="polite" aria-atomic="true" data-typing-notifications-target="indicator">
       <span class="typing-dots"><span></span><span></span><span></span></span>
       <div class="typing-indicator__author spinner" data-typing-notifications-target="author"></div>
@@ -30,7 +29,8 @@
 
           <%= render "rooms/composer_fields", form: form, autocomplete_room: room,
                 label: "Write a message", send_label: "Send Message",
-                placeholder: composer_placeholder(room) %>
+                placeholder: composer_placeholder(room),
+                search_path: searches_path %>
 
           <%= form.hidden_field :client_message_id, data: { composer_target: "clientid" } %>
         <% end %>

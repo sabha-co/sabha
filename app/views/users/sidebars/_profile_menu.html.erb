@@ -1,9 +1,5 @@
 <%= tag.div class: "sidebar__profile",
-      data: { controller: "popover presence-picker",
-              popover_placement_value: "bottom-start",
-              presence_picker_url_value: user_presence_path,
-              presence: Current.user.presence,
-              action: "resize@window->popover#reposition" } do %>
+      data: { controller: "popover", popover_placement_value: "bottom-start", action: "resize@window->popover#reposition" } do %>
   <button type="button" class="sidebar__me" title="Open profile menu"
           aria-haspopup="true" aria-expanded="false"
           data-popover-target="trigger" data-action="popover#toggle">
@@ -11,11 +7,11 @@
       <figure class="avatar" style="--avatar-size: 32px;">
         <%= avatar_image_tag(Current.user, size: 32, loading: :lazy) %>
       </figure>
-      <span class="status-dot sidebar__me-dot" aria-hidden="true"></span>
+      <span class="status-dot status--active sidebar__me-dot" aria-hidden="true"></span>
     </span>
     <span class="sidebar__me-info">
       <span class="sidebar__me-name"><%= Current.user.name %></span>
-      <span class="sidebar__me-status" data-presence-picker-target="line"><%= Current.user.presence_label %></span>
+      <span class="sidebar__me-status"><%= Current.user.email_address %></span>
     </span>
     <span class="sidebar__me-caret" aria-hidden="true"><%= icon_tag "caret-down" %></span>
   </button>
@@ -31,23 +27,6 @@
       </span>
       <span class="sidebar__profile-summary-arrow" aria-hidden="true">&rsaquo;</span>
     <% end %>
-
-    <span class="sidebar__profile-divider" aria-hidden="true"></span>
-
-    <span class="sidebar__presence-heading">Presence</span>
-    <div role="radiogroup" aria-label="Presence">
-      <% User::PRESENCE_LABELS.each do |value, label| %>
-        <button type="button" class="sidebar__presence-option" role="radio"
-                aria-checked="<%= Current.user.presence == value %>"
-                data-presence-picker-target="option"
-                data-status="<%= value %>"
-                data-action="presence-picker#choose">
-          <span class="sidebar__presence-dot sidebar__presence-dot--<%= value %>" aria-hidden="true"></span>
-          <span class="sidebar__presence-option-label"><%= label %></span>
-          <span class="sidebar__presence-check" aria-hidden="true">&#10003;</span>
-        </button>
-      <% end %>
-    </div>
 
     <span class="sidebar__profile-divider" aria-hidden="true"></span>
 

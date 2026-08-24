@@ -94,11 +94,6 @@
     > :last-child {
       margin-block-start: 1.5ch;
       margin-inline-start: -0.75ch;
-      /* Two overlapping tiles read as two avatars: the front tile is ringed
-         in the local page surface so its edge shows against the one behind.
-         Scopes on other grounds re-point --avatar-group-edge-color (the
-         sidebar rings its stacks in the sidebar ground). */
-      box-shadow: 0 0 0 2px var(--avatar-group-edge-color, var(--color-bg));
     }
   }
 

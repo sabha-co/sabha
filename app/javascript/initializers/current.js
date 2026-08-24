@@ -3,11 +3,10 @@ class Current {
     const currentUserId = this.#extractContentFromMetaTag("current-user-id")
 
     if (currentUserId) {
-      return {
-        id: parseInt(currentUserId),
+      return { 
+        id: parseInt(currentUserId), 
         name: this.#extractContentFromMetaTag("current-user-name"),
-        role: this.#extractContentFromMetaTag("current-user-role"),
-        avatarUrl: this.#extractContentFromMetaTag("current-user-avatar-url")
+        role: this.#extractContentFromMetaTag("current-user-role")
       }
     }
   }

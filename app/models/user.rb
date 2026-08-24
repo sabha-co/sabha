@@ -6,17 +6,6 @@ class User < ApplicationRecord
 
   serialize :preferences, coder: JSON
 
-  # Presence picked in the profile flyout (Sidebar v2.1 account menu), stored in
-  # the preferences json under "presence". The sidebar footer dot and the status
-  # line under the name follow it; per design it does not propagate to rosters —
-  # those stay connection-derived.
-  PRESENCE_OPTIONS = %w[available away do_not_disturb].freeze
-  PRESENCE_LABELS = {
-    "available" => "Available",
-    "away" => "Away",
-    "do_not_disturb" => "Do not disturb"
-  }.freeze
-
   # The workspace member count shown in the sidebar header, the account settings
   # overview, the members directory, and the signup page. Bots are excluded — they
   # get their own management page and never appear in the members list, so the
@@ -227,20 +216,6 @@ class User < ApplicationRecord
 
   def member_of?(room)
     Membership.active.visible.exists?(room_id: room.id, user_id: id)
-  end
-
-  # The presence option chosen in the flyout. Defaults to Available so a user
-  # who never picked one still renders the design's "one always selected" state.
-  def presence
-    preferences.fetch("presence", "available")
-  end
-
-  def presence_label
-    PRESENCE_LABELS.fetch(presence, PRESENCE_LABELS["available"])
-  end
-
-  def presence=(option)
-    self.preferences = preferences.merge("presence" => option)
   end
 
   # Email-only presence check — true when no membership in this workspace has

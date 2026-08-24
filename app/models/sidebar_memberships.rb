@@ -36,18 +36,11 @@ class SidebarMemberships
     shared_base.starred
   end
 
-  # Unstarred shared rooms with unseen messages — the v2.1 UNREAD section.
-  # Starred wins over unread (a starred room stays in Favorites), forums keep
-  # their post-derived dots in FORUMS, so no room is listed twice.
-  def unread
-    shared_base.unstarred.without_forum_rooms.unread
-  end
-
-  # Unstarred, caught-up shared room memberships shown in the "Rooms" section.
+  # Unstarred shared room memberships shown in the "Rooms" section.
   # Forums are listed separately.
   #
   def shared
-    shared_base.unstarred.without_forum_rooms.read
+    shared_base.unstarred.without_forum_rooms
   end
 
   # Forum memberships shown in the "Forums" section.

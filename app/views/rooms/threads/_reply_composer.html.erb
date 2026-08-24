@@ -3,7 +3,7 @@
       data-controller="typing-notifications"
       data-typing-notifications-active-class="typing-indicator--active"
       data-typing-notifications-room-id-value="<%= @room.id %>">
-    <%# Reserved 22px row above the card — see rooms/show/_composer %>
+    <%# Overlay strip — see rooms/show/_composer %>
     <div class="typing-indicator" aria-live="polite" aria-atomic="true" data-typing-notifications-target="indicator">
       <span class="typing-dots"><span></span><span></span><span></span></span>
       <div class="typing-indicator__author spinner" data-typing-notifications-target="author"></div>

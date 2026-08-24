@@ -45,13 +45,10 @@
             <%= room_display_name(room) %>
           <% end %>
         </h1>
+        <%# A group's count lives in the "N people" pill (navbar-actions), which
+            also opens the participants panel — so no static subline here. %>
         <% if dm_other %>
           <span class="navbar-dm__status"><%= dm_presence_label(dm_status) %></span>
-        <% elsif dm_members.many? %>
-          <%# v2.1: a group's subline names the others ("Iris, Marcus and you");
-              the "N people" pill beside it opens the participants panel. %>
-          <span class="navbar-dm__status"><%= (dm_members.map { |member| member.name.split(" ").first } + ["you"])
-            .to_sentence(two_words_connector: " and ", last_word_connector: " and ") %></span>
         <% end %>
       </div>
     </div>

@@ -1,7 +1,7 @@
 /* Composer */
 .composer {
- flex: none;
- padding: var(--block-space-half) calc(var(--inline-space) + 1vw);
+  flex: none;
+  padding: var(--block-space-half) calc(var(--inline-space) + 1vw);
 }
 
 /* Decisive frame: the resting card holds a firm border-darker edge; focus
@@ -9,400 +9,375 @@
    glow. Inline --input-border-color overrides (the negative "not allowed"
    notices) still win over this custom property. */
 .composer__input.input--actor {
- --input-border-color: var(--color-border-darker);
+  --input-border-color: var(--color-border-darker);
 
- &:focus-within {
-  --input-border-color: var(--color-selected-dark);
+  &:focus-within {
+    --input-border-color: var(--color-selected-dark);
 
-  outline: 2px solid var(--color-accent-brand);
-  outline-offset: 2px;
- }
+    outline: 2px solid var(--color-accent-brand);
+    outline-offset: 2px;
+  }
 }
 
 /* Leading glyph on the search surfaces' inputs (the composer itself no longer
    carries one) */
 .composer__input-hint {
- align-self: center;
+  align-self: center;
 }
 
 /* Attachments */
 /* Tools row buttons: bare 18px glyphs at subtle ink (comp), no button box;
    hover lifts them to full ink rather than showing a surface. */
 .composer__attachment-btn,
-.composer__emoji-btn {
- --btn-color: var(--color-text-subtle);
- --btn-padding: 0;
- --btn-size: 18px;
- --icon-size: 18px;
+.composer__emoji-btn,
+.composer__search-btn {
+  --btn-color: var(--color-text-subtle);
+  --btn-padding: 0;
+  --btn-size: 18px;
+  --icon-size: 18px;
 
- @media (any-hover: hover) {
-  &:where(:not(:active):hover) {
-   --btn-color: var(--color-text);
-   background-color: transparent;
-   box-shadow: none;
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) {
+      --btn-color: var(--color-text);
+      background-color: transparent;
+      box-shadow: none;
+    }
   }
- }
 }
 
 /* Pending attachments */
 .composer__filelist {
- --row-gap: var(--block-space-half);
+  --row-gap: var(--block-space-half);
 
- &:not(:empty) {
-  padding-block-end: var(--block-space-half);
- }
+  &:not(:empty) {
+    padding-block-end: var(--block-space-half);
+  }
 }
 
 .composer__file {
- --aspect-ratio: 5/4;
- --btn-border-radius: 1em;
- --thumbnail-size: 15ch;
+  --aspect-ratio: 5/4;
+  --btn-border-radius: 1em;
+  --thumbnail-size: 15ch;
 
- aspect-ratio: var(--aspect-ratio);
- inline-size: var(--thumbnail-size);
+  aspect-ratio: var(--aspect-ratio);
+  inline-size: var(--thumbnail-size);
 }
 
 :is(img, span):is(.composer__file-thumbnail) {
- aspect-ratio: var(--aspect-ratio);
- block-size: auto;
- border-radius: var(--btn-border-radius);
- border: 1px solid var(--color-border-darker);
- inline-size: var(--thumbnail-size);
- object-fit: cover;
+  aspect-ratio: var(--aspect-ratio);
+  block-size: auto;
+  border-radius: var(--btn-border-radius);
+  border: 1px solid var(--color-border-darker);
+  inline-size: var(--thumbnail-size);
+  object-fit: cover;
 }
 
 .composer__file-thumbnail--common {
- background: url(../common-file-text.svg) no-repeat center;
- background-size: 55%;
+  background: url(../common-file-text.svg) no-repeat center;
+  background-size: 55%;
 }
 
 .composer__file-caption {
- --icon-size: 1.3em;
+  --icon-size: 1.3em;
 
- &::after {
-  content: "";
-  block-size: var(--icon-size);
-  inline-size: var(--icon-size);
-  background: url("../remove-circle.svg") no-repeat center;
-  margin-inline: 0.5em -0.5em;
-  flex-shrink: 0;
- }
-
- @media (prefers-color-scheme: dark) {
   &::after {
-   filter: invert(100%);
+    content: "";
+    block-size: var(--icon-size);
+    inline-size: var(--icon-size);
+    background: url("../remove-circle.svg") no-repeat center;
+    margin-inline: 0.5em -0.5em;
+    flex-shrink: 0;
   }
- }
 
- :root[data-theme="light"] &::after {
-  filter: invert(0%);
- }
+  @media (prefers-color-scheme: dark) {
+    &::after {
+      filter: invert(100%);
+    }
+  }
 
- :root[data-theme="dark"] &::after {
-  filter: invert(100%);
- }
+  :root[data-theme="light"] &::after {
+    filter: invert(0%);
+  }
+
+  :root[data-theme="dark"] &::after {
+    filter: invert(100%);
+  }
 }
 
 /* Rich text */
 .composer__rich-text-btn {
- --hover-filter: brightness(0.85);
+  --hover-filter: brightness(0.85);
 
- display: inline-flex;
- margin-inline-start: -0.5em;
+  display: inline-flex;
+  margin-inline-start: -0.5em;
 
- @media (any-hover: hover) {
-  &:where(:not(:active):hover) {
-   filter: var(--hover-filter);
-   box-shadow: none;
+  @media (any-hover: hover) {
+    &:where(:not(:active):hover) {
+      filter: var(--hover-filter);
+      box-shadow: none;
+    }
   }
- }
 
- img {
-  inline-size: 1.7em;
- }
+  img {
+    inline-size: 1.7em;
+  }
 }
 
 /* Tools row: attach · emoji · search left, Send flush right; 12px gap and
    6/12/10 padding (comp) */
 .composer__tools {
- gap: 12px;
- padding: 6px 12px 10px;
+  gap: 12px;
+  padding: 6px 12px 10px;
 }
 
 /* The emoji control wraps its trigger and the scrim dialog so the dialog can
    sit in the composer's flow without stretching the tools row */
 .composer__emoji {
- display: inline-flex;
+  display: inline-flex;
 }
 
 .composer__send-btn {
- --btn-background: var(--color-bg-hover);
- --btn-border-color: transparent;
- --btn-border-radius: 8px;
- --btn-color: var(--color-text-subtle);
- --btn-padding: 0.4375rem 1rem;
- --hover-color: transparent;
- --hover-filter: none;
+  --btn-background: var(--color-bg-hover);
+  --btn-border-color: transparent;
+  --btn-border-radius: 8px;
+  --btn-color: var(--color-text-subtle);
+  --btn-padding: 0.44em 1em;
+  --hover-color: transparent;
+  --hover-filter: none;
 
- font-size: 0.8125rem;
- font-weight: 600;
- margin-inline-start: auto;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-inline-start: auto;
 
- /* Accent fill only while the draft is non-empty (composer#draftChanged) */
- .composer--drafting & {
-  --btn-background: var(--color-accent-brand);
-  --btn-color: var(--color-text-reversed);
- }
-}
-
-/* Read-only card (redlines composer state "Read-only" — blocked, banned, or an
-   archived room): the card stays but its surface sinks to the hover tint with
-   a plain border, the tools drop out, one line of reason replaces the
-   placeholder, and Send renders inert — hover-surface/subtle text, never
-   disabled-red. */
-.composer--read-only.composer__input {
- --input-border-color: var(--color-border);
-
- background-color: var(--color-bg-hover);
-}
-
-.composer--read-only .composer__reason {
- color: var(--color-text-subtle);
- font-size: 0.9375rem;
- line-height: 1.55;
- margin-block-end: 0;
- padding: 13px 14px;
-}
-
-.composer--read-only .composer__send-btn {
- --btn-background: transparent;
+  /* Accent fill only while the draft is non-empty (composer#draftChanged) */
+  .composer--drafting & {
+    --btn-background: var(--color-accent-brand);
+    --btn-color: var(--color-text-reversed);
+  }
 }
 
 /* The card follows the comp's row rhythm: no padding on the card itself
    (--input-padding: 0 in the view), each row carries its own — format bar 8/14,
    input 13/14, tools 6/12/10 — so the single-line composer stays compact. */
 .composer lexxy-editor.input {
- display: flex;
- flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
- /* Comp: 15px message text, 13/14 padding, grows to ~8 lines then scrolls. The
+  /* Comp: 15px message text, 13/14 padding, grows to ~8 lines then scrolls. The
      16px input floor exists to stop iOS focus-zoom, only relevant on coarse
      pointers. */
- .lexxy-editor__content {
-  max-block-size: 12rem;
-  overflow-y: auto;
-  padding: 13px 14px;
- }
+  .lexxy-editor__content {
+    max-block-size: 12rem;
+    overflow-y: auto;
+    padding: 13px 14px;
+  }
 
- @media (pointer: fine) {
-  font-size: 0.9375rem;
- }
+  @media (pointer: fine) {
+    font-size: 0.9375rem;
+  }
 
- /* Format bar: bare 13px glyphs at 15px gaps under a hairline, 8/14 padding
+  /* Format bar: bare 13px glyphs at 15px gaps under a hairline, 8/14 padding
      (comp). The @ insert is grafted on in composer#insertFormatBarExtras. */
- lexxy-toolbar {
-  --lexxy-toolbar-gap: 15px;
-  --lexxy-toolbar-button-size: 13px;
-  --lexxy-toolbar-icon-size: 13px;
+  lexxy-toolbar {
+    --lexxy-toolbar-gap: 15px;
+    --lexxy-toolbar-button-size: 13px;
+    --lexxy-toolbar-icon-size: 13px;
 
-  align-items: center;
-  background: transparent;
-  border: 0;
-  border-block-end: 1px solid var(--color-border);
-  border-radius: 0;
-  color: var(--color-text-subtle);
-  display: flex;
-  /* Redlines: the format bar is 34 high — pin the floor so Lexxy's own
-       button metrics can't shrink it */
-  min-block-size: 2.125rem;
-  order: -1;
-  padding: 8px 14px;
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-block-end: 1px solid var(--color-border);
+    border-radius: 0;
+    color: var(--color-text-subtle);
+    display: flex;
+    order: -1;
+    padding: 8px 14px;
 
-  /* Curate to the handoff set (B I S </>): hide everything Lexxy offers, then
+    /* Curate to the handoff set (B I S </>): hide everything Lexxy offers, then
        re-show just those four. The @ insert (.composer__mention-btn, grafted on
        in composer#insertFormatBarExtras) shows too; attachments and emoji live
        in the tools row below. */
-  .lexxy-editor__toolbar-button,
-  .lexxy-editor__toolbar-dropdown {
-   display: none;
-  }
+    .lexxy-editor__toolbar-button,
+    .lexxy-editor__toolbar-dropdown {
+      display: none;
+    }
 
-  button[name="bold"],
-  button[name="italic"],
-  button[name="strikethrough"],
-  button[name="code"],
-  .composer__mention-btn {
-   display: grid;
-  }
+    button[name="bold"],
+    button[name="italic"],
+    button[name="strikethrough"],
+    button[name="code"],
+    .composer__mention-btn {
+      display: grid;
+    }
 
-  /* Bare glyphs like the comp — no button surface; hover lifts the subtle
+    /* Bare glyphs like the comp — no button surface; hover lifts the subtle
        glyph to full ink. */
-  .lexxy-editor__toolbar-button:hover,
-  .composer__mention-btn:hover {
-   background-color: transparent;
-   color: var(--color-text);
+    .lexxy-editor__toolbar-button:hover,
+    .composer__mention-btn:hover {
+      background-color: transparent;
+      color: var(--color-text);
+    }
   }
- }
 }
 
 /* Phones: the resting composer stays one compact card; the format bar reveals
    once the field has focus (handoff). */
 @media (max-width: 499.9px) {
- .composer lexxy-editor.input lexxy-toolbar {
-  display: none;
- }
+  .composer lexxy-editor.input lexxy-toolbar {
+    display: none;
+  }
 
- .composer:focus-within lexxy-editor.input lexxy-toolbar {
-  display: flex;
- }
+  .composer:focus-within lexxy-editor.input lexxy-toolbar {
+    display: flex;
+  }
 }
 
 /* The @ insert grafted onto the bar (composer#insertFormatBarExtras) is a text
    glyph rather than a masked icon, so it carries its own sizing; the leading
    hairline is the handoff's B/I/S/</> | @ group divider. */
 .composer__mention-btn {
- border-inline-start: 1px solid var(--color-border);
- font-size: 13px;
- font-weight: 600;
- line-height: 1;
- padding-inline-start: 8px;
+  border-inline-start: 1px solid var(--color-border);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding-inline-start: 8px;
 }
 
 /* The toggle-driven toolbar for the surfaces that keep it: the message-edit
    form and the forum post composer (forum_body_controller). The chat composers
    above show their bar persistently instead. */
 .composer--rich-text {
- lexxy-toolbar {
-  display: flex;
- }
+  lexxy-toolbar {
+    display: flex;
+  }
 
- lexxy-editor.input {
-  margin-block-start: var(--block-space-half);
- }
+  lexxy-editor.input {
+    margin-block-start: var(--block-space-half);
+  }
 }
 
 .composer--edit lexxy-toolbar {
- border-block-end: 1px solid var(--color-border);
- margin-inline: -0.8em;
- padding-inline: 0.3em;
- padding-block-end: 0.5em;
+  border-block-end: 1px solid var(--color-border);
+  margin-inline: -0.8em;
+  padding-inline: 0.3em;
+  padding-block-end: 0.5em;
 }
 
 /* The editor's container-type prevents it from sizing the message bubble by its
    content, so give the bubble the full available width while editing */
 .message__body:has(.composer--edit) {
- inline-size: 100%;
+  inline-size: 100%;
 
- .message__body-content--editing {
-  flex-grow: 1;
- }
+  .message__body-content--editing {
+    flex-grow: 1;
+  }
 }
 
-/* Typing indicator: a reserved 22px row sitting directly above the composer
-   card, outside the scroll container (redlines: "always present even when
-   empty, so the composer never shifts when someone starts or stops typing").
-   Its inline padding mirrors the transcript gutter so the label aligns with
-   the composer card. Dots and label stay subtle; opacity is the only thing
-   that changes while someone types. */
+/* Typing indicator: floats in a 22px strip just above the composer card,
+   overlapping the bottom of the message canvas. Absolutely positioned, so it
+   reserves no layout space when idle and never shifts the composer when someone
+   starts or stops typing. It paints the canvas background so the dots and label
+   stay legible over whatever message sits behind them. */
 .typing-indicator {
- align-items: center;
- block-size: 22px;
- color: var(--color-text-subtle);
- display: flex;
- flex: none;
- gap: 0.75ch;
- opacity: var(--indicator-opacity, 0);
- overflow: hidden;
- padding-inline: calc(var(--inline-space) + 1vw);
- pointer-events: none;
- transition: opacity 250ms cubic-bezier(0.25, 1, 0.5, 1);
+  align-items: center;
+  background-color: var(--color-bg);
+  block-size: 22px;
+  color: var(--color-text-subtle);
+  display: flex;
+  gap: 0.75ch;
+  inset-block-end: 100%;
+  inset-inline: 0;
+  opacity: var(--indicator-opacity, 0);
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 250ms cubic-bezier(0.25, 1, 0.5, 1);
 
- &.typing-indicator--active {
-  --indicator-opacity: 1;
- }
+  /* Align the label with the composer card, past the search button */
+  .composer:not(.composer--thread) & {
+    padding-inline-start: calc(var(--btn-size) + 1ch);
+  }
+
+  &.typing-indicator--active {
+    --indicator-opacity: 1;
+  }
 }
 
 .typing-indicator__author {
- font-size: 0.78125rem;
- line-height: 1.2;
- overflow: hidden;
- text-overflow: ellipsis;
- white-space: nowrap;
+  font-size: 0.78125rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
- &.spinner {
-  display: none;
+  &.spinner {
+    display: none;
 
-  .typing-indicator--active & {
-   display: block;
+    .typing-indicator--active & {
+      display: block;
+    }
+
+    /* Hide the default spinner dots — replaced by .typing-dots */
+    &::before {
+      display: none;
+    }
   }
-
-  /* Hide the default spinner dots — replaced by .typing-dots */
-  &::before {
-   display: none;
-  }
- }
 }
 
 .typing-dots {
- display: inline-flex;
- gap: 3px;
- align-items: center;
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
 
- span {
-  display: inline-block;
-  inline-size: 5px;
-  block-size: 5px;
-  border-radius: 50%;
-  background-color: currentColor;
-  opacity: 0.3;
- }
-
- /* Dots animate only while a name is shown; no idle animation */
- .typing-indicator--active & span {
-  animation: typing-dot 1.2s infinite both;
-
-  &:nth-child(2) {
-   animation-delay: 0.2s;
+  span {
+    display: inline-block;
+    inline-size: 5px;
+    block-size: 5px;
+    border-radius: 50%;
+    background-color: currentColor;
+    opacity: 0.3;
   }
 
-  &:nth-child(3) {
-   animation-delay: 0.4s;
+  /* Dots animate only while a name is shown; no idle animation */
+  .typing-indicator--active & span {
+    animation: typing-dot 1.2s infinite both;
+
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
   }
- }
 }
 
 .composer__input {
-
- .composer__rich-text-btn,
- label:has(input[type="file"]) {
-  cursor: pointer;
- }
+  .composer__rich-text-btn,
+  label:has(input[type="file"]) {
+    cursor: pointer;
+  }
 }
 
 @media (min-width: 1024px) and (any-hover: hover) and (pointer: fine) {
- .composer__rich-text-btn {
-  display: inline-flex;
- }
+  .composer__rich-text-btn {
+    display: inline-flex;
+  }
 }
 
 /* Phone: the composer stays one compact card (the format bar reveals on focus),
    but its tools-row controls grow to 44px tap targets. */
 @media (max-width: 499.9px) {
+  .composer__attachment-btn,
+  .composer__emoji-btn,
+  .composer__rich-text-btn,
+  .composer__search-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    margin-inline: 0;
+  }
 
- .composer__attachment-btn,
- .composer__emoji-btn,
- .composer__rich-text-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-block-size: 44px;
-  min-inline-size: 44px;
-  margin-inline: 0;
- }
+  .composer__send-btn {
+    --btn-padding: 0.7em 1.15em;
 
- .composer__send-btn {
-  --btn-padding: 0.7em 1.15em;
-
-  min-block-size: 44px;
- }
+    min-block-size: 44px;
+  }
 }

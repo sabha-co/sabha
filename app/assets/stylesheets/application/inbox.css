@@ -58,30 +58,6 @@ body.inbox .searches__results:has(.bookmark-card) {
   }
 }
 
-/* v2.1 row anatomy (Desktop dc 1029-1043): the verb row reads as one line —
-   actor, verb, accent destination, time — at its own scale inside the shared
-   message shell. Rows breathe at 13px block padding; the shell keeps the
-   horizontal gutter the unread tint's negative margins are tuned to. */
-body.inbox .notification--activity,
-body.inbox .notification--boost {
-  --avatar-size: 34px;
-  padding-block: 13px;
-
-  .message__heading strong {
-    font-size: 0.875rem;
-    font-weight: 700;
-  }
-
-  .message__heading .txt-muted {
-    font-size: 0.84375rem;
-  }
-}
-
-.notification--activity .notification__where,
-.notification--boost .notification__where {
-  font-size: 0.8125rem;
-}
-
 /* Today / Earlier group eyebrows. Every row carries its bucket; the eyebrow
    renders on the first row of each bucket via sibling logic, so prepended
    older pages and live-appended rows keep the labels deduped without a
@@ -138,10 +114,20 @@ body.inbox [data-activity-unread="true"] {
   margin-inline-start: 0.5rem;
 }
 
-/* Page title at header strength (v2.1: 16px/700) — the section owns the screen */
+/* Page title steps to headline strength — the section owns the screen */
 body.inbox .navbar-title {
-  font-size: 1rem;
-  letter-spacing: -0.01em;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+/* Empty states speak at display scale in full ink, with room to breathe */
+body.inbox .empty-state__title {
+  font-size: 1.375rem;
+  letter-spacing: -0.02em;
+}
+
+body.inbox .empty-state__body {
+  max-inline-size: 44ch;
 }
 
 /* Threads inbox: each followed thread is a card — the room + an inline follow
@@ -149,11 +135,11 @@ body.inbox .navbar-title {
    and the live reply-count footer (the embedded messages/threads chips). */
 .thread-card {
   border: 1px solid var(--color-border);
-  border-radius: 0.875rem;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 16px 18px;
+  padding: 14px 16px;
 }
 
 /* Threads with unseen replies get the accent tint the comp draws —
@@ -171,8 +157,8 @@ body.inbox .navbar-title {
 
 .thread-card__room {
   color: var(--color-link);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 700;
   text-decoration: none;
 
   @media (any-hover: hover) {
@@ -202,8 +188,8 @@ body.inbox .navbar-title {
 
 .thread-card__root {
   color: var(--color-text);
-  font-size: 0.90625rem;
-  line-height: 1.55;
+  font-size: 0.9375rem;
+  line-height: 1.5;
   text-decoration: none;
 }
 
@@ -224,11 +210,11 @@ body.inbox .navbar-title {
    the message itself, with an inline Remove. */
 .bookmark-card {
   border: 1px solid var(--color-border);
-  border-radius: 0.875rem;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 15px 17px;
+  padding: 14px 16px;
 }
 
 .bookmark-card__head {
@@ -239,8 +225,8 @@ body.inbox .navbar-title {
 
 .bookmark-card__room {
   color: var(--color-link);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.9375rem;
+  font-weight: 700;
   text-decoration: none;
 
   @media (any-hover: hover) {

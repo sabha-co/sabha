@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // the colour label, and the confirm button stays inert until the name is
 // non-empty. The server enforces the same rules.
 export default class extends Controller {
-  static targets = [ "name", "icon", "counter", "preview", "hex", "picker", "submit" ]
+  static targets = [ "name", "counter", "preview", "hex", "picker", "submit" ]
 
   connect() {
     this.update()
@@ -14,8 +14,7 @@ export default class extends Controller {
   update() {
     const name = this.nameTarget.value.trim()
 
-    const icon = this.hasIconTarget ? this.iconTarget.value.trim() : ""
-    this.previewTarget.textContent = [icon, name].filter(Boolean).join(" ") || "BADGE"
+    this.previewTarget.textContent = name || "BADGE"
     this.counterTarget.textContent = `${this.nameTarget.value.length}/10`
     this.submitTarget.disabled = name.length === 0
 

@@ -69,10 +69,8 @@ export default class Selection {
     const { value, label } = option
     const content = this.#template.content.cloneNode(true)
     content.querySelectorAll("[data-value]").forEach(element => element.dataset.value = value)
-    // v2.1 recipient pills read by first name; the option (the select's value)
-    // and the screen-reader copy keep the full name.
-    content.querySelector("[data-content=label]").textContent = label.split(" ")[0]
-    content.querySelector("[data-content=label]").title = label
+    content.querySelector("[data-content=label]").textContent = label
+    content.querySelector("[data-content=label]").title = value
     content.querySelector("[data-content=screenReaderLabel]").textContent = label
     content.querySelector("[data-content=avatar]").src = option.dataset.avatarUrl
     return this.#template.insertAdjacentElement("beforebegin", content.firstElementChild)

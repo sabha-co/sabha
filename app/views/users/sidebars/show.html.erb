@@ -30,6 +30,11 @@
           <%= icon_tag "gear" %>
           <span class="for-screen-reader">Community settings</span>
         <% end %>
+      <% else %>
+        <%= link_to account_path, class: "btn sidebar__workspace-action", title: "About this community" do %>
+          <%= icon_tag "info" %>
+          <span class="for-screen-reader">About this community</span>
+        <% end %>
       <% end %>
     </header>
 
@@ -80,32 +85,6 @@
 
         <div data-collapsible-section-target="content" class="flex flex-col rooms-list">
           <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :starred_rooms, memberships: @starred_memberships %>
-          <% if @starred_memberships.empty? %>
-            <p class="sidebar__empty">Add a room from its ⋯ menu to keep it here</p>
-          <% end %>
-        </div>
-      </div>
-
-      <div id="unread_section"
-           data-controller="unread-section"
-           data-action="rooms-list:unread@window->unread-section#moveIn rooms-list:read@window->unread-section#moveOut"
-           class="flex position-relative flex-col gap">
-        <div class="flex items-center gap-half mb-2">
-          <span class="sidebar__section-toggle">
-            <span class="favorites-toggle__icon" aria-hidden="true"></span>
-            <h1 class="font-semibold txt-label sidebar__label">Unread</h1>
-            <span class="sidebar__label-count" data-unread-section-target="count" <%= "hidden" if @unread_memberships.size.zero? %>><%= @unread_memberships.size %></span>
-          </span>
-        </div>
-        <%# Rows render with their ROOMS list ids (list_name :shared_rooms):
-            a row that moves into this section keeps the id every per-user
-            sidebar broadcast targets, so replaces still land after the move. %>
-        <div id="unread_rooms" contents data-sorted-list-target="container">
-          <% @unread_memberships.each do |membership| %>
-            <% cache(sidebar_membership_cache_key(:unread_rooms, membership)) do %>
-              <%= render "users/sidebars/rooms/shared", list_name: :shared_rooms, membership: %>
-            <% end %>
-          <% end %>
         </div>
       </div>
 

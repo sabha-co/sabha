@@ -993,14 +993,6 @@ body.settings #main-content {
   }
 }
 
-/* The Members pane runs wider than the form pages — roster rows carry role
-   controls that need the room (v2.1: 880px here, 660px elsewhere). The shell
-   marks the active section only as aria-current on the nav link, so :has
-   scopes the width to the members page alone. */
-.settings-split:has(.settings-nav__item[aria-current="page"][href="/account/users"]) .settings-split__inner {
-  max-inline-size: 55rem;
-}
-
 @media (max-width: 833.9px) {
   .settings-split {
     display: block;

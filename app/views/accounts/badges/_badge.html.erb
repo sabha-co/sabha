@@ -1,6 +1,6 @@
 <%# locals: (badge:) %>
 <div class="badge-row" id="<%= dom_id(badge) %>" data-controller="dialog" data-action="turbo:submit-end->dialog#closeOnSubmit">
-  <span class="member-badge badge-row__chip" style="--badge-color: <%= badge.color %>"><%= badge_label(badge) %></span>
+  <span class="member-badge badge-row__chip" style="--badge-color: <%= badge.color %>"><%= badge.name %></span>
   <span class="badge-row__holders"><%= badge_holders_summary(badge) %></span>
   <span class="badge-row__hex"><%= badge.color %></span>
 
