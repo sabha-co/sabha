@@ -55,11 +55,11 @@ export default class ClientMessage {
     const retry = retryable
       ? `<button type="button" class="btn message__failed-retry"
                  data-action="messages#retryPendingMessage"
-                 data-messages-client-message-id-param="${clientMessageId}">Retry</button>`
+                 data-messages-client-message-id-param="${clientMessageId}">Try again</button>`
       : ""
 
     return `<div class="message__failed-notice">
-      <span>Couldn’t send. Your message is still here.</span>
+      <span>Not sent</span>
       ${retry}
     </div>`
   }

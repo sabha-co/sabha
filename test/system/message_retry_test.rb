@@ -13,11 +13,11 @@ class MessageRetryTest < ApplicationSystemTestCase
     send_message "Hello from a dead zone"
 
     assert_selector ".message--failed"
-    assert_selector ".message__failed-notice", text: /Couldn’t send. Your message is still here./
+    assert_selector ".message__failed-notice", text: /Not sent/
     assert_equal count_before + 1, rooms(:designers).messages.count,
       "the server persisted the send before its response was lost"
 
-    click_on "Retry"
+    click_on "Try again"
 
     assert_no_selector ".message--failed"
     assert_no_selector ".message__failed-notice"
