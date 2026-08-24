@@ -67,7 +67,7 @@ body {
   transition: transform 300ms cubic-bezier(0.25, 1, 0.5, 1);
 
   .sidebar & {
-    background-color: var(--color-bg-sunk);
+    background-color: var(--color-bg-side);
     block-size: 100dvh;
     contain: layout style;
     max-block-size: 100dvh;

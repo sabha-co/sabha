@@ -26,6 +26,13 @@
   --lch-hover: 97.6% 0.003 265;
   --lch-control: 73% 0.005 96;
 
+  /* The bench edge — the signature two-tone split between the sidebar
+     field and the paper content. Hue 84 leans warm ("warm wood on the
+     walls") so the split reads intentional, not just darker gray. */
+  --lch-side: 96% 0.007 84;
+  --lch-side-hover: 93% 0.011 82;
+  --lch-side-line: 88.5% 0.013 82;
+
   --lch-green: 57.4% 0.135 155;
   --lch-red: 57% 0.168 26;
   --lch-red-light: 98% 0.08 22;
@@ -44,12 +51,15 @@
   --dark-lch-ink-3: 55.3% 0.019 259;
   --dark-lch-line: 28.6% 0.013 273;
   --dark-lch-line-2: 25.7% 0.012 271;
-  --dark-lch-raise: 23.1% 0.010 268;
-  --dark-lch-sunk: 21% 0.010 277;
+  --dark-lch-raise: 23.1% 0.01 268;
+  --dark-lch-sunk: 21% 0.01 277;
   --dark-lch-hover: 24.8% 0.012 271;
   --dark-lch-control: 40% 0 0;
+  --dark-lch-side: 16% 0.008 278;
+  --dark-lch-side-hover: 20.5% 0.01 274;
+  --dark-lch-side-line: 25.7% 0.012 271;
   --dark-lch-green: 75% 0.145 158;
-  --dark-lch-red: 68.7% 0.140 24;
+  --dark-lch-red: 68.7% 0.14 24;
   --dark-lch-red-light: 28% 0.05 20;
   --dark-lch-orange: 74.9% 0.123 78;
 
@@ -59,6 +69,9 @@
   --color-bg-sunk: oklch(var(--lch-sunk));
   --color-bg-hover: oklch(var(--lch-hover));
   --color-bg-negative: oklch(var(--lch-red-light));
+  --color-bg-side: oklch(var(--lch-side));
+  --color-bg-side-hover: oklch(var(--lch-side-hover));
+  --color-border-side: oklch(var(--lch-side-line));
 
   --color-text: oklch(var(--lch-ink));
   --color-text-lighter: oklch(var(--lch-ink-1));
@@ -109,19 +122,19 @@
 :root[data-accent="ink"] {
   --lch-accent: 32.9% 0.025 266;
   --lch-accent-bg: 94.9% 0.004 271;
-  --lch-accent-bd: 88.8% 0.010 267;
+  --lch-accent-bd: 88.8% 0.01 267;
   --lch-accent-lift: 77.5% 0.024 264;
 }
 
 :root[data-accent="forest"] {
-  --lch-accent: 48.6% 0.090 165;
+  --lch-accent: 48.6% 0.09 165;
   --lch-accent-bg: 95.2% 0.013 167;
-  --lch-accent-bd: 88.5% 0.030 170;
+  --lch-accent-bd: 88.5% 0.03 170;
   --lch-accent-lift: 73.5% 0.109 164;
 }
 
 :root[data-accent="rust"] {
-  --lch-accent: 52.4% 0.130 41;
+  --lch-accent: 52.4% 0.13 41;
   --lch-accent-bg: 95.3% 0.014 46;
   --lch-accent-bd: 88.1% 0.032 45;
   --lch-accent-lift: 71.5% 0.114 45;
@@ -131,7 +144,7 @@
   --lch-accent: 47.7% 0.138 317;
   --lch-accent-bg: 94.9% 0.017 317;
   --lch-accent-bd: 87.4% 0.044 318;
-  --lch-accent-lift: 71.8% 0.110 317;
+  --lch-accent-lift: 71.8% 0.11 317;
 }
 
 :root[data-accent="teal"] {
@@ -142,17 +155,17 @@
 }
 
 :root[data-accent="ocean"] {
-  --lch-accent: 50% 0.150 253;
+  --lch-accent: 50% 0.15 253;
   --lch-accent-bg: 95.3% 0.019 253;
   --lch-accent-bd: 88.6% 0.045 253;
-  --lch-accent-lift: 67% 0.130 253;
+  --lch-accent-lift: 67% 0.13 253;
 }
 
 :root[data-accent="amber"] {
-  --lch-accent: 52% 0.110 80;
+  --lch-accent: 52% 0.11 80;
   --lch-accent-bg: 95.2% 0.016 80;
   --lch-accent-bd: 88.2% 0.036 80;
-  --lch-accent-lift: 74% 0.120 80;
+  --lch-accent-lift: 74% 0.12 80;
 }
 
 /* Dark scopes — bind the --dark-* primitives declared above. Keep the two
@@ -174,6 +187,9 @@
     --lch-sunk: var(--dark-lch-sunk);
     --lch-hover: var(--dark-lch-hover);
     --lch-control: var(--dark-lch-control);
+    --lch-side: var(--dark-lch-side);
+    --lch-side-hover: var(--dark-lch-side-hover);
+    --lch-side-line: var(--dark-lch-side-line);
     --lch-green: var(--dark-lch-green);
     --lch-red: var(--dark-lch-red);
     --lch-red-light: var(--dark-lch-red-light);
@@ -204,7 +220,10 @@
   --lch-green: var(--dark-lch-green);
   --lch-red: var(--dark-lch-red);
   --lch-red-light: var(--dark-lch-red-light);
-  --lch-orange: var(--dark-lch-orange);
+  --lch-control: var(--dark-lch-control);
+  --lch-side: var(--dark-lch-side);
+  --lch-side-hover: var(--dark-lch-side-hover);
+  --lch-side-line: var(--dark-lch-side-line);
   --lch-accent: var(--lch-accent-lift);
   --lch-accent-bg: var(--lch-accent-lift) / 0.15;
   --lch-accent-bd: var(--lch-accent-lift) / 0.34;

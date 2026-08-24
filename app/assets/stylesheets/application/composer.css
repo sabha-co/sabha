@@ -4,6 +4,21 @@
   padding: var(--block-space-half) calc(var(--inline-space) + 1vw);
 }
 
+/* Decisive frame: the resting card holds a firm border-darker edge; focus
+   claims attention outright with the accent outline over the selected-dark
+   glow. Inline --input-border-color overrides (the negative "not allowed"
+   notices) still win over this custom property. */
+.composer__input.input--actor {
+  --input-border-color: var(--color-border-darker);
+
+  &:focus-within {
+    --input-border-color: var(--color-selected-dark);
+
+    outline: 2px solid var(--color-accent-brand);
+    outline-offset: 2px;
+  }
+}
+
 /* Leading glyph on the search surfaces' inputs (the composer itself no longer
    carries one) */
 .composer__input-hint {
@@ -14,8 +29,7 @@
 /* Tools row buttons: bare 18px glyphs at subtle ink (comp), no button box;
    hover lifts them to full ink rather than showing a surface. */
 .composer__attachment-btn,
-.composer__emoji-btn,
-.composer__search-btn {
+.composer__emoji-btn {
   --btn-color: var(--color-text-subtle);
   --btn-padding: 0;
   --btn-size: 18px;
@@ -350,8 +364,7 @@
 @media (max-width: 499.9px) {
   .composer__attachment-btn,
   .composer__emoji-btn,
-  .composer__rich-text-btn,
-  .composer__search-btn {
+  .composer__rich-text-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;

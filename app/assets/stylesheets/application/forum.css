@@ -12,6 +12,14 @@
   align-self: stretch;
 }
 
+/* Forum index header at headline strength — the gallery owns the screen, and
+   the room name should announce it (:has scopes the shared nav title to the
+   gallery without touching the chat shell) */
+body:has(.forum) .navbar-title {
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
 /* Left-aligned like the message list — share the app's content gutter. A wide
    cap keeps line lengths sane on ultrawide without leaving a right void on
    normal screens. Everything below shares this same left edge. */
@@ -53,7 +61,7 @@
 
 .forum-compose__title {
   font-size: 1.15rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* The body reuses the composer's rich input shell; give it room to read as a
@@ -92,7 +100,7 @@
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  padding: 15px 20px 15px 4px;
+  padding: 18px 20px 18px 4px;
   border-block-end: 1px solid var(--color-border);
   color: inherit;
   text-decoration: none;
@@ -126,9 +134,9 @@
 }
 
 .forum-card__title {
-  font-size: 0.96875rem;
+  font-size: 1.0625rem;
   font-weight: 700;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.01em;
   line-height: 1.35;
   color: var(--color-text);
 }
@@ -309,3 +317,17 @@
 
 .forum__empty-glyph { color: var(--color-border-darkest); }
 .forum__empty-glyph .icon { width: 1.75rem; height: 1.75rem; }
+
+/* The heading is the fact — display-scale ink, unhurried space */
+.forum__empty .empty-state {
+  padding-block: 4rem;
+}
+
+.forum__empty .empty-state__title {
+  font-size: 1.375rem;
+  letter-spacing: -0.02em;
+}
+
+.forum__empty .empty-state__body {
+  max-inline-size: 44ch;
+}

@@ -45,7 +45,10 @@ class SidebarNavigationTest < ApplicationSystemTestCase
 
     assert_selector ".sidebar__me[aria-expanded='true']"
     within ".sidebar__profile-popover" do
-      assert_link "View profile"
+      # The summary row at the top of the flyout is the profile link — the shell
+      # rework folded the old "View profile" item into it, and it's the same
+      # element this test tabs to below.
+      assert_selector "a.sidebar__profile-summary[href='#{user_path(users(:kevin))}']"
       assert_link "Your settings"
       assert_link "Appearance"
       assert_link "Invitations"

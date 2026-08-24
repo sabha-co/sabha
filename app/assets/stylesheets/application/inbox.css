@@ -61,15 +61,17 @@ body.inbox .searches__results:has(.bookmark-card) {
 /* Today / Earlier group eyebrows. Every row carries its bucket; the eyebrow
    renders on the first row of each bucket via sibling logic, so prepended
    older pages and live-appended rows keep the labels deduped without a
-   re-render. The list is ascending, so buckets only ever step earlier→today. */
+   re-render. The list is ascending, so buckets only ever step earlier→today.
+   Section headers read at full strength: more room above than below. */
 body.inbox [data-activity-bucket]::before {
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   content: "Earlier";
   display: none;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 700;
   grid-area: sep;
   letter-spacing: 0.07em;
+  margin-block-start: 12px;
   margin-block-end: 6px;
   text-transform: uppercase;
 }
@@ -83,8 +85,13 @@ body.inbox [data-activity-bucket="earlier"] + [data-activity-bucket="today"]::be
   display: block;
 }
 
-/* Since-last-visit unread mark: an accent dot on the row's right edge */
+/* Since-last-visit unread: the selected tint claims the whole row — an
+   unmissable field, not a hint — with the accent dot on the right edge */
 body.inbox [data-activity-unread="true"] {
+  background-color: var(--color-selected);
+  border-radius: 8px;
+  margin-inline: -12px;
+  padding-inline: 12px;
   position: relative;
 
   &::after {
@@ -94,7 +101,7 @@ body.inbox [data-activity-unread="true"] {
     content: "";
     inline-size: 8px;
     inset-block-start: 50%;
-    inset-inline-end: 4px;
+    inset-inline-end: 16px;
     position: absolute;
     transform: translateY(-50%);
   }
@@ -105,6 +112,22 @@ body.inbox [data-activity-unread="true"] {
   align-items: center;
   display: flex;
   margin-inline-start: 0.5rem;
+}
+
+/* Page title steps to headline strength — the section owns the screen */
+body.inbox .navbar-title {
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+/* Empty states speak at display scale in full ink, with room to breathe */
+body.inbox .empty-state__title {
+  font-size: 1.375rem;
+  letter-spacing: -0.02em;
+}
+
+body.inbox .empty-state__body {
+  max-inline-size: 44ch;
 }
 
 /* Threads inbox: each followed thread is a card — the room + an inline follow
@@ -119,10 +142,11 @@ body.inbox [data-activity-unread="true"] {
   padding: 14px 16px;
 }
 
-/* Threads with unseen replies get the accent tint the comp draws */
+/* Threads with unseen replies get the accent tint the comp draws —
+   confidently tinted so an unread thread reads before its text does */
 .thread-card--unread {
-  background-color: color-mix(in oklch, var(--color-accent-brand) 5%, var(--color-bg));
-  border-color: color-mix(in oklch, var(--color-accent-brand) 30%, var(--color-border));
+  background-color: color-mix(in oklch, var(--color-accent-brand) 9%, var(--color-bg));
+  border-color: color-mix(in oklch, var(--color-accent-brand) 45%, var(--color-border));
 }
 
 .thread-card__head {
@@ -133,8 +157,8 @@ body.inbox [data-activity-unread="true"] {
 
 .thread-card__room {
   color: var(--color-link);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 700;
   text-decoration: none;
 
   @media (any-hover: hover) {

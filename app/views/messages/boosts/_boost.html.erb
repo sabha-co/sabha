@@ -20,7 +20,9 @@
           aria-label="<%= reactor_names.to_sentence %> reacted with <%= group.content %>">
     <span class="boost__avatars flex-item-no-shrink" aria-hidden="true">
       <% shown.each do |booster| %>
-        <%= avatar_image_tag booster, size: 34, class: "boost__avatar" %>
+        <div class="boost__avatar">
+          <%= avatar_image_tag booster, size: 34 %>
+        </div>
       <% end %>
     </span>
     <span class="boost__content"><%= group.content %></span>

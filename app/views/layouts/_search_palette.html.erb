@@ -4,9 +4,12 @@
     never renders results itself. %>
 <dialog id="search_palette" class="scrim-dialog scrim-dialog--palette" aria-label="Search"
         data-controller="dialog"
+        <%# :capture because the composer has focus on every room page and the
+            editor stops the keydown before it bubbles — the shortcut has to be
+            claimed on the way down or it never arrives. %>
         data-action="click->dialog#closeOnScrim
-                     keydown.meta+k@document->dialog#open:prevent
-                     keydown.ctrl+k@document->dialog#open:prevent
+                     keydown.meta+k@document->dialog#open:prevent:capture
+                     keydown.ctrl+k@document->dialog#open:prevent:capture
                      turbo:submit-end->dialog#closeOnSubmit
                      turbo:before-cache@document->dialog#close">
   <%= form_with url: searches_path, class: "search-palette__field" do |form| %>

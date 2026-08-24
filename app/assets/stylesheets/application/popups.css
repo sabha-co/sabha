@@ -276,7 +276,7 @@
 
     @media (hover: hover) and (pointer: fine) {
         &:where(:not(:active):hover) {
-            --btn-background: var(--color-border-dark);
+            --btn-background: var(--color-bg-hover);
             --hover-size: 0;
         
             opacity: 1;

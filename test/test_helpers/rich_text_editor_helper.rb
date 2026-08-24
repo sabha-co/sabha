@@ -22,8 +22,13 @@ module RichTextEditorHelper
   end
 
   # Waits for the suggestion to appear, then commits the selected one with Tab.
+  #
+  # The prompt filters server-side, so the menu opens on the unfiltered list and
+  # swaps it when the request lands. Nodes caught mid-swap read as "<<ERROR>>",
+  # and the first request of a run is slow enough to outlast the default wait —
+  # hence a round-trip's worth of patience rather than the page default.
   def pick_mention(name)
-    assert_selector ".lexxy-prompt-menu__item", text: name
+    assert_selector ".lexxy-prompt-menu__item", text: name, wait: 15
     composer_editor.send_keys :tab
   end
 
