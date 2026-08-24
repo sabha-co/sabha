@@ -96,6 +96,8 @@
 .messages {
   --message-column-gap: 0.66ch;
   --message-row-gap: 0.1em;
+  --message-space: 1.33em;
+  --message-grouped-gap: 0.35em;
 
   contain: layout style;
   display: grid;
@@ -114,6 +116,19 @@
   overscroll-behavior: contain;
   position: relative;
   row-gap: var(--message-row-gap);
+}
+
+/* Compact density tightens the message stream too, not just the sidebar (owner
+   reversed the sidebar-only scope — see docs/redesign/handoff-divergences.md).
+   Doc §09: spacing only — body type never drops below 14px, avatars never below
+   28px, so only the spacing tokens move here. */
+:root[data-density="compact"] .messages {
+  --message-space: 0.8em;
+  --message-grouped-gap: 0.15em;
+}
+
+:root[data-density="compact"] .message {
+  --content-padding-block: 0.4rem;
 }
 
 .message {
@@ -189,13 +204,18 @@
   }
 
   + .message--threaded {
-    margin-block-start: calc(
-      (var(--message-space) + (var(--message-row-gap) * 2) - 2px) * -1
-    );
+    /* Grouped same-author rows sit --message-grouped-gap apart (doc §09: 0.35em
+       comfortable): collapse the stream's --message-space row-gap and add the
+       grouped gap back. The +0.25em is a measured compensation for the constant
+       the grid leaves above a threaded row's collapsed heading. */
+    margin-block-start: calc((var(--message-space) - var(--message-grouped-gap) + 0.25em) * -1);
   }
 
   &.message--failed .message__body-content {
     animation: wiggle 0.4s both;
+    border-radius: var(--border-radius-md);
+    outline: 1px dashed color-mix(in srgb, var(--color-negative) 45%, transparent);
+    outline-offset: 2px;
   }
 
   /* The undelivered draft dims; the chip stays at full strength */
@@ -542,12 +562,19 @@
   }
 
   .message__heading {
-    align-items: center;
+    align-items: baseline;
     column-gap: 7px;
     display: inline-flex;
     margin: 0;
     min-inline-size: 0;
     flex: 1;
+
+    /* The doc's heading is all text, so baseline aligns cleanly. Icon-bearing
+       children (bookmark, role glyph) have no text baseline and would ride high,
+       so center those against the name instead. */
+    > *:has(.icon) {
+      align-self: center;
+    }
   }
 }
 
@@ -614,10 +641,6 @@
   max-inline-size: min(80ch, 85%);
   position: relative;
   inline-size: 100%;
-
-  .message--me & {
-    flex-direction: row-reverse;
-  }
 
   .threads {
     margin-block-start: calc(var(--block-space-half) / 2);
@@ -979,38 +1002,9 @@ img.message__attachment {
   padding: var(--block-space);
 }
 
-/* Me */
-.message--me {
-  grid-auto-columns: min-content 1fr 36px;
-  grid-template-areas:
-    "loading_up loading_up loading_up"
-    "new new new"
-    "sep sep sep"
-    "avatar body body"
-    "replies_sep replies_sep replies_sep"
-    "loading_down loading_down loading_down";
-
-  :is(.message__body, .message__meta, .message__heading) {
-    justify-self: end;
-  }
-
-  :is(.message__meta, .message__heading) {
-    flex-direction: row-reverse;
-    justify-content: end;
-  }
-
-  .message__meta {
-    padding-inline: calc(var(--btn-size) / 2) 0;
-  }
-
-  .message__avatar {
-    margin-inline: calc(var(--content-padding-inline) * -1) 0;
-  }
-
-  .message__actions {
-    justify-content: end;
-  }
-}
+/* Me — own messages render as ordinary left-aligned rows, one alignment for
+   everyone. The .message--me class is kept (the formatter still applies it) only
+   for the edit affordance; see .message__edit-btn. */
 
 /* Event (system messages) */
 .message--event {
@@ -1047,8 +1041,13 @@ img.message__attachment {
 }
 
 .message--mentioned {
-  .message__body-content {
+  /* Doc: the one tinted row — a red wash on the body text only, a padded rounded
+     block (bodyPad 9px 12px, radius 8px). Not the name line, not the reply pill. */
+  [data-messages-target="body"] {
     background-color: var(--color-message-mentioned);
+    border-radius: var(--border-radius-md);
+    max-inline-size: 100%;
+    padding: var(--content-padding-block) var(--content-padding-inline);
   }
 
   .message__mention-label {
@@ -1056,14 +1055,30 @@ img.message__attachment {
   }
 
   @media (any-hover: hover) {
-    &:hover .message__body-content {
+    &:hover [data-messages-target="body"] {
       background-color: var(--color-message-mentioned-hover);
     }
   }
 
-  &.message--mentioned-unread .message__body-content {
+  &.message--mentioned-unread [data-messages-target="body"] {
     animation: wiggle 0.4s both;
   }
+}
+
+/* Pinned thread-parent message reads as context, not the first reply: a sunk,
+   bordered block. Keyed off the parent-only day separator, so no extra markup. */
+.message:has(.message__day-separator--parent) .message__body-content {
+  background-color: var(--color-bg-sunk);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: var(--content-padding-block) var(--content-padding-inline);
+}
+
+/* Deactivated author: the name is already struck through — desaturate their
+   avatar to match. The message text stays intact. Keyed off that same hook. */
+.message:has(.message__author .txt-strikethrough) .message__avatar {
+  filter: grayscale(100%);
+  opacity: 0.6;
 }
 
 /* Grouped follow-on (same author, <5 min): body only — the whole meta line and

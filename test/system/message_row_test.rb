@@ -63,7 +63,7 @@ class MessageRowTest < ApplicationSystemTestCase
       })()
     JS
     assert_equal "rgba(0, 0, 0, 0)", message.evaluate_script("getComputedStyle(this).backgroundColor")
-    assert_equal mention_wash, message.find(".message__body-content").evaluate_script("getComputedStyle(this).backgroundColor")
+    assert_equal mention_wash, message.find("[data-messages-target='body']").evaluate_script("getComputedStyle(this).backgroundColor")
     assert_not_equal mention_wash, unmentioned_message.evaluate_script("getComputedStyle(this).backgroundColor")
   end
 

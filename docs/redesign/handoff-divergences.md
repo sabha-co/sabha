@@ -58,10 +58,10 @@ Aligned to the handoff (one chip per emoji, stacked reactor avatars, accent tint
 - **Shipped:** the ⋯ keeps a reserved column (read rows are marginally narrower) and the badge stays put; on hover the ⋯ appears beside it.
 - **Why:** absolute-positioning the ⋯ to reclaim the width painted a stray chip over the translucent selected/hover backgrounds, and hiding the badge on hover dropped mention counts. The handoff text itself sanctions the reserved column ("appears in place of nothing; the row does not grow").
 
-## Sidebar density — localStorage vs. per-person preference
-- **Handoff:** a comfortable/compact row-density control whose choice is stored per person as a server preference (§06 for the `--rowpad` 9px/4px values; §10 pairs it with collapse: "stored per person… not in local storage").
-- **Shipped:** a Comfortable/Compact segmented control on the Appearance page, stamping `data-density="compact"` on `<html>` to narrow `--space-row` (9px→4px); the 32px row floor holds. Persisted in `localStorage`, per device, mirroring the theme toggle and its pre-paint bootstrap.
-- **Why:** same call as collapse below — a device-local preference matches the theme control already there and needs no model or endpoint. Scoped to sidebar rows only (the spec's scope; `--space-msg` is an unused hook, so message density stays untouched). **Trade-off:** density doesn't follow you to a second device.
+## Density — localStorage vs. per-person preference
+- **Handoff:** a comfortable/compact density control whose choice is stored per person as a server preference (§06 for the `--rowpad` 9px/4px values; §10 pairs it with collapse: "stored per person… not in local storage"). Message-area §09 defines a compact message stream too.
+- **Shipped:** a Comfortable/Compact segmented control on the Appearance page, stamping `data-density="compact"` on `<html>`. It narrows the sidebar (`--space-row` 9px→4px; the 32px row floor holds) **and** the message stream (`--message-space` 1.33→0.8em, `--message-grouped-gap` 0.35→0.15em, `--content-padding-block` 0.66→0.4rem, per §09; the 14px type and 28px avatar floors hold). Persisted in `localStorage`, per device, mirroring the theme toggle and its pre-paint bootstrap.
+- **Why:** a device-local preference matches the theme control already there and needs no model or endpoint. **Trade-off:** density doesn't follow you to a second device. (The message stream was originally scoped out; that decision was later reversed to match §09.)
 
 ## Sidebar collapse memory — localStorage vs. per-person preference
 - **Handoff:** Favorites/Rooms/DMs remember their collapsed state per person, per community — a stored preference, "not in local storage".

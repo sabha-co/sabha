@@ -63,32 +63,5 @@
   max-inline-size: 100%;
 }
 
-.message--me {
-  grid-auto-columns: 36px 1fr min-content;
-}
-
-.message--me .message__body,
-.message--me .message__meta,
-.message--me .message__heading {
-  justify-self: start;
-}
-
-.message--me .message__meta,
-.message--me .message__heading {
-  flex-direction: row;
-  justify-content: start;
-}
-
-.message--me .message__meta {
-  padding-inline: 0;
-}
-
-.message--me .message__avatar {
-  margin-inline: inherit;
-}
-
-.message--me .message__actions {
-  justify-content: end;
-}
 
 

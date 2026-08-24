@@ -61,7 +61,7 @@
 }
 
 /* Reactor avatars: 17px, overlapping −5, ringed in the chip's ground so the
-   stack reads as separate discs */
+   stack reads as separate tiles. Rounded-square to match every other avatar. */
 .boost__avatars {
   display: inline-flex;
   overflow: hidden;
@@ -70,6 +70,7 @@
 
 .boost__avatar {
   block-size: 17px;
+  border-radius: var(--avatar-border-radius, 25%);
   box-shadow: 0 0 0 1.5px var(--color-bg);
   inline-size: 17px;
   object-fit: cover;
