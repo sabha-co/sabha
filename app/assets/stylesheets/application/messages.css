@@ -26,10 +26,18 @@
     .message-area--empty {
       flex: 1;
       display: grid;
-      place-content: center;
-      place-items: center;
+      /* Top-aligned like every other empty state (the 70px block padding comes
+         from .empty-state itself); only the horizontal axis centers. */
+      place-content: start center;
       animation: empty-state-in 350ms cubic-bezier(0.25, 1, 0.5, 1) both;
       order: 1;
+    }
+
+    /* The list container rides flex:1 even when the inbox is empty, which
+       shoves the empty state halfway down the page. Collapse it when the query
+       rendered nothing. */
+    .messages:not(:has(*)) {
+      display: none;
     }
   }
 }
@@ -163,10 +171,10 @@
     "avatar body body"
     "replies_sep replies_sep replies_sep"
     "loading_down loading_down loading_down";
-  /* Redline row rhythm: 15px block padding (9px compact) with the fluid
-     1ch + 1vw inline gutter; the avatar keeps its 36px track and 12px gap */
+  /* Redline row rhythm: 15px block padding (9px compact) over a fixed 20px
+     inline gutter; the avatar keeps its 36px track and 12px gap */
   padding-block: var(--msgpad);
-  padding-inline: calc(var(--inline-space) + 1vw);
+  padding-inline: 1.25rem;
   position: relative;
   row-gap: var(--message-row-gap);
   visibility: hidden;

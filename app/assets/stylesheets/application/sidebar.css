@@ -269,9 +269,17 @@
 /* Row count riding each section label */
 .sidebar__label-count {
   color: var(--color-text-subtle);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   opacity: 0.75;
+
+  &::before {
+    content: "("
+  }
+
+  &::after {
+    content: ")"
+  }
 }
 
 /* Presence on 1:1 DM rows: the roster's connected signal as a corner dot */
@@ -845,7 +853,7 @@
   font-size: 0.8125rem;
   /* Row text x: the room button's 1.2ch padding plus the 20px glyph column
      and its 11px gap */
-  padding-inline-start: calc(1.2ch + 31px);
+  padding-inline-start: 1rem;
 }
 
 /* UNREAD is gone from the list entirely at zero — not shown at zero (comp) */
