@@ -29,8 +29,7 @@
 
           <%= render "rooms/composer_fields", form: form, autocomplete_room: room,
                 label: "Write a message", send_label: "Send Message",
-                placeholder: composer_placeholder(room),
-                search_path: searches_path %>
+                placeholder: composer_placeholder(room) %>
 
           <%= form.hidden_field :client_message_id, data: { composer_target: "clientid" } %>
         <% end %>

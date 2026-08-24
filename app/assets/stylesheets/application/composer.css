@@ -29,8 +29,7 @@
 /* Tools row buttons: bare 18px glyphs at subtle ink (comp), no button box;
    hover lifts them to full ink rather than showing a surface. */
 .composer__attachment-btn,
-.composer__emoji-btn,
-.composer__search-btn {
+.composer__emoji-btn {
   --btn-color: var(--color-text-subtle);
   --btn-padding: 0;
   --btn-size: 18px;
@@ -365,8 +364,7 @@
 @media (max-width: 499.9px) {
   .composer__attachment-btn,
   .composer__emoji-btn,
-  .composer__rich-text-btn,
-  .composer__search-btn {
+  .composer__rich-text-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
