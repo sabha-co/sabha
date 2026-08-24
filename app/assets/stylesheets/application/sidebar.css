@@ -269,9 +269,17 @@
 /* Row count riding each section label */
 .sidebar__label-count {
   color: var(--color-text-subtle);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   opacity: 0.75;
+
+  &::before {
+    content: "("
+  }
+
+  &::after {
+    content: ")"
+  }
 }
 
 /* Presence on 1:1 DM rows: the roster's connected signal as a corner dot */
@@ -750,8 +758,14 @@
   margin-bottom: calc(var(--block-space) * 2);
 }
 
-#favorites_section:not(:has(.room-row)) {
-  display: none;
+/* FAVORITES always renders (comp): its emptiness is instructive — one quiet
+   line aligned with the row names, never a card inside the nav. */
+.sidebar__empty {
+  color: var(--color-text-subtle);
+  font-size: 0.8125rem;
+  /* Row text x: the room button's 1.2ch padding plus the 20px glyph column
+     and its 11px gap */
+  padding-inline-start: 1rem;
 }
 
 .favorites-toggle {
