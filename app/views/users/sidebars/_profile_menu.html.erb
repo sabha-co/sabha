@@ -11,9 +11,7 @@
     </span>
     <span class="sidebar__me-info">
       <span class="sidebar__me-name"><%= Current.user.name %></span>
-      <span class="sidebar__me-status" id="<%= dom_id Current.user, :presence_label %>">
-        <%= presence_dot_label Current.user.own_presence_dot %>
-      </span>
+      <%= presence_label_tag Current.user, Current.user.own_presence_dot, surface: :sidebar %>
     </span>
     <span class="sidebar__me-caret" aria-hidden="true"><%= icon_tag "caret-down" %></span>
   </button>
@@ -37,13 +35,13 @@
     <%= form_with url: user_presence_path, method: :patch, class: "sidebar__presence",
           data: { action: "click->popover#hold" } do %>
       <div role="radiogroup" aria-label="Presence">
-        <% User.presences.each_key do |state| %>
-          <% selected = Current.user.presence == state %>
-          <button type="submit" name="user[presence]" value="<%= state %>"
+        <% User.availabilities.each_key do |state| %>
+          <% selected = Current.user.availability == state %>
+          <button type="submit" name="user[availability]" value="<%= state %>"
                   role="radio" aria-checked="<%= selected %>"
                   class="sidebar__profile-menu-item sidebar__presence-option">
-            <span class="status-dot <%= presence_dot_class AccountsHelper::PRESENCE_STATE_DOTS.fetch(state) %>" aria-hidden="true"></span>
-            <span><%= presence_dot_label AccountsHelper::PRESENCE_STATE_DOTS.fetch(state) %></span>
+            <span class="status-dot <%= presence_dot_class availability_dot(state) %>" aria-hidden="true"></span>
+            <span><%= presence_dot_label availability_dot(state) %></span>
             <% if selected %>
               <span class="sidebar__profile-menu-hint" aria-hidden="true"><%= icon_tag "check" %></span>
             <% end %>

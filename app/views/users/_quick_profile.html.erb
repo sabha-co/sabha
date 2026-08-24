@@ -38,9 +38,7 @@
         <%= link_to user_path(user), class: "avatar", data: { turbo_frame: "_top" } do %>
           <%= avatar_image_tag(user, alt: "") %>
         <% end %>
-        <% if (dot = user.presence_dot_now) %>
-          <%= presence_dot_tag user, dot, surface: :quick_profile %>
-        <% end %>
+        <%= presence_dot_tag user, user.presence_dot_now, surface: :quick_profile %>
       </span>
       <div class="flex flex-column gap-half" style="min-width: 0;">
         <div class="flex align-center gap-half">

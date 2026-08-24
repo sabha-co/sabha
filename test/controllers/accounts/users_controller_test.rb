@@ -325,7 +325,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a member's row shows their resolved presence dot and label" do
-    users(:jason).update! presence: :do_not_disturb, last_active_at: 1.minute.ago
+    users(:jason).update! availability: :do_not_disturb, last_active_at: 1.minute.ago
 
     get account_users_url
 
@@ -335,7 +335,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
 
   test "an available member who has gone quiet reads as away, not available" do
     user = users(:jason)
-    user.update! presence: :available, last_active_at: 30.minutes.ago
+    user.update! availability: :available, last_active_at: 30.minutes.ago
     user.memberships.first.update! connections: 1, connected_at: Time.current
 
     get account_users_url
@@ -344,7 +344,7 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "an unreachable member is greyed regardless of what they chose" do
-    users(:jason).update! presence: :available, last_active_at: 2.hours.ago
+    users(:jason).update! availability: :available, last_active_at: 2.hours.ago
 
     get account_users_url
 
@@ -358,9 +358,12 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "##{ActionView::RecordIdentifier.dom_id(users(:david))} .list-row__subtitle", text: /Joined/
   end
 
-  test "each other member's row subscribes to that member's own stream" do
+  # A per-row subscription is what the workspace stream replaced: the same person
+  # renders in both the sidebar frame and this list, and the duplicate that
+  # produced was never confirmed, leaving Action Cable retrying it forever.
+  test "member rows carry no subscription of their own" do
     get account_users_url
 
-    assert_select "turbo-cable-stream-source[signed-stream-name]", minimum: 1
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:jason))} turbo-cable-stream-source", count: 0
   end
 end

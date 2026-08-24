@@ -24,12 +24,6 @@ module RoomsHelper
     end
   end
 
-  # Deliberately not "Here now": presence is what someone chose, and idleness is
-  # inferred — neither one earns a claim about where they're sitting.
-  def dm_presence_label(dot)
-    presence_dot_label(dot) || "Offline"
-  end
-
   def direct_member_status(user)
     user.presence_dot_now
   end

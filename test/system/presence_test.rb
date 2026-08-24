@@ -12,7 +12,7 @@ class PresenceTest < ApplicationSystemTestCase
 
     assert_no_selector "[popover]:popover-open", wait: 5
     assert_selector "##{dom_id(users(:david), :presence_dot_sidebar)}.status--dnd"
-    assert_equal "do_not_disturb", users(:david).reload.presence
+    assert_equal "do_not_disturb", users(:david).reload.availability
   end
 
   test "the footer label follows the choice" do
@@ -23,7 +23,7 @@ class PresenceTest < ApplicationSystemTestCase
   end
 
   test "the picker marks the current choice and says notifications are unchanged" do
-    users(:david).update! presence: :away
+    users(:david).update! availability: :away
     page.refresh
     open_profile_menu
 
@@ -44,7 +44,7 @@ class PresenceTest < ApplicationSystemTestCase
       sign_in "jason@37signals.com"
       open_profile_menu
       click_on "Do not disturb"
-      assert_equal "do_not_disturb", jason.reload.presence
+      assert_equal "do_not_disturb", jason.reload.availability
     end
 
     assert_selector "##{dom_id(jason, :presence_dot_direct)}.status--dnd", wait: 10

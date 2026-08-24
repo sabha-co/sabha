@@ -344,6 +344,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_24_090000) do
   create_table "users", force: :cascade do |t|
     t.datetime "activity_seen_at"
     t.string "ascii_name"
+    t.integer "availability", default: 0, null: false
     t.integer "avatar_seed"
     t.string "avatar_url"
     t.integer "badge_id"
@@ -362,7 +363,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_08_24_090000) do
     t.string "password_digest"
     t.string "personal_url"
     t.text "preferences", default: "{}"
-    t.integer "presence", default: 0, null: false
     t.integer "role", default: 0, null: false
     t.integer "status", default: 0, null: false
     t.string "status_message"

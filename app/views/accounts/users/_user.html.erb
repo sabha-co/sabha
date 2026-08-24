@@ -5,10 +5,10 @@
 <% dot = show_presence ? @presence_dots&.dig(user.id) : nil %>
   <span class="member-row__avatar list-row__avatar">
     <%= render "users/popup", user: user %>
-    <%# The subscription lives on the page, not in this frame — a row that
+    <%# The subscription lives in the layout, not in this frame — a row that
         re-renders would otherwise tear its own stream source down and rebuild
-        it. See the _presence_streams partial rendered by the index. %>
-    <%= presence_dot_tag user, dot, surface: :member if dot %>
+        it, and one workspace stream covers every row here anyway. %>
+    <%= presence_dot_tag user, dot, surface: :member %>
   </span>
 
   <div class="list-row__body">
@@ -32,7 +32,7 @@
       <% if user.bot? %>
         Posts through the API
       <% elsif dot %>
-        <%= presence_dot_label dot %>
+        <%= presence_label_tag user, dot, surface: :member %>
       <% else %>
         Joined <%= user.created_at.strftime("%B %Y") %>
       <% end %>

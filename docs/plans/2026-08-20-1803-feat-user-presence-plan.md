@@ -25,7 +25,7 @@ execution: code
 
 | Unit | State | Notes |
 |---|---|---|
-| U1 model + migrations | done | `users.presence` enum, `users.last_active_at`, `User::Presence` concern with the R4a resolver |
+| U1 model + migrations | done | `users.availability` enum, `users.last_active_at`, `User::Presence` concern with the R4a resolver |
 | U2 mapping + CSS | done | token → `status--*`; one new rule, `status--dnd` |
 | U3 controller + broadcast | done | `resource :presence, only: :update`; presence-only fragment |
 | U4 picker | done | in `_profile_menu.html.erb` as planned; radiogroup, DND hint, closes on success only |
@@ -151,7 +151,7 @@ The v2.1 redesign treats presence as a first-class social signal in the sidebar 
 
 - The current sidebar profile menu (`_profile_menu.html.erb`) is the setter. v2.1 may restyle or rename that flyout later; this slice does not block on it.
 - AnyCable already terminates WebSockets. Presence live updates reuse Turbo Streams over that socket. No new WebSocket server or ActionCable channel class.
-- Presence is a dedicated `users.presence` column (not a preferences key), plus a `users.last_active_at` timestamp for the idle signal. No database index in this slice — nothing filters or sorts by either.
+- Presence is a dedicated `users.availability` column (not a preferences key), plus a `users.last_active_at` timestamp for the idle signal. No database index in this slice — nothing filters or sorts by either.
 - Auto-idle needs the browser to report interaction; the connection heartbeat cannot (it is a timer). The idle watcher piggybacks the existing `PresenceChannel`; `connected_at` is not re-gated.
 - SaaS: `User` is tenanted; add the column via the usual tenanted `db/migrate` path, not an untenanted migration.
 
@@ -163,13 +163,13 @@ The v2.1 redesign treats presence as a first-class social signal in the sidebar 
 
 ### Key Technical Decisions
 
-- KTD1. Store presence as a `User` enum column (`available`, `away`, `do_not_disturb`), default `available`, `null: false` so existing rows backfill. Not inside `preferences`. Do **not** add an index. Governs R1–R4.
+- KTD1. Store presence as a `User` enum column (`available`, `away`, `do_not_disturb`), default `available`, `null: false` so existing rows backfill. **Named `availability`, not `presence`** — `presence` is `Object#presence` on every model, and an attribute by that name shadows the present?-or-nil idiom for the life of the codebase. Availability is what someone chose; presence is what it resolves to. Not inside `preferences`. Do **not** add an index. Governs R1–R4.
 - KTD2. The dot is **resolved** from manual presence + liveness (offline) + a new activity signal (idle), via a single explicit resolver (KTD7) — the deliberate Slack/Discord merge. This supersedes the earlier "manual value alone drives the dot." What stays separate: the resolver does **not** overload `activity_statuses_for` or `connected_at`. That existing socket machinery keeps feeding email away logic, room presence, push gating, unread, and the "online" count, untouched. Manual state still wins over the active/idle distinction while the user is online; offline outranks manual. Governs R2, R4a, R13, R21.
 - KTD3. **Workspace stream.** One `turbo_stream_from Current.account, :presence` in the application layout, rendered exactly once per page; broadcasts go to `[Current.account, :presence]`. Payload stays a **presence-only fragment** (dot + label), never a full DM row, directory row, or quick-profile card (those contain viewer-specific admin controls and unread). Governs R4.
 
   **This replaces the original per-subject stream** (`turbo_stream_from user, :presence` beside each dot), which was implemented and then withdrawn as unshippable. Per-subject subscriptions are the tighter fan-out, but the same person's dot renders in both the sidebar frame and the main document — two separate HTTP renders that cannot dedupe against each other. Action Cable answers a duplicate `subscribe` with `return if subscriptions.key?(id_key)`: no confirmation, ever. The client's `SubscriptionGuarantor` then resubscribes that never-confirmed subscription every 500ms for the life of the tab. Measured against the current code, which has **zero** duplicate subscriptions on every page checked, the per-subject design introduced 2 duplicates on the DM inbox, 3 on the members directory, and 2 on a DM room — a permanent background RPC drip per open tab, plus `visit`-time failures in unrelated system tests (`dm_split_test`). The trade accepted here: every member receives every presence change.
-- KTD4. Reuse the existing sibling `.status-dot` markup and CSS. Extend `AccountsHelper::STATUS_CSS_CLASSES` with `do_not_disturb` (and map `available` — do not reuse `:active`, which already means account lifecycle on `User` and socket activity on `Membership`). `avatar_image_tag` stays an `<img>`; wrap or sibling-render the dot in the views. Governs R17–R20.
-- KTD5. Directory batch-reads all three inputs to avoid N+1: `users.presence`, the connected set (existing `Membership.connected` scope), and the active set (`User.where(last_active_at: 10.min.ago..)`), then resolves per row (KTD7). Do **not** teach `activity_status_class` to fall back to manual presence — the resolver is a separate path; `activity_status_class`/`@activity_statuses` are left as-is for the online count and non-dot uses. Governs R13.
+- KTD4. Reuse the existing sibling `.status-dot` markup and CSS, in a `PresencesHelper` of its own rather than bolted onto `AccountsHelper`. Give the dot its own class map including `do_not_disturb` (and map `available` — do not reuse `:active`, which already means account lifecycle on `User` and socket activity on `Membership`). `avatar_image_tag` stays an `<img>`; wrap or sibling-render the dot in the views. Governs R17–R20.
+- KTD5. Directory batch-reads all three inputs to avoid N+1: `users.availability`, the connected set (existing `Membership.connected` scope), and the active set (`User.where(last_active_at: 10.min.ago..)`), then resolves per row (KTD7). Do **not** teach the old socket-status helpers to fall back to manual presence — the resolver is a separate path. `@activity_statuses` survives only where it answers a question about connections (the directory sort and the online count); once every dot read the resolver, `activity_status_class`/`online_status_class` had no callers left and were deleted. Governs R13.
 
 - KTD6. **Activity signal.** Add `last_active_at` to `users` (not `memberships` — the dot is user-level). A client-side idle watcher (Stimulus, mounted on `<body>`) tracks real interaction and reports only edges over the **existing `HeartbeatChannel`** (new `activity` action); no new channel class. Not `PresenceChannel`: that one subclasses `RoomChannel` and rejects a subscription without a `room_id`, so it would stop hearing from anyone reading their settings. `HeartbeatChannel` is per-user and already subscribed app-wide as the connection-liveness proxy. The server bumps `last_active_at` on "active" pings — throttled like the connection heartbeat (only rewrite once stale, to protect the single SQLite writer) — and on either edge persists + broadcasts the presence fragment (KTD3). **Do not** re-gate `refresh_connection`/`connected_at` on interaction: that column is liveness for push gating (`message.rb`), `Room::Roster#here_now`, `Membership::Unreadable`, and email away — starving it would make an idle-but-open tab look disconnected and start pushing to it. Governs R4b, R4d, R4e.
 
@@ -177,7 +177,7 @@ The v2.1 redesign treats presence as a first-class social signal in the sidebar 
 
 ### High-Level Technical Design
 
-Add `presence` to `users` as an enum: `available`, `away`, `do_not_disturb`, default `available`, and `last_active_at` (timestamp, nullable) for the activity signal. Do not add `User#presence_status` returning `:active`/`:offline` — instead add a resolver `User#presence_dot` (KTD7) that folds manual presence together with `connected?` and `active?` (`last_active_at >= 10.min.ago`) into one token. Helpers map the token to a `status--*` class + label, returning `nil` when `deactivated?`/`banned?`.
+Add `availability` to `users` as an enum: `available`, `away`, `do_not_disturb`, default `available`, and `last_active_at` (timestamp, nullable) for the activity signal. Do not add `User#presence_status` returning `:active`/`:offline` — instead add a resolver `User#presence_dot` (KTD7) that folds manual presence together with `connected?` and `active?` (`last_active_at >= 10.min.ago`) into one token. Helpers map the token to a `status--*` class + label, returning `nil` when `deactivated?`/`banned?`.
 
 Idle is detected in the browser: a Stimulus idle watcher listens to pointer/keydown/scroll/touch/visibility, holds a 10-minute inactivity timer, and reports **edges** (went idle / came back) over the existing `PresenceChannel`. The channel bumps `last_active_at` (throttled) and, on an edge, broadcasts the presence fragment to `user, :presence`. The connection heartbeat and `connected_at` are unchanged — offline is still read from the existing `Membership.connected` scope.
 
@@ -238,7 +238,7 @@ Recipient-picker dots are added to the autocomplete JSON and painted in `app/jav
 #### U6. Member directory presence
 - **Goal:** Show presence dot and status subline in the members list from persisted `presence`.
 - **Files:** `app/controllers/accounts/users_controller.rb`, `app/helpers/accounts_helper.rb`, `app/views/accounts/users/_user.html.erb`.
-- **Patterns:** Batch-read the three resolver inputs (KTD5): `users.presence`, the connected set, the active set. Resolve per row via `User#presence_dot`. This is a separate path from `activity_status_class`/`@activity_statuses` (leave those for the online count). Omit dot and subline on the current user's own row (R26) and on deactivated/banned rows (R21).
+- **Patterns:** Batch-read the three resolver inputs (KTD5): `users.availability`, the connected set, the active set. Resolve per row via `User#presence_dot`. This is a separate path from `@activity_statuses` (which stays for the sort and the online count). Omit dot and subline on the current user's own row (R26) and on deactivated/banned rows (R21).
 - **Test scenarios (test/controllers/accounts/users_controller_test.rb):**
   - Member list shows correct resolved classes for available-active / available-idle / away / dnd users.
   - A manually-Available user with a stale `last_active_at` resolves to `:idle` (amber), not `:active`.

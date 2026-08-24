@@ -23,9 +23,7 @@
     <% else %>
       <span class="avatar">
         <%= avatar_image_tag(members.first || Current.user, size: 48, loading: :lazy) %>
-        <% if presence %>
-          <%= presence_dot_tag members.first, presence, surface: :conversation %>
-        <% end %>
+        <%= presence_dot_tag members.first, presence, surface: :conversation %>
       </span>
     <% end %>
   </div>

@@ -2,7 +2,6 @@ class Messages::ProfilesController < ApplicationController
   before_action :set_user
 
   def show
-    @activity_statuses = Membership.activity_statuses_for([ @user.id ])
   end
 
   private

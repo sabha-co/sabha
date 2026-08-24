@@ -35,9 +35,7 @@
         <span class="avatar"><%= avatar_image_tag(@user, alt: "") %></span>
         <%# You're by definition here while looking at your own profile %>
         <% dot = Current.user == @user ? @user.own_presence_dot : @user.presence_dot_now %>
-        <% if dot %>
-          <%= presence_dot_tag @user, dot, surface: :profile_hero %>
-        <% end %>
+        <%= presence_dot_tag @user, dot, surface: :profile_hero %>
       </span>
 
       <div class="profile-hero__body">
@@ -54,7 +52,10 @@
         </div>
 
         <p class="profile-hero__meta">
-          <%= dm_presence_label(dot) %> · joined <%= @user.joined_at.strftime("%b %Y") %>
+          <%# No dot means we're making no claim about them at all, so the line
+              starts at the one fact that survives deactivation. %>
+          <% if dot %><%= presence_label_tag @user, dot, surface: :profile_hero %> · joined<% else %>Joined<% end %>
+          <%= @user.joined_at.strftime("%b %Y") %>
           <% if Current.user.can_administer? %>
             · <%= mail_to @user.email_address, class: "txt-undecorated profile-hero__email" %>
           <% end %>

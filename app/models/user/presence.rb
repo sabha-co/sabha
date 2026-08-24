@@ -20,11 +20,10 @@ module User::Presence
   ACTIVITY_REFRESH_THRESHOLD = 3.minutes
 
   included do
-    # NOTE: this attribute shadows ActiveSupport's Object#presence on User
-    # instances — `user.presence` is the enum, not the present?-or-nil idiom.
-    # Nothing calls it that way today; reach for `.presence_dot` when you want
-    # the visible state, and don't add a bare `user.presence ||` chain.
-    enum :presence, %i[available away do_not_disturb], default: :available
+    # Availability is what you chose; presence is what that resolves to once
+    # liveness has had its say. Only the first is stored, and it's deliberately
+    # not called `presence` — that name is Object#presence on every model.
+    enum :availability, %i[available away do_not_disturb], default: :available
   end
 
   # The dot is deliberately not a stored value: it's manual intent resolved
@@ -73,8 +72,8 @@ module User::Presence
   # Three verbs, one rule: each ends in a broadcast when — and only when — the
   # dot other people see actually moved. An ordinary stream of "still here"
   # pings changes nothing and says nothing.
-  def change_presence!(state)
-    update! presence: state
+  def change_availability!(state)
+    update! availability: state
     touch_last_active # choosing a status is itself a sign of life
     broadcast_presence
   end
