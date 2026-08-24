@@ -1,10 +1,9 @@
 require "application_system_test_case"
 
 # The search palette is the entry point for search: a layout-mounted scrim
-# dialog opened by the keyboard shortcut and the sidebar row. Submitting (or
-# picking a recent search) navigates to the results page — the palette itself
-# never renders results. The composer's search button was a third entry point
-# until the composer pass reduced that toolbar to attach · emoji · send.
+# dialog opened by the keyboard shortcut, the sidebar row, and the composer
+# search button. Submitting (or picking a recent search) navigates to the
+# results page — the palette itself never renders results.
 class SearchPaletteTest < ApplicationSystemTestCase
   setup { sign_in "david@37signals.com" }
 
@@ -26,6 +25,12 @@ class SearchPaletteTest < ApplicationSystemTestCase
 
     assert_selector "#search_palette[open]"
     assert_equal path_before, current_path
+  end
+
+  test "composer search button opens the palette" do
+    find(".composer__search-btn").click
+
+    assert_selector "#search_palette[open]"
   end
 
   test "submitting runs the search on the results page" do
