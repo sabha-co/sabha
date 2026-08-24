@@ -86,7 +86,7 @@ module AccountsHelper
     conversation:  "dm-conversation__presence",
     nav:           "navbar-dm__dot",
     member:        "member-row__dot",
-    participant:   nil,
+    participant:   "status-dot--inline",
     quick_profile: "quick-profile__dot",
     profile_hero:  "profile-hero__dot"
   }.freeze

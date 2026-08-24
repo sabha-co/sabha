@@ -464,12 +464,23 @@ body.browse #main-content {
   padding: 6px 13px;
 }
 
+/* Size belongs to the surface, not here. This used to carry width/height in em,
+   which are the same properties the surfaces set in their logical form — so with
+   equal specificity the winner came down to which file the asset loader happened
+   to sort first, and the identical dot rendered 8px in the inbox and 10px in the
+   sidebar. Every surface names its own size now; a dot that sits inline rather
+   than on an avatar uses --inline below. */
 .status-dot {
-  width: 0.5em;
-  height: 0.5em;
   border-radius: 50%;
   flex-shrink: 0;
   align-self: center;
+}
+
+/* Dots in a text row (the group-DM participant cards) rather than pinned to an
+   avatar corner: no positioning to inherit, so the size is stated outright. */
+.status-dot--inline {
+  block-size: 10px;
+  inline-size: 10px;
 }
 
 .status--active  { background-color: var(--color-positive); }
