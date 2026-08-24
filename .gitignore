@@ -46,6 +46,7 @@ Caddyfile
 .worktrees
 .agents/
 .claude/
+.cursor/
 
 # Claude Code local settings (user-specific paths and permissions)
 .claude/settings.local.json
