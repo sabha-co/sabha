@@ -427,6 +427,101 @@
   z-index: 1;
 }
 
+/* Presence picker inside the profile flyout (v2.1 account menu): a PRESENCE
+   heading, then three options — one always selected. The selected row reads at
+   weight 600 with an accent check. The swatches are deliberately their own
+   class rather than .status-dot: this row shows what you chose, never how you
+   resolve to everyone else, so it must not inherit a surface's dot sizing. */
+.sidebar__presence {
+  margin: 0;
+}
+
+.sidebar__presence-heading {
+  color: var(--color-text-subtle);
+  font-size: 0.65625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 7px 10px 4px;
+  text-transform: uppercase;
+}
+
+.sidebar__presence-option {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 0.84375rem;
+  gap: 10px;
+  inline-size: 100%;
+  min-block-size: 32px;
+  padding: 0 10px;
+  text-align: start;
+
+  /* A <button>, so drop the base reset's hover box-shadow like the menu items */
+  --hover-size: 0;
+  --hover-filter: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent-brand);
+    outline-offset: 2px;
+  }
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: var(--color-bg-hover);
+    }
+  }
+
+  &[aria-checked="true"] {
+    font-weight: 600;
+
+    .sidebar__presence-check {
+      display: inline;
+    }
+  }
+}
+
+.sidebar__presence-dot {
+  block-size: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  inline-size: 8px;
+}
+
+.sidebar__presence-dot--available {
+  background-color: var(--color-positive);
+}
+
+.sidebar__presence-dot--away {
+  background-color: var(--color-alert);
+}
+
+.sidebar__presence-dot--do_not_disturb {
+  background-color: var(--color-negative);
+}
+
+.sidebar__presence-check {
+  color: var(--color-accent-brand);
+  display: none;
+  font-size: 0.75rem;
+  margin-inline-start: auto;
+}
+
+/* Ours, not in the v2.1 spec: DND changes the dot and nothing else, and saying
+   so here is cheaper than letting someone discover it by missing a mention. */
+.sidebar__presence-hint {
+  color: var(--color-text-subtle);
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  margin: 2px 0 4px;
+  padding-inline: 10px;
+}
+
 .sidebar__me-info {
   display: flex;
   flex-direction: column;
