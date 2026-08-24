@@ -11,6 +11,7 @@ export default class extends Controller {
 
   #files = []
   #pendingClientIds = []
+  #toolbarObserver
 
   connect() {
     this.insertFormatBarExtras()
@@ -18,6 +19,12 @@ export default class extends Controller {
     if (!this.#usingTouchDevice) {
       onNextEventLoopTick(() => this.textTarget.focus())
     }
+  }
+
+  disconnect() {
+    // The toolbar observer self-disconnects once Lexxy builds its bar; tear it
+    // down here too in case we leave before that (fast thread open/close, nav).
+    this.#toolbarObserver?.disconnect()
   }
 
   submit(event) {
@@ -100,14 +107,14 @@ export default class extends Controller {
     const toolbar = this.textTarget.querySelector("lexxy-toolbar")
     if (toolbar) return this.#graftMentionButton(toolbar)
 
-    const observer = new MutationObserver(() => {
+    this.#toolbarObserver = new MutationObserver(() => {
       const bar = this.textTarget.querySelector("lexxy-toolbar")
       if (bar) {
-        observer.disconnect()
+        this.#toolbarObserver.disconnect()
         this.#graftMentionButton(bar)
       }
     })
-    observer.observe(this.textTarget, { childList: true, subtree: true })
+    this.#toolbarObserver.observe(this.textTarget, { childList: true, subtree: true })
   }
 
   #graftMentionButton(toolbar) {
