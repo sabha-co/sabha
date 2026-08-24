@@ -28,8 +28,13 @@
 }
 
 :root {
-  --font-family: "Instrument Sans", -apple-system, BlinkMacSystemFont, Aptos, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monaco, monospace;
+  --font-family:
+    "Instrument Sans", -apple-system, BlinkMacSystemFont, Aptos, Roboto,
+    "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monaco, monospace;
   --hover-color: var(--color-border-darker);
   --hover-size: 0.15em;
   --hover-filter: brightness(1);
@@ -39,10 +44,13 @@
    drops the bundled Instrument Sans and falls back to the platform UI stack.
    Default (attribute absent) keeps the webfont. Mono is unaffected. */
 :root[data-typeface="system"] {
-  --font-family: -apple-system, BlinkMacSystemFont, Aptos, Roboto, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-family:
+    -apple-system, BlinkMacSystemFont, Aptos, Roboto, "Segoe UI", Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
-html, body {
+html,
+body {
   -webkit-text-size-adjust: none;
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -56,8 +64,22 @@ html, body {
    which computes to 900 inside already-bold contexts (message authors,
    sidebar names) and makes the browser synthesize the weight — cap it so
    emphasis always renders real glyphs. */
-b, strong {
+b,
+strong {
   font-weight: 700;
+}
+
+/* Browser surfaces carry the design too: text selection, the input caret,
+   and native form controls (checkboxes, radios, progress) all take the
+   workspace accent instead of shipping UA defaults. */
+:root {
+  accent-color: var(--color-accent-brand);
+  caret-color: var(--color-link);
+}
+
+::selection {
+  background-color: var(--color-selected-dark);
+  color: var(--color-text);
 }
 
 /* Links */
@@ -83,7 +105,12 @@ b, strong {
   line-height: inherit;
   text-decoration: none;
   touch-action: manipulation;
-  transition: box-shadow 150ms ease, outline-offset 150ms ease, background-color 150ms ease, opacity 150ms ease, filter 150ms ease;
+  transition:
+    box-shadow 150ms ease,
+    outline-offset 150ms ease,
+    background-color 150ms ease,
+    opacity 150ms ease,
+    filter 150ms ease;
 
   /* Hover */
   @media (any-hover: hover) {
@@ -170,6 +197,7 @@ legend {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+
   &::backdrop {
     background-color: oklch(var(--lch-always-black) / 0.5);
   }
@@ -280,7 +308,7 @@ pre {
 /* Nicer scrollbars on Chrome 29+. This is intended for Windows machines, but */
 /* there's not a way to target Windows using CSS, so Chrome on Mac will have */
 /* slightly thinner scrollbars than normal. #C1C1C1 is the default color on Macs. */
-@media screen and (-webkit-min-device-pixel-ratio:0) and (min-resolution:.001dpcm) {
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: 0.001dpcm) {
   * {
     scrollbar-color: oklch(var(--lch-gray-darker)) transparent;
     scrollbar-width: thin;

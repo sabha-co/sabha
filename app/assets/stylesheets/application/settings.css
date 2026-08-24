@@ -4,17 +4,18 @@
    field, and the page header. */
 
 .settings-label {
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   display: block;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.07em;
   margin: 0 0 8px 2px;
   text-transform: uppercase;
 }
 
+/* More room above a group label than below it */
 * + .settings-label {
-  margin-block-start: 22px;
+  margin-block-start: 26px;
 }
 
 .settings-card {
@@ -72,7 +73,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.025em;
-  margin: 5px 0 0;
+  margin: 8px 0 0;
 }
 
 .settings-header__blurb {
@@ -126,9 +127,20 @@
   margin-block-start: 14px;
 }
 
+/* Section headings inside a grouped card: title strength, more room above
+   than below so each Identity/About/Links group reads as its own movement */
 .settings-group__heading {
-  font-size: 0.78125rem;
+  font-size: 0.875rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.settings-group > .settings-group__heading:not(:first-child) {
+  margin-block-start: 22px;
+}
+
+.settings-group__heading + * {
+  margin-block-start: 10px;
 }
 
 .settings-fields {
@@ -355,8 +367,10 @@
 }
 
 .bot-empty__title {
-  font-size: 0.9375rem;
+  color: var(--color-text);
+  font-size: 1.125rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
   margin: 0;
 }
 
@@ -624,8 +638,10 @@
 }
 
 .badges-empty__title {
-  font-size: 0.9375rem;
+  color: var(--color-text);
+  font-size: 1.125rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .badges-empty__body {

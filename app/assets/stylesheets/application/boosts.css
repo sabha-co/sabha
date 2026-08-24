@@ -32,23 +32,24 @@
   gap: 6px;
   line-height: 1;
   min-block-size: 23px;
-  padding: 2px 8px 2px 3px;
+  padding: 4px 8px;
   transition:
     box-shadow 150ms cubic-bezier(0.25, 1, 0.5, 1),
     background-color 150ms ease;
-
-  .boost--mine & {
-    --boost-border-color: var(--color-selected-dark);
-
-    background-color: var(--color-selected);
-  }
 
   @media (any-hover: hover) {
     &:where(:not(:active):hover) {
       --boost-border-color: var(--color-border-darker);
 
+      background-color: var(--color-bg-hover);
       box-shadow: 0 0 0 var(--hover-size) var(--hover-color);
     }
+  }
+
+  .boost--mine & {
+    --boost-border-color: var(--color-selected-dark);
+
+    background-color: var(--color-selected);
   }
 
   &:active {
@@ -64,18 +65,22 @@
    stack reads as separate discs */
 .boost__avatars {
   display: inline-flex;
-  overflow: hidden;
-  border-radius: 50%;
 }
 
 .boost__avatar {
+  --avatar-border-radius: 25%;
+
   block-size: 17px;
   box-shadow: 0 0 0 1.5px var(--color-bg);
   inline-size: 17px;
-  object-fit: cover;
+  overflow: hidden;
 
   & + & {
-    margin-inline-start: -5px;
+    margin-inline-start: -6px;
+  }
+
+  & > img {
+    border-radius: var(--avatar-border-radius);
   }
 
   .boost--mine & {
@@ -84,22 +89,18 @@
 }
 
 .boost__content {
-  font-size: 0.8125rem;
+  font-size: 1rem;
 }
 
 .boost__overflow {
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Trailing pill that opens the reaction picker */
 .boost__add {
-  align-items: center;
-  background-color: transparent;
-  border: 1px solid var(--color-border-dark);
-  border-radius: var(--border-radius-pill);
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   display: inline-flex;
   font-size: 0.8125rem;
   justify-content: center;

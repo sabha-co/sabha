@@ -71,7 +71,7 @@
 }
 
 .quick-profile .social-link:hover {
-  background: var(--color-border);
+  background: var(--color-bg-hover);
 }
 
 /* Popup menu sizing */

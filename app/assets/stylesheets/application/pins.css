@@ -9,7 +9,7 @@
 .pinned-bar {
   align-items: center;
   background-color: var(--color-bg-sunk);
-  border-block-end: 1px solid var(--color-border);
+  border-block-end: 1px solid var(--color-border-dark);
   color: inherit;
   display: flex;
   flex-shrink: 0;
@@ -27,13 +27,13 @@
 .pinned-bar__label {
   color: var(--color-accent-brand);
   flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .pinned-bar__text {
-  color: var(--color-text-subtle);
-  flex: 1;
+  color: var(--color-text-muted);
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;

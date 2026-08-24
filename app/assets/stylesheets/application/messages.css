@@ -67,7 +67,7 @@
   content-visibility: visible;
   contain: none;
   display: block;
-  margin-block-start: calc(var(--avatar-size) * 2);
+  margin-block-start: calc(var(--avatar-size) * 2.5);
   position: relative;
   z-index: 1;
 
@@ -86,6 +86,22 @@
 
   .message__body-content {
     overflow: unset;
+    padding-block: var(--block-space-double);
+  }
+
+  /* Empty-stream display treatment: the greeting claims headline scale in full
+     ink; the copy under it stays at reading size */
+  strong {
+    display: block;
+    font-size: var(--font-size-x-large);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-block-end: var(--block-space);
+  }
+
+  /* The copy follows the headline as its own block once strong is block-level */
+  p > br {
+    display: none;
   }
 
   .invite-label {
@@ -317,20 +333,22 @@
   margin-block: var(--message-space);
   visibility: hidden;
 
-  /* Comp treatment: a quiet bordered pill between hairlines */
+  /* Comp treatment: a deliberate bordered pill between darker hairlines —
+     the date grid reads as structure, not noise */
   time,
   span {
     background-color: var(--color-bg);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-dark);
     color: var(--color-text-muted);
     font-size: var(--font-size-x-small);
+    font-weight: 700;
     padding: 2px 12px;
     text-transform: none;
   }
 
   &::after,
   &::before {
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-border-dark);
   }
 
   .message--first-of-day & {
@@ -354,9 +372,9 @@
   display: flex;
   align-items: center;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.07em;
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   text-align: start;
   text-transform: uppercase;
   visibility: visible;
@@ -746,7 +764,7 @@ img.message__attachment {
 @media (hover: hover) and (pointer: fine) {
   .message__meta .message__actions {
     background-color: var(--color-bg-raised);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-darker);
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow-pop);
     inline-size: max-content;
@@ -786,7 +804,7 @@ img.message__attachment {
 
   @media (hover: hover) and (pointer: fine) {
     &:where(:not(:active):hover) {
-      --btn-background: var(--color-border-dark);
+      --btn-background: var(--color-bg-hover);
       --hover-size: 0;
 
       opacity: 1;

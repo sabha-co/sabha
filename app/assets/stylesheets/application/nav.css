@@ -34,9 +34,10 @@
 }
 
 .navbar-title {
-  font-size: 1rem;
+  font-size: var(--font-size-large);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   margin: 0;
   min-inline-size: 0;
   overflow: hidden;
