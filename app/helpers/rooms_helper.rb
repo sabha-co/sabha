@@ -114,13 +114,13 @@ module RoomsHelper
     end
   end
 
-  def edit_room_path(room)
+  def edit_room_path(room, **options)
     case room
-    when Rooms::Direct then edit_rooms_direct_path(room)
-    when Rooms::Open   then edit_rooms_open_path(room)
-    when Rooms::Closed then edit_rooms_closed_path(room)
-    when Rooms::Forum  then edit_rooms_forum_path(room)
-    when Rooms::Thread then edit_rooms_thread_path(room)
+    when Rooms::Direct then edit_rooms_direct_path(room, **options)
+    when Rooms::Open   then edit_rooms_open_path(room, **options)
+    when Rooms::Closed then edit_rooms_closed_path(room, **options)
+    when Rooms::Forum  then edit_rooms_forum_path(room, **options)
+    when Rooms::Thread then edit_rooms_thread_path(room, **options)
     else raise ArgumentError, "Unknown room type: #{room.class}"
     end
   end
