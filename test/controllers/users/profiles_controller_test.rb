@@ -63,11 +63,12 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".settings-field__hint", text: /full address/, count: 1
   end
 
-  test "the password field is not on the profile page" do
+  test "the optional password field is on the profile page" do
     get user_profile_url
 
-    assert_select ".settings-group__heading", text: "Password", count: 0
-    assert_select "input[type=password]", count: 0
+    assert_select ".settings-group__heading", text: "Password", count: 1
+    assert_select "input[type=password]", count: 1
+    assert_select ".settings-field__hint", text: /Leave blank to keep your current one/
   end
 
   test "optional profile fields can be cleared" do

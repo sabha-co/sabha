@@ -71,18 +71,8 @@ export default class MessageFormatter {
 
   #highlightMentions(message) {
     const mentionsCurrentUser = message.querySelector(this.#selectorForCurrentUser) !== null
-    const isUnread = message.dataset.unread === "true"
-    const shouldAnimate = mentionsCurrentUser && isUnread
 
     message.classList.toggle(this.#classes.mentioned, mentionsCurrentUser)
-
-    // Force animation replay by removing class first (handles Turbo cache restoration)
-    if (shouldAnimate && message.classList.contains(this.#classes.mentionedUnread)) {
-      message.classList.remove(this.#classes.mentionedUnread)
-      requestAnimationFrame(() => message.classList.add(this.#classes.mentionedUnread))
-    } else {
-      message.classList.toggle(this.#classes.mentionedUnread, shouldAnimate)
-    }
   }
 
   #highlightCode(body) {

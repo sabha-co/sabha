@@ -109,6 +109,7 @@ Rails.application.routes.draw do
 
       scope defaults: { user_id: "me" } do
         resource :sidebar, only: :show
+        resource :presence, only: :update
         resources :hidden_rooms, only: :index
         resource :profile
         resource :appearance, only: :show

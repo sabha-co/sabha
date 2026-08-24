@@ -7,7 +7,7 @@
       class: "scrim-dialog__body", data: { controller: "badge-editor" } do |form| %>
   <div class="badge-preview-wrap">
     <span class="member-badge badge-preview" data-badge-editor-target="preview"
-          style="--badge-color: <%= @badge.color %>"><%= @badge.name.presence || "BADGE" %></span>
+          style="--badge-color: <%= @badge.color %>"><%= @badge.name.present? ? badge_label(@badge) : "BADGE" %></span>
   </div>
 
   <div class="settings-field">
@@ -30,6 +30,16 @@
     </div>
     <%= form.color_field :color, class: "color-picker",
           data: { badge_editor_target: "picker", action: "input->badge-editor#update" } %>
+  </div>
+
+  <div class="settings-field">
+    <div class="settings-field__label">
+      <label for="badge_icon">Icon</label>
+    </div>
+    <%= form.text_field :icon, placeholder: "✦", maxlength: 4,
+          class: "input",
+          data: { badge_editor_target: "icon", action: "input->badge-editor#update" } %>
+    <p class="settings-field__hint">Optional. A single glyph that leads the chip — ✦ ⚑ ◎ ❖ all work.</p>
   </div>
 
   <div class="scrim-dialog__footer">

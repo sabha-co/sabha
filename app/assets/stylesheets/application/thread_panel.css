@@ -170,8 +170,9 @@
   gap: 1px;
   flex: 1;
   min-inline-size: 0;
-  font-size: 0.90625rem;
+  font-size: var(--font-size-medium);
   font-weight: 700;
+  letter-spacing: -0.02em;
   margin: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -203,7 +204,7 @@
   --btn-background: transparent;
   --btn-border-color: var(--color-border-dark);
   --btn-border-radius: 7px;
-  --btn-color: var(--color-text-muted);
+  --btn-color: var(--color-text);
   --btn-padding: 5px 10px;
   --hover-color: transparent;
   --hover-filter: none;

@@ -67,7 +67,7 @@ body {
   transition: transform 300ms cubic-bezier(0.25, 1, 0.5, 1);
 
   .sidebar & {
-    background-color: var(--color-bg-sunk);
+    background-color: var(--color-bg-side);
     block-size: 100dvh;
     contain: layout style;
     max-block-size: 100dvh;
@@ -86,7 +86,7 @@ body {
     @media (min-width: 834px) and (max-width: 1279.9px) {
       &.open {
         box-shadow: var(--shadow-overlay);
-        inline-size: 264px;
+        inline-size: 272px;
         inset: 0 auto 0 0;
         position: fixed;
       }
@@ -96,6 +96,9 @@ body {
   &.open {
     @media (max-width: 833.9px) {
       transform: translate(0);
+      /* Mirrors --shadow-panel for a drawer that slides in from the left:
+         the cast falls rightward onto the content it covers */
+      box-shadow: 18px 0 44px oklch(var(--lch-always-black) / 0.2);
     }
   }
 }
@@ -108,7 +111,7 @@ body {
     overflow: hidden;
 
     &::after {
-      background-color: oklch(var(--lch-always-black) / 0.4);
+      background-color: var(--color-scrim);
       content: "";
       inset: 0;
       position: fixed;

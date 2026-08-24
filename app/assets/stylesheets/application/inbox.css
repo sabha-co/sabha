@@ -58,18 +58,44 @@ body.inbox .searches__results:has(.bookmark-card) {
   }
 }
 
+/* v2.1 row anatomy (Desktop dc 1029-1043): the verb row reads as one line —
+   actor, verb, accent destination, time — at its own scale inside the shared
+   message shell. Rows breathe at 13px block padding; the shell keeps the
+   horizontal gutter the unread tint's negative margins are tuned to. */
+body.inbox .notification--activity,
+body.inbox .notification--boost {
+  --avatar-size: 34px;
+  padding-block: 13px;
+
+  .message__heading strong {
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .message__heading .txt-muted {
+    font-size: 0.84375rem;
+  }
+}
+
+.notification--activity .notification__where,
+.notification--boost .notification__where {
+  font-size: 0.8125rem;
+}
+
 /* Today / Earlier group eyebrows. Every row carries its bucket; the eyebrow
    renders on the first row of each bucket via sibling logic, so prepended
    older pages and live-appended rows keep the labels deduped without a
-   re-render. The list is ascending, so buckets only ever step earlier→today. */
+   re-render. The list is ascending, so buckets only ever step earlier→today.
+   Section headers read at full strength: more room above than below. */
 body.inbox [data-activity-bucket]::before {
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   content: "Earlier";
   display: none;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 700;
   grid-area: sep;
   letter-spacing: 0.07em;
+  margin-block-start: 12px;
   margin-block-end: 6px;
   text-transform: uppercase;
 }
@@ -83,8 +109,13 @@ body.inbox [data-activity-bucket="earlier"] + [data-activity-bucket="today"]::be
   display: block;
 }
 
-/* Since-last-visit unread mark: an accent dot on the row's right edge */
+/* Since-last-visit unread: the selected tint claims the whole row — an
+   unmissable field, not a hint — with the accent dot on the right edge */
 body.inbox [data-activity-unread="true"] {
+  background-color: var(--color-selected);
+  border-radius: 8px;
+  margin-inline: -12px;
+  padding-inline: 12px;
   position: relative;
 
   &::after {
@@ -94,7 +125,7 @@ body.inbox [data-activity-unread="true"] {
     content: "";
     inline-size: 8px;
     inset-block-start: 50%;
-    inset-inline-end: 4px;
+    inset-inline-end: 16px;
     position: absolute;
     transform: translateY(-50%);
   }
@@ -107,22 +138,29 @@ body.inbox [data-activity-unread="true"] {
   margin-inline-start: 0.5rem;
 }
 
+/* Page title at header strength (v2.1: 16px/700) — the section owns the screen */
+body.inbox .navbar-title {
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
 /* Threads inbox: each followed thread is a card — the room + an inline follow
    toggle, a "started by" byline with an optional unread pill, the root message,
    and the live reply-count footer (the embedded messages/threads chips). */
 .thread-card {
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 0.875rem;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
 
-/* Threads with unseen replies get the accent tint the comp draws */
+/* Threads with unseen replies get the accent tint the comp draws —
+   confidently tinted so an unread thread reads before its text does */
 .thread-card--unread {
-  background-color: color-mix(in oklch, var(--color-accent-brand) 5%, var(--color-bg));
-  border-color: color-mix(in oklch, var(--color-accent-brand) 30%, var(--color-border));
+  background-color: color-mix(in oklch, var(--color-accent-brand) 9%, var(--color-bg));
+  border-color: color-mix(in oklch, var(--color-accent-brand) 45%, var(--color-border));
 }
 
 .thread-card__head {
@@ -164,8 +202,8 @@ body.inbox [data-activity-unread="true"] {
 
 .thread-card__root {
   color: var(--color-text);
-  font-size: 0.9375rem;
-  line-height: 1.5;
+  font-size: 0.90625rem;
+  line-height: 1.55;
   text-decoration: none;
 }
 
@@ -186,11 +224,11 @@ body.inbox [data-activity-unread="true"] {
    the message itself, with an inline Remove. */
 .bookmark-card {
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 0.875rem;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 14px 16px;
+  padding: 15px 17px;
 }
 
 .bookmark-card__head {
@@ -201,8 +239,8 @@ body.inbox [data-activity-unread="true"] {
 
 .bookmark-card__room {
   color: var(--color-link);
-  font-size: 0.9375rem;
-  font-weight: 700;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-decoration: none;
 
   @media (any-hover: hover) {

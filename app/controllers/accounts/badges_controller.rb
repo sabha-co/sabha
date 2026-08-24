@@ -52,6 +52,6 @@ class Accounts::BadgesController < ApplicationController
     end
 
     def badge_params
-      params.require(:badge).permit(:name, :color)
+      params.require(:badge).permit(:name, :color, :icon)
     end
 end

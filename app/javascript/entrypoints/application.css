@@ -19,6 +19,9 @@
   --color-bg-sunk: oklch(var(--lch-sunk));
   --color-bg-hover: oklch(var(--lch-hover));
   --color-bg-negative: oklch(var(--lch-red-light));
+  --color-bg-side: oklch(var(--lch-side));
+  --color-bg-side-hover: oklch(var(--lch-side-hover));
+  --color-border-side: oklch(var(--lch-side-line));
   --color-text: oklch(var(--lch-ink));
   --color-text-lighter: oklch(var(--lch-ink-1));
   --color-text-muted: oklch(var(--lch-ink-2));

@@ -68,8 +68,10 @@
               <%= form.email_field :email_address, class: "input", value: @user.email_address, autocomplete: "username",
                                    placeholder: "Enter your email address", required: true %>
             <% end %>
+            <% unless Sabha.saas? %>
+              <p class="settings-field__hint">A new address has to be confirmed by email before it takes effect.</p>
+            <% end %>
           </div>
-        </div>
         <% if @user.pending_email_change? && !Sabha.saas? %>
           <p class="settings-field__hint">
             Pending: <strong><%= @user.unconfirmed_email %></strong> ·
@@ -120,6 +122,20 @@
           </div>
           <%= form.text_field :personal_url, class: "input", placeholder: "Your website", required: false %>
         </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group__heading">Password</div>
+        <div class="settings-fields">
+          <div class="settings-field">
+            <div class="settings-field__label">
+              <label for="user_password">New password</label>
+            </div>
+            <%= form.password_field :password, class: "input", autocomplete: "new-password",
+                                    placeholder: "At least #{User::MINIMUM_PASSWORD_LENGTH} characters", required: false %>
+          </div>
+        </div>
+        <p class="settings-field__hint">Leave blank to keep your current one. Other signed-in devices stay signed in.</p>
       </div>
 
       <div class="settings-actions">

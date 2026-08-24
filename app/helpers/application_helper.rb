@@ -15,7 +15,8 @@ module ApplicationHelper
       safe_join [
         tag(:meta, name: "current-user-id", content: Current.user.id),
         tag(:meta, name: "current-user-name", content: Current.user.name),
-        tag(:meta, name: "current-user-role", content: Current.user.role)
+        tag(:meta, name: "current-user-role", content: Current.user.role),
+        tag(:meta, name: "current-user-avatar-url", content: user_image_path(Current.user))
       ]
     end
   end
@@ -37,8 +38,13 @@ module ApplicationHelper
     tag.span class: class_names("icon icon--#{name}", options.delete(:class)), "aria-hidden": true, **options
   end
 
+  # Chip label: the glyph leads ("✦ STEWARD"); icon-less badges stay name-only.
+  def badge_label(badge)
+    [ badge.icon.presence, badge.name ].compact.join(" ")
+  end
+
   def badge_tag(badge, class_name: "member-badge")
-    tag.span badge.name, class: class_name, style: "--badge-color: #{badge.color}"
+    tag.span badge_label(badge), class: class_name, style: "--badge-color: #{badge.color}"
   end
 
   def badge_holders_summary(badge)

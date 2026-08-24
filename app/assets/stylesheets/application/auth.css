@@ -45,6 +45,7 @@ body.session {
   object-fit: cover;
 }
 
+/* The first screen speaks plainly but assuredly (v2.1: 20px/700) */
 .auth-card__title {
   font-size: 1.25rem;
   font-weight: 700;

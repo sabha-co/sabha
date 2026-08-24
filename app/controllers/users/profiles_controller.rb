@@ -21,7 +21,7 @@ class Users::ProfilesController < ApplicationController
     end
 
     def user_params
-      params.require(:user).permit(:name, :avatar, :email_address, :bio, :status_message, :twitter_url, :linkedin_url, :personal_url).compact
+      params.require(:user).permit(:name, :avatar, :email_address, :password, :bio, :status_message, :twitter_url, :linkedin_url, :personal_url).compact
     end
 
     def email_change_requested?

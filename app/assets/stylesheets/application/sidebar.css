@@ -133,7 +133,7 @@
   color: var(--color-text);
   display: flex;
   gap: 10px;
-  padding: 13px 14px;
+  padding: 16px 14px 12px;
 
   /* The drawer/overlay close button pins to the same corner — slide the
      gear clear of it while the sidebar is open below the docked breakpoint */
@@ -180,9 +180,9 @@
 }
 
 .sidebar__workspace-name {
-  font-size: var(--font-size-medium);
+  font-size: var(--font-size-large);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -234,7 +234,7 @@
   /* Comp: hover tints the row, the label color holds */
   @media (any-hover: hover) {
     &:hover {
-      background-color: var(--color-bg-hover);
+      background-color: var(--color-bg-side-hover);
     }
   }
 
@@ -281,7 +281,7 @@
 }
 
 .direct__presence {
-  border: 2px solid var(--color-bg-sunk);
+  border: 2px solid var(--color-bg-side);
   block-size: 10px;
   inline-size: 10px;
   inset-block-end: -1px;
@@ -320,7 +320,7 @@
 
   @media (any-hover: hover) {
     &:hover {
-      background-color: var(--color-bg-hover);
+      background-color: var(--color-bg-side-hover);
       color: var(--color-text);
     }
   }
@@ -355,8 +355,8 @@
 /* Footer: the signed-in user chip is the one trigger for the profile flyout. */
 .sidebar__footer {
   align-items: center;
-  background-color: var(--color-bg-sunk);
-  border-block-start: 1px solid var(--color-border-dark);
+  background-color: var(--color-bg-side);
+  border-block-start: 1px solid var(--color-border-side);
   display: flex;
   inset-block-end: 0;
   margin-block-start: auto;
@@ -389,7 +389,7 @@
   --hover-filter: none;
 
   &[aria-expanded="true"] {
-    background-color: var(--color-bg-hover);
+    background-color: var(--color-bg-side-hover);
   }
 
   &:focus-visible {
@@ -399,7 +399,7 @@
 
   @media (any-hover: hover) {
     &:hover {
-      background-color: var(--color-bg-hover);
+      background-color: var(--color-bg-side-hover);
     }
   }
 }
@@ -411,12 +411,104 @@
 
 .sidebar__me-dot {
   block-size: 10px;
-  border: 2px solid var(--color-bg-sunk);
+  border: 2px solid var(--color-bg-side);
   inline-size: 10px;
   inset-block-end: -2px;
   inset-inline-end: -2px;
   position: absolute;
   z-index: 1;
+}
+
+/* The footer avatar dot follows the presence picked in the flyout */
+.sidebar__profile[data-presence="available"] .sidebar__me-dot {
+  background-color: var(--color-positive);
+}
+
+.sidebar__profile[data-presence="away"] .sidebar__me-dot {
+  background-color: var(--color-alert);
+}
+
+.sidebar__profile[data-presence="do_not_disturb"] .sidebar__me-dot {
+  background-color: var(--color-negative);
+}
+
+/* Presence picker inside the profile flyout (v2.1 account menu): a PRESENCE
+   heading, then three options — one always selected, applied immediately.
+   The selected row reads at weight 600 with an accent check. */
+.sidebar__presence-heading {
+  color: var(--color-text-subtle);
+  font-size: 0.65625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 7px 10px 4px;
+  text-transform: uppercase;
+}
+
+.sidebar__presence-option {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 0.84375rem;
+  gap: 10px;
+  inline-size: 100%;
+  min-block-size: 32px;
+  padding: 0 10px;
+  text-align: start;
+
+  /* A <button>, so drop the base reset's hover box-shadow like the menu items */
+  --hover-size: 0;
+  --hover-filter: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent-brand);
+    outline-offset: 2px;
+  }
+
+  @media (any-hover: hover) {
+    &:hover {
+      background-color: var(--color-bg-hover);
+    }
+  }
+
+  &[aria-checked="true"] {
+    font-weight: 600;
+
+    .sidebar__presence-check {
+      display: inline;
+    }
+  }
+}
+
+.sidebar__presence-dot {
+  block-size: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  inline-size: 8px;
+}
+
+.sidebar__presence-dot--available {
+  background-color: var(--color-positive);
+}
+
+.sidebar__presence-dot--away {
+  background-color: var(--color-alert);
+}
+
+.sidebar__presence-dot--do_not_disturb {
+  background-color: var(--color-negative);
+}
+
+.sidebar__presence-check {
+  color: var(--color-accent-brand);
+  display: none;
+  font-size: 0.75rem;
+  margin-inline-start: auto;
 }
 
 .sidebar__me-info {
@@ -469,7 +561,7 @@
 
   @media (any-hover: hover) {
     &:hover {
-      background-color: var(--color-bg-hover);
+      background-color: var(--color-bg-side-hover);
       color: var(--color-text);
     }
   }
@@ -555,7 +647,7 @@
 
     @media (any-hover: hover) {
       &:hover {
-        background-color: var(--color-bg-hover);
+        background-color: var(--color-bg-side-hover);
         color: var(--color-text);
       }
     }
@@ -637,6 +729,7 @@
      offsets alike — so scaling its font-size shrinks the whole stack uniformly
      to sit inside the single-avatar footprint instead of overpowering it. */
   .avatar__group {
+    --avatar-group-edge-color: var(--color-bg-side);
     font-size: 0.7em;
   }
 
@@ -649,12 +742,12 @@
   /* Two overlapping tiles for a group DM; the upper tile is ringed in the
      sidebar ground so it reads as a separate avatar over the one behind it. */
   .avatar__group > :last-child .avatar {
-    box-shadow: 0 0 0 2px var(--color-bg-sunk);
+    box-shadow: 0 0 0 2px var(--color-bg-side);
   }
 
   @media (any-hover: hover) {
     &:where(:not(:active):hover) {
-      background-color: var(--color-bg-hover);
+      background-color: var(--color-bg-side-hover);
       color: var(--color-text);
     }
   }
@@ -717,15 +810,10 @@
   --row-gap: 0.5em;
 
   /* Comp: a hairline separates the tool block from the room sections */
-  border-block-start: 1px solid var(--color-border-dark);
+  border-block-start: 1px solid var(--color-border-side);
   padding-top: var(--block-space-half);
   padding-bottom: var(--block-space-half);
   padding-inline: 8px;
-
-  input {
-    margin-bottom: var(--block-space);
-    font-size: var(--font-size-small);
-  }
 
   /* Rows stack flush — the 9px row padding is the breathing room (comp) */
   .rooms-list {
@@ -750,7 +838,18 @@
   margin-bottom: calc(var(--block-space) * 2);
 }
 
-#favorites_section:not(:has(.room-row)) {
+/* FAVORITES always renders (comp): its emptiness is instructive — one quiet
+   line aligned with the row names, never a card inside the nav. */
+.sidebar__empty {
+  color: var(--color-text-subtle);
+  font-size: 0.8125rem;
+  /* Row text x: the room button's 1.2ch padding plus the 20px glyph column
+     and its 11px gap */
+  padding-inline-start: calc(1.2ch + 31px);
+}
+
+/* UNREAD is gone from the list entirely at zero — not shown at zero (comp) */
+#unread_section:not(:has(.room-row)) {
   display: none;
 }
 
@@ -803,7 +902,7 @@
   /* The whole row — star included — is one hover/current unit (comp) */
   @media (any-hover: hover) {
     &:hover {
-      background-color: var(--color-bg-hover);
+      background-color: var(--color-bg-side-hover);
     }
   }
 
@@ -862,7 +961,7 @@
 
   &[aria-current="page"] {
     color: var(--color-accent-brand);
-    font-weight: 700;
+    font-weight: 600;
   }
 
   /* Unread count rides the accent, not red — red stays destructive-only */
@@ -890,11 +989,11 @@
 
   &.unread {
     color: var(--color-text);
-    font-weight: 700;
+    font-weight: 600;
   }
 
   &:active:not(:disabled) {
-    background-color: var(--color-bg-hover);
+    background-color: var(--color-bg-side-hover);
     transform: none;
     transition: none;
   }
@@ -1104,6 +1203,9 @@ html:not([data-sidebar="match"]) #sidebar[data-contrast="true"] {
   --color-bg: oklch(21% 0.01 277);
   --color-bg-raised: oklch(24% 0.012 271);
   --color-bg-sunk: oklch(21% 0.01 277);
+  --color-bg-side: oklch(21% 0.01 277);
+  --color-bg-side-hover: oklch(26.5% 0.013 273);
+  --color-border-side: oklch(28.2% 0.013 273);
   --color-bg-hover: oklch(26.5% 0.013 273);
   --color-text: oklch(100% 0 0);
   --color-text-lighter: oklch(92.7% 0.009 265);
