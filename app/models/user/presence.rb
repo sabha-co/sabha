@@ -119,10 +119,12 @@ module User::Presence
   # Payloads stay presence-only, as always: a DM row or directory row would carry
   # unread counts and admin controls belonging to the viewer, not the subject.
   def broadcast_presence
+    return if suppressed_turbo_broadcasts?
+
     dot = presence_dot_now
 
     broadcast_dots_to self, "own", dot
-    presence_audience.each { |viewer| broadcast_dots_to viewer, "chrome", dot }
+    broadcast_dots_to_each presence_audience, "chrome", dot
     broadcast_dots_to Current.account, "rare", dot
   end
 
@@ -160,9 +162,25 @@ module User::Presence
       Rooms::Direct.active.where(id: memberships.select(:room_id)).select(:id)
     end
 
-    def broadcast_dots_to(stream, group, dot)
-      broadcast_render_to [ stream, :presence ],
-        partial: "users/presences/#{group}", locals: { user: self, dot: dot }
+    def broadcast_dots_to(streamable, group, dot)
+      Turbo::StreamsChannel.broadcast_stream_to streamable, :presence, content: render_dots(group, dot)
+    end
+
+    # The payload carries only the subject's own dots, so every recipient gets
+    # byte-identical HTML. Rendering once and publishing the same string is the
+    # difference between one render and one per partner — broadcast_render_to
+    # renders per call, which is why it isn't used here.
+    def broadcast_dots_to_each(viewers, group, dot)
+      viewers = viewers.to_a
+      return if viewers.empty?
+
+      content = render_dots(group, dot)
+      viewers.each { |viewer| Turbo::StreamsChannel.broadcast_stream_to viewer, :presence, content: content }
+    end
+
+    def render_dots(group, dot)
+      ApplicationController.render partial: "users/presences/#{group}",
+        locals: { user: self, dot: dot }, formats: [ :turbo_stream ]
     end
 
     def reported_recently?

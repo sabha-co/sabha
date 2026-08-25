@@ -153,6 +153,26 @@ class User::PresenceTest < ActiveSupport::TestCase
     end
   end
 
+  # Every partner receives byte-identical HTML, so the cost of a change must not
+  # scale with the size of the audience. broadcast_render_to renders per call,
+  # which is exactly the regression this guards against.
+  test "the chrome payload is rendered once, not once per partner" do
+    assert_operator @user.presence_audience.count, :>=, 2,
+                    "needs more than one DM partner for this to prove anything"
+    @user.update_columns last_active_at: Time.current
+
+    renders = 0
+    subscription = ActiveSupport::Notifications.subscribe("render_partial.action_view") do |*, payload|
+      renders += 1 if payload[:identifier].to_s.end_with?("_chrome.turbo_stream.erb")
+    end
+
+    @user.change_availability! :do_not_disturb
+
+    assert_equal 1, renders
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscription)
+  end
+
   test "the audience is the DM partners, without you in it" do
     assert_equal [ users(:jason), users(:kevin) ].map(&:id).sort,
                  @user.presence_audience.pluck(:id).sort
