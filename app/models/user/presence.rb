@@ -72,6 +72,12 @@ module User::Presence
   # Three verbs, one rule: each ends in a broadcast when — and only when — the
   # dot other people see actually moved. An ordinary stream of "still here"
   # pings changes nothing and says nothing.
+  #
+  # The two idle verbs pass rare: false. An inferred active/idle flicker reaches
+  # the shells a viewer keeps open all day (own + chrome), but not the opt-in
+  # directory/profile/roster pages, which aren't worth a live render for a mouse
+  # going still. Only a declared change reaches those; they're correct on load
+  # either way. See broadcast_presence.
   def change_availability!(state)
     broadcasting_dot_change do
       update! availability: state
@@ -82,7 +88,7 @@ module User::Presence
   def interacted
     return if reported_recently?
 
-    broadcasting_dot_change { touch_last_active }
+    broadcasting_dot_change(rare: false) { touch_last_active }
   end
 
   # Doesn't clear the timestamp, ages it out: idleness is derived from the one
@@ -91,16 +97,22 @@ module User::Presence
   def went_idle
     return unless active_now?
 
-    broadcasting_dot_change { update_columns last_active_at: ACTIVE_WINDOW.ago - 1.second }
+    broadcasting_dot_change(rare: false) { update_columns last_active_at: ACTIVE_WINDOW.ago - 1.second }
   end
 
-  # Delivery follows the audience rather than the headcount. Three sends, each
-  # sized to who can actually be looking:
+  # Delivery follows the audience rather than the headcount. Up to three sends,
+  # each sized to who can actually be looking:
   #
   #   own    → your footer, on your own stream
   #   chrome → your DM rows and room header, on each partner's stream
   #   rare   → the directory, a profile, a roster — on the workspace stream,
   #            which only those pages subscribe to, so it usually reaches nobody
+  #
+  # The rare send is skipped for ambient idle flickers (rare: false). It's the
+  # one payload that almost always reaches nobody, which makes it the one render
+  # almost always thrown away — not paying it on the high-frequency active/idle
+  # edge is the whole point. A declared availability change still refreshes those
+  # pages live, and they read correctly on load regardless.
   #
   # Subscribing per *viewer* rather than per *subject* also keeps the wire quiet:
   # a page opens exactly one of these, where per-subject streams meant one
@@ -112,12 +124,12 @@ module User::Presence
   #
   # Payloads stay presence-only, as always: a DM row or directory row would carry
   # unread counts and admin controls belonging to the viewer, not the subject.
-  def broadcast_presence(dot = presence_dot_now)
+  def broadcast_presence(dot = presence_dot_now, rare: true)
     return if suppressed_turbo_broadcasts?
 
     broadcast_dots_to self, "own", dot
     broadcast_dots_to_each presence_audience, "chrome", dot
-    broadcast_dots_to Current.account, "rare", dot
+    broadcast_dots_to Current.account, "rare", dot if rare
   end
 
   # Everyone who keeps a row for you: the people you share a direct message
@@ -156,12 +168,15 @@ module User::Presence
     # anyone who has already said something about themselves. Away and Do Not
     # Disturb ignore the active/idle distinction entirely, so their tabs going
     # quiet and coming back changes nothing and now announces nothing.
-    def broadcasting_dot_change
+    #
+    # rare: threads straight through to broadcast_presence — the idle verbs pass
+    # false so an ambient flicker never renders or publishes the opt-in pages.
+    def broadcasting_dot_change(rare: true)
       was = presence_dot_now
       yield
       now = presence_dot_now
 
-      broadcast_presence now unless now == was
+      broadcast_presence now, rare: rare unless now == was
     end
 
     def direct_room_ids

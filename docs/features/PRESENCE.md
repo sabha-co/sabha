@@ -125,13 +125,13 @@ out of the surface-sizing cascade.
 
 ## Delivery
 
-Delivery follows the audience, not the headcount. Three sends per change:
+Delivery follows the audience, not the headcount. Up to three sends per change:
 
 ```ruby
 # app/models/user/presence.rb
-broadcast_dots_to self,            "own",    dot   # → [self, :presence]
+broadcast_dots_to self,            "own",    dot         # → [self, :presence]
 presence_audience.each { |viewer| broadcast_dots_to viewer, "chrome", dot }
-broadcast_dots_to Current.account, "rare",   dot   # → [account, :presence]
+broadcast_dots_to Current.account, "rare",   dot if rare # → [account, :presence]
 ```
 
 | Group | Payload | Goes to | Subscribed by |
@@ -139,6 +139,14 @@ broadcast_dots_to Current.account, "rare",   dot   # → [account, :presence]
 | `own` | 444 B · 2 actions | you | the layout |
 | `chrome` | 952 B · 4 actions | your DM partners (`presence_audience`) | the layout |
 | `rare` | 1,537 B · 7 actions | the workspace stream | only the directory, profile, and roster pages, while open |
+
+**`rare` is only sent for a declared change.** An ambient active/idle flicker —
+the high-frequency path — reaches `own` and `chrome` but skips `rare` (`rare:
+false` on the idle verbs). That payload is the one that almost always reaches
+nobody, so it's the one render almost always thrown away; not paying it on every
+mouse-goes-still edge is the point. A directory or profile is worth a live update
+for someone declaring "Away", not for their pointer pausing — and those pages are
+correct on load either way. Only `change_availability!` sends all three.
 
 The payload carries only the subject's own dots, so every partner receives
 byte-identical HTML. It is rendered **once** and the same string is published to
@@ -217,7 +225,8 @@ Counted from the code paths, not estimated.
 | A list of dots | **2 queries, flat** — `presence_dots_for`, whatever the length |
 | Rendering a page | **0** — the stream tags are markup; subscribing touches no database |
 | An activity report | arrives every 2 min over the existing socket; writes only once the watermark is 3 min stale, so roughly **one UPDATE per 4 min per active person** |
-| A broadcast | **1 query** for the audience, **3 renders** (flat), **K+2** broker publishes |
+| An idle broadcast | **1 query** for the audience, **2 renders** (own + chrome, flat), **K+1** broker publishes — the frequent path |
+| A declared broadcast | **1 query** for the audience, **3 renders** (flat), **K+2** broker publishes — only on a picker change |
 
 The write is a bare `update_columns`: no callbacks, no validations, no
 `updated_at` bump — so nothing keyed on the user's timestamp is invalidated by

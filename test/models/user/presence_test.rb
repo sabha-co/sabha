@@ -75,20 +75,31 @@ class User::PresenceTest < ActiveSupport::TestCase
     assert_equal before.to_i, @user.reload.last_active_at.to_i
   end
 
-  test "coming back after going quiet moves the dot for everyone" do
+  test "coming back after going quiet moves the dot for a DM partner" do
     @user.update! last_active_at: 30.minutes.ago
 
-    assert_broadcasts broadcasting_for(Current.account, :presence), 1 do
+    assert_broadcasts broadcasting_for(users(:jason), :presence), 1 do
       @user.interacted
     end
 
     assert @user.active_now?
   end
 
+  # The opt-in directory/profile/roster pages don't get live idle churn: only a
+  # declared availability change reaches the workspace stream. An ambient
+  # active/idle flicker stays on the always-open shells.
+  test "an idle edge stays off the workspace stream" do
+    @user.update! last_active_at: 30.minutes.ago
+
+    assert_no_broadcasts broadcasting_for(Current.account, :presence) do
+      @user.interacted
+    end
+  end
+
   test "staying active says nothing" do
     @user.update! last_active_at: 5.minutes.ago
 
-    assert_no_broadcasts broadcasting_for(Current.account, :presence) do
+    assert_no_broadcasts broadcasting_for(users(:jason), :presence) do
       @user.interacted
     end
 
@@ -98,7 +109,7 @@ class User::PresenceTest < ActiveSupport::TestCase
   test "going idle ages the timestamp out rather than clearing it" do
     @user.update! last_active_at: Time.current
 
-    assert_broadcasts broadcasting_for(Current.account, :presence), 1 do
+    assert_broadcasts broadcasting_for(users(:jason), :presence), 1 do
       @user.went_idle
     end
 
@@ -110,7 +121,7 @@ class User::PresenceTest < ActiveSupport::TestCase
     @user.update! last_active_at: Time.current
     @user.went_idle
 
-    assert_no_broadcasts broadcasting_for(Current.account, :presence) do
+    assert_no_broadcasts broadcasting_for(users(:jason), :presence) do
       @user.went_idle
     end
   end
@@ -184,11 +195,11 @@ class User::PresenceTest < ActiveSupport::TestCase
     @user.update! availability: :away, last_active_at: Time.current
     @user.memberships.first.update! connections: 1, connected_at: Time.current
 
-    assert_no_broadcasts broadcasting_for(Current.account, :presence) do
+    assert_no_broadcasts broadcasting_for(users(:jason), :presence) do
       @user.went_idle
     end
 
-    assert_no_broadcasts broadcasting_for(Current.account, :presence) do
+    assert_no_broadcasts broadcasting_for(users(:jason), :presence) do
       @user.interacted
     end
   end
@@ -197,7 +208,7 @@ class User::PresenceTest < ActiveSupport::TestCase
     @user.update! availability: :available, last_active_at: Time.current
     @user.memberships.first.update! connections: 1, connected_at: Time.current
 
-    assert_broadcasts broadcasting_for(Current.account, :presence), 1 do
+    assert_broadcasts broadcasting_for(users(:jason), :presence), 1 do
       @user.went_idle
     end
   end
