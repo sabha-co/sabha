@@ -26,17 +26,31 @@ export default class extends Controller {
     this.lastReportedAt = 0
     this.lastTouchedAt = 0
 
-    this.channel = await cable.subscribeTo({ channel: "HeartbeatChannel" })
+    // Turbo can tear this controller down while the subscription is still in
+    // flight. A token captured before the await lets the late continuation
+    // notice it's been disconnected and clean up after itself — otherwise it
+    // would attach the listeners and arm the timer on a dead controller, and
+    // hold a HeartbeatChannel subscription nothing is left to unsubscribe.
+    const token = this.connectToken = {}
+    const channel = await cable.subscribeTo({ channel: "HeartbeatChannel" })
 
+    if (this.connectToken !== token) {
+      channel?.unsubscribe?.()
+      return
+    }
+
+    this.channel = channel
     this.#listen()
     this.#restartIdleTimer()
     this.#report(true)
   }
 
   disconnect() {
+    this.connectToken = null
     clearTimeout(this.idleTimer)
     this.#stopListening()
     this.channel?.unsubscribe?.()
+    this.channel = null
   }
 
   #listen() {
