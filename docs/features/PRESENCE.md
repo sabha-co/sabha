@@ -140,6 +140,12 @@ broadcast_dots_to Current.account, "rare",   dot   # → [account, :presence]
 | `chrome` | 952 B · 4 actions | your DM partners (`presence_audience`) | the layout |
 | `rare` | 1,537 B · 7 actions | the workspace stream | only the directory, profile, and roster pages, while open |
 
+The payload carries only the subject's own dots, so every partner receives
+byte-identical HTML. It is rendered **once** and the same string is published to
+each — `broadcast_render_to` renders per call, which is why it isn't used here,
+and why a test asserts the chrome payload renders exactly once regardless of how
+many partners exist.
+
 **Every viewer subscribes to their own stream**, in the layout:
 
 ```erb
@@ -176,12 +182,58 @@ exactly — adding a ninth fails until it's been given an audience.
 
 ### When nothing is sent
 
-All three verbs broadcast only when the dot other people see actually moved:
+All three verbs end on one rule — do the write, then compare the **resolved dot**,
+never the stored value:
 
-- `interacted` — silent unless it moves you off idle; most reports write nothing
-- `went_idle` — silent if you were already idle
-- `change_availability!` — compares the **resolved dot**, not the stored value,
-  because choosing also counts as activity and that alone can lift you off idle
+```ruby
+def broadcasting_dot_change
+  was = presence_dot_now
+  yield
+  now = presence_dot_now
+
+  broadcast_presence now unless now == was
+end
+```
+
+Comparing the resolved dot is what makes idleness free for anyone who has already
+said something about themselves. Away and Do Not Disturb sit above the
+active/idle distinction, so those tabs going quiet and coming back changes
+nothing anyone can see, and says nothing. Since idle edges dominate presence
+traffic, that removes most of it for those people.
+
+Re-picking the state you already hold is silent for the same reason — but note it
+isn't *always* a no-op, because choosing also counts as activity and that alone
+can lift you off idle.
+
+---
+
+## What it costs
+
+Counted from the code paths, not estimated.
+
+| Path | Cost |
+|---|---|
+| One person's dot | **0–1 queries** — `last_active_at` is on the record; the reachability check is skipped when they're active |
+| A list of dots | **2 queries, flat** — `presence_dots_for`, whatever the length |
+| Rendering a page | **0** — the stream tags are markup; subscribing touches no database |
+| An activity report | arrives every 2 min over the existing socket; writes only once the watermark is 3 min stale, so roughly **one UPDATE per 4 min per active person** |
+| A broadcast | **1 query** for the audience, **3 renders** (flat), **K+2** broker publishes |
+
+The write is a bare `update_columns`: no callbacks, no validations, no
+`updated_at` bump — so nothing keyed on the user's timestamp is invalidated by
+someone moving their mouse. That matters because every write lands on the same
+single SQLite writer the chat itself uses; `ACTIVITY_REFRESH_THRESHOLD` is the
+dial to turn if it's ever felt, and the only cost of raising it is noticing
+idleness slightly later.
+
+Storage is two columns and **no index** — nothing sorts or filters by either, so
+an index would be write cost for nothing.
+
+On the client: five passive listeners plus `visibilitychange`, with timer churn
+bounded to one clear/set per 5 seconds however fast the pointer moves.
+`HeartbeatChannel` is subscribed three times per page (connection status, room
+refresh, idle watcher), costing two redundant subscribe commands per navigation —
+see the note above on why that's waste rather than a leak.
 
 ---
 
