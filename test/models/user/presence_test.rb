@@ -126,6 +126,38 @@ class User::PresenceTest < ActiveSupport::TestCase
     assert @user.active_now?, "the chooser would otherwise be broadcast as idle"
   end
 
+  # The whole point of splitting the fan-out: a change reaches the people who
+  # keep a row for you and nobody else. jz shares rooms with david but no DM, so
+  # they're the control — under a workspace-wide broadcast they'd hear about it.
+  test "a change reaches a DM partner" do
+    assert_broadcasts broadcasting_for(users(:jason), :presence), 1 do
+      @user.change_availability! :do_not_disturb
+    end
+  end
+
+  test "a change skips a member who shares rooms but no direct message" do
+    assert_no_broadcasts broadcasting_for(users(:jz), :presence) do
+      @user.change_availability! :do_not_disturb
+    end
+  end
+
+  test "your own footer rides your own stream" do
+    assert_broadcasts broadcasting_for(@user, :presence), 1 do
+      @user.change_availability! :do_not_disturb
+    end
+  end
+
+  test "the rarely-open surfaces stay on the workspace stream" do
+    assert_broadcasts broadcasting_for(Current.account, :presence), 1 do
+      @user.change_availability! :do_not_disturb
+    end
+  end
+
+  test "the audience is the DM partners, without you in it" do
+    assert_equal [ users(:jason), users(:kevin) ].map(&:id).sort,
+                 @user.presence_audience.pluck(:id).sort
+  end
+
   test "re-picking the state you already hold says nothing" do
     @user.update! availability: :away, last_active_at: Time.current
 

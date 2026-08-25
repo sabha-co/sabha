@@ -100,20 +100,49 @@ module User::Presence
     broadcast_presence
   end
 
-  # Workspace-wide, not per-subject. A per-subject stream is the tighter fan-out,
-  # but it means subscribing once per visible avatar — and the same person's dot
-  # appears in both the sidebar frame and the main document, two separate renders
-  # that can't dedupe against each other. The duplicate subscription that follows
-  # is never confirmed, and Action Cable then retries it every 500ms forever.
-  # One workspace stream removes the failure mode outright.
+  # Delivery follows the audience rather than the headcount. Three sends, each
+  # sized to who can actually be looking:
   #
-  # The payload stays presence-only for the same reason it always did: a DM row
-  # or directory row would carry unread counts and admin controls that belong to
-  # the viewer, not the subject — and now every member receives it.
+  #   own    → your footer, on your own stream
+  #   chrome → your DM rows and room header, on each partner's stream
+  #   rare   → the directory, a profile, a roster — on the workspace stream,
+  #            which only those pages subscribe to, so it usually reaches nobody
+  #
+  # Subscribing per *viewer* rather than per *subject* is what keeps this safe:
+  # a page opens exactly one of these, so it can't subscribe to the same stream
+  # twice. (Per-subject streams meant one subscription per visible avatar, the
+  # same person appeared in both the sidebar frame and the main document, and the
+  # duplicate that followed was never confirmed — leaving Action Cable's
+  # guarantor resubscribing it every 500ms for the life of the tab.)
+  #
+  # Payloads stay presence-only, as always: a DM row or directory row would carry
+  # unread counts and admin controls belonging to the viewer, not the subject.
   def broadcast_presence
+    dot = presence_dot_now
+
+    broadcast_render_to [ self, :presence ],
+      partial: "users/presences/own", locals: { user: self, dot: dot }
+
+    presence_audience.each do |viewer|
+      broadcast_render_to [ viewer, :presence ],
+        partial: "users/presences/chrome", locals: { user: self, dot: dot }
+    end
+
     broadcast_render_to [ Current.account, :presence ],
-      partial: "users/presences/dots",
-      locals: { user: self, dot: presence_dot_now }
+      partial: "users/presences/rare", locals: { user: self, dot: dot }
+  end
+
+  # Everyone who keeps a row for you: the people you share a direct message
+  # with. Their sidebar row, inbox row, and room header are the only places
+  # another person's dot appears on a page they're likely to have open. Group
+  # DMs are included even though they draw no single dot — they're small, and
+  # counting members per room to exclude them costs more than the actions it
+  # would save.
+  def presence_audience
+    User.where(id: Membership.active
+      .where(room_id: Rooms::Direct.active.where(id: memberships.select(:room_id)).select(:id))
+      .where.not(user_id: id)
+      .select(:user_id))
   end
 
   class_methods do

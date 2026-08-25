@@ -1,10 +1,10 @@
-<%# Replays every surface's dot for one subject, and the words beside it wherever
-    a surface prints them — a dot that turns amber next to a label still reading
-    "Available" is worse than not moving at all. Only the surfaces the viewer
-    actually has on screen match a target; Turbo discards the rest. Nothing here
-    is viewer-specific, which is the point — a DM row or directory row would
-    carry unread counts and admin controls that aren't this subject's to send. %>
-<% presence_surfaces.each do |surface| %>
+<%# Replays one subject's dot across the surfaces it was asked for, and the words
+    beside it wherever a surface prints them — a dot that turns amber next to a
+    label still reading "Available" is worse than not moving at all. Only the
+    surfaces the viewer actually has on screen match a target; Turbo discards the
+    rest. Which surfaces arrive is decided by the caller, so a payload is never
+    larger than its audience can use. %>
+<% surfaces.each do |surface| %>
   <%# The sidebar footer is only ever your own, and it answers a different
       question than everyone else's dots do: what you chose, not how you look
       from outside. Reflecting idleness back at the person who is demonstrably

@@ -47,14 +47,15 @@
   </head>
 
   <body class="<%= body_classes %>" data-controller="local-time lightbox page-title theme idle">
-    <%# One presence subscription for the whole workspace, and deliberately here
-        rather than beside each dot. A dot for the same person routinely renders
-        in both the sidebar frame and the main document, which are separate
-        requests that cannot dedupe against each other — and a duplicate
-        subscription is never confirmed by the server, leaving Action Cable's
-        guarantor resubscribing it every 500ms for the life of the tab. One
-        stream in the layout makes that impossible by construction. %>
-    <%= turbo_stream_from Current.account, :presence if Current.user %>
+    <%# Your own presence stream: your footer, plus the DM rows and room header
+        your partners publish into it. One per page, and keyed to the viewer
+        rather than to each subject on screen — a per-subject subscription would
+        be opened twice for anyone appearing in both the sidebar frame and the
+        main document, and Action Cable never confirms a duplicate, leaving its
+        guarantor resubscribing every 500ms for the life of the tab.
+        Pages showing the rarer surfaces subscribe to the workspace stream
+        themselves; see User::Presence#broadcast_presence. %>
+    <%= turbo_stream_from Current.user, :presence if Current.user %>
     <% if DemoMode.enabled? %>
       <%= render "shared/top_banner", style: :warning, label: "Demo Mode", text: "This server resets #{DemoMode.reset_interval}. Data is not persisted." %>
     <% end %>

@@ -54,17 +54,23 @@ class PresenceTest < ApplicationSystemTestCase
   # guarantor resubscribes it every 500ms for the life of the tab. The sidebar and
   # the main document are separate renders that can't dedupe against each other,
   # so this is asserted against the assembled DOM rather than either response.
+  # The layout carries your own presence stream; the pages that draw other
+  # people's rarer surfaces add the workspace stream on top. Both are checked
+  # here because that second subscription is exactly where a duplicate would
+  # creep back in.
   test "no page subscribes to the same stream twice" do
-    visit inbox_direct_messages_url
+    [ inbox_direct_messages_url, account_users_url, user_url(users(:jason)) ].each do |url|
+      visit url
 
-    names = page.evaluate_script(<<~JS)
-      Array.from(document.querySelectorAll("turbo-cable-stream-source"))
-           .map(el => el.getAttribute("signed-stream-name"))
-    JS
+      names = page.evaluate_script(<<~JS)
+        Array.from(document.querySelectorAll("turbo-cable-stream-source"))
+             .map(el => el.getAttribute("signed-stream-name"))
+      JS
 
-    assert_predicate names, :any?, "expected the page to subscribe to something"
-    assert_equal names.uniq.size, names.size,
-                 "#{names.size - names.uniq.size} duplicate stream source(s) — each one resubscribes forever"
+      assert_predicate names, :any?, "expected #{url} to subscribe to something"
+      assert_equal names.uniq.size, names.size,
+                   "#{url}: #{names.size - names.uniq.size} duplicate stream source(s) — each one resubscribes forever"
+    end
   end
 
   private

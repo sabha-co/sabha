@@ -47,22 +47,30 @@ class Users::PresencesControllerTest < ActionDispatch::IntegrationTest
     assert @user.reload.active_now?, "the chooser would otherwise be broadcast as idle"
   end
 
-  test "the change is broadcast on the workspace presence stream" do
-    assert_broadcasts broadcasting_for(Current.account, :presence), 1 do
-      patch user_presence_url, params: { user: { availability: "away" } }
+  test "the change is broadcast to a DM partner and to the workspace stream" do
+    assert_broadcasts broadcasting_for(users(:jason), :presence), 1 do
+      assert_broadcasts broadcasting_for(Current.account, :presence), 1 do
+        patch user_presence_url, params: { user: { availability: "away" } }
+      end
     end
   end
 
   # A dot that turns amber beside words still reading "Available" is worse than
   # one that never moved, so the surfaces that spell the state out are replayed
-  # alongside it rather than left for the next full page load.
+  # alongside it rather than left for the next full page load. Asserted on both
+  # payloads, since the surfaces are split across two audiences.
   test "the words beside the dot travel with it" do
     patch user_presence_url, params: { user: { availability: "away" } }
 
-    assert_rendered_turbo_stream_broadcast Current.account, :presence,
+    assert_rendered_turbo_stream_broadcast users(:jason), :presence,
       action: :replace, target: [ @user, :presence_dot_nav ]
-    assert_rendered_turbo_stream_broadcast Current.account, :presence,
+    assert_rendered_turbo_stream_broadcast users(:jason), :presence,
       action: :replace, target: [ @user, :presence_label_nav ]
+
+    assert_rendered_turbo_stream_broadcast Current.account, :presence,
+      action: :replace, target: [ @user, :presence_dot_member ]
+    assert_rendered_turbo_stream_broadcast Current.account, :presence,
+      action: :replace, target: [ @user, :presence_label_member ]
   end
 
   test "signing out blocks the update" do

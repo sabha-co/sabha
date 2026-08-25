@@ -1,3 +1,7 @@
+<%# The roster draws the other members' dots, so it opts into the workspace
+    presence stream while open; the layout only carries your own. %>
+<%= turbo_stream_from Current.account, :presence %>
+
 <%= render layout: "rooms/layouts/edit", locals: { room: @room } do %>
   <%= render "rooms/directs/participants", users: @users, statuses: @member_statuses %>
 <% end %>

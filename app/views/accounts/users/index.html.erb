@@ -1,4 +1,8 @@
 <% @page_title = "Members" %>
+<%# This directory is one of the pages that draws other people's dots, so it
+    opts into the workspace presence stream while it's open. The layout only
+    subscribes you to your own. %>
+<%= turbo_stream_from Current.account, :presence %>
 
 <%= render layout: "settings/shell", locals: { section: :members } do %>
   <header class="settings-header">

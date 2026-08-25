@@ -38,6 +38,16 @@ module PresencesHelper
     profile_hero:  "profile-hero__dot"
   }.freeze
 
+  # The surfaces split by who has them on screen, which is what decides where a
+  # change is delivered (see User::Presence#broadcast_presence).
+  #
+  #   OWN    — only ever the subject's own page
+  #   CHROME — the shell a DM partner keeps open all day
+  #   RARE   — pages that are usually closed, so they subscribe for themselves
+  OWN_SURFACES = %i[ sidebar ].freeze
+  CHROME_SURFACES = %i[ direct conversation nav ].freeze
+  RARE_SURFACES = %i[ member participant quick_profile profile_hero ].freeze
+
   # Surfaces that also spell the state out in words. There the dot is decoration
   # and stays out of the accessibility tree — announcing both would say the same
   # thing twice — and the words need replacing on a broadcast alongside it, or

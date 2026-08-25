@@ -1,5 +1,8 @@
 <% @page_title = @user.name %>
 <% @body_class = "sidebar profile" %>
+<%# The hero dot belongs to whoever this profile is about, so this page opts
+    into the workspace presence stream; the layout only carries your own. %>
+<%= turbo_stream_from Current.account, :presence %>
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 
 <% content_for :nav do %>
