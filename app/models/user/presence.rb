@@ -109,38 +109,6 @@ module User::Presence
     broadcasting_dot_change(rare: false) { update_columns last_active_at: ACTIVE_WINDOW.ago - 1.second }
   end
 
-  # Delivery follows the audience rather than the headcount. Up to three sends,
-  # each sized to who can actually be looking:
-  #
-  #   own    → your footer, on your own stream
-  #   chrome → your DM rows and room header, on each partner's stream
-  #   rare   → the directory, a profile, a roster — on the workspace stream,
-  #            which only those pages subscribe to, so it usually reaches nobody
-  #
-  # The rare send is skipped for ambient idle flickers (rare: false). It's the
-  # one payload that almost always reaches nobody, which makes it the one render
-  # almost always thrown away — not paying it on the high-frequency active/idle
-  # edge is the whole point. A declared availability change still refreshes those
-  # pages live, and they read correctly on load regardless.
-  #
-  # Subscribing per *viewer* rather than per *subject* also keeps the wire quiet:
-  # a page opens exactly one of these, where per-subject streams meant one
-  # subscription per visible avatar and the same person appeared in both the
-  # sidebar frame and the main document. Duplicates are benign — Action Cable
-  # ignores a repeated subscribe, and one confirmation forgets every subscription
-  # sharing that identifier (findAll), so nothing retries — but they're pure
-  # waste, and per-viewer keying makes them impossible rather than harmless.
-  #
-  # Payloads stay presence-only, as always: a DM row or directory row would carry
-  # unread counts and admin controls belonging to the viewer, not the subject.
-  def broadcast_presence(dot = presence_dot_now, rare: true)
-    return if suppressed_turbo_broadcasts?
-
-    broadcast_dots_to self, "own", dot
-    broadcast_dots_to_each presence_audience, "chrome", dot
-    broadcast_dots_to Current.account, "rare", dot if rare
-  end
-
   # Everyone who keeps a row for you: the people you share a direct message
   # with. Their sidebar row, inbox row, and room header are the only places
   # another person's dot appears on a page they're likely to have open. Group
@@ -186,6 +154,38 @@ module User::Presence
       now = presence_dot_now
 
       broadcast_presence now, rare: rare unless now == was
+    end
+
+    # Delivery follows the audience rather than the headcount. Up to three sends,
+    # each sized to who can actually be looking:
+    #
+    #   own    → your footer, on your own stream
+    #   chrome → your DM rows and room header, on each partner's stream
+    #   rare   → the directory, a profile, a roster — on the workspace stream,
+    #            which only those pages subscribe to, so it usually reaches nobody
+    #
+    # The rare send is skipped for ambient idle flickers (rare: false). It's the
+    # one payload that almost always reaches nobody, which makes it the one render
+    # almost always thrown away — not paying it on the high-frequency active/idle
+    # edge is the whole point. A declared availability change still refreshes those
+    # pages live, and they read correctly on load regardless.
+    #
+    # Subscribing per *viewer* rather than per *subject* also keeps the wire quiet:
+    # a page opens exactly one of these, where per-subject streams meant one
+    # subscription per visible avatar and the same person appeared in both the
+    # sidebar frame and the main document. Duplicates are benign — Action Cable
+    # ignores a repeated subscribe, and one confirmation forgets every subscription
+    # sharing that identifier (findAll), so nothing retries — but they're pure
+    # waste, and per-viewer keying makes them impossible rather than harmless.
+    #
+    # Payloads stay presence-only, as always: a DM row or directory row would carry
+    # unread counts and admin controls belonging to the viewer, not the subject.
+    def broadcast_presence(dot = presence_dot_now, rare: true)
+      return if suppressed_turbo_broadcasts?
+
+      broadcast_dots_to self, "own", dot
+      broadcast_dots_to_each presence_audience, "chrome", dot
+      broadcast_dots_to Current.account, "rare", dot if rare
     end
 
     def direct_room_ids
