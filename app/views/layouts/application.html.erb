@@ -51,8 +51,9 @@
         your partners publish into it. One per page, and keyed to the viewer
         rather than to each subject on screen — a per-subject subscription would
         be opened twice for anyone appearing in both the sidebar frame and the
-        main document, and Action Cable never confirms a duplicate, leaving its
-        guarantor resubscribing every 500ms for the life of the tab.
+        main document. Action Cable tolerates that (a repeated subscribe is
+        ignored, and one confirmation clears every subscription sharing the
+        identifier), but it's wasted wire either way.
         Pages showing the rarer surfaces subscribe to the workspace stream
         themselves; see User::Presence#broadcast_presence. %>
     <%= turbo_stream_from Current.user, :presence if Current.user %>

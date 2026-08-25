@@ -108,12 +108,13 @@ module User::Presence
   #   rare   → the directory, a profile, a roster — on the workspace stream,
   #            which only those pages subscribe to, so it usually reaches nobody
   #
-  # Subscribing per *viewer* rather than per *subject* is what keeps this safe:
-  # a page opens exactly one of these, so it can't subscribe to the same stream
-  # twice. (Per-subject streams meant one subscription per visible avatar, the
-  # same person appeared in both the sidebar frame and the main document, and the
-  # duplicate that followed was never confirmed — leaving Action Cable's
-  # guarantor resubscribing it every 500ms for the life of the tab.)
+  # Subscribing per *viewer* rather than per *subject* also keeps the wire quiet:
+  # a page opens exactly one of these, where per-subject streams meant one
+  # subscription per visible avatar and the same person appeared in both the
+  # sidebar frame and the main document. Duplicates are benign — Action Cable
+  # ignores a repeated subscribe, and one confirmation forgets every subscription
+  # sharing that identifier (findAll), so nothing retries — but they're pure
+  # waste, and per-viewer keying makes them impossible rather than harmless.
   #
   # Payloads stay presence-only, as always: a DM row or directory row would carry
   # unread counts and admin controls belonging to the viewer, not the subject.

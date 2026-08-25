@@ -50,10 +50,12 @@ class PresenceTest < ApplicationSystemTestCase
     assert_selector "##{dom_id(jason, :presence_dot_direct)}.status--dnd", wait: 10
   end
 
-  # A duplicate stream source is never confirmed by the server, so Action Cable's
-  # guarantor resubscribes it every 500ms for the life of the tab. The sidebar and
-  # the main document are separate renders that can't dedupe against each other,
-  # so this is asserted against the assembled DOM rather than either response.
+  # Duplicates are wasteful rather than fatal: Action Cable ignores a repeated
+  # subscribe, and one confirmation forgets every subscription sharing that
+  # identifier, so nothing retries. What they do cost is an extra subscribe on
+  # every navigation and a second element to keep in sync. The sidebar and the
+  # main document are separate renders that can't dedupe against each other, so
+  # this is asserted against the assembled DOM rather than either response.
   # The layout carries your own presence stream; the pages that draw other
   # people's rarer surfaces add the workspace stream on top. Both are checked
   # here because that second subscription is exactly where a duplicate would

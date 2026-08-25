@@ -146,13 +146,24 @@ broadcast_dots_to Current.account, "rare",   dot   # → [account, :presence]
 <%= turbo_stream_from Current.user, :presence %>
 ```
 
-This is load-bearing. A per-*subject* subscription (one beside each visible
-avatar) subscribes the same person twice on any page where they appear in both
-the sidebar frame and the main document. Action Cable answers a duplicate
-subscribe with silence — no confirmation, ever — and the client's
-`SubscriptionGuarantor` then retries it every 500 ms for the life of the tab.
-Keying by viewer makes one-subscription-per-page structural rather than a
-convention to remember. `test/system/presence_test.rb` guards it.
+A per-*subject* subscription (one beside each visible avatar) would subscribe the
+same person twice on any page where they appear in both the sidebar frame and the
+main document. That is **wasteful, not fatal** — worth stating plainly, because
+this codebase previously recorded it as fatal:
+
+- the server ignores a repeated subscribe (`return if subscriptions.key?(id_key)`),
+  so no second confirmation is sent
+- the client's `confirmSubscription(identifier)` forgets **every** subscription
+  sharing that identifier (`findAll`), so the guarantor stops retrying all of them
+- `remove` likewise only sends `unsubscribe` once the last one is gone
+
+Measured on a room page carrying three identical `HeartbeatChannel` subscriptions:
+zero WebSocket frames in a five-second idle window. No retry storm.
+
+What duplicates actually cost is an extra subscribe command per navigation and a
+second element to keep in sync. Keying by viewer makes one-subscription-per-page
+structural rather than a convention to remember.
+`test/system/presence_test.rb` guards it.
 
 Pages drawing the rarer surfaces add `turbo_stream_from Current.account, :presence`
 themselves, so that payload costs only what someone is actually looking at. A
