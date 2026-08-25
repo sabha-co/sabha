@@ -94,8 +94,17 @@ module User::Presence
   # Doesn't clear the timestamp, ages it out: idleness is derived from the one
   # column so a tab that dies without ever reporting still goes idle on its own
   # rather than staying green forever.
+  #
+  # Refused while activity was just reported — the same freshness the write path
+  # throttles on, read the other way: you can't be idle inside the window you
+  # just proved you were active in. The signal is one shared column, so without
+  # this a second tab going quiet could backdate it out from under a tab that's
+  # actively reporting, and a client forging alternating edges could force a
+  # write and a fan-out on every faked message. Neither can age out a timestamp
+  # that a live tab keeps fresh.
   def went_idle
     return unless active_now?
+    return if reported_recently?
 
     broadcasting_dot_change(rare: false) { update_columns last_active_at: ACTIVE_WINDOW.ago - 1.second }
   end

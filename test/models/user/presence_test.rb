@@ -107,7 +107,7 @@ class User::PresenceTest < ActiveSupport::TestCase
   end
 
   test "going idle ages the timestamp out rather than clearing it" do
-    @user.update! last_active_at: Time.current
+    @user.update! last_active_at: 5.minutes.ago # active, but past the report window
 
     assert_broadcasts broadcasting_for(users(:jason), :presence), 1 do
       @user.went_idle
@@ -117,8 +117,22 @@ class User::PresenceTest < ActiveSupport::TestCase
     assert @user.last_active_at.present?, "timestamp is the only idle signal; clearing it loses the edge"
   end
 
-  test "going idle twice is not a second edge" do
+  # A live tab keeps the shared timestamp fresh, so a second tab going quiet — or
+  # a client forging edges — can't age it out from under it and flip the dot.
+  test "an idle edge is refused while activity was just reported" do
     @user.update! last_active_at: Time.current
+    before = @user.last_active_at
+
+    assert_no_broadcasts broadcasting_for(users(:jason), :presence) do
+      @user.went_idle
+    end
+
+    assert_equal before.to_i, @user.reload.last_active_at.to_i, "a fresh timestamp must survive a contradicting idle"
+    assert @user.active_now?
+  end
+
+  test "going idle twice is not a second edge" do
+    @user.update! last_active_at: 5.minutes.ago # active, but past the report window
     @user.went_idle
 
     assert_no_broadcasts broadcasting_for(users(:jason), :presence) do
@@ -192,7 +206,7 @@ class User::PresenceTest < ActiveSupport::TestCase
   # Away and Do Not Disturb sit above the active/idle distinction, so a tab
   # going quiet or coming back moves nothing anyone can see.
   test "idleness is silent for someone who already said they're away" do
-    @user.update! availability: :away, last_active_at: Time.current
+    @user.update! availability: :away, last_active_at: 5.minutes.ago
     @user.memberships.first.update! connections: 1, connected_at: Time.current
 
     assert_no_broadcasts broadcasting_for(users(:jason), :presence) do
@@ -205,7 +219,7 @@ class User::PresenceTest < ActiveSupport::TestCase
   end
 
   test "idleness still speaks for someone who is merely available" do
-    @user.update! availability: :available, last_active_at: Time.current
+    @user.update! availability: :available, last_active_at: 5.minutes.ago
     @user.memberships.first.update! connections: 1, connected_at: Time.current
 
     assert_broadcasts broadcasting_for(users(:jason), :presence), 1 do

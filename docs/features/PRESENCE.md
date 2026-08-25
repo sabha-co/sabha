@@ -87,6 +87,17 @@ idle_controller.js  ──▶  HeartbeatChannel#activity  ──▶  User#intera
 (`last_active_at = ACTIVE_WINDOW.ago - 1.second`), so a tab that dies without
 ever reporting still goes idle on its own instead of staying green forever.
 
+It's **refused while activity was just reported** (`reported_recently?`, the same
+freshness the write path throttles on): you can't be idle inside the window you
+just proved you were active in. Because presence rides one shared column, this is
+what stops a second tab going quiet from backdating the timestamp out from under a
+tab that's actively reporting — and stops an authenticated client forging
+alternating idle/active edges to force a write and a fan-out on every message. A
+live tab keeps the column fresh, and nothing can age out what it's holding up. The
+residual: two tabs can disagree for up to one report interval, after which the
+active tab's next report settles it — a brief flicker, not a redesign into
+per-tab tracking.
+
 A hidden tab is not interaction: the watcher returns early unless
 `document.visibilityState === "visible"`, or tabbing away would keep you looking
 available indefinitely.
