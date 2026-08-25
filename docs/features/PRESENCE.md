@@ -111,8 +111,15 @@ and a positioning class; five also print the state in words
 | `nav` | room header | yes | `chrome` |
 | `member` | members directory | yes | `rare` |
 | `participant` | DM roster | yes | `rare` |
-| `quick_profile` | hover card | — | `rare` |
+| `quick_profile` | hover card | — | none — fetched fresh on open |
 | `profile_hero` | profile page | yes | `rare` |
+
+The hover card is the one surface that draws a dot but is **never broadcast to**.
+It's lazy-loaded and lives for seconds, rendering `presence_dot_now` fresh every
+time it opens, so a live replacement target would only ever refresh a card that's
+already gone. It's listed in `PresencesHelper::TRANSIENT_SURFACES`, and the
+group-coverage test treats "delivered by one group" and "explicitly transient" as
+the only two valid states for a surface.
 
 Labels are replayed alongside their dot. A dot that turns amber next to words
 still reading "Available" is worse than one that never moved.
@@ -138,7 +145,7 @@ broadcast_dots_to Current.account, "rare",   dot if rare # → [account, :presen
 |---|---|---|---|
 | `own` | 444 B · 2 actions | you | the layout |
 | `chrome` | 952 B · 4 actions | your DM partners (`presence_audience`) | the layout |
-| `rare` | 1,537 B · 7 actions | the workspace stream | only the directory, profile, and roster pages, while open |
+| `rare` | 1,286 B · 6 actions | the workspace stream | only the directory, profile, and roster pages, while open |
 
 **`rare` is only sent for a declared change.** An ambient active/idle flicker —
 the high-frequency path — reaches `own` and `chrome` but skips `rare` (`rare:

@@ -45,13 +45,20 @@ module PresencesHelper
   #   chrome — the shell a DM partner keeps open all day
   #   rare   — pages usually closed, so they subscribe for themselves while open
   #
-  # Every surface belongs to exactly one group; nothing is delivered twice and
-  # nothing is stranded.
+  # Every broadcast surface belongs to exactly one group; nothing is delivered
+  # twice and nothing is stranded.
   SURFACE_GROUPS = {
     own:    %i[ sidebar ],
     chrome: %i[ direct conversation nav ],
-    rare:   %i[ member participant quick_profile profile_hero ]
+    rare:   %i[ member participant profile_hero ]
   }.freeze
+
+  # Surfaces that are never broadcast to, on purpose. The hover card is fetched
+  # lazily and lives for seconds — it renders presence_dot_now fresh every time
+  # it opens, so a live replacement target would only ever refresh a card that's
+  # already gone. It draws a dot (hence a positioning class in DOT_SURFACES) but
+  # deliberately sits in no delivery group.
+  TRANSIENT_SURFACES = %i[ quick_profile ].freeze
 
   # Surfaces that also spell the state out in words. There the dot is decoration
   # and stays out of the accessibility tree — announcing both would say the same
