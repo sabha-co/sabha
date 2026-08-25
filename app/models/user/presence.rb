@@ -120,16 +120,9 @@ module User::Presence
   def broadcast_presence
     dot = presence_dot_now
 
-    broadcast_render_to [ self, :presence ],
-      partial: "users/presences/own", locals: { user: self, dot: dot }
-
-    presence_audience.each do |viewer|
-      broadcast_render_to [ viewer, :presence ],
-        partial: "users/presences/chrome", locals: { user: self, dot: dot }
-    end
-
-    broadcast_render_to [ Current.account, :presence ],
-      partial: "users/presences/rare", locals: { user: self, dot: dot }
+    broadcast_dots_to self, "own", dot
+    presence_audience.each { |viewer| broadcast_dots_to viewer, "chrome", dot }
+    broadcast_dots_to Current.account, "rare", dot
   end
 
   # Everyone who keeps a row for you: the people you share a direct message
@@ -139,10 +132,7 @@ module User::Presence
   # counting members per room to exclude them costs more than the actions it
   # would save.
   def presence_audience
-    User.where(id: Membership.active
-      .where(room_id: Rooms::Direct.active.where(id: memberships.select(:room_id)).select(:id))
-      .where.not(user_id: id)
-      .select(:user_id))
+    User.where(id: Membership.active.where(room_id: direct_room_ids).where.not(user_id: id).select(:user_id))
   end
 
   class_methods do
@@ -165,6 +155,15 @@ module User::Presence
   end
 
   private
+    def direct_room_ids
+      Rooms::Direct.active.where(id: memberships.select(:room_id)).select(:id)
+    end
+
+    def broadcast_dots_to(stream, group, dot)
+      broadcast_render_to [ stream, :presence ],
+        partial: "users/presences/#{group}", locals: { user: self, dot: dot }
+    end
+
     def reported_recently?
       active_now? && last_active_at > ACTIVITY_REFRESH_THRESHOLD.ago
     end

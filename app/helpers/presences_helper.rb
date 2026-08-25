@@ -41,12 +41,17 @@ module PresencesHelper
   # The surfaces split by who has them on screen, which is what decides where a
   # change is delivered (see User::Presence#broadcast_presence).
   #
-  #   OWN    — only ever the subject's own page
-  #   CHROME — the shell a DM partner keeps open all day
-  #   RARE   — pages that are usually closed, so they subscribe for themselves
-  OWN_SURFACES = %i[ sidebar ].freeze
-  CHROME_SURFACES = %i[ direct conversation nav ].freeze
-  RARE_SURFACES = %i[ member participant quick_profile profile_hero ].freeze
+  #   own    — only ever the subject's own page
+  #   chrome — the shell a DM partner keeps open all day
+  #   rare   — pages usually closed, so they subscribe for themselves while open
+  #
+  # Every surface belongs to exactly one group; nothing is delivered twice and
+  # nothing is stranded.
+  SURFACE_GROUPS = {
+    own:    %i[ sidebar ],
+    chrome: %i[ direct conversation nav ],
+    rare:   %i[ member participant quick_profile profile_hero ]
+  }.freeze
 
   # Surfaces that also spell the state out in words. There the dot is decoration
   # and stays out of the accessibility tree — announcing both would say the same
@@ -63,8 +68,8 @@ module PresencesHelper
   # there even while the person reading it has already gone idle.
   AVAILABILITY_DOTS = { "available" => :active, "away" => :away, "do_not_disturb" => :dnd }.freeze
 
-  def presence_surfaces
-    DOT_SURFACES.keys
+  def presence_surfaces(group)
+    SURFACE_GROUPS.fetch(group)
   end
 
   def presence_labelled?(surface)
