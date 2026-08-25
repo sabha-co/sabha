@@ -178,6 +178,30 @@ class User::PresenceTest < ActiveSupport::TestCase
                  @user.presence_audience.pluck(:id).sort
   end
 
+  # Away and Do Not Disturb sit above the active/idle distinction, so a tab
+  # going quiet or coming back moves nothing anyone can see.
+  test "idleness is silent for someone who already said they're away" do
+    @user.update! availability: :away, last_active_at: Time.current
+    @user.memberships.first.update! connections: 1, connected_at: Time.current
+
+    assert_no_broadcasts broadcasting_for(Current.account, :presence) do
+      @user.went_idle
+    end
+
+    assert_no_broadcasts broadcasting_for(Current.account, :presence) do
+      @user.interacted
+    end
+  end
+
+  test "idleness still speaks for someone who is merely available" do
+    @user.update! availability: :available, last_active_at: Time.current
+    @user.memberships.first.update! connections: 1, connected_at: Time.current
+
+    assert_broadcasts broadcasting_for(Current.account, :presence), 1 do
+      @user.went_idle
+    end
+  end
+
   test "re-picking the state you already hold says nothing" do
     @user.update! availability: :away, last_active_at: Time.current
 

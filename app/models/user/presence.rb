@@ -72,22 +72,17 @@ module User::Presence
   # Three verbs, one rule: each ends in a broadcast when — and only when — the
   # dot other people see actually moved. An ordinary stream of "still here"
   # pings changes nothing and says nothing.
-  # Re-picking the state you already hold is a no-op to everyone looking, so it
-  # says nothing — the dot is compared, not the stored value, because choosing
-  # also counts as activity and that alone can move someone off idle.
   def change_availability!(state)
-    was = presence_dot_now
-    update! availability: state
-    touch_last_active # choosing a status is itself a sign of life
-    broadcast_presence unless presence_dot_now == was
+    broadcasting_dot_change do
+      update! availability: state
+      touch_last_active # choosing a status is itself a sign of life
+    end
   end
 
   def interacted
     return if reported_recently?
 
-    was_active = active_now?
-    touch_last_active
-    broadcast_presence unless was_active
+    broadcasting_dot_change { touch_last_active }
   end
 
   # Doesn't clear the timestamp, ages it out: idleness is derived from the one
@@ -96,8 +91,7 @@ module User::Presence
   def went_idle
     return unless active_now?
 
-    update_columns last_active_at: ACTIVE_WINDOW.ago - 1.second
-    broadcast_presence
+    broadcasting_dot_change { update_columns last_active_at: ACTIVE_WINDOW.ago - 1.second }
   end
 
   # Delivery follows the audience rather than the headcount. Three sends, each
@@ -118,10 +112,8 @@ module User::Presence
   #
   # Payloads stay presence-only, as always: a DM row or directory row would carry
   # unread counts and admin controls belonging to the viewer, not the subject.
-  def broadcast_presence
+  def broadcast_presence(dot = presence_dot_now)
     return if suppressed_turbo_broadcasts?
-
-    dot = presence_dot_now
 
     broadcast_dots_to self, "own", dot
     broadcast_dots_to_each presence_audience, "chrome", dot
@@ -158,6 +150,20 @@ module User::Presence
   end
 
   private
+    # The one rule every verb ends on: do the write, then say something only if
+    # the dot other people see actually moved. It's the resolved dot that's
+    # compared, never the stored value — which is what makes idleness free for
+    # anyone who has already said something about themselves. Away and Do Not
+    # Disturb ignore the active/idle distinction entirely, so their tabs going
+    # quiet and coming back changes nothing and now announces nothing.
+    def broadcasting_dot_change
+      was = presence_dot_now
+      yield
+      now = presence_dot_now
+
+      broadcast_presence now unless now == was
+    end
+
     def direct_room_ids
       Rooms::Direct.active.where(id: memberships.select(:room_id)).select(:id)
     end
