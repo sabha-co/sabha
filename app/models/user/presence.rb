@@ -72,10 +72,14 @@ module User::Presence
   # Three verbs, one rule: each ends in a broadcast when — and only when — the
   # dot other people see actually moved. An ordinary stream of "still here"
   # pings changes nothing and says nothing.
+  # Re-picking the state you already hold is a no-op to everyone looking, so it
+  # says nothing — the dot is compared, not the stored value, because choosing
+  # also counts as activity and that alone can move someone off idle.
   def change_availability!(state)
+    was = presence_dot_now
     update! availability: state
     touch_last_active # choosing a status is itself a sign of life
-    broadcast_presence
+    broadcast_presence unless presence_dot_now == was
   end
 
   def interacted

@@ -126,6 +126,14 @@ class User::PresenceTest < ActiveSupport::TestCase
     assert @user.active_now?, "the chooser would otherwise be broadcast as idle"
   end
 
+  test "re-picking the state you already hold says nothing" do
+    @user.update! availability: :away, last_active_at: Time.current
+
+    assert_no_broadcasts broadcasting_for(Current.account, :presence) do
+      @user.change_availability! "away"
+    end
+  end
+
   test "an unknown state is refused" do
     assert_raises(ArgumentError) { @user.change_availability! "on_holiday" }
   end
