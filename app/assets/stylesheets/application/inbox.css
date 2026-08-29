@@ -120,6 +120,39 @@ body.inbox .navbar-title {
   letter-spacing: -0.02em;
 }
 
+/* Phone: the Activity filter tabs can't share the title's row. Let the bar
+   wrap and drop the filter onto its own full-width line, ordered last so the
+   title and Mark all read keep line one. The count ("N unread" / "All caught
+   up") steps aside — the sidebar badge and the tabs already carry that state,
+   and unstyled for width it wraps to a cramped column here. */
+@media (max-width: 833.9px) {
+  body.inbox #nav {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  body.inbox .navbar-count {
+    display: none;
+  }
+
+  body.inbox #nav .inbox-filter {
+    flex-basis: 100%;
+    margin-inline-start: 0;
+    order: 1;
+  }
+
+  /* Below ~340px four tabs still outrun the row — scroll rather than clip */
+  body.inbox .inbox-filter .segmented-control {
+    max-inline-size: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
 /* Empty states speak at display scale in full ink, with room to breathe */
 body.inbox .empty-state__title {
   font-size: 1.375rem;
