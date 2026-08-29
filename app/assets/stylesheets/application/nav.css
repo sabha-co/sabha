@@ -34,9 +34,10 @@
 }
 
 .navbar-title {
-  font-size: var(--font-size-large);
+  /* Handoff: 16px / 700 header (v2.1) — not the oversized display step */
+  font-size: var(--font-size-medium);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   line-height: 1.2;
   margin: 0;
   min-inline-size: 0;
