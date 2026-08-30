@@ -898,7 +898,7 @@ columns:
     collation:
     comment:
   - *10
-  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+  - &30 !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: last_active_at
     cast_type: *1
@@ -1363,6 +1363,16 @@ columns:
     comment:
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
+    name: availability
+    cast_type: *3
+    sql_type_metadata: *4
+    'null': false
+    default: 0
+    default_function:
+    collation:
+    comment:
+  - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
+    auto_increment:
     name: avatar_seed
     cast_type: *3
     sql_type_metadata: *4
@@ -1453,6 +1463,7 @@ columns:
     collation:
     comment:
   - *10
+  - *30
   - !ruby/object:ActiveRecord::ConnectionAdapters::SQLite3::Column
     auto_increment:
     name: last_authenticated_at
@@ -2353,7 +2364,7 @@ indexes:
   - !ruby/object:ActiveRecord::ConnectionAdapters::IndexDefinition
     table: notifications
     name: index_notifications_on_boost_id
-    unique: false
+    unique: true
     columns:
     - boost_id
     lengths: {}
@@ -2903,4 +2914,4 @@ indexes:
     nulls_not_distinct:
     comment:
     valid: true
-version: 20260819183231
+version: 20260824090000
