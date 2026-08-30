@@ -60,7 +60,7 @@ the only claim made about them.
 
 | Call | Use |
 |---|---|
-| `user.presence_dot_now` | one user, two queries |
+| `user.presence_dot_now` | one user, 0–1 queries — the reachability lookup is skipped when they're already active |
 | `User.presence_dots_for(users)` | a whole list, two queries total — use this in any loop |
 | `user.own_presence_dot` | what *you* see on your own avatar: `connected: true, active: true`, so your manual choice speaks for itself |
 
@@ -147,9 +147,9 @@ Delivery follows the audience, not the headcount. Up to three sends per change:
 
 ```ruby
 # app/models/user/presence.rb
-broadcast_dots_to self,            "own",    dot         # → [self, :presence]
-presence_audience.each { |viewer| broadcast_dots_to viewer, "chrome", dot }
-broadcast_dots_to Current.account, "rare",   dot if rare # → [account, :presence]
+broadcast_dots_to self, "own", dot                       # → [self, :presence]
+broadcast_dots_to_each presence_audience, "chrome", dot  # → each partner's [user, :presence]
+broadcast_dots_to Current.account, "rare", dot if rare   # → [account, :presence]
 ```
 
 | Group | Payload | Goes to | Subscribed by |
@@ -212,12 +212,12 @@ All three verbs end on one rule — do the write, then compare the **resolved do
 never the stored value:
 
 ```ruby
-def broadcasting_dot_change
+def broadcasting_dot_change(rare: true)   # the idle verbs pass rare: false
   was = presence_dot_now
   yield
   now = presence_dot_now
 
-  broadcast_presence now unless now == was
+  broadcast_presence now, rare: rare unless now == was
 end
 ```
 
