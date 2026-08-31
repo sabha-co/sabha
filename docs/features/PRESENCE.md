@@ -279,6 +279,18 @@ single SQLite writer the chat itself uses; `ACTIVITY_REFRESH_THRESHOLD` is the
 dial to turn if it's ever felt, and the only cost of raising it is noticing
 idleness slightly later.
 
+The write throttle is not an RPC throttle, though. The idle watcher doesn't open a
+channel of its own — it rides the `HeartbeatChannel` that connection-status and
+room-refresh already hold app-wide, adding an `activity` action rather than a
+second socket. But every `activity` report still invokes that action over an
+`anycable-go`→Rails RPC round-trip, including the majority that the watermark check
+turns into no writes. The throttle spares the SQLite writer, not the RPC path; that
+round-trip is the price of resolving idleness on the server (a turbo stream is
+broadcast-only and can't receive), which is what lets *other* viewers' dots, the
+directory sort, and the broadcasts reflect your idleness at all.
+`ACTIVE_REPORT_INTERVAL` (the client's 2-minute report cadence) is the dial that
+bounds the RPC volume.
+
 Storage is two columns and **no index** — nothing sorts or filters by either, so
 an index would be write cost for nothing.
 
