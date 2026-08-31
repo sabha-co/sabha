@@ -244,7 +244,7 @@ GEM
     lefthook (2.1.10)
     letter_opener (1.10.0)
       launchy (>= 2.2, < 4)
-    lexxy (0.9.29)
+    lexxy (0.9.31)
       rails (>= 8.0.2)
     lint_roller (1.1.0)
     logger (1.7.0)
@@ -591,7 +591,7 @@ CHECKSUMS
   launchy (3.1.1) sha256=72b847b5cc961589dde2c395af0108c86ff0119f42d4648d25b5440ebb10059e
   lefthook (2.1.10) sha256=cc9c06bd8ea689e8b8016eab9769e54d696d07951860c1c6d28e8f6812e61b65
   letter_opener (1.10.0) sha256=2ff33f2e3b5c3c26d1959be54b395c086ca6d44826e8bf41a14ff96fdf1bdbb2
-  lexxy (0.9.29) sha256=67421fef9a72c303189780cb419287e2a5aa550b492dee7a153a582add00e29c
+  lexxy (0.9.31) sha256=6207e187c341fc419bbaa0480e092e75a45d840d4da18afe104963f3a64b6f91
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   loofah (2.25.2) sha256=2007f746959ac65552456e04b433e83deb22759ab38c838b4445c70e43425918
