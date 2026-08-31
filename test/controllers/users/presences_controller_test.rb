@@ -44,7 +44,7 @@ class Users::PresencesControllerTest < ActionDispatch::IntegrationTest
 
     patch user_presence_url, params: { user: { availability: "available" } }
 
-    assert @user.reload.active_now?, "the chooser would otherwise be broadcast as idle"
+    assert @user.reload.interacted_recently?, "the chooser would otherwise be broadcast as idle"
   end
 
   test "the change is broadcast to a DM partner and to the workspace stream" do

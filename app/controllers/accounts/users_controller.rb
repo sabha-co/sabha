@@ -98,20 +98,20 @@ class Accounts::UsersController < ApplicationController
       people = people_scope.where(name_matches)
       bots = bots_scope.where(name_matches)
       @users = (people + bots).first(50)
-      preload_activity(@users)
-      @users = sort_by_activity(@users)
+      preload_presence_dots(@users)
+      @users = sort_by_presence(@users)
     end
 
     def load_banned_users
       @filtering_banned = true
       @users = users_scope.banned
-      preload_activity(@users)
+      preload_presence_dots(@users)
     end
 
     def load_deactivated_users
       @filtering_deactivated = true
       @users = users_scope.deactivated
-      preload_activity(@users)
+      preload_presence_dots(@users)
     end
 
     def load_members_by_role
@@ -124,11 +124,11 @@ class Accounts::UsersController < ApplicationController
       set_page_and_extract_portion_from members, per_page: 25
       @members = @page.records
 
-      preload_activity(@administrators + @moderators + @members)
+      preload_presence_dots(@administrators + @moderators + @members)
 
-      @administrators = sort_by_activity(@administrators)
-      @moderators = sort_by_activity(@moderators)
-      @members = sort_by_activity(@members)
+      @administrators = sort_by_presence(@administrators)
+      @moderators = sort_by_presence(@moderators)
+      @members = sort_by_presence(@members)
 
       @bots = bots_scope.ordered.to_a
     end
@@ -138,19 +138,19 @@ class Accounts::UsersController < ApplicationController
       @banned_count = User.without_bots.banned.count
     end
 
-    ACTIVITY_SORT_ORDER = { active: 0, away: 1, offline: 2 }.freeze
+    # The list is ordered by the same presence dot it renders, so the order
+    # matches what you see: here-and-engaged first, then idle/away, then the
+    # dnd/offline tail. One liveness signal drives both the dot and the sort.
+    PRESENCE_SORT_ORDER = { active: 0, idle: 1, away: 2, dnd: 3, offline: 4 }.freeze
 
-    def preload_activity(users)
-      @activity_statuses = Membership.activity_statuses_for(users.map(&:id))
-      @activity_statuses[Current.user.id] = :active # You're viewing the page, so you're online
-
-      # The dots read this instead: what people chose, resolved against whether
-      # they're reachable. The socket statuses above still order the list and
-      # feed the online count, which are questions about connections, not intent.
+    def preload_presence_dots(users)
       @presence_dots = User.presence_dots_for(users)
     end
 
-    def sort_by_activity(users)
-      users.sort_by { |u| ACTIVITY_SORT_ORDER.fetch(@activity_statuses[u.id], 2) }
+    def sort_by_presence(users)
+      users.sort_by do |user|
+        dot = user == Current.user ? :active : @presence_dots[user.id] # you're viewing the page, so you're here
+        PRESENCE_SORT_ORDER.fetch(dot, 5)
+      end
     end
 end

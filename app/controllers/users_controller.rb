@@ -161,8 +161,8 @@ class UsersController < ApplicationController
     end
 
     def set_member_counts
-      @online_user_count_extended = Rails.cache.fetch(ApplicationRecord.tenant_cache_key("users/online_count_extended"), expires_in: 5.minutes) do
-        Membership.online_user_count(since: Membership::Connectable::ACTIVITY_TIERS[:recently_active])
+      @here_now_count_extended = Rails.cache.fetch(ApplicationRecord.tenant_cache_key("users/here_now_count_extended"), expires_in: 5.minutes) do
+        Membership.connected_member_count(since: Membership::Connectable::ACTIVITY_TIERS[:recently_active])
       end
       @member_count = User.member_count
     end

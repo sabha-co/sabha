@@ -76,7 +76,7 @@ class User::PresenceTest < ActiveSupport::TestCase
     @user.interacted
 
     travel User::Presence::ACTIVITY_REFRESH_THRESHOLD do
-      assert @user.reload.active_now?, "the next report is due now, and it's already too late"
+      assert @user.reload.interacted_recently?, "the next report is due now, and it's already too late"
     end
   end
 
@@ -96,7 +96,7 @@ class User::PresenceTest < ActiveSupport::TestCase
       @user.interacted
     end
 
-    assert @user.active_now?
+    assert @user.interacted_recently?
   end
 
   # The opt-in directory/profile/roster pages don't get live idle churn: only a
@@ -117,7 +117,7 @@ class User::PresenceTest < ActiveSupport::TestCase
       @user.interacted
     end
 
-    assert @user.active_now?, "the watermark still advances, it just isn't news"
+    assert @user.interacted_recently?, "the watermark still advances, it just isn't news"
   end
 
   test "going idle ages the timestamp out rather than clearing it" do
@@ -127,7 +127,7 @@ class User::PresenceTest < ActiveSupport::TestCase
       @user.went_idle
     end
 
-    assert_not @user.active_now?
+    assert_not @user.interacted_recently?
     assert @user.last_active_at.present?, "timestamp is the only idle signal; clearing it loses the edge"
   end
 
@@ -142,7 +142,7 @@ class User::PresenceTest < ActiveSupport::TestCase
     end
 
     assert_equal before.to_i, @user.reload.last_active_at.to_i, "a fresh timestamp must survive a contradicting idle"
-    assert @user.active_now?
+    assert @user.interacted_recently?
   end
 
   test "going idle twice is not a second edge" do
@@ -162,7 +162,7 @@ class User::PresenceTest < ActiveSupport::TestCase
     end
 
     assert_equal "do_not_disturb", @user.reload.availability
-    assert @user.active_now?, "the chooser would otherwise be broadcast as idle"
+    assert @user.interacted_recently?, "the chooser would otherwise be broadcast as idle"
   end
 
   # The whole point of splitting the fan-out: a change reaches the people who

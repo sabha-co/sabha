@@ -15,6 +15,25 @@ For what a Do Not Disturb dot does *not* do, see
 
 ---
 
+## Vocabulary
+
+A few words circle the same idea; each has exactly one job here, and the code
+sticks to them.
+
+| Word | Means | Lives in |
+|---|---|---|
+| **Active** | you're here and engaged — the green presence state and its dot | the `:active` dot token, and the "Active" label the picker shows |
+| **Availability** | the *dimension* you set: Active / Away / Do Not Disturb / Invisible | the `availability` enum. Its stored value for "Active" is `available` — a storage name only, kept because renaming it would collide with `status.active?` |
+| **Idle / Away / Do Not Disturb / Invisible / Offline** | the other resolved dots | `presence_dot` return tokens |
+| **Interaction** | a human touched a tab recently (the idle watcher) | `interacted_recently?`, `last_active_at`, `ACTIVE_WINDOW` |
+| **Connected** | reachable — a live socket with a fresh `connected_at` | `Membership.connected`, `connected?`, `connected_member?` |
+| **Here now** | how many members are *connected* right now (workspace vitality) | `Membership.connected_member_count`, `AccountsHelper#here_now_count`, the header text |
+
+The word **"online" is not used** — reachability is *connected*, and its count is
+*here now*.
+
+---
+
 ## The two inputs
 
 | Input | Stored as | Set by | Means |
@@ -273,24 +292,21 @@ see the note above on why that's waste rather than a leak.
 
 ## Where the two signals diverge
 
-The workspace header reads `online_users_count`, which is
-`Membership.online_user_count` — pure connection data, untouched by this feature.
-So the two can visibly disagree: someone on Do Not Disturb is **counted in "here
-now" while showing a red dot**.
+The workspace header reads `here_now_count`, which is
+`Membership.connected_member_count` — pure connection data, untouched by this
+feature. So the two can visibly disagree: someone on Do Not Disturb is **counted
+in "here now" while showing a red dot**.
 
 That divergence is intentional, not a bug. "Here now" is a workspace-vitality
 signal — *is anyone around* — while the dot answers whether a person is *open to
 being interrupted*. They are two different questions, so they are allowed to
-disagree: a Do Not Disturb member is genuinely here (their client is connected)
-while asking not to be disturbed. The count is availability-blind by design, and
-`AccountsHelper#here_now_label` gives it a tooltip ("Members connected in the
-last 10 minutes") so a reader doesn't pit the number against a nearby dot.
-
-The **one** availability the count does honour is `invisible`. Its whole purpose
-is to remove you from presence signals, so a hidden member is subtracted from the
-number as well as from the dots — otherwise a rising count would betray that
-*someone* is around who can't be seen, which is exactly what invisible is for.
-Do Not Disturb still counts (busy, not gone); invisible does not.
+disagree. The count is **fully availability-blind**: it counts everyone with a
+fresh socket regardless of what they chose, so a Do Not Disturb *and even an
+invisible* member is still counted, exactly as an idle member is. Invisible hides
+you from the *dots* — the thing that names you — not from the vitality number,
+which names no one. `AccountsHelper#here_now_label` gives the count a tooltip
+("Members connected in the last 10 minutes") so a reader doesn't pit the number
+against a nearby dot.
 
 Room rosters are also deliberately **not** live — extending presence there would
 reintroduce the large fan-out this design removes, since a room can hold

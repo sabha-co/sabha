@@ -53,56 +53,21 @@ module Membership::Connectable
       where(user_id: user_ids).group(:user_id).maximum(:connected_at)
     end
 
-    # A dot answers two questions with one word, and each half reads the signal
-    # that knows: "are they here" is the refcount plus freshness, "how long ago"
-    # is the preserved last-seen. Required rather than defaulted — a default
-    # would quietly assume the flattering answer and leave a green dot burning
-    # after someone closed their browser.
-    def activity_status(connected_at, connected:)
-      return :offline unless connected_at
-      return :offline unless connected
-
-      if connected_at >= ACTIVITY_TIERS[:active].ago
-        :active
-      elsif connected_at >= ACTIVITY_TIERS[:away].ago
-        :away
-      else
-        :offline
-      end
-    end
-
-    def activity_statuses_for(user_ids)
-      connected_user_ids = connected.where(user_id: user_ids).distinct.pluck(:user_id).to_set
-
-      last_connected_at_for(user_ids).to_h do |user_id, last_seen|
-        [ user_id, activity_status(last_seen, connected: connected_user_ids.include?(user_id)) ]
-      end
-    end
-
     # "Here now" — the workspace-vitality count in the header. Pure connection
     # freshness: how many distinct members hold a fresh socket within the tier,
-    # with no regard for availability. It answers "how alive is this workspace
-    # right now", not "who's free to talk" — so a Do Not Disturb member is
-    # counted here while showing a red dot. That's intentional, not a bug; the
-    # two answer different questions (see here_now_label for the tooltip that
-    # keeps the number from reading as a contradiction, and the User::Presence
-    # dot for the availability signal).
-    # "Here now" — workspace vitality, connection freshness rather than intent, so
-    # a Do Not Disturb member is still counted here while showing a red dot. The
-    # one exception is invisible: its whole purpose is to remove you from presence
-    # signals, so a hidden member is subtracted from the number too, exactly as
-    # they're subtracted from the dots.
-    def online_user_count(since: ACTIVITY_TIERS[:active])
-      joins(:user)
-        .where(connected_at: since.ago..)
-        .merge(User.where.not(availability: :invisible))
-        .distinct.count(:user_id)
+    # availability-blind on purpose. It answers "how alive is this workspace right
+    # now", not "who's free to talk" — so a member on Do Not Disturb or invisible
+    # is still counted here even while their dot says otherwise. That's intentional,
+    # not a bug; the two answer different questions (see here_now_label for the
+    # tooltip, and the User::Presence dot for the availability signal).
+    def connected_member_count(since: ACTIVITY_TIERS[:active])
+      where(connected_at: since.ago..).select(:user_id).distinct.count
     end
 
     # Is this member reachable within the active tier — pure connection, no
     # availability. accounts_helper reads it to avoid adding the current viewer to
-    # the count twice; the invisible case is handled there, not here.
-    def online?(user, since: ACTIVITY_TIERS[:active])
+    # the count twice.
+    def connected_member?(user, since: ACTIVITY_TIERS[:active])
       where(user_id: user.id, connected_at: since.ago..).exists?
     end
 

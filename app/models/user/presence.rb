@@ -47,7 +47,7 @@ module User::Presence
     active ? :active : :idle
   end
 
-  def active_now?
+  def interacted_recently?
     last_active_at.present? && last_active_at > ACTIVE_WINDOW.ago
   end
 
@@ -58,12 +58,12 @@ module User::Presence
   # a roomless page long enough to go idle — reads as offline rather than idle,
   # which is the safe direction to be wrong in.
   def connected_now?
-    active_now? || Membership.connected.exists?(user_id: id)
+    interacted_recently? || Membership.connected.exists?(user_id: id)
   end
 
   # The resolver's inputs for a single user, when there's no list to batch with.
   def presence_dot_now
-    presence_dot connected: connected_now?, active: active_now?
+    presence_dot connected: connected_now?, active: interacted_recently?
   end
 
   # What the user themselves should see on their own avatar. They're looking at
@@ -110,7 +110,7 @@ module User::Presence
   # write and a fan-out on every faked message. Neither can age out a timestamp
   # that a live tab keeps fresh.
   def went_idle
-    return unless active_now?
+    return unless interacted_recently?
     return if reported_recently?
 
     broadcasting_dot_change(rare: false) { update_columns last_active_at: ACTIVE_WINDOW.ago - 1.second }
@@ -221,7 +221,7 @@ module User::Presence
     end
 
     def reported_recently?
-      active_now? && last_active_at > ACTIVITY_REFRESH_THRESHOLD.ago
+      interacted_recently? && last_active_at > ACTIVITY_REFRESH_THRESHOLD.ago
     end
 
     def touch_last_active

@@ -12,7 +12,7 @@
       <%= account_logo_tag style: "account-logo--display" %>
       <div>
         <strong><%= @account.name %></strong>
-        <div class="txt-small txt-muted"><%= pluralize(@member_count, "member") %> · <%= here_now_label online_users_count %> · <%= pluralize(@room_count, "room") %></div>
+        <div class="txt-small txt-muted"><%= pluralize(@member_count, "member") %> · <%= here_now_label here_now_count %> · <%= pluralize(@room_count, "room") %></div>
       </div>
     </div>
 

@@ -38,16 +38,16 @@ module AccountsHelper
     ACCENT_SWATCH_COLORS.fetch(accent)
   end
 
-  def online_users_count
-    count = Membership.online_user_count
-    return count if Current.user.invisible? # you asked to be unseen — don't count yourself into "here now" either
-    Membership.online?(Current.user) ? count : count + 1 # You're viewing the page, so you're online
+  def here_now_count
+    count = Membership.connected_member_count
+    Membership.connected_member?(Current.user) ? count : count + 1 # You're viewing the page, so you're connected
   end
 
   # "Here now" measures workspace vitality — who's connected — not who's
-  # available. It deliberately ignores availability, so a Do Not Disturb member
-  # is counted here while showing a red dot elsewhere. The tooltip says so, so
-  # the number and the dots beside it aren't read as contradicting each other.
+  # available. It deliberately ignores availability, so a Do Not Disturb or even
+  # an invisible member is still counted here while their dot says otherwise. The
+  # tooltip says so, so the number and the dots beside it aren't read as
+  # contradicting each other.
   def here_now_label(count, window: "10 minutes")
     tag.span "#{count} here now", title: "Members connected in the last #{window}"
   end

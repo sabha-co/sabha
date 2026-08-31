@@ -22,7 +22,7 @@
 
       <span class="sidebar__workspace-info">
         <span class="sidebar__workspace-name"><%= Current.account.name %></span>
-        <%= link_to account_users_path, class: "sidebar__workspace-sub", title: "View members" do %><%= pluralize(@member_count, "member") %> · <%= here_now_label online_users_count %><% end %>
+        <%= link_to account_users_path, class: "sidebar__workspace-sub", title: "View members" do %><%= pluralize(@member_count, "member") %> · <%= here_now_label here_now_count %><% end %>
       </span>
 
       <% if Current.user.can_administer? %>

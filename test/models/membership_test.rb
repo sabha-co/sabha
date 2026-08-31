@@ -273,76 +273,36 @@ class MembershipTest < ActiveSupport::TestCase
     @membership.destroy
   end
 
-  # Activity status tests
 
-  test "activity_status returns :active when connected within 10 minutes" do
-    assert_equal :active, Membership.activity_status(2.minutes.ago, connected: true)
-    assert_equal :active, Membership.activity_status(9.minutes.ago, connected: true)
-    assert_equal :active, Membership.activity_status(Time.current, connected: true)
-  end
-
-  test "activity_status returns :away when connected within 1 hour" do
-    assert_equal :away, Membership.activity_status(11.minutes.ago, connected: true)
-    assert_equal :away, Membership.activity_status(30.minutes.ago, connected: true)
-    assert_equal :away, Membership.activity_status(59.minutes.ago, connected: true)
-  end
-
-  test "activity_status returns :offline when connected over 1 hour ago or never" do
-    assert_equal :offline, Membership.activity_status(2.hours.ago, connected: true)
-    assert_equal :offline, Membership.activity_status(nil, connected: true)
-  end
-
-  # Preserving last-seen for email must not leave a green dot burning for
-  # ten minutes after someone closes their browser. The dot's "are they here"
-  # half reads the refcount; only its "how long ago" half reads last-seen.
-  test "activity_status is offline for a departed member however fresh last-seen is" do
-    assert_equal :active, Membership.activity_status(2.minutes.ago, connected: true)
-    assert_equal :offline, Membership.activity_status(2.minutes.ago, connected: false)
-  end
-
-  test "activity_statuses_for greys a departed member at once while last-seen survives" do
-    david = users(:david)
-    Membership.unscoped.where(user_id: david.id).update_all(connected_at: nil, connections: 0)
-
-    present @membership
-    assert_equal :active, Membership.activity_statuses_for([ david.id ])[david.id]
-
-    @membership.disconnect
-
-    assert_equal :offline, Membership.activity_statuses_for([ david.id ])[david.id],
-      "closing the browser greys the dot immediately, exactly as it did before last-seen was preserved"
-    assert_not_nil @membership.reload.connected_at, "…and last-seen still survives, for email"
-  end
-
-  # online? and online_user_count answer a different question than the dot —
-  # "how many people have been around lately" — so they stay last-seen-based.
-  # They must agree with each other, though: accounts_helper adds one to the
-  # count when online? is false, and would double-count otherwise.
-  test "online? stays last-seen based, so a member who just left still counts as around" do
+  # connected_member? and connected_member_count answer a different question than
+  # the dot — "how many people have been around lately" — so they stay last-seen
+  # based. They must agree with each other, though: accounts_helper adds one to
+  # the count when connected_member? is false, and would double-count otherwise.
+  test "connected_member? stays last-seen based, so a member who just left still counts as around" do
     david = users(:david)
     Membership.unscoped.where(user_id: david.id).update_all(connected_at: nil, connections: 0)
 
     present @membership
     @membership.disconnect
 
-    assert Membership.online?(david), "they were here a moment ago"
+    assert Membership.connected_member?(david), "they were here a moment ago"
     assert_empty Membership.connected.where(user_id: david.id), "…though they hold no connection"
   end
 
-  test "online_user_count subtracts an invisible member but keeps Do Not Disturb" do
+  test "connected_member_count is availability-blind — vitality, not intent" do
     david = users(:david)
     present @membership # david is reachable within the active tier
 
+    david.update!(availability: :available)
+    with_david = Membership.connected_member_count
+
     david.update!(availability: :do_not_disturb)
-    with_david = Membership.online_user_count
+    assert_equal with_david, Membership.connected_member_count,
+      "Do Not Disturb still counts — it looks busy, not gone"
 
     david.update!(availability: :invisible)
-    assert_equal with_david - 1, Membership.online_user_count,
-      "invisible removes you from the vitality count, the same way it removes your dot"
-
-    david.update!(availability: :available)
-    assert_equal with_david, Membership.online_user_count,
-      "…while Do Not Disturb stays counted — it looks busy, not gone"
+    assert_equal with_david, Membership.connected_member_count,
+      "invisible still counts too — 'here now' asks who's connected, not who wants to be seen"
   end
 
   test "last_connected_at_for returns max connected_at per user" do
@@ -367,21 +327,21 @@ class MembershipTest < ActiveSupport::TestCase
 
     result = Membership.last_connected_at_for([ david.id, jason.id ])
 
-    assert_equal :active, Membership.activity_status(result[david.id], connected: true)
-    assert_equal :away, Membership.activity_status(result[jason.id], connected: true)
+    assert_in_delta 3.minutes.ago, result[david.id], 1.second
+    assert_in_delta 30.minutes.ago, result[jason.id], 1.second
   end
 
   test "online? is true only when the user has a membership connected within the active tier" do
     david = users(:david)
     Membership.unscoped.where(user_id: david.id).update_all(connected_at: nil)
 
-    refute Membership.online?(david)
+    refute Membership.connected_member?(david)
 
     memberships(:david_watercooler).update_column(:connected_at, 1.minute.ago)
-    assert Membership.online?(david)
+    assert Membership.connected_member?(david)
 
     memberships(:david_watercooler).update_column(:connected_at, 30.minutes.ago)
-    refute Membership.online?(david)
+    refute Membership.connected_member?(david)
   end
 
   # Starred tests

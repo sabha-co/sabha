@@ -10,6 +10,22 @@ class Accounts::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # The directory is ordered by the same presence dot it renders, so a member
+  # who's here sorts above one who's gone. Guards the sort that replaced the
+  # retired activity_status resolver.
+  test "members are ordered by presence, here-and-engaged first" do
+    here = users(:kevin)
+    gone = users(:rachel)
+    here.update!(availability: :available, last_active_at: Time.current)
+    gone.update!(availability: :available, last_active_at: nil)
+    Membership.unscoped.where(user_id: gone.id).update_all(connected_at: nil, connections: 0)
+
+    get account_users_url
+
+    assert_operator response.body.index("user_#{here.id}"), :<, response.body.index("user_#{gone.id}"),
+      "an active member must sort before an offline one"
+  end
+
   test "index renders as the Members pane in the settings shell" do
     get account_users_url
 
