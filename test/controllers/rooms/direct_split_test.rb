@@ -20,7 +20,7 @@ class Rooms::DirectSplitTest < ActionDispatch::IntegrationTest
     get room_url(rooms(:david_and_kevin))
 
     assert_select ".navbar-dm__status"
-    assert_select "a[href=?]", user_path(users(:kevin)), text: "View profile"
+    assert_select "a.btn.navbar-view-profile[href=?]", user_path(users(:kevin)), text: "View profile"
     assert_select "a[href$=?]", "/roster", count: 0
   end
 
