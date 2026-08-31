@@ -5,9 +5,13 @@ import { Controller } from "@hotwired/stimulus"
 // container directly; this observer re-counts on any such mutation, so the
 // count never depends on which action produced the change. The count hides at
 // zero, matching the server-rendered conditional.
+//
+// hideWhenEmpty is opt-in and hides the whole section at zero rows — only
+// Favorites wants this. Rooms/Forums/DMs manage their own visibility
+// server-side (and DMs' rows aren't ".room-row", so they'd always count zero).
 export default class extends Controller {
   static targets = ["count"]
-  static values = { container: String }
+  static values = { container: String, hideWhenEmpty: Boolean }
 
   #observer = undefined;
 
@@ -27,7 +31,7 @@ export default class extends Controller {
       target.textContent = count
       target.hidden = count === 0
     })
-    this.element.hidden = count === 0
+    if (this.hideWhenEmptyValue) this.element.hidden = count === 0
   }
 
   get #list() {
