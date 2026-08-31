@@ -6,8 +6,7 @@
 
 .library__title {
   font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-weight: 600;
   line-height: 1.2;
   display: none;
 }
@@ -187,7 +186,7 @@ body.room-settings #main-content {
 .members-roster__band-label {
   color: var(--color-text-muted);
   font-size: 0.6875rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -526,8 +525,7 @@ body.browse #main-content {
 
 .library__section-title {
   font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 600;
 }
 
 .library__card {
@@ -590,7 +588,7 @@ body.browse #main-content {
 
 .library__download-title {
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 600;
 
   @media (max-width: 1024px) {
     font-size: 1.1rem;
@@ -778,4 +776,3 @@ body.browse #main-content {
 .callout--alert {
   background-color: color-mix(in oklch, var(--color-alert) 12%, transparent);
 }
-

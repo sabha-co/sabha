@@ -170,9 +170,8 @@
   gap: 1px;
   flex: 1;
   min-inline-size: 0;
-  font-size: var(--font-size-medium);
+  font-size: 0.90625rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
   margin: 0;
   overflow: hidden;
   white-space: nowrap;

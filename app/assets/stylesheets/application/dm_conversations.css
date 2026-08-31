@@ -117,9 +117,8 @@
 }
 
 .dm-rail__title {
-  font-size: var(--font-size-medium);
+  font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
   margin: 0;
 }
 
@@ -175,10 +174,8 @@
 }
 
 .dm-new__title {
-  font-size: var(--font-size-x-large);
+  font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
   margin: 0;
 }
 

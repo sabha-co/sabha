@@ -68,7 +68,7 @@ body.inbox [data-activity-bucket]::before {
   content: "Earlier";
   display: none;
   font-size: 0.6875rem;
-  font-weight: 700;
+  font-weight: 600;
   grid-area: sep;
   letter-spacing: 0.07em;
   margin-block-start: 12px;
@@ -114,12 +114,6 @@ body.inbox [data-activity-unread="true"] {
   margin-inline-start: 0.5rem;
 }
 
-/* Page title steps to headline strength — the section owns the screen */
-body.inbox .navbar-title {
-  font-size: 1.25rem;
-  letter-spacing: -0.02em;
-}
-
 /* Phone: the Activity filter tabs can't share the title's row. Let the bar
    wrap and drop the filter onto its own full-width line, ordered last so the
    title and Mark all read keep line one. The count ("N unread" / "All caught
@@ -153,16 +147,6 @@ body.inbox .navbar-title {
   }
 }
 
-/* Empty states speak at display scale in full ink, with room to breathe */
-body.inbox .empty-state__title {
-  font-size: 1.375rem;
-  letter-spacing: -0.02em;
-}
-
-body.inbox .empty-state__body {
-  max-inline-size: 44ch;
-}
-
 /* Threads inbox: each followed thread is a card — the room + an inline follow
    toggle, a "started by" byline with an optional unread pill, the root message,
    and the live reply-count footer (the embedded messages/threads chips). */
@@ -190,8 +174,8 @@ body.inbox .empty-state__body {
 
 .thread-card__room {
   color: var(--color-link);
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-size: 0.8125rem;
+  font-weight: 600;
   text-decoration: none;
 
   @media (any-hover: hover) {

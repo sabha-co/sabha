@@ -40,9 +40,8 @@
 
 .scrim-dialog__title {
   flex: 1;
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
 }
 
 .scrim-dialog__close {
@@ -162,7 +161,7 @@
 }
 
 .manage-member__name {
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   margin: 0;
   padding: 10px 12px 8px;
@@ -385,4 +384,3 @@
   line-height: 1.55;
   margin: 18px 0 0;
 }
-

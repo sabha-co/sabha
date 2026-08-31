@@ -97,21 +97,6 @@
     padding-block: var(--block-space-double);
   }
 
-  /* Empty-stream display treatment: the greeting claims headline scale in full
-     ink; the copy under it stays at reading size */
-  strong {
-    display: block;
-    font-size: var(--font-size-x-large);
-    letter-spacing: -0.02em;
-    line-height: 1.15;
-    margin-block-end: var(--block-space);
-  }
-
-  /* The copy follows the headline as its own block once strong is block-level */
-  p > br {
-    display: none;
-  }
-
   .invite-label {
     display: none;
   }
@@ -609,7 +594,7 @@
 /* Meta line: author 14.5/700, time and "(edited)" 11.5 subtle */
 .message__author {
   color: var(--color-text);
-  font-size: var(--font-size-medium);
+  font-size: 0.90625rem;
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;

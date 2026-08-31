@@ -7,8 +7,8 @@
   color: var(--color-text-muted);
   display: block;
   font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   margin: 0 0 8px 2px;
   text-transform: uppercase;
 }
@@ -130,9 +130,8 @@
 /* Section headings inside a grouped card: title strength, more room above
    than below so each Identity/About/Links group reads as its own movement */
 .settings-group__heading {
-  font-size: 0.875rem;
+  font-size: 0.78125rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
 }
 
 .settings-group > .settings-group__heading:not(:first-child) {
@@ -368,9 +367,8 @@
 
 .bot-empty__title {
   color: var(--color-text);
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
   margin: 0;
 }
 
@@ -639,9 +637,8 @@
 
 .badges-empty__title {
   color: var(--color-text);
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
 }
 
 .badges-empty__body {
@@ -1033,4 +1030,3 @@ body.settings #main-content {
     white-space: nowrap;
   }
 }
-
