@@ -260,6 +260,18 @@
   }
 }
 
+/* The phone transcript follows the Responsive handoff exactly: 14px row
+   inset, a 32px avatar, then a 10px gutter. Defining the tracks here matters
+   because the desktop grid's 36px implicit avatar column otherwise remains
+   after the avatar itself has shrunk to 32px. */
+@media (max-width: 499.9px) {
+  .message {
+    column-gap: 10px;
+    grid-template-columns: 32px minmax(0, 1fr) min-content;
+    padding-inline: 14px;
+  }
+}
+
 /* Failed-send chip: the draft stays in place, the chip says so and offers the
    one action that helps */
 .message__failed-notice {
