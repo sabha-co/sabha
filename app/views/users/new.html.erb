@@ -27,7 +27,7 @@
     <div class="auth-card__meta">
       <span><%= @member_count %> members</span>
       <span>&middot;</span>
-      <span><%= @online_user_count_extended %> here now</span>
+      <%= here_now_label @online_user_count_extended, window: "24 hours" %>
     </div>
 
     <% if flash[:notice] %>

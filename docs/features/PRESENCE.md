@@ -266,14 +266,18 @@ see the note above on why that's waste rather than a leak.
 
 ## Where the two signals diverge
 
-The workspace header still reads `online_users_count`, which is
+The workspace header reads `online_users_count`, which is
 `Membership.online_user_count` — pure connection data, untouched by this feature.
 So the two can visibly disagree: someone on Do Not Disturb is **counted in "here
 now" while showing a red dot**.
 
-That's a known, unresolved product question rather than a bug: whether a roster
-dot answers *"is their client connected?"* or *"are they open to being
-interrupted?"*. Only one can own the dot.
+That divergence is intentional, not a bug. "Here now" is a workspace-vitality
+signal — *is anyone around* — while the dot answers whether a person is *open to
+being interrupted*. They are two different questions, so they are allowed to
+disagree: a Do Not Disturb member is genuinely here (their client is connected)
+while asking not to be disturbed. The count is availability-blind by design, and
+`AccountsHelper#here_now_label` gives it a tooltip ("Members connected in the
+last 10 minutes") so a reader doesn't pit the number against a nearby dot.
 
 Room rosters are also deliberately **not** live — extending presence there would
 reintroduce the large fan-out this design removes, since a room can hold

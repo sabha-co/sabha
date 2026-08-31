@@ -79,10 +79,20 @@ module Membership::Connectable
       end
     end
 
+    # "Here now" — the workspace-vitality count in the header. Pure connection
+    # freshness: how many distinct members hold a fresh socket within the tier,
+    # with no regard for availability. It answers "how alive is this workspace
+    # right now", not "who's free to talk" — so a Do Not Disturb member is
+    # counted here while showing a red dot. That's intentional, not a bug; the
+    # two answer different questions (see here_now_label for the tooltip that
+    # keeps the number from reading as a contradiction, and the User::Presence
+    # dot for the availability signal).
     def online_user_count(since: ACTIVITY_TIERS[:active])
       where(connected_at: since.ago..).select(:user_id).distinct.count
     end
 
+    # The single-user form of the count above, same connection-only question —
+    # accounts_helper reads it to avoid adding the current viewer twice.
     def online?(user, since: ACTIVITY_TIERS[:active])
       where(user_id: user.id, connected_at: since.ago..).exists?
     end

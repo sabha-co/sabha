@@ -8,7 +8,7 @@
   <header class="settings-header">
     <div class="settings-header__scope">Community settings</div>
     <h1 class="settings-header__title">Members</h1>
-    <p class="settings-header__blurb"><%= pluralize(@member_count, "member") %> · <%= online_users_count %> here now</p>
+    <p class="settings-header__blurb"><%= pluralize(@member_count, "member") %> · <%= here_now_label online_users_count %></p>
   </header>
 
   <section class="members-page">

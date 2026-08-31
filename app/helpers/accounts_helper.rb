@@ -42,4 +42,12 @@ module AccountsHelper
     count = Membership.online_user_count
     Membership.online?(Current.user) ? count : count + 1 # You're viewing the page, so you're online
   end
+
+  # "Here now" measures workspace vitality — who's connected — not who's
+  # available. It deliberately ignores availability, so a Do Not Disturb member
+  # is counted here while showing a red dot elsewhere. The tooltip says so, so
+  # the number and the dots beside it aren't read as contradicting each other.
+  def here_now_label(count, window: "10 minutes")
+    tag.span "#{count} here now", title: "Members connected in the last #{window}"
+  end
 end
