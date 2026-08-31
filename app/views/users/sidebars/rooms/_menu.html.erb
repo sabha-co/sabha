@@ -9,7 +9,7 @@
     <span class="for-screen-reader"><%= room.name %> options</span>
   </button>
 
-  <%= popover_menu_tag "room-menu", aria: { label: "#{room.name} options" } do %>
+  <%= popover_menu_tag "room-menu", "menu-popover", aria: { label: "#{room.name} options" } do %>
     <%= button_to membership.starred? ? "Remove from favorites" : "Add to favorites",
           room_star_path(room), method: membership.starred? ? :delete : :post, class: "btn" %>
 

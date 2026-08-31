@@ -5,7 +5,7 @@
     <span class="for-screen-reader">Room options</span>
   </button>
 
-  <%= popover_menu_tag "room-menu", aria: { label: "Room options" } do %>
+  <%= popover_menu_tag "room-menu", "menu-popover", aria: { label: "Room options" } do %>
     <%= link_to "Browse rooms", rooms_browse_path, class: "btn" %>
 
     <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
