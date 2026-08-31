@@ -10,7 +10,7 @@ class Search < ApplicationRecord
 
   class << self
     def record(query, creator: nil)
-      find_or_create_by(query: query, creator:).touch
+      find_or_create_by(query: Message::SearchIndex.normalize(query), creator:).touch
     end
   end
 

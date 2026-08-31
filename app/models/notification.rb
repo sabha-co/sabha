@@ -25,6 +25,20 @@ class Notification < ApplicationRecord
 
   validates :activity_type, inclusion: { in: %w[mention boost thread_reply] }
 
+  # Appends each notification in the scope to its user's activity stream and
+  # refreshes their activity indicator — the append mirror of #delete_all_and_broadcast.
+  def self.append_and_broadcast(scope)
+    scope.with_message_and_creator.each do |notification|
+      Turbo::StreamsChannel.broadcast_append_to(
+        [ notification.user, :inbox_activity ],
+        target: "inbox",
+        partial: "notifications/notification",
+        locals: { notification: notification, timestamp_style: :long_datetime }
+      )
+      notification.user.broadcast_activity_indicator
+    end
+  end
+
   # Deletes the given scope of notifications and broadcasts removal to each user's activity stream.
   # Loads records first, then deletes by ID to avoid double-querying the same WHERE clause.
   def self.delete_all_and_broadcast(scope)

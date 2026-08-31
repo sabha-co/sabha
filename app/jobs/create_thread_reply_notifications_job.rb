@@ -14,12 +14,7 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
     return unless container
     return if container.direct?
 
-    # Followers of this thread/post, plus members who opted into "everything" on
-    # the container (a chat thread's parent room, or a forum post's forum). Same
-    # recipient logic as BroadcastInboxThreadsJob.
-    room_user_ids = room.memberships.active.visible.pluck(:user_id)
-    container_user_ids = container.memberships.active.involved_in_everything.pluck(:user_id)
-    all_user_ids = (room_user_ids + container_user_ids).uniq - [ creator_id ]
+    all_user_ids = room.reply_recipient_ids(excluding: creator_id)
 
     return if all_user_ids.empty?
 
@@ -40,17 +35,9 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
     )
 
     # Broadcast to each recipient's activity stream
-    Notification.where(message_id: message_id, activity_type: "thread_reply", user_id: recipient_ids)
-                .with_message_and_creator
-                .each do |notification|
-      Turbo::StreamsChannel.broadcast_append_to(
-        [ notification.user, :inbox_activity ],
-        target: "inbox",
-        partial: "notifications/notification",
-        locals: { notification: notification }
-      )
-      notification.user.broadcast_activity_indicator
-    end
+    Notification.append_and_broadcast(
+      Notification.where(message_id: message_id, activity_type: "thread_reply", user_id: recipient_ids)
+    )
   end
 
   private

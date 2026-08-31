@@ -72,16 +72,27 @@ module Message::SearchIndex
 
   # --- Querying (backs the Message.search scope) ---
   #
-  # Bare-token queries (callers strip everything but word characters first)
-  # filtered against the index, ordered. plainto_tsquery is sufficient because
-  # phrase/operator syntax never reaches here; the only cross-engine difference
-  # is stopwords — Postgres's english config strips them, FTS5's porter keeps them.
+  # Bare-token queries filtered against the index, ordered. #normalize enforces
+  # the bare-token contract right here so no caller can pass raw input through:
+  # plainto_tsquery and the FTS5 match only ever see word characters, never
+  # phrase or operator syntax. The only cross-engine difference is stopwords —
+  # Postgres's english config strips them, FTS5's porter keeps them.
   def search(relation, query)
+    query = normalize(query)
+    return relation.none if query.blank?
+
     if postgresql?
       relation.where("messages.body_search @@ plainto_tsquery('english', ?)", query).ordered
     else
       relation.joins("join message_search_index idx on messages.id = idx.rowid").where("idx.body match ?", query).ordered
     end
+  end
+
+  # Reduces a raw query to the bare word tokens the index expects, dropping every
+  # character FTS5 or tsquery would read as operator or phrase syntax. Idempotent,
+  # so callers may normalize for display or keys and still pass through #search.
+  def normalize(query)
+    query.to_s.gsub(/[^[:word:]]/, " ").strip
   end
 
   # The one place the search backend branches on adapter.
