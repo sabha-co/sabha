@@ -88,4 +88,36 @@ class MessageComposerTest < ApplicationSystemTestCase
     composer_editor.click
     assert_selector "#composer lexxy-toolbar", visible: true
   end
+
+  test "on a phone Jump to newest reserves space above the composer" do
+    room = rooms(:designers)
+    18.times do |i|
+      room.messages.create!(
+        creator: [ users(:jason), users(:david), users(:jz) ][i % 3],
+        body: "Older message #{i}",
+        client_message_id: "phone_jump_#{i}",
+        created_at: (20 - i).minutes.ago
+      )
+    end
+
+    page.current_window.resize_to(390, 800)
+    find("#sidebar-toggle").click
+    click_on "Designers"
+    dismiss_pwa_install_prompt
+
+    messages = find(".messages")
+    page.execute_script("arguments[0].scrollTo(0, 0)", messages)
+    assert_selector ".message-area__return-to-latest", visible: true
+
+    geometry = page.evaluate_script(<<~JS)
+      (() => {
+        const messages = document.querySelector(".messages").getBoundingClientRect()
+        const button = document.querySelector(".message-area__return-to-latest").getBoundingClientRect()
+        return { messagesBottom: messages.bottom, buttonTop: button.top }
+      })()
+    JS
+
+    assert_operator geometry["messagesBottom"], :<=, geometry["buttonTop"],
+                    "expected Jump to newest below the message viewport"
+  end
 end

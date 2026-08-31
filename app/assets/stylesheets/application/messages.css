@@ -69,6 +69,30 @@
   }
 }
 
+/* On phones the newest-message control takes a row above the composer instead
+   of floating over the transcript. Showing it shrinks the scroll viewport, so
+   the control can never cover a readable message. */
+@media (max-width: 833.9px) {
+  .message-area {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-block-size: 0;
+
+    .messages {
+      min-block-size: 0;
+    }
+  }
+
+  .message-area__return-to-latest {
+    align-self: center;
+    flex: none;
+    margin-block: var(--block-space-half);
+    position: static;
+    transform: none;
+  }
+}
+
 #system_welcome {
   --avatar-size: 5ch;
 
