@@ -28,6 +28,8 @@ class Users::AvatarsHelperTest < ActionView::TestCase
     html = avatar_image_tag(@user)
     assert_match %r{<img[^>]+src="/users/.+/avatar}, html
     assert_match %r{loading="lazy"}, html
+    assert_match %r{width="48"}, html
+    assert_match %r{height="48"}, html
     assert_match %r{aria-hidden="true"}, html
   end
 

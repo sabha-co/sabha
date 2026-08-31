@@ -24,6 +24,7 @@ module Users::AvatarsHelper
 
   def avatar_image_tag(user, **options)
     options[:loading] ||= :lazy
+    options[:size] ||= 48
     # All avatar rendering goes through the controller which handles:
     # 1. Uploaded avatars
     # 2. Cached DiceBear avatars
