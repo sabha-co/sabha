@@ -58,6 +58,28 @@ body.inbox .searches__results:has(.bookmark-card) {
   }
 }
 
+/* Activity keeps the message grid for its day separators, but its verb row
+   needs the full body column. Metadata wraps between complete fields on narrow
+   screens — never through an actor or room name. */
+.notification--activity {
+  .message__body {
+    max-inline-size: none;
+    min-inline-size: 0;
+  }
+
+  .message__heading {
+    flex-wrap: wrap;
+  }
+
+  .message__heading > strong,
+  .message__heading > .txt-muted,
+  .notification__where,
+  .message__permalink {
+    flex: none;
+    white-space: nowrap;
+  }
+}
+
 /* Today / Earlier group eyebrows. Every row carries its bucket; the eyebrow
    renders on the first row of each bucket via sibling logic, so prepended
    older pages and live-appended rows keep the labels deduped without a
@@ -221,6 +243,16 @@ body.inbox [data-activity-unread="true"] {
 .thread-card__foot .threads {
   flex: 1;
   min-inline-size: 0;
+}
+
+/* At tablet portrait and below, reply avatars/count and the follow control
+   take priority over relative time. Dropping the timestamp keeps the footer on
+   one readable row instead of wrapping its metadata around the button. */
+@media (max-width: 1023.9px) {
+  .thread-card .thread__separator,
+  .thread-card .thread__link .txt-muted {
+    display: none;
+  }
 }
 
 /* Bookmarks: each saved message is a card — where and when it was saved over
