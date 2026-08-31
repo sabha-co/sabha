@@ -17,11 +17,14 @@
     <% end %>
   <% end %>
 
-  <%= link_to new_message_boost_path(message),
-        class: "btn message__action-btn message__bar-btn message__boost-btn message__quick-reaction",
-        data: { turbo_frame: "reaction_picker" } do %>
-    <%= icon_tag "boost" %>
-    <span class="for-screen-reader">Boost this message</span>
+  <%= tag.div class: "position-relative message__reaction-picker", data: { controller: "popover" } do %>
+    <button type="button" class="btn message__action-btn message__bar-btn message__boost-btn"
+        aria-expanded="false" data-popover-target="trigger" data-action="popover#toggle">
+      <%= icon_tag "boost" %>
+      <span class="for-screen-reader">Boost this message</span>
+    </button>
+
+    <%= render "messages/boosts/quick_picker", message: %>
   <% end %>
 
   <% if show_thread_actions %>

@@ -66,6 +66,52 @@
     color: var(--color-negative);
 }
 
+/* The hover-bar reaction trigger keeps common emoji close to its message. The
+   full picker remains available from the final row for the complete set and
+   custom reactions. */
+.message-reaction-picker {
+    display: inline-flex;
+}
+
+.message-reaction-menu {
+    inline-size: 184px;
+    padding: 4px;
+}
+
+.message-reaction-menu__grid {
+    display: grid;
+    gap: 2px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.message-reaction-menu__emoji,
+.message-reaction-menu__more {
+    --btn-background: transparent;
+    --btn-border-color: transparent;
+    --btn-border-radius: 6px;
+    --btn-padding: 0;
+    --hover-color: transparent;
+    --hover-filter: none;
+
+    block-size: 30px;
+    inline-size: 100%;
+
+    .boost-character {
+        font-size: 1rem;
+    }
+
+    @media (any-hover: hover) {
+        &:hover {
+            background-color: var(--color-bg-hover);
+        }
+    }
+}
+
+.message-reaction-menu__more {
+    color: var(--color-text-muted);
+    font-size: 1rem;
+}
+
 /* Room-menu variants: an item set apart by a hairline and a negative action. */
 .room-menu__separated {
     border-block-start: 1px solid var(--color-border);

@@ -46,6 +46,7 @@
   }
 
   .message__quick-reaction,
+  .message__reaction-picker,
   .message__reply-label {
     display: none;
   }
@@ -62,6 +63,5 @@
 .message__body {
   max-inline-size: 100%;
 }
-
 
 

@@ -33,6 +33,52 @@ class BoostingMessagesTest < ApplicationSystemTestCase
     end
   end
 
+  test "the action bar opens an anchored quick-reaction picker" do
+    open_action_bar_picker messages(:third)
+    assert_no_selector "#reaction_picker_dialog[open]"
+    assert_selector ".message-reaction-menu__emoji", count: 15
+    assert_no_selector ".message-reaction-menu__emoji[title='Thumbs up']"
+    assert_selector ".message-reaction-menu__more"
+    assert_selector ".message-reaction-menu__grid > *", count: 16
+
+    within ".message-reaction-menu" do
+      click_on "Party popper"
+    end
+
+    within_message messages(:third) do
+      assert_boost_text "🎉"
+    end
+    assert_no_selector ".message-reaction-menu", visible: :visible
+  end
+
+  test "the action bar picker links to the full reaction picker" do
+    open_action_bar_picker messages(:third)
+
+    within ".message-reaction-menu" do
+      click_on "More reactions"
+    end
+
+    assert_selector "#reaction_picker_dialog[open]"
+  end
+
+  test "the action bar picker light dismisses" do
+    open_action_bar_picker messages(:third)
+    find("#nav").click
+
+    assert_no_selector ".message-reaction-menu", visible: :visible
+    within_message messages(:third) do
+      assert_equal "false", find(".message__reaction-picker .message__boost-btn", visible: :all)["aria-expanded"]
+    end
+
+    open_action_bar_picker messages(:third)
+    find("body").send_keys :escape
+
+    assert_no_selector ".message-reaction-menu", visible: :visible
+    within_message messages(:third) do
+      assert_equal "false", find(".message__reaction-picker .message__boost-btn", visible: :all)["aria-expanded"]
+    end
+  end
+
   test "the trailing reaction picker aligns with the reaction chips" do
     messages(:third).boosts.create!(content: "🎉", booster: users(:david))
     visit room_path(rooms(:designers))
@@ -145,6 +191,15 @@ class BoostingMessagesTest < ApplicationSystemTestCase
   end
 
   private
+    def open_action_bar_picker(message)
+      within_message message do
+        find(".message__body-content").hover
+        find(".message__boost-btn").click
+      end
+
+      assert_selector ".message-reaction-menu", visible: :visible
+    end
+
     def open_reaction_picker(message)
       within_message message do
         reveal_message_actions
