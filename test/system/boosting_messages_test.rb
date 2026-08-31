@@ -33,6 +33,21 @@ class BoostingMessagesTest < ApplicationSystemTestCase
     end
   end
 
+  test "the trailing reaction picker aligns with the reaction chips" do
+    messages(:third).boosts.create!(content: "🎉", booster: users(:david))
+    visit room_path(rooms(:designers))
+
+    within_message messages(:third) do
+      add = find(".boost__add")
+      chip = find(".boost__toggle")
+
+      assert_equal "1px", add.evaluate_script("getComputedStyle(this).borderTopWidth")
+      assert_in_delta chip.evaluate_script("this.getBoundingClientRect().top + this.getBoundingClientRect().height / 2"),
+                      add.evaluate_script("this.getBoundingClientRect().top + this.getBoundingClientRect().height / 2"),
+                      1
+    end
+  end
+
   test "the picker closes on escape without boosting" do
     open_reaction_picker messages(:third)
 
