@@ -17,7 +17,7 @@
       </div>
     </div>
 
-    <div class="flex align-center gap">
+    <div class="quick-profile__actions flex align-center gap">
       <%= link_to user_path(user), class: "btn txt-small", data: { turbo_frame: "_top" } do %>
         <%= icon_tag "person" %>
         <span>View profile</span>
@@ -33,28 +33,32 @@
     </div>
 
   <% elsif user.active? %>
+    <% presence_dot = user.presence_dot_now %>
     <div class="flex align-start gap">
       <span class="quick-profile__avatar">
         <%= link_to user_path(user), class: "avatar", data: { turbo_frame: "_top" } do %>
           <%= avatar_image_tag(user, alt: "") %>
         <% end %>
-        <%= presence_dot_tag user, user.presence_dot_now, surface: :quick_profile %>
+        <%= presence_dot_tag user, presence_dot, surface: :quick_profile %>
       </span>
-      <div class="flex flex-column gap-half" style="min-width: 0;">
+      <div class="quick-profile__identity flex flex-column gap-half">
         <div class="flex align-center gap-half">
-          <strong class="txt-medium">
+          <strong class="quick-profile__name">
             <%= link_to user.name, user_path(user), title: user.title, class: "txt-undecorated txt-primary", data: { turbo_frame: "_top" } %>
           </strong>
           <%= render "users/role_badge", user: user %>
         </div>
+        <% if presence_dot %>
+          <span class="quick-profile__status"><%= presence_dot_label presence_dot %></span>
+        <% end %>
         <% if user.bio.present? %>
-          <p class="txt-small txt-lighter margin-none" style="line-height: 1.35;"><%= auto_link truncate(user.bio, length: 80) %></p>
+          <p class="quick-profile__bio margin-none"><%= auto_link user.bio %></p>
         <% end %>
       </div>
     </div>
 
-    <div class="flex align-center justify-space-between pad-block-half border-top">
-      <div class="flex gap">
+    <div class="quick-profile__stats flex align-center justify-space-between pad-block-half border-top">
+      <div class="quick-profile__stats-values flex gap">
         <%= render "users/user_stats", user: user, message_count: user.total_message_count, streak: user.current_streak, show_joined: true %>
       </div>
       <% if user.has_social_links? %>
@@ -64,7 +68,7 @@
       <% end %>
     </div>
 
-    <div class="flex align-center gap">
+    <div class="quick-profile__actions flex align-center gap">
       <%= link_to user_path(user), class: "btn txt-small", data: { turbo_frame: "_top" } do %>
         <%= icon_tag "person" %>
         <span>View profile</span>
@@ -93,7 +97,7 @@
       </div>
     </div>
 
-    <div class="flex align-center gap">
+    <div class="quick-profile__actions flex align-center gap">
       <%= link_to user_path(user), class: "btn txt-small", data: { turbo_frame: "_top" } do %>
         <%= icon_tag "person" %>
         <span>View profile</span>

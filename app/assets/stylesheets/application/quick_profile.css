@@ -4,6 +4,46 @@
   width: 320px;
 }
 
+.quick-profile__identity {
+  min-width: 0;
+}
+
+.quick-profile__name {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.quick-profile__status {
+  color: var(--color-text-subtle);
+  font-size: 0.78125rem;
+  line-height: 1.3;
+  margin-block-start: 2px;
+}
+
+.quick-profile__bio {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--color-text-lighter);
+  display: -webkit-box;
+  font-size: 0.84375rem;
+  line-height: 1.55;
+  margin-block-start: 6px;
+  overflow: hidden;
+}
+
+.quick-profile__stats-values {
+  gap: 18px;
+
+  .txt-medium {
+    font-size: 0.9375rem;
+  }
+
+  .txt-x-small {
+    font-size: 0.65625rem;
+    letter-spacing: 0.04em;
+  }
+}
+
 /* Avatar frame: a non-clipping wrapper so the presence dot can overhang the
    avatar's rounded corner (the .avatar itself is overflow:hidden). */
 .quick-profile__avatar {
@@ -29,8 +69,9 @@
 }
 
 /* Footer actions share the width evenly. */
-.quick-profile > .flex > .btn {
+.quick-profile__actions > .btn {
   flex: 1;
+  font-size: 0.8125rem;
 }
 
 /* Social link base styles (full profile page) */

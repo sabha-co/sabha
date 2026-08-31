@@ -18,4 +18,18 @@ class Messages::ProfilesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".quick-profile a[href=?]", user_profile_path, count: 0
     assert_select ".quick-profile a", text: /View profile/
   end
+
+  test "show gives an active quick profile its status subline and card structure" do
+    sign_in :david
+    user = users(:jz)
+    user.update! last_active_at: Time.current
+
+    get mention_profile_url(user)
+
+    assert_response :ok
+    assert_select ".quick-profile__status", text: "Active"
+    assert_select ".quick-profile__bio", text: "Designer"
+    assert_select ".quick-profile__stats"
+    assert_select ".quick-profile__actions"
+  end
 end
