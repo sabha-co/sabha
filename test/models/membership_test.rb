@@ -329,6 +329,22 @@ class MembershipTest < ActiveSupport::TestCase
     assert_empty Membership.connected.where(user_id: david.id), "…though they hold no connection"
   end
 
+  test "online_user_count subtracts an invisible member but keeps Do Not Disturb" do
+    david = users(:david)
+    present @membership # david is reachable within the active tier
+
+    david.update!(availability: :do_not_disturb)
+    with_david = Membership.online_user_count
+
+    david.update!(availability: :invisible)
+    assert_equal with_david - 1, Membership.online_user_count,
+      "invisible removes you from the vitality count, the same way it removes your dot"
+
+    david.update!(availability: :available)
+    assert_equal with_david, Membership.online_user_count,
+      "…while Do Not Disturb stays counted — it looks busy, not gone"
+  end
+
   test "last_connected_at_for returns max connected_at per user" do
     david = users(:david)
 

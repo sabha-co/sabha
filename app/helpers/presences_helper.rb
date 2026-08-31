@@ -5,20 +5,25 @@ module PresencesHelper
   # Manual presence and inferred idleness share the amber dot on purpose: the
   # distinction between "I said I'm away" and "you stopped typing" is ours to
   # act on, not something a reader of the dot needs to arbitrate.
+  # `invisible` is only ever the subject's own dot — everyone else sees them as
+  # `offline` (see User#presence_dot). It reads as a hollow ring so the person
+  # stays reminded they're hidden rather than mistaking it for a dead socket.
   DOT_CLASSES = {
-    active:  "status--active",
-    idle:    "status--away",
-    away:    "status--away",
-    dnd:     "status--dnd",
-    offline: "status--offline"
+    active:    "status--active",
+    idle:      "status--away",
+    away:      "status--away",
+    dnd:       "status--dnd",
+    offline:   "status--offline",
+    invisible: "status--invisible"
   }.freeze
 
   DOT_LABELS = {
-    active:  "Available",
-    idle:    "Away",
-    away:    "Away",
-    dnd:     "Do not disturb",
-    offline: "Offline"
+    active:    "Active",
+    idle:      "Away",
+    away:      "Away",
+    dnd:       "Do not disturb",
+    offline:   "Offline",
+    invisible: "Invisible"
   }.freeze
 
   # Every place a dot can appear, and the class that positions it there. The
@@ -71,9 +76,9 @@ module PresencesHelper
   LABEL_CLASSES = { sidebar: "sidebar__me-status", nav: "navbar-dm__status" }.freeze
 
   # What each choosable state looks like when nothing is second-guessing it —
-  # the picker shows intent, not the resolved dot, so "Available" stays green
+  # the picker shows intent, not the resolved dot, so "Active" stays green
   # there even while the person reading it has already gone idle.
-  AVAILABILITY_DOTS = { "available" => :active, "away" => :away, "do_not_disturb" => :dnd }.freeze
+  AVAILABILITY_DOTS = { "available" => :active, "away" => :away, "do_not_disturb" => :dnd, "invisible" => :invisible }.freeze
 
   def presence_surfaces(group)
     SURFACE_GROUPS.fetch(group)

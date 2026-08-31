@@ -87,12 +87,21 @@ module Membership::Connectable
     # two answer different questions (see here_now_label for the tooltip that
     # keeps the number from reading as a contradiction, and the User::Presence
     # dot for the availability signal).
+    # "Here now" — workspace vitality, connection freshness rather than intent, so
+    # a Do Not Disturb member is still counted here while showing a red dot. The
+    # one exception is invisible: its whole purpose is to remove you from presence
+    # signals, so a hidden member is subtracted from the number too, exactly as
+    # they're subtracted from the dots.
     def online_user_count(since: ACTIVITY_TIERS[:active])
-      where(connected_at: since.ago..).select(:user_id).distinct.count
+      joins(:user)
+        .where(connected_at: since.ago..)
+        .merge(User.where.not(availability: :invisible))
+        .distinct.count(:user_id)
     end
 
-    # The single-user form of the count above, same connection-only question —
-    # accounts_helper reads it to avoid adding the current viewer twice.
+    # Is this member reachable within the active tier — pure connection, no
+    # availability. accounts_helper reads it to avoid adding the current viewer to
+    # the count twice; the invisible case is handled there, not here.
     def online?(user, since: ACTIVITY_TIERS[:active])
       where(user_id: user.id, connected_at: since.ago..).exists?
     end

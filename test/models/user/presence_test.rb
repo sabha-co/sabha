@@ -46,10 +46,24 @@ class User::PresenceTest < ActiveSupport::TestCase
     assert_nil @user.presence_dot(connected: true, active: true)
   end
 
+  test "invisible looks offline to everyone else, however live the user is" do
+    @user.availability = :invisible
+
+    assert_equal :offline, @user.presence_dot(connected: true, active: true),
+      "choosing invisible aims the dot down past even reachability"
+  end
+
   test "own dot ignores liveness, since the viewer is demonstrably present" do
     @user.update! availability: :do_not_disturb, last_active_at: nil
 
     assert_equal :dnd, @user.own_presence_dot
+  end
+
+  test "an invisible user still sees their own dot as invisible, not offline" do
+    @user.update! availability: :invisible, last_active_at: nil
+
+    assert_equal :invisible, @user.own_presence_dot,
+      "you stay reminded you're hidden rather than looking like a dead socket"
   end
 
   # The dial in ACTIVITY_REFRESH_THRESHOLD is safe to turn, but only downward of

@@ -40,6 +40,7 @@ module AccountsHelper
 
   def online_users_count
     count = Membership.online_user_count
+    return count if Current.user.invisible? # you asked to be unseen — don't count yourself into "here now" either
     Membership.online?(Current.user) ? count : count + 1 # You're viewing the page, so you're online
   end
 

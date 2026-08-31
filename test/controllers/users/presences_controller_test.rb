@@ -55,7 +55,7 @@ class Users::PresencesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  # A dot that turns amber beside words still reading "Available" is worse than
+  # A dot that turns amber beside words still reading "Active" is worse than
   # one that never moved, so the surfaces that spell the state out are replayed
   # alongside it rather than left for the next full page load. Asserted on both
   # payloads, since the surfaces are split across two audiences.

@@ -489,6 +489,10 @@ body.browse #main-content {
 .status--dnd     { background-color: var(--color-negative); }
 .status--offline { background-color: var(--color-border-darker); }
 
+/* Invisible is only your own dot — a hollow ring, so you stay reminded you're
+   hidden rather than reading it as offline. Everyone else sees you as offline. */
+.status--invisible { background-color: transparent; box-shadow: inset 0 0 0 1.5px var(--color-border-darker); }
+
 @media (max-width: 480px) {
   /* Keep the row on one line — the compact role control sizes to its content
      rather than reserving the desktop 130px alignment column, so the name

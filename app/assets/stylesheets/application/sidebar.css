@@ -506,6 +506,11 @@
   background-color: var(--color-negative);
 }
 
+.sidebar__presence-dot--invisible {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--color-border-darker);
+}
+
 .sidebar__presence-check {
   color: var(--color-accent-brand);
   display: none;

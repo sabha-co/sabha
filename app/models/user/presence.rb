@@ -23,7 +23,7 @@ module User::Presence
     # Availability is what you chose; presence is what that resolves to once
     # liveness has had its say. Only the first is stored, and it's deliberately
     # not called `presence` — that name is Object#presence on every model.
-    enum :availability, %i[available away do_not_disturb], default: :available
+    enum :availability, %i[available away do_not_disturb invisible], default: :available
   end
 
   # The dot is deliberately not a stored value: it's manual intent resolved
@@ -31,11 +31,15 @@ module User::Presence
   # than looked up, so a list can batch them (see .presence_dots_for) instead of
   # issuing two queries per avatar.
   #
-  # Order matters and encodes the product rule: being unreachable outranks
-  # whatever you claimed, a claim outranks inferred idleness, and only the
-  # default "available" is open to being second-guessed by idleness at all.
+  # Order matters and encodes the product rule: choosing to be invisible aims the
+  # dot down to offline outright, being unreachable outranks whatever you claimed,
+  # a claim outranks inferred idleness, and only the default "available" is open
+  # to being second-guessed by idleness at all. Nobody can fake presence upward —
+  # invisible is the far end of the same rule, letting you look *gone* while
+  # you're demonstrably here.
   def presence_dot(connected:, active:)
     return nil if deactivated? || banned?
+    return :offline if invisible?
     return :offline unless connected
     return :dnd if do_not_disturb?
     return :away if away?
@@ -64,8 +68,11 @@ module User::Presence
 
   # What the user themselves should see on their own avatar. They're looking at
   # the page, so liveness isn't in question — this is the one case where the
-  # manual value speaks for itself.
+  # manual value speaks for itself. Invisible is shown as its own dot rather than
+  # the offline everyone else sees, so the person stays reminded they're hidden.
   def own_presence_dot
+    return :invisible if invisible?
+
     presence_dot connected: true, active: true
   end
 

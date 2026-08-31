@@ -22,14 +22,23 @@ class PresenceTest < ApplicationSystemTestCase
     assert_selector ".sidebar__me-status", text: "Away"
   end
 
-  test "the picker marks the current choice and says notifications are unchanged" do
+  test "the picker marks the current choice and offers invisible" do
     users(:david).update! availability: :away
     page.refresh
     open_profile_menu
 
     assert_selector "[role=radio][aria-checked=true]", text: "Away"
-    assert_selector "[role=radio][aria-checked=false]", text: "Available"
-    assert_text "notifications are unchanged"
+    assert_selector "[role=radio][aria-checked=false]", text: "Active"
+    assert_selector "[role=radio]", text: "Invisible"
+  end
+
+  test "going invisible shows yourself a hidden dot, not offline" do
+    open_profile_menu
+    click_on "Invisible"
+
+    assert_no_selector "[popover]:popover-open", wait: 5
+    assert_selector "##{dom_id(users(:david), :presence_dot_sidebar)}.status--invisible"
+    assert_equal "invisible", users(:david).reload.availability
   end
 
   # The point of the whole slice: a change made by one person reaches someone

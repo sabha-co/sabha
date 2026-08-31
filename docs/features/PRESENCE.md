@@ -19,7 +19,7 @@ For what a Do Not Disturb dot does *not* do, see
 
 | Input | Stored as | Set by | Means |
 |---|---|---|---|
-| **Availability** | `users.availability` enum (`available` / `away` / `do_not_disturb`), default `available` | the profile-flyout picker | "here's how I want to appear" |
+| **Availability** | `users.availability` enum (`available` / `away` / `do_not_disturb` / `invisible`), default `available` | the profile-flyout picker | "here's how I want to appear" |
 | **Activity** | `users.last_active_at` | the idle watcher, throttled | "a human touched this tab recently" |
 | **Reachability** | `memberships.connected_at` (existing) | the room heartbeat | "a tab is open on a room" |
 
@@ -37,6 +37,7 @@ One method folds all three into a token. Order encodes the product rules:
 # app/models/user/presence.rb
 def presence_dot(connected:, active:)
   return nil if deactivated? || banned?   # no claim at all
+  return :offline if invisible?           # you chose to look gone — aims down
   return :offline unless connected        # unreachable outranks intent
   return :dnd if do_not_disturb?          # a claim outranks inferred idleness
   return :away if away?
@@ -45,10 +46,16 @@ def presence_dot(connected:, active:)
 end
 ```
 
-Two consequences worth knowing:
+Three consequences worth knowing:
 
 - **Nobody can fake presence upward.** `offline` sits above the manual value, so
   you can only ever make yourself look *less* available than you are.
+- **`invisible` is the far end of that same rule** — the one state that aims the
+  dot *down* to `offline` outright, past even reachability, so a connected person
+  can look gone. It's the appear-offline lever. Everyone else sees `:offline`;
+  only the person themselves sees a distinct `:invisible` dot (a hollow ring), so
+  they stay reminded they're hidden rather than mistaking it for a dead socket.
+  See [`own_presence_dot`](#reading-it).
 - **`idle` and `away` render identically** (the amber dot). The difference
   between "I said I'm away" and "you stopped typing" is ours to act on, not
   something a reader of the dot needs to arbitrate.
@@ -133,7 +140,7 @@ group-coverage test treats "delivered by one group" and "explicitly transient" a
 the only two valid states for a surface.
 
 Labels are replayed alongside their dot. A dot that turns amber next to words
-still reading "Available" is worse than one that never moved.
+still reading "Active" is worse than one that never moved.
 
 The picker's swatches are **not** `.status-dot`. The picker shows intent, never
 resolved state, so it has its own `.sidebar__presence-dot` — which also keeps it
@@ -278,6 +285,12 @@ disagree: a Do Not Disturb member is genuinely here (their client is connected)
 while asking not to be disturbed. The count is availability-blind by design, and
 `AccountsHelper#here_now_label` gives it a tooltip ("Members connected in the
 last 10 minutes") so a reader doesn't pit the number against a nearby dot.
+
+The **one** availability the count does honour is `invisible`. Its whole purpose
+is to remove you from presence signals, so a hidden member is subtracted from the
+number as well as from the dots — otherwise a rising count would betray that
+*someone* is around who can't be seen, which is exactly what invisible is for.
+Do Not Disturb still counts (busy, not gone); invisible does not.
 
 Room rosters are also deliberately **not** live — extending presence there would
 reintroduce the large fan-out this design removes, since a room can hold
