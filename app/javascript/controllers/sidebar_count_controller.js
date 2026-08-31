@@ -6,7 +6,7 @@ import { Controller } from "@hotwired/stimulus"
 // count never depends on which action produced the change. The count hides at
 // zero, matching the server-rendered conditional.
 export default class extends Controller {
-  static targets = ["count", "empty"]
+  static targets = ["count"]
   static values = { container: String }
 
   #observer = undefined;
@@ -27,9 +27,7 @@ export default class extends Controller {
       target.textContent = count
       target.hidden = count === 0
     })
-    // The empty line is server-rendered with `hidden` for the no-JS case;
-    // broadcasts never touch it, so this owns its visibility from here on.
-    this.emptyTargets.forEach((target) => { target.hidden = count > 0 })
+    this.element.hidden = count === 0
   }
 
   get #list() {

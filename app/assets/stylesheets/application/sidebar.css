@@ -849,16 +849,6 @@
   margin-bottom: calc(var(--block-space) * 2);
 }
 
-/* FAVORITES always renders (comp): its emptiness is instructive — one quiet
-   line aligned with the row names, never a card inside the nav. */
-.sidebar__empty {
-  color: var(--color-text-subtle);
-  font-size: 0.8125rem;
-  /* Row text x: the room button's 1.2ch padding plus the 20px glyph column
-     and its 11px gap */
-  padding-inline-start: 1rem;
-}
-
 .favorites-toggle {
   all: unset;
   cursor: pointer;

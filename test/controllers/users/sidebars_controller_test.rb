@@ -24,6 +24,15 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:pets), "starred_rooms_list_node")}", count: 0
   end
 
+  test "hides Favorites when the user has no starred rooms" do
+    sign_in :kevin
+
+    get user_sidebar_url
+
+    assert_select "#favorites_section[hidden]"
+    assert_select ".sidebar__empty", count: 0
+  end
+
   test "forum rows carry no row menu, while ordinary rooms do" do
     rooms(:help_desk).memberships.grant_to(users(:david))
 

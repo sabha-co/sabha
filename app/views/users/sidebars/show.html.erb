@@ -72,7 +72,8 @@
            data-sorted-list-attribute-value="updatedAt" data-sorted-list-order-value="desc"
            data-sidebar-count-container-value="starred_rooms"
            data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
-           class="flex position-relative flex-col gap">
+           class="flex position-relative flex-col gap"
+           <%= "hidden" if @starred_memberships.empty? %>>
         <button type="button" class="favorites-toggle flex items-center gap-half mb-2"
                 aria-expanded="true"
                 data-collapsible-section-target="toggle"
@@ -84,10 +85,6 @@
 
         <div data-collapsible-section-target="content" class="flex flex-col rooms-list">
           <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :starred_rooms, memberships: @starred_memberships %>
-          <%# Always rendered: the row broadcasts only mutate the list above, so
-              this line can't be added or removed by a stream. sidebar-count
-              toggles its hidden state as rows come and go. %>
-          <p class="sidebar__empty" data-sidebar-count-target="empty" <%= "hidden" unless @starred_memberships.empty? %>>Add a room from its ⋯ menu to keep it here</p>
         </div>
       </div>
 

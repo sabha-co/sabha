@@ -30,11 +30,14 @@ class SidebarRowMenuTest < ApplicationSystemTestCase
   end
 
   test "the menu favorites a room, moving it into the starred section" do
+    assert_selector "#favorites_section[hidden]", visible: :all
+
     open_row_menu "Designers"
     click_on "Add to favorites"
 
     assert_selector "#starred_rooms .room-row", text: "Designers", wait: 10
     assert_no_selector "#shared_rooms .room-row", text: "Designers"
+    assert_no_selector "#favorites_section[hidden]"
   end
 
   test "the menu mutes and the row shows the muted bell" do
