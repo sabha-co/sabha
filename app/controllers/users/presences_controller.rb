@@ -12,7 +12,10 @@ class Users::PresencesController < ApplicationController
     Current.user.change_availability! chosen_availability
 
     respond_to do |format|
-      format.turbo_stream { head :no_content }
+      # The presence broadcast moves the dots and labels; this refreshes the one
+      # thing it doesn't — the picker's own checked state, which only ever changes
+      # right here. turbo:submit-end still fires, so the menu closes as before.
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("presence_picker", partial: "users/sidebars/presence_picker") }
       format.html { redirect_back fallback_location: root_url }
     end
   end

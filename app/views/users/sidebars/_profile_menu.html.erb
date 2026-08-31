@@ -35,19 +35,7 @@
     <%= form_with url: user_presence_path, method: :patch, class: "sidebar__presence",
           data: { action: "click->popover#hold" } do %>
       <span class="sidebar__presence-heading">Presence</span>
-      <div role="radiogroup" aria-label="Presence">
-        <% User.availabilities.each_key do |state| %>
-          <button type="submit" name="user[availability]" value="<%= state %>"
-                  role="radio" aria-checked="<%= Current.user.availability == state %>"
-                  class="sidebar__presence-option">
-            <span class="sidebar__presence-dot sidebar__presence-dot--<%= state %>" aria-hidden="true"></span>
-            <span class="sidebar__presence-option-label"><%= presence_dot_label availability_dot(state) %></span>
-            <%# Always rendered; the checked row reveals it in CSS, so the row
-                keeps its height whichever option is selected. %>
-            <span class="sidebar__presence-check" aria-hidden="true">&#10003;</span>
-          </button>
-        <% end %>
-      </div>
+      <%= render "users/sidebars/presence_picker" %>
     <% end %>
 
     <span class="sidebar__profile-divider" aria-hidden="true"></span>

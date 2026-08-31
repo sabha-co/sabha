@@ -73,6 +73,18 @@ class Users::PresencesControllerTest < ActionDispatch::IntegrationTest
       action: :replace, target: [ @user, :presence_label_member ]
   end
 
+  # The presence broadcast moves the dots but never the picker itself, so the
+  # turbo_stream response refreshes the picker's checked state directly —
+  # otherwise its checkmark would keep pointing at the state you just left.
+  test "the turbo_stream response refreshes the picker's checked state" do
+    patch user_presence_url, params: { user: { availability: "away" } }, as: :turbo_stream
+
+    assert_response :success
+    assert_match %r{turbo-stream action="replace" target="presence_picker"}, response.body
+    assert_select "button[value=away][aria-checked=true]"
+    assert_select "button[value=available][aria-checked=false]"
+  end
+
   test "signing out blocks the update" do
     delete session_url
 
