@@ -30,10 +30,14 @@
 
     <span class="sidebar__profile-divider" aria-hidden="true"></span>
 
-    <%# click->popover#hold keeps the menu open through the click itself; only
-        turbo:submit-end closes it, so a rejected change stays visible. %>
+    <%# Selecting a radio submits the choice (change->form#submit). Only
+        turbo:submit-end closes the menu, so a rejected change stays visible with
+        the previous choice still showing. A submit that never lands (a rare 500 or
+        a dropped network) leaves the optimistic radio checked until the next load;
+        the footer dot and label stay truthful either way, since a failed change
+        never broadcasts. %>
     <%= form_with url: user_presence_path, method: :patch, class: "sidebar__presence",
-          data: { action: "click->popover#hold" } do %>
+          data: { controller: "form" } do %>
       <span class="sidebar__presence-heading">Presence</span>
       <%= render "users/sidebars/presence_picker" %>
     <% end %>

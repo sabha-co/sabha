@@ -8,7 +8,7 @@ class PresenceTest < ApplicationSystemTestCase
   test "choosing a state updates your own dot and closes the menu" do
     open_profile_menu
 
-    click_on "Do not disturb"
+    choose "Do not disturb", allow_label_click: true
 
     assert_no_selector "[popover]:popover-open", wait: 5
     assert_selector "##{dom_id(users(:david), :presence_dot_sidebar)}.status--dnd"
@@ -17,7 +17,7 @@ class PresenceTest < ApplicationSystemTestCase
 
   test "the footer label follows the choice" do
     open_profile_menu
-    click_on "Away"
+    choose "Away", allow_label_click: true
 
     assert_selector ".sidebar__me-status", text: "Away"
   end
@@ -27,14 +27,14 @@ class PresenceTest < ApplicationSystemTestCase
     page.refresh
     open_profile_menu
 
-    assert_selector "[role=radio][aria-checked=true]", text: "Away"
-    assert_selector "[role=radio][aria-checked=false]", text: "Active"
-    assert_selector "[role=radio]", text: "Invisible"
+    assert_field "Away", type: :radio, checked: true, visible: :all
+    assert_field "Active", type: :radio, checked: false, visible: :all
+    assert_field "Invisible", type: :radio, visible: :all
   end
 
   test "going invisible shows yourself a hidden dot, not offline" do
     open_profile_menu
-    click_on "Invisible"
+    choose "Invisible", allow_label_click: true
 
     assert_no_selector "[popover]:popover-open", wait: 5
     assert_selector "##{dom_id(users(:david), :presence_dot_sidebar)}.status--invisible"
@@ -52,7 +52,7 @@ class PresenceTest < ApplicationSystemTestCase
     using_session "jason" do
       sign_in "jason@37signals.com"
       open_profile_menu
-      click_on "Do not disturb"
+      choose "Do not disturb", allow_label_click: true
       assert_equal "do_not_disturb", jason.reload.availability
     end
 

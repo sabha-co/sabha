@@ -1,17 +1,22 @@
 <%# The one control that names your chosen availability. It's replaced live after
     a successful change (see Users::PresencesController#update) because the presence
     broadcast only moves the dots and labels — never this, so the checkmark would
-    otherwise keep pointing at the state you just left until the next full load. %>
+    otherwise keep pointing at the state you just left until the next full load.
+
+    Native radios rather than role=radio buttons, so keyboard and screen-reader
+    users get real radiogroup semantics — arrow-key navigation, roving focus — for
+    free. change->form#submit posts the choice the moment it changes. %>
 <div role="radiogroup" aria-label="Presence" id="presence_picker">
   <% User.availabilities.each_key do |state| %>
-    <button type="submit" name="user[availability]" value="<%= state %>"
-            role="radio" aria-checked="<%= Current.user.availability == state %>"
-            class="sidebar__presence-option">
+    <label class="sidebar__presence-option">
+      <input type="radio" name="user[availability]" value="<%= state %>" class="sidebar__presence-radio"
+             <%= "checked" if Current.user.availability == state %>
+             data-action="change->form#submit">
       <span class="sidebar__presence-dot sidebar__presence-dot--<%= state %>" aria-hidden="true"></span>
       <span class="sidebar__presence-option-label"><%= presence_dot_label availability_dot(state) %></span>
-      <%# Always rendered; the checked row reveals it in CSS, so the row
-          keeps its height whichever option is selected. %>
+      <%# Always rendered; the checked row reveals it in CSS, so the row keeps its
+          height whichever option is selected. %>
       <span class="sidebar__presence-check" aria-hidden="true">&#10003;</span>
-    </button>
+    </label>
   <% end %>
 </div>

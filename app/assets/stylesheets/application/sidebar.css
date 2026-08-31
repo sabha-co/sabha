@@ -446,31 +446,18 @@
   text-transform: uppercase;
 }
 
+/* A <label> wrapping a visually-hidden native radio: the dot, word, and check
+   are the visible control, while the radio still owns focus and keyboard. */
 .sidebar__presence-option {
   align-items: center;
-  appearance: none;
-  background: transparent;
-  border: 0;
   border-radius: 8px;
   color: var(--color-text);
   cursor: pointer;
   display: flex;
-  font: inherit;
   font-size: 0.84375rem;
   gap: 10px;
-  inline-size: 100%;
   min-block-size: 32px;
   padding: 0 10px;
-  text-align: start;
-
-  /* A <button>, so drop the base reset's hover box-shadow like the menu items */
-  --hover-size: 0;
-  --hover-filter: none;
-
-  &:focus-visible {
-    outline: 2px solid var(--color-accent-brand);
-    outline-offset: 2px;
-  }
 
   @media (any-hover: hover) {
     &:hover {
@@ -478,13 +465,26 @@
     }
   }
 
-  &[aria-checked="true"] {
+  /* Focus rides the label, since the radio itself is off-screen. */
+  &:has(.sidebar__presence-radio:focus-visible) {
+    outline: 2px solid var(--color-accent-brand);
+    outline-offset: 2px;
+  }
+
+  &:has(.sidebar__presence-radio:checked) {
     font-weight: 600;
 
     .sidebar__presence-check {
       display: inline;
     }
   }
+}
+
+/* Off-screen, not display:none, so it stays focusable and in the radiogroup. */
+.sidebar__presence-radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .sidebar__presence-dot {

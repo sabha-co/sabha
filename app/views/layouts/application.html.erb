@@ -46,7 +46,7 @@
     <%= umami_analytics_tag %>
   </head>
 
-  <body class="<%= body_classes %>" data-controller="local-time lightbox page-title theme idle">
+  <body class="<%= body_classes %>" data-controller="local-time lightbox page-title theme<%= " idle" if Current.user %>">
     <%# Your own presence stream: your footer, plus the DM rows and room header
         your partners publish into it. One per page, and keyed to the viewer
         rather than to each subject on screen — a per-subject subscription would

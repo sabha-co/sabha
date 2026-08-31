@@ -81,8 +81,8 @@ class Users::PresencesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match %r{turbo-stream action="replace" target="presence_picker"}, response.body
-    assert_select "button[value=away][aria-checked=true]"
-    assert_select "button[value=available][aria-checked=false]"
+    assert_select "input[type=radio][value=away][checked]"
+    assert_select "input[type=radio][value=available]:not([checked])"
   end
 
   test "signing out blocks the update" do

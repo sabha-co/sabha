@@ -241,6 +241,49 @@ class User::PresenceTest < ActiveSupport::TestCase
     end
   end
 
+  # The client fires the idle edge at the same window the timestamp ages out on,
+  # so the RPC routinely lands with last_active_at already expired — the dot reads
+  # idle in the row with no broadcast behind it. The transition must still reach
+  # partners, who are holding the green we last sent them. This is the exact edge
+  # the interacted_recently? gate used to drop.
+  test "an idle edge that lands right on the window still reaches partners" do
+    @user.update! availability: :available, last_active_at: User::Presence::ACTIVE_WINDOW.ago
+    @user.memberships.first.update! connections: 1, connected_at: Time.current
+    assert_not @user.interacted_recently?, "the timestamp has already crossed the window, as it does in the field"
+
+    assert_broadcasts broadcasting_for(users(:jason), :presence), 1 do
+      @user.went_idle
+    end
+  end
+
+  # On a roomless page the aged-out dot is offline, not idle, but partners are
+  # still holding the green we last sent them. The active→offline edge must retire
+  # it. Re-resolving the baseline from a connected_now? that has itself gone false
+  # at the boundary would compare offline to offline and strand them green.
+  test "a roomless idle edge at the boundary retires the green dot" do
+    @user.update! availability: :available, last_active_at: User::Presence::ACTIVE_WINDOW.ago
+    Membership.unscoped.where(user_id: @user.id).update_all(connected_at: nil, connections: 0)
+    assert_not Membership.connected.exists?(user_id: @user.id), "the roomless precondition"
+
+    assert_broadcasts broadcasting_for(users(:jason), :presence), 1 do
+      @user.went_idle
+    end
+  end
+
+  # Once the write has retired the dot, a still-connected tab firing the edge
+  # again must not reconstruct the active baseline and fan out a second time — the
+  # transition already happened, and a forged repeat is the amplification this
+  # guards against.
+  test "a repeated idle edge while still connected says nothing the second time" do
+    @user.update! availability: :available, last_active_at: 5.minutes.ago
+    @user.memberships.first.update! connections: 1, connected_at: Time.current
+    @user.went_idle
+
+    assert_no_broadcasts broadcasting_for(users(:jason), :presence) do
+      @user.went_idle
+    end
+  end
+
   test "re-picking the state you already hold says nothing" do
     @user.update! availability: :away, last_active_at: Time.current
 

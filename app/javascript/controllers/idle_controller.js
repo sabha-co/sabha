@@ -23,6 +23,7 @@ export default class extends Controller {
     if (pageIsTurboPreview()) return
 
     this.idle = false
+    this.started = false
     this.lastReportedAt = 0
     this.lastTouchedAt = 0
 
@@ -32,7 +33,7 @@ export default class extends Controller {
     // would attach the listeners and arm the timer on a dead controller, and
     // hold a HeartbeatChannel subscription nothing is left to unsubscribe.
     const token = this.connectToken = {}
-    const channel = await cable.subscribeTo({ channel: "HeartbeatChannel" })
+    const channel = await cable.subscribeTo({ channel: "HeartbeatChannel" }, { connected: this.#socketConnected })
 
     if (this.connectToken !== token) {
       channel?.unsubscribe?.()
@@ -41,8 +42,10 @@ export default class extends Controller {
 
     this.channel = channel
     this.#listen()
-    this.#restartIdleTimer()
-    this.#report(true)
+    // connected can fire before the await assigns this.channel, so run once more
+    // now that a report can actually land — the same belt-and-braces
+    // presence_controller uses. The started flag keeps it idempotent.
+    this.#socketConnected()
   }
 
   disconnect() {
@@ -97,6 +100,31 @@ export default class extends Controller {
     this.#report(true)
   }
 
+  // Fires when the subscription is confirmed, and again on every reconnect. The
+  // first confirmation starts the clock and reports active — waiting for this
+  // rather than firing at a socket that isn't open yet and being dropped.
+  //
+  // A reconnect is the socket blipping, not the human returning: it must not clear
+  // idle or push the deadline out, or a tab left idle would spring back to active
+  // on its own after any network hiccup. It only resends the state we're already
+  // in, so an edge dropped while the socket was down still lands — throttled, so
+  // the belt-and-braces double call on first connect doesn't double-report.
+  //
+  // A tab opened in the background stays silent until it's looked at; reporting on
+  // connect would show someone present over a page they never glanced at. The
+  // visibilitychange listener brings it in the moment they do.
+  #socketConnected = () => {
+    if (document.visibilityState !== "visible") return
+
+    if (this.started) {
+      this.#report(!this.idle)
+    } else {
+      this.started = true
+      this.#restartIdleTimer()
+      this.#report(true, { force: true })
+    }
+  }
+
   #restartIdleTimer() {
     clearTimeout(this.idleTimer)
     this.idleTimer = setTimeout(() => this.#goIdle(), IDLE_AFTER)
@@ -115,7 +143,9 @@ export default class extends Controller {
     const now = Date.now()
     if (!force && now - this.lastReportedAt < ACTIVE_REPORT_INTERVAL) return
 
-    this.lastReportedAt = now
-    this.channel?.send({ action: "activity", active })
+    // send returns false when the socket isn't open. Only a delivered report
+    // advances the throttle, so one dropped before the connection is up doesn't
+    // lock the next real interaction out for the whole two-minute window.
+    if (this.channel?.send({ action: "activity", active })) this.lastReportedAt = now
   }
 }

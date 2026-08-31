@@ -109,11 +109,32 @@ module User::Presence
   # actively reporting, and a client forging alternating edges could force a
   # write and a fan-out on every faked message. Neither can age out a timestamp
   # that a live tab keeps fresh.
+  #
+  # The client sends this edge at the same ten-minute deadline the resolver ages
+  # out on, so by the time the RPC lands last_active_at has usually crossed the
+  # window on its own — the dot already reads idle in the row, with no broadcast
+  # behind it, while partners are still on the green we last sent them. So the
+  # baseline handed to broadcasting_dot_change is the active dot they're actually
+  # holding — presence_dot(connected: true, active: true) — not one re-resolved
+  # from a connected_now? that has itself gone false at the boundary. On a roomless
+  # page the aged-out "after" is offline, and only an active baseline retires the
+  # green they're still showing; re-resolving the baseline would compare offline
+  # against offline and strand them.
+  #
+  # idled_out? is the idempotency: once the write has aged the timestamp past the
+  # sentinel, the transition has happened and every later edge is a repeat that
+  # writes and fans out nothing. Without it a still-connected tab reconstructs the
+  # active baseline on each edge and rebroadcasts, and a client forging edges could
+  # force a fan-out per faked message. Only the default `available` has an
+  # active/idle split to lose; away, DND, and invisible never flicker.
   def went_idle
-    return unless interacted_recently?
     return if reported_recently?
+    return unless available?
+    return if idled_out?
 
-    broadcasting_dot_change(rare: false) { update_columns last_active_at: ACTIVE_WINDOW.ago - 1.second }
+    broadcasting_dot_change(was: presence_dot(connected: true, active: true), rare: false) do
+      update_columns last_active_at: idle_watermark
+    end
   end
 
   # Everyone who keeps a row for you: the people you share a direct message
@@ -153,10 +174,16 @@ module User::Presence
     # Disturb ignore the active/idle distinction entirely, so their tabs going
     # quiet and coming back changes nothing and now announces nothing.
     #
+    # The baseline defaults to the resolved dot as it stands, which is right for
+    # every verb but idleness: there the write is the clock catching up to a dot
+    # that already aged to idle on its own, so the current resolved dot is already
+    # idle and diffing it would compare idle against idle. went_idle passes the
+    # active dot partners are still holding as `was` instead, so the transition it
+    # exists to announce isn't swallowed. See went_idle.
+    #
     # rare: threads straight through to broadcast_presence — the idle verbs pass
     # false so an ambient flicker never renders or publishes the opt-in pages.
-    def broadcasting_dot_change(rare: true)
-      was = presence_dot_now
+    def broadcasting_dot_change(was: presence_dot_now, rare: true)
       yield
       now = presence_dot_now
 
@@ -222,6 +249,20 @@ module User::Presence
 
     def reported_recently?
       interacted_recently? && last_active_at > ACTIVITY_REFRESH_THRESHOLD.ago
+    end
+
+    # The timestamp went_idle backdates to: one second past the active window, far
+    # enough that the resolver reads idle, close enough that a first edge landing
+    # right at the deadline still sits newer than it and counts as the transition.
+    def idle_watermark
+      ACTIVE_WINDOW.ago - 1.second
+    end
+
+    # The write has already aged the timestamp to (or past) the watermark, so the
+    # active→idle transition is behind us and any further edge is a repeat to stay
+    # silent on. A timestamp that never crossed the window can't be idled out.
+    def idled_out?
+      last_active_at.present? && last_active_at <= idle_watermark
     end
 
     def touch_last_active
