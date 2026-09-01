@@ -200,6 +200,12 @@ class User < ApplicationRecord
     close_remote_connections reconnect: true
   end
 
+  # Signing out invalidates this session, so a live socket must not reconnect
+  # with its existing JWT.
+  def disconnect_remote_connections
+    close_remote_connections reconnect: false
+  end
+
   def member_of?(room)
     Membership.active.visible.exists?(room_id: room.id, user_id: id)
   end

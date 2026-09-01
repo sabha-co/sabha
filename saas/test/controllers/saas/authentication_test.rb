@@ -39,8 +39,11 @@ module Saas
     end
 
     test "sign_out destroys session and clears cookie" do
-      sign_in_global_identity(global_identities(:alice))
+      identity = global_identities(:alice)
+      sign_in_global_identity(identity)
       session_count_before = GlobalSession.count
+
+      GlobalIdentity.any_instance.expects(:disconnect_remote_connections)
 
       delete session_path
 
@@ -49,6 +52,18 @@ module Saas
 
       # Should redirect to login
       assert_redirected_to new_session_path
+    end
+
+    test "sign_out still destroys the session when disconnecting connections fails" do
+      identity = global_identities(:alice)
+      sign_in_global_identity(identity)
+      current_session = GlobalSession.last
+      identity.stubs(:disconnect_remote_connections).raises(RuntimeError, "cable down")
+
+      delete session_path
+
+      assert_redirected_to new_session_path
+      assert_not GlobalSession.exists?(current_session.id)
     end
 
     test "after_authentication_url defaults to root when no return_to" do
