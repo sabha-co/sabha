@@ -534,7 +534,7 @@ DEPENDENCIES
   kredis
   lefthook (~> 2.0)
   letter_opener
-  lexxy (~> 0.9.24)
+  lexxy
   mocha
   msgpack (>= 1.8.0)
   net-http-persistent
