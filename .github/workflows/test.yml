@@ -131,3 +131,20 @@ jobs:
           SECRET_KEY_BASE: test_secret_key_base_for_ci
           BUNDLE_GEMFILE: Gemfile.saas
           UNTENANTED_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test
+
+  bundle-drift:
+    name: Lockfile drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 4.0.5
+
+      - name: Check Gemfile.lock and Gemfile.saas.lock are in sync
+        run: bin/bundle-drift
