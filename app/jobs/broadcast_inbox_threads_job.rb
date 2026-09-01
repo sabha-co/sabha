@@ -13,6 +13,11 @@ class BroadcastInboxThreadsJob < ApplicationJob
 
     return if all_user_ids.empty?
 
+    # Followers of the thread itself, as opposed to parent-room "everything"
+    # members who also hear about the reply. Only a follower gets an unread
+    # badge and the Follow control on their inbox card.
+    thread_user_ids = thread.memberships.active.visible.pluck(:user_id)
+
     # Batch load all users at once to avoid N+1 queries
     users_by_id = User.where(id: all_user_ids).index_by(&:id)
 
