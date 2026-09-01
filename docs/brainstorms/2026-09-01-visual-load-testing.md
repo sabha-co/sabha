@@ -201,11 +201,14 @@ topology and remaining meters.
 - **OQ2. Persist + diff runs in v1?** Save runs and diff two of them after a config change (e.g.
   before/after raising `pool` or `RAILS_MAX_THREADS`) — v1 or later? *Lean: later; single live run
   first.*
-- **OQ3. [Decided] Adopt Yabeda in Sabha.** The Yabeda stack (`yabeda-anycable`,
-  `yabeda-prometheus`, + ActiveRecord-pool / GVL / Puma plugins) becomes Sabha's real metrics
-  layer, not just a load-test crutch. *Open sub-questions:* (a) mount `/metrics` always-on behind
-  auth, or only in `performance`/staging? (b) endpoint protection — internal-only bind vs bearer
-  token? (c) both `Gemfile` and `Gemfile.saas` lockfiles must stay in sync.
+- **OQ3. [Decided] Adopt Yabeda in Sabha — implementation deferred.** The Yabeda stack
+  (`yabeda-anycable`, `yabeda-prometheus`, + ActiveRecord-pool / GVL / Puma plugins) becomes
+  Sabha's real metrics layer, not just a load-test crutch. **Exposure decided: `/metrics` mounts
+  in non-prod only** (performance/staging/dev) — zero prod overhead or surface; the load-test
+  target runs `RAILS_ENV=performance`, so this fully unblocks the tool. Promote to prod (behind a
+  token) later only if the metrics prove useful in production. Phased rollout when built: Phase 1 =
+  `yabeda` + `yabeda-prometheus` + `yabeda-anycable` + mount (on a branch cut from `main`, both
+  `Gemfile`/`Gemfile.saas` lockfiles synced); Phase 2 = the pool / GVL / Puma / HTTP plugins.
 
 ## Out of scope (for now)
 
