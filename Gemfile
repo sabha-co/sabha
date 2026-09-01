@@ -54,6 +54,7 @@ gem "stackprof", "~> 0.2"
 gem "bcrypt"
 gem "msgpack", ">= 1.8.0"
 gem "web-push"
+gem "surfguard", "~> 0.2.0" # SSRF address policy behind outbound fetch/webhook/push
 gem "rqrcode"
 gem "rails_autolink"
 gem "geared_pagination"
