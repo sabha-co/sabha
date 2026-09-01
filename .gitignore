@@ -55,3 +55,7 @@ Caddyfile
 
 PRODUCT.md
 .impeccable/
+
+# Local AI tooling
+.pi/
+.cursor/
