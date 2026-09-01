@@ -22,7 +22,7 @@ class Opengraph::Location
 
   def resolved_ip
     return @resolved_ip if defined? @resolved_ip
-    @resolved_ip = SsrfProtection.resolve_public_ip(parsed_url.host) rescue nil
+    @resolved_ip = RestrictedHTTP::PrivateNetworkGuard.resolve_public_ip(parsed_url&.host)
   end
 
   private

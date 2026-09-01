@@ -38,7 +38,7 @@ class Opengraph::FetchTest < ActiveSupport::TestCase
       .to_return(status: 200, body: "<body>ok<body>", headers: { content_type: "text/html" })
     stub_dns_resolution("127.0.0.1")
 
-    assert_raises SsrfProtection::Violation do
+    assert_raises RestrictedHTTP::PrivateNetworkGuard::Violation do
       @fetch.fetch_document(@url, ip: "1.2.3.4")
     end
   end
