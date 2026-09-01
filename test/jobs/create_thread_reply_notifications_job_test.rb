@@ -16,11 +16,15 @@ class CreateThreadReplyNotificationsJobTest < ActiveJob::TestCase
 
     reply = thread.messages.create!(body: "Reply", creator: @jason, client_message_id: "job_reply_1")
 
-    CreateThreadReplyNotificationsJob.perform_now(
-      message_id: reply.id,
-      thread_id: thread.id,
-      creator_id: @jason.id
-    )
+    assert_turbo_stream_broadcasts [ @david, :inbox_activity ], count: 1 do
+      assert_turbo_stream_broadcasts [ @david, :sidebar_activity_indicator ], count: 1 do
+        CreateThreadReplyNotificationsJob.perform_now(
+          message_id: reply.id,
+          thread_id: thread.id,
+          creator_id: @jason.id
+        )
+      end
+    end
 
     assert Notification.exists?(user: @david, message: reply, activity_type: "thread_reply")
   end
