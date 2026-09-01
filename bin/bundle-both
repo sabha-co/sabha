@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Runs a Bundler command against both the self-hosted (Gemfile) and SaaS
+# (Gemfile.saas) gemfiles so their lockfiles stay in lockstep. Reach for this
+# instead of a bare `bundle` whenever the lockfiles would change — installs,
+# updates, adds/removes — so Gemfile.lock and Gemfile.saas.lock never drift.
+#
+#   bin/bundle-both install
+#   bin/bundle-both update
+#   bin/bundle-both update lexxy
+set -euo pipefail
+
+echo "▸ self-hosted: Gemfile"
+BUNDLE_GEMFILE=Gemfile bundle "$@"
+
+echo
+echo "▸ SaaS: Gemfile.saas"
+BUNDLE_GEMFILE=Gemfile.saas bundle "$@"
