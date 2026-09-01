@@ -192,12 +192,25 @@ topology and remaining meters.
 
 ## Open questions
 
-- **OQ1. [Resolved] Target environment.** Reuse the proven setup from
-  `docs/performance/load-testing.md`: a disposable DO VPS running the image in
+- **OQ1. [Resolved] Target environment — provision with sabha_cloud.** Reuse the proven setup from
+  `docs/performance/load-testing.md`: a disposable droplet running the image in
   `RAILS_ENV=performance` (auto-seeds 10k users / 201 rooms / 11k memberships), generator on a
-  separate machine, never local dev for headline numbers. *Open sub-question:* box size — the
-  existing run used 1 vCPU/2 GB and topped out ~3,400 concurrent (AnyCable); the ~10k goal needs
-  more cores, and finding *where* the wall moves per box is the tool's job.
+  separate machine, never local dev for headline numbers. **A sabha_cloud-provisioned box *is*
+  this target shape** — a self-hosted single-tenant Sabha (Docker Compose: web + anycable + caddy +
+  litestream on SQLite) — and it **auto-installs the Beszel host agent** post-deploy
+  (`InstallBeszelAgentJob`, `--network host`, best-effort, gated on beszel credentials), so host
+  CPU/mem/swap come for free. Two things to handle:
+  - *Reading host metrics back.* sabha_cloud only *pushes* agents to the Beszel hub; it has **no
+    read-back API**. The tool must query the **Beszel hub's own API** (PocketBase, at the hub URL)
+    directly, and should point the test box's agent at a **throwaway hub**, not prod
+    `monitor.sabha.co`. Net-new integration in the tool, not free.
+  - *Env mismatch.* A standard sabha_cloud box runs **production** mode → no 10k auto-seed, and the
+    non-prod-only `/metrics` (OQ3) wouldn't mount. So deploy the load-test box in
+    **performance/staging** mode (manual override — there's no load-test provisioning path in
+    sabha_cloud today), which keeps the seed + metrics and stays "non-prod."
+  - *Sub-question still open:* box size — the existing run used 1 vCPU/2 GB and topped out ~3,400
+    concurrent (AnyCable); the ~10k goal needs more cores, and finding *where* the wall moves per
+    box is the tool's job.
 - **OQ2. Persist + diff runs in v1?** Save runs and diff two of them after a config change (e.g.
   before/after raising `pool` or `RAILS_MAX_THREADS`) — v1 or later? *Lean: later; single live run
   first.*
