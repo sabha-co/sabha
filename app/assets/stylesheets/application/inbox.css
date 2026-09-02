@@ -245,6 +245,33 @@ body.inbox [data-activity-unread="true"] {
   min-inline-size: 0;
 }
 
+/* The shared thread partial is a bordered message-preview pill when it sits
+   beneath a message. In this card footer it is quieter metadata: the reply
+   count is useful but should not compete with the root message or the follow
+   control. Keep this scope local so message previews retain their pill. */
+.thread-card .thread__link {
+  align-items: center;
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  font-family: var(--font-family);
+  font-size: 0.8125rem;
+  gap: 10px;
+  padding: 0;
+  text-decoration: none;
+}
+
+.thread-card .thread__count {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.thread-card .thread__link .txt-muted {
+  color: var(--color-text-subtle);
+  font-size: 0.78125rem;
+}
+
 /* At tablet portrait and below, reply avatars/count and the follow control
    take priority over relative time. Dropping the timestamp keeps the footer on
    one readable row instead of wrapping its metadata around the button. */
