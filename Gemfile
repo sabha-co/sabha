@@ -50,6 +50,18 @@ gem "sentry-rails"
 gem "rack-mini-profiler", "~> 4.0", require: false
 gem "stackprof", "~> 0.2"
 
+# Metrics — non-production only. /metrics (Prometheus) is mounted in the
+# performance/development envs (see config/routes.rb); these load only in the
+# :performance / :development bundler groups, so production carries no overhead.
+group :development, :performance do
+  gem "yabeda"
+  gem "yabeda-prometheus"
+  gem "yabeda-activerecord"   # AR connection-pool + query metrics
+  gem "yabeda-puma-plugin"    # Puma thread-pool metrics (see config/puma.rb)
+  # GVL: yabeda-gvl_metrics 0.2.0 tags gauges with `pid`, which prometheus-client
+  # 4.x reserves (boot crash). Deferred until a compatible GVL source is wired.
+end
+
 # Other
 gem "bcrypt"
 gem "msgpack", ">= 1.8.0"

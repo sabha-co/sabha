@@ -259,4 +259,10 @@ Rails.application.routes.draw do
   get "/.well-known/change-password" => redirect(Sabha.saas? ? "/session/new" : "/password_resets/new")
 
   get "up" => "rails/health#show", as: :rails_health_check
+
+  # Prometheus metrics — non-production only (performance/development). The
+  # exporter gem loads only in those bundler groups; never mounted in production.
+  unless Rails.env.production?
+    mount Yabeda::Prometheus::Exporter, at: "/metrics", as: :yabeda_metrics
+  end
 end

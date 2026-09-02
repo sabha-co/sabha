@@ -6,6 +6,16 @@ Rails.application.configure do
   config.action_cable.disable_request_forgery_protection = true
   config.action_cable.url = nil # Let client determine WebSocket URL
 
+  # Let the load generator scrape /metrics by IP. production.rb's host allowlist
+  # otherwise blocks any path except /up and /_anycable.
+  config.host_authorization = {
+    exclude: ->(request) do
+      request.path == "/up" ||
+        request.path == "/metrics" ||
+        request.path.start_with?("/_anycable")
+    end
+  }
+
   config.after_initialize do
     if defined?(Rails::Server) && User.none?
       Account.create!(name: "Sabha")

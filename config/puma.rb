@@ -53,6 +53,14 @@ end
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart
 
+# Puma thread-pool metrics for the Prometheus /metrics endpoint. Non-production
+# only — the yabeda-puma-plugin gem loads just in the :performance/:development
+# bundler groups. `activate_control_app` exposes the stats the plugin reads.
+if ENV["RAILS_ENV"] != "production"
+  activate_control_app "tcp://127.0.0.1:9293", { no_token: true }
+  plugin :yabeda
+end
+
 # Run the Solid Queue supervisor inside of Puma for single-server deployments.
 # - Dev/test: runs in Puma by default (no separate worker process needed)
 # - Production: separate workers via Procfile (default), or set SOLID_QUEUE_IN_PUMA=true
