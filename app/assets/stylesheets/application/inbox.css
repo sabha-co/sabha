@@ -62,6 +62,10 @@ body.inbox .searches__results:has(.bookmark-card) {
    needs the full body column. Metadata wraps between complete fields on narrow
    screens — never through an actor or room name. */
 .notification--activity {
+  .message__avatar {
+    --avatar-size: 32px;
+  }
+
   .message__body {
     max-inline-size: none;
     min-inline-size: 0;
@@ -69,6 +73,25 @@ body.inbox .searches__results:has(.bookmark-card) {
 
   .message__heading {
     flex-wrap: wrap;
+  }
+
+  .message__heading > strong {
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .message__heading > .txt-muted {
+    font-size: 0.84375rem;
+  }
+
+  .notification__where {
+    font-size: 0.8125rem;
+  }
+
+  .message__presentation .lexxy-content {
+    color: var(--color-text-lighter);
+    font-size: 0.875rem;
+    line-height: 1.5;
   }
 
   .message__heading > strong,
@@ -194,7 +217,8 @@ body.inbox [data-activity-unread="true"] {
   gap: 9px;
 }
 
-.thread-card__room {
+.thread-card__room,
+.bookmark-card__room {
   color: var(--color-link);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -207,9 +231,13 @@ body.inbox [data-activity-unread="true"] {
   }
 }
 
-.thread-card__starter {
+.thread-card__starter,
+.bookmark-card__saved {
   color: var(--color-text-subtle);
   font-size: 0.78125rem;
+}
+
+.thread-card__starter {
   white-space: nowrap;
 }
 
@@ -299,24 +327,6 @@ body.inbox [data-activity-unread="true"] {
   gap: 10px;
 }
 
-.bookmark-card__room {
-  color: var(--color-link);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  text-decoration: none;
-
-  @media (any-hover: hover) {
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-}
-
-.bookmark-card__saved {
-  color: var(--color-text-subtle);
-  font-size: 0.75rem;
-}
-
 .bookmark-card__remove-form {
   margin-inline-start: auto;
 }
@@ -354,6 +364,12 @@ body.inbox [data-activity-unread="true"] {
   flex-direction: column;
   gap: 2px;
   min-inline-size: 0;
+}
+
+.bookmark-card__content > .lexxy-content {
+  color: var(--color-text-lighter);
+  font-size: 0.90625rem;
+  line-height: 1.55;
 }
 
 .bookmark-card__byline {

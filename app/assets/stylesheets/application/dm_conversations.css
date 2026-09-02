@@ -123,7 +123,12 @@
 }
 
 .dm-rail__empty {
-  padding: 20px 16px;
+  align-items: center;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 16px;
   text-align: center;
 }
 
@@ -134,6 +139,10 @@
     flex: 1 1 auto;
     min-block-size: 0;
     padding: 8px;
+  }
+
+  .dm-list:not(:has(*)) {
+    display: none;
   }
 }
 

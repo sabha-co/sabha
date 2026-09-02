@@ -30,4 +30,20 @@ class ActivityTest < ApplicationSystemTestCase
 
     assert labels.all? { |label| label["height"] < 24 }, "expected one-line Activity labels: #{labels.inspect}"
   end
+
+  test "Activity uses the handoff's compact metadata hierarchy" do
+    visit inbox_activity_index_path
+
+    row = find(".notification--activity", text: "Activity mobile marker")
+    actor = row.find(".message__heading > strong")
+    verb = row.find(".message__heading > .txt-muted")
+    room = row.find(".notification__where")
+    preview = row.find(".message__presentation .lexxy-content")
+
+    assert_equal "14px", actor.evaluate_script("getComputedStyle(this).fontSize")
+    assert_equal "700", actor.evaluate_script("getComputedStyle(this).fontWeight")
+    assert_equal "13.5px", verb.evaluate_script("getComputedStyle(this).fontSize")
+    assert_equal "13px", room.evaluate_script("getComputedStyle(this).fontSize")
+    assert_equal "14px", preview.evaluate_script("getComputedStyle(this).fontSize")
+  end
 end
