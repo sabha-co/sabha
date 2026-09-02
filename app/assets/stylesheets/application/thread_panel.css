@@ -24,7 +24,7 @@
   #thread-panel {
     block-size: 100dvh;
     box-shadow: var(--shadow-panel);
-    inline-size: 360px;
+    inline-size: var(--thread-panel-width);
     inset: 0 0 0 auto;
     position: fixed;
     transform: translateX(100%);
@@ -75,8 +75,19 @@
   }
 }
 
-@media (min-width: 1232px) {
-  body:has(#thread-panel:not([hidden]) [data-panel-kind="thread"]) #thread-panel {
+@media (min-width: 1360px) {
+  body:not(:has(#list-rail)):has(#thread-panel:not([hidden]) [data-panel-kind="thread"]) #thread-panel {
+    block-size: auto;
+    box-shadow: none;
+    inline-size: var(--thread-width);
+    inset: auto;
+    position: static;
+    z-index: auto;
+  }
+}
+
+@media (min-width: 1536px) {
+  body:has(#list-rail):has(#thread-panel:not([hidden]) [data-panel-kind="thread"]) #thread-panel {
     block-size: auto;
     box-shadow: none;
     inline-size: var(--thread-width);
@@ -114,8 +125,14 @@
   }
 }
 
-@media (min-width: 500px) and (max-width: 1231.9px) {
+@media (min-width: 500px) and (max-width: 1359.9px) {
   body.thread-panel-open:has(#thread-panel [data-panel-kind="thread"]) .thread-panel__scrim {
+    display: block;
+  }
+}
+
+@media (min-width: 1360px) and (max-width: 1535.9px) {
+  body.thread-panel-open:has(#list-rail):has(#thread-panel [data-panel-kind="thread"]) .thread-panel__scrim {
     display: block;
   }
 }

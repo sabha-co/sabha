@@ -110,19 +110,29 @@ class ContextualPanelTest < ApplicationSystemTestCase
 
     join_room rooms(:designers)
 
-    page.current_window.resize_to(1232, 900)
+    page.current_window.resize_to(1360, 900)
     find("##{dom_id(messages(:third))}").hover
     find("##{dom_id(messages(:third))} .message__reply-btn").click
     assert_selector "#thread-panel .thread-panel__title", text: "Thread", wait: 5
     assert_selector "#thread-panel[aria-label='Thread']"
     assert_panel_position "static"
+    assert_equal 420, panel_width
 
-    page.current_window.resize_to(1231, 900)
+    page.current_window.resize_to(1600, 900)
+    assert_panel_position "static"
+    assert_equal 448, panel_width
+
+    page.current_window.resize_to(1920, 900)
+    assert_panel_position "static"
+    assert_equal 520, panel_width
+
+    page.current_window.resize_to(1359, 900)
     assert_panel_position "fixed"
     assert_selector ".thread-panel__scrim", visible: :visible
 
     page.current_window.resize_to(500, 800)
     assert_panel_position "fixed"
+    assert_equal 420, panel_width
     assert_selector ".thread-panel__scrim", visible: :visible
 
     page.current_window.resize_to(499, 800)
@@ -136,6 +146,25 @@ class ContextualPanelTest < ApplicationSystemTestCase
     assert_no_selector ".thread-panel__scrim", visible: :visible
   end
 
+  test "a thread docks later when the direct-message rail is present" do
+    thread = Rooms::Thread.create!(parent_message: messages(:third), creator: users(:david))
+    thread.messages.create!(creator: users(:david), body: "A thread reply")
+
+    visit room_url(rooms(:david_and_kevin))
+    assert_selector "#list-rail"
+
+    page.current_window.resize_to(1535, 900)
+    open_thread_panel(thread)
+    assert_selector "#thread-panel .thread-panel__title", text: "Thread", wait: 5
+    assert_panel_position "fixed"
+    assert_selector ".thread-panel__scrim", visible: :visible
+
+    page.current_window.resize_to(1536, 900)
+    assert_panel_position "static"
+    assert_no_selector ".thread-panel__scrim", visible: :visible
+    assert_equal 430, panel_width
+  end
+
   test "a forum post keeps its wider reading column" do
     forum = rooms(:help_desk)
     forum.memberships.grant_to(users(:kevin))
@@ -147,14 +176,29 @@ class ContextualPanelTest < ApplicationSystemTestCase
     find("##{dom_id(post, :card)}").click
     assert_selector "#thread-panel .forum-post-header", wait: 5
     assert_panel_position "static"
-    # A forum post reads wider than a thread's 360px column, up to the 680px cap.
+    # A forum post reads wider than a thread's 420px minimum, up to the 680px cap.
     width = find("#thread-panel").evaluate_script("Math.round(this.getBoundingClientRect().width)")
-    assert_operator width, :>, 360
+    assert_operator width, :>, 420
     assert_operator width, :<=, 680
   end
 
   private
     def assert_panel_position(position)
       assert_equal position, find("#thread-panel").evaluate_script("getComputedStyle(this).position")
+    end
+
+    def panel_width
+      find("#thread-panel").evaluate_script("Math.round(this.getBoundingClientRect().width)")
+    end
+
+    def open_thread_panel(thread)
+      page.execute_script(<<~JS)
+        const link = document.createElement("a")
+        link.href = #{rooms_thread_path(thread).to_json}
+        link.dataset.turboFrame = "thread_panel_frame"
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+      JS
     end
 end

@@ -6,6 +6,7 @@ body {
   --footer-height: calc((var(--block-space)) + 3.6em + var(--block-space));
   --navbar-height: 54px;
   --sidebar-width: 0vw;
+  --thread-panel-width: clamp(420px, 28vw, 520px);
 
   display: grid;
   grid-template-areas:
@@ -135,8 +136,8 @@ body {
 
 /* Contextual panels dock only after their own width fits beside the sidebar and
    a readable transcript. Room info earns a 288px column at 1160px; threads
-   need their 360px column at 1232px. Until then, thread_panel.css keeps them
-   as overlays so the transcript retains its full measure. */
+   scale from 420px to 520px and dock at 1360px. Until then, thread_panel.css
+   keeps them as overlays so the transcript retains its full measure. */
 @media (min-width: 1160px) {
   body:has(#thread-panel:not([hidden]) [data-panel-kind="roster"]) {
     --thread-width: 288px;
@@ -150,9 +151,9 @@ body {
   }
 }
 
-@media (min-width: 1232px) {
-  body:has(#thread-panel:not([hidden]) [data-panel-kind="thread"]) {
-    --thread-width: 360px;
+@media (min-width: 1360px) {
+  body:not(:has(#list-rail)):has(#thread-panel:not([hidden]) [data-panel-kind="thread"]) {
+    --thread-width: var(--thread-panel-width);
 
     grid-template-areas:
       "sidebar notice notice"
@@ -230,8 +231,12 @@ body {
   }
 }
 
-@media (min-width: 1232px) {
+/* Direct rooms also carry the 272px conversation rail, so their thread needs
+   a wider viewport before all four columns can remain readable. */
+@media (min-width: 1536px) {
   body:has(#list-rail):has(#thread-panel:not([hidden]) [data-panel-kind="thread"]) {
+    --thread-width: var(--thread-panel-width);
+
     grid-template-areas:
       "sidebar notice notice notice"
       "sidebar connection connection connection"
