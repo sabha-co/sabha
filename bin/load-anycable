@@ -186,12 +186,18 @@ class Load
             "--name", :sabha_anycable,
             "--network", :sabha_net,
             "--network-alias", :anycable,
+            # Prometheus exporter on :5000/metrics, published to the host so the
+            # load generator (Loadscope) can scrape transport metrics by IP.
+            "-p", "5000:5000",
             "-e", "ANYCABLE_HOST=0.0.0.0",
             "-e", "ANYCABLE_PORT=8080",
             "-e", "ANYCABLE_RPC_HOST=http://web:3000/_anycable",
             "-e", "ANYCABLE_BROADCAST_ADAPTER=http",
             "-e", "ANYCABLE_HTTP_BROADCAST_PORT=8080",
             "-e", "ANYCABLE_SECRET=test-secret",
+            "-e", "ANYCABLE_METRICS_HTTP=/metrics",
+            "-e", "ANYCABLE_METRICS_PORT=5000",
+            "-e", "ANYCABLE_METRICS_HOST=0.0.0.0",
             # Presence lives in the broker component. Without one the presence
             # API reports unsupported, Rails falls back to connected_at, and the
             # harness measures the pre-presence path while looking like it
