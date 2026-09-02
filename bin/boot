@@ -1,14 +1,18 @@
 #!/usr/bin/env ruby
 
-# Minimal process manager for running multiple services in a single container.
+# Minimal process supervisor for running multiple services in a single container.
 # Reads Procfile and spawns all defined processes (web, redis, workers).
-# Handles graceful shutdown by forwarding signals to child processes.
-# Similar to Foreman/Overmind but simpler.
+# Restarts a process that dies (with crash-loop protection) so one crashing
+# worker doesn't take the whole container down; forwards INT/TERM for graceful
+# shutdown. Similar to Foreman/Overmind but simpler.
 
-# Pre-boot: prepare database before spawning processes.
-# Must complete before workers start (they need Solid Queue tables).
-# Absorbs what was previously bin/configure.
-if ENV["RAILS_ENV"] == "production"
+env = ENV["RAILS_ENV"]
+
+# Pre-boot: prepare the database before spawning processes — workers need the
+# Solid Queue tables before they start. Runs in every deployed env (production,
+# performance, staging, …), not just production; skipped only in dev/test where
+# bin/boot isn't the entrypoint. Absorbs what was previously bin/configure.
+unless %w[development test].include?(env)
   # In SaaS mode, verify the storage volume is mounted before proceeding.
   # Without this check, tenant SQLite databases get written to ephemeral
   # container storage and are lost when the container is replaced.
@@ -20,18 +24,61 @@ if ENV["RAILS_ENV"] == "production"
   abort("db:prepare failed") unless system("./bin/rails db:prepare")
 end
 
-require "json"
 require "yaml"
 
-class ProcessMonitor
-  SIGNALS = %w[ INT TERM CLD ]
+class MonitoredProcess
+  # If a process crashes more than MAX_RESTARTS times within RESTART_WINDOW
+  # seconds, stop restarting it and let the container exit so the orchestrator
+  # (Docker/Kamal restart policy) replaces it — rather than spinning forever.
+  MAX_RESTARTS = 5
+  RESTART_WINDOW = 60
 
+  attr_reader :name, :pid
+
+  def initialize(name, cmd)
+    @name, @cmd = name, cmd
+    @restart_times = []
+    @stopping = false
+  end
+
+  def start
+    @pid = Process.spawn(@cmd)
+  end
+
+  def stop
+    @stopping = true
+    Process.kill("TERM", @pid) if @pid
+  rescue Errno::ESRCH
+    nil
+  end
+
+  # Called after @pid has exited. Returns true if restarted, false if it should
+  # be given up on (intentional shutdown or crash loop).
+  def restart
+    return false if @stopping
+
+    now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    @restart_times.reject! { |t| now - t > RESTART_WINDOW }
+    @restart_times << now
+
+    if @restart_times.size > MAX_RESTARTS
+      warn "[boot] #{@name} crashed #{@restart_times.size} times in #{RESTART_WINDOW}s — giving up"
+      return false
+    end
+
+    warn "[boot] #{@name} exited; restarting (#{@restart_times.size}/#{MAX_RESTARTS} within #{RESTART_WINDOW}s)"
+    start
+    true
+  end
+end
+
+class ProcessMonitor
   def initialize(procfile)
     @procs = process_list(procfile)
+    @stopping = false
     handle_signals
-
-    @procs.each &:start
-    @procs.each &:wait
+    @procs.each(&:start)
+    supervise
   end
 
   private
@@ -45,34 +92,39 @@ class ProcessMonitor
     end
 
     def handle_signals
-      SIGNALS.each do |signal|
+      # Only real termination signals shut us down. A child death is handled by
+      # the supervise loop (which restarts it) — NOT by tearing everything down,
+      # which was the old SIGCHLD-trap cascade that killed the box when a single
+      # process died under load.
+      %w[INT TERM].each do |signal|
         Signal.trap(signal) do
-          @procs.each &:terminate
+          @stopping = true
+          @procs.each(&:stop)
         end
       end
     end
-end
 
-class MonitoredProcess
-  def initialize(name, cmd)
-    @name, @cmd = name, cmd
-  end
+    def supervise
+      loop do
+        begin
+          pid = Process.wait
+        rescue Errno::ECHILD
+          break # no children left (finished shutting down)
+        end
 
-  def start
-    @pid = Process.spawn(@cmd)
-  end
+        proc = @procs.find { |p| p.pid == pid }
+        next unless proc          # already reaped/unknown
+        next if @stopping         # shutting down: keep reaping until ECHILD
 
-  def wait
-    Process.wait @pid
-  rescue Errno::ECHILD
-    nil
-  end
-
-  def terminate
-    Process.kill "TERM", @pid
-  rescue Errno::ESRCH
-    nil
-  end
+        unless proc.restart
+          # Crash loop or unrestartable: stop the rest and exit non-zero so the
+          # orchestrator replaces the container instead of running degraded.
+          @stopping = true
+          @procs.each(&:stop)
+          exit 1
+        end
+      end
+    end
 end
 
 ProcessMonitor.new("Procfile")
