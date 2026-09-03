@@ -12,6 +12,9 @@ class Users::HiddenRoomsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match rooms(:pets).name, @response.body
+    # The hidden-room append broadcast targets #hidden_rooms_list, so the list
+    # container must render with that id and hold each hidden room's row.
+    assert_select "#hidden_rooms_list ##{dom_id(rooms(:pets), :hidden_room)}"
   end
 
   test "index renders an empty state when nothing is hidden" do

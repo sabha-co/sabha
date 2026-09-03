@@ -13,13 +13,22 @@ class Rooms::InvolvementsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update involvement sends turbo update when going invisible" do
-    # When going invisible: 1 broadcast for sidebar section + 2 for removal + 1 for hidden_rooms append = 4
-    assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 4 do
-    assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "everything", to: "invisible" do
-      put room_involvement_url(rooms(:watercooler)), params: { involvement: "invisible" }
-      assert_redirected_to room_involvement_url(rooms(:watercooler))
+    streams = capture_turbo_stream_broadcasts [ users(:david), :rooms ] do
+      assert_changes -> { memberships(:david_watercooler).reload.involvement }, from: "everything", to: "invisible" do
+        put room_involvement_url(rooms(:watercooler)), params: { involvement: "invisible" }
+        assert_redirected_to room_involvement_url(rooms(:watercooler))
+      end
     end
-    end
+
+    # 1 broadcast for sidebar section + 2 for removal + 1 for hidden_rooms append
+    assert_equal 4, streams.size
+
+    append = streams.find { |stream| stream["action"] == "append" }
+    assert append, "going invisible should append the room into the hidden-rooms list"
+    assert_equal "hidden_rooms_list", append["target"],
+      "the append must target the hidden-rooms list id rendered by users/hidden_rooms/index"
+    assert append.at_css("##{dom_id(rooms(:watercooler), :hidden_room)}"),
+      "the append carries the hidden-room row for the newly invisible room"
   end
 
   test "update involvement sends turbo update when returning to visible" do
