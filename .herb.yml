@@ -49,6 +49,34 @@ linter:
     erb-no-interpolated-class-names:
       enabled: false
 
+    # Conditional/dynamic attributes (`<%= "checked" if x %>`, helper-emitted
+    # attribute strings) are a deliberate pattern on hand-written form markup.
+    erb-no-output-in-attribute-name:
+      enabled: false
+    erb-no-output-in-attribute-position:
+      enabled: false
+
+    # No CSP-nonce infrastructure; the pre-paint theme script can't carry one.
+    html-require-script-nonce:
+      enabled: false
+
+    # False positives: `_composer_fields` reads a `label` local (not the form
+    # helper); `admin/stats` builds SVG with tag/safe_join inside a lambda whose
+    # return value is emitted with `<%= sparkline.call %>`.
+    actionview-no-silent-helper:
+      exclude:
+        - "app/views/rooms/_composer_fields.html.erb"
+        - "saas/app/views/admin/stats/show.html.erb"
+
+    # Client-side message template: a <script type="text/template"> that JS
+    # clones (never executes), interpolating the current user's own data.
+    erb-no-unsafe-script-interpolation:
+      exclude:
+        - "app/views/messages/_template.html.erb"
+    html-allowed-script-type:
+      exclude:
+        - "app/views/messages/_template.html.erb"
+
 formatter:
   enabled: false
   indentWidth: 2
