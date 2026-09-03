@@ -16,12 +16,12 @@
 <% end %>
 
 <section class="panel flex flex-column gap" style="view-transition-name: avatar-<%= @user.id %>">
-  <% if @user.bot? %>
-    <div class="align-center center gap">
-      <div class="avatar avatar--large">
-        <%= avatar_image_tag(@user, alt: "") %>
-      </div>
+  <div class="align-center center gap">
+    <div class="avatar avatar--large">
+      <%= avatar_image_tag(@user, alt: "") %>
     </div>
+  </div>
+  <% if @user.bot? %>
 
     <div class="flex flex-column align-center gap-half">
       <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
@@ -39,11 +39,6 @@
     <% end %>
 
   <% elsif @user.active? %>
-    <div class="align-center center gap">
-      <div class="avatar avatar--large">
-        <%= avatar_image_tag(@user, alt: "") %>
-      </div>
-    </div>
 
     <div class="flex flex-column align-center gap-half txt-align-center">
       <div class="flex align-center gap-half">
@@ -153,11 +148,6 @@
     <% end %>
 
   <% elsif @user.banned? %>
-    <div class="align-center center gap">
-      <div class="avatar avatar--large">
-        <%= avatar_image_tag(@user, alt: "") %>
-      </div>
-    </div>
 
     <div class="flex flex-column align-center gap-half">
       <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
@@ -172,11 +162,6 @@
     <% end %>
 
   <% else %>
-    <div class="align-center center gap">
-      <div class="avatar avatar--large">
-        <%= avatar_image_tag(@user, alt: "") %>
-      </div>
-    </div>
 
     <div class="flex flex-column align-center gap-half">
       <h1 class="txt-x-large margin-none"><%= @user.name %></h1>
