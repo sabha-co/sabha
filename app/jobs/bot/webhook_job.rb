@@ -3,7 +3,7 @@ class Bot::WebhookJob < ApplicationJob
   # GlobalID arguments then fail to deserialize. Discard rather than retry —
   # the records aren't coming back — so the queue closes cleanly instead of
   # recording a failed execution nothing can act on.
-  discard_on ActiveJob::DeserializationError
+  discard_on ActiveJob::DeserializationError::RecordNotFound
 
   # Retry transient network failures (connection drops, DNS hiccups, SSL
   # renegotiation) and HTTP-level delivery failures (a bot endpoint returning

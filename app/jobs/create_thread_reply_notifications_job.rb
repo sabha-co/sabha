@@ -1,8 +1,7 @@
 class CreateThreadReplyNotificationsJob < ApplicationJob
   queue_as :default
 
-  rescue_from ActiveJob::DeserializationError do
-  end
+  discard_on ActiveJob::DeserializationError::RecordNotFound
 
   # thread_id is the room a reply lives in — a chat thread or a forum post.
   def perform(message_id:, thread_id:, creator_id:)

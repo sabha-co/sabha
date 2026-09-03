@@ -6,7 +6,7 @@ class Notification::BundleDeliveryJob < ApplicationJob
   # transient infrastructure flakes that Solid Queue should retry.
   TerminalError = Class.new(StandardError)
 
-  discard_on ActiveJob::DeserializationError
+  discard_on ActiveJob::DeserializationError::RecordNotFound
   # The bundle is already canceled by the time we raise TerminalError. Discard
   # so Solid Queue closes the job cleanly instead of recording a failed
   # execution that operators would investigate (the work is done).

@@ -2,9 +2,9 @@ class ForumReactivationJob < ApplicationJob
   queue_as :default
 
   # The forum was hard-destroyed before this ran — nothing left to restore, so
-  # swallow the error rather than retry a job that can never succeed.
-  rescue_from ActiveJob::DeserializationError do
-  end
+  # discard rather than retry a job that can never succeed. A transient
+  # deserialization failure still retries.
+  discard_on ActiveJob::DeserializationError::RecordNotFound
 
   # Restores the posts a forum's deletion cascaded — and only those, so a post
   # deleted on its own stays deleted. Rooms::Forum#reactivate brings the
