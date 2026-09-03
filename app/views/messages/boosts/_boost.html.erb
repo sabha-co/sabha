@@ -2,8 +2,8 @@
 <% cache [ boost, boost.booster ] do %>
   <div id="<%= dom_id(boost) %>"
       class="boost boost-item flex-inline postion--relative max-width align-center fill-white gap"
-      data-controller="boost-delete boost-repeat" data-action="click->boost-repeat#perform click->boost-delete#reveal" 
-      data-boost-delete-perform-class="boost--deleting" data-boost-delete-reveal-class="expanded" 
+      data-controller="boost-delete boost-repeat" data-action="click->boost-repeat#perform click->boost-delete#reveal"
+      data-boost-delete-perform-class="boost--deleting" data-boost-delete-reveal-class="expanded"
       data-boost-delete-booster-id-value="<%= boost.booster.id %>" data-boost-repeat-booster-id-param="<%= boost.booster.id %>">
 
     <figure class="avatar boost__avatar flex-item-no-shrink" data-stop-propagation="true">

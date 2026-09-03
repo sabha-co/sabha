@@ -62,7 +62,7 @@ class Rooms::InvolvementsController < ApplicationController
         Sidebar::SIDEBAR_SECTIONS.each do |list_name|
           broadcast_remove_to @membership.user, :rooms, target: [ @room, helpers.dom_prefix(list_name, :list_node) ]
         end
-        broadcast_append_to @membership.user, :rooms, target: :hidden_rooms,
+        broadcast_append_to @membership.user, :rooms, target: :hidden_rooms_list,
                             partial: "users/sidebars/rooms/hidden", locals: { membership: @membership }
       when @membership.involvement_previously_was.inquiry.invisible?
         # Room is now visible - remove from hidden section, add to correct section
