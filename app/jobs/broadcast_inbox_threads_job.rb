@@ -1,8 +1,7 @@
 class BroadcastInboxThreadsJob < ApplicationJob
   queue_as :default
 
-  rescue_from ActiveJob::DeserializationError do
-  end
+  discard_on ActiveJob::DeserializationError::RecordNotFound
 
   def perform(thread_id:, parent_message_id:, message_id:, creator_id:)
     thread = Room.find_by(id: thread_id)

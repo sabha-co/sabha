@@ -4,8 +4,7 @@ class BroadcastMentioneeSidebarUpdatesJob < ApplicationJob
 
   queue_as :default
 
-  rescue_from ActiveJob::DeserializationError do
-  end
+  discard_on ActiveJob::DeserializationError::RecordNotFound
 
   def perform(message_id:)
     message = Message.find_by(id: message_id)

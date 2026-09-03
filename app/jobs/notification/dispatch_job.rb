@@ -2,7 +2,7 @@
 # push, missed-notification email bundle candidates). One job per message; the
 # boost path is the only call site that uses `only:`.
 class Notification::DispatchJob < ApplicationJob
-  discard_on ActiveJob::DeserializationError
+  discard_on ActiveJob::DeserializationError::RecordNotFound
 
   def perform(message, only: nil, actor: nil)
     return if DemoMode.enabled?
