@@ -4,7 +4,7 @@ class RoomUpdateBroadcastJob < ApplicationJob
   rescue_from ActiveJob::DeserializationError do
   end
 
-  retry_on ActiveRecord::Deadlocked, wait: :exponentially, attempts: 3
+  retry_on ActiveRecord::Deadlocked, wait: :polynomially_longer, attempts: 3
 
   def perform(room)
     return unless room.active?
