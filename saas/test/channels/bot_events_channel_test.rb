@@ -62,15 +62,9 @@ class SaasBotEventsChannelTest < ActionCable::Channel::TestCase
         legacy_stream   = "bot_events:#{bot_a.id}"
 
         assert_has_stream expected_stream
-        assert_no_streams_match foreign_stream
-        assert_no_streams_match legacy_stream
+        assert_has_no_stream foreign_stream
+        assert_has_no_stream legacy_stream
       end
     end
   end
-
-  private
-    def assert_no_streams_match(name)
-      assert_not subscription.streams.include?(name),
-        "expected channel not to subscribe to #{name.inspect} but it did"
-    end
 end

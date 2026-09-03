@@ -1,10 +1,11 @@
 class RoomUpdateBroadcastJob < ApplicationJob
   queue_as :default
 
-  rescue_from ActiveJob::DeserializationError do
-  end
+  # The room was destroyed before this ran — nothing left to broadcast. Drop
+  # only that case; a transient deserialization failure should still retry.
+  discard_on ActiveJob::DeserializationError::RecordNotFound
 
-  retry_on ActiveRecord::Deadlocked, wait: :exponentially, attempts: 3
+  retry_on ActiveRecord::Deadlocked, wait: :polynomially_longer, attempts: 3
 
   def perform(room)
     return unless room.active?

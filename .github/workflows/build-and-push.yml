@@ -123,7 +123,9 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=raw,value=latest
+            # Don't let a prerelease claim :latest — real deploys pull :latest,
+            # so a prerelease (e.g. a load-test build) must not overwrite it.
+            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
           flavor: |
             latest=false
           labels: |
