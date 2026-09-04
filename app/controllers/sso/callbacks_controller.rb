@@ -1,4 +1,6 @@
 class Sso::CallbacksController < Sso::BaseController
+  include DesktopHandoff
+
   rate_limit to: 10, within: 1.minute, only: :show, with: -> { head :too_many_requests }
 
   def show
@@ -34,12 +36,25 @@ class Sso::CallbacksController < Sso::BaseController
     end
 
     def sign_in_via_sso(payload, return_path)
+      handoff = desktop_handoff_context
+
       newly_bootstrapped = FirstRun.auto_bootstrap_from_sso(payload)
       pending_join_code = session.delete(:pending_join_code)
       user = User.sign_in_with_sso!(payload)
       redeem_pending_join_code!(user, pending_join_code)
       start_new_session_for user
       flash[:notice] = welcome_message(user) if newly_bootstrapped || user.previously_new_record?
+
+      if handoff.present?
+        claim = Desktop::SessionClaim.issue!(
+          user: user,
+          nonce: handoff["nonce"],
+          origin: handoff["origin"],
+          return_path: handoff["return_path"]
+        )
+        return redirect_to_desktop_claim!(claim)
+      end
+
       redirect_to safe_return_path(return_path)
     end
 

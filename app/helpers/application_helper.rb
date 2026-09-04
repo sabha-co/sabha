@@ -1,5 +1,6 @@
 module ApplicationHelper
   include RoomsHelper
+  include DesktopClientDetection
 
   def page_title_tag
     tag.title page_title
@@ -38,7 +39,7 @@ module ApplicationHelper
   end
 
   def body_classes
-    [ @body_class, admin_body_class, account_logo_body_class, workspace_selector_body_class, workspace_banner_body_class ].compact.join(" ")
+    [ @body_class, admin_body_class, account_logo_body_class, workspace_selector_body_class, workspace_banner_body_class, desktop_client_body_class ].compact.join(" ")
   end
 
   def link_back
@@ -86,6 +87,10 @@ module ApplicationHelper
 
     def workspace_banner_body_class
       "has-workspace-banner" if Sabha.saas? && Current.workspace.present?
+    end
+
+    def desktop_client_body_class
+      "desktop-client" if desktop_client?
     end
 
     # Extracts a back path from the referer if it matches a known inbox/search page.
