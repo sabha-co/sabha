@@ -10,7 +10,8 @@ module Desktop
       {
         protocol_major: PROTOCOL_MAJOR,
         product: product_identity,
-        sign_in_path: sign_in_path
+        sign_in_path: sign_in_path,
+        destinations_path: "/api/desktop/destinations"
       }
     end
 
@@ -29,8 +30,13 @@ module Desktop
       def product_identity
         {
           name: Branding.app_name,
-          short_name: Branding.app_short_name
+          short_name: Branding.app_short_name,
+          slug: product_slug
         }
+      end
+
+      def product_slug
+        Branding.app_short_name.to_s.parameterize.presence || "sabha"
       end
 
       def sign_in_path

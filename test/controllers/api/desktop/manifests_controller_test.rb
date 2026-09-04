@@ -10,6 +10,9 @@ class API::Desktop::ManifestsControllerTest < ActionDispatch::IntegrationTest
     body = JSON.parse(response.body)
     assert_equal 1, body["protocol_major"]
     assert_equal Branding.app_name, body.dig("product", "name")
+    assert_equal Branding.app_short_name, body.dig("product", "short_name")
+    assert_equal Branding.app_short_name.to_s.parameterize.presence || "sabha", body.dig("product", "slug")
+    assert_equal "/api/desktop/destinations", body["destinations_path"]
     assert body["sign_in_path"].present?
     refute body.key?("destinations")
     refute body.key?("members")
