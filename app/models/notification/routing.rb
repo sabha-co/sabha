@@ -7,4 +7,5 @@ module Notification::Routing
   IN_APP_ROW_TYPES = %i[mention thread_reply boost].freeze
   PUSH_TYPES       = %i[mention direct_message everyone_room_message thread_reply].freeze
   EMAIL_TYPES      = %i[mention direct_message].freeze
+  DESKTOP_TYPES    = PUSH_TYPES
 end
