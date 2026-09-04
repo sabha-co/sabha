@@ -196,7 +196,7 @@
 .forum-filter { row-gap: 0.5rem; }
 
 /* The sort control drops on phones; the Solved filter stays. */
-.forum-filter__sort {
+.forum-filter .forum-filter__sort {
   @media (max-width: 499.9px) {
     display: none;
   }

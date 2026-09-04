@@ -59,32 +59,15 @@
   &:focus-visible {
     outline: 2px solid var(--color-accent-brand);
   }
-}
 
-/* Reactor avatars: 17px, overlapping −5, ringed in the chip's ground so the
-   stack reads as separate discs */
-.boost__avatars {
-  display: inline-flex;
-}
-
-.boost__avatar {
-  --avatar-border-radius: 25%;
-
-  block-size: 17px;
-  box-shadow: 0 0 0 1.5px var(--color-bg);
-  inline-size: 17px;
-  overflow: hidden;
-
-  & + & {
-    margin-inline-start: -6px;
-  }
-
-  & > img {
-    border-radius: var(--avatar-border-radius);
-  }
-
-  .boost--mine & {
-    box-shadow: 0 0 0 1.5px var(--color-selected);
+  /* The roster tooltip is an absolutely-positioned child, so it has to clear the
+     stacking ladder .message owns (avatar 2, hover actions 3, avatar menu 4) or
+     it paints under the avatar it overlaps. Lifted only while the tooltip is
+     actually showing, so a resting chip never outranks an open avatar menu. */
+  &:hover,
+  &:focus-visible {
+    position: relative;
+    z-index: 5;
   }
 }
 
@@ -92,10 +75,13 @@
   font-size: 1rem;
 }
 
-.boost__overflow {
+/* The count carries the roster: tabular so chips do not jitter as it ticks,
+   and quieter than the emoji it follows. */
+.boost__count {
   color: var(--color-text-muted);
-  font-size: 0.6875rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
 /* Trailing pill that opens the reaction picker */

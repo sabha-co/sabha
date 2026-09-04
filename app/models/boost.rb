@@ -1,9 +1,10 @@
 class Boost < ApplicationRecord
   Group = Data.define(:content, :count, :boosters, :truncated)
 
-  # How many reactor avatars a grouped chip stacks before collapsing the rest
-  # into a trailing "+N".
-  AVATARS_SHOWN = 5
+  # The tooltip and accessible name list this many boosters before collapsing
+  # the rest into a trailing "and N more". Set high because at chip size the
+  # roster reads as text, not avatars, so there's little cost to naming everyone.
+  BOOSTERS_LISTED = 100
 
   belongs_to :message, touch: true
   belongs_to :booster, class_name: "User", default: -> { Current.user }

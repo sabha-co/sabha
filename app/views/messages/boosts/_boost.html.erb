@@ -1,34 +1,32 @@
 <%# locals: (group:, message:) -%>
-<%# One grouped reaction chip: the reactors' avatars stacked, then the emoji.
+<%# One grouped reaction chip: the emoji, then the count. Who reacted is carried
+    by the tooltip and the accessible name rather than a stack of avatars — at
+    17px those faces read as texture, not identity.
     Clicking toggles the current user's own reaction on or off — whether it's
     "mine" is stamped client-side (boost_toggle_controller) so the broadcast HTML
     stays identical for every viewer. The two hidden forms are the add and remove
     paths the controller submits between. %>
 <%# Cached per chip so a toggle re-renders only the emoji that changed — the
     other chips in the replaced container reuse their cached HTML. Keyed on the
-    boosters (avatars + names bust on change), the count (the "+N" overflow), and
-    the message (the form action paths). %>
+    boosters (their names carry the roster), the count, and the message (the form
+    action paths). %>
 <% cache [ message, group.content, group.count, group.boosters ] do %>
-<% shown = group.boosters.first(Boost::AVATARS_SHOWN)
-   extra = group.count - shown.size
-   reactor_names = shown.map(&:name)
-   reactor_names << "#{extra} #{'other'.pluralize(extra)}" if extra.positive? -%>
+<% listed = group.boosters.first(Boost::BOOSTERS_LISTED)
+   extra = group.count - listed.size
+   reactor_names = listed.map(&:name)
+   reactor_names << "#{extra} more" if extra.positive?
+   roster = reactor_names.to_sentence -%>
 <div class="boost" data-controller="boost-toggle"
      data-boost-toggle-content-value="<%= group.content %>"
      data-boost-toggle-booster-ids-value="<%= group.boosters.map(&:id).to_json %>">
+  <%# data-tooltip (tooltips.css) reveals the roster on hover AND on keyboard
+      focus, unlike a native title which does neither reliably. The span carries
+      the full sentence so it doubles as the button's accessible name. %>
   <button type="button" class="boost__toggle" data-action="boost-toggle#toggle" aria-pressed="false"
-          aria-label="<%= reactor_names.to_sentence %> reacted with <%= group.content %>">
-    <span class="boost__avatars flex-item-no-shrink" aria-hidden="true">
-      <% shown.each do |booster| %>
-        <div class="boost__avatar">
-          <%= avatar_image_tag booster, size: 34 %>
-        </div>
-      <% end %>
-    </span>
-    <span class="boost__content"><%= group.content %></span>
-    <% if extra.positive? %>
-      <span class="boost__overflow">+<%= extra %></span>
-    <% end %>
+          data-tooltip="true">
+    <span class="boost__content" aria-hidden="true"><%= group.content %></span>
+    <span class="boost__count" aria-hidden="true"><%= group.count %></span>
+    <span class="for-screen-reader"><%= roster %> reacted with <%= group.content %></span>
   </button>
 
   <%= form_with model: [ message, Boost.new ], html: { class: "boost__form", data: { boost_toggle_target: "addForm" } } do %>

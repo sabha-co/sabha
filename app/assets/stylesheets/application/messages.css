@@ -539,8 +539,7 @@
   overflow: visible;
 }
 
-.thread__avatar,
-.boost__avatar {
+.thread__avatar {
   overflow: visible;
 }
 
@@ -733,6 +732,15 @@
 
     .thread__separator {
       color: var(--color-text-subtle);
+    }
+
+    /* Below the wide breakpoint the card keeps the reply count and drops the
+       last-reply stamp (and its separator), per the responsive doc. */
+    @media (max-width: 1023.9px) {
+      .thread__separator,
+      .thread__last-reply {
+        display: none;
+      }
     }
 
     .txt-muted {
@@ -1031,14 +1039,6 @@ img.message__attachment {
   }
 }
 
-.boost__avatar .message__avatar-menu {
-  --arrow-size: 0.9em;
-
-  .btn {
-    padding: var(--btn-padding, 0.5em 1.1em);
-  }
-}
-
 .mention .message__avatar-menu {
   --avatar-size: 1em;
   --avatar-border-size: 0px;
@@ -1095,6 +1095,7 @@ img.message__attachment {
   [data-messages-target="body"] {
     background-color: var(--color-message-mentioned);
     border-radius: var(--border-radius-md);
+    inline-size: fit-content;
     max-inline-size: 100%;
     padding: var(--content-padding-block) var(--content-padding-inline);
   }

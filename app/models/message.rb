@@ -133,7 +133,7 @@ class Message < ApplicationRecord
   # Issues O(distinct_emoji) queries by design — bounded by `limit + 1` —
   # SQLite portability rules out a single `array_agg`. boost_groups is the
   # in-memory sibling used by the web render; keep their ranking rules in step.
-  def boost_summary(limit: 50, boosters_limit: 100)
+  def boost_summary(limit: 50, boosters_limit: Boost::BOOSTERS_LISTED)
     ranked = boosts.group(:content)
                    .reorder(Arel.sql("COUNT(*) DESC, MIN(created_at) ASC"))
                    .limit(limit + 1)
