@@ -60,10 +60,6 @@ body.room-header--pencil #nav {
   }
 }
 
-body.room-header--pencil .navbar-title--room {
-  font-size: var(--font-size-large);
-}
-
 /* DM header: avatar with presence dot, then name over the presence line */
 .navbar-dm {
   align-items: center;

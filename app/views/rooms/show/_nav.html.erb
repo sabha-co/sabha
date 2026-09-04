@@ -51,7 +51,7 @@
       </div>
     </div>
   <% else %>
-    <h1 class="navbar-title navbar-title--room">
+    <h1 class="navbar-title">
       <%= link_to edit_room_path(room) do %>
         <% if room.thread? %>
           <%= room_display_name(room.parent_message.room) %>
