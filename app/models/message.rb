@@ -202,6 +202,7 @@ class Message < ApplicationRecord
 
     types = only ? Array(only).map(&:to_sym) : room.applicable_activity_types(self)
     push_subscriptions = []
+    desktop_recipient_ids = Set.new
 
     # Two phases. Everything that can raise — in-app rows, email bundles, and
     # working out who to push — runs first; posting runs last. A push can't be
@@ -210,9 +211,11 @@ class Message < ApplicationRecord
     types.each do |activity_type|
       deliver_in_app_row_for(activity_type, actor: actor)              if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
       push_subscriptions.concat push_subscriptions_for(activity_type)  if Notification::Routing::PUSH_TYPES.include?(activity_type)
+      desktop_recipient_ids.merge(desktop_recipient_user_ids_for(activity_type)) if Notification::Routing::DESKTOP_TYPES.include?(activity_type)
       enqueue_missed_email_candidates_for(activity_type)               if Notification::Routing::EMAIL_TYPES.include?(activity_type)
     end
 
+    deliver_desktop_events_to(desktop_recipient_ids, applicable_types: types)
     deliver_pushes_to push_subscriptions
   end
 
@@ -237,8 +240,16 @@ class Message < ApplicationRecord
   # participate — same predicates run at dispatch time and at delivery time,
   # per arch § 4–5.
   def push_recipient_user_ids_for(activity_type)
+    notify_recipient_user_ids_for(activity_type, routing: Notification::Routing::PUSH_TYPES)
+  end
+
+  def desktop_recipient_user_ids_for(activity_type)
+    notify_recipient_user_ids_for(activity_type, routing: Notification::Routing::DESKTOP_TYPES)
+  end
+
+  def notify_recipient_user_ids_for(activity_type, routing:)
     activity_type = activity_type.to_sym
-    return [] unless Notification::Routing::PUSH_TYPES.include?(activity_type)
+    return [] unless routing.include?(activity_type)
 
     push_candidate_memberships_for(activity_type)
       .reject { |membership| watching?(membership) }
@@ -321,6 +332,20 @@ class Message < ApplicationRecord
     # Phase 2. Deliberately dumb: everything that can fail has already run. The
     # payload is built before the first post, so a raise here still means
     # nothing went out and the job can retry cleanly.
+    def deliver_desktop_events_to(recipient_ids, applicable_types:)
+      return if recipient_ids.empty?
+
+      activity_types = applicable_types.map(&:to_sym) & Notification::Routing::DESKTOP_TYPES
+      users_by_id = User.where(id: recipient_ids).index_by(&:id)
+
+      recipient_ids.each do |user_id|
+        user = users_by_id[user_id]
+        next unless user
+
+        Desktop::NotificationEvent.deliver_for(message: self, user: user, activity_types: activity_types)
+      end
+    end
+
     def deliver_pushes_to(subscriptions)
       return if subscriptions.empty?
 
