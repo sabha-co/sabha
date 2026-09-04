@@ -63,7 +63,7 @@ spacing:
   block: "1rem"
   block-half: "0.5rem"
   block-double: "2rem"
-  row: "6px"
+  row: "9px"
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
@@ -138,6 +138,7 @@ A paper-and-ink foundation with a single selectable accent — indigo is the def
 - **Paper Hover** (`oklch(97.6% 0.003 265)`): `--color-bg-hover`.
 - **Line Soft** (`oklch(95.8% 0.004 271)`): `--color-border` — default divider.
 - **Line** (`oklch(93.4% 0.006 265)`): `--color-border-dark` — stronger rule.
+- **Bench Edge** (`oklch(96% 0.007 84)`): `--color-bg-side` — the warm near-paper sidebar field; a shade off `paper` for a quiet two-tone split. Hover `oklch(93% 0.011 82)`, divider `oklch(88.5% 0.013 82)`. Inverts to a dark rail (`oklch(16% 0.008 278)`) in dark mode only.
 - **Scrim** (`oklch(0% 0 0 / 0.16)`): `--color-scrim` — sidebar drawer overlay; dialog backdrop is `oklch(0% 0 0 / 0.5)`.
 
 ### Named Rules
@@ -168,11 +169,11 @@ A paper-and-ink foundation with a single selectable accent — indigo is the def
 
 ## Layout
 
-**Spatial model:** A rem-anchored rhythm using `--spacing-block: 1rem` / `--spacing-inline: 1ch` with half and double steps. Utilities `.pad`, `.gap`, `.margin-*` consume these exact values so spacing composes predictably.
+**Spatial model:** A rem-anchored rhythm using `--block-space: 1rem` / `--inline-space: 1ch` with half (`--block-space-half`) and double (`--block-space-double`) steps. Utilities `.pad`, `.gap`, `.margin-*` consume these exact values so spacing composes predictably.
 
 **Grid & containers:** Sidebar + main content. Sidebar: docks left ≥1280px, collapses to 60px icon rail from 834–1279px (expands over content on demand with `-18px 0 44px` panel shadow), becomes a drawer over a `16%` scrim below 834px. Main content is the message stream or forum post gallery; forum forces post-gallery layout, not a stream.
 
-**Density:** Default `--space-row: 6px` on sidebar rows (min-height 32px keeps touch targets); compact mode via `data-density="compact"` tightens to `4px` without shrinking hit area.
+**Density:** Default `--space-row: 9px`, applied as the block padding on each sidebar row rather than as a gap between them (min-height 32px keeps touch targets); compact mode via `data-density="compact"` tightens to `4px` without shrinking hit area.
 
 **Responsive:** Design mobile and desktop states together from the start. Utilities `.hide-on-mobile` / `.hide-on-desktop`, container `contain: inline-size`, and overflow snap regions provide staged disclosure without hidden gestures.
 
@@ -194,7 +195,7 @@ Flat by default. Depth comes from tonal layering (`--color-bg`, `--color-bg-rais
 
 ## Shapes
 
-Corner strategy is consistent and restrained: **8px** is the signature radius for buttons, inputs, and cards (pinned in `px` so it holds across zoom), pills are an explicit opt-in (`999px`, e.g. `.message-area__return-to-latest`), circles are reserved for icon-only buttons and avatars (`50%` / `--avatar-border-radius`). Borders are hairline `1px solid` using `--color-border` / `--color-border-darker` / `--control-border` (73% lightness). Code and inline `code` use `0.3em` radius. Dialogs use `--color-bg` with a `0.5` scrim backdrop, centered via transform. Clipping is minimal — no decorative masks; geometry stays rectangular and honest.
+Corner strategy is restrained, with a small named scale behind it. Controls default to **8px** — the `buttons.css` fallback in `border-radius: var(--btn-border-radius, 8px)` — for buttons, inputs, and cards. Alongside it sits a four-step token scale in `utilities.css`: `--border-radius-sm: 6px`, `--border-radius-md: 9px`, `--border-radius-lg: 12px`, `--border-radius-pill: 999px`. Radius isn't fully centralized yet: `0.5em` is still hardcoded at ~9 legacy sites (avatars, embeds, sidebar, actiontext), and those are `em`-based, so they scale with zoom rather than pinning — the token scale is the direction to converge on. Pills are an explicit opt-in (`--border-radius-pill` / `999px`, e.g. `.message-area__return-to-latest`); true circles (`50%`) are reserved for icon-only buttons. Avatars are **not** circles — since v2 they're a squircle, `--avatar-border-radius: 25%` (`avatars.css`), scaling with the avatar so a 36px message avatar reads as ~9px and the 17px boost-chip avatar keeps the same shape. Borders are hairline `1px solid` using `--color-border` / `--color-border-darker` / `--control-border` (73% lightness). Code and inline `code` use `0.3em` radius. Dialogs sit on a raised paper surface with a scrim backdrop, centered via transform — but there are **two** backdrops: the standard `<dialog>` uses `oklch(0% 0 0 / 0.5)` (`base.css`), while the lighter `.scrim-dialog` (reaction picker, role menu) uses a tinted `rgb(12 14 20 / 0.36)` (`dialogs.css`) — the one non-OKLch surface value, flagged for cleanup. Clipping is minimal — no decorative masks; geometry stays rectangular and honest.
 
 ## Components
 
@@ -221,7 +222,7 @@ Stroke and sunk, focus via glow.
 - **Internal Padding:** `var(--block-space) var(--inline-space)` (`1rem 1ch`) via `.pad`.
 
 ### Navigation (Sidebar)
-- **Style:** Contrast-tinted sidebar (light/dark OKLch scopes), list nodes with `--space-row: 6px` (compact 4px), 32px min-height.
+- **Style:** Warm-light "bench edge" sidebar — a near-paper field (`--color-bg-side`, `oklch(96% 0.007 84)`) held a shade off the content so the two-tone split reads without contrast. It inverts to a dark rail only in dark mode; light mode is a quiet, warm split, not a dark panel. List nodes with `--space-row: 9px` (compact 4px), 32px min-height.
 - **Typography:** Body/ small; active/mentioned states tinted via `indigo-bg` / red wash.
 - **States:** Hover `bg-hover`; selected `indigo-bg` + `indigo-border`; mentioned `color-message-mentioned` wash.
 - **Mobile:** Drawer over `scrim` with `shadow-panel`.
@@ -232,11 +233,11 @@ Stroke and sunk, focus via glow.
 - **Boosts:** Inline pill reactions, hard-deleted on toggle.
 
 ### Chips / Boosts / Avatars
-- **Avatar:** `--avatar-size` (`48px` small, `120px` large), `--avatar-border-radius`, warm earth tones for identity — the primary saturated color in the UI.
+- **Avatar:** `--avatar-size` (`48px` small, `120px` large), squircle shape (`--avatar-border-radius: 25%`, not a circle). Identity resolves through a four-step chain (`Users::AvatarsController#show`): (1) an uploaded image (WebP variant); (2) for bots, a DiceBear bot style or the bundled `default-bot-avatar.svg`; (3) a **DiceBear**-generated SVG when `Dicebear.enabled?` (the `User::DicebearAvatar` concern, cached ~1 week); (4) initials on a warm earth-tone background (`avatar_background_color`) as the final fallback. The "warm earth tones" are only that last step — DiceBear is the default generated look when enabled, and earth tones are the saturated color only when it isn't.
 - **Boosts:** Tactile pills with count, `color-selected` / `color-selected-dark` tints on active.
 
 ### Dialogs / Popups / Lightbox
-- **Dialog:** `--width: 50ch`, centered `translate(-50%, -50%)`, `::backdrop oklch(0% 0 0 / 0.5)`.
+- **Dialog:** `--width: 50ch`, centered `translate(-50%, -50%)`, `::backdrop oklch(0% 0 0 / 0.5)`. The lighter `.scrim-dialog` variant (picker/menu) overrides this with a tinted `rgb(12 14 20 / 0.36)` backdrop — the lone non-OKLch surface value (see Shapes).
 - **Popups:** `shadow-overlay`, 8px radius, tonal border.
 - **Lightbox:** Overlay with scrim, centered image, keyboard and SR accessible.
 

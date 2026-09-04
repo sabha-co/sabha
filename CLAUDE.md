@@ -162,5 +162,5 @@ Community-oriented chat. Users are members of online communities — hobbyist gr
 1. **Clarity over cleverness** — Every element should be immediately understandable. No mystery meat navigation, no hidden features behind gestures.
 2. **Warmth through restraint** — Personality comes from thoughtful defaults and subtle touches (avatar colors, spacing, transitions), not from decoration or illustration.
 3. **Content-first** — Messages are the product. UI chrome should be minimal and recede. The conversation is always the hero.
-4. **Responsive by nature** — The dark-contrast sidebar docks left ≥1280px, collapses to a 60px icon rail from 834–1279px (expanding over the content on demand), and becomes a drawer over a scrim below 834px. Design for every state from the start, not as an afterthought.
+4. **Responsive by nature** — The sidebar — a warm-light "bench edge" field in light mode, inverting to a dark rail only in dark mode — docks left ≥1280px, collapses to a 60px icon rail from 834–1279px (expanding over the content on demand), and becomes a drawer over a scrim below 834px. Design for every state from the start, not as an afterthought.
 5. **Accessible by default** — WCAG AA contrast, keyboard navigation, screen reader support, `max(16px, 1em)` inputs. Accessibility is not a feature, it's the baseline.
