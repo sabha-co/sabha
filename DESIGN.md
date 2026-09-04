@@ -138,7 +138,8 @@ A paper-and-ink foundation with a single selectable accent — indigo is the def
 - **Paper Hover** (`oklch(97.6% 0.003 265)`): `--color-bg-hover`.
 - **Line Soft** (`oklch(95.8% 0.004 271)`): `--color-border` — default divider.
 - **Line** (`oklch(93.4% 0.006 265)`): `--color-border-dark` — stronger rule.
-- **Bench Edge** (`oklch(96% 0.007 84)`): `--color-bg-side` — the warm near-paper sidebar field; a shade off `paper` for a quiet two-tone split. Hover `oklch(93% 0.011 82)`, divider `oklch(88.5% 0.013 82)`. Inverts to a dark rail (`oklch(16% 0.008 278)`) in dark mode only.
+- **Contrast Sidebar** (`oklch(21% 0.01 277)` light theme; `oklch(16% 0.008 278)` dark theme): the default sidebar surface. It stays dark in both themes and steps darker than the page in dark mode so the two-tone hierarchy does not invert.
+- **Bench Edge** (`oklch(96% 0.007 84)`): `--color-bg-side` — the warm near-paper Match preference; a shade off `paper` for a quiet two-tone split. Hover `oklch(93% 0.011 82)`, divider `oklch(88.5% 0.013 82)`. In dark mode Match uses the dark bench tokens.
 - **Scrim** (`oklch(0% 0 0 / 0.16)`): `--color-scrim` — sidebar drawer overlay; dialog backdrop is `oklch(0% 0 0 / 0.5)`.
 
 ### Named Rules
@@ -171,7 +172,7 @@ A paper-and-ink foundation with a single selectable accent — indigo is the def
 
 **Spatial model:** A rem-anchored rhythm using `--block-space: 1rem` / `--inline-space: 1ch` with half (`--block-space-half`) and double (`--block-space-double`) steps. Utilities `.pad`, `.gap`, `.margin-*` consume these exact values so spacing composes predictably.
 
-**Grid & containers:** Sidebar + main content. Sidebar: docks left ≥1280px, collapses to 60px icon rail from 834–1279px (expands over content on demand with `-18px 0 44px` panel shadow), becomes a drawer over a `16%` scrim below 834px. Main content is the message stream or forum post gallery; forum forces post-gallery layout, not a stream.
+**Grid & containers:** Sidebar + main content. The dark Contrast skin is the default; the page-matched Bench Edge skin is an optional per-device preference. Sidebar: docks left ≥1280px, collapses to 60px icon rail from 834–1279px (expands over content on demand with `-18px 0 44px` panel shadow), becomes a drawer over a `16%` scrim below 834px. Main content is the message stream or forum post gallery; forum forces post-gallery layout, not a stream.
 
 **Density:** Default `--space-row: 9px`, applied as the block padding on each sidebar row rather than as a gap between them (min-height 32px keeps touch targets); compact mode via `data-density="compact"` tightens to `4px` without shrinking hit area.
 
@@ -222,7 +223,7 @@ Stroke and sunk, focus via glow.
 - **Internal Padding:** `var(--block-space) var(--inline-space)` (`1rem 1ch`) via `.pad`.
 
 ### Navigation (Sidebar)
-- **Style:** Warm-light "bench edge" sidebar — a near-paper field (`--color-bg-side`, `oklch(96% 0.007 84)`) held a shade off the content so the two-tone split reads without contrast. It inverts to a dark rail only in dark mode; light mode is a quiet, warm split, not a dark panel. List nodes with `--space-row: 9px` (compact 4px), 32px min-height.
+- **Style:** Dark Contrast is the intentional default in light and dark themes. It uses a 21% ground against the light page and a 16% ground against the 19.6% dark page, preserving a darker navigation edge in both. Match is the optional warm near-paper field in light mode and the dark bench surface in dark mode. List nodes use `--space-row: 9px` (compact 4px), 32px min-height; readable counts use `--color-text-muted`, never the decorative subtle token.
 - **Typography:** Body/ small; active/mentioned states tinted via `indigo-bg` / red wash.
 - **States:** Hover `bg-hover`; selected `indigo-bg` + `indigo-border`; mentioned `color-message-mentioned` wash.
 - **Mobile:** Drawer over `scrim` with `shadow-panel`.

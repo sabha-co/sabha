@@ -66,8 +66,9 @@ export default class extends Controller {
     const rooms = this.#findRoomTargets(roomId)
 
     rooms.forEach(room => {
-      if (room.dataset.sortedListPriority) {
-        room.dataset.sortedListPriority = "1"
+      const sortedListTarget = room.closest('[data-sorted-list-target]')
+      if (sortedListTarget?.dataset.sortedListPriority) {
+        sortedListTarget.dataset.sortedListPriority = "1"
       }
       room.classList.remove(this.unreadClass, this.badgeClass)
       // The numeric count is server-rendered; classes only drive the dot, so

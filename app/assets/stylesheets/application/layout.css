@@ -108,7 +108,7 @@ body {
     overflow: hidden;
 
     &::after {
-      background-color: oklch(var(--lch-always-black) / 0.4);
+      background-color: var(--color-scrim);
       content: "";
       inset: 0;
       position: fixed;

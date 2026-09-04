@@ -1,17 +1,20 @@
 <% room = local_assigns[:room] || local_assigns[:membership].room %>
+<% membership = local_assigns[:membership] %>
+<% membership_unread = membership&.unread? %>
 
 <div id="<%= dom_id(room, dom_prefix(list_name, :list_node)) %>"
      data-sorted-list-target="item"
      data-name="<%= room.sortable_name %>"
      data-size="<%= room.messages_count %>"
      data-updated-at="<%= room.last_active_at.iso8601 %>"
+     data-sorted-list-priority="<%= membership_unread ? 0 : 1 %>"
      data-type="list_node"
      class="room-row flex align-center gap-half">
-  <%= render "users/sidebars/rooms/shared_link", list_name: list_name, membership: local_assigns[:membership] %>
+  <%= render "users/sidebars/rooms/shared_link", list_name:, membership:, membership_unread: %>
 
   <%# Forums carry no row menu — they are community-wide auto-join rooms, so
       Leave/Favorite/Mute don't apply the way they do to ordinary rooms. %>
-  <% if local_assigns[:membership] && !room.forum? %>
-    <%= render "users/sidebars/rooms/menu", membership: local_assigns[:membership] %>
+  <% if membership && !room.forum? %>
+    <%= render "users/sidebars/rooms/menu", membership: %>
   <% end %>
 </div>

@@ -269,11 +269,10 @@
 
 /* Row count riding each section label */
 .sidebar__label-count {
-  color: var(--color-text-subtle);
+  color: var(--color-text-muted);
   font-size: 0.6875rem;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
-  opacity: 0.75;
 
   &::before {
     content: "("
@@ -829,8 +828,6 @@
 
   /* Rows stack flush — the 9px row padding is the breathing room (comp) */
   .rooms-list {
-    padding-bottom: var(--block-space);
-
     & #shared_rooms {
       display: flex;
       flex-direction: column;
@@ -1195,18 +1192,18 @@ body.searches
    the sidebar-skin preference stamps data-sidebar="match" on <html> — then the
    sidebar drops the scope and inherits the page theme. */
 html:not([data-sidebar="match"]) #sidebar[data-contrast="true"] {
-  --color-bg: oklch(21% 0.01 277);
-  --color-bg-raised: oklch(24% 0.012 271);
-  --color-bg-sunk: oklch(21% 0.01 277);
-  --color-bg-side: oklch(21% 0.01 277);
-  --color-bg-side-hover: oklch(26.5% 0.013 273);
-  --color-border-side: oklch(28.2% 0.013 273);
-  --color-bg-hover: oklch(26.5% 0.013 273);
-  --color-text: oklch(100% 0 0);
-  --color-text-lighter: oklch(92.7% 0.009 265);
-  --color-text-muted: oklch(73% 0.017 263);
-  --color-text-subtle: oklch(57.2% 0.02 264);
-  --color-border-dark: oklch(28.2% 0.013 273);
+  --color-bg: var(--color-sidebar-contrast-bg);
+  --color-bg-raised: var(--color-sidebar-contrast-bg-raised);
+  --color-bg-sunk: var(--color-sidebar-contrast-bg);
+  --color-bg-side: var(--color-sidebar-contrast-bg);
+  --color-bg-side-hover: var(--color-sidebar-contrast-bg-hover);
+  --color-border-side: var(--color-sidebar-contrast-border);
+  --color-bg-hover: var(--color-sidebar-contrast-bg-hover);
+  --color-text: var(--color-sidebar-contrast-text);
+  --color-text-lighter: var(--color-sidebar-contrast-text-lighter);
+  --color-text-muted: var(--color-sidebar-contrast-text-muted);
+  --color-text-subtle: var(--color-sidebar-contrast-text-subtle);
+  --color-border-dark: var(--color-sidebar-contrast-border);
   --color-selected: oklch(100% 0 0 / 0.1);
   /* The workspace accent, lifted for the dark ground (colors.css sets the
      per-accent lift on :root). */
@@ -1230,38 +1227,52 @@ html:not([data-sidebar="match"]) #sidebar[data-contrast="true"] * {
 html:not([data-sidebar="match"])
   #sidebar[data-contrast="true"]
   .anchored-popover {
-  --color-bg: oklch(var(--lch-white));
-  --color-bg-raised: oklch(var(--lch-raise));
-  --color-bg-sunk: oklch(var(--lch-sunk));
-  --color-bg-hover: oklch(var(--lch-hover));
-  --color-text: oklch(var(--lch-ink));
-  --color-text-lighter: oklch(var(--lch-ink-1));
-  --color-text-muted: oklch(var(--lch-ink-2));
-  --color-text-subtle: oklch(var(--lch-ink-3));
-  --color-border: oklch(var(--lch-line-2));
-  --color-border-dark: oklch(var(--lch-line));
-  --color-selected: oklch(var(--lch-accent-bg));
-  --color-accent-brand: oklch(var(--lch-accent));
+  --color-bg: var(--color-page-bg);
+  --color-bg-raised: var(--color-page-bg-raised);
+  --color-bg-sunk: var(--color-page-bg-sunk);
+  --color-bg-hover: var(--color-page-bg-hover);
+  --color-text: var(--color-page-text);
+  --color-text-lighter: var(--color-page-text-lighter);
+  --color-text-muted: var(--color-page-text-muted);
+  --color-text-subtle: var(--color-page-text-subtle);
+  --color-border: var(--color-page-border);
+  --color-border-dark: var(--color-page-border-dark);
+  --color-selected: var(--color-page-selected);
+  --color-accent-brand: var(--color-page-accent-brand);
 }
 
 /* Cold-start skeleton for the lazy sidebar frame (users/sidebars/_skeleton).
-   Theme-agnostic bars (text colour at low alpha reads on light or dark ground);
-   a gentle pulse, disabled under reduced-motion. */
+   Reserve the same four regions as the loaded sidebar so only their contents
+   resolve when the frame lands. Theme-agnostic bars use text at low alpha. */
 .sidebar-skeleton {
+  block-size: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-block: 8px;
-  padding-inline: var(--sidebar-inline-space);
+  max-block-size: 100dvh;
 }
 
+.sidebar-skeleton__footer,
 .sidebar-skeleton__row {
   align-items: center;
   display: flex;
   gap: 10px;
-  padding-block: 7px;
 }
 
+.sidebar-skeleton__rooms {
+  border-block-start: 1px solid var(--color-border-side);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--block-space-half) 8px;
+}
+
+.sidebar-skeleton__row {
+  min-block-size: 32px;
+  padding-block: 7px;
+  padding-inline: 1.2ch;
+}
+
+.sidebar-skeleton__avatar,
 .sidebar-skeleton__glyph,
 .sidebar-skeleton__bar {
   animation: skeleton-pulse 1.4s ease-in-out infinite;
@@ -1269,27 +1280,79 @@ html:not([data-sidebar="match"])
   border-radius: 6px;
 }
 
-.sidebar-skeleton__glyph {
-  block-size: 20px;
+.sidebar-skeleton__avatar {
+  block-size: 32px;
   flex-shrink: 0;
-  inline-size: 20px;
+  inline-size: 32px;
+}
+
+.sidebar-skeleton__glyph {
+  block-size: 18px;
+  flex-shrink: 0;
+  inline-size: 18px;
 }
 
 .sidebar-skeleton__bar {
+  display: block;
   block-size: 12px;
   inline-size: 60%;
 }
 
-.sidebar-skeleton__row:nth-child(2) .sidebar-skeleton__bar {
+.sidebar-skeleton__copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sidebar-skeleton__bar--title {
+  block-size: 12px;
   inline-size: 44%;
 }
 
-.sidebar-skeleton__row:nth-child(3) .sidebar-skeleton__bar {
+.sidebar-skeleton__bar--meta {
+  block-size: 8px;
+  inline-size: 62%;
+}
+
+.sidebar-skeleton__bar--label {
+  block-size: 8px;
+  inline-size: 28%;
+  margin-block: 5px 2px;
+  margin-inline: 1.2ch;
+}
+
+.sidebar-skeleton__menu .sidebar-skeleton__row:nth-child(2) .sidebar-skeleton__bar,
+.sidebar-skeleton__rooms .sidebar-skeleton__row:nth-child(3) .sidebar-skeleton__bar {
+  inline-size: 44%;
+}
+
+.sidebar-skeleton__menu .sidebar-skeleton__row:nth-child(3) .sidebar-skeleton__bar,
+.sidebar-skeleton__rooms .sidebar-skeleton__row:nth-child(4) .sidebar-skeleton__bar {
   inline-size: 68%;
 }
 
-.sidebar-skeleton__row:nth-child(4) .sidebar-skeleton__bar {
+.sidebar-skeleton__menu .sidebar-skeleton__row:nth-child(4) .sidebar-skeleton__bar,
+.sidebar-skeleton__rooms .sidebar-skeleton__row:nth-child(5) .sidebar-skeleton__bar {
   inline-size: 38%;
+}
+
+@media (min-width: 834px) and (max-width: 1279.9px) {
+  #sidebar:not(.open) {
+    .sidebar-skeleton__bar {
+      display: none;
+    }
+
+    .sidebar-skeleton__rooms {
+      padding-inline: 6px;
+    }
+
+    .sidebar-skeleton__row,
+    .sidebar-skeleton__footer {
+      justify-content: center;
+    }
+
+  }
 }
 
 @keyframes skeleton-pulse {
@@ -1304,6 +1367,7 @@ html:not([data-sidebar="match"])
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sidebar-skeleton__avatar,
   .sidebar-skeleton__glyph,
   .sidebar-skeleton__bar {
     animation: none;

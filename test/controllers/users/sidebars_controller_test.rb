@@ -145,6 +145,16 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".unread", count: unread_count
   end
 
+  test "shared room rows sort unread memberships ahead of read memberships" do
+    message = rooms(:pets).messages.create! client_message_id: 1000, body: "Unread room", creator: users(:jason)
+    rewind_unread_to memberships(:david_pets), message
+
+    get user_sidebar_url
+
+    assert_select "#shared_rooms [data-sorted-list-priority='0'] .room.unread", minimum: 1
+    assert_select "#shared_rooms [data-sorted-list-priority='1'] .room:not(.unread)", minimum: 1
+  end
+
   test "does not render a notification preferences link in the sidebar tools" do
     get user_sidebar_url
 

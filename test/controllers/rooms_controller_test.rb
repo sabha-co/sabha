@@ -27,7 +27,12 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     get room_url(users(:david).rooms.last)
 
     assert_response :success
-    assert_select "turbo-frame#user_sidebar[src] .sidebar-skeleton .sidebar-skeleton__row"
+    assert_select "turbo-frame#user_sidebar[src] .sidebar-skeleton" do
+      assert_select ".sidebar-skeleton__workspace", count: 1
+      assert_select ".sidebar-skeleton__menu .sidebar-skeleton__row", count: 5
+      assert_select ".sidebar-skeleton__rooms .sidebar-skeleton__row", count: 4
+      assert_select ".sidebar-skeleton__footer", count: 1
+    end
   end
 
   test "show renders the direct-message nav header" do

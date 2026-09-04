@@ -27,8 +27,12 @@ export default class extends Controller {
   }
 
   reSort() {
-    // Force immediate sort instead of throttled to ensure room updates are reflected immediately
-    this.sort()
+    if (this.isSorting) {
+      this.#scheduledSort()
+    } else {
+      // Force immediate sort instead of throttled to ensure room updates are reflected immediately
+      this.sort()
+    }
   }
 
   sort() {

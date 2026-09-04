@@ -1,10 +1,39 @@
-<%# Cold-start placeholder for the lazy sidebar frame — holds the list rhythm so
-    nothing jumps when the real rooms land. Four rows, per the States comp. %>
+<%# Cold-start placeholder for the lazy sidebar frame. It reserves the full
+    sidebar anatomy so the workspace, tools, room list, and footer do not jump
+    into place when the frame lands. %>
 <div class="sidebar-skeleton" aria-hidden="true">
-  <% 4.times do %>
-    <div class="sidebar-skeleton__row">
-      <span class="sidebar-skeleton__glyph"></span>
-      <span class="sidebar-skeleton__bar"></span>
-    </div>
-  <% end %>
+  <header class="sidebar__workspace sidebar-skeleton__workspace">
+    <span class="sidebar-skeleton__avatar"></span>
+    <span class="sidebar-skeleton__copy">
+      <span class="sidebar-skeleton__bar sidebar-skeleton__bar--title"></span>
+      <span class="sidebar-skeleton__bar sidebar-skeleton__bar--meta"></span>
+    </span>
+  </header>
+
+  <nav class="sidebar__menu sidebar-skeleton__menu">
+    <% 5.times do %>
+      <span class="sidebar-skeleton__row">
+        <span class="sidebar-skeleton__glyph"></span>
+        <span class="sidebar-skeleton__bar"></span>
+      </span>
+    <% end %>
+  </nav>
+
+  <div class="sidebar-skeleton__rooms">
+    <span class="sidebar-skeleton__bar sidebar-skeleton__bar--label"></span>
+    <% 4.times do %>
+      <span class="sidebar-skeleton__row">
+        <span class="sidebar-skeleton__glyph"></span>
+        <span class="sidebar-skeleton__bar"></span>
+      </span>
+    <% end %>
+  </div>
+
+  <footer class="sidebar__footer sidebar-skeleton__footer">
+    <span class="sidebar-skeleton__avatar"></span>
+    <span class="sidebar-skeleton__copy">
+      <span class="sidebar-skeleton__bar sidebar-skeleton__bar--title"></span>
+      <span class="sidebar-skeleton__bar sidebar-skeleton__bar--meta"></span>
+    </span>
+  </footer>
 </div>

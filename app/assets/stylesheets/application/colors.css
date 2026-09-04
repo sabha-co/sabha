@@ -63,34 +63,60 @@
   --dark-lch-red-light: 28% 0.05 20;
   --dark-lch-orange: 74.9% 0.123 78;
 
+  /* Named page and contrast surfaces keep palette values out of component
+     scopes. The public --color-* layer below remains what components read. */
+  --color-page-bg: oklch(var(--lch-white));
+  --color-page-bg-raised: oklch(var(--lch-raise));
+  --color-page-bg-sunk: oklch(var(--lch-sunk));
+  --color-page-bg-hover: oklch(var(--lch-hover));
+  --color-page-text: oklch(var(--lch-ink));
+  --color-page-text-lighter: oklch(var(--lch-ink-1));
+  --color-page-text-muted: oklch(var(--lch-ink-2));
+  --color-page-text-subtle: oklch(var(--lch-ink-3));
+  --color-page-border: oklch(var(--lch-line-2));
+  --color-page-border-dark: oklch(var(--lch-line));
+  --color-page-selected: oklch(var(--lch-accent-bg));
+  --color-page-accent-brand: oklch(var(--lch-accent));
+
+  /* The default sidebar is a dark contrast surface in both themes. These
+     named values keep literal palette colours out of component scopes. */
+  --color-sidebar-contrast-bg: oklch(21% 0.01 277);
+  --color-sidebar-contrast-bg-raised: oklch(24% 0.012 271);
+  --color-sidebar-contrast-bg-hover: oklch(26.5% 0.013 273);
+  --color-sidebar-contrast-border: oklch(28.2% 0.013 273);
+  --color-sidebar-contrast-text: oklch(100% 0 0);
+  --color-sidebar-contrast-text-lighter: oklch(92.7% 0.009 265);
+  --color-sidebar-contrast-text-muted: oklch(73% 0.017 263);
+  --color-sidebar-contrast-text-subtle: oklch(57.2% 0.02 264);
+
   /* Semantic — the only layer components read */
-  --color-bg: oklch(var(--lch-white));
-  --color-bg-raised: oklch(var(--lch-raise));
-  --color-bg-sunk: oklch(var(--lch-sunk));
-  --color-bg-hover: oklch(var(--lch-hover));
+  --color-bg: var(--color-page-bg);
+  --color-bg-raised: var(--color-page-bg-raised);
+  --color-bg-sunk: var(--color-page-bg-sunk);
+  --color-bg-hover: var(--color-page-bg-hover);
   --color-bg-negative: oklch(var(--lch-red-light));
   --color-bg-side: oklch(var(--lch-side));
   --color-bg-side-hover: oklch(var(--lch-side-hover));
   --color-border-side: oklch(var(--lch-side-line));
 
-  --color-text: oklch(var(--lch-ink));
-  --color-text-lighter: oklch(var(--lch-ink-1));
-  --color-text-muted: oklch(var(--lch-ink-2));
+  --color-text: var(--color-page-text);
+  --color-text-lighter: var(--color-page-text-lighter);
+  --color-text-muted: var(--color-page-text-muted);
   /* Subtle clears 3:1 contrast but not 4.5:1 — decorative meta only
      (timestamps, counts, section labels); load-bearing text uses muted. */
-  --color-text-subtle: oklch(var(--lch-ink-3));
+  --color-text-subtle: var(--color-page-text-subtle);
   --color-text-reversed: oklch(var(--lch-white));
 
-  --color-border: oklch(var(--lch-line-2));
+  --color-border: var(--color-page-border);
   --color-border-subtle: oklch(var(--lch-ink-2));
-  --color-border-dark: oklch(var(--lch-line));
+  --color-border-dark: var(--color-page-border-dark);
   --color-border-darker: oklch(var(--lch-gray-darker));
   --color-border-darkest: oklch(var(--lch-gray-darkest));
   --control-border: oklch(var(--lch-control));
 
-  --color-accent-brand: oklch(var(--lch-accent));
+  --color-accent-brand: var(--color-page-accent-brand);
   --color-link: var(--color-accent-brand);
-  --color-selected: oklch(var(--lch-accent-bg));
+  --color-selected: var(--color-page-selected);
   --color-selected-dark: oklch(var(--lch-accent-bd));
 
   --color-negative: oklch(var(--lch-red));
@@ -190,6 +216,10 @@
     --lch-side: var(--dark-lch-side);
     --lch-side-hover: var(--dark-lch-side-hover);
     --lch-side-line: var(--dark-lch-side-line);
+    --color-sidebar-contrast-bg: oklch(var(--dark-lch-side));
+    --color-sidebar-contrast-bg-raised: oklch(var(--dark-lch-side-hover));
+    --color-sidebar-contrast-bg-hover: oklch(var(--dark-lch-side-hover));
+    --color-sidebar-contrast-border: oklch(var(--dark-lch-side-line));
     --lch-green: var(--dark-lch-green);
     --lch-red: var(--dark-lch-red);
     --lch-red-light: var(--dark-lch-red-light);
@@ -224,6 +254,10 @@
   --lch-side: var(--dark-lch-side);
   --lch-side-hover: var(--dark-lch-side-hover);
   --lch-side-line: var(--dark-lch-side-line);
+  --color-sidebar-contrast-bg: oklch(var(--dark-lch-side));
+  --color-sidebar-contrast-bg-raised: oklch(var(--dark-lch-side-hover));
+  --color-sidebar-contrast-bg-hover: oklch(var(--dark-lch-side-hover));
+  --color-sidebar-contrast-border: oklch(var(--dark-lch-side-line));
   --lch-accent: var(--lch-accent-lift);
   --lch-accent-bg: var(--lch-accent-lift) / 0.15;
   --lch-accent-bd: var(--lch-accent-lift) / 0.34;
