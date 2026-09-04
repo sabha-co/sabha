@@ -11,20 +11,20 @@ class API::Desktop::DestinationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     body = JSON.parse(response.body)
     assert_equal 1, body["protocol_major"]
-    assert_equal 1, body["destinations"].length
+    assert_equal 1, body["peers"].length
 
-    destination = body["destinations"].first
-    assert_equal "default", destination["id"]
-    assert_equal Account.sole.name, destination["name"]
-    assert_equal "/", destination["base_path"]
-    assert_equal "/api/cable", destination["cable_path"]
+    peer = body["peers"].first
+    assert_equal "default", peer["id"]
+    assert_equal Account.sole.name, peer["name"]
+    assert peer["workspace_url"].end_with?("/")
+    assert peer["cable_url"].end_with?("/api/cable")
   end
 
   test "is unauthorized without a session" do
     get "/api/desktop/destinations", headers: desktop_headers
 
     assert_response :unauthorized
-    refute JSON.parse(response.body).key?("destinations")
+    refute JSON.parse(response.body).key?("peers")
   end
 
   private

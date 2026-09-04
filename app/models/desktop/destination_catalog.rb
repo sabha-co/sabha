@@ -7,29 +7,29 @@ module Desktop
     def as_json
       {
         protocol_major: ClientManifest::PROTOCOL_MAJOR,
-        destinations: destinations
+        peers: peers
       }
     end
 
     private
       attr_reader :request
 
-      def destinations
+      def peers
         if Sabha.saas?
-          Saas.new(request: request).destinations
+          Saas.new(request: request).peers
         else
-          [ self_hosted_destination ]
+          [ self_hosted_peer ]
         end
       end
 
-      def self_hosted_destination
+      def self_hosted_peer
         account = Current.account
         {
           id: "default",
           name: account.name,
           logo_url: account_logo_url,
-          base_path: "/",
-          cable_path: "/api/cable"
+          workspace_url: "#{request.base_url}/",
+          cable_url: "#{request.base_url}/api/cable"
         }
       end
 

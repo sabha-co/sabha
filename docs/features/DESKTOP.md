@@ -24,8 +24,8 @@ Unauthenticated probe used when a member adds a server origin. Returns protocol 
 
 Authenticated catalog after sign-in.
 
-- Self-hosted mode returns exactly one branded destination for the community with `/api/cable` as the cable-discovery path.
-- SaaS mode returns ordered active workspace memberships only. Each peer includes a tenant-scoped cable path such as `/api/cable?wid=1000001`.
+- Self-hosted mode returns exactly one branded peer with `workspace_url` and `cable_url` (`/api/cable` on the origin).
+- SaaS mode returns ordered active workspace memberships only. Each peer includes a tenant-scoped `cable_url` such as `/api/cable?wid=1000001`.
 
 ### Session claims
 
