@@ -111,6 +111,7 @@ img.icon {
 .icon--notification-bell-nothing { --svg: url("../notification-bell-nothing.svg"); }
 .icon--office { --svg: url("../office.svg"); }
 .icon--password { --svg: url("../password.svg"); }
+.icon--panel-right { --svg: url("../panel-right.svg"); }
 .icon--pencil { --svg: url("../pencil.svg"); }
 .icon--person { --svg: url("../person.svg"); }
 .icon--person-add { --svg: url("../person-add.svg"); }
@@ -147,6 +148,7 @@ img.icon {
 .icon--unblock { --svg: url("../unblock.svg"); }
 .icon--unpinned { --svg: url("../unpinned.svg"); }
 .icon--unseen { --svg: url("../unseen.svg"); }
+.icon--users { --svg: url("../users.svg"); }
 .icon--web { --svg: url("../web.svg"); }
 .icon--world { --svg: url("../world.svg"); }
 .icon--youtube { --svg: url("../youtube.svg"); }

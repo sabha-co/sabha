@@ -21,6 +21,12 @@ body {
     --navbar-height: 52px;
   }
 
+  /* The Pencil room header is deliberately taller than the shared shell.
+     Keep that geometry local to standard web rooms and forums. */
+  &.room-header--pencil {
+    --navbar-height: 62px;
+  }
+
   /* Sidebar states: docked >=1280 (272px wide desktop, 240px narrow),
      a 60px icon rail 834-1279 that expands over the content on demand,
      and an off-canvas drawer below 834. */

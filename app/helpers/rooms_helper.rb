@@ -8,10 +8,10 @@ module RoomsHelper
   def link_to_room_roster(room)
     link_to \
       room_roster_path(room),
-      class: "btn",
+      class: "btn navbar-roster",
       aria: { label: "Who's in #{room_display_name(room)}" },
       data: { turbo_frame: "thread_panel_frame", room_id: room.id } do
-        icon_tag("info", style: "--icon-size: 14px") +
+        icon_tag("panel-right") +
         tag.span("Room details", class: "for-screen-reader")
     end
   end

@@ -144,6 +144,10 @@
   }
 }
 
+body.room-header--pencil .sidebar__workspace {
+  padding-block: 13px 14px;
+}
+
 .sidebar__workspace-logo {
   block-size: 32px;
   border-radius: 9px;

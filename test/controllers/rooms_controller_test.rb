@@ -15,6 +15,50 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "standard room header shows member avatars and distinct member actions" do
+    room = rooms(:watercooler)
+
+    get room_url(room)
+
+    assert_response :success
+    assert_select "body.room-header--pencil", count: 1
+    assert_select ".navbar-member-avatars" do
+      assert_select ".avatar", count: 4
+      assert_select ".navbar-member-avatars__overflow", text: "+1"
+    end
+    assert_select "a.navbar-members--web[href=?]", edit_rooms_closed_path(room, tab: "members"), count: 1
+    assert_select "a.navbar-roster[href=?]", room_roster_path(room), count: 1
+  end
+
+  test "standard room header shows its exact four members without an overflow badge" do
+    room = rooms(:hq)
+    member_names = %i[david jason jz kevin].map { |fixture| users(fixture).name }
+
+    get room_url(room)
+
+    assert_response :success
+    assert_select ".navbar-member-avatars" do
+      assert_select ".navbar-member-avatars__avatar", count: 4
+      member_names.each do |member_name|
+        assert_select ".navbar-member-avatars__avatar[title=?]", member_name, count: 1
+      end
+      assert_select ".navbar-member-avatars__overflow", count: 0
+    end
+  end
+
+  test "native standard room header keeps compact member management without web actions" do
+    room = rooms(:watercooler)
+
+    get room_url(room), headers: { "HTTP_USER_AGENT" => "Sabha Hotwire Native" }
+
+    assert_response :success
+    assert_select "body.room-header--pencil", count: 0
+    assert_select "a.navbar-members--native[href=?]", edit_rooms_closed_path(room, tab: "members"), text: room.active_member_count.to_s
+    assert_select ".navbar-members--web", count: 0
+    assert_select ".navbar-member-avatars", count: 0
+    assert_select ".navbar-roster", count: 0
+  end
+
   test "the app layout mounts the connection-lost banner, hidden until the socket drops" do
     get room_url(users(:david).rooms.last)
 
@@ -41,6 +85,7 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     get room_url(room)
 
     assert_response :success
+    assert_select "body.room-header--pencil", count: 0
     # The recipient titles the conversation, and the header links to the room's settings.
     assert_select ".navbar-dm h1.navbar-title a[href=?]", edit_rooms_direct_path(room), text: /#{users(:kevin).name}/
   end
@@ -53,6 +98,7 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".navbar-actions a", text: "View profile"
     assert_select ".navbar-actions a[href=?]", edit_rooms_direct_path(room), count: 0
+    assert_select ".navbar-member-avatars", count: 0
   end
 
   test "group DM header shows an N-people pill to the participants panel and a plain name" do
@@ -64,6 +110,7 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".navbar-dm h1.navbar-title a", false, "the group name is plain text, not a link"
     assert_select ".navbar-actions a[href=?]", edit_rooms_direct_path(group)
     assert_select ".navbar-actions", text: /\d+ people/
+    assert_select ".navbar-member-avatars", count: 0
   end
 
   test "composer carries the @everyone confirm threshold, member count, and cap flag" do

@@ -22,6 +22,7 @@ class Room < ApplicationRecord
         Array(users).collect { |user| { room_id: room.id, user_id: user.id, involvement: room.default_involvement(user: user), active: true, last_read_at: head_at, last_read_message_id: head_id } },
         unique_by: %i[room_id user_id], update_only: %i[involvement active]
       )
+      room.invalidate_member_count_cache
     end
 
     def revoke_from(users)
@@ -220,6 +221,10 @@ class Room < ApplicationRecord
     Rails.cache.fetch(active_member_count_cache_key, expires_in: 5.minutes) do
       memberships.visible.joins(:user).merge(User.active).count
     end
+  end
+
+  def header_members(limit: 4)
+    visible_users.active.order(User.arel_table[:id]).limit(limit).to_a
   end
 
   # Above the configured ceiling, @everyone degrades from per-member

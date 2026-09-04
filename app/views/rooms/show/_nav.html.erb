@@ -51,7 +51,7 @@
       </div>
     </div>
   <% else %>
-    <h1 class="navbar-title">
+    <h1 class="navbar-title navbar-title--room">
       <%= link_to edit_room_path(room) do %>
         <% if room.thread? %>
           <%= room_display_name(room.parent_message.room) %>
@@ -62,17 +62,45 @@
     </h1>
   <% end %>
 
-  <% unless room.thread? || room.direct? %>
-    <%= link_to edit_room_path(room, tab: "members"), class: "navbar-members",
-          aria: { label: "#{pluralize(room.active_member_count, "member")} — see everyone in #{room_display_name(room)}" } do %>
-      <%= icon_tag "person" %><%= room.active_member_count %>
+  <span class="navbar-topic"><%= room.description %></span>
+
+  <% if hotwire_native_app? && !room.thread? && !room.direct? %>
+    <% native_member_count = room.active_member_count %>
+    <%= link_to edit_room_path(room, tab: "members"), class: "navbar-members navbar-members--native",
+          aria: { label: "#{pluralize(native_member_count, "member")} — manage members in #{room_display_name(room)}" } do %>
+      <%= icon_tag "person" %><%= native_member_count %>
     <% end %>
   <% end %>
 
-  <span class="navbar-topic"><%= room.description %></span>
-
   <% unless hotwire_native_app? %>
+    <% unless room.thread? || room.direct? %>
+      <% header_members = room.header_members %>
+      <% active_member_count = room.active_member_count %>
+      <% header_member_overflow = active_member_count - header_members.size %>
+    <% end %>
+
     <div class="flex gap-half align-center navbar-actions">
+      <% unless room.thread? || room.direct? %>
+        <% member_names = header_members.map(&:name).to_sentence %>
+        <div class="navbar-member-avatars" role="img"
+             aria-label="Members include <%= member_names %><%= ", and #{pluralize(header_member_overflow, "more member")}" if header_member_overflow.positive? %>">
+          <% header_members.each do |member| %>
+            <span class="avatar navbar-member-avatars__avatar" title="<%= member.name %>">
+              <%= avatar_image_tag(member, size: 26, loading: :lazy) %>
+            </span>
+          <% end %>
+          <% if header_member_overflow.positive? %>
+            <span class="navbar-member-avatars__overflow" aria-hidden="true">+<%= header_member_overflow %></span>
+          <% end %>
+        </div>
+
+        <%= link_to edit_room_path(room, tab: "members"), class: "btn navbar-members navbar-members--web",
+              aria: { label: "Manage #{pluralize(active_member_count, "member")} in #{room_display_name(room)}" } do %>
+          <%= icon_tag "users" %>
+          <span class="for-screen-reader">Manage members</span>
+        <% end %>
+      <% end %>
+
       <% if dm_other %>
         <%= link_to "View profile", user_path(dm_other), class: "btn navbar-view-profile" %>
       <% elsif dm_members.many? %>

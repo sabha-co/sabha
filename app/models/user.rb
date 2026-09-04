@@ -276,6 +276,7 @@ class User < ApplicationRecord
       # this parent membership, so a new member reaches them without a per-sub-room
       # row of their own — no fan-out.
       Membership.insert_all(forced_room_ids.collect { |room_id| { room_id: room_id, user_id: id } })
+      Room.where(id: forced_room_ids).find_each(&:invalidate_member_count_cache)
     end
 
     # Clean up associated records explicitly because most `has_many` declarations

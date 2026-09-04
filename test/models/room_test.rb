@@ -152,15 +152,16 @@ class RoomTest < ActiveSupport::TestCase
     assert_not rooms(:pets).active?
   end
 
-  test "active_member_count returns count of active visible members" do
-    room = rooms(:watercooler)
-    initial_count = room.active_member_count
+  test "active_member_count refreshes after a bulk membership grant" do
+    with_memory_cache do
+      room = rooms(:watercooler)
+      initial_count = room.active_member_count
 
-    # Add a new active user
-    new_user = User.create!(name: "New User", email_address: "new@example.com", password: "secret123456")
-    room.memberships.grant_to(new_user)
+      new_user = User.create!(name: "New User", email_address: "new@example.com", password: "secret123456")
+      room.memberships.grant_to(new_user)
 
-    assert_equal initial_count + 1, room.active_member_count
+      assert_equal initial_count + 1, room.active_member_count
+    end
   end
 
   test "active_member_count excludes invisible memberships" do
@@ -172,6 +173,19 @@ class RoomTest < ActiveSupport::TestCase
     membership.update!(involvement: :invisible)
 
     assert_equal initial_count - 1, room.active_member_count
+  end
+
+  test "header_members returns the first four active visible members" do
+    room = rooms(:watercooler)
+    hidden_membership = room.memberships.find_by!(user: users(:jason))
+    hidden_membership.update!(involvement: :invisible)
+
+    members = room.header_members
+
+    assert_equal 4, members.size
+    assert_equal members.sort_by(&:id), members
+    assert_not_includes members, users(:jason)
+    assert members.all?(&:active?)
   end
 
   # System event messages
@@ -598,4 +612,13 @@ class RoomTest < ActiveSupport::TestCase
       Rooms::Thread.create!(parent_message: parent, creator: users(:david))
     end
   end
+
+  private
+    def with_memory_cache
+      previous_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+      yield
+    ensure
+      Rails.cache = previous_cache
+    end
 end

@@ -1,5 +1,5 @@
 <% @page_title = @room.thread? ? "🧵 #{room_display_name(@room.parent_message.room)}" : room_display_name(@room) %>
-<% @body_class = "sidebar" %>
+<% @body_class = class_names("sidebar", "room-header--pencil": !hotwire_native_app? && !@room.thread? && !@room.direct?) %>
 <% content_for :head do %>
   <%= turbo_exempts_page_from_preview %>
   <meta name="current-room-id" content="<%= @room.id %>">

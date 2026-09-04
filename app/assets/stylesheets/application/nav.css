@@ -25,6 +25,15 @@
   }
 }
 
+body.room-header--pencil #nav {
+  column-gap: 12px;
+  padding-inline: 20px calc(20px + env(safe-area-inset-right));
+
+  @media (max-width: 1279.9px) {
+    padding-inline-start: calc(var(--btn-size, 2.65em) + max(var(--inline-space), 1vw) + 12px);
+  }
+}
+
 .navbar-glyph {
   --icon-size: 15px;
 
@@ -34,7 +43,7 @@
 }
 
 .navbar-title {
-  /* Handoff: 16px / 700 header (v2.1) — not the oversized display step */
+  /* Compact by default for shared surfaces and direct-message headers. */
   font-size: var(--font-size-medium);
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -49,6 +58,10 @@
     color: inherit;
     text-decoration: none;
   }
+}
+
+body.room-header--pencil .navbar-title--room {
+  font-size: var(--font-size-large);
 }
 
 /* DM header: avatar with presence dot, then name over the presence line */
@@ -109,9 +122,63 @@
   }
 }
 
-/* Member-count pill between the room name and topic. The count is the
-   room's, but it links to the community-wide members directory. */
-.navbar-members {
+/* Standard-room member facepile and the two member-related actions. */
+.navbar-members,
+.navbar-roster {
+  --icon-size: 17px;
+
+  flex-shrink: 0;
+}
+
+.navbar-member-avatars {
+  --avatar-size: 26px;
+
+  align-items: center;
+  border: 1px solid var(--color-border-dark);
+  border-radius: 12px;
+  display: flex;
+  flex-shrink: 0;
+  padding: 3px 7px 3px 3px;
+}
+
+.navbar-member-avatars__avatar {
+  box-shadow: 0 0 0 1px var(--color-bg);
+  margin-inline-start: -8px;
+
+  &:first-child {
+    margin-inline-start: 0;
+  }
+}
+
+.navbar-member-avatars__overflow {
+  align-items: center;
+  block-size: var(--avatar-size);
+  box-sizing: border-box;
+  color: var(--color-text-muted);
+  display: flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  justify-content: center;
+  margin-inline-start: 6px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1023.9px) {
+  body.room-header--pencil .navbar-topic {
+    visibility: hidden;
+  }
+}
+
+@media (max-width: 833.9px) {
+  .navbar-member-avatars,
+  .navbar-members--web {
+    display: none;
+  }
+}
+
+/* Native keeps the former compact member-management affordance. The richer
+   facepile and roster panel are web-only. */
+.navbar-members--native {
   --icon-size: 12px;
 
   align-items: center;
@@ -120,7 +187,6 @@
   color: var(--color-text-muted);
   column-gap: 5px;
   display: inline-flex;
-  flex-shrink: 0;
   font-size: 0.75rem;
   font-weight: 600;
   padding: 2px 9px;
@@ -130,10 +196,6 @@
   &:hover {
     background-color: var(--color-bg-hover);
     color: var(--color-text);
-  }
-
-  @media (max-width: 833.9px) {
-    display: none;
   }
 }
 
@@ -224,9 +286,7 @@
   }
 }
 
-/* The right-side action icons ride the design's quiet scale: a 17px bell
-   (the shared involvement image ships larger) and an info glyph in the
-   lighter subtle tone the bar glyph already uses, not the heavier muted. */
+/* The right-side action icons ride the design's quiet 17px scale. */
 #nav .navbar-actions img {
   block-size: 17px;
   inline-size: 17px;

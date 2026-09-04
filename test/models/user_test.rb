@@ -56,6 +56,22 @@ class UserTest < ActiveSupport::TestCase
     assert_not user.member_of?(non_auto_room), "New user should not be auto-joined to non-auto_join rooms"
   end
 
+  test "creating users refreshes cached member counts for every auto_join room" do
+    with_memory_cache do
+      auto_join_rooms = [
+        Rooms::Open.create!(name: "Auto Room One", creator: users(:david), auto_join: true),
+        Rooms::Open.create!(name: "Auto Room Two", creator: users(:david), auto_join: true)
+      ]
+      initial_counts = auto_join_rooms.index_with(&:active_member_count)
+
+      create_new_user
+
+      auto_join_rooms.each do |room|
+        assert_equal initial_counts.fetch(room) + 1, room.active_member_count
+      end
+    end
+  end
+
   test "a new user reaches existing threads in an auto_join room via derived access, without a thread membership" do
     auto_join_room = Rooms::Open.create!(name: "Auto Room", creator: users(:david), auto_join: true)
     parent_message = auto_join_room.messages.create!(body: "topic", creator: users(:david))
@@ -585,6 +601,14 @@ class UserTest < ActiveSupport::TestCase
   end
 
   private
+    def with_memory_cache
+      previous_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+      yield
+    ensure
+      Rails.cache = previous_cache
+    end
+
     def create_new_user
       User.create!(name: "User", email_address: "user@example.com", password: "secret123456")
     end
