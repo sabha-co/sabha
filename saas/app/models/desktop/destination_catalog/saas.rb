@@ -5,7 +5,7 @@ module Desktop
         @request = request
       end
 
-      def destinations
+      def peers
         return [] unless Current.global_identity
 
         Current.global_identity.workspace_memberships_ordered.user_active.filter_map do |membership|
@@ -16,8 +16,8 @@ module Desktop
             id: workspace.external_id.to_s,
             name: workspace.name,
             logo_url: logo_url_for(workspace),
-            base_path: workspace.slug,
-            cable_path: cable_path_for(workspace)
+            workspace_url: workspace_url_for(workspace),
+            cable_url: cable_url_for(workspace)
           }
         end
       end
@@ -25,8 +25,13 @@ module Desktop
       private
         attr_reader :request
 
-        def cable_path_for(workspace)
-          "/api/cable?wid=#{workspace.external_id}"
+        def workspace_url_for(workspace)
+          slug = workspace.slug.to_s.delete_prefix("/")
+          "#{request.base_url}/#{slug}"
+        end
+
+        def cable_url_for(workspace)
+          "#{request.base_url}/api/cable?wid=#{workspace.external_id}"
         end
 
         def logo_url_for(workspace)

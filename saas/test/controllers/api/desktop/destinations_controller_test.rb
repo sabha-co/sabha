@@ -17,9 +17,9 @@ module Saas
 
       assert_response :success
       body = JSON.parse(response.body)
-      ids = body["destinations"].map { |d| d["id"] }
+      ids = body["peers"].map { |d| d["id"] }
       assert_equal [ "1000001", "1000003" ], ids
-      assert_equal "/api/cable?wid=1000001", body["destinations"].first["cable_path"]
+      assert_includes body["peers"].first["cable_url"], "/api/cable?wid=1000001"
       refute_includes ids, "1000004"
     end
 
