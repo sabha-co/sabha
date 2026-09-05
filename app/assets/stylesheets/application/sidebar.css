@@ -206,8 +206,7 @@ body.room-header--pencil .sidebar__workspace {
   font-size: 0.71875rem;
   line-height: 1.3;
   overflow: hidden;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration: none;
   text-overflow: ellipsis;
   white-space: nowrap;
 
