@@ -59,11 +59,13 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown.
 
 ## Deployment
 
-**Self-host (free, MIT)** — single-tenant: one community per instance. Kamal or Docker Compose on a small VPS. See the [deployment guide](docs/DEPLOYMENT.md).
+These are three different things. Do not treat them as modes of one host.
 
-**Managed hosting** — don't want to run a server? [Sabha Cloud](https://cloud.sabha.co) hosts a dedicated Sabha instance for you with continuous backups, custom domain support, and managed updates. Same open-source app, you manage the community we manage the server.
+**Self-host (free, MIT)** — this repository in default single-tenant mode: one community per instance. Run as many instances as you want on your own servers (Kamal or Docker Compose). See the [deployment guide](docs/DEPLOYMENT.md).
 
-**Multi-tenant** — Sabha is based on Campfire, which is single-tenant by design and MIT-licensed. We added multi-tenancy on top to power the free communities at [sabha.co](https://sabha.co); that engine lives in `saas/` under the separately-licensed [Sabha SaaS License](saas/LICENSE) rather than MIT. See [docs/multi-tenant/](docs/multi-tenant/) for details.
+**sabha.co (SaaS)** — this same repository with the `saas/` engine enabled (`SAAS=true`). Shared communities at path-prefix URLs. That engine is under the [Sabha SaaS License](saas/LICENSE), not MIT. See [docs/multi-tenant/](docs/multi-tenant/).
+
+**Sabha Cloud** — a **separate application**, [sabha_cloud](https://github.com/sabha-co/sabha_cloud), at [cloud.sabha.co](https://cloud.sabha.co). It is not this repo. It deploys dedicated self-hosted Sabha instances (backups, custom domain, managed updates). From sabha.co and from the desktop app each of those is just another self-hosted origin, same as the N instances you might run yourself.
 
 ## Development
 
