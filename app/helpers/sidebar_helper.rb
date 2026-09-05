@@ -26,7 +26,7 @@ module SidebarHelper
     tag.attributes(SORTED_LIST_NEWEST_FIRST)
   end
 
-  def sidebar_membership_cache_key(prefix, membership)
-    [ prefix, membership.room, membership.involvement, membership.starred?, membership.involved_in_nothing?, membership.unread?, membership.has_unread_notifications? ]
+  def sidebar_membership_cache_key(prefix, membership, membership_unread = membership.unread?)
+    [ prefix, membership.room, membership.involvement, membership.starred?, membership.involved_in_nothing?, membership_unread, membership.has_unread_notifications? ]
   end
 end

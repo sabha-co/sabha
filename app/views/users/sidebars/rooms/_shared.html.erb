@@ -1,6 +1,6 @@
 <% room = local_assigns[:room] || local_assigns[:membership].room %>
 <% membership = local_assigns[:membership] %>
-<% membership_unread = membership&.unread? %>
+<% membership_unread = local_assigns.fetch(:membership_unread) { membership&.unread? } %>
 
 <div id="<%= dom_id(room, dom_prefix(list_name, :list_node)) %>"
      data-sorted-list-target="item"

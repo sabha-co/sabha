@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { debounce, throttle } from "helpers/timing_helpers"
+import { debounce } from "helpers/timing_helpers"
 
 export default class extends Controller {
   static targets = ["item", "container"]
@@ -30,7 +30,7 @@ export default class extends Controller {
     if (this.isSorting) {
       this.#scheduledSort()
     } else {
-      // Force immediate sort instead of throttled to ensure room updates are reflected immediately
+      // Force immediate sort instead of the debounced one to ensure room updates are reflected immediately
       this.sort()
     }
   }
@@ -125,6 +125,5 @@ export default class extends Controller {
     return 0
   }
 
-  #throttledSort = throttle(this.sort.bind(this), 200)
   #scheduledSort = debounce(this.sort.bind(this), 150)
 }
