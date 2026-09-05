@@ -10,6 +10,21 @@ class Rooms::InvolvementsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "turbo-frame##{dom_id(rooms(:designers), :involvement)}"
+    assert_select ".roster__notifications button[aria-expanded='false']"
+    assert_select "button[role='menuitemradio']", count: 3
+  end
+
+  test "notification update returns and broadcasts the same dropdown" do
+    room = rooms(:watercooler)
+    patch room_involvement_url(room), params: { involvement: "mentions" }, as: :turbo_stream
+
+    assert_response :success
+    assert_select "turbo-stream[action='replace'] template .roster__notifications"
+    assert_select ".roster__notification-menu button[role='menuitemradio'][aria-checked='true']", text: "Mentions only"
+    assert_rendered_turbo_stream_broadcast memberships(:david_watercooler), action: "replace", target: [ room, :involvement ] do
+      assert_select "template .roster__notifications"
+      assert_select ".roster__notification-menu button[role='menuitemradio'][aria-checked='true']", text: "Mentions only"
+    end
   end
 
   test "update involvement sends turbo update when going invisible" do

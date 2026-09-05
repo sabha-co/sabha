@@ -320,9 +320,10 @@ which names no one. `AccountsHelper#here_now_label` gives the count a tooltip
 ("Members connected in the last 10 minutes") so a reader doesn't pit the number
 against a nearby dot.
 
-Room rosters are also deliberately **not** live — extending presence there would
-reintroduce the large fan-out this design removes, since a room can hold
-everyone. They're correct on load.
+Room info does not display member lists or room attendance. Members and room
+management live in Room settings; the contextual panel keeps its description
+and controls, leaving space for future huddles. It performs no roster queries
+or presence refreshes. See `docs/plans/2026-09-05-001-feat-room-info-panel-plan.md`.
 
 ---
 

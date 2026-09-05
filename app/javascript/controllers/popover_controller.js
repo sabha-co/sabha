@@ -60,6 +60,11 @@ export default class extends Controller {
       this.#loadLazyFrame()
       this.#place()
       this.#closeOnScroll()
+      if (this.menuTarget.getAttribute("role") === "menu") {
+        const selected = this.menuTarget.querySelector('[role="menuitemradio"][aria-checked="true"]')
+        const item = selected || this.menuTarget.querySelector('[role="menuitemradio"]')
+        item?.focus({ preventScroll: true })
+      }
     } else {
       this.menuTarget.classList.remove("anchored-popover--placed")
       this.#stopClosingOnScroll()
@@ -79,6 +84,17 @@ export default class extends Controller {
 
   closeOnSubmit(event) {
     if (event.detail.success) this.close()
+  }
+
+  navigate(event) {
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return
+    const items = Array.from(this.menuTarget.querySelectorAll('[role="menuitemradio"]'))
+    if (!items.length) return
+    event.preventDefault()
+    const current = items.indexOf(document.activeElement)
+    const index = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 :
+      (current + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length
+    items[index].focus({ preventScroll: true })
   }
 
   // Frames marked with data-turbo-frame-src load on first open, not page load

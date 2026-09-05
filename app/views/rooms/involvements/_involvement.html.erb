@@ -1,3 +1,19 @@
 <%= turbo_frame_tag room, dom_prefix((:sidebar if from_sidebar), :involvement) do %>
-  <%= button_to_change_involvement room, involvement, from_sidebar: %>
+  <% if !from_sidebar && !room.direct? && !room.sub_room? %>
+    <div class="roster__notifications" data-controller="popover">
+      <span>Notifications</span>
+      <button type="button" class="roster__notification-trigger" data-popover-target="trigger"
+              data-action="popover#toggle" aria-expanded="false" aria-label="Notifications: <%= involvement_label(involvement) %>">
+        <%= involvement_label(involvement) %> <%= icon_tag "caret-down" %>
+      </button>
+      <%= popover_menu_tag "menu-popover", "roster__notification-menu", action: "keydown->popover#navigate", role: "menu", aria: { label: "Notifications" } do %>
+        <% involvement_options_for(room).each do |label, level| %>
+          <%= button_to label, room_involvement_path(room, involvement: level), method: :patch,
+                class: "btn", role: "menuitemradio", aria: { checked: involvement == level } %>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <%= button_to_change_involvement room, involvement, from_sidebar: %>
+  <% end %>
 <% end %>

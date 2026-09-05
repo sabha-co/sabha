@@ -169,7 +169,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :rooms do
+  resources :rooms, except: :edit do
     resources :messages do
       resources :unreads, only: %i[ create ], module: "messages"
       resource :pin, only: %i[ create destroy ], module: "messages"

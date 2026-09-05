@@ -285,9 +285,7 @@
   border-block-start: 1px solid var(--color-border);
 }
 
-/* Room roster panel: the contextual room info that opens from the header member
-   count — a description, a favourite/settings button pair, then here-now / away
-   sections of avatar rows. */
+/* Room info keeps description and controls together, with room for future huddles. */
 .roster {
   display: flex;
   flex: 1;
@@ -367,86 +365,33 @@
   color: var(--color-accent-brand);
 }
 
-.roster__section {
-  margin-block-start: 18px;
-}
-
-.roster__label {
-  align-items: baseline;
-  color: var(--color-text-muted);
-  display: flex;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  gap: 6px;
-  letter-spacing: 0.07em;
-  margin: 0 0 4px;
-  text-transform: uppercase;
-}
-
-.roster__list {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-}
-
-.roster__row {
-  margin: 0;
-}
-
-.roster__link {
+.roster__notifications {
   align-items: center;
-  border-radius: 8px;
-  color: var(--color-text);
   display: flex;
-  gap: 10px;
-  padding: 6px 8px;
-  text-decoration: none;
-
-  @media (any-hover: hover) {
-    &:hover {
-      background-color: var(--color-bg-hover);
-    }
-  }
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  gap: 6px;
+  justify-content: space-between;
+  padding-block: 10px;
 }
 
-/* Away members read as recently-here, not present: dimmed, and the section
-   header carries the status so the row drops its own dot. */
-.roster__link--away {
-  opacity: 0.65;
+.roster__notification-trigger {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: 4px;
+  padding: 6px 0;
+  --icon-size: 12px;
 }
 
-.roster__avatar {
-  flex-shrink: 0;
-  position: relative;
-}
-
-.status-dot--roster {
-  border: 2px solid var(--color-bg);
-  height: 9px;
-  inset-block-end: -1px;
-  inset-inline-end: -1px;
-  position: absolute;
-  width: 9px;
-  z-index: 1; /* the avatar figure is a positioned, overflow-clipped sibling — lift the dot above it */
-}
-
-.roster__name {
-  font-size: 0.84375rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.roster__link--active .roster__name {
-  font-weight: 500;
-}
-
-.roster__empty {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-  padding-block: var(--block-space);
-  text-align: center;
+.roster__notification-menu [aria-checked="true"] {
+  color: var(--color-accent-brand);
+  font-weight: 700;
 }
 
 /* Panel rows sit tighter than the main stream: 32px avatars, one step down

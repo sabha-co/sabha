@@ -105,8 +105,9 @@
     </main>
 
     <div class="thread-panel-controller" data-controller="thread-panel"
+         data-thread-panel-storage-key-value="room-info:<%= Current.account.id %>:<%= Current.user.id %>"
          data-action="keydown@document->thread-panel#closeOnEscape turbo:before-visit@document->thread-panel#closeOnNavigation turbo:before-cache@document->thread-panel#closeOnNavigation">
-      <aside id="thread-panel" hidden aria-label="Thread" data-thread-panel-target="panel">
+      <aside id="thread-panel" hidden aria-label="Room info" data-thread-panel-target="panel">
         <%# A deep-linked post (gallery visited as ?post=<slug>) eager-loads its
             panel here; the frame-load opens the panel over the gallery. %>
         <%= turbo_frame_tag "thread_panel_frame",

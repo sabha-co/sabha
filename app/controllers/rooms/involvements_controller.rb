@@ -13,7 +13,7 @@ class Rooms::InvolvementsController < ApplicationController
     broadcast_involvement_changes
 
     respond_to do |format|
-      format.turbo_stream { head :ok }
+      format.turbo_stream
       format.html { redirect_to safe_return_to || room_involvement_url(@room, from_sidebar:) }
     end
   end
@@ -40,7 +40,7 @@ class Rooms::InvolvementsController < ApplicationController
     end
 
     def broadcast_involvement_change_to_room_nav
-      broadcast_replace_to @membership, target: [ @room, :involvement ],
+      Turbo::StreamsChannel.broadcast_replace_to @membership, target: [ @room, :involvement ],
                            partial: "rooms/involvements/involvement",
                            locals: { room: @room, involvement: @membership.involvement, from_sidebar: false }
     end
@@ -49,7 +49,7 @@ class Rooms::InvolvementsController < ApplicationController
       return if @room.direct?
 
       list_name = @membership.sidebar_list_name
-      broadcast_replace_to @membership.user, :rooms,
+      Turbo::StreamsChannel.broadcast_replace_to @membership.user, :rooms,
                            target: [ @room, helpers.dom_prefix(list_name, :list_node) ],
                            partial: "users/sidebars/rooms/shared",
                            locals: { list_name:, membership: @membership }
@@ -60,15 +60,15 @@ class Rooms::InvolvementsController < ApplicationController
       when @membership.involved_in_invisible?
         # Room is now hidden - remove from visible sections, add to hidden section
         Sidebar::SIDEBAR_SECTIONS.each do |list_name|
-          broadcast_remove_to @membership.user, :rooms, target: [ @room, helpers.dom_prefix(list_name, :list_node) ]
+          Turbo::StreamsChannel.broadcast_remove_to @membership.user, :rooms, target: [ @room, helpers.dom_prefix(list_name, :list_node) ]
         end
-        broadcast_append_to @membership.user, :rooms, target: :hidden_rooms,
+        Turbo::StreamsChannel.broadcast_append_to @membership.user, :rooms, target: :hidden_rooms,
                             partial: "users/sidebars/rooms/hidden", locals: { membership: @membership }
       when @membership.involvement_previously_was.inquiry.invisible?
         # Room is now visible - remove from hidden section, add to correct section
-        broadcast_remove_to @membership.user, :rooms, target: [ @room, :hidden_room ]
+        Turbo::StreamsChannel.broadcast_remove_to @membership.user, :rooms, target: [ @room, :hidden_room ]
         list_name = @membership.sidebar_list_name
-        broadcast_append_to @membership.user, :rooms, target: list_name,
+        Turbo::StreamsChannel.broadcast_append_to @membership.user, :rooms, target: list_name,
                             partial: "users/sidebars/rooms/shared", locals: { list_name:, membership: @membership },
                             attributes: { maintain_scroll: true }
       end

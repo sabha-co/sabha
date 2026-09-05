@@ -14,6 +14,10 @@ module Rooms::InvolvementsHelper
     levels.map { |level| [ HUMANIZE_INVOLVEMENT[level], level ] }
   end
 
+  def involvement_label(involvement)
+    HUMANIZE_INVOLVEMENT.fetch(involvement)
+  end
+
   private
     HUMANIZE_INVOLVEMENT = {
       "mentions" => "Mentions only",

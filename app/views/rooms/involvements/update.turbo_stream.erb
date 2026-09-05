@@ -1,0 +1,3 @@
+<%= turbo_stream.replace dom_id(@room, :involvement) do %>
+  <%= render "rooms/involvements/involvement", room: @room, involvement: @membership.involvement, from_sidebar: false %>
+<% end %>

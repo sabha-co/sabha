@@ -15,6 +15,12 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "the unsupported generic edit route is absent" do
+    assert_raises(ActionController::RoutingError) do
+      Rails.application.routes.recognize_path("/rooms/#{rooms(:designers).id}/edit", method: :get)
+    end
+  end
+
   test "standard room header links member avatars to room info and keeps the panel icon" do
     room = rooms(:watercooler)
 

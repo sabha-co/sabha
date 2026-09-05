@@ -7,9 +7,58 @@ class ContextualPanelTest < ApplicationSystemTestCase
   setup do
     page.current_window.resize_to(1400, 1400)
     sign_in "kevin@37signals.com"
+    page.execute_script("Object.keys(localStorage).filter(key => key.startsWith('room-info:')).forEach(key => localStorage.removeItem(key))")
   end
 
   teardown { page.current_window.resize_to(1400, 1400) }
+
+  test "room info toggles both triggers and restores keyboard focus" do
+    join_room rooms(:designers)
+    find("a.navbar-roster--avatars").click
+    assert_selector "#thread-panel[aria-label='Room info']"
+    assert_selector "a.navbar-roster[aria-expanded='true']", count: 2
+    assert_selector "#thread-panel .thread-panel__title:focus"
+    find("a.navbar-roster.btn").click
+    assert_no_selector "#thread-panel:not([hidden])"
+    assert_selector "a.navbar-roster[aria-expanded='false']", count: 2
+    assert_selector "a.navbar-roster.btn:focus"
+  end
+
+  test "an explicitly opened roster follows desktop room navigation but never opens a phone overlay" do
+    join_room rooms(:designers)
+    find("a.navbar-roster.btn").click
+    assert_selector "#thread-panel .roster"
+    visit room_path(rooms(:hq))
+    assert_selector "#thread-panel .thread-panel__name", text: rooms(:hq).name
+    page.current_window.resize_to(1100, 900)
+    visit room_path(rooms(:designers))
+    assert_no_selector "#thread-panel:not([hidden])"
+    page.current_window.resize_to(390, 844)
+    visit room_path(rooms(:hq))
+    assert_no_selector "#thread-panel:not([hidden])"
+  end
+
+  test "notification selection updates the menu immediately" do
+    join_room rooms(:designers)
+    find("a.navbar-roster.btn").click
+    find(".roster__notification-trigger").click
+    within ".roster__notification-menu:popover-open" do
+      click_button "Notifications muted"
+    end
+    assert_selector ".roster__notification-trigger", text: "Notifications muted"
+    find(".roster__notification-trigger").click
+    assert_selector "button[role='menuitemradio'][aria-checked='true']", text: "Notifications muted"
+    assert_selector "button[role='menuitemradio']:focus", text: "Notifications muted"
+    page.driver.browser.keyboard.type(:Home)
+    assert_selector "button[role='menuitemradio']:focus", text: "Mentions only"
+    page.driver.browser.keyboard.type(:Escape)
+    assert_no_selector ".roster__notification-menu:popover-open"
+    assert_selector ".roster__notification-trigger:focus"
+    assert_selector "#thread-panel:not([hidden])"
+    page.driver.browser.keyboard.type(:Escape)
+    assert_no_selector "#thread-panel:not([hidden])"
+    assert_selector "a.navbar-roster.btn:focus"
+  end
 
   test "the avatar group opens room info and phones keep one compact entry point" do
     join_room rooms(:designers)
@@ -65,6 +114,7 @@ class ContextualPanelTest < ApplicationSystemTestCase
     find("##{dom_id(messages(:third))}").hover
     find("##{dom_id(messages(:third))} .message__reply-btn").click
     assert_selector "#thread-panel .thread-panel__title", text: "Thread", wait: 5
+    assert_selector "#thread-panel[aria-label='Thread']"
     assert_panel_position "static"
 
     page.current_window.resize_to(1231, 900)

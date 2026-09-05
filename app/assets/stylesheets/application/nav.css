@@ -147,6 +147,11 @@ body.room-header--pencil #nav {
   }
 }
 
+.navbar-roster[aria-expanded="true"] {
+  background-color: var(--color-bg-hover);
+  color: var(--color-accent-brand);
+}
+
 .navbar-member-avatars__avatar {
   box-shadow: 0 0 0 1px var(--color-bg);
   margin-inline-start: -8px;

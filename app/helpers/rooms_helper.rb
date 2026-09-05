@@ -9,8 +9,8 @@ module RoomsHelper
     link_to \
       room_roster_path(room),
       class: class_names("navbar-roster", block ? "navbar-roster--avatars" : "btn"),
-      aria: { label: "Room info for #{room_display_name(room)}", controls: "thread-panel" },
-      data: { turbo_frame: "thread_panel_frame", room_id: room.id } do
+      aria: { label: "Room info for #{room_display_name(room)}", controls: "thread-panel", expanded: false },
+      data: { turbo_frame: "thread_panel_frame", room_id: room.id, room_info_trigger: true } do
         block ? capture(&block) : icon_tag("panel-right")
     end
   end
