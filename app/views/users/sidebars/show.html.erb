@@ -75,11 +75,11 @@
            data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
            class="flex position-relative flex-col gap"
            <%= "hidden" if @starred_memberships.empty? %>>
-        <button type="button" class="favorites-toggle flex items-center gap-half"
+        <button type="button" class="sidebar__section-toggle sidebar__section-toggle--full"
                 aria-expanded="true"
                 data-collapsible-section-target="toggle"
                 data-action="collapsible-section#toggle">
-          <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
+          <span data-collapsible-section-target="icon" class="sidebar__section-icon"><%= icon_tag "caret-down" %></span>
           <h1 class="font-semibold txt-label sidebar__label">Favorites</h1>
           <span class="sidebar__label-count" data-sidebar-count-target="count" <%= "hidden" if @starred_memberships.size.zero? %>><%= @starred_memberships.size %></span>
         </button>
@@ -99,7 +99,7 @@
                   aria-expanded="true"
                   data-collapsible-section-target="toggle"
                   data-action="collapsible-section#toggle">
-            <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
+            <span data-collapsible-section-target="icon" class="sidebar__section-icon"><%= icon_tag "caret-down" %></span>
             <h1 class="font-semibold txt-label sidebar__label">Rooms</h1>
             <span class="sidebar__label-count" data-sidebar-count-target="count" <%= "hidden" if @shared_memberships.size.zero? %>><%= @shared_memberships.size %></span>
           </button>
@@ -130,11 +130,11 @@
            data-sidebar-count-hide-when-empty-value="true"
            class="flex position-relative flex-col gap"
            <%= "hidden" if @forum_memberships.empty? %>>
-        <button type="button" class="favorites-toggle flex items-center gap-half"
+        <button type="button" class="sidebar__section-toggle sidebar__section-toggle--full"
                 aria-expanded="true"
                 data-collapsible-section-target="toggle"
                 data-action="collapsible-section#toggle">
-          <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
+          <span data-collapsible-section-target="icon" class="sidebar__section-icon"><%= icon_tag "caret-down" %></span>
           <h1 class="font-semibold txt-label sidebar__label">Forums</h1>
           <span class="sidebar__label-count" data-sidebar-count-target="count" <%= "hidden" if @forum_memberships.size.zero? %>><%= @forum_memberships.size %></span>
         </button>
@@ -162,7 +162,7 @@
                     aria-expanded="true"
                     data-collapsible-section-target="toggle"
                     data-action="collapsible-section#toggle">
-              <span data-collapsible-section-target="icon" class="favorites-toggle__icon"><%= icon_tag "caret-down" %></span>
+              <span data-collapsible-section-target="icon" class="sidebar__section-icon"><%= icon_tag "caret-down" %></span>
               <h1 class="font-semibold txt-label sidebar__label">Direct messages</h1>
               <span class="sidebar__label-count" data-sidebar-count-target="count" <%= "hidden" if @direct_memberships.size.zero? %>><%= @direct_memberships.size %></span>
             </button>

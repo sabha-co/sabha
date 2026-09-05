@@ -1,0 +1,91 @@
+/* Searches */
+.searches {
+  #nav {
+    align-items: start;
+    column-gap: 0;
+    padding-inline-end: 0;
+  }
+
+  .rooms {
+    padding-block-start: var(--block-space);
+  }
+
+  .message--formatted .message__room {
+    visibility: visible;
+    display: inline-block;
+  }
+}
+
+.searches__recents {
+  --mask: linear-gradient(
+    to left,
+    oklch(0% 0 0 / 1) 97%,
+    oklch(0% 0 0 / 0) 99%
+  );
+
+  -webkit-mask-image: var(--mask);
+  display: none;
+  mask-image: var(--mask);
+  position: relative;
+
+  @media (max-width: 1024px) {
+    display: flex;
+  }
+
+  .room {
+    max-inline-size: 20ch;
+
+    &:first-child {
+      margin-inline-start: var(--inline-space);
+    }
+  }
+
+  .searches__btn {
+    margin-inline-end: var(--inline-space-double);
+  }
+}
+
+.searches__query {
+  --btn-border-radius: 0.5em;
+
+  min-block-size: var(--btn-size);
+}
+
+.searches__results {
+  padding-block-start: var(--block-space);
+}
+
+/* Results page: the input rides at the top of the column (the palette is the
+   entry point; this refines) and the results scroll beneath it. */
+.searches__bar {
+  padding: 12px var(--inline-space) 10px;
+}
+
+body.searches #main-content {
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+body.searches .searches__results {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/* The generic empty state forces a 100vh flex column for the DM compose
+   layout; under the top-mounted bar it should just fill the leftover column. */
+body.searches
+  .message-area:not(:has(.message)):not(:has(.dm-conversation)):not(
+    :has(.thread-card)
+  ) {
+  block-size: auto;
+  flex: 1;
+  min-block-size: 0;
+}
+
+.searches__input:required:invalid {
+  ~ .searches__reset {
+    display: none;
+    visibility: hidden;
+  }
+}

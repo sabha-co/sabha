@@ -34,6 +34,12 @@
     }
 
     .sidebar__workspace {
+      justify-content: center;
+      padding: 12px 0 var(--block-space-half);
+    }
+
+    .sidebar__workspace-info,
+    .sidebar__workspace-action {
       display: none;
     }
 
@@ -200,12 +206,14 @@ body.room-header--pencil .sidebar__workspace {
   font-size: 0.71875rem;
   line-height: 1.3;
   overflow: hidden;
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
   text-overflow: ellipsis;
   white-space: nowrap;
 
-  &:hover {
-    color: var(--color-text-muted);
+  &:hover,
+  &:focus-visible {
+    color: var(--color-text);
   }
 }
 
@@ -593,9 +601,8 @@ body.room-header--pencil .sidebar__workspace {
 
   #sidebar:where(
       :not(.open):has(
-        #sidebar_inbox [data-type="list_node"]:not([hidden]),
-        #starred_rooms [data-type="list_node"]:not([hidden]) .unread,
-        .direct.unread
+        :is(#shared_rooms, #starred_rooms, #forum_rooms) > .room-row:not([hidden]) .room.unread,
+        #direct_rooms .direct.unread:not([hidden])
       )
     )
     & {
@@ -651,7 +658,7 @@ body.room-header--pencil .sidebar__workspace {
 
     color: var(--color-text-muted);
     display: flex;
-    inset-block-start: var(--block-space-half);
+    inset-block-start: calc(12px + 32px + var(--block-space-half));
     inset-inline: 0;
     margin-inline: auto;
     position: absolute;
@@ -704,23 +711,6 @@ body.room-header--pencil .sidebar__workspace {
   display: flex;
   flex-direction: column;
   gap: 2px;
-}
-
-.directs--edit {
-  display: grid;
-  gap: var(--inline-space);
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  grid-template-rows: min-content;
-  place-items: center;
-
-  .member {
-    aspect-ratio: 1;
-    block-size: auto;
-    inline-size: 100%;
-    max-inline-size: 200px;
-    margin-inline: auto;
-    place-content: center;
-  }
 }
 
 .direct {
@@ -840,28 +830,8 @@ body.room-header--pencil .sidebar__workspace {
   }
 }
 
-.rooms__new-btn {
-  position: relative;
-  z-index: 4;
-  border-radius: 0.5em;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 0;
-  margin-bottom: calc(var(--block-space) * 2);
-}
-
-.favorites-toggle {
-  all: unset;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.35em;
-  width: 100%;
-}
-
-/* Rooms and Direct messages carry header actions (⋯, ＋) beside the label, so
-   their collapse toggle sizes to its content rather than filling the row. */
+/* One collapse control for all sections; headers without adjacent actions
+   use the full-width modifier. */
 .sidebar__section-toggle {
   all: unset;
   cursor: pointer;
@@ -870,7 +840,11 @@ body.room-header--pencil .sidebar__workspace {
   gap: 0.35em;
 }
 
-.favorites-toggle__icon {
+.sidebar__section-toggle--full {
+  width: 100%;
+}
+
+.sidebar__section-icon {
   /* The caret paints with background-color: currentColor. The toggle button
      resets color via `all: unset`, so without this the caret inherits the dark
      ink color and vanishes on the contrast nav — name it like the label. */
@@ -993,201 +967,14 @@ body.room-header--pencil .sidebar__workspace {
     transform: none;
     transition: none;
   }
-
-  time {
-    opacity: 0.4;
-    font-weight: 400;
-
-    .sidebar__list:not(#shared_rooms) .room.unread &,
-    .sidebar__list .room.unread.badge & {
-      opacity: 1;
-      font-weight: 700;
-    }
-
-    .sidebar__list .room.unread.badge & {
-      padding-inline-start: calc(var(--inline-space) * 4 / 3);
-
-      &::after {
-        --size: 0.5em;
-
-        aspect-ratio: 1;
-        background-color: var(--color-negative);
-        block-size: var(--size);
-        border-radius: calc(var(--size) * 2);
-        content: "";
-        flex-shrink: 0;
-        inline-size: var(--size);
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-      }
-    }
-  }
 }
 
-.room--current {
-  --btn-border-radius: 0.5em;
-  --hover-filter: none;
-  --num-buttons: 1;
-
-  cursor: pointer;
-  min-block-size: var(--btn-size);
-
-  .room__contents {
-    .account-has-logo & {
-      --num-buttons: 2;
-    }
-
-    max-inline-size: calc(
-      100dvw - (var(--btn-size) * var(--num-buttons)) -
-        (var(--btn-size) + max(var(--inline-space), 1vw)) -
-        ((var(--inline-space) + 1.8em) * 2) - var(--sidebar-width) -
-        var(--inline-space) * var(--num-buttons) - 1.2em
-    );
-
-    @media (max-width: 1024px) {
-      --num-buttons: 2;
-
-      .account-has-logo & {
-        --num-buttons: 3;
-      }
-    }
-  }
-}
-
-/* Searches */
-.searches {
-  #nav {
-    align-items: start;
-    column-gap: 0;
-    padding-inline-end: 0;
-  }
-
-  .rooms {
-    padding-block-start: var(--block-space);
-  }
-
-  .message--formatted .message__room {
-    visibility: visible;
-    display: inline-block;
-  }
-}
-
-.searches__recents {
-  --mask: linear-gradient(
-    to left,
-    oklch(0% 0 0 / 1) 97%,
-    oklch(0% 0 0 / 0) 99%
-  );
-
-  -webkit-mask-image: var(--mask);
-  display: none;
-  mask-image: var(--mask);
-  position: relative;
-
-  @media (max-width: 1024px) {
-    display: flex;
-  }
-
-  .room {
-    max-inline-size: 20ch;
-
-    &:first-child {
-      margin-inline-start: var(--inline-space);
-    }
-  }
-
-  .searches__btn {
-    margin-inline-end: var(--inline-space-double);
-  }
-}
-
-.searches__query {
-  --btn-border-radius: 0.5em;
-
-  min-block-size: var(--btn-size);
-}
-
-.searches__results {
-  padding-block-start: var(--block-space);
-}
-
-/* Results page: the input rides at the top of the column (the palette is the
-   entry point; this refines) and the results scroll beneath it. */
-.searches__bar {
-  padding: 12px var(--inline-space) 10px;
-}
-
-body.searches #main-content {
-  justify-content: flex-start;
-  overflow: hidden;
-}
-
-body.searches .searches__results {
-  flex: 1 1 auto;
-  min-block-size: 0;
-  overflow-y: auto;
-}
-
-/* The generic empty state forces a 100vh flex column for the DM compose
-   layout; under the top-mounted bar it should just fill the leftover column. */
-body.searches
-  .message-area:not(:has(.message)):not(:has(.dm-conversation)):not(
-    :has(.thread-card)
-  ) {
-  block-size: auto;
-  flex: 1;
-  min-block-size: 0;
-}
-
-.searches__input:required:invalid {
-  ~ .searches__reset {
-    display: none;
-    visibility: hidden;
-  }
-}
-
-#sidebar {
-  &:has([open]) {
-    [open] .options-btn {
-      opacity: 1;
-    }
-
-    [open] .popup-menu {
-      display: block;
-    }
-  }
-
-  .options-btn {
-    aspect-ratio: 1;
-    block-size: 20px;
-    border-radius: var(--border-radius-sm);
-    inline-size: 20px;
-    padding: 0;
-  }
-
-  .actions-menu {
-    --arrow-size: 1.5em;
-    --btn-size: 2em;
-
-    inset: var(--btn-size) auto auto 50%;
-    transform: translateX(-50%);
-    transform-origin: top left;
-    z-index: 100;
-  }
-
-  .actions-menu .action-btn {
-    font-size: var(--font-size-small);
-    --width: 100%;
-    --btn-padding: calc(var(--inline-space) * 2 / 3) var(--inline-space);
-    --btn-border-radius: calc(var(--arrow-size) / 2 - var(--inline-space-half));
-    --busy-inset: calc(var(--inline-space) * 1.5);
-
-    white-space: nowrap;
-    justify-content: start;
-    font-weight: 400;
-  }
+#sidebar .options-btn {
+  aspect-ratio: 1;
+  block-size: 20px;
+  border-radius: var(--border-radius-sm);
+  inline-size: 20px;
+  padding: 0;
 }
 
 /* Contrast treatment — a scope, not a theme: rebinds the semantic tokens
@@ -1343,7 +1130,8 @@ html:not([data-sidebar="match"])
 
 @media (min-width: 834px) and (max-width: 1279.9px) {
   #sidebar:not(.open) {
-    .sidebar-skeleton__bar {
+    .sidebar-skeleton__bar,
+    .sidebar-skeleton__copy {
       display: none;
     }
 

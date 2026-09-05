@@ -46,4 +46,23 @@ class SidebarDrawerTest < ApplicationSystemTestCase
     find(".sidebar__close").click
     assert_no_selector "#sidebar.open"
   end
+
+  test "the closed drawer signals unread shared rooms and clears when they are read" do
+    assert_selector "#shared_rooms .room", visible: :all, minimum: 1
+    page.execute_script(<<~JS)
+      document.querySelectorAll("#sidebar .unread, #sidebar .badge").forEach(row => row.classList.remove("unread", "badge"))
+      document.querySelector("#shared_rooms .room").classList.add("unread")
+    JS
+
+    assert_equal '""', toggle_indicator_content
+
+    page.execute_script('document.querySelector("#shared_rooms .room.unread").classList.remove("unread")')
+
+    assert_equal "none", toggle_indicator_content
+  end
+
+  private
+    def toggle_indicator_content
+      page.evaluate_script('getComputedStyle(document.querySelector("#sidebar-toggle"), "::after").content')
+    end
 end

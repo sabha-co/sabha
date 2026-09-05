@@ -38,6 +38,12 @@ class SidebarRailTest < ApplicationSystemTestCase
 
   test "the closed rail previews unread-first rooms as compact glyph rows with names and section chrome hidden" do
     assert_no_selector "#sidebar.open"
+    assert_selector ".sidebar__workspace-logo", visible: true
+    assert_no_selector ".sidebar__workspace-info", visible: true
+    assert page.evaluate_script(<<~JS)
+      document.querySelector(".sidebar__workspace-logo").getBoundingClientRect().bottom <=
+        document.querySelector("#sidebar-toggle").getBoundingClientRect().top
+    JS
 
     # The main Rooms list still renders its rows in the rail (they carry the
     # live unread badges and sort priority), capped to a compact preview.

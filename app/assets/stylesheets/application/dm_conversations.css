@@ -223,3 +223,21 @@
   min-block-size: 0;
   padding: var(--block-space);
 }
+
+/* Direct-message participant editor */
+.directs--edit {
+  display: grid;
+  gap: var(--inline-space);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-rows: min-content;
+  place-items: center;
+
+  .member {
+    aspect-ratio: 1;
+    block-size: auto;
+    inline-size: 100%;
+    max-inline-size: 200px;
+    margin-inline: auto;
+    place-content: center;
+  }
+}
