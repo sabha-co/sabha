@@ -15,6 +15,13 @@ module RoomsHelper
     end
   end
 
+  def room_info_storage_key
+    return unless Current.user && Current.account
+
+    tenant = ApplicationRecord.current_tenant if Sabha.saas?
+    [ "room-info", tenant, Current.account.id, Current.user.id ].compact.join(":")
+  end
+
   def browse_room_type_label(room)
     case room
     when Rooms::Closed then "Private"

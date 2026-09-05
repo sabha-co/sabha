@@ -25,4 +25,26 @@ class WorkspaceSwitchNavigationTest < ActionDispatch::IntegrationTest
     assert_select "a.workspace-selector__item:not([data-turbo='false'])", false,
       "every workspace-switch link must force a full reload with data-turbo=\"false\""
   end
+
+  test "Room info preferences are scoped to the workspace as well as the local user" do
+    sign_in_global_identity(global_identities(:alice))
+
+    keys = []
+    local_ids = []
+    [ "Room info A", "Room info B" ].each do |name|
+      with_provisioned_workspace(name: name, creator: global_identities(:alice)) do |workspace|
+        room_id = ApplicationRecord.with_tenant(workspace.external_id.to_s) do
+          local_ids << [ Account.sole.id, User.find_by!(email_address: global_identities(:alice).email_address).id ]
+          Room.first.id
+        end
+        workspace_get "/rooms/#{room_id}", workspace: workspace
+
+        assert_response :success
+        keys << css_select("[data-thread-panel-storage-key-value]").sole["data-thread-panel-storage-key-value"]
+      end
+    end
+
+    assert_equal local_ids.first, local_ids.last, "the workspaces must exercise colliding local IDs"
+    assert_not_equal keys.first, keys.last
+  end
 end

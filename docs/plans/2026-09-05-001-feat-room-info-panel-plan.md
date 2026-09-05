@@ -45,7 +45,9 @@ is needed. Room settings retains its existing member list and permissions.
   Post. Nested frame loads must not reopen or refocus the containing panel.
 - Remember an explicitly opened Room info panel across desktop room navigation
   at widths of at least 1160px. Store this preference per account and user on
-  the device; explicit close clears it. Never automatically open overlays or
+  the device, including the tenant identifier in SaaS keys because local record
+  IDs can repeat across workspaces. Omit the key on public pages where the user
+  or account is absent. Explicit close clears it. Never automatically open overlays or
   replace a deep-linked thread/post.
 - Keep the existing responsive layout: docked at 1160px and above, overlay below
   that, and full column below 500px. Preserve existing light/dark tokens.

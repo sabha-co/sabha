@@ -34,6 +34,7 @@ class EmailUnsubscribesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "form[action=?]", email_unsubscribe_path(token: token)
+    assert_select "[data-thread-panel-storage-key-value]", count: 0
   end
 
   test "re-clicking is idempotent" do

@@ -11,7 +11,7 @@ class Rooms::InvolvementSettingsTest < ActionDispatch::IntegrationTest
     membership = memberships(:david_hq)
     assert membership.involved_in_everything?
 
-    put room_involvement_url(room), params: { involvement: "nothing", return_to: edit_room_path(room) }
+    put room_involvement_url(room), params: { involvement: "nothing", return_to: edit_rooms_open_path(room) }
 
     assert membership.reload.involved_in_nothing?
   end
@@ -21,7 +21,7 @@ class Rooms::InvolvementSettingsTest < ActionDispatch::IntegrationTest
     membership = memberships(:david_hq)
     membership.update!(involvement: "nothing")
 
-    put room_involvement_url(room), params: { involvement: "mentions", return_to: edit_room_path(room) }
+    put room_involvement_url(room), params: { involvement: "mentions", return_to: edit_rooms_open_path(room) }
 
     assert membership.reload.involved_in_mentions?
   end
@@ -53,7 +53,7 @@ class Rooms::InvolvementSettingsTest < ActionDispatch::IntegrationTest
     membership = memberships(:david_hq)
 
     assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 5 do
-      put room_involvement_url(room), params: { involvement: "invisible", return_to: edit_room_path(room) }
+      put room_involvement_url(room), params: { involvement: "invisible", return_to: edit_rooms_open_path(room) }
     end
 
     assert membership.reload.involved_in_invisible?
@@ -65,7 +65,7 @@ class Rooms::InvolvementSettingsTest < ActionDispatch::IntegrationTest
     membership.update!(involvement: "invisible")
 
     assert_turbo_stream_broadcasts [ users(:david), :rooms ], count: 3 do
-      put room_involvement_url(room), params: { involvement: "mentions", return_to: edit_room_path(room) }
+      put room_involvement_url(room), params: { involvement: "mentions", return_to: edit_rooms_open_path(room) }
     end
 
     assert membership.reload.involved_in_mentions?
@@ -75,9 +75,9 @@ class Rooms::InvolvementSettingsTest < ActionDispatch::IntegrationTest
   test "returns to specified path after update" do
     room = rooms(:hq)
 
-    put room_involvement_url(room), params: { involvement: "nothing", return_to: edit_room_path(room) }
+    put room_involvement_url(room), params: { involvement: "nothing", return_to: edit_rooms_open_path(room) }
 
-    assert_redirected_to edit_room_path(room)
+    assert_redirected_to edit_rooms_open_path(room)
   end
 
   test "turbo stream request returns head ok" do

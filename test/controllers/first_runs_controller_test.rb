@@ -10,6 +10,7 @@ class FirstRunsControllerTest < ActionDispatch::IntegrationTest
   test "new is permitted when no other users exit" do
     get first_run_url
     assert_response :success
+    assert_select "[data-thread-panel-storage-key-value]", count: 0
   end
 
   test "new is not permitted when account exist" do

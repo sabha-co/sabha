@@ -105,7 +105,7 @@
     </main>
 
     <div class="thread-panel-controller" data-controller="thread-panel"
-         data-thread-panel-storage-key-value="room-info:<%= Current.account.id %>:<%= Current.user.id %>"
+         <%= tag.attributes(data: { thread_panel_storage_key_value: room_info_storage_key }) %>
          data-action="keydown@document->thread-panel#closeOnEscape turbo:before-visit@document->thread-panel#closeOnNavigation turbo:before-cache@document->thread-panel#closeOnNavigation">
       <aside id="thread-panel" hidden aria-label="Room info" data-thread-panel-target="panel">
         <%# A deep-linked post (gallery visited as ?post=<slug>) eager-loads its
