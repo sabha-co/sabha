@@ -15,19 +15,22 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "standard room header shows member avatars and distinct member actions" do
+  test "standard room header links member avatars to room info and keeps the panel icon" do
     room = rooms(:watercooler)
 
     get room_url(room)
 
     assert_response :success
     assert_select "body.room-header--pencil", count: 1
-    assert_select ".navbar-member-avatars" do
-      assert_select ".avatar", count: 4
-      assert_select ".navbar-member-avatars__overflow", text: "+1"
+    assert_select "a.navbar-roster--avatars[href=?][data-turbo-frame='thread_panel_frame']", room_roster_path(room), count: 1 do
+      assert_select ".navbar-member-avatars" do
+        assert_select ".avatar", count: 4
+        assert_select ".navbar-member-avatars__overflow", text: "+1"
+      end
     end
-    assert_select "a.navbar-members--web[href=?]", edit_rooms_closed_path(room, tab: "members"), count: 1
-    assert_select "a.navbar-roster[href=?]", room_roster_path(room), count: 1
+    assert_select "a.navbar-roster[href=?] .icon--panel-right", room_roster_path(room), count: 1
+    assert_select ".navbar-actions a", count: 2
+    assert_select ".navbar-actions .icon--users", count: 0
   end
 
   test "standard room header shows its exact four members without an overflow badge" do

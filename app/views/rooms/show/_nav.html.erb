@@ -81,23 +81,17 @@
 
     <div class="flex gap-half align-center navbar-actions">
       <% unless room.thread? || room.direct? %>
-        <% member_names = header_members.map(&:name).to_sentence %>
-        <div class="navbar-member-avatars" role="img"
-             aria-label="Members include <%= member_names %><%= ", and #{pluralize(header_member_overflow, "more member")}" if header_member_overflow.positive? %>">
-          <% header_members.each do |member| %>
-            <span class="avatar navbar-member-avatars__avatar" title="<%= member.name %>">
-              <%= avatar_image_tag(member, size: 26, loading: :lazy) %>
-            </span>
-          <% end %>
-          <% if header_member_overflow.positive? %>
-            <span class="navbar-member-avatars__overflow" aria-hidden="true">+<%= header_member_overflow %></span>
-          <% end %>
-        </div>
-
-        <%= link_to edit_room_path(room, tab: "members"), class: "btn navbar-members navbar-members--web",
-              aria: { label: "Manage #{pluralize(active_member_count, "member")} in #{room_display_name(room)}" } do %>
-          <%= icon_tag "users" %>
-          <span class="for-screen-reader">Manage members</span>
+        <%= link_to_room_roster(room) do %>
+          <span class="navbar-member-avatars" aria-hidden="true">
+            <% header_members.each do |member| %>
+              <span class="avatar navbar-member-avatars__avatar" title="<%= member.name %>">
+                <%= avatar_image_tag(member, size: 26, loading: :lazy) %>
+              </span>
+            <% end %>
+            <% if header_member_overflow.positive? %>
+              <span class="navbar-member-avatars__overflow" aria-hidden="true">+<%= header_member_overflow %></span>
+            <% end %>
+          </span>
         <% end %>
       <% end %>
 
@@ -117,7 +111,6 @@
             <%= button_to_change_involvement(room, @membership.involvement) %>
           <% end %>
         <% else %>
-          <%# The involvement toggle now lives inside the roster panel. %>
           <%= link_to_room_roster(room) %>
         <% end %>
       <% end %>

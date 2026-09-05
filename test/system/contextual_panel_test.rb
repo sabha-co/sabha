@@ -11,13 +11,34 @@ class ContextualPanelTest < ApplicationSystemTestCase
 
   teardown { page.current_window.resize_to(1400, 1400) }
 
+  test "the avatar group opens room info and phones keep one compact entry point" do
+    join_room rooms(:designers)
+
+    within ".navbar-actions" do
+      assert_selector "a", count: 2
+      find(".navbar-member-avatars").click
+    end
+    assert_selector "#thread-panel .roster"
+    find("[aria-label='Close room info']").click
+    assert_no_selector "#thread-panel:not([hidden])"
+
+    page.current_window.resize_to(390, 844)
+    within ".navbar-actions" do
+      assert_selector "a", count: 1
+      assert_no_selector ".navbar-member-avatars"
+      find("a.navbar-roster").click
+    end
+    assert_selector "#thread-panel .roster"
+    assert_current_path room_path(rooms(:designers))
+  end
+
   test "room info is closed by default and overlays below its inline threshold" do
     join_room rooms(:designers)
 
     assert_no_selector "#thread-panel:not([hidden])"
 
     page.current_window.resize_to(1160, 900)
-    find("a[href$='/roster']").click
+    find("a.navbar-roster.btn").click
     assert_selector "#thread-panel .roster", wait: 5
     assert_panel_position "static"
 

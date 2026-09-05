@@ -57,5 +57,12 @@
     <% else %>
       <p class="roster__empty">No one's here right now.</p>
     <% end %>
+
+    <% if @room.is_a?(Rooms::Closed) && Current.user.can_administer?(@room) %>
+      <div class="roster__section">
+        <%= link_to "Manage members", edit_room_path(@room, tab: "members"),
+              class: "roster__action", data: { turbo_frame: "_top" } %>
+      </div>
+    <% end %>
   </div>
 <% end %>

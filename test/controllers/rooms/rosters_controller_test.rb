@@ -25,6 +25,25 @@ class Rooms::RostersControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: /Settings/
   end
 
+  test "offers member management to a private room administrator" do
+    get room_roster_url(@room)
+
+    assert_select "a[href=?][data-turbo-frame='_top']", edit_rooms_closed_path(@room, tab: "members"), text: "Manage members"
+  end
+
+  test "omits member management for ordinary members and rooms without managed membership" do
+    sign_in :kevin
+    get room_roster_url(@room)
+    assert_select "a", text: "Manage members", count: 0
+
+    sign_in :david
+    [ rooms(:hq), rooms(:help_desk), rooms(:david_and_jason) ].each do |room|
+      room.memberships.grant_to(users(:david))
+      get room_roster_url(room)
+      assert_select "a", text: "Manage members", count: 0
+    end
+  end
+
   test "offers a favourite toggle for a starrable room" do
     get room_roster_url(@room)
 

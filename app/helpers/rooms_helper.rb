@@ -5,14 +5,13 @@ module RoomsHelper
     }.merge(attributes.delete(:data) || {}), &
   end
 
-  def link_to_room_roster(room)
+  def link_to_room_roster(room, &block)
     link_to \
       room_roster_path(room),
-      class: "btn navbar-roster",
-      aria: { label: "Who's in #{room_display_name(room)}" },
+      class: class_names("navbar-roster", block ? "navbar-roster--avatars" : "btn"),
+      aria: { label: "Room info for #{room_display_name(room)}", controls: "thread-panel" },
       data: { turbo_frame: "thread_panel_frame", room_id: room.id } do
-        icon_tag("panel-right") +
-        tag.span("Room details", class: "for-screen-reader")
+        block ? capture(&block) : icon_tag("panel-right")
     end
   end
 

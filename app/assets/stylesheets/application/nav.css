@@ -118,7 +118,7 @@ body.room-header--pencil #nav {
   }
 }
 
-/* Standard-room member facepile and the two member-related actions. */
+/* The member facepile and panel icon both open room info. */
 .navbar-members,
 .navbar-roster {
   --icon-size: 17px;
@@ -135,6 +135,16 @@ body.room-header--pencil #nav {
   display: flex;
   flex-shrink: 0;
   padding: 3px 7px 3px 3px;
+}
+
+.navbar-roster--avatars {
+  border-radius: 12px;
+  display: flex;
+  text-decoration: none;
+
+  &:hover {
+    background-color: var(--color-bg-hover);
+  }
 }
 
 .navbar-member-avatars__avatar {
@@ -166,8 +176,7 @@ body.room-header--pencil #nav {
 }
 
 @media (max-width: 833.9px) {
-  .navbar-member-avatars,
-  .navbar-members--web {
+  .navbar-roster--avatars {
     display: none;
   }
 }
