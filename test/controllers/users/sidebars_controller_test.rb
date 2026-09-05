@@ -33,6 +33,24 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".sidebar__empty", count: 0
   end
 
+  test "hides Forums when the user belongs to no forum, but keeps the container for real-time inserts" do
+    sign_in :jz
+
+    get user_sidebar_url
+
+    assert_select "#forums_section[hidden]"
+    assert_select "#forum_rooms"
+  end
+
+  test "hides Direct messages when the user has none, but keeps the container for real-time inserts" do
+    sign_in :jz
+
+    get user_sidebar_url
+
+    assert_select "#direct_messages_section[hidden]"
+    assert_select "#direct_rooms"
+  end
+
   test "forum rows carry no row menu, while ordinary rooms do" do
     rooms(:help_desk).memberships.grant_to(users(:david))
 
