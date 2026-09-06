@@ -5,6 +5,7 @@ import MessageFormatter, { ThreadStyle } from "models/message_formatter"
 import MessagePaginator from "models/message_paginator"
 import ScrollManager from "models/scroll_manager"
 import ScrollTracker from "models/scroll_tracker"
+import StreamRenderQueue from "models/stream_render_queue"
 
 export default class extends Controller {
   static targets = [ "latest", "message", "body", "messages", "template" ]
@@ -16,6 +17,7 @@ export default class extends Controller {
   #formatter
   #scrollManager
   #scrollTracker
+  #streamQueue
   #pendingSends = new Map()
 
   // Lifecycle
@@ -39,6 +41,7 @@ export default class extends Controller {
     })
     this.#scrollManager = new ScrollManager(this.messagesTarget)
     this.#scrollTracker = new ScrollTracker(this.messagesTarget, { lastChildHidden: this.#showReturnToLatestButton.bind(this) })
+    this.#streamQueue = new StreamRenderQueue(this.messagesTarget)
 
     if (this.#hasSearchResult) {
       this.#highlightSearchResult()
@@ -60,6 +63,7 @@ export default class extends Controller {
   disconnect() {
     this.#paginator.disconnect()
     this.#scrollTracker.disconnect()
+    this.#streamQueue.disconnect()
   }
 
   #streaming = false
@@ -84,29 +88,27 @@ export default class extends Controller {
   async beforeStreamRender(event) {
     const target = event.detail.newStream.getAttribute("target")
     const action = event.detail.newStream.getAttribute("action")
-
     const render = event.detail.render
+    const paginator = this.#paginator
+    const reset = paginator.resetting ? paginator.resetToLastPage() : null
+    const gate = this.#streamQueue.gateFor(target, reset)
 
-    if (action === "remove") {
-      const removedMessage = this.messageTargets.find(el => el.id === target)
-      if (removedMessage) {
-        const followingMessage = removedMessage.nextElementSibling
-        if (followingMessage) {
-          event.detail.render = async (streamElement) => {
-            await render(streamElement)
-            await nextEventLoopTick()
-            // Re-format the message following the deleted one, in case we need to re-draw message separators or re-thread messages
-            this.#formatMessage(followingMessage)
-          }
-        }
+    if (action === "remove" && this.#streamQueue.owns(target)) {
+      event.detail.render = async (streamElement) => {
+        // A queued append may create this target after the event was received.
+        const removedMessage = this.messageTargets.find(el => el.id === target)
+        const followingMessage = removedMessage?.nextElementSibling
+        await render(streamElement)
+        await nextEventLoopTick()
+        if (followingMessage?.isConnected) this.#formatMessage(followingMessage)
       }
     }
-    
-    if (target === this.messagesTarget.id) {
-      const upToDate = this.#paginator.upToDate
 
-      if (upToDate) {
+    if (target === this.messagesTarget.id) {
+      if (this.#paginator.upToDate || gate) {
         event.detail.render = async (streamElement) => {
+          if (!this.element.isConnected) return
+
           const didScroll = await this.#scrollManager.autoscroll(false, async () => {
             this.#streaming = true
             try {
@@ -131,15 +133,33 @@ export default class extends Controller {
         this.#showReturnToLatestButton(true)
       }
     }
+
+    if (gate) {
+      event.detail.messageRenderReady = gate
+      event.detail.render = this.#streamQueue.enqueue(event.detail.newStream, gate, {
+        render: event.detail.render,
+        appendsToContainer: target === this.messagesTarget.id,
+        isStale: () => this.#paginator !== paginator || !this.element.isConnected
+      })
+    }
   }
 
   async returnToLatest() {
     if (!this.#paginator.upToDate) {
       this.latestTarget.classList.add('busy')
     }
-    await this.#ensureUpToDate()
-    this.#scrollManager.autoscroll(true)
-    this.#hideReturnToLatestButton()
+    try {
+      await this.#ensureUpToDate()
+      await this.#scrollManager.autoscroll(true)
+      this.#hideReturnToLatestButton()
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.warn("[JumpToNewest]", error)
+        this.#showReturnToLatestButton()
+      }
+    } finally {
+      this.latestTarget.classList.remove('busy')
+    }
   }
 
   async editMyLastMessage() {
@@ -173,6 +193,7 @@ export default class extends Controller {
 
   async insertPendingMessage(clientMessageId, node) {
     await this.#ensureUpToDate()
+    await this.#streamQueue.whenIdle()
 
     return this.#scrollManager.autoscroll(true, async () => {
       const message = this.#clientMessage.render(clientMessageId, node)

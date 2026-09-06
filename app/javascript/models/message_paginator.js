@@ -20,6 +20,8 @@ export default class MessagePaginator {
   #classes
   #upToDate = true
   #idAttribute
+  #resetPromise
+  #pageGeneration = 0
 
   constructor(container, url, messageFormatter, allContentViewedCallback, classes, options = {}) {
     this.#container = container
@@ -39,6 +41,7 @@ export default class MessagePaginator {
   }
 
   disconnect() {
+    this.#pageGeneration++
     this.#scrollTracker.disconnect()
   }
 
@@ -50,9 +53,21 @@ export default class MessagePaginator {
     this.#upToDate = value
   }
 
-  async resetToLastPage() {
-    this.upToDate = true
-    await this.#showLastPage()
+  get resetting() {
+    return !!this.#resetPromise
+  }
+
+  resetToLastPage() {
+    if (!this.#resetPromise) {
+      // Responses for the previous history window must never enter this one.
+      const generation = ++this.#pageGeneration
+      this.upToDate = false
+      this.#hideLoadingIndicators()
+      this.#resetPromise = this.#showLastPage(generation).finally(() => {
+        this.#resetPromise = null
+      })
+    }
+    return this.#resetPromise
   }
 
   async trimExcessMessages(top) {
@@ -68,6 +83,8 @@ export default class MessagePaginator {
   // Internal
 
   #messageBecameVisible(element) {
+    if (this.resetting) return
+
     const itemId = element.dataset[this.#idAttribute]
     const firstItem = element === this.#container.firstElementChild
     const lastItem = element === this.#container.lastElementChild
@@ -87,16 +104,23 @@ export default class MessagePaginator {
     }
   }
 
-  async #showLastPage() {
+  async #showLastPage(generation) {
     const resp = await this.#fetchPage()
-    if (resp.statusCode === 200) {
-      const page = await this.#formatPage(resp)
-      this.#container.replaceChildren(page)
+    if (resp.redirected || ![200, 204].includes(resp.statusCode)) {
+      throw new Error(`Could not load newest messages: ${resp.statusCode}`)
     }
+
+    const page = resp.statusCode === 204 ? document.createDocumentFragment() : await this.#formatPage(resp)
+    if (generation !== this.#pageGeneration) throw new DOMException("Message list disconnected", "AbortError")
+
+    this.#container.replaceChildren(page)
+    this.upToDate = true
   }
 
   async #addPage(params, top) {
+    const generation = this.#pageGeneration
     const resp = await this.#fetchPage(params)
+    if (generation !== this.#pageGeneration) return
 
     if (resp.statusCode === 204 && !top) {
       this.upToDate = true
@@ -105,6 +129,7 @@ export default class MessagePaginator {
 
     if (resp.statusCode === 200) {
       const page = await this.#formatPage(resp)
+      if (generation !== this.#pageGeneration) return
       const lastNewElement = page.lastElementChild
 
       keepScroll(this.#container, top, () => {

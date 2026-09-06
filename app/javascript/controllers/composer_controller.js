@@ -241,8 +241,13 @@ export default class extends Controller {
       // panel (no thread, so no message stream yet). Skip the optimistic insert and
       // just submit — the server materializes the thread and renders the real panel.
       if (this.hasMessagesOutlet) {
-        await this.messagesOutlet.insertPendingMessage(clientMessageId, this.textTarget)
-        await nextFrame()
+        try {
+          await this.messagesOutlet.insertPendingMessage(clientMessageId, this.textTarget)
+          await nextFrame()
+        } catch (error) {
+          console.warn("[MessageSend]", error)
+          return // Keep the draft intact when history could not be loaded.
+        }
       }
 
       this.clientidTarget.value = clientMessageId
@@ -278,12 +283,21 @@ export default class extends Controller {
     this.#files = []
     this.#updateFileList()
 
-    for (const file of files) {
+    for (const [index, file] of files.entries()) {
       const clientMessageId = this.#generateClientId()
       const uploader = new FileUploader(file, this.directUploadUrlValue, this.element.action, clientMessageId, this.#uploadProgress.bind(this))
 
       const body = this.#pendingUploadProgress(file.name)
-      await this.messagesOutlet.insertPendingMessage(clientMessageId, body)
+      try {
+        await this.messagesOutlet.insertPendingMessage(clientMessageId, body)
+      } catch (error) {
+        console.warn("[FileUploader]", file.name, error)
+        // These uploads never started. Preserve the remaining batch and any
+        // files selected while we were waiting, so Send can retry them.
+        this.#files.push(...files.slice(index))
+        this.#updateFileList()
+        return
+      }
 
       try {
         const resp = await uploader.upload()

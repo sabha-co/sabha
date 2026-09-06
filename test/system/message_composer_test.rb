@@ -89,7 +89,7 @@ class MessageComposerTest < ApplicationSystemTestCase
     assert_selector "#composer lexxy-toolbar", visible: true
   end
 
-  test "on a phone Jump to newest reserves space above the composer" do
+  test "on a phone Jump to newest floats over the transcript above the composer" do
     room = rooms(:designers)
     18.times do |i|
       room.messages.create!(
@@ -109,15 +109,27 @@ class MessageComposerTest < ApplicationSystemTestCase
     page.execute_script("arguments[0].scrollTo(0, 0)", messages)
     assert_selector ".message-area__return-to-latest", visible: true
 
-    geometry = page.evaluate_script(<<~JS)
-      (() => {
-        const messages = document.querySelector(".messages").getBoundingClientRect()
-        const button = document.querySelector(".message-area__return-to-latest").getBoundingClientRect()
-        return { messagesBottom: messages.bottom, buttonTop: button.top }
-      })()
-    JS
+    [ "", "<p>Draft line</p>" * 12 ].each do |draft|
+      fill_in_rich_text_area "message_body", with: draft
+      assert_composer_text "Draft line" unless draft.empty?
 
-    assert_operator geometry["messagesBottom"], :<=, geometry["buttonTop"],
-                    "expected Jump to newest below the message viewport"
+      geometry = page.evaluate_script(<<~JS)
+        (() => {
+          const messages = document.querySelector(".messages").getBoundingClientRect()
+          const button = document.querySelector(".message-area__return-to-latest").getBoundingClientRect()
+          const composer = document.querySelector("#composer").getBoundingClientRect()
+          return { messagesBottom: messages.bottom, buttonTop: button.top, buttonBottom: button.bottom, composerTop: composer.top }
+        })()
+      JS
+
+      assert_operator geometry["messagesBottom"], :>=, geometry["buttonBottom"],
+                      "expected messages to continue behind Jump to newest without a separate blank row"
+      assert_operator geometry["buttonBottom"], :<=, geometry["composerTop"],
+                      "expected Jump to newest to clear the composer"
+    end
+
+    click_on "Jump to newest"
+    assert_no_selector ".message-area__return-to-latest", visible: true
+    assert_composer_text "Draft line"
   end
 end

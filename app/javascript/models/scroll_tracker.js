@@ -17,7 +17,6 @@ export default class ScrollTracker {
         this.#lastChildHiddenCallback = lastChildHidden
 
         this.#mutationObserver = new MutationObserver(this.#childrenChanged.bind(this))
-        this.#mutationObserver.observe(container, {childList: true})
 
         this.#intersectionObserver = new IntersectionObserver(this.#handleIntersection.bind(this), {root: container})
 
@@ -25,16 +24,18 @@ export default class ScrollTracker {
     }
 
     connect() {
+        this.#mutationObserver.observe(this.#container, {childList: true})
         this.#childrenChanged()
     }
 
     disconnect() {
+        this.#mutationObserver?.disconnect()
         this.#intersectionObserver?.disconnect()
         this.#geometry?.cancel()
     }
 
     #childrenChanged() {
-        this.disconnect()
+        this.#intersectionObserver?.disconnect()
 
         if (this.#container.firstElementChild) {
             this.#firstChildWasHidden = false

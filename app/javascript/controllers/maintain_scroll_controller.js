@@ -16,10 +16,24 @@ export default class extends Controller {
     const target = event.detail.newStream.getAttribute("target")
     const targetElement = document.getElementById(target)
 
-    if (this.element.contains(targetElement) && shouldKeepScroll) {
-      const top = this.#isAboveFold(targetElement)
+    if (shouldKeepScroll && (this.element.contains(targetElement) || event.detail.messageRenderReady)) {
+      const top = targetElement ? this.#isAboveFold(targetElement) : false
       event.detail.render = async (streamElement) => {
-        this.#scrollManager.keepScroll(top, () => render(streamElement), 'auto')
+        // Wait before entering the shared scroll queue: an earlier message
+        // append may need that queue to finish and reveal this stream's target.
+        try {
+          await event.detail.messageRenderReady
+        } catch {
+          // Let the ordered renderer settle its pending stream on reset failure.
+          return render(streamElement)
+        }
+        const element = document.getElementById(target)
+        if (!this.element.contains(element)) return render(streamElement)
+        return this.#scrollManager.keepScroll(
+          targetElement ? top : this.#isAboveFold(element),
+          () => render(streamElement),
+          'auto'
+        )
       }
     }
   }

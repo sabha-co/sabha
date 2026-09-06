@@ -67,29 +67,34 @@
   &.pulse {
     animation: pulsing-outline 2s infinite both;
   }
+
+  /* Keep the pill anchored while the spinner shows — the shared .busy rule
+     flips position to relative, which shifts a centered absolute pill sideways. */
+  &.busy {
+    position: absolute;
+  }
 }
 
-/* On phones the newest-message control takes a row above the composer instead
-   of floating over the transcript. Showing it shrinks the scroll viewport, so
-   the control can never cover a readable message. */
+/* Let the phone transcript shrink with the composer, and anchor the floating
+   control to its bottom edge instead of estimating the composer's height. */
 @media (max-width: 833.9px) {
-  .message-area {
+  #message-area:has(> .message-area__return-to-latest) {
     display: flex;
     flex: 1;
     flex-direction: column;
+    block-size: auto;
     min-block-size: 0;
+    position: relative;
 
     .messages {
       min-block-size: 0;
     }
-  }
 
-  .message-area__return-to-latest {
-    align-self: center;
-    flex: none;
-    margin-block: var(--block-space-half);
-    position: static;
-    transform: none;
+    .message-area__return-to-latest {
+      inset-block-end: var(--block-space-half);
+      transform: none;
+      translate: -50% 0;
+    }
   }
 }
 
