@@ -6,7 +6,7 @@ Sabha exposes a versioned desktop compatibility contract so the native Sabha des
 
 All desktop API requests must send the `Sabha-Desktop-Protocol-Major` header. Major version `1` is the only supported version today. Unsupported majors receive HTTP 415 with upgrade guidance.
 
-Desktop layout hooks use the non-authoritative `Sabha-Desktop-Client` request header. Browser requests without that header keep the existing workspace selector and WebPush enrollment UI.
+Desktop layout hooks use the non-authoritative `Sabha-Desktop-Client` request header. Browser requests without that header keep WebPush enrollment UI. The SaaS workspace selector renders for both.
 
 ## Endpoints
 
@@ -48,7 +48,7 @@ Password, email-code, and ordinary browser SSO flows without desktop handoff par
 
 ## Client detection
 
-Send `Sabha-Desktop-Client: 1` on desktop-embedded page loads. Sabha suppresses the in-page SaaS workspace rail and sidebar WebPush enrollment UI for those requests while preserving the ordinary Hotwire interface.
+Send `Sabha-Desktop-Client: 1` on desktop-embedded page loads. Sabha keeps the in-page SaaS workspace selector (path-prefix switching still matches the native rail) and suppresses only sidebar WebPush enrollment so native OS notifications will not double-fire later. Marketing pages (the public landing, about, changelog, openclaw) redirect to sign-in or the member’s community instead of rendering. See the product lock in [Workspace Caps & Default Community](../plans/2026-09-05-001-feat-workspace-caps-and-default-community.md).
 
 ## Related docs
 

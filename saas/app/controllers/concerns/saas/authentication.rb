@@ -119,9 +119,29 @@ module Saas
       # URL to redirect to after successful authentication
       def after_authentication_url
         stored_url = session.delete(:return_to_after_authenticating)
-        return stored_url if stored_url.present? && safe_redirect_url?(stored_url)
+        if stored_url.present? && safe_redirect_url?(stored_url) && !desktop_marketing_destination?(stored_url)
+          return stored_url
+        end
 
-        # Default: go to root (shows blank page with workspace selector)
+        default_after_authentication_url
+      end
+
+      def desktop_marketing_destination?(url)
+        return false unless desktop_client?
+
+        path = URI.parse(url).path
+        path.blank? || path == "/"
+      rescue URI::InvalidURIError
+        false
+      end
+
+      def default_after_authentication_url
+        if desktop_client? && current_global_identity
+          workspaces = current_global_identity.active_workspaces_recent_first
+          return "/#{workspaces.first.external_id}" if workspaces.any?
+          return new_workspace_path
+        end
+
         saas_root_path
       end
 

@@ -230,20 +230,46 @@ class GlobalIdentityTest < ActiveSupport::TestCase
   # Workspace limit tests
 
   test "workspace_limit_reached? is false when under limit" do
-    identity = global_identities(:alice)
+    identity = GlobalIdentity.create!(name: "New", email_address: "new-owner@example.com")
+    GlobalIdentity.enforce_community_caps = true
     assert_not identity.workspace_limit_reached?
   end
 
   test "workspace_limit_reached? is true when at limit" do
     identity = global_identities(:alice)
-    # Alice owns 1 workspace (acme), so limit of 1 should be reached
-    original = GlobalIdentity::MAX_WORKSPACES
-    GlobalIdentity.send(:remove_const, :MAX_WORKSPACES)
-    GlobalIdentity.const_set(:MAX_WORKSPACES, 1)
+    GlobalIdentity.enforce_community_caps = true
     assert identity.workspace_limit_reached?
-  ensure
-    GlobalIdentity.send(:remove_const, :MAX_WORKSPACES)
-    GlobalIdentity.const_set(:MAX_WORKSPACES, original)
+  end
+
+  test "superadmin is not workspace-capped" do
+    GlobalIdentity.enforce_community_caps = true
+    assert_not global_identities(:superadmin).workspace_limit_reached?
+  end
+
+  test "join raises when the membership cap is reached" do
+    identity = GlobalIdentity.create!(name: "Capped", email_address: "capped-join@example.com")
+
+    with_provisioned_workspace(name: "Cap Join A", creator: global_identities(:alice)) do |first|
+      identity.join(first.external_id.to_s)
+
+      with_provisioned_workspace(name: "Cap Join B", creator: global_identities(:bob)) do |second|
+        GlobalIdentity.enforce_community_caps = true
+        identity.stubs(:membership_limit_reached?).returns(true)
+        assert_raises(GlobalIdentity::MembershipLimitReachedError) do
+          identity.join(second.external_id.to_s)
+        end
+
+        assert_not identity.workspace_memberships.exists?(tenant: second.external_id.to_s)
+      end
+    end
+  end
+
+  test "creating an identity joins the default community when it exists" do
+    with_provisioned_workspace(name: "Flagship", creator: global_identities(:alice)) do |flagship|
+      GlobalIdentity.stubs(:default_community).returns(flagship)
+      identity = GlobalIdentity.create!(name: "Signup", email_address: "signup-join@example.com")
+      assert identity.workspace_memberships.exists?(tenant: flagship.external_id.to_s)
+    end
   end
 
   test "email_available? checks primary email_address only" do

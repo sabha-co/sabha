@@ -101,11 +101,13 @@ class ActiveSupport::TestCase
     ActionController::Base.send(:cache_store).clear
     WebMock.disable_net_connect!(allow: "localhost:8080")
     ENV.delete("R2_ACCESS_KEY_ID")
+    GlobalIdentity.enforce_community_caps = false
   end
 
   teardown do
     WebMock.reset!
     Current.reset
+    GlobalIdentity.enforce_community_caps = false
   end
 end
 

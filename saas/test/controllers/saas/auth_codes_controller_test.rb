@@ -9,6 +9,13 @@ module Saas
       assert_response :success
     end
 
+    test "desktop client OTP page omits marketing back and logo links" do
+      get auth_code_path, headers: { "Sabha-Desktop-Client" => "1" }
+
+      assert_response :success
+      assert_select "a[href=?]", root_path, count: 0
+    end
+
     test "show stores return_to param in session" do
       get auth_code_path, params: { return_to: "/1000001/rooms" }
       assert_response :success
@@ -23,6 +30,14 @@ module Saas
       # Redirects to saas_root_path (/) by default
       assert_response :redirect
       assert_equal "Welcome back!", flash[:notice]
+    end
+
+    test "desktop client sign-in skips the marketing root" do
+      post auth_code_path, params: { code: auth_codes(:alice_signin).code },
+        headers: { "Sabha-Desktop-Client" => "1" }
+
+      most_recent = global_identities(:alice).active_workspaces_recent_first.first
+      assert_redirected_to "/#{most_recent.external_id}"
     end
 
     test "create with valid sign_up code shows welcome" do

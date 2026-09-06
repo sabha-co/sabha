@@ -11,9 +11,14 @@ class GlobalIdentity < UntenantedRecord
 
   include Joinable
 
-  MAX_WORKSPACES = 10
+  MAX_WORKSPACES = 1
+  MAX_MEMBERSHIPS = 20
+  DEFAULT_COMMUNITY_ID = ENV.fetch("DEFAULT_COMMUNITY_ID", "1000101")
+
+  class_attribute :enforce_community_caps, default: true
 
   class WorkspaceLimitReachedError < StandardError; end
+  class MembershipLimitReachedError < StandardError; end
 
   has_many :global_sessions, dependent: :destroy
   has_many :auth_codes, dependent: :destroy
@@ -33,6 +38,7 @@ class GlobalIdentity < UntenantedRecord
   normalizes :terms_of_service, with: ->(v) { ActiveRecord::Type::Boolean.new.deserialize(v) }
 
   before_create :stamp_terms_acceptance, if: :terms_of_service
+  after_create_commit :join_default_community
 
   validates :unconfirmed_email, 'valid_email_2/email': true, allow_blank: true
   validates :unconfirmed_email, 'valid_email_2/email': { disposable: true, message: "looks like a temporary email address. We discourage use of disposable emails — please use a permanent one instead." }, allow_blank: true
@@ -59,7 +65,19 @@ class GlobalIdentity < UntenantedRecord
   end
 
   def workspace_limit_reached?
+    return false if superadmin? || !enforce_community_caps
+
     Workspace.where(creator: self).count >= MAX_WORKSPACES
+  end
+
+  def membership_limit_reached?
+    return false if superadmin? || !enforce_community_caps
+
+    workspace_memberships.user_active.count >= MAX_MEMBERSHIPS
+  end
+
+  def self.default_community
+    Workspace.active.find_by(external_id: DEFAULT_COMMUNITY_ID)
   end
 
   def active_workspaces_recent_first
@@ -191,5 +209,12 @@ class GlobalIdentity < UntenantedRecord
 
     def stamp_terms_acceptance
       self.accepted_terms_at ||= Time.current
+    end
+
+    def join_default_community
+      community = self.class.default_community
+      return unless community
+
+      join(community.external_id.to_s)
     end
 end

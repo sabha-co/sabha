@@ -3,7 +3,6 @@
 require "zlib"
 
 module WorkspaceSelectorHelper
-  include DesktopClientDetection
   # Gradient pairs: [from_color, to_color] — rich, vibrant combinations (OKLch)
   WORKSPACE_GRADIENTS = [
     [ "oklch(40% 0.17 310)", "oklch(65% 0.20 300)" ], # Purple
@@ -27,8 +26,6 @@ module WorkspaceSelectorHelper
   end
 
   def show_workspace_selector?
-    return false if desktop_client?
-
     # Always show in SaaS mode when user is authenticated
     # Shows empty state on /workspaces/new when user has no workspaces
     Sabha.saas? && Current.global_identity.present?

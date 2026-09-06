@@ -22,5 +22,25 @@ module Saas
       get root_path
       assert_redirected_to new_workspace_path
     end
+
+    test "desktop client does not render the marketing landing" do
+      get root_path, headers: { "Sabha-Desktop-Client" => "1" }
+
+      assert_redirected_to new_session_path
+    end
+
+    test "signed-in desktop client skips marketing landing for a workspace" do
+      sign_in_global_identity(global_identities(:alice))
+      get root_path, headers: { "Sabha-Desktop-Client" => "1" }
+
+      most_recent = global_identities(:alice).active_workspaces_recent_first.first
+      assert_redirected_to "/#{most_recent.external_id}"
+    end
+
+    test "desktop client does not render about marketing" do
+      get about_path, headers: { "Sabha-Desktop-Client" => "1" }
+
+      assert_redirected_to new_session_path
+    end
   end
 end

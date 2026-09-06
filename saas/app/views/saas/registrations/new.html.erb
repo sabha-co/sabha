@@ -1,13 +1,19 @@
 <% content_for :title, "Create account" %>
-<% content_for :back_nav do %>
-  <%= link_to "← Back", root_path, class: "txt-medium txt-muted txt-undecorated" %>
+<% unless desktop_client? %>
+  <% content_for :back_nav do %>
+    <%= link_to "← Back", root_path, class: "txt-medium txt-muted txt-undecorated" %>
+  <% end %>
 <% end %>
 
 <section class="txt-align-center">
   <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
     <div class="flex justify-center mb-6">
-      <%= link_to root_path do %>
+      <% if desktop_client? %>
         <%= image_tag "logos/app-icon.png", alt: Branding.app_name, class: "w-18 h-auto rounded-lg" %>
+      <% else %>
+        <%= link_to root_path do %>
+          <%= image_tag "logos/app-icon.png", alt: Branding.app_name, class: "w-18 h-auto rounded-lg" %>
+        <% end %>
       <% end %>
     </div>
 

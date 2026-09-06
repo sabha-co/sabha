@@ -13,9 +13,9 @@ module Saas
     layout "marketing"
 
     def show
-      if signed_in?
-        redirect_to_workspace_or_create
-      end
+      return redirect_desktop_away_from_marketing if desktop_client?
+
+      redirect_to_workspace_or_create if signed_in?
     end
 
     private

@@ -18,6 +18,7 @@ module Saas
 
     include Saas::Authentication
     include SetCurrentRequest
+    include DesktopClientDetection
 
     # Include core helpers for consistent UI (icon_tag, translation_button, etc.)
     helper ApplicationHelper
@@ -40,6 +41,17 @@ module Saas
         return unless signed_in?
 
         @workspaces = current_global_identity.active_workspaces_recent_first
+      end
+
+      def redirect_desktop_away_from_marketing
+        return unless desktop_client?
+
+        if signed_in?
+          workspaces = current_global_identity.active_workspaces_recent_first
+          redirect_to(workspaces.any? ? "/#{workspaces.first.external_id}" : new_workspace_path)
+        else
+          redirect_to new_session_path
+        end
       end
   end
 end

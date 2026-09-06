@@ -133,5 +133,12 @@ module Saas
       assert_redirected_to new_session_path
       assert_equal "You have been signed out", flash[:notice]
     end
+
+    test "desktop client sign-in omits marketing back and logo links" do
+      get new_session_path, headers: { "Sabha-Desktop-Client" => "1" }
+
+      assert_response :success
+      assert_select "a[href=?]", root_path, count: 0
+    end
   end
 end
