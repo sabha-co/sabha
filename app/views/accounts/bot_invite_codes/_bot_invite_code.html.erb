@@ -2,7 +2,7 @@
 <div id="bot_invite_code">
   <% if bot_invite_code %>
     <div class="invite-url-row">
-      <input type="text" class="invite-url-input" value="<%= join_bot_url(bot_invite_code.code) %>" aria-label="Bot invite URL" readonly>
+      <input type="text" class="invite-url-input" value="<%= join_bot_url(bot_invite_code.code) %>" aria-label="Bot invite URL" readonly autocomplete="off">
       <%= button_to_copy_to_clipboard(join_bot_url(bot_invite_code.code), btn_class: "btn settings-chip-btn", toast: "Bot invite URL copied") do %>
         <%= icon_tag "copy-paste" %>
         <span class="for-screen-reader">Copy bot invite URL</span>

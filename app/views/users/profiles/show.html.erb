@@ -17,7 +17,7 @@
     <div class="settings-avatar-row" data-controller="upload-preview">
       <%= profile_form_with @user do |form| %>
         <label class="btn avatar input--file">
-          <%= image_tag user_image_path(@user), role: "presentation", size: 300, data: { upload_preview_target: "image" } %>
+          <%= image_tag user_image_path(@user), alt: "", role: "presentation", size: 300, data: { upload_preview_target: "image" } %>
           <%= form.file_field :avatar, class: "input", accept: "image/*",
                               data: { upload_preview_target: "input", action: "upload-preview#previewImage change->form#submit" } %>
           <span class="for-screen-reader">Avatar</span>

@@ -25,7 +25,7 @@
           <li>Go to <em>System &gt; Notification</em>.</li>
           <li>Click <em><%= image_tag "external/switch.svg", alt: "the toggle button", size: 22 %></em> <em>ON</em> for Sabha.</li>
         <% else %>
-          <li>Click <em aria-label="the Apple menu"></em> in the top left.</li>
+          <li>Click <em aria-label="Apple menu"></em> in the top left.</li>
           <li>Click <em>System Settings…</em>.</li>
           <li>Click <em>Notifications</em>.</li>
           <li>Click <em>Sabha</em>.</li>
@@ -34,7 +34,7 @@
       </ol>
     <% elsif platform.safari? && platform.desktop? %>
       <ol>
-        <li>Click <em aria-label="the Apple menu"></em> in the top left.</li>
+        <li>Click <em aria-label="Apple menu"></em> in the top left.</li>
         <li>Click <em>System Settings…</em>.</li>
         <li>Click <em>Notifications</em>.</li>
         <li>Click <em>Sabha</em>.</li>
@@ -42,14 +42,14 @@
       </ol>
     <% elsif (platform.safari? || platform.chrome?) && platform.ios? %>
       <ol>
-        <li>Open the <em><%= image_tag "external/gear.svg", aria: { hidden: "true" }, size: 20 %></em> Settings app.</li>
+        <li>Open the <em><%= image_tag "external/gear.svg", alt: "", aria: { hidden: "true" }, size: 20 %></em> Settings app.</li>
         <li>Scroll to and tap <em>Sabha</em>.</li>
         <li>Tap <em>Notifications</em>.</li>
         <li>Tap <em><%= image_tag "external/switch.svg", alt: "the allow notifications switch button", size: 22 %></em> to <em>Allow Notifications</em>.</li>
       </ol>
     <% elsif platform.chrome? && platform.android? %>
       <ol>
-        <li>Open the <em><%= image_tag "external/gear.svg", aria: { hidden: "true" }, size: 20 %></em> Settings app.</li>
+        <li>Open the <em><%= image_tag "external/gear.svg", alt: "", aria: { hidden: "true" }, size: 20 %></em> Settings app.</li>
         <li>Tap <em>Notifications</em>.</li>
         <li>Tap <em>App notifications</em>.</li>
         <li>Scroll to <em>Sabha</em>.</li>

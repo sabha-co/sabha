@@ -15,7 +15,7 @@
 
     <%= form_with model: @user, url: first_run_path do |form| %>
       <div class="auth-card__avatar-row" data-controller="upload-preview">
-        <%= image_tag "default-avatar.svg", data: { upload_preview_target: "image" }, aria: { hidden: true } %>
+        <%= image_tag "default-avatar.svg", alt: "", data: { upload_preview_target: "image" }, aria: { hidden: true } %>
         <span class="auth-card__avatar-copy">
           <strong>Your avatar</strong>
           <span>Add one now, or replace it whenever.</span>

@@ -17,7 +17,7 @@
       </div>
 
       <div class="invite-url-row">
-        <input type="text" class="invite-url-input" id="invite_url" value="<%= url %>" aria-labelledby="invite_label" readonly>
+        <input type="text" class="invite-url-input" id="invite_url" value="<%= url %>" aria-labelledby="invite_label" readonly autocomplete="off">
 
         <%= button_to_copy_to_clipboard(url, btn_class: "btn settings-chip-btn", toast: "Invite link copied") do %>
           Copy

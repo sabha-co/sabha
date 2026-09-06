@@ -12,7 +12,7 @@
     <div class="settings-avatar-row" data-controller="upload-preview">
       <%= form_with model: @account, method: :patch, data: { controller: "form" } do |form| %>
         <label class="btn avatar input--file account-logo">
-          <%= image_tag fresh_account_logo_path, role: "presentation", size: 48, data: { upload_preview_target: "image" } %>
+          <%= image_tag fresh_account_logo_path, alt: "", role: "presentation", size: 48, data: { upload_preview_target: "image" } %>
           <%= form.file_field :logo, class: "input", accept: "image/*",
                 data: { action: "upload-preview#previewImage change->form#submit" } %>
           <span class="for-screen-reader">Upload logo</span>

@@ -68,6 +68,13 @@ linter:
         - "app/views/rooms/_composer_fields.html.erb"
         - "saas/app/views/admin/stats/show.html.erb"
 
+    # Placeholders that JS fills before the element is shown: the lightbox's
+    # image/download/share targets and the autocomplete pill template.
+    html-no-empty-attributes:
+      exclude:
+        - "app/views/layouts/_lightbox.html.erb"
+        - "app/views/users/autocompletables/_template.html.erb"
+
     # Client-side message template: a <script type="text/template"> that JS
     # clones (never executes), interpolating the current user's own data.
     erb-no-unsafe-script-interpolation:
