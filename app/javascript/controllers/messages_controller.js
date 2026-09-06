@@ -22,8 +22,12 @@ export default class extends Controller {
   #resizeObserver
   #pinnedToEnd = false
   #scrollTop = 0
+  #container
   #trackScroll = () => {
-    const container = this.messagesTarget
+    // Resolved once in connect(): Stimulus resolves a target with a DOM query,
+    // and this runs on every scroll frame over the whole message subtree.
+    const container = this.#container
+    if (!container) return
     const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight)
     const atEnd = maxScrollTop - container.scrollTop <= 4
     // A shrinking scroll range can clamp scrollTop. Only upward movement beyond
@@ -48,17 +52,19 @@ export default class extends Controller {
   }
 
   connect() {
+    this.#container = this.messagesTarget
     this.#clientMessage = new ClientMessage(this.templateTarget)
-    this.#paginator = new MessagePaginator(this.messagesTarget, this.pageUrlValue, this.#formatter, this.#allContentViewed.bind(this), {
+    this.#paginator = new MessagePaginator(this.#container, this.pageUrlValue, this.#formatter, this.#allContentViewed.bind(this), {
       loadingUp: this.loadingUpClass,
       loadingDown: this.loadingDownClass
     })
-    this.#scrollManager = new ScrollManager(this.messagesTarget)
-    this.#scrollTracker = new ScrollTracker(this.messagesTarget, { lastChildHidden: this.#showReturnToLatestButton.bind(this) })
-    this.#streamQueue = new StreamRenderQueue(this.messagesTarget)
+    this.#scrollManager = new ScrollManager(this.#container)
+    this.#scrollTracker = new ScrollTracker(this.#container, { lastChildHidden: this.#showReturnToLatestButton.bind(this) })
+    this.#streamQueue = new StreamRenderQueue(this.#container)
     this.#pinnedToEnd = !this.#hasSearchResult && !this.#hasUnreadSeparator
     this.#resizeObserver = new ResizeObserver(() => {
-      const container = this.messagesTarget
+      const container = this.#container
+      if (!container) return
       // The observer can run before the scroll event for this frame.
       this.#trackScroll()
       if (this.#pinnedToEnd && this.#paginator.upToDate && !this.#paginator.resetting) {
@@ -66,9 +72,9 @@ export default class extends Controller {
       }
       this.#scrollTop = container.scrollTop
     })
-    this.#resizeObserver.observe(this.messagesTarget)
+    this.#resizeObserver.observe(this.#container)
     this.messageTargets.forEach(message => this.#resizeObserver.observe(message))
-    this.messagesTarget.addEventListener("scroll", this.#trackScroll, { passive: true })
+    this.#container.addEventListener("scroll", this.#trackScroll, { passive: true })
 
     if (this.#hasSearchResult) {
       this.#highlightSearchResult()
@@ -89,7 +95,10 @@ export default class extends Controller {
 
   disconnect() {
     this.#resizeObserver.disconnect()
-    this.messagesTarget.removeEventListener("scroll", this.#trackScroll)
+    // Detach from the element we attached to. Stimulus disconnects targets
+    // before the controller, so the getter may no longer find it.
+    this.#container?.removeEventListener("scroll", this.#trackScroll)
+    this.#container = null
     this.#paginator.disconnect()
     this.#scrollTracker.disconnect()
     this.#streamQueue.disconnect()
