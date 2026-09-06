@@ -27,7 +27,9 @@ Remove Tailwind CSS from Sabha. Keep the application’s existing file-per-compo
 
 ### Problem Frame
 
-Sabha carries two overlapping CSS systems. Most chat UI already uses its own components and utilities, but Tailwind still supplies a global reset, form defaults, a few layout utilities, and the CSS build pipeline. The overlap obscures ownership, duplicates utility rules, and keeps Node and pnpm in the stack solely to compile CSS.
+Sabha carries two overlapping CSS systems. Most chat UI already uses its own components and utilities, but Tailwind still supplies a global reset, form defaults, a few layout utilities, the `--font-size-*` token scale, and the CSS build pipeline. The overlap obscures ownership, duplicates utility rules, and keeps Node and pnpm in the stack to compile CSS.
+
+Verified against the tree on 2026-09-06: about 40 distinct Tailwind-only class names remain, across roughly 110 uses. They cluster in the marketing layout, the five SaaS auth and workspace pages, the session and SaaS layouts, and the sidebar view. Landing and static marketing pages carry none. The `@tailwindcss/typography` plugin and the `tw-animate-css` package are already unused.
 
 ### Requirements
 
@@ -42,7 +44,7 @@ Sabha carries two overlapping CSS systems. Most chat UI already uses its own com
 ### Success Criteria
 
 - No runtime layout requests `tailwind.css`, and no source or build configuration depends on Tailwind, pnpm, or Node solely for CSS compilation.
-- The application has no JavaScript package manifest or lockfile unless another independently justified frontend dependency remains.
+- The JavaScript package manifest keeps only dependencies with a consumer other than CSS. Today that is the Herb ERB linter (`@herb-tools/linter`, run via `pnpm run lint:erb`), so `package.json` and the lockfile stay as a dev-only manifest; Node is no longer required to build or run the app.
 - The main chat, session, SaaS, admin, and marketing shells retain their current visual hierarchy at desktop and mobile breakpoints.
 - Forms retain usable focus states, control sizing, autofill behavior, and iOS-safe text input sizing.
 
@@ -52,6 +54,7 @@ Sabha carries two overlapping CSS systems. Most chat UI already uses its own com
 - Keep `Stylesheets.from` as the component stylesheet loader and preserve its ordering contract.
 - Do not replace direct CSS delivery with Propshaft manifests, cssbundling, Sass, or another framework.
 - Do not rewrite historical changelog entries that describe Tailwind when they accurately document past releases.
+- Do not remove the Herb linter's Node setup; only the Tailwind packages, scripts, and build steps go.
 
 ---
 
@@ -61,8 +64,9 @@ Sabha carries two overlapping CSS systems. Most chat UI already uses its own com
 
 - KTD1. **Retain direct component stylesheet delivery.** Remove the explicit Tailwind asset from each layout while retaining `Stylesheets.from` and vendor stylesheet loading. Sabha already matches Once Campfire’s file-per-component ownership model, so a replacement build layer would add no value. (R1, R2, R6)
 - KTD2. **Use semantic CSS first and existing Sabha utilities second.** Map the small set of Tailwind-native classes to component selectors or current `utilities.css` names. Keep Sabha’s native custom-property pattern, including inline fallback values where a component exposes a variant, and do not rename the established `.flex`, `.gap`, `.txt-*`, or spacing vocabulary merely because Tailwind once generated overlapping selectors. (R2, R4)
-- KTD3. **Make reset and form behavior explicit before deleting Tailwind.** Extend Sabha’s reset, base, and input styles only for browser defaults that were previously inherited from Preflight or Forms. Use Once Campfire’s reset and code-input ownership and Fizzy’s focused form-state patterns as references, not as source material to copy wholesale. (R3, R7)
+- KTD3. **Make reset and form behavior explicit before deleting Tailwind.** Extend Sabha’s reset, base, and input styles only for browser defaults that were previously inherited from Preflight or Forms. Sabha’s own reset is the thin modern-css-reset, so the gap is concrete: Preflight currently owns `[hidden] { display: none !important }`, the list reset, heading size and weight inheritance, anchor color inheritance, the universal `border: 0 solid`, the button background and padding reset, `textarea` resize, and placeholder color. Use Once Campfire’s reset and code-input ownership and Fizzy’s focused form-state patterns as references, not as source material to copy wholesale. (R3, R7)
 - KTD4. **Keep marketing isolated.** Put marketing-shell and toast rules in marketing CSS and retain its local token namespace. Do not couple public pages to application tokens solely to remove utility classes. (R2, R5)
+- KTD5. **Move the font-size scale out of the Tailwind entrypoint first.** The `--font-size-x-small` through `--font-size-xx-large` tokens are defined only in the `@theme` block of `app/javascript/entrypoints/application.css`, yet they are consumed by the `.txt-*` utilities and by sidebar, nav, messages, forum, and SaaS stylesheets. They must be declared in `base.css` before the entrypoint is deleted. The colour tokens are already authoritative in `colors.css`; the spacing theme variables are unused and can simply go. (R2)
 
 ### High-Level Technical Design
 
@@ -82,13 +86,15 @@ The migration removes the Tailwind source and generated layer from the path. The
 - Preserve alphabetical component stylesheet loading and keep `overrides.css` last where it is currently loaded separately.
 - Preserve the established `--border-radius-*` names. They must not be replaced by Tailwind-style radius variables.
 - Keep component-specific focus, disabled, checkbox/radio, select, search, file-input, autofill, and mobile text-size behavior intact.
-- Treat the existing dirty worktree as user-owned. Do not overwrite or fold unrelated changes into this migration.
 
 ### Risks and Mitigation
 
 | Risk | Mitigation |
 | --- | --- |
 | Removing Preflight changes browser defaults outside the obvious class replacements. | Establish and compare an owned reset and form baseline first; inspect headings, lists, images, controls, focus outlines, and dialogs. |
+| Elements hidden with the `hidden` attribute reappear because a `.flex` or `.grid` class outranks the browser default once Preflight’s `!important` rule is gone. Views use the attribute about 84 times and Stimulus toggles it about 42 times. | Add an owned `[hidden] { display: none !important }` rule in the reset before any layout loses the Tailwind asset, and smoke every toggled panel. |
+| Unclassed `ul`/`ol` elements regain bullets and indentation. Views have 37 lists, 21 without a class, and Sabha CSS declares `list-style` only six times. | Own the list reset in `_reset.css` and check the sidebar, roster, settings, and marketing lists. |
+| The `.txt-*` scale and several component sizes silently fall back to inherited sizes because the font-size tokens were only ever declared in the Tailwind theme block. | Declare the scale in `base.css` as the first step of U1 and diff computed font sizes before and after. |
 | Removing Forms alters focused controls or custom controls. | Cover text, search, checkbox, radio, select, file, autofill, and disabled states in the app and SaaS shells. |
 | A generic session-shell rule breaks the deliberate `body.session` grid escape hatch. | Add a named centered session main rule and exercise password, OTP, join, first-run, and SaaS auth flows at the existing mobile breakpoint. |
 | Marketing silently inherits app assumptions after Tailwind removal. | Add marketing-specific shell and toast rules and exercise landing, legal/static, and both flash branches independently. |
@@ -99,7 +105,7 @@ The migration removes the Tailwind source and generated layer from the path. The
 - `app/assets/stylesheets/application/utilities.css` and `app/assets/stylesheets/application/colors.css` establish Sabha’s current owned utility and token model.
 - `lib/stylesheets.rb` defines the direct, alphabetical component stylesheet delivery contract.
 - `docs/plans/2026-08-12-001-redesign-v2-integration-plan.md` records cascade, auth-shell, marketing, and visual-regression constraints from the prior reskin.
-- `app/assets/stylesheets/_reset.css`, `app/assets/stylesheets/application/inputs.css`, and `app/assets/stylesheets/application/auth.css` are the current Sabha foundation to extend.
+- `app/assets/stylesheets/application/_reset.css`, `app/assets/stylesheets/application/inputs.css`, and `app/assets/stylesheets/application/auth.css` are the current Sabha foundation to extend.
 - [37signals: Modern CSS patterns and techniques in Campfire](https://dev.37signals.com/modern-css-patterns-and-techniques-in-campfire/) grounds the retained OKLch primitives, semantic aliases, custom-property variant pattern, and capability-based responsive CSS approach.
 - [Rob Zolkos: Vanilla CSS is all you need](https://www.zolkos.com/2025/12/03/vanilla-css-is-all-you-need.html) confirms the practical no-build, file-per-concept architecture across Campfire and Fizzy; it is supporting context, not an authority over Sabha’s existing cascade.
 - The local Once Campfire checkout’s reset, utilities, and inputs stylesheets provide the closest semantic-CSS reference, including plain CSS ownership of `.input--code`.
@@ -116,10 +122,11 @@ The migration removes the Tailwind source and generated layer from the path. The
 - **Dependencies:** None.
 - **Files:** `app/assets/stylesheets/application/_reset.css`, `app/assets/stylesheets/application/base.css`, `app/assets/stylesheets/application/inputs.css`, `app/assets/stylesheets/application/utilities.css`, `app/assets/stylesheets/application/dialogs.css`, `app/javascript/entrypoints/application.css`.
 - **Approach:**
-  1. Audit the current Preflight and Forms effects against existing Sabha rules.
-  2. Add only missing explicit baseline rules to the owning reset, base, or inputs file.
-  3. Move `.input--code` from the Tailwind entrypoint into `inputs.css`.
-  4. Remove Tailwind-specific comments and duplicated theme exposure while retaining the authoritative token definitions in `colors.css`.
+  1. Declare the `--font-size-*` scale in `base.css`; it currently exists only in the Tailwind theme block (KTD5).
+  2. Audit the current Preflight and Forms effects against existing Sabha rules, working through the list in KTD3. Add `[hidden] { display: none !important }` and the list reset to `_reset.css` first; they are the two with the widest blast radius.
+  3. Add only the remaining missing baseline rules to the owning reset, base, or inputs file.
+  4. Move `.input--code` and the `main#main-content:focus` rule from the Tailwind entrypoint into `inputs.css` and `base.css`.
+  5. Remove Tailwind-specific comments and the duplicated colour re-exposure; the colour tokens stay authoritative in `colors.css`.
 - **Execution note:** Start with a browser smoke comparison of controls and focus states; this unit replaces global styling behavior, not a model-level feature.
 - **Patterns to follow:** Once Campfire’s `_reset.css` and `inputs.css`; Fizzy’s `reset.css` and `inputs.css`; Sabha’s existing logical-property and custom-property conventions.
 - **Test scenarios:**
@@ -127,6 +134,9 @@ The migration removes the Tailwind source and generated layer from the path. The
   - Keyboard focus remains visible on standard controls and remains intentionally suppressed only where the owning component supplies a replacement affordance.
   - Autofilled fields and `input--code` retain their custom presentation.
   - Dark theme and each supported accent continue to resolve semantic token values without a Tailwind theme layer.
+  - Every `.txt-*` size and the sidebar, nav, message, and forum sizes that read `--font-size-*` compute to the same pixel value as before.
+  - Panels toggled through the `hidden` attribute stay hidden when they also carry `.flex` or `.grid`.
+  - Unclassed lists render without bullets or indentation.
 - **Verification:** Foundation CSS owns the audited reset and control states, with no residual `@apply`, `@theme`, `@source`, or Tailwind plugin directives.
 
 ### U2. Migrate application and session shell utilities
@@ -134,11 +144,12 @@ The migration removes the Tailwind source and generated layer from the path. The
 - **Goal:** Replace Tailwind-only application-shell and sidebar classes without changing the main chat or authentication layout.
 - **Requirements:** R2, R4, R5, R7.
 - **Dependencies:** U1.
-- **Files:** `app/views/layouts/application.html.erb`, `app/views/layouts/session.html.erb`, `app/views/users/sidebars/show.html.erb`, `app/views/rooms/show/_block_notice.html.erb`, `app/assets/stylesheets/application/auth.css`, `app/assets/stylesheets/application/sidebar.css`, `app/assets/stylesheets/application/utilities.css`, `test/system/sidebar_drawer_test.rb`, `test/system/sidebar_rail_test.rb`, `test/system/sidebar_navigation_test.rb`, `test/system/otp_input_test.rb`, `test/system/search_palette_test.rb`.
+- **Files:** `app/views/layouts/application.html.erb`, `app/views/layouts/session.html.erb`, `app/views/users/sidebars/show.html.erb`, `app/views/rooms/show/_block_notice.html.erb`, `app/views/messages/actions/_bookmark_indicator.html.erb`, `app/views/rooms/browse/_room.html.erb`, `app/assets/stylesheets/application/auth.css`, `app/assets/stylesheets/application/sidebar.css`, `app/assets/stylesheets/application/utilities.css`, `test/system/sidebar_drawer_test.rb`, `test/system/sidebar_rail_test.rb`, `test/system/sidebar_navigation_test.rb`, `test/system/otp_input_test.rb`, `test/system/search_palette_test.rb`.
 - **Approach:**
   1. Give the centered session main element an owned semantic selector that preserves full-viewport, column, responsive padding, and centering behavior.
   2. Replace sidebar-only Tailwind column, alignment, spacing, and font-weight utilities with existing Sabha utilities or sidebar component rules.
-  3. Keep existing shared utilities unchanged where they already express the required behavior.
+  3. Replace the single stray utilities in the block notice, bookmark indicator, and browse room partials with component rules.
+  4. Keep existing shared utilities unchanged where they already express the required behavior.
 - **Execution note:** Use existing system tests as behavioral protection, then inspect desktop rail and mobile drawer rendering at the established 833px breakpoint.
 - **Patterns to follow:** `body.session` in `application/auth.css`; existing sidebar component selectors; Once Campfire’s semantic utility vocabulary.
 - **Test scenarios:**
@@ -168,7 +179,7 @@ The migration removes the Tailwind source and generated layer from the path. The
 
 ### U4. Make the marketing shell self-contained
 
-- **Goal:** Move public-page Tailwind-only shell and flash styling into scoped marketing CSS.
+- **Goal:** Move public-page Tailwind-only shell and flash styling into scoped marketing CSS. The landing and static templates already carry no Tailwind classes; the work is the marketing layout’s seven class attributes.
 - **Requirements:** R2, R4, R5, R7.
 - **Dependencies:** U1.
 - **Files:** `saas/app/views/layouts/marketing.html.erb`, `app/assets/stylesheets/marketing/landing.css`, relevant public marketing/static page templates, `saas/test/controllers/saas/landing_controller_test.rb`.
@@ -185,18 +196,18 @@ The migration removes the Tailwind source and generated layer from the path. The
 
 ### U5. Remove the Tailwind delivery and build chain
 
-- **Goal:** Delete Tailwind runtime references and eliminate Node/pnpm provisioning that exists only to compile CSS.
+- **Goal:** Delete Tailwind runtime references and eliminate Node/pnpm provisioning that exists only to compile CSS. The package manifest itself stays, trimmed to the Herb linter.
 - **Requirements:** R1, R5, R6.
 - **Dependencies:** U1, U2, U3, U4.
 - **Files:** `app/views/layouts/application.html.erb`, `app/views/layouts/session.html.erb`, `saas/app/views/layouts/saas.html.erb`, `saas/app/views/layouts/admin.html.erb`, `saas/app/views/layouts/marketing.html.erb`, `lib/stylesheets.rb`, `package.json`, `pnpm-lock.yaml`, `Procfile.dev`, `bin/setup`, `Dockerfile`, `saas/Dockerfile`, `.github/workflows/test.yml`, `app/javascript/entrypoints/application.css`, `app/assets/builds/tailwind.css`.
 - **Approach:**
   1. Remove the generated asset from all five layout asset lists only after their replacement CSS is in place.
-  2. Delete the Tailwind source and build output, then remove packages, scripts, watcher, setup work, container stages, and CI steps that serve no other consumer.
-  3. Simplify `Stylesheets` comments to describe the remaining direct asset paths accurately.
+  2. Delete the Tailwind source and build output, then remove the Tailwind packages (including the already-unused typography plugin and `tw-animate-css`), build scripts, watcher, setup step, container stages, and CI steps. Leave the Herb dependency and its lint scripts in place; CI may still install Node for linting but no longer for asset builds.
+  3. Remove the two `next if` skips in `Stylesheets.load_vendor_stylesheets` that exclude the builds and javascript asset paths, and update its comments.
 - **Execution note:** This is packaging and deployment work; prefer asset and image build smoke verification over adding unit tests for deleted configuration.
 - **Patterns to follow:** Once Campfire’s direct stylesheet loading; Sabha’s existing `Stylesheets.from` cache behavior.
 - **Test expectation:** none -- this unit removes configuration and generated output; behavioral coverage belongs to U2-U4 and deployment smoke checks.
-- **Verification:** A clean setup, development start, test workflow, and both container images complete without Node, pnpm, Tailwind, or a missing stylesheet asset error.
+- **Verification:** A clean setup, development start, and both container images complete without Node, pnpm, Tailwind, or a missing stylesheet asset error. The test workflow no longer runs a CSS build step.
 
 ### U6. Update documentation and run migration verification
 
@@ -232,7 +243,7 @@ The migration removes the Tailwind source and generated layer from the path. The
 ## Documentation and Operational Notes
 
 - Update active developer guidance only. Keep historical changelog entries that accurately describe past Tailwind releases.
-- The migration removes a build dependency and, if no independent JavaScript consumer remains, the complete Node/pnpm package layer. Verify onboarding instructions and CI cache/setup assumptions as part of the same change.
+- The migration removes the CSS build dependency. The Node/pnpm layer shrinks to the Herb linter rather than disappearing, so onboarding instructions should describe Node as optional tooling for `pnpm run lint:erb`, not a build prerequisite.
 - No data migration, feature flag, or staged rollout is needed. The work is a CSS and build-dependency refactor, but the visual smoke matrix is a release gate.
 
 ---
@@ -241,7 +252,7 @@ The migration removes the Tailwind source and generated layer from the path. The
 
 - All six implementation units meet their verification criteria.
 - The direct stylesheet loader is the only CSS delivery path for Sabha, and marketing remains independently scoped.
-- No active source, configuration, package, container, CI, or documentation path requires Tailwind, pnpm, or Node for CSS; remove the Node/pnpm package layer entirely when it has no independent consumer.
+- No active source, configuration, package, container, CI, or documentation path requires Tailwind, pnpm, or Node for CSS. The package manifest holds only the Herb linter.
 - Existing token semantics, theme/accent behavior, form accessibility, and responsive shell behavior are preserved.
 - Self-hosted and SaaS suites pass, and the visual smoke matrix has been reviewed.
 - The final diff contains no abandoned generated CSS, temporary compatibility rules, or unrelated worktree changes.
