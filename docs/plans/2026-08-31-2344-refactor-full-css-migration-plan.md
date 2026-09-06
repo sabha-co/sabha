@@ -256,3 +256,52 @@ The migration removes the Tailwind source and generated layer from the path. The
 - Existing token semantics, theme/accent behavior, form accessibility, and responsive shell behavior are preserved.
 - Self-hosted and SaaS suites pass, and the visual smoke matrix has been reviewed.
 - The final diff contains no abandoned generated CSS, temporary compatibility rules, or unrelated worktree changes.
+
+---
+
+## Execution Log
+
+### Method: measuring what Tailwind still supplies
+
+The gap was measured rather than inferred. A Ferrum script signs in, visits 41 self-hosted pages (rooms, forum, thread, DM, browse, settings, account, inbox, search, and the four session-layout pages), records the computed styles of every element, removes the Tailwind `<link>` in place, records again, and diffs. Two lessons from getting it right:
+
+- Everything has to happen inside one `page.evaluate` call. Reading the snapshot out of the page and diffing in Ruby silently truncated the result to the first few hundred elements, so the first two runs missed the message stream entirely and looked far cleaner than reality.
+- Wait for the element count to settle rather than for network idle. The WebSocket keeps the network busy, and message pagination and lazy frames arrive after load.
+
+The script lives outside the repo (session scratchpad). It is worth keeping the idea: before U5 removes the asset, run it once more and expect only marketing and SaaS pages to differ.
+
+### U1 findings (done, commit 6181318f)
+
+Before U1 the diff reported 427 distinct change groups. The ones that mattered, in order of blast radius:
+
+- `--font-size-*` was only declared in the Tailwind theme block. Every `.txt-small` and `.txt-x-small` (3,462 elements across 30 pages) fell back to 16px, dragging em-based padding, radii, gaps, and heights with it. Declared in `base.css`.
+- Headings: `h3.message__heading` and the sidebar section `h1`s relied on Preflight's `font-size: inherit; font-weight: inherit`. Without it they jumped to 17.55px bold.
+- Links and controls relied on Preflight's `color: inherit`. Classed links (sidebar rows, buttons rendered as `<a>`) turned browser blue and underlined; bare `<button>`s without `.btn` (reaction remove buttons) gained UA padding and black text.
+- `[hidden]` needs `!important`: the Lexxy toolbar dropdown menus and the message edit frame set `display` at the same specificity later in the cascade and reappeared.
+- Lists in the settings pages and the PWA instructions regained bullets, numbers, and 40px indents; `hr` regained its inset margins and grey; `img` lost `vertical-align: middle`.
+- The Forms plugin was doing real work in three places: the search palette input had no padding of its own (now `8px 12px` in `dialogs.css`), every `<select>` got `appearance: none` and the chevron from it (now owned in `inputs.css`), and checkboxes and radios took `flex-shrink: 0` and `user-select: none` from it. Placeholder colour was the plugin's fixed grey; it is now `--color-text-muted`.
+- Smaller carries: `tab-size: 4`, transparent tap highlight, `code`/`kbd`/`samp` in the mono face, `textarea { resize: vertical }`, the webkit date and search pseudo-elements.
+
+Decisions made while doing it:
+
+- The reset block is a real cascade layer, `@layer base`, at the top of `_reset.css`. Layered rules lose to every unlayered rule regardless of specificity, which is exactly the relationship Preflight had with Sabha's CSS, so nothing that used to win stops winning. The name matters: a first attempt called `reset` was declared after Tailwind's layers while both were loaded, outranked the `@layer components` block in `tooltips.css`, and stripped the tooltip padding. `base` merges into Tailwind's layer for now and sits beneath `components` once Tailwind is gone. `tooltips.css` is the only other layered file; keep the reset layer first in load order.
+- The `#main-content:focus` rule went to `layout.css` beside the `#main-content` block, not `base.css`.
+- The select chevron keeps the plugin's grey SVG literally; a data-URI image cannot read a token, and the grey reads on both themes.
+- The Forms and typography plugins and the theme block were removed from the entrypoint in U1. Preflight stays until U4 because the marketing layout loads only `marketing/landing.css` and has no reset of its own.
+- After U1 the diff showed changes only on elements carrying a Tailwind utility class, which is U2's scope. 44 system tests (sidebar, composer, inbox, settings, avatars, unread, OTP, palette, boosts, popups) passed.
+
+### U2 findings (done, pending commit)
+
+- Session and SaaS layouts: the `<main>` utility cluster became `.session-main` in `auth.css` with the same values (16px padding, 24px from 640px up).
+- Sidebar: `flex-col`, `items-center`, and `justify-between` mapped one-to-one onto `flex-column`, `align-center`, and `justify-space-between`. `font-semibold` on the four section `h1`s became `font-weight: 600` on `.sidebar__label`, which no other view uses.
+- The block notice's `gap-1` (4px) is a `.block-notice` rule under `#system_welcome`. The bookmark indicator's `opacity-50` is Sabha's existing `.translucent`.
+- `align-baseline` on the browse room row was inert: Tailwind's class sets `vertical-align`, which does nothing on a flex container. Removed rather than translated.
+- The one `class="hidden"` in the app (the welcome message's reply source) became the `hidden` attribute; the reply controller reads the element by target, not by class.
+- `container` in the two mailer layouts is their own inline style, not Tailwind.
+- 28 system tests (sidebar navigation, drawer, rail, OTP, palette, composer, bookmarks, unread) and 36 SaaS controller tests (sessions, registrations, authentication) passed.
+
+### Still open after U2
+
+- U3: `h-auto`, `mb-6`, `w-18`, `rounded-lg` on the five SaaS pages; `saas.html.erb` is already clean.
+- U4: the marketing layout's seven class attributes, and marketing needs the reset. The cleanest route is for the marketing layout to link `application/_reset` explicitly before `Stylesheets.from("marketing")`, since the reset uses no application tokens except `--font-mono` for code, which marketing can define or ignore.
+- U5: Preflight leaves with the entrypoint; nothing else in the app depends on it now.
