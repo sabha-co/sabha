@@ -65,7 +65,7 @@
       <% end %>
     </nav>
 
-    <div class="rooms position-relative flex flex-col gap">
+    <div class="rooms position-relative flex flex-column gap">
       <div id="favorites_section"
            data-controller="collapsible-section sorted-list sidebar-count"
            data-collapsible-section-key-value="favorites"
@@ -73,18 +73,18 @@
            data-sidebar-count-container-value="starred_rooms"
            data-sidebar-count-hide-when-empty-value="true"
            data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
-           class="flex position-relative flex-col gap"
+           class="flex position-relative flex-column gap"
            <%= "hidden" if @starred_memberships.empty? %>>
         <button type="button" class="sidebar__section-toggle sidebar__section-toggle--full"
                 aria-expanded="true"
                 data-collapsible-section-target="toggle"
                 data-action="collapsible-section#toggle">
           <span data-collapsible-section-target="icon" class="sidebar__section-icon"><%= icon_tag "caret-down" %></span>
-          <h1 class="font-semibold txt-label sidebar__label">Favorites</h1>
+          <h1 class="txt-label sidebar__label">Favorites</h1>
           <span class="sidebar__label-count" data-sidebar-count-target="count" <%= "hidden" if @starred_memberships.size.zero? %>><%= @starred_memberships.size %></span>
         </button>
 
-        <div data-collapsible-section-target="content" class="flex flex-col rooms-list">
+        <div data-collapsible-section-target="content" class="flex flex-column rooms-list">
           <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :starred_rooms, memberships: @starred_memberships %>
         </div>
       </div>
@@ -93,17 +93,17 @@
            data-controller="collapsible-section sidebar-count"
            data-collapsible-section-key-value="rooms"
            data-sidebar-count-container-value="shared_rooms"
-           class="flex position-relative flex-col gap">
-        <div class="flex items-center justify-between gap-half">
+           class="flex position-relative flex-column gap">
+        <div class="flex align-center justify-space-between gap-half">
           <button type="button" class="sidebar__section-toggle"
                   aria-expanded="true"
                   data-collapsible-section-target="toggle"
                   data-action="collapsible-section#toggle">
             <span data-collapsible-section-target="icon" class="sidebar__section-icon"><%= icon_tag "caret-down" %></span>
-            <h1 class="font-semibold txt-label sidebar__label">Rooms</h1>
+            <h1 class="txt-label sidebar__label">Rooms</h1>
             <span class="sidebar__label-count" data-sidebar-count-target="count" <%= "hidden" if @shared_memberships.size.zero? %>><%= @shared_memberships.size %></span>
           </button>
-          <div class="flex items-center gap-half">
+          <div class="flex align-center gap-half">
             <%= render "users/sidebars/all_rooms_actions" %>
             <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
               <%= link_to new_rooms_open_path, class: "btn btn--small", aria: { label: "New Room" },
@@ -114,10 +114,10 @@
             <% end %>
           </div>
         </div>
-        <div data-collapsible-section-target="content" class="flex flex-col">
+        <div data-collapsible-section-target="content" class="flex flex-column">
           <div data-controller="sorted-list" <%= all_rooms_sort_order %>
                data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
-               class="rail-rooms flex position-relative flex-col rooms-list">
+               class="rail-rooms flex position-relative flex-column rooms-list">
             <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @shared_memberships %>
           </div>
         </div>
@@ -128,20 +128,20 @@
            data-collapsible-section-key-value="forums"
            data-sidebar-count-container-value="forum_rooms"
            data-sidebar-count-hide-when-empty-value="true"
-           class="flex position-relative flex-col gap"
+           class="flex position-relative flex-column gap"
            <%= "hidden" if @forum_memberships.empty? %>>
         <button type="button" class="sidebar__section-toggle sidebar__section-toggle--full"
                 aria-expanded="true"
                 data-collapsible-section-target="toggle"
                 data-action="collapsible-section#toggle">
           <span data-collapsible-section-target="icon" class="sidebar__section-icon"><%= icon_tag "caret-down" %></span>
-          <h1 class="font-semibold txt-label sidebar__label">Forums</h1>
+          <h1 class="txt-label sidebar__label">Forums</h1>
           <span class="sidebar__label-count" data-sidebar-count-target="count" <%= "hidden" if @forum_memberships.size.zero? %>><%= @forum_memberships.size %></span>
         </button>
-        <div data-collapsible-section-target="content" class="flex flex-col">
+        <div data-collapsible-section-target="content" class="flex flex-column">
           <div data-controller="sorted-list" <%= all_rooms_sort_order %>
                data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
-               class="flex position-relative flex-col rooms-list">
+               class="flex position-relative flex-column rooms-list">
             <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :forum_rooms, memberships: @forum_memberships %>
           </div>
         </div>
@@ -155,15 +155,15 @@
              data-collapsible-section-key-value="direct-messages"
              data-sidebar-count-container-value="direct_rooms"
              data-sidebar-count-hide-when-empty-value="true"
-             class="flex position-relative flex-col gap"
+             class="flex position-relative flex-column gap"
              <%= "hidden" if @direct_memberships.empty? %>>
-          <div class="flex items-center justify-between gap-half">
+          <div class="flex align-center justify-space-between gap-half">
             <button type="button" class="sidebar__section-toggle"
                     aria-expanded="true"
                     data-collapsible-section-target="toggle"
                     data-action="collapsible-section#toggle">
               <span data-collapsible-section-target="icon" class="sidebar__section-icon"><%= icon_tag "caret-down" %></span>
-              <h1 class="font-semibold txt-label sidebar__label">Direct messages</h1>
+              <h1 class="txt-label sidebar__label">Direct messages</h1>
               <span class="sidebar__label-count" data-sidebar-count-target="count" <%= "hidden" if @direct_memberships.size.zero? %>><%= @direct_memberships.size %></span>
             </button>
             <% if can_create_dms? %>

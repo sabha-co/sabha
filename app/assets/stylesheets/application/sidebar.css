@@ -359,6 +359,7 @@ body.room-header--pencil .sidebar__workspace {
 .sidebar__label {
   color: var(--color-text-muted);
   font-size: 0.6875rem;
+  font-weight: 600;
   letter-spacing: 0.07em;
 }
 

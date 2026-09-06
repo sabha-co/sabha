@@ -3,7 +3,7 @@
   <span class="browse-room__glyph txt-deemphasize" aria-hidden="true"><%= room_type_indicator(room) %></span>
 
   <div class="list-row__body">
-    <div class="flex align-baseline gap-half min-width">
+    <div class="flex gap-half min-width">
       <% if joined %>
         <%= link_to room.name, room_path(room), class: "list-row__title txt-undecorated" %>
       <% else %>

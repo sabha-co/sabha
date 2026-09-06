@@ -10,6 +10,21 @@ body.session {
   min-block-size: 100dvh;
 }
 
+/* Its <main>: a full-height centred column with a little more breathing room
+   once the viewport is wider than a phone. */
+.session-main {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-block-size: 100dvh;
+  padding: 16px;
+
+  @media (min-width: 640px) {
+    padding: 24px;
+  }
+}
+
 /* Ground for cards that render inside the app layout (join, first run) —
    the session layout centres its own <main> instead. */
 .auth-ground {

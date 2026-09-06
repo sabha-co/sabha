@@ -14,7 +14,7 @@
         </div>
         <%= render "messages/actions/boost_only", message: message %>
       </div>
-      <div data-reply-target="body" class="hidden"><div class="lexxy-content"><%= message.plain_text_body %></div></div>
+      <div data-reply-target="body" hidden><div class="lexxy-content"><%= message.plain_text_body %></div></div>
       <%= render "messages/boosts/boosts", message: message %>
     </div>
   </div>

@@ -116,6 +116,11 @@
     margin-block-start: calc(var(--avatar-size) * -0.5);
   }
 
+  /* The block notice stacks its copy and button tightly */
+  .block-notice {
+    gap: 4px;
+  }
+
   .message__body {
     display: block;
     max-inline-size: unset;

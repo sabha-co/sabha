@@ -36,7 +36,7 @@
       <%= render "shared/workspace_selector" %>
     <% end %>
 
-    <main class="min-h-dvh flex flex-col items-center justify-center p-4 sm:p-6">
+    <main class="session-main">
       <% if notice = flash[:notice] || flash[:alert] %>
         <div class="flash" data-controller="element-removal" data-action="animationend->element-removal#remove">
           <div class="flash__inner" style="<%= "--flash-background: var(--color-negative)" if flash[:alert] %>">
