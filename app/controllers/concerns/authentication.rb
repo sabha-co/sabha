@@ -147,6 +147,8 @@ module Authentication
     end
 
     def terminate_current_session
+      global_identity = Current.global_identity if Sabha.saas?
+
       if Sabha.saas?
         Current.global_session&.destroy
         cookies.delete(:global_session_token)
@@ -155,6 +157,18 @@ module Authentication
         reset_session
         cookies.delete(:session_token, domain: ENV["COOKIE_DOMAIN"])
       end
+
+      disconnect_remote_connections(global_identity)
+    end
+
+    def disconnect_remote_connections(global_identity)
+      if Sabha.saas?
+        global_identity&.disconnect_remote_connections
+      else
+        Current.user&.disconnect_remote_connections
+      end
+    rescue => error
+      Rails.logger.warn "Could not disconnect remote connections on sign out: #{error.class}"
     end
 
     def authenticated_as(session)
