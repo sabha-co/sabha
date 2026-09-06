@@ -7,6 +7,7 @@ export default class extends Controller {
     attribute: String,
     attributeType: String,
     order: String,
+    ignorePriority: Boolean,
   }
 
   initialize() {
@@ -14,11 +15,15 @@ export default class extends Controller {
     this.sortKeyType = this.attributeTypeValue || 'string'
     this.sortOrder = this.orderValue || 'asc'
 
-    // Pre-compute sort criteria for better performance
+    // Pre-compute sort criteria for better performance. Most lists sort
+    // unread-first (priority 0) before falling back to recency/name; DMs opt
+    // out and sort purely by recency, matching the inbox and Slack/Discord.
     this.sortCriteria = [
-      { key: 'sortedListPriority', type: 'number', order: 'asc' },
       { key: this.sortKey, type: this.sortKeyType, order: this.sortOrder },
     ]
+    if (!this.ignorePriorityValue) {
+      this.sortCriteria.unshift({ key: 'sortedListPriority', type: 'number', order: 'asc' })
+    }
   }
 
   itemTargetConnected(target) {

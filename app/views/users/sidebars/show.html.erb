@@ -176,6 +176,7 @@
           <div data-collapsible-section-target="content" class="directs gap">
             <div id="direct_rooms" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
                  data-sorted-list-order-value="desc"
+                 data-sorted-list-ignore-priority-value="true"
                  data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort">
               <%= render partial: "users/sidebars/rooms/direct", collection: @direct_memberships, as: :membership, cached: true %>
             </div>

@@ -9,8 +9,7 @@
   <%= link_to_room membership.room, class: [ "direct", "unread": membership_unread, "badge": notifications_count > 0 ], id: dom_id(membership.room, :list),
         data: {
           sorted_list_target: "item",
-          sorted_list_priority: membership_unread ? 0 : 1,
-          updated_at: ((membership_unread && membership.unread_since) || membership.room.updated_at)&.iso8601
+          updated_at: membership.room.last_active_at&.iso8601
         } do %>
     <% if members.many? %>
       <div class="avatar__group">
