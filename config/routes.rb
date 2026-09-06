@@ -256,6 +256,10 @@ Rails.application.routes.draw do
     end
   end
 
+  namespace :searches do
+    resources :recents, only: :index
+  end
+
 
   resource :unfurl_link, only: :create
 

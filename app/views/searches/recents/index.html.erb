@@ -1,0 +1,10 @@
+<%= turbo_frame_tag "search_palette_recents", target: "_top", class: "search-palette__recents" do %>
+  <% if @recent_searches.any? %>
+    <span class="scrim-dialog__label">Recent searches</span>
+    <div class="search-palette__chips">
+      <% @recent_searches.each do |search| %>
+        <%= link_to search.query, searches_path(q: search.query), class: "search-palette__chip" %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

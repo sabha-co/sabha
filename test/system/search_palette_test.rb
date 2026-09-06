@@ -37,6 +37,38 @@ class SearchPaletteTest < ApplicationSystemTestCase
     assert_selector ".searches__bar .searches__input"
   end
 
+  test "the sidebar row loads recent searches too" do
+    find("#room-search").click
+
+    assert_selector "#search_palette[open]"
+    assert_selector ".search-palette__chip", text: "pizza"
+  end
+
+  test "the input is focused and typeable before history arrives" do
+    find("body").send_keys [ :control, "k" ]
+
+    assert_selector "#search_palette[open]"
+    # Asserted before waiting on any chip: the form sits outside the history
+    # frame, so it must not wait on it.
+    assert_equal "search-palette__input", page.evaluate_script("document.activeElement.className")
+    find(".search-palette__input").fill_in with: "anchovies"
+    assert_equal "anchovies", page.evaluate_script("document.activeElement.value")
+  end
+
+  test "reopening after a successful load does not request history again" do
+    find("body").send_keys [ :control, "k" ]
+    assert_selector ".search-palette__chip", text: "pizza"
+
+    find(".search-palette__input").send_keys :escape
+    assert_no_selector "#search_palette[open]"
+    find("body").send_keys [ :control, "k" ]
+
+    assert_selector "#search_palette[open]"
+    assert_selector ".search-palette__chip", text: "pizza"
+    assert page.evaluate_script("document.querySelector('#search_palette_recents').hasAttribute('complete')")
+    assert_nil page.evaluate_script("document.querySelector('#search_palette_recents').getAttribute('busy')")
+  end
+
   test "recent search chip runs that search" do
     find("body").send_keys [ :control, "k" ]
 

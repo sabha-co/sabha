@@ -357,6 +357,13 @@
   padding: 16px 18px 20px;
 }
 
+/* The recent-history frame loads lazily, and Turbo watches it with an
+   IntersectionObserver — turbo-frame is display:contents globally, so without
+   its own box there is nothing to observe and history never loads. */
+.search-palette__recents {
+  display: block;
+}
+
 .search-palette__chips {
   display: flex;
   flex-wrap: wrap;

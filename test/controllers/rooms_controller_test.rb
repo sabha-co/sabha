@@ -5,6 +5,31 @@ class RoomsControllerTest < ActionDispatch::IntegrationTest
     sign_in :david
   end
 
+  test "a room visit performs no search-history query and renders no chips" do
+    2.times { |n| users(:david).searches.create!(query: "history #{n}") }
+
+    queries = 0
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      next if payload[:cached] || payload[:name] == "SCHEMA"
+      queries += 1 if payload[:sql].include?("searches")
+    end
+    get room_url(users(:david).rooms.last)
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+
+    assert_response :success
+    assert_equal 0, queries
+    assert_select ".search-palette__chip", count: 0
+    assert_select "turbo-frame#search_palette_recents[loading=lazy]"
+  end
+
+  test "a room visit renders the lazy history frame with no history stored" do
+    get room_url(users(:david).rooms.last)
+
+    assert_response :success
+    assert_select "turbo-frame#search_palette_recents[loading=lazy]"
+    assert_select ".search-palette__chip", count: 0
+  end
+
   test "index redirects to the user's last room" do
     get rooms_url
     assert_redirected_to room_url(users(:david).rooms.last)

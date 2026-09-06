@@ -23,13 +23,12 @@
   <% end %>
 
   <div class="search-palette__body">
-    <% if palette_recent_searches.any? %>
-      <span class="scrim-dialog__label">Recent searches</span>
-      <div class="search-palette__chips">
-        <% palette_recent_searches.each do |search| %>
-          <%= link_to search.query, searches_path(q: search.query), class: "search-palette__chip" %>
-        <% end %>
-      </div>
+    <%# History loads only once the dialog makes the frame visible, so a room
+        visit costs no query. The placeholder gives the unloaded frame a layout
+        box; the form above stays outside it and works while this is in flight. %>
+    <%= turbo_frame_tag "search_palette_recents", src: searches_recents_path, loading: :lazy, target: "_top",
+          class: "search-palette__recents" do %>
+      <span class="scrim-dialog__label">Loading recent searches…</span>
     <% end %>
 
     <p class="search-palette__hint">Enter a keyword or phrase to search across all your messages and rooms.</p>
