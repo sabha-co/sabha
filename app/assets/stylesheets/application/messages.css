@@ -122,6 +122,7 @@
   }
 
   .message__body-content {
+    max-inline-size: unset;
     overflow: unset;
     padding-block: var(--block-space-double);
   }
@@ -696,11 +697,15 @@
   flex-shrink: 2;
 }
 
+/* Spans the whole body column: it is the containing block for the floating
+   action bar, which sits at the row's right edge. The reading measure is capped
+   on .message__body-content instead, so the text stays at 80ch while the bar
+   still reaches the edge. */
 .message__body {
   column-gap: var(--inline-space-half);
   display: flex;
   grid-area: body;
-  max-inline-size: min(80ch, 100%);
+  max-inline-size: 100%;
   position: relative;
   inline-size: 100%;
 
@@ -793,9 +798,8 @@
   font-weight: 400;
   inline-size: 100%;
   margin-block-end: var(--message-row-gap);
-  max-inline-size: 100%;
+  max-inline-size: min(80ch, 100%);
   padding: 0;
-  position: relative;
   word-break: break-word;
 
   &:has(.message__attachment) {
@@ -803,7 +807,7 @@
   }
 
   &.message__body-content--editing:has(.message__attachment) {
-    max-inline-size: calc(100% - var(--btn-size));
+    max-inline-size: calc(min(80ch, 100%) - var(--btn-size));
   }
 }
 

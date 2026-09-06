@@ -51,7 +51,7 @@ class HeaderStreamAuditTest < ApplicationSystemTestCase
   test "wide message bodies respect the reading measure" do
     [ 1400, 1100, 1024 ].each do |width|
       page.current_window.resize_to(width, 900)
-      body = find("##{dom_id(@first)} .message__body")
+      body = find("##{dom_id(@first)} .message__body-content")
       within_measure = body.evaluate_script(<<~JS)
       (() => {
         const probe = document.createElement('span')
@@ -64,6 +64,21 @@ class HeaderStreamAuditTest < ApplicationSystemTestCase
       JS
       assert within_measure, "message body exceeds 80ch at #{width}px"
     end
+  end
+
+  test "the floating action bar sits at the row's right edge, not at the measure" do
+    page.current_window.resize_to(1400, 900)
+    row = find("##{dom_id(@first)}")
+    at_row_edge = row.evaluate_script(<<~JS)
+      (() => {
+        const bar = this.querySelector('.message__meta .message__actions')
+        const content = this.querySelector('.message__body-content')
+        const gutter = parseFloat(getComputedStyle(this).paddingInlineEnd)
+        return this.getBoundingClientRect().right - bar.getBoundingClientRect().right <= gutter + 1 &&
+          bar.getBoundingClientRect().right > content.getBoundingClientRect().right
+      })()
+    JS
+    assert at_row_edge, "action bar is anchored to the reading measure instead of the row"
   end
 
   test "a touch user can open reactions directly from a message" do

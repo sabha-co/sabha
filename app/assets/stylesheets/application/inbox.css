@@ -66,7 +66,8 @@ body.inbox .searches__results:has(.bookmark-card) {
     --avatar-size: 32px;
   }
 
-  .message__body {
+  .message__body,
+  .message__body-content {
     max-inline-size: none;
     min-inline-size: 0;
   }
