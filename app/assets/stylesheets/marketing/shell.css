@@ -8,6 +8,11 @@
     "Liberation Mono", "Courier New", monospace;
 }
 
+/* Pinned to the light theme, matching the color-scheme the layout declares on
+   <html>. Every marketing page wraps its content in .landing, which paints its
+   own light palette over this ground, so a dark treatment here would only ever
+   surface in the overscroll gutter — and would contradict the scheme the rest
+   of the page renders in. */
 .marketing {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
@@ -17,13 +22,6 @@
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   line-height: 1.5;
   text-size-adjust: 100%;
-
-  /* The page is pinned to the light theme; only the ground behind .landing
-     follows the OS, exactly as before. */
-  @media (prefers-color-scheme: dark) {
-    background-color: oklch(14.1% 0.005 285.823);
-    color: oklch(98.5% 0 0);
-  }
 }
 
 .marketing-page {
