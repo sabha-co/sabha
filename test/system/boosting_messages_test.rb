@@ -39,7 +39,11 @@ class BoostingMessagesTest < ApplicationSystemTestCase
     assert_selector ".message-reaction-menu__emoji", count: 15
     assert_no_selector ".message-reaction-menu__emoji[title='Thumbs up']"
     assert_selector ".message-reaction-menu__more"
-    assert_selector ".message-reaction-menu__grid > *", count: 16
+    assert_selector ".message-reaction-menu__grid > :is(button, a)", count: 16
+    within_message messages(:third) do
+      assert_selector ".message__quick-reactions", count: 1, visible: :all
+      assert_selector ".message-reaction-menu form", count: 1, visible: :all
+    end
 
     within ".message-reaction-menu" do
       click_on "Party popper"

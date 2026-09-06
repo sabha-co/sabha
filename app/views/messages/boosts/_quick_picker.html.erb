@@ -1,14 +1,12 @@
 <%# locals: (message:) -%>
 <%# Touch has no quick-reaction bar, so include those choices in its picker. %>
 <%= popover_menu_tag "message-reaction-menu", aria: { label: "Add reaction" } do %>
-  <div class="message-reaction-menu__grid">
+  <%= form_with model: [ message, Boost.new ], class: "message-reaction-menu__grid", data: { turbo_frame: dom_id(message, :boosting) } do |form| %>
     <% EmojiHelper::REACTIONS.each_with_index do |(character, title), index| %>
-      <%= form_with model: [ message, Boost.new ], class: ("message-reaction-menu__touch-choice" if index < 4), data: { turbo_frame: dom_id(message, :boosting) } do |form| %>
-        <%= hidden_field_tag "boost[content]", character %>
-        <%= form.button type: "submit", title:, class: "btn message-reaction-menu__emoji", data: { emoji: character } do %>
-          <figure class="margin-none boost-character"><%= character %></figure>
-          <span class="for-screen-reader"><%= title %></span>
-        <% end %>
+      <%= form.button type: "submit", name: "boost[content]", value: character, title:,
+            class: class_names("btn message-reaction-menu__emoji", "message-reaction-menu__touch-choice" => index < 4), data: { emoji: character } do %>
+        <figure class="margin-none boost-character"><%= character %></figure>
+        <span class="for-screen-reader"><%= title %></span>
       <% end %>
     <% end %>
     <%= link_to new_message_boost_path(message), class: "btn message-reaction-menu__more",
@@ -16,5 +14,5 @@
       <span aria-hidden="true">+</span>
       <span class="for-screen-reader">More reactions</span>
     <% end %>
-  </div>
+  <% end %>
 <% end %>

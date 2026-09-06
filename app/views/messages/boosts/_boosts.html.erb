@@ -6,7 +6,7 @@
     direct response, the broadcast, and other people's concurrent reactions) so a
     stale snapshot can't overwrite newer committed state — see the boost_revision
     initializer. It's the message's updated_at, bumped on every boost change. %>
-<%= turbo_frame_tag message, :boosting, data: { boost_revision: message.updated_at.strftime("%s%6N") } do %>
+<%= turbo_frame_tag message, :boosting, data: { boost_revision: message.updated_at.strftime("%s%6N"), reaction_bar_target: "boosts" } do %>
   <% if message.boosts.any? %>
     <div class="boosts flex flex-wrap align-center gap full-width" style="--column-gap: 0.4ch; --row-gap: 0">
       <div class="flex-inline flex-wrap gap message__boosts" id="<%= dom_id(message, :boosts) %>">

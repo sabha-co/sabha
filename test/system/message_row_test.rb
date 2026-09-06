@@ -141,19 +141,39 @@ class MessageRowTest < ApplicationSystemTestCase
 
   test "the action bar reflects a reaction the user has made and toggles it off" do
     within_message messages(:third) do
-      find(".message__body-content").hover
-      find(".message__quick-reaction button[title='Thumbs up']").click
+      EmojiHelper::REACTIONS.first(4).each do |emoji, title|
+        find(".message__body-content").hover
+        find(".message__quick-reaction[title='#{title}']").click
 
-      # The reaction lands and its quick-reaction now reads as active.
-      assert_selector ".boost.boost--mine", text: "👍"
-      assert_selector ".message__quick-reaction--active button[title='Thumbs up']"
+        assert_selector ".boost.boost--mine", text: emoji
+        assert_selector ".message__quick-reaction--active[title='#{title}']"
+        active = find(".message__quick-reaction--active[title='#{title}']")
+        assert active.evaluate_script("getComputedStyle(this).getPropertyValue('--btn-background') === getComputedStyle(this).getPropertyValue('--color-selected')"), "selected reaction lost its highlight"
 
-      # Clicking the active quick-reaction removes the reaction again.
-      find(".message__body-content").hover
-      find(".message__quick-reaction--active button[title='Thumbs up']").click
+        find(".message__body-content").hover
+        find(".message__quick-reaction--active[title='#{title}']").click
 
-      assert_no_selector ".boost", text: "👍"
-      assert_no_selector ".message__quick-reaction--active"
+        assert_no_selector ".boost", text: emoji
+        assert_no_selector ".message__quick-reaction--active"
+      end
+    end
+  end
+
+  test "reaction targets restore keyboard focus after the last chip is removed" do
+    messages(:third).boosts.create!(content: "👏", booster: users(:kevin))
+    visit room_path(rooms(:designers))
+
+    within_message messages(:first) do
+      assert_no_selector ".message__quick-reaction--active", visible: :all
+    end
+    within_message messages(:third) do
+      assert_selector ".message__quick-reaction--active[title='Clapping']", visible: :all
+      find(".boost--mine .boost__toggle").evaluate_script("this.focus()")
+      page.driver.browser.keyboard.type(:Enter)
+
+      assert_no_selector ".boost"
+      assert_no_selector ".message__quick-reaction--active", visible: :all
+      assert_selector ".message__author:focus"
     end
   end
 

@@ -850,21 +850,22 @@ img.message__attachment {
   }
 }
 
-.message__quick-reaction {
+.message__quick-reactions {
   display: inline-flex;
+  column-gap: 2px;
 }
 
 .message-reaction-menu__touch-choice {
   display: none;
 
   @media (hover: none) and (pointer: coarse) {
-    display: block;
+    display: inline-flex;
   }
 }
 
 /* The quick reaction carries the accent tint while the current user is already
    in that reaction (reaction_bar_controller); clicking it then removes theirs. */
-.message__quick-reaction--active .message__bar-btn {
+.message__quick-reaction.message__quick-reaction--active {
   --btn-background: var(--color-selected);
   --btn-border-color: var(--color-selected-dark);
 }

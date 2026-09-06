@@ -6,23 +6,17 @@ import { Controller } from "@hotwired/stimulus"
 // the cached, viewer-blind message render, so this can only be decided
 // client-side. Re-syncs whenever the boosts frame is replaced.
 export default class extends Controller {
-  connect() {
-    this.sync()
-    this.observer = new MutationObserver(() => {
-      this.sync()
-      this.#restoreFocus()
-    })
-    this.observer.observe(this.element, { childList: true })
-  }
+  static targets = [ "quickReaction", "boosts" ]
 
-  disconnect() {
-    this.observer?.disconnect()
+  boostsTargetConnected() {
+    this.sync()
+    this.#restoreFocus()
   }
 
   // On a quick-reaction submit for an emoji already mine, remove it (reusing that
   // chip's own remove form) rather than POSTing a duplicate the server ignores.
   route(event) {
-    const emoji = this.#emojiOf(event.target)
+    const emoji = event.submitter?.value
     if (!emoji || !this.#mine.has(emoji)) return
 
     event.preventDefault()
@@ -31,9 +25,8 @@ export default class extends Controller {
 
   sync() {
     const mine = this.#mine
-    this.element.querySelectorAll(".message__quick-reaction").forEach(form => {
-      const emoji = this.#emojiOf(form)
-      form.classList.toggle("message__quick-reaction--active", !!emoji && mine.has(emoji))
+    this.quickReactionTargets.forEach(button => {
+      button.classList.toggle("message__quick-reaction--active", mine.has(button.value))
     })
   }
 
@@ -57,18 +50,14 @@ export default class extends Controller {
 
   get #mine() {
     const set = new Set()
-    this.element.querySelectorAll(".boost[data-boost-toggle-content-value]").forEach(chip => {
+    this.boostsTarget.querySelectorAll(".boost[data-boost-toggle-content-value]").forEach(chip => {
       const ids = JSON.parse(chip.dataset.boostToggleBoosterIdsValue || "[]")
       if (ids.includes(Current.user.id)) set.add(chip.dataset.boostToggleContentValue)
     })
     return set
   }
 
-  #emojiOf(form) {
-    return form.querySelector("button[data-emoji]")?.dataset.emoji
-  }
-
   #chipFor(emoji) {
-    return this.element.querySelector(`.boost[data-boost-toggle-content-value="${CSS.escape(emoji)}"]`)
+    return this.boostsTarget.querySelector(`.boost[data-boost-toggle-content-value="${CSS.escape(emoji)}"]`)
   }
 }

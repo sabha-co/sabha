@@ -48,7 +48,7 @@
     min-inline-size: 40px;
   }
 
-  .message__quick-reaction,
+  .message__quick-reactions,
   .message__reply-label {
     display: none;
   }
