@@ -88,9 +88,17 @@ module Saas
 
       # Sign out by destroying the GlobalSession
       def sign_out
+        global_identity = Current.global_identity
         Current.global_session&.destroy
         cookies.delete(:global_session_token)
+        disconnect_remote_connections(global_identity)
         Current.global_session = nil
+      end
+
+      def disconnect_remote_connections(global_identity)
+        global_identity&.disconnect_remote_connections
+      rescue => error
+        Rails.logger.warn "Could not disconnect remote connections on sign out: #{error.class}"
       end
 
       # Store the current URL for redirect after authentication

@@ -1,6 +1,6 @@
 <% content_for :title, "Stats" %>
 
-<%# SVG sparkline helper — plots daily counts as a filled area chart %>
+<%# SVG sparkline helper — plots daily counts as a filled area chart. %>
 <%
   sparkline = ->(data, color: "var(--color-accent-brand)") {
     values = data.map(&:last)

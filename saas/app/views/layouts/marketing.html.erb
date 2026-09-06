@@ -17,8 +17,8 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="<%= content_for?(:title) ? "#{content_for(:title)} | Sabha" : "Sabha — Open Source Discord Alternative for Communities" %>">
     <meta property="og:description" content="<%= content_for?(:meta_description) ? content_for(:meta_description) : "Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to use, free to leave." %>">
-    <meta property="og:image" content="<%= "#{request.base_url}/sabha-og.jpg" %>">
-    <meta property="og:logo" content="<%= "#{request.base_url}/icon.png" %>">
+    <meta property="og:image" content="<%= request.base_url %>/sabha-og.jpg">
+    <meta property="og:logo" content="<%= request.base_url %>/icon.png">
     <meta property="og:url" content="<%= canonical_url %>">
     <meta property="og:site_name" content="Sabha">
 
@@ -26,7 +26,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<%= content_for?(:title) ? "#{content_for(:title)} | Sabha" : "Sabha — Open Source Discord Alternative for Communities" %>">
     <meta name="twitter:description" content="<%= content_for?(:meta_description) ? content_for(:meta_description) : "Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to use, free to leave." %>">
-    <meta name="twitter:image" content="<%= "#{request.base_url}/sabha-og.jpg" %>">
+    <meta name="twitter:image" content="<%= request.base_url %>/sabha-og.jpg">
 
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>

@@ -58,11 +58,13 @@
       <% end %>
     </div>
     <div class="flex align-center gap-half">
-      <% if snap %>
-        <p class="txt-x-small txt-muted">Updated <%= time_ago_in_words(snap.updated_at) %> ago</p>
-      <% else %>
-        <p class="txt-x-small txt-muted">No snapshot yet.</p>
-      <% end %>
+      <p class="txt-x-small txt-muted">
+        <% if snap %>
+          Updated <%= time_ago_in_words(snap.updated_at) %> ago
+        <% else %>
+          No snapshot yet.
+        <% end %>
+      </p>
       <%= button_to "Refresh", admin_workspace_snapshot_path(@workspace), class: "btn txt-x-small" %>
     </div>
   </section>

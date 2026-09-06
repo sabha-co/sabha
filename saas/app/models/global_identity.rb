@@ -119,6 +119,27 @@ class GlobalIdentity < UntenantedRecord
     end
   end
 
+  def disconnect_remote_connections
+    # A global sign-out may arrive through the core session route while that
+    # request is scoped to one workspace. Clear that scope before visiting each
+    # membership so every tenant can be disconnected.
+    ApplicationRecord.prohibit_shard_swapping(false) do
+      ApplicationRecord.without_tenant do
+        workspace_memberships.find_each do |membership|
+          next if membership.user_id.blank?
+
+          ApplicationRecord.with_tenant(membership.tenant) do
+            User.find_by(id: membership.user_id)&.disconnect_remote_connections
+          end
+        rescue ActiveRecord::Tenanted::TenantDoesNotExistError
+          # Workspace database doesn't exist, skip silently
+        rescue => error
+          Rails.logger.warn("[GlobalIdentity#disconnect_remote_connections] Failed for membership #{membership.id} in tenant #{membership.tenant}: #{error.message}")
+        end
+      end
+    end
+  end
+
   def cancel_email_change!
     return unless unconfirmed_email.present?
 

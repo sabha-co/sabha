@@ -161,6 +161,45 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
     assert_nil parsed_cookies.signed[:session_token]
   end
 
+  test "signed logout payload closes the signed-out user's live connections without reconnecting" do
+    ENV["AUTH_METHOD"] = "password"
+    sign_in :david
+    ENV["AUTH_METHOD"] = "sso"
+
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode({ nonce:, logout: "true" }, ENV["SSO_SECRET"])
+
+    connections = mock("RemoteConnections")
+    connections.expects(:disconnect).with(reconnect: false)
+    ActionCable.server.remote_connections
+      .expects(:where)
+      .with(current_user: users(:david))
+      .returns(connections)
+
+    get sso_callback_url, params: { sso:, sig: }
+
+    assert_response :redirect
+  end
+
+  test "signed logout payload still signs out when realtime service is unreachable" do
+    ENV["AUTH_METHOD"] = "password"
+    sign_in :david
+    session_id = users(:david).sessions.last.id
+    ENV["AUTH_METHOD"] = "sso"
+    ActionCable.server.stubs(:remote_connections).raises(RuntimeError, "cable down")
+
+    get sso_handshake_url
+    nonce = provider_request_payload["nonce"]
+    sso, sig = Sso::Payload.encode({ nonce:, logout: "true" }, ENV["SSO_SECRET"])
+
+    get sso_callback_url, params: { sso:, sig: }
+
+    assert_response :redirect
+    assert_not Session.exists?(session_id)
+    assert_nil parsed_cookies.signed[:session_token]
+  end
+
   test "logout payload with invalid signature does not terminate current session" do
     ENV["AUTH_METHOD"] = "password"
     sign_in :david

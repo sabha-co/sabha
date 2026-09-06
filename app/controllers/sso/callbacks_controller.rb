@@ -53,9 +53,18 @@ class Sso::CallbacksController < Sso::BaseController
     end
 
     def terminate_session_from_cookie
-      find_session_by_cookie&.destroy!
+      session = find_session_by_cookie
+      user = session&.user
+      session&.destroy!
       reset_session
       cookies.delete(:session_token, domain: ENV["COOKIE_DOMAIN"])
+      disconnect_remote_connections(user)
+    end
+
+    def disconnect_remote_connections(user)
+      user&.disconnect_remote_connections
+    rescue => error
+      Rails.logger.warn("[SSO] Failed to close remote connections: #{error.class.name}: #{error.message}")
     end
 
     def redeem_pending_join_code!(user, code)

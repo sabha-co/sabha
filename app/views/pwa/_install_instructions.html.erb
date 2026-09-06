@@ -6,28 +6,27 @@
       <%= icon_tag "disclosure", class: "disclosure" %>
     </summary>
 
-    <% case
-      when platform.edge? %>
+    <% if platform.edge? %>
         <ol>
           <li>Click <em><%= image_tag "install-edge.svg", alt: "the app available - install Sabha chat button", size: 16 %></em>in the address bar.</li>
           <li>Click <em>Install</em>.</li>
         </ol>
-      <% when platform.chrome? && platform.android? %>
+      <% elsif platform.chrome? && platform.android? %>
         <ol>
           <li>Tap the <em><%= image_tag "menu-dots-vertical.svg", alt: "More options", size: 16 %></em> menu button.</li>
           <li>Tap <em>Install app</em> in the menu.</li>
         </ol>
-      <% when platform.firefox? && platform.android? %>
+      <% elsif platform.firefox? && platform.android? %>
         <ol>
           <li>Tap the <em><%= image_tag "menu-dots-vertical.svg", alt: "More options", size: 16 %></em> menu button.</li>
           <li>Tap <em>Install</em> in the menu.</li>
         </ol>
-      <% when platform.safari? && platform.desktop? %>
+      <% elsif platform.safari? && platform.desktop? %>
         <ol>
           <li>Click <em>File</em> in the top left.</li>
           <li>Click <em>Add to Dock…</em>.</li>
         </ol>
-      <% when (platform.safari? || platform.chrome?) && platform.ios? %>
+      <% elsif (platform.safari? || platform.chrome?) && platform.ios? %>
         <p>To receive push notifications in <%= platform.browser.capitalize %> for <%= platform.operating_system %>, you must install Sabha as a web app.</p>
         <ol>
           <li>Tap <em><%= image_tag "external/share.svg", alt: "the share button", size: 20 %></em></li>

@@ -114,6 +114,36 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     identity&.destroy
   end
 
+  test "disconnect_remote_connections leaves the active tenant and continues after a workspace failure" do
+    identity = GlobalIdentity.create!(name: "Remote Disconnect", email_address: "remote-disconnect@example.com", verified_at: Time.current)
+
+    with_provisioned_workspace(name: "Remote Disconnect A", creator: identity) do |workspace_a|
+      with_provisioned_workspace(name: "Remote Disconnect B", creator: identity) do |workspace_b|
+        memberships = [ workspace_a, workspace_b ].map do |workspace|
+          identity.workspace_memberships.find_by!(tenant: workspace.external_id.to_s)
+        end
+        users = memberships.map do |membership|
+          ApplicationRecord.with_tenant(membership.tenant) { User.find(membership.user_id) }
+        end
+
+        connections = mock("RemoteConnections")
+        connections.expects(:where)
+          .with(current_tenant: memberships.first.tenant, current_user: users.first)
+          .raises(RuntimeError, "cable down")
+        connections.expects(:where)
+          .with(current_tenant: memberships.second.tenant, current_user: users.second)
+          .returns(mock.tap { |connection| connection.expects(:disconnect).with(reconnect: false) })
+        ActionCable.server.stubs(:remote_connections).returns(connections)
+
+        ApplicationRecord.with_tenant(workspace_a.external_id.to_s) do
+          identity.disconnect_remote_connections
+        end
+      end
+    end
+  ensure
+    identity&.destroy
+  end
+
   # join tests
 
   test "join creates a membership and provisions a tenant user" do
