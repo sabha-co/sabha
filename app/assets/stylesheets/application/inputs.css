@@ -449,6 +449,12 @@ select {
   padding: var(--input-padding, 0.5em 0.8em);
   print-color-adjust: exact;
 
+  /* Keep the value clear of the chevron, which sits 1.5em wide inset 0.5rem
+     from the end edge — without this a long option runs underneath it. */
+  &:not(:where([multiple], [size]:not([size="1"]))) {
+    padding-inline-end: 2.5rem;
+  }
+
   &:where([multiple], [size]:not([size="1"])) {
     background-image: none;
   }
