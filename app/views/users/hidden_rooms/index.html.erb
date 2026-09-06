@@ -1,7 +1,7 @@
 <%= turbo_frame_tag :hidden_rooms do %>
   <div class="margin-block">
     <h2 class="txt-x-small txt-label margin-block-end">Hidden rooms (<%= @hidden_memberships.size %>)</h2>
-    <div id="hidden_rooms" class="flex flex-column rooms-list">
+    <div id="hidden_rooms_list" class="flex flex-column rooms-list">
       <% @hidden_memberships.each do |membership| %>
         <%= render "users/sidebars/rooms/hidden", membership: membership %>
       <% end %>

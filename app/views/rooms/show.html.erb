@@ -9,7 +9,11 @@
 
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
 <%# Direct rooms carry the DM conversation rail beside the conversation %>
-<% content_for :list_rail, render("inboxes/direct_messages/rail") if @room.direct? %>
+<% if @room.direct? %>
+  <% content_for :list_rail do %>
+    <%= render "inboxes/direct_messages/rail" %>
+  <% end %>
+<% end %>
 
 <%= message_area_tag(@room) do %>
   <%= render "messages/template" %>

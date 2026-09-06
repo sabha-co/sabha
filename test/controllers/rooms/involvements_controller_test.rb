@@ -46,7 +46,7 @@ class Rooms::InvolvementsControllerTest < ActionDispatch::IntegrationTest
         action: "remove", target: [ room, "#{list_name}_list_node" ]
     end
     assert_rendered_turbo_stream_broadcast users(:david), :rooms,
-      action: "append", target: "hidden_rooms"
+      action: "append", target: "hidden_rooms_list"
   end
 
   test "update involvement sends turbo update when returning to visible" do

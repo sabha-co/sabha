@@ -23,7 +23,9 @@
 <% @body_class = "sidebar" %>
 
 <% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
-<% content_for :list_rail, render("inboxes/direct_messages/rail") %>
+<% content_for :list_rail do %>
+  <%= render "inboxes/direct_messages/rail" %>
+<% end %>
 
 <% content_for :nav do %>
   <span class="dm-back"><%= link_back_to_or_referrer inbox_direct_messages_path %></span>
