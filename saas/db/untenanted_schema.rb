@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_05_08_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_04_183000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,6 +24,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_08_000001) do
     t.index ["code"], name: "index_auth_codes_on_code", unique: true
     t.index ["expires_at"], name: "index_auth_codes_on_expires_at"
     t.index ["global_identity_id"], name: "index_auth_codes_on_global_identity_id"
+  end
+
+  create_table "desktop_global_session_claims", force: :cascade do |t|
+    t.bigint "global_identity_id", null: false
+    t.string "token_digest", null: false
+    t.string "nonce", null: false
+    t.string "origin", null: false
+    t.string "return_path", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_desktop_global_session_claims_on_expires_at"
+    t.index ["global_identity_id"], name: "index_desktop_global_session_claims_on_global_identity_id"
+    t.index ["token_digest"], name: "index_desktop_global_session_claims_on_token_digest", unique: true
   end
 
   create_table "global_identities", force: :cascade do |t|
@@ -110,6 +125,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_05_08_000001) do
   end
 
   add_foreign_key "auth_codes", "global_identities"
+  add_foreign_key "desktop_global_session_claims", "global_identities"
   add_foreign_key "global_sessions", "global_identities"
   add_foreign_key "workspace_memberships", "global_identities"
   add_foreign_key "workspace_snapshots", "workspaces"

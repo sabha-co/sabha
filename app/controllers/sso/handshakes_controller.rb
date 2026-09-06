@@ -1,6 +1,10 @@
 class Sso::HandshakesController < Sso::BaseController
+  include DesktopHandoff
+
   def new
     return sso_misconfigured unless sso_configured?
+
+    store_desktop_handoff_context
 
     nonce = SingleSignOnNonce.issue!(return_path: sso_return_path)
     session[SESSION_NONCE_KEY] = nonce
