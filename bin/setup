@@ -159,7 +159,7 @@ if command -v pnpm &>/dev/null; then
 elif command -v bun &>/dev/null; then
   step "Installing Node.js dependencies" bun install
 else
-  echo "Warning: pnpm not found. Install pnpm: npm install -g pnpm"
+  echo "Skipping Node.js dependencies: no pnpm or bun found. Only the Herb ERB linter needs them (npm install -g pnpm)."
 fi
 
 if [[ $* == *--reset* ]]; then
