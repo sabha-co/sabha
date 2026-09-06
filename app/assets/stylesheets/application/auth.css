@@ -60,6 +60,20 @@ body.session {
   object-fit: cover;
 }
 
+/* SaaS sign-in, registration, invite, and workspace pages: the app mark
+   centred above the panel. */
+.auth-brand {
+  display: flex;
+  justify-content: center;
+  margin-block-end: 24px;
+
+  img {
+    block-size: auto;
+    border-radius: 8px;
+    inline-size: 72px;
+  }
+}
+
 /* The first screen speaks with display presence — assured, not apologetic */
 .auth-card__title {
   font-size: 1.5rem;
