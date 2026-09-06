@@ -39,11 +39,14 @@ class HeaderStreamAuditTest < ApplicationSystemTestCase
     page.save_screenshot(Rails.root.join("tmp/header-stream-desktop.png")) if ENV["AUDIT_SCREENSHOTS"]
   end
 
-  test "an unread cursor inside a day does not repeat its date" do
-    visit room_path(rooms(:hq))
-    rewind_unread_to @room.memberships.find_by!(user: users(:kevin)), @second, marked: true
-    visit room_path(@room)
-    assert_selector "##{dom_id(@second)} .message__new-separator"
+  # Where the cursor lands is asserted on the server response in
+  # test/integration/unread_cursor_rendering_test.rb — opening a room clears it,
+  # so a browser assertion races that clear. What is left here is the rule that
+  # only survives in a browser: the date belongs to the day's first message, and
+  # every later message that day stays undated. Every row carries the markup;
+  # the first-of-day class decides which one is visible.
+  test "only the day's first message shows its date" do
+    assert_no_selector "##{dom_id(@second)}.message--first-of-day"
     assert_no_selector "##{dom_id(@second)} .message__day-separator", visible: true
     assert_selector ".message--first-of-day .message__day-separator", visible: true
   end
