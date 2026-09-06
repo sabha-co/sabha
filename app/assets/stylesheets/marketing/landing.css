@@ -11,7 +11,7 @@
     sans-serif;
   --font-display: "Inter", system-ui, -apple-system, sans-serif;
   /* Quiet Workshop paper-and-ink register. Marketing pages load only the
-     Tailwind build plus this file, so the OKLch values mirror
+     shared browser defaults, this file, and shell.css, so the OKLch values mirror
      application/colors.css locally instead of referencing its tokens. */
   --accent-green: oklch(57.4% 0.135 155);
   --bg-dark: oklch(21% 0.008 274);

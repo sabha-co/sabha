@@ -34,7 +34,7 @@
     <%= tag.link rel: "icon", href: image_path("icons/sabha-icon.svg"), type: "image/svg+xml" %>
     <%= tag.link rel: "apple-touch-icon", href: image_path("icons/sabha-icon.svg") %>
 
-    <%= stylesheet_link_tag "tailwind", *Stylesheets.from("marketing"), "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "tailwind", "application/_defaults", *Stylesheets.from("marketing"), "data-turbo-track": "reload" %>
     <% if hotwire_native_app? %>
       <%= stylesheet_link_tag "native", "data-turbo-track": "reload" %>
     <% end %>
@@ -50,24 +50,24 @@
     <%= umami_analytics_tag %>
   </head>
 
-  <body class="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 antialiased font-sans">
+  <body class="marketing">
     <% if notice = flash[:notice] || flash[:alert] %>
-      <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full" data-controller="element-removal" data-action="animationend->element-removal#remove">
-        <div class="bg-zinc-800 text-white rounded-lg shadow-lg p-4 flex items-start gap-3 <%= "bg-red-600" if flash[:alert] %>">
-          <div class="mt-0.5">
+      <div class="marketing-toast" data-controller="element-removal" data-action="animationend->element-removal#remove">
+        <div class="marketing-toast__card <%= "marketing-toast__card--alert" if flash[:alert] %>">
+          <div class="marketing-toast__icon">
             <% if flash[:alert] %>
-              <%= icon_tag "alert", class: "w-5 h-5 text-white" %>
+              <%= icon_tag "alert", class: "marketing-toast__glyph" %>
             <% else %>
-              <%= icon_tag "check", class: "w-5 h-5 text-white" %>
+              <%= icon_tag "check", class: "marketing-toast__glyph" %>
             <% end %>
           </div>
-          <p class="text-sm font-medium leading-relaxed"><%= notice %></p>
+          <p class="marketing-toast__text"><%= notice %></p>
         </div>
       </div>
     <% end %>
 
-    <div class="min-h-screen flex flex-col">
-      <main class="flex-grow flex flex-col relative w-full overflow-hidden">
+    <div class="marketing-page">
+      <main class="marketing-main">
         <%= yield %>
       </main>
     </div>

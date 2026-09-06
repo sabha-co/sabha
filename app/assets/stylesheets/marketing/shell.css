@@ -1,0 +1,88 @@
+/* Marketing shell: the page frame and flash toast around the .landing pages.
+   Public pages load the shared browser defaults, landing.css, and this file,
+   and nothing else from the application stylesheets, so the few values needed
+   here are declared locally rather than read from application tokens. */
+
+:root {
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+.marketing {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  background-color: #fff;
+  color: oklch(21% 0.006 285.885);
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  line-height: 1.5;
+  text-size-adjust: 100%;
+
+  /* The page is pinned to the light theme; only the ground behind .landing
+     follows the OS, exactly as before. */
+  @media (prefers-color-scheme: dark) {
+    background-color: oklch(14.1% 0.005 285.823);
+    color: oklch(98.5% 0 0);
+  }
+}
+
+.marketing-page {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100vh;
+}
+
+.marketing-main {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  inline-size: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Flash toast: fixed to the top-right corner, dark card, red for alerts */
+.marketing-toast {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  inline-size: 100%;
+  inset-block-start: 1rem;
+  inset-inline-end: 1rem;
+  max-inline-size: 24rem;
+  position: fixed;
+  z-index: 50;
+}
+
+.marketing-toast__card {
+  align-items: flex-start;
+  background-color: oklch(27.4% 0.006 286.033);
+  border-radius: 0.5rem;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+  color: #fff;
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.marketing-toast__card--alert {
+  background-color: oklch(57.7% 0.245 27.325);
+}
+
+.marketing-toast__icon {
+  margin-block-start: 0.125rem;
+}
+
+.marketing-toast__glyph {
+  block-size: 1.25rem;
+  color: #fff;
+  inline-size: 1.25rem;
+}
+
+.marketing-toast__text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.625;
+}
