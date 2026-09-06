@@ -6,13 +6,12 @@
       <%= icon_tag "disclosure", class: "disclosure" %>
     </summary>
 
-    <% case
-      when platform.firefox? && platform.android? %>
+    <% if platform.firefox? && platform.android? %>
         <ol>
           <li>Tap <em><%= image_tag "lock.svg", alt: "the View site information button", size: 20 %></em> in the address bar.</li>
           <li>Tap <em>Notification</em> to change to <em>Allowed</em>.</li>
         </ol>
-      <% when platform.edge? && platform.desktop? %>
+      <% elsif platform.edge? && platform.desktop? %>
         <h2 class="txt-normal txt-medium margin-block-start">Turn on notifications for this website.</h2>
         <ol>
           <li>Click <em><%= image_tag "lock.svg", alt: "the View site information button", size: 20 %></em> left of the address bar.</li>
@@ -32,7 +31,7 @@
             <li>Click <em><%= image_tag "external/switch.svg", alt: "the switch", size: 22 %></em> to <em>Allow notifications</em>.</li>
           <% end %>
         </ol>
-      <% when platform.firefox? && platform.desktop? %>
+      <% elsif platform.firefox? && platform.desktop? %>
         <h2 class="txt-normal txt-medium margin-block-start">Turn on notifications for this website.</h2>
         <ol>
           <li>Click <em><%= platform.browser.capitalize %></em> in the top left.</li>
@@ -57,7 +56,7 @@
             <li>Click <em><%= image_tag "external/switch.svg", alt: "the switch", size: 22 %></em> to <em>Allow notifications</em>.</li>
           <% end %>
         </ol>
-      <% when platform.chrome? && platform.desktop? %>
+      <% elsif platform.chrome? && platform.desktop? %>
         <h2 class="txt-normal txt-medium margin-block-start">Turn on notifications for this website.</h2>
         <ol>
           <li>Click the <em><%= image_tag "external/sliders.svg", alt: "View site information", size: 20 %></em> icon in the address bar.</li>
@@ -79,7 +78,7 @@
             <li>Click <em><%= image_tag "external/switch.svg", alt: "the switch", size: 22 %></em> to <em>Allow notifications</em>.</li>
           <% end %>
         </ol>
-      <% when platform.chrome? && platform.android? %>
+      <% elsif platform.chrome? && platform.android? %>
         <ol>
           <li>Tap the <em><%= image_tag "menu-dots-vertical.svg", alt: "More options", size: 16 %></em> menu button.</li>
           <li>Tap <em>Settings</em>.</li>
@@ -88,7 +87,7 @@
           <li>Tap <em><%= image_tag "external/switch.svg", alt: "the switch", size: 22 %></em> next to <em>Web apps</em>.</li>
           <li>Tap <em><%= image_tag "notification-bell-alert.svg", alt: "the notification bell", size: 16 %></em> and select <em>Allow</em>.</li>
         </ol>
-      <% when platform.safari? && platform.desktop? %>
+      <% elsif platform.safari? && platform.desktop? %>
         <ol>
           <li>Click <em><%= platform.browser.capitalize %></em> in the top left.</li>
           <li>Click <em>Settings…</em>.</li>

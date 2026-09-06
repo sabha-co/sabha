@@ -5,14 +5,16 @@
   <div class="searches__query flex align-center gap pad-block-start-half">
     <%= tag.div class: "btn btn--reversed btn--faux align-center gap txt-nowrap" do %>
       <%= avatar_image_tag(@user, size: 20, class: "avatar", loading: :lazy) %>
-      <%= @user.name %>    
+      <%= @user.name %>
     <% end %>
     <%= tag.div class: "btn btn--reversed btn--faux align-center gap txt-nowrap" do %>
-      <% if @query %>
-        <span class="overflow-ellipsis">“<%= @query %>”</span>
-      <% else %>
-        <span class="overflow-ellipsis">All messages</span>
-      <% end %>
+      <span class="overflow-ellipsis">
+        <% if @query %>
+          “<%= @query %>”
+        <% else %>
+          All messages
+        <% end %>
+      </span>
       <span class="flex-item-no-shrink"><%= @message_count %></span>
     <% end %>
   </div>
@@ -21,7 +23,7 @@
     <%= link_to user_messages_path(@user), class: "align-center gap room btn txt-nowrap" do %>
       <span class="overflow-ellipsis">All messages by <%= @user.name %></span>
     <% end %>
-    
+
     <% @recent_searches.each do |search| %>
       <%= link_to user_messages_path(@user, q: search.query), class: "align-center gap room btn txt-nowrap" do %>
         <span class="overflow-ellipsis">“<%= search.query %>”</span>
@@ -43,7 +45,7 @@
     <%= link_to user_messages_path(@user), class: "align-center gap room btn txt-nowrap" do %>
       <span class="overflow-ellipsis">All messages by <%= @user.name %></span>
     <% end %>
-    
+
     <% @recent_searches.each do |search| %>
       <%= link_to user_messages_path(@user, q: search.query), class: "align-center gap room btn txt-nowrap" do %>
         <span class="overflow-ellipsis">“<%= search.query %>”</span>

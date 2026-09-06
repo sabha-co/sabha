@@ -33,9 +33,8 @@
       <% end %>
 
       <p class="txt-small txt-muted margin-none">
-        <% case @membership.involvement
-        when "mentions" %>Bot receives events when @mentioned or in a DM. Applies to WebSocket and webhook delivery.
-        <% when "nothing" %>Bot receives no events from this room. It can still post and read via the API.<% end %>
+        <% if @membership.involvement == "mentions" %>Bot receives events when @mentioned or in a DM. Applies to WebSocket and webhook delivery.
+        <% elsif @membership.involvement == "nothing" %>Bot receives no events from this room. It can still post and read via the API.<% end %>
       </p>
 
       <% message_url = api_bots_room_messages_url(@room) %>
