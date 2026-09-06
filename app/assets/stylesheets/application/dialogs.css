@@ -323,9 +323,10 @@
   flex: 1;
   font-size: max(16px, 1rem);
   min-inline-size: 0;
+  padding: 8px 12px;
 
   /* the card itself is the focus affordance — mute the global outline
-     and the tailwindcss/forms focus ring (a box-shadow) */
+     and the field focus ring (a box-shadow) */
   &:focus {
     box-shadow: none;
     outline: none;

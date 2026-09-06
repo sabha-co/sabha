@@ -11,10 +11,7 @@
      The compact skin narrows --space-row below; the 32px row floor holds. */
   --space-row: 9px;
 
-  /* Corner radius scale. Named --border-radius-* rather than --radius-*
-     because Tailwind's rounded-* utilities resolve var(--radius-sm/md/lg)
-     from its default theme — reusing those names would rebind every
-     rounded-* call site. */
+  /* Corner radius scale */
   --border-radius-sm: 6px;
   --border-radius-md: 9px;
   --border-radius-lg: 12px;
@@ -221,8 +218,7 @@
   white-space: nowrap;
 }
 
-/* Visibility */
-[hidden] { display: none; }
+/* Visibility ([hidden] is owned by the reset layer) */
 [contents] { display: contents; }
 
 .no-select { user-select: none }

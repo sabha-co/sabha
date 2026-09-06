@@ -74,6 +74,12 @@ body {
   }
 }
 
+/* The skip-link target: focusing the main region must not ring the whole
+   content column. */
+#main-content:focus {
+  outline: none;
+}
+
 #main-content > #app {
   overflow: auto;
 }

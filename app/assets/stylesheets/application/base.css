@@ -35,6 +35,16 @@
   --font-mono:
     "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monaco, monospace;
+
+  /* Type scale: the .txt-* utilities and the sidebar, nav, message, forum,
+     flash, and SaaS components size themselves from these. */
+  --font-size-x-small: 0.8rem;
+  --font-size-small: 0.85rem;
+  --font-size-medium: 1rem;
+  --font-size-large: 1.4rem;
+  --font-size-x-large: 1.8rem;
+  --font-size-xx-large: 2.4rem;
+
   --hover-color: var(--color-border-darker);
   --hover-size: 0.15em;
   --hover-filter: brightness(1);

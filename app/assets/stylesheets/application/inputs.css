@@ -1,7 +1,3 @@
-/* PHASE 2 MIGRATION STATUS: Complex classes with nested selectors and CSS custom properties */
-/* NOTE: .input--code has been migrated to Tailwind in application.css */
-/* These base classes need to remain in CSS for complex pseudo-classes, nested selectors, and CSS variables */
-/* Switch classes (.switch, .switch__input, .switch__btn) remain in CSS due to complex pseudo-elements */
 /* Text inputs */
 .input {
   accent-color: var(--input-accent-color, var(--color-text));
@@ -66,6 +62,12 @@
   }
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
 input[type="checkbox"]:not(.switch__input),
 input[type="radio"] {
   --outline-size: min(0.2em, 2px);
@@ -76,11 +78,14 @@ input[type="radio"] {
   border-radius: 0.35em;
   cursor: pointer;
   display: grid;
+  flex-shrink: 0;
   inline-size: var(--control-size, 1.075em);
   margin: 0;
   place-items: center;
   position: relative;
+  print-color-adjust: exact;
   transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+  user-select: none;
 }
 
 input[type="checkbox"]:not(.switch__input)::after,
@@ -300,7 +305,11 @@ input[type="radio"]:disabled::after {
   }
 }
 
-/* .input--code migrated to Tailwind in application.css */
+.input--code {
+  font-family: var(--font-mono);
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
 
 /* Switches — v2: 38×22 pill, accent track when on */
 .switch {
@@ -420,9 +429,17 @@ button.setting-row {
   }
 }
 
+/* Selects drop the native widget and draw their own chevron; the stroke is a
+   mid grey that reads on both themes because a data-URI image cannot take a
+   token. Multi-selects keep the plain list box. */
 select {
   accent-color: var(--input-accent-color, var(--color-text));
+  appearance: none;
   background-color: var(--input-background, transparent);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='oklch(55.1%25 0.027 264.364)' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
   border-radius: var(--input-border-radius, 0.5em);
   border: var(--input-border-size, 1px) solid
     var(--input-border-color, var(--color-border-darker));
@@ -430,4 +447,9 @@ select {
   font-size: max(16px, 1em);
   inline-size: 100%;
   padding: var(--input-padding, 0.5em 0.8em);
+  print-color-adjust: exact;
+
+  &:where([multiple], [size]:not([size="1"])) {
+    background-image: none;
+  }
 }
