@@ -300,8 +300,20 @@ Decisions made while doing it:
 - `container` in the two mailer layouts is their own inline style, not Tailwind.
 - 28 system tests (sidebar navigation, drawer, rail, OTP, palette, composer, bookmarks, unread) and 36 SaaS controller tests (sessions, registrations, authentication) passed.
 
-### Still open after U2
+### U3 findings (done, pending commit)
 
-- U3: `h-auto`, `mb-6`, `w-18`, `rounded-lg` on the five SaaS pages; `saas.html.erb` is already clean.
-- U4: the marketing layout's seven class attributes, and marketing needs the reset. The cleanest route is for the marketing layout to link `application/_reset` explicitly before `Stylesheets.from("marketing")`, since the reset uses no application tokens except `--font-mono` for code, which marketing can define or ignore.
-- U5: Preflight leaves with the entrypoint; nothing else in the app depends on it now.
+- The five SaaS pages shared one logo block. It is `.auth-brand` in `auth.css` with the same 72px mark, 8px radius, and 24px gap. The admin layout carried no Tailwind classes.
+- The same computed-style diff, run against a SaaS server, shows sign-in, registration, new workspace, workspace show, settings, and the tenant chat pages unchanged when the Tailwind asset is removed.
+
+### U4 findings (done, pending commit)
+
+- The marketing layout had no reset of its own; box-sizing, body margin, paragraph and list defaults, image sizing, button appearance, and the mono face on `<code>` all came from Preflight. It now links `application/_defaults` (see below) ahead of the marketing folder.
+- The layout's utility clusters became `.marketing`, `.marketing-page`, `.marketing-main`, and `.marketing-toast*` in a new `marketing/shell.css`, with every value copied from the compiled theme. The old `dark:` variants keyed on the OS setting even though the page pins the light theme, so the ground behind `.landing` still follows the OS; that is preserved, and easy to drop.
+- First attempt linked `_reset.css` itself, and the owner spotted the pages looking different. Pixel comparison against a served copy of the pre-migration commit found why: the modern-css-reset rules in that file are opinions, not neutral defaults, and marketing had never had them. `word-break: break-word` on headings and paragraphs wrapped "Company" mid-word in the phone footer, and `text-rendering: optimizeSpeed` shifted kerning through the changelog copy. The layered browser defaults now live in `application/_defaults.css`, which sorts first and is the only application file marketing links. `_reset.css` keeps the modern-css-reset opinions for the app.
+- After the split, full-page screenshots of the landing, about, privacy, terms, changelog, and openclaw pages at 1440px and 390px in both colour schemes match the pre-migration build to within the pulsing hero badge dot (under 110 pixels). The auth pages differ only in placeholder colour.
+- A cheap way to get the "before" build for comparison: `git archive <commit>` into a scratch directory, symlink `storage` and `node_modules`, copy `.env` and `config/master.key`, build its Tailwind, and run it on spare ports. Both modes ran alongside the working tree's servers without conflict.
+
+### Still open after U4
+
+- U5: Preflight leaves with the entrypoint; nothing in either mode depends on it now. Remove the asset from the five layouts, delete the entrypoint and build output, drop the Tailwind packages and scripts, and take Node out of `bin/setup`, `Procfile.dev`, both Dockerfiles, and the test workflow (Herb keeps `package.json`).
+- U6: docs still describe the Tailwind pipeline in `README.md`, `docs/DEVELOPMENT.md`, `docs/ARCHITECTURE.md`, `AGENTS.md`, and `CLAUDE.md`; `.herb.yml` has a comment tying the interpolated-class-names rule to Tailwind.
