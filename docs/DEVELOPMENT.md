@@ -7,7 +7,7 @@ Guide for contributing to Sabha.
 ## Prerequisites
 
 - **Ruby** 4.0+ (check `.ruby-version`)
-- **Node.js** 24+ and **pnpm**
+- **Node.js** 24+ and **pnpm** (optional: only the Herb ERB linter needs them)
 - **anycable-go** — the WebSocket server; required for all real-time delivery. See the [AnyCable install guide](https://docs.anycable.io/anycable-go/getting_started).
 - **Redis** (for Kredis)
 - **libvips** (for image processing)
@@ -43,7 +43,7 @@ cd sabha
 bin/setup
 ```
 
-This installs gems, pnpm packages, `anycable-go` (on macOS), prepares the database, and builds Tailwind.
+This installs gems, the Herb linter (when pnpm is present), `anycable-go` (on macOS), and prepares the database. There is no CSS build: stylesheets are served as written.
 
 To populate development data (users, rooms, messages):
 
@@ -63,8 +63,8 @@ Opens at `http://localhost:3000`
 
 ### What `bin/dev` starts
 
-Foreman runs three processes together: the Rails server (Puma, with Solid Queue
-in-process), the Tailwind CSS watcher, and `anycable-go`. AnyCable is required —
+Foreman runs two processes together: the Rails server (Puma, with Solid Queue
+in-process) and `anycable-go`. AnyCable is required —
 it carries all real-time delivery (live messages, typing, presence) — so
 `bin/dev` always boots it.
 

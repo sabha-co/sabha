@@ -45,7 +45,8 @@ linter:
     erb-no-instance-variables-in-partials:
       enabled: false
 
-    # Interpolated/dynamic class names are intentional with Tailwind.
+    # Interpolated/dynamic class names are intentional (modifier classes built
+    # from Ruby state).
     erb-no-interpolated-class-names:
       enabled: false
 

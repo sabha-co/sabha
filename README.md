@@ -53,7 +53,7 @@ https://github.com/user-attachments/assets/ee9ac732-7f6c-495f-8438-bf3c52511dd9
 
 Sabha is a Rails 8 monolith with the added simplicity of SQLite, all on one server.
 
-The frontend is Hotwire/Turbo + Importmap + Tailwind CSS v4. Real-time delivery runs through AnyCable. Background jobs run on Solid Queue.
+The frontend is Hotwire/Turbo + Importmap with hand-written CSS served straight through Propshaft, no CSS build step. Real-time delivery runs through AnyCable. Background jobs run on Solid Queue.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown.
 
@@ -72,8 +72,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full breakdown.
 - Ruby 4.0.1
 - SQLite3
 - Redis
-- Node.js 24+
-- pnpm (for Tailwind CSS compilation)
+- Node.js 24+ and pnpm (optional, only for the Herb ERB linter)
 
 ### Setup
 

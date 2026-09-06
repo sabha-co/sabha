@@ -54,7 +54,7 @@ Sabha is a real-time chat application built with Ruby on Rails, Hotwire, and SQL
 - **Rails 8.2** with Hotwire (Turbo + Stimulus) for server-rendered HTML with real-time updates
 - **SQLite** in production, optimized for single-server deployments
 - **AnyCable** for WebSocket scaling (HTTP RPC mode)
-- **Tailwind CSS v4** compiled via `@tailwindcss/cli`; **Importmap** for all JavaScript (zero JS bundling)
+- **Plain CSS** served directly by Propshaft (no build step); **Importmap** for all JavaScript (zero JS bundling)
 - **Solid Queue** (SQLite-backed) for background jobs
 - **Propshaft** as the asset pipeline
 
@@ -286,8 +286,8 @@ Turbo Stream broadcasts are emitted from models, jobs, and selected controller a
 
 ```
                  ┌──────────────┐
-                 │ Tailwind CLI │──── @tailwindcss/cli ──▶ app/assets/builds/tailwind.css
-                 │ (CSS only)   │
+                 │ Stylesheets  │──── plain CSS files ──▶ one <link> per file, alphabetical
+                 │ (.from)      │
                  └──────────────┘
 
                  ┌──────────────┐
@@ -301,14 +301,12 @@ Turbo Stream broadcasts are emitted from models, jobs, and selected controller a
                  └──────────────┘
 ```
 
-Tailwind CSS v4 is compiled via `@tailwindcss/cli` (pnpm). All JavaScript loads as native ES modules via Importmap -- no bundler, no transpilation.
+Stylesheets are plain CSS files served as written; `Stylesheets.from` links every file under a folder in alphabetical order. All JavaScript loads as native ES modules via Importmap -- no bundler, no transpilation.
 
 ### Directory Layout
 
 ```
 app/javascript/
-├── entrypoints/
-│   └── application.css       # Tailwind v4 source (input for @tailwindcss/cli)
 ├── application.js            # Main JS entry (Importmap): Turbo, Trix, Stimulus
 ├── initializers/             # Setup modules (autocomplete, current user, rich text)
 ├── controllers/              # 50+ Stimulus controllers
@@ -330,7 +328,7 @@ app/javascript/
 
 ### Styling
 
-Tailwind CSS v4 with a custom OKLCH color system supporting light and dark modes. Semantic color tokens (`--color-bg`, `--color-text`, `--color-link`) abstract the palette for theme flexibility. Plugins: `@tailwindcss/typography`, `@tailwindcss/forms`.
+Hand-written CSS, one file per component under `app/assets/stylesheets/application/`, loaded alphabetically by `Stylesheets.from` with `_defaults.css` (layered browser normalisation) and `_reset.css` first. A custom OKLCH color system supports light and dark modes; semantic color tokens (`--color-bg`, `--color-text`, `--color-link`) abstract the palette for theme flexibility. Marketing pages load only `_defaults.css` and the `marketing/` folder.
 
 ---
 
@@ -436,7 +434,7 @@ bin/boot
 ### Docker Image
 
 Multi-stage build:
-1. **Build stage**: Ruby + Node.js + pnpm → install gems, compile Tailwind (`@tailwindcss/cli`), precompile assets (Propshaft)
+1. **Build stage**: Ruby → install gems, precompile assets (Propshaft)
 2. **Runtime stage**: Minimal image with `libsqlite3`, `libvips`, `jemalloc`, `ffmpeg`, `redis-server` -- runs as non-root `sabha` user with YJIT enabled
 
 ---
@@ -455,7 +453,6 @@ Multi-stage build:
 | `turbo-rails` | Turbo Drive, Frames, Streams |
 | `stimulus-rails` | Stimulus controllers |
 | `importmap-rails` | ES module loading (no bundler) |
-| `@tailwindcss/cli` (npm) | Tailwind CSS v4 compilation |
 | `propshaft` | Asset pipeline |
 | `bcrypt` | Password hashing |
 | `resend` | Transactional email |
@@ -472,7 +469,7 @@ Multi-stage build:
 
 1. **SQLite as the production database.** Tuned with `default_transaction_mode: immediate` plus adapter/runtime SQLite optimizations. FTS5 provides full-text search without an external search service via the `message_search_index` virtual table.
 
-2. **Importmap for JS, Tailwind CLI for CSS.** Avoids bundler complexity. Browsers load Stimulus controllers directly as ES modules. Tailwind CSS v4 is compiled via `@tailwindcss/cli` -- no Vite, no bundler.
+2. **Importmap for JS, plain CSS for styling.** Avoids bundler complexity. Browsers load Stimulus controllers directly as ES modules and stylesheets straight from Propshaft -- no Vite, no bundler, no CSS compiler.
 
 3. **AnyCable-Go for WebSockets.** Uses HTTP RPC mode (no gRPC dependency). Scales WebSocket connections outside the Ruby process while keeping authentication and channel logic in Rails.
 

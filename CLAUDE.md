@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Sabha is a Ruby on Rails chat application: Hotwire/Turbo views, AnyCable (a separate Go WebSocket server) for real-time, Tailwind CSS v4 via `@tailwindcss/cli`, Importmap for JS. SQLite3 in production.
+Sabha is a Ruby on Rails chat application: Hotwire/Turbo views, AnyCable (a separate Go WebSocket server) for real-time, plain CSS served by Propshaft, Importmap for JS. SQLite3 in production.
 
 **Two deployment modes:** Self-hosted (default, single-tenant) and SaaS (multi-tenant via `activerecord-tenanted` gem, engine in `saas/`, enabled by `SAAS=true` or `tmp/saas.txt`). See @docs/multi-tenant/ for SaaS architecture details.
 
@@ -99,9 +99,9 @@ Sabha uses **AnyCable** as its real-time transport — a required runtime depend
 ## Development Commands
 
 ```bash
-bin/setup                  # Install deps, prepare DB, build Tailwind
+bin/setup                  # Install deps, prepare DB
 bin/dev                    # Start dev server
-pnpm run build:css:watch   # Watch mode for CSS changes
+pnpm run lint:erb          # Herb ERB linter (the only Node tooling)
 ```
 
 ### Testing
@@ -131,8 +131,8 @@ bin/rails saas:disable && bundle install                         # Disable
 
 When updating gems in `Gemfile`, also run `BUNDLE_GEMFILE=Gemfile.saas bundle install` to keep lockfiles in sync.
 
-### Tailwind CSS
-Source: `app/javascript/entrypoints/application.css` → Output: `app/assets/builds/tailwind.css`. Compiled by `@tailwindcss/cli` via pnpm. No Vite, no bundler.
+### CSS
+Plain CSS, one file per component in `app/assets/stylesheets/application/`, linked alphabetically by `Stylesheets.from`. `_defaults.css` holds the layered browser normalisation and `_reset.css` the modern-css-reset opinions; components read only the semantic `--color-*` tokens from `colors.css`. No build step, no bundler.
 
 ## Context Management
 

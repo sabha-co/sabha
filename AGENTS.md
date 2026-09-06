@@ -1,25 +1,25 @@
 # Repository Guidelines
 
-Sabha is a Ruby on Rails chat application using Hotwire/Turbo, AnyCable-Go, Tailwind CSS v4 via `@tailwindcss/cli`, and Importmap. It supports self-hosted single-tenant mode and SaaS multi-tenant mode through `activerecord-tenanted` and the engine in `saas/`; SaaS mode is selected with `SAAS=true` or the `tmp/saas.txt` marker.
+Sabha is a Ruby on Rails chat application using Hotwire/Turbo, AnyCable-Go, plain CSS served by Propshaft, and Importmap. It supports self-hosted single-tenant mode and SaaS multi-tenant mode through `activerecord-tenanted` and the engine in `saas/`; SaaS mode is selected with `SAAS=true` or the `tmp/saas.txt` marker.
 
 ## Project Structure & Module Organization
 - Rails app code lives in `app/` (models, controllers, views, channels, jobs, mailers).
-- Frontend assets: `app/javascript/` (Tailwind CSS source, Stimulus controllers) and `app/assets/`.
+- Frontend assets: `app/javascript/` (Stimulus controllers) and `app/assets/stylesheets/` (one CSS file per component).
 - Configuration in `config/`, database migrations in `db/migrate/`.
 - Tests: `test/` (self-hosted) and `saas/test/` (SaaS multi-tenant).
 - Multi-tenant SaaS engine code lives under `saas/` (models, controllers, initializers, views).
 - Docs in `docs/`, including `docs/multi-tenant/` for SaaS architecture.
 
 ## Build, Test, and Development Commands
-- `bin/setup` — install gems/pnpm, prepare DB, build Tailwind once.
-- `bin/dev` — start Rails, the Tailwind watcher, and required `anycable-go` (jobs run in the web process).
+- `bin/setup` — install gems (and the Herb linter when pnpm is present), prepare DB.
+- `bin/dev` — start Rails and the required `anycable-go` (jobs run in the web process).
 - `bin/boot` — start the container app processes (web + Redis + workers); AnyCable-Go runs separately.
 - `bin/rails db:migrate` — migrate database.
 - `SAAS=true bin/rails db:migrate:primary` — migrate SaaS tenanted and untenanted databases.
 - `bin/rails test` — run self-hosted tests.
 - `bin/rails test test/models/user_test.rb` — run one self-hosted test file.
 - `SAAS=true bin/rails test saas/test/` — run SaaS test suite.
-- `pnpm run build:css:watch` — rebuild Tailwind CSS continuously.
+- `pnpm run lint:erb` — lint ERB templates with Herb (the only reason Node is installed).
 - Enable SaaS with `bin/rails saas:enable && bundle install && bin/rails saas:setup`; disable it with `bin/rails saas:disable && bundle install`.
 - When changing gems in `Gemfile`, also run `BUNDLE_GEMFILE=Gemfile.saas bundle install` to keep both lockfiles synchronized.
 
@@ -69,7 +69,7 @@ Sabha is a Ruby on Rails chat application using Hotwire/Turbo, AnyCable-Go, Tail
 - Self-hosted mode uses SQLite in production. SaaS uses PostgreSQL for shared untenanted records (`UntenantedRecord`, migrations in `saas/db/untenanted_migrate/`, schema in `saas/db/untenanted_schema.rb`) and one SQLite database per workspace for application records (`ApplicationRecord`, migrations in `db/migrate/`).
 - SaaS mode uses `Gemfile.saas`; tenant databases live under `storage/workspaces/{env}/{tenant}/db/main.sqlite3`.
 - Path-based tenant routing uses URLs like `/1000001/rooms/general`.
-- Tailwind source is `app/javascript/entrypoints/application.css`; output is `app/assets/builds/tailwind.css`. The project uses the Tailwind CLI through pnpm, with no Vite or JavaScript bundler.
+- Stylesheets are plain CSS under `app/assets/stylesheets/application/`, linked alphabetically by `Stylesheets.from`; there is no CSS build step and no JavaScript bundler.
 
 ## UI & Styling Guidelines
 - Before changing CSS or views, ask for concrete colors, backgrounds, and visual references, then summarize the proposed visual changes before editing.
