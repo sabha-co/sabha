@@ -14,6 +14,7 @@
      shared browser defaults, this file, and shell.css, so the OKLch values mirror
      application/colors.css locally instead of referencing its tokens. */
   --accent-green: oklch(57.4% 0.135 155);
+  --accent-red: oklch(58.88% 0.2254 29.93);
   --bg-dark: oklch(21% 0.008 274);
   --bg-dark-line: oklch(32% 0.011 273);
   --bg-surface: oklch(98.5% 0.001 286);
@@ -84,7 +85,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.125rem;
-  color: var(--text-secondary);
+  color: var(--accent-red);
 }
 
 .landing h1 {
