@@ -313,7 +313,21 @@ Decisions made while doing it:
 - After the split, full-page screenshots of the landing, about, privacy, terms, changelog, and openclaw pages at 1440px and 390px in both colour schemes match the pre-migration build to within the pulsing hero badge dot (under 110 pixels). The auth pages differ only in placeholder colour.
 - A cheap way to get the "before" build for comparison: `git archive <commit>` into a scratch directory, symlink `storage` and `node_modules`, copy `.env` and `config/master.key`, build its Tailwind, and run it on spare ports. Both modes ran alongside the working tree's servers without conflict.
 
-### Still open after U4
+### U5 findings (done, pending commit)
 
-- U5: Preflight leaves with the entrypoint; nothing in either mode depends on it now. Remove the asset from the five layouts, delete the entrypoint and build output, drop the Tailwind packages and scripts, and take Node out of `bin/setup`, `Procfile.dev`, both Dockerfiles, and the test workflow (Herb keeps `package.json`).
-- U6: docs still describe the Tailwind pipeline in `README.md`, `docs/DEVELOPMENT.md`, `docs/ARCHITECTURE.md`, `AGENTS.md`, and `CLAUDE.md`; `.herb.yml` has a comment tying the interpolated-class-names rule to Tailwind.
+- The five layouts drop the `tailwind` asset; the entrypoint, the `app/assets/builds` directory and its asset path, the Tailwind and `tw-animate-css` packages, the two build scripts, the `css` Procfile line, the `bin/setup` build step, the Node stages in both Dockerfiles, and the Node and build steps in both CI jobs are gone. `Stylesheets.load_vendor_stylesheets` keeps only the application-folder skip. `package.json` holds the Herb linter alone.
+- Watch for stale output: Propshaft adds every directory under `app/assets` to the asset path, and `Stylesheets.vendor_stylesheets` links every CSS file it finds there. A `bin/dev` started before this change kept the Tailwind watcher alive, which regenerated `app/assets/builds/tailwind.css` after it had been deleted, and the page linked it again. The loader therefore keeps a skip for `app/assets/builds`, and the folder is no longer gitignored so a leftover copy shows up in `git status`. After pulling, delete `app/assets/builds` and restart `bin/dev`.
+- `pnpm-lock.yaml` still lists `tailwindcss@4.3.1` because Herb's class sorter declares it as an optional peer and pnpm resolves it. It is not a dependency of Sabha and nothing loads it.
+- Docker is not available on this machine, so the image builds were not exercised here; CI's build-and-push workflow is the check for that.
+- Verification with everything removed (re-run after the stale output above was found and deleted): 2,073 self-hosted tests, 309 SaaS tests, and the 45-test system wall pass; every stylesheet the running dev servers link resolves and no page references `tailwind`. Screenshots against the pre-migration build: all static marketing pages match pixel-for-pixel, the landing page matches to within the pulsing badge dot once the autoplay videos are hidden, and the auth pages differ only in placeholder colour.
+
+### U6 findings (done, pending commit)
+
+- `README.md`, `docs/DEVELOPMENT.md`, `docs/ARCHITECTURE.md`, `AGENTS.md`, and `CLAUDE.md` describe the direct pipeline and present Node and pnpm as optional tooling for the Herb linter. The `.herb.yml` comment on interpolated class names no longer cites Tailwind; the commented-out example rewriter list is Herb's own template and was left alone.
+- No regression assertions were added: the existing suites plus the screenshot comparison covered every surface the migration touched.
+
+### Still open after U6
+
+- Placeholder colour is `--color-text-muted` rather than the Forms plugin's fixed grey; pin the old value in `inputs.css` if an exact match matters.
+- The marketing ground behind `.landing` still follows the OS colour scheme, as the old `dark:` utilities did; drop the media query in `marketing/shell.css` to make the page light throughout.
+- The Docker images have not been built locally; watch the first CI image build.
