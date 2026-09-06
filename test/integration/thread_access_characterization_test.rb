@@ -31,7 +31,7 @@ class ThreadAccessCharacterizationTest < ActionDispatch::IntegrationTest
 
   test "a parent-room member can open a thread they never posted in" do
     sign_in :jason
-    get rooms_thread_url(@thread)
+    get rooms_thread_url(@thread), headers: { "Turbo-Frame" => "thread_panel_frame" }
     assert_response :success
   end
 
@@ -54,7 +54,7 @@ class ThreadAccessCharacterizationTest < ActionDispatch::IntegrationTest
     Current.set(user: @member) { thread.messages.create!(body: "count me in", creator: @member) }
 
     sign_in :jason
-    get rooms_thread_url(thread)
+    get rooms_thread_url(thread), headers: { "Turbo-Frame" => "thread_panel_frame" }
     assert_response :success, "member has thread access before removal"
 
     closed.remove_member!(@member, actor: @creator)

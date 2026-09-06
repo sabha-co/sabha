@@ -176,7 +176,7 @@ body.room-header--pencil #nav {
 
 @media (max-width: 1023.9px) {
   body.room-header--pencil .navbar-topic {
-    visibility: hidden;
+    display: none;
   }
 }
 
@@ -218,11 +218,16 @@ body.room-header--pencil #nav {
   min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-decoration: none;
   white-space: nowrap;
 
   @media (max-width: 833.9px) {
-    visibility: hidden;
+    display: none;
   }
+}
+
+.navbar-actions {
+  margin-inline-start: auto;
 }
 
 .navbar-count {

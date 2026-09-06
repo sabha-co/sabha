@@ -16,11 +16,11 @@ class ContextualPanelTest < ApplicationSystemTestCase
     join_room rooms(:designers)
     find("a.navbar-roster--avatars").click
     assert_selector "#thread-panel[aria-label='Room info']"
-    assert_selector "a.navbar-roster[aria-expanded='true']", count: 2
+    assert_selector "a.navbar-roster[aria-expanded='true']", count: 3
     assert_selector "#thread-panel .thread-panel__title:focus"
     find("a.navbar-roster.btn").click
     assert_no_selector "#thread-panel:not([hidden])"
-    assert_selector "a.navbar-roster[aria-expanded='false']", count: 2
+    assert_selector "a.navbar-roster[aria-expanded='false']", count: 3
     assert_selector "a.navbar-roster.btn:focus"
   end
 

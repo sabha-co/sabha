@@ -208,7 +208,7 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
 
     thread = Rooms::Thread.create_for({ parent_message_id: parent_message.id, creator: @jason }, users: [ @david, @jason ])
 
-    get rooms_thread_url(thread)
+    get rooms_thread_url(thread), headers: { "Turbo-Frame" => "thread_panel_frame" }
     assert_response :success
     assert_select "turbo-frame#thread_panel_frame"
   end
@@ -221,9 +221,21 @@ class Rooms::ThreadsControllerTest < ActionDispatch::IntegrationTest
     )
     thread = Rooms::Thread.create_for({ parent_message_id: parent_message.id, creator: @david }, users: [ @david, @jason ])
 
-    get rooms_thread_url(thread)
+    get rooms_thread_url(thread), headers: { "Turbo-Frame" => "thread_panel_frame" }
 
     assert_select "##{dom_id(parent_message)} .message__mention-label", text: "mentioned you"
+  end
+
+  test "a full page thread visit redirects to its parent message" do
+    parent = @room.messages.create!(body: "Linked thread", creator: @jason)
+    thread = Rooms::Thread.create!(parent_message: parent, creator: @david)
+
+    get rooms_thread_url(thread)
+
+    assert_redirected_to room_at_message_url(@room, parent)
+    follow_redirect!
+    assert_select "html head"
+    assert_select "##{dom_id(parent)}"
   end
 
   test "show requires access to the parent room" do

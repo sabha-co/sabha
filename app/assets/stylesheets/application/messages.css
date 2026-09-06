@@ -414,8 +414,6 @@
 }
 
 .message__new-separator + .message__day-separator {
-  display: grid !important;
-  visibility: visible !important;
   margin-top: 0;
   /* Reduce top margin since it's right after the NEW separator */
 }
@@ -572,6 +570,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-inline-size: 0;
+    flex-shrink: 10;
   }
 
   .message__original-room,
@@ -640,7 +640,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   flex-shrink: 1;
-  min-inline-size: 0;
+  min-inline-size: min(8ch, 100%);
 }
 
 .message__badge,
@@ -669,6 +669,10 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 4;
 }
 
 .message__permalink {
@@ -685,13 +689,18 @@
   color: var(--color-text-subtle);
   font-size: 0.71875rem;
   margin-inline-start: 4px;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 2;
 }
 
 .message__body {
   column-gap: var(--inline-space-half);
   display: flex;
   grid-area: body;
-  max-inline-size: min(80ch, 85%);
+  max-inline-size: min(80ch, 100%);
   position: relative;
   inline-size: 100%;
 
@@ -760,9 +769,6 @@
     inline-size: auto;
   }
 
-  @media (max-width: 1024px) {
-    max-inline-size: 100%;
-  }
 }
 
 /* Flat rows per the redlines: text sits on the page, no bubble. The tinted
@@ -821,7 +827,7 @@ img.message__attachment {
 /* The action bar: quick reactions, boost, Reply and the overflow menu. On
    pointer devices it floats above the row's top-right corner (revealed on
    hover/focus-within — see overrides.css); on touch it stays in the meta row
-   and collapses to Reply + overflow. */
+   and keeps the picker, Reply and overflow. */
 .message__meta .message__actions {
   align-items: center;
   column-gap: 2px;
@@ -846,6 +852,14 @@ img.message__attachment {
 
 .message__quick-reaction {
   display: inline-flex;
+}
+
+.message-reaction-menu__touch-choice {
+  display: none;
+
+  @media (hover: none) and (pointer: coarse) {
+    display: block;
+  }
 }
 
 /* The quick reaction carries the accent tint while the current user is already
@@ -1136,13 +1150,45 @@ img.message__attachment {
   opacity: 0.6;
 }
 
-/* Grouped follow-on (same author, <5 min): body only — the whole meta line and
-   the avatar drop out, the gutter stays. The action bar is a sibling of the
-   heading, so hover actions survive. */
+.message__grouped-time {
+  display: none;
+  grid-area: avatar;
+  align-self: start;
+  padding-block-start: 2px;
+  font-size: 0.625rem;
+  color: var(--color-text-subtle);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Follow-on rows keep the author grouping; each time remains keyboard-reachable. */
 .message--threaded {
+  .message__meta {
+    justify-content: end;
+  }
+
   .message__heading,
   .message__avatar {
     display: none;
+  }
+
+  .message__grouped-time {
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:is(:hover, :focus-within) .message__grouped-time {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .message__grouped-time {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 }
 

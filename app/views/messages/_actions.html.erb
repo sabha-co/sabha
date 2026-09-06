@@ -5,8 +5,7 @@
 <% existing_thread = message.threads.find { |t| t.active? } if show_thread_actions %>
 
 <div class="message__actions">
-  <%# Quick reactions surface in the bar on pointer devices; phones keep the
-      single overflow menu below, so these hide on coarse pointers. %>
+  <%# Quick reactions surface on pointer devices; phones use the adjacent picker. %>
   <% EmojiHelper::REACTIONS.first(4).each do |character, title| %>
     <%= form_with model: [ message, Boost.new ], class: "message__quick-reaction", data: { turbo_frame: dom_id(message, :boosting), action: "submit->reaction-bar#route" } do |form| %>
       <%= hidden_field_tag "boost[content]", character %>

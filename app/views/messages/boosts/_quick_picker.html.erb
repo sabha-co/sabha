@@ -1,11 +1,9 @@
 <%# locals: (message:) -%>
-<%# The hover-bar's compact picker excludes its four visible reactions. Its
-    sixteenth grid cell opens the existing full picker for every reaction and
-    custom text. %>
+<%# Touch has no quick-reaction bar, so include those choices in its picker. %>
 <%= popover_menu_tag "message-reaction-menu", aria: { label: "Add reaction" } do %>
   <div class="message-reaction-menu__grid">
-    <% EmojiHelper::REACTIONS.drop(4).each do |character, title| %>
-      <%= form_with model: [ message, Boost.new ], data: { turbo_frame: dom_id(message, :boosting) } do |form| %>
+    <% EmojiHelper::REACTIONS.each_with_index do |(character, title), index| %>
+      <%= form_with model: [ message, Boost.new ], class: ("message-reaction-menu__touch-choice" if index < 4), data: { turbo_frame: dom_id(message, :boosting) } do |form| %>
         <%= hidden_field_tag "boost[content]", character %>
         <%= form.button type: "submit", title:, class: "btn message-reaction-menu__emoji", data: { emoji: character } do %>
           <figure class="margin-none boost-character"><%= character %></figure>

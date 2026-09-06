@@ -43,8 +43,12 @@ class Rooms::ThreadsController < RoomsController
   end
 
   def show
-    @messages = find_messages
-    render layout: false
+    if turbo_frame_request?
+      @messages = find_messages
+      render layout: false
+    else
+      redirect_to room_at_message_path(@room.parent_message.room, @room.parent_message)
+    end
   end
 
   def edit

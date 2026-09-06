@@ -7,6 +7,8 @@
       data-messages-target="message">
     <div class="message-separator message__day-separator"><time class="message__timestamp" datetime="$messageDatetime$" data-local-time-target="date"></time></div>
 
+    <span class="message__grouped-time" tabindex="0"><time datetime="$messageDatetime$" data-local-time-target="time"></time></span>
+
     <figure class="avatar message__avatar">
       <%= render 'users/popup', user: Current.user %>
     </figure>

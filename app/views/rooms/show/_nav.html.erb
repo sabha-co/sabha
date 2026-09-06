@@ -52,17 +52,25 @@
     </div>
   <% else %>
     <h1 class="navbar-title">
-      <%= link_to edit_room_path(room) do %>
-        <% if room.thread? %>
-          <%= room_display_name(room.parent_message.room) %>
-        <% else %>
-          <%= room_display_name(room) %>
+      <% if !hotwire_native_app? && !room.sub_room? %>
+        <%= link_to_room_roster(room, class_name: "navbar-roster--title") { room_display_name(room) } %>
+      <% else %>
+        <%= link_to edit_room_path(room) do %>
+          <% if room.thread? %>
+            <%= room_display_name(room.parent_message.room) %>
+          <% else %>
+            <%= room_display_name(room) %>
+          <% end %>
         <% end %>
       <% end %>
     </h1>
   <% end %>
 
-  <span class="navbar-topic"><%= room.description %></span>
+  <% if !hotwire_native_app? && !room.direct? && !room.sub_room? && room.description.present? %>
+    <%= link_to_room_roster(room, class_name: "navbar-topic", title: room.description) { room.description } %>
+  <% else %>
+    <span class="navbar-topic" title="<%= room.description %>"><%= room.description %></span>
+  <% end %>
 
   <% if hotwire_native_app? && !room.thread? && !room.direct? %>
     <% native_member_count = room.active_member_count %>

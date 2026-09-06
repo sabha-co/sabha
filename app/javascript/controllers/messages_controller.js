@@ -19,6 +19,20 @@ export default class extends Controller {
   #scrollTracker
   #streamQueue
   #pendingSends = new Map()
+  #resizeObserver
+  #pinnedToEnd = false
+  #scrollTop = 0
+  #trackScroll = () => {
+    const container = this.messagesTarget
+    const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight)
+    const atEnd = maxScrollTop - container.scrollTop <= 4
+    // A shrinking scroll range can clamp scrollTop. Only upward movement beyond
+    // that clamp releases the anchor, even when geometry changes in the same frame.
+    if (atEnd || container.scrollTop < Math.min(this.#scrollTop, maxScrollTop)) {
+      this.#pinnedToEnd = atEnd
+    }
+    this.#scrollTop = container.scrollTop
+  }
 
   // Lifecycle
 
@@ -42,6 +56,19 @@ export default class extends Controller {
     this.#scrollManager = new ScrollManager(this.messagesTarget)
     this.#scrollTracker = new ScrollTracker(this.messagesTarget, { lastChildHidden: this.#showReturnToLatestButton.bind(this) })
     this.#streamQueue = new StreamRenderQueue(this.messagesTarget)
+    this.#pinnedToEnd = !this.#hasSearchResult && !this.#hasUnreadSeparator
+    this.#resizeObserver = new ResizeObserver(() => {
+      const container = this.messagesTarget
+      // The observer can run before the scroll event for this frame.
+      this.#trackScroll()
+      if (this.#pinnedToEnd && this.#paginator.upToDate && !this.#paginator.resetting) {
+        container.scrollTop = container.scrollHeight
+      }
+      this.#scrollTop = container.scrollTop
+    })
+    this.#resizeObserver.observe(this.messagesTarget)
+    this.messageTargets.forEach(message => this.#resizeObserver.observe(message))
+    this.messagesTarget.addEventListener("scroll", this.#trackScroll, { passive: true })
 
     if (this.#hasSearchResult) {
       this.#highlightSearchResult()
@@ -61,6 +88,8 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this.#resizeObserver.disconnect()
+    this.messagesTarget.removeEventListener("scroll", this.#trackScroll)
     this.#paginator.disconnect()
     this.#scrollTracker.disconnect()
     this.#streamQueue.disconnect()
@@ -71,12 +100,17 @@ export default class extends Controller {
   messageTargetConnected(target) {
     if (this.#streaming) target.dataset.new = ""
     this.#formatMessage(target)
+    this.#resizeObserver?.observe(target)
 
     // Fix reply outlet for messages rendered with the default composer_id
     if (target.dataset.replyComposerOutlet) {
       const composerId = this.element.id === "thread-message-area" ? "thread-composer" : "composer"
       target.dataset.replyComposerOutlet = `#${composerId}`
     }
+  }
+
+  messageTargetDisconnected(target) {
+    this.#resizeObserver?.unobserve(target)
   }
 
   bodyTargetConnected(target) {
@@ -126,6 +160,8 @@ export default class extends Controller {
           })
           if (!didScroll) {
             this.#showReturnToLatestButton(true)
+          } else {
+            this.#pinnedToEnd = true
           }
         }
       } else {
@@ -151,6 +187,7 @@ export default class extends Controller {
     try {
       await this.#ensureUpToDate()
       await this.#scrollManager.autoscroll(true)
+      this.#pinnedToEnd = true
       this.#hideReturnToLatestButton()
     } catch (error) {
       if (error.name !== "AbortError") {
@@ -194,6 +231,7 @@ export default class extends Controller {
   async insertPendingMessage(clientMessageId, node) {
     await this.#ensureUpToDate()
     await this.#streamQueue.whenIdle()
+    this.#pinnedToEnd = true
 
     return this.#scrollManager.autoscroll(true, async () => {
       const message = this.#clientMessage.render(clientMessageId, node)

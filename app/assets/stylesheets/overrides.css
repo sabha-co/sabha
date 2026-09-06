@@ -35,9 +35,12 @@
   }
 }
 
-/* Touch keeps the one-menu model: no floating bar, no quick reactions —
-   Reply and the overflow stay in the meta row, grown to real tap targets. */
+/* Touch keeps the picker, Reply and overflow in the meta row at tap size. */
 @media (hover: none) and (pointer: coarse) {
+  .message__heading {
+    flex-wrap: wrap;
+  }
+
   .message__meta .message__action-btn {
     align-items: center;
     justify-content: center;
@@ -46,22 +49,11 @@
   }
 
   .message__quick-reaction,
-  .message__reaction-picker,
   .message__reply-label {
     display: none;
   }
 
   .message__options-btn {
-    opacity: 0.5;
-  }
-
-  .message__options-btn[aria-expanded="true"] {
     opacity: 1;
   }
 }
-
-.message__body {
-  max-inline-size: 100%;
-}
-
-
