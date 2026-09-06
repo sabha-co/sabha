@@ -34,7 +34,7 @@
     <%= tag.link rel: "icon", href: image_path("icons/sabha-icon.svg"), type: "image/svg+xml" %>
     <%= tag.link rel: "apple-touch-icon", href: image_path("icons/sabha-icon.svg") %>
 
-    <%= stylesheet_link_tag "tailwind", "application/_defaults", *Stylesheets.from("marketing"), "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application/_defaults", *Stylesheets.from("marketing"), "data-turbo-track": "reload" %>
     <% if hotwire_native_app? %>
       <%= stylesheet_link_tag "native", "data-turbo-track": "reload" %>
     <% end %>

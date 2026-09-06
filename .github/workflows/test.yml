@@ -30,27 +30,10 @@ jobs:
           ruby-version: 4.0.5
           bundler-cache: true
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 10.28.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install Node dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Set up database
         run: bin/rails db:prepare
         env:
           RAILS_ENV: test
-
-      - name: Build Tailwind CSS
-        run: pnpm run build:css
 
       - name: Run tests
         run: bin/rails test
@@ -98,20 +81,6 @@ jobs:
         env:
           BUNDLE_GEMFILE: Gemfile.saas
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 10.28.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install Node dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Set up database
         run: bin/rails db:prepare
         env:
@@ -119,9 +88,6 @@ jobs:
           SAAS: "true"
           BUNDLE_GEMFILE: Gemfile.saas
           UNTENANTED_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/sabha_untenanted_test
-
-      - name: Build Tailwind CSS
-        run: pnpm run build:css
 
       - name: Run SaaS tests
         run: bin/rails test saas/test/

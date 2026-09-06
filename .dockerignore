@@ -48,7 +48,6 @@ yarn-error.log*
 .node_repl_history
 
 # Build artifacts
-app/assets/builds/
 public/assets/
 public/packs*
 

@@ -23,7 +23,7 @@
     <%= tag.link rel: "icon", href: "/icon.png", type: "image/png" %>
     <%= tag.link rel: "apple-touch-icon", href: "/icon.png" %>
 
-    <%= stylesheet_link_tag "tailwind", *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag *(Stylesheets.from("application") + Stylesheets.vendor_stylesheets), "data-turbo-track": "reload" %>
 
     <%= javascript_importmap_tags %>
 

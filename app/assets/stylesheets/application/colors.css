@@ -1,9 +1,7 @@
 /* Design tokens — the single place color values are declared.
    Three layers: primitives (--lch-*) hold raw OKLCH triples; the semantic
    layer (--color-*) is the only one components read; scopes (dark mode,
-   [data-accent], the contrast sidebar) rebind primitives locally. The
-   Tailwind entrypoint re-exposes the semantic names to utilities but
-   declares no values of its own. */
+   [data-accent], the contrast sidebar) rebind primitives locally. */
 
 :root {
   color-scheme: light dark;

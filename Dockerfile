@@ -17,14 +17,10 @@ ENV RAILS_ENV="production" \
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems and Node.js for Tailwind CSS
-ARG PNPM_VERSION=10.28.0
+# Install packages needed to build gems
 RUN apt-get update -qq && \
   apt-get install --no-install-recommends -y \
   build-essential git pkg-config curl libyaml-dev libssl-dev libvips ca-certificates && \
-  curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
-  apt-get install --no-install-recommends -y nodejs && \
-  npm install -g pnpm@$PNPM_VERSION && \
   rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
@@ -38,23 +34,16 @@ RUN bundle install && \
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile --gemfile
 
-# Install Node dependencies (before copying app for better caching)
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
 # Copy application code
 COPY . .
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Build Tailwind CSS
-RUN pnpm run build:css
-
 # Precompile assets and clean up build artifacts
 RUN mkdir -p /rails/storage/logs && \
   SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile && \
-  rm -rf node_modules tmp/cache .git
+  rm -rf tmp/cache .git
 
 
 # Final stage for app image

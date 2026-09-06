@@ -162,8 +162,6 @@ else
   echo "Warning: pnpm not found. Install pnpm: npm install -g pnpm"
 fi
 
-step "Building CSS" pnpm run build:css
-
 if [[ $* == *--reset* ]]; then
   rm -rf ./storage/{db,files,workspaces,untenanted}
   if [ "$SAAS" = "true" ] || [ -f "$app_root/tmp/saas.txt" ]; then
