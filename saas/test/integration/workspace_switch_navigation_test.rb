@@ -28,6 +28,7 @@ class WorkspaceSwitchNavigationTest < ActionDispatch::IntegrationTest
 
   test "Room info preferences are scoped to the workspace as well as the local user" do
     sign_in_global_identity(global_identities(:alice))
+    purge_stale_tenants(2)
 
     keys = []
     local_ids = []
@@ -47,4 +48,18 @@ class WorkspaceSwitchNavigationTest < ActionDispatch::IntegrationTest
     assert_equal local_ids.first, local_ids.last, "the workspaces must exercise colliding local IDs"
     assert_not_equal keys.first, keys.last
   end
+
+  private
+    # Provisioning reuses a tenant database it finds on disk, and databases left
+    # by earlier tests in this process survive because their purge runs as a
+    # background job. A reused tenant hands the creator whatever local id is
+    # free, so the workspaces above only collide when both start from a fresh
+    # database. Consuming one sequence id tells us which ids they will receive.
+    def purge_stale_tenants(count)
+      first = Workspace::ExternalIdSequence.next_id
+      (first + 1).upto(first + count) do |external_id|
+        tenant_id = external_id.to_s
+        ApplicationRecord.destroy_tenant(tenant_id) if ApplicationRecord.tenant_exist?(tenant_id)
+      end
+    end
 end
