@@ -73,7 +73,7 @@
         <% if @user.pending_email_change? && !Sabha.saas? %>
           <p class="settings-field__hint">
             Pending: <strong><%= @user.unconfirmed_email %></strong> ·
-            <%= link_to "Cancel", user_email_change_path, data: { turbo_method: :delete } %>
+            <%= button_tag "Cancel", type: :submit, form: "cancel-email-change", class: "btn btn--plain" %>
           </p>
         <% end %>
       </div>
@@ -125,6 +125,11 @@
       <div class="settings-actions">
         <%= profile_form_submit_button %>
       </div>
+    <% end %>
+
+    <% if @user.pending_email_change? && !Sabha.saas? %>
+      <%= form_with url: user_email_change_path, method: :delete, id: "cancel-email-change", class: "inline" do %>
+      <% end %>
     <% end %>
   </div>
 <% end %>

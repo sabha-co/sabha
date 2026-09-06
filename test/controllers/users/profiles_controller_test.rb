@@ -111,6 +111,10 @@ class Users::ProfilesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "strong", "pending@example.com"
+    assert_select "form#cancel-email-change[action=?][method=post]", user_email_change_path do
+      assert_select "input[name=_method][value=delete]", count: 1
+    end
+    assert_select "button[form=cancel-email-change]", text: "Cancel", count: 1
   end
 
   test "email with different case does not trigger change flow" do
