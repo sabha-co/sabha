@@ -69,6 +69,8 @@ module Message::Unreadable
       Membership.where(room_id: room_id, user_id: recipient_ids)
                 .merge(Membership.with_message_unseen(created_at, id))
                 .update_all("unread_notifications_count = unread_notifications_count + 1")
+
+      Desktop::BadgeState.broadcast_to_users(User.where(id: recipient_ids))
     end
 
     # Keeps memberships.unread_notifications_count consistent when this
@@ -77,7 +79,7 @@ module Message::Unreadable
     # callback above.
     #
     # Only the DM counter needs rebalancing here: DMs count every unseen
-    # message, so each membership whose cursor sat before this one loses a
+    # message, so each membership whose cursor sits before this one loses a
     # count. Mention counters unwind through the notification destroy
     # (Notification.decrement_membership_counters), and derived unread itself
     # self-heals — the cursor comparison only sees active messages, so no
@@ -85,8 +87,14 @@ module Message::Unreadable
     def rebalance_unread_counters
       return unless room.direct?
 
+      affected_user_ids = Membership.where(room_id: room_id)
+                                    .merge(Membership.with_message_unseen(created_at, id))
+                                    .pluck(:user_id)
+
       Membership.where(room_id: room_id)
                 .merge(Membership.with_message_unseen(created_at, id))
                 .update_all("unread_notifications_count = CASE WHEN unread_notifications_count > 0 THEN unread_notifications_count - 1 ELSE 0 END")
+
+      Desktop::BadgeState.broadcast_to_users(User.where(id: affected_user_ids))
     end
 end

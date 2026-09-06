@@ -152,6 +152,7 @@ module Membership::Unreadable
     head_at, head_id = room_head_position
     update!(last_read_at: head_at, last_read_message_id: head_id, marked_unread: false, unread_notifications_count: 0)
     broadcast_read
+    Desktop::BadgeState.broadcast_to(user)
   end
 
   def mark_unread_at(message)
@@ -161,6 +162,7 @@ module Membership::Unreadable
       unread_notifications_count: count_unseen_notifications(cursor_at, cursor_id)
     )
     broadcast_unread
+    Desktop::BadgeState.broadcast_to(user)
   end
 
   def read_until(time)
