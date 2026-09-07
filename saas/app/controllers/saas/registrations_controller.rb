@@ -28,12 +28,12 @@ module Saas
       if global_identity
         # Name intentionally ignored for existing accounts (anti-enumeration)
         auth_code = global_identity.auth_codes.create!(purpose: :sign_in)
-        auth_code.deliver_later
+        auth_code.deliver_later(automated: platform.automated?)
       else
         # New account - create and send verification code
         global_identity = GlobalIdentity.create!(name: params[:name], email_address: params[:email_address], terms_of_service: params[:terms_of_service])
         auth_code = global_identity.auth_codes.create!(purpose: :sign_up)
-        auth_code.deliver_later
+        auth_code.deliver_later(automated: platform.automated?)
       end
 
       # Don't reveal whether email exists (prevent email enumeration)

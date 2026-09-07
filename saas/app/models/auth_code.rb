@@ -37,8 +37,8 @@ class AuthCode < UntenantedRecord
     global_identity.tap { destroy }
   end
 
-  def deliver_later
-    AuthCodeMailer.code(self).deliver_later
+  def deliver_later(automated: false)
+    AuthCodeMailer.code(self, automated: automated).deliver_later
   end
 
   def expired?

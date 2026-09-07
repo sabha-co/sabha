@@ -16,7 +16,7 @@ class AuthTokensController < ApplicationController
     session[:otp_email_address] = params[:email_address]
 
     auth_token = @user.auth_tokens.create!(expires_at: 15.minutes.from_now)
-    auth_token.deliver_later
+    auth_token.deliver_later(automated: platform.automated?)
 
     redirect_to new_auth_tokens_validations_path
   end

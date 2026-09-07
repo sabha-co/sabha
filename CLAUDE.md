@@ -121,7 +121,7 @@ bin/latest-otp jason@sabha.co   # newest unused, unexpired code for that address
 SAAS=true bin/latest-otp        # SaaS: newest valid AuthCode as "email<TAB>code"
 ```
 
-Paste it into the first code cell (the field spreads a paste across all six) and click Verify. Codes are one-shot and expire after 15 minutes. Never open the letter_opener window: development mail pops it in a browser an agent can't read reliably.
+Paste it into the first code cell (the field spreads a paste across all six) and click Verify. Codes are one-shot and expire after 15 minutes. Development mail previews in a browser tab for a person, but a code requested from a headless browser (Ferrum, Playwright, Puppeteer) is only written under `tmp/letter_opener`, so an agent signing in never pops a tab in front of whoever is at the machine. Read codes from the database, not the mail files.
 
 ### SaaS Dual Database Setup
 - **Untenanted (PostgreSQL):** `GlobalIdentity`, `Workspace`, `WorkspaceMembership`, `GlobalSession`. Models inherit from `UntenantedRecord`. Migrations in `saas/db/untenanted_migrate/`, schema in `saas/db/untenanted_schema.rb`.

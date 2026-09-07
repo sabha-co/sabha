@@ -24,6 +24,24 @@ class AuthTokensControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_auth_tokens_validations_url
   end
 
+  test "a code requested from a headless browser is marked as automated" do
+    perform_enqueued_jobs do
+      post auth_tokens_url, params: { email_address: users(:david).email_address },
+        headers: { "User-Agent" => "Mozilla/5.0 HeadlessChrome/128.0.0.0 Safari/537.36" }
+    end
+
+    assert_equal "true", ActionMailer::Base.deliveries.last[ApplicationMailer::AUTOMATED_CLIENT_HEADER].value
+  end
+
+  test "a code requested from a desktop browser is not marked as automated" do
+    perform_enqueued_jobs do
+      post auth_tokens_url, params: { email_address: users(:david).email_address },
+        headers: { "User-Agent" => "Mozilla/5.0 Chrome/128.0.0.0 Safari/537.36" }
+    end
+
+    assert_nil ActionMailer::Base.deliveries.last[ApplicationMailer::AUTOMATED_CLIENT_HEADER]
+  end
+
   test "create with unknown email redirects with error" do
     post auth_tokens_url, params: { email_address: "unknown@example.com" }
 

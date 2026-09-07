@@ -18,8 +18,8 @@ class AuthToken < ApplicationRecord
 
   scope :valid, -> { where(used_at: nil, expires_at: Time.current..) }
 
-  def deliver_later
-    AuthTokenMailer.otp(self).deliver_later
+  def deliver_later(automated: false)
+    AuthTokenMailer.otp(self, automated: automated).deliver_later
   end
 
   def use!

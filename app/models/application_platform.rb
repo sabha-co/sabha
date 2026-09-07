@@ -38,6 +38,12 @@ class ApplicationPlatform < PlatformAgent
     ios? || android?
   end
 
+  # A browser driven by a script rather than a person: headless Chrome (Ferrum,
+  # Cuprite, Playwright, Puppeteer) and the WebDriver family all say so.
+  def automated?
+    match?(/HeadlessChrome|Puppeteer|Playwright|Selenium|WebDriver/i)
+  end
+
   def desktop?
     !mobile?
   end

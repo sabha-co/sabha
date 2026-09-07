@@ -37,11 +37,18 @@ Rails.application.configure do
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 
-  # Configure Action Mailer for development with letter_opener
+  # Mail previews open in the browser as usual, except mail that a script asked
+  # for (an agent signing in through a headless browser), which is only written
+  # under tmp/letter_opener so it never pops a tab in front of a person.
   config.action_mailer.delivery_method = :letter_opener
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = false
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+
+  config.after_initialize do
+    require "rails_ext/letter_opener_quiet_for_automated_clients"
+    ActionMailer::Base.add_delivery_method :letter_opener, LetterOpener::QuietForAutomatedClients
+  end
 
   # Raise an error on page load if there are pending migrations.
   config.active_record.migration_error = :page_load

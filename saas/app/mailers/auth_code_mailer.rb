@@ -9,8 +9,9 @@ class AuthCodeMailer < ApplicationMailer
   #
   # Used for sign-in, sign-up, and email change verification
 
-  def code(auth_code)
+  def code(auth_code, automated: false)
     @auth_code = auth_code
+    mark_automated_client(automated)
     @code = auth_code.code
     @global_identity = auth_code.global_identity
 

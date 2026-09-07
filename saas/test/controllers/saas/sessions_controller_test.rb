@@ -55,6 +55,15 @@ module Saas
       assert_equal "If this email is registered, you'll receive a sign-in code", flash[:notice]
     end
 
+    test "a code requested from a headless browser is marked as automated" do
+      perform_enqueued_jobs do
+        post session_path, params: { email_address: global_identities(:alice).email_address },
+          headers: { "User-Agent" => "Mozilla/5.0 HeadlessChrome/128.0.0.0 Safari/537.36" }
+      end
+
+      assert_equal "true", ActionMailer::Base.deliveries.last[ApplicationMailer::AUTOMATED_CLIENT_HEADER].value
+    end
+
     test "create does not create identity for unknown email (prevents enumeration)" do
       # Login should NOT create new identities - that's what registration is for
       assert_no_difference "GlobalIdentity.count" do
