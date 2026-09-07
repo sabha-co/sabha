@@ -68,6 +68,41 @@ module Saas
       assert_equal "If this email is registered, you'll receive a sign-in code", flash[:notice]
     end
 
+    test "development shows the requested code on the verification page" do
+      Rails.env.stubs(:development?).returns(true)
+      identity = global_identities(:alice)
+
+      post session_path, params: { email_address: identity.email_address }
+      code = identity.auth_codes.order(:id).last.code
+      assert_equal code, response.headers["X-Sign-In-Code"]
+
+      follow_redirect!
+      assert_select "p.txt-small.txt-muted strong", text: code
+
+      post auth_code_path, params: { code: code }
+      assert_redirected_to root_path
+      assert_not AuthCode.exists?(code: code)
+    end
+
+    test "sign-in code is not exposed outside development" do
+      post session_path, params: { email_address: global_identities(:alice).email_address }
+
+      assert_nil response.headers["X-Sign-In-Code"]
+      assert_nil flash[:development_sign_in_code]
+      follow_redirect!
+      assert_select "p.txt-small.txt-muted strong", count: 0
+    end
+
+    test "unknown email does not expose a code in development" do
+      Rails.env.stubs(:development?).returns(true)
+
+      post session_path, params: { email_address: "unknown@example.com" }
+
+      assert_redirected_to auth_code_path
+      assert_nil response.headers["X-Sign-In-Code"]
+      assert_nil flash[:development_sign_in_code]
+    end
+
     test "create normalizes email when looking up identity" do
       # Create identity with normalized email
       identity = global_identities(:alice)

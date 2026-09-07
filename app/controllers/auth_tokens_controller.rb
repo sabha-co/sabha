@@ -1,6 +1,7 @@
 class AuthTokensController < ApplicationController
   include EmailValidation
   include BlockBannedRequests
+  include DevelopmentSignInCode
 
   allow_unauthenticated_access
 
@@ -17,6 +18,7 @@ class AuthTokensController < ApplicationController
 
     auth_token = @user.auth_tokens.create!(expires_at: 15.minutes.from_now)
     auth_token.deliver_later
+    show_development_sign_in_code(auth_token.code)
 
     redirect_to new_auth_tokens_validations_path
   end

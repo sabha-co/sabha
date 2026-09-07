@@ -31,6 +31,31 @@ class AuthTokensControllerTest < ActionDispatch::IntegrationTest
     assert_match /couldn't find an account/, flash[:alert]
   end
 
+  test "development shows the requested code on the verification page" do
+    Rails.env.stubs(:development?).returns(true)
+    user = users(:david)
+
+    post auth_tokens_url, params: { email_address: user.email_address }
+    code = user.auth_tokens.order(:id).last.code
+    assert_equal code, response.headers["X-Sign-In-Code"]
+    assert_equal code, flash[:development_sign_in_code]
+
+    follow_redirect!
+    assert_select "p.txt-small.txt-muted strong", text: code
+
+    post auth_tokens_validations_url, params: { code: code }
+    assert user.auth_tokens.find_by!(code: code).used_at.present?
+  end
+
+  test "sign-in code is not exposed outside development" do
+    post auth_tokens_url, params: { email_address: users(:david).email_address }
+
+    assert_nil response.headers["X-Sign-In-Code"]
+    assert_nil flash[:development_sign_in_code]
+    follow_redirect!
+    assert_select "p.txt-small.txt-muted strong", count: 0
+  end
+
   test "create with invalid email returns 422" do
     post auth_tokens_url, params: { email_address: "not-an-email" }
     assert_response :unprocessable_entity

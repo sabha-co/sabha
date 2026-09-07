@@ -2,6 +2,8 @@
 
 module Saas
   class SessionsController < BaseController
+    include DevelopmentSignInCode
+
     # GlobalIdentity login via auth code (OTP)
 
     allow_unauthenticated_access
@@ -28,6 +30,7 @@ module Saas
         # Existing account - send auth code
         auth_code = global_identity.auth_codes.create!(purpose: :sign_in)
         auth_code.deliver_later
+        show_development_sign_in_code(auth_code.code)
       end
       # Don't reveal whether email exists (prevent email enumeration)
       # Show same message regardless of whether account exists

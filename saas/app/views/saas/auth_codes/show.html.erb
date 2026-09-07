@@ -19,6 +19,8 @@
 
         <p class="txt-medium txt-muted">Enter the 6-character code we sent to <strong class="txt-body"><%= @auth_code_email || "your email" %></strong></p>
 
+        <%= render "sessions/development_sign_in_code" %>
+
         <%= render "sessions/code_field", form: form, styled: true, show_icon: false, show_translation: false %>
         <%= render "sessions/submit_button", form: form, label: "Verify" %>
 
