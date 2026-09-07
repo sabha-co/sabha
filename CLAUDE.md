@@ -113,6 +113,16 @@ SAAS=true bin/rails test saas/test/      # SaaS test suite
 
 After implementing changes, run the relevant test suite to verify. For SaaS changes, run both.
 
+### Signing in as an agent
+Self-hosted defaults to `AUTH_METHOD=password`. Seed accounts from `bin/rails db:seed` are `ashwin@sabha.co` (administrator), `jason@sabha.co`, and `david@sabha.co`, all with password `password`; use them for UI work and role switching. When a task needs the email-code flow (the OTP screen, the code mail, or any SaaS sign-in, which is OTP-only), submit the email on the sign-in page, then read the code from the database instead of the mail:
+
+```bash
+bin/latest-otp jason@sabha.co   # newest unused, unexpired code for that address
+SAAS=true bin/latest-otp        # SaaS: newest valid AuthCode as "email<TAB>code"
+```
+
+Paste it into the first code cell (the field spreads a paste across all six) and click Verify. Codes are one-shot and expire after 15 minutes. Never open the letter_opener window: development mail pops it in a browser an agent can't read reliably.
+
 ### SaaS Dual Database Setup
 - **Untenanted (PostgreSQL):** `GlobalIdentity`, `Workspace`, `WorkspaceMembership`, `GlobalSession`. Models inherit from `UntenantedRecord`. Migrations in `saas/db/untenanted_migrate/`, schema in `saas/db/untenanted_schema.rb`.
 - **Tenanted (SQLite per workspace):** All app models (`User`, `Room`, `Message`, etc.) inherit from `ApplicationRecord`. Each workspace gets its own SQLite database at `storage/workspaces/{env}/{tenant}/db/main.sqlite3`. Standard migrations in `db/migrate/`.

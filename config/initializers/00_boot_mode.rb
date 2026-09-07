@@ -51,9 +51,10 @@ Rails.application.config.after_initialize do
   end
 
   if Rails.env.local?
-    puts ""
-    puts "  Sabha running in #{mode} mode"
-    puts ""
+    # stderr, so scripts that capture stdout (bin/latest-otp, runner one-liners) stay clean
+    $stderr.puts ""
+    $stderr.puts "  Sabha running in #{mode} mode"
+    $stderr.puts ""
   else
     Rails.logger.info "[Sabha] Running in #{mode} mode"
   end

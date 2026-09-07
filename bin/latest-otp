@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Print the newest unused, unexpired sign-in code so an agent (or a person at a
+# terminal) can finish an email-code sign-in without opening the mail.
+# Development and test only; it reads the local database, never production.
+#
+#   bin/latest-otp <email>   prints the six-character code for that address
+#   bin/latest-otp           prints "<email>\t<code>" for the newest valid code
+#
+# Self-hosted reads AuthToken. SaaS (SAAS=true) reads AuthCode on the untenanted
+# database. Exit 1 when there is no valid code: request one first by submitting
+# the email on the sign-in page.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+exec bin/rails runner - "$@" <<'RUBY'
+abort "latest-otp: development and test only" unless Rails.env.development? || Rails.env.test?
+
+email = ARGV.first.to_s.strip.downcase.presence
+
+if Sabha.saas?
+  scope = AuthCode.active.joins(:global_identity)
+  scope = scope.where(global_identities: { email_address: email }) if email
+  row = scope.order(id: :desc).first
+  found = row && [ row.global_identity.email_address, row.code ]
+else
+  scope = AuthToken.valid.joins(:user)
+  scope = scope.where(users: { email_address: email }) if email
+  row = scope.order(id: :desc).first
+  found = row && [ row.user.email_address, row.code ]
+end
+
+unless found
+  who = email || "any address"
+  abort "latest-otp: no unused, unexpired code for #{who}. Submit the email on the sign-in page first."
+end
+
+puts email ? found.last : found.join("\t")
+RUBY

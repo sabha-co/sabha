@@ -19,6 +19,7 @@ Sabha is a Ruby on Rails chat application using Hotwire/Turbo, AnyCable-Go, Tail
 - `bin/rails test` — run self-hosted tests.
 - `bin/rails test test/models/user_test.rb` — run one self-hosted test file.
 - `SAAS=true bin/rails test saas/test/` — run SaaS test suite.
+- `bin/latest-otp [email]` — development only: print the newest unused, unexpired sign-in code from the database (`AuthToken`, or `AuthCode` with `SAAS=true`) so an agent can finish an email-code sign-in without reading mail. Self-hosted defaults to password auth, and the seed accounts `ashwin@sabha.co` (administrator), `jason@sabha.co`, and `david@sabha.co` all use the password `password`.
 - `pnpm run build:css:watch` — rebuild Tailwind CSS continuously.
 - Enable SaaS with `bin/rails saas:enable && bundle install && bin/rails saas:setup`; disable it with `bin/rails saas:disable && bundle install`.
 - When changing gems in `Gemfile`, also run `BUNDLE_GEMFILE=Gemfile.saas bundle install` to keep both lockfiles synchronized.
