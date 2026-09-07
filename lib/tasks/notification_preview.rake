@@ -3,6 +3,7 @@ namespace :notifications do
   task preview: :environment do
     abort "Only runs in development." unless Rails.env.development?
     abort "Requires letter_opener delivery (config/environments/development.rb)." unless ActionMailer::Base.delivery_method == :letter_opener
+    abort "Enable mail previews with bin/rails dev:email first." unless ActionMailer::Base.perform_deliveries
     abort "SaaS mode not supported by this preview task — run with SAAS unset." if defined?(Sabha) && Sabha.respond_to?(:saas?) && Sabha.saas?
 
     recipient = User.active.verified.where.not(email_address: [ nil, "" ]).order(:id).first

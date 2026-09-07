@@ -98,5 +98,27 @@ module Saas
       identity = GlobalIdentity.find_by(email_address: "newuser@example.com")
       assert identity.present?
     end
+
+    test "development shows verification codes for new and existing identities" do
+      Rails.env.stubs(:development?).returns(true)
+
+      [ "newuser@example.com", global_identities(:alice).email_address ].each do |email|
+        post registration_path, params: with_turnstile_response(name: "Test", email_address: email, terms_of_service: "1")
+        code = GlobalIdentity.find_by!(email_address: email).auth_codes.order(:id).last.code
+
+        assert_equal code, response.headers["X-Sign-In-Code"]
+        follow_redirect!
+        assert_select "p.txt-small.txt-muted strong", text: code
+      end
+    end
+
+    test "registration code is not exposed outside development" do
+      post registration_path, params: with_turnstile_response(name: "Test", email_address: "newuser@example.com", terms_of_service: "1")
+
+      assert_nil response.headers["X-Sign-In-Code"]
+      assert_nil flash[:development_sign_in_code]
+      follow_redirect!
+      assert_select "p.txt-small.txt-muted strong", count: 0
+    end
   end
 end

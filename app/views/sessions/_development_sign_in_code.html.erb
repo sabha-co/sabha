@@ -1,0 +1,5 @@
+<% if flash[:development_sign_in_code].present? %>
+  <p class="txt-small txt-muted">
+    Psst, here's your code: <strong><%= flash[:development_sign_in_code] %></strong> (development only)
+  </p>
+<% end %>

@@ -2,6 +2,8 @@
 
 module Saas
   class RegistrationsController < BaseController
+    include DevelopmentSignInCode
+
     # GlobalIdentity registration (signup) via auth code (OTP)
     #
     # Creates a new GlobalIdentity and sends an auth code for verification.
@@ -35,6 +37,8 @@ module Saas
         auth_code = global_identity.auth_codes.create!(purpose: :sign_up)
         auth_code.deliver_later
       end
+
+      show_development_sign_in_code(auth_code.code)
 
       # Don't reveal whether email exists (prevent email enumeration)
       # Show same message regardless of whether account existed

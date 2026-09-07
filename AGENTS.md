@@ -13,6 +13,7 @@ Sabha is a Ruby on Rails chat application using Hotwire/Turbo, AnyCable-Go, Tail
 ## Build, Test, and Development Commands
 - `bin/setup` — install gems/pnpm, prepare DB, build Tailwind once.
 - `bin/dev` — start Rails, the Tailwind watcher, and required `anycable-go` (jobs run in the web process).
+- `bin/rails dev:email` — toggle opt-in Letter Opener previews and request a server restart. Email-code sign-in and SaaS registration show "Psst, here's your code" on the verification page in development; agents can read it there or from the creating response's `X-Sign-In-Code` header.
 - `bin/boot` — start the container app processes (web + Redis + workers); AnyCable-Go runs separately.
 - `bin/rails db:migrate` — migrate database.
 - `SAAS=true bin/rails db:migrate:primary` — migrate SaaS tenanted and untenanted databases.

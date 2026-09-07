@@ -113,6 +113,11 @@ SAAS=true bin/rails test saas/test/      # SaaS test suite
 
 After implementing changes, run the relevant test suite to verify. For SaaS changes, run both.
 
+### Signing in during development
+Self-hosted seed accounts (`ashwin@sabha.co`, `jason@sabha.co`, `david@sabha.co`) use password `password`. For email-code flows (self-hosted OTP, SaaS sign-in and registration), submit the email, then read "Psst, here's your code" on the verification page and paste it into the code field. Development also exposes the code in the creating response's `X-Sign-In-Code` header. These shortcuts are development-only and still use normal expiring, single-use codes.
+
+Mail previews are off by default. `bin/rails dev:email` toggles `tmp/email-dev.txt` and requests a server restart to enable or disable Letter Opener browser previews. Use `SAAS=true` for an environment-selected SaaS server. No database-reading script is needed for sign-in.
+
 ### SaaS Dual Database Setup
 - **Untenanted (PostgreSQL):** `GlobalIdentity`, `Workspace`, `WorkspaceMembership`, `GlobalSession`. Models inherit from `UntenantedRecord`. Migrations in `saas/db/untenanted_migrate/`, schema in `saas/db/untenanted_schema.rb`.
 - **Tenanted (SQLite per workspace):** All app models (`User`, `Room`, `Message`, etc.) inherit from `ApplicationRecord`. Each workspace gets its own SQLite database at `storage/workspaces/{env}/{tenant}/db/main.sqlite3`. Standard migrations in `db/migrate/`.

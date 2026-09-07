@@ -61,6 +61,30 @@ bin/dev
 
 Opens at `http://localhost:3000`
 
+### Signing in and previewing email
+
+Self-hosted development defaults to password sign-in. The seed accounts
+`ashwin@sabha.co`, `jason@sabha.co`, and `david@sabha.co` use `password`.
+
+For email-code sign-in (`AUTH_METHOD=otp` in self-hosted mode, or SaaS sign-in
+and registration), submit your email and read "Psst, here's your code" on the
+verification page. Paste the code into the code field and click Verify.
+Development also returns the code in the `X-Sign-In-Code` response header on
+the request that creates it. Both shortcuts are development-only; the normal
+single-use code and expiration checks still apply.
+
+Mail previews are off by default. To toggle Letter Opener browser previews:
+
+```bash
+bin/rails dev:email
+```
+
+This creates or removes `tmp/email-dev.txt` and requests a server restart.
+Use `SAAS=true bin/rails dev:email` when running SaaS via the environment flag.
+Restart `bin/dev` manually if the server does not pick up `tmp/restart.txt`.
+Enable previews when checking actual email content, including
+`bin/rails notifications:preview`.
+
 ### What `bin/dev` starts
 
 Foreman runs three processes together: the Rails server (Puma, with Solid Queue
