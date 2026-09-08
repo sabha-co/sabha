@@ -2,6 +2,10 @@
 # happens and supply the URL context; this class owns who hears about it and how
 # it reaches them. Selection stays on `Room`, payload construction on
 # `Bot::EventPayload`, and HTTP delivery on `Webhook`.
+#
+# In SaaS mode, dispatch must run in the item's tenant context, established by
+# the request, a tenant-aware job, or ApplicationRecord.with_tenant. base_url
+# only supplies URL context; it does not select or switch the database tenant.
 class Bot::Event
   def initialize(item, event, base_url:)
     @item, @event, @base_url = item, event, base_url
