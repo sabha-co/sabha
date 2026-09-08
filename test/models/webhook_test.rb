@@ -1,6 +1,8 @@
 require "test_helper"
 
 class WebhookTest < ActiveSupport::TestCase
+  include ActionCable::TestHelper
+
   test "payload contains absolute URLs" do
     message = messages(:first)
     base_url = "https://sabha.test"
@@ -32,6 +34,23 @@ class WebhookTest < ActiveSupport::TestCase
 
     reply_message = Message.last
     assert_equal "Hello back!", reply_message.body.to_plain_text
+  end
+
+  test "automatic replies do not announce events to mentioned bots" do
+    webhook = webhooks(:bender)
+    message = messages(:fourth)
+    WebMock.stub_request(:post, webhook.url).to_return(status: 200,
+      body: "<div>Hey #{mention_attachment_for(:nsa)}</div>", headers: { "Content-Type" => "text/html" })
+
+    assert_no_broadcasts "bot_events:#{users(:nsa).id}" do
+      assert_no_enqueued_jobs only: Bot::WebhookJob do
+        assert_difference -> { Message.count }, 1 do
+          webhook.deliver_now(message, :created, reply: true)
+        end
+      end
+    end
+    assert_equal users(:bender), Message.last.creator
+    assert_includes Message.last.mentionees, users(:nsa)
   end
 
   test "delivery with reply posts attachment response" do
