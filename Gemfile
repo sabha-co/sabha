@@ -47,7 +47,7 @@ gem "sentry-ruby"
 gem "sentry-rails"
 
 # Profiling
-gem "rack-mini-profiler", "~> 4.0", require: false
+gem "rack-mini-profiler", "~> 5.0", require: false
 gem "stackprof", "~> 0.2"
 
 # Other
