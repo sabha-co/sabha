@@ -142,6 +142,10 @@ module MessagesHelper
 
   def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false, composer_id: "composer", forum_replies_count: nil)
     [
+      # Bump this version when message presentation changes what it emits but the
+      # digestor can't see it — e.g. the opengraph embed partial, which ActionText
+      # renders by name rather than through a render call the digestor follows.
+      "presentation-v2",
       message,
       room_id,
       message.bookmarked_by?(Current.user),

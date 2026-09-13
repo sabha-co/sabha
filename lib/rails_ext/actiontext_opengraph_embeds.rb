@@ -4,11 +4,12 @@ class ActionText::Attachment::OpengraphEmbed
   OPENGRAPH_EMBED_CONTENT_TYPE = "application/vnd.actiontext.opengraph-embed"
   TWITTER_AVATAR_URL_PREFIX = "https://pbs.twimg.com/profile_images"
 
-  # An embed with no link is a broken embed — bail rather than render a
-  # self-referential nil-href link. Guards the case where attributes_from_content
+  # A preview with neither a link nor a title is a broken embed — bail rather
+  # than render an empty figure. Guards the case where attributes_from_content
   # finds nothing (e.g. a renamed og-embed class), so `attachment if valid?`
-  # actually returns nil.
-  validates :href, presence: true
+  # actually returns nil. A dropped link (see web_url) still renders: the title
+  # shows as plain text rather than a link to the current page.
+  validate :link_or_title
 
   class << self
     def from_node(node)
@@ -28,8 +29,8 @@ class ActionText::Attachment::OpengraphEmbed
       def attributes_from_node(node)
         if node["href"].present?
           {
-            href: node["href"],
-            url: node["url"],
+            href: web_url(node["href"]),
+            url: web_url(node["url"]),
             filename: node["filename"],
             description: node["caption"]
           }
@@ -44,11 +45,79 @@ class ActionText::Attachment::OpengraphEmbed
         link = title&.at_css("a")
 
         {
-          href: link&.[]("href"),
-          url: fragment.at_css(".og-embed__image img")&.[]("src"),
+          href: web_url(link&.[]("href")),
+          url: web_url(fragment.at_css(".og-embed__image img")&.[]("src")),
           filename: (link || title)&.text&.strip,
           description: fragment.at_css(".og-embed__description")&.text&.strip
         }
+      end
+
+      # A link preview points at what we unfurled: an absolute http or https URL
+      # on some other host. Drop anything else a message body asks for, so it
+      # can't aim the preview's link or its image at this Sabha and have every
+      # reader's browser fetch it with their session attached. A dropped link
+      # renders the title as plain text; a dropped image renders no image.
+      def web_url(value)
+        return if value.blank?
+
+        parsed = URI.parse(value)
+        value if parsed.is_a?(URI::HTTP) && elsewhere?(parsed.host)
+      rescue URI::InvalidURIError
+        nil
+      end
+
+      # "https:/rooms/1" parses as HTTPS with no host at all, and a browser
+      # resolves both that and our own hostname against the origin Sabha is
+      # served from. A percent-escape hides our hostname from this comparison
+      # while a browser still unescapes it back to us, so an escaped host is out
+      # too, and neither case is anything an unfurl could have produced.
+      def elsewhere?(host)
+        named_host?(host) && !ours?(host)
+      end
+
+      # A host is ours — and so shares the reader's session cookie — when it is
+      # one of the origins Sabha is served from (APP_HOST / ALLOWED_HOSTS, plus
+      # the ambient request) or sits under the parent COOKIE_DOMAIN that scopes
+      # the cookie across sibling subdomains (self-hosted aliases, SaaS tenants).
+      # Drawn from configuration rather than the current request alone, so it
+      # holds for a multi-host deploy and for renders outside any request, where
+      # there is no request host to compare against.
+      def ours?(host)
+        canonical = canonical_host(host)
+        application_hosts.include?(canonical) || under_cookie_domain?(canonical)
+      end
+
+      def application_hosts
+        [ ENV["APP_HOST"], *ENV["ALLOWED_HOSTS"].to_s.split(","), Current.request_host ]
+          .filter_map { |value| canonical_host(value).presence }
+          .to_set
+      end
+
+      def under_cookie_domain?(canonical)
+        domain = cookie_domain
+        domain.present? && (canonical == domain || canonical.end_with?(".#{domain}"))
+      end
+
+      def cookie_domain
+        canonical_host(ENV["COOKIE_DOMAIN"].to_s.strip.delete_prefix(".")).presence
+      end
+
+      # A preview names a page on the public internet, so its host is a domain
+      # name, written plainly. A bare address is not one, and a browser rewrites
+      # the many spellings of an address ("2130706433", "0x7f.0.0.1") into a
+      # single one before it fetches, which is a race a comparison here loses.
+      def named_host?(host)
+        host.present? && host.exclude?("%") && host.include?(".") && domain_ending?(host.split(".").last)
+      end
+
+      # What keeps a name from reading as an address is its last label, which is
+      # a word: never a number, and never the hexadecimal spelling of one.
+      def domain_ending?(label)
+        label.match?(/[a-z]/i) && !label.match?(/\A0x/i)
+      end
+
+      def canonical_host(host)
+        host.to_s.strip.downcase.delete_suffix(".")
       end
   end
 
@@ -69,4 +138,9 @@ class ActionText::Attachment::OpengraphEmbed
   def to_partial_path
     "action_text/attachables/opengraph_embed"
   end
+
+  private
+    def link_or_title
+      errors.add(:base, "nothing to render") if href.blank? && filename.blank?
+    end
 end
