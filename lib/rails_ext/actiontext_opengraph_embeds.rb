@@ -72,9 +72,34 @@ class ActionText::Attachment::OpengraphEmbed
       # while a browser still unescapes it back to us, so an escaped host is out
       # too, and neither case is anything an unfurl could have produced.
       def elsewhere?(host)
-        return false unless named_host?(host)
+        named_host?(host) && !ours?(host)
+      end
 
-        canonical_host(host) != canonical_host(Current.request_host.to_s)
+      # A host is ours — and so shares the reader's session cookie — when it is
+      # one of the origins Sabha is served from (APP_HOST / ALLOWED_HOSTS, plus
+      # the ambient request) or sits under the parent COOKIE_DOMAIN that scopes
+      # the cookie across sibling subdomains (self-hosted aliases, SaaS tenants).
+      # Drawn from configuration rather than the current request alone, so it
+      # holds for a multi-host deploy and for renders outside any request, where
+      # there is no request host to compare against.
+      def ours?(host)
+        canonical = canonical_host(host)
+        application_hosts.include?(canonical) || under_cookie_domain?(canonical)
+      end
+
+      def application_hosts
+        [ ENV["APP_HOST"], *ENV["ALLOWED_HOSTS"].to_s.split(","), Current.request_host ]
+          .filter_map { |value| canonical_host(value).presence }
+          .to_set
+      end
+
+      def under_cookie_domain?(canonical)
+        domain = cookie_domain
+        domain.present? && (canonical == domain || canonical.end_with?(".#{domain}"))
+      end
+
+      def cookie_domain
+        canonical_host(ENV["COOKIE_DOMAIN"].to_s.strip.delete_prefix(".")).presence
       end
 
       # A preview names a page on the public internet, so its host is a domain
@@ -92,7 +117,7 @@ class ActionText::Attachment::OpengraphEmbed
       end
 
       def canonical_host(host)
-        host.downcase.delete_suffix(".")
+        host.to_s.strip.downcase.delete_suffix(".")
       end
   end
 

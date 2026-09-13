@@ -74,6 +74,45 @@ class ActionText::Attachment::OpengraphEmbedTest < ActiveSupport::TestCase
     assert_match "Title", html
   end
 
+  test "drops a link and an image on a configured application host that isn't the request host" do
+    with_env "ALLOWED_HOSTS" => "a.sabha.test, b.sabha.test" do
+      Current.set request: ActionDispatch::TestRequest.create("HTTP_HOST" => "a.sabha.test") do
+        # b is a sibling alias serving the same Sabha, sharing the reader's cookie.
+        embed = embed_from href: "https://b.sabha.test/rooms/1", url: "https://b.sabha.test/x.png"
+
+        assert_nil embed.href
+        assert_nil embed.url
+      end
+    end
+  end
+
+  test "drops a link and an image under the shared cookie domain" do
+    with_env "COOKIE_DOMAIN" => ".sabha.test" do
+      [ "https://sabha.test/rooms/1", "https://tenant-b.sabha.test/rooms/1",
+        "https://deep.tenant-b.sabha.test/x.png" ].each do |value|
+        embed = embed_from href: value, url: value
+
+        assert_nil embed.href, "expected #{value.inspect} to be dropped as a link"
+        assert_nil embed.url, "expected #{value.inspect} to be dropped as an image"
+      end
+
+      # A lookalike outside the cookie domain is still elsewhere.
+      embed = embed_from href: "https://evilsabha.test/page", url: "https://evilsabha.test/x.png"
+      assert_equal "https://evilsabha.test/page", embed.href
+    end
+  end
+
+  test "drops a same-host link and image when rendered outside any request" do
+    with_env "APP_HOST" => "chat.sabha.test" do
+      # No Current.request — a background render — so there is no request host.
+      assert_nil Current.request_host
+      embed = embed_from href: "https://chat.sabha.test/rooms/1", url: "https://chat.sabha.test/x.png"
+
+      assert_nil embed.href
+      assert_nil embed.url
+    end
+  end
+
   test "keeps an internationalized domain written in punycode" do
     embed = embed_from href: "https://xn--80aswg.xn--p1ai/page", url: "https://xn--80aswg.xn--p1ai/image.png"
 
@@ -99,6 +138,15 @@ class ActionText::Attachment::OpengraphEmbedTest < ActiveSupport::TestCase
   end
 
   private
+    def with_env(values)
+      original = values.transform_values { |_| :__unset__ }
+      values.each_key { |key| original[key] = ENV.key?(key) ? ENV[key] : :__unset__ }
+      values.each { |key, value| ENV[key] = value }
+      yield
+    ensure
+      original.each { |key, value| value == :__unset__ ? ENV.delete(key) : ENV[key] = value }
+    end
+
     def attachment_for(href: nil, url: nil, filename: "Title", caption: "Description", content: nil)
       attributes = if content
         %(content-type="#{ActionText::Attachment::OpengraphEmbed::OPENGRAPH_EMBED_CONTENT_TYPE}" content="#{CGI.escapeHTML(content)}")
