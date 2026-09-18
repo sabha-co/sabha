@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_07_16_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_04_183000) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -133,6 +133,21 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_16_000001) do
     t.index ["booster_id"], name: "index_boosts_on_booster_id"
     t.index ["message_id", "booster_id", "content"], name: "index_boosts_on_message_booster_content", unique: true
     t.index ["message_id", "created_at"], name: "index_boosts_on_message_created"
+  end
+
+  create_table "desktop_session_claims", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "token_digest", null: false
+    t.string "nonce", null: false
+    t.string "origin", null: false
+    t.string "return_path", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_desktop_session_claims_on_expires_at"
+    t.index ["token_digest"], name: "index_desktop_session_claims_on_token_digest", unique: true
+    t.index ["user_id"], name: "index_desktop_session_claims_on_user_id"
   end
 
   create_table "memberships", force: :cascade do |t|
@@ -401,6 +416,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_16_000001) do
   add_foreign_key "bookmarks", "messages"
   add_foreign_key "bookmarks", "users"
   add_foreign_key "boosts", "messages"
+  add_foreign_key "desktop_session_claims", "users"
   add_foreign_key "messages", "rooms"
   add_foreign_key "messages", "users", column: "creator_id"
   add_foreign_key "notification_bundle_items", "messages", on_delete: :cascade
@@ -422,9 +438,4 @@ ActiveRecord::Schema[8.2].define(version: 2026_07_16_000001) do
   add_foreign_key "users", "badges"
   add_foreign_key "webhooks", "users"
 
-  # The full-text search index is intentionally not dumped here — it is
-  # engine-specific (an FTS5 virtual table on SQLite, a tsvector column + GIN
-  # index on Postgres) and a single schema file can't hold both. It is
-  # provisioned by Message::SearchIndex (run from db:prepare and the test schema
-  # load), and a SchemaDumper filter keeps it out of future dumps.
 end

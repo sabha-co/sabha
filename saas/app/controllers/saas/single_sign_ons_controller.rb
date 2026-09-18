@@ -2,13 +2,28 @@
 
 module Saas
   class SingleSignOnsController < BaseController
+    include ::DesktopHandoff
+
     allow_unauthenticated_access
 
     before_action :set_sso_request
+    before_action :store_desktop_handoff_context, only: :show
 
     def show
       unless signed_in?
         return redirect_to new_session_path(return_to: request.fullpath), alert: "Please sign in to continue"
+      end
+
+      handoff = desktop_handoff_context
+      clear_desktop_handoff_context
+      if handoff.present?
+        claim = Desktop::GlobalSessionClaim.issue!(
+          global_identity: current_global_identity,
+          nonce: handoff["nonce"],
+          origin: handoff["origin"],
+          return_path: handoff["return_path"]
+        )
+        return redirect_to_desktop_claim!(claim)
       end
 
       sso, sig = Sso::Payload.encode(sso_response_payload, @sso_client.secret)
