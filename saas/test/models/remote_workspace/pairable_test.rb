@@ -102,6 +102,17 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
     assert_nil @acme.paired_by
   end
 
+  test "a Cloud pairing retried from a stale copy gets the secret already issued" do
+    club = remote_workspaces(:club)
+    stale = RemoteWorkspace.find(club.id)
+
+    issued = club.pair_sabha_cloud!.hub_secret
+    stale.pair_sabha_cloud!
+
+    assert_equal issued, stale.hub_secret
+    assert_equal issued, club.reload.hub_secret
+  end
+
   private
     def sign_in_request(secret, return_sso_url: "https://chat.acme.org/session/hub/callback")
       Sso::Payload.encode({ nonce: "community-nonce", return_sso_url: return_sso_url }, secret)

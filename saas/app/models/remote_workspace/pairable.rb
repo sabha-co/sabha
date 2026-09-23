@@ -75,10 +75,14 @@ module RemoteWorkspace::Pairable
     end
   end
 
-  # Every deploy asks again, and gets the secret the droplet already runs with
+  # Every deploy asks again, and gets the secret the droplet already runs with.
+  # Two retries at once would each mint a secret and one droplet would keep
+  # the loser's, so the check runs on the locked, freshly read row.
   def pair_sabha_cloud!
-    unless pairing_active? && paired_via_sabha_cloud?
-      update!(hub_secret: SecureRandom.hex(32), pairing_status: :active, paired_via: :sabha_cloud, paired_by: nil, paired_at: Time.current)
+    with_lock do
+      unless pairing_active? && paired_via_sabha_cloud?
+        update!(hub_secret: SecureRandom.hex(32), pairing_status: :active, paired_via: :sabha_cloud, paired_by: nil, paired_at: Time.current)
+      end
     end
     self
   end
