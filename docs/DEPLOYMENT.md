@@ -280,7 +280,7 @@ docker compose exec web bin/rails runner "puts ActiveRecord::Base.connection.exe
 
 Self-hosted Sabha installs expose the Sabha protocol documented in [features/SABHA_PROTOCOL.md](./features/SABHA_PROTOCOL.md). No extra configuration is required beyond a reachable HTTPS origin. Clients (the desktop app, and sabha.co when a member adds your community) probe `GET /api/manifest`.
 
-Members can keep your community in their sabha.co list, beside their other communities. After sign-in, the sidebar offers once to add it (members can dismiss it for good), and the profile page keeps a link. sabha.co only reads your community's public name, logo and address; it never sees your members' accounts or sessions. To stop suggesting it, turn off **Suggest adding this community to sabha.co** in the admin settings. `SABHA_HUB_URL` points the link at a different sabha.co and defaults to `https://sabha.co`. Communities on their own single sign-on (`AUTH_METHOD=sso`) don't show it.
+Members can keep your community in their sabha.co list, beside their other communities. After sign-in, the sidebar offers once to add it (members can dismiss it for good), and the profile page keeps a link. sabha.co only reads your community's public name, logo and address; it never sees your members' accounts or sessions. To stop suggesting it, turn off **Suggest adding this community to sabha.co** in the admin settings. Communities on their own single sign-on (`AUTH_METHOD=sso`) don't show it.
 
 ---
 

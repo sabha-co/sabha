@@ -15,10 +15,10 @@ module HubListPromptHelper
   # A plain link: sabha.co looks the community up and asks the member to
   # confirm. Nothing about the member travels with it.
   def hub_list_prompt_url
-    "#{Account.hub_url.delete_suffix("/")}/remote_workspaces/new?#{{ origin: request.base_url, source: "prompt" }.to_query}"
+    "#{Sabha::HUB_URL}/remote_workspaces/new?#{{ origin: request.base_url, source: "prompt" }.to_query}"
   end
 
   def hub_name
-    URI(Account.hub_url).host
+    URI(Sabha::HUB_URL).host
   end
 end

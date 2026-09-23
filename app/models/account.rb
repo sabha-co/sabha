@@ -50,11 +50,6 @@ class Account < ApplicationRecord
     def sso_secret
       ENV["SSO_SECRET"]
     end
-
-    # The sabha.co that keeps members' lists of communities
-    def hub_url
-      ENV["SABHA_HUB_URL"].presence || "https://sabha.co"
-    end
   end
 
   def attach_logo(attachable)

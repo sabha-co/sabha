@@ -270,7 +270,7 @@ single_sign_on_records
 - "Add to your sabha.co list" link after sign-in, hidden when the admin turns it off, for users with a sabha.co link, or after the member dismisses it (`resource :hub_list_prompt, only: :destroy`, stored in `User#preferences`).
 - `GET /session/hub`, `GET /session/hub/callback`: the shortcut handshake and signed return.
 - Profile → Sign-in methods: `resource :hub_link, only: %i[ new create destroy ]`. Creating needs fresh auth; destroying is refused for the last method.
-- Env: `SABHA_HUB_URL` (default `https://sabha.co`), `SABHA_HUB_SECRET`, `SABHA_HUB_AUTO_PROVISION`, plus a setting to hide the list prompt.
+- Env: `SABHA_HUB_SECRET`, `SABHA_HUB_AUTO_PROVISION`, plus a setting to hide the list prompt. The hub is always `https://sabha.co` (`Sabha::HUB_URL`), not configurable.
 - All community-side routes above are declared `unless Sabha.saas?`.
 
 **sabha.co (hub)**

@@ -40,15 +40,6 @@ class Users::HubListPromptsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href^='https://sabha.co/remote_workspaces']", count: 0
   end
 
-  test "points at a configured sabha.co" do
-    with_env("SABHA_HUB_URL" => "https://hub.example/") do
-      get user_sidebar_url
-    end
-
-    assert_select "#hub_list_nudge a[href^='https://hub.example/remote_workspaces/new?']"
-    assert_select "#hub_list_nudge .sidebar__tool-label", "hub.example"
-  end
-
   test "the Sabha apps don't get the nudge; they have the list already" do
     get user_sidebar_url, headers: { "Sabha-Client" => "desktop" }
 
@@ -62,13 +53,4 @@ class Users::HubListPromptsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "#hub_list_nudge", count: 0
   end
-
-  private
-    def with_env(vars)
-      originals = vars.keys.index_with { ENV[it] }
-      vars.each { |key, value| ENV[key] = value }
-      yield
-    ensure
-      originals.each { |key, value| ENV[key] = value }
-    end
 end
