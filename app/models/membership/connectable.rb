@@ -107,7 +107,7 @@ module Membership::Connectable
     self.class.connect(self, connected? ? connections + 1 : 1)
     # connect zeroes the count with update_all, which skips the badge callback;
     # this record still holds the count from before.
-    user.broadcast_desktop_badge if has_unread_notifications?
+    user.broadcast_desktop_badge if Desktop.notifications_enabled? && has_unread_notifications?
   end
 
   # Leaving counts everything watched live as seen, so the cursor advances —

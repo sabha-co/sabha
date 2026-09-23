@@ -47,7 +47,7 @@ module Membership::Unreadable
   UNSEEN_SQL = "(#{UNSEEN_MESSAGES_SQL} OR #{UNSEEN_POSTS_SQL})"
 
   included do
-    after_update_commit :broadcast_desktop_badge, if: :badge_inputs_changed?
+    after_update_commit :broadcast_desktop_badge, if: :desktop_badge_changed?
 
     has_many :unread_notifications, ->(membership) {
       scope = if membership.last_read_at
@@ -313,8 +313,8 @@ module Membership::Unreadable
 
     # The badge counts rooms that are unread with something that notified, so
     # it can only move when the count or the explicit unread flag does.
-    def badge_inputs_changed?
-      saved_change_to_unread_notifications_count? || saved_change_to_marked_unread?
+    def desktop_badge_changed?
+      Desktop.notifications_enabled? && (saved_change_to_unread_notifications_count? || saved_change_to_marked_unread?)
     end
 
     def broadcast_desktop_badge

@@ -88,10 +88,10 @@ module Message::Unreadable
       return unless room.direct?
 
       affected = Membership.where(room_id: room_id).merge(Membership.with_message_unseen(created_at, id))
-      affected_user_ids = affected.pluck(:user_id)
+      affected_user_ids = Desktop.notifications_enabled? ? affected.pluck(:user_id) : []
 
       affected.update_all("unread_notifications_count = CASE WHEN unread_notifications_count > 0 THEN unread_notifications_count - 1 ELSE 0 END")
 
-      User.where(id: affected_user_ids).each(&:broadcast_desktop_badge) if Desktop.notifications_enabled?
+      User.where(id: affected_user_ids).each(&:broadcast_desktop_badge) if affected_user_ids.any?
     end
 end
