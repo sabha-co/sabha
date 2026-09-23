@@ -23,6 +23,9 @@ LICENSE*
 # IDE and editor files
 .idea/
 .vscode/
+.claude/
+.codex/
+.cursor/
 *.sublime-*
 .DS_Store
 
