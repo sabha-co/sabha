@@ -10,13 +10,7 @@
         <fieldset class="flex flex-column gap center-block pad align-center">
           <legend class="txt-large txt-align-center"><strong>Add this community to your list?</strong></legend>
 
-          <div class="workspace-initial workspace-initial--large" style="<%= remote_workspace_gradient_style(@remote_workspace) unless @remote_workspace.logo? %>">
-            <% if @remote_workspace.logo? %>
-              <%= image_tag remote_workspace_logo_path(@remote_workspace), alt: "", class: "workspace-initial__logo" %>
-            <% else %>
-              <%= @remote_workspace.name.first.upcase %>
-            <% end %>
-          </div>
+          <%= render "saas/remote_workspaces/logo", remote_workspace: @remote_workspace, large: true %>
 
           <div class="flex flex-column">
             <strong class="txt-large"><%= @remote_workspace.name %></strong>

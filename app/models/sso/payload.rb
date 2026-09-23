@@ -49,6 +49,17 @@ class Sso::Payload
     raise InvalidPayload, "Invalid Base64 payload"
   end
 
+  # Where a request wants its answer sent, read before its signature can be
+  # checked: a provider with a secret per client uses it to pick the secret.
+  # Nothing else in an unverified payload is trusted.
+  def self.unverified_return_url(encoded_payload)
+    return unless encoded_payload.to_s.match?(BASE64_PATTERN)
+
+    Rack::Utils.parse_query(Base64.strict_decode64(encoded_payload))["return_sso_url"].presence
+  rescue ArgumentError
+    nil
+  end
+
   def self.sign(payload, secret)
     OpenSSL::HMAC.hexdigest("sha256", secret, payload)
   end

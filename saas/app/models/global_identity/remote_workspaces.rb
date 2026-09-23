@@ -8,9 +8,14 @@ module GlobalIdentity::RemoteWorkspaces
   MAX_REMOTE_WORKSPACES = 100
 
   class RemoteWorkspaceLimitReachedError < StandardError; end
+  class RemoteWorkspaceClaimedError < StandardError; end
 
   included do
     has_many :remote_workspace_memberships, dependent: :destroy
+    has_many :remote_workspace_pairings, dependent: :destroy
+    # A pairing outlives whoever set it up, until the community pairs again
+    has_many :paired_remote_workspaces, class_name: "RemoteWorkspace", foreign_key: :paired_by_id,
+      inverse_of: :paired_by, dependent: :nullify
   end
 
   # Adds the community to the list, or brings a hidden entry back. The first
@@ -26,6 +31,31 @@ module GlobalIdentity::RemoteWorkspaces
       membership.update!(hidden: false)
       membership
     end
+  end
+
+  # Starts pairing a community for "Continue with sabha.co". The secret waits
+  # on the request until the community proves it's running with it.
+  def pair_remote_workspace!(remote_workspace)
+    raise RemoteWorkspaceClaimedError if Sso::ProviderClient.claims_host?(URI(remote_workspace.origin).host)
+
+    remote_workspace = save_remote_workspace!(remote_workspace) if remote_workspace.new_record?
+    remote_workspace_pairings.create!(remote_workspace: remote_workspace)
+  end
+
+  # Approving once lets sabha.co tell the community this person's name and
+  # email from then on, and keeps the community in their list.
+  def consent_to_remote_workspace!(remote_workspace)
+    list_remote_workspace!(remote_workspace, source: :shortcut).update!(consented_at: Time.current)
+  end
+
+  def consented_to_remote_workspace?(remote_workspace)
+    remote_workspace_memberships.consented.exists?(remote_workspace: remote_workspace)
+  end
+
+  # Signing in with the shortcut brings a hidden entry back
+  def signed_in_to_remote_workspace!(remote_workspace)
+    list_remote_workspace!(remote_workspace, source: :shortcut)
+    remote_workspace.signed_in!
   end
 
   def remote_workspace_limit_reached?

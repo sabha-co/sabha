@@ -61,4 +61,8 @@ Rails.application.configure do
 
   # Off by default elsewhere (config/initializers/desktop_notifications.rb).
   config.x.desktop_notifications_enabled = true
+
+  # Not secret: only ever protects test data
+  config.active_record.encryption.primary_key = "test-primary-key"
+  config.active_record.encryption.key_derivation_salt = "test-key-derivation-salt"
 end

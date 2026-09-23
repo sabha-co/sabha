@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+# A signed request from a community asking sabha.co who someone is. A paired
+# community is found by the address it wants the answer sent to; everyone
+# else is an env-configured client.
+module Saas::SingleSignOnRequest
+  extend ActiveSupport::Concern
+
+  included do
+    before_action :set_sso_request
+  end
+
+  private
+    def set_sso_request
+      @remote_workspace, @sso_request = RemoteWorkspace.authenticate_sign_in(params[:sso], params[:sig])
+      @sso_client = @remote_workspace
+      @sso_client, @sso_request = Sso::ProviderClient.authenticate(params[:sso], params[:sig]) unless @remote_workspace
+    rescue RemoteWorkspace::Disconnected => error
+      @remote_workspace = error.remote_workspace
+      render "saas/single_sign_ons/disconnected", status: :forbidden
+    rescue Sso::ProviderClient::NotConfigured
+      head :service_unavailable
+    rescue RemoteWorkspace::NotPaired, Sso::Payload::Error, Sso::ProviderClient::Error
+      head :forbidden
+    end
+end

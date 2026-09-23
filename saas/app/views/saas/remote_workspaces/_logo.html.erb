@@ -1,0 +1,8 @@
+<%# locals: (remote_workspace:, large: false) %>
+<div class="workspace-initial <%= "workspace-initial--large" if large %>" style="<%= remote_workspace_gradient_style(remote_workspace) unless remote_workspace.logo? %>">
+  <% if remote_workspace.logo? %>
+    <%= image_tag remote_workspace_logo_path(remote_workspace), alt: "", class: "workspace-initial__logo" %>
+  <% else %>
+    <%= remote_workspace.name.first.upcase %>
+  <% end %>
+</div>

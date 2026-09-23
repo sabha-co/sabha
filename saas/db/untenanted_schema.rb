@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_23_000002) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_24_100003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_23_000002) do
   end
 
   create_table "remote_workspace_memberships", force: :cascade do |t|
+    t.datetime "consented_at"
     t.datetime "created_at", null: false
     t.bigint "global_identity_id", null: false
     t.boolean "hidden", default: false, null: false
@@ -67,19 +68,37 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_23_000002) do
     t.index ["remote_workspace_id", "global_identity_id"], name: "index_remote_workspace_memberships_on_workspace_and_identity", unique: true
   end
 
+  create_table "remote_workspace_pairings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.bigint "global_identity_id", null: false
+    t.bigint "remote_workspace_id", null: false
+    t.text "secret", null: false
+    t.datetime "updated_at", null: false
+    t.index ["global_identity_id"], name: "index_remote_workspace_pairings_on_global_identity_id"
+    t.index ["remote_workspace_id"], name: "index_remote_workspace_pairings_on_remote_workspace_id"
+  end
+
   create_table "remote_workspaces", force: :cascade do |t|
     t.string "alias_origin"
     t.datetime "created_at", null: false
+    t.text "hub_secret"
+    t.datetime "last_signed_in_at"
     t.string "logo_content_type"
     t.binary "logo_data"
     t.string "logo_source_url"
     t.string "name", null: false
     t.string "origin", null: false
+    t.datetime "paired_at"
+    t.bigint "paired_by_id"
+    t.string "paired_via"
+    t.string "pairing_status", default: "none", null: false
     t.integer "protocol_major"
     t.datetime "refreshed_at"
     t.datetime "unreachable_since"
     t.datetime "updated_at", null: false
     t.index ["origin"], name: "index_remote_workspaces_on_origin", unique: true
+    t.index ["paired_by_id"], name: "index_remote_workspaces_on_paired_by_id"
   end
 
   create_table "workspace_backups", force: :cascade do |t|
@@ -141,6 +160,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_23_000002) do
   add_foreign_key "global_sessions", "global_identities"
   add_foreign_key "remote_workspace_memberships", "global_identities"
   add_foreign_key "remote_workspace_memberships", "remote_workspaces"
+  add_foreign_key "remote_workspace_pairings", "global_identities"
+  add_foreign_key "remote_workspace_pairings", "remote_workspaces"
+  add_foreign_key "remote_workspaces", "global_identities", column: "paired_by_id"
   add_foreign_key "workspace_memberships", "global_identities"
   add_foreign_key "workspace_snapshots", "workspaces"
   add_foreign_key "workspaces", "global_identities", column: "creator_id"

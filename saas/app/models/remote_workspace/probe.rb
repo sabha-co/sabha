@@ -18,7 +18,7 @@ class RemoteWorkspace::Probe
   # A Sabha server speaking a different protocol major
   class UnsupportedProtocol < Error; end
 
-  Manifest = Data.define(:name, :logo_url, :alias_origin, :protocol_major)
+  Manifest = Data.define(:name, :logo_url, :alias_origin, :protocol_major, :hub_proof)
 
   def manifest(origin)
     response, body = get(URI("#{origin}/api/manifest"), accept: "application/json", max_size: MAX_MANIFEST_SIZE)
@@ -82,7 +82,8 @@ class RemoteWorkspace::Probe
         name: name_from(community, json["product"], origin),
         logo_url: same_origin_url(community["logo_url"], origin),
         alias_origin: alias_from(community["url"], origin),
-        protocol_major: json["protocol_major"]
+        protocol_major: json["protocol_major"],
+        hub_proof: json["hub_proof"]
     rescue JSON::ParserError
       raise NotSabha
     end

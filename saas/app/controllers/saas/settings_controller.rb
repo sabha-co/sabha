@@ -13,7 +13,7 @@ module Saas
     def show
       @global_identity = current_global_identity
       @workspace_memberships = current_global_identity.workspace_memberships_with_workspaces
-      @remote_workspace_memberships = current_global_identity.remote_workspace_memberships.alphabetically
+      set_communities
       @workspace_access_denied = params[:denied] == "workspace"
     end
 
@@ -27,11 +27,17 @@ module Saas
       end
     rescue ActiveRecord::RecordInvalid
       @workspace_memberships = current_global_identity.workspace_memberships_with_workspaces
-      @remote_workspace_memberships = current_global_identity.remote_workspace_memberships.alphabetically
+      set_communities
       render :show, status: :unprocessable_entity
     end
 
     private
+
+      def set_communities
+        @remote_workspace_memberships = current_global_identity.remote_workspace_memberships.alphabetically
+        @paired_remote_workspaces = current_global_identity.paired_remote_workspaces.pairing_active.order(:name)
+        @remote_workspace_pairings = current_global_identity.remote_workspace_pairings.pending.includes(:remote_workspace).order(created_at: :desc)
+      end
 
       def settings_params
         params.require(:global_identity).permit(:email_address)

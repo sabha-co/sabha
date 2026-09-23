@@ -4,6 +4,8 @@
 # row per origin, shared by everyone who lists it, so its name and logo are
 # refreshed once for all of them. It never holds anyone's session there.
 class RemoteWorkspace < UntenantedRecord
+  include Pairable
+
   # Two missed daily refreshes before an entry reads as unreachable
   UNREACHABLE_AFTER = 1.day
 
@@ -15,7 +17,8 @@ class RemoteWorkspace < UntenantedRecord
 
   validates :origin, :name, presence: true
 
-  scope :unlisted, -> { where.missing(:memberships) }
+  # Nobody lists it and nothing pairs it, so there's nothing left to remember
+  scope :unlisted, -> { where.missing(:memberships, :pairings).where.not(pairing_status: :active) }
 
   # Adding shows the name straight away; the logo follows in the background.
   after_create_commit :refresh_later, if: :logo_source_url?

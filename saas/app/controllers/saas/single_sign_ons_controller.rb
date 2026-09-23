@@ -2,13 +2,19 @@
 
 module Saas
   class SingleSignOnsController < BaseController
-    allow_unauthenticated_access
+    include SingleSignOnRequest
 
-    before_action :set_sso_request
+    allow_unauthenticated_access
 
     def show
       unless signed_in?
         return redirect_to new_session_path(return_to: request.fullpath), alert: "Please sign in to continue"
+      end
+
+      if @remote_workspace
+        return render :consent unless current_global_identity.consented_to_remote_workspace?(@remote_workspace)
+
+        current_global_identity.signed_in_to_remote_workspace!(@remote_workspace)
       end
 
       sso, sig = Sso::Payload.encode(sso_response_payload, @sso_client.secret)
@@ -17,14 +23,6 @@ module Saas
     end
 
     private
-
-      def set_sso_request
-        @sso_client, @sso_request = Sso::ProviderClient.authenticate(params[:sso], params[:sig])
-      rescue Sso::ProviderClient::NotConfigured
-        head :service_unavailable
-      rescue Sso::Payload::Error, Sso::ProviderClient::Error
-        head :forbidden
-      end
 
       def sso_response_payload
         {

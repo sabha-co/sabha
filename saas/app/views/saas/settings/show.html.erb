@@ -71,24 +71,24 @@
 
             <div class="flex align-center justify-space-between pad-block-half pad-inline gap">
               <%= link_to remote_workspace.origin, class: "flex align-center gap txt-undecorated", data: { turbo: false } do %>
-                <div class="workspace-initial" style="<%= remote_workspace_gradient_style(remote_workspace) unless remote_workspace.logo? %>">
-                  <% if remote_workspace.logo? %>
-                    <%= image_tag remote_workspace_logo_path(remote_workspace), alt: "", class: "workspace-initial__logo" %>
-                  <% else %>
-                    <%= remote_workspace.name.first.upcase %>
-                  <% end %>
-                </div>
+                <%= render "saas/remote_workspaces/logo", remote_workspace: remote_workspace %>
                 <div class="flex flex-column">
                   <strong><%= remote_workspace.name %></strong>
                   <span class="txt-small txt-muted">
                     <%= remote_workspace.address %>
                     <% if remote_workspace.unreachable? %> · Unreachable<% end %>
                     <% if membership.hidden? %> · Hidden<% end %>
+                    <% if membership.consented? %> · Signs in with sabha.co<% end %>
                   </span>
                 </div>
               <% end %>
 
-              <div class="flex align-center gap-half">
+              <div class="flex align-center gap-half flex-item-no-shrink">
+                <% if membership.consented? %>
+                  <%= button_to "Disconnect", remote_workspace_membership_consent_path(membership),
+                        method: :delete, class: "btn txt-small", form_class: "flex",
+                        "aria-label": "Stop signing in to #{remote_workspace.name} with sabha.co" %>
+                <% end %>
                 <%= button_to membership.hidden? ? "Show" : "Hide", remote_workspace_membership_path(membership),
                       method: :patch, params: { remote_workspace_membership: { hidden: !membership.hidden? } },
                       class: "btn txt-small", form_class: "flex" %>
@@ -112,6 +112,66 @@
         <% if @remote_workspace_memberships.any? %>
           <%= button_to "Clear list", remote_workspace_list_path, method: :delete, class: "btn txt-small",
                 data: { turbo_confirm: "Forget every community in your list? Your accounts on them stay as they are." } %>
+        <% end %>
+      </div>
+    </section>
+  </div>
+
+  <%# Communities this person paired with sabha.co, for "Continue with sabha.co" %>
+  <div class="panel">
+    <section class="settings__section">
+      <header>
+        <h2 class="divider">Connected communities</h2>
+      </header>
+
+      <p class="txt-small txt-muted">
+        Run a self-hosted Sabha? Connect it to sabha.co so members can sign in with <strong>Continue with sabha.co</strong>. Its own login keeps working.
+      </p>
+
+      <% if @paired_remote_workspaces.any? || @remote_workspace_pairings.any? %>
+        <div class="flex flex-column gap-half">
+          <% @paired_remote_workspaces.each do |remote_workspace| %>
+            <div class="flex align-center justify-space-between pad-block-half pad-inline gap">
+              <div class="flex align-center gap">
+                <%= render "saas/remote_workspaces/logo", remote_workspace: remote_workspace %>
+                <div class="flex flex-column">
+                  <strong><%= remote_workspace.name %></strong>
+                  <span class="txt-small txt-muted"><%= remote_workspace.address %> · Connected</span>
+                </div>
+              </div>
+
+              <div class="flex align-center gap-half flex-item-no-shrink">
+                <%= link_to "Pair again", new_remote_workspace_pairing_path(origin: remote_workspace.origin), class: "btn txt-small",
+                      "aria-label": "Pair #{remote_workspace.name} again with a new secret" %>
+                <%= button_to "Disconnect", remote_workspace_connection_path(remote_workspace),
+                      method: :delete, class: "btn btn--negative txt-small", form_class: "flex",
+                      "aria-label": "Disconnect #{remote_workspace.name} from sabha.co" %>
+              </div>
+            </div>
+          <% end %>
+
+          <% @remote_workspace_pairings.each do |pairing| %>
+            <% remote_workspace = pairing.remote_workspace %>
+
+            <div class="flex align-center justify-space-between pad-block-half pad-inline gap">
+              <div class="flex align-center gap">
+                <%= render "saas/remote_workspaces/logo", remote_workspace: remote_workspace %>
+                <div class="flex flex-column">
+                  <strong><%= remote_workspace.name %></strong>
+                  <span class="txt-small txt-muted"><%= remote_workspace.address %> · Waiting for Verify</span>
+                </div>
+              </div>
+
+              <%= link_to "Verify", remote_workspace_pairing_path(pairing), class: "btn txt-small" %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="flex justify-center">
+        <%= link_to new_remote_workspace_pairing_path, class: "btn" do %>
+          <%= icon_tag "add" %>
+          <span>Connect a community</span>
         <% end %>
       </div>
     </section>

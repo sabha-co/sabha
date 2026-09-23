@@ -99,7 +99,97 @@ module Saas
       assert_response :service_unavailable
     end
 
+    test "asks before telling a paired community who you are, the first time only" do
+      identity = global_identities(:charlie)
+      acme = pair_acme
+      sign_in_global_identity(identity)
+      sso, sig = community_request
+
+      get "/session/sso", params: { sso:, sig: }
+      assert_response :ok
+      assert_select "legend", text: "Allow Acme to see your name and email?"
+      assert_select "span", text: "chat.acme.org"
+      assert_select "form[action='/session/sso/consent'][data-turbo=false]"
+
+      post "/session/sso/consent", params: { sso:, sig: }
+      assert_redirected_to "/session/sso?#{{ sso:, sig: }.to_query}"
+      follow_redirect!
+
+      assert_match %r{\Ahttps://chat\.acme\.org/session/hub/callback\?}, response.location
+      payload = callback_payload(response.location, "acme-hub-secret")
+      assert_equal "community-nonce", payload.nonce
+      assert_equal "global_identity:#{identity.id}", payload["external_id"]
+      assert identity.remote_workspace_memberships.find_by!(remote_workspace: acme).shortcut?
+
+      get "/session/sso", params: { sso:, sig: }
+      assert_match %r{\Ahttps://chat\.acme\.org/session/hub/callback\?}, response.location
+    end
+
+    test "signing in with the shortcut brings back a hidden entry" do
+      acme = pair_acme
+      identity = global_identities(:alice)
+      identity.consent_to_remote_workspace!(acme)
+      remote_workspace_memberships(:alice_acme).update!(hidden: true)
+      sign_in_global_identity(identity)
+      sso, sig = community_request
+
+      get "/session/sso", params: { sso:, sig: }
+
+      assert_response :redirect
+      assert_not remote_workspace_memberships(:alice_acme).reload.hidden?
+    end
+
+    test "a community that isn't paired can't ask" do
+      sign_in_global_identity(global_identities(:alice))
+      sso, sig = community_request
+
+      get "/session/sso", params: { sso:, sig: }
+
+      assert_response :forbidden
+    end
+
+    test "a disconnected community gets a page that explains" do
+      pair_acme.disconnect!
+      sso, sig = community_request
+
+      get "/session/sso", params: { sso:, sig: }
+
+      assert_response :forbidden
+      assert_select "h1", text: /Acme is no longer connected to sabha.co/
+      assert_select "a[href=?]", "https://chat.acme.org/session/new"
+    end
+
+    test "approving needs a signed-in person and a valid request" do
+      pair_acme
+      sso, sig = community_request
+
+      post "/session/sso/consent", params: { sso:, sig: }
+      assert_response :redirect
+      assert_not_equal "/session/sso?#{{ sso:, sig: }.to_query}", URI(response.location).request_uri
+
+      sign_in_global_identity(global_identities(:alice))
+      post "/session/sso/consent", params: { sso:, sig: "forged" }
+      assert_response :forbidden
+    end
+
+    test "env clients never see the consent screen" do
+      sign_in_global_identity(global_identities(:alice))
+      sso, sig = provider_request
+
+      post "/session/sso/consent", params: { sso:, sig: }
+
+      assert_response :forbidden
+    end
+
     private
+      def pair_acme
+        remote_workspaces(:acme).tap { it.update!(pairing_status: :active, paired_via: :self_serve, hub_secret: "acme-hub-secret") }
+      end
+
+      def community_request
+        Sso::Payload.encode({ nonce: "community-nonce", return_sso_url: "https://chat.acme.org/session/hub/callback" }, "acme-hub-secret")
+      end
+
       def provider_request(attributes = {})
         Sso::Payload.encode({
           nonce: "cloud-nonce",
@@ -107,11 +197,11 @@ module Saas
         }.merge(attributes), ENV["SSO_CLOUD_SECRET"])
       end
 
-      def callback_payload(location)
+      def callback_payload(location, secret = ENV["SSO_CLOUD_SECRET"])
         uri = URI.parse(location)
         query = Rack::Utils.parse_query(uri.query)
 
-        Sso::Payload.decode(query["sso"], query["sig"], ENV["SSO_CLOUD_SECRET"])
+        Sso::Payload.decode(query["sso"], query["sig"], secret)
       end
 
       def restore_env(key, value)

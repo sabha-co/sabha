@@ -50,6 +50,7 @@ module Sabha
 
             # Session (login/logout) - uses GlobalIdentity
             get "/session/sso", to: "saas/single_sign_ons#show"
+            post "/session/sso/consent", to: "saas/single_sign_on_consents#create", as: :single_sign_on_consent
             resource :session, only: [ :new, :create, :destroy ], controller: "saas/sessions"
 
             # Auth code OTP verification
@@ -78,9 +79,14 @@ module Sabha
             # Self-hosted communities in the person's list
             resources :remote_workspaces, only: [ :new, :create ], controller: "saas/remote_workspaces" do
               resource :logo, only: :show, controller: "saas/remote_workspaces/logos"
+              resource :connection, only: :destroy, controller: "saas/remote_workspaces/connections"
             end
             resources :remote_workspace_memberships, only: [ :update, :destroy ],
-                      controller: "saas/remote_workspace_memberships"
+                      controller: "saas/remote_workspace_memberships" do
+              resource :consent, only: :destroy, controller: "saas/remote_workspace_memberships/consents"
+            end
+            resources :remote_workspace_pairings, only: [ :new, :create, :show, :update ],
+                      controller: "saas/remote_workspace_pairings"
             resource :remote_workspace_list, only: :destroy, controller: "saas/remote_workspace_lists"
 
             # Platform admin area (superadmin only)

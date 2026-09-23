@@ -18,6 +18,7 @@ if Sabha.saas?
     json.name remote_workspace.name
     json.logo_url(remote_workspace.logo? ? remote_workspace_logo_url(remote_workspace, script_name: "") : nil)
     json.unreachable remote_workspace.unreachable?
+    json.shortcut remote_workspace.pairing_active?
   end
 else
   json.peers [ Current.account ] do |account|

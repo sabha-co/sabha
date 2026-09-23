@@ -41,7 +41,7 @@ production:
     schedule: every day at 2am
 
   refresh_remote_workspaces:
-    command: "RemoteWorkspace.unlisted.destroy_all; RemoteWorkspace.refresh_all_later"
+    command: "RemoteWorkspacePairing.expired.delete_all; RemoteWorkspace.unlisted.destroy_all; RemoteWorkspace.refresh_all_later"
     schedule: every day at 4am
 
   snapshot_workspaces:

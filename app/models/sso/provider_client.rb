@@ -33,6 +33,11 @@ class Sso::ProviderClient
     all.select(&:active?)
   end
 
+  # A host an env client answers for can't also be paired as a community
+  def self.claims_host?(host)
+    active.any? { it.claims_host?(host) }
+  end
+
   def self.all
     ENV.fetch("SSO_PROVIDER_CLIENTS", "").split(",").filter_map do |name|
       from_env(name.strip)
@@ -69,7 +74,7 @@ class Sso::ProviderClient
 
     uri = URI.parse(url)
 
-    unless valid_scheme?(uri) && host_matches?(uri.host) && uri.path == return_path && uri.userinfo.blank?
+    unless valid_scheme?(uri) && claims_host?(uri.host) && uri.path == return_path && uri.userinfo.blank?
       raise InvalidReturnUrl, "Untrusted SSO return URL"
     end
 
@@ -85,6 +90,23 @@ class Sso::ProviderClient
     return_host.to_s.start_with?("*.")
   end
 
+  def claims_host?(host)
+    return false if host.blank?
+    return host == return_host unless wildcard?
+
+    base = return_host.delete_prefix("*.")
+    return false unless host.end_with?(".#{base}")
+
+    remainder = host.delete_suffix(".#{base}")
+    return false if remainder.empty? || remainder.include?(".")
+
+    # A wildcard client must not validate a host that another configured
+    # client claims exactly — keeps managed_sabha (*.sabha.co) out of
+    # cloud.sabha.co even if cloud_sabha's secret leaks and an attacker
+    # tries to swap return URLs.
+    !claimed_exactly_by_other_client?(host)
+  end
+
   private
     # Production requires HTTPS; development allows plain HTTP so the local
     # cloud.lvh.me ↔ lvh.me SSO loop works without TLS.
@@ -92,23 +114,6 @@ class Sso::ProviderClient
       return true if uri.is_a?(URI::HTTPS)
 
       Rails.env.development? && uri.is_a?(URI::HTTP)
-    end
-
-    def host_matches?(host)
-      return false if host.blank?
-      return host == return_host unless wildcard?
-
-      base = return_host.delete_prefix("*.")
-      return false unless host.end_with?(".#{base}")
-
-      remainder = host.delete_suffix(".#{base}")
-      return false if remainder.empty? || remainder.include?(".")
-
-      # A wildcard client must not validate a host that another configured
-      # client claims exactly — keeps managed_sabha (*.sabha.co) out of
-      # cloud.sabha.co even if cloud_sabha's secret leaks and an attacker
-      # tries to swap return URLs.
-      !claimed_exactly_by_other_client?(host)
     end
 
     def claimed_exactly_by_other_client?(host)

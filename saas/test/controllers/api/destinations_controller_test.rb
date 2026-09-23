@@ -48,6 +48,14 @@ module Saas
       assert_equal "http://www.example.com/remote_workspaces/#{acme.remote_workspace_id}/logo", body["remote_peers"].last["logo_url"]
     end
 
+    test "says which communities offer Continue with sabha.co" do
+      remote_workspaces(:acme).update!(pairing_status: :active, hub_secret: "secret")
+
+      get "/api/destinations", headers: protocol_headers
+
+      assert_equal [ true ], JSON.parse(response.body)["remote_peers"].map { it["shortcut"] }
+    end
+
     private
       def protocol_headers
         { "Sabha-Protocol-Major" => "1" }

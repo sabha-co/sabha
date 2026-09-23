@@ -282,6 +282,18 @@ Self-hosted Sabha installs expose the Sabha protocol documented in [features/SAB
 
 Members can keep your community in their sabha.co list, beside their other communities. After sign-in, the sidebar offers once to add it (members can dismiss it for good), and the profile page keeps a link. sabha.co only reads your community's public name, logo and address; it never sees your members' accounts or sessions. To stop suggesting it, turn off **Suggest adding this community to sabha.co** in the admin settings. Communities on their own single sign-on (`AUTH_METHOD=sso`) don't show it.
 
+### Continue with sabha.co
+
+You can also let members sign in with their sabha.co account. It's one more option beside your own password or email-code login, and it's off until you connect:
+
+1. On sabha.co, open **Settings → Connected communities → Connect a community** and paste your community's address. sabha.co shows a secret once.
+2. Set it as `SABHA_HUB_SECRET` and restart.
+3. Click **Verify** on sabha.co. It checks your community is running with the secret, then switches the shortcut on.
+
+Your rules still apply. Someone new needs your invite link, even with sabha.co, unless you set `SABHA_HUB_AUTO_PROVISION=true`. An existing member is never matched to a sabha.co account by email; they connect it from their own profile after signing in the usual way. sabha.co tells your community a member's name and email only after that member approves it once.
+
+To rotate the secret, connect again from sabha.co, restart with the new secret and Verify straight away; the shortcut stops working in between. To stop, disconnect on sabha.co. Members keep your community in their list and sign in the usual way. Communities on their own single sign-on (`AUTH_METHOD=sso`) can't use the shortcut.
+
 ---
 
 ## Server Requirements
