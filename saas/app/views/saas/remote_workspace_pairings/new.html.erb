@@ -11,8 +11,6 @@
 
         <% if @lookup_error %>
           <p class="txt-small txt-negative" role="alert"><%= remote_workspace_lookup_message(@lookup_error) %></p>
-        <% elsif @claimed %>
-          <p class="txt-small txt-negative" role="alert">That address already signs in with sabha.co another way, so it can't be connected here.</p>
         <% end %>
 
         <label class="flex align-center gap input input--actor txt-large">

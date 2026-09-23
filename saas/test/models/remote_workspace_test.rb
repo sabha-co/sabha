@@ -151,7 +151,7 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
   test "only communities somebody lists are kept" do
     unlisted = RemoteWorkspace.create!(origin: ORIGIN, name: "New")
 
-    assert_equal [ unlisted ], RemoteWorkspace.unlisted
+    assert_equal [ unlisted ], RemoteWorkspace.abandoned
   end
 
   test "refreshes every community in the background" do

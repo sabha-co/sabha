@@ -83,11 +83,11 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
     RemoteWorkspaceMembership.delete_all
     global_identities(:bob).pair_remote_workspace!(remote_workspaces(:club))
 
-    assert_empty RemoteWorkspace.unlisted
+    assert_empty RemoteWorkspace.abandoned
 
     RemoteWorkspacePairing.delete_all
     @acme.disconnect!
-    assert_equal [ @acme, remote_workspaces(:club) ].sort_by(&:id), RemoteWorkspace.unlisted.sort_by(&:id)
+    assert_equal [ @acme, remote_workspaces(:club) ].sort_by(&:id), RemoteWorkspace.abandoned.sort_by(&:id)
   end
 
   test "deleting an account forgets its requests and leaves its pairings working" do

@@ -12,11 +12,11 @@ class RemoteWorkspacePairing < UntenantedRecord
   belongs_to :global_identity
 
   encrypts :secret
+  has_secure_token :secret, length: 64
+  attribute :expires_at, default: -> { EXPIRES_IN.from_now }
 
   scope :pending, -> { where(expires_at: Time.current..) }
   scope :expired, -> { where(expires_at: ...Time.current) }
-
-  before_validation :generate_secret, on: :create
 
   def verify!
     hub_proof = RemoteWorkspace::Probe.new.manifest(remote_workspace.origin).hub_proof
@@ -30,11 +30,6 @@ class RemoteWorkspacePairing < UntenantedRecord
   end
 
   private
-    def generate_secret
-      self.secret ||= SecureRandom.hex(32)
-      self.expires_at ||= EXPIRES_IN.from_now
-    end
-
     def expected_proof
       RemoteWorkspace.pairing_proof(secret, remote_workspace.origin)
     end

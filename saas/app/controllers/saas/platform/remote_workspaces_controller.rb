@@ -15,14 +15,10 @@ module Saas
       end
 
       def create
-        remote_workspace = RemoteWorkspace.pair_sabha_cloud!(params.require(:origin), name: params.require(:name))
-        owner = GlobalIdentity.find_by(email_address: params[:owner_email].to_s.downcase) if params[:owner_email].present?
+        remote_workspace = RemoteWorkspace.pair_sabha_cloud!(params.require(:origin), name: params.require(:name), owner_email: params[:owner_email])
 
-        render json: {
-          origin: remote_workspace.origin,
-          secret: remote_workspace.hub_secret,
-          listed: owner&.list_sabha_cloud_workspace(remote_workspace).present?
-        }, status: :created
+        render json: { origin: remote_workspace.origin, secret: remote_workspace.secret, listed: remote_workspace.listed_by?(params[:owner_email]) },
+          status: :created
       end
 
       # The droplet is gone. Its owner keeps the entry until they remove it.

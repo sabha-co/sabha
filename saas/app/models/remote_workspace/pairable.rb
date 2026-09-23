@@ -24,6 +24,8 @@ module RemoteWorkspace::Pairable
     enum :paired_via, %w[ self_serve sabha_cloud ].index_by(&:itself), prefix: true
 
     encrypts :hub_secret
+    # Signs sign-in answers, as an env client's secret does
+    alias_attribute :secret, :hub_secret
 
     belongs_to :paired_by, class_name: "GlobalIdentity", optional: true
     has_many :pairings, class_name: "RemoteWorkspacePairing", dependent: :destroy
@@ -52,18 +54,16 @@ module RemoteWorkspace::Pairable
     # A Sabha Cloud droplet, paired as it's provisioned. The platform created
     # the server, so there's nothing to prove, and the droplet may not answer
     # yet: the name is Cloud's until the daily refresh reads the manifest.
-    def pair_sabha_cloud!(address, name:)
-      remote_workspace = create_or_find_by!(origin: RemoteWorkspace::Origin.normalize(address)) { it.name = name }
-      remote_workspace.pair_sabha_cloud!
+    def pair_sabha_cloud!(address, name:, owner_email: nil)
+      create_or_find_by!(origin: RemoteWorkspace::Origin.normalize(address)) { it.name = name }.tap do |remote_workspace|
+        remote_workspace.pair_sabha_cloud!
+        GlobalIdentity.find_by(email_address: owner_email.to_s.downcase)&.list_sabha_cloud_workspace(remote_workspace) if owner_email.present?
+      end
     end
 
     def pairing_proof(secret, origin)
       OpenSSL::HMAC.hexdigest("sha256", secret, "#{PAIRING_PROOF_CONTEXT}#{origin}")
     end
-  end
-
-  def secret
-    hub_secret
   end
 
   # A verified request replaces whatever pairing came before it
@@ -81,6 +81,11 @@ module RemoteWorkspace::Pairable
       update!(hub_secret: SecureRandom.hex(32), pairing_status: :active, paired_via: :sabha_cloud, paired_by: nil, paired_at: Time.current)
     end
     self
+  end
+
+  # A droplet's owner may not have a sabha.co account yet, or a full list
+  def listed_by?(email_address)
+    memberships.joins(:global_identity).exists?(global_identities: { email_address: email_address.to_s.downcase })
   end
 
   # Members keep their entries; each falls back to the community's own login,

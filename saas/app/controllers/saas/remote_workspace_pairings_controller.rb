@@ -21,13 +21,10 @@ module Saas
       @pairing = current_global_identity.pair_remote_workspace!(RemoteWorkspace.preview(params[:origin]))
       @show_secret = true
       render :show, status: :created
-    rescue RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Origin::Hub, RemoteWorkspace::Probe::Error => error
+    rescue RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Origin::Hub, RemoteWorkspace::Probe::Error,
+        GlobalIdentity::RemoteWorkspaceClaimedError => error
       @address = params[:origin].to_s
       @lookup_error = error
-      render :new, status: :unprocessable_entity
-    rescue GlobalIdentity::RemoteWorkspaceClaimedError
-      @address = params[:origin].to_s
-      @claimed = true
       render :new, status: :unprocessable_entity
     end
 

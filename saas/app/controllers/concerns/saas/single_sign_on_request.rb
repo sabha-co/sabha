@@ -13,8 +13,7 @@ module Saas::SingleSignOnRequest
   private
     def set_sso_request
       @remote_workspace, @sso_request = RemoteWorkspace.authenticate_sign_in(params[:sso], params[:sig])
-      @sso_client = @remote_workspace
-      @sso_client, @sso_request = Sso::ProviderClient.authenticate(params[:sso], params[:sig]) unless @remote_workspace
+      @sso_client, @sso_request = @remote_workspace ? [ @remote_workspace, @sso_request ] : Sso::ProviderClient.authenticate(params[:sso], params[:sig])
     rescue RemoteWorkspace::Disconnected => error
       @remote_workspace = error.remote_workspace
       render "saas/single_sign_ons/disconnected", status: :forbidden

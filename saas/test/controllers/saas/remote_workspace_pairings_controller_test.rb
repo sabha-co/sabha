@@ -42,6 +42,17 @@ module Saas
       assert_select "[role=alert]", text: /https/
     end
 
+    test "won't pair an address an env client answers for" do
+      ENV["SSO_PROVIDER_CLIENTS"], ENV["SSO_ACME_RETURN_HOST"], ENV["SSO_ACME_SECRET"] = "acme", "chat.acme.org", "secret"
+
+      post "/remote_workspace_pairings", params: { origin: "chat.acme.org" }
+
+      assert_response :unprocessable_entity
+      assert_select "[role=alert]", text: /another way/
+    ensure
+      %w[ SSO_PROVIDER_CLIENTS SSO_ACME_RETURN_HOST SSO_ACME_SECRET ].each { ENV.delete(it) }
+    end
+
     test "verify switches the shortcut on" do
       pairing = @alice.pair_remote_workspace!(@acme)
       stub_manifest(hub_proof: RemoteWorkspace.pairing_proof(pairing.secret, @acme.origin))
