@@ -1,10 +1,10 @@
-class API::Desktop::SessionClaimsController < API::ProtocolController
+class API::SessionClaimsController < API::ProtocolController
   allow_unauthenticated_access
 
   rate_limit to: 10, within: 1.minute, only: :create, with: -> { render json: { error: "Too many requests" }, status: :too_many_requests }
 
   def create
-    claim = Desktop::SessionClaim.redeem!(
+    claim = Session::Claim.redeem!(
       token: params[:token],
       nonce: params[:nonce],
       origin: params[:origin],
@@ -12,7 +12,7 @@ class API::Desktop::SessionClaimsController < API::ProtocolController
     )
     start_new_session_for(claim.user)
     render json: { return_path: claim.return_path }
-  rescue Desktop::SessionClaim::Invalid
+  rescue Session::Claim::Invalid
     render json: { error: "Invalid or expired claim" }, status: :forbidden
   end
 end

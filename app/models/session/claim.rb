@@ -1,4 +1,4 @@
-class Desktop::SessionClaim < ApplicationRecord
+class Session::Claim < ApplicationRecord
   class Invalid < StandardError; end
 
   ACTIVE_TTL = 5.minutes

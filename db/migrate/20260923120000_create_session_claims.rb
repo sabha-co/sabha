@@ -1,6 +1,6 @@
-class CreateDesktopSessionClaims < ActiveRecord::Migration[8.2]
+class CreateSessionClaims < ActiveRecord::Migration[8.2]
   def change
-    create_table :desktop_session_claims do |t|
+    create_table :session_claims do |t|
       t.references :user, null: false, foreign_key: true
       t.string :token_digest, null: false
       t.string :nonce, null: false
@@ -13,7 +13,7 @@ class CreateDesktopSessionClaims < ActiveRecord::Migration[8.2]
       t.timestamps
     end
 
-    add_index :desktop_session_claims, :token_digest, unique: true
-    add_index :desktop_session_claims, :expires_at
+    add_index :session_claims, :token_digest, unique: true
+    add_index :session_claims, :expires_at
   end
 end

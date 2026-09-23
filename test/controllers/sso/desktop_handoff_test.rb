@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
-  CODE_CHALLENGE = Desktop::SessionClaim.code_challenge_for("desktop-code-verifier")
+  CODE_CHALLENGE = Session::Claim.code_challenge_for("desktop-code-verifier")
 
   setup do
     host! "once.sabha.test"
@@ -20,12 +20,12 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
     get sso_handshake_url, params: handoff_params(return_to: "/chat")
     assert_response :success
 
-    assert_difference -> { Desktop::SessionClaim.count }, 1 do
+    assert_difference -> { Session::Claim.count }, 1 do
       complete_sso_as users(:david)
     end
 
     assert_redirected_to %r{\Asabha://session-claim\?}
-    claim = Desktop::SessionClaim.last
+    claim = Session::Claim.last
     assert_equal "handoff-nonce", claim.nonce
     assert_equal "https://once.sabha.test", claim.origin
     assert_equal CODE_CHALLENGE, claim.code_challenge
@@ -36,13 +36,13 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
     get sso_handshake_url, params: handoff_params(return_to: "//evil.example/steal")
     complete_sso_as users(:david)
 
-    assert_equal "/", Desktop::SessionClaim.last.return_path
+    assert_equal "/", Session::Claim.last.return_path
   end
 
   test "desktop handoff without a code challenge is ignored" do
     get sso_handshake_url, params: handoff_params.except(:desktop_code_challenge)
 
-    assert_no_difference -> { Desktop::SessionClaim.count } do
+    assert_no_difference -> { Session::Claim.count } do
       complete_sso_as users(:david)
     end
     assert_redirected_to root_url
@@ -52,7 +52,7 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
     get sso_handshake_url, params: handoff_params
     get sso_handshake_url
 
-    assert_no_difference -> { Desktop::SessionClaim.count } do
+    assert_no_difference -> { Session::Claim.count } do
       complete_sso_as users(:david)
     end
     assert_redirected_to root_url
@@ -66,7 +66,7 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_url
     assert parsed_cookies.signed[:session_token]
-    assert_empty Desktop::SessionClaim.redeemable
+    assert_empty Session::Claim.redeemable
   end
 
   private

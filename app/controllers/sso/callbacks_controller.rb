@@ -45,7 +45,7 @@ class Sso::CallbacksController < Sso::BaseController
       start_new_session_for user
 
       if handoff.present?
-        claim = Desktop::SessionClaim.issue!(
+        claim = Session::Claim.issue!(
           user: user,
           nonce: handoff["nonce"],
           origin: handoff["origin"],

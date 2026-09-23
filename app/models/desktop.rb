@@ -1,6 +1,4 @@
 module Desktop
-  def self.table_name_prefix = "desktop_"
-
   UPGRADE_URL = "https://github.com/sabha-co/sabha-desktop/releases"
 
   # Off until the desktop app ships: every eligible recipient otherwise costs a

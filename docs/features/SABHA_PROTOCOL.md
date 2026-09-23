@@ -12,7 +12,7 @@ Every request to these endpoints sends the `Sabha-Protocol-Major` header. Major 
 |--------|------|------|---------|
 | GET | `/api/manifest` | None | Product identity and server-owned sign-in entry |
 | GET | `/api/destinations` | Session | Ordered destinations and cable-discovery paths |
-| POST | `/api/desktop/session_claim` | None | Redeem a one-time desktop SSO claim (self-hosted only) |
+| POST | `/api/session_claim` | None | Redeem a one-time SSO session claim (self-hosted only) |
 
 ### Manifest
 
@@ -31,7 +31,7 @@ Authenticated catalog after sign-in.
 
 One-time credentials for system-browser SSO return. Claims store only a SHA256 digest of the bearer token, expire after five minutes, and redeem transactionally once into the initiating origin's session partition. Redeeming requires the PKCE `code_verifier` for the challenge sent at the start of the handoff, so an app that intercepts the `sabha://` link can't use it.
 
-Claims live in `desktop_session_claims` and exist in self-hosted mode only. In SaaS mode the desktop client signs in to sabha.co inside the app at the manifest's `sign_in_path`.
+Claims live in `session_claims` and exist in self-hosted mode only. In SaaS mode the desktop client signs in to sabha.co inside the app at the manifest's `sign_in_path`.
 
 ## SSO hand-off
 
@@ -43,7 +43,7 @@ When the desktop client opens an external sign-in flow, pass these query paramet
 - `desktop_code_challenge` — PKCE S256 challenge: base64url (no padding) of the SHA256 of a random client-held verifier
 - `return_to` — optional in-app path to open after redeem; anything other than a local path falls back to `/`
 
-A handshake without these parameters clears any earlier pending handoff. After successful SSO, Sabha redirects to `sabha://session-claim?token=…&origin=…&nonce=…`. The desktop client redeems it via `POST /api/desktop/session_claim` with `token`, `nonce`, `origin` and `code_verifier`, and the response carries `return_path`.
+A handshake without these parameters clears any earlier pending handoff. After successful SSO, Sabha redirects to `sabha://session-claim?token=…&origin=…&nonce=…`. The desktop client redeems it via `POST /api/session_claim` with `token`, `nonce`, `origin` and `code_verifier`, and the response carries `return_path`.
 
 Password, email-code, and ordinary browser SSO flows without desktop handoff parameters are unchanged.
 

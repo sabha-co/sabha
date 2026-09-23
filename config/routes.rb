@@ -195,10 +195,7 @@ Rails.application.routes.draw do
 
     resource :manifest, only: :show
     resource :destinations, only: :show
-
-    namespace :desktop do
-      resource :session_claim, only: :create unless Sabha.saas?
-    end
+    resource :session_claim, only: :create unless Sabha.saas?
   end
 
   # Bot API — authenticate with `Authorization: Bearer <bot_key>`.

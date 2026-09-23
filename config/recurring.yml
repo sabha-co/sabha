@@ -26,8 +26,8 @@ production:
     command: "SingleSignOnNonce.purge_expired"
     schedule: every hour at minute 24
 
-  clear_expired_desktop_session_claims:
-    command: "Desktop::SessionClaim.purge_expired"
+  clear_expired_session_claims:
+    command: "Session::Claim.purge_expired"
     schedule: every hour at minute 26
 <% end %>
 

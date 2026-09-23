@@ -149,7 +149,7 @@ class UserTest < ActiveSupport::TestCase
     user = users(:david)
     issue_desktop_session_claim(user)
 
-    assert_changes -> { user.desktop_session_claims.count }, from: 1, to: 0 do
+    assert_changes -> { user.session_claims.count }, from: 1, to: 0 do
       user.deactivate
     end
   end
@@ -158,7 +158,7 @@ class UserTest < ActiveSupport::TestCase
     user = users(:kevin)
     issue_desktop_session_claim(user)
 
-    assert_difference -> { Desktop::SessionClaim.count }, -1 do
+    assert_difference -> { Session::Claim.count }, -1 do
       user.destroy!
     end
   end
@@ -592,7 +592,7 @@ class UserTest < ActiveSupport::TestCase
 
   private
     def issue_desktop_session_claim(user)
-      Desktop::SessionClaim.issue!(user: user, nonce: "n", origin: "https://once.sabha.test", code_challenge: "c", return_path: "/")
+      Session::Claim.issue!(user: user, nonce: "n", origin: "https://once.sabha.test", code_challenge: "c", return_path: "/")
     end
 
     def create_new_user
