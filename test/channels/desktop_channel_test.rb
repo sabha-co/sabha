@@ -37,11 +37,11 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
     )
 
     assert_broadcasts("desktop:#{users(:jason).id}", 1) do
-      Desktop::NotificationEvent.deliver_for(
+      Desktop::NotificationEvent.new(
         message: message,
         user: users(:jason),
         activity_types: [ :direct_message ]
-      )
+      ).deliver
     end
   end
 end

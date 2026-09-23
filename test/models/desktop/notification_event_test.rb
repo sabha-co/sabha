@@ -47,10 +47,31 @@ class Desktop::NotificationEventTest < ActiveSupport::TestCase
 
     DesktopChannel.expects(:broadcast_to_user).with(user, kind_of(Hash)).once
 
-    Desktop::NotificationEvent.deliver_for(
+    Desktop::NotificationEvent.new(
       message: message,
       user: user,
       activity_types: [ :direct_message ]
+    ).deliver
+  end
+
+  test "builds every recipient's event from one push payload and one badge query" do
+    message = rooms(:designers).messages.create!(
+      body: "Batch me",
+      creator: users(:david),
+      client_message_id: "desktop_event_batch"
     )
+    recipients = [ users(:kevin), users(:jason) ]
+
+    Room::MessagePusher.expects(:payload_for).once.returns(title: "t", body: "b", path: "/p")
+    Desktop::BadgeState.expects(:count_for).never
+
+    events = Desktop::NotificationEvent.for_recipients(
+      message: message,
+      user_ids: recipients.map(&:id).to_set,
+      activity_types: [ :everyone_room_message ]
+    )
+
+    assert_equal recipients.map(&:id).sort, events.map { |event| event.user.id }.sort
+    assert events.all? { |event| event.as_json[:badge].is_a?(Integer) }
   end
 end

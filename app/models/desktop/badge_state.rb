@@ -11,6 +11,11 @@ module Desktop
         user.memberships.unread.where("unread_notifications_count > 0").count
       end
 
+      # { user_id => count } in one query; users with nothing unread are absent.
+      def counts_for(user_ids)
+        Membership.where(user_id: user_ids.to_a).unread.where("unread_notifications_count > 0").group(:user_id).count
+      end
+
       def snapshot_for(user)
         {
           type: "badge",

@@ -207,16 +207,21 @@ class Message < ApplicationRecord
     # Two phases. Everything that can raise — in-app rows, email bundles, and
     # working out who to push — runs first; posting runs last. A push can't be
     # recalled once posted, so a raise afterwards (the next activity type's
-    # email work, say) would re-send it when the job retries.
+    # email work, say) would re-send it when the job retries. Desktop events go
+    # out after pushes and swallow their own broadcast errors for the same reason.
     types.each do |activity_type|
       deliver_in_app_row_for(activity_type, actor: actor)              if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
       push_subscriptions.concat push_subscriptions_for(activity_type)  if Notification::Routing::PUSH_TYPES.include?(activity_type)
-      desktop_recipient_ids.merge(desktop_recipient_user_ids_for(activity_type)) if Notification::Routing::DESKTOP_TYPES.include?(activity_type)
+      desktop_recipient_ids.merge(desktop_recipient_user_ids_for(activity_type)) if desktop_events_for?(activity_type)
       enqueue_missed_email_candidates_for(activity_type)               if Notification::Routing::EMAIL_TYPES.include?(activity_type)
     end
 
-    deliver_desktop_events_to(desktop_recipient_ids, applicable_types: types)
+    desktop_events = Desktop::NotificationEvent.for_recipients(
+      message: self, user_ids: desktop_recipient_ids, activity_types: types & Notification::Routing::DESKTOP_TYPES
+    )
+
     deliver_pushes_to push_subscriptions
+    desktop_events.each(&:deliver)
   end
 
   # Block ids touching this message's creator — memoized so per-recipient
@@ -329,23 +334,13 @@ class Message < ApplicationRecord
       Push::Subscription.where(user_id: user_ids).to_a
     end
 
+    def desktop_events_for?(activity_type)
+      Desktop::BadgeState.enabled? && Notification::Routing::DESKTOP_TYPES.include?(activity_type)
+    end
+
     # Phase 2. Deliberately dumb: everything that can fail has already run. The
     # payload is built before the first post, so a raise here still means
     # nothing went out and the job can retry cleanly.
-    def deliver_desktop_events_to(recipient_ids, applicable_types:)
-      return if recipient_ids.empty?
-
-      activity_types = applicable_types.map(&:to_sym) & Notification::Routing::DESKTOP_TYPES
-      users_by_id = User.where(id: recipient_ids).index_by(&:id)
-
-      recipient_ids.each do |user_id|
-        user = users_by_id[user_id]
-        next unless user
-
-        Desktop::NotificationEvent.deliver_for(message: self, user: user, activity_types: activity_types)
-      end
-    end
-
     def deliver_pushes_to(subscriptions)
       return if subscriptions.empty?
 
