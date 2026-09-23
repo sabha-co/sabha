@@ -219,6 +219,15 @@ class User < ApplicationRecord
     Membership.workspace_locally_away?(id)
   end
 
+  # The one-time nudge to keep this community in the member's sabha.co list
+  def hub_list_prompt_dismissed?
+    preferences.to_h.key?("hub_list_prompt_dismissed_at")
+  end
+
+  def dismiss_hub_list_prompt
+    update!(preferences: preferences.to_h.merge("hub_list_prompt_dismissed_at" => Time.current.iso8601))
+  end
+
   def default_name?
     name == DEFAULT_NAME
   end

@@ -122,6 +122,8 @@
         <span class="sidebar__tool-label"><%= account_tool_label %></span>
       <% end %>
 
+      <%= render "users/sidebars/hub_list_nudge" if hub_list_nudge? %>
+
       <%= render "users/sidebars/bell" unless platform.desktop_app? %>
 
       <%= link_to user_profile_path, class: "btn avatar sidebar__tool" do %>

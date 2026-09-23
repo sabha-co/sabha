@@ -1,0 +1,33 @@
+<%# One-time nudge to keep this community in the member's sabha.co list %>
+<span id="hub_list_nudge" data-controller="dialog">
+  <button type="button" class="btn sidebar__tool" data-action="dialog#open">
+    <%= icon_tag "web" %>
+    <span class="for-screen-reader">Add <%= Current.account.name %> to your <%= hub_name %> list</span>
+    <span class="sidebar__tool-label"><%= hub_name %></span>
+  </button>
+
+  <dialog data-dialog-target="dialog" class="dialog pad center center-block border-radius border shadow" style="--inline-space: var(--block-space)"
+      aria-labelledby="hub_list_nudge_title">
+    <div class="flex flex-column gap txt-align-center">
+      <h1 id="hub_list_nudge_title" class="txt-large margin-none">Keep <%= Current.account.name %> in your <%= hub_name %> list</h1>
+      <p class="txt-small margin-none">
+        Switch between your communities in one place, on the web and in the Sabha apps.
+        <%= hub_name %> only learns this community's name, logo and address. You still sign in here the usual way.
+      </p>
+
+      <div class="flex align-center justify-center gap">
+        <%= link_to "Add to #{hub_name}", hub_list_prompt_url, class: "btn btn--reversed",
+              target: "_blank", rel: "noopener", data: { action: "dialog#close" } %>
+        <%= button_to "Don't show again", user_hub_list_prompt_path, method: :delete, class: "btn",
+              form: { data: { action: "turbo:submit-end->dialog#close" } } %>
+      </div>
+
+      <form method="dialog" class="flex justify-center">
+        <button class="btn dialog__close">
+          <span class="for-screen-reader">Close</span>
+          <%= icon_tag "close" %>
+        </button>
+      </form>
+    </div>
+  </dialog>
+</span>

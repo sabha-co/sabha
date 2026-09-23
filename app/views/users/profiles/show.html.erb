@@ -161,6 +161,21 @@
       <% end %>
     </section>
 
+    <% if hub_list_prompt_offered? %>
+      <hr class="separator separator--row margin-block">
+
+      <section>
+        <p class="txt-small txt-muted txt-label"><%= hub_name %></p>
+        <%= link_to hub_list_prompt_url, class: "setting-row txt-undecorated", target: "_blank", rel: "noopener" do %>
+          <span class="setting-row__text">
+            <span class="setting-row__title">Add <%= Current.account.name %> to your <%= hub_name %> list</span>
+            <span class="txt-small txt-muted">Switch between your communities in one place. You still sign in here the usual way.</span>
+          </span>
+          <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
+        <% end %>
+      </section>
+    <% end %>
+
     <% if Rails.env.development? %>
       <hr class="separator separator--row margin-block">
 
