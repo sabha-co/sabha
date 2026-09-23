@@ -75,6 +75,13 @@ module Sabha
             resource :workspace_membership_order, only: :update,
                      controller: "saas/workspace_membership_orders"
 
+            # Self-hosted communities in the person's list
+            resources :remote_workspaces, only: [ :new, :create ], controller: "saas/remote_workspaces" do
+              resource :logo, only: :show, controller: "saas/remote_workspaces/logos"
+            end
+            resources :remote_workspace_memberships, only: [ :update, :destroy ],
+                      controller: "saas/remote_workspace_memberships"
+
             # Platform admin area (superadmin only)
             namespace :admin do
               root to: "stats#show"

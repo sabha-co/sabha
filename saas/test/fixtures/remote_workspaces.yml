@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+# Self-hosted communities people keep in their sabha.co list
+
+acme:
+  origin: https://chat.acme.org
+  name: Acme
+  protocol_major: 1
+  logo_data: png
+  logo_content_type: image/png
+
+club:
+  origin: https://club.example
+  name: Club
+  protocol_major: 1
+  unreachable_since: <%= 2.days.ago.to_fs(:db) %>

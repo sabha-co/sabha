@@ -38,20 +38,6 @@ class WorkspaceMembership < UntenantedRecord
     end
   }
 
-  # Bulk update positions for a global identity's workspace memberships
-  def self.reorder_for_identity(global_identity, workspace_ids)
-    return false if workspace_ids.blank? || !workspace_ids.is_a?(Array)
-
-    transaction do
-      workspace_ids.each_with_index do |external_id, index|
-        global_identity.workspace_memberships
-          .where(tenant: external_id.to_s)
-          .update_all(position: index, updated_at: Time.current)
-      end
-    end
-    true
-  end
-
   # Get the User record from the tenanted database
   # Returns nil if user doesn't exist yet (created lazily on first visit)
   def user

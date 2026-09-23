@@ -9,7 +9,7 @@ class GlobalIdentity < UntenantedRecord
   # MVP: Email + OTP only (no password)
   # v2: Add password_digest for optional password auth
 
-  include Joinable
+  include Joinable, RemoteWorkspaces
 
   MAX_WORKSPACES = 10
 

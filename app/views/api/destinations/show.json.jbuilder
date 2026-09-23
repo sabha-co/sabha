@@ -8,6 +8,17 @@ if Sabha.saas?
     json.workspace_url "#{request.base_url}/#{workspace.slug.to_s.delete_prefix("/")}"
     json.cable_url api_cable_url(wid: workspace.external_id)
   end
+
+  # Self-hosted communities from the person's list. A separate key, so a client
+  # that only knows workspace peers keeps working.
+  json.remote_peers Current.global_identity.switcher_memberships.grep(RemoteWorkspaceMembership) do |membership|
+    remote_workspace = membership.remote_workspace
+    json.id "remote:#{membership.id}"
+    json.origin remote_workspace.origin
+    json.name remote_workspace.name
+    json.logo_url(remote_workspace.logo? ? remote_workspace_logo_url(remote_workspace, script_name: "") : nil)
+    json.unreachable remote_workspace.unreachable?
+  end
 else
   json.peers [ Current.account ] do |account|
     json.id "default"

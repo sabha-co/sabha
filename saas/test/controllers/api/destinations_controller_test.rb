@@ -31,6 +31,23 @@ module Saas
       assert_response :unauthorized
     end
 
+    test "lists self-hosted communities separately, in selector order, without hidden ones" do
+      alice = global_identities(:alice)
+      acme = remote_workspace_memberships(:alice_acme)
+      club = alice.list_remote_workspace!(remote_workspaces(:club), source: :added)
+      alice.list_remote_workspace!(RemoteWorkspace.create!(origin: "https://hidden.example", name: "Hidden"), source: :added).update!(hidden: true)
+      alice.reorder_switcher([ "remote:#{club.id}", "1000001", "remote:#{acme.id}", "1000003" ])
+
+      get "/api/destinations", headers: protocol_headers
+
+      body = JSON.parse(response.body)
+      assert_equal [ "1000001", "1000003" ], body["peers"].map { it["id"] }
+      assert_equal [ "https://club.example", "https://chat.acme.org" ], body["remote_peers"].map { it["origin"] }
+      assert body["remote_peers"].first["unreachable"]
+      assert_nil body["remote_peers"].first["logo_url"]
+      assert_equal "http://www.example.com/remote_workspaces/#{acme.remote_workspace_id}/logo", body["remote_peers"].last["logo_url"]
+    end
+
     private
       def protocol_headers
         { "Sabha-Protocol-Major" => "1" }
