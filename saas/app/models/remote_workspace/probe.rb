@@ -7,6 +7,9 @@ require "net/http"
 # comes from whoever pasted it. It carries nothing about the person asking.
 class RemoteWorkspace::Probe
   TIMEOUT = 5.seconds
+  # Socket timeouts apply per read, so a server dripping a byte at a time
+  # could hold a web worker far longer. This bounds the whole fetch.
+  DEADLINE = 10.seconds
   MAX_MANIFEST_SIZE = 64.kilobytes
   MAX_LOGO_SIZE = 64.kilobytes
   LOGO_CONTENT_TYPES = %w[ image/png image/jpeg image/webp image/gif ].freeze
@@ -19,6 +22,10 @@ class RemoteWorkspace::Probe
   class UnsupportedProtocol < Error; end
 
   Manifest = Data.define(:name, :logo_url, :alias_origin, :protocol_major, :hub_proof)
+
+  def initialize(deadline: DEADLINE)
+    @deadline = deadline
+  end
 
   def manifest(origin)
     response, body = get(URI("#{origin}/api/manifest"), accept: "application/json", max_size: MAX_MANIFEST_SIZE)
@@ -43,11 +50,13 @@ class RemoteWorkspace::Probe
 
   private
     def get(uri, accept:, max_size:)
-      Net::HTTP.start(uri.host, uri.port, ipaddr: address_for(uri.host), use_ssl: uri.scheme == "https",
-          open_timeout: TIMEOUT, read_timeout: TIMEOUT) do |http|
-        request = Net::HTTP::Get.new(uri, "Accept" => accept, "Sabha-Protocol-Major" => Sabha::PROTOCOL_MAJOR.to_s)
-        http.request(request) do |response|
-          return [ response, read_capped(response, max_size) ]
+      Timeout.timeout(@deadline) do
+        Net::HTTP.start(uri.host, uri.port, ipaddr: address_for(uri.host), use_ssl: uri.scheme == "https",
+            open_timeout: TIMEOUT, read_timeout: TIMEOUT) do |http|
+          request = Net::HTTP::Get.new(uri, "Accept" => accept, "Sabha-Protocol-Major" => Sabha::PROTOCOL_MAJOR.to_s)
+          http.request(request) do |response|
+            return [ response, read_capped(response, max_size) ]
+          end
         end
       end
     rescue RestrictedHTTP::PrivateNetworkGuard::Violation, Surfguard::Unresolvable, SocketError, SystemCallError,

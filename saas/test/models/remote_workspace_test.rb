@@ -92,6 +92,14 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
     assert_not_requested :get, "#{ORIGIN}/api/manifest"
   end
 
+  test "gives up on a server that answers too slowly overall" do
+    stub_request(:get, "#{ORIGIN}/api/manifest").to_return(status: 200, body: ->(_) { sleep 1; "{}" })
+
+    assert_raises(RemoteWorkspace::Probe::Unreachable) do
+      RemoteWorkspace::Probe.new(deadline: 0.1.seconds).manifest(ORIGIN)
+    end
+  end
+
   test "refuses an oversized manifest" do
     stub_request(:get, "#{ORIGIN}/api/manifest").to_return(status: 200, body: "x" * 65.kilobytes)
 
