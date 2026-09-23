@@ -1,7 +1,7 @@
 require "test_helper"
 
 class API::SessionClaimsControllerTest < ActionDispatch::IntegrationTest
-  VERIFIER = "desktop-code-verifier-0123456789-abcdefghijklmnop"
+  VERIFIER = "app-code-verifier-0123456789-abcdefghijklmnop"
 
   setup { host! "once.sabha.test" }
 
@@ -10,7 +10,7 @@ class API::SessionClaimsControllerTest < ActionDispatch::IntegrationTest
 
     post "/api/session_claim",
       params: { token: claim.raw_token, nonce: "nonce-abc", origin: "https://once.sabha.test", code_verifier: VERIFIER },
-      headers: desktop_headers
+      headers: protocol_headers
 
     assert_response :success
     assert_equal "/chat", JSON.parse(response.body)["return_path"]
@@ -22,10 +22,10 @@ class API::SessionClaimsControllerTest < ActionDispatch::IntegrationTest
     claim = issue_claim(nonce: "nonce-replay")
     params = { token: claim.raw_token, nonce: "nonce-replay", origin: "https://once.sabha.test", code_verifier: VERIFIER }
 
-    post "/api/session_claim", params: params, headers: desktop_headers
+    post "/api/session_claim", params: params, headers: protocol_headers
     assert_response :success
 
-    post "/api/session_claim", params: params, headers: desktop_headers
+    post "/api/session_claim", params: params, headers: protocol_headers
     assert_response :forbidden
   end
 
@@ -33,10 +33,10 @@ class API::SessionClaimsControllerTest < ActionDispatch::IntegrationTest
     claim = issue_claim(nonce: "nonce-intercepted")
     params = { token: claim.raw_token, nonce: "nonce-intercepted", origin: "https://once.sabha.test" }
 
-    post "/api/session_claim", params: params, headers: desktop_headers
+    post "/api/session_claim", params: params, headers: protocol_headers
     assert_response :forbidden
 
-    post "/api/session_claim", params: params.merge(code_verifier: "guessed-verifier"), headers: desktop_headers
+    post "/api/session_claim", params: params.merge(code_verifier: "guessed-verifier"), headers: protocol_headers
     assert_response :forbidden
 
     assert_nil parsed_cookies.signed[:session_token]
@@ -76,7 +76,7 @@ class API::SessionClaimsControllerTest < ActionDispatch::IntegrationTest
       )
     end
 
-    def desktop_headers
+    def protocol_headers
       { "Sabha-Protocol-Major" => "1" }
     end
 end

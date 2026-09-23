@@ -13,7 +13,7 @@ module Saas
     end
 
     test "returns ordered active workspace peers with tenant cable paths" do
-      get "/api/destinations", headers: desktop_headers
+      get "/api/destinations", headers: protocol_headers
 
       assert_response :success
       body = JSON.parse(response.body)
@@ -26,13 +26,13 @@ module Saas
     test "is unauthorized without a global session" do
       reset!
 
-      get "/api/destinations", headers: desktop_headers
+      get "/api/destinations", headers: protocol_headers
 
       assert_response :unauthorized
     end
 
     private
-      def desktop_headers
+      def protocol_headers
         { "Sabha-Protocol-Major" => "1" }
       end
   end

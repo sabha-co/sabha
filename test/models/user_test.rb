@@ -145,18 +145,18 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "deactivating a user cancels their pending desktop session claims" do
+  test "deactivating a user cancels their pending session claims" do
     user = users(:david)
-    issue_desktop_session_claim(user)
+    issue_session_claim(user)
 
     assert_changes -> { user.session_claims.count }, from: 1, to: 0 do
       user.deactivate
     end
   end
 
-  test "destroying a user with a pending desktop session claim" do
+  test "destroying a user with a pending session claim" do
     user = users(:kevin)
-    issue_desktop_session_claim(user)
+    issue_session_claim(user)
 
     assert_difference -> { Session::Claim.count }, -1 do
       user.destroy!
@@ -591,7 +591,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   private
-    def issue_desktop_session_claim(user)
+    def issue_session_claim(user)
       Session::Claim.issue!(user: user, nonce: "n", origin: "https://once.sabha.test", code_challenge: "c", return_path: "/")
     end
 

@@ -1,7 +1,7 @@
 require "test_helper"
 
 class Sso::HandoffTest < ActionDispatch::IntegrationTest
-  CODE_CHALLENGE = Session::Claim.code_challenge_for("desktop-code-verifier")
+  CODE_CHALLENGE = Session::Claim.code_challenge_for("app-code-verifier")
 
   setup do
     host! "once.sabha.test"

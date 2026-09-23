@@ -69,7 +69,7 @@ class GlobalIdentity < UntenantedRecord
       .filter_map { |m| m.workspace if m.workspace&.active? }
   end
 
-  # Same set in the person's own selector order (for the desktop catalog)
+  # Same set in the person's own selector order (for the destination catalog)
   def active_workspaces_ordered
     workspace_memberships_ordered.user_active
       .filter_map { |m| m.workspace if m.workspace&.active? }

@@ -4,7 +4,7 @@ class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
   setup { host! "once.sabha.test" }
 
   test "returns protocol version 1 product identity and sign-in path without authentication" do
-    get "/api/manifest", headers: desktop_headers
+    get "/api/manifest", headers: protocol_headers
 
     assert_response :success
     body = JSON.parse(response.body)
@@ -28,7 +28,7 @@ class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
-    def desktop_headers
+    def protocol_headers
       { "Sabha-Protocol-Major" => "1" }
     end
 end

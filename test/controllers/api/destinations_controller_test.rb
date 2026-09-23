@@ -6,7 +6,7 @@ class API::DestinationsControllerTest < ActionDispatch::IntegrationTest
   test "returns one branded destination with cable discovery path when signed in" do
     sign_in :david
 
-    get "/api/destinations", headers: desktop_headers
+    get "/api/destinations", headers: protocol_headers
 
     assert_response :success
     body = JSON.parse(response.body)
@@ -21,14 +21,14 @@ class API::DestinationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "is unauthorized without a session" do
-    get "/api/destinations", headers: desktop_headers
+    get "/api/destinations", headers: protocol_headers
 
     assert_response :unauthorized
     refute JSON.parse(response.body).key?("peers")
   end
 
   private
-    def desktop_headers
+    def protocol_headers
       { "Sabha-Protocol-Major" => "1" }
     end
 end
