@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
+class Sso::HandoffTest < ActionDispatch::IntegrationTest
   CODE_CHALLENGE = Session::Claim.code_challenge_for("desktop-code-verifier")
 
   setup do
@@ -16,7 +16,7 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
     ENV.delete("SSO_SECRET")
   end
 
-  test "successful sso callback with desktop handoff redirects to a one-time claim deep link" do
+  test "successful sso callback with app hand-off redirects to a one-time claim deep link" do
     get sso_handshake_url, params: handoff_params(return_to: "/chat")
     assert_response :success
 
@@ -32,15 +32,15 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
     assert_equal "/chat", claim.return_path
   end
 
-  test "desktop handoff falls back to root for an off-site return path" do
+  test "app hand-off falls back to root for an off-site return path" do
     get sso_handshake_url, params: handoff_params(return_to: "//evil.example/steal")
     complete_sso_as users(:david)
 
     assert_equal "/", Session::Claim.last.return_path
   end
 
-  test "desktop handoff without a code challenge is ignored" do
-    get sso_handshake_url, params: handoff_params.except(:desktop_code_challenge)
+  test "app hand-off without a code challenge is ignored" do
+    get sso_handshake_url, params: handoff_params.except(:code_challenge)
 
     assert_no_difference -> { Session::Claim.count } do
       complete_sso_as users(:david)
@@ -48,7 +48,7 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
   end
 
-  test "an abandoned desktop handoff does not hijack a later browser sign-in" do
+  test "an abandoned app hand-off does not hijack a later browser sign-in" do
     get sso_handshake_url, params: handoff_params
     get sso_handshake_url
 
@@ -58,7 +58,7 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
   end
 
-  test "browser sso without desktop handoff still sets a session cookie" do
+  test "browser sso without app hand-off still sets a session cookie" do
     get sso_handshake_url
     assert_response :success
 
@@ -72,10 +72,10 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
   private
     def handoff_params(**overrides)
       {
-        desktop_handoff: "1",
-        desktop_nonce: "handoff-nonce",
-        desktop_origin: "https://once.sabha.test",
-        desktop_code_challenge: CODE_CHALLENGE
+        handoff: "1",
+        handoff_nonce: "handoff-nonce",
+        handoff_origin: "https://once.sabha.test",
+        code_challenge: CODE_CHALLENGE
       }.merge(overrides)
     end
 

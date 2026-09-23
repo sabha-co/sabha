@@ -1,4 +1,11 @@
 class ApplicationPlatform < PlatformAgent
+  attr_reader :client
+
+  def initialize(user_agent_string, client: nil)
+    super(user_agent_string)
+    @client = client
+  end
+
   def ios?
     match? /iPhone|iPad/
   end
@@ -38,11 +45,11 @@ class ApplicationPlatform < PlatformAgent
     ios? || android?
   end
 
-  # The Sabha desktop app appends this token to its Electron user agent, the
-  # way Hotwire Native apps identify themselves. Not to be confused with
-  # `desktop?`, which only means "not a phone".
+  # Sabha's own apps name themselves in the Sabha-Client header ("desktop",
+  # later "mobile"). Not to be confused with `desktop?`, which only means
+  # "not a phone".
   def desktop_app?
-    match? /\bSabha Desktop\b/
+    client == "desktop"
   end
 
   def desktop?

@@ -25,31 +25,33 @@ Authenticated catalog after sign-in.
 - Self-hosted mode returns exactly one branded peer with `workspace_url` and `cable_url` (`/api/cable` on the origin).
 - SaaS mode returns the person's active workspaces in their selector order. Each peer includes a tenant-scoped `cable_url` such as `/api/cable?wid=1000001`.
 
-# Desktop app
+# Sabha apps
 
 ## Session claims
 
 One-time credentials for system-browser SSO return. Claims store only a SHA256 digest of the bearer token, expire after five minutes, and redeem transactionally once into the initiating origin's session partition. Redeeming requires the PKCE `code_verifier` for the challenge sent at the start of the handoff, so an app that intercepts the `sabha://` link can't use it.
 
-Claims live in `session_claims` and exist in self-hosted mode only. In SaaS mode the desktop client signs in to sabha.co inside the app at the manifest's `sign_in_path`.
+Claims live in `session_claims` and exist in self-hosted mode only. In SaaS mode an app signs in to sabha.co inside the app at the manifest's `sign_in_path`.
 
 ## SSO hand-off
 
-When the desktop client opens an external sign-in flow, pass these query parameters on the handshake URL:
+When an app opens an external sign-in flow in the system browser, it passes these query parameters on the handshake URL:
 
-- `desktop_handoff=1`
-- `desktop_nonce` — client-generated nonce, echoed back so the client can match the deep link to its pending sign-in
-- `desktop_origin` — initiating server origin URL
-- `desktop_code_challenge` — PKCE S256 challenge: base64url (no padding) of the SHA256 of a random client-held verifier
+- `handoff=1`
+- `handoff_nonce` — client-generated nonce, echoed back so the app can match the deep link to its pending sign-in
+- `handoff_origin` — initiating server origin URL
+- `code_challenge` — PKCE S256 challenge: base64url (no padding) of the SHA256 of a random app-held verifier
 - `return_to` — optional in-app path to open after redeem; anything other than a local path falls back to `/`
 
-A handshake without these parameters clears any earlier pending handoff. After successful SSO, Sabha redirects to `sabha://session-claim?token=…&origin=…&nonce=…`. The desktop client redeems it via `POST /api/session_claim` with `token`, `nonce`, `origin` and `code_verifier`, and the response carries `return_path`.
+A handshake without these parameters clears any earlier pending handoff. After successful SSO, Sabha redirects to `sabha://session-claim?token=…&origin=…&nonce=…`. The app redeems it via `POST /api/session_claim` with `token`, `nonce`, `origin` and `code_verifier`, and the response carries `return_path`.
 
-Password, email-code, and ordinary browser SSO flows without desktop handoff parameters are unchanged.
+Password, email-code, and ordinary browser SSO flows without hand-off parameters are unchanged.
 
 ## App detection
 
-The desktop app appends `Sabha Desktop/<version>` to the user agent of every destination session (`platform.desktop_app?`). It is a layout hint, not an authentication signal. Sabha suppresses the in-page SaaS workspace rail and sidebar WebPush enrollment UI for those requests while preserving the ordinary Hotwire interface.
+Sabha's apps send a `Sabha-Client` header naming themselves: `desktop` today, `mobile` later. The desktop app sends it on every request from a destination session, and `platform.desktop_app?` reads it. It is a layout hint, not an authentication signal. Sabha suppresses the in-page SaaS workspace rail and sidebar WebPush enrollment UI for those requests while preserving the ordinary Hotwire interface.
+
+# Desktop app
 
 ## Notifications and badges
 
