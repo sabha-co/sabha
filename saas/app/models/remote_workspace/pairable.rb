@@ -49,6 +49,14 @@ module RemoteWorkspace::Pairable
       raise NotPaired
     end
 
+    # A Sabha Cloud droplet, paired as it's provisioned. The platform created
+    # the server, so there's nothing to prove, and the droplet may not answer
+    # yet: the name is Cloud's until the daily refresh reads the manifest.
+    def pair_sabha_cloud!(address, name:)
+      remote_workspace = create_or_find_by!(origin: RemoteWorkspace::Origin.normalize(address)) { it.name = name }
+      remote_workspace.pair_sabha_cloud!
+    end
+
     def pairing_proof(secret, origin)
       OpenSSL::HMAC.hexdigest("sha256", secret, "#{PAIRING_PROOF_CONTEXT}#{origin}")
     end
@@ -65,6 +73,14 @@ module RemoteWorkspace::Pairable
         paired_by: pairing.global_identity, paired_at: Time.current)
       pairing.destroy!
     end
+  end
+
+  # Every deploy asks again, and gets the secret the droplet already runs with
+  def pair_sabha_cloud!
+    unless pairing_active? && paired_via_sabha_cloud?
+      update!(hub_secret: SecureRandom.hex(32), pairing_status: :active, paired_via: :sabha_cloud, paired_by: nil, paired_at: Time.current)
+    end
+    self
   end
 
   # Members keep their entries; each falls back to the community's own login,

@@ -89,6 +89,14 @@ module Sabha
                       controller: "saas/remote_workspace_pairings"
             resource :remote_workspace_list, only: :destroy, controller: "saas/remote_workspace_lists"
 
+            # Sabha Cloud pairing the droplets it provisions. A droplet is
+            # named by its host, which carries dots, so the id takes any
+            # character but a slash.
+            scope "api/platform", as: :platform, defaults: { format: :json } do
+              resources :remote_workspaces, only: [ :create, :destroy ], controller: "saas/platform/remote_workspaces",
+                        constraints: { id: %r{[^/]+} }
+            end
+
             # Platform admin area (superadmin only)
             namespace :admin do
               root to: "stats#show"

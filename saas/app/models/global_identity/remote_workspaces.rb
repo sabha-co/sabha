@@ -52,6 +52,13 @@ module GlobalIdentity::RemoteWorkspaces
     remote_workspace_memberships.consented.exists?(remote_workspace: remote_workspace)
   end
 
+  # The owner of a Sabha Cloud droplet finds it in their list without adding it
+  def list_sabha_cloud_workspace(remote_workspace)
+    list_remote_workspace!(remote_workspace, source: :sabha_cloud)
+  rescue RemoteWorkspaceLimitReachedError
+    nil
+  end
+
   # Signing in with the shortcut brings a hidden entry back
   def signed_in_to_remote_workspace!(remote_workspace)
     list_remote_workspace!(remote_workspace, source: :shortcut)

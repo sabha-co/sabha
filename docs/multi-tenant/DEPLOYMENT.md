@@ -429,6 +429,7 @@ Self-hosted communities that pair with sabha.co for **Continue with sabha.co** s
 |----------|-------------|
 | `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` | Encrypts each community's shared secret |
 | `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | Salt for the encryption keys |
+| `SABHA_PLATFORM_TOKEN` | Lets Sabha Cloud pair the droplets it provisions (`/api/platform/remote_workspaces`). Set the same value in Sabha Cloud. Without it, droplets can still be paired by hand |
 
 ### Optional
 
