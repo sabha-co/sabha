@@ -83,6 +83,7 @@ class User < ApplicationRecord
 
   has_many :sessions, dependent: :destroy
   has_many :auth_tokens, dependent: :destroy
+  has_many :session_claims, class_name: "Session::Claim", dependent: :delete_all
   has_many :bans, dependent: :destroy
   has_one :single_sign_on_record, dependent: :destroy
 
@@ -194,6 +195,7 @@ class User < ApplicationRecord
     push_subscriptions.delete_all
     sessions.delete_all
     auth_tokens.delete_all
+    session_claims.delete_all
   end
 
   def reset_remote_connections

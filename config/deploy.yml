@@ -51,6 +51,7 @@ env:
     - ANYCABLE_SECRET
     - CLOUDFLARE_TURNSTILE_SITE_KEY
     - CLOUDFLARE_TURNSTILE_SECRET_KEY
+    - DESKTOP_NOTIFICATIONS_ENABLED
 
 volumes:
   - "/disk/sabha/:/rails/storage/"

@@ -32,6 +32,10 @@ module Message::Mentionee
     @mentionee_ids ||= mentionees.map(&:id)
   end
 
+  def mentions_user_id?(user_id)
+    mentions_everyone? || mentionee_ids.include?(user_id)
+  end
+
   # An @everyone in a room past the ceiling: the durable Activity rows and the
   # mention badge are still written, but the per-member push, email, and live
   # broadcasts are dropped in favor of the room-wide post.

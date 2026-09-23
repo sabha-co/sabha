@@ -1,0 +1,78 @@
+require "test_helper"
+
+class Desktop::NotificationEventTest < ActiveSupport::TestCase
+  test "builds a stable event id from message and user" do
+    message = rooms(:designers).messages.create!(
+      body: "Stable id",
+      creator: users(:david),
+      client_message_id: "desktop_event_id"
+    )
+    user = users(:kevin)
+
+    event = Desktop::NotificationEvent.new(message: message, user: user, activity_types: [ :mention ])
+
+    assert_equal "#{message.id}:#{user.id}", event.event_id
+  end
+
+  test "serializes title body path badge and collapsed activity types" do
+    room = rooms(:david_and_kevin)
+    message = room.messages.create!(
+      body: "Hello there",
+      creator: users(:david),
+      client_message_id: "desktop_event_payload"
+    )
+    user = users(:kevin)
+
+    payload = Desktop::NotificationEvent.new(
+      message: message,
+      user: user,
+      activity_types: [ :direct_message, :mention ]
+    ).as_json
+
+    assert_equal "notification", payload[:type]
+    assert_equal 1, payload[:protocol_major]
+    assert_equal [ "direct_message", "mention" ], payload[:activity_types]
+    assert_equal users(:david).name, payload[:title]
+    assert_equal "Hello there", payload[:body]
+    assert_includes payload[:path], room.to_param
+    assert_kind_of Integer, payload[:badge]
+  end
+
+  test "deliver broadcasts through the desktop channel" do
+    room = rooms(:david_and_jason)
+    message = room.messages.create!(
+      body: "Deliver me",
+      creator: users(:david),
+      client_message_id: "desktop_event_deliver"
+    )
+    user = users(:jason)
+
+    DesktopChannel.expects(:broadcast_to_user).with(user, kind_of(Hash)).once
+
+    Desktop::NotificationEvent.new(
+      message: message,
+      user: user,
+      activity_types: [ :direct_message ]
+    ).deliver
+  end
+
+  test "builds every recipient's event from one push payload and one badge query" do
+    message = rooms(:designers).messages.create!(
+      body: "Batch me",
+      creator: users(:david),
+      client_message_id: "desktop_event_batch"
+    )
+    recipients = [ users(:kevin), users(:jason) ]
+
+    Room::MessagePusher.expects(:payload_for).once.returns(title: "t", body: "b", path: "/p")
+    User.any_instance.expects(:badge_count).never
+
+    events = Desktop::NotificationEvent.for_recipients(
+      message: message,
+      activity_types_by_user_id: recipients.to_h { [ it.id, [ :everyone_room_message ] ] }
+    )
+
+    assert_equal recipients.map(&:id).sort, events.map { |event| event.user.id }.sort
+    assert events.all? { |event| event.as_json[:badge].is_a?(Integer) }
+  end
+end

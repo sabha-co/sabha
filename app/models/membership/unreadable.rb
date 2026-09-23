@@ -47,6 +47,8 @@ module Membership::Unreadable
   UNSEEN_SQL = "(#{UNSEEN_MESSAGES_SQL} OR #{UNSEEN_POSTS_SQL})"
 
   included do
+    after_update_commit :broadcast_desktop_badge, if: :desktop_badge_changed?
+
     has_many :unread_notifications, ->(membership) {
       scope = if membership.last_read_at
         after_cursor(membership.last_read_at, membership.last_read_message_id)
@@ -80,6 +82,9 @@ module Membership::Unreadable
         )
       )
     }
+    # The rooms an app badge counts: unread and holding something that notified.
+    scope :badged, -> { unread.where("unread_notifications_count > 0") }
+
     # Memberships that have unread messages OR whose room was updated recently.
     # Used to filter direct messages in the sidebar to only show recent conversations.
     scope :recently_active_or_unread, ->(since: 7.days.ago) {
@@ -304,5 +309,15 @@ module Membership::Unreadable
 
     def notification_payload
       { roomId: room.id }
+    end
+
+    # The badge counts rooms that are unread with something that notified, so
+    # it can only move when the count or the explicit unread flag does.
+    def desktop_badge_changed?
+      Desktop.notifications_enabled? && (saved_change_to_unread_notifications_count? || saved_change_to_marked_unread?)
+    end
+
+    def broadcast_desktop_badge
+      user.broadcast_desktop_badge
     end
 end

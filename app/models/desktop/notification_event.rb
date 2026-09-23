@@ -1,0 +1,65 @@
+module Desktop
+  class NotificationEvent
+    attr_reader :message, :user, :activity_types
+
+    # Builds every recipient's event up front — one push payload, one badge
+    # query — so nothing is left to raise once delivery starts. Takes
+    # { user_id => the activity types that reached that user }.
+    def self.for_recipients(message:, activity_types_by_user_id:)
+      return [] if activity_types_by_user_id.empty?
+
+      user_ids = activity_types_by_user_id.keys
+      push_payload = Room::MessagePusher.payload_for(room: message.room, message: message)
+      badges = Membership.badged.where(user_id: user_ids).group(:user_id).count
+
+      User.where(id: user_ids).map do |user|
+        new(message: message, user: user, activity_types: activity_types_by_user_id[user.id],
+            push_payload: push_payload, badge: badges.fetch(user.id, 0))
+      end
+    end
+
+    def initialize(message:, user:, activity_types:, push_payload: nil, badge: nil)
+      @message = message
+      @user = user
+      @activity_types = Array(activity_types).map(&:to_sym).uniq.sort
+      @push_payload = push_payload
+      @badge = badge
+    end
+
+    def event_id
+      [ (ApplicationRecord.current_tenant if Sabha.saas?), message.id, user.id ].compact.join(":")
+    end
+
+    # Best effort: runs after web pushes have gone out, so a failed broadcast
+    # must not fail the dispatch job and re-send them on retry. The next badge
+    # snapshot corrects the count.
+    def deliver
+      Rails.error.handle(context: { event_id: event_id }) do
+        DesktopChannel.broadcast_to_user(user, as_json)
+      end
+    end
+
+    def as_json
+      {
+        type: "notification",
+        protocol_major: Sabha::PROTOCOL_MAJOR,
+        event_id: event_id,
+        message_id: message.id,
+        activity_types: activity_types.map(&:to_s),
+        title: push_payload.fetch(:title),
+        body: push_payload.fetch(:body),
+        path: push_payload.fetch(:path),
+        badge: badge
+      }
+    end
+
+    private
+      def push_payload
+        @push_payload ||= Room::MessagePusher.payload_for(room: message.room, message: message)
+      end
+
+      def badge
+        @badge ||= user.badge_count
+      end
+  end
+end

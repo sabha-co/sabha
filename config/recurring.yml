@@ -25,6 +25,10 @@ production:
   clear_expired_single_sign_on_nonces:
     command: "SingleSignOnNonce.purge_expired"
     schedule: every hour at minute 24
+
+  clear_expired_session_claims:
+    command: "Session::Claim.purge_expired"
+    schedule: every hour at minute 26
 <% end %>
 
 <% if Sabha.saas? %>

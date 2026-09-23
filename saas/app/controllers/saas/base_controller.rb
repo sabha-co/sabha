@@ -18,6 +18,7 @@ module Saas
 
     include Saas::Authentication
     include SetCurrentRequest
+    include SetPlatform
 
     # Include core helpers for consistent UI (icon_tag, translation_button, etc.)
     helper ApplicationHelper

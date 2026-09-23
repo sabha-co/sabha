@@ -7,6 +7,6 @@ module SetPlatform
 
   private
     def platform
-      @platform ||= ApplicationPlatform.new(request.user_agent)
+      @platform ||= ApplicationPlatform.new(request.user_agent, client: request.headers["Sabha-Client"])
     end
 end

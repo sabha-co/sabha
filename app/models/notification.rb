@@ -55,7 +55,10 @@ class Notification < ApplicationRecord
       )
     end
 
-    notifications.map(&:user).uniq.each(&:broadcast_activity_indicator)
+    notifications.map(&:user).uniq.each do |user|
+      user.broadcast_activity_indicator
+      user.broadcast_desktop_badge
+    end
 
     # Boost groups use a stable DOM ID separate from individual notification IDs
     notifications.select(&:boost_notification?).group_by { |n| [ n.user_id, n.message_id ] }.each do |(_, message_id), group|

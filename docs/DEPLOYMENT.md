@@ -276,6 +276,12 @@ docker compose exec web bin/rails runner "puts ActiveRecord::Base.connection.exe
 
 ---
 
+## Sabha protocol
+
+Self-hosted Sabha installs expose the Sabha protocol documented in [features/SABHA_PROTOCOL.md](./features/SABHA_PROTOCOL.md). No extra configuration is required beyond a reachable HTTPS origin. Clients (the desktop app, and sabha.co when a member adds your community) probe `GET /api/manifest`.
+
+---
+
 ## Server Requirements
 
 | Resource | Minimum | Recommended |

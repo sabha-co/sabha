@@ -16,6 +16,7 @@ Multi-tenant mode enables:
 - **Shared authentication** - Users authenticate once, access multiple workspaces
 - **Path-based routing** - URLs include workspace ID (e.g., `/1000001/rooms/general`)
 - **Cross-workspace sessions** - Single sign-on across all workspaces
+- **Sabha protocol** - Manifest and destination catalog for Sabha apps
 
 ---
 

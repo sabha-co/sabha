@@ -192,6 +192,10 @@ Rails.application.routes.draw do
   # sibling of the short-lived `jid` token minted into the layout.
   namespace :api, defaults: { format: :json } do
     resource :cable, only: :show
+
+    resource :manifest, only: :show
+    resource :destinations, only: :show
+    resource :session_claim, only: :create unless Sabha.saas?
   end
 
   # Bot API — authenticate with `Authorization: Bearer <bot_key>`.

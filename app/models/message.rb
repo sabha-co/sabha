@@ -202,18 +202,37 @@ class Message < ApplicationRecord
 
     types = only ? Array(only).map(&:to_sym) : room.applicable_activity_types(self)
     push_subscriptions = []
+    desktop_activity_types = Hash.new { |types, user_id| types[user_id] = [] }
 
     # Two phases. Everything that can raise — in-app rows, email bundles, and
     # working out who to push — runs first; posting runs last. A push can't be
     # recalled once posted, so a raise afterwards (the next activity type's
-    # email work, say) would re-send it when the job retries.
+    # email work, say) would re-send it when the job retries. Desktop events go
+    # to the same recipients as pushes, after them, and swallow their own
+    # broadcast errors for the same reason.
     types.each do |activity_type|
-      deliver_in_app_row_for(activity_type, actor: actor)              if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
-      push_subscriptions.concat push_subscriptions_for(activity_type)  if Notification::Routing::PUSH_TYPES.include?(activity_type)
-      enqueue_missed_email_candidates_for(activity_type)               if Notification::Routing::EMAIL_TYPES.include?(activity_type)
+      deliver_in_app_row_for(activity_type, actor: actor) if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
+
+      if Notification::Routing::PUSH_TYPES.include?(activity_type)
+        recipient_ids = push_recipient_user_ids_for(activity_type)
+        push_subscriptions.concat push_subscriptions_for(recipient_ids)
+        recipient_ids.each { desktop_activity_types[it] << activity_type } if Desktop.notifications_enabled?
+      end
+
+      enqueue_missed_email_candidates_for(activity_type) if Notification::Routing::EMAIL_TYPES.include?(activity_type)
     end
 
+    # The push rules skip members at "everything" in the mention pass (their
+    # room or DM push already covers it), so add the mention back for anyone
+    # the message names: the app still needs to know they were mentioned.
+    if types.include?(:mention)
+      desktop_activity_types.each { |user_id, reached| reached << :mention if mentions_user_id?(user_id) }
+    end
+
+    desktop_events = Desktop::NotificationEvent.for_recipients(message: self, activity_types_by_user_id: desktop_activity_types)
+
     deliver_pushes_to push_subscriptions
+    desktop_events.each(&:deliver)
   end
 
   # Block ids touching this message's creator — memoized so per-recipient
@@ -311,8 +330,7 @@ class Message < ApplicationRecord
       end
     end
 
-    def push_subscriptions_for(activity_type)
-      user_ids = push_recipient_user_ids_for(activity_type)
+    def push_subscriptions_for(user_ids)
       return [] if user_ids.empty?
 
       Push::Subscription.where(user_id: user_ids).to_a

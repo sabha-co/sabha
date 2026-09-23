@@ -3,6 +3,11 @@
 module Sabha
   SAAS_MARKER = File.expand_path("../tmp/saas.txt", __dir__)
 
+  # Major version of the protocol clients speak to a Sabha server: the
+  # manifest, the destination catalog, the session claim, and the desktop
+  # channel. Clients send it as the Sabha-Protocol-Major header.
+  PROTOCOL_MAJOR = 1
+
   class << self
     # Detect if SaaS mode is enabled.
     #

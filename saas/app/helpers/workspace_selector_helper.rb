@@ -26,6 +26,8 @@ module WorkspaceSelectorHelper
   end
 
   def show_workspace_selector?
+    return false if platform.desktop_app?
+
     # Always show in SaaS mode when user is authenticated
     # Shows empty state on /workspaces/new when user has no workspaces
     Sabha.saas? && Current.global_identity.present?

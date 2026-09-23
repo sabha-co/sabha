@@ -1,4 +1,11 @@
 class ApplicationPlatform < PlatformAgent
+  attr_reader :client
+
+  def initialize(user_agent_string, client: nil)
+    super(user_agent_string)
+    @client = client
+  end
+
   def ios?
     match? /iPhone|iPad/
   end
@@ -36,6 +43,13 @@ class ApplicationPlatform < PlatformAgent
 
   def mobile?
     ios? || android?
+  end
+
+  # Sabha's own apps name themselves in the Sabha-Client header ("desktop",
+  # later "mobile"). Not to be confused with `desktop?`, which only means
+  # "not a phone".
+  def desktop_app?
+    client == "desktop"
   end
 
   def desktop?

@@ -58,4 +58,7 @@ Rails.application.configure do
 
   # Reduce BCrypt cost for faster password hashing in tests
   BCrypt::Engine.cost = BCrypt::Engine::MIN_COST
+
+  # Off by default elsewhere (config/initializers/desktop_notifications.rb).
+  config.x.desktop_notifications_enabled = true
 end

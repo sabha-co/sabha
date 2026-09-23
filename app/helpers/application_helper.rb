@@ -38,7 +38,7 @@ module ApplicationHelper
   end
 
   def body_classes
-    [ @body_class, admin_body_class, account_logo_body_class, workspace_selector_body_class, workspace_banner_body_class ].compact.join(" ")
+    [ @body_class, admin_body_class, account_logo_body_class, workspace_selector_body_class, workspace_banner_body_class, desktop_app_body_class ].compact.join(" ")
   end
 
   def link_back
@@ -86,6 +86,10 @@ module ApplicationHelper
 
     def workspace_banner_body_class
       "has-workspace-banner" if Sabha.saas? && Current.workspace.present?
+    end
+
+    def desktop_app_body_class
+      "desktop-app" if platform.desktop_app?
     end
 
     # Extracts a back path from the referer if it matches a known inbox/search page.
