@@ -39,4 +39,22 @@ class SaasDesktopChannelTest < ActionCable::Channel::TestCase
       end
     end
   end
+
+  test "badge count stays inside the current tenant database" do
+    with_provisioned_workspace(name: "Badge Tenant A", creator: global_identities(:alice)) do |ws_a|
+      with_provisioned_workspace(name: "Badge Tenant B", creator: global_identities(:bob)) do |ws_b|
+        user_a = global_identities(:alice).workspace_memberships.find_by!(tenant: ws_a.external_id.to_s).user
+        user_b = global_identities(:bob).workspace_memberships.find_by!(tenant: ws_b.external_id.to_s).user
+
+        ApplicationRecord.with_tenant(ws_a.external_id.to_s) do
+          user_a.memberships.first.update!(unread_notifications_count: 3, marked_unread: true, last_read_at: 1.day.ago, last_read_message_id: 0)
+          assert_equal 1, DesktopChannel.badge_for(user_a)[:count]
+        end
+
+        ApplicationRecord.with_tenant(ws_b.external_id.to_s) do
+          assert_equal 0, DesktopChannel.badge_for(user_b)[:count]
+        end
+      end
+    end
+  end
 end

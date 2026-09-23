@@ -1,7 +1,4 @@
-class API::Desktop::SessionClaimsController < ApplicationController
-  skip_forgery_protection
-  include DesktopClientDetection
-
+class API::Desktop::SessionClaimsController < API::Desktop::BaseController
   allow_unauthenticated_access
 
   rate_limit to: 10, within: 1.minute, only: :create, with: -> { render json: { error: "Too many requests" }, status: :too_many_requests }

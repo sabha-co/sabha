@@ -335,7 +335,7 @@ class Message < ApplicationRecord
     end
 
     def desktop_events_for?(activity_type)
-      Desktop::BadgeState.enabled? && Notification::Routing::DESKTOP_TYPES.include?(activity_type)
+      Desktop.notifications_enabled? && Notification::Routing::DESKTOP_TYPES.include?(activity_type)
     end
 
     # Phase 2. Deliberately dumb: everything that can fail has already run. The

@@ -63,7 +63,7 @@ class Desktop::NotificationEventTest < ActiveSupport::TestCase
     recipients = [ users(:kevin), users(:jason) ]
 
     Room::MessagePusher.expects(:payload_for).once.returns(title: "t", body: "b", path: "/p")
-    Desktop::BadgeState.expects(:count_for).never
+    User.any_instance.expects(:badge_count).never
 
     events = Desktop::NotificationEvent.for_recipients(
       message: message,

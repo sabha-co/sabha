@@ -44,4 +44,30 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
       ).deliver
     end
   end
+
+  test "badge counts the rooms that are unread and notified" do
+    memberships(:kevin_designers).update!(unread_notifications_count: 2, marked_unread: true, last_read_at: 1.day.ago, last_read_message_id: 0)
+    kevin = users(:kevin)
+
+    assert_equal kevin.memberships.unread.where("unread_notifications_count > 0").count, kevin.badge_count
+    assert_equal({ type: "badge", protocol_major: 1, count: kevin.badge_count }, DesktopChannel.badge_for(kevin))
+  end
+
+  test "reading a room broadcasts a fresh badge" do
+    membership = memberships(:david_david_and_jason)
+    membership.update!(unread_notifications_count: 2, marked_unread: true, last_read_at: 1.day.ago, last_read_message_id: 0)
+
+    badges = capture_broadcasts(DesktopChannel.stream_name_for(membership.user)) { membership.read }
+
+    assert_equal [ "badge" ], badges.map { |payload| payload["type"] }
+    assert_equal membership.user.badge_count, badges.last["count"]
+  end
+
+  test "nothing is broadcast while desktop notifications are off" do
+    Desktop.stubs(:notifications_enabled?).returns(false)
+
+    assert_no_broadcasts(DesktopChannel.stream_name_for(users(:kevin))) do
+      users(:kevin).broadcast_desktop_badge
+    end
+  end
 end

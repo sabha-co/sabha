@@ -80,6 +80,9 @@ module Membership::Unreadable
         )
       )
     }
+    # The rooms an app badge counts: unread and holding something that notified.
+    scope :badged, -> { unread.where("unread_notifications_count > 0") }
+
     # Memberships that have unread messages OR whose room was updated recently.
     # Used to filter direct messages in the sidebar to only show recent conversations.
     scope :recently_active_or_unread, ->(since: 7.days.ago) {
@@ -152,7 +155,7 @@ module Membership::Unreadable
     head_at, head_id = room_head_position
     update!(last_read_at: head_at, last_read_message_id: head_id, marked_unread: false, unread_notifications_count: 0)
     broadcast_read
-    Desktop::BadgeState.broadcast_to(user)
+    user.broadcast_desktop_badge
   end
 
   def mark_unread_at(message)
@@ -162,7 +165,7 @@ module Membership::Unreadable
       unread_notifications_count: count_unseen_notifications(cursor_at, cursor_id)
     )
     broadcast_unread
-    Desktop::BadgeState.broadcast_to(user)
+    user.broadcast_desktop_badge
   end
 
   def read_until(time)

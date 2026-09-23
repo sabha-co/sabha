@@ -103,6 +103,16 @@ module User::Notifiable
     touch_activity_seen_at(activity_until)
   end
 
+  # The app badge: web push sends it with each notification, the desktop app
+  # gets it over DesktopChannel.
+  def badge_count
+    memberships.badged.count
+  end
+
+  def broadcast_desktop_badge
+    DesktopChannel.broadcast_badge_to(self) if Desktop.notifications_enabled?
+  end
+
   def broadcast_activity_indicator
     Turbo::StreamsChannel.broadcast_replace_to(
       self, :sidebar_activity_indicator,

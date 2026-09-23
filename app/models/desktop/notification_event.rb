@@ -1,16 +1,14 @@
 module Desktop
   class NotificationEvent
-    PROTOCOL_MAJOR = 1
-
     attr_reader :message, :user, :activity_types
 
     # Builds every recipient's event up front — one push payload, one badge
     # query — so nothing is left to raise once delivery starts.
     def self.for_recipients(message:, user_ids:, activity_types:)
-      return [] if user_ids.empty? || !BadgeState.enabled?
+      return [] if user_ids.empty? || !Desktop.notifications_enabled?
 
       push_payload = Room::MessagePusher.payload_for(room: message.room, message: message)
-      badges = BadgeState.counts_for(user_ids)
+      badges = Membership.badged.where(user_id: user_ids.to_a).group(:user_id).count
 
       User.where(id: user_ids.to_a).map do |user|
         new(message: message, user: user, activity_types: activity_types, push_payload: push_payload, badge: badges.fetch(user.id, 0))
@@ -49,7 +47,7 @@ module Desktop
     def as_json
       {
         type: "notification",
-        protocol_major: PROTOCOL_MAJOR,
+        protocol_major: Desktop::PROTOCOL_MAJOR,
         event_id: event_id,
         message_id: message.id,
         activity_types: activity_types.map(&:to_s),
@@ -66,7 +64,7 @@ module Desktop
       end
 
       def badge
-        @badge ||= BadgeState.count_for(user)
+        @badge ||= user.badge_count
       end
   end
 end

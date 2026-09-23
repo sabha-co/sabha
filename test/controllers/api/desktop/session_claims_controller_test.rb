@@ -15,7 +15,7 @@ class API::Desktop::SessionClaimsControllerTest < ActionDispatch::IntegrationTes
     assert_response :success
     assert_equal "/chat", JSON.parse(response.body)["return_path"]
     assert parsed_cookies.signed[:session_token]
-    assert claim.reload.used?
+    assert claim.reload.used_at
   end
 
   test "rejects a replayed claim" do
@@ -40,7 +40,7 @@ class API::Desktop::SessionClaimsControllerTest < ActionDispatch::IntegrationTes
     assert_response :forbidden
 
     assert_nil parsed_cookies.signed[:session_token]
-    assert_not claim.reload.used?
+    assert_nil claim.reload.used_at
   end
 
   test "does not persist the raw bearer token" do
@@ -63,6 +63,6 @@ class API::Desktop::SessionClaimsControllerTest < ActionDispatch::IntegrationTes
     end
 
     def desktop_headers
-      { "Sabha-Desktop-Protocol-Major" => "1", "Sabha-Desktop-Client" => "1" }
+      { "Sabha-Desktop-Protocol-Major" => "1" }
     end
 end

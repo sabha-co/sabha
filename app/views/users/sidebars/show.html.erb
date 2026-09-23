@@ -122,7 +122,7 @@
         <span class="sidebar__tool-label"><%= account_tool_label %></span>
       <% end %>
 
-      <%= render "users/sidebars/bell" %>
+      <%= render "users/sidebars/bell" unless platform.desktop_app? %>
 
       <%= link_to user_profile_path, class: "btn avatar sidebar__tool" do %>
         <%= avatar_image_tag(Current.user, size: 40, style: "view-transition-name: avatar-#{Current.user.id}", loading: :lazy) %>

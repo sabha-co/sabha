@@ -1,20 +1,20 @@
 class API::Desktop::BaseController < ApplicationController
   skip_forgery_protection
-  include DesktopClientDetection
-
   skip_before_action :require_workspace_membership, raise: false
 
   before_action :require_supported_protocol_major
 
   private
-    def protocol_major
-      request.headers["Sabha-Desktop-Protocol-Major"]&.to_i
-    end
-
     def require_supported_protocol_major
-      return if protocol_major == Desktop::ClientManifest::PROTOCOL_MAJOR
+      protocol_major = request.headers["Sabha-Desktop-Protocol-Major"]&.to_i
+      return if protocol_major == Desktop::PROTOCOL_MAJOR
 
-      render json: Desktop::ClientManifest.unsupported(protocol_major), status: :unsupported_media_type
+      render json: {
+        error: "unsupported_protocol_major",
+        requested_major: protocol_major,
+        supported_major: Desktop::PROTOCOL_MAJOR,
+        upgrade_url: Desktop::UPGRADE_URL
+      }, status: :unsupported_media_type
     end
 
     def request_authentication
@@ -26,13 +26,5 @@ class API::Desktop::BaseController < ApplicationController
       return if performed?
 
       deny_inactive_workspace_user if Current.user.present?
-    end
-
-    def signed_in_for_desktop_api?
-      if Sabha.saas?
-        Current.global_identity.present?
-      else
-        Current.user.present?
-      end
     end
 end

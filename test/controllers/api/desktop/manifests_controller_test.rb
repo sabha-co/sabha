@@ -13,7 +13,7 @@ class API::Desktop::ManifestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal Branding.app_short_name, body.dig("product", "short_name")
     assert_equal Branding.app_short_name.to_s.parameterize.presence || "sabha", body.dig("product", "slug")
     assert_equal "/api/desktop/destinations", body["destinations_path"]
-    assert body["sign_in_path"].present?
+    assert_equal "/session/new", body["sign_in_path"]
     refute body.key?("destinations")
     refute body.key?("members")
   end

@@ -6,7 +6,7 @@ Sabha exposes a versioned desktop compatibility contract so the native Sabha des
 
 All desktop API requests must send the `Sabha-Desktop-Protocol-Major` header. Major version `1` is the only supported version today. Unsupported majors receive HTTP 415 with upgrade guidance.
 
-Desktop layout hooks use the non-authoritative `Sabha-Desktop-Client` request header. Browser requests without that header keep the existing workspace selector and WebPush enrollment UI.
+Desktop layout hooks key off a `Sabha Desktop/<version>` token the app appends to its user agent (`platform.desktop_app?`). It is not an authentication signal. Browser requests without the token keep the existing workspace selector and WebPush enrollment UI.
 
 ## Endpoints
 
@@ -49,7 +49,7 @@ Password, email-code, and ordinary browser SSO flows without desktop handoff par
 
 ## Client detection
 
-Send `Sabha-Desktop-Client: 1` on desktop-embedded page loads. Sabha suppresses the in-page SaaS workspace rail and sidebar WebPush enrollment UI for those requests while preserving the ordinary Hotwire interface.
+Append `Sabha Desktop/<version>` to the user agent of every destination session. Sabha suppresses the in-page SaaS workspace rail and sidebar WebPush enrollment UI for those requests while preserving the ordinary Hotwire interface.
 
 ## Related docs
 

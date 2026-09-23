@@ -1,4 +1,3 @@
-<% unless desktop_client? %>
 <span class="button_to_change_notifying" id="notification_bell_container" hidden
     data-controller="notifications" data-notifications-subscriptions-url-value="<%= user_push_subscriptions_path %>" data-notifications-attention-class="btn--pulsing">
   <%= turbo_frame_tag "global_notifications" do %>
@@ -34,4 +33,3 @@
     </div>
   </dialog>
 </span>
-<% end %>

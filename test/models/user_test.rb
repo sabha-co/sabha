@@ -145,6 +145,24 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  test "deactivating a user cancels their pending desktop session claims" do
+    user = users(:david)
+    issue_desktop_session_claim(user)
+
+    assert_changes -> { user.desktop_session_claims.count }, from: 1, to: 0 do
+      user.deactivate
+    end
+  end
+
+  test "destroying a user with a pending desktop session claim" do
+    user = users(:kevin)
+    issue_desktop_session_claim(user)
+
+    assert_difference -> { Desktop::SessionClaim.count }, -1 do
+      user.destroy!
+    end
+  end
+
   test "reactivating a user restores their memberships" do
     user = users(:david)
     initial_count = Membership.where(user_id: user.id, active: true).without_direct_rooms.count
@@ -573,6 +591,10 @@ class UserTest < ActiveSupport::TestCase
   end
 
   private
+    def issue_desktop_session_claim(user)
+      Desktop::SessionClaim.issue!(user: user, nonce: "n", origin: "https://once.sabha.test", code_challenge: "c", return_path: "/")
+    end
+
     def create_new_user
       User.create!(name: "User", email_address: "user@example.com", password: "secret123456")
     end

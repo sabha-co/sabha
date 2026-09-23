@@ -66,8 +66,4 @@ class Desktop::SessionClaim < ApplicationRecord
   def use!
     update!(used_at: Time.current)
   end
-
-  def used?
-    used_at.present?
-  end
 end

@@ -47,8 +47,8 @@ class Room::DesktopNotificationTest < ActiveSupport::TestCase
   end
 
   test "nothing is computed or sent while desktop notifications are off" do
-    Desktop::BadgeState.stubs(:enabled?).returns(false)
-    Desktop::BadgeState.expects(:counts_for).never
+    Desktop.stubs(:notifications_enabled?).returns(false)
+    Message.any_instance.expects(:desktop_recipient_user_ids_for).never
 
     assert_no_broadcasts(desktop_stream(@recipient)) do
       send_dm "Flag off", client_message_id: "desktop_flag_off"

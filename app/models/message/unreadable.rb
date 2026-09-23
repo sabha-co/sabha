@@ -70,7 +70,7 @@ module Message::Unreadable
                 .merge(Membership.with_message_unseen(created_at, id))
                 .update_all("unread_notifications_count = unread_notifications_count + 1")
 
-      Desktop::BadgeState.broadcast_to_users(User.where(id: recipient_ids))
+      User.where(id: recipient_ids).each(&:broadcast_desktop_badge) if Desktop.notifications_enabled?
     end
 
     # Keeps memberships.unread_notifications_count consistent when this
@@ -87,14 +87,11 @@ module Message::Unreadable
     def rebalance_unread_counters
       return unless room.direct?
 
-      affected_user_ids = Membership.where(room_id: room_id)
-                                    .merge(Membership.with_message_unseen(created_at, id))
-                                    .pluck(:user_id)
+      affected = Membership.where(room_id: room_id).merge(Membership.with_message_unseen(created_at, id))
+      affected_user_ids = affected.pluck(:user_id)
 
-      Membership.where(room_id: room_id)
-                .merge(Membership.with_message_unseen(created_at, id))
-                .update_all("unread_notifications_count = CASE WHEN unread_notifications_count > 0 THEN unread_notifications_count - 1 ELSE 0 END")
+      affected.update_all("unread_notifications_count = CASE WHEN unread_notifications_count > 0 THEN unread_notifications_count - 1 ELSE 0 END")
 
-      Desktop::BadgeState.broadcast_to_users(User.where(id: affected_user_ids))
+      User.where(id: affected_user_ids).each(&:broadcast_desktop_badge) if Desktop.notifications_enabled?
     end
 end

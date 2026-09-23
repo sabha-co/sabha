@@ -38,6 +38,13 @@ class ApplicationPlatform < PlatformAgent
     ios? || android?
   end
 
+  # The Sabha desktop app appends this token to its Electron user agent, the
+  # way Hotwire Native apps identify themselves. Not to be confused with
+  # `desktop?`, which only means "not a phone".
+  def desktop_app?
+    match? /\bSabha Desktop\b/
+  end
+
   def desktop?
     !mobile?
   end
