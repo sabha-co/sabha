@@ -266,7 +266,7 @@ class Room < ApplicationRecord
     return if forum?
 
     now = Time.current
-    client_message_id = Random.uuid
+    client_message_id = SecureRandom.uuid
 
     Message.insert!({
       room_id: id,
@@ -321,7 +321,7 @@ class Room < ApplicationRecord
       creator: user,
       welcome: true,
       body: body,
-      client_message_id: Random.uuid
+      client_message_id: SecureRandom.uuid
     )
   end
 
