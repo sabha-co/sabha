@@ -87,6 +87,12 @@ env:
     - SSO_CLOUD_SABHA_SECRET
     - SSO_MANAGED_SABHA_RETURN_HOST
     - SSO_MANAGED_SABHA_SECRET
+    # Encrypts the secret each connected self-hosted community shares with
+    # sabha.co; without them, pairing can't store the secret
+    - ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+    - ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+    # Lets Sabha Cloud pair the droplets it provisions
+    - SABHA_PLATFORM_TOKEN
 
 volumes:
   - "/disk/sabha/:/rails/storage/"
