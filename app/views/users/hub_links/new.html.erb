@@ -1,0 +1,28 @@
+<% @page_title = "Connect #{hub_name}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back %>
+  </div>
+<% end %>
+
+<section class="panel flex flex-column gap txt-align-center">
+  <% if Current.session&.fresh? %>
+    <h1 class="txt-large margin-none">Connect <%= hub_name %></h1>
+    <p class="txt-medium margin-none">
+      You'll pick the <%= hub_name %> account to connect. After that, <strong>Continue with <%= hub_name %></strong>
+      signs you in to <%= Current.account.name %> without a password.
+    </p>
+    <p class="txt-small txt-muted margin-none">You can still sign in the usual way, and disconnect it from your profile at any time.</p>
+
+    <%= button_to "Continue to #{hub_name}", user_hub_link_path, class: "btn btn--reversed center txt-large", form: { data: { turbo: false } } %>
+  <% else %>
+    <h1 class="txt-large margin-none">Confirm it's you</h1>
+    <p class="txt-medium margin-none">
+      To connect <%= hub_name %>, sign in to <%= Current.account.name %> again first. You'll come straight back here.
+    </p>
+
+    <%= button_to "Sign in again", session_path, method: :delete, params: { return_to: new_user_hub_link_path },
+          class: "btn btn--reversed center txt-large", form: { data: { turbo: false } } %>
+  <% end %>
+</section>

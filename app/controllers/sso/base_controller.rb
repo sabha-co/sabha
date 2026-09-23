@@ -9,6 +9,8 @@ class Sso::BaseController < ApplicationController
 
   before_action :reject_banned_ip
 
+  helper_method :provider
+
   private
     # /session/sso is the community's own single sign-on; /session/hub is sabha.co
     def provider

@@ -28,6 +28,22 @@ class SingleSignOnRecord < ApplicationRecord
     raise Sso::Forbidden, "Unable to sign in with SSO."
   end
 
+  # A signed-in member connecting a provider they asked to connect. The
+  # provider's email may differ from theirs: the request is the proof, not the
+  # address.
+  def self.link!(user, payload, provider:)
+    raise Sso::Forbidden, "SSO response is missing an external id." if external_id_from(payload).blank?
+    raise Sso::ActivationRequired if activation_required?(payload)
+
+    record = issued_by(provider).find_or_initialize_by(external_id: external_id_from(payload))
+    raise Sso::LinkedElsewhere unless record.new_record? || record.user == user
+
+    record.update!(user:, external_email: email_address_from(payload), last_payload: payload.to_json, last_seen_at: Time.current)
+    record
+  rescue ActiveRecord::RecordNotUnique
+    raise Sso::LinkedElsewhere
+  end
+
   def seen!(payload)
     update!(
       external_email: payload["email"].to_s.downcase,

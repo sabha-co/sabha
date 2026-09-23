@@ -13,6 +13,8 @@ class Sso::CallbacksController < Sso::BaseController
       raise Sso::Failed
     elsif payload.logout?
       sign_out_via_sso(return_path)
+    elsif (member = member_connecting_hub)
+      connect_hub(member, payload)
     else
       sign_in_via_sso(payload, return_path)
     end
@@ -51,6 +53,21 @@ class Sso::CallbacksController < Sso::BaseController
 
       flash[:notice] = welcome_message(user) if newly_bootstrapped || user.previously_new_record?
       redirect_to safe_return_path(return_path)
+    end
+
+    # The signed-in member who asked, from their profile, to connect sabha.co.
+    # The request is used up by the first sabha.co answer, whatever it says.
+    def member_connecting_hub
+      requested_at = session.delete(:hub_link_requested_at)
+      return unless provider.hub? && requested_at && Time.at(requested_at).after?(Session::FRESH_FOR.ago)
+
+      restore_authentication
+      Current.user
+    end
+
+    def connect_hub(member, payload)
+      member.link_hub!(payload)
+      redirect_to user_profile_url, notice: "sabha.co is connected. Use Continue with sabha.co next time you sign in."
     end
 
     def welcome_message(user)

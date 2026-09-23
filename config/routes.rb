@@ -125,7 +125,10 @@ Rails.application.routes.draw do
           end
         end
         resource :notification_settings, only: %i[ edit update ]
-        resource :hub_list_prompt, only: :destroy unless Sabha.saas?
+        unless Sabha.saas?
+          resource :hub_list_prompt, only: :destroy
+          resource :hub_link, only: %i[ new create destroy ]
+        end
       end
     end
     resource :block, only: [ :create, :destroy ]

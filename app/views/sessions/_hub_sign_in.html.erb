@@ -1,0 +1,7 @@
+<%# locals: (join_code: nil) %>
+<div class="flex flex-column gap center-block pad">
+  <p class="txt-small txt-muted txt-align-center margin-none">or</p>
+  <%= link_to hub_handshake_path(join_code:), class: "btn center txt-large", data: { turbo: false } do %>
+    Continue with <%= hub_name %>
+  <% end %>
+</div>

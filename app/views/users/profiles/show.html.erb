@@ -161,6 +161,31 @@
       <% end %>
     </section>
 
+    <% if hub_sign_in_offered? %>
+      <hr class="separator separator--row margin-block">
+
+      <section>
+        <p class="txt-small txt-muted txt-label">Sign-in methods</p>
+        <% if (hub_link = Current.user.hub_link) %>
+          <div class="setting-row">
+            <span class="setting-row__text">
+              <span class="setting-row__title"><%= hub_name %></span>
+              <span class="txt-small txt-muted">Connected as <%= hub_link.external_email %></span>
+            </span>
+            <%= button_to "Disconnect", user_hub_link_path, method: :delete, class: "btn txt-small flex-item-no-shrink" %>
+          </div>
+        <% else %>
+          <%= link_to new_user_hub_link_path, class: "setting-row txt-undecorated" do %>
+            <span class="setting-row__text">
+              <span class="setting-row__title">Connect <%= hub_name %></span>
+              <span class="txt-small txt-muted">Sign in here with your <%= hub_name %> account, no password needed</span>
+            </span>
+            <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
+          <% end %>
+        <% end %>
+      </section>
+    <% end %>
+
     <% if hub_list_prompt_offered? %>
       <hr class="separator separator--row margin-block">
 
