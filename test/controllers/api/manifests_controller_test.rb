@@ -18,6 +18,35 @@ class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
     refute body.key?("members")
   end
 
+  test "describes the community with its name, address and no logo when none is set" do
+    get "/api/manifest", headers: protocol_headers
+
+    community = JSON.parse(response.body)["community"]
+    assert_equal accounts(:signal).name, community["name"]
+    assert_equal Branding.app_url, community["url"]
+    assert_nil community["logo_url"]
+  end
+
+  test "points the community logo at the versioned small logo" do
+    accounts(:signal).logo.attach io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg"
+
+    get "/api/manifest", headers: protocol_headers
+
+    logo_url = URI(JSON.parse(response.body).dig("community", "logo_url"))
+    assert_equal "http://once.sabha.test/account/logo", "#{logo_url.scheme}://#{logo_url.host}#{logo_url.path}"
+    assert_includes logo_url.query, "size=small"
+    assert_includes logo_url.query, "v="
+  end
+
+  test "leaves the community out before first run" do
+    Account.destroy_all
+
+    get "/api/manifest", headers: protocol_headers
+
+    assert_response :success
+    refute JSON.parse(response.body).key?("community")
+  end
+
   test "refuses unsupported protocol majors with upgrade guidance" do
     get "/api/manifest", headers: { "Sabha-Protocol-Major" => "99" }
 
