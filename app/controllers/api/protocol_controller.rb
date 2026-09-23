@@ -2,7 +2,6 @@
 # sabha.co when it checks a community.
 class API::ProtocolController < ApplicationController
   skip_forgery_protection
-  skip_before_action :require_workspace_membership, raise: false
 
   before_action :require_supported_protocol_major
 

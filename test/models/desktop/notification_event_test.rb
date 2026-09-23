@@ -9,7 +9,9 @@ class Desktop::NotificationEventTest < ActiveSupport::TestCase
     )
     user = users(:kevin)
 
-    assert_equal "#{message.id}:#{user.id}", Desktop::NotificationEvent.event_id_for(message: message, user: user)
+    event = Desktop::NotificationEvent.new(message: message, user: user, activity_types: [ :mention ])
+
+    assert_equal "#{message.id}:#{user.id}", event.event_id
   end
 
   test "serializes title body path badge and collapsed activity types" do
@@ -67,8 +69,7 @@ class Desktop::NotificationEventTest < ActiveSupport::TestCase
 
     events = Desktop::NotificationEvent.for_recipients(
       message: message,
-      user_ids: recipients.map(&:id).to_set,
-      activity_types: [ :everyone_room_message ]
+      activity_types_by_user_id: recipients.to_h { [ it.id, [ :everyone_room_message ] ] }
     )
 
     assert_equal recipients.map(&:id).sort, events.map { |event| event.user.id }.sort

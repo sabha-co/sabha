@@ -29,6 +29,23 @@ class Room::DesktopNotificationTest < ActiveSupport::TestCase
     assert_equal [ "direct_message", "mention" ], events.first["activity_types"]
   end
 
+  test "a mention shows up only in the events of the people it names" do
+    room = rooms(:designers)
+    room.memberships.update_all(involvement: "everything")
+    bystander = room.memberships.where.not(user_id: [ users(:david).id, users(:kevin).id ]).first.user
+
+    bystander_events = capture_broadcasts(desktop_stream(bystander)) do
+      @mentioned_events = capture_broadcasts(desktop_stream(users(:kevin))) do
+        perform_enqueued_jobs only: Notification::DispatchJob do
+          room.messages.create!(body: "Hey #{mention_attachment_for(:kevin)}", creator: users(:david), client_message_id: "desktop_types_per_recipient")
+        end
+      end
+    end
+
+    assert_equal [ [ "everyone_room_message" ] ], bystander_events.map { it["activity_types"] }
+    assert_equal [ [ "everyone_room_message", "mention" ] ], @mentioned_events.map { it["activity_types"] }
+  end
+
   test "push-disabled recipient receives no desktop event" do
     settings = @recipient.notification_settings || @recipient.create_notification_settings!
     settings.update!(push_enabled: false)

@@ -3,20 +3,19 @@ module Desktop
     attr_reader :message, :user, :activity_types
 
     # Builds every recipient's event up front — one push payload, one badge
-    # query — so nothing is left to raise once delivery starts.
-    def self.for_recipients(message:, user_ids:, activity_types:)
-      return [] if user_ids.empty?
+    # query — so nothing is left to raise once delivery starts. Takes
+    # { user_id => the activity types that reached that user }.
+    def self.for_recipients(message:, activity_types_by_user_id:)
+      return [] if activity_types_by_user_id.empty?
 
+      user_ids = activity_types_by_user_id.keys
       push_payload = Room::MessagePusher.payload_for(room: message.room, message: message)
-      badges = Membership.badged.where(user_id: user_ids.to_a).group(:user_id).count
+      badges = Membership.badged.where(user_id: user_ids).group(:user_id).count
 
-      User.where(id: user_ids.to_a).map do |user|
-        new(message: message, user: user, activity_types: activity_types, push_payload: push_payload, badge: badges.fetch(user.id, 0))
+      User.where(id: user_ids).map do |user|
+        new(message: message, user: user, activity_types: activity_types_by_user_id[user.id],
+            push_payload: push_payload, badge: badges.fetch(user.id, 0))
       end
-    end
-
-    def self.event_id_for(message:, user:)
-      [ (ApplicationRecord.current_tenant if Sabha.saas?), message.id, user.id ].compact.join(":")
     end
 
     def initialize(message:, user:, activity_types:, push_payload: nil, badge: nil)
@@ -28,7 +27,7 @@ module Desktop
     end
 
     def event_id
-      self.class.event_id_for(message: message, user: user)
+      [ (ApplicationRecord.current_tenant if Sabha.saas?), message.id, user.id ].compact.join(":")
     end
 
     # Best effort: runs after web pushes have gone out, so a failed broadcast

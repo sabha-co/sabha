@@ -202,7 +202,7 @@ class Message < ApplicationRecord
 
     types = only ? Array(only).map(&:to_sym) : room.applicable_activity_types(self)
     push_subscriptions = []
-    desktop_recipient_ids = Set.new
+    desktop_activity_types = Hash.new { |types, user_id| types[user_id] = [] }
 
     # Two phases. Everything that can raise — in-app rows, email bundles, and
     # working out who to push — runs first; posting runs last. A push can't be
@@ -216,15 +216,20 @@ class Message < ApplicationRecord
       if Notification::Routing::PUSH_TYPES.include?(activity_type)
         recipient_ids = push_recipient_user_ids_for(activity_type)
         push_subscriptions.concat push_subscriptions_for(recipient_ids)
-        desktop_recipient_ids.merge(recipient_ids) if Desktop.notifications_enabled?
+        recipient_ids.each { desktop_activity_types[it] << activity_type } if Desktop.notifications_enabled?
       end
 
       enqueue_missed_email_candidates_for(activity_type) if Notification::Routing::EMAIL_TYPES.include?(activity_type)
     end
 
-    desktop_events = Desktop::NotificationEvent.for_recipients(
-      message: self, user_ids: desktop_recipient_ids, activity_types: types & Notification::Routing::PUSH_TYPES
-    )
+    # The push rules skip members at "everything" in the mention pass (their
+    # room or DM push already covers it), so add the mention back for anyone
+    # the message names: the app still needs to know they were mentioned.
+    if types.include?(:mention)
+      desktop_activity_types.each { |user_id, reached| reached << :mention if mentions_user_id?(user_id) }
+    end
+
+    desktop_events = Desktop::NotificationEvent.for_recipients(message: self, activity_types_by_user_id: desktop_activity_types)
 
     deliver_pushes_to push_subscriptions
     desktop_events.each(&:deliver)

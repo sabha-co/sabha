@@ -45,13 +45,7 @@ class Sso::CallbacksController < Sso::BaseController
       start_new_session_for user
 
       if handoff.present?
-        claim = Session::Claim.issue!(
-          user: user,
-          nonce: handoff["nonce"],
-          origin: handoff["origin"],
-          code_challenge: handoff["code_challenge"],
-          return_path: handoff["return_path"]
-        )
+        claim = Session::Claim.issue!(user: user, **handoff.symbolize_keys)
         return redirect_to_session_claim!(claim)
       end
 
