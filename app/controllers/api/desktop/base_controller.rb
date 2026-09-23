@@ -22,7 +22,7 @@ class API::Desktop::BaseController < ApplicationController
     end
 
     def require_authentication
-      restore_authentication || bot_authentication || request_authentication
+      restore_authentication || request_authentication
       return if performed?
 
       deny_inactive_workspace_user if Current.user.present?

@@ -50,6 +50,7 @@ class Sso::CallbacksController < Sso::BaseController
           user: user,
           nonce: handoff["nonce"],
           origin: handoff["origin"],
+          code_challenge: handoff["code_challenge"],
           return_path: handoff["return_path"]
         )
         return redirect_to_desktop_claim!(claim)

@@ -140,6 +140,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_04_183000) do
     t.string "token_digest", null: false
     t.string "nonce", null: false
     t.string "origin", null: false
+    t.string "code_challenge", null: false
     t.string "return_path", null: false
     t.datetime "expires_at", null: false
     t.datetime "used_at"

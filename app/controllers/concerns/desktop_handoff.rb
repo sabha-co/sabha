@@ -4,25 +4,30 @@ module DesktopHandoff
   SESSION_KEY = "desktop_handoff"
 
   private
-
     def desktop_handoff_requested?
       params[:desktop_handoff].present? &&
         params[:desktop_nonce].present? &&
-        params[:desktop_origin].present?
+        params[:desktop_origin].present? &&
+        params[:desktop_code_challenge].present?
     end
 
+    # Always replaces what's stored, so an abandoned desktop sign-in can't
+    # hijack a later browser sign-in in the same session.
     def store_desktop_handoff_context
+      clear_desktop_handoff_context
       return unless desktop_handoff_requested?
 
       session[SESSION_KEY] = {
         "nonce" => params[:desktop_nonce].to_s,
         "origin" => params[:desktop_origin].to_s,
-        "return_path" => params[:return_to].presence || default_desktop_return_path
+        "code_challenge" => params[:desktop_code_challenge].to_s,
+        "return_path" => desktop_return_path
       }
     end
 
-    def default_desktop_return_path
-      Sabha.saas? ? saas_root_path : root_path
+    def desktop_return_path
+      path = params[:return_to].to_s
+      path.start_with?("/") && !path.start_with?("//") ? path : root_path
     end
 
     def desktop_handoff_context
