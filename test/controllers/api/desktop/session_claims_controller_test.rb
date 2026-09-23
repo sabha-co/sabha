@@ -63,6 +63,6 @@ class API::Desktop::SessionClaimsControllerTest < ActionDispatch::IntegrationTes
     end
 
     def desktop_headers
-      { "Sabha-Desktop-Protocol-Major" => "1" }
+      { "Sabha-Protocol-Major" => "1" }
     end
 end

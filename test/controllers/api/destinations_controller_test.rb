@@ -1,12 +1,12 @@
 require "test_helper"
 
-class API::Desktop::DestinationsControllerTest < ActionDispatch::IntegrationTest
+class API::DestinationsControllerTest < ActionDispatch::IntegrationTest
   setup { host! "once.sabha.test" }
 
   test "returns one branded destination with cable discovery path when signed in" do
     sign_in :david
 
-    get "/api/desktop/destinations", headers: desktop_headers
+    get "/api/destinations", headers: desktop_headers
 
     assert_response :success
     body = JSON.parse(response.body)
@@ -21,7 +21,7 @@ class API::Desktop::DestinationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "is unauthorized without a session" do
-    get "/api/desktop/destinations", headers: desktop_headers
+    get "/api/destinations", headers: desktop_headers
 
     assert_response :unauthorized
     refute JSON.parse(response.body).key?("peers")
@@ -29,6 +29,6 @@ class API::Desktop::DestinationsControllerTest < ActionDispatch::IntegrationTest
 
   private
     def desktop_headers
-      { "Sabha-Desktop-Protocol-Major" => "1" }
+      { "Sabha-Protocol-Major" => "1" }
     end
 end

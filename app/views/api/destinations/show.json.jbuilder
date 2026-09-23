@@ -1,4 +1,4 @@
-json.protocol_major Desktop::PROTOCOL_MAJOR
+json.protocol_major Sabha::PROTOCOL_MAJOR
 
 if Sabha.saas?
   json.peers Current.global_identity.active_workspaces_ordered do |workspace|

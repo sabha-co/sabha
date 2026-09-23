@@ -1,4 +1,6 @@
-class API::Desktop::BaseController < ApplicationController
+# Base for endpoints any Sabha client reads: the desktop and mobile apps, and
+# sabha.co when it checks a community.
+class API::ProtocolController < ApplicationController
   skip_forgery_protection
   skip_before_action :require_workspace_membership, raise: false
 
@@ -6,13 +8,13 @@ class API::Desktop::BaseController < ApplicationController
 
   private
     def require_supported_protocol_major
-      protocol_major = request.headers["Sabha-Desktop-Protocol-Major"]&.to_i
-      return if protocol_major == Desktop::PROTOCOL_MAJOR
+      protocol_major = request.headers["Sabha-Protocol-Major"]&.to_i
+      return if protocol_major == Sabha::PROTOCOL_MAJOR
 
       render json: {
         error: "unsupported_protocol_major",
         requested_major: protocol_major,
-        supported_major: Desktop::PROTOCOL_MAJOR,
+        supported_major: Sabha::PROTOCOL_MAJOR,
         upgrade_url: Desktop::UPGRADE_URL
       }, status: :unsupported_media_type
     end

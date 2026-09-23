@@ -33,7 +33,7 @@ class DesktopChannel < ApplicationCable::Channel
   end
 
   def self.badge_for(user)
-    { type: "badge", protocol_major: Desktop::PROTOCOL_MAJOR, count: user.badge_count }
+    { type: "badge", protocol_major: Sabha::PROTOCOL_MAJOR, count: user.badge_count }
   end
 
   private

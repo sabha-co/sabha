@@ -1,10 +1,10 @@
 require "test_helper"
 
-class API::Desktop::ManifestsControllerTest < ActionDispatch::IntegrationTest
+class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
   setup { host! "once.sabha.test" }
 
   test "returns protocol version 1 product identity and sign-in path without authentication" do
-    get "/api/desktop/manifest", headers: desktop_headers
+    get "/api/manifest", headers: desktop_headers
 
     assert_response :success
     body = JSON.parse(response.body)
@@ -12,14 +12,14 @@ class API::Desktop::ManifestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal Branding.app_name, body.dig("product", "name")
     assert_equal Branding.app_short_name, body.dig("product", "short_name")
     assert_equal Branding.app_short_name.to_s.parameterize.presence || "sabha", body.dig("product", "slug")
-    assert_equal "/api/desktop/destinations", body["destinations_path"]
+    assert_equal "/api/destinations", body["destinations_path"]
     assert_equal "/session/new", body["sign_in_path"]
     refute body.key?("destinations")
     refute body.key?("members")
   end
 
   test "refuses unsupported protocol majors with upgrade guidance" do
-    get "/api/desktop/manifest", headers: { "Sabha-Desktop-Protocol-Major" => "99" }
+    get "/api/manifest", headers: { "Sabha-Protocol-Major" => "99" }
 
     assert_response :unsupported_media_type
     body = JSON.parse(response.body)
@@ -30,6 +30,6 @@ class API::Desktop::ManifestsControllerTest < ActionDispatch::IntegrationTest
 
   private
     def desktop_headers
-      { "Sabha-Desktop-Protocol-Major" => "1" }
+      { "Sabha-Protocol-Major" => "1" }
     end
 end

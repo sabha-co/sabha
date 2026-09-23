@@ -193,9 +193,10 @@ Rails.application.routes.draw do
   namespace :api, defaults: { format: :json } do
     resource :cable, only: :show
 
+    resource :manifest, only: :show
+    resource :destinations, only: :show
+
     namespace :desktop do
-      resource :manifest, only: :show
-      resource :destinations, only: :show
       resource :session_claim, only: :create unless Sabha.saas?
     end
   end

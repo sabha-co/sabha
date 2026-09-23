@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "../../../test_helper"
+require_relative "../../test_helper"
 
 module Saas
-  class API::Desktop::DestinationsSaasControllerTest < ActionDispatch::IntegrationTest
+  class API::DestinationsSaasControllerTest < ActionDispatch::IntegrationTest
     setup do
       [ workspaces(:acme), workspaces(:shared), workspaces(:suspended) ].each do |workspace|
         tenant_id = workspace.external_id.to_s
@@ -13,7 +13,7 @@ module Saas
     end
 
     test "returns ordered active workspace peers with tenant cable paths" do
-      get "/api/desktop/destinations", headers: desktop_headers
+      get "/api/destinations", headers: desktop_headers
 
       assert_response :success
       body = JSON.parse(response.body)
@@ -26,14 +26,14 @@ module Saas
     test "is unauthorized without a global session" do
       reset!
 
-      get "/api/desktop/destinations", headers: desktop_headers
+      get "/api/destinations", headers: desktop_headers
 
       assert_response :unauthorized
     end
 
     private
       def desktop_headers
-        { "Sabha-Desktop-Protocol-Major" => "1" }
+        { "Sabha-Protocol-Major" => "1" }
       end
   end
 end

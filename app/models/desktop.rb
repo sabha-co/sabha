@@ -1,6 +1,4 @@
 module Desktop
-  PROTOCOL_MAJOR = 1
-
   UPGRADE_URL = "https://github.com/sabha-co/sabha-desktop/releases"
 
   # Off until the desktop app ships: every eligible recipient otherwise costs a

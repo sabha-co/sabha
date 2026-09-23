@@ -47,7 +47,7 @@ module Desktop
     def as_json
       {
         type: "notification",
-        protocol_major: Desktop::PROTOCOL_MAJOR,
+        protocol_major: Sabha::PROTOCOL_MAJOR,
         event_id: event_id,
         message_id: message.id,
         activity_types: activity_types.map(&:to_s),
