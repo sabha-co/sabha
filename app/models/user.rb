@@ -6,8 +6,8 @@ class User < ApplicationRecord
 
   serialize :preferences, coder: JSON
 
-  def self.sign_in_with_sso!(payload)
-    record = SingleSignOnRecord.find_or_provision!(payload)
+  def self.sign_in_with_sso!(payload, provider: Sso::Provider.custom, invited: false)
+    record = SingleSignOnRecord.find_or_provision!(payload, provider:, invited:)
     record.require_activation!(payload)
     record.user
   end
@@ -85,7 +85,7 @@ class User < ApplicationRecord
   has_many :auth_tokens, dependent: :destroy
   has_many :session_claims, class_name: "Session::Claim", dependent: :delete_all
   has_many :bans, dependent: :destroy
-  has_one :single_sign_on_record, dependent: :destroy
+  has_many :single_sign_on_records, dependent: :destroy
 
   belongs_to :badge, optional: true
 

@@ -47,6 +47,27 @@ class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
     refute JSON.parse(response.body).key?("community")
   end
 
+  test "proves the sabha.co pairing only when a secret is set" do
+    get "/api/manifest", headers: protocol_headers
+    refute JSON.parse(response.body).key?("hub_proof")
+
+    with_hub_secret("hub-secret") do
+      get "/api/manifest", headers: protocol_headers
+    end
+
+    expected = OpenSSL::HMAC.hexdigest("sha256", "hub-secret", "sabha-hub-pairing:http://once.sabha.test")
+    assert_equal expected, JSON.parse(response.body)["hub_proof"]
+  end
+
+  test "publishes no pairing proof beside the community's own single sign-on" do
+    with_hub_secret("hub-secret") do
+      Account.stubs(:sso_auth?).returns(true)
+      get "/api/manifest", headers: protocol_headers
+    end
+
+    refute JSON.parse(response.body).key?("hub_proof")
+  end
+
   test "refuses unsupported protocol majors with upgrade guidance" do
     get "/api/manifest", headers: { "Sabha-Protocol-Major" => "99" }
 
@@ -57,6 +78,14 @@ class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+    def with_hub_secret(secret)
+      original = ENV["SABHA_HUB_SECRET"]
+      ENV["SABHA_HUB_SECRET"] = secret
+      yield
+    ensure
+      original ? ENV["SABHA_HUB_SECRET"] = original : ENV.delete("SABHA_HUB_SECRET")
+    end
+
     def protocol_headers
       { "Sabha-Protocol-Major" => "1" }
     end

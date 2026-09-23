@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_23_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_09_24_000001) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -301,12 +301,14 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_23_120000) do
     t.datetime "created_at", null: false
     t.string "external_email"
     t.string "external_id", null: false
+    t.string "issuer"
     t.text "last_payload"
     t.datetime "last_seen_at"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["external_id"], name: "index_single_sign_on_records_on_external_id", unique: true
-    t.index ["user_id"], name: "index_single_sign_on_records_on_user_id", unique: true
+    t.index ["issuer", "external_id"], name: "index_single_sign_on_records_on_issuer_and_external_id", unique: true
+    t.index ["issuer", "user_id"], name: "index_single_sign_on_records_on_issuer_and_user_id", unique: true
+    t.index ["user_id"], name: "index_single_sign_on_records_on_user_id"
   end
 
   create_table "solutions", force: :cascade do |t|

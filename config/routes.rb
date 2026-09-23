@@ -47,6 +47,10 @@ Rails.application.routes.draw do
   end
   get "/session/sso", to: "sso/handshakes#new", as: :sso_handshake
   get "/session/sso/callback", to: "sso/callbacks#show", as: :sso_callback
+  unless Sabha.saas?
+    get "/session/hub", to: "sso/handshakes#new", as: :hub_handshake, defaults: { provider: "hub" }
+    get "/session/hub/callback", to: "sso/callbacks#show", as: :hub_callback, defaults: { provider: "hub" }
+  end
   get "/session/signed_out", to: "signed_out_sessions#show", as: :signed_out_session
 
   resources :auth_tokens, only: %i[create]

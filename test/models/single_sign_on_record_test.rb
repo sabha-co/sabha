@@ -35,9 +35,22 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     assert_includes record.errors[:external_id], "has already been taken"
   end
 
-  test "user is unique" do
+  test "a user has one link per issuer" do
+    SingleSignOnRecord.insert!({ user_id: users(:jason).id, issuer: "https://sso.example", external_id: "jason-1" })
+
     assert_raises ActiveRecord::RecordNotUnique do
-      SingleSignOnRecord.insert!({ user_id: users(:david).id, external_id: "provider-david-2" })
+      SingleSignOnRecord.insert!({ user_id: users(:jason).id, issuer: "https://sso.example", external_id: "jason-2" })
+    end
+    assert_nothing_raised do
+      SingleSignOnRecord.insert!({ user_id: users(:jason).id, issuer: "https://sabha.co", external_id: "global_identity:7" })
+    end
+  end
+
+  test "the same external id can come from two issuers" do
+    SingleSignOnRecord.insert!({ user_id: users(:jason).id, issuer: "https://sso.example", external_id: "7" })
+
+    assert_nothing_raised do
+      SingleSignOnRecord.insert!({ user_id: users(:kevin).id, issuer: "https://sabha.co", external_id: "7" })
     end
   end
 
@@ -93,7 +106,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
         record = SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: "jason-provider"))
 
         assert_equal user, record.user
-        assert_equal "jason-provider", user.single_sign_on_record.external_id
+        assert_equal "jason-provider", user.single_sign_on_records.sole.external_id
       end
     end
   end
@@ -139,7 +152,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     assert_match(/admin must re-link/i, error.user_message)
 
     # The existing mapping is untouched — proves no silent takeover.
-    assert_equal single_sign_on_records(:david).external_id, user.reload.single_sign_on_record.external_id
+    assert_equal single_sign_on_records(:david).external_id, user.reload.single_sign_on_records.sole.external_id
   end
 
   test "wraps concurrent claim unique index race as forbidden" do
@@ -148,7 +161,10 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
     active_users.expects(:find_by).with(email_address: user.email_address).returns(user)
 
     User.stubs(:active).returns(active_users)
-    user.stubs(:create_single_sign_on_record!).raises(ActiveRecord::RecordNotUnique.new("duplicate"))
+    records = mock("sso records")
+    records.stubs(:where).returns(SingleSignOnRecord.none)
+    records.stubs(:create!).raises(ActiveRecord::RecordNotUnique.new("duplicate"))
+    user.stubs(:single_sign_on_records).returns(records)
 
     assert_raises Sso::Forbidden do
       SingleSignOnRecord.find_or_provision!(payload(email: user.email_address, external_id: "racing-provider"))
@@ -174,7 +190,7 @@ class SingleSignOnRecordTest < ActiveSupport::TestCase
 
     user = User.find_by(email_address: "activate@example.com")
     assert_not user.verified?
-    assert_equal "activate-1", user.single_sign_on_record.external_id
+    assert_equal "activate-1", user.single_sign_on_records.sole.external_id
   end
 
   test "require activation for linked unverified user sends verification email without session" do

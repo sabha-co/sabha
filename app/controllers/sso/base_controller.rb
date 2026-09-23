@@ -1,7 +1,7 @@
 class Sso::BaseController < ApplicationController
   include BlockBannedRequests
 
-  SESSION_NONCE_KEY = "single_sign_on_nonce"
+  SESSION_NONCE_KEYS = { custom: "single_sign_on_nonce", hub: "hub_sign_on_nonce" }.freeze
 
   layout "session"
 
@@ -10,16 +10,29 @@ class Sso::BaseController < ApplicationController
   before_action :reject_banned_ip
 
   private
+    # /session/sso is the community's own single sign-on; /session/hub is sabha.co
+    def provider
+      @provider ||= Sso::Provider.find(request.path_parameters[:provider])
+    end
+
     def sso_configured?
-      Account.sso_configured?
+      provider.configured?
     end
 
     def sso_secret
-      Account.sso_secret
+      provider.secret
     end
 
     def sso_provider_url
-      Account.sso_provider_url
+      provider.url
+    end
+
+    def session_nonce_key
+      SESSION_NONCE_KEYS.fetch(provider.key)
+    end
+
+    def provider_callback_url
+      provider.hub? ? hub_callback_url : sso_callback_url
     end
 
     def sso_return_path
@@ -32,8 +45,13 @@ class Sso::BaseController < ApplicationController
     end
 
     def sso_misconfigured
-      Rails.logger.error("[SSO] Missing SSO_PROVIDER_URL or SSO_SECRET")
-      @message = "Single sign-on is not configured."
-      render "sso/failed", status: :service_unavailable
+      if provider.hub?
+        @message = "Signing in with sabha.co isn't available here."
+        render "sso/failed", status: :not_found
+      else
+        Rails.logger.error("[SSO] Missing SSO_PROVIDER_URL or SSO_SECRET")
+        @message = "Single sign-on is not configured."
+        render "sso/failed", status: :service_unavailable
+      end
     end
 end

@@ -1,16 +1,27 @@
 class SingleSignOnRecord < ApplicationRecord
   belongs_to :user
 
-  validates :external_id, presence: true, uniqueness: true
+  validates :external_id, presence: true, uniqueness: { scope: :issuer }
 
-  def self.find_or_provision!(payload)
+  scope :issued_by, ->(provider) { where(issuer: provider.issuer) }
+
+  # The account a provider's payload signs in to. The community's own single
+  # sign-on keeps its long-standing rules, including claiming an existing
+  # account by email. sabha.co never matches by email: an account connects it
+  # from the profile, and new accounts need an invite unless the admin opens
+  # sign-up to it.
+  def self.find_or_provision!(payload, provider: Sso::Provider.custom, invited: false)
     raise Sso::Forbidden, "SSO response is missing an external id." if external_id_from(payload).blank?
     raise Sso::Forbidden, "SSO response is missing an email address." if email_address_from(payload).blank?
 
     transaction do
-      find_by(external_id: external_id_from(payload))&.apply_sso!(payload) ||
-        claim_existing_user!(payload) ||
-        provision_user!(payload)
+      if provider.hub?
+        find_or_provision_for_hub!(payload, provider, invited:)
+      else
+        find_for_custom(payload, provider)&.apply_sso!(payload) ||
+          claim_existing_user!(payload, provider) ||
+          provision_user!(payload, provider)
+      end
     end
   rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => error
     Rails.logger.warn("[SSO] Failed to resolve user for external_id=#{external_id_from(payload).inspect}: #{error.message}")
@@ -25,11 +36,12 @@ class SingleSignOnRecord < ApplicationRecord
     )
   end
 
-  def apply_sso!(payload)
+  # sabha.co's profile is a hint at sign-up, never an override afterwards
+  def apply_sso!(payload, provider = Sso::Provider.custom)
     raise Sso::Forbidden, "Unable to sign in with SSO." unless user.active?
 
     seen!(payload)
-    update_user_profile!(payload)
+    update_user_profile!(payload) unless provider.hub?
     self
   end
 
@@ -65,7 +77,28 @@ class SingleSignOnRecord < ApplicationRecord
   end
 
   private
-    def self.claim_existing_user!(payload)
+    # Rows from before links were keyed by issuer belong to the custom
+    # provider; the first callback that presents one stamps it.
+    def self.find_for_custom(payload, provider)
+      issued_by(provider).find_by(external_id: external_id_from(payload)) ||
+        where(issuer: nil).find_by(external_id: external_id_from(payload))&.tap { it.update!(issuer: provider.issuer) }
+    end
+
+    def self.find_or_provision_for_hub!(payload, provider, invited:)
+      raise Sso::ActivationRequired if activation_required?(payload)
+
+      if (record = issued_by(provider).find_by(external_id: external_id_from(payload)))
+        record.apply_sso!(payload, provider)
+      elsif User.exists?(email_address: email_address_from(payload))
+        raise Sso::LinkFromProfile
+      elsif invited || provider.auto_provision?
+        provision_user!(payload, provider)
+      else
+        raise Sso::InviteRequired
+      end
+    end
+
+    def self.claim_existing_user!(payload, provider)
       user = User.active.find_by(email_address: email_address_from(payload))
       return unless user
 
@@ -74,14 +107,15 @@ class SingleSignOnRecord < ApplicationRecord
         raise Sso::ActivationRequired
       end
 
-      if (existing = user.single_sign_on_record)
+      if (existing = user.single_sign_on_records.where(issuer: [ provider.issuer, nil ]).first)
         Rails.logger.warn("[SSO] Refused email takeover: email=#{email_address_from(payload).inspect} " \
           "incoming_external_id=#{external_id_from(payload).inspect} " \
           "existing_external_id=#{existing.external_id.inspect} user=#{user.id}")
         raise Sso::AlreadyLinked
       end
 
-      user.create_single_sign_on_record!(
+      user.single_sign_on_records.create!(
+        issuer: provider.issuer,
         external_id: external_id_from(payload),
         external_email: email_address_from(payload),
         last_payload: payload.to_json,
@@ -91,7 +125,7 @@ class SingleSignOnRecord < ApplicationRecord
       end
     end
 
-    def self.provision_user!(payload)
+    def self.provision_user!(payload, provider)
       user = User.create!(
         name: name_from(payload),
         email_address: email_address_from(payload),
@@ -99,7 +133,8 @@ class SingleSignOnRecord < ApplicationRecord
         verified_at: activation_required?(payload) ? nil : Time.current
       )
 
-      user.create_single_sign_on_record!(
+      user.single_sign_on_records.create!(
+        issuer: provider.issuer,
         external_id: external_id_from(payload),
         external_email: email_address_from(payload),
         last_payload: payload.to_json,

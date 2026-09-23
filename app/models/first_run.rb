@@ -76,7 +76,8 @@ class FirstRun
       room.save!
       room.memberships.grant_to(admin)
 
-      admin.create_single_sign_on_record!(
+      admin.single_sign_on_records.create!(
+        issuer: Sso::Provider.custom.issuer,
         external_id: SingleSignOnRecord.external_id_from(payload),
         external_email: SingleSignOnRecord.email_address_from(payload),
         last_payload: payload.to_json,

@@ -16,3 +16,10 @@ if !Sabha.saas? && (account = Current.account)
     json.url Branding.app_url
   end
 end
+
+# Proves to sabha.co, while it pairs with this server, that the server holds
+# the secret it was given and answers at this origin. The signed text can't be
+# mistaken for a sign-in payload, which is base64 and never contains a colon.
+if (hub = Sso::Provider.hub).configured?
+  json.hub_proof hub.pairing_proof(request.base_url)
+end
