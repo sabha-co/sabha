@@ -59,8 +59,14 @@ class RemoteWorkspace < UntenantedRecord
     unreachable_since.present? && unreachable_since <= UNREACHABLE_AFTER.ago
   end
 
-  def host
-    URI(origin).host
+  # What people see under the name: the origin without its scheme, keeping any
+  # port, so two communities on one host can't pass for each other.
+  def address
+    origin.delete_prefix("https://").delete_prefix("http://")
+  end
+
+  def alias_address
+    alias_origin&.delete_prefix("https://")
   end
 
   def logo?

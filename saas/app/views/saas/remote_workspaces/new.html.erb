@@ -1,0 +1,66 @@
+<% content_for :title, "Add a community" %>
+
+<section class="txt-align-center">
+  <div class="panel panel--centered" style="--panel-width: 36rem">
+    <% if @remote_workspace %>
+      <%= form_with url: remote_workspaces_path, class: "flex flex-column gap" do |form| %>
+        <%= form.hidden_field :origin, value: @remote_workspace.origin %>
+        <%= form.hidden_field :source, value: params[:source] if params[:source].present? %>
+
+        <fieldset class="flex flex-column gap center-block pad align-center">
+          <legend class="txt-large txt-align-center"><strong>Add this community to your list?</strong></legend>
+
+          <div class="workspace-initial workspace-initial--large" style="<%= remote_workspace_gradient_style(@remote_workspace) unless @remote_workspace.logo? %>">
+            <% if @remote_workspace.logo? %>
+              <%= image_tag remote_workspace_logo_path(@remote_workspace), alt: "", class: "workspace-initial__logo" %>
+            <% else %>
+              <%= @remote_workspace.name.first.upcase %>
+            <% end %>
+          </div>
+
+          <div class="flex flex-column">
+            <strong class="txt-large"><%= @remote_workspace.name %></strong>
+            <span class="txt-large"><%= @remote_workspace.address %></span>
+          </div>
+
+          <p class="txt-small txt-muted">
+            It will open at this address. Sign in there the usual way; sabha.co never sees your account on it.
+          </p>
+
+          <% if @remote_workspace.alias_origin %>
+            <p class="txt-small">
+              This community calls itself <strong><%= @remote_workspace.alias_address %></strong>.
+              <%= link_to "Add that address instead", new_remote_workspace_path(origin: @remote_workspace.alias_origin, source: params[:source]) %>
+            </p>
+          <% end %>
+
+          <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+            Add to my list
+          <% end %>
+          <%= link_to "Use a different address", new_remote_workspace_path, class: "txt-small" %>
+        </fieldset>
+      <% end %>
+    <% else %>
+      <%= form_with url: new_remote_workspace_path, method: :get, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
+        <fieldset class="flex flex-column gap center-block pad">
+          <legend class="txt-large txt-align-center"><strong>Add a community</strong></legend>
+          <p class="txt-muted txt-medium txt-align-center">Paste the address of a self-hosted Sabha you've joined.</p>
+
+          <% if @lookup_error %>
+            <p class="txt-small txt-negative" role="alert"><%= remote_workspace_lookup_message(@lookup_error) %></p>
+          <% end %>
+
+          <label class="flex align-center gap input input--actor txt-large">
+            <%= form.text_field :origin, value: @address, required: true, class: "input", autofocus: true,
+                  placeholder: "chat.example.org", inputmode: "url", autocapitalize: "off", spellcheck: false,
+                  "aria-label": "Community address" %>
+          </label>
+
+          <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+            Look it up
+          <% end %>
+        </fieldset>
+      <% end %>
+    <% end %>
+  </div>
+</section>

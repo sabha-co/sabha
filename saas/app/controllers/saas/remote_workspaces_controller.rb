@@ -2,6 +2,8 @@
 
 module Saas
   class RemoteWorkspacesController < BaseController
+    helper RemoteWorkspacesHelper
+
     # Each look-up fetches someone else's server, so keep people from using
     # sabha.co to hammer one.
     rate_limit to: 30, within: 1.hour, only: :new, by: -> { current_global_identity.id }, with: :too_many_requests

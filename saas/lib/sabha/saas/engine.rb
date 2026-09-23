@@ -81,6 +81,7 @@ module Sabha
             end
             resources :remote_workspace_memberships, only: [ :update, :destroy ],
                       controller: "saas/remote_workspace_memberships"
+            resource :remote_workspace_list, only: :destroy, controller: "saas/remote_workspace_lists"
 
             # Platform admin area (superadmin only)
             namespace :admin do

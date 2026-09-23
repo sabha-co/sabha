@@ -10,4 +10,5 @@ class RemoteWorkspaceMembership < UntenantedRecord
   belongs_to :remote_workspace
 
   scope :visible, -> { where(hidden: false) }
+  scope :alphabetically, -> { eager_load(:remote_workspace).order(RemoteWorkspace.arel_table[:name].lower) }
 end

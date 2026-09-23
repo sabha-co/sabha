@@ -17,6 +17,49 @@ module Saas
         body: { protocol_major: 1, community: { name: "New" } }.to_json, headers: { "Content-Type" => "application/json" })
     end
 
+    test "asks for an address" do
+      get "/remote_workspaces/new"
+
+      assert_response :success
+      assert_select "input[name=origin]"
+    end
+
+    test "shows the community's name and address to confirm" do
+      get "/remote_workspaces/new", params: { origin: "new.example/rooms/3", source: "prompt" }
+
+      assert_response :success
+      assert_select "strong", "New"
+      assert_select "span", "new.example"
+      assert_select "input[name=origin][value=?]", ORIGIN
+      assert_select "input[name=source][value=prompt]"
+    end
+
+    test "offers the address a community calls itself" do
+      stub_request(:get, "#{ORIGIN}/api/manifest").to_return(status: 200,
+        body: { protocol_major: 1, community: { name: "New", url: "https://chat.new.example" } }.to_json)
+
+      get "/remote_workspaces/new", params: { origin: ORIGIN }
+
+      assert_select "a[href=?]", new_remote_workspace_path(origin: "https://chat.new.example"), text: "Add that address instead"
+    end
+
+    test "explains why an address can't be added" do
+      stub_request(:get, "#{ORIGIN}/api/manifest").to_return(status: 404)
+
+      get "/remote_workspaces/new", params: { origin: ORIGIN }
+
+      assert_response :unprocessable_entity
+      assert_select "[role=alert]", /isn't a Sabha community/
+      assert_select "input[name=origin][value=?]", ORIGIN
+    end
+
+    test "explains an address that isn't one" do
+      get "/remote_workspaces/new", params: { origin: "http://new.example" }
+
+      assert_response :unprocessable_entity
+      assert_select "[role=alert]", "Use an https:// address."
+    end
+
     test "adding a community puts it in the person's list" do
       assert_difference -> { @alice.remote_workspace_memberships.count }, 1 do
         post "/remote_workspaces", params: { origin: "New.Example" }

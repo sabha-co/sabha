@@ -42,8 +42,10 @@ module Saas
       assert_includes response.headers["Cache-Control"], "private"
     end
 
-    test "serves no logo to people who don't list the community" do
-      assert_raises(ActiveRecord::RecordNotFound) { get "/remote_workspaces/#{remote_workspaces(:club).id}/logo" }
+    test "answers not found for a community without a logo" do
+      get "/remote_workspaces/#{remote_workspaces(:club).id}/logo"
+
+      assert_response :not_found
     end
 
     test "reorders workspaces and communities together" do

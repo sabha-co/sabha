@@ -189,6 +189,11 @@
   transform: translateX(2px);
 }
 
+/* A self-hosted community sabha.co couldn't reach lately: still clickable */
+.workspace-selector__item--unreachable .workspace-selector__workspace-icon {
+  opacity: 0.45;
+}
+
 /* Micro-interaction bounce on click */
 @keyframes workspace-bounce {
   0% { transform: translateX(2px) scale(1); }
@@ -419,6 +424,13 @@
   color: var(--color-lch-white);
   flex-shrink: 0;
   overflow: hidden;
+}
+
+.workspace-initial--large {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 0.875rem;
+  font-size: 1.5rem;
 }
 
 .workspace-initial__logo {

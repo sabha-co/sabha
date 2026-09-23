@@ -25,6 +25,29 @@ module Saas
       assert_select "strong", text: "Shared Workspace"
     end
 
+    test "show lists the person's communities with their addresses" do
+      sign_in_global_identity(global_identities(:bob))
+      remote_workspace_memberships(:bob_club).update!(hidden: true)
+
+      get settings_path
+
+      assert_select "strong", "Acme"
+      assert_select "span", /chat\.acme\.org/
+      assert_select "span", /club\.example\s+· Unreachable\s+· Hidden/
+      assert_select "button", "Show"
+      assert_select "a[href=?]", new_remote_workspace_path, text: /Add a community/
+    end
+
+    test "the selector lists communities beside workspaces, linking to their own sites" do
+      sign_in_global_identity(global_identities(:bob))
+
+      get settings_path
+
+      assert_select ".workspace-selector a[href='https://chat.acme.org'][data-workspace-id^='remote:']"
+      assert_select ".workspace-selector a.workspace-selector__item--unreachable[href='https://club.example']"
+      assert_select ".workspace-selector a[href='https://chat.acme.org'] img[src=?]", "/remote_workspaces/#{remote_workspaces(:acme).id}/logo"
+    end
+
     test "update requires authentication" do
       patch settings_path, params: { global_identity: { email_address: "new@example.com" } }
       assert_redirected_to new_session_path

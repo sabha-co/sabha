@@ -3,10 +3,12 @@
 module Saas
   module RemoteWorkspaces
     # Serves the copy of a community's logo that sabha.co keeps, so the
-    # community never sees who has it in their list.
+    # community never sees who has it in their list. The logo is public on the
+    # community itself, so anyone signed in may see it, including on the
+    # confirm screen before they add it.
     class LogosController < BaseController
       def show
-        remote_workspace = current_global_identity.remote_workspace_memberships.find_by!(remote_workspace_id: params[:remote_workspace_id]).remote_workspace
+        remote_workspace = RemoteWorkspace.find(params[:remote_workspace_id])
 
         if !remote_workspace.logo?
           head :not_found

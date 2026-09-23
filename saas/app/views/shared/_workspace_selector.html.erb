@@ -1,6 +1,6 @@
 <%# Workspace selector sidebar - Discord-style with home, workspaces, profile %>
 <% if show_workspace_selector? %>
-  <% workspaces = workspace_selector_workspaces %>
+  <% entries = workspace_selector_entries %>
   <% settings_active = controller.controller_path == "saas/settings" %>
   <% workspaces_active = controller.controller_path == "saas/workspaces" && action_name == "index" %>
 
@@ -21,8 +21,11 @@
 
     <%# Workspace list (sortable) %>
     <nav class="workspace-selector__list" aria-label="Your workspaces">
-      <% if workspaces.any? %>
-        <% workspaces.each do |workspace| %>
+      <% entries.each do |entry| %>
+        <% if entry.is_a?(RemoteWorkspaceMembership) %>
+          <%= render "shared/remote_workspace_selector_item", membership: entry %>
+        <% else %>
+          <% workspace = entry.workspace %>
           <%= link_to workspace_url(workspace),
               class: class_names("workspace-selector__item", "workspace-selector__item--active": workspace.current?),
               title: workspace.name,
