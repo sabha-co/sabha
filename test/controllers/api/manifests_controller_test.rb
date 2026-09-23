@@ -25,7 +25,6 @@ class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
     body = JSON.parse(response.body)
     assert_equal "unsupported_protocol_major", body["error"]
     assert_equal 1, body["supported_major"]
-    assert body["upgrade_url"].present?
   end
 
   private

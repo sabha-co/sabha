@@ -43,6 +43,20 @@ class API::SessionClaimsControllerTest < ActionDispatch::IntegrationTest
     assert_nil claim.reload.used_at
   end
 
+  # The endpoint skips CSRF protection. The required custom header is what stops
+  # another site from posting here: a browser can't send it cross-origin
+  # without a preflight this server never approves.
+  test "rejects a claim redeemed without the protocol header" do
+    claim = issue_claim(nonce: "nonce-no-header")
+
+    post "/api/session_claim",
+      params: { token: claim.raw_token, nonce: "nonce-no-header", origin: "https://once.sabha.test", code_verifier: VERIFIER }
+
+    assert_response :unsupported_media_type
+    assert_nil parsed_cookies.signed[:session_token]
+    assert_nil claim.reload.used_at
+  end
+
   test "does not persist the raw bearer token" do
     claim = issue_claim(nonce: "nonce-digest")
 

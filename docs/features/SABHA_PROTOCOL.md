@@ -4,7 +4,7 @@ A small, versioned contract that lets clients discover a Sabha server, find wher
 
 ## Protocol major 1
 
-Every request to these endpoints sends the `Sabha-Protocol-Major` header. Major version `1` is the only supported version today. Unsupported majors receive HTTP 415 with upgrade guidance.
+Every request to these endpoints sends the `Sabha-Protocol-Major` header. Major version `1` is the only supported version today. Unsupported majors receive HTTP 415 with `supported_major`, and each client shows its own upgrade message.
 
 ## Endpoints
 

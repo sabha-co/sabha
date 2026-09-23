@@ -14,8 +14,7 @@ class API::ProtocolController < ApplicationController
       render json: {
         error: "unsupported_protocol_major",
         requested_major: protocol_major,
-        supported_major: Sabha::PROTOCOL_MAJOR,
-        upgrade_url: Desktop::UPGRADE_URL
+        supported_major: Sabha::PROTOCOL_MAJOR
       }, status: :unsupported_media_type
     end
 
