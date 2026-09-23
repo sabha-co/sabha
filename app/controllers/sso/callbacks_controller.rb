@@ -43,7 +43,6 @@ class Sso::CallbacksController < Sso::BaseController
       user = User.sign_in_with_sso!(payload)
       redeem_pending_join_code!(user, pending_join_code)
       start_new_session_for user
-      flash[:notice] = welcome_message(user) if newly_bootstrapped || user.previously_new_record?
 
       if handoff.present?
         claim = Desktop::SessionClaim.issue!(
@@ -56,6 +55,7 @@ class Sso::CallbacksController < Sso::BaseController
         return redirect_to_desktop_claim!(claim)
       end
 
+      flash[:notice] = welcome_message(user) if newly_bootstrapped || user.previously_new_record?
       redirect_to safe_return_path(return_path)
     end
 

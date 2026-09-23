@@ -208,16 +208,22 @@ class Message < ApplicationRecord
     # working out who to push — runs first; posting runs last. A push can't be
     # recalled once posted, so a raise afterwards (the next activity type's
     # email work, say) would re-send it when the job retries. Desktop events go
-    # out after pushes and swallow their own broadcast errors for the same reason.
+    # to the same recipients as pushes, after them, and swallow their own
+    # broadcast errors for the same reason.
     types.each do |activity_type|
-      deliver_in_app_row_for(activity_type, actor: actor)              if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
-      push_subscriptions.concat push_subscriptions_for(activity_type)  if Notification::Routing::PUSH_TYPES.include?(activity_type)
-      desktop_recipient_ids.merge(desktop_recipient_user_ids_for(activity_type)) if desktop_events_for?(activity_type)
-      enqueue_missed_email_candidates_for(activity_type)               if Notification::Routing::EMAIL_TYPES.include?(activity_type)
+      deliver_in_app_row_for(activity_type, actor: actor) if Notification::Routing::IN_APP_ROW_TYPES.include?(activity_type)
+
+      if Notification::Routing::PUSH_TYPES.include?(activity_type)
+        recipient_ids = push_recipient_user_ids_for(activity_type)
+        push_subscriptions.concat push_subscriptions_for(recipient_ids)
+        desktop_recipient_ids.merge(recipient_ids) if Desktop.notifications_enabled?
+      end
+
+      enqueue_missed_email_candidates_for(activity_type) if Notification::Routing::EMAIL_TYPES.include?(activity_type)
     end
 
     desktop_events = Desktop::NotificationEvent.for_recipients(
-      message: self, user_ids: desktop_recipient_ids, activity_types: types & Notification::Routing::DESKTOP_TYPES
+      message: self, user_ids: desktop_recipient_ids, activity_types: types & Notification::Routing::PUSH_TYPES
     )
 
     deliver_pushes_to push_subscriptions
@@ -245,16 +251,8 @@ class Message < ApplicationRecord
   # participate — same predicates run at dispatch time and at delivery time,
   # per arch § 4–5.
   def push_recipient_user_ids_for(activity_type)
-    notify_recipient_user_ids_for(activity_type, routing: Notification::Routing::PUSH_TYPES)
-  end
-
-  def desktop_recipient_user_ids_for(activity_type)
-    notify_recipient_user_ids_for(activity_type, routing: Notification::Routing::DESKTOP_TYPES)
-  end
-
-  def notify_recipient_user_ids_for(activity_type, routing:)
     activity_type = activity_type.to_sym
-    return [] unless routing.include?(activity_type)
+    return [] unless Notification::Routing::PUSH_TYPES.include?(activity_type)
 
     push_candidate_memberships_for(activity_type)
       .reject { |membership| watching?(membership) }
@@ -327,15 +325,10 @@ class Message < ApplicationRecord
       end
     end
 
-    def push_subscriptions_for(activity_type)
-      user_ids = push_recipient_user_ids_for(activity_type)
+    def push_subscriptions_for(user_ids)
       return [] if user_ids.empty?
 
       Push::Subscription.where(user_id: user_ids).to_a
-    end
-
-    def desktop_events_for?(activity_type)
-      Desktop.notifications_enabled? && Notification::Routing::DESKTOP_TYPES.include?(activity_type)
     end
 
     # Phase 2. Deliberately dumb: everything that can fail has already run. The

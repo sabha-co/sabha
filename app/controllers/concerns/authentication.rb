@@ -5,7 +5,7 @@ module Authentication
   included do
     before_action :require_authentication
     before_action :deny_bots
-    helper_method :signed_in?
+    helper_method :signed_in?, :sign_in_entry_path
 
     protect_from_forgery with: :exception, unless: -> { authenticated_by.bot_key? }
   end
@@ -79,13 +79,19 @@ module Authentication
       # request.url includes script_name (workspace prefix) per Rack spec
       session[:return_to_after_authenticating] = request.url unless turbo_frame_request?
 
+      redirect_to sign_in_entry_path
+    end
+
+    # Where a signed-out person goes to sign in. Browsers are redirected here,
+    # and the manifest advertises it to apps.
+    def sign_in_entry_path
       if Sabha.saas?
-        # In SaaS mode, redirect to the global login page
-        redirect_to "/session/new"
+        # The global login page, never under a workspace prefix
+        "/session/new"
       elsif Account.sso_auth? || FirstRun.should_auto_bootstrap?
-        redirect_to sso_handshake_url
+        sso_handshake_path
       else
-        redirect_to new_session_url
+        new_session_path
       end
     end
 

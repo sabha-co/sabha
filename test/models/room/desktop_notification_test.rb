@@ -48,7 +48,7 @@ class Room::DesktopNotificationTest < ActiveSupport::TestCase
 
   test "nothing is computed or sent while desktop notifications are off" do
     Desktop.stubs(:notifications_enabled?).returns(false)
-    Message.any_instance.expects(:desktop_recipient_user_ids_for).never
+    Desktop::NotificationEvent.expects(:new).never
 
     assert_no_broadcasts(desktop_stream(@recipient)) do
       send_dm "Flag off", client_message_id: "desktop_flag_off"
@@ -87,7 +87,7 @@ class Room::DesktopNotificationTest < ActiveSupport::TestCase
 
   private
     def desktop_stream(user)
-      DesktopChannel.stream_name_for(user)
+      DesktopChannel.broadcasting_for(user)
     end
 
     def send_dm(body, client_message_id:)

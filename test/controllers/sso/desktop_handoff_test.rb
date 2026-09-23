@@ -66,7 +66,7 @@ class Sso::DesktopHandoffTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to root_url
     assert parsed_cookies.signed[:session_token]
-    assert_empty Desktop::SessionClaim.valid
+    assert_empty Desktop::SessionClaim.redeemable
   end
 
   private

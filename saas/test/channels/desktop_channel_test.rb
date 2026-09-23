@@ -7,14 +7,14 @@ class SaasDesktopChannelTest < ActionCable::Channel::TestCase
 
   tests DesktopChannel
 
-  test "stream name is scoped to current tenant in SaaS mode" do
+  test "stream is scoped to the user's tenant through their GlobalID" do
     with_provisioned_workspace(name: "Desktop Stream WS", creator: global_identities(:alice)) do |workspace|
       tenant_id = workspace.external_id.to_s
-      membership = global_identities(:alice).workspace_memberships.find_by!(tenant: tenant_id)
-      user = membership.user
+      user = global_identities(:alice).workspace_memberships.find_by!(tenant: tenant_id).user
 
       ApplicationRecord.with_tenant(tenant_id) do
-        assert_equal "desktop:#{tenant_id}:#{user.id}", DesktopChannel.stream_name_for(user)
+        assert_equal tenant_id, user.to_global_id.tenant
+        assert_equal "desktop:#{user.to_gid_param}", DesktopChannel.broadcasting_for(user)
       end
     end
   end
@@ -25,17 +25,14 @@ class SaasDesktopChannelTest < ActionCable::Channel::TestCase
         tenant_a = ws_a.external_id.to_s
         tenant_b = ws_b.external_id.to_s
 
-        membership_a = global_identities(:alice).workspace_memberships.find_by!(tenant: tenant_a)
-        user_a = membership_a.user
+        user_a = global_identities(:alice).workspace_memberships.find_by!(tenant: tenant_a).user
+        user_b = global_identities(:bob).workspace_memberships.find_by!(tenant: tenant_b).user
 
         stub_connection(current_user: user_a, current_tenant: tenant_a)
         ApplicationRecord.with_tenant(tenant_a) { subscribe }
 
-        expected_stream = "desktop:#{tenant_a}:#{user_a.id}"
-        foreign_stream  = "desktop:#{tenant_b}:#{user_a.id}"
-
-        assert_has_stream expected_stream
-        assert_has_no_stream foreign_stream
+        assert_has_stream ApplicationRecord.with_tenant(tenant_a) { DesktopChannel.broadcasting_for(user_a) }
+        assert_has_no_stream ApplicationRecord.with_tenant(tenant_b) { DesktopChannel.broadcasting_for(user_b) }
       end
     end
   end

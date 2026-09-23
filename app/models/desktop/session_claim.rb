@@ -1,6 +1,4 @@
 class Desktop::SessionClaim < ApplicationRecord
-  self.table_name = "desktop_session_claims"
-
   class Invalid < StandardError; end
 
   ACTIVE_TTL = 5.minutes
@@ -9,11 +7,11 @@ class Desktop::SessionClaim < ApplicationRecord
 
   validates :token_digest, :nonce, :origin, :code_challenge, :return_path, :expires_at, presence: true
 
-  scope :valid, -> { where(used_at: nil, expires_at: Time.current..) }
+  scope :redeemable, -> { where(used_at: nil, expires_at: Time.current..) }
 
   def self.issue!(user:, nonce:, origin:, code_challenge:, return_path:)
     raw_token = SecureRandom.urlsafe_base64(32)
-    claim = create!(
+    create!(
       user: user,
       token_digest: digest(raw_token),
       nonce: nonce,
@@ -21,9 +19,7 @@ class Desktop::SessionClaim < ApplicationRecord
       code_challenge: code_challenge,
       return_path: return_path,
       expires_at: ACTIVE_TTL.from_now
-    )
-    claim.raw_token = raw_token
-    claim
+    ).tap { it.raw_token = raw_token }
   end
 
   # The deep link carries token, nonce and origin, so any app that intercepts
@@ -34,7 +30,7 @@ class Desktop::SessionClaim < ApplicationRecord
     raise Invalid, "code verifier missing" if code_verifier.blank?
 
     transaction do
-      record = valid.lock.find_by(token_digest: digest(token))
+      record = redeemable.lock.find_by(token_digest: digest(token))
       raise Invalid, "claim not found, expired, or used" if record.blank?
       raise Invalid, "claim origin mismatch" unless record.origin == origin
       raise Invalid, "claim nonce mismatch" unless record.nonce == nonce

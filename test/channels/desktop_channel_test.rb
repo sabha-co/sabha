@@ -11,7 +11,7 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
     subscribe
 
     assert subscription.confirmed?
-    assert_has_stream "desktop:#{users(:kevin).id}"
+    assert_has_stream_for users(:kevin)
 
     badge = transmissions.last
     assert_equal "badge", badge["type"]
@@ -36,7 +36,7 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
       client_message_id: "desktop_channel_event"
     )
 
-    assert_broadcasts("desktop:#{users(:jason).id}", 1) do
+    assert_broadcasts(DesktopChannel.broadcasting_for(users(:jason)), 1) do
       Desktop::NotificationEvent.new(
         message: message,
         user: users(:jason),
@@ -57,7 +57,7 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
     membership = memberships(:david_david_and_jason)
     membership.update!(unread_notifications_count: 2, marked_unread: true, last_read_at: 1.day.ago, last_read_message_id: 0)
 
-    badges = capture_broadcasts(DesktopChannel.stream_name_for(membership.user)) { membership.read }
+    badges = capture_broadcasts(DesktopChannel.broadcasting_for(membership.user)) { membership.read }
 
     assert_equal [ "badge" ], badges.map { |payload| payload["type"] }
     assert_equal membership.user.badge_count, badges.last["count"]
@@ -66,7 +66,7 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
   test "nothing is broadcast while desktop notifications are off" do
     Desktop.stubs(:notifications_enabled?).returns(false)
 
-    assert_no_broadcasts(DesktopChannel.stream_name_for(users(:kevin))) do
+    assert_no_broadcasts(DesktopChannel.broadcasting_for(users(:kevin))) do
       users(:kevin).broadcast_desktop_badge
     end
   end

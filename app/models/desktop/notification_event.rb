@@ -5,7 +5,7 @@ module Desktop
     # Builds every recipient's event up front — one push payload, one badge
     # query — so nothing is left to raise once delivery starts.
     def self.for_recipients(message:, user_ids:, activity_types:)
-      return [] if user_ids.empty? || !Desktop.notifications_enabled?
+      return [] if user_ids.empty?
 
       push_payload = Room::MessagePusher.payload_for(room: message.room, message: message)
       badges = Membership.badged.where(user_id: user_ids.to_a).group(:user_id).count
@@ -16,11 +16,7 @@ module Desktop
     end
 
     def self.event_id_for(message:, user:)
-      parts = []
-      parts << ApplicationRecord.current_tenant if Sabha.saas? && ApplicationRecord.current_tenant.present?
-      parts << message.id
-      parts << user.id
-      parts.join(":")
+      [ (ApplicationRecord.current_tenant if Sabha.saas?), message.id, user.id ].compact.join(":")
     end
 
     def initialize(message:, user:, activity_types:, push_payload: nil, badge: nil)
