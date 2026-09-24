@@ -147,6 +147,7 @@ class Workspace < UntenantedRecord
       # Lock the creator row to serialize concurrent workspace creation
       creator.lock!
       raise GlobalIdentity::WorkspaceLimitReachedError if creator.workspace_limit_reached?
+      raise GlobalIdentity::MembershipLimitReachedError if creator.membership_limit_reached?
 
       workspace = create!(
         name: name,

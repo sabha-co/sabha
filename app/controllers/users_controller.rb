@@ -70,6 +70,8 @@ class UsersController < ApplicationController
 
       notify_bots(@user, :created) if redeemed
       redirect_to root_url, notice: "Welcome to #{Current.account.name}!"
+    rescue GlobalIdentity::MembershipLimitReachedError => e
+      redirect_to root_url, alert: "#{e.message} Leave one to join another."
     rescue ActiveRecord::RecordInvalid => e
       flash.now[:alert] = e.record.errors.full_messages.to_sentence
       @user = User.new

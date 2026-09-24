@@ -6,9 +6,7 @@
 <section class="txt-align-center">
   <div class="panel panel--centered <%= "shake" if flash[:alert] %>">
     <div class="flex justify-center mb-6">
-      <%= link_to root_path do %>
-        <%= image_tag "logos/app-icon.png", alt: Branding.app_name, class: "w-18 h-auto rounded-lg" %>
-      <% end %>
+      <%= render "saas/shared/app_icon_link" %>
     </div>
 
     <%= form_with url: auth_code_path, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>

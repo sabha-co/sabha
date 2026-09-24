@@ -42,5 +42,17 @@ module Saas
 
         @workspaces = current_global_identity.active_workspaces_recent_first
       end
+
+      # The desktop app opens workspaces, never the marketing site
+      def redirect_desktop_away_from_marketing
+        return unless platform.desktop_app?
+
+        signed_in? ? redirect_to_workspace_or_create : redirect_to(new_session_path)
+      end
+
+      def redirect_to_workspace_or_create
+        workspace = current_global_identity.active_workspaces_recent_first.first
+        redirect_to workspace ? "/#{workspace.external_id}" : new_workspace_path
+      end
   end
 end

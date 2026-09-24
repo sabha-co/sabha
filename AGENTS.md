@@ -2,6 +2,8 @@
 
 Sabha is a Ruby on Rails chat application using Hotwire/Turbo, AnyCable-Go, Tailwind CSS v4 via `@tailwindcss/cli`, and Importmap. It supports self-hosted single-tenant mode and SaaS multi-tenant mode through `activerecord-tenanted` and the engine in `saas/`; SaaS mode is selected with `SAAS=true` or the `tmp/saas.txt` marker.
 
+**Related applications — do not conflate.** This repository is the chat app. **sabha.co** is this app in SaaS mode. **Self-hosted** is this app in default single-tenant mode: **one workspace per install**, and operators may run as many installs as they like (each its own origin). **[sabha_cloud](https://github.com/sabha-co/sabha_cloud)** is a **separate Rails app** at `cloud.sabha.co`; it provisions dedicated droplets. It is not this codebase and is not a chat origin. Each droplet runs this app in self-hosted mode, so to sabha.co and [sabha-desktop](https://github.com/sabha-co/sabha-desktop) it's a self-hosted workspace like any other.
+
 ## Project Structure & Module Organization
 - Rails app code lives in `app/` (models, controllers, views, channels, jobs, mailers).
 - Frontend assets: `app/javascript/` (Tailwind CSS source, Stimulus controllers) and `app/assets/`.

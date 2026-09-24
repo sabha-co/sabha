@@ -3,24 +3,33 @@
 module GlobalIdentity::Joinable
   extend ActiveSupport::Concern
 
-  # Idempotently links this identity to a workspace. Safe to call repeatedly:
-  # find_or_create_by collapses retries into a single membership, and
-  # WorkspaceMembership#create_user! reactivates or creates the per-tenant User
-  # as needed. Returns the membership so callers can check `previously_new_record?`
+  # Idempotently links this identity to a workspace. Safe to call repeatedly.
+  # Returns the membership so callers can check `previously_new_record?`
   # to detect a fresh join vs. a no-op rejoin.
   #
-  # If create_user! raises on a freshly-opened membership, destroy it: `user_active`
-  # defaults to true on insert, so the row would otherwise surface in the workspace
-  # selector (see WorkspaceMembership.user_active) as a phantom workspace the user
-  # can't enter. Pre-existing memberships are left alone — they may be healthy from
-  # a prior successful join or another in-flight retry.
+  # Coming back to a workspace you left counts toward the membership cap like
+  # a new join; the identity row lock keeps two joins from both slipping under it.
+  #
+  # If create_user! raises on a freshly-opened membership, destroy it so the
+  # row cannot surface in the selector as a phantom workspace. Pre-existing
+  # memberships are left alone.
   def join(tenant)
-    workspace_memberships.find_or_create_by!(tenant: tenant).tap do |membership|
-      begin
-        membership.create_user!
-      rescue ActiveRecord::RecordInvalid
-        membership.destroy if membership.previously_new_record?
-        raise
+    transaction do
+      lock!
+
+      membership = workspace_memberships.find_by(tenant: tenant)
+      already_in = membership&.user_active?
+      raise GlobalIdentity::MembershipLimitReachedError if !already_in && membership_limit_reached?
+
+      if membership
+        membership.tap(&:create_user!)
+      else
+        workspace_memberships.create!(tenant: tenant).tap do |membership|
+          membership.create_user!
+        rescue ActiveRecord::RecordInvalid
+          membership.destroy
+          raise
+        end
       end
     end
   end
