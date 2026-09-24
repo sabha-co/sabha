@@ -214,12 +214,18 @@ class GlobalIdentity < UntenantedRecord
       self.accepted_terms_at ||= Time.current
     end
 
-    # Joining waits for the sign-up code, so the workspace user starts verified
+    # Joining waits for the sign-up code, so the workspace user starts verified.
+    # A session's touch skips dirty tracking, so ask about this save's change
+    # rather than the value before it
     def became_verified?
-      verified? && verified_at_before_last_save.nil?
+      saved_change_to_verified_at?(from: nil)
     end
 
+    # Verifying can happen inside a workspace; the job must not carry it along,
+    # or joining Sabha Chat would try to switch databases mid-job
     def join_default_workspace_later
-      JoinDefaultWorkspaceJob.perform_later(self)
+      ApplicationRecord.prohibit_shard_swapping(false) do
+        ApplicationRecord.without_tenant { JoinDefaultWorkspaceJob.perform_later(self) }
+      end
     end
 end

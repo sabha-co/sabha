@@ -290,6 +290,28 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     end
   end
 
+  test "a session touching an already verified identity doesn't join it again" do
+    identity = GlobalIdentity.find(global_identities(:alice).id)
+
+    assert_no_enqueued_jobs(only: GlobalIdentity::JoinDefaultWorkspaceJob) do
+      UntenantedRecord.transaction { identity.touch_later }
+    end
+  end
+
+  test "verifying from inside another workspace still joins the default one" do
+    with_provisioned_workspace(name: "Flagship", creator: global_identities(:alice)) do |flagship|
+      with_provisioned_workspace(name: "Elsewhere", creator: global_identities(:bob)) do |elsewhere|
+        GlobalIdentity.stubs(:default_workspace).returns(flagship)
+        identity = GlobalIdentity.create!(name: "Signup", email_address: "signup-elsewhere@example.com")
+
+        ApplicationRecord.with_tenant(elsewhere.external_id.to_s) { identity.verify! }
+        perform_enqueued_jobs(only: GlobalIdentity::JoinDefaultWorkspaceJob)
+
+        assert identity.workspace_memberships.exists?(tenant: flagship.external_id.to_s)
+      end
+    end
+  end
+
   test "an identity created verified joins the default workspace straight away" do
     with_provisioned_workspace(name: "Flagship", creator: global_identities(:alice)) do |flagship|
       GlobalIdentity.stubs(:default_workspace).returns(flagship)
