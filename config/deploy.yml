@@ -52,10 +52,8 @@ env:
     - CLOUDFLARE_TURNSTILE_SITE_KEY
     - CLOUDFLARE_TURNSTILE_SECRET_KEY
     - DESKTOP_NOTIFICATIONS_ENABLED
-    # Continue with sabha.co (optional): the secret sabha.co gives when you
-    # pair this workspace, and whether newcomers can join without an invite
+    # Continue with sabha.co (optional): the secret sabha.co gives when you pair this workspace
     - SABHA_HUB_SECRET
-    - SABHA_HUB_AUTO_PROVISION
 
 volumes:
   - "/disk/sabha/:/rails/storage/"
