@@ -105,6 +105,14 @@ module Saas
         assert_not RemoteWorkspace.exists?(origin: "https://rust.sabha.co")
       end
 
+      test "taking Sabha Cloud off the client list turns its token off too" do
+        ENV["SSO_PROVIDER_CLIENTS"] = "managed_sabha"
+
+        post "/api/platform/remote_workspaces", params: { origin: "https://rust.sabha.co", name: "Rust" }, headers: auth
+
+        assert_response :unauthorized
+      end
+
       private
         def auth
           { "Authorization" => "Bearer #{TOKEN}" }

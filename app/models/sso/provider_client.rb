@@ -43,7 +43,7 @@ class Sso::ProviderClient
   # Sabha Cloud also pairs the droplets it provisions, with a token derived
   # from the secret it signs in with, so there's no second secret to share
   def self.sabha_cloud
-    from_env(SABHA_CLOUD)&.then { it if it.active? }
+    active.find { it.name == SABHA_CLOUD }
   end
 
   def self.all
