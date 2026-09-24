@@ -1,5 +1,5 @@
-<%# One-time nudge to keep this workspace in the member's sabha.co list %>
-<span id="hub_list_nudge" data-controller="dialog">
+<%# One-time prompt to keep this workspace in the member's sabha.co list %>
+<span id="hub_list_prompt" data-controller="dialog">
   <button type="button" class="btn sidebar__tool" data-action="dialog#open">
     <%= icon_tag "web" %>
     <span class="for-screen-reader">Add <%= Current.account.name %> to your <%= hub_name %> list</span>
@@ -7,9 +7,9 @@
   </button>
 
   <dialog data-dialog-target="dialog" class="dialog pad center center-block border-radius border shadow" style="--inline-space: var(--block-space)"
-      aria-labelledby="hub_list_nudge_title">
+      aria-labelledby="hub_list_prompt_title">
     <div class="flex flex-column gap txt-align-center">
-      <h1 id="hub_list_nudge_title" class="txt-large margin-none">Keep <%= Current.account.name %> in your <%= hub_name %> list</h1>
+      <h1 id="hub_list_prompt_title" class="txt-large margin-none">Keep <%= Current.account.name %> in your <%= hub_name %> list</h1>
       <p class="txt-small margin-none">
         Switch between your workspaces in one place, on the web and in the Sabha apps.
         <%= hub_name %> only learns this workspace's name, logo and address. You still sign in here the usual way.

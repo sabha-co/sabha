@@ -219,7 +219,7 @@ class User < ApplicationRecord
     Membership.workspace_locally_away?(id)
   end
 
-  # The one-time nudge to keep this workspace in the member's sabha.co list
+  # The one-time prompt to keep this workspace in the member's sabha.co list
   def hub_list_prompt_dismissed?
     preferences.to_h.key?("hub_list_prompt_dismissed_at")
   end

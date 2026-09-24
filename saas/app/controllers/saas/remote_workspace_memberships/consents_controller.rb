@@ -7,7 +7,7 @@ module Saas
     class ConsentsController < BaseController
       def destroy
         membership = current_global_identity.remote_workspace_memberships.find(params[:remote_workspace_membership_id])
-        membership.revoke_consent
+        membership.revoke_consent!
 
         redirect_to settings_path, notice: "sabha.co won't sign you in to #{membership.remote_workspace.name} until you allow it again"
       end

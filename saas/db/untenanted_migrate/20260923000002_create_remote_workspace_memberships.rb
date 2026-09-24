@@ -10,7 +10,6 @@ class CreateRemoteWorkspaceMemberships < ActiveRecord::Migration[8.2]
         t.string :source, null: false
         t.integer :position
         t.boolean :hidden, null: false, default: false
-        t.datetime :last_opened_at
         t.timestamps
 
         t.foreign_key :remote_workspaces

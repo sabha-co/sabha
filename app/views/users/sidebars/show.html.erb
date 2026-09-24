@@ -122,7 +122,7 @@
         <span class="sidebar__tool-label"><%= account_tool_label %></span>
       <% end %>
 
-      <%= render "users/sidebars/hub_list_nudge" if hub_list_nudge? %>
+      <%= render "users/sidebars/hub_list_prompt" if hub_list_prompt_in_sidebar? %>
 
       <%= render "users/sidebars/bell" unless platform.desktop_app? %>
 

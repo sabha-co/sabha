@@ -14,12 +14,12 @@ module Saas::SingleSignOnRequest
     def set_sso_request
       @remote_workspace, @sso_request = RemoteWorkspace.authenticate_sign_in(params[:sso], params[:sig])
       @sso_client, @sso_request = @remote_workspace ? [ @remote_workspace, @sso_request ] : Sso::ProviderClient.authenticate(params[:sso], params[:sig])
-    rescue RemoteWorkspace::Disconnected => error
+    rescue RemoteWorkspace::DisconnectedError => error
       @remote_workspace = error.remote_workspace
       render "saas/single_sign_ons/disconnected", status: :forbidden
     rescue Sso::ProviderClient::NotConfigured
       head :service_unavailable
-    rescue RemoteWorkspace::NotPaired, Sso::Payload::Error, Sso::ProviderClient::Error
+    rescue RemoteWorkspace::NotPairedError, Sso::Payload::Error, Sso::ProviderClient::Error
       head :forbidden
     end
 end

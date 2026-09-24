@@ -8,11 +8,11 @@ module GlobalIdentity::RemoteWorkspaces
   MAX_REMOTE_WORKSPACES = 100
 
   class RemoteWorkspaceLimitReachedError < StandardError; end
-  class RemoteWorkspaceClaimedError < StandardError; end
+  class RemoteWorkspaceHasSsoClientError < StandardError; end
 
   included do
     has_many :remote_workspace_memberships, dependent: :destroy
-    has_many :remote_workspace_pairings, dependent: :destroy
+    has_many :remote_workspace_pairing_requests, dependent: :destroy
     # A pairing outlives whoever set it up, until the workspace pairs again
     has_many :paired_remote_workspaces, class_name: "RemoteWorkspace", foreign_key: :paired_by_id,
       inverse_of: :paired_by, dependent: :nullify
@@ -35,15 +35,15 @@ module GlobalIdentity::RemoteWorkspaces
 
   # Starts pairing a workspace for "Continue with sabha.co". The secret waits
   # on the request until the workspace proves it's running with it.
-  def pair_remote_workspace!(remote_workspace)
-    raise RemoteWorkspaceClaimedError if Sso::ProviderClient.claims_host?(URI(remote_workspace.origin).host)
+  def request_remote_workspace_pairing!(remote_workspace)
+    raise RemoteWorkspaceHasSsoClientError if Sso::ProviderClient.claims_host?(URI(remote_workspace.origin).host)
 
     remote_workspace = save_remote_workspace!(remote_workspace) if remote_workspace.new_record?
 
     transaction do
       # A new secret replaces the one still waiting, so only one ever works
-      remote_workspace_pairings.where(remote_workspace: remote_workspace).delete_all
-      remote_workspace_pairings.create!(remote_workspace: remote_workspace)
+      remote_workspace_pairing_requests.where(remote_workspace: remote_workspace).delete_all
+      remote_workspace_pairing_requests.create!(remote_workspace: remote_workspace)
     end
   end
 
@@ -67,10 +67,8 @@ module GlobalIdentity::RemoteWorkspaces
   end
 
   # The owner of a Sabha Cloud droplet finds it in their list without adding it
-  def list_sabha_cloud_workspace(remote_workspace)
+  def list_sabha_cloud_workspace!(remote_workspace)
     list_remote_workspace!(remote_workspace, source: :sabha_cloud)
-  rescue RemoteWorkspaceLimitReachedError
-    nil
   end
 
   # Signing in with the shortcut brings a hidden entry back
@@ -86,22 +84,22 @@ module GlobalIdentity::RemoteWorkspaces
   # Workspaces and list entries in the person's own order. Entries without a
   # position (never reordered) follow, most recently touched first, which is
   # how the selector has always ordered workspaces.
-  def switcher_memberships
+  def selector_entries
     workspaces = workspace_memberships.user_active.includes(:workspace).select { it.workspace&.active? }
     remotes = remote_workspace_memberships.visible.includes(:remote_workspace)
 
-    in_switcher_order(workspaces + remotes)
+    in_selector_order(workspaces + remotes)
   end
 
   # The same order for settings, which also shows hidden entries and
   # workspaces the person can no longer open
-  def listed_memberships
-    in_switcher_order(workspace_memberships_with_workspaces + remote_workspace_memberships.includes(:remote_workspace))
+  def list_entries
+    in_selector_order(workspace_memberships_with_workspaces + remote_workspace_memberships.includes(:remote_workspace))
   end
 
   # Positions come from the selector as workspace external ids and
   # "remote:<membership id>", in their new order.
-  def reorder_switcher(ids)
+  def reorder_selector(ids)
     return false unless ids.is_a?(Array) && ids.any?
 
     transaction do
@@ -117,7 +115,7 @@ module GlobalIdentity::RemoteWorkspaces
   end
 
   private
-    def in_switcher_order(memberships)
+    def in_selector_order(memberships)
       memberships.sort_by { [ it.position || Float::INFINITY, -it.updated_at.to_f ] }
     end
 

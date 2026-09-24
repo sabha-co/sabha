@@ -30,7 +30,7 @@ module Saas
       sign_in_global_identity(bob)
       club = remote_workspace_memberships(:bob_club)
       club.update!(hidden: true)
-      bob.reorder_switcher([ "remote:#{club.id}", "1000002", "remote:#{remote_workspace_memberships(:bob_acme).id}", "1000003" ])
+      bob.reorder_selector([ "remote:#{club.id}", "1000002", "remote:#{remote_workspace_memberships(:bob_acme).id}", "1000003" ])
 
       get settings_path
 

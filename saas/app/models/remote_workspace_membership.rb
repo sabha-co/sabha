@@ -13,14 +13,13 @@ class RemoteWorkspaceMembership < UntenantedRecord
 
   scope :visible, -> { where(hidden: false) }
   scope :consented, -> { where.not(consented_at: nil) }
-  scope :alphabetically, -> { eager_load(:remote_workspace).order(RemoteWorkspace.arel_table[:name].lower) }
 
   def consented?
     consented_at.present?
   end
 
   # sabha.co stops vouching for this person here until they approve again
-  def revoke_consent
+  def revoke_consent!
     update!(consented_at: nil)
   end
 end

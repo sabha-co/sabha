@@ -1,6 +1,6 @@
 class AddIssuerToSingleSignOnRecords < ActiveRecord::Migration[8.2]
   # Sign-in links used to come from one provider. They're now keyed by the
-  # provider's origin, so a member can sign in through the community's own
+  # provider's origin, so a member can sign in through the workspace's own
   # single sign-on and through sabha.co. Existing rows belong to the custom
   # provider; rows left blank here (no SSO_PROVIDER_URL at migrate time) are
   # stamped by that provider's next callback.

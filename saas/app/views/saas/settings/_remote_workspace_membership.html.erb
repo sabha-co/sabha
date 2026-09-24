@@ -1,7 +1,7 @@
-<%# locals: (membership:, pending_pairing:) %>
+<%# locals: (membership:, pairing_request:) %>
 <%# A self-hosted workspace: its row opens its own site, and its actions sit in the ⋯ menu %>
 <% remote_workspace = membership.remote_workspace %>
-<% connected_by_me = remote_workspace.connected_by?(current_global_identity) %>
+<% paired_by_me = remote_workspace.paired_by?(current_global_identity) %>
 
 <div class="flex align-center justify-space-between pad-block-half pad-inline gap">
   <%= link_to remote_workspace.origin, class: "flex align-center gap txt-undecorated min-width", data: { turbo: false } do %>
@@ -25,8 +25,8 @@
   <% end %>
 
   <div class="flex align-center gap-half flex-item-no-shrink">
-    <% if pending_pairing %>
-      <%= link_to "Verify", remote_workspace_pairing_path(pending_pairing), class: "btn txt-small",
+    <% if pairing_request %>
+      <%= link_to "Verify", remote_workspace_pairing_request_path(pairing_request), class: "btn txt-small",
             "aria-label": "Verify #{remote_workspace.name} is running with its secret" %>
     <% end %>
 
@@ -49,14 +49,14 @@
                 method: :delete, class: "btn action-btn full-width" %>
         <% end %>
 
-        <% if connected_by_me %>
-          <%= button_to "Get a new secret", remote_workspace_pairings_path, params: { remote_workspace_id: remote_workspace.id },
+        <% if paired_by_me %>
+          <%= button_to "Get a new secret", remote_workspace_pairing_requests_path, params: { remote_workspace_id: remote_workspace.id },
                 class: "btn action-btn full-width" %>
-          <%= button_to "Disconnect from sabha.co", remote_workspace_connection_path(remote_workspace),
+          <%= button_to "Disconnect from sabha.co", remote_workspace_pairing_path(remote_workspace),
                 method: :delete, class: "btn action-btn full-width txt-negative",
                 data: { turbo_confirm: "Turn off Continue with sabha.co for everyone on #{remote_workspace.name}? They'll sign in there the usual way." } %>
-        <% elsif !remote_workspace.pairing_active? && !pending_pairing %>
-          <%= button_to "Set up Continue with sabha.co", remote_workspace_pairings_path, params: { remote_workspace_id: remote_workspace.id },
+        <% elsif !remote_workspace.pairing_active? && !pairing_request %>
+          <%= button_to "Set up Continue with sabha.co", remote_workspace_pairing_requests_path, params: { remote_workspace_id: remote_workspace.id },
                 class: "btn action-btn full-width" %>
         <% end %>
 

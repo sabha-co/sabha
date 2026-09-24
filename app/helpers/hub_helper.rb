@@ -14,7 +14,7 @@ module HubHelper
     Sso::Provider.hub.configured?
   end
 
-  def hub_list_nudge?
+  def hub_list_prompt_in_sidebar?
     hub_list_prompt_offered? && !Current.user.hub_list_prompt_dismissed?
   end
 

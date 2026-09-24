@@ -21,7 +21,7 @@ class RemoteWorkspace::Probe
   # A Sabha server speaking a different protocol major
   class UnsupportedProtocol < Error; end
   # sabha.co itself, or another multi-tenant Sabha, under any address
-  class MultiTenant < Error; end
+  class Hub < Error; end
 
   Manifest = Data.define(:name, :logo_url, :alias_origin, :protocol_major, :hub_proof)
 
@@ -86,7 +86,7 @@ class RemoteWorkspace::Probe
       json = JSON.parse(body)
       raise NotSabha unless json.is_a?(Hash) && json["protocol_major"].is_a?(Integer)
       raise UnsupportedProtocol unless json["protocol_major"] == Sabha::PROTOCOL_MAJOR
-      raise MultiTenant if json["multi_tenant"] == true
+      raise Hub if json["multi_tenant"] == true
 
       workspace = json["workspace"].is_a?(Hash) ? json["workspace"] : {}
 
@@ -110,7 +110,7 @@ class RemoteWorkspace::Probe
     # Only fetch a logo from the workspace itself, never a third party it names
     def same_origin_url(url, origin)
       url if url.is_a?(String) && RemoteWorkspace::Origin.normalize(url) == origin
-    rescue RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Origin::Hub
+    rescue RemoteWorkspace::Origin::Error
       nil
     end
 
@@ -122,7 +122,7 @@ class RemoteWorkspace::Probe
       candidate = RemoteWorkspace::Origin.normalize(url)
       host = URI(candidate).host
       candidate if candidate != origin && candidate.start_with?("https://") && host.include?(".") && !host.match?(/\A[\d.]+\z|:/)
-    rescue RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Origin::Hub
+    rescue RemoteWorkspace::Origin::Error
       nil
     end
 end

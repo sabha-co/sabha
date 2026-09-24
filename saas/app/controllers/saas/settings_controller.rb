@@ -33,8 +33,8 @@ module Saas
     private
 
       def set_memberships
-        @memberships = current_global_identity.listed_memberships
-        @pending_pairings = current_global_identity.remote_workspace_pairings.pending.order(:created_at).index_by(&:remote_workspace_id)
+        @memberships = current_global_identity.list_entries
+        @pairing_requests = current_global_identity.remote_workspace_pairing_requests.pending.order(:created_at).index_by(&:remote_workspace_id)
       end
 
       def settings_params

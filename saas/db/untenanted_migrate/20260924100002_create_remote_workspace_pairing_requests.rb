@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-class CreateRemoteWorkspacePairings < ActiveRecord::Migration[8.2]
+class CreateRemoteWorkspacePairingRequests < ActiveRecord::Migration[8.2]
   def change
     # A new, empty table: its two foreign keys block no existing writes.
     safety_assured do
-      create_table :remote_workspace_pairings do |t|
+      create_table :remote_workspace_pairing_requests do |t|
         t.references :remote_workspace, null: false, foreign_key: true
         t.references :global_identity, null: false, index: false
         t.text :secret, null: false

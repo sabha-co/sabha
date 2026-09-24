@@ -7,7 +7,7 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
 
   setup do
     @acme = remote_workspaces(:acme)
-    @acme.update!(pairing_status: :active, paired_via: :self_serve, hub_secret: SECRET, paired_by: global_identities(:alice))
+    @acme.update!(pairing_status: :active, paired_via: :self_serve, secret: SECRET, paired_by: global_identities(:alice))
   end
 
   test "finds the paired workspace a sign-in request comes from and checks its secret" do
@@ -35,17 +35,17 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
     Sso::Payload.expects(:decode).never
 
     sso, sig = sign_in_request(SECRET, return_sso_url: "https://unknown.example/session/hub/callback")
-    assert_raises(RemoteWorkspace::NotPaired) { RemoteWorkspace.authenticate_sign_in(sso, sig) }
+    assert_raises(RemoteWorkspace::NotPairedError) { RemoteWorkspace.authenticate_sign_in(sso, sig) }
 
     sso, sig = sign_in_request(SECRET, return_sso_url: "https://club.example/session/hub/callback")
-    assert_raises(RemoteWorkspace::NotPaired) { RemoteWorkspace.authenticate_sign_in(sso, sig) }
+    assert_raises(RemoteWorkspace::NotPairedError) { RemoteWorkspace.authenticate_sign_in(sso, sig) }
   end
 
   test "a disconnected workspace is told so" do
     @acme.disconnect!
     sso, sig = sign_in_request(SECRET)
 
-    error = assert_raises(RemoteWorkspace::Disconnected) { RemoteWorkspace.authenticate_sign_in(sso, sig) }
+    error = assert_raises(RemoteWorkspace::DisconnectedError) { RemoteWorkspace.authenticate_sign_in(sso, sig) }
     assert_equal @acme, error.remote_workspace
   end
 
@@ -54,8 +54,8 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
 
     @acme.disconnect!
 
-    assert @acme.reload.pairing_revoked?
-    assert_nil @acme.hub_secret
+    assert @acme.reload.pairing_disconnected?
+    assert_nil @acme.secret
     assert remote_workspace_memberships(:alice_acme).reload.present?
     assert_not global_identities(:alice).consented_to_remote_workspace?(@acme)
   end
@@ -81,11 +81,11 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
 
   test "the daily cleanup keeps paired workspaces and ones with waiting requests" do
     RemoteWorkspaceMembership.delete_all
-    global_identities(:bob).pair_remote_workspace!(remote_workspaces(:club))
+    global_identities(:bob).request_remote_workspace_pairing!(remote_workspaces(:club))
 
     assert_empty RemoteWorkspace.abandoned
 
-    RemoteWorkspacePairing.delete_all
+    RemoteWorkspacePairingRequest.delete_all
     @acme.disconnect!
     assert_equal [ @acme, remote_workspaces(:club) ].sort_by(&:id), RemoteWorkspace.abandoned.sort_by(&:id)
   end
@@ -93,11 +93,11 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
   test "deleting an account forgets its requests and leaves its pairings working" do
     identity = global_identities(:charlie)
     @acme.update!(paired_by: identity)
-    identity.pair_remote_workspace!(remote_workspaces(:club))
+    identity.request_remote_workspace_pairing!(remote_workspaces(:club))
 
     identity.destroy!
 
-    assert_empty RemoteWorkspacePairing.where(global_identity_id: identity.id)
+    assert_empty RemoteWorkspacePairingRequest.where(global_identity_id: identity.id)
     assert @acme.reload.pairing_active?
     assert_nil @acme.paired_by
   end
@@ -106,11 +106,11 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
     club = remote_workspaces(:club)
     stale = RemoteWorkspace.find(club.id)
 
-    issued = club.pair_sabha_cloud!.hub_secret
+    issued = club.pair_sabha_cloud!.secret
     stale.pair_sabha_cloud!
 
-    assert_equal issued, stale.hub_secret
-    assert_equal issued, club.reload.hub_secret
+    assert_equal issued, stale.secret
+    assert_equal issued, club.reload.secret
   end
 
   private

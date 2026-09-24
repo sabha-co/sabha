@@ -9,8 +9,8 @@ module RemoteWorkspace::Pairable
   PAIRING_PROOF_CONTEXT = "sabha-hub-pairing:"
   CALLBACK_PATH = "/session/hub/callback"
 
-  class NotPaired < StandardError; end
-  class Disconnected < StandardError
+  class NotPairedError < StandardError; end
+  class DisconnectedError < StandardError
     attr_reader :remote_workspace
 
     def initialize(remote_workspace)
@@ -20,15 +20,14 @@ module RemoteWorkspace::Pairable
   end
 
   included do
-    enum :pairing_status, %w[ none active revoked ].index_by(&:itself), prefix: :pairing, default: "none"
+    enum :pairing_status, %w[ none active disconnected ].index_by(&:itself), prefix: :pairing, default: "none"
     enum :paired_via, %w[ self_serve sabha_cloud ].index_by(&:itself), prefix: true
 
-    encrypts :hub_secret
     # Signs sign-in answers, as an env client's secret does
-    alias_attribute :secret, :hub_secret
+    encrypts :secret
 
     belongs_to :paired_by, class_name: "GlobalIdentity", optional: true
-    has_many :pairings, class_name: "RemoteWorkspacePairing", dependent: :destroy
+    has_many :pairing_requests, class_name: "RemoteWorkspacePairingRequest", dependent: :destroy
   end
 
   class_methods do
@@ -40,15 +39,15 @@ module RemoteWorkspace::Pairable
       return unless URI(return_url.to_s).path == CALLBACK_PATH
 
       remote_workspace = find_by(origin: RemoteWorkspace::Origin.normalize(return_url))
-      raise Disconnected, remote_workspace if remote_workspace&.pairing_revoked?
-      raise NotPaired unless remote_workspace&.pairing_active?
+      raise DisconnectedError, remote_workspace if remote_workspace&.pairing_disconnected?
+      raise NotPairedError unless remote_workspace&.pairing_active?
 
-      payload = Sso::Payload.decode(encoded_payload, signature, remote_workspace.hub_secret)
+      payload = Sso::Payload.decode(encoded_payload, signature, remote_workspace.secret)
       raise Sso::Payload::InvalidPayload, "Missing SSO nonce" if payload.nonce.blank?
 
       [ remote_workspace, payload ]
-    rescue URI::InvalidURIError, RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Origin::Hub
-      raise NotPaired
+    rescue URI::InvalidURIError, RemoteWorkspace::Origin::Error
+      raise NotPairedError
     end
 
     # A Sabha Cloud droplet, paired as it's provisioned. The platform created
@@ -57,21 +56,30 @@ module RemoteWorkspace::Pairable
     def pair_sabha_cloud!(address, name:, owner_email: nil)
       create_or_find_by!(origin: RemoteWorkspace::Origin.normalize(address)) { it.name = name }.tap do |remote_workspace|
         remote_workspace.pair_sabha_cloud!
-        GlobalIdentity.find_by(email_address: owner_email.to_s.downcase)&.list_sabha_cloud_workspace(remote_workspace) if owner_email.present?
+        list_for_owner(remote_workspace, owner_email) if owner_email.present?
       end
     end
 
     def pairing_proof(secret, origin)
       OpenSSL::HMAC.hexdigest("sha256", secret, "#{PAIRING_PROOF_CONTEXT}#{origin}")
     end
+
+    private
+      # The droplet is paired either way; a full list just goes without it,
+      # and the platform API reports that as listed: false
+      def list_for_owner(remote_workspace, owner_email)
+        GlobalIdentity.find_by(email_address: owner_email.to_s.downcase)&.list_sabha_cloud_workspace!(remote_workspace)
+      rescue GlobalIdentity::RemoteWorkspaceLimitReachedError
+        nil
+      end
   end
 
   # A verified request replaces whatever pairing came before it
-  def pair!(pairing)
+  def pair!(request)
     transaction do
-      update!(hub_secret: pairing.secret, pairing_status: :active, paired_via: :self_serve,
-        paired_by: pairing.global_identity, paired_at: Time.current)
-      pairing.destroy!
+      update!(secret: request.secret, pairing_status: :active, paired_via: :self_serve,
+        paired_by: request.global_identity, paired_at: Time.current)
+      request.destroy!
     end
   end
 
@@ -81,26 +89,25 @@ module RemoteWorkspace::Pairable
   def pair_sabha_cloud!
     with_lock do
       unless pairing_active? && paired_via_sabha_cloud?
-        update!(hub_secret: SecureRandom.hex(32), pairing_status: :active, paired_via: :sabha_cloud, paired_by: nil, paired_at: Time.current)
+        update!(secret: SecureRandom.hex(32), pairing_status: :active, paired_via: :sabha_cloud, paired_by: nil, paired_at: Time.current)
       end
     end
     self
   end
 
-  def connected_by?(global_identity)
+  def paired_by?(global_identity)
     pairing_active? && paired_by_id == global_identity.id
   end
 
-  # A droplet's owner may not have a sabha.co account yet, or a full list
-  def listed_by?(email_address)
-    memberships.joins(:global_identity).exists?(global_identities: { email_address: email_address.to_s.downcase })
+  def listed_by?(global_identity)
+    memberships.exists?(global_identity: global_identity)
   end
 
   # Members keep their entries; each falls back to the workspace's own login,
   # and sabha.co asks again before vouching for anyone if it's paired again.
   def disconnect!
     transaction do
-      update!(hub_secret: nil, pairing_status: :revoked)
+      update!(secret: nil, pairing_status: :disconnected)
       memberships.update_all(consented_at: nil)
     end
   end

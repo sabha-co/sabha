@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 require_relative "../../../test/test_helpers/dns_test_helper"
 
-class RemoteWorkspacePairingTest < ActiveSupport::TestCase
+class RemoteWorkspacePairingRequestTest < ActiveSupport::TestCase
   include DnsTestHelper
 
   setup do
@@ -12,18 +12,18 @@ class RemoteWorkspacePairingTest < ActiveSupport::TestCase
   end
 
   test "starting a pairing gives the requester a fresh secret and leaves the workspace untouched" do
-    pairing = global_identities(:alice).pair_remote_workspace!(@acme)
+    pairing = global_identities(:alice).request_remote_workspace_pairing!(@acme)
 
     assert_equal 64, pairing.secret.length
     assert_in_delta 24.hours.from_now, pairing.expires_at, 5.seconds
     assert @acme.reload.pairing_none?
-    assert_nil @acme.hub_secret
+    assert_nil @acme.secret
   end
 
   test "the secret is encrypted at rest" do
-    pairing = global_identities(:alice).pair_remote_workspace!(@acme)
+    pairing = global_identities(:alice).request_remote_workspace_pairing!(@acme)
 
-    stored = RemoteWorkspacePairing.connection.select_value("SELECT secret FROM remote_workspace_pairings WHERE id = #{pairing.id}")
+    stored = RemoteWorkspacePairingRequest.connection.select_value("SELECT secret FROM remote_workspace_pairing_requests WHERE id = #{pairing.id}")
     assert_not_includes stored, pairing.secret
   end
 
@@ -31,20 +31,20 @@ class RemoteWorkspacePairingTest < ActiveSupport::TestCase
     stub_manifest("https://new.example", workspace: { name: "New" })
 
     assert_difference -> { RemoteWorkspace.count }, +1 do
-      global_identities(:alice).pair_remote_workspace!(RemoteWorkspace.preview("new.example"))
+      global_identities(:alice).request_remote_workspace_pairing!(RemoteWorkspace.preview("new.example"))
     end
   end
 
   test "a host an env client answers for can't be paired" do
     with_env("SSO_PROVIDER_CLIENTS" => "cloud", "SSO_CLOUD_RETURN_HOST" => "chat.acme.org", "SSO_CLOUD_SECRET" => "s") do
-      assert_raises(GlobalIdentity::RemoteWorkspaceClaimedError) do
-        global_identities(:alice).pair_remote_workspace!(@acme)
+      assert_raises(GlobalIdentity::RemoteWorkspaceHasSsoClientError) do
+        global_identities(:alice).request_remote_workspace_pairing!(@acme)
       end
     end
   end
 
   test "verify pairs the workspace when its manifest carries the proof" do
-    pairing = global_identities(:alice).pair_remote_workspace!(@acme)
+    pairing = global_identities(:alice).request_remote_workspace_pairing!(@acme)
     stub_manifest(@acme.origin, hub_proof: RemoteWorkspace.pairing_proof(pairing.secret, @acme.origin))
 
     pairing.verify!
@@ -52,61 +52,61 @@ class RemoteWorkspacePairingTest < ActiveSupport::TestCase
     @acme.reload
     assert @acme.pairing_active?
     assert @acme.paired_via_self_serve?
-    assert_equal pairing.secret, @acme.hub_secret
+    assert_equal pairing.secret, @acme.secret
     assert_equal global_identities(:alice), @acme.paired_by
-    assert_not RemoteWorkspacePairing.exists?(pairing.id)
+    assert_not RemoteWorkspacePairingRequest.exists?(pairing.id)
   end
 
   test "verify refuses a manifest without the proof, or with someone else's" do
-    pairing = global_identities(:alice).pair_remote_workspace!(@acme)
+    pairing = global_identities(:alice).request_remote_workspace_pairing!(@acme)
 
     stub_manifest(@acme.origin, {})
-    assert_raises(RemoteWorkspacePairing::ProofMismatch) { pairing.verify! }
+    assert_raises(RemoteWorkspacePairingRequest::ProofMismatchError) { pairing.verify! }
 
     stub_manifest(@acme.origin, hub_proof: RemoteWorkspace.pairing_proof("another-secret", @acme.origin))
-    assert_raises(RemoteWorkspacePairing::ProofMismatch) { pairing.verify! }
+    assert_raises(RemoteWorkspacePairingRequest::ProofMismatchError) { pairing.verify! }
 
     assert @acme.reload.pairing_none?
   end
 
   test "a proof made for another address doesn't pair this one" do
-    pairing = global_identities(:alice).pair_remote_workspace!(@acme)
+    pairing = global_identities(:alice).request_remote_workspace_pairing!(@acme)
     stub_manifest(@acme.origin, hub_proof: RemoteWorkspace.pairing_proof(pairing.secret, "https://elsewhere.example"))
 
-    assert_raises(RemoteWorkspacePairing::ProofMismatch) { pairing.verify! }
+    assert_raises(RemoteWorkspacePairingRequest::ProofMismatchError) { pairing.verify! }
   end
 
   test "a squatter's waiting request doesn't stop the real admin" do
-    global_identities(:bob).pair_remote_workspace!(@acme)
-    admins = global_identities(:alice).pair_remote_workspace!(@acme)
+    global_identities(:bob).request_remote_workspace_pairing!(@acme)
+    admins = global_identities(:alice).request_remote_workspace_pairing!(@acme)
     stub_manifest(@acme.origin, hub_proof: RemoteWorkspace.pairing_proof(admins.secret, @acme.origin))
 
     admins.verify!
 
-    assert_equal admins.secret, @acme.reload.hub_secret
+    assert_equal admins.secret, @acme.reload.secret
   end
 
   test "a newer verified pairing replaces the old one, so rotating and recovering work the same way" do
-    first = global_identities(:alice).pair_remote_workspace!(@acme)
+    first = global_identities(:alice).request_remote_workspace_pairing!(@acme)
     stub_manifest(@acme.origin, hub_proof: RemoteWorkspace.pairing_proof(first.secret, @acme.origin))
     first.verify!
 
-    second = global_identities(:bob).pair_remote_workspace!(@acme)
+    second = global_identities(:bob).request_remote_workspace_pairing!(@acme)
     stub_manifest(@acme.origin, hub_proof: RemoteWorkspace.pairing_proof(second.secret, @acme.origin))
     second.verify!
 
     @acme.reload
-    assert_equal second.secret, @acme.hub_secret
+    assert_equal second.secret, @acme.secret
     assert_equal global_identities(:bob), @acme.paired_by
   end
 
   test "requests expire after a day" do
-    pairing = global_identities(:alice).pair_remote_workspace!(@acme)
+    pairing = global_identities(:alice).request_remote_workspace_pairing!(@acme)
 
     travel 25.hours do
       assert pairing.expired?
-      assert_includes RemoteWorkspacePairing.expired, pairing
-      assert_not_includes RemoteWorkspacePairing.pending, pairing
+      assert_includes RemoteWorkspacePairingRequest.expired, pairing
+      assert_not_includes RemoteWorkspacePairingRequest.pending, pairing
     end
   end
 

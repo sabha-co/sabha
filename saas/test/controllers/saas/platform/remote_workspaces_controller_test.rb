@@ -25,7 +25,7 @@ module Saas
         body = response.parsed_body
         remote_workspace = RemoteWorkspace.find_by!(origin: "https://rust.sabha.co")
         assert_equal "https://rust.sabha.co", body["origin"]
-        assert_equal remote_workspace.hub_secret, body["secret"]
+        assert_equal remote_workspace.secret, body["secret"]
         assert body["listed"]
         assert remote_workspace.pairing_active?
         assert remote_workspace.paired_via_sabha_cloud?
@@ -43,12 +43,22 @@ module Saas
 
       test "takes over a workspace its owner paired by hand" do
         acme = remote_workspaces(:acme)
-        acme.update!(pairing_status: :active, paired_via: :self_serve, hub_secret: "hand-made")
+        acme.update!(pairing_status: :active, paired_via: :self_serve, secret: "hand-made")
 
         post "/api/platform/remote_workspaces", params: { origin: acme.origin, name: "Acme" }, headers: auth
 
         assert_not_equal "hand-made", response.parsed_body["secret"]
         assert acme.reload.paired_via_sabha_cloud?
+      end
+
+      test "an owner with a full list still gets a paired droplet" do
+        fill_remote_workspace_list global_identities(:alice)
+
+        post "/api/platform/remote_workspaces", params: { origin: "https://rust.sabha.co", name: "Rust", owner_email: global_identities(:alice).email_address }, headers: auth
+
+        assert_response :created
+        assert RemoteWorkspace.find_by!(origin: "https://rust.sabha.co").pairing_active?
+        assert_equal false, response.parsed_body["listed"]
       end
 
       test "an unknown owner still gets a paired droplet" do
@@ -71,7 +81,7 @@ module Saas
 
         assert_response :no_content
         remote_workspace = RemoteWorkspace.find_by!(origin: "https://rust.sabha.co")
-        assert remote_workspace.pairing_revoked?
+        assert remote_workspace.pairing_disconnected?
         assert global_identities(:charlie).remote_workspace_memberships.exists?(remote_workspace: remote_workspace)
       end
 

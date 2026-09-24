@@ -46,7 +46,7 @@ class Users::HubLinksControllerTest < ActionDispatch::IntegrationTest
     assert_select "a.setting-row[href=?]", new_user_hub_link_path, text: /Connect sabha.co/
   end
 
-  test "the profile shows the connected sabha.co account and hides the list nudge" do
+  test "the profile shows the connected sabha.co account and hides the list prompt" do
     link_hub(users(:david), "global_identity:1", email: "david@sabha.co")
     sign_in :david
 
@@ -55,7 +55,7 @@ class Users::HubLinksControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href^='https://sabha.co/remote_workspaces']", count: 0
 
     get user_sidebar_url
-    assert_select "#hub_list_nudge", count: 0
+    assert_select "#hub_list_prompt", count: 0
   end
 
   test "connecting right after signing in goes straight to sabha.co" do

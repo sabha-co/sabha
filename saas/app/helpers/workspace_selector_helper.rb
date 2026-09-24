@@ -38,16 +38,9 @@ module WorkspaceSelectorHelper
     Sabha.saas? && Current.global_identity.present?
   end
 
-  def workspace_selector_workspaces
-    return [] unless Current.global_identity
-
-    Current.global_identity.workspace_memberships_ordered.user_active
-      .filter_map { |m| m.workspace if m.workspace&.active? }
-  end
-
   # sabha.co and self-hosted workspaces, in the person's own order
   def workspace_selector_entries
-    Current.global_identity ? Current.global_identity.switcher_memberships : []
+    Current.global_identity ? Current.global_identity.selector_entries : []
   end
 
   def workspace_url(workspace)

@@ -106,7 +106,7 @@ class SingleSignOnRecord < ApplicationRecord
       if (record = issued_by(provider).find_by(external_id: external_id_from(payload)))
         record.apply_sso!(payload, provider)
       elsif User.exists?(email_address: email_address_from(payload))
-        raise Sso::LinkFromProfile
+        raise Sso::ProfileLinkRequired
       elsif invited || provider.auto_provision?
         provision_user!(payload, provider)
       else

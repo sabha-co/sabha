@@ -1,7 +1,7 @@
 json.protocol_major Sabha::PROTOCOL_MAJOR
 
 if Sabha.saas?
-  memberships = Current.global_identity.switcher_memberships
+  memberships = Current.global_identity.selector_entries
   workspaces, remotes = memberships.partition { it.is_a?(WorkspaceMembership) }
 
   json.peers workspaces.map(&:workspace) do |workspace|
@@ -14,7 +14,7 @@ if Sabha.saas?
 
   # Self-hosted workspaces from the person's list. A separate key, so a client
   # that only knows workspace peers keeps working.
-  json.remote_peers remotes do |membership|
+  json.self_hosted_peers remotes do |membership|
     remote_workspace = membership.remote_workspace
     json.id "remote:#{membership.id}"
     json.origin remote_workspace.origin

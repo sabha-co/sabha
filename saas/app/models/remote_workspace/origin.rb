@@ -8,12 +8,13 @@ require "addressable/uri"
 module RemoteWorkspace::Origin
   extend self
 
-  class Invalid < StandardError; end
+  class Error < StandardError; end
+  class Invalid < Error; end
 
   # The address points at sabha.co itself. When it names a workspace
   # (sabha.co/1000121), `workspace_id` carries it so the caller can send the
   # person to that workspace's join flow instead.
-  class Hub < StandardError
+  class Hub < Error
     attr_reader :workspace_id
 
     def initialize(workspace_id = nil)

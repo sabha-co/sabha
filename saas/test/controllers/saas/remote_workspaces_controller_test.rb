@@ -41,7 +41,7 @@ module Saas
 
       assert_select "h1", "Already in your list"
       assert_select "a[href=?]", acme.origin, text: "Open Acme"
-      assert_select "form[action='/remote_workspace_pairings'] input[name=remote_workspace_id][value=?]", acme.id.to_s
+      assert_select "form[action='/remote_workspace_pairing_requests'] input[name=remote_workspace_id][value=?]", acme.id.to_s
       assert_select "form[action='/remote_workspaces']", count: 0
     end
 
@@ -108,18 +108,18 @@ module Saas
       post "/remote_workspaces", params: { origin: ORIGIN, pair: "1" }
 
       assert_response :created
-      pairing = @alice.remote_workspace_pairings.sole
+      pairing = @alice.remote_workspace_pairing_requests.sole
       assert_equal ORIGIN, pairing.remote_workspace.origin
       assert @alice.remote_workspace_memberships.exists?(remote_workspace: pairing.remote_workspace)
       assert_select "input#hub_secret[value=?]", pairing.secret
-      assert_select "form[action=?]", "/remote_workspace_pairings/#{pairing.id}", text: "Verify"
+      assert_select "form[action=?]", "/remote_workspace_pairing_requests/#{pairing.id}", text: "Verify"
     end
 
     test "a member who leaves it unticked only lists the workspace" do
       post "/remote_workspaces", params: { origin: ORIGIN }
 
       assert_redirected_to settings_path
-      assert_empty @alice.remote_workspace_pairings
+      assert_empty @alice.remote_workspace_pairing_requests
     end
 
     test "won't pair an address an env client answers for, and doesn't list it either" do

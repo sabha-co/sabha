@@ -6,22 +6,22 @@ class Users::HubListPromptsControllerTest < ActionDispatch::IntegrationTest
   test "the sidebar offers to add the workspace to sabha.co" do
     get user_sidebar_url
 
-    assert_select "#hub_list_nudge" do
+    assert_select "#hub_list_prompt" do
       assert_select "a[href=?]", "https://sabha.co/remote_workspaces/new?origin=#{CGI.escape("http://www.example.com")}&source=prompt"
     end
   end
 
-  test "don't show again removes the nudge for good" do
+  test "don't show again removes the prompt for good" do
     delete user_hub_list_prompt_url, as: :turbo_stream
 
-    assert_turbo_stream action: :remove, target: "hub_list_nudge"
+    assert_turbo_stream action: :remove, target: "hub_list_prompt"
     assert users(:david).reload.hub_list_prompt_dismissed?
 
     get user_sidebar_url
-    assert_select "#hub_list_nudge", count: 0
+    assert_select "#hub_list_prompt", count: 0
   end
 
-  test "the profile keeps its link after the nudge is dismissed" do
+  test "the profile keeps its link after the prompt is dismissed" do
     users(:david).dismiss_hub_list_prompt
 
     get user_profile_url
@@ -34,16 +34,16 @@ class Users::HubListPromptsControllerTest < ActionDispatch::IntegrationTest
     accounts(:signal).save!
 
     get user_sidebar_url
-    assert_select "#hub_list_nudge", count: 0
+    assert_select "#hub_list_prompt", count: 0
 
     get user_profile_url
     assert_select "a[href^='https://sabha.co/remote_workspaces']", count: 0
   end
 
-  test "the Sabha apps don't get the nudge; they have the list already" do
+  test "the Sabha apps don't get the prompt; they have the list already" do
     get user_sidebar_url, headers: { "Sabha-Client" => "desktop" }
 
-    assert_select "#hub_list_nudge", count: 0
+    assert_select "#hub_list_prompt", count: 0
   end
 
   test "workspaces on their own single sign-on don't suggest sabha.co" do
@@ -51,6 +51,6 @@ class Users::HubListPromptsControllerTest < ActionDispatch::IntegrationTest
 
     get user_sidebar_url
 
-    assert_select "#hub_list_nudge", count: 0
+    assert_select "#hub_list_prompt", count: 0
   end
 end

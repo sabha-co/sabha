@@ -21,7 +21,7 @@
           <% @memberships.each do |membership| %>
             <% if membership.is_a?(RemoteWorkspaceMembership) %>
               <%= render "saas/settings/remote_workspace_membership", membership: membership,
-                    pending_pairing: @pending_pairings[membership.remote_workspace_id] %>
+                    pairing_request: @pairing_requests[membership.remote_workspace_id] %>
             <% else %>
               <%= render "saas/settings/workspace_membership", membership: membership %>
             <% end %>

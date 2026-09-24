@@ -76,17 +76,17 @@ module Sabha
             resource :workspace_membership_order, only: :update,
                      controller: "saas/workspace_membership_orders"
 
-            # Self-hosted communities in the person's list
+            # Self-hosted workspaces in the person's list
             resources :remote_workspaces, only: [ :new, :create ], controller: "saas/remote_workspaces" do
               resource :logo, only: :show, controller: "saas/remote_workspaces/logos"
-              resource :connection, only: :destroy, controller: "saas/remote_workspaces/connections"
+              resource :pairing, only: :destroy, controller: "saas/remote_workspaces/pairings"
             end
             resources :remote_workspace_memberships, only: [ :update, :destroy ],
                       controller: "saas/remote_workspace_memberships" do
               resource :consent, only: :destroy, controller: "saas/remote_workspace_memberships/consents"
             end
-            resources :remote_workspace_pairings, only: [ :create, :show, :update ],
-                      controller: "saas/remote_workspace_pairings"
+            resources :remote_workspace_pairing_requests, only: [ :create, :show, :update ],
+                      controller: "saas/remote_workspace_pairing_requests"
 
             # Sabha Cloud pairing the droplets it provisions. A droplet is
             # named by its host, which carries dots, so the id takes any

@@ -183,7 +183,7 @@ module Saas
 
     private
       def pair_acme
-        remote_workspaces(:acme).tap { it.update!(pairing_status: :active, paired_via: :self_serve, hub_secret: "acme-hub-secret") }
+        remote_workspaces(:acme).tap { it.update!(pairing_status: :active, paired_via: :self_serve, secret: "acme-hub-secret") }
       end
 
       def workspace_request

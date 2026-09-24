@@ -22,7 +22,7 @@
         <%= link_to "Open #{listed.name}", listed.origin, class: "btn btn--reversed center txt-large", data: { turbo: false } %>
 
         <% unless listed.pairing_active? %>
-          <%= button_to "I run it: set up Continue with sabha.co", remote_workspace_pairings_path,
+          <%= button_to "I run it: set up Continue with sabha.co", remote_workspace_pairing_requests_path,
                 params: { remote_workspace_id: listed.id }, class: "btn txt-small" %>
         <% end %>
 

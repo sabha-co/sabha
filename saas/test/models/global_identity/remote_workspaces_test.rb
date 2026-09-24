@@ -43,23 +43,23 @@ class GlobalIdentity::RemoteWorkspacesTest < ActiveSupport::TestCase
     club.update!(hidden: true)
     acme = remote_workspace_memberships(:alice_acme)
 
-    assert @alice.reorder_switcher([ "1000003", "remote:#{acme.id}", "1000001" ])
+    assert @alice.reorder_selector([ "1000003", "remote:#{acme.id}", "1000001" ])
 
-    entries = @alice.switcher_memberships
+    entries = @alice.selector_entries
     assert_equal [ "1000003", acme, "1000001" ], entries.map { it.is_a?(WorkspaceMembership) ? it.tenant : it }
   end
 
   test "reordering only touches the person's own entries" do
-    @alice.reorder_switcher([ "remote:#{remote_workspace_memberships(:bob_acme).id}", "1000002" ])
+    @alice.reorder_selector([ "remote:#{remote_workspace_memberships(:bob_acme).id}", "1000002" ])
 
     assert_nil remote_workspace_memberships(:bob_acme).reload.position
     assert_nil workspace_memberships(:bob_widgets).reload.position
   end
 
   test "reordering refuses anything but a list" do
-    assert_not @alice.reorder_switcher(nil)
-    assert_not @alice.reorder_switcher("1000001")
-    assert_not @alice.reorder_switcher([])
+    assert_not @alice.reorder_selector(nil)
+    assert_not @alice.reorder_selector("1000001")
+    assert_not @alice.reorder_selector([])
   end
 
   test "forgetting a person's list keeps the workspaces others share" do

@@ -12,7 +12,7 @@ module Saas
     rate_limit to: 20, within: 1.hour, only: :create, name: "add", by: -> { current_global_identity.id }, with: :too_many_requests
 
     rescue_from RemoteWorkspace::Origin::Hub, with: :redirect_to_hub_workspace
-    rescue_from RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Probe::Error, GlobalIdentity::RemoteWorkspaceClaimedError,
+    rescue_from RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Probe::Error, GlobalIdentity::RemoteWorkspaceHasSsoClientError,
       with: :render_lookup_failure
 
     # GET /remote_workspaces/new?origin=chat.acme.org
@@ -30,12 +30,12 @@ module Saas
       remote_workspace = RemoteWorkspace.preview(params[:origin])
       return redirect_to_listed(remote_workspace) if listed_elsewhere?(remote_workspace)
 
-      @pairing = current_global_identity.pair_remote_workspace!(remote_workspace) if params[:pair] == "1"
-      current_global_identity.list_remote_workspace!(@pairing&.remote_workspace || remote_workspace, source: params[:source] == "prompt" ? :prompt : :added)
+      @pairing_request = current_global_identity.request_remote_workspace_pairing!(remote_workspace) if params[:pair] == "1"
+      current_global_identity.list_remote_workspace!(@pairing_request&.remote_workspace || remote_workspace, source: params[:source] == "prompt" ? :prompt : :added)
 
-      if @pairing
+      if @pairing_request
         @show_secret = true
-        render "saas/remote_workspace_pairings/show", status: :created
+        render "saas/remote_workspace_pairing_requests/show", status: :created
       else
         redirect_to settings_path, notice: "#{remote_workspace.name} is in your list"
       end
