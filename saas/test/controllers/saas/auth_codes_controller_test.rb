@@ -50,6 +50,17 @@ module Saas
       assert_equal "Welcome!", flash[:notice]
     end
 
+    test "a new member lands in the default workspace straight after verifying" do
+      with_provisioned_workspace(name: "Flagship", creator: global_identities(:alice)) do |flagship|
+        GlobalIdentity.stubs(:default_workspace).returns(flagship)
+
+        post auth_code_path, params: { code: auth_codes(:unverified_signup).code }
+        follow_redirect!
+
+        assert_redirected_to "/#{flagship.external_id}"
+      end
+    end
+
     test "create with valid code verifies unverified identity" do
       identity = global_identities(:unverified)
       code = auth_codes(:unverified_signup)

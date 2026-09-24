@@ -283,7 +283,7 @@ class GlobalIdentityTest < ActiveSupport::TestCase
       identity = GlobalIdentity.create!(name: "Signup", email_address: "signup-join@example.com")
       assert_not identity.workspace_memberships.exists?(tenant: flagship.external_id.to_s)
 
-      perform_enqueued_jobs(only: GlobalIdentity::JoinDefaultWorkspaceJob) { identity.verify! }
+      identity.verify!
 
       membership = identity.workspace_memberships.find_by!(tenant: flagship.external_id.to_s)
       ApplicationRecord.with_tenant(membership.tenant) { assert User.find(membership.user_id).verified? }
@@ -293,9 +293,9 @@ class GlobalIdentityTest < ActiveSupport::TestCase
   test "a session touching an already verified identity doesn't join it again" do
     identity = GlobalIdentity.find(global_identities(:alice).id)
 
-    assert_no_enqueued_jobs(only: GlobalIdentity::JoinDefaultWorkspaceJob) do
-      UntenantedRecord.transaction { identity.touch_later }
-    end
+    identity.expects(:join_default_workspace).never
+
+    UntenantedRecord.transaction { identity.touch_later }
   end
 
   test "verifying from inside another workspace still joins the default one" do
@@ -305,19 +305,26 @@ class GlobalIdentityTest < ActiveSupport::TestCase
         identity = GlobalIdentity.create!(name: "Signup", email_address: "signup-elsewhere@example.com")
 
         ApplicationRecord.with_tenant(elsewhere.external_id.to_s) { identity.verify! }
-        perform_enqueued_jobs(only: GlobalIdentity::JoinDefaultWorkspaceJob)
 
         assert identity.workspace_memberships.exists?(tenant: flagship.external_id.to_s)
       end
     end
   end
 
+  test "a failed join doesn't stop verification, and a job tries again" do
+    identity = GlobalIdentity.create!(name: "Signup", email_address: "signup-retry@example.com")
+    identity.stubs(:join_default_workspace).raises(ActiveRecord::RecordInvalid)
+
+    assert_enqueued_with(job: GlobalIdentity::JoinDefaultWorkspaceJob, args: [ identity ]) do
+      identity.verify!
+    end
+    assert identity.reload.verified?
+  end
+
   test "an identity created verified joins the default workspace straight away" do
     with_provisioned_workspace(name: "Flagship", creator: global_identities(:alice)) do |flagship|
       GlobalIdentity.stubs(:default_workspace).returns(flagship)
-      identity = perform_enqueued_jobs(only: GlobalIdentity::JoinDefaultWorkspaceJob) do
-        GlobalIdentity.create!(name: "Seeded", email_address: "seeded-join@example.com", verified_at: Time.current)
-      end
+      identity = GlobalIdentity.create!(name: "Seeded", email_address: "seeded-join@example.com", verified_at: Time.current)
 
       assert identity.workspace_memberships.exists?(tenant: flagship.external_id.to_s)
     end

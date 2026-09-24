@@ -41,7 +41,7 @@ class GlobalIdentity < UntenantedRecord
   normalizes :terms_of_service, with: ->(v) { ActiveRecord::Type::Boolean.new.deserialize(v) }
 
   before_create :stamp_terms_acceptance, if: :terms_of_service
-  after_save_commit :join_default_workspace_later, if: :became_verified?
+  after_save_commit :join_default_workspace_now, if: :became_verified?
 
   validates :unconfirmed_email, 'valid_email_2/email': true, allow_blank: true
   validates :unconfirmed_email, 'valid_email_2/email': { disposable: true, message: "looks like a temporary email address. We discourage use of disposable emails — please use a permanent one instead." }, allow_blank: true
@@ -221,11 +221,17 @@ class GlobalIdentity < UntenantedRecord
       saved_change_to_verified_at?(from: nil)
     end
 
-    # Verifying can happen inside a workspace; the job must not carry it along,
-    # or joining Sabha Chat would try to switch databases mid-job
-    def join_default_workspace_later
+    # Joins during the verifying request, so its redirect already finds Sabha Chat.
+    # Verifying can happen inside another workspace, so step out of it first. If
+    # joining fails, sign-up still goes through and a job tries again
+    def join_default_workspace_now
       ApplicationRecord.prohibit_shard_swapping(false) do
-        ApplicationRecord.without_tenant { JoinDefaultWorkspaceJob.perform_later(self) }
+        ApplicationRecord.without_tenant do
+          join_default_workspace
+        rescue => error
+          Rails.error.report(error)
+          JoinDefaultWorkspaceJob.perform_later(self)
+        end
       end
     end
 end
