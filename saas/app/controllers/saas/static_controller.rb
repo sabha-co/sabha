@@ -6,6 +6,8 @@ module Saas
 
     layout "marketing"
 
+    before_action :redirect_desktop_away_from_marketing, only: %i[ about changelog openclaw ]
+
     def about
     end
 
