@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Saas
-  # An admin switching on Continue with sabha.co for a community in their
-  # list: put the secret in the community's server environment, restart it,
-  # then Verify. Adding a community can start this too.
+  # An admin switching on Continue with sabha.co for a workspace in their
+  # list: put the secret in the workspace's server environment, restart it,
+  # then Verify. Adding a workspace can start this too.
   class RemoteWorkspacePairingsController < BaseController
     helper RemoteWorkspacesHelper
 
@@ -32,9 +32,9 @@ module Saas
       redirect_to settings_path, notice: "#{@pairing.remote_workspace.name} is connected to sabha.co"
     rescue RemoteWorkspacePairing::ProofMismatch
       redirect_to remote_workspace_pairing_path(@pairing),
-        alert: "#{@pairing.remote_workspace.address} isn't running with this secret yet. Check SABHA_HUB_SECRET, restart it, then Verify again."
+        alert: "#{@pairing.remote_workspace.address} isn't using this secret yet. Check SABHA_HUB_SECRET and restart it."
     rescue RemoteWorkspace::Probe::Error
-      redirect_to remote_workspace_pairing_path(@pairing), alert: "We couldn't reach #{@pairing.remote_workspace.address}. Try again once it's back up."
+      redirect_to remote_workspace_pairing_path(@pairing), alert: "Couldn't reach #{@pairing.remote_workspace.address}."
     end
 
     private

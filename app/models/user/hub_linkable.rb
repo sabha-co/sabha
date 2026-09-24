@@ -24,7 +24,7 @@ module User::HubLinkable
     hub_link&.destroy!
   end
 
-  # Email codes always reach the member; a password community needs a password
+  # Email codes always reach the member; a password workspace needs a password
   def signs_in_without_hub?
     Account.otp_auth? || password_digest.present?
   end

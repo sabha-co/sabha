@@ -2,7 +2,7 @@
 
 require "addressable/uri"
 
-# One community per origin, so the origin is its identity. Every way into the
+# One workspace per origin, so the origin is its identity. Every way into the
 # list goes through here, so "HTTPS://Chat.Acme.org:443/rooms" and
 # "chat.acme.org" land on the same row.
 module RemoteWorkspace::Origin
@@ -49,7 +49,7 @@ module RemoteWorkspace::Origin
     end
 
     # APP_HOST carries a port in development (localhost:3000), so compare the
-    # whole authority; a self-hosted community on localhost:3001 is still remote.
+    # whole authority; a self-hosted workspace on localhost:3001 is still remote.
     def hub_authority
       Branding.app_host.to_s.downcase
     end

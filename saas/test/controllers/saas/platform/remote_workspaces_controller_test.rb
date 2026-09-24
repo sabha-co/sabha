@@ -41,7 +41,7 @@ module Saas
         assert_equal first, response.parsed_body["secret"]
       end
 
-      test "takes over a community its owner paired by hand" do
+      test "takes over a workspace its owner paired by hand" do
         acme = remote_workspaces(:acme)
         acme.update!(pairing_status: :active, paired_via: :self_serve, hub_secret: "hand-made")
 

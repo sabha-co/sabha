@@ -189,7 +189,7 @@
   transform: translateX(2px);
 }
 
-/* A self-hosted community sabha.co couldn't reach lately: still clickable */
+/* A self-hosted workspace sabha.co couldn't reach lately: still clickable */
 .workspace-selector__item--unreachable .workspace-selector__workspace-icon {
   opacity: 0.45;
 }
@@ -1244,7 +1244,7 @@
 }
 
 /* "+" opens a small menu beside the rail: create a workspace, or add a
-   self-hosted community. The rail sits below the sidebar, so it rises above
+   self-hosted workspace. The rail sits below the sidebar, so it rises above
    it while the menu is open. */
 .workspace-selector:has(.workspace-selector__add-menu[open]) {
   z-index: 4;

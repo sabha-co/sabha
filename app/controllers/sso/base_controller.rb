@@ -12,7 +12,7 @@ class Sso::BaseController < ApplicationController
   helper_method :provider
 
   private
-    # /session/sso is the community's own single sign-on; /session/hub is sabha.co
+    # /session/sso is the workspace's own single sign-on; /session/hub is sabha.co
     def provider
       @provider ||= Sso::Provider.find(request.path_parameters[:provider])
     end

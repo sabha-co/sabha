@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# Someone asking to pair a community with sabha.co. It holds a fresh secret
-# until the community proves, through its manifest, that it runs with it. Any
-# number can wait for one community, so a squatter can't block its admin.
+# Someone asking to pair a workspace with sabha.co. It holds a fresh secret
+# until the workspace proves, through its manifest, that it runs with it. Any
+# number can wait for one workspace, so a squatter can't block its admin.
 class RemoteWorkspacePairing < UntenantedRecord
   EXPIRES_IN = 24.hours
 

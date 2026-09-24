@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# The self-hosted communities a person keeps in their list, and the one order
+# The self-hosted workspaces a person keeps in their list, and the one order
 # they share with sabha.co workspaces in the selector.
 module GlobalIdentity::RemoteWorkspaces
   extend ActiveSupport::Concern
@@ -13,12 +13,12 @@ module GlobalIdentity::RemoteWorkspaces
   included do
     has_many :remote_workspace_memberships, dependent: :destroy
     has_many :remote_workspace_pairings, dependent: :destroy
-    # A pairing outlives whoever set it up, until the community pairs again
+    # A pairing outlives whoever set it up, until the workspace pairs again
     has_many :paired_remote_workspaces, class_name: "RemoteWorkspace", foreign_key: :paired_by_id,
       inverse_of: :paired_by, dependent: :nullify
   end
 
-  # Adds the community to the list, or brings a hidden entry back. The first
+  # Adds the workspace to the list, or brings a hidden entry back. The first
   # person to list an origin creates its shared row from the manifest.
   def list_remote_workspace!(remote_workspace, source:)
     remote_workspace = save_remote_workspace!(remote_workspace) if remote_workspace.new_record?
@@ -33,8 +33,8 @@ module GlobalIdentity::RemoteWorkspaces
     end
   end
 
-  # Starts pairing a community for "Continue with sabha.co". The secret waits
-  # on the request until the community proves it's running with it.
+  # Starts pairing a workspace for "Continue with sabha.co". The secret waits
+  # on the request until the workspace proves it's running with it.
   def pair_remote_workspace!(remote_workspace)
     raise RemoteWorkspaceClaimedError if Sso::ProviderClient.claims_host?(URI(remote_workspace.origin).host)
 
@@ -47,7 +47,7 @@ module GlobalIdentity::RemoteWorkspaces
     end
   end
 
-  # The person's entry for a community, including one they added under its
+  # The person's entry for a workspace, including one they added under its
   # other address (the public address it reports, or the one that reports this)
   def remote_workspace_membership_for(remote_workspace)
     listed = remote_workspace_memberships.joins(:remote_workspace)
@@ -56,8 +56,8 @@ module GlobalIdentity::RemoteWorkspaces
       .first
   end
 
-  # Approving once lets sabha.co tell the community this person's name and
-  # email from then on, and keeps the community in their list.
+  # Approving once lets sabha.co tell the workspace this person's name and
+  # email from then on, and keeps the workspace in their list.
   def consent_to_remote_workspace!(remote_workspace)
     list_remote_workspace!(remote_workspace, source: :shortcut).update!(consented_at: Time.current)
   end

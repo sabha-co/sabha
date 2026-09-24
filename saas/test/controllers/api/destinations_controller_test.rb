@@ -31,7 +31,7 @@ module Saas
       assert_response :unauthorized
     end
 
-    test "lists self-hosted communities separately, with one order across both kinds, without hidden ones" do
+    test "lists self-hosted workspaces separately, with one order across both kinds, without hidden ones" do
       alice = global_identities(:alice)
       acme = remote_workspace_memberships(:alice_acme)
       club = alice.list_remote_workspace!(remote_workspaces(:club), source: :added)
@@ -49,7 +49,7 @@ module Saas
       assert_equal [ "remote:#{club.id}", "1000001", "remote:#{acme.id}", "1000003" ], body["order"]
     end
 
-    test "says which communities offer Continue with sabha.co" do
+    test "says which workspaces offer Continue with sabha.co" do
       remote_workspaces(:acme).update!(pairing_status: :active, hub_secret: "secret")
 
       get "/api/destinations", headers: protocol_headers

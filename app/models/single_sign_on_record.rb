@@ -5,7 +5,7 @@ class SingleSignOnRecord < ApplicationRecord
 
   scope :issued_by, ->(provider) { where(issuer: provider.issuer) }
 
-  # The account a provider's payload signs in to. The community's own single
+  # The account a provider's payload signs in to. The workspace's own single
   # sign-on keeps its long-standing rules, including claiming an existing
   # account by email. sabha.co never matches by email: an account connects it
   # from the profile, and new accounts need an invite unless the admin opens

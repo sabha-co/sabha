@@ -24,7 +24,7 @@ module WorkspaceSelectorHelper
     gradient_style_for(workspace.external_id)
   end
 
-  # Self-hosted communities are keyed by address, so the colour stays put
+  # Self-hosted workspaces are keyed by address, so the colour stays put
   # when they rename themselves.
   def remote_workspace_gradient_style(remote_workspace)
     gradient_style_for(remote_workspace.origin)
@@ -45,7 +45,7 @@ module WorkspaceSelectorHelper
       .filter_map { |m| m.workspace if m.workspace&.active? }
   end
 
-  # Workspaces and self-hosted communities, in the person's own order
+  # sabha.co and self-hosted workspaces, in the person's own order
   def workspace_selector_entries
     Current.global_identity ? Current.global_identity.switcher_memberships : []
   end

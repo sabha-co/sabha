@@ -99,11 +99,11 @@ module Saas
       assert_response :service_unavailable
     end
 
-    test "asks before telling a paired community who you are, the first time only" do
+    test "asks before telling a paired workspace who you are, the first time only" do
       identity = global_identities(:charlie)
       acme = pair_acme
       sign_in_global_identity(identity)
-      sso, sig = community_request
+      sso, sig = workspace_request
 
       get "/session/sso", params: { sso:, sig: }
       assert_response :ok
@@ -117,7 +117,7 @@ module Saas
 
       assert_match %r{\Ahttps://chat\.acme\.org/session/hub/callback\?}, response.location
       payload = callback_payload(response.location, "acme-hub-secret")
-      assert_equal "community-nonce", payload.nonce
+      assert_equal "workspace-nonce", payload.nonce
       assert_equal "global_identity:#{identity.id}", payload["external_id"]
       assert identity.remote_workspace_memberships.find_by!(remote_workspace: acme).shortcut?
 
@@ -131,7 +131,7 @@ module Saas
       identity.consent_to_remote_workspace!(acme)
       remote_workspace_memberships(:alice_acme).update!(hidden: true)
       sign_in_global_identity(identity)
-      sso, sig = community_request
+      sso, sig = workspace_request
 
       get "/session/sso", params: { sso:, sig: }
 
@@ -139,18 +139,18 @@ module Saas
       assert_not remote_workspace_memberships(:alice_acme).reload.hidden?
     end
 
-    test "a community that isn't paired can't ask" do
+    test "a workspace that isn't paired can't ask" do
       sign_in_global_identity(global_identities(:alice))
-      sso, sig = community_request
+      sso, sig = workspace_request
 
       get "/session/sso", params: { sso:, sig: }
 
       assert_response :forbidden
     end
 
-    test "a disconnected community gets a page that explains" do
+    test "a disconnected workspace gets a page that explains" do
       pair_acme.disconnect!
-      sso, sig = community_request
+      sso, sig = workspace_request
 
       get "/session/sso", params: { sso:, sig: }
 
@@ -161,7 +161,7 @@ module Saas
 
     test "approving needs a signed-in person and a valid request" do
       pair_acme
-      sso, sig = community_request
+      sso, sig = workspace_request
 
       post "/session/sso/consent", params: { sso:, sig: }
       assert_response :redirect
@@ -186,8 +186,8 @@ module Saas
         remote_workspaces(:acme).tap { it.update!(pairing_status: :active, paired_via: :self_serve, hub_secret: "acme-hub-secret") }
       end
 
-      def community_request
-        Sso::Payload.encode({ nonce: "community-nonce", return_sso_url: "https://chat.acme.org/session/hub/callback" }, "acme-hub-secret")
+      def workspace_request
+        Sso::Payload.encode({ nonce: "workspace-nonce", return_sso_url: "https://chat.acme.org/session/hub/callback" }, "acme-hub-secret")
       end
 
       def provider_request(attributes = {})

@@ -14,7 +14,7 @@ module Saas
       stub_dns_resolution("93.184.216.34")
     end
 
-    test "a new secret for a community in the list is shown once, with the steps to finish" do
+    test "a new secret for a workspace in the list is shown once, with the steps to finish" do
       post "/remote_workspace_pairings", params: { remote_workspace_id: @acme.id }
 
       assert_response :created
@@ -28,7 +28,7 @@ module Saas
       assert_select "form[action='/remote_workspace_pairings'] input[name=remote_workspace_id][value=?]", @acme.id.to_s
     end
 
-    test "only communities in the person's list can be paired" do
+    test "only workspaces in the person's list can be paired" do
       assert_raises(ActiveRecord::RecordNotFound) do
         post "/remote_workspace_pairings", params: { remote_workspace_id: remote_workspaces(:club).id }
       end
@@ -84,7 +84,7 @@ module Saas
       assert_raises(ActiveRecord::RecordNotFound) { patch "/remote_workspace_pairings/#{pairing.id}" }
     end
 
-    test "whoever paired a community can disconnect it" do
+    test "whoever paired a workspace can disconnect it" do
       @acme.update!(pairing_status: :active, hub_secret: "secret", paired_by: @alice)
 
       delete "/remote_workspaces/#{@acme.id}/connection"
@@ -100,7 +100,7 @@ module Saas
       assert @acme.reload.pairing_active?
     end
 
-    test "settings offers Verify on a waiting community and the pairer's actions on a connected one" do
+    test "settings offers Verify on a waiting workspace and the pairer's actions on a connected one" do
       @acme.update!(pairing_status: :active, hub_secret: "secret", paired_by: @alice)
       club = @alice.list_remote_workspace!(remote_workspaces(:club), source: :added).remote_workspace
       pairing = @alice.pair_remote_workspace!(club)
@@ -114,7 +114,7 @@ module Saas
       assert_select "form[action='/remote_workspace_pairings']", text: "Set up Continue with sabha.co", count: 0
     end
 
-    test "settings offers setting up the shortcut on a community nobody has paired" do
+    test "settings offers setting up the shortcut on a workspace nobody has paired" do
       get "/settings"
 
       assert_select "form[action='/remote_workspace_pairings'] input[name=remote_workspace_id][value=?]", @acme.id.to_s
@@ -138,7 +138,7 @@ module Saas
 
     private
       def stub_manifest(overrides)
-        body = { protocol_major: 1, community: { name: "Acme" } }.merge(overrides)
+        body = { protocol_major: 1, workspace: { name: "Acme" } }.merge(overrides)
         stub_request(:get, "#{@acme.origin}/api/manifest").to_return(status: 200, body: body.to_json, headers: { "Content-Type" => "application/json" })
       end
   end

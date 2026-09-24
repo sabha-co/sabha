@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Self-hosted communities people keep in their sabha.co list
+# Self-hosted workspaces people keep in their sabha.co list
 
 acme:
   origin: https://chat.acme.org

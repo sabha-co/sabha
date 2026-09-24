@@ -11,7 +11,7 @@ class RemoteWorkspacePairingTest < ActiveSupport::TestCase
     @acme = remote_workspaces(:acme)
   end
 
-  test "starting a pairing gives the requester a fresh secret and leaves the community untouched" do
+  test "starting a pairing gives the requester a fresh secret and leaves the workspace untouched" do
     pairing = global_identities(:alice).pair_remote_workspace!(@acme)
 
     assert_equal 64, pairing.secret.length
@@ -28,7 +28,7 @@ class RemoteWorkspacePairingTest < ActiveSupport::TestCase
   end
 
   test "the first person to pair a new address creates its row" do
-    stub_manifest("https://new.example", community: { name: "New" })
+    stub_manifest("https://new.example", workspace: { name: "New" })
 
     assert_difference -> { RemoteWorkspace.count }, +1 do
       global_identities(:alice).pair_remote_workspace!(RemoteWorkspace.preview("new.example"))
@@ -43,7 +43,7 @@ class RemoteWorkspacePairingTest < ActiveSupport::TestCase
     end
   end
 
-  test "verify pairs the community when its manifest carries the proof" do
+  test "verify pairs the workspace when its manifest carries the proof" do
     pairing = global_identities(:alice).pair_remote_workspace!(@acme)
     stub_manifest(@acme.origin, hub_proof: RemoteWorkspace.pairing_proof(pairing.secret, @acme.origin))
 

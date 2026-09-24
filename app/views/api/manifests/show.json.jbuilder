@@ -7,13 +7,13 @@ end
 json.sign_in_path sign_in_entry_path
 json.destinations_path api_destinations_path
 
-# A self-hosted install is one community, so it can say which one. sabha.co
-# hosts many, so it has no single community to describe, and says so: it
-# can't be added to anyone's list of communities, whatever address reaches it.
+# A self-hosted install is one workspace, so it can say which one. sabha.co
+# hosts many, so it has no single workspace to describe, and says so: it
+# can't be added to anyone's list of workspaces, whatever address reaches it.
 json.multi_tenant true if Sabha.saas?
 
 if !Sabha.saas? && (account = Current.account)
-  json.community do
+  json.workspace do
     json.name account.name
     json.logo_url(account.logo.attached? ? fresh_account_logo_url(size: "small") : nil)
     json.url Branding.app_url

@@ -58,7 +58,7 @@
 
     <div class="workspace-selector__separator" aria-hidden="true"></div>
 
-    <%# Footer: Settings + Add (create a workspace, or add a self-hosted community) %>
+    <%# Footer: Settings + Add (create a workspace, or add a self-hosted workspace) %>
     <div class="workspace-selector__footer">
       <%= link_to untenanted_path(:settings),
           class: class_names("workspace-selector__profile", "workspace-selector__profile--active": settings_active),
@@ -81,7 +81,7 @@
         <div class="popup-menu workspace-selector__add-options border shadow" data-popup-target="menu">
           <%= link_to "Create a workspace", untenanted_path(:new_workspace),
                 class: "btn action-btn full-width", data: { turbo_prefetch: "false" } %>
-          <%= link_to "Add a self-hosted community", untenanted_path(:new_remote_workspace),
+          <%= link_to "Add a self-hosted workspace", untenanted_path(:new_remote_workspace),
                 class: "btn action-btn full-width", data: { turbo_prefetch: "false" } %>
         </div>
       <% end %>

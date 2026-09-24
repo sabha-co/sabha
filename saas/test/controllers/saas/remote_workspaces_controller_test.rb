@@ -14,7 +14,7 @@ module Saas
       sign_in_global_identity(@alice)
       stub_dns_resolution("93.184.216.34")
       stub_request(:get, "#{ORIGIN}/api/manifest").to_return(status: 200,
-        body: { protocol_major: 1, community: { name: "New" } }.to_json, headers: { "Content-Type" => "application/json" })
+        body: { protocol_major: 1, workspace: { name: "New" } }.to_json, headers: { "Content-Type" => "application/json" })
     end
 
     test "asks for an address" do
@@ -24,7 +24,7 @@ module Saas
       assert_select "input[name=origin]"
     end
 
-    test "shows the community's name and address to confirm" do
+    test "shows the workspace's name and address to confirm" do
       get "/remote_workspaces/new", params: { origin: "new.example/rooms/3", source: "prompt" }
 
       assert_response :success
@@ -34,7 +34,7 @@ module Saas
       assert_select "input[name=source][value=prompt]"
     end
 
-    test "says a community is already in the list instead of offering to add it" do
+    test "says a workspace is already in the list instead of offering to add it" do
       acme = remote_workspaces(:acme)
 
       get "/remote_workspaces/new", params: { origin: acme.origin }
@@ -45,7 +45,7 @@ module Saas
       assert_select "form[action='/remote_workspaces']", count: 0
     end
 
-    test "offers to show a hidden community again" do
+    test "offers to show a hidden workspace again" do
       acme = remote_workspaces(:acme)
       remote_workspace_memberships(:alice_acme).update!(hidden: true)
 
@@ -54,9 +54,9 @@ module Saas
       assert_select "form[action='/remote_workspaces'] button", "Show in sidebar"
     end
 
-    test "offers the address a community calls itself" do
+    test "offers the address a workspace calls itself" do
       stub_request(:get, "#{ORIGIN}/api/manifest").to_return(status: 200,
-        body: { protocol_major: 1, community: { name: "New", url: "https://chat.new.example" } }.to_json)
+        body: { protocol_major: 1, workspace: { name: "New", url: "https://chat.new.example" } }.to_json)
 
       get "/remote_workspaces/new", params: { origin: ORIGIN }
 
@@ -69,7 +69,7 @@ module Saas
       get "/remote_workspaces/new", params: { origin: ORIGIN }
 
       assert_response :unprocessable_entity
-      assert_select "[role=alert]", /isn't a Sabha community/
+      assert_select "[role=alert]", "That isn't a Sabha workspace, or its Sabha is too old."
       assert_select "input[name=origin][value=?]", ORIGIN
     end
 
@@ -80,7 +80,7 @@ module Saas
       get "/remote_workspaces/new", params: { origin: ORIGIN }
 
       assert_response :unprocessable_entity
-      assert_select "[role=alert]", "That's sabha.co, not a self-hosted community."
+      assert_select "[role=alert]", "That's sabha.co, not a self-hosted workspace."
     end
 
     test "explains an address that isn't one" do
@@ -90,7 +90,7 @@ module Saas
       assert_select "[role=alert]", "Use an https:// address."
     end
 
-    test "adding a community puts it in the person's list" do
+    test "adding a workspace puts it in the person's list" do
       assert_difference -> { @alice.remote_workspace_memberships.count }, 1 do
         post "/remote_workspaces", params: { origin: "New.Example" }
       end
@@ -101,7 +101,7 @@ module Saas
       assert_equal "added", membership.source
     end
 
-    test "an admin who ticks I run this community gets a secret, shown once" do
+    test "an admin who ticks I run this workspace gets a secret, shown once" do
       get "/remote_workspaces/new", params: { origin: ORIGIN }
       assert_select "input[type=checkbox][name=pair][value='1']"
 
@@ -115,7 +115,7 @@ module Saas
       assert_select "form[action=?]", "/remote_workspace_pairings/#{pairing.id}", text: "Verify"
     end
 
-    test "a member who leaves it unticked only lists the community" do
+    test "a member who leaves it unticked only lists the workspace" do
       post "/remote_workspaces", params: { origin: ORIGIN }
 
       assert_redirected_to settings_path
@@ -135,7 +135,7 @@ module Saas
       %w[ SSO_PROVIDER_CLIENTS SSO_NEW_RETURN_HOST SSO_NEW_SECRET ].each { ENV.delete(it) }
     end
 
-    test "records that an entry came from a community's prompt" do
+    test "records that an entry came from a workspace's prompt" do
       post "/remote_workspaces", params: { origin: ORIGIN, source: "prompt" }
 
       assert_equal "prompt", @alice.remote_workspace_memberships.last.source

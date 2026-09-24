@@ -33,7 +33,7 @@ class Sso::ProviderClient
     all.select(&:active?)
   end
 
-  # A host an env client answers for can't also be paired as a community
+  # A host an env client answers for can't also be paired as a workspace
   def self.claims_host?(host)
     active.any? { it.claims_host?(host) }
   end

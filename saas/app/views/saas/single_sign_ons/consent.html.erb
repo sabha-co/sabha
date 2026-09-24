@@ -2,7 +2,7 @@
 
 <section class="txt-align-center">
   <div class="panel panel--centered" style="--panel-width: 36rem">
-    <%# The answer goes back to the community, another origin, so no Turbo %>
+    <%# The answer goes back to the workspace, another origin, so no Turbo %>
     <%= form_with url: single_sign_on_consent_path, class: "flex flex-column gap", data: { turbo: false } do |form| %>
       <%= form.hidden_field :sso, value: params[:sso] %>
       <%= form.hidden_field :sig, value: params[:sig] %>
@@ -20,7 +20,7 @@
           Signing in as <strong><%= current_global_identity.email_address %></strong>
         </p>
         <p class="txt-small txt-muted">
-          sabha.co will tell this community your name and email whenever you sign in with it, and add it to your list.
+          sabha.co will tell this workspace your name and email whenever you sign in with it, and add it to your list.
           You can stop this from Settings at any time.
         </p>
 

@@ -3,7 +3,7 @@
 module Saas
   module RemoteWorkspaceMemberships
     # A member taking back their approval: sabha.co stops vouching for them to
-    # the community until they approve it again.
+    # the workspace until they approve it again.
     class ConsentsController < BaseController
       def destroy
         membership = current_global_identity.remote_workspace_memberships.find(params[:remote_workspace_membership_id])

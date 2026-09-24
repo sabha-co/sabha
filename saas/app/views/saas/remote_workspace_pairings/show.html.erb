@@ -4,7 +4,7 @@
 <section class="txt-align-center">
   <div class="panel panel--centered" style="--panel-width: 36rem">
     <div class="flex flex-column gap center-block pad align-center">
-      <h1 class="txt-large margin-none"><strong>Connect this community to sabha.co</strong></h1>
+      <h1 class="txt-large margin-none"><strong>Connect this workspace to sabha.co</strong></h1>
 
       <%= render "saas/remote_workspaces/logo", remote_workspace: remote_workspace, large: true %>
       <div class="flex flex-column">
@@ -15,7 +15,7 @@
       <ol class="flex flex-column gap txt-align-start txt-medium margin-none">
         <li>
           <% if @show_secret %>
-            Add this secret to the community's server environment as <code>SABHA_HUB_SECRET</code>
+            Add this secret to the workspace's server environment as <code>SABHA_HUB_SECRET</code>
             (in <code>.kamal/secrets</code> for a standard install). It's shown only once.
             <div class="flex align-center gap margin-block-start-half">
               <label for="hub_secret" class="for-screen-reader">Secret</label>
@@ -26,18 +26,18 @@
               <% end %>
             </div>
           <% else %>
-            Add the secret you were given to the community's server environment as <code>SABHA_HUB_SECRET</code>.
+            Add the secret you were given to the workspace's server environment as <code>SABHA_HUB_SECRET</code>.
             Lost it? <%= button_to "Get a new secret", remote_workspace_pairings_path, params: { remote_workspace_id: remote_workspace.id },
                   class: "btn btn--plain txt-link", form_class: "inline" %>
           <% end %>
         </li>
-        <li>Restart the community.</li>
-        <li>Click <strong>Verify</strong>. sabha.co checks the community is running with the secret, then switches on <strong>Continue with sabha.co</strong>.</li>
+        <li>Restart the workspace.</li>
+        <li>Click <strong>Verify</strong>. sabha.co checks the workspace is running with the secret, then switches on <strong>Continue with sabha.co</strong>.</li>
       </ol>
 
       <% if remote_workspace.pairing_active? %>
         <p class="txt-small txt-muted">
-          This replaces the community's current secret. Until you Verify, Continue with sabha.co stops working there, so Verify straight after the restart.
+          This replaces the workspace's current secret. Until you Verify, Continue with sabha.co stops working there, so Verify straight after the restart.
         </p>
       <% end %>
 

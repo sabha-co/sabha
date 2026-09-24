@@ -11,8 +11,8 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
 
   setup { stub_dns_resolution("93.184.216.34") }
 
-  test "previews a new community from its manifest without saving it" do
-    stub_manifest community: { name: "Acme", logo_url: "#{ORIGIN}/account/logo?size=small&v=1", url: ORIGIN }
+  test "previews a new workspace from its manifest without saving it" do
+    stub_manifest workspace: { name: "Acme", logo_url: "#{ORIGIN}/account/logo?size=small&v=1", url: ORIGIN }
 
     remote_workspace = RemoteWorkspace.preview("New.Example/rooms")
 
@@ -23,13 +23,13 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
     assert_nil remote_workspace.alias_origin
   end
 
-  test "previews an already listed community without fetching it again" do
+  test "previews an already listed workspace without fetching it again" do
     assert_equal remote_workspaces(:acme), RemoteWorkspace.preview("Chat.Acme.org")
     assert_not_requested :get, "https://chat.acme.org/api/manifest"
   end
 
   test "sends the protocol major and nothing about the person" do
-    stub_manifest community: { name: "Acme" }
+    stub_manifest workspace: { name: "Acme" }
 
     RemoteWorkspace.preview(ORIGIN)
 
@@ -38,7 +38,7 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
     end
   end
 
-  test "falls back to the product name, then the host, for manifests without a community" do
+  test "falls back to the product name, then the host, for manifests without a workspace" do
     stub_manifest product: { name: "Acme Chat" }
     assert_equal "Acme Chat", RemoteWorkspace.preview(ORIGIN).name
 
@@ -47,17 +47,17 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
   end
 
   test "keeps a different public address as an alias hint only" do
-    stub_manifest community: { name: "Acme", url: "https://chat.new.example" }
+    stub_manifest workspace: { name: "Acme", url: "https://chat.new.example" }
     assert_equal "https://chat.new.example", RemoteWorkspace.preview(ORIGIN).alias_origin
 
     [ "http://localhost", "https://localhost:3000", "https://10.0.0.5", "https://#{Branding.app_host}" ].each do |url|
-      stub_manifest community: { name: "Acme", url: url }
+      stub_manifest workspace: { name: "Acme", url: url }
       assert_nil RemoteWorkspace.preview(ORIGIN).alias_origin, url
     end
   end
 
-  test "ignores a logo hosted anywhere but the community" do
-    stub_manifest community: { name: "Acme", logo_url: "https://tracker.example/pixel.png" }
+  test "ignores a logo hosted anywhere but the workspace" do
+    stub_manifest workspace: { name: "Acme", logo_url: "https://tracker.example/pixel.png" }
 
     assert_nil RemoteWorkspace.preview(ORIGIN).logo_source_url
   end
@@ -107,7 +107,7 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
   end
 
   test "fetches the logo in the background after the first listing" do
-    stub_manifest community: { name: "Acme", logo_url: "#{ORIGIN}/account/logo?v=1" }
+    stub_manifest workspace: { name: "Acme", logo_url: "#{ORIGIN}/account/logo?v=1" }
     stub_request(:get, "#{ORIGIN}/account/logo?v=1").to_return(status: 200, body: PNG, headers: { "Content-Type" => "image/png" })
 
     remote_workspace = RemoteWorkspace.preview(ORIGIN)
@@ -119,7 +119,7 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
 
   test "keeps no logo that isn't a small image" do
     remote_workspace = RemoteWorkspace.create!(origin: ORIGIN, name: "New")
-    stub_manifest community: { name: "Acme", logo_url: "#{ORIGIN}/account/logo?v=2" }
+    stub_manifest workspace: { name: "Acme", logo_url: "#{ORIGIN}/account/logo?v=2" }
 
     stub_request(:get, "#{ORIGIN}/account/logo?v=2").to_return(status: 200, body: "<svg/>", headers: { "Content-Type" => "image/svg+xml" })
     remote_workspace.refresh
@@ -132,7 +132,7 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
 
   test "refreshing picks up a new name and clears the unreachable mark" do
     remote_workspace = RemoteWorkspace.create!(origin: ORIGIN, name: "New", unreachable_since: 3.days.ago)
-    stub_manifest community: { name: "New Club" }
+    stub_manifest workspace: { name: "New Club" }
 
     remote_workspace.refresh
 
@@ -156,13 +156,13 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
     end
   end
 
-  test "only communities somebody lists are kept" do
+  test "only workspaces somebody lists are kept" do
     unlisted = RemoteWorkspace.create!(origin: ORIGIN, name: "New")
 
     assert_equal [ unlisted ], RemoteWorkspace.abandoned
   end
 
-  test "refreshes every community in the background" do
+  test "refreshes every workspace in the background" do
     assert_enqueued_jobs RemoteWorkspace.count, only: RemoteWorkspace::RefreshJob do
       RemoteWorkspace.refresh_all_later
     end

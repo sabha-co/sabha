@@ -280,19 +280,19 @@ docker compose exec web bin/rails runner "puts ActiveRecord::Base.connection.exe
 
 Self-hosted Sabha installs expose the Sabha protocol documented in [features/SABHA_PROTOCOL.md](./features/SABHA_PROTOCOL.md). No extra configuration is required beyond a reachable HTTPS origin. Clients (the desktop app, and sabha.co when a member adds your community) probe `GET /api/manifest`.
 
-Members can keep your community in their sabha.co list, beside their other communities. After sign-in, the sidebar offers once to add it (members can dismiss it for good), and the profile page keeps a link. sabha.co only reads your community's public name, logo and address; it never sees your members' accounts or sessions. To stop suggesting it, turn off **Suggest adding this community to sabha.co** in the admin settings. Communities on their own single sign-on (`AUTH_METHOD=sso`) don't show it.
+Members can keep your workspace in their sabha.co list, beside their other workspaces. After sign-in, the sidebar offers once to add it (members can dismiss it for good), and the profile page keeps a link. sabha.co only reads your workspace's public name, logo and address; it never sees your members' accounts or sessions. To stop suggesting it, turn off **Suggest adding this workspace to sabha.co** in the admin settings. Workspaces on their own single sign-on (`AUTH_METHOD=sso`) don't show it.
 
 ### Continue with sabha.co
 
 You can also let members sign in with their sabha.co account. It's one more option beside your own password or email-code login, and it's off until you connect:
 
-1. On sabha.co, click **+** in the sidebar, choose **Add a self-hosted community**, paste your community's address and tick **I run this community**. sabha.co shows a secret once. If the community is already in your list, use **Set up Continue with sabha.co** from its menu in Settings instead.
-2. Add it to the community's server environment as `SABHA_HUB_SECRET` (in `.kamal/secrets`) and restart.
-3. Click **Verify** on sabha.co. It checks your community is running with the secret, then switches the shortcut on.
+1. On sabha.co, click **+** in the sidebar, choose **Add a self-hosted workspace**, paste your workspace's address and tick **I run this workspace**. sabha.co shows a secret once. If the workspace is already in your list, use **Set up Continue with sabha.co** from its menu in Settings instead.
+2. Add it to the workspace's server environment as `SABHA_HUB_SECRET` (in `.kamal/secrets`) and restart.
+3. Click **Verify** on sabha.co. It checks your workspace is running with the secret, then switches the shortcut on.
 
-Your rules still apply. Someone new needs your invite link, even with sabha.co, unless you set `SABHA_HUB_AUTO_PROVISION=true`. An existing member is never matched to a sabha.co account by email; they connect it from their own profile after signing in the usual way. sabha.co tells your community a member's name and email only after that member approves it once.
+Your rules still apply. Someone new needs your invite link, even with sabha.co, unless you set `SABHA_HUB_AUTO_PROVISION=true`. An existing member is never matched to a sabha.co account by email; they connect it from their own profile after signing in the usual way. sabha.co tells your workspace a member's name and email only after that member approves it once.
 
-To rotate the secret, use **Get a new secret** from the community's menu in sabha.co's Settings, restart with the new secret and Verify straight away; the shortcut stops working in between. To stop, use **Disconnect from sabha.co** from the same menu. Members keep your community in their list and sign in the usual way. Communities on their own single sign-on (`AUTH_METHOD=sso`) can't use the shortcut.
+To rotate the secret, use **Get a new secret** from the workspace's menu in sabha.co's Settings, restart with the new secret and Verify straight away; the shortcut stops working in between. To stop, use **Disconnect from sabha.co** from the same menu. Members keep your workspace in their list and sign in the usual way. Workspaces on their own single sign-on (`AUTH_METHOD=sso`) can't use the shortcut.
 
 ---
 

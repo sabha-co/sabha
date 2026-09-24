@@ -16,7 +16,7 @@ module Saas
       with: :render_lookup_failure
 
     # GET /remote_workspaces/new?origin=chat.acme.org
-    # Shows the community's name and address to confirm before listing it,
+    # Shows the workspace's name and address to confirm before listing it,
     # or says it's already listed.
     def new
       @address = params[:origin].to_s
@@ -24,7 +24,7 @@ module Saas
       @membership = current_global_identity.remote_workspace_membership_for(@remote_workspace) if @remote_workspace
     end
 
-    # An admin can tick "I run this community" to get a secret for Continue
+    # An admin can tick "I run this workspace" to get a secret for Continue
     # with sabha.co. It's shown on this one response and never again.
     def create
       remote_workspace = RemoteWorkspace.preview(params[:origin])
@@ -40,7 +40,7 @@ module Saas
         redirect_to settings_path, notice: "#{remote_workspace.name} is in your list"
       end
     rescue GlobalIdentity::RemoteWorkspaceLimitReachedError
-      redirect_to settings_path, alert: "Your list is full. Remove a community to add another."
+      redirect_to settings_path, alert: "Your list is full. Remove a workspace to add another."
     end
 
     private

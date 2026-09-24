@@ -10,16 +10,16 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
     @acme.update!(pairing_status: :active, paired_via: :self_serve, hub_secret: SECRET, paired_by: global_identities(:alice))
   end
 
-  test "finds the paired community a sign-in request comes from and checks its secret" do
+  test "finds the paired workspace a sign-in request comes from and checks its secret" do
     sso, sig = sign_in_request(SECRET)
 
     remote_workspace, payload = RemoteWorkspace.authenticate_sign_in(sso, sig)
 
     assert_equal @acme, remote_workspace
-    assert_equal "community-nonce", payload.nonce
+    assert_equal "workspace-nonce", payload.nonce
   end
 
-  test "any other community's secret is refused" do
+  test "any other workspace's secret is refused" do
     sso, sig = sign_in_request("someone-elses-secret")
 
     assert_raises(Sso::Payload::InvalidSignature) { RemoteWorkspace.authenticate_sign_in(sso, sig) }
@@ -31,7 +31,7 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
     assert_nil RemoteWorkspace.authenticate_sign_in(sso, sig)
   end
 
-  test "refuses unknown and not yet paired communities before checking any signature" do
+  test "refuses unknown and not yet paired workspaces before checking any signature" do
     Sso::Payload.expects(:decode).never
 
     sso, sig = sign_in_request(SECRET, return_sso_url: "https://unknown.example/session/hub/callback")
@@ -41,7 +41,7 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
     assert_raises(RemoteWorkspace::NotPaired) { RemoteWorkspace.authenticate_sign_in(sso, sig) }
   end
 
-  test "a disconnected community is told so" do
+  test "a disconnected workspace is told so" do
     @acme.disconnect!
     sso, sig = sign_in_request(SECRET)
 
@@ -60,7 +60,7 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
     assert_not global_identities(:alice).consented_to_remote_workspace?(@acme)
   end
 
-  test "approving lists the community and remembers the approval" do
+  test "approving lists the workspace and remembers the approval" do
     identity = global_identities(:unverified)
 
     identity.consent_to_remote_workspace!(@acme)
@@ -79,7 +79,7 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
     assert @acme.reload.last_signed_in_at.present?
   end
 
-  test "the daily cleanup keeps paired communities and ones with waiting requests" do
+  test "the daily cleanup keeps paired workspaces and ones with waiting requests" do
     RemoteWorkspaceMembership.delete_all
     global_identities(:bob).pair_remote_workspace!(remote_workspaces(:club))
 
@@ -115,6 +115,6 @@ class RemoteWorkspace::PairableTest < ActiveSupport::TestCase
 
   private
     def sign_in_request(secret, return_sso_url: "https://chat.acme.org/session/hub/callback")
-      Sso::Payload.encode({ nonce: "community-nonce", return_sso_url: return_sso_url }, secret)
+      Sso::Payload.encode({ nonce: "workspace-nonce", return_sso_url: return_sso_url }, secret)
     end
 end

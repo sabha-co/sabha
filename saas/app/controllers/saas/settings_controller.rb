@@ -8,7 +8,7 @@ module Saas
     # It allows users to:
     # - Edit their email (triggers re-verification)
     # - View all workspaces they belong to with their role, and the
-    #   self-hosted communities in their list
+    #   self-hosted workspaces in their list
     # - Navigate to workspace-specific settings (leave/delete)
 
     def show

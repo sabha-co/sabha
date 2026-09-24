@@ -2,7 +2,7 @@
 
 module Saas
   module RemoteWorkspaces
-    # An admin disconnecting their community from sabha.co. Members keep it in
+    # An admin disconnecting their workspace from sabha.co. Members keep it in
     # their lists and sign in there the usual way.
     class ConnectionsController < BaseController
       def destroy

@@ -2,7 +2,7 @@
 
 require "net/http"
 
-# Reads a self-hosted community's public manifest and logo. Every request pins
+# Reads a self-hosted workspace's public manifest and logo. Every request pins
 # a public address, follows no redirects and caps the body, because the origin
 # comes from whoever pasted it. It carries nothing about the person asking.
 class RemoteWorkspace::Probe
@@ -66,7 +66,7 @@ class RemoteWorkspace::Probe
       raise Unreachable, error.message
     end
 
-    # Development lists communities on localhost, which the guard rightly refuses.
+    # Development lists workspaces on localhost, which the guard rightly refuses.
     def address_for(host)
       RestrictedHTTP::PrivateNetworkGuard.resolve_public_ip!(host) unless RemoteWorkspace.allow_private_networks
     end
@@ -88,26 +88,26 @@ class RemoteWorkspace::Probe
       raise UnsupportedProtocol unless json["protocol_major"] == Sabha::PROTOCOL_MAJOR
       raise MultiTenant if json["multi_tenant"] == true
 
-      community = json["community"].is_a?(Hash) ? json["community"] : {}
+      workspace = json["workspace"].is_a?(Hash) ? json["workspace"] : {}
 
       Manifest.new \
-        name: name_from(community, json["product"], origin),
-        logo_url: same_origin_url(community["logo_url"], origin),
-        alias_origin: alias_from(community["url"], origin),
+        name: name_from(workspace, json["product"], origin),
+        logo_url: same_origin_url(workspace["logo_url"], origin),
+        alias_origin: alias_from(workspace["url"], origin),
         protocol_major: json["protocol_major"],
         hub_proof: json["hub_proof"]
     rescue JSON::ParserError
       raise NotSabha
     end
 
-    # Manifests from before the community block name only the product, which a
-    # self-hosted admin usually sets to the community's name anyway.
-    def name_from(community, product, origin)
-      name = [ community["name"], product.try(:[], "name") ].find { it.is_a?(String) && it.strip.present? }
+    # Manifests from before the workspace block name only the product, which a
+    # self-hosted admin usually sets to the workspace's name anyway.
+    def name_from(workspace, product, origin)
+      name = [ workspace["name"], product.try(:[], "name") ].find { it.is_a?(String) && it.strip.present? }
       name ? name.strip.truncate(100) : URI(origin).host
     end
 
-    # Only fetch a logo from the community itself, never a third party it names
+    # Only fetch a logo from the workspace itself, never a third party it names
     def same_origin_url(url, origin)
       url if url.is_a?(String) && RemoteWorkspace::Origin.normalize(url) == origin
     rescue RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Origin::Hub

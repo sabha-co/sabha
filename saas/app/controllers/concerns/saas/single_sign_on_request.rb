@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# A signed request from a community asking sabha.co who someone is. A paired
-# community is found by the address it wants the answer sent to; everyone
+# A signed request from a workspace asking sabha.co who someone is. A paired
+# workspace is found by the address it wants the answer sent to; everyone
 # else is an env-configured client.
 module Saas::SingleSignOnRequest
   extend ActiveSupport::Concern

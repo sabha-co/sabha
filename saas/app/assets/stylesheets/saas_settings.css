@@ -87,7 +87,7 @@
 }
 
 /* Small status tags under a list row's name: how you sign in to a
-   self-hosted community, and whether it's reachable or hidden */
+   self-hosted workspace, and whether it's reachable or hidden */
 .list-tags {
   display: flex;
   flex-wrap: wrap;

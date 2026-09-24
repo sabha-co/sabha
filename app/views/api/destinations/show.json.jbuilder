@@ -12,7 +12,7 @@ if Sabha.saas?
     json.cable_url api_cable_url(wid: workspace.external_id)
   end
 
-  # Self-hosted communities from the person's list. A separate key, so a client
+  # Self-hosted workspaces from the person's list. A separate key, so a client
   # that only knows workspace peers keeps working.
   json.remote_peers remotes do |membership|
     remote_workspace = membership.remote_workspace

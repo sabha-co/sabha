@@ -16,13 +16,13 @@ class Users::HubLinksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the sign-in page offers sabha.co beside the community's own login" do
+  test "the sign-in page offers sabha.co beside the workspace's own login" do
     get new_session_url
 
     assert_select "a[href=?]", hub_handshake_path, text: /Continue with sabha.co/
   end
 
-  test "the sign-in page doesn't offer sabha.co to a community that isn't connected" do
+  test "the sign-in page doesn't offer sabha.co to a workspace that isn't connected" do
     ENV.delete("SABHA_HUB_SECRET")
 
     get new_session_url
@@ -157,7 +157,7 @@ class Users::HubLinksControllerTest < ActionDispatch::IntegrationTest
     assert users(:david).hub_linked?
   end
 
-  test "email-code communities can always disconnect" do
+  test "email-code workspaces can always disconnect" do
     link_hub(users(:david), "global_identity:1")
     sign_in :david
     ENV["AUTH_METHOD"] = "otp"
@@ -168,7 +168,7 @@ class Users::HubLinksControllerTest < ActionDispatch::IntegrationTest
     assert_not users(:david).hub_linked?
   end
 
-  test "isn't there when the community isn't connected to sabha.co" do
+  test "isn't there when the workspace isn't connected to sabha.co" do
     sign_in :david
     ENV.delete("SABHA_HUB_SECRET")
 

@@ -1,4 +1,4 @@
-# sabha.co vouched for someone new, and the community only lets people in by invite
+# sabha.co vouched for someone new, and the workspace only lets people in by invite
 class Sso::InviteRequired < Sso::Forbidden
   def initialize(message = "sabha.co sign-in for a new member without an invite.")
     super(

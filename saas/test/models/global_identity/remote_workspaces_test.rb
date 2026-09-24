@@ -5,14 +5,14 @@ require_relative "../../test_helper"
 class GlobalIdentity::RemoteWorkspacesTest < ActiveSupport::TestCase
   setup { @alice = global_identities(:alice) }
 
-  test "lists a community once, however often it's added" do
+  test "lists a workspace once, however often it's added" do
     again = @alice.list_remote_workspace!(remote_workspaces(:acme), source: :prompt)
 
     assert_equal remote_workspace_memberships(:alice_acme), again
     assert_equal "added", again.source
   end
 
-  test "adding a hidden community shows it again" do
+  test "adding a hidden workspace shows it again" do
     remote_workspace_memberships(:alice_acme).update!(hidden: true)
 
     @alice.list_remote_workspace!(remote_workspaces(:acme), source: :added)
@@ -24,9 +24,9 @@ class GlobalIdentity::RemoteWorkspacesTest < ActiveSupport::TestCase
     @alice.list_remote_workspace!(RemoteWorkspace.new(origin: "https://new.example", name: "New"), source: :added)
     global_identities(:bob).list_remote_workspace!(RemoteWorkspace.new(origin: "https://new.example", name: "New (stale)"), source: :added)
 
-    new_community = RemoteWorkspace.find_by!(origin: "https://new.example")
-    assert_equal "New", new_community.name
-    assert_equal 2, new_community.memberships.count
+    new_workspace = RemoteWorkspace.find_by!(origin: "https://new.example")
+    assert_equal "New", new_workspace.name
+    assert_equal 2, new_workspace.memberships.count
   end
 
   test "stops at the list limit" do
@@ -38,7 +38,7 @@ class GlobalIdentity::RemoteWorkspacesTest < ActiveSupport::TestCase
     assert_nothing_raised { @alice.list_remote_workspace!(remote_workspaces(:acme), source: :added) }
   end
 
-  test "the selector mixes workspaces and communities in one order, leaving out hidden ones" do
+  test "the selector mixes sabha.co and self-hosted workspaces in one order, leaving out hidden ones" do
     club = @alice.list_remote_workspace!(remote_workspaces(:club), source: :added)
     club.update!(hidden: true)
     acme = remote_workspace_memberships(:alice_acme)
@@ -62,7 +62,7 @@ class GlobalIdentity::RemoteWorkspacesTest < ActiveSupport::TestCase
     assert_not @alice.reorder_switcher([])
   end
 
-  test "forgetting a person's list keeps the communities others share" do
+  test "forgetting a person's list keeps the workspaces others share" do
     @alice.remote_workspace_memberships.destroy_all
 
     assert RemoteWorkspace.exists?(remote_workspaces(:acme).id)

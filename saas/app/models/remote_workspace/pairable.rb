@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# "Continue with sabha.co" for a community whose admin paired it. The pairing
-# lives on the shared row: one active secret per community, whoever set it up,
+# "Continue with sabha.co" for a workspace whose admin paired it. The pairing
+# lives on the shared row: one active secret per workspace, whoever set it up,
 # so controlling the server, not the original account, owns it.
 module RemoteWorkspace::Pairable
   extend ActiveSupport::Concern
@@ -32,8 +32,8 @@ module RemoteWorkspace::Pairable
   end
 
   class_methods do
-    # The paired community a sign-in request comes from, found by the address
-    # it wants the answer sent to and checked against that community's secret
+    # The paired workspace a sign-in request comes from, found by the address
+    # it wants the answer sent to and checked against that workspace's secret
     # alone. Requests for any other return path belong to the env clients.
     def authenticate_sign_in(encoded_payload, signature)
       return_url = Sso::Payload.unverified_return_url(encoded_payload)
@@ -96,7 +96,7 @@ module RemoteWorkspace::Pairable
     memberships.joins(:global_identity).exists?(global_identities: { email_address: email_address.to_s.downcase })
   end
 
-  # Members keep their entries; each falls back to the community's own login,
+  # Members keep their entries; each falls back to the workspace's own login,
   # and sabha.co asks again before vouching for anyone if it's paired again.
   def disconnect!
     transaction do

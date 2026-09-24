@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# A self-hosted Sabha community that people keep in their sabha.co list. One
+# A self-hosted Sabha workspace that people keep in their sabha.co list. One
 # row per origin, shared by everyone who lists it, so its name and logo are
 # refreshed once for all of them. It never holds anyone's session there.
 class RemoteWorkspace < UntenantedRecord
@@ -9,14 +9,14 @@ class RemoteWorkspace < UntenantedRecord
   # Two missed daily refreshes before an entry reads as unreachable
   UNREACHABLE_AFTER = 1.day
 
-  # Development lists communities on http://localhost; everywhere else they
+  # Development lists workspaces on http://localhost; everywhere else they
   # must be public https origins.
   class_attribute :allow_private_networks, default: Rails.env.development?
 
   has_many :memberships, class_name: "RemoteWorkspaceMembership", dependent: :destroy
 
   # The origin's uniqueness is the database's to enforce: two people adding
-  # a new community at once rely on create_or_find_by settling it.
+  # a new workspace at once rely on create_or_find_by settling it.
   validates :origin, presence: true
   validates :name, presence: true, length: { maximum: 100 }
   validate :origin_normalized
@@ -28,7 +28,7 @@ class RemoteWorkspace < UntenantedRecord
   after_create_commit :refresh_later, if: :logo_source_url?
 
   class << self
-    # The community behind an address, as it describes itself right now.
+    # The workspace behind an address, as it describes itself right now.
     # Returns an unsaved record the first time anyone lists an origin.
     def preview(address)
       origin = RemoteWorkspace::Origin.normalize(address)
@@ -67,7 +67,7 @@ class RemoteWorkspace < UntenantedRecord
   end
 
   # What people see under the name: the origin without its scheme, keeping any
-  # port, so two communities on one host can't pass for each other.
+  # port, so two workspaces on one host can't pass for each other.
   def address
     origin.delete_prefix("https://").delete_prefix("http://")
   end
@@ -82,7 +82,7 @@ class RemoteWorkspace < UntenantedRecord
 
   private
     # Every way in goes through Origin.normalize; a row that skipped it could
-    # be a second entry for a community already listed.
+    # be a second entry for a workspace already listed.
     def origin_normalized
       errors.add(:origin, :invalid) unless origin.blank? || RemoteWorkspace::Origin.normalize(origin) == origin
     rescue RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Origin::Hub

@@ -25,7 +25,7 @@ module Saas
       assert_select "strong", text: "Shared Workspace"
     end
 
-    test "show lists communities in the same list as workspaces, in the selector's order" do
+    test "show lists self-hosted workspaces in the same list as sabha.co ones, in the selector's order" do
       bob = global_identities(:bob)
       sign_in_global_identity(bob)
       club = remote_workspace_memberships(:bob_club)
@@ -39,10 +39,10 @@ module Saas
       assert_select ".list-tag--negative", "Unreachable"
       assert_select ".list-tag", "Hidden"
       assert_select "button", "Show in sidebar"
-      assert_select "a[href=?]", new_remote_workspace_path, text: /Add a self-hosted community/
+      assert_select "a[href=?]", new_remote_workspace_path, text: /Add a self-hosted workspace/
     end
 
-    test "the selector lists communities beside workspaces, linking to their own sites" do
+    test "the selector lists self-hosted workspaces beside sabha.co ones, linking to their own sites" do
       sign_in_global_identity(global_identities(:bob))
 
       get settings_path
@@ -52,14 +52,14 @@ module Saas
       assert_select ".workspace-selector a[href='https://chat.acme.org'] img[src=?]", "/remote_workspaces/#{remote_workspaces(:acme).id}/logo"
     end
 
-    test "the selector's add button offers a new workspace or a self-hosted community" do
+    test "the selector's add button offers a new workspace or a self-hosted workspace" do
       sign_in_global_identity(global_identities(:alice))
 
       get settings_path
 
       assert_select ".workspace-selector details summary.workspace-selector__add"
       assert_select ".workspace-selector__add-options a[href=?]", new_workspace_path, text: "Create a workspace"
-      assert_select ".workspace-selector__add-options a[href=?]", new_remote_workspace_path, text: "Add a self-hosted community"
+      assert_select ".workspace-selector__add-options a[href=?]", new_remote_workspace_path, text: "Add a self-hosted workspace"
     end
 
     test "update requires authentication" do

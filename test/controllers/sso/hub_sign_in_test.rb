@@ -1,6 +1,6 @@
 require "test_helper"
 
-# "Continue with sabha.co": one more way into a self-hosted community, beside
+# "Continue with sabha.co": one more way into a self-hosted workspace, beside
 # its own password or email codes.
 class Sso::HubSignInTest < ActionDispatch::IntegrationTest
   HUB_SECRET = "hub-secret"
@@ -143,7 +143,7 @@ class Sso::HubSignInTest < ActionDispatch::IntegrationTest
     assert_equal users(:david), Session::Claim.redeemable.sole.user
   end
 
-  test "isn't offered beside the community's own single sign-on" do
+  test "isn't offered beside the workspace's own single sign-on" do
     ENV["AUTH_METHOD"] = "sso"
     ENV["SSO_PROVIDER_URL"] = "https://sso.example/sso"
     ENV["SSO_SECRET"] = "custom-secret"

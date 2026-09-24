@@ -1,4 +1,4 @@
-# Who a community trusts to vouch for a member: its own single sign-on
+# Who a workspace trusts to vouch for a member: its own single sign-on
 # (SSO_PROVIDER_URL, the only way in under AUTH_METHOD=sso) or sabha.co
 # (SABHA_HUB_SECRET, one more way in beside password and email codes). Both
 # speak the same DiscourseConnect payload. Links are keyed by the issuer, the

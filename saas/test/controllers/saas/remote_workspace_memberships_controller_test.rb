@@ -33,7 +33,7 @@ module Saas
       assert RemoteWorkspaceMembership.exists?(bobs.id)
     end
 
-    test "serves the stored logo to people who list the community" do
+    test "serves the stored logo to people who list the workspace" do
       get "/remote_workspaces/#{@acme.id}/logo"
 
       assert_response :success
@@ -42,13 +42,13 @@ module Saas
       assert_includes response.headers["Cache-Control"], "private"
     end
 
-    test "answers not found for a community without a logo" do
+    test "answers not found for a workspace without a logo" do
       get "/remote_workspaces/#{remote_workspaces(:club).id}/logo"
 
       assert_response :not_found
     end
 
-    test "reorders workspaces and communities together" do
+    test "reorders sabha.co and self-hosted workspaces together" do
       patch "/workspace_membership_order", params: { workspace_ids: [ "remote:#{@membership.id}", "1000003", "1000001" ] }, as: :json
 
       assert_response :ok

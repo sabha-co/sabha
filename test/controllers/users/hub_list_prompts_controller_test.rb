@@ -3,7 +3,7 @@ require "test_helper"
 class Users::HubListPromptsControllerTest < ActionDispatch::IntegrationTest
   setup { sign_in :david }
 
-  test "the sidebar offers to add the community to sabha.co" do
+  test "the sidebar offers to add the workspace to sabha.co" do
     get user_sidebar_url
 
     assert_select "#hub_list_nudge" do
@@ -46,7 +46,7 @@ class Users::HubListPromptsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#hub_list_nudge", count: 0
   end
 
-  test "communities on their own single sign-on don't suggest sabha.co" do
+  test "workspaces on their own single sign-on don't suggest sabha.co" do
     Account.stubs(:sso_auth?).returns(true)
 
     get user_sidebar_url

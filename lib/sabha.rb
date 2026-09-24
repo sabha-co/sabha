@@ -8,7 +8,7 @@ module Sabha
   # channel. Clients send it as the Sabha-Protocol-Major header.
   PROTOCOL_MAJOR = 1
 
-  # The sabha.co that keeps members' lists of communities and offers
+  # The sabha.co that keeps members' lists of workspaces and offers
   # "Continue with sabha.co"
   HUB_URL = "https://sabha.co"
 

@@ -40,7 +40,7 @@ class RemoteWorkspace::OriginTest < ActiveSupport::TestCase
     assert_equal "1000121", error.workspace_id
   end
 
-  test "treats a subdomain of sabha.co as a self-hosted community" do
+  test "treats a subdomain of sabha.co as a self-hosted workspace" do
     assert_equal "https://acme.#{Branding.app_host}", normalize("acme.#{Branding.app_host}")
   end
 
