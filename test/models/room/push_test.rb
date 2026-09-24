@@ -21,7 +21,7 @@ class Room::PushTest < ActiveSupport::TestCase
 
     perform_enqueued_jobs only: Notification::DispatchJob do
       WebPush.expects(:payload_send).times(3)
-      rooms(:designers).messages.create! body: "Hey #{mention_attachment_for(:kevin)}", client_message_id: "earth", creator: users(:david)
+      rooms(:designers).messages.create! body: "Hey #{mention_attachment_for(:kevin)}", client_message_id: "earth-2", creator: users(:david)
     end
     wait_for_web_push_delivery_pool_tasks(5)
   end

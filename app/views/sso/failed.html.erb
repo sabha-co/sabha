@@ -1,8 +1,12 @@
-<% content_for :title, "Single sign-on failed" %>
+<% heading = provider.hub? ? "Couldn't sign in with #{hub_name}" : "Single sign-on failed" %>
+<% content_for :title, heading %>
 
 <main class="session__main">
   <section class="session__card">
-    <h1>Single sign-on failed</h1>
+    <h1><%= heading %></h1>
     <p><%= @message || "Unable to sign in with single sign-on." %></p>
+    <% if provider.hub? %>
+      <p><%= signed_in? ? link_to("Back to your profile", user_profile_path) : link_to("Back to sign in", new_session_path) %></p>
+    <% end %>
   </section>
 </main>

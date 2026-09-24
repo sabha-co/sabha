@@ -1,0 +1,26 @@
+<%# A self-hosted workspace: a plain link to its own site, never a session %>
+<% remote_workspace = membership.remote_workspace %>
+<% label = "#{remote_workspace.name} · #{remote_workspace.address}#{" (unreachable)" if remote_workspace.unreachable?}" %>
+
+<%= link_to remote_workspace.origin,
+    class: class_names("workspace-selector__item", "workspace-selector__item--unreachable": remote_workspace.unreachable?),
+    title: label,
+    draggable: true,
+    data: {
+      workspace_sortable_target: "item",
+      workspace_id: "remote:#{membership.id}",
+      action: "dragstart->workspace-sortable#dragstart dragover->workspace-sortable#dragover dragend->workspace-sortable#dragend",
+      turbo: false
+    },
+    "aria-label": "Open #{label}" do %>
+  <div class="workspace-selector__workspace-icon" role="img" aria-hidden="true"
+    <% unless remote_workspace.logo? %>
+      style="<%= remote_workspace_gradient_style(remote_workspace) %>"
+    <% end %>>
+    <% if remote_workspace.logo? %>
+      <%= image_tag untenanted_path(:remote_workspace_logo, remote_workspace), alt: "", class: "workspace-selector__logo" %>
+    <% else %>
+      <span><%= remote_workspace.name.first.upcase %></span>
+    <% end %>
+  </div>
+<% end %>

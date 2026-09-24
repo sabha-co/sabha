@@ -16,6 +16,57 @@ class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "/session/new", body["sign_in_path"]
     refute body.key?("destinations")
     refute body.key?("members")
+    refute body.key?("multi_tenant")
+  end
+
+  test "describes the workspace with its name, address and no logo when none is set" do
+    get "/api/manifest", headers: protocol_headers
+
+    workspace = JSON.parse(response.body)["workspace"]
+    assert_equal accounts(:signal).name, workspace["name"]
+    assert_equal Branding.app_url, workspace["url"]
+    assert_nil workspace["logo_url"]
+  end
+
+  test "points the workspace logo at the versioned small logo" do
+    accounts(:signal).logo.attach io: file_fixture("moon.jpg").open, filename: "moon.jpg", content_type: "image/jpeg"
+
+    get "/api/manifest", headers: protocol_headers
+
+    logo_url = URI(JSON.parse(response.body).dig("workspace", "logo_url"))
+    assert_equal "http://once.sabha.test/account/logo", "#{logo_url.scheme}://#{logo_url.host}#{logo_url.path}"
+    assert_includes logo_url.query, "size=small"
+    assert_includes logo_url.query, "v="
+  end
+
+  test "leaves the workspace out before first run" do
+    Account.destroy_all
+
+    get "/api/manifest", headers: protocol_headers
+
+    assert_response :success
+    refute JSON.parse(response.body).key?("workspace")
+  end
+
+  test "proves the sabha.co pairing only when a secret is set" do
+    get "/api/manifest", headers: protocol_headers
+    refute JSON.parse(response.body).key?("hub_proof")
+
+    with_hub_secret("hub-secret") do
+      get "/api/manifest", headers: protocol_headers
+    end
+
+    expected = OpenSSL::HMAC.hexdigest("sha256", "hub-secret", "sabha-hub-pairing:http://once.sabha.test")
+    assert_equal expected, JSON.parse(response.body)["hub_proof"]
+  end
+
+  test "publishes no pairing proof beside the workspace's own single sign-on" do
+    with_hub_secret("hub-secret") do
+      Account.stubs(:sso_auth?).returns(true)
+      get "/api/manifest", headers: protocol_headers
+    end
+
+    refute JSON.parse(response.body).key?("hub_proof")
   end
 
   test "refuses unsupported protocol majors with upgrade guidance" do
@@ -28,6 +79,14 @@ class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+    def with_hub_secret(secret)
+      original = ENV["SABHA_HUB_SECRET"]
+      ENV["SABHA_HUB_SECRET"] = secret
+      yield
+    ensure
+      original ? ENV["SABHA_HUB_SECRET"] = original : ENV.delete("SABHA_HUB_SECRET")
+    end
+
     def protocol_headers
       { "Sabha-Protocol-Major" => "1" }
     end

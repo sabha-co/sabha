@@ -25,6 +25,43 @@ module Saas
       assert_select "strong", text: "Shared Workspace"
     end
 
+    test "show lists self-hosted workspaces in the same list as sabha.co ones, in the selector's order" do
+      bob = global_identities(:bob)
+      sign_in_global_identity(bob)
+      club = remote_workspace_memberships(:bob_club)
+      club.update!(hidden: true)
+      bob.reorder_selector([ "remote:#{club.id}", "1000002", "remote:#{remote_workspace_memberships(:bob_acme).id}", "1000003" ])
+
+      get settings_path
+
+      assert_equal [ "Club", "Widgets Inc", "Acme", "Shared Workspace" ], css_select(".panel:first-of-type strong").map(&:text)
+      assert_select "span", "Self-hosted · chat.acme.org"
+      assert_select ".list-tag--negative", "Unreachable"
+      assert_select ".list-tag", "Hidden"
+      assert_select "button", "Show in sidebar"
+      assert_select "a[href=?]", new_remote_workspace_path, text: /Add a self-hosted workspace/
+    end
+
+    test "the selector lists self-hosted workspaces beside sabha.co ones, linking to their own sites" do
+      sign_in_global_identity(global_identities(:bob))
+
+      get settings_path
+
+      assert_select ".workspace-selector a[href='https://chat.acme.org'][data-workspace-id^='remote:']"
+      assert_select ".workspace-selector a.workspace-selector__item--unreachable[href='https://club.example']"
+      assert_select ".workspace-selector a[href='https://chat.acme.org'] img[src=?]", "/remote_workspaces/#{remote_workspaces(:acme).id}/logo"
+    end
+
+    test "the selector's add button offers a new workspace or a self-hosted workspace" do
+      sign_in_global_identity(global_identities(:alice))
+
+      get settings_path
+
+      assert_select ".workspace-selector details summary.workspace-selector__add"
+      assert_select ".workspace-selector__add-options a[href=?]", new_workspace_path, text: "Create a workspace"
+      assert_select ".workspace-selector__add-options a[href=?]", new_remote_workspace_path, text: "Add a self-hosted workspace"
+    end
+
     test "update requires authentication" do
       patch settings_path, params: { global_identity: { email_address: "new@example.com" } }
       assert_redirected_to new_session_path

@@ -1,0 +1,14 @@
+<% content_for :title, "#{@remote_workspace.name} isn't connected" %>
+
+<section class="txt-align-center">
+  <div class="panel panel--centered" style="--panel-width: 36rem">
+    <div class="flex flex-column gap center-block pad align-center">
+      <%# The stored logo is only served to signed-in people %>
+      <%= render "saas/remote_workspaces/logo", remote_workspace: @remote_workspace, large: true if signed_in? %>
+      <h1 class="txt-large margin-none"><strong><%= @remote_workspace.name %> is no longer connected to sabha.co</strong></h1>
+      <p class="txt-medium">Sign in to <%= @remote_workspace.name %> the usual way.</p>
+      <%= link_to "Go to #{@remote_workspace.address}", "#{@remote_workspace.origin}/session/new",
+            class: "btn btn--reversed center txt-large", data: { turbo: false } %>
+    </div>
+  </div>
+</section>

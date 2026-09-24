@@ -1,0 +1,90 @@
+<% content_for :title, "Add a self-hosted workspace" %>
+
+<section class="txt-align-center">
+  <div class="panel panel--centered" style="--panel-width: 36rem">
+    <% if @membership && !@membership.hidden? %>
+      <% listed = @membership.remote_workspace %>
+      <div class="flex flex-column gap center-block pad align-center">
+        <h1 class="txt-large margin-none"><strong>Already in your list</strong></h1>
+
+        <%= render "saas/remote_workspaces/logo", remote_workspace: listed, large: true %>
+
+        <div class="flex flex-column">
+          <strong class="txt-large"><%= listed.name %></strong>
+          <span class="txt-large"><%= listed.address %></span>
+        </div>
+
+        <p class="txt-small txt-muted">
+          It's in your sidebar, and in Settings with the rest of your workspaces.
+        </p>
+
+        <%= link_to "Open #{listed.name}", listed.origin, class: "btn btn--reversed center txt-large", data: { turbo: false } %>
+
+        <% unless listed.pairing_active? %>
+          <%= button_to "I run it: set up Continue with sabha.co", remote_workspace_pairing_requests_path,
+                params: { remote_workspace_id: listed.id }, class: "btn txt-small" %>
+        <% end %>
+
+        <%= link_to "Use a different address", new_remote_workspace_path, class: "txt-small" %>
+      </div>
+    <% elsif @remote_workspace %>
+      <%= form_with url: remote_workspaces_path, class: "flex flex-column gap" do |form| %>
+        <%= form.hidden_field :origin, value: @remote_workspace.origin %>
+        <%= form.hidden_field :source, value: params[:source] if params[:source].present? %>
+
+        <fieldset class="flex flex-column gap center-block pad align-center">
+          <legend class="txt-large txt-align-center"><strong><%= @membership ? "Show this workspace in your sidebar again?" : "Add this workspace to your list?" %></strong></legend>
+
+          <%= render "saas/remote_workspaces/logo", remote_workspace: @remote_workspace, large: true %>
+
+          <div class="flex flex-column">
+            <strong class="txt-large"><%= @remote_workspace.name %></strong>
+            <span class="txt-large"><%= @remote_workspace.address %></span>
+          </div>
+
+          <p class="txt-small txt-muted">
+            It will open at this address. Sign in there the usual way; sabha.co never sees your account on it.
+          </p>
+
+          <% if @remote_workspace.alias_origin %>
+            <p class="txt-small">
+              This workspace calls itself <strong><%= @remote_workspace.alias_address %></strong>.
+              <%= link_to "Add that address instead", new_remote_workspace_path(origin: @remote_workspace.alias_origin, source: params[:source]) %>
+            </p>
+          <% end %>
+
+          <label class="flex align-start gap-half txt-small txt-align-start">
+            <%= form.check_box :pair, { checked: params[:pair] == "1" }, "1", nil %>
+            <span>I run this workspace: turn on <strong>Continue with sabha.co</strong> so members can sign in there with sabha.co. You'll get a secret to add to its server.</span>
+          </label>
+
+          <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+            <%= @membership ? "Show in sidebar" : "Add to my list" %>
+          <% end %>
+          <%= link_to "Use a different address", new_remote_workspace_path, class: "txt-small" %>
+        </fieldset>
+      <% end %>
+    <% else %>
+      <%= form_with url: new_remote_workspace_path, method: :get, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
+        <fieldset class="flex flex-column gap center-block pad">
+          <legend class="txt-large txt-align-center"><strong>Add a self-hosted workspace</strong></legend>
+          <p class="txt-muted txt-medium txt-align-center">Paste the address of a self-hosted Sabha you've joined or run.</p>
+
+          <% if @lookup_error %>
+            <p class="txt-small txt-negative" role="alert"><%= remote_workspace_lookup_message(@lookup_error) %></p>
+          <% end %>
+
+          <label class="flex align-center gap input input--actor txt-large">
+            <%= form.text_field :origin, value: @address, required: true, class: "input", autofocus: true,
+                  placeholder: "chat.example.org", inputmode: "url", autocapitalize: "off", spellcheck: false,
+                  "aria-label": "Workspace address" %>
+          </label>
+
+          <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+            Look it up
+          <% end %>
+        </fieldset>
+      <% end %>
+    <% end %>
+  </div>
+</section>

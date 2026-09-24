@@ -44,7 +44,14 @@ class SessionsController < ApplicationController
 
   private
     def post_logout_url
-      Account.sso_auth? ? signed_out_session_url : root_url
+      if Account.sso_auth?
+        signed_out_session_url
+      elsif params[:return_to].present? && safe_redirect_url?(params[:return_to])
+        # "Sign in again" to confirm it's you, then carry on where you were
+        new_session_url(return_to: params[:return_to])
+      else
+        root_url
+      end
     end
 
     def redirect_to_saas_login

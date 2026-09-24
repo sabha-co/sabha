@@ -1,6 +1,6 @@
 <%# Workspace selector sidebar - Discord-style with home, workspaces, profile %>
 <% if show_workspace_selector? %>
-  <% workspaces = workspace_selector_workspaces %>
+  <% entries = workspace_selector_entries %>
   <% settings_active = controller.controller_path == "saas/settings" %>
   <% workspaces_active = controller.controller_path == "saas/workspaces" && action_name == "index" %>
 
@@ -21,8 +21,11 @@
 
     <%# Workspace list (sortable) %>
     <nav class="workspace-selector__list" aria-label="Your workspaces">
-      <% if workspaces.any? %>
-        <% workspaces.each do |workspace| %>
+      <% entries.each do |entry| %>
+        <% if entry.is_a?(RemoteWorkspaceMembership) %>
+          <%= render "shared/remote_workspace_selector_item", membership: entry %>
+        <% else %>
+          <% workspace = entry.workspace %>
           <%= link_to workspace_url(workspace),
               class: class_names("workspace-selector__item", "workspace-selector__item--active": workspace.current?),
               title: workspace.name,
@@ -55,7 +58,7 @@
 
     <div class="workspace-selector__separator" aria-hidden="true"></div>
 
-    <%# Footer: Settings + Add workspace %>
+    <%# Footer: Settings + Add (create a workspace, or add a self-hosted workspace) %>
     <div class="workspace-selector__footer">
       <%= link_to untenanted_path(:settings),
           class: class_names("workspace-selector__profile", "workspace-selector__profile--active": settings_active),
@@ -66,12 +69,21 @@
         <%= icon_tag("gear", style: "--icon-size: 20px") %>
       <% end %>
 
-      <%= link_to untenanted_path(:new_workspace),
-          class: "workspace-selector__add",
-          title: "Create workspace",
-          data: { turbo_prefetch: "false" },
-          "aria-label": "Create new workspace" do %>
-        <%= icon_tag("add") %>
+      <%= tag.details class: "workspace-selector__add-menu", data: {
+        controller: "popup", popup_orientation_top_class: "is-near-bottom",
+        action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
+      } do %>
+        <summary class="workspace-selector__add" title="Add a workspace">
+          <%= icon_tag("add") %>
+          <span class="for-screen-reader">Add a workspace</span>
+        </summary>
+
+        <div class="popup-menu workspace-selector__add-options border shadow" data-popup-target="menu">
+          <%= link_to "Create a workspace", untenanted_path(:new_workspace),
+                class: "btn action-btn full-width", data: { turbo_prefetch: "false" } %>
+          <%= link_to "Add a self-hosted workspace", untenanted_path(:new_remote_workspace),
+                class: "btn action-btn full-width", data: { turbo_prefetch: "false" } %>
+        </div>
       <% end %>
     </div>
   </aside>

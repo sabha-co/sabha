@@ -29,6 +29,7 @@ class AccountsController < ApplicationController
         settings: %i[
           restrict_room_creation_to_administrators
           restrict_direct_messages_to_administrators
+          suggest_hub_list
           allow_users_to_create_invite_links
         ]
       )

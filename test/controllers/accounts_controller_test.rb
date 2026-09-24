@@ -94,4 +94,16 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert accounts(:signal).settings.restrict_room_creation_to_administrators?, "Room creation restriction was overwritten"
     assert accounts(:signal).settings.restrict_direct_messages_to_administrators?, "DM restriction was not saved"
   end
+
+  test "admin can stop suggesting sabha.co to members" do
+    assert accounts(:signal).settings.suggest_hub_list?
+
+    get edit_account_url
+    assert_select "input[name='account[settings][suggest_hub_list]']"
+
+    put account_url, params: { account: { settings: { suggest_hub_list: false } } }
+
+    assert_redirected_to edit_account_url
+    assert_not accounts(:signal).reload.settings.suggest_hub_list?
+  end
 end

@@ -1,0 +1,34 @@
+<% content_for :title, "Sign in to #{@remote_workspace.name}" %>
+
+<section class="txt-align-center">
+  <div class="panel panel--centered" style="--panel-width: 36rem">
+    <%# The answer goes back to the workspace, another origin, so no Turbo %>
+    <%= form_with url: single_sign_on_consent_path, class: "flex flex-column gap", data: { turbo: false } do |form| %>
+      <%= form.hidden_field :sso, value: params[:sso] %>
+      <%= form.hidden_field :sig, value: params[:sig] %>
+
+      <fieldset class="flex flex-column gap center-block pad align-center">
+        <legend class="txt-large txt-align-center"><strong>Allow <%= @remote_workspace.name %> to see your name and email?</strong></legend>
+
+        <%= render "saas/remote_workspaces/logo", remote_workspace: @remote_workspace, large: true %>
+        <div class="flex flex-column">
+          <strong class="txt-large"><%= @remote_workspace.name %></strong>
+          <span class="txt-large"><%= @remote_workspace.address %></span>
+        </div>
+
+        <p class="txt-medium">
+          Signing in as <strong><%= current_global_identity.email_address %></strong>
+        </p>
+        <p class="txt-small txt-muted">
+          sabha.co will tell this workspace your name and email whenever you sign in with it, and add it to your list.
+          You can stop this from Settings at any time.
+        </p>
+
+        <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
+          Allow
+        <% end %>
+        <%= link_to "Cancel", "#{@remote_workspace.origin}/session/new", class: "txt-small", data: { turbo: false } %>
+      </fieldset>
+    <% end %>
+  </div>
+</section>

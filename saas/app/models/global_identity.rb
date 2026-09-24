@@ -9,7 +9,7 @@ class GlobalIdentity < UntenantedRecord
   # MVP: Email + OTP only (no password)
   # v2: Add password_digest for optional password auth
 
-  include Joinable
+  include Joinable, RemoteWorkspaces
 
   MAX_WORKSPACES = 10
 
@@ -67,17 +67,6 @@ class GlobalIdentity < UntenantedRecord
       .includes(:workspace)
       .order(updated_at: :desc)
       .filter_map { |m| m.workspace if m.workspace&.active? }
-  end
-
-  # Same set in the person's own selector order (for the destination catalog)
-  def active_workspaces_ordered
-    workspace_memberships_ordered.user_active
-      .filter_map { |m| m.workspace if m.workspace&.active? }
-  end
-
-  # Get workspace memberships in user-defined order (for workspace selector)
-  def workspace_memberships_ordered
-    workspace_memberships.ordered.includes(:workspace)
   end
 
   # Get workspace memberships with valid workspaces (filters orphaned memberships)

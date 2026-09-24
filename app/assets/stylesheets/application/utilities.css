@@ -25,6 +25,7 @@
 .txt-negative { color: var(--color-negative); }
 .txt-lighter { color: var(--color-text-lighter); }
 .txt-muted { color: var(--color-text-muted); }
+.txt-link { color: var(--color-link); }
 .txt-subtle { color: var(--color-text-subtle); }
 .txt-undecorated { text-decoration: none; }
 .txt-underlined { color: inherit; text-decoration: underline; text-underline-offset: 3px; }

@@ -35,6 +35,10 @@
         <% end %>
       <% end %>
 
+      <% if hub_sign_in_offered? %>
+        <%= render "sessions/hub_sign_in" %>
+      <% end %>
+
       <fieldset class="flex flex-column gap center-block pad">
         <legend class="txt-medium txt-align-center txt-muted">New to <%= Branding.contextual_app_name %>?</legend>
         <p class="txt-small txt-muted">You need an invite link to create an account.</p>

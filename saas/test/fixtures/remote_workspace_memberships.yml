@@ -1,0 +1,17 @@
+# frozen_string_literal: true
+
+# Alice lists Acme; Bob lists Acme and Club
+alice_acme:
+  global_identity: alice
+  remote_workspace: acme
+  source: added
+
+bob_acme:
+  global_identity: bob
+  remote_workspace: acme
+  source: added
+
+bob_club:
+  global_identity: bob
+  remote_workspace: club
+  source: prompt

@@ -9,45 +9,37 @@
 <% end %>
 
 <div class="saas-settings settings-layout">
-  <%# Workspaces Section %>
+  <%# sabha.co and self-hosted workspaces, in the selector's order %>
   <div class="panel">
     <section class="settings__section">
       <header>
         <h2 class="divider">Your Workspaces</h2>
       </header>
 
-      <% if @workspace_memberships.any? %>
+      <% if @memberships.any? %>
         <div class="flex flex-column gap-half">
-          <% @workspace_memberships.each do |membership| %>
-            <% workspace = membership.workspace %>
-
-            <%= link_to settings_path(script_name: workspace.slug),
-                  class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated" do %>
-              <div class="flex align-center gap">
-                <div class="workspace-initial" style="<%= workspace_gradient_style(workspace) unless workspace.has_logo? %>">
-                  <% if workspace.has_logo? %>
-                    <%= image_tag workspace_logo_url(workspace), alt: "", class: "workspace-initial__logo" %>
-                  <% else %>
-                    <%= workspace.name.first.upcase %>
-                  <% end %>
-                </div>
-                <div class="flex flex-column">
-                  <strong><%= workspace.name %></strong>
-                  <span class="txt-small txt-muted"><%= workspace_role_label(membership) %></span>
-                </div>
-              </div>
-              <%= icon_tag "arrow-right", class: "txt-muted" %>
+          <% @memberships.each do |membership| %>
+            <% if membership.is_a?(RemoteWorkspaceMembership) %>
+              <%= render "saas/settings/remote_workspace_membership", membership: membership,
+                    pairing_request: @pairing_requests[membership.remote_workspace_id] %>
+            <% else %>
+              <%= render "saas/settings/workspace_membership", membership: membership %>
             <% end %>
           <% end %>
         </div>
       <% else %>
-        <p class="txt-small txt-muted">Start by creating your first workspace.</p>
+        <p class="txt-small txt-muted">Start by creating your first workspace, or add a self-hosted Sabha you've joined.</p>
       <% end %>
 
-      <div class="flex justify-center">
+      <div class="flex justify-center gap flex-wrap">
         <%= link_to new_workspace_path, class: "btn btn--reversed" do %>
           <%= icon_tag "add" %>
           <span>Create workspace</span>
+        <% end %>
+
+        <%= link_to new_remote_workspace_path, class: "btn" do %>
+          <%= icon_tag "add" %>
+          <span>Add a self-hosted workspace</span>
         <% end %>
       </div>
     </section>

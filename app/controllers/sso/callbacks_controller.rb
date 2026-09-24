@@ -13,6 +13,8 @@ class Sso::CallbacksController < Sso::BaseController
       raise Sso::Failed
     elsif payload.logout?
       sign_out_via_sso(return_path)
+    elsif (member = member_connecting_hub)
+      connect_hub(member, payload)
     else
       sign_in_via_sso(payload, return_path)
     end
@@ -27,20 +29,20 @@ class Sso::CallbacksController < Sso::BaseController
 
   private
     def verify_and_consume_nonce(nonce)
-      expected = session[SESSION_NONCE_KEY]
+      expected = session[session_nonce_key]
       raise SingleSignOnNonce::Invalid, "SSO nonce expired or invalid" unless expected.present? && expected == nonce
 
       return_path = SingleSignOnNonce.consume!(nonce)
-      session.delete(SESSION_NONCE_KEY)
+      session.delete(session_nonce_key)
       return_path
     end
 
     def sign_in_via_sso(payload, return_path)
       handoff = handoff_context
 
-      newly_bootstrapped = FirstRun.auto_bootstrap_from_sso(payload)
+      newly_bootstrapped = FirstRun.auto_bootstrap_from_sso(payload) unless provider.hub?
       pending_join_code = session.delete(:pending_join_code)
-      user = User.sign_in_with_sso!(payload)
+      user = User.sign_in_with_sso!(payload, provider:, invited: pending_join_code.present?)
       redeem_pending_join_code!(user, pending_join_code)
       start_new_session_for user
 
@@ -51,6 +53,21 @@ class Sso::CallbacksController < Sso::BaseController
 
       flash[:notice] = welcome_message(user) if newly_bootstrapped || user.previously_new_record?
       redirect_to safe_return_path(return_path)
+    end
+
+    # The signed-in member who asked, from their profile, to connect sabha.co.
+    # The request is used up by the first sabha.co answer, whatever it says.
+    def member_connecting_hub
+      requested_at = session.delete(:hub_link_requested_at)
+      return unless provider.hub? && requested_at && Time.at(requested_at).after?(Session::FRESH_FOR.ago)
+
+      restore_authentication
+      Current.user
+    end
+
+    def connect_hub(member, payload)
+      member.link_hub!(payload)
+      redirect_to user_profile_url, notice: "sabha.co is connected. Use Continue with sabha.co next time you sign in."
     end
 
     def welcome_message(user)

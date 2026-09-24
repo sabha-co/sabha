@@ -21,8 +21,13 @@ module WorkspaceSelectorHelper
 
   # Returns inline CSS style for a workspace's gradient background
   def workspace_gradient_style(workspace)
-    from, to = WORKSPACE_GRADIENTS[Zlib.crc32(workspace.external_id.to_s) % WORKSPACE_GRADIENTS.size]
-    "background: linear-gradient(135deg, #{from}, #{to});"
+    gradient_style_for(workspace.external_id)
+  end
+
+  # Self-hosted workspaces are keyed by address, so the colour stays put
+  # when they rename themselves.
+  def remote_workspace_gradient_style(remote_workspace)
+    gradient_style_for(remote_workspace.origin)
   end
 
   def show_workspace_selector?
@@ -33,11 +38,9 @@ module WorkspaceSelectorHelper
     Sabha.saas? && Current.global_identity.present?
   end
 
-  def workspace_selector_workspaces
-    return [] unless Current.global_identity
-
-    Current.global_identity.workspace_memberships_ordered.user_active
-      .filter_map { |m| m.workspace if m.workspace&.active? }
+  # sabha.co and self-hosted workspaces, in the person's own order
+  def workspace_selector_entries
+    Current.global_identity ? Current.global_identity.selector_entries : []
   end
 
   def workspace_url(workspace)
@@ -55,4 +58,10 @@ module WorkspaceSelectorHelper
     return "Inactive" if membership.inactive?
     membership.user&.role&.capitalize || "Member"
   end
+
+  private
+    def gradient_style_for(key)
+      from, to = WORKSPACE_GRADIENTS[Zlib.crc32(key.to_s) % WORKSPACE_GRADIENTS.size]
+      "background: linear-gradient(135deg, #{from}, #{to});"
+    end
 end

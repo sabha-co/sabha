@@ -99,6 +99,10 @@
           Join <%= Current.account.name %>
         <% end %>
 
+        <% if hub_sign_in_offered? %>
+          <%= render "sessions/hub_sign_in", join_code: @join_code.code %>
+        <% end %>
+
         <div class="txt-medium txt-align-center">
           Already have an account? <%= link_to "Sign in", new_session_path(return_to: request.fullpath) %>
         </div>

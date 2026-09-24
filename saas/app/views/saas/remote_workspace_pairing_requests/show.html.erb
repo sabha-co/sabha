@@ -1,0 +1,49 @@
+<% remote_workspace = @pairing_request.remote_workspace %>
+<% content_for :title, "Connect #{remote_workspace.name}" %>
+
+<section class="txt-align-center">
+  <div class="panel panel--centered" style="--panel-width: 36rem">
+    <div class="flex flex-column gap center-block pad align-center">
+      <h1 class="txt-large margin-none"><strong>Connect this workspace to sabha.co</strong></h1>
+
+      <%= render "saas/remote_workspaces/logo", remote_workspace: remote_workspace, large: true %>
+      <div class="flex flex-column">
+        <strong class="txt-large"><%= remote_workspace.name %></strong>
+        <span class="txt-large"><%= remote_workspace.address %></span>
+      </div>
+
+      <ol class="flex flex-column gap txt-align-start txt-medium margin-none">
+        <li>
+          <% if @show_secret %>
+            Add this secret to the workspace's server environment as <code>SABHA_HUB_SECRET</code>
+            (in <code>.kamal/secrets</code> for a standard install). It's shown only once.
+            <div class="flex align-center gap margin-block-start-half">
+              <label for="hub_secret" class="for-screen-reader">Secret</label>
+              <input type="text" class="input fill-white txt-small" value="<%= @pairing_request.secret %>" id="hub_secret" readonly>
+              <%= button_to_copy_to_clipboard(@pairing_request.secret) do %>
+                <span class="for-screen-reader">Copy secret</span>
+                <%= icon_tag "copy-paste" %>
+              <% end %>
+            </div>
+          <% else %>
+            Add the secret you were given to the workspace's server environment as <code>SABHA_HUB_SECRET</code>.
+            Lost it? <%= button_to "Get a new secret", remote_workspace_pairing_requests_path, params: { remote_workspace_id: remote_workspace.id },
+                  class: "btn btn--plain txt-link", form_class: "inline" %>
+          <% end %>
+        </li>
+        <li>Restart the workspace.</li>
+        <li>Click <strong>Verify</strong>. sabha.co checks the workspace is running with the secret, then switches on <strong>Continue with sabha.co</strong>.</li>
+      </ol>
+
+      <% if remote_workspace.pairing_active? %>
+        <p class="txt-small txt-muted">
+          This replaces the workspace's current secret. Until you Verify, Continue with sabha.co stops working there, so Verify straight after the restart.
+        </p>
+      <% end %>
+
+      <%= button_to "Verify", remote_workspace_pairing_request_path(@pairing_request), method: :patch, class: "btn btn--reversed center txt-large" %>
+      <p class="txt-small txt-muted">This request expires <%= time_ago_in_words(@pairing_request.expires_at) %> from now.</p>
+      <%= link_to "Back to settings", settings_path, class: "txt-small" %>
+    </div>
+  </div>
+</section>

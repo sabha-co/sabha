@@ -421,6 +421,10 @@ See `.env.multitenant.sample` for the authoritative list. The variables actually
 
 When all R2 vars are set, `Workspace::Backup` is active and final backups run on workspace deletion.
 
+### Self-hosted workspace pairing
+
+Pairing needs no settings of its own. The secret sabha.co shares with each paired self-hosted workspace is stored encrypted, with keys derived from `SECRET_KEY_BASE`: changing it means every workspace has to pair again. Sabha Cloud pairs the droplets it provisions (`/api/platform/remote_workspaces`) with a token derived from `SSO_CLOUD_SABHA_SECRET`, the secret it already signs in with.
+
 ### Optional
 
 | Variable | Description |

@@ -50,6 +50,7 @@ module Sabha
 
             # Session (login/logout) - uses GlobalIdentity
             get "/session/sso", to: "saas/single_sign_ons#show"
+            post "/session/sso/consent", to: "saas/single_sign_on_consents#create", as: :single_sign_on_consent
             resource :session, only: [ :new, :create, :destroy ], controller: "saas/sessions"
 
             # Auth code OTP verification
@@ -74,6 +75,26 @@ module Sabha
             # Persist drag-to-reorder of workspace icons in the sidebar
             resource :workspace_membership_order, only: :update,
                      controller: "saas/workspace_membership_orders"
+
+            # Self-hosted workspaces in the person's list
+            resources :remote_workspaces, only: [ :new, :create ], controller: "saas/remote_workspaces" do
+              resource :logo, only: :show, controller: "saas/remote_workspaces/logos"
+              resource :pairing, only: :destroy, controller: "saas/remote_workspaces/pairings"
+            end
+            resources :remote_workspace_memberships, only: [ :update, :destroy ],
+                      controller: "saas/remote_workspace_memberships" do
+              resource :consent, only: :destroy, controller: "saas/remote_workspace_memberships/consents"
+            end
+            resources :remote_workspace_pairing_requests, only: [ :create, :show, :update ],
+                      controller: "saas/remote_workspace_pairing_requests"
+
+            # Sabha Cloud pairing the droplets it provisions. A droplet is
+            # named by its host, which carries dots, so the id takes any
+            # character but a slash.
+            scope "api/platform", as: :platform, defaults: { format: :json } do
+              resources :remote_workspaces, only: [ :create, :destroy ], controller: "saas/platform/remote_workspaces",
+                        constraints: { id: %r{[^/]+} }
+            end
 
             # Platform admin area (superadmin only)
             namespace :admin do

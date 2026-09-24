@@ -48,7 +48,7 @@ class FirstRunAutoBootstrapFromSsoTest < ActiveSupport::TestCase
     assert admin.verified?
     assert_equal "first-admin@example.com", admin.email_address
     assert_equal "First Admin", admin.name
-    assert_equal "ext-first-admin", admin.single_sign_on_record.external_id
+    assert_equal "ext-first-admin", admin.single_sign_on_records.sole.external_id
 
     general = Room.first
     assert_equal "General", general.name

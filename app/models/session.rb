@@ -1,6 +1,7 @@
 class Session < ApplicationRecord
   ACTIVITY_REFRESH_RATE = 1.hour
   SESSION_LIFETIME = 30.days
+  FRESH_FOR = 10.minutes
 
   has_secure_token
 
@@ -19,6 +20,11 @@ class Session < ApplicationRecord
     if last_active_at.before?(ACTIVITY_REFRESH_RATE.ago)
       update! user_agent: user_agent, ip_address: ip_address, last_active_at: Time.now
     end
+  end
+
+  # Signed in moments ago, so the member just proved who they are here
+  def fresh?
+    created_at.after?(FRESH_FOR.ago)
   end
 
   def expired?

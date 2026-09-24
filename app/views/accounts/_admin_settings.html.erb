@@ -20,6 +20,15 @@
           attribute: :allow_users_to_create_invite_links,
           title:     "Allow everyone to create invite links",
           hint:      "Off means only admins can generate invite URLs." %>
+
+    <% unless Sabha.saas? || Account.sso_auth? %>
+      <hr class="separator separator--row separator--soft">
+
+      <%= render "accounts/setting_toggle", account: @account, scope: :settings,
+            attribute: :suggest_hub_list,
+            title:     "Suggest adding this workspace to sabha.co",
+            hint:      "Members can keep it in their sabha.co list beside their other workspaces. sabha.co only reads your workspace's public name, logo and address." %>
+    <% end %>
   </section>
 
   <% unless Sabha.email_globally_disabled? %>

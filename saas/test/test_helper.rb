@@ -31,7 +31,8 @@ module SaasTestHelper
   included do
     # Load untenanted fixtures
     self.fixture_paths = [ SAAS_FIXTURE_PATH ]
-    fixtures :global_identities, :global_sessions, :workspaces, :workspace_memberships, :auth_codes
+    fixtures :global_identities, :global_sessions, :workspaces, :workspace_memberships, :auth_codes,
+      :remote_workspaces, :remote_workspace_memberships
   end
 
   def parsed_cookies
@@ -79,6 +80,27 @@ module SaasTestHelper
 
   def auth_codes(name)
     AuthCode.find(ActiveRecord::FixtureSet.identify(name))
+  end
+
+  def remote_workspaces(name)
+    RemoteWorkspace.find(ActiveRecord::FixtureSet.identify(name))
+  end
+
+  def remote_workspace_memberships(name)
+    RemoteWorkspaceMembership.find(ActiveRecord::FixtureSet.identify(name))
+  end
+
+  # Tops a person's list up to the limit, fast enough to run in any test
+  def fill_remote_workspace_list(identity)
+    now = Time.current
+    spare = GlobalIdentity::MAX_REMOTE_WORKSPACES - identity.remote_workspace_memberships.count
+    ids = RemoteWorkspace.insert_all!(
+      spare.times.map { { origin: "https://filler-#{it}.example", name: "Filler #{it}", created_at: now, updated_at: now } },
+      returning: :id
+    ).rows.flatten
+    RemoteWorkspaceMembership.insert_all!(
+      ids.map { { global_identity_id: identity.id, remote_workspace_id: it, source: "added", created_at: now, updated_at: now } }
+    )
   end
 
   # Creates a workspace with a real tenant database, yields it, and

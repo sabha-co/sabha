@@ -18,6 +18,14 @@ Every request to these endpoints sends the `Sabha-Protocol-Major` header. Major 
 
 Unauthenticated probe used when a member adds a server origin. Returns protocol major, product name, a sign-in path, and the catalog path. Never returns member records.
 
+A self-hosted server also returns a `community` block, so lists can show the community rather than the product:
+
+- `name`: the community's name, as set in its account settings.
+- `logo_url`: an absolute, versioned URL for the 192px PNG logo, or `null` when none is set.
+- `url`: the server's canonical origin, from `APP_HOST`. Treat it as a hint: it can differ from the address a member typed, and an unset `APP_HOST` reports `localhost`.
+
+The block is absent before first run and in SaaS mode, where one origin hosts many communities.
+
 ### Destinations
 
 Authenticated catalog after sign-in.

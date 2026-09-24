@@ -7,12 +7,13 @@ module Saas
     # This page is accessible via the gear icon in workspace selector.
     # It allows users to:
     # - Edit their email (triggers re-verification)
-    # - View all workspaces they belong to with their role
+    # - View all workspaces they belong to with their role, and the
+    #   self-hosted workspaces in their list
     # - Navigate to workspace-specific settings (leave/delete)
 
     def show
       @global_identity = current_global_identity
-      @workspace_memberships = current_global_identity.workspace_memberships_with_workspaces
+      set_memberships
       @workspace_access_denied = params[:denied] == "workspace"
     end
 
@@ -25,11 +26,16 @@ module Saas
         redirect_to settings_path, notice: "No changes made"
       end
     rescue ActiveRecord::RecordInvalid
-      @workspace_memberships = current_global_identity.workspace_memberships_with_workspaces
+      set_memberships
       render :show, status: :unprocessable_entity
     end
 
     private
+
+      def set_memberships
+        @memberships = current_global_identity.list_entries
+        @pairing_requests = current_global_identity.remote_workspace_pairing_requests.pending.order(:created_at).index_by(&:remote_workspace_id)
+      end
 
       def settings_params
         params.require(:global_identity).permit(:email_address)
