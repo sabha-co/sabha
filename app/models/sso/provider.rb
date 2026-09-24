@@ -44,9 +44,9 @@ class Sso::Provider
     OpenSSL::HMAC.hexdigest("sha256", secret, "#{PAIRING_PROOF_CONTEXT}#{origin}")
   end
 
-  # New members arriving through sabha.co need an invite unless the admin opens it up
+  # New members arriving through sabha.co always need an invite
   def auto_provision?
-    hub? ? ENV["SABHA_HUB_AUTO_PROVISION"] == "true" : true
+    !hub?
   end
 
   def self.origin_of(url)

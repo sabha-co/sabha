@@ -423,13 +423,7 @@ When all R2 vars are set, `Workspace::Backup` is active and final backups run on
 
 ### Self-hosted workspace pairing
 
-Self-hosted workspaces that pair with sabha.co for **Continue with sabha.co** share a secret with it, which sabha.co stores encrypted. Pairing fails until these are set. Generate them with `bin/rails db:encryption:init` and keep them: losing them breaks every pairing, and each workspace would have to pair again.
-
-| Variable | Description |
-|----------|-------------|
-| `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` | Encrypts each workspace's shared secret |
-| `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | Salt for the encryption keys |
-| `SABHA_PLATFORM_TOKEN` | Lets Sabha Cloud pair the droplets it provisions (`/api/platform/remote_workspaces`). Set the same value in Sabha Cloud. Without it, droplets can still be paired by hand |
+Pairing needs no settings of its own. The secret sabha.co shares with each paired self-hosted workspace is stored encrypted, with keys derived from `SECRET_KEY_BASE`: changing it means every workspace has to pair again. Sabha Cloud pairs the droplets it provisions (`/api/platform/remote_workspaces`) with a token derived from `SSO_CLOUD_SABHA_SECRET`, the secret it already signs in with.
 
 ### Optional
 

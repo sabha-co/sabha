@@ -48,12 +48,6 @@ module Sabha
     # precedence over Client-IP, so remote_ip is unchanged for real requests.
     config.action_dispatch.ip_spoofing_check = false
 
-    # Encrypts the few secrets kept in the database, such as the secret sabha.co
-    # shares with each workspace paired to it. Development and test set fixed
-    # keys in their environment files.
-    config.active_record.encryption.primary_key = ENV["ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY"].presence
-    config.active_record.encryption.key_derivation_salt = ENV["ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT"].presence
-
     console do
       if Sabha.saas?
         require_relative "../lib/console/tenant_helpers"

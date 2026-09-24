@@ -10,6 +10,8 @@ class Sso::ProviderClient
   class InvalidReturnUrl < Error; end
 
   DEFAULT_RETURN_PATH = "/session/sso/callback"
+  SABHA_CLOUD = "cloud_sabha"
+  PLATFORM_TOKEN_CONTEXT = "sabha-platform-api"
 
   attr_reader :name, :return_host, :return_path, :secret
 
@@ -36,6 +38,12 @@ class Sso::ProviderClient
   # A host an env client answers for can't also be paired as a workspace
   def self.claims_host?(host)
     active.any? { it.claims_host?(host) }
+  end
+
+  # Sabha Cloud also pairs the droplets it provisions, with a token derived
+  # from the secret it signs in with, so there's no second secret to share
+  def self.sabha_cloud
+    from_env(SABHA_CLOUD)&.then { it if it.active? }
   end
 
   def self.all
@@ -67,6 +75,10 @@ class Sso::ProviderClient
 
   def active?
     ActiveModel::Type::Boolean.new.cast(@active) && return_host.present? && secret.present?
+  end
+
+  def platform_token
+    OpenSSL::HMAC.hexdigest("sha256", secret, PLATFORM_TOKEN_CONTEXT)
   end
 
   def verify_return_url!(url)

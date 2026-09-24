@@ -290,7 +290,7 @@ You can also let members sign in with their sabha.co account. It's one more opti
 2. Add it to the workspace's server environment as `SABHA_HUB_SECRET` (in `.kamal/secrets`) and restart.
 3. Click **Verify** on sabha.co. It checks your workspace is running with the secret, then switches the shortcut on.
 
-Your rules still apply. Someone new needs your invite link, even with sabha.co, unless you set `SABHA_HUB_AUTO_PROVISION=true`. An existing member is never matched to a sabha.co account by email; they connect it from their own profile after signing in the usual way. sabha.co tells your workspace a member's name and email only after that member approves it once.
+Your rules still apply. Someone new needs your invite link, even with sabha.co. An existing member is never matched to a sabha.co account by email; they connect it from their own profile after signing in the usual way. sabha.co tells your workspace a member's name and email only after that member approves it once.
 
 To rotate the secret, use **Get a new secret** from the workspace's menu in sabha.co's Settings, restart with the new secret and Verify straight away; the shortcut stops working in between. To stop, use **Disconnect from sabha.co** from the same menu. Members keep your workspace in their list and sign in the usual way. Workspaces on their own single sign-on (`AUTH_METHOD=sso`) can't use the shortcut.
 

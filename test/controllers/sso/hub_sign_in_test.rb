@@ -7,14 +7,13 @@ class Sso::HubSignInTest < ActionDispatch::IntegrationTest
   CODE_CHALLENGE = Session::Claim.code_challenge_for("app-code-verifier")
 
   setup do
-    @original_env = ENV.to_h.slice("AUTH_METHOD", "SABHA_HUB_SECRET", "SABHA_HUB_AUTO_PROVISION", "SSO_PROVIDER_URL", "SSO_SECRET")
+    @original_env = ENV.to_h.slice("AUTH_METHOD", "SABHA_HUB_SECRET", "SSO_PROVIDER_URL", "SSO_SECRET")
     ENV["AUTH_METHOD"] = "password"
     ENV["SABHA_HUB_SECRET"] = HUB_SECRET
-    ENV.delete("SABHA_HUB_AUTO_PROVISION")
   end
 
   teardown do
-    %w[ AUTH_METHOD SABHA_HUB_SECRET SABHA_HUB_AUTO_PROVISION SSO_PROVIDER_URL SSO_SECRET ].each do |key|
+    %w[ AUTH_METHOD SABHA_HUB_SECRET SSO_PROVIDER_URL SSO_SECRET ].each do |key|
       @original_env.key?(key) ? ENV[key] = @original_env[key] : ENV.delete(key)
     end
   end
@@ -81,19 +80,8 @@ class Sso::HubSignInTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
-  test "the admin can let anyone with sabha.co in" do
-    ENV["SABHA_HUB_AUTO_PROVISION"] = "true"
-
-    get hub_handshake_url
-    assert_difference -> { User.count }, +1 do
-      complete_hub_sign_in(external_id: "global_identity:9", email: "newcomer@example.com")
-    end
-  end
-
   test "an unverified sabha.co email never creates or links an account" do
-    ENV["SABHA_HUB_AUTO_PROVISION"] = "true"
-
-    get hub_handshake_url
+    get hub_handshake_url, params: { join_code: Current.account.join_code.code }
     assert_no_difference -> { User.count } do
       complete_hub_sign_in(external_id: "global_identity:9", email: "newcomer@example.com", require_activation: true)
     end

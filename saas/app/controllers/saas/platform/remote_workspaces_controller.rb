@@ -39,7 +39,7 @@ module Saas
 
         def authenticate_platform
           authenticate_or_request_with_http_token do |token|
-            expected = ENV["SABHA_PLATFORM_TOKEN"]
+            expected = Sso::ProviderClient.sabha_cloud&.platform_token
             expected.present? && ActiveSupport::SecurityUtils.secure_compare(token, expected)
           end
         end

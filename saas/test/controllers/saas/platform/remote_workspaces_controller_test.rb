@@ -5,15 +5,16 @@ require_relative "../../../test_helper"
 module Saas
   module Platform
     class RemoteWorkspacesControllerTest < ActionDispatch::IntegrationTest
-      TOKEN = "platform-token"
+      CLOUD_ENV = { "SSO_PROVIDER_CLIENTS" => "cloud_sabha", "SSO_CLOUD_SABHA_RETURN_HOST" => "cloud.sabha.co", "SSO_CLOUD_SABHA_SECRET" => "cloud-secret" }
+      TOKEN = OpenSSL::HMAC.hexdigest("sha256", "cloud-secret", "sabha-platform-api")
 
       setup do
-        @original_token = ENV["SABHA_PLATFORM_TOKEN"]
-        ENV["SABHA_PLATFORM_TOKEN"] = TOKEN
+        @original_env = ENV.to_h.slice(*CLOUD_ENV.keys)
+        ENV.update(CLOUD_ENV)
       end
 
       teardown do
-        @original_token ? ENV["SABHA_PLATFORM_TOKEN"] = @original_token : ENV.delete("SABHA_PLATFORM_TOKEN")
+        CLOUD_ENV.each_key { |key| @original_env.key?(key) ? ENV[key] = @original_env[key] : ENV.delete(key) }
       end
 
       test "pairs a new droplet and lists it for its owner" do
@@ -91,11 +92,14 @@ module Saas
         assert_response :not_found
       end
 
-      test "needs the platform token" do
+      test "needs the token derived from Sabha Cloud's sign-in secret" do
         post "/api/platform/remote_workspaces", params: { origin: "https://rust.sabha.co", name: "Rust" }, headers: { "Authorization" => "Bearer wrong" }
         assert_response :unauthorized
 
-        ENV.delete("SABHA_PLATFORM_TOKEN")
+        post "/api/platform/remote_workspaces", params: { origin: "https://rust.sabha.co", name: "Rust" }, headers: { "Authorization" => "Bearer cloud-secret" }
+        assert_response :unauthorized
+
+        ENV.delete("SSO_CLOUD_SABHA_SECRET")
         post "/api/platform/remote_workspaces", params: { origin: "https://rust.sabha.co", name: "Rust" }, headers: { "Authorization" => "Bearer " }
         assert_response :unauthorized
         assert_not RemoteWorkspace.exists?(origin: "https://rust.sabha.co")
