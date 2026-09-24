@@ -52,6 +52,8 @@ env:
     - CLOUDFLARE_TURNSTILE_SITE_KEY
     - CLOUDFLARE_TURNSTILE_SECRET_KEY
     - DESKTOP_NOTIFICATIONS_ENABLED
+    # Continue with sabha.co (optional): the secret sabha.co gives when you pair this workspace
+    - SABHA_HUB_SECRET
 
 volumes:
   - "/disk/sabha/:/rails/storage/"
