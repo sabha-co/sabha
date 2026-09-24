@@ -30,7 +30,8 @@ with sabha.co and appear in its owner's list (see
 ## The model
 
 1. **Default workspace.** Every new `GlobalIdentity` joins `1000101` ("Sabha
-   Chat", `GlobalIdentity::DEFAULT_WORKSPACE_ID`) when it's created. Skipped if
+   Chat", `GlobalIdentity::DEFAULT_WORKSPACE_ID`) once its sign-up code is
+   verified, so its user there starts verified too. Skipped if
    that workspace doesn't exist. Forward-only: existing identities aren't
    backfilled.
 2. **Create one.** A regular user may create one workspace (`MAX_WORKSPACES`

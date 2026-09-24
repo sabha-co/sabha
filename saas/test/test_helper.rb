@@ -124,6 +124,7 @@ class ActiveSupport::TestCase
     WebMock.disable_net_connect!(allow: "localhost:8080")
     ENV.delete("R2_ACCESS_KEY_ID")
     GlobalIdentity.enforce_workspace_caps = false
+    GlobalIdentity.stubs(:default_workspace).returns(nil) # tests that want it stub it back
   end
 
   teardown do

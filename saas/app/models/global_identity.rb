@@ -38,7 +38,7 @@ class GlobalIdentity < UntenantedRecord
   normalizes :terms_of_service, with: ->(v) { ActiveRecord::Type::Boolean.new.deserialize(v) }
 
   before_create :stamp_terms_acceptance, if: :terms_of_service
-  after_create_commit :join_default_workspace
+  after_save_commit :join_default_workspace, if: :became_verified?
 
   validates :unconfirmed_email, 'valid_email_2/email': true, allow_blank: true
   validates :unconfirmed_email, 'valid_email_2/email': { disposable: true, message: "looks like a temporary email address. We discourage use of disposable emails — please use a permanent one instead." }, allow_blank: true
@@ -204,6 +204,11 @@ class GlobalIdentity < UntenantedRecord
 
     def stamp_terms_acceptance
       self.accepted_terms_at ||= Time.current
+    end
+
+    # Joining waits for the sign-up code, so the workspace user starts verified
+    def became_verified?
+      verified? && verified_at_before_last_save.nil?
     end
 
     def join_default_workspace

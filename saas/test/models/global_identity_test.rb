@@ -278,10 +278,24 @@ class GlobalIdentityTest < ActiveSupport::TestCase
     end
   end
 
-  test "creating an identity joins the default workspace when it exists" do
+  test "verifying a new identity joins the default workspace as a verified member" do
     with_provisioned_workspace(name: "Flagship", creator: global_identities(:alice)) do |flagship|
       GlobalIdentity.stubs(:default_workspace).returns(flagship)
       identity = GlobalIdentity.create!(name: "Signup", email_address: "signup-join@example.com")
+      assert_not identity.workspace_memberships.exists?(tenant: flagship.external_id.to_s)
+
+      identity.verify!
+
+      membership = identity.workspace_memberships.find_by!(tenant: flagship.external_id.to_s)
+      ApplicationRecord.with_tenant(membership.tenant) { assert User.find(membership.user_id).verified? }
+    end
+  end
+
+  test "an identity created verified joins the default workspace straight away" do
+    with_provisioned_workspace(name: "Flagship", creator: global_identities(:alice)) do |flagship|
+      GlobalIdentity.stubs(:default_workspace).returns(flagship)
+      identity = GlobalIdentity.create!(name: "Seeded", email_address: "seeded-join@example.com", verified_at: Time.current)
+
       assert identity.workspace_memberships.exists?(tenant: flagship.external_id.to_s)
     end
   end
