@@ -12,6 +12,17 @@ builds_on: "#194 Sabha protocol (merged 2026-09-23; supersedes #177 and #178), #
 
 People don't belong to one Sabha. They're in a couple of workspaces on sabha.co, their open-source project's self-hosted Sabha, a friend's Sabha Cloud droplet. Today each of those is a separate site with a separate login and nothing ties them together. This plan makes **sabha.co the place that remembers every Sabha you've joined**, on the web and in the desktop and mobile apps, so switching between them is one click. Any self-hosted workspace works from day one, without its admin doing anything. Workspaces whose admin connects them to sabha.co also get a shortcut: "Continue with sabha.co" instead of another password.
 
+## Terms
+
+- **Hub**: sabha.co, in its role as the place that keeps each person's list and offers the sign-in shortcut. It is always `https://sabha.co` (`Sabha::HUB_URL`) and isn't configurable. Code that talks about it says "hub" (`Sso::Provider.hub`, `hub_link`, `hub_proof`, `SABHA_HUB_SECRET`). Screens and emails say "sabha.co", never "Hub".
+- **sabha.co workspace**: a workspace hosted on the Hub.
+- **Self-hosted workspace**: any other Sabha install, including a Sabha Cloud droplet. In code it's a `RemoteWorkspace`. Where an install has a kind (`team` or `community`), its own screens use that kind's display noun (`install_noun`); the Hub always says "workspace".
+- **List entry**: one person's entry for a self-hosted workspace in their list (`RemoteWorkspaceMembership`). It is not a membership of that workspace.
+- **Shortcut**: "Continue with sabha.co" on a self-hosted workspace. An admin turns it on by **pairing** (get a secret, restart, Verify) and off by **disconnecting**.
+- **Consent**: a member's one-time "Allow" before the Hub tells a workspace their name and email.
+- **Destination catalog**: `GET /api/destinations`, the list the desktop and mobile apps read.
+- **Community**: the people in a workspace. Never a name for the install itself.
+
 ## Who this is for
 
 **A member** of several workspaces.
@@ -150,11 +161,11 @@ Settled with the owner on 2026-09-23:
 Each step ships on its own and is useful by itself. #194 is merged and covers everything the plan needs. #193 (workspace caps) is still in review; it isn't a prerequisite, but step 2 touches the same selector, reorder and join code, so whichever lands second rebases.
 
 1. **Workspace manifest: name, logo and address** (instance, after #194). `api/manifests/show.json.jbuilder` adds a `workspace` block with the account's name, logo URL and its own canonical URL (`Branding.app_url`, from `APP_HOST`), so lists show "Acme", not "Sabha", and sabha.co can spot a second address. #194 defers exactly this.
-2. **The list on sabha.co** (hub; overlaps #193). Add by address, selector entries, hide/remove, reorder across sabha.co and self-hosted workspaces, one settings list. **This alone gives every member a switcher.**
+2. **The list on sabha.co** (Hub; overlaps #193). Add by address, selector entries, hide/remove, reorder across sabha.co and self-hosted workspaces, one settings list. **This alone gives every member a switcher.**
 3. **"Add to your sabha.co list" prompt** (instance, after 2). The link, dismissal, the confirm page on sabha.co, the admin toggle.
 4. **The shortcut, workspace side** (instance, after #194). The button, the `issuer` column, link-from-profile, invite and last-method rules, `hub_proof` in the manifest.
-5. **The shortcut, sabha.co side** (hub, after 2 and 4). Pairing and Verify, lookup by address, the consent screen, rotate and disconnect.
-6. **Sabha Cloud** (hub platform API + `sabha_cloud`, after 5). Connect droplets and add them to the owner's list at provisioning.
+5. **The shortcut, sabha.co side** (Hub, after 2 and 4). Pairing and Verify, lookup by address, the consent screen, rotate and disconnect.
+6. **Sabha Cloud** (Hub platform API + `sabha_cloud`, after 5). Connect droplets and add them to the owner's list at provisioning.
 7. **Desktop app** (catalog in this repo after 1 and 2; then `sabha-desktop`). The list in the app, per-workspace sign-in, badges.
 8. **Mobile app** (Hotwire Native; path configuration in this repo, then `sabha-mobile`, after 1 and 2). The native switcher, the route handler that keeps listed workspaces in-app, per-workspace sign-in, and iOS and Android path configuration served by sabha.co.
 
@@ -270,10 +281,10 @@ single_sign_on_records
 - "Add to your sabha.co list" link after sign-in, hidden when the admin turns it off, for users with a sabha.co link, or after the member dismisses it (`resource :hub_list_prompt, only: :destroy`, stored in `User#preferences`).
 - `GET /session/hub`, `GET /session/hub/callback`: the shortcut handshake and signed return.
 - Profile → Sign-in methods: `resource :hub_link, only: %i[ new create destroy ]`. Creating needs fresh auth; destroying is refused for the last method.
-- Env: `SABHA_HUB_SECRET`, `SABHA_HUB_AUTO_PROVISION`, plus a setting to hide the list prompt. The hub is always `https://sabha.co` (`Sabha::HUB_URL`), not configurable.
+- Env: `SABHA_HUB_SECRET`, `SABHA_HUB_AUTO_PROVISION`, plus a setting to hide the list prompt. The Hub is always `https://sabha.co` (`Sabha::HUB_URL`), not configurable.
 - All workspace-side routes above are declared `unless Sabha.saas?`.
 
-**sabha.co (hub)**
+**sabha.co (the Hub)**
 - `resources :remote_workspaces, only: %i[ new create ]`: add by address; `new` takes `?origin=` from the prompt and creates the workspace row if it's the first person to list it.
 - `resources :remote_workspace_memberships, only: %i[ update destroy ]`: hide, position, remove.
 - `resources :remote_workspaces do resource :logo, only: :show end`: serves the stored logo bytes, untenanted.
