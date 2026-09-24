@@ -31,7 +31,7 @@ module Saas
       assert_response :unauthorized
     end
 
-    test "lists self-hosted communities separately, in selector order, without hidden ones" do
+    test "lists self-hosted communities separately, with one order across both kinds, without hidden ones" do
       alice = global_identities(:alice)
       acme = remote_workspace_memberships(:alice_acme)
       club = alice.list_remote_workspace!(remote_workspaces(:club), source: :added)
@@ -46,6 +46,7 @@ module Saas
       assert body["remote_peers"].first["unreachable"]
       assert_nil body["remote_peers"].first["logo_url"]
       assert_equal "http://www.example.com/remote_workspaces/#{acme.remote_workspace_id}/logo", body["remote_peers"].last["logo_url"]
+      assert_equal [ "remote:#{club.id}", "1000001", "remote:#{acme.id}", "1000003" ], body["order"]
     end
 
     test "says which communities offer Continue with sabha.co" do
