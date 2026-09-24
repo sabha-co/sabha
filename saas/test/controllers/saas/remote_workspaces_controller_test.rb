@@ -63,6 +63,21 @@ module Saas
       assert_select "a[href=?]", new_remote_workspace_path(origin: "https://chat.new.example"), text: "Add that address instead"
     end
 
+    test "a workspace claiming a listed address is still a different entry" do
+      acme = remote_workspaces(:acme)
+      stub_request(:get, "#{ORIGIN}/api/manifest").to_return(status: 200,
+        body: { protocol_major: 1, workspace: { name: "New", url: acme.origin } }.to_json)
+
+      get "/remote_workspaces/new", params: { origin: ORIGIN }
+      assert_select "h1", text: "Already in your list", count: 0
+      assert_select "form[action='/remote_workspaces'] button", "Add to my list"
+
+      assert_difference -> { @alice.remote_workspace_memberships.count }, 1 do
+        post "/remote_workspaces", params: { origin: ORIGIN }
+      end
+      assert @alice.remote_workspace_memberships.joins(:remote_workspace).exists?(remote_workspaces: { origin: acme.origin })
+    end
+
     test "explains why an address can't be added" do
       stub_request(:get, "#{ORIGIN}/api/manifest").to_return(status: 404)
 

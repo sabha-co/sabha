@@ -47,13 +47,10 @@ module GlobalIdentity::RemoteWorkspaces
     end
   end
 
-  # The person's entry for a workspace, including one they added under its
-  # other address (the public address it reports, or the one that reports this)
+  # The person's entry for exactly this address. The address a workspace
+  # reports for itself is only a hint, so it never matches another entry.
   def remote_workspace_membership_for(remote_workspace)
-    listed = remote_workspace_memberships.joins(:remote_workspace)
-    listed.where(remote_workspaces: { origin: [ remote_workspace.origin, remote_workspace.alias_origin ].compact })
-      .or(listed.where(remote_workspaces: { alias_origin: remote_workspace.origin }))
-      .first
+    remote_workspace_memberships.joins(:remote_workspace).find_by(remote_workspaces: { origin: remote_workspace.origin })
   end
 
   # Approving once lets sabha.co tell the workspace this person's name and

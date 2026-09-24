@@ -28,8 +28,6 @@ module Saas
     # with sabha.co. It's shown on this one response and never again.
     def create
       remote_workspace = RemoteWorkspace.preview(params[:origin])
-      return redirect_to_listed(remote_workspace) if listed_elsewhere?(remote_workspace)
-
       @pairing_request = current_global_identity.request_remote_workspace_pairing!(remote_workspace) if params[:pair] == "1"
       current_global_identity.list_remote_workspace!(@pairing_request&.remote_workspace || remote_workspace, source: params[:source] == "prompt" ? :prompt : :added)
 
@@ -44,16 +42,6 @@ module Saas
     end
 
     private
-      def listed_elsewhere?(remote_workspace)
-        membership = current_global_identity.remote_workspace_membership_for(remote_workspace)
-        membership && membership.remote_workspace.origin != remote_workspace.origin
-      end
-
-      def redirect_to_listed(remote_workspace)
-        listed = current_global_identity.remote_workspace_membership_for(remote_workspace).remote_workspace
-        redirect_to settings_path, notice: "#{listed.name} is already in your list as #{listed.address}"
-      end
-
       def redirect_to_hub_workspace(error)
         redirect_to error.workspace_id ? "/#{error.workspace_id}" : workspaces_path
       end
