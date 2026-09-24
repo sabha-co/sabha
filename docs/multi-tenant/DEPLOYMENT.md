@@ -58,7 +58,9 @@ SUPPORT_EMAIL="support@yourdomain.com"
 MAILER_FROM_NAME="Your Platform"
 MAILER_FROM_EMAIL="noreply@yourdomain.com"
 
-# IMPORTANT: Cookie domain enables cross-workspace sessions
+# Your domain. Link previews treat its subdomains as your own; the session
+# cookie itself stays on the app's host, so self-hosted workspaces on
+# subdomains keep their own
 COOKIE_DOMAIN=yourdomain.com
 
 # Managed PostgreSQL for the untenanted database
@@ -339,16 +341,6 @@ Workspace.find_by(external_id: 1000001)
 Workspace.pluck(:external_id, :name)
 ```
 
-### Cross-workspace session issues
-
-Verify `COOKIE_DOMAIN` is set correctly:
-
-```bash
-kamal app exec -d multitenant 'echo $COOKIE_DOMAIN'
-```
-
-Must match your domain (e.g., `sabha.co`, not `www.sabha.co`).
-
 ### Database locked errors
 
 ```bash
@@ -382,7 +374,7 @@ See `.env.multitenant.sample` for the authoritative list. The variables actually
 | `SAAS` | Set to `true` for multi-tenant mode (set by `deploy.multitenant.yml`) |
 | `SERVER_IP` | Server IP address |
 | `PROXY_HOST` | Domain name handled by kamal-proxy |
-| `COOKIE_DOMAIN` | Cookie scope for cross-workspace sessions (e.g. `sabha.co`) |
+| `COOKIE_DOMAIN` | Your domain (e.g. `sabha.co`); link previews treat its subdomains as your own |
 | `SECRET_KEY_BASE` | Rails encryption key (generate with `rails secret`) |
 | `UNTENANTED_DATABASE_URL` | Managed PostgreSQL connection URL |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Web push keys (`npx web-push generate-vapid-keys`) |
