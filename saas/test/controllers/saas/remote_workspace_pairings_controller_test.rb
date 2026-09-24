@@ -14,15 +14,8 @@ module Saas
       stub_dns_resolution("93.184.216.34")
     end
 
-    test "asks for the community's address" do
-      get "/remote_workspace_pairings/new"
-
-      assert_response :success
-      assert_select "input[name=origin]"
-    end
-
-    test "shows the secret once, with the steps to finish" do
-      post "/remote_workspace_pairings", params: { origin: "chat.acme.org" }
+    test "a new secret for a community in the list is shown once, with the steps to finish" do
+      post "/remote_workspace_pairings", params: { remote_workspace_id: @acme.id }
 
       assert_response :created
       pairing = @alice.remote_workspace_pairings.sole
@@ -32,23 +25,22 @@ module Saas
 
       get "/remote_workspace_pairings/#{pairing.id}"
       assert_select "input#hub_secret", count: 0
-      assert_select "a", text: "Start again"
+      assert_select "form[action='/remote_workspace_pairings'] input[name=remote_workspace_id][value=?]", @acme.id.to_s
     end
 
-    test "explains an address it can't pair" do
-      post "/remote_workspace_pairings", params: { origin: "http://chat.acme.org" }
-
-      assert_response :unprocessable_entity
-      assert_select "[role=alert]", text: /https/
+    test "only communities in the person's list can be paired" do
+      assert_raises(ActiveRecord::RecordNotFound) do
+        post "/remote_workspace_pairings", params: { remote_workspace_id: remote_workspaces(:club).id }
+      end
     end
 
     test "won't pair an address an env client answers for" do
       ENV["SSO_PROVIDER_CLIENTS"], ENV["SSO_ACME_RETURN_HOST"], ENV["SSO_ACME_SECRET"] = "acme", "chat.acme.org", "secret"
 
-      post "/remote_workspace_pairings", params: { origin: "chat.acme.org" }
+      post "/remote_workspace_pairings", params: { remote_workspace_id: @acme.id }
 
-      assert_response :unprocessable_entity
-      assert_select "[role=alert]", text: /another way/
+      assert_redirected_to settings_path
+      assert_match "another way", flash[:alert]
     ensure
       %w[ SSO_PROVIDER_CLIENTS SSO_ACME_RETURN_HOST SSO_ACME_SECRET ].each { ENV.delete(it) }
     end
@@ -81,7 +73,8 @@ module Saas
         patch "/remote_workspace_pairings/#{pairing.id}"
       end
 
-      assert_redirected_to new_remote_workspace_pairing_path(origin: @acme.origin)
+      assert_redirected_to settings_path
+      assert_match "new secret", flash[:alert]
     end
 
     test "someone else's request can't be seen or verified" do
@@ -107,15 +100,25 @@ module Saas
       assert @acme.reload.pairing_active?
     end
 
-    test "settings list connected communities and waiting requests" do
+    test "settings offers Verify on a waiting community and the pairer's actions on a connected one" do
       @acme.update!(pairing_status: :active, hub_secret: "secret", paired_by: @alice)
-      @alice.pair_remote_workspace!(remote_workspaces(:club))
+      club = @alice.list_remote_workspace!(remote_workspaces(:club), source: :added).remote_workspace
+      pairing = @alice.pair_remote_workspace!(club)
 
       get "/settings"
 
-      assert_select "span", text: "chat.acme.org · Connected"
-      assert_select "span", text: "club.example · Waiting for Verify"
-      assert_select "form[action=?]", "/remote_workspaces/#{@acme.id}/connection", text: "Disconnect"
+      assert_select "a[href=?]", "/remote_workspace_pairings/#{pairing.id}", text: "Verify"
+      assert_select ".list-tag--positive", text: "Continue with sabha.co"
+      assert_select "form[action=?]", "/remote_workspaces/#{@acme.id}/connection", text: "Disconnect from sabha.co"
+      assert_select "form[action='/remote_workspace_pairings']", text: "Get a new secret"
+      assert_select "form[action='/remote_workspace_pairings']", text: "Set up Continue with sabha.co", count: 0
+    end
+
+    test "settings offers setting up the shortcut on a community nobody has paired" do
+      get "/settings"
+
+      assert_select "form[action='/remote_workspace_pairings'] input[name=remote_workspace_id][value=?]", @acme.id.to_s
+      assert_select "form[action='/remote_workspace_pairings']", text: "Set up Continue with sabha.co"
     end
 
     test "a member can take back their approval from settings" do
@@ -124,7 +127,8 @@ module Saas
       membership = remote_workspace_memberships(:alice_acme)
 
       get "/settings"
-      assert_select "span", text: /Signs in with sabha.co/
+      assert_select ".list-tag", text: "You sign in with sabha.co"
+      assert_select "form[action=?]", "/remote_workspace_memberships/#{membership.id}/consent", text: "Stop signing in with sabha.co"
 
       delete "/remote_workspace_memberships/#{membership.id}/consent"
 

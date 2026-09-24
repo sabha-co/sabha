@@ -1,14 +1,40 @@
-<% content_for :title, "Add a community" %>
+<% content_for :title, "Add a self-hosted community" %>
 
 <section class="txt-align-center">
   <div class="panel panel--centered" style="--panel-width: 36rem">
-    <% if @remote_workspace %>
+    <% if @membership && !@membership.hidden? %>
+      <% listed = @membership.remote_workspace %>
+      <div class="flex flex-column gap center-block pad align-center">
+        <h1 class="txt-large margin-none"><strong>Already in your list</strong></h1>
+
+        <%= render "saas/remote_workspaces/logo", remote_workspace: listed, large: true %>
+
+        <div class="flex flex-column">
+          <strong class="txt-large"><%= listed.name %></strong>
+          <span class="txt-large"><%= listed.address %></span>
+        </div>
+
+        <p class="txt-small txt-muted">
+          <% if listed.origin != @remote_workspace.origin %>You added it as <%= listed.address %>, the same community as <%= @remote_workspace.address %>.<% end %>
+          It's in your sidebar, and in Settings with the rest of your workspaces.
+        </p>
+
+        <%= link_to "Open #{listed.name}", listed.origin, class: "btn btn--reversed center txt-large", data: { turbo: false } %>
+
+        <% unless listed.pairing_active? %>
+          <%= button_to "I run it: set up Continue with sabha.co", remote_workspace_pairings_path,
+                params: { remote_workspace_id: listed.id }, class: "btn txt-small" %>
+        <% end %>
+
+        <%= link_to "Use a different address", new_remote_workspace_path, class: "txt-small" %>
+      </div>
+    <% elsif @remote_workspace %>
       <%= form_with url: remote_workspaces_path, class: "flex flex-column gap" do |form| %>
         <%= form.hidden_field :origin, value: @remote_workspace.origin %>
         <%= form.hidden_field :source, value: params[:source] if params[:source].present? %>
 
         <fieldset class="flex flex-column gap center-block pad align-center">
-          <legend class="txt-large txt-align-center"><strong>Add this community to your list?</strong></legend>
+          <legend class="txt-large txt-align-center"><strong><%= @membership ? "Show this community in your sidebar again?" : "Add this community to your list?" %></strong></legend>
 
           <%= render "saas/remote_workspaces/logo", remote_workspace: @remote_workspace, large: true %>
 
@@ -28,8 +54,13 @@
             </p>
           <% end %>
 
+          <label class="flex align-start gap-half txt-small txt-align-start">
+            <%= form.check_box :pair, { checked: params[:pair] == "1" }, "1", nil %>
+            <span>I run this community: turn on <strong>Continue with sabha.co</strong> so members can sign in there with sabha.co. You'll get a secret to add to its server.</span>
+          </label>
+
           <%= form.button class: "btn btn--reversed center txt-large", type: "submit" do %>
-            Add to my list
+            <%= @membership ? "Show in sidebar" : "Add to my list" %>
           <% end %>
           <%= link_to "Use a different address", new_remote_workspace_path, class: "txt-small" %>
         </fieldset>
@@ -37,8 +68,8 @@
     <% else %>
       <%= form_with url: new_remote_workspace_path, method: :get, class: "flex flex-column gap", html: { autocomplete: "off" } do |form| %>
         <fieldset class="flex flex-column gap center-block pad">
-          <legend class="txt-large txt-align-center"><strong>Add a community</strong></legend>
-          <p class="txt-muted txt-medium txt-align-center">Paste the address of a self-hosted Sabha you've joined.</p>
+          <legend class="txt-large txt-align-center"><strong>Add a self-hosted community</strong></legend>
+          <p class="txt-muted txt-medium txt-align-center">Paste the address of a self-hosted Sabha you've joined or run.</p>
 
           <% if @lookup_error %>
             <p class="txt-small txt-negative" role="alert"><%= remote_workspace_lookup_message(@lookup_error) %></p>

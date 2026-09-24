@@ -11,6 +11,7 @@ module Saas
       body = JSON.parse(response.body)
       assert_equal "Sabha", body.dig("product", "name")
       refute body.key?("community")
+      assert body["multi_tenant"]
     end
   end
 end

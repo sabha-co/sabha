@@ -1,31 +1,26 @@
 # frozen_string_literal: true
 
 module Saas
-  # An admin pairing their community with sabha.co: paste its address, put the
-  # secret in the community's settings, restart it, then Verify.
+  # An admin switching on Continue with sabha.co for a community in their
+  # list: put the secret in the community's server environment, restart it,
+  # then Verify. Adding a community can start this too.
   class RemoteWorkspacePairingsController < BaseController
     helper RemoteWorkspacesHelper
 
     # Each look-up and Verify fetches someone else's server
-    rate_limit to: 10, within: 1.hour, only: :create, by: -> { current_global_identity.id }, with: :too_many_requests
-    rate_limit to: 30, within: 1.hour, only: :update, by: -> { current_global_identity.id }, with: :too_many_requests
+    rate_limit to: 10, within: 1.hour, only: :create, name: "pair", by: -> { current_global_identity.id }, with: :too_many_requests
+    rate_limit to: 30, within: 1.hour, only: :update, name: "verify", by: -> { current_global_identity.id }, with: :too_many_requests
 
     before_action :set_pairing, only: %i[ show update ]
 
-    def new
-      @address = params[:origin].to_s
-    end
-
-    # The secret is shown on this one response and never again
+    # A new secret, shown on this one response and never again
     def create
-      @pairing = current_global_identity.pair_remote_workspace!(RemoteWorkspace.preview(params[:origin]))
+      remote_workspace = current_global_identity.remote_workspace_memberships.find_by!(remote_workspace_id: params[:remote_workspace_id]).remote_workspace
+      @pairing = current_global_identity.pair_remote_workspace!(remote_workspace)
       @show_secret = true
       render :show, status: :created
-    rescue RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Origin::Hub, RemoteWorkspace::Probe::Error,
-        GlobalIdentity::RemoteWorkspaceClaimedError => error
-      @address = params[:origin].to_s
-      @lookup_error = error
-      render :new, status: :unprocessable_entity
+    rescue GlobalIdentity::RemoteWorkspaceClaimedError
+      redirect_to settings_path, alert: "#{remote_workspace.address} already signs in with sabha.co another way."
     end
 
     def show
@@ -45,7 +40,7 @@ module Saas
     private
       def set_pairing
         @pairing = current_global_identity.remote_workspace_pairings.find(params[:id])
-        redirect_to new_remote_workspace_pairing_path(origin: @pairing.remote_workspace.origin), alert: "That request expired. Start again for a new secret." if @pairing.expired?
+        redirect_to settings_path, alert: "That request expired. Get a new secret from #{@pairing.remote_workspace.name}'s menu." if @pairing.expired?
       end
 
       def too_many_requests

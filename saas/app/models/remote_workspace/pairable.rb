@@ -87,6 +87,10 @@ module RemoteWorkspace::Pairable
     self
   end
 
+  def connected_by?(global_identity)
+    pairing_active? && paired_by_id == global_identity.id
+  end
+
   # A droplet's owner may not have a sabha.co account yet, or a full list
   def listed_by?(email_address)
     memberships.joins(:global_identity).exists?(global_identities: { email_address: email_address.to_s.downcase })

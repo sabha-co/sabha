@@ -20,6 +20,8 @@ class RemoteWorkspace::Probe
   class NotSabha < Error; end
   # A Sabha server speaking a different protocol major
   class UnsupportedProtocol < Error; end
+  # sabha.co itself, or another multi-tenant Sabha, under any address
+  class MultiTenant < Error; end
 
   Manifest = Data.define(:name, :logo_url, :alias_origin, :protocol_major, :hub_proof)
 
@@ -84,6 +86,7 @@ class RemoteWorkspace::Probe
       json = JSON.parse(body)
       raise NotSabha unless json.is_a?(Hash) && json["protocol_major"].is_a?(Integer)
       raise UnsupportedProtocol unless json["protocol_major"] == Sabha::PROTOCOL_MAJOR
+      raise MultiTenant if json["multi_tenant"] == true
 
       community = json["community"].is_a?(Hash) ? json["community"] : {}
 

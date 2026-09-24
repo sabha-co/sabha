@@ -16,6 +16,7 @@ class API::ManifestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "/session/new", body["sign_in_path"]
     refute body.key?("destinations")
     refute body.key?("members")
+    refute body.key?("multi_tenant")
   end
 
   test "describes the community with its name, address and no logo when none is set" do

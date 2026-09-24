@@ -286,13 +286,13 @@ Members can keep your community in their sabha.co list, beside their other commu
 
 You can also let members sign in with their sabha.co account. It's one more option beside your own password or email-code login, and it's off until you connect:
 
-1. On sabha.co, open **Settings → Connected communities → Connect a community** and paste your community's address. sabha.co shows a secret once.
-2. Set it as `SABHA_HUB_SECRET` and restart.
+1. On sabha.co, click **+** in the sidebar, choose **Add a self-hosted community**, paste your community's address and tick **I run this community**. sabha.co shows a secret once. If the community is already in your list, use **Set up Continue with sabha.co** from its menu in Settings instead.
+2. Add it to the community's server environment as `SABHA_HUB_SECRET` (in `.kamal/secrets`) and restart.
 3. Click **Verify** on sabha.co. It checks your community is running with the secret, then switches the shortcut on.
 
 Your rules still apply. Someone new needs your invite link, even with sabha.co, unless you set `SABHA_HUB_AUTO_PROVISION=true`. An existing member is never matched to a sabha.co account by email; they connect it from their own profile after signing in the usual way. sabha.co tells your community a member's name and email only after that member approves it once.
 
-To rotate the secret, connect again from sabha.co, restart with the new secret and Verify straight away; the shortcut stops working in between. To stop, disconnect on sabha.co. Members keep your community in their list and sign in the usual way. Communities on their own single sign-on (`AUTH_METHOD=sso`) can't use the shortcut.
+To rotate the secret, use **Get a new secret** from the community's menu in sabha.co's Settings, restart with the new secret and Verify straight away; the shortcut stops working in between. To stop, use **Disconnect from sabha.co** from the same menu. Members keep your community in their list and sign in the usual way. Communities on their own single sign-on (`AUTH_METHOD=sso`) can't use the shortcut.
 
 ---
 

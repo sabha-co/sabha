@@ -15,7 +15,11 @@ class RemoteWorkspace < UntenantedRecord
 
   has_many :memberships, class_name: "RemoteWorkspaceMembership", dependent: :destroy
 
-  validates :origin, :name, presence: true
+  # The origin's uniqueness is the database's to enforce: two people adding
+  # a new community at once rely on create_or_find_by settling it.
+  validates :origin, presence: true
+  validates :name, presence: true, length: { maximum: 100 }
+  validate :origin_normalized
 
   # Nobody lists it and nothing pairs it, so there's nothing left to remember
   scope :abandoned, -> { where.missing(:memberships, :pairings).where.not(pairing_status: :active) }
@@ -77,6 +81,14 @@ class RemoteWorkspace < UntenantedRecord
   end
 
   private
+    # Every way in goes through Origin.normalize; a row that skipped it could
+    # be a second entry for a community already listed.
+    def origin_normalized
+      errors.add(:origin, :invalid) unless origin.blank? || RemoteWorkspace::Origin.normalize(origin) == origin
+    rescue RemoteWorkspace::Origin::Invalid, RemoteWorkspace::Origin::Hub
+      errors.add(:origin, :invalid)
+    end
+
     def refresh_logo
       self.logo_data, self.logo_content_type = logo_source_url && RemoteWorkspace::Probe.new.logo(logo_source_url)
     end

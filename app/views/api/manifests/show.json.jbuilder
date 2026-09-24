@@ -8,7 +8,10 @@ json.sign_in_path sign_in_entry_path
 json.destinations_path api_destinations_path
 
 # A self-hosted install is one community, so it can say which one. sabha.co
-# hosts many, so it has no single community to describe.
+# hosts many, so it has no single community to describe, and says so: it
+# can't be added to anyone's list of communities, whatever address reaches it.
+json.multi_tenant true if Sabha.saas?
+
 if !Sabha.saas? && (account = Current.account)
   json.community do
     json.name account.name

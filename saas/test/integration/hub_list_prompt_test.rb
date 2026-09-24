@@ -16,7 +16,7 @@ class HubListPromptSaasTest < ActionDispatch::IntegrationTest
 
       workspace_get "/users/me/profile", workspace: workspace
       assert_response :success
-      assert_select "a[href*='remote_workspaces/new']", count: 0
+      assert_select "a[href*='source=prompt']", count: 0
     end
   end
 

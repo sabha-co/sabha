@@ -15,7 +15,8 @@
       <ol class="flex flex-column gap txt-align-start txt-medium margin-none">
         <li>
           <% if @show_secret %>
-            Put this secret in the community's settings as <code>SABHA_HUB_SECRET</code>. It's shown only once.
+            Add this secret to the community's server environment as <code>SABHA_HUB_SECRET</code>
+            (in <code>.kamal/secrets</code> for a standard install). It's shown only once.
             <div class="flex align-center gap margin-block-start-half">
               <label for="hub_secret" class="for-screen-reader">Secret</label>
               <input type="text" class="input fill-white txt-small" value="<%= @pairing.secret %>" id="hub_secret" readonly>
@@ -25,8 +26,9 @@
               <% end %>
             </div>
           <% else %>
-            Put the secret you were given in the community's settings as <code>SABHA_HUB_SECRET</code>.
-            Lost it? <%= link_to "Start again", new_remote_workspace_pairing_path(origin: remote_workspace.origin) %> for a new one.
+            Add the secret you were given to the community's server environment as <code>SABHA_HUB_SECRET</code>.
+            Lost it? <%= button_to "Get a new secret", remote_workspace_pairings_path, params: { remote_workspace_id: remote_workspace.id },
+                  class: "btn btn--plain txt-link", form_class: "inline" %>
           <% end %>
         </li>
         <li>Restart the community.</li>

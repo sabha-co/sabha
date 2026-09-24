@@ -9,6 +9,8 @@ class RemoteWorkspaceMembership < UntenantedRecord
   belongs_to :global_identity, touch: true
   belongs_to :remote_workspace
 
+  validates :remote_workspace, uniqueness: { scope: :global_identity }
+
   scope :visible, -> { where(hidden: false) }
   scope :consented, -> { where.not(consented_at: nil) }
   scope :alphabetically, -> { eager_load(:remote_workspace).order(RemoteWorkspace.arel_table[:name].lower) }

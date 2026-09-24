@@ -58,7 +58,7 @@ Your list is already there. Communities with the shortcut need one tap each; oth
 - **Can't reach it?** If a community is down or moved, its entry is marked as unreachable, and it keeps its last known name until it comes back or you remove it.
 - **Remove** it: it's gone from your list and sabha.co forgets it. Your Acme account is untouched.
 - **Disconnect** the shortcut: sabha.co stops vouching for you to Acme. Next time it asks for permission again.
-- **Settings → Your communities** shows everything sabha.co remembers for you, and lets you clear it.
+- **Settings → Your Workspaces** is one list, in the selector's order: sabha.co workspaces and self-hosted communities together, each self-hosted row tagged with its address and status, its actions in a ⋯ menu.
 
 ## How it works for an admin
 
@@ -66,8 +66,8 @@ Your list is already there. Communities with the shortcut need one tap each; oth
 
 **Connecting to sabha.co (optional, one-time)** adds the "Continue with sabha.co" shortcut:
 
-1. On sabha.co, paste your community's address. sabha.co checks it's a Sabha server and gives you a secret, shown once.
-2. Put the secret in your community's settings (`SABHA_HUB_SECRET`) and restart.
+1. On sabha.co, add your community from the selector's **+** and tick **I run this community**. sabha.co checks it's a Sabha server and gives you a secret, shown once.
+2. Add the secret to your community's server environment (`SABHA_HUB_SECRET`) and restart.
 3. Click **Verify** on sabha.co right after the restart. It checks for a proof that only your server can publish, and switches the shortcut on.
 
 After that:
@@ -106,7 +106,7 @@ When a droplet is created, Sabha Cloud connects it to sabha.co and adds it to th
 - L4e. Pasting sabha.co itself is refused; pasting a sabha.co workspace address (`sabha.co/1000121`) goes to that workspace's normal join flow instead of the remote list. Sabha Cloud droplets on `*.sabha.co` subdomains are self-hosted communities and can be added.
 - L4f. If the pasted address differs from the address the community calls itself, the add screen says so ("this community calls itself chat.rustclub.org") and offers to add that one instead. Both stay allowed; sabha.co never merges two addresses on its own.
 - L4. Entries added through the shortcut or by Sabha Cloud appear automatically.
-- L5. Hide, remove, and a "Your communities" settings page listing everything remembered, with a clear-all.
+- L5. Hide and remove, from a settings list that shows everything remembered beside the person's workspaces.
 - L6. The list is served to the desktop and mobile apps through the protocol's destination catalog (`GET /api/destinations`, #194).
 
 **The shortcut: "Continue with sabha.co"**
@@ -150,7 +150,7 @@ Settled with the owner on 2026-09-23:
 Each step ships on its own and is useful by itself. #194 is merged and covers everything the plan needs. #193 (workspace caps) is still in review; it isn't a prerequisite, but step 2 touches the same selector, reorder and join code, so whichever lands second rebases.
 
 1. **Community manifest: name, logo and address** (instance, after #194). `api/manifests/show.json.jbuilder` adds a `community` block with the account's name, logo URL and its own canonical URL (`Branding.app_url`, from `APP_HOST`), so lists show "Acme", not "Sabha", and sabha.co can spot a second address. #194 defers exactly this.
-2. **The list on sabha.co** (hub; overlaps #193). Add by address, selector entries, hide/remove, reorder across workspaces and communities, "Your communities" settings. **This alone gives every member a switcher.**
+2. **The list on sabha.co** (hub; overlaps #193). Add by address, selector entries, hide/remove, reorder across workspaces and communities, communities in the settings list. **This alone gives every member a switcher.**
 3. **"Add to your sabha.co list" prompt** (instance, after 2). The link, dismissal, the confirm page on sabha.co, the admin toggle.
 4. **The shortcut, community side** (instance, after #194). The button, the `issuer` column, link-from-profile, invite and last-method rules, `hub_proof` in the manifest.
 5. **The shortcut, sabha.co side** (hub, after 2 and 4). Pairing and Verify, lookup by address, the consent screen, rotate and disconnect.
@@ -216,7 +216,7 @@ Diverged:
 13. **The desktop app gets the list through the destination catalog.** `api/destinations/show.json.jbuilder` in SaaS mode adds `remote_peers` after the workspace peers: origin, name, sabha.co's logo endpoint URL, and whether the shortcut is on. A top-level `order` lists every peer id, workspaces and communities together, in the person's selector order, so a client can rebuild the mixed order. They read only untenanted rows, so building the catalog never opens a tenant connection pool. They're a separate key so a client that only understands workspace peers keeps working within protocol major 1. For the shortcut, the app opens the community's `/session/hub` in the system browser with #194's hand-off parameters, including the PKCE challenge; the community issues the session claim and the app redeems it with its verifier. The app holds a cookie session per community partition; sabha.co never sees it.
 14. **Limits and upkeep.** Adding is rate-limited per identity with `rate_limit ..., by: -> { current_global_identity.id }` (its counters live in the shared, untenanted `Rails.cache`, which is what we want; the default key is the IP, which would lump people behind one address together) and capped at 100 memberships. A daily job in `config/recurring.yml` refreshes each `RemoteWorkspace` that has at least one membership or an active pairing, sets `unreachable_since` after repeated failures and clears it on success, and deletes rows with neither. Active Job records the tenant it was enqueued in, so the recurring job runs with no tenant and touches only `UntenantedRecord` models; the logo fetch after an add is enqueued from an untenanted route.
 15. **Untenanted models and account deletion.** `RemoteWorkspace`, `RemoteWorkspaceMembership` and `RemoteWorkspacePairing` inherit from `UntenantedRecord`, with migrations in `saas/db/untenanted_migrate/`. Deleting a `GlobalIdentity` destroys its memberships and pending pairings and nullifies `paired_by` on workspaces it paired; the pairing itself stays active until the community disconnects or re-pairs.
-16. **Untenanted URLs from tenanted pages.** The selector renders inside workspace pages (`/1000121/…`), and Rails path helpers carry the request's `script_name`, so `remote_workspaces_path` there would come out as `/1000121/remote_workspaces`. `Sabha::Saas::PathRewriter` would then resolve a tenant and workspace-membership checks would run. Every sabha.co-level link and form (add, hide, reorder, logo, Your communities, consent) passes `script_name: ""`, the mirror image of the selector's existing `root_path(script_name: slug)` for workspace links. If the selector later updates live, it streams on the `GlobalIdentity`, never a bare symbol.
+16. **Untenanted URLs from tenanted pages.** The selector renders inside workspace pages (`/1000121/…`), and Rails path helpers carry the request's `script_name`, so `remote_workspaces_path` there would come out as `/1000121/remote_workspaces`. `Sabha::Saas::PathRewriter` would then resolve a tenant and workspace-membership checks would run. Every sabha.co-level link and form (add, hide, reorder, logo, settings, consent) passes `script_name: ""`, the mirror image of the selector's existing `root_path(script_name: slug)` for workspace links. If the selector later updates live, it streams on the `GlobalIdentity`, never a bare symbol.
 17. **Identity is the key, never the name.** A sabha.co workspace is identified by `Workspace.external_id`; a self-hosted community by its canonical origin, unique on `remote_workspaces.origin` (a self-hosted install has exactly one community, so one origin is one community). Memberships are unique per identity and workspace in their own tables; the selector's typed ids (`workspace:<external_id>`, `remote:<id>`) and the catalog's separate `peers` / `remote_peers` keys keep the two id spaces apart, and the desktop app keys sessions by origin (every tenanted workspace shares sabha.co's).
 18. **Origin normalisation, one function used everywhere** (add, prompt link, pairing, platform API, provider lookup): `https` only; lowercase host; IDN hosts converted to punycode; trailing dot and default port dropped; path, query and fragment discarded. `www.` and the apex stay distinct because redirects are never followed. Anything whose normalised host is sabha.co's own `Branding.app_host` is refused, except `/<workspace id>` paths, which are routed to that workspace's join flow.
 19. **Aliases are surfaced, not merged.** The manifest's `community.url` is a hint, not proof: any server can claim any address, and an unpaired one can prove nothing. When it differs from the pasted origin, sabha.co shows both and lets the person choose; it ignores hints that aren't public `https` origins (such as an unset `APP_HOST` reporting `localhost`). Pairing and the shortcut stay bound to the exact origin that published `hub_proof`.
@@ -278,8 +278,8 @@ single_sign_on_records
 - `resources :remote_workspace_memberships, only: %i[ update destroy ]`: hide, position, remove.
 - `resources :remote_workspaces do resource :logo, only: :show end`: serves the stored logo bytes, untenanted.
 - All of these are untenanted routes, reached with `script_name: ""` from workspace pages.
-- Settings → Your communities: the list, per-entry remove and disconnect, clear-all.
-- Settings → Connected communities (admins): `resources :remote_workspace_pairings, only: %i[ new create update ]` for pair and Verify, plus rotate and disconnect on the paired workspace.
+- The selector's **+** opens a menu: create a workspace, or add a self-hosted community. The add confirmation carries an "I run this community" checkbox that starts pairing on the same submit.
+- Settings → Your Workspaces: one list across both kinds. A self-hosted row's ⋯ menu holds hide, remove, stop signing in with sabha.co and, for admins, set up, new secret and disconnect; a waiting pairing shows Verify on the row. `resources :remote_workspace_pairings, only: %i[ create show update ]`.
 - The consent screen in the provider flow.
 - `POST /api/platform/remote_workspaces`: control-plane create (bearer platform token). Creates an already-active pairing, returns origin and secret, and adds the owner's membership when `owner_email` is given.
 - Desktop catalog: list entries as external peers.

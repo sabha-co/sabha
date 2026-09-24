@@ -85,3 +85,59 @@
   color: white;
   padding: 0.875rem 1.25rem;
 }
+
+/* Small status tags under a list row's name: how you sign in to a
+   self-hosted community, and whether it's reachable or hidden */
+.list-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--inline-space-half);
+  margin-block-start: 0.25em;
+}
+
+.list-tag {
+  border: 1px solid var(--color-border-darker);
+  border-radius: 1em;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-x-small);
+  line-height: 1.6;
+  padding-inline: 0.6em;
+  white-space: nowrap;
+}
+
+.list-tag--positive {
+  border-color: currentColor;
+  color: var(--color-positive);
+}
+
+.list-tag--negative {
+  border-color: currentColor;
+  color: var(--color-negative);
+}
+
+/* A list row's ⋯ menu: opens below the trigger and leftward so it stays on
+   the panel, with the arrow under the trigger rather than mid-menu */
+.saas-settings .popup-menu.list-menu {
+  inline-size: max-content;
+  inset: calc(100% + 0.75em) 0 auto auto;
+  transform-origin: top right;
+  z-index: 100;
+
+  &::before,
+  &::after {
+    inset-inline-end: 0.6em;
+    inset-inline-start: auto;
+    transform: none;
+  }
+
+  .action-btn {
+    --width: 100%;
+    --btn-padding: calc(var(--inline-space) * 2 / 3) var(--inline-space);
+    --btn-border-radius: calc(var(--arrow-size) / 2 - var(--inline-space-half));
+
+    font-size: var(--font-size-small);
+    font-weight: 400;
+    justify-content: start;
+    white-space: nowrap;
+  }
+}

@@ -39,7 +39,21 @@ module GlobalIdentity::RemoteWorkspaces
     raise RemoteWorkspaceClaimedError if Sso::ProviderClient.claims_host?(URI(remote_workspace.origin).host)
 
     remote_workspace = save_remote_workspace!(remote_workspace) if remote_workspace.new_record?
-    remote_workspace_pairings.create!(remote_workspace: remote_workspace)
+
+    transaction do
+      # A new secret replaces the one still waiting, so only one ever works
+      remote_workspace_pairings.where(remote_workspace: remote_workspace).delete_all
+      remote_workspace_pairings.create!(remote_workspace: remote_workspace)
+    end
+  end
+
+  # The person's entry for a community, including one they added under its
+  # other address (the public address it reports, or the one that reports this)
+  def remote_workspace_membership_for(remote_workspace)
+    listed = remote_workspace_memberships.joins(:remote_workspace)
+    listed.where(remote_workspaces: { origin: [ remote_workspace.origin, remote_workspace.alias_origin ].compact })
+      .or(listed.where(remote_workspaces: { alias_origin: remote_workspace.origin }))
+      .first
   end
 
   # Approving once lets sabha.co tell the community this person's name and
@@ -76,7 +90,13 @@ module GlobalIdentity::RemoteWorkspaces
     workspaces = workspace_memberships.user_active.includes(:workspace).select { it.workspace&.active? }
     remotes = remote_workspace_memberships.visible.includes(:remote_workspace)
 
-    (workspaces + remotes).sort_by { [ it.position || Float::INFINITY, -it.updated_at.to_f ] }
+    in_switcher_order(workspaces + remotes)
+  end
+
+  # The same order for settings, which also shows hidden entries and
+  # workspaces the person can no longer open
+  def listed_memberships
+    in_switcher_order(workspace_memberships_with_workspaces + remote_workspace_memberships.includes(:remote_workspace))
   end
 
   # Positions come from the selector as workspace external ids and
@@ -97,6 +117,10 @@ module GlobalIdentity::RemoteWorkspaces
   end
 
   private
+    def in_switcher_order(memberships)
+      memberships.sort_by { [ it.position || Float::INFINITY, -it.updated_at.to_f ] }
+    end
+
     # Two people adding a new origin at once both try to create its row; the
     # loser picks up the winner's.
     def save_remote_workspace!(remote_workspace)
