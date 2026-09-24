@@ -231,18 +231,18 @@ class GlobalIdentityTest < ActiveSupport::TestCase
 
   test "workspace_limit_reached? is false when under limit" do
     identity = GlobalIdentity.create!(name: "New", email_address: "new-owner@example.com")
-    GlobalIdentity.enforce_workspace_caps = true
+    enforce_workspace_caps
     assert_not identity.workspace_limit_reached?
   end
 
   test "workspace_limit_reached? is true when at limit" do
     identity = global_identities(:alice)
-    GlobalIdentity.enforce_workspace_caps = true
+    enforce_workspace_caps
     assert identity.workspace_limit_reached?
   end
 
   test "superadmin is not workspace-capped" do
-    GlobalIdentity.enforce_workspace_caps = true
+    enforce_workspace_caps
     assert_not global_identities(:superadmin).workspace_limit_reached?
   end
 
@@ -253,7 +253,6 @@ class GlobalIdentityTest < ActiveSupport::TestCase
       identity.join(first.external_id.to_s)
 
       with_provisioned_workspace(name: "Cap Join B", creator: global_identities(:bob)) do |second|
-        GlobalIdentity.enforce_workspace_caps = true
         identity.stubs(:membership_limit_reached?).returns(true)
         assert_raises(GlobalIdentity::MembershipLimitReachedError) do
           identity.join(second.external_id.to_s)
@@ -284,7 +283,7 @@ class GlobalIdentityTest < ActiveSupport::TestCase
       identity = GlobalIdentity.create!(name: "Signup", email_address: "signup-join@example.com")
       assert_not identity.workspace_memberships.exists?(tenant: flagship.external_id.to_s)
 
-      identity.verify!
+      perform_enqueued_jobs(only: GlobalIdentity::JoinDefaultWorkspaceJob) { identity.verify! }
 
       membership = identity.workspace_memberships.find_by!(tenant: flagship.external_id.to_s)
       ApplicationRecord.with_tenant(membership.tenant) { assert User.find(membership.user_id).verified? }
@@ -294,7 +293,9 @@ class GlobalIdentityTest < ActiveSupport::TestCase
   test "an identity created verified joins the default workspace straight away" do
     with_provisioned_workspace(name: "Flagship", creator: global_identities(:alice)) do |flagship|
       GlobalIdentity.stubs(:default_workspace).returns(flagship)
-      identity = GlobalIdentity.create!(name: "Seeded", email_address: "seeded-join@example.com", verified_at: Time.current)
+      identity = perform_enqueued_jobs(only: GlobalIdentity::JoinDefaultWorkspaceJob) do
+        GlobalIdentity.create!(name: "Seeded", email_address: "seeded-join@example.com", verified_at: Time.current)
+      end
 
       assert identity.workspace_memberships.exists?(tenant: flagship.external_id.to_s)
     end

@@ -87,7 +87,7 @@ module Saas
     test "create blocked when workspace limit reached" do
       identity = global_identities(:alice)
       sign_in_global_identity(identity)
-      GlobalIdentity.enforce_workspace_caps = true
+      enforce_workspace_caps
 
       assert_no_difference "Workspace.count" do
         post workspaces_path, params: { name: "One Too Many" }
@@ -99,7 +99,7 @@ module Saas
 
     test "superadmin can create beyond the workspace cap" do
       sign_in_global_identity(global_identities(:superadmin))
-      GlobalIdentity.enforce_workspace_caps = true
+      enforce_workspace_caps
 
       assert_difference "Workspace.count", 1 do
         post workspaces_path, params: { name: "Platform Seed" }

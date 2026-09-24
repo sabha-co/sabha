@@ -105,6 +105,12 @@ module SaasTestHelper
 
   # Creates a workspace with a real tenant database, yields it, and
   # guarantees cleanup even if an assertion fails mid-test.
+  # Fixture creators already own a workspace, so setup lifts the create cap;
+  # tests about the caps put it back
+  def enforce_workspace_caps
+    GlobalIdentity.any_instance.unstub(:workspace_limit_reached?)
+  end
+
   def with_provisioned_workspace(name:, creator:)
     workspace = Workspace.create_with_database!(name: name, creator: creator)
     yield workspace
@@ -123,14 +129,13 @@ class ActiveSupport::TestCase
     ActionController::Base.send(:cache_store).clear
     WebMock.disable_net_connect!(allow: "localhost:8080")
     ENV.delete("R2_ACCESS_KEY_ID")
-    GlobalIdentity.enforce_workspace_caps = false
+    GlobalIdentity.any_instance.stubs(:workspace_limit_reached?).returns(false)
     GlobalIdentity.stubs(:default_workspace).returns(nil) # tests that want it stub it back
   end
 
   teardown do
     WebMock.reset!
     Current.reset
-    GlobalIdentity.enforce_workspace_caps = false
   end
 end
 

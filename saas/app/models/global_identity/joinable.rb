@@ -18,7 +18,8 @@ module GlobalIdentity::Joinable
       lock!
 
       membership = workspace_memberships.find_by(tenant: tenant)
-      raise GlobalIdentity::MembershipLimitReachedError if !membership&.user_active? && membership_limit_reached?
+      already_in = membership&.user_active?
+      raise GlobalIdentity::MembershipLimitReachedError if !already_in && membership_limit_reached?
 
       if membership
         membership.tap(&:create_user!)

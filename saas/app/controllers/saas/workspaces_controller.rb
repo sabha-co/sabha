@@ -33,11 +33,11 @@ module Saas
       )
 
       redirect_to workspace_path(workspace)
-    rescue GlobalIdentity::WorkspaceLimitReachedError
-      flash.now[:alert] = "You can create one workspace. For more, run Sabha yourself or on Sabha Cloud, and add it as a self-hosted workspace."
+    rescue GlobalIdentity::WorkspaceLimitReachedError => e
+      flash.now[:alert] = "#{e.message} For more, run Sabha yourself or on Sabha Cloud, and add it as a self-hosted workspace."
       render :new, status: :unprocessable_entity
-    rescue GlobalIdentity::MembershipLimitReachedError
-      flash.now[:alert] = "You're in #{GlobalIdentity::MAX_MEMBERSHIPS} workspaces, the most you can be in. Leave one to create another."
+    rescue GlobalIdentity::MembershipLimitReachedError => e
+      flash.now[:alert] = "#{e.message} Leave one to create another."
       render :new, status: :unprocessable_entity
     rescue ActiveRecord::RecordInvalid => e
       # Extract error message safely - e.record may be from a tenanted model

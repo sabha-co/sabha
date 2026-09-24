@@ -47,7 +47,7 @@
 
       <%= yield %>
 
-      <% if content_for?(:back_nav) %>
+      <% if content_for?(:back_nav) && !platform.desktop_app? %>
         <div class="margin-block">
           <%= yield :back_nav %>
         </div>

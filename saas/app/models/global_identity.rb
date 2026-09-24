@@ -15,10 +15,13 @@ class GlobalIdentity < UntenantedRecord
   MAX_MEMBERSHIPS = 20
   DEFAULT_WORKSPACE_ID = "1000101" # Sabha Chat, which everyone joins at sign-up
 
-  class_attribute :enforce_workspace_caps, default: true
+  class WorkspaceLimitReachedError < StandardError
+    def message = "You can create one workspace."
+  end
 
-  class WorkspaceLimitReachedError < StandardError; end
-  class MembershipLimitReachedError < StandardError; end
+  class MembershipLimitReachedError < StandardError
+    def message = "You're in #{MAX_MEMBERSHIPS} workspaces, the most you can be in."
+  end
 
   has_many :global_sessions, dependent: :destroy
   has_many :auth_codes, dependent: :destroy
@@ -38,7 +41,7 @@ class GlobalIdentity < UntenantedRecord
   normalizes :terms_of_service, with: ->(v) { ActiveRecord::Type::Boolean.new.deserialize(v) }
 
   before_create :stamp_terms_acceptance, if: :terms_of_service
-  after_save_commit :join_default_workspace, if: :became_verified?
+  after_save_commit :join_default_workspace_later, if: :became_verified?
 
   validates :unconfirmed_email, 'valid_email_2/email': true, allow_blank: true
   validates :unconfirmed_email, 'valid_email_2/email': { disposable: true, message: "looks like a temporary email address. We discourage use of disposable emails — please use a permanent one instead." }, allow_blank: true
@@ -65,19 +68,24 @@ class GlobalIdentity < UntenantedRecord
   end
 
   def workspace_limit_reached?
-    return false if superadmin? || !enforce_workspace_caps
+    return false if superadmin?
 
     Workspace.where(creator: self).count >= MAX_WORKSPACES
   end
 
   def membership_limit_reached?
-    return false if superadmin? || !enforce_workspace_caps
+    return false if superadmin?
 
     workspace_memberships.user_active.count >= MAX_MEMBERSHIPS
   end
 
   def self.default_workspace
     Workspace.active.find_by(external_id: DEFAULT_WORKSPACE_ID)
+  end
+
+  def join_default_workspace
+    workspace = self.class.default_workspace
+    join(workspace.external_id.to_s) if workspace
   end
 
   def active_workspaces_recent_first
@@ -211,8 +219,7 @@ class GlobalIdentity < UntenantedRecord
       verified? && verified_at_before_last_save.nil?
     end
 
-    def join_default_workspace
-      workspace = self.class.default_workspace
-      join(workspace.external_id.to_s) if workspace
+    def join_default_workspace_later
+      JoinDefaultWorkspaceJob.perform_later(self)
     end
 end
