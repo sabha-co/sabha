@@ -129,6 +129,9 @@ jobs:
 
           CLOUDFLARE_TURNSTILE_SITE_KEY=${{ secrets.CLOUDFLARE_TURNSTILE_SITE_KEY }}
           CLOUDFLARE_TURNSTILE_SECRET_KEY=${{ secrets.CLOUDFLARE_TURNSTILE_SECRET_KEY }}
+
+          DESKTOP_NOTIFICATIONS_ENABLED=
+          SABHA_HUB_SECRET=${{ secrets.STAGING_SABHA_HUB_SECRET }}
           EOF
 
       - name: Run Kamal setup (first-time provisioning)
