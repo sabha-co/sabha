@@ -52,6 +52,15 @@ module Saas
       assert_select ".workspace-selector a[href='https://chat.acme.org'] img[src=?]", "/remote_workspaces/#{remote_workspaces(:acme).id}/logo"
     end
 
+    test "self-hosted workspaces open in a new tab, so this one keeps the selector" do
+      sign_in_global_identity(global_identities(:bob))
+
+      get settings_path
+
+      assert_select ".workspace-selector a[href='https://chat.acme.org'][target=_blank][rel=noopener]"
+      assert_select ".workspace-selector a[data-workspace-id]:not([data-workspace-id^='remote:'])[target]", count: 0
+    end
+
     test "the selector's add button offers a new workspace or a self-hosted workspace" do
       sign_in_global_identity(global_identities(:alice))
 

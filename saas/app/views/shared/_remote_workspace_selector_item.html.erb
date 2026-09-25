@@ -1,10 +1,13 @@
-<%# A self-hosted workspace: a plain link to its own site, never a session %>
+<%# A self-hosted workspace: a plain link to its own site, never a session. It
+    opens in a new tab, so this tab keeps the selector to come back to %>
 <% remote_workspace = membership.remote_workspace %>
 <% label = "#{remote_workspace.name} · #{remote_workspace.address}#{" (unreachable)" if remote_workspace.unreachable?}" %>
 
 <%= link_to remote_workspace.origin,
     class: class_names("workspace-selector__item", "workspace-selector__item--unreachable": remote_workspace.unreachable?),
     title: label,
+    target: "_blank",
+    rel: "noopener",
     draggable: true,
     data: {
       workspace_sortable_target: "item",
@@ -12,7 +15,7 @@
       action: "dragstart->workspace-sortable#dragstart dragover->workspace-sortable#dragover dragend->workspace-sortable#dragend",
       turbo: false
     },
-    "aria-label": "Open #{label}" do %>
+    "aria-label": "Open #{label} in a new tab" do %>
   <div class="workspace-selector__workspace-icon" role="img" aria-hidden="true"
     <% unless remote_workspace.logo? %>
       style="<%= remote_workspace_gradient_style(remote_workspace) %>"
