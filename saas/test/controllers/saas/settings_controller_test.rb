@@ -61,6 +61,15 @@ module Saas
       assert_select ".workspace-selector a[data-workspace-id]:not([data-workspace-id^='remote:'])[target]", count: 0
     end
 
+    test "self-hosted workspaces carry a server badge in the selector, sabha.co ones don't" do
+      sign_in_global_identity(global_identities(:bob))
+
+      get settings_path
+
+      assert_select ".workspace-selector a[href='https://chat.acme.org'] .workspace-selector__self-hosted[aria-hidden=true] .icon--server"
+      assert_select ".workspace-selector a[data-workspace-id]:not([data-workspace-id^='remote:']) .workspace-selector__self-hosted", count: 0
+    end
+
     test "the selector's add button offers a new workspace or a self-hosted workspace" do
       sign_in_global_identity(global_identities(:alice))
 

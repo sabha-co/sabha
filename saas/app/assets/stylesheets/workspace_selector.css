@@ -194,6 +194,26 @@
   opacity: 0.45;
 }
 
+/* Marks a self-hosted workspace, another site that opens in a new tab. It
+   overlaps the icon's edge only a little, so the list's side clip misses it */
+.workspace-selector__self-hosted {
+  --icon-size: 0.625rem;
+
+  position: absolute;
+  right: -0.1875rem;
+  bottom: -0.1875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border: 2px solid var(--workspace-selector-bg);
+  border-radius: 50%;
+  background: var(--workspace-selector-icon-bg);
+  color: var(--workspace-selector-text);
+  pointer-events: none;
+}
+
 /* Micro-interaction bounce on click */
 @keyframes workspace-bounce {
   0% { transform: translateX(2px) scale(1); }

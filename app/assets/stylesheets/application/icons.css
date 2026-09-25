@@ -126,6 +126,7 @@ img.icon {
 .icon--rename { --svg: url("../rename.svg"); }
 .icon--reply { --svg: url("../reply.svg"); }
 .icon--search { --svg: url("../search.svg"); }
+.icon--server { --svg: url("../server.svg"); }
 .icon--settings { --svg: url("../settings.svg"); }
 .icon--share { --svg: url("../share.svg"); }
 .icon--shield { --svg: url("../shield.svg"); }
