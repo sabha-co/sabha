@@ -42,6 +42,22 @@ module Saas
       assert_select "a[href=?]", new_remote_workspace_path, text: /Add a self-hosted workspace/
     end
 
+    test "the workspace list can be reordered in place, for the desktop app that hides the selector" do
+      bob = global_identities(:bob)
+      sign_in_global_identity(bob)
+      club = remote_workspace_memberships(:bob_club)
+      acme = remote_workspace_memberships(:bob_acme)
+      bob.reorder_selector([ "remote:#{club.id}", "1000002", "remote:#{acme.id}", "1000003" ])
+
+      get settings_path
+
+      assert_select ".saas-settings [data-controller~=workspace-sortable]"
+      assert_equal [ "remote:#{club.id}", "1000002", "remote:#{acme.id}", "1000003" ],
+        css_select(".saas-settings [data-workspace-sortable-target=item]").map { it["data-workspace-id"] }
+      assert_select ".saas-settings [data-workspace-sortable-target=item][draggable=true]", 4
+      assert_select ".saas-settings p", "Drag to change the order."
+    end
+
     test "the selector lists self-hosted workspaces beside sabha.co ones, linking to their own sites" do
       sign_in_global_identity(global_identities(:bob))
 

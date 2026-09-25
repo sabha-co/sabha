@@ -17,7 +17,11 @@
       </header>
 
       <% if @memberships.any? %>
-        <div class="flex flex-column gap-half">
+        <%# Reordering here is how the desktop app, which hides the selector, changes the order %>
+        <% if @memberships.many? %>
+          <p class="txt-small txt-muted">Drag to change the order.</p>
+        <% end %>
+        <div class="flex flex-column gap-half" data-controller="workspace-sortable">
           <% @memberships.each do |membership| %>
             <% if membership.is_a?(RemoteWorkspaceMembership) %>
               <%= render "saas/settings/remote_workspace_membership", membership: membership,

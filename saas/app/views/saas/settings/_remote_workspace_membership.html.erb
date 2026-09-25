@@ -3,7 +3,11 @@
 <% remote_workspace = membership.remote_workspace %>
 <% paired_by_me = remote_workspace.paired_by?(current_global_identity) %>
 
-<div class="flex align-center justify-space-between pad-block-half pad-inline gap">
+<%= tag.div class: "flex align-center justify-space-between pad-block-half pad-inline gap", draggable: true, data: {
+  workspace_sortable_target: "item",
+  workspace_id: "remote:#{membership.id}",
+  action: "dragstart->workspace-sortable#dragstart dragover->workspace-sortable#dragover dragend->workspace-sortable#dragend"
+} do %>
   <%= link_to remote_workspace.origin, class: "flex align-center gap txt-undecorated min-width", data: { turbo: false } do %>
     <%= render "saas/remote_workspaces/logo", remote_workspace: remote_workspace %>
     <div class="flex flex-column min-width">
@@ -65,4 +69,4 @@
       </div>
     <% end %>
   </div>
-</div>
+<% end %>

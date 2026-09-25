@@ -2,7 +2,13 @@
 <% workspace = membership.workspace %>
 
 <%= link_to settings_path(script_name: workspace.slug),
-      class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated" do %>
+      class: "flex align-center justify-space-between pad-block-half pad-inline gap txt-undecorated",
+      draggable: true,
+      data: {
+        workspace_sortable_target: "item",
+        workspace_id: workspace.external_id,
+        action: "dragstart->workspace-sortable#dragstart dragover->workspace-sortable#dragover dragend->workspace-sortable#dragend"
+      } do %>
   <div class="flex align-center gap">
     <div class="workspace-initial" style="<%= workspace_gradient_style(workspace) unless workspace.has_logo? %>">
       <% if workspace.has_logo? %>

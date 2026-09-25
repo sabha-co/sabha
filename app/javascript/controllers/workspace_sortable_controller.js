@@ -1,7 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 import { patch } from "@rails/request.js"
 
-// Handles drag-to-reorder for workspace icons in the workspace selector sidebar.
+// Handles drag-to-reorder for the workspace selector sidebar and the settings
+// page list, which is where the desktop app (no selector) reorders.
 // Persists order via PATCH to /workspace_membership_order endpoint.
 // Note: Drag-to-reorder is disabled on touch devices as HTML5 drag doesn't work well.
 export default class extends Controller {
