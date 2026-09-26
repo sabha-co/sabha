@@ -194,7 +194,64 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "edit renders a Trix-era link preview's details into the editor" do
+    message = create_message_with_body \
+      %(<div>https://example.com/ <action-text-attachment content-type="application/vnd.actiontext.opengraph-embed" url="https://example.com/image.png" href="https://example.com/" filename="Example title" caption="Example description"></action-text-attachment></div>)
+
+    content = edited_attachment_content(message)
+
+    assert_equal "Example title", content.at_css(".og-embed__title a").text.strip
+    assert_equal "https://example.com/", content.at_css(".og-embed__title a")["href"]
+    assert_equal "Example description", content.at_css(".og-embed__description").text.strip
+    assert_equal "https://example.com/image.png", content.at_css(".og-embed__image img")["src"]
+  end
+
+  test "edit rebuilds a hand-written link preview from its validated details" do
+    markup = <<~HTML.squish
+      <actiontext-opengraph-embed data-controller="pwn" data-action="click->pwn#run">
+        <div class="og-embed"><div class="og-embed__title"><a href="/rooms/1">Free cookies</a></div>
+        <div class="og-embed__image"><img src="/rooms/1/avatar" data-action="load->pwn#run"></div></div>
+      </actiontext-opengraph-embed>
+    HTML
+    message = create_message_with_body \
+      %(<p><action-text-attachment content-type="application/vnd.actiontext.opengraph-embed" url="https://example.com/image.png" content="#{ERB::Util.html_escape(markup)}"></action-text-attachment></p>)
+
+    content = edited_attachment_content(message)
+
+    assert_equal "Free cookies", content.at_css(".og-embed__title").text.strip
+    assert_nil content.at_css("a")
+    assert_nil content.at_css("img")
+    assert_no_match %r{rooms/1|data-action|data-controller}, content.to_html
+  end
+
+  test "edit gives a mention saved under Trix the mention content type" do
+    message = create_message_with_body \
+      %(<div>Hey <action-text-attachment sgid="#{users(:jason).attachable_sgid}" content-type="application/octet-stream"></action-text-attachment></div>)
+
+    get edit_room_message_url(@room, message)
+
+    node = edited_attachment_node
+    assert_equal User::Mentionable::CONTENT_TYPE, node["content-type"]
+    assert_match "Jason", node["content"]
+  end
+
   private
+    def create_message_with_body(body)
+      @room.messages.create! body: body, client_message_id: SecureRandom.uuid, creator: users(:david)
+    end
+
+    def edited_attachment_content(message)
+      get edit_room_message_url(@room, message)
+      assert_response :success
+
+      Nokogiri::HTML.fragment(edited_attachment_node["content"])
+    end
+
+    def edited_attachment_node
+      editor = Nokogiri::HTML(response.body).at_css("lexxy-editor")
+      Nokogiri::HTML.fragment(editor["value"]).at_css("action-text-attachment")
+    end
+
     def ensure_messages_present(*messages, count: 1)
       messages.each do |message|
         assert_select "#" + dom_id(message), count:

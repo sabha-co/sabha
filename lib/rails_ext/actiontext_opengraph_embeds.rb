@@ -139,6 +139,14 @@ class ActionText::Attachment::OpengraphEmbed
     "action_text/attachables/opengraph_embed"
   end
 
+  # Rails rebuilds an attachment's editor markup only when its attachable names
+  # an editor partial, and otherwise hands the editor whatever markup the body
+  # stored. Naming one means editing a message always starts from the validated
+  # details, whether they were stored as Trix attributes or as content markup.
+  def to_editor_content_attachment_partial_path
+    to_partial_path
+  end
+
   private
     def link_or_title
       errors.add(:base, "nothing to render") if href.blank? && filename.blank?
