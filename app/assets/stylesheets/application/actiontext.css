@@ -168,22 +168,21 @@ action-text-attachment[content-type~="application/vnd.actiontext.opengraph-embed
   lexxy-editor &.node--selected {
     --lexxy-attachment-bg-color: transparent;
   }
+}
 
-  /* A prominent remove button on the card's top edge, horizontally centered.
-     The lexxy-editor prefix out-specifies Lexxy's own placement rules. */
-  lexxy-editor & lexxy-node-delete-button {
-    inset-block-start: 0;
-    inset-inline-start: 50%;
-    inset-inline-end: auto;
-    transform: translate(-50%, -50%);
+/* A prominent remove button on the link preview card's top edge, horizontally
+   centered. The lexxy-editor prefix out-specifies Lexxy's own placement rules. */
+lexxy-editor lexxy-attachment-toolbar[data-content-type~="application/vnd.actiontext.opengraph-embed"] {
+  left: calc(var(--lexxy-anchor-left) + var(--lexxy-anchor-width) / 2);
+  top: var(--lexxy-anchor-top);
+  transform: translate(-50%, -50%);
 
-    .lexxy-floating-controls__group {
-      --button-size: 2.2em;
+  .lexxy-floating-controls__group {
+    --button-size: 2.2em;
 
-      background-color: var(--color-negative);
-      border-radius: 50%;
-      color: white;
-    }
+    background-color: var(--color-negative);
+    border-radius: 50%;
+    color: white;
   }
 }
 
