@@ -63,6 +63,16 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
     assert_equal %w[id name], json["creator"].keys.sort
   end
 
+  test "show renders a body with a content attachment as JSON" do
+    message = @room.messages.create!(creator: users(:david),
+      body: %(<action-text-attachment content-type="text/html" content="&lt;p&gt;Embedded content&lt;/p&gt;"></action-text-attachment>))
+
+    get api_bots_message_url(message), headers: bot_headers(@bot.bot_key)
+
+    assert_response :success
+    assert_includes response.parsed_body.dig("body", "html"), "Embedded content"
+  end
+
   # Permissions
 
   test "index 404s when bot is not in the room" do
