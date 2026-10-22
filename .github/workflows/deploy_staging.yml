@@ -62,7 +62,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '4.0.5'
+          ruby-version: '4.0.8'
           bundler-cache: true
 
       - name: Cache Kamal gem
@@ -70,7 +70,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ runner.tool_cache }}/kamal-gems
-          key: kamal-gem-${{ runner.os }}-ruby-4.0.5
+          key: kamal-gem-${{ runner.os }}-ruby-4.0.8
 
       - name: Install Kamal
         run: |
