@@ -13,6 +13,15 @@ class Message < ApplicationRecord
 
   has_rich_text :body
 
+  # Everything the message partial renders beyond what its cache key reads.
+  PRESENTATION_ASSOCIATIONS = [
+    { rich_text_body: { embeds_attachments: :blob } },
+    { creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ] },
+    { room: { parent_message: :room } },
+    { attachment_attachment: { blob: :variant_records } },
+    { boosts: { booster: { avatar_attachment: { blob: :variant_records } } } }
+  ]
+
   before_create :set_default_client_message_id
   before_create :touch_room_activity
   after_create_commit :dispatch_notifications
@@ -25,14 +34,10 @@ class Message < ApplicationRecord
   # Lightweight thread loading - fetches threads but NOT their messages
   # The partial uses Rooms::Thread#participant_creators for efficient participant fetching
   scope :with_thread_summary, -> { includes(:threads) }
-  scope :for_display, -> {
-    with_rich_text_body_and_embeds
-      .with_creator
-      .includes(room: { parent_message: :room })
-      .includes(attachment_attachment: { blob: :variant_records })
-      .includes(boosts: { booster: { avatar_attachment: { blob: :variant_records } } })
-      .with_thread_summary
-  }
+  # What a message's fragment cache key reads. A page loaded with only this can be
+  # keyed against the cache, then preload_presentation fills in the misses.
+  scope :for_cache_key, -> { includes(:creator, :room).with_thread_summary }
+  scope :for_display, -> { for_cache_key.includes(PRESENTATION_ASSOCIATIONS) }
   scope :created_by, ->(users) { where(creator_id: Array.wrap(users).map { |u| u.is_a?(User) ? u.id : u }) }
   scope :without_created_by, ->(user) { where.not(creator_id: user.id) }
   scope :between, ->(from, to) { where(created_at: from..to) }
@@ -96,6 +101,12 @@ class Message < ApplicationRecord
     thread_participants = Rooms::Thread.preload_participant_creators(messages.flat_map(&:threads).uniq, limit:)
     messages.each { |message| message.thread_participants = thread_participants }
     messages
+  end
+
+  # Loads what the message partial renders for messages loaded with for_cache_key.
+  def self.preload_presentation(messages)
+    ActiveRecord::Associations::Preloader.new(records: messages, associations: PRESENTATION_ASSOCIATIONS).call
+    with_thread_participants(messages)
   end
 
   def repliable?

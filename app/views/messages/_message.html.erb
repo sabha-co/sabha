@@ -3,7 +3,7 @@
 
 <% is_first_unread_message = (message == first_unread_message) %>
 <% is_forum_opening = current_room == message.room && forum_opening_message?(message) %>
-<% cache message_cache_key(message, room_id: current_room&.id, is_first_unread_message:, is_unread:, composer_id:, forum_replies_count: (message.room.replies_count if is_forum_opening)) do %>
+<% cache message_partial_cache_key(message:, current_room:, first_unread_message:, is_unread:, composer_id:) do %>
   <%= message_tag message, is_unread: is_unread, composer_id: composer_id do %>
     <div class="message-separator message__loading-indicator">
       <span class="busy txt-muted"></span>

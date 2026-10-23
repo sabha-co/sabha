@@ -80,7 +80,7 @@ class MessagesController < ApplicationController
     end
 
     def find_paged_messages
-      scope = @room.messages.with_thread_summary.with_creator.with_bookmark_status_for(Current.user)
+      scope = @room.messages.for_cache_key.with_bookmark_status_for(Current.user)
 
       messages = if params[:before].present?
         anchor = @room.messages.find_by(id: params[:before])
@@ -92,7 +92,7 @@ class MessagesController < ApplicationController
         scope.last_page
       end
 
-      Message.with_thread_participants(prepend_thread_parent(messages))
+      prepend_thread_parent(messages)
     end
 
     def prepend_thread_parent(messages)
