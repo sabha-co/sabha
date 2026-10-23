@@ -160,43 +160,7 @@ module MessagesHelper
     ]
   end
 
-  # The key messages/_message caches its fragment under.
-  def message_partial_cache_key(message:, current_room:, first_unread_message:, is_unread:, composer_id:)
-    is_forum_opening = current_room == message.room && forum_opening_message?(message)
-
-    message_cache_key(message, room_id: current_room&.id, is_first_unread_message: message == first_unread_message,
-      is_unread:, composer_id:, forum_replies_count: (message.room.replies_count if is_forum_opening))
-  end
-
-  # Renders a page of a room's messages, loaded with Message.for_cache_key. The
-  # page's fragments come back in one cache read, and only the messages that
-  # missed get their presentation loaded and rendered.
-  def render_message_stream(messages, room:, first_unread_message:, composer_id:)
-    seen_first_unread = false
-    partial_locals = messages.map do |message|
-      seen_first_unread ||= message == first_unread_message
-      { message:, current_room: room, first_unread_message:, is_unread: first_unread_message.present? && seen_first_unread, composer_id: }
-    end
-
-    fragments = cached_message_fragments(partial_locals)
-    Message.preload_presentation(partial_locals.each_index.filter_map { |i| partial_locals[i][:message] unless fragments[i] })
-
-    safe_join(partial_locals.each_with_index.map { |locals, i| fragments[i] || render("messages/message", locals) })
-  end
-
   private
-    def cached_message_fragments(partial_locals)
-      return [] unless controller.perform_caching
-
-      digest_path = digest_path_from_template(lookup_context.find("messages/message", [], true))
-      keys = partial_locals.map do |locals|
-        controller.combined_fragment_cache_key(cache_fragment_name(message_partial_cache_key(**locals), digest_path:))
-      end
-
-      fragments = controller.cache_store.read_multi(*keys)
-      keys.map { |key| fragments[key]&.html_safe }
-    end
-
     # Shared resolver for message_permalink_path / _url — the same three-branch
     # decision (forum post / chat thread / plain room). only_path toggles between
     # a path and a full URL, the sole difference between the two public helpers.

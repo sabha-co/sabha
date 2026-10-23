@@ -111,13 +111,13 @@ class RoomsController < ApplicationController
     end
 
     def find_messages
-      messages = @room.messages.for_cache_key.with_bookmark_status_for(Current.user)
+      messages = @room.messages.for_display.with_bookmark_status_for(Current.user)
       @first_unread_message = first_unread
 
       anchor = target_message(messages) || @first_unread_message
       result = anchor ? messages.page_around(anchor) : messages.last_page
 
-      with_thread_parent(result)
+      Message.with_thread_participants(with_thread_parent(result))
     end
 
     def first_unread
