@@ -4,7 +4,7 @@
 # This Dockerfile uses Gemfile.saas which includes activerecord-tenanted
 
 # Make sure it matches the Ruby version in .ruby-version and Gemfile
-ARG RUBY_VERSION=4.0.8
+ARG RUBY_VERSION=4.0.9
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
