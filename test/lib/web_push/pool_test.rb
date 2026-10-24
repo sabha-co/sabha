@@ -4,6 +4,11 @@ class WebPush::PoolTest < ActiveSupport::TestCase
   include WebPushPoolReset, DnsTestHelper
 
   setup do
+    # These tests count what the pool schedules, not what it sends. A real send
+    # gets rejected, and the invalidation that follows deletes the subscription
+    # from a pool thread after the test's transaction has rolled back, so later
+    # push tests find their fixtures gone.
+    WebPush.stubs(:payload_send)
     stub_dns_resolution "104.18.0.1"
     @pool = Rails.configuration.x.web_push_pool
     @payload = { title: "Hi", body: "There", path: "/" }

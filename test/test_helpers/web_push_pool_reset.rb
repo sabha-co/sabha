@@ -16,5 +16,13 @@ module WebPushPoolReset
           invalid_subscription_handler: config.x.web_push_pool.invalid_subscription_handler
       end
     end
+
+    # Drain before Mocha unstubs the sends and the fixture transaction rolls
+    # back. A delivery still running past the test would make a real send, get
+    # rejected, and delete its subscription outside the transaction, so every
+    # later push test would find its fixtures gone.
+    teardown do
+      Rails.configuration.x.web_push_pool.shutdown
+    end
   end
 end
