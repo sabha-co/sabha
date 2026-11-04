@@ -11,8 +11,10 @@ class ActionTextSanitizerTest < ActiveSupport::TestCase
     assert_includes rendered, "<summary>"
     assert_includes rendered, "<section"
     assert_includes rendered, %(data-controller="popup")
-    assert_includes rendered, %(data-action="click->popup#toggle")
     assert_includes rendered, %(data-popup-target="content")
+
+    section = Nokogiri::HTML5.fragment(rendered).at_css("section")
+    assert_equal "click->popup#toggle", section["data-action"]
   end
 
   test "ActionText preserves figure, figcaption, and action-text-attachment with its attributes" do
