@@ -25,7 +25,7 @@ module Saas
     end
 
     test "shows the workspace's name and address to confirm" do
-      get "/remote_workspaces/new", params: { origin: "new.example/rooms/3", source: "prompt" }
+      get "/remote_workspaces/new", params: { origin: "new.example/channels/3", source: "prompt" }
 
       assert_response :success
       assert_select "strong", "New"

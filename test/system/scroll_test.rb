@@ -15,22 +15,22 @@ require "application_system_test_case"
 class ScrollTest < ApplicationSystemTestCase
   setup do
     sign_in "kevin@37signals.com"
-    join_room rooms(:designers)
+    join_channel channels(:designers)
   end
 
   test "sending a message keeps the container pinned to the newest message" do
     send_message "Bottom of the thread"
     assert_message_text "Bottom of the thread"
 
-    assert_scrolled_to_bottom rooms(:designers)
+    assert_scrolled_to_bottom channels(:designers)
   end
 
   private
     # The messages container (ScrollManager's element) is pinned to the bottom when
     # scrollHeight - scrollTop - clientHeight is within a small slack. A couple of
     # pixels of rounding is expected; anything larger means autoscroll didn't fire.
-    def assert_scrolled_to_bottom(room, slack: 4)
-      selector = "##{dom_id(room, :messages)}"
+    def assert_scrolled_to_bottom(channel, slack: 4)
+      selector = "##{dom_id(channel, :messages)}"
       distance = page.evaluate_script(<<~JS)
         (() => { const el = document.querySelector("#{selector}");
                  return el ? el.scrollHeight - el.scrollTop - el.clientHeight : null })()

@@ -14,7 +14,7 @@ Multi-tenant mode enables:
 
 - **Multiple workspaces** - Each workspace has its own isolated SQLite database
 - **Shared authentication** - Users authenticate once, access multiple workspaces
-- **Path-based routing** - URLs include workspace ID (e.g., `/1000001/rooms/general`)
+- **Path-based routing** - URLs include workspace ID (e.g., `/1000001/channels/general`)
 - **Cross-workspace sessions** - Single sign-on across all workspaces
 - **Sabha protocol** - Manifest and destination catalog for Sabha apps
 
@@ -137,7 +137,7 @@ puts "Workspace external ID: #{workspace.external_id}"
 # Access at: https://sabha.co/#{workspace.external_id}/
 ```
 
-`create_with_database!` provisions the per-workspace SQLite database, the membership for the creator, and the default rooms — plain `Workspace.create!` would leave the tenant DB uninitialized.
+`create_with_database!` provisions the per-workspace SQLite database, the membership for the creator, and the default channels — plain `Workspace.create!` would leave the tenant DB uninitialized.
 
 ---
 

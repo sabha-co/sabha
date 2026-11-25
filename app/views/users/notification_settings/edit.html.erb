@@ -2,7 +2,7 @@
 
 <% content_for :nav do %>
   <div class="flex-item-justify-start">
-    <%= link_back_to_last_room_visited %>
+    <%= link_back_to_last_channel_visited %>
   </div>
 
   <div class="flex-item-justify-end">
@@ -89,10 +89,10 @@
 
   </div>
 
-  <%# ─── Per-room notifications ────────────────────────────────────── %>
+  <%# ─── Per-channel notifications ────────────────────────────────────── %>
   <div class="margin-block pad fill-shade border-radius" style="margin-top: 0;">
-    <p class="txt-small txt-muted txt-label margin-block-end-half">Per-room notifications</p>
-    <p class="txt-small txt-muted margin-block-end-half">Choose how closely you follow each room. Use the bell button to set your involvement level.</p>
+    <p class="txt-small txt-muted txt-label margin-block-end-half">Per-channel notifications</p>
+    <p class="txt-small txt-muted margin-block-end-half">Choose how closely you follow each channel. Use the bell button to set your involvement level.</p>
 
     <% @memberships.each do |membership| %>
       <%= turbo_stream_from membership %>

@@ -7,9 +7,9 @@ class ForumReactivationJob < ApplicationJob
   discard_on ActiveJob::DeserializationError::RecordNotFound
 
   # Restores the posts a forum's deletion cascaded — and only those, so a post
-  # deleted on its own stays deleted. Rooms::Forum#reactivate brings the
+  # deleted on its own stays deleted. Channels::Forum#reactivate brings the
   # forum row + memberships back synchronously; this restores each post's
-  # messages and memberships in its own short transaction (Room::Nested), so the
+  # messages and memberships in its own short transaction (Channel::Nested), so the
   # write lock is released between posts. Idempotent: a retry re-scans and skips
   # posts already restored (no longer active: false + cascade_deactivated).
   #
@@ -21,7 +21,7 @@ class ForumReactivationJob < ApplicationJob
   def perform(forum:)
     return unless forum.active?
 
-    Rooms::Post.where(parent_room_id: forum.id, active: false, cascade_deactivated: true).in_batches do |batch|
+    Channels::Post.where(parent_channel_id: forum.id, active: false, cascade_deactivated: true).in_batches do |batch|
       break unless forum.reload.active?
       batch.each(&:reactivate)
     end

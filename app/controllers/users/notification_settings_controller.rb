@@ -27,10 +27,10 @@ class Users::NotificationSettingsController < ApplicationController
       )
     end
 
-    # Starred first, then "all notifications" rooms, then mentions-only, then muted.
+    # Starred first, then "all notifications" channels, then mentions-only, then muted.
     # Alphabetical within each bucket.
     def ordered_memberships_for_notification_preferences
-      memberships = Current.user.memberships.shared.visible.with_ordered_room
+      memberships = Current.user.memberships.shared.visible.with_ordered_channel
       starred, rest = memberships.partition(&:starred?)
       high, rest    = rest.partition(&:involved_in_everything?)
       muted, low    = rest.partition(&:involved_in_nothing?)

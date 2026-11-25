@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 // This controller debounces Turbo Stream updates to prevent race conditions.
-// It works by tracking the timestamp of the last update for each room
+// It works by tracking the timestamp of the last update for each channel
 // and ignoring any updates that are older than the last one received.
 export default class extends Controller {
   static values = {
@@ -24,24 +24,24 @@ export default class extends Controller {
     }
 
     const targetId = event.target.target
-    const roomId = this.getRoomId(targetId)
-    if (!roomId) {
+    const channelId = this.getChannelId(targetId)
+    if (!channelId) {
       return
     }
 
     const newTimestamp = new Date(newElement.dataset.updatedAt).getTime()
-    const lastTimestamp = this.timestampsValue[roomId] || 0
+    const lastTimestamp = this.timestampsValue[channelId] || 0
 
     if (newTimestamp >= lastTimestamp) {
-      this.timestampsValue = { ...this.timestampsValue, [roomId]: newTimestamp }
+      this.timestampsValue = { ...this.timestampsValue, [channelId]: newTimestamp }
     } else {
       // Stop the rendering if the incoming update is older
       event.preventDefault()
     }
   }
 
-  getRoomId(targetId) {
-    const match = targetId.match(/^room_(\d+)/)
+  getChannelId(targetId) {
+    const match = targetId.match(/^channel_(\d+)/)
     return match ? match[1] : null
   }
 }

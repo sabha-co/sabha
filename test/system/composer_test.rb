@@ -3,7 +3,7 @@ require "application_system_test_case"
 class ComposerTest < ApplicationSystemTestCase
   setup do
     sign_in "david@37signals.com"
-    join_room rooms(:hq)
+    join_channel channels(:hq)
   end
 
   test "enter sends the message when the toolbar is collapsed" do
@@ -21,7 +21,7 @@ class ComposerTest < ApplicationSystemTestCase
 
     assert_selector ".message:last-of-type .message__body .mention", text: "David"
 
-    message = rooms(:hq).messages.ordered.last
+    message = channels(:hq).messages.ordered.last
     assert_includes message.body.body.to_html, "application/vnd.sabha.mention"
     assert_equal [ users(:david) ], message.mentionees
   end
@@ -47,7 +47,7 @@ class ComposerTest < ApplicationSystemTestCase
     click_on "send"
 
     assert_selector last_message_selector(".mention"), text: "Jason"
-    message = rooms(:hq).messages.ordered.last
+    message = channels(:hq).messages.ordered.last
 
     within_message message do
       reveal_message_actions
@@ -64,9 +64,9 @@ class ComposerTest < ApplicationSystemTestCase
   # node attributes; editing it under Lexxy must round-trip both intact.
   test "editing a legacy trix message keeps its mention and embed" do
     body = %(<div>Hey #{mention_attachment_for(:jason)} check <action-text-attachment content-type="application/vnd.actiontext.opengraph-embed" url="https://example.com/image.png" href="https://example.com/" filename="Example title" caption="Example description"></action-text-attachment></div>)
-    message = Message.create! room: rooms(:hq), body: body, client_message_id: "legacy", creator: users(:david)
+    message = Message.create! channel: channels(:hq), body: body, client_message_id: "legacy", creator: users(:david)
 
-    join_room rooms(:hq)
+    join_channel channels(:hq)
 
     within_message message do
       reveal_message_actions
@@ -95,8 +95,8 @@ class ComposerTest < ApplicationSystemTestCase
   end
 
   test "pasting a URL while editing unfurls a preview that persists" do
-    message = Message.create! room: rooms(:hq), body: "Original", client_message_id: "edit-unfurl", creator: users(:david)
-    join_room rooms(:hq)
+    message = Message.create! channel: channels(:hq), body: "Original", client_message_id: "edit-unfurl", creator: users(:david)
+    join_channel channels(:hq)
 
     stub_unfurl "Example Site", "https://example.com/article"
 

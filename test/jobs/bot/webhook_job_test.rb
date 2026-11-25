@@ -3,7 +3,7 @@ require "test_helper"
 class Bot::WebhookJobTest < ActiveJob::TestCase
   setup do
     @webhook = webhooks(:betty)
-    @room = rooms(:designers)
+    @channel = channels(:designers)
     DemoMode.stubs(:enabled?).returns(false)
   end
 
@@ -11,7 +11,7 @@ class Bot::WebhookJobTest < ActiveJob::TestCase
     @webhook.stubs(:deliver).raises(NoMethodError, "undefined method `avatar' for nil")
 
     assert_raises(NoMethodError) do
-      Bot::WebhookJob.perform_now(@webhook, "message_created", "{}", @room, false)
+      Bot::WebhookJob.perform_now(@webhook, "message_created", "{}", @channel, false)
     end
 
     assert_no_enqueued_jobs
@@ -21,7 +21,7 @@ class Bot::WebhookJobTest < ActiveJob::TestCase
     @webhook.stubs(:deliver).raises(Webhook::DeliveryError, "Failed to deliver webhook, response: 500 Internal Server Error")
 
     assert_nothing_raised do
-      Bot::WebhookJob.perform_now(@webhook, "message_created", "{}", @room, false)
+      Bot::WebhookJob.perform_now(@webhook, "message_created", "{}", @channel, false)
     end
 
     assert_enqueued_with(job: Bot::WebhookJob)
@@ -31,12 +31,12 @@ class Bot::WebhookJobTest < ActiveJob::TestCase
     DemoMode.stubs(:enabled?).returns(true)
     @webhook.expects(:deliver).never
 
-    Bot::WebhookJob.perform_now(@webhook, "message_created", "{}", @room, false)
+    Bot::WebhookJob.perform_now(@webhook, "message_created", "{}", @channel, false)
   end
 
   test "discards when the webhook has been deleted" do
     assert_enqueued_with(job: Bot::WebhookJob) do
-      Bot::WebhookJob.perform_later(@webhook, "message_created", "{}", @room, false)
+      Bot::WebhookJob.perform_later(@webhook, "message_created", "{}", @channel, false)
     end
 
     @webhook.destroy!

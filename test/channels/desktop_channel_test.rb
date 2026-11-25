@@ -29,8 +29,8 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
   end
 
   test "broadcasts a desktop notification event to the subscribed user" do
-    room = rooms(:david_and_jason)
-    message = room.messages.create!(
+    channel = channels(:david_and_jason)
+    message = channel.messages.create!(
       body: "Desktop cable event",
       creator: users(:david),
       client_message_id: "desktop_channel_event"
@@ -45,7 +45,7 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
     end
   end
 
-  test "badge counts the rooms that are unread and notified" do
+  test "badge counts the channels that are unread and notified" do
     memberships(:kevin_designers).update!(unread_notifications_count: 2, marked_unread: true, last_read_at: 1.day.ago, last_read_message_id: 0)
     kevin = users(:kevin)
 
@@ -53,7 +53,7 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
     assert_equal({ type: "badge", protocol_major: 1, count: kevin.badge_count }, DesktopChannel.badge_for(kevin))
   end
 
-  test "reading a room broadcasts a fresh badge" do
+  test "reading a channel broadcasts a fresh badge" do
     membership = memberships(:david_david_and_jason)
     membership.update!(unread_notifications_count: 2, marked_unread: true, last_read_at: 1.day.ago, last_read_message_id: 0)
 
@@ -65,7 +65,7 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
 
   test "a partial read_until broadcasts a fresh badge" do
     membership = unread_with_notifications(memberships(:david_david_and_jason))
-    first, second = 2.times.map { |i| membership.room.messages.create!(body: "Unread #{i}", creator: users(:jason), client_message_id: "badge_read_until_#{i}") }
+    first, second = 2.times.map { |i| membership.channel.messages.create!(body: "Unread #{i}", creator: users(:jason), client_message_id: "badge_read_until_#{i}") }
 
     badges = capture_broadcasts(DesktopChannel.broadcasting_for(membership.user)) { membership.reload.read_until(first.created_at) }
 
@@ -80,7 +80,7 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
     assert_equal [ "badge" ], badges.map { it["type"] }
   end
 
-  test "opening a room with notifications broadcasts a fresh badge" do
+  test "opening a channel with notifications broadcasts a fresh badge" do
     membership = unread_with_notifications(memberships(:david_david_and_jason))
 
     badges = capture_broadcasts(DesktopChannel.broadcasting_for(membership.user)) { membership.present }
@@ -88,7 +88,7 @@ class DesktopChannelTest < ActionCable::Channel::TestCase
     assert_equal [ 0 ], badges.map { it["count"] }
   end
 
-  test "opening a room with nothing unread broadcasts no badge" do
+  test "opening a channel with nothing unread broadcasts no badge" do
     membership = memberships(:david_david_and_jason)
     membership.update!(unread_notifications_count: 0)
 

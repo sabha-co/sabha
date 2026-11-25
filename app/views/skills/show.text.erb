@@ -11,9 +11,8 @@ workspace. This document is the complete reference for what you can do here.
 operates within exactly one workspace.
 
 If you've worked with other chat platforms, the rough analogues are:
-- **Sabha rooms ≈ Slack channels ≈ Discord channels.** Same concept, different name.
-  Always say "room" in this API.
-- **Sabha threads** are first-class chat surfaces (each thread *is* a room rooted at
+- **Sabha channels work like Slack and Discord channels.** Same concept, same name.
+- **Sabha threads** are first-class chat surfaces (each thread *is* a channel rooted at
   a parent message), not collapsible sub-replies like Slack/Discord threads.
 - **Sabha boosts ≈ emoji reactions** on a message.
 
@@ -30,28 +29,28 @@ emoji reactions ("boosts").
 
 These terms appear throughout the API. Use them precisely:
 
-- **Room** — a chat surface. Comes in four flavors:
-  - **Open** room: anyone in the workspace can join freely, see history, post.
-  - **Closed** room: invite-only; only members see the room exists.
-  - **Direct** room (DM): a private 1:1 or small-group chat between specific users.
+- **Channel** — a chat surface. Comes in four flavors:
+  - **Open** channel: anyone in the workspace can join freely, see history, post.
+  - **Closed** channel: invite-only; only members see the channel exists.
+  - **Direct** channel (DM): a private 1:1 or small-group chat between specific users.
     Created on first message, never deleted, can't be left.
-  - **Thread** room: a side-conversation rooted at a specific parent message in
-    another room. Has its own id and acts like a regular room for posting.
-- **Message** — a single post in a room. Has a body (HTML + plain text), optional
+  - **Thread** channel: a side-conversation rooted at a specific parent message in
+    another channel. Has its own id and acts like a regular channel for posting.
+- **Message** — a single post in a channel. Has a body (HTML + plain text), optional
   attachment, optional mentions, optional reactions ("boosts").
 - **Mention** — `@{user_id}` syntax in a message body resolves to a user in the
-  same room and triggers their mention webhook + notification.
+  same channel and triggers their mention webhook + notification.
 - **Boost** — Sabha's term for an emoji reaction on a message. (NOT a payment,
   NOT a "super-like" — just a reaction.)
 - **Bookmark** — a personal save-for-later flag on a message. Not visible to others.
-- **Membership** — the link between a user and a room. Carries an **involvement**
+- **Membership** — the link between a user and a channel. Carries an **involvement**
   level (see below) and a starred flag.
-- **Involvement** — per-room notification level for a membership:
-  - `everything` — webhook fires on every message in the room.
+- **Involvement** — per-channel notification level for a membership:
+  - `everything` — webhook fires on every message in the channel.
   - `mentions` — webhook fires only when @mentioned, in a DM, or in a thread the
     bot is part of. **Default for bots.**
-  - `nothing` — receive nothing from this room.
-  - `invisible` — additionally hides the room from sidebar listings.
+  - `nothing` — receive nothing from this channel.
+  - `invisible` — additionally hides the channel from sidebar listings.
 - **Role** — workspace-level permission. One of: `member` (default human),
   `moderator`, `administrator`, `bot`. Bots are a separate role and are NOT
   promotable to administrator.
@@ -68,16 +67,16 @@ The base URL for all bot API calls is `<%= api %>`. Authenticate with
 |-------------------------------------|--------------------------------------------------------------|
 | Register a new bot                  | `POST <%= base %>/join/{join_code}` (no auth)                |
 | Receive events                      | WebSocket to `wss://<%= request.host %><%= request.script_name %>/cable` or webhook URL |
-| Post a message                      | `POST /rooms/{id}/messages`                                  |
-| Reply in a thread                   | `POST /rooms/{id}/messages?parent_message_id={msg_id}`       |
+| Post a message                      | `POST /channels/{id}/messages`                               |
+| Reply in a thread                   | `POST /channels/{id}/messages?parent_message_id={msg_id}`    |
 | Edit / delete your message          | `PATCH` or `DELETE /messages/{msg_id}`                       |
-| Read recent messages                | `GET /rooms/{id}/messages`                                   |
+| Read recent messages                | `GET /channels/{id}/messages`                                |
 | Read a single message               | `GET /messages/{msg_id}`                                     |
 | React to a message                  | `POST /messages/{msg_id}/boosts`                             |
 | List a message's reactions          | `GET /messages/{msg_id}/boosts`                              |
-| Find a user's id (for mentions)     | `GET /autocompletable/users?room_id=X&query=...`             |
-| List rooms you're in                | `GET /rooms`                                                 |
-| Browse open rooms you can join      | `GET /rooms?joinable=true`                                   |
+| Find a user's id (for mentions)     | `GET /autocompletable/users?channel_id=X&query=...`          |
+| List channels you're in             | `GET /channels`                                              |
+| Browse open channels you can join   | `GET /channels?joinable=true`                                |
 | Send a DM                           | `POST /direct_messages` with `{user_ids: [...]}`             |
 | Search messages                     | `GET /search?q=...`                                          |
 | Update your bot profile             | `PATCH /profile`                                             |
@@ -113,16 +112,16 @@ Response (`201 Created`):
       "base_url": "<%= base %>",
       "api_base_url": "<%= api %>",
       "websocket_url": "wss://<%= request.host %><%= request.script_name %>/cable?bot_key=42-AbCdEfGhIjKl",
-      "rooms": [
+      "channels": [
         { "id": 1, "name": "General", "type": "Open",
-          "messages_url": "<%= api %>/rooms/1/messages" }
+          "messages_url": "<%= api %>/channels/1/messages" }
       ]
     }
 
 **Store `bot_key` and `webhook_secret` immediately — they are shown only once.**
 
-By default, new bots are auto-joined to all open rooms with `mentions` involvement.
-Workspace admins can later change involvement per room (see Vocabulary above).
+By default, new bots are auto-joined to all open channels with `mentions` involvement.
+Workspace admins can later change involvement per channel (see Vocabulary above).
 
 ## Authentication
 
@@ -185,10 +184,10 @@ Example `message_created` payload (most common):
         "id": 1, "name": "Alice", "role": "member",
         "url": "<%= base %>/users/1"
       },
-      "room": {
+      "channel": {
         "id": 5, "name": "General", "type": "Open",
         "members": 42, "has_bot": true,
-        "messages_url": "<%= api %>/rooms/5/messages"
+        "messages_url": "<%= api %>/channels/5/messages"
       },
       "message": {
         "id": 10,
@@ -200,7 +199,7 @@ Example `message_created` payload (most common):
           "byte_size": 245760
         },
         "mentionees": [{ "id": 99, "name": "MyBot" }],
-        "url": "<%= base %>/rooms/5@10",
+        "url": "<%= base %>/channels/5@10",
         "created_at": "2026-04-07T12:00:00Z",
         "updated_at": "2026-04-07T12:00:00Z",
         "thread": null
@@ -208,9 +207,9 @@ Example `message_created` payload (most common):
     }
 
 Notes:
-- `room.type` is one of `"Open"`, `"Closed"`, `"Direct"`, `"Thread"`. For a
+- `channel.type` is one of `"Open"`, `"Closed"`, `"Direct"`, `"Thread"`. For a
   `Thread`, `message.thread.parent_message_id` points back to the originating
-  message in the parent room.
+  message in the parent channel.
 - `message.body.plain` strips HTML and is what you usually want to read.
 - `message.mentionees` lists users mentioned in this message; check whether your
   bot's id is in there to detect mentions.
@@ -219,16 +218,16 @@ Notes:
 ### Webhook Auto-Reply Convention
 
 If you respond to a webhook with HTTP 200:
-- `text/plain` or `text/html` body → auto-posted as your bot's reply in the source room.
+- `text/plain` or `text/html` body → auto-posted as your bot's reply in the source channel.
 - Binary content type → auto-posted as an attachment.
-- Non-200 or timeout (300s max) → an error message is posted to the room.
+- Non-200 or timeout (300s max) → an error message is posted to the channel.
 
 This lets simple bots be a single HTTP handler with no API calls. For anything
 non-trivial, return 200 with empty body and use the REST API explicitly.
 
 ## Posting Messages
 
-    POST <%= api %>/rooms/{room_id}/messages
+    POST <%= api %>/channels/{channel_id}/messages
     Content-Type: text/plain
 
     Hello world!
@@ -238,12 +237,12 @@ The body is plain text and gets formatted as a message paragraph. To post HTML
 
 For file attachments:
 
-    POST <%= api %>/rooms/{room_id}/messages
+    POST <%= api %>/channels/{channel_id}/messages
     Content-Type: multipart/form-data
 
     attachment: <file>
 
-Response: `201 Created` with body `{ "id": <message_id>, "room_id": <room_id> }` and a `Location` header pointing to the new message. For threaded sends (see "Threads" below) `room_id` is the resolved thread room.
+Response: `201 Created` with body `{ "id": <message_id>, "channel_id": <channel_id> }` and a `Location` header pointing to the new message. For threaded sends (see "Threads" below) `channel_id` is the resolved thread channel.
 
 ### Mentioning Users
 
@@ -251,17 +250,17 @@ Use `@{user_id}` syntax in the message body:
 
     Welcome @{42}!
 
-The mention only resolves if user `42` is a member of `room_id`. To find user ids
-**always include `room_id` matching where you'll post**:
+The mention only resolves if user `42` is a member of `channel_id`. To find user ids
+**always include `channel_id` matching where you'll post**:
 
-    GET <%= api %>/autocompletable/users?room_id=5&query=alice
-    GET <%= api %>/users?room_id=5
+    GET <%= api %>/autocompletable/users?channel_id=5&query=alice
+    GET <%= api %>/users?channel_id=5
 
-Without `room_id`, results may include users from other shared rooms who can't be
-mentioned in your target room.
+Without `channel_id`, results may include users from other shared channels who can't be
+mentioned in your target channel.
 
 `@everyone` exists in the human UI but is **not available to bots** — bots can't
-mention everyone in a room.
+mention everyone in a channel.
 
 ### Editing & Deleting Your Own Messages
 
@@ -273,16 +272,16 @@ mention everyone in a room.
     DELETE <%= api %>/messages/{message_id}
 
 Both return `403` for messages not authored by your bot, and `404` if the
-message is in a room your bot isn't a member of. The server resolves the room
+message is in a channel your bot isn't a member of. The server resolves the channel
 from the message id, so the same call works equally for messages in regular
-rooms and in thread rooms — handy for streaming partial edits across thread
+channels and in thread channels — handy for streaming partial edits across thread
 creates.
 
 ## Reading Messages
 
-    GET <%= api %>/rooms/{room_id}/messages
+    GET <%= api %>/channels/{channel_id}/messages
 
-Returns recent messages in the room, **newest-first**, in the envelope:
+Returns recent messages in the channel, **newest-first**, in the envelope:
 
     { "results": [...], "has_more": true, "next_cursor": "<iso>|<id>" }
 
@@ -300,32 +299,32 @@ Single message:
 
     GET <%= api %>/messages/{message_id}
 
-Resolves the room from the message id; returns the full message envelope with
+Resolves the channel from the message id; returns the full message envelope with
 `mentionees` included.
 
 ## Threads
 
-A **thread** in Sabha is a separate room rooted at a specific parent message.
+A **thread** in Sabha is a separate channel rooted at a specific parent message.
 Reply in a thread by adding a `parent_message_id` query parameter to the
 regular `POST /messages` endpoint — the server creates the thread (or finds
 the existing one), adds you as a member, and posts your reply there:
 
-    POST <%= api %>/rooms/{room_id}/messages?parent_message_id={message_id}
+    POST <%= api %>/channels/{channel_id}/messages?parent_message_id={message_id}
     Content-Type: text/plain
 
     My threaded reply
 
 Response (`201 Created`):
 
-    { "id": 99, "room_id": 42 }
+    { "id": 99, "channel_id": 42 }
 
-`room_id` in the body is the resolved thread room id. To post follow-up
-messages to the same thread, post to `/rooms/{thread_id}/messages` directly,
-or keep using `parent_message_id={message_id}` from the parent room — the
+`channel_id` in the body is the resolved thread channel id. To post follow-up
+messages to the same thread, post to `/channels/{thread_id}/messages` directly,
+or keep using `parent_message_id={message_id}` from the parent channel — the
 server is idempotent and will land both in the same thread.
 
-A `parent_message_id` pointing at a message in a different room than
-`{room_id}` returns 404. A `parent_message_id` pointing at a message that
+A `parent_message_id` pointing at a message in a different channel than
+`{channel_id}` returns 404. A `parent_message_id` pointing at a message that
 already lives inside a thread returns 422 — Sabha doesn't support nested
 threads.
 
@@ -369,72 +368,72 @@ Start (or resume) a DM with one or more users:
 
     { "user_ids": [42, 17] }
 
-Response: `{ "room": { "id": 5 } }` with status `201` for new or `200` for
-existing. Once you have the DM's `room.id`, post to it like any other room.
+Response: `{ "channel": { "id": 5 } }` with status `201` for new or `200` for
+existing. Once you have the DM's `channel.id`, post to it like any other channel.
 
-DM rooms cannot be left or deleted.
+DM channels cannot be left or deleted.
 
-## Rooms
+## Channels
 
 ### Listing
 
-    GET <%= api %>/rooms                       # rooms you're in
-    GET <%= api %>/rooms?joinable=true         # open rooms you could join
+    GET <%= api %>/channels                       # channels you're in
+    GET <%= api %>/channels?joinable=true         # open channels you could join
 
-### Joining and Leaving Open Rooms
+### Joining and Leaving Open Channels
 
-    POST <%= api %>/rooms/{room_id}/membership     # join (open rooms only)
-    DELETE <%= api %>/rooms/{room_id}/membership   # leave
+    POST <%= api %>/channels/{channel_id}/membership     # join (open channels only)
+    DELETE <%= api %>/channels/{channel_id}/membership   # leave
 
-DMs can't be left. To join a closed room, an existing member must add you (see
+DMs can't be left. To join a closed channel, an existing member must add you (see
 Members below).
 
 ### Creating
 
-    POST <%= api %>/rooms
+    POST <%= api %>/channels
     Content-Type: application/json
 
-    { "name": "My Room", "type": "open" }
+    { "name": "My Channel", "type": "open" }
 
 `type` must be `"open"` or `"closed"`. The bot is auto-joined and recorded as
 the creator. The creator is the only bot that can later edit, archive, or
-manage members of that room.
+manage members of that channel.
 
 ### Updating, Archiving
 
-    PATCH <%= api %>/rooms/{room_id}    { "name": "New Name" }
-    DELETE <%= api %>/rooms/{room_id}   # archive (soft-delete)
+    PATCH <%= api %>/channels/{channel_id}    { "name": "New Name" }
+    DELETE <%= api %>/channels/{channel_id}   # archive (soft-delete)
 
 Both return `403` if your bot is not the creator.
 
-## Room Members
+## Channel Members
 
-Listing works for any room your bot is in:
+Listing works for any channel your bot is in:
 
-    GET <%= api %>/rooms/{room_id}/members
+    GET <%= api %>/channels/{channel_id}/members
 
 Returns `{id, name, role}` for each member.
 
 Add or remove members (creator-bot only):
 
-    POST <%= api %>/rooms/{room_id}/members         { "user_id": 42 }
-    DELETE <%= api %>/rooms/{room_id}/members/{user_id}
+    POST <%= api %>/channels/{channel_id}/members         { "user_id": 42 }
+    DELETE <%= api %>/channels/{channel_id}/members/{user_id}
 
 ## User Directory
 
-For mention discovery, **always pass `room_id` matching the room you'll post in**.
-Without `room_id`, results span all rooms the bot shares.
+For mention discovery, **always pass `channel_id` matching the channel you'll post in**.
+Without `channel_id`, results span all channels the bot shares.
 
-    GET <%= api %>/users?room_id=5
-    GET <%= api %>/users?room_id=5&page=2&per_page=50
-    GET <%= api %>/users/{user_id}?room_id=5
-    GET <%= api %>/autocompletable/users?room_id=5&query=alice
+    GET <%= api %>/users?channel_id=5
+    GET <%= api %>/users?channel_id=5&page=2&per_page=50
+    GET <%= api %>/users/{user_id}?channel_id=5
+    GET <%= api %>/autocompletable/users?channel_id=5&query=alice
 
 Returns `{id, name, role, bot, url}` for each user; the single-user `show`
 endpoint additionally includes `bio`, `twitter_url`, `linkedin_url`,
 `personal_url`. `autocomplete` returns up to 20 users (exact-name matches first).
-With blank `query`, returns recent posters in the room (or alphabetical when
-`room_id` is omitted).
+With blank `query`, returns recent posters in the channel (or alphabetical when
+`channel_id` is omitted).
 
 Defaults: `per_page=50`, max `100`. Placeholder accounts (default-named, not
 yet onboarded) are excluded from all three endpoints.
@@ -443,8 +442,8 @@ yet onboarded) are excluded from all three endpoints.
 
     GET <%= api %>/search?q=deploy
 
-Returns up to 50 matching messages across rooms your bot is in. Each result
-includes id, creator, body, `room` (`{id, name}`), and `created_at`.
+Returns up to 50 matching messages across channels your bot is in. Each result
+includes id, creator, body, `channel` (`{id, name}`), and `created_at`.
 
 Search uses SQLite FTS5 — supports phrase queries (`"exact phrase"`) and prefix
 matches (`deploy*`).
@@ -469,7 +468,7 @@ All 4xx/5xx responses are JSON:
 `validation_failed`, `forbidden`, `not_found`, `service_unavailable`.
 
 A few endpoints return `403` with no body when authorization fails (e.g.,
-non-creator bot trying to update a room) — treat any 403 as a permission error
+non-creator bot trying to update a channel) — treat any 403 as a permission error
 regardless of body.
 
 Requests to retired URLs (older shapes that no longer exist) are 404'd by the
@@ -483,48 +482,48 @@ and update your client.
 
 1. Receive a `message_created` event (webhook or WebSocket).
 2. Check whether your bot's id is in `message.mentionees`.
-3. POST your reply to `room.messages_url` (an absolute URL provided in the payload).
+3. POST your reply to `channel.messages_url` (an absolute URL provided in the payload).
 
 If you're using webhooks, you can also just return your reply text with HTTP 200
 — Sabha will auto-post it for you.
 
 ### "Resolve a name to a user_id for mentioning"
 
-1. Note the `room_id` you're about to post in.
-2. Call `GET /api/bots/autocompletable/users?room_id={id}&query={name}`.
+1. Note the `channel_id` you're about to post in.
+2. Call `GET /api/bots/autocompletable/users?channel_id={id}&query={name}`.
 3. Use the first result's `id` in `@{id}` syntax.
 
 ### "Catch up after a disconnect"
 
 1. Reconnect to the WebSocket.
-2. Sabha does not currently replay missed events — for any room you care about,
-   call `GET /api/bots/rooms/{id}/messages` and walk `next_cursor` until your
+2. Sabha does not currently replay missed events — for any channel you care about,
+   call `GET /api/bots/channels/{id}/messages` and walk `next_cursor` until your
    last-seen state is covered.
 
 ### "Start a thread on someone else's message"
 
-1. POST to `/api/bots/rooms/{room_id}/messages?parent_message_id={message_id}`
+1. POST to `/api/bots/channels/{channel_id}/messages?parent_message_id={message_id}`
    with your reply body.
-2. The response's `room_id` is the thread room id you can post follow-up
+2. The response's `channel_id` is the thread channel id you can post follow-up
    messages to.
 
-### "Send a DM after seeing someone post in a public room"
+### "Send a DM after seeing someone post in a public channel"
 
 1. Note `user.id` from the incoming message event.
 2. `POST /api/bots/direct_messages` with `{ user_ids: [user_id] }`.
-3. POST messages to the returned `room.id`.
+3. POST messages to the returned `channel.id`.
 
 ## Limits & Gotchas
 
-- **Mentions only resolve in the target room.** Always scope user discovery with
-  `room_id`. A user discoverable cross-room may be silently un-mentionable elsewhere.
+- **Mentions only resolve in the target channel.** Always scope user discovery with
+  `channel_id`. A user discoverable cross-channel may be silently un-mentionable elsewhere.
 - **Bots cannot use `@everyone`.** That capability is admin-only in the human UI.
-- **Bots are not administrators.** Most administrative actions (renaming a room
+- **Bots are not administrators.** Most administrative actions (renaming a channel
   the bot didn't create, removing arbitrary members, banning users) are not
   available to bots regardless of role inheritance.
 - **No replay for missed events.** Webhook retries cap at ~10 attempts; WebSocket
   reconnects don't replay backlog. Reconcile by re-reading message history.
-- **Message history pagination uses cursors.** `GET /rooms/{id}/messages` returns
+- **Message history pagination uses cursors.** `GET /channels/{id}/messages` returns
   `next_cursor`; pass it back as `before` to fetch the next page. Default
   `limit` 50, max 200.
 - **Attachment URLs expire.** Download promptly when you receive an event.

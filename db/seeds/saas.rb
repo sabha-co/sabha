@@ -1,6 +1,6 @@
 # SaaS development seed data
 #
-# Creates 3 global identities, 3 workspaces, each with rooms, messages, boosts, and bookmarks.
+# Creates 3 global identities, 3 workspaces, each with channels, messages, boosts, and bookmarks.
 # Sign in as ashwin@sabha.co (OTP — check server logs for code)
 
 # Global identities
@@ -58,24 +58,24 @@ seed_workspace(basecamp, [ [ gi_ashwin, :administrator ], [ gi_jason, :member ],
   david    = users["david@sabha.co"]
   everyone = [ ashwin, jason, david ]
 
-  general = Rooms::Open.find_or_create_by!(name: "General") do |r|
+  general = Channels::Open.find_or_create_by!(name: "General") do |r|
     r.slug = "general"
     r.creator = ashwin
     r.auto_join = true
   end
   general.memberships.grant_to(everyone)
 
-  random = Rooms::Open.find_or_create_by!(name: "Random") do |r|
+  random = Channels::Open.find_or_create_by!(name: "Random") do |r|
     r.creator = jason
   end
   random.memberships.grant_to(everyone)
 
-  design = Rooms::Closed.find_or_create_by!(name: "Design") do |r|
+  design = Channels::Closed.find_or_create_by!(name: "Design") do |r|
     r.creator = ashwin
   end
   design.memberships.grant_to([ ashwin, david ])
 
-  dm = Rooms::Direct.find_or_create_for([ ashwin, jason ])
+  dm = Channels::Direct.find_or_create_for([ ashwin, jason ])
 
   times = spread_times(12)
 
@@ -108,7 +108,7 @@ seed_workspace(hey, [ [ gi_jason, :administrator ], [ gi_david, :member ] ]) do 
   jason = users["jason@sabha.co"]
   david = users["david@sabha.co"]
 
-  general = Rooms::Open.find_or_create_by!(name: "General") do |r|
+  general = Channels::Open.find_or_create_by!(name: "General") do |r|
     r.slug = "general"
     r.creator = jason
     r.auto_join = true
@@ -122,7 +122,7 @@ seed_workspace(hey, [ [ gi_jason, :administrator ], [ gi_david, :member ] ]) do 
   m3 = post_message general, jason, "Let's keep things focused.", at: times[2]
   m4 = post_message general, david, "Agreed. Less noise, more signal.", at: times[3]
 
-  dm = Rooms::Direct.find_or_create_for([ jason, david ])
+  dm = Channels::Direct.find_or_create_for([ jason, david ])
   m5 = post_message dm, jason, "How's the email redesign going?", at: times[4]
   m6 = post_message dm, david, "Making good progress. Should be ready next week.", at: times[5]
 
@@ -139,14 +139,14 @@ seed_workspace(once, [ [ gi_ashwin, :administrator ], [ gi_jason, :member ] ]) d
   ashwin = users["ashwin@sabha.co"]
   jason  = users["jason@sabha.co"]
 
-  general = Rooms::Open.find_or_create_by!(name: "General") do |r|
+  general = Channels::Open.find_or_create_by!(name: "General") do |r|
     r.slug = "general"
     r.creator = ashwin
     r.auto_join = true
   end
   general.memberships.grant_to([ ashwin, jason ])
 
-  ops = Rooms::Closed.find_or_create_by!(name: "Operations") do |r|
+  ops = Channels::Closed.find_or_create_by!(name: "Operations") do |r|
     r.creator = ashwin
   end
   ops.memberships.grant_to([ ashwin, jason ])

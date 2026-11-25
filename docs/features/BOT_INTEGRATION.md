@@ -30,9 +30,9 @@ Response:
   "base_url": "https://chat.example.com",
   "api_base_url": "https://chat.example.com/api/bots",
   "websocket_url": "wss://chat.example.com/cable?bot_key=42-AbCdEfGhIjKl",
-  "rooms": [
+  "channels": [
     { "id": 1, "name": "General", "type": "Open",
-      "messages_url": "https://chat.example.com/api/bots/rooms/1/messages" }
+      "messages_url": "https://chat.example.com/api/bots/channels/1/messages" }
   ]
 }
 ```
@@ -43,7 +43,7 @@ A `webhook_secret` is generated for **every** bot at creation, regardless of whe
 
 The registration and `PATCH /api/bots/profile` endpoints also accept `mentions_url` and `everything_url` as legacy aliases for `webhook_url`. They map to the same column and are kept for backwards compatibility with older self-hosted bots.
 
-The invite URL is consumed on success. The bot is automatically added to all open rooms marked as auto-join, just like a human user.
+The invite URL is consumed on success. The bot is automatically added to all open channels marked as auto-join, just like a human user.
 
 ### 3. Alternatively: create a bot via admin UI
 
@@ -65,36 +65,36 @@ The WebSocket endpoint keeps `bot_key` in the query string (`wss://.../cable?bot
 
 All endpoints are rooted at the `api_base_url` returned from registration (e.g. `https://chat.example.com/api/bots`).
 
-> **URL shape principle.** URLs encode the minimum context the server can't infer. *Creating* a message needs a target room, so it's `POST /rooms/{room_id}/messages`. *Listing* is inherently per-room, so it's `GET /rooms/{room_id}/messages`. *Mutating, reading, or aggregating* an existing record can resolve the room from the record itself, so they're id-only: `/messages/{id}`, `/messages/{message_id}/boosts/...`. The id-only endpoints are stable across rooms and tenants — a bot streaming partial edits never has to track room rebinds across thread creates.
+> **URL shape principle.** URLs encode the minimum context the server can't infer. *Creating* a message needs a target channel, so it's `POST /channels/{channel_id}/messages`. *Listing* is inherently per-channel, so it's `GET /channels/{channel_id}/messages`. *Mutating, reading, or aggregating* an existing record can resolve the channel from the record itself, so they're id-only: `/messages/{id}`, `/messages/{message_id}/boosts/...`. The id-only endpoints are stable across channels and tenants — a bot streaming partial edits never has to track channel rebinds across thread creates.
 >
-> **Per-room URLs — server is the source of truth.** Every webhook payload and the registration response include a `messages_url` on each `room` object pointing at the room-scoped messages collection (used for posting and listing). Clients **should** consume that field directly rather than deriving URLs from `api_base_url` + `room_id`. Derivation works today but will silently break if the server's URL shape ever changes (versioning, subdomain split, new `script_name` mount). Treat string concatenation as a compatibility fallback only. Id-only URLs (`/messages/{id}`, `/messages/{message_id}/boosts/...`) have no per-room context to encode and so are not surfaced as discovery fields — derive them from `api_base_url`.
+> **Per-channel URLs — server is the source of truth.** Every webhook payload and the registration response include a `messages_url` on each `channel` object pointing at the channel-scoped messages collection (used for posting and listing). Clients **should** consume that field directly rather than deriving URLs from `api_base_url` + `channel_id`. Derivation works today but will silently break if the server's URL shape ever changes (versioning, subdomain split, new `script_name` mount). Treat string concatenation as a compatibility fallback only. Id-only URLs (`/messages/{id}`, `/messages/{message_id}/boosts/...`) have no per-channel context to encode and so are not surfaced as discovery fields — derive them from `api_base_url`.
 
 | Action | Method | Endpoint |
 |---|---|---|
-| Post a message | POST | `/rooms/{room_id}/messages` |
-| Send attachment | POST | `/rooms/{room_id}/messages` (multipart) |
-| Reply in a thread | POST | `/rooms/{room_id}/messages?parent_message_id={message_id}` |
+| Post a message | POST | `/channels/{channel_id}/messages` |
+| Send attachment | POST | `/channels/{channel_id}/messages` (multipart) |
+| Reply in a thread | POST | `/channels/{channel_id}/messages?parent_message_id={message_id}` |
 | Edit own message | PATCH | `/messages/{id}` |
 | Delete own message | DELETE | `/messages/{id}` |
 | Read single message | GET | `/messages/{id}` |
-| Read messages | GET | `/rooms/{room_id}/messages` |
+| Read messages | GET | `/channels/{channel_id}/messages` |
 | Add reaction | POST | `/messages/{message_id}/boosts` |
 | Remove reaction | DELETE | `/messages/{message_id}/boosts/{id}` |
 | List reactions | GET | `/messages/{message_id}/boosts` |
-| List room members | GET | `/rooms/{room_id}/members` |
-| Add member to room | POST | `/rooms/{room_id}/members` |
-| Remove member from room | DELETE | `/rooms/{room_id}/members/{user_id}` |
-| Bot joins room | POST | `/rooms/{room_id}/membership` |
-| Bot leaves room | DELETE | `/rooms/{room_id}/membership` |
-| List users (for mention discovery) | GET | `/users?room_id={room_id}` |
+| List channel members | GET | `/channels/{channel_id}/members` |
+| Add member to channel | POST | `/channels/{channel_id}/members` |
+| Remove member from channel | DELETE | `/channels/{channel_id}/members/{user_id}` |
+| Bot joins channel | POST | `/channels/{channel_id}/membership` |
+| Bot leaves channel | DELETE | `/channels/{channel_id}/membership` |
+| List users (for mention discovery) | GET | `/users?channel_id={channel_id}` |
 | Look up a user by id | GET | `/users/{user_id}` |
-| Autocomplete users by name/handle | GET | `/autocompletable/users?room_id={room_id}&query=...` |
+| Autocomplete users by name/handle | GET | `/autocompletable/users?channel_id={channel_id}&query=...` |
 | Search messages | GET | `/search?q=query` |
-| List rooms | GET | `/rooms` |
-| List joinable rooms | GET | `/rooms?joinable=true` |
-| Create room | POST | `/rooms` |
-| Update room | PATCH | `/rooms/{room_id}` |
-| Archive room | DELETE | `/rooms/{room_id}` |
+| List channels | GET | `/channels` |
+| List joinable channels | GET | `/channels?joinable=true` |
+| Create channel | POST | `/channels` |
+| Update channel | PATCH | `/channels/{channel_id}` |
+| Archive channel | DELETE | `/channels/{channel_id}` |
 | Create a DM | POST | `/direct_messages` |
 | Update bot settings | PATCH | `/profile` |
 | API discovery | GET | `/skill` (top-level, unauthenticated) |
@@ -117,50 +117,50 @@ Pass `next_cursor` back as `cursor=...` on the next request (or use the typed-cu
 
 | Endpoint | Cursor / filter params |
 |---|---|
-| `GET /rooms/{room_id}/messages` | `before_id`, `before_time`, `after_time`, `limit` |
-| `GET /search` | `room_ids[]`, `author_ids[]`, `before_id`, `before_time`, `after_time`, `limit` |
+| `GET /channels/{channel_id}/messages` | `before_id`, `before_time`, `after_time`, `limit` |
+| `GET /search` | `channel_ids[]`, `author_ids[]`, `before_id`, `before_time`, `after_time`, `limit` |
 
-`GET /rooms` and `GET /users` use **page-based** pagination (`page`, `per_page`). `per_page` defaults to 50 and is capped at 100. `GET /rooms` also accepts `query=` for substring matching on room names.
+`GET /channels` and `GET /users` use **page-based** pagination (`page`, `per_page`). `per_page` defaults to 50 and is capped at 100. `GET /channels` also accepts `query=` for substring matching on channel names.
 
 ### Response shapes (overview)
 
 | Endpoint | Status | Body |
 |---|---|---|
-| `POST /rooms/{id}/messages` | `201` + `Location` | `{ "id": 10, "room_id": 5 }` |
-| `POST /rooms/{id}/messages?parent_message_id={pid}` | `201` + `Location` | `{ "id": 10, "room_id": <thread_room_id> }` |
+| `POST /channels/{id}/messages` | `201` + `Location` | `{ "id": 10, "channel_id": 5 }` |
+| `POST /channels/{id}/messages?parent_message_id={pid}` | `201` + `Location` | `{ "id": 10, "channel_id": <thread_channel_id> }` |
 | `PATCH /messages/{id}` | `200` | `{ "id": 10, "body": { "html": "...", "plain": "..." } }` |
 | `DELETE /messages/{id}` | `204` | — |
 | `POST /messages/{id}/boosts` | `201` | `{ "id": 7, "content": "🎉" }` |
 | `GET /messages/{id}/boosts` | `200` | `{ "reactions": [ { "content": "🎉", "count": 3, "boosters": [ {"id":1,"name":"A"}, … ], "truncated": false } ], "total": 5, "truncated": false }` |
-| `POST /direct_messages` | `200` (existing DM) or `201` (new) | `{ "room": { "id": 5 } }` |
+| `POST /direct_messages` | `200` (existing DM) or `201` (new) | `{ "channel": { "id": 5 } }` |
 | `PATCH /profile` | `200` | `{ "name": "MyBot", "webhook_url": "https://..." }` |
-| `POST /rooms/{id}/members` | `201` | `{ "id": 42, "name": "Alice" }` |
-| `GET /rooms/{id}/members` | `200` | `[ { "id": 1, "name": "Alice", "role": "member" }, … ]` |
+| `POST /channels/{id}/members` | `201` | `{ "id": 42, "name": "Alice" }` |
+| `GET /channels/{id}/members` | `200` | `[ { "id": 1, "name": "Alice", "role": "member" }, … ]` |
 
-**Multipart upload** (file attachments): post `multipart/form-data` to `POST /rooms/{id}/messages` with the file under the field name `attachment`.
+**Multipart upload** (file attachments): post `multipart/form-data` to `POST /channels/{id}/messages` with the file under the field name `attachment`.
 
 ```bash
-curl -X POST "$API/rooms/$ROOM_ID/messages" \
+curl -X POST "$API/channels/$CHANNEL_ID/messages" \
   -H "Authorization: Bearer $BOT_KEY" \
   -F "attachment=@photo.jpg"
 ```
 
 ---
 
-## Room Permissions
+## Channel Permissions
 
-A bot's access to each room is controlled by its membership involvement:
+A bot's access to each channel is controlled by its membership involvement:
 
 - **Mentions** — bot receives events when @mentioned or in a DM. Applies to both WebSocket and webhook delivery. If `webhook_url` is set, the HTTP response body is auto-posted as a reply.
-- **Muted** — bot receives no events from this room. It can still post and read via the API.
+- **Muted** — bot receives no events from this channel. It can still post and read via the API.
 
-Admins configure permissions per room from the bot's detail page. Each room has its own permission page at `/account/bots/:bot_id/rooms/:room_id/permission`. The `mentions` and `nothing` options surface in the UI as **Mentions** and **Muted**; the membership model also accepts `everything` (set via API or console) — a bot with `involvement: :everything` receives every message in the room.
+Admins configure permissions per channel from the bot's detail page. Each channel has its own permission page at `/account/bots/:bot_id/channels/:channel_id/permission`. The `mentions` and `nothing` options surface in the UI as **Mentions** and **Muted**; the membership model also accepts `everything` (set via API or console) — a bot with `involvement: :everything` receives every message in the channel.
 
-By default, new bots join open rooms with "mentions" involvement.
+By default, new bots join open channels with "mentions" involvement.
 
 ### Thread and DM delivery
 
-Inside a thread or direct message, a bot member receives **every** message — no mention required — matching how notifications work for human members of the same conversation. The "mentions" gate only applies to open and closed rooms.
+Inside a thread or direct message, a bot member receives **every** message — no mention required — matching how notifications work for human members of the same conversation. The "mentions" gate only applies to open and closed channels.
 
 ---
 
@@ -172,10 +172,10 @@ For small automations — deploy notifications, CI alerts, standup reminders —
 
 ```bash
 BOT_KEY="42-AbCdEfGhIjKl"
-ROOM_ID=1
+CHANNEL_ID=1
 API="https://chat.example.com/api/bots"
 
-curl -X POST "$API/rooms/$ROOM_ID/messages" \
+curl -X POST "$API/channels/$CHANNEL_ID/messages" \
   -H "Authorization: Bearer $BOT_KEY" \
   -H "Content-Type: text/plain" \
   -d "Deploy complete: $(git log --oneline -1)"
@@ -185,7 +185,7 @@ curl -X POST "$API/rooms/$ROOM_ID/messages" \
 
 ```bash
 # Every weekday at 9am
-0 9 * * 1-5 curl -X POST "$API/rooms/$ROOM_ID/messages" \
+0 9 * * 1-5 curl -X POST "$API/channels/$CHANNEL_ID/messages" \
   -H "Authorization: Bearer $BOT_KEY" \
   -H "Content-Type: text/plain" \
   -d "Standup time! What are you working on today?"
@@ -201,7 +201,7 @@ require "net/http"
 require "json"
 
 BOT_KEY = ENV["SABHA_BOT_KEY"]
-ROOM_ID = ENV["SABHA_ROOM_ID"]
+CHANNEL_ID = ENV["SABHA_CHANNEL_ID"]
 API     = ENV["SABHA_API_BASE_URL"]  # e.g. https://chat.example.com/api/bots
 
 post "/github" do
@@ -220,7 +220,7 @@ post "/github" do
   end
 
   if message
-    uri = URI("#{API}/rooms/#{ROOM_ID}/messages")
+    uri = URI("#{API}/channels/#{CHANNEL_ID}/messages")
     Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
       http.post(uri.path, message,
         "Authorization" => "Bearer #{BOT_KEY}",
@@ -237,33 +237,33 @@ end
 Use `@{user_id}` syntax in message bodies:
 
 ```bash
-curl -X POST "$API/rooms/$ROOM_ID/messages" \
+curl -X POST "$API/channels/$CHANNEL_ID/messages" \
   -H "Authorization: Bearer $BOT_KEY" \
   -H "Content-Type: text/plain" \
   -d "Hey @{42}, your build failed."
 ```
 
-`@{user_id}` only resolves against members of the target room — a mention to a user not in `room_id` is silently dropped. To find user ids, use the discovery endpoints (next section) and **always pass `room_id` matching the room you'll post in**.
+`@{user_id}` only resolves against members of the target channel — a mention to a user not in `channel_id` is silently dropped. To find user ids, use the discovery endpoints (next section) and **always pass `channel_id` matching the channel you'll post in**.
 
 ### Discovering users
 
 To resolve a name to a `user_id` for mentioning:
 
 ```bash
-curl "$API/autocompletable/users?room_id=$ROOM_ID&query=alice" \
+curl "$API/autocompletable/users?channel_id=$CHANNEL_ID&query=alice" \
   -H "Authorization: Bearer $BOT_KEY"
 ```
 
 Returns up to 20 users matching the query (exact first-name matches ranked first). Each result has `id`, `name`, `role`, `bot`, and `url`.
 
-To list all users in a room (paginated):
+To list all users in a channel (paginated):
 
 ```bash
-curl "$API/users?room_id=$ROOM_ID&page=1&per_page=50" \
+curl "$API/users?channel_id=$CHANNEL_ID&page=1&per_page=50" \
   -H "Authorization: Bearer $BOT_KEY"
 ```
 
-Defaults to `per_page=50` (max `100`). Omit `room_id` to span all rooms the bot shares — useful for directory browsing, but results may include users not mentionable from any single room.
+Defaults to `per_page=50` (max `100`). Omit `channel_id` to span all channels the bot shares — useful for directory browsing, but results may include users not mentionable from any single channel.
 
 To fetch a single user's full profile (bio, social URLs):
 
@@ -271,7 +271,7 @@ To fetch a single user's full profile (bio, social URLs):
 curl "$API/users/$USER_ID" -H "Authorization: Bearer $BOT_KEY"
 ```
 
-All three endpoints exclude default-named placeholder accounts and deactivated users. With `room_id`, the bot must be a member of that room or the request returns `404`.
+All three endpoints exclude default-named placeholder accounts and deactivated users. With `channel_id`, the bot must be a member of that channel or the request returns `404`.
 
 ### Editing a message
 
@@ -315,10 +315,10 @@ curl -X DELETE "$API/messages/$MESSAGE_ID/boosts/$BOOST_ID" \
   -H "Authorization: Bearer $BOT_KEY"
 ```
 
-### Listing room members
+### Listing channel members
 
 ```bash
-curl "$API/rooms/$ROOM_ID/members" -H "Authorization: Bearer $BOT_KEY"
+curl "$API/channels/$CHANNEL_ID/members" -H "Authorization: Bearer $BOT_KEY"
 ```
 
 Returns an array of members with `id`, `name`, and `role`.
@@ -329,7 +329,7 @@ Returns an array of members with `id`, `name`, and `role`.
 curl "$API/search?q=deploy" -H "Authorization: Bearer $BOT_KEY"
 ```
 
-Returns a cursor-paginated envelope (see Pagination above) with matching messages and room context. Filter further with `room_ids[]`, `author_ids[]`, `before_id`, `before_time`, `after_time`, and `limit`.
+Returns a cursor-paginated envelope (see Pagination above) with matching messages and channel context. Filter further with `channel_ids[]`, `author_ids[]`, `before_id`, `before_time`, `after_time`, and `limit`.
 
 ### Reading a single message
 
@@ -337,65 +337,65 @@ Returns a cursor-paginated envelope (see Pagination above) with matching message
 curl "$API/messages/$MESSAGE_ID" -H "Authorization: Bearer $BOT_KEY"
 ```
 
-### Discovering joinable rooms
+### Discovering joinable channels
 
-List open rooms the bot can join (rooms it's not already in).
+List open channels the bot can join (channels it's not already in).
 
 ```bash
-curl "$API/rooms?joinable=true" -H "Authorization: Bearer $BOT_KEY"
+curl "$API/channels?joinable=true" -H "Authorization: Bearer $BOT_KEY"
 ```
 
-### Joining a room
+### Joining a channel
 
 ```bash
-curl -X POST "$API/rooms/$ROOM_ID/membership" -H "Authorization: Bearer $BOT_KEY"
+curl -X POST "$API/channels/$CHANNEL_ID/membership" -H "Authorization: Bearer $BOT_KEY"
 ```
 
-### Leaving a room
+### Leaving a channel
 
 ```bash
-curl -X DELETE "$API/rooms/$ROOM_ID/membership" -H "Authorization: Bearer $BOT_KEY"
+curl -X DELETE "$API/channels/$CHANNEL_ID/membership" -H "Authorization: Bearer $BOT_KEY"
 ```
 
-### Creating a room
+### Creating a channel
 
 ```bash
-curl -X POST "$API/rooms" \
+curl -X POST "$API/channels" \
   -H "Authorization: Bearer $BOT_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Bot Room", "type": "open"}'
+  -d '{"name": "Bot Channel", "type": "open"}'
 ```
 
 `name` is required and `type` must be `open` or `closed`. Missing or invalid values return `422` with `code: "validation_failed"`.
 
-### Updating a room
+### Updating a channel
 
 ```bash
-curl -X PATCH "$API/rooms/$ROOM_ID" \
+curl -X PATCH "$API/channels/$CHANNEL_ID" \
   -H "Authorization: Bearer $BOT_KEY" \
   -H "Content-Type: application/json" \
   -d '{"name": "New Name"}'
 ```
 
-### Archiving a room
+### Archiving a channel
 
 ```bash
-curl -X DELETE "$API/rooms/$ROOM_ID" -H "Authorization: Bearer $BOT_KEY"
+curl -X DELETE "$API/channels/$CHANNEL_ID" -H "Authorization: Bearer $BOT_KEY"
 ```
 
-### Adding a member to a room
+### Adding a member to a channel
 
 ```bash
-curl -X POST "$API/rooms/$ROOM_ID/members" \
+curl -X POST "$API/channels/$CHANNEL_ID/members" \
   -H "Authorization: Bearer $BOT_KEY" \
   -H "Content-Type: application/json" \
   -d '{"user_id": 42}'
 ```
 
-### Removing a member from a room
+### Removing a member from a channel
 
 ```bash
-curl -X DELETE "$API/rooms/$ROOM_ID/members/$USER_ID" -H "Authorization: Bearer $BOT_KEY"
+curl -X DELETE "$API/channels/$CHANNEL_ID/members/$USER_ID" -H "Authorization: Bearer $BOT_KEY"
 ```
 
 ---
@@ -456,16 +456,16 @@ WebSocket events are NOT signed — the WebSocket connection is already authenti
 
 All URLs in the payload are absolute — you can call them directly.
 
-The `role` field is always one of `"member"`, `"moderator"`, `"administrator"`, or `"bot"` — branch on this value if the bot needs to distinguish humans from other bots in the same room. Unlike the autocomplete `users` endpoints (which add a `"bot": true/false` flag for convenience), the webhook payload's `user` object does **not** carry a separate `bot` key — use `role == "bot"` instead.
+The `role` field is always one of `"member"`, `"moderator"`, `"administrator"`, or `"bot"` — branch on this value if the bot needs to distinguish humans from other bots in the same channel. Unlike the autocomplete `users` endpoints (which add a `"bot": true/false` flag for convenience), the webhook payload's `user` object does **not** carry a separate `bot` key — use `role == "bot"` instead.
 
 ```json
 {
   "event": "message_created",
   "user": { "id": 1, "name": "Alice", "role": "member", "url": "https://chat.example.com/users/1" },
-  "room": {
+  "channel": {
     "id": 5, "name": "General", "type": "Open",
     "members": 12, "has_bot": true,
-    "messages_url": "https://chat.example.com/api/bots/rooms/5/messages"
+    "messages_url": "https://chat.example.com/api/bots/channels/5/messages"
   },
   "message": {
     "id": 10,
@@ -473,7 +473,7 @@ The `role` field is always one of `"member"`, `"moderator"`, `"administrator"`, 
     "has_attachment": false,
     "attachment": null,
     "mentionees": [{ "id": 42, "name": "MyBot" }],
-    "url": "https://chat.example.com/rooms/5@10",
+    "url": "https://chat.example.com/channels/5@10",
     "created_at": "2026-04-07T12:00:00Z",
     "updated_at": "2026-04-07T12:00:00Z",
     "thread": null
@@ -501,23 +501,23 @@ Attachment URLs are signed and expire after 1 hour.
 | `200` with `Content-Type: text/plain` | Auto-posted as a message |
 | `200` with `Content-Type: text/html` | Auto-posted as a rich message |
 | `200` with binary content type | Auto-posted as a file attachment |
-| Timeout (300s) or error | Error message posted to the room |
+| Timeout (300s) or error | Error message posted to the channel |
 
 ### Thread replies
 
 Reply in a thread by adding a `parent_message_id` query parameter to the regular `POST /messages` endpoint:
 
 ```
-POST /api/bots/rooms/{room_id}/messages?parent_message_id={message_id}
+POST /api/bots/channels/{channel_id}/messages?parent_message_id={message_id}
 Authorization: Bearer {bot_key}
 Content-Type: text/plain
 
 This is a threaded reply!
 ```
 
-`parent_message_id` is a **query-string parameter**, not part of the body — the request body remains the message text. The server creates the thread room (or finds the existing one), adds the bot as a member, and posts the reply there. The response is `201 Created` with body `{ "id": <message_id>, "room_id": <thread_room_id> }` and a `Location` header pointing at the new message. The `room_id` in the body is the resolved thread room id.
+`parent_message_id` is a **query-string parameter**, not part of the body — the request body remains the message text. The server creates the thread channel (or finds the existing one), adds the bot as a member, and posts the reply there. The response is `201 Created` with body `{ "id": <message_id>, "channel_id": <thread_channel_id> }` and a `Location` header pointing at the new message. The `channel_id` in the body is the resolved thread channel id.
 
-A `parent_message_id` pointing at a message in a different room than `{room_id}` returns 404. A `parent_message_id` pointing at a message that already lives inside a thread returns 422 — Sabha doesn't support nested threads.
+A `parent_message_id` pointing at a message in a different channel than `{channel_id}` returns 404. A `parent_message_id` pointing at a message that already lives inside a thread returns 422 — Sabha doesn't support nested threads.
 
 ### Minimal echo bot (Ruby)
 
@@ -580,7 +580,7 @@ Events arrive as JSON messages with the same structure as webhook payloads. All 
 WebSocket is receive-only. To reply, use the REST API:
 
 ```bash
-curl -X POST "$API/rooms/$ROOM_ID/messages" \
+curl -X POST "$API/channels/$CHANNEL_ID/messages" \
   -H "Authorization: Bearer $BOT_KEY" \
   -H "Content-Type: text/plain" \
   -d "Got your message!"
@@ -647,12 +647,12 @@ Sabha calls webhook_url (HMAC-signed) ──> OpenClaw gateway verifies + receiv
 | Channel | Sabha bot API |
 | Bot token | `bot_key` + `webhook_secret` (from self-registration or admin UI) |
 | Inbound messages | WebSocket (`websocket_url`) or signed webhook (`webhook_url`) |
-| Outbound messages | `POST /api/bots/rooms/{room_id}/messages` with `Authorization: Bearer` |
-| Thread replies | `POST /api/bots/rooms/{room_id}/messages?parent_message_id={message_id}` |
+| Outbound messages | `POST /api/bots/channels/{channel_id}/messages` with `Authorization: Bearer` |
+| Thread replies | `POST /api/bots/channels/{channel_id}/messages?parent_message_id={message_id}` |
 | DM creation | `POST /api/bots/direct_messages` |
-| Room discovery | `GET /api/bots/rooms` |
-| Message history | `GET /api/bots/rooms/{room_id}/messages` (last 50) |
-| User discovery | `GET /api/bots/autocompletable/users?room_id={id}&query=...` |
+| Channel discovery | `GET /api/bots/channels` |
+| Message history | `GET /api/bots/channels/{channel_id}/messages` (last 50) |
+| User discovery | `GET /api/bots/autocompletable/users?channel_id={id}&query=...` |
 | API discovery | `GET /skill` (text/plain, LLM-readable) |
 | Registration | `POST /join/{code}` with JSON |
 
@@ -687,28 +687,28 @@ Sabha calls webhook_url (HMAC-signed) ──> OpenClaw gateway verifies + receiv
 
 ## Bot Lifecycle
 
-### Room access
+### Channel access
 
-- Bots auto-join open rooms with `auto_join: true` on creation (same as humans)
-- Admins manage bot room access from the bot detail page — each room has a dedicated permission page
-- Adding/removing a bot from a room posts a system message visible to all members
+- Bots auto-join open channels with `auto_join: true` on creation (same as humans)
+- Admins manage bot channel access from the bot detail page — each channel has a dedicated permission page
+- Adding/removing a bot from a channel posts a system message visible to all members
 
 ### Managing bots
 
-- **Admin UI** at `/account/bots` — create, view, configure room permissions, reset keys, delete bots
-- **Per-room permissions** at `/account/bots/:id/rooms/:room_id/permission` — set involvement (mentions/muted), copy message URL, add/remove from room
+- **Admin UI** at `/account/bots` — create, view, configure channel permissions, reset keys, delete bots
+- **Per-channel permissions** at `/account/bots/:id/channels/:channel_id/permission` — set involvement (mentions/muted), copy message URL, add/remove from channel
 - **Self-update** via `PATCH /api/bots/profile` — bot can change its own name and webhook URL
 - **Key rotation** — admins can reset a bot's key from the UI. The old key stops working immediately.
 
 ### Account-level restrictions
 
-Accounts can restrict which users (humans or bots) can create direct messages via the `restrict_direct_messages_to_administrators` setting. When enabled, `POST /api/bots/direct_messages` returns `403 Forbidden` for any non-admin bot. Room creation is restricted the same way via `restrict_room_creation_to_administrators`. Admins toggle these on the account settings page.
+Accounts can restrict which users (humans or bots) can create direct messages via the `restrict_direct_messages_to_administrators` setting. When enabled, `POST /api/bots/direct_messages` returns `403 Forbidden` for any non-admin bot. Channel creation is restricted the same way via `restrict_channel_creation_to_administrators`. Admins toggle these on the account settings page.
 
 ### Webhook reliability
 
 - Webhook delivery timeout is 300 seconds
 - Every outbound webhook is HMAC-SHA256 signed with the bot's `webhook_secret`
-- Failed deliveries (timeout or HTTP error) result in an error message posted to the room
+- Failed deliveries (timeout or HTTP error) result in an error message posted to the channel
 - SSRF protection: webhook URLs cannot target private/internal networks
 - Unresolvable domains return a validation error
 
@@ -729,8 +729,8 @@ All bot API errors from existing endpoints return JSON with two fields:
 | `join_code_expired` | 410 | Code expired or usage exhausted |
 | `rate_limited` | 429 | Too many registration attempts (10/hour) |
 | `validation_failed` | 422 | Invalid parameters |
-| `room_not_found` | 404 | Bot is not a member of this room |
-| `not_found` | 404 | Room or message not found |
+| `channel_not_found` | 404 | Bot is not a member of this channel |
+| `not_found` | 404 | Channel or message not found |
 | `service_unavailable` | 503 | Storage service unavailable |
 | `internal_error` | 500 | Unexpected server error |
 

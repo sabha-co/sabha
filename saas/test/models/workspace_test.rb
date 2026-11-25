@@ -122,9 +122,9 @@ class WorkspaceTest < ActiveSupport::TestCase
         assert_equal admin.id, membership.user_id
       end
 
-      # Creates default General room
+      # Creates default General channel
       ApplicationRecord.with_tenant(tenant) do
-        general = Rooms::Open.find_by(name: "General")
+        general = Channels::Open.find_by(name: "General")
         assert_not_nil general
         assert_equal "general", general.slug
         assert general.auto_join?
@@ -158,9 +158,9 @@ class WorkspaceTest < ActiveSupport::TestCase
       tenant = workspace.external_id.to_s
 
       ApplicationRecord.with_tenant(tenant) do
-        room = Rooms::Open.find_by!(name: "General")
+        channel = Channels::Open.find_by!(name: "General")
         admin = User.find_by!(email_address: global_identities(:alice).email_address)
-        room.messages.create!(creator: admin, body: ActionText::Content.new("hello world"))
+        channel.messages.create!(creator: admin, body: ActionText::Content.new("hello world"))
       end
 
       live_message_count = ApplicationRecord.with_tenant(tenant) { Message.unscoped.count }
@@ -172,7 +172,7 @@ class WorkspaceTest < ActiveSupport::TestCase
         begin
           assert_equal live_message_count, snapshot.execute("SELECT COUNT(*) FROM messages").first.first
           assert_equal 1, snapshot.execute("SELECT COUNT(*) FROM accounts").first.first
-          assert_equal 1, snapshot.execute("SELECT COUNT(*) FROM rooms WHERE name = 'General'").first.first
+          assert_equal 1, snapshot.execute("SELECT COUNT(*) FROM channels WHERE name = 'General'").first.first
         ensure
           snapshot.close
         end
@@ -211,7 +211,7 @@ class WorkspaceTest < ActiveSupport::TestCase
         [
           {
             users: User.unscoped.count,
-            rooms: Room.unscoped.count,
+            channels: Channel.unscoped.count,
             messages: Message.unscoped.count
           },
           ApplicationRecord.connection.select_values("SELECT version FROM schema_migrations ORDER BY version")
@@ -224,7 +224,7 @@ class WorkspaceTest < ActiveSupport::TestCase
         snapshot = SQLite3::Database.new(tempfile.path)
         begin
           assert_equal live_counts[:users], snapshot.execute("SELECT COUNT(*) FROM users").first.first
-          assert_equal live_counts[:rooms], snapshot.execute("SELECT COUNT(*) FROM rooms").first.first
+          assert_equal live_counts[:channels], snapshot.execute("SELECT COUNT(*) FROM channels").first.first
           assert_equal live_counts[:messages], snapshot.execute("SELECT COUNT(*) FROM messages").first.first
 
           snapshot_migrations = snapshot.execute("SELECT version FROM schema_migrations ORDER BY version").map(&:first)

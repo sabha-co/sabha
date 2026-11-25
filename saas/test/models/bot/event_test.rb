@@ -13,13 +13,13 @@ class SaasBotEventTest < ActiveSupport::TestCase
         records = [ tenant_a, tenant_b ].map do |tenant|
           ApplicationRecord.with_tenant(tenant) do
             bot = User.create_bot!(id: bot_id, name: "Bot #{tenant}", webhook_url: "https://example.com/hook/#{tenant}")
-            room = bot.rooms.without_threads.first
-            message = room.messages.create!(creator: bot, body: "Message from #{tenant}")
-            [ bot, room, message ]
+            channel = bot.channels.without_threads.first
+            message = channel.messages.create!(creator: bot, body: "Message from #{tenant}")
+            [ bot, channel, message ]
           end
         end
 
-        records.each_with_index do |(bot, room, message), index|
+        records.each_with_index do |(bot, channel, message), index|
           tenant, foreign_tenant = index.zero? ? [ tenant_a, tenant_b ] : [ tenant_b, tenant_a ]
           base_url = "https://chat.example.test/#{tenant}"
           payload = nil
@@ -33,8 +33,8 @@ class SaasBotEventTest < ActiveSupport::TestCase
               end
             end
             payload = JSON.parse(broadcasts("bot_events:#{tenant}:#{bot_id}").last)
-            assert_equal base_url + Rails.application.routes.url_helpers.room_at_message_path(room, message), payload.dig("message", "url")
-            assert_equal base_url + Rails.application.routes.url_helpers.api_bots_room_messages_path(room), payload.dig("room", "messages_url")
+            assert_equal base_url + Rails.application.routes.url_helpers.channel_at_message_path(channel, message), payload.dig("message", "url")
+            assert_equal base_url + Rails.application.routes.url_helpers.api_bots_channel_messages_path(channel), payload.dig("channel", "messages_url")
             assert_equal bot.id, payload.dig("user", "id")
           end
 

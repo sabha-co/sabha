@@ -117,7 +117,7 @@ export default class extends Controller {
       ? this.element.querySelector(selector)
       : this.#focusableWithin()[0]
     if (!target && this.element.id === "sidebar") {
-      target = this.element.querySelector("#room-search")
+      target = this.element.querySelector("#channel-search")
     }
     if (target && typeof target.focus === "function") {
       // Defer to next tick to respect any CSS transitions
@@ -142,7 +142,7 @@ export default class extends Controller {
 
   #handleTurboClick(event) {
     // On mobile (max-width: 120ch), close the sidebar when clicking a link inside it
-    // This ensures the user sees the room content after selecting it
+    // This ensures the user sees the channel content after selecting it
     if (window.matchMedia("(min-width: 120ch)").matches) return
     if (!this.element.classList.contains(this.toggleClass)) return
 

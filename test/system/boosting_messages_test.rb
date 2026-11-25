@@ -3,7 +3,7 @@ require "application_system_test_case"
 class BoostingMessagesTest < ApplicationSystemTestCase
   setup do
     sign_in "kevin@37signals.com"
-    join_room rooms(:designers)
+    join_channel channels(:designers)
   end
 
   test "boosting a message" do
@@ -18,7 +18,7 @@ class BoostingMessagesTest < ApplicationSystemTestCase
   test "deleting a boost" do
     using_session("David") do
       sign_in "david@37signals.com"
-      join_room rooms(:designers)
+      join_channel channels(:designers)
 
       within "#" + dom_id(boosts(:first)) do
         find("span", text: "Hello").click
@@ -39,7 +39,7 @@ class BoostingMessagesTest < ApplicationSystemTestCase
 
     using_session("JZ") do
       sign_in "jz@37signals.com"
-      join_room rooms(:designers)
+      join_channel channels(:designers)
 
       within_message messages(:third) do
         reveal_message_actions
@@ -65,7 +65,7 @@ class BoostingMessagesTest < ApplicationSystemTestCase
 
     using_session("David") do
       sign_in "david@37signals.com"
-      join_room rooms(:designers)
+      join_channel channels(:designers)
 
       within_message messages(:third) do
         reveal_message_actions

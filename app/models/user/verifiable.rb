@@ -26,8 +26,8 @@ module User::Verifiable
   private
     def post_welcome_message
       return unless bot? || verified?
-      return unless room = Room.original
+      return unless channel = Channel.original
 
-      room.post_welcome_message(user: self)
+      channel.post_welcome_message(user: self)
     end
 end

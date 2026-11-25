@@ -13,11 +13,11 @@ module Slack
     private
 
     def import_public_channels
-      channels_data = @context.parse_json("channels.json")
-      @context.log "Found #{channels_data.count} public channels"
+      slack_channels = @context.parse_json("channels.json")
+      @context.log "Found #{slack_channels.count} public channels"
 
-      channels_data.each do |channel|
-        import_channel(channel, Rooms::Open)
+      slack_channels.each do |slack_channel|
+        import_channel(slack_channel, Channels::Open)
       end
     end
 
@@ -26,32 +26,32 @@ module Slack
       @context.log "Found #{groups_data.count} private channels"
 
       groups_data.each do |group|
-        import_channel(group, Rooms::Closed)
+        import_channel(group, Channels::Closed)
       end
     end
 
-    def import_channel(channel_data, room_class)
-      room_name = channel_data["name"].tr("-_", " ").titleize
+    def import_channel(slack_channel, channel_class)
+      channel_name = slack_channel["name"].tr("-_", " ").titleize
 
-      existing_room = Room.where("LOWER(name) = LOWER(?)", room_name).first
-      if existing_room
-        @context.channel_map[channel_data["id"]] = existing_room
-        grant_open_room_access(existing_room) if existing_room.is_a?(Rooms::Open)
-        @context.log "Room already exists: ##{existing_room.name}"
+      existing_channel = Channel.where("LOWER(name) = LOWER(?)", channel_name).first
+      if existing_channel
+        @context.channel_map[slack_channel["id"]] = existing_channel
+        grant_open_channel_access(existing_channel) if existing_channel.is_a?(Channels::Open)
+        @context.log "Channel already exists: ##{existing_channel.name}"
         return
       end
 
-      room = room_class.create!(
-        name: room_name,
+      channel = channel_class.create!(
+        name: channel_name,
         creator: @context.admin_user
       )
 
-      grant_membership(room, channel_data["members"])
-      grant_open_room_access(room) if room.is_a?(Rooms::Open)
+      grant_membership(channel, slack_channel["members"])
+      grant_open_channel_access(channel) if channel.is_a?(Channels::Open)
 
-      @context.channel_map[channel_data["id"]] = room
-      @context.increment(:rooms)
-      @context.log "Created room: ##{room.name}"
+      @context.channel_map[slack_channel["id"]] = channel
+      @context.increment(:channels)
+      @context.log "Created channel: ##{channel.name}"
     end
 
     def import_dms
@@ -64,25 +64,25 @@ module Slack
 
         begin
           Current.user = members.first
-          room_count_before = Rooms::Direct.count
-          room = Rooms::Direct.find_or_create_for(members)
-          @context.channel_map[dm["id"]] = room
-          @context.increment(:rooms) if Rooms::Direct.count > room_count_before
+          channel_count_before = Channels::Direct.count
+          channel = Channels::Direct.find_or_create_for(members)
+          @context.channel_map[dm["id"]] = channel
+          @context.increment(:channels) if Channels::Direct.count > channel_count_before
         ensure
           Current.user = nil
         end
       end
     end
 
-    def grant_membership(room, member_ids)
+    def grant_membership(channel, member_ids)
       member_users = (member_ids || []).filter_map { |id| @context.user_map[id] }
-      room.memberships.grant_to(member_users) if member_users.any?
+      channel.memberships.grant_to(member_users) if member_users.any?
     end
 
-    def grant_open_room_access(room)
-      existing_member_ids = room.memberships.pluck(:user_id)
+    def grant_open_channel_access(channel)
+      existing_member_ids = channel.memberships.pluck(:user_id)
       users_to_add = User.active.where.not(id: existing_member_ids)
-      room.memberships.grant_to(users_to_add) if users_to_add.exists?
+      channel.memberships.grant_to(users_to_add) if users_to_add.exists?
     end
   end
 end

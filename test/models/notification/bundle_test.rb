@@ -105,7 +105,7 @@ class Notification::BundleTest < ActiveSupport::TestCase
 
   test "destroying the bundle deletes its items" do
     bundle  = @user.active_notification_bundle
-    message = rooms(:designers).messages.create!(body: "hi", creator: users(:david), client_message_id: "bundle_dep_#{SecureRandom.hex(4)}")
+    message = channels(:designers).messages.create!(body: "hi", creator: users(:david), client_message_id: "bundle_dep_#{SecureRandom.hex(4)}")
     Notification::BundleItem.create!(bundle: bundle, message: message, actor: users(:david), kind: "mention")
 
     assert_difference -> { Notification::BundleItem.count }, -1 do

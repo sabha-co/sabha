@@ -20,9 +20,9 @@ module Message::Mentionee
   def mentionees
     @mentionees ||=
       if mentions_everyone?
-        room.mentionable_users.to_a
+        channel.mentionable_users.to_a
       elsif (ids = mentioned_users.map(&:id)).any?
-        room.mentionable_users.where(id: ids).to_a
+        channel.mentionable_users.where(id: ids).to_a
       else
         []
       end
@@ -36,11 +36,11 @@ module Message::Mentionee
     mentions_everyone? || mentionee_ids.include?(user_id)
   end
 
-  # An @everyone in a room past the ceiling: the durable Activity rows and the
+  # An @everyone in a channel past the ceiling: the durable Activity rows and the
   # mention badge are still written, but the per-member push, email, and live
-  # broadcasts are dropped in favor of the room-wide post.
+  # broadcasts are dropped in favor of the channel-wide post.
   def everyone_mention_capped?
-    mentions_everyone? && room.everyone_mention_over_ceiling?
+    mentions_everyone? && channel.everyone_mention_over_ceiling?
   end
 
   private
@@ -73,10 +73,10 @@ module Message::Mentionee
 
     def create_mention_notifications
       return if event?
-      return if room.direct? || room.parent_room&.direct?
+      return if channel.direct? || channel.parent_channel&.direct?
 
       recipient_ids = if mentions_everyone?
-        room.user_ids - [ creator_id ]
+        channel.user_ids - [ creator_id ]
       else
         mentionee_ids - [ creator_id ]
       end
@@ -91,7 +91,7 @@ module Message::Mentionee
         unique_by: "index_notifications_on_message_user_type"
       )
 
-      # Above the ceiling the rows above are enough: the message posts room-wide,
+      # Above the ceiling the rows above are enough: the message posts channel-wide,
       # so skip the O(members) per-recipient activity dot and Activity-tab append.
       return if everyone_mention_capped?
 
@@ -101,12 +101,12 @@ module Message::Mentionee
     end
 
     def destroy_stale_mention_notifications
-      return if room.direct?
+      return if channel.direct?
       return unless active? # already handled by Message::Unreadable#destroy_notifications_if_deactivated
       return unless rich_text_body.saved_changes?
 
       current_recipient_ids = if mentions_everyone_in_body?
-        room.user_ids - [ creator_id ]
+        channel.user_ids - [ creator_id ]
       else
         mentioned_users.map(&:id) - [ creator_id ]
       end

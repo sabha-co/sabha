@@ -1,0 +1,31 @@
+<% @page_title = @channel.thread? ? "🧵 #{channel_display_name(@channel.parent_message.channel)}" : channel_display_name(@channel) %>
+<% @body_class = "sidebar" %>
+<% content_for :head do %>
+  <%= turbo_exempts_page_from_preview %>
+  <meta name="current-channel-id" content="<%= @channel.id %>">
+<% end %>
+
+<%= render "channels/show/nav", channel: @channel %>
+
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+
+<%= message_area_tag(@channel) do %>
+  <%= render "messages/template" %>
+
+  <%= messages_tag(@channel) do %>
+    <%= render "channels/show/welcome", channel: @channel %>
+    <%= render "channels/show/block_notice", channel: @channel %>
+    <%= render "messages/message_list", messages: @messages, channel: @channel, first_unread_message: @first_unread_message %>
+  <% end %>
+
+  <%= turbo_stream_from @membership %>
+  <%= turbo_stream_from @channel, :messages, channel: "ChannelStreamsChannel" %>
+  <%= turbo_stream_from Current.user, @channel, :messages, channel: "ChannelStreamsChannel" %>
+  <%= button_to_jump_to_newest_message %>
+<% end %>
+
+<% if Current.user.blocked_in?(@channel) %>
+  <%= render "channels/show/composer_not_allowed", channel: @channel %>
+<% else %>
+  <%= render "channels/show/composer", channel: @channel %>
+<% end %>

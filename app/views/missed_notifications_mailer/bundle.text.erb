@@ -1,7 +1,7 @@
 You have new activity in <%= @workspace_name %>.
 
-<% @grouped_items.each do |room, items| %>
-<%= room_label_for(room) %>
+<% @grouped_items.each do |channel, items| %>
+<%= channel_label_for(channel) %>
 <% items.each do |item| -%>
   - <%= sender_for(item) %>: <%= preview_for(item) %>
 <% end -%>

@@ -6,7 +6,7 @@ Sabha is built with Ruby on Rails, Hotwire, and ActionCable. It supports self-ho
 
 ## Key concepts
 
-- **Rooms**: Group chat channels (open, closed, direct messages, threads)
+- **Channels**: Group chat (open, closed, direct messages, threads)
 - **Messages**: Rich text via ActionText, with file attachments, @mentions, and reactions
 - **Members**: Users belong to an account with roles (member, administrator)
 - **Notifications**: Activity feed, @mentions, inbox

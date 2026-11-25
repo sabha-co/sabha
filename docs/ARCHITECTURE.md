@@ -96,18 +96,18 @@ AnyCable-Go handles WebSocket lifecycle; Rails handles authentication and channe
 User ──────┐
   │        │ has_many
   │        ▼
-  │    Membership ──────▶ Room (STI)
+  │    Membership ──────▶ Channel (STI)
   │        │                 │
-  │        │                 ├── Rooms::Open    (public)
-  │        │                 ├── Rooms::Closed  (invite-only)
-  │        │                 ├── Rooms::Direct  (1:1 / group DMs)
-  │        │                 ├── Rooms::Forum   (container of posts; a gallery, owns no messages)
-  │        │                 ├── Rooms::Thread  (replies branched off a parent message)
-  │        │                 └── Rooms::Post    (a forum post; its opening body is message #1)
+  │        │                 ├── Channels::Open    (public)
+  │        │                 ├── Channels::Closed  (invite-only)
+  │        │                 ├── Channels::Direct  (1:1 / group DMs)
+  │        │                 ├── Channels::Forum   (container of posts; a gallery, owns no messages)
+  │        │                 ├── Channels::Thread  (replies branched off a parent message)
+  │        │                 └── Channels::Post    (a forum post; its opening body is message #1)
   │        │
   │        └── involvement: invisible | nothing | mentions | everything
   │
-  ├── has_many: Message (via room)
+  ├── has_many: Message (via channel)
   │              │
   │              ├── ActionText::RichText (body)
   │              ├── ActiveStorage attachments
@@ -130,7 +130,7 @@ Models primarily use namespace decomposition, with selective service objects whe
 
 | Directory | Purpose |
 |-----------|---------|
-| `app/models/rooms/` | STI subclasses: `Open`, `Closed`, `Direct`, `Forum`, `Thread`, `Post` |
+| `app/models/channels/` | STI subclasses: `Open`, `Closed`, `Direct`, `Forum`, `Thread`, `Post` |
 | `app/models/user/` | `Avatar`, `Bannable`, `Blockable`, `Bot`, `DicebearAvatar`, `EmailChangeable`, `Mentionable`, `Notifiable`, `PasswordAuthable`, `Role`, `SaasBridged`, `Streakable`, `Transferable`, `Verifiable` |
 | `app/models/message/` | `Attachment`, `Broadcasts`, `Mentionee`, `Searchable`, `Streakable`, `Threadable`, `Unreadable` |
 | `app/models/membership/` | `Cacheable`, `Connectable`, `Involvable`, `Notifiable`, `Starrable` |
@@ -143,25 +143,25 @@ Models primarily use namespace decomposition, with selective service objects whe
 - **Strictly RESTful controllers.** Only standard CRUD actions (`index`, `show`, `new`, `create`, `edit`, `update`, `destroy`). Custom actions like `leave` or `activate` become `destroy` on a new resource controller (e.g., `MembershipsController#destroy`).
 - **Exceptions over return values.** Model methods raise on failure, controllers rescue with redirects.
 - **`id: false` tables** (like `mentions`) must use `dependent: :delete_all`, never `:destroy`.
-- **Soft deletion via `Deactivatable` concern.** Three models (`Message`, `Room`, `Membership`) use an `active` boolean with two named scopes (`active`, `inactive`) — there is no `default_scope`. `User` uses a `status` enum (`active`/`deactivated`/`banned`) instead. Hard-delete cleanup is enforced explicitly in `destroy_all_associated_records` for FK ordering, not for soft-delete bypass. The `active` flag is used by admin/system flows (`User#deactivate`, `Room#deactivate`, ban/unban) — those preserve per-membership preferences (involvement, starred, read-cursor state) for later reactivation. User-initiated leave (`Membership#leave!`) takes a different path: it clears involvement to `:invisible` and cascades to unstarring; preferences are not preserved across user-driven leave/rejoin.
-- **System event messages bypass callbacks.** Room lifecycle changes (renames, joins, leaves) are recorded via `Message.insert!` to skip push notifications, search indexing, and counter caches. Excluded from inbox queries and search via `without_events` scope.
+- **Soft deletion via `Deactivatable` concern.** Three models (`Message`, `Channel`, `Membership`) use an `active` boolean with two named scopes (`active`, `inactive`) — there is no `default_scope`. `User` uses a `status` enum (`active`/`deactivated`/`banned`) instead. Hard-delete cleanup is enforced explicitly in `destroy_all_associated_records` for FK ordering, not for soft-delete bypass. The `active` flag is used by admin/system flows (`User#deactivate`, `Channel#deactivate`, ban/unban) — those preserve per-membership preferences (involvement, starred, read-cursor state) for later reactivation. User-initiated leave (`Membership#leave!`) takes a different path: it clears involvement to `:invisible` and cascades to unstarring; preferences are not preserved across user-driven leave/rejoin.
+- **System event messages bypass callbacks.** Channel lifecycle changes (renames, joins, leaves) are recorded via `Message.insert!` to skip push notifications, search indexing, and counter caches. Excluded from inbox queries and search via `without_events` scope.
 
-### Room Types in Detail
+### Channel Types in Detail
 
-- **`Rooms::Open`** - Auto-grants membership to all current and future users. New users join all open rooms on creation.
-- **`Rooms::Closed`** - Membership must be explicitly granted by an admin or room creator.
-- **`Rooms::Direct`** - Identified by an MD5 `members_hash` of sorted user IDs, ensuring one DM room per unique set of participants. Default involvement: `everything`.
-- **`Rooms::Forum`** - A container of posts, presented as a gallery. Owns no messages of its own (`receive` is a no-op); joinable like an Open room, but posts don't ping members. Its posts derive access from the forum's membership. See `docs/features/FORUMS.md`.
-- **`Rooms::Thread`** - A sub-room: replies branched off a `parent_message`. Access derives from the room it was spawned in (`parent_room`), not a per-thread membership fan-out. Default involvement: `invisible` except for the thread creator and parent-message author.
-- **`Rooms::Post`** - A sub-room: a first-class forum post belonging to its forum via `parent_room_id`, carrying a title (`name`), permanent `slug`, and Solved state (a `Solution` record). Its opening body is message #1; replies are the messages that follow. Access derives from the forum (`viewable_by?` delegates to `parent_room`); members follow lazily on engagement. Sibling of `Rooms::Thread`.
+- **`Channels::Open`** - Auto-grants membership to all current and future users. New users join all open channels on creation.
+- **`Channels::Closed`** - Membership must be explicitly granted by an admin or channel creator.
+- **`Channels::Direct`** - Identified by an MD5 `members_hash` of sorted user IDs, ensuring one DM channel per unique set of participants. Default involvement: `everything`.
+- **`Channels::Forum`** - A container of posts, presented as a gallery. Owns no messages of its own (`receive` is a no-op); joinable like an Open channel, but posts don't ping members. Its posts derive access from the forum's membership. See `docs/features/FORUMS.md`.
+- **`Channels::Thread`** - A sub-channel: replies branched off a `parent_message`. Access derives from the channel it was spawned in (`parent_channel`), not a per-thread membership fan-out. Default involvement: `invisible` except for the thread creator and parent-message author.
+- **`Channels::Post`** - A sub-channel: a first-class forum post belonging to its forum via `parent_channel_id`, carrying a title (`name`), permanent `slug`, and Solved state (a `Solution` record). Its opening body is message #1; replies are the messages that follow. Access derives from the forum (`viewable_by?` delegates to `parent_channel`); members follow lazily on engagement. Sibling of `Channels::Thread`.
 
 ### All Models
 
 | Model | Purpose |
 |-------|---------|
 | `User` | User record with role enum (`member`, `moderator`, `administrator`, `bot`) |
-| `Room` | STI base class for `Open`, `Closed`, `Direct`, `Forum`, `Thread`, `Post` |
-| `Membership` | User ↔ Room link with involvement level |
+| `Channel` | STI base class for `Open`, `Closed`, `Direct`, `Forum`, `Thread`, `Post` |
+| `Membership` | User ↔ Channel link with involvement level |
 | `Message` | Chat message with ActionText body and attachments |
 | `Account` | Singleton workspace settings. `has_json :settings` for feature flags |
 | `Boost` | Message reactions/reshares |
@@ -235,12 +235,12 @@ Current.request    # HTTP request
                         │
           ┌─────────────┼─────────────────────┐
           ▼             ▼                     ▼
-    RoomChannel    PresenceChannel     $pubsub signed
-    (messages)     (online users)      room-list stream
+    ChannelScopedChannel    PresenceChannel     $pubsub signed
+    (messages)     (online users)      channel-list stream
           │                            (sidebar updates)
     ┌─────┼──────────────┬──────────────────┐
     ▼     ▼              ▼                  ▼
- Typing  Heartbeat   ReadRooms         InboxActivity
+ Typing  Heartbeat   ReadChannels      InboxActivity
  Notifs  Channel     Channel           Channel
                                             │
                                      ┌──────┼──────┐
@@ -251,12 +251,12 @@ Current.request    # HTTP request
 
 | Channel | Purpose |
 |---------|---------|
-| `RoomChannel` | Message broadcasts to room subscribers |
+| `ChannelScopedChannel` | Message broadcasts to channel subscribers |
 | `PresenceChannel` | Online/offline user tracking |
-| Room-list signed stream (`$pubsub`) | One shared, account-scoped sidebar stream: room touched by a message or post, renames. Clients subscribe with a server-signed name that anycable-go verifies itself — no per-subscriber Rails round-trip; each client derives its own unread state |
+| Channel-list signed stream (`$pubsub`) | One shared, account-scoped sidebar stream: channel touched by a message or post, renames. Clients subscribe with a server-signed name that anycable-go verifies itself — no per-subscriber Rails round-trip; each client derives its own unread state |
 | `TypingNotificationsChannel` | "User is typing..." indicators |
 | `HeartbeatChannel` | Connection keep-alive |
-| `ReadRoomsChannel` | Per-user read-state pushes: room read (clear the dot) and explicit mark-as-unread |
+| `ReadChannelsChannel` | Per-user read-state pushes: channel read (clear the dot) and explicit mark-as-unread |
 | `UserInvolvementsChannel` | Notification preference changes |
 | `InboxActivityChannel` | Real-time inbox: @mentions |
 | `InboxThreadsChannel` | Real-time inbox: thread replies |
@@ -270,11 +270,11 @@ Server-side broadcasts use Turbo Streams for DOM updates without custom JavaScri
 
 ```ruby
 # Model callback broadcasts
-broadcast_append_to room, :messages, partial: "messages/message"
-broadcast_replace_to room, :unread_count, target: "unread-#{room.id}"
+broadcast_append_to channel, :messages, partial: "messages/message"
+broadcast_replace_to channel, :unread_count, target: "unread-#{channel.id}"
 ```
 
-Turbo Streams handle: appending new messages, replacing unread counts, updating room lists, removing deleted content, and refreshing user presence indicators.
+Turbo Streams handle: appending new messages, replacing unread counts, updating channel lists, removing deleted content, and refreshing user presence indicators.
 
 Turbo Stream broadcasts are emitted from models, jobs, and selected controller actions (for scoped UI updates like bookmarks/involvements). Typing notifications are handled by `TypingNotificationsChannel`, and use `whisper: true` when AnyCable is enabled.
 
@@ -316,7 +316,7 @@ app/javascript/
 │   ├── composer_controller.js        # Rich text composer
 │   ├── presence_controller.js        # Online/offline tracking
 │   ├── typing_notifications_controller.js
-│   ├── rooms_list_controller.js      # Sidebar room list
+│   ├── channels_list_controller.js      # Sidebar channel list
 │   ├── inbox_controller.js           # Inbox tabs
 │   ├── notifications_controller.js   # Web push subscription
 │   └── ...
@@ -357,12 +357,12 @@ Configuration (`config/queue.yml`):
 
 | Job | Purpose |
 |-----|---------|
-| `Room::PushMessageJob` | Web push notifications for new messages (fans out via `Room::MessagePusher`) |
+| `Channel::PushMessageJob` | Web push notifications for new messages (fans out via `Channel::MessagePusher`) |
 | `Bot::WebhookJob` | Delivers webhook payloads to bot endpoints, handles text/attachment replies |
 | `BroadcastInboxDirectMessagesJob` | Real-time DM inbox updates |
 | `BroadcastInboxThreadsJob` | Real-time thread inbox updates |
 | `RemoveBannedContentJob` | Cleans up content from banned users |
-| `RoomUpdateBroadcastJob` | Broadcasts room list updates |
+| `ChannelUpdateBroadcastJob` | Broadcasts channel list updates |
 
 ### Recurring Jobs
 
@@ -476,7 +476,7 @@ Multi-stage build:
 
 3. **AnyCable-Go for WebSockets.** Uses HTTP RPC mode (no gRPC dependency). Scales WebSocket connections outside the Ruby process while keeping authentication and channel logic in Rails.
 
-4. **Soft deletion is first-class.** `Message`, `Room`, and `Membership` use an `active` boolean with named scopes (`active`/`inactive`); `User` uses a `status` enum (`active`/`deactivated`/`banned`). Hard-delete cascade order is enforced explicitly in `destroy_all_associated_records` for FK satisfaction (notifications before messages, bundle items before bundles), not for soft-delete bypass — see [`docs/plans/deactivatable-refactor.html`](./plans/deactivatable-refactor.html) for the audit that established this.
+4. **Soft deletion is first-class.** `Message`, `Channel`, and `Membership` use an `active` boolean with named scopes (`active`/`inactive`); `User` uses a `status` enum (`active`/`deactivated`/`banned`). Hard-delete cascade order is enforced explicitly in `destroy_all_associated_records` for FK satisfaction (notifications before messages, bundle items before bundles), not for soft-delete bypass — see [`docs/plans/deactivatable-refactor.html`](./plans/deactivatable-refactor.html) for the audit that established this.
 
 5. **Namespace decomposition first; no service layer.** User concerns live in `User::Role`, `User::Bot`, etc. Multi-step workflows live next to their collaborators (e.g., `Slack::Importer` under `lib/slack/`) rather than in a dedicated `app/services/` directory — which doesn't exist in Sabha.
 
@@ -484,6 +484,6 @@ Multi-stage build:
 
 7. **3-container deployment.** The web container runs Puma, Redis, and Solid Queue workers together. AnyCable-Go runs as a separate container for WebSocket scaling. A reverse proxy (kamal-proxy or Thruster) handles TLS and routes `/cable` traffic to AnyCable-Go. This keeps operations simple while separating WebSocket connections from the Ruby process.
 
-8. **STI for room types, not `delegated_type`.** Every room variant — `Rooms::Open`, `Closed`, `Direct`, `Forum`, and the nested `Thread` / `Post` — is single-table inheritance on one `rooms` table sharing a fat `Room` base. The acknowledged cost is subtype-specific columns that sit null on the others (`parent_message_id`, `parent_room_id`, `cascade_deactivated`, `slug`, `members_hash`) and a few base methods a subtype nullifies (`Rooms::Forum#receive` is a deliberate no-op — a forum owns no messages of its own). Rails' `delegated_type` — a thin `rooms` table plus per-type detail tables — is the standard alternative that avoids both, and would be a legitimate choice. We stay on STI deliberately: per-tenant SQLite bounds each workspace's row count, so the sparse columns cost effectively nothing; STI is the pervasively-assumed pattern across the models, scopes, and queries here; and the `if forum?` / `if post?` branching that STI tends to breed is best addressed by deriving a nested room's access from its container (its `parent_room`) rather than its subtype — a behavior change, not a table-strategy change. Reach for `delegated_type` only if base-class no-op overrides or per-subtype columns outgrow what the shared `Room` behavior justifies; at today's surface, STI wins on inertia and is not a gap.
+8. **STI for channel types, not `delegated_type`.** Every channel variant — `Channels::Open`, `Closed`, `Direct`, `Forum`, and the nested `Thread` / `Post` — is single-table inheritance on one `channels` table sharing a fat `Channel` base. The acknowledged cost is subtype-specific columns that sit null on the others (`parent_message_id`, `parent_channel_id`, `cascade_deactivated`, `slug`, `members_hash`) and a few base methods a subtype nullifies (`Channels::Forum#receive` is a deliberate no-op — a forum owns no messages of its own). Rails' `delegated_type` — a thin `channels` table plus per-type detail tables — is the standard alternative that avoids both, and would be a legitimate choice. We stay on STI deliberately: per-tenant SQLite bounds each workspace's row count, so the sparse columns cost effectively nothing; STI is the pervasively-assumed pattern across the models, scopes, and queries here; and the `if forum?` / `if post?` branching that STI tends to breed is best addressed by deriving a nested channel's access from its container (its `parent_channel`) rather than its subtype — a behavior change, not a table-strategy change. Reach for `delegated_type` only if base-class no-op overrides or per-subtype columns outgrow what the shared `Channel` behavior justifies; at today's surface, STI wins on inertia and is not a gap.
 
-9. **Rooms are the membership + message-stream container — which is why Post and Forum are room types.** `Room` isn't "a chat room"; it's the unit that owns members and/or a message stream, with unread state, broadcasts, mentions, and soft-delete on top. `Rooms::Post` reuses both halves — a post is a conversation (its opening body is message #1, replies follow), and since a `Message` keys off `room_id`, any message stream must be a room. `Rooms::Forum` reuses only the membership half: it owns no messages (`receive` is a no-op) but holds the members its posts derive access from (`Rooms::Post#viewable_by?` delegates to `parent_room`). Post-as-a-room is simply correct; Forum-as-a-room is the pragmatic compromise — the no-op is the rent for reusing one Membership system instead of building a second. Revisit `delegated_type` (see #8) only if forums grow behavior that doesn't map to a room.
+9. **Channels are the membership + message-stream container — which is why Post and Forum are channel types.** `Channel` isn't "a chat channel"; it's the unit that owns members and/or a message stream, with unread state, broadcasts, mentions, and soft-delete on top. `Channels::Post` reuses both halves — a post is a conversation (its opening body is message #1, replies follow), and since a `Message` keys off `channel_id`, any message stream must be a channel. `Channels::Forum` reuses only the membership half: it owns no messages (`receive` is a no-op) but holds the members its posts derive access from (`Channels::Post#viewable_by?` delegates to `parent_channel`). Post-as-a-channel is simply correct; Forum-as-a-channel is the pragmatic compromise — the no-op is the rent for reusing one Membership system instead of building a second. Revisit `delegated_type` (see #8) only if forums grow behavior that doesn't map to a channel.

@@ -56,9 +56,9 @@ class BlockBannedRequestsTest < ActionDispatch::IntegrationTest
 
   test "authenticated POST from banned IP is not blocked" do
     sign_in :david
-    room = rooms(:watercooler)
+    channel = channels(:watercooler)
 
-    post room_messages_url(room, format: :turbo_stream),
+    post channel_messages_url(channel, format: :turbo_stream),
       params: { message: { body: "Test", client_message_id: "test-123" } },
       headers: { "REMOTE_ADDR" => "203.0.113.1" }
 

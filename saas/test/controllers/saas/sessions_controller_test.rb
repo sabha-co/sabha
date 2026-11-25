@@ -10,9 +10,9 @@ module Saas
     end
 
     test "new stores return_to param in session" do
-      get new_session_path, params: { return_to: "/1000001/rooms/general" }
+      get new_session_path, params: { return_to: "/1000001/channels/general" }
       assert_response :success
-      assert_equal "/1000001/rooms/general", session[:return_to_after_authenticating]
+      assert_equal "/1000001/channels/general", session[:return_to_after_authenticating]
     end
 
     test "new clears stale return_to when none is supplied" do

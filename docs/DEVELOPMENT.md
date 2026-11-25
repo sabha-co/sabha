@@ -45,7 +45,7 @@ bin/setup
 
 This installs gems, pnpm packages, `anycable-go` (on macOS), prepares the database, and builds Tailwind.
 
-To populate development data (users, rooms, messages):
+To populate development data (users, channels, messages):
 
 ```bash
 bin/rails db:seed
@@ -210,7 +210,7 @@ Add `debugger` anywhere in code, then interact in terminal.
 ```ruby
 def show
   debugger  # Execution stops here
-  @room = Room.find(params[:id])
+  @channel = Channel.find(params[:id])
 end
 ```
 

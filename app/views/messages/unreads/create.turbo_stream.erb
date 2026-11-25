@@ -1,10 +1,10 @@
 <%= turbo_stream.remove "unread_separator" %>
-<%= turbo_stream.replace dom_id(@message), partial: "messages/message", locals: { message: @message, first_unread_message: @message, current_room: @room } %>
-<% if @membership.room.direct? %>
-  <%= turbo_stream.replace dom_id(@membership.room, :list), partial: "users/sidebars/rooms/direct", locals: { membership: @membership } %>
+<%= turbo_stream.replace dom_id(@message), partial: "messages/message", locals: { message: @message, first_unread_message: @message, current_channel: @channel } %>
+<% if @membership.channel.direct? %>
+  <%= turbo_stream.replace dom_id(@membership.channel, :list), partial: "users/sidebars/channels/direct", locals: { membership: @membership } %>
 <% else %>
   <% list_name = @membership.sidebar_list_name %>
-  <%= turbo_stream.replace dom_id(@membership.room, dom_prefix(list_name, :list_node)),
-                           partial: "users/sidebars/rooms/shared",
+  <%= turbo_stream.replace dom_id(@membership.channel, dom_prefix(list_name, :list_node)),
+                           partial: "users/sidebars/channels/shared",
                            locals: { list_name:, membership: @membership } %>
 <% end %>

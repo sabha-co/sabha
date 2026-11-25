@@ -8,9 +8,9 @@ json.results @messages do |message|
     json.html message.body.body.to_s
     json.plain message.plain_text_body
   end
-  json.room do
-    json.id message.room.id
-    json.name message.room.name
+  json.channel do
+    json.id message.channel.id
+    json.name message.channel.name
   end
   json.created_at message.created_at.iso8601
 end

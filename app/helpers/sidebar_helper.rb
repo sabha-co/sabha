@@ -22,11 +22,11 @@ module SidebarHelper
     tag.attributes(SORTED_LIST_NEWEST_FIRST)
   end
 
-  def all_rooms_sort_order
+  def all_channels_sort_order
     tag.attributes(SORTED_LIST_NEWEST_FIRST)
   end
 
   def sidebar_membership_cache_key(prefix, membership)
-    [ prefix, membership.room, membership.involvement, membership.starred?, membership.involved_in_nothing?, membership.unread?, membership.has_unread_notifications? ]
+    [ prefix, membership.channel, membership.involvement, membership.starred?, membership.involved_in_nothing?, membership.unread?, membership.has_unread_notifications? ]
   end
 end

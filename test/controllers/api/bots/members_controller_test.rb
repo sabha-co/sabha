@@ -3,11 +3,11 @@ require "test_helper"
 class API::Bots::MembersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @bot = users(:bender)
-    @room = rooms(:watercooler)
+    @channel = channels(:watercooler)
   end
 
-  test "list room members" do
-    get api_bots_room_members_url(@room), headers: bot_headers(@bot.bot_key)
+  test "list channel members" do
+    get api_bots_channel_members_url(@channel), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     json = response.parsed_body
@@ -20,32 +20,32 @@ class API::Bots::MembersControllerTest < ActionDispatch::IntegrationTest
     assert member["role"].present?
   end
 
-  test "returns 404 for room bot is not a member of" do
-    get api_bots_room_members_url(rooms(:designers)), headers: bot_headers(@bot.bot_key)
+  test "returns 404 for channel bot is not a member of" do
+    get api_bots_channel_members_url(channels(:designers)), headers: bot_headers(@bot.bot_key)
 
     assert_response :not_found
   end
 
-  test "returns 404 for a sub-room the bot can no longer view after leaving the parent" do
+  test "returns 404 for a sub-channel the bot can no longer view after leaving the parent" do
     thread = nil
     Current.set(user: @bot) do
-      room = Rooms::Closed.create_for({ name: "Bot Parent" }, users: @bot)
-      room.add_member!(users(:david), actor: @bot) # keep a human so the room survives
-      parent = room.messages.create!(body: "topic", creator: @bot)
-      thread = Rooms::Thread.find_or_create_for(parent, creator: @bot)
-      room.remove_member!(@bot, actor: users(:david))
-      ThreadFollowCleanupJob.perform_now(room: room, user: @bot)
+      channel = Channels::Closed.create_for({ name: "Bot Parent" }, users: @bot)
+      channel.add_member!(users(:david), actor: @bot) # keep a human so the channel survives
+      parent = channel.messages.create!(body: "topic", creator: @bot)
+      thread = Channels::Thread.find_or_create_for(parent, creator: @bot)
+      channel.remove_member!(@bot, actor: users(:david))
+      ThreadFollowCleanupJob.perform_now(channel: channel, user: @bot)
     end
-    assert Membership.exists?(room_id: thread.id, user_id: @bot.id, active: true),
+    assert Membership.exists?(channel_id: thread.id, user_id: @bot.id, active: true),
       "precondition: the bot keeps a silenced-but-active thread row"
 
-    get api_bots_room_members_url(thread), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_members_url(thread), headers: bot_headers(@bot.bot_key)
 
     assert_response :not_found
   end
 
   test "invalid bot key redirects to sign in" do
-    get api_bots_room_members_url(@room), headers: bot_headers("999-invalid")
+    get api_bots_channel_members_url(@channel), headers: bot_headers("999-invalid")
 
     assert_redirected_to new_session_url
   end
@@ -54,20 +54,20 @@ class API::Bots::MembersControllerTest < ActionDispatch::IntegrationTest
 
   test "creator bot can add a member" do
     Current.user = @bot
-    room = Rooms::Closed.create_for({ name: "Bot's Room" }, users: @bot)
+    channel = Channels::Closed.create_for({ name: "Bot's Channel" }, users: @bot)
     Current.reset
 
-    post api_bots_room_members_url(room),
+    post api_bots_channel_members_url(channel),
       params: { user_id: users(:david).id },
       as: :json, headers: bot_headers(@bot.bot_key)
 
     assert_response :created
     assert_equal users(:david).id, response.parsed_body["id"]
-    assert room.users.include?(users(:david))
+    assert channel.users.include?(users(:david))
   end
 
   test "non-creator bot cannot add members" do
-    post api_bots_room_members_url(@room),
+    post api_bots_channel_members_url(@channel),
       params: { user_id: users(:kevin).id },
       as: :json, headers: bot_headers(@bot.bot_key)
 
@@ -76,10 +76,10 @@ class API::Bots::MembersControllerTest < ActionDispatch::IntegrationTest
 
   test "adding nonexistent user returns 404" do
     Current.user = @bot
-    room = Rooms::Closed.create_for({ name: "Bot's Room" }, users: @bot)
+    channel = Channels::Closed.create_for({ name: "Bot's Channel" }, users: @bot)
     Current.reset
 
-    post api_bots_room_members_url(room),
+    post api_bots_channel_members_url(channel),
       params: { user_id: 999999 },
       as: :json, headers: bot_headers(@bot.bot_key)
 
@@ -90,28 +90,28 @@ class API::Bots::MembersControllerTest < ActionDispatch::IntegrationTest
 
   test "creator bot can remove a member" do
     Current.user = @bot
-    room = Rooms::Closed.create_for({ name: "Bot's Room" }, users: @bot)
+    channel = Channels::Closed.create_for({ name: "Bot's Channel" }, users: @bot)
     Current.reset
-    room.add_member!(users(:david), actor: @bot)
+    channel.add_member!(users(:david), actor: @bot)
 
-    delete api_bots_room_member_url(room, users(:david)), headers: bot_headers(@bot)
+    delete api_bots_channel_member_url(channel, users(:david)), headers: bot_headers(@bot)
 
     assert_response :no_content
-    assert_not room.reload.users.include?(users(:david))
+    assert_not channel.reload.users.include?(users(:david))
   end
 
   test "non-creator bot cannot remove members" do
-    delete api_bots_room_member_url(@room, users(:david)), headers: bot_headers(@bot)
+    delete api_bots_channel_member_url(@channel, users(:david)), headers: bot_headers(@bot)
 
     assert_response :forbidden
   end
 
   test "cannot remove last member" do
     Current.user = @bot
-    room = Rooms::Closed.create_for({ name: "Solo Bot" }, users: @bot)
+    channel = Channels::Closed.create_for({ name: "Solo Bot" }, users: @bot)
     Current.reset
 
-    delete api_bots_room_member_url(room, @bot), headers: bot_headers(@bot)
+    delete api_bots_channel_member_url(channel, @bot), headers: bot_headers(@bot)
 
     assert_response :unprocessable_entity
     assert_equal "validation_failed", response.parsed_body["code"]

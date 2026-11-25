@@ -2,12 +2,12 @@ require "test_helper"
 
 class Notification::DispatchJobTest < ActiveSupport::TestCase
   setup do
-    @room = rooms(:designers)
+    @channel = channels(:designers)
     @creator = users(:david)
   end
 
   test "performs notify_recipients on the message" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "Dispatch test",
       creator: @creator,
       client_message_id: "dispatch_job_perform"
@@ -27,7 +27,7 @@ class Notification::DispatchJobTest < ActiveSupport::TestCase
   end
 
   test "passes only: and actor: through to notify_recipients" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "Dispatch only test",
       creator: @creator,
       client_message_id: "dispatch_job_only"
@@ -46,7 +46,7 @@ class Notification::DispatchJobTest < ActiveSupport::TestCase
 
   test "skips work in DemoMode" do
     DemoMode.stubs(:enabled?).returns(true)
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "Demo mode skip",
       creator: @creator,
       client_message_id: "dispatch_demo_mode"
@@ -63,7 +63,7 @@ class Notification::DispatchJobTest < ActiveSupport::TestCase
   end
 
   test "boost dispatch via job creates a Notification row matching the inline path" do
-    parent = @room.messages.create!(
+    parent = @channel.messages.create!(
       body: "Boost target via dispatch",
       creator: @creator,
       client_message_id: "dispatch_boost_target"

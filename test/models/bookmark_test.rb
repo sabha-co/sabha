@@ -47,9 +47,9 @@ class BookmarkTest < ActiveSupport::TestCase
   end
 
   test "with_bookmark_status_for handles multiple messages" do
-    room = rooms(:designers)
+    channel = channels(:designers)
     messages_list = 3.times.map do |i|
-      room.messages.create!(body: "Test #{i}", creator: @jason, client_message_id: "scope_test_#{i}")
+      channel.messages.create!(body: "Test #{i}", creator: @jason, client_message_id: "scope_test_#{i}")
     end
 
     Bookmark.create!(user: @david, message: messages_list[0])

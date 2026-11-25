@@ -2,25 +2,25 @@ require "test_helper"
 
 # The @everyone guardrail (U7): above the configured member ceiling, @everyone
 # keeps its durable in-app surfaces (Activity rows + mention badge) but stops
-# fanning out per-member push, email, and live broadcasts — it posts room-wide
+# fanning out per-member push, email, and live broadcasts — it posts channel-wide
 # instead. The admin/open floor is unchanged and covered in message_test.
 class Message::EveryoneCapTest < ActiveSupport::TestCase
   include ActionCable::TestHelper
 
   setup do
-    @room = rooms(:pets)      # Rooms::Open, members: david + jason (both admins)
+    @channel = channels(:pets)      # Channels::Open, members: david + jason (both admins)
     @admin = users(:jason)
     @recipient = users(:david)
   end
 
   test "everyone_mention_over_ceiling? tracks the configured ceiling" do
-    with_everyone_ceiling(1) { assert @room.everyone_mention_over_ceiling? }
-    with_everyone_ceiling(1000) { assert_not @room.everyone_mention_over_ceiling? }
+    with_everyone_ceiling(1) { assert @channel.everyone_mention_over_ceiling? }
+    with_everyone_ceiling(1000) { assert_not @channel.everyone_mention_over_ceiling? }
   end
 
   test "a capped @everyone still writes the Activity row and bumps the mention badge" do
     with_everyone_ceiling(1) do
-      membership = @room.memberships.find_by(user: @recipient)
+      membership = @channel.memberships.find_by(user: @recipient)
       force_all_unread(membership)
 
       assert_difference -> { Notification.where(activity_type: "mention", user_id: @recipient.id).count }, 1 do
@@ -35,7 +35,7 @@ class Message::EveryoneCapTest < ActiveSupport::TestCase
     with_everyone_ceiling(1) do
       message = post_everyone("capped_types")
 
-      assert_equal [ :everyone_room_message ], @room.applicable_activity_types(message)
+      assert_equal [ :everyone_channel_message ], @channel.applicable_activity_types(message)
     end
   end
 
@@ -69,7 +69,7 @@ class Message::EveryoneCapTest < ActiveSupport::TestCase
         end
       end
 
-      assert_includes @room.applicable_activity_types(message), :mention
+      assert_includes @channel.applicable_activity_types(message), :mention
     end
   end
 
@@ -77,7 +77,7 @@ class Message::EveryoneCapTest < ActiveSupport::TestCase
     def post_everyone(client_message_id)
       sgid = Everyone.new.attachable_sgid
       body = %(<div><action-text-attachment sgid="#{sgid}" content-type="application/vnd.sabha.mention"></action-text-attachment></div>)
-      @room.messages.create!(body: body, creator: @admin, client_message_id: client_message_id)
+      @channel.messages.create!(body: body, creator: @admin, client_message_id: client_message_id)
     end
 
     def with_everyone_ceiling(value)

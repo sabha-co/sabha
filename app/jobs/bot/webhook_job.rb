@@ -1,5 +1,5 @@
 class Bot::WebhookJob < ApplicationJob
-  # A webhook or its room can be deleted between enqueue and perform; the
+  # A webhook or its channel can be deleted between enqueue and perform; the
   # GlobalID arguments then fail to deserialize. Discard rather than retry —
   # the records aren't coming back — so the queue closes cleanly instead of
   # recording a failed execution nothing can act on.
@@ -17,9 +17,9 @@ class Bot::WebhookJob < ApplicationJob
            Webhook::DeliveryError,
            wait: :polynomially_longer, attempts: 10
 
-  def perform(webhook, event_name, payload, room, reply = false)
+  def perform(webhook, event_name, payload, channel, reply = false)
     return if DemoMode.enabled?
 
-    webhook.deliver(event_name, payload, room, reply: reply)
+    webhook.deliver(event_name, payload, channel, reply: reply)
   end
 end

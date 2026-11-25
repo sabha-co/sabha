@@ -6,11 +6,11 @@ class BroadcastUnreadNotificationsJobTest < ActiveJob::TestCase
   setup do
     @david = users(:david)
     @jason = users(:jason)
-    @room = rooms(:pets)
+    @channel = channels(:pets)
   end
 
   test "broadcasts an unread badge nudge to each mentioned user" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
       creator: @david,
       client_message_id: "unread_badge_job_1"
@@ -30,7 +30,7 @@ class BroadcastUnreadNotificationsJobTest < ActiveJob::TestCase
   end
 
   test "does nothing for a message with no recipients" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "Plain message",
       creator: @david,
       client_message_id: "unread_badge_job_2"

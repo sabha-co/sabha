@@ -1,0 +1,35 @@
+<% if channel.direct? %>
+  <%= render "channels/directs/header", title: channel_display_name(channel), channel: channel, membership: @membership %>
+<% else %>
+  <% content_for :nav do %>
+    <%= account_logo_tag if Current.account.logo.attached? %>
+
+    <% if channel.thread? %>
+      <%= link_back_to_or_referrer channel_at_message_path(channel.parent_message.channel, channel.parent_message) %>
+    <% end %>
+
+    <%= link_to edit_channel_path(channel), class: "btn btn--reversed btn--faux channel--current" do %>
+      <h1 class="channel__contents txt-medium overflow-ellipsis">
+        <% if channel.thread? %>
+          🧵 <%= channel_display_name(channel.parent_message.channel) %>
+        <% else %>
+          <%= channel_type_indicator(channel) %> <%= channel_display_name(channel) %>
+        <% end %>
+      </h1>
+    <% end %>
+
+    <% unless channel.thread? %>
+      <%= link_to_edit_channel(channel) %>
+    <% end %>
+
+    <% unless hotwire_native_app? %>
+      <div class="flex gap-half align-center navbar-actions">
+        <% unless channel.thread? %>
+          <%= turbo_frame_tag dom_id(channel, :involvement) do %>
+            <%= button_to_change_involvement(channel, @membership.involvement) %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

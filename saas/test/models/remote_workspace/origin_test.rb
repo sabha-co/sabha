@@ -6,7 +6,7 @@ class RemoteWorkspace::OriginTest < ActiveSupport::TestCase
   test "reduces an address to its canonical https origin" do
     assert_equal "https://chat.acme.org", normalize("https://chat.acme.org")
     assert_equal "https://chat.acme.org", normalize("chat.acme.org")
-    assert_equal "https://chat.acme.org", normalize("HTTPS://Chat.ACME.org:443/rooms/1?x=1#top")
+    assert_equal "https://chat.acme.org", normalize("HTTPS://Chat.ACME.org:443/channels/1?x=1#top")
     assert_equal "https://chat.acme.org", normalize("  https://chat.acme.org./  ")
   end
 
@@ -36,7 +36,7 @@ class RemoteWorkspace::OriginTest < ActiveSupport::TestCase
     error = assert_raises(RemoteWorkspace::Origin::Hub) { normalize("https://#{Branding.app_host}") }
     assert_nil error.workspace_id
 
-    error = assert_raises(RemoteWorkspace::Origin::Hub) { normalize("#{Branding.app_host}/1000121/rooms/3") }
+    error = assert_raises(RemoteWorkspace::Origin::Hub) { normalize("#{Branding.app_host}/1000121/channels/3") }
     assert_equal "1000121", error.workspace_id
   end
 

@@ -3,7 +3,7 @@
 require "addressable/uri"
 
 # One workspace per origin, so the origin is its identity. Every way into the
-# list goes through here, so "HTTPS://Chat.Acme.org:443/rooms" and
+# list goes through here, so "HTTPS://Chat.Acme.org:443/channels" and
 # "chat.acme.org" land on the same row.
 module RemoteWorkspace::Origin
   extend self

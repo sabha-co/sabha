@@ -1,7 +1,7 @@
-class TypingNotificationsChannel < RoomChannel
+class TypingNotificationsChannel < ChannelScopedChannel
   def subscribed
-    if room
-      stream_for room, whisper: true
+    if channel
+      stream_for channel, whisper: true
     else
       reject
     end
@@ -9,13 +9,13 @@ class TypingNotificationsChannel < RoomChannel
 
   def start(data)
     with_tenant_context do
-      broadcast_to room, action: :start, user: current_user_attributes if room
+      broadcast_to channel, action: :start, user: current_user_attributes if channel
     end
   end
 
   def stop(data)
     with_tenant_context do
-      broadcast_to room, action: :stop, user: current_user_attributes if room
+      broadcast_to channel, action: :stop, user: current_user_attributes if channel
     end
   end
 

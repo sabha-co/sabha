@@ -22,7 +22,7 @@ class Message::AttachmentTest < ActiveSupport::TestCase
 
   private
     def create_attachment_message(file, content_type)
-      rooms(:hq).messages.create_with_attachment! \
+      channels(:hq).messages.create_with_attachment! \
         creator: users(:david),
         client_message_id: "message",
         attachment: fixture_file_upload(file, content_type)

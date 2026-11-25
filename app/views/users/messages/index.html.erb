@@ -20,12 +20,12 @@
   </div>
 
   <div class="searches__recents align-center gap pad-block-half overflow-y overflow-hide-scrollbar">
-    <%= link_to user_messages_path(@user), class: "align-center gap room btn txt-nowrap" do %>
+    <%= link_to user_messages_path(@user), class: "align-center gap channel btn txt-nowrap" do %>
       <span class="overflow-ellipsis">All messages by <%= @user.name %></span>
     <% end %>
 
     <% @recent_searches.each do |search| %>
-      <%= link_to user_messages_path(@user, q: search.query), class: "align-center gap room btn txt-nowrap" do %>
+      <%= link_to user_messages_path(@user, q: search.query), class: "align-center gap channel btn txt-nowrap" do %>
         <span class="overflow-ellipsis">“<%= search.query %>”</span>
       <% end %>
     <% end %>
@@ -41,13 +41,13 @@
 <% end %>
 
 <% content_for :sidebar do %>
-  <div class="rooms position-relative flex flex-column gap overflow-y overflow-hide-scrollbar">
-    <%= link_to user_messages_path(@user), class: "align-center gap room btn txt-nowrap" do %>
+  <div class="channels position-relative flex flex-column gap overflow-y overflow-hide-scrollbar">
+    <%= link_to user_messages_path(@user), class: "align-center gap channel btn txt-nowrap" do %>
       <span class="overflow-ellipsis">All messages by <%= @user.name %></span>
     <% end %>
 
     <% @recent_searches.each do |search| %>
-      <%= link_to user_messages_path(@user, q: search.query), class: "align-center gap room btn txt-nowrap" do %>
+      <%= link_to user_messages_path(@user, q: search.query), class: "align-center gap channel btn txt-nowrap" do %>
         <span class="overflow-ellipsis">“<%= search.query %>”</span>
       <% end %>
     <% end %>
@@ -86,13 +86,13 @@
   </div>
 
   <%= search_results_tag("search-results", page_user_messages_url(@user, q: @query)) do %>
-    <%= render partial: "messages/message", collection: @messages, cached: -> message { message_cache_key(message, room_id: "search_#{Current.user.id}") } %>
+    <%= render partial: "messages/message", collection: @messages, cached: -> message { message_cache_key(message, channel_id: "search_#{Current.user.id}") } %>
   <% end %>
 </div>
 
 <% content_for :footer do %>
   <div class="composer flex align-end gap">
-    <%= link_to room_path(@return_to_room),
+    <%= link_to channel_path(@return_to_channel),
             class: "btn flex-item-no-shrink margin-block-end d-hotwire-native-none", style: "view-transition-name: input-switcher; --btn-border-radius: 0.5em" do %>
       <%= icon_tag "arrow-left" %>
       <span class="for-screen-reader">Exit search </span>

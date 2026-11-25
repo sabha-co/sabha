@@ -82,8 +82,8 @@ Rails.application.routes.draw do
           resource :key, only: :update
           resource :avatar, only: :destroy
           resource :avatar_shuffle, only: :create
-          resources :rooms, only: %i[ index ], controller: "room_permissions" do
-            resource :permission, only: %i[ show create update destroy ], controller: "room_permissions"
+          resources :channels, only: %i[ index ], controller: "channel_permissions" do
+            resource :permission, only: %i[ show create update destroy ], controller: "channel_permissions"
           end
         end
       end
@@ -114,7 +114,7 @@ Rails.application.routes.draw do
 
       scope defaults: { user_id: "me" } do
         resource :sidebar, only: :show
-        resources :hidden_rooms, only: :index
+        resources :hidden_channels, only: :index
         resource :profile
         resource :avatar_shuffle, only: :create
         resource :email_change, only: :destroy
@@ -151,7 +151,7 @@ Rails.application.routes.draw do
   get "join/:join_code", to: "users#new", as: :join
   post "join/:join_code", to: "users#create"
 
-  namespace :rooms do
+  namespace :channels do
     get "browse", to: "browse#index", as: :browse
     resources :opens
     resources :closeds
@@ -174,12 +174,12 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :rooms do
+  resources :channels do
     resources :messages do
       resources :unreads, only: %i[ create ], module: "messages"
     end
 
-    scope module: "rooms" do
+    scope module: "channels" do
       resource :refresh, only: :show
       resource :settings, only: :show
       resource :involvement, only: %i[ show update ] do
@@ -191,7 +191,7 @@ Rails.application.routes.draw do
       resource :access, only: :update, controller: "access"
     end
 
-    get "@:message_id", to: "rooms#show", as: :at_message
+    get "@:message_id", to: "channels#show", as: :at_message
   end
 
   # Cable config discovery + JWT refresh. A signed-in client (browser, or a
@@ -209,7 +209,7 @@ Rails.application.routes.draw do
   # Bot API — authenticate with `Authorization: Bearer <bot_key>`.
   namespace :api, defaults: { format: :json } do
     namespace :bots do
-      resources :rooms, only: %i[ index create update destroy ] do
+      resources :channels, only: %i[ index create update destroy ] do
         resources :messages, only: %i[ index create ]
         resources :members, only: %i[ index create destroy ]
         resource  :membership, only: %i[ create destroy ]

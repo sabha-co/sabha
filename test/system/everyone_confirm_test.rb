@@ -1,6 +1,6 @@
 require "application_system_test_case"
 
-# U8: the composer asks a permitted sender to confirm @everyone once the room is
+# U8: the composer asks a permitted sender to confirm @everyone once the channel is
 # above the configured threshold, showing the real recipient count. Below it,
 # @everyone sends with no friction.
 class EveryoneConfirmTest < ApplicationSystemTestCase
@@ -15,12 +15,12 @@ class EveryoneConfirmTest < ApplicationSystemTestCase
   test "@everyone above the threshold asks for confirmation and sends once acknowledged" do
     Rails.configuration.x.everyone_mention.confirm_threshold = 1 # pets has 2 members
     sign_in "jason@37signals.com" # administrator
-    join_room rooms(:pets)
+    join_channel channels(:pets)
 
     compose_everyone
     click_on "send"
 
-    assert_text "Notify all 2 people in this room?"
+    assert_text "Notify all 2 people in this channel?"
     assert_message_text "@everyone", count: 0 # held until acknowledged
 
     click_on "Send to everyone"
@@ -30,7 +30,7 @@ class EveryoneConfirmTest < ApplicationSystemTestCase
   test "@everyone below the threshold sends without a prompt" do
     Rails.configuration.x.everyone_mention.confirm_threshold = 1000
     sign_in "jason@37signals.com"
-    join_room rooms(:pets)
+    join_channel channels(:pets)
 
     compose_everyone
     click_on "send"

@@ -14,7 +14,7 @@ class RemoteWorkspaceTest < ActiveSupport::TestCase
   test "previews a new workspace from its manifest without saving it" do
     stub_manifest workspace: { name: "Acme", logo_url: "#{ORIGIN}/account/logo?size=small&v=1", url: ORIGIN }
 
-    remote_workspace = RemoteWorkspace.preview("New.Example/rooms")
+    remote_workspace = RemoteWorkspace.preview("New.Example/channels")
 
     assert remote_workspace.new_record?
     assert_equal ORIGIN, remote_workspace.origin

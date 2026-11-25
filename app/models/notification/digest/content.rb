@@ -1,5 +1,5 @@
 class Notification::Digest::Content
-  ACTIVE_ROOM_MIN_MESSAGES = 3
+  ACTIVE_CHANNEL_MIN_MESSAGES = 3
   EXCERPT_LIMIT            = 5
   LOOKBACK                 = 1.week
 
@@ -8,32 +8,32 @@ class Notification::Digest::Content
   end
 
   def empty?
-    everyone_mentions.empty? && active_rooms.empty? && excerpts.empty?
+    everyone_mentions.empty? && active_channels.empty? && excerpts.empty?
   end
 
   def everyone_mentions
-    @everyone_mentions ||= room_ids.empty? ? [] : Message
+    @everyone_mentions ||= channel_ids.empty? ? [] : Message
       .active
-      .includes(:creator, :room, :rich_text_body)
-      .where(room_id: room_ids, mentions_everyone: true)
+      .includes(:creator, :channel, :rich_text_body)
+      .where(channel_id: channel_ids, mentions_everyone: true)
       .where("messages.created_at > ?", LOOKBACK.ago)
       .order(created_at: :desc)
       .limit(EXCERPT_LIMIT)
       .to_a
   end
 
-  def active_rooms
-    @active_rooms ||= qualifying_room_ids
-      .map { |id| [ rooms_by_id[id], counts_by_room_id[id] ] }
-      .reject { |room, _| room.nil? }
+  def active_channels
+    @active_channels ||= qualifying_channel_ids
+      .map { |id| [ channels_by_id[id], counts_by_channel_id[id] ] }
+      .reject { |channel, _| channel.nil? }
       .sort_by { |_, count| -count }
   end
 
   def excerpts
-    @excerpts ||= qualifying_room_ids.empty? ? [] : Message
+    @excerpts ||= qualifying_channel_ids.empty? ? [] : Message
       .active
-      .includes(:creator, :room, :rich_text_body)
-      .where(room_id: qualifying_room_ids)
+      .includes(:creator, :channel, :rich_text_body)
+      .where(channel_id: qualifying_channel_ids)
       .where("messages.created_at > ?", LOOKBACK.ago)
       .order(created_at: :desc)
       .limit(EXCERPT_LIMIT)
@@ -43,31 +43,31 @@ class Notification::Digest::Content
   private
     attr_reader :user
 
-    def room_ids
-      @room_ids ||= user
+    def channel_ids
+      @channel_ids ||= user
         .memberships
-        .without_direct_rooms
-        .without_thread_rooms
+        .without_direct_channels
+        .without_thread_channels
         .where.not(involvement: %w[ invisible nothing ])
-        .joins(:room)
-        .where(rooms: { active: true })
-        .pluck("rooms.id")
+        .joins(:channel)
+        .where(channels: { active: true })
+        .pluck("channels.id")
     end
 
-    def counts_by_room_id
-      @counts_by_room_id ||= Message
+    def counts_by_channel_id
+      @counts_by_channel_id ||= Message
         .active
-        .where(room_id: room_ids)
+        .where(channel_id: channel_ids)
         .where("messages.created_at > ?", LOOKBACK.ago)
-        .group(:room_id)
+        .group(:channel_id)
         .count
     end
 
-    def qualifying_room_ids
-      @qualifying_room_ids ||= counts_by_room_id.select { |_, count| count >= ACTIVE_ROOM_MIN_MESSAGES }.keys
+    def qualifying_channel_ids
+      @qualifying_channel_ids ||= counts_by_channel_id.select { |_, count| count >= ACTIVE_CHANNEL_MIN_MESSAGES }.keys
     end
 
-    def rooms_by_id
-      @rooms_by_id ||= Room.where(id: qualifying_room_ids).index_by(&:id)
+    def channels_by_id
+      @channels_by_id ||= Channel.where(id: qualifying_channel_ids).index_by(&:id)
     end
 end

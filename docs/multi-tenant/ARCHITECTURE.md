@@ -14,7 +14,7 @@ Multi-tenant mode enables:
 
 - **Multiple workspaces** — each workspace has its own isolated SQLite database
 - **Shared authentication** — users authenticate once, access multiple workspaces
-- **Path-based routing** — URLs include workspace ID (e.g., `/1000001/rooms/general`)
+- **Path-based routing** — URLs include workspace ID (e.g., `/1000001/channels/general`)
 - **Cross-workspace sessions** — single sign-on across all workspaces
 
 ---
@@ -37,14 +37,14 @@ Multi-tenant mode enables:
 │  SQLite DB   │ │  SQLite DB   │  ...   │  SQLite DB   │
 │ Workspace A  │ │ Workspace B  │        │ Workspace N  │
 │              │ │              │        │              │
-│ User, Room,  │ │ User, Room,  │        │ User, Room,  │
+│ User, Channel,  │ │ User, Channel,  │        │ User, Channel,  │
 │ Message,     │ │ Message,     │        │ Message,     │
 │ Membership...│ │ Membership...│        │ Membership...│
 └──────────────┘ └──────────────┘        └──────────────┘
 ```
 
 - **Untenanted database** (PostgreSQL): `GlobalIdentity`, `Workspace`, `WorkspaceMembership`, `GlobalSession`, `AuthCode` — these models inherit from `UntenantedRecord`
-- **Tenanted databases** (SQLite, one per workspace): All application models (`User`, `Room`, `Message`, etc.) — stored at `storage/workspaces/{env}/{tenant_id}/db/main.sqlite3`
+- **Tenanted databases** (SQLite, one per workspace): All application models (`User`, `Channel`, `Message`, etc.) — stored at `storage/workspaces/{env}/{tenant_id}/db/main.sqlite3`
 - Tenant isolation via `activerecord-tenanted` gem
 
 ---
@@ -52,12 +52,12 @@ Multi-tenant mode enables:
 ## Request Flow
 
 ```
-GET /1000001/rooms/42
+GET /1000001/channels/42
          │
          ▼
 PathRewriter middleware
   SCRIPT_NAME = /1000001
-  PATH_INFO   = /rooms/42
+  PATH_INFO   = /channels/42
          │
          ▼
 TenantResolver
@@ -66,11 +66,11 @@ TenantResolver
          │
          ▼
 Rails router (standard routing, unaware of tenant)
-  matches /rooms/42 → RoomsController#show
+  matches /channels/42 → ChannelsController#show
          │
          ▼
 URL helpers auto-include SCRIPT_NAME
-  room_path(@room) → /1000001/rooms/42
+  channel_path(@channel) → /1000001/channels/42
 ```
 
 The `PathRewriter` middleware moves the workspace prefix (e.g., `/1000001/`) from PATH_INFO to SCRIPT_NAME, enabling transparent URL generation. Controllers and views are unaware of the tenant prefix.
@@ -222,7 +222,7 @@ https://sabha.co/                     # Landing page
 https://sabha.co/session/new          # Global sign-in
 https://sabha.co/workspaces           # Workspace selector
 https://sabha.co/1000001/             # Workspace 1 home
-https://sabha.co/1000001/rooms/general # Room in workspace 1
+https://sabha.co/1000001/channels/general # Channel in workspace 1
 ```
 
 ---

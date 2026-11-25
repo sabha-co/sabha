@@ -1,9 +1,9 @@
 <% @messages.each do |message| %>
-  <% if message == @room&.parent_message %>
-    <% cache message_cache_key(message, room_id: @room.id, is_parent: true) do %>
-      <%= render "messages/parent_message", message: message, thread: @room %>
+  <% if message == @channel&.parent_message %>
+    <% cache message_cache_key(message, channel_id: @channel.id, is_parent: true) do %>
+      <%= render "messages/parent_message", message: message, thread: @channel %>
     <% end %>
   <% else %>
-    <%= render partial: "messages/message", locals: { message: message, current_room: @room }, cached: message_cache_key(message, room_id: @room&.id || message.room_id) %>
+    <%= render partial: "messages/message", locals: { message: message, current_channel: @channel }, cached: message_cache_key(message, channel_id: @channel&.id || message.channel_id) %>
   <% end %>
 <% end %>

@@ -2,14 +2,14 @@ require "test_helper"
 
 class SingleSignOnNonceTest < ActiveSupport::TestCase
   test "issue and consume returns stored return path" do
-    nonce = SingleSignOnNonce.issue!(return_path: "/rooms/general")
+    nonce = SingleSignOnNonce.issue!(return_path: "/channels/general")
 
-    assert_equal "/rooms/general", SingleSignOnNonce.consume!(nonce)
+    assert_equal "/channels/general", SingleSignOnNonce.consume!(nonce)
     assert SingleSignOnNonce.find_by(nonce:).used?
   end
 
   test "second consume raises replayed" do
-    nonce = SingleSignOnNonce.issue!(return_path: "/rooms/general")
+    nonce = SingleSignOnNonce.issue!(return_path: "/channels/general")
 
     SingleSignOnNonce.consume!(nonce)
 
@@ -20,7 +20,7 @@ class SingleSignOnNonceTest < ActiveSupport::TestCase
 
   test "expired nonce raises invalid without consuming record" do
     now = Time.zone.local(2026, 5, 18, 12, 0, 0)
-    nonce = SingleSignOnNonce.issue!(return_path: "/rooms/general", now:)
+    nonce = SingleSignOnNonce.issue!(return_path: "/channels/general", now:)
 
     assert_raises SingleSignOnNonce::Invalid do
       SingleSignOnNonce.consume!(nonce, now: now + 31.minutes)

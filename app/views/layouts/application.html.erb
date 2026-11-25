@@ -93,7 +93,7 @@
       <%# A deep-linked post (gallery visited as ?post=<slug>) eager-loads its
           panel here; the frame-load opens the panel over the gallery. %>
       <%= turbo_frame_tag "thread_panel_frame",
-            src: (@deep_linked_post && rooms_post_path(@deep_linked_post, message_id: params[:message_id])),
+            src: (@deep_linked_post && channels_post_path(@deep_linked_post, message_id: params[:message_id])),
             data: { thread_panel_target: "frame" } %>
     </aside>
 
@@ -101,7 +101,7 @@
       <%= yield :sidebar %>
     </template>
 
-    <aside id="sidebar" data-controller="toggle-class" data-toggle-class-toggle-class="open" data-toggle-class-close-on-escape-value="true" data-toggle-class-focus-trap-value="true" data-toggle-class-initial-focus-selector-value="#room-search" <%= "data-turbo-permanent" unless Sabha.saas? %>>
+    <aside id="sidebar" data-controller="toggle-class" data-toggle-class-toggle-class="open" data-toggle-class-close-on-escape-value="true" data-toggle-class-focus-trap-value="true" data-toggle-class-initial-focus-selector-value="#channel-search" <%= "data-turbo-permanent" unless Sabha.saas? %>>
       <%= yield :sidebar %>
     </aside>
 

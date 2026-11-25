@@ -33,13 +33,13 @@ On a **1 vCPU / 2 GB** VPS running Sabha v1.10.0:
 - **Generator:** k6 on a separate machine (laptop) over the public internet, so the
   load generator never steals CPU from the target.
 - **Seed:** `config/environments/performance.rb` auto-seeds **10,000 users + sessions,
-  201 rooms, ~11,000 memberships** on first boot. Room 1 contains *every* user.
+  201 channels, ~11,000 memberships** on first boot. Channel 1 contains *every* user.
 - **Auth:** the test authenticates as seeded users with pre-signed `session_token`
   cookies (`SECRET_KEY_BASE=dummy`); WebSocket origin checks are disabled in the
   performance env.
 
 Each virtual user opens a WebSocket and subscribes to the same channels a real
-room page does: `PresenceChannel`, the account's signed room-list stream
+channel page does: `PresenceChannel`, the account's signed channel-list stream
 (`$pubsub`), `HeartbeatChannel`, and three signed `Turbo::StreamsChannel`
 streams.
 
@@ -154,11 +154,11 @@ connections out of the Ruby process.
 
 ## Message throughput (both modes)
 
-Posting a message is dominated by **room membership size**, not the cable layer.
-Room 1 in the seed has all 10,000 users, so each post fans out unread/notification
+Posting a message is dominated by **channel membership size**, not the cable layer.
+Channel 1 in the seed has all 10,000 users, so each post fans out unread/notification
 work to every member: it **pegs the Ruby core at 100% for ~2.5–4 s per message**.
-A normal 50–200-member room is far cheaper. This is a separate scaling axis from
-connection count — large rooms are expensive to post into regardless of ActionCable
+A normal 50–200-member channel is far cheaper. This is a separate scaling axis from
+connection count — large channels are expensive to post into regardless of ActionCable
 vs AnyCable.
 
 ---
@@ -177,7 +177,7 @@ These tripped up the test and are worth knowing (or fixing):
 - **anycable-go must bind `--host=0.0.0.0`** in Docker, or it listens on localhost
   inside the container and docker-proxy can't reach it.
 - **Disabling broadcast batching floods anycable-go.** With `broadcast_batching: true`
-  (the default), per-member broadcasts for a large room are aggregated into one POST;
+  (the default), per-member broadcasts for a large channel are aggregated into one POST;
   with it off, each becomes a separate HTTP POST and delivery degrades under load.
 
 The load-test fixtures themselves were also stale and were corrected: the signed
@@ -202,7 +202,7 @@ For a self-hosted Sabha instance:
    client reconnects helps more.
 4. **With AnyCable, raise `RAILS_MAX_THREADS`** (and watch SQLite contention) to lift
    the RPC establishment ceiling — that, not connection-holding, becomes the limit.
-5. **Watch room sizes.** Posting into rooms with thousands of members is CPU-heavy
+5. **Watch channel sizes.** Posting into channels with thousands of members is CPU-heavy
    regardless of the cable layer (per-member unread fan-out).
 
 ### Rough sizing guide

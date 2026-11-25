@@ -1,4 +1,4 @@
-# Fetches messages from rooms the user has access to, filtered by membership involvement level (:visible or :notifications_on).
+# Fetches messages from channels the user has access to, filtered by membership involvement level (:visible or :notifications_on).
 class Inbox::MessagesQuery
   INVOLVEMENT_SCOPES = %i[visible notifications_on].freeze
 
@@ -11,7 +11,7 @@ class Inbox::MessagesQuery
 
   def call
     Message.active
-           .in_rooms(involved_room_ids)
+           .in_channels(involved_channel_ids)
            .without_events
            .without_created_by(user)
            .for_display
@@ -21,12 +21,12 @@ class Inbox::MessagesQuery
 
   attr_reader :user, :involvement
 
-  # Rooms where the user's own membership carries the requested involvement. The
+  # Channels where the user's own membership carries the requested involvement. The
   # inbox surfaces messages by YOUR involvement, so it's membership-based — not
   # the derived reach of User#reachable_messages (a member who can merely *view* a
-  # sub-room, without an involved membership, gets no inbox entry for it).
-  def involved_room_ids
-    user.memberships.active.public_send(involvement).select(:room_id)
+  # sub-channel, without an involved membership, gets no inbox entry for it).
+  def involved_channel_ids
+    user.memberships.active.public_send(involvement).select(:channel_id)
   end
 
   def validate_involvement!

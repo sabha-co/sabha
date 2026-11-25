@@ -2,16 +2,16 @@ require "test_helper"
 
 class BroadcastInboxThreadsJobTest < ActiveJob::TestCase
   setup do
-    @room = rooms(:designers)
+    @channel = channels(:designers)
     @david = users(:david)
     @jason = users(:jason)
 
     # Create a parent message that we'll thread from
-    @parent_message = @room.messages.create!(creator: @david, body: "Parent message")
+    @parent_message = @channel.messages.create!(creator: @david, body: "Parent message")
   end
 
   test "broadcasts to thread participants when thread has messages" do
-    thread = Rooms::Thread.create!(parent_message: @parent_message, creator: @david)
+    thread = Channels::Thread.create!(parent_message: @parent_message, creator: @david)
     thread.memberships.grant_to([ @david, @jason ])
 
     # First reply triggers the append-to-inbox branch for non-creator participants.
@@ -42,15 +42,15 @@ class BroadcastInboxThreadsJobTest < ActiveJob::TestCase
   end
 
   test "excludes message creator from broadcasts" do
-    # Set all parent room members to non-everything involvement so we can test just the thread
-    @room.memberships.update_all(involvement: :mentions)
+    # Set all parent channel members to non-everything involvement so we can test just the thread
+    @channel.memberships.update_all(involvement: :mentions)
 
-    thread = Rooms::Thread.create!(parent_message: @parent_message, creator: @david)
+    thread = Channels::Thread.create!(parent_message: @parent_message, creator: @david)
     thread.memberships.grant_to([ @david ])
 
     thread_message = thread.messages.create!(creator: @david, body: "Thread reply")
 
-    # Creator is the only thread member and no parent room members have :everything
+    # Creator is the only thread member and no parent channel members have :everything
     # involvement, so the broadcast recipient set is empty after removing the creator.
     assert_no_turbo_stream_broadcasts [ @david, :inbox_threads ] do
       assert_no_turbo_stream_broadcasts [ @jason, :inbox_threads ] do

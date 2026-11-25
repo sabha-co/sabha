@@ -27,7 +27,7 @@ module User::Bannable
 
   def remove_banned_content
     # Query messages before deactivating (association is scoped to active)
-    messages_to_remove = messages.includes(:room).to_a
+    messages_to_remove = messages.includes(:channel).to_a
 
     # Batch update for deactivation
     Message.where(id: messages_to_remove.map(&:id)).update_all(active: false)

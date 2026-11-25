@@ -33,7 +33,7 @@ Migrating an existing SQLite install's *data* to Postgres is a separate, harder 
 
 ### Application Postgres compatibility
 
-- R1. Application SQL behaves correctly on Postgres — no dialect errors and no silent case-sensitivity regressions in name/room/member matching.
+- R1. Application SQL behaves correctly on Postgres — no dialect errors and no silent case-sensitivity regressions in name/channel/member matching.
 - R2. `bin/rails db:prepare` succeeds against a fresh Postgres 18 (schema loads without the FTS5 virtual table aborting it).
 - R3. Full-text search works on both engines, with each engine's index kept current on message create, update, and destroy.
 
@@ -106,16 +106,16 @@ Two tracks. **Application compatibility** (U1–U3) makes the app run correctly 
 - Goal: eliminate the dialect-specific SQL that errors or silently under-matches on Postgres. (R1)
 - Dependencies: none.
 - Files:
-  - `app/models/user.rb` — `by_first_name` (`instr`→`strpos` per adapter); `filtered_by` (`LIKE`→Arel `matches`); `sharing_rooms_with` (`joins.distinct`→`where(id: subquery)`).
-  - `app/models/room.rb` — `matching` (`LIKE`→Arel `matches`).
+  - `app/models/user.rb` — `by_first_name` (`instr`→`strpos` per adapter); `filtered_by` (`LIKE`→Arel `matches`); `sharing_channels_with` (`joins.distinct`→`where(id: subquery)`).
+  - `app/models/channel.rb` — `matching` (`LIKE`→Arel `matches`).
   - `app/controllers/accounts/users_controller.rb` — people/bots search (`LIKE`→Arel `matches`).
   - `app/models/inbox/threads_query.rb` — raw `active = 1`→`active = TRUE`.
   - `app/models/notification.rb`, `app/models/message/unreadable.rb` — scalar `MAX(x, 0)`→portable `CASE` clamp.
   - `lib/slack/users_importer.rb` — `json_extract`→`jsonb` accessor over the `preferences` text column, per adapter.
-  - Tests: `test/models/user_test.rb`, `test/models/room_test.rb`, `test/models/inbox/threads_query_test.rb` (new), `test/lib/slack/importer_test.rb`.
+  - Tests: `test/models/user_test.rb`, `test/models/channel_test.rb`, `test/models/inbox/threads_query_test.rb` (new), `test/lib/slack/importer_test.rb`.
 - Approach: prefer adapter-agnostic Arel/AR constructs; branch on `connection.adapter_name` only where no portable form exists. The `MAX`→`CASE` and `DISTINCT`→subquery fixes were surfaced by running the full suite against a live Postgres 18 (not enumerated up front) — the value of the dual-adapter run.
 - Patterns to follow: `app/models/membership/unreadable.rb` already uses `active = TRUE`.
-- Test scenarios: case-insensitive member/room search matches mixed-case names; `by_first_name` groups multi-word names under the first token and single-word names with no split; the Slack importer finds a user by `slack_user_id`; the inbox threads query excludes deactivated threads.
+- Test scenarios: case-insensitive member/channel search matches mixed-case names; `by_first_name` groups multi-word names under the first token and single-word names with no split; the Slack importer finds a user by `slack_user_id`; the inbox threads query excludes deactivated threads.
 - Verification: the search/scope tests pass on both SQLite and (development-verified) Postgres 18; ongoing Postgres coverage arrives with 001's CI leg.
 
 ### U2. Adapter-aware search-index provisioning and schema-load compatibility

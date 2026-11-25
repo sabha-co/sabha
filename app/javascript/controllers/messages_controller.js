@@ -142,7 +142,7 @@ export default class extends Controller {
 
     // Only act when our own composer or message area has focus — prevents
     // the document-level keydown.up from triggering edits in both the main
-    // room and the thread panel simultaneously.
+    // channel and the thread panel simultaneously.
     const focused = document.activeElement
     if (!editor?.contains(focused) && !this.element.contains(focused)) return
 

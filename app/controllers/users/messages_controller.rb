@@ -7,7 +7,7 @@ class Users::MessagesController < ApplicationController
   def index
     @query = query.presence
     @recent_searches = Current.user.searches.for_creator(@user).ordered
-    @return_to_room = last_room_visited
+    @return_to_channel = last_channel_visited
     @message_count = messages.count
   end
 

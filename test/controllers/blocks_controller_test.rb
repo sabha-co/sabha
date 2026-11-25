@@ -12,22 +12,22 @@ class BlocksControllerTest < ActionDispatch::IntegrationTest
 
     assert users(:david).blocked?(users(:jason))
 
-    room = rooms(:david_and_jason)
-    assert room.messages.exists?(event: "user_blocked"), "Should post blocked system message"
+    channel = channels(:david_and_jason)
+    assert channel.messages.exists?(event: "user_blocked"), "Should post blocked system message"
     assert_redirected_to root_path
   end
 
   test "create is idempotent and does not post duplicate system messages" do
     users(:david).block!(users(:jason))
 
-    room = rooms(:david_and_jason)
-    message_count_before = room.messages.where(event: "user_blocked").count
+    channel = channels(:david_and_jason)
+    message_count_before = channel.messages.where(event: "user_blocked").count
 
     assert_no_difference -> { Block.count } do
       post user_block_url(users(:jason))
     end
 
-    assert_equal message_count_before, room.messages.where(event: "user_blocked").count
+    assert_equal message_count_before, channel.messages.where(event: "user_blocked").count
     assert_redirected_to root_path
   end
 
@@ -40,8 +40,8 @@ class BlocksControllerTest < ActionDispatch::IntegrationTest
 
     assert_not users(:david).blocked?(users(:jason))
 
-    room = rooms(:david_and_jason)
-    assert room.messages.exists?(event: "user_unblocked"), "Should post unblocked system message"
+    channel = channels(:david_and_jason)
+    assert channel.messages.exists?(event: "user_unblocked"), "Should post unblocked system message"
     assert_redirected_to root_path
   end
 

@@ -128,7 +128,7 @@ module Saas
       # Visit the workspace — should recreate the User, not crash or redirect loop
       workspace_get "/", workspace: workspace
 
-      # WelcomeController redirects to landing room on success — no error, no loop
+      # WelcomeController redirects to landing channel on success — no error, no loop
       assert_response :redirect
       assert_not_equal "/workspaces", response.location # not bounced to workspace selector
 
@@ -235,7 +235,7 @@ module Saas
       widgets = workspaces(:widgets)
 
       # Alice is not a member of widgets workspace
-      get new_session_path, params: { return_to: "/#{widgets.external_id}/rooms/general" }
+      get new_session_path, params: { return_to: "/#{widgets.external_id}/channels/general" }
       post auth_code_path, params: { code: code.code }
 
       # Should redirect to root, not the inaccessible workspace
@@ -259,11 +259,11 @@ module Saas
       acme = workspaces(:acme)
 
       # Alice IS a member of acme
-      get new_session_path, params: { return_to: "/#{acme.external_id}/rooms/general" }
+      get new_session_path, params: { return_to: "/#{acme.external_id}/channels/general" }
       post auth_code_path, params: { code: code.code }
 
       # Should redirect to the stored workspace URL
-      assert_redirected_to "/#{acme.external_id}/rooms/general"
+      assert_redirected_to "/#{acme.external_id}/channels/general"
     end
   end
 end

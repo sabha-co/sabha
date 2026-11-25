@@ -5,7 +5,7 @@ module Sabha
 
   # Major version of the protocol clients speak to a Sabha server: the
   # manifest, the destination catalog, the session claim, and the desktop
-  # channel. Clients send it as the Sabha-Protocol-Major header.
+  # cable channel. Clients send it as the Sabha-Protocol-Major header.
   PROTOCOL_MAJOR = 1
 
   # The sabha.co that keeps members' lists of workspaces and offers

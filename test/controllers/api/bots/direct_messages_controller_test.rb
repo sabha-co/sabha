@@ -9,28 +9,28 @@ class API::Bots::DirectMessagesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :created
     json = JSON.parse(response.body)
-    assert json["room"]["id"].present?
+    assert json["channel"]["id"].present?
 
-    room = Room.find(json["room"]["id"])
-    assert room.direct?
-    assert room.users.include?(bot)
-    assert room.users.include?(users(:jz))
+    channel = Channel.find(json["channel"]["id"])
+    assert channel.direct?
+    assert channel.users.include?(bot)
+    assert channel.users.include?(users(:jz))
   end
 
   test "bot creating existing DM returns ok status" do
     bot = users(:bender)
 
-    # Create the room first
+    # Create the channel first
     post api_bots_direct_messages_url, params: { user_ids: [ users(:jz).id ] }, headers: bot_headers(bot.bot_key)
     assert_response :created
-    first_room_id = JSON.parse(response.body)["room"]["id"]
+    first_channel_id = JSON.parse(response.body)["channel"]["id"]
 
-    # Creating again returns existing room with :ok status
+    # Creating again returns existing channel with :ok status
     post api_bots_direct_messages_url, params: { user_ids: [ users(:jz).id ] }, headers: bot_headers(bot.bot_key)
     assert_response :ok
-    second_room_id = JSON.parse(response.body)["room"]["id"]
+    second_channel_id = JSON.parse(response.body)["channel"]["id"]
 
-    assert_equal first_room_id, second_room_id
+    assert_equal first_channel_id, second_channel_id
   end
 
   test "bot can create group DM" do
@@ -40,13 +40,13 @@ class API::Bots::DirectMessagesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :created
     json = JSON.parse(response.body)
-    room = Room.find(json["room"]["id"])
+    channel = Channel.find(json["channel"]["id"])
 
-    assert room.direct?
-    assert_equal 3, room.users.count
-    assert room.users.include?(bot)
-    assert room.users.include?(users(:jz))
-    assert room.users.include?(users(:kevin))
+    assert channel.direct?
+    assert_equal 3, channel.users.count
+    assert channel.users.include?(bot)
+    assert channel.users.include?(users(:jz))
+    assert channel.users.include?(users(:kevin))
   end
 
   test "invalid bot token redirects to sign in" do
@@ -55,7 +55,7 @@ class API::Bots::DirectMessagesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_url
   end
 
-  test "creating DM with non-existent user creates bot-only room" do
+  test "creating DM with non-existent user creates bot-only channel" do
     bot = users(:bender)
 
     # Non-existent user ID is filtered out, bot creates DM with just itself
@@ -63,11 +63,11 @@ class API::Bots::DirectMessagesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :created
     json = JSON.parse(response.body)
-    room = Room.find(json["room"]["id"])
+    channel = Channel.find(json["channel"]["id"])
 
-    # Room contains only the bot (note to self)
-    assert_equal 1, room.users.count
-    assert room.users.include?(bot)
+    # Channel contains only the bot (note to self)
+    assert_equal 1, channel.users.count
+    assert channel.users.include?(bot)
   end
 
   test "bot cannot create DM when account restricts DMs to administrators" do

@@ -4,7 +4,7 @@ require_relative "../test_helper"
 
 class PathRewriterTest < ActionDispatch::IntegrationTest
   # Tests for PathRewriter middleware which:
-  # 1. Extracts workspace ID from URL path (/1000001/rooms → tenant 1000001)
+  # 1. Extracts workspace ID from URL path (/1000001/channels → tenant 1000001)
   # 2. Moves workspace prefix to SCRIPT_NAME for URL generation
   # 3. Raises TenantDoesNotExistError for non-existent tenants (converted to 404 by rescue_responses)
 

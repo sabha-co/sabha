@@ -1,4 +1,4 @@
-class PresenceChannel < RoomChannel
+class PresenceChannel < ChannelScopedChannel
   include AnyCable::Rails::Channel::Presence
 
   # Has this subscription already given its connection back? Channel state, not
@@ -15,9 +15,9 @@ class PresenceChannel < RoomChannel
       return unless m
 
       m.present
-      join_presence room_presence_stream
+      join_presence channel_presence_stream
       self.departed = false
-      ReadRoomsChannel.broadcast_to(current_user, { room_id: m.room_id })
+      ReadChannelsChannel.broadcast_to(current_user, { channel_id: m.channel_id })
     end
   end
 
@@ -52,7 +52,7 @@ class PresenceChannel < RoomChannel
     # A subscription contributes exactly one connection, so it may only take one
     # away. A hidden tab has already sent `absent`; closing it then fires
     # unsubscribe too, and without this guard that second decrement would come
-    # out of another tab's count — marking a room unread while the member is
+    # out of another tab's count — marking a channel unread while the member is
     # still sitting in it.
     def depart_once
       return if departed
@@ -63,15 +63,15 @@ class PresenceChannel < RoomChannel
 
     def membership
       with_tenant_context do
-        room&.memberships&.find_by(user: current_user)
+        channel&.memberships&.find_by(user: current_user)
       end
     end
 
-    # The room's own stream, already tenant-scoped by the Room GID. Passed
+    # The channel's own stream, already tenant-scoped by the Channel GID. Passed
     # explicitly so a standalone `present` action (a re-focused tab, no fresh
     # `stream_for`) still joins the right presence set.
-    def room_presence_stream
-      self.class.broadcasting_for(room)
+    def channel_presence_stream
+      self.class.broadcasting_for(channel)
     end
 
     # Key presence by the user, so a member's multiple tabs dedupe to one entry

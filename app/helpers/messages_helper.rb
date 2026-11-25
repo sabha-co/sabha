@@ -1,10 +1,10 @@
 module MessagesHelper
-  def edit_message_in_room_path(room, message)
-    room ? edit_room_message_path(room, message) : edit_message_path(message)
+  def edit_message_in_channel_path(channel, message)
+    channel ? edit_channel_message_path(channel, message) : edit_message_path(message)
   end
 
-  def message_in_room_path(room, message)
-    room ? room_message_path(room, message) : message_path(message)
+  def message_in_channel_path(channel, message)
+    channel ? channel_message_path(channel, message) : message_path(message)
   end
 
   def message_permalink_path(message)
@@ -15,7 +15,7 @@ module MessagesHelper
     message_permalink(message, only_path: false)
   end
 
-  def message_area_tag(room, id: "message-area", presence: true, &)
+  def message_area_tag(channel, id: "message-area", presence: true, &)
     controllers = [ "messages", ("presence" if presence), "drop-target" ].compact.join(" ")
     actions = [ messages_actions, drop_target_actions ]
     actions << presence_actions if presence
@@ -32,17 +32,17 @@ module MessagesHelper
       messages_threaded_class: "message--threaded",
       messages_loading_up_class: "message--loading-up",
       messages_loading_down_class: "message--loading-down",
-      messages_page_url_value: room_messages_url(room)
+      messages_page_url_value: channel_messages_url(channel)
     }
 
-    data[:presence_room_id_value] = room.id if presence
+    data[:presence_channel_id_value] = channel.id if presence
 
     tag.div id: id, class: "message-area", contents: true, data: data, &
   end
 
-  def messages_tag(room, refresh: true, &)
-    controllers = refresh ? "maintain-scroll refresh-room" : "maintain-scroll"
-    actions = refresh ? [ maintain_scroll_actions, refresh_room_actions ].join(" ") : maintain_scroll_actions
+  def messages_tag(channel, refresh: true, &)
+    controllers = refresh ? "maintain-scroll refresh-channel" : "maintain-scroll"
+    actions = refresh ? [ maintain_scroll_actions, refresh_channel_actions ].join(" ") : maintain_scroll_actions
 
     data = {
       controller: controllers,
@@ -51,12 +51,12 @@ module MessagesHelper
     }
 
     if refresh
-      data[:refresh_room_loaded_at_value] = room.updated_at.to_fs(:epoch)
-      data[:refresh_room_url_value] = room_refresh_url(room)
-      data[:refresh_room_first_unread_class] = "message__new-separator"
+      data[:refresh_channel_loaded_at_value] = channel.updated_at.to_fs(:epoch)
+      data[:refresh_channel_url_value] = channel_refresh_url(channel)
+      data[:refresh_channel_first_unread_class] = "message__new-separator"
     end
 
-    tag.div id: dom_id(room, :messages), class: "messages", aria: { live: "polite", relevant: "additions" }, data: data, &
+    tag.div id: dom_id(channel, :messages), class: "messages", aria: { live: "polite", relevant: "additions" }, data: data, &
   end
 
   # True when this message was written by the forum post's original poster — the
@@ -64,19 +64,19 @@ module MessagesHelper
   # creator (the OP), so this is deterministic and O(1) — cache-safe. Non-post
   # messages are never OP.
   def forum_op?(message)
-    message.room.post? && message.creator_id == message.room.creator_id
+    message.channel.post? && message.creator_id == message.channel.creator_id
   end
 
   # True for the single opening message of a forum post — its earliest message,
   # which carries the post body and gets the roomier "question" hero treatment.
   # Memoized per post so a message list resolves it once, not per message; the
-  # "which message opens the post" query lives on Rooms::Post#opening_message_id.
+  # "which message opens the post" query lives on Channels::Post#opening_message_id.
   def forum_opening_message?(message)
-    room = message.room
-    return false unless room.post?
+    channel = message.channel
+    return false unless channel.post?
 
-    (@forum_opening_ids ||= {})[room.id] ||= room.opening_message_id
-    @forum_opening_ids[room.id] == message.id
+    (@forum_opening_ids ||= {})[channel.id] ||= channel.opening_message_id
+    @forum_opening_ids[channel.id] == message.id
   end
 
   def message_tag(message, is_unread: false, composer_id: "composer", &)
@@ -91,7 +91,7 @@ module MessagesHelper
       unread: is_unread || nil,
       messages_target: "message",
       search_results_target: "message",
-      refresh_room_target: "message",
+      refresh_channel_target: "message",
       inbox_target: "message"
     }
 
@@ -140,20 +140,20 @@ module MessagesHelper
     ""
   end
 
-  def message_cache_key(message, room_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_room_name: false, composer_id: "composer", forum_replies_count: nil)
+  def message_cache_key(message, channel_id: nil, is_first_unread_message: false, is_unread: false, is_parent: false, show_channel_name: false, composer_id: "composer", forum_replies_count: nil)
     [
       # Bump this version when message presentation changes what it emits but the
       # digestor can't see it — e.g. the opengraph embed partial, which ActionText
       # renders by name rather than through a render call the digestor follows.
       "presentation-v2",
       message,
-      room_id,
+      channel_id,
       message.bookmarked_by?(Current.user),
       message.creator,
       is_first_unread_message,
       is_unread,
       is_parent,
-      show_room_name,
+      show_channel_name,
       composer_id,
       message.thread_fingerprint,
       forum_replies_count
@@ -162,17 +162,17 @@ module MessagesHelper
 
   private
     # Shared resolver for message_permalink_path / _url — the same three-branch
-    # decision (forum post / chat thread / plain room). only_path toggles between
+    # decision (forum post / chat thread / plain channel). only_path toggles between
     # a path and a full URL, the sole difference between the two public helpers.
     def message_permalink(message, only_path:)
-      room = message.room
+      channel = message.channel
       if post = message.forum_post
         message_id = message.id unless forum_opening_message?(message)
-        room_url(post.parent_room, post: post.slug, message_id:, only_path:)
-      elsif room.thread? && (parent = room.parent_message)
-        room_at_message_url(parent.room, parent, only_path:)
+        channel_url(post.parent_channel, post: post.slug, message_id:, only_path:)
+      elsif channel.thread? && (parent = channel.parent_message)
+        channel_at_message_url(parent.channel, parent, only_path:)
       else
-        room_at_message_url(room, message, only_path:)
+        channel_at_message_url(channel, message, only_path:)
       end
     end
 
@@ -184,8 +184,8 @@ module MessagesHelper
       "turbo:before-stream-render@document->maintain-scroll#beforeStreamRender"
     end
 
-    def refresh_room_actions
-      "visibilitychange@document->refresh-room#visibilityChanged online@window->refresh-room#online"
+    def refresh_channel_actions
+      "visibilitychange@document->refresh-channel#visibilityChanged online@window->refresh-channel#online"
     end
 
     def presence_actions

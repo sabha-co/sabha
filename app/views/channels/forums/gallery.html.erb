@@ -1,0 +1,59 @@
+<% @page_title = channel_display_name(@channel) %>
+<% @body_class = "sidebar" %>
+
+<% content_for :head do %>
+  <meta name="current-channel-id" content="<%= @channel.id %>">
+<% end %>
+
+<%= render "channels/show/nav", channel: @channel %>
+
+<% content_for :sidebar, sidebar_turbo_frame_tag(src: user_sidebar_path) %>
+
+<% filtering = params[:solved].present? %>
+<% populated = @posts.any? || filtering %>
+
+<%# Mount the presence controller so opening the forum clears its sidebar unread,
+    the same way a channel's message area does (see message_area_tag). The gallery
+    renders cards, not a message stream, so it wires presence itself. %>
+<div class="forum" data-controller="presence" data-presence-channel-id-value="<%= @channel.id %>"
+     data-action="visibilitychange@document->presence#visibilityChanged">
+  <%= turbo_stream_from @channel, :posts, channel: "ChannelStreamsChannel" %>
+  <%# Involvement changes (the nav bell) broadcast to the membership stream —
+      subscribe so the button cycles its state, like the chat and post pages. %>
+  <%= turbo_stream_from @membership if @membership %>
+
+  <div class="forum__inner flex flex-column gap">
+    <%# Toolbar row: filters lead on the left, New post pinned to the right. %>
+    <div class="forum__toolbar flex align-center gap flex-wrap">
+      <% if populated %>
+        <%= render "channels/forums/filter_bar", forum: @channel %>
+      <% end %>
+
+      <%# Native <details> disclosure: the summary is the "New post" trigger; the
+          controller only focuses the title on open (see forum_compose). Pinned
+          right when closed; expands to a full-width row below the filters on open. %>
+      <%= tag.details class: "forum-compose", data: {
+            controller: "forum-compose", action: "toggle->forum-compose#focus" } do %>
+        <summary class="forum-compose__toggle btn btn--reversed">
+          <%= icon_tag "add", class: "forum-compose__toggle-icon" %>
+          <span>New post</span>
+        </summary>
+        <%= render "channels/forums/posts/compose", forum: @channel %>
+      <% end %>
+    </div>
+
+    <% if @posts.any? %>
+      <div id="<%= dom_id(@channel, :posts) %>" class="forum__list flex flex-column">
+        <%= render partial: "channels/forums/post_card", collection: @posts, as: :post,
+              locals: { forum: @channel, participants: @participants, viewer: Current.user } %>
+        <% unless @page.last? %>
+          <%= render "channels/forums/next_page_container", forum: @channel, page: @page.next_param %>
+        <% end %>
+      </div>
+    <% elsif filtering %>
+      <%= render "channels/forums/empty", forum: @channel, filtering: true %>
+    <% else %>
+      <%= render "channels/forums/empty", forum: @channel, filtering: false %>
+    <% end %>
+  </div>
+</div>

@@ -14,10 +14,10 @@ export default class extends Controller {
     // Store the original page title when the controller connects
     this.originalTitleValue = document.title
     
-    // Listen for unread and badge events from rooms-list
-    window.addEventListener("rooms-list:unread", this.boundUpdateTitle)
-    window.addEventListener("rooms-list:read", this.boundUpdateTitle)
-    window.addEventListener("rooms-list:addBadge", this.boundUpdateTitle)
+    // Listen for unread and badge events from channels-list
+    window.addEventListener("channels-list:unread", this.boundUpdateTitle)
+    window.addEventListener("channels-list:read", this.boundUpdateTitle)
+    window.addEventListener("channels-list:addBadge", this.boundUpdateTitle)
     
     // Listen for Turbo navigation events
     document.addEventListener("turbo:before-render", this.boundCheckTitle)
@@ -28,9 +28,9 @@ export default class extends Controller {
 
   disconnect() {
     // Clean up event listeners
-    window.removeEventListener("rooms-list:unread", this.boundUpdateTitle)
-    window.removeEventListener("rooms-list:read", this.boundUpdateTitle)
-    window.removeEventListener("rooms-list:addBadge", this.boundUpdateTitle)
+    window.removeEventListener("channels-list:unread", this.boundUpdateTitle)
+    window.removeEventListener("channels-list:read", this.boundUpdateTitle)
+    window.removeEventListener("channels-list:addBadge", this.boundUpdateTitle)
     
     // Clean up Turbo navigation event listeners
     document.removeEventListener("turbo:before-render", this.boundCheckTitle)
@@ -61,7 +61,7 @@ export default class extends Controller {
 
     if (sidebar.querySelector(".badge") || sidebar.querySelector(".direct.unread")) {
       document.title = `🔴 ${this.originalTitleValue}`
-    } else if (sidebar.querySelector("#starred_rooms [data-type=list_node]:not([hidden]) .unread")) {
+    } else if (sidebar.querySelector("#starred_channels [data-type=list_node]:not([hidden]) .unread")) {
       document.title = `⚫ ${this.originalTitleValue}`
     } else {
       document.title = this.originalTitleValue

@@ -1,1 +1,1 @@
-<%= render partial: "messages/message", collection: @messages, cached: -> message { message_cache_key(message, room_id: "search_#{Current.user.id}") } %>
+<%= render partial: "messages/message", collection: @messages, cached: -> message { message_cache_key(message, channel_id: "search_#{Current.user.id}") } %>

@@ -15,14 +15,14 @@ module Bot::EventPayload
       {
         event:   "message_#{event}",
         user:    urls.user_to_api(item.creator),
-        room:    urls.room_to_api(item.room, bot_is_member: bot.member_of?(item.room)),
+        channel:    urls.channel_to_api(item.channel, bot_is_member: bot.member_of?(item.channel)),
         message: urls.message_to_api(item)
       }
     elsif item.is_a?(Boost)
       {
         event:   "boost_#{event}",
         user:    urls.user_to_api(item.booster),
-        room:    urls.room_to_api(item.message.room, bot_is_member: bot.member_of?(item.message.room)),
+        channel:    urls.channel_to_api(item.message.channel, bot_is_member: bot.member_of?(item.message.channel)),
         message: urls.message_to_api(item.message),
         boost:   { id: item.id, body: item.content }
       }
@@ -41,14 +41,14 @@ module Bot::EventPayload
       @base_url = base_url
     end
 
-    def room_to_api(room, bot_is_member: false)
+    def channel_to_api(channel, bot_is_member: false)
       {
-        id: room.id,
-        name: room.name,
-        type: room.class.name.demodulize,
-        members: room.memberships.visible.count,
+        id: channel.id,
+        name: channel.name,
+        type: channel.class.name.demodulize,
+        members: channel.memberships.visible.count,
         has_bot: bot_is_member,
-        messages_url: absolute_url(routes.api_bots_room_messages_path(room))
+        messages_url: absolute_url(routes.api_bots_channel_messages_path(channel))
       }
     end
 
@@ -59,7 +59,7 @@ module Bot::EventPayload
         has_attachment: message.attachment?,
         attachment: attachment_to_api(message),
         mentionees: message.mentionees.map { |m| { id: m.id, name: m.name } },
-        url: absolute_url(routes.room_at_message_path(message.room, message)),
+        url: absolute_url(routes.channel_at_message_path(message.channel, message)),
         created_at: message.created_at.iso8601,
         updated_at: message.updated_at.iso8601,
         thread: thread_to_api(message)
@@ -77,8 +77,8 @@ module Bot::EventPayload
 
     private
       def thread_to_api(message)
-        return nil unless message.room.sub_room?
-        { id: message.room.id, parent_message_id: message.room.parent_message_id }
+        return nil unless message.channel.sub_channel?
+        { id: message.channel.id, parent_message_id: message.channel.parent_message_id }
       end
 
       def attachment_to_api(message)

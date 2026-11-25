@@ -1,5 +1,5 @@
 module ApplicationHelper
-  include RoomsHelper
+  include ChannelsHelper
 
   def page_title_tag
     tag.title page_title
@@ -45,7 +45,7 @@ module ApplicationHelper
     if params[:from].present?
       link_back_to params[:from]
     else
-      link_back_to_last_room_visited
+      link_back_to_last_channel_visited
     end
   end
 
@@ -93,7 +93,7 @@ module ApplicationHelper
     end
 
     # Extracts a back path from the referer if it matches a known inbox/search page.
-    # Returns nil for room pages or unrecognized paths so callers fall back to defaults.
+    # Returns nil for channel pages or unrecognized paths so callers fall back to defaults.
     # Preserves query string for search pages and handles SaaS workspace path prefixes.
     def referrer_back_path
       return unless request.referer.present?

@@ -4,11 +4,11 @@ module Sabha
   module Saas
     # Middleware that extracts workspace ID from path and rewrites for routing.
     #
-    # When a request comes in like `/1000002/rooms/general`:
+    # When a request comes in like `/1000002/channels/general`:
     # 1. Extracts the workspace ID (1000002)
     # 2. Moves it from PATH_INFO to SCRIPT_NAME
     # 3. Stashes it in env for TenantSelector to use
-    # 4. Routes see `/rooms/general` and URL helpers generate `/1000002/rooms/general`
+    # 4. Routes see `/channels/general` and URL helpers generate `/1000002/channels/general`
     #
     # Runs BEFORE TenantSelector so the tenant resolver can read the stashed ID.
     class PathRewriter

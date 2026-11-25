@@ -1,9 +1,9 @@
 class API::Bots::MembersController < API::Bots::BaseController
-  before_action :set_room
+  before_action :set_channel
   before_action :require_creator, only: %i[create destroy]
 
   def index
-    members = @room.memberships.visible.includes(:user).map do |membership|
+    members = @channel.memberships.visible.includes(:user).map do |membership|
       user = membership.user
       { id: user.id, name: user.name, role: user.role }
     end
@@ -13,16 +13,16 @@ class API::Bots::MembersController < API::Bots::BaseController
 
   def create
     user = User.active.find(params[:user_id])
-    @room.add_member!(user, actor: Current.user)
-    broadcast_sidebar_room_added(user, @room)
+    @channel.add_member!(user, actor: Current.user)
+    broadcast_sidebar_channel_added(user, @channel)
 
     render json: { id: user.id, name: user.name }, status: :created
   end
 
   def destroy
-    user = @room.users.find(params[:id])
-    @room.remove_member!(user, actor: Current.user)
-    broadcast_sidebar_room_removed(user, @room)
+    user = @channel.users.find(params[:id])
+    @channel.remove_member!(user, actor: Current.user)
+    broadcast_sidebar_channel_removed(user, @channel)
 
     head :no_content
   rescue Membership::LastVisibleMemberError
@@ -30,7 +30,7 @@ class API::Bots::MembersController < API::Bots::BaseController
   end
 
   private
-    def set_room
-      @room = reachable_bot_room(params[:room_id])
+    def set_channel
+      @channel = reachable_bot_channel(params[:channel_id])
     end
 end

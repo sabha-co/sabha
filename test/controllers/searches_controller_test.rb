@@ -3,7 +3,7 @@ require "test_helper"
 class SearchesControllerTest < ActionDispatch::IntegrationTest
   setup do
     sign_in :david
-    @message = rooms(:designers).messages.create! body: "Hello world!", client_message_id: "search", creator: users(:david)
+    @message = channels(:designers).messages.create! body: "Hello world!", client_message_id: "search", creator: users(:david)
   end
 
   test "index initial view" do

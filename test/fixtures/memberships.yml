@@ -1,94 +1,94 @@
 david_designers:
-  room: designers
+  channel: designers
   user: david
 
 jason_designers:
-  room: designers
+  channel: designers
   user: jason
   involvement: everything
 
 jz_designers:
-  room: designers
+  channel: designers
   user: jz
   involvement: everything
 
 kevin_designers:
-  room: designers
+  channel: designers
   user: kevin
 
 david_pets:
-  room: pets
+  channel: pets
   user: david
   involvement: everything
 
 jason_pets:
-  room: pets
+  channel: pets
   user: jason
   involvement: everything
 
 david_watercooler:
-  room: watercooler
+  channel: watercooler
   user: david
   involvement: everything
   starred: true
 
 jason_watercooler:
-  room: watercooler
+  channel: watercooler
   user: jason
   involvement: everything
 
 bender_watercooler:
-  room: watercooler
+  channel: watercooler
   user: bender
   involvement: mentions
 
 nsa_watercooler:
-  room: watercooler
+  channel: watercooler
   user: nsa
   involvement: mentions
 
 rachel_watercooler:
-  room: watercooler
+  channel: watercooler
   user: rachel
   involvement: everything
 
 david_hq:
-  room: hq
+  channel: hq
   user: david
   involvement: everything
   starred: true
 
 jason_hq:
-  room: hq
+  channel: hq
   user: jason
   involvement: everything
 
 jz_hq:
-  room: hq
+  channel: hq
   user: jz
   involvement: everything
 
 kevin_hq:
-  room: hq
+  channel: hq
   user: kevin
   involvement: everything
 
 david_david_and_jason:
-  room: david_and_jason
+  channel: david_and_jason
   user: david
   involvement: everything
 
 jason_david_and_jason:
-  room: david_and_jason
+  channel: david_and_jason
   user: jason
   involvement: everything
 
 david_david_and_kevin:
-  room: david_and_kevin
+  channel: david_and_kevin
   user: david
   involvement: everything
 
 kevin_david_and_kevin:
-  room: david_and_kevin
+  channel: david_and_kevin
   user: kevin
   involvement: everything

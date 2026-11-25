@@ -1,0 +1,9 @@
+<%= turbo_stream.remove :next_page_container %>
+
+<%= turbo_stream.append :browsable_channels do %>
+  <%= render partial: "channels/browse/channel", collection: @channels, as: :channel %>
+<% end %>
+
+<% unless @page.last? %>
+  <%= turbo_stream.append :browsable_channels, partial: "channels/browse/next_page_container", locals: { page: @page.next_param } %>
+<% end %>

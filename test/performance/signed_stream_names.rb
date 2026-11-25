@@ -33,9 +33,9 @@ verifier = ActiveSupport::MessageVerifier.new(key, digest: "SHA256", serializer:
 gid_param = ->(model, id) { Base64.urlsafe_encode64("gid://#{gid_app}/#{model}/#{id}", padding: false) }
 stream    = ->(*parts) { verifier.generate(parts.join(":")) }
 
-# Streams a member on room 1's page subscribes to. The second one — room 1's
+# Streams a member on channel 1's page subscribes to. The second one — channel 1's
 # `messages` stream — is where Message#broadcast_create appends, so it's the one
 # that actually exercises message fan-out.
-puts stream.call("rooms")
-puts stream.call(gid_param.call("Rooms::Closed", 1), "messages")
-puts stream.call(gid_param.call("User", 1), "rooms")
+puts stream.call("channels")
+puts stream.call(gid_param.call("Channels::Closed", 1), "messages")
+puts stream.call(gid_param.call("User", 1), "channels")

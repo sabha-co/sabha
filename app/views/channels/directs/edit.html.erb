@@ -1,0 +1,3 @@
+<%= render layout: "channels/layouts/edit", locals: { channel: @channel } do %>
+  <%= render "channels/directs/participants", users: @users %>
+<% end %>

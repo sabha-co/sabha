@@ -1,0 +1,54 @@
+<% @page_title = "Edit settings for #{channel_display_name(channel)}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to_last_channel_visited %>
+  </div>
+<% end %>
+
+<% membership = @membership %>
+
+<section class="panel" style="view-transition-name: edit-channel-<%= channel.id %>">
+  <%= yield %>
+
+  <% if membership && !channel.thread? %>
+    <hr class="margin-block separator full-width" style="--border-style: solid">
+    <p class="txt-muted margin-none margin-block-half txt-align-center">Notifications</p>
+
+    <% if membership.involved_in_invisible? %>
+      <% unless channel.direct? %>
+        <%= render "channels/involvements/hide_toggle", channel: channel, is_hidden: true %>
+      <% end %>
+    <% else %>
+      <%= render "channels/involvements/involvement_select", channel: channel, membership: membership %>
+      <% unless channel.direct? %>
+        <%= render "channels/involvements/hide_toggle", channel: channel, is_hidden: false %>
+      <% end %>
+    <% end %>
+
+    <% if channel.respond_to?(:other_user) && (block_target = channel.other_user) %>
+      <%= render "blocks/toggle", user: block_target %>
+    <% end %>
+
+    <% unless channel.direct? %>
+      <hr class="margin-block separator full-width" style="--border-style: solid">
+      <p class="txt-muted margin-none margin-block-half txt-align-center">Membership</p>
+
+      <div class="txt-align-center pad-block">
+        <%= button_to channel_membership_path(channel), method: :delete,
+              class: "btn max-width",
+              data: { turbo_confirm: "Leave #{channel_display_name(channel)}?" } do %>
+          Leave channel
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% if channel.direct? || (Current.user.can_administer?(channel) && !channel.original?) %>
+    <hr class="margin-block separator full-width" style="--border-style: solid">
+    <p class="txt-muted margin-none margin-block-half txt-align-center">Danger zone</p>
+    <div class="txt-align-center pad-block">
+      <%= button_to_delete_channel channel %>
+    </div>
+  <% end %>
+</section>

@@ -105,7 +105,7 @@ export default class extends Controller {
       <label class="switch flex-item-no-shrink">
         <input type="checkbox" value="${user.id}" class="switch__input" data-action="change->member-toggle#toggle">
         <span class="switch__btn round"></span>
-        <span class="for-screen-reader">Give ${name} access to this room</span>
+        <span class="for-screen-reader">Give ${name} access to this channel</span>
       </label>
     </li>`
   }

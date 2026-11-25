@@ -1,0 +1,42 @@
+<%= turbo_frame_tag "thread_panel_frame" do %>
+  <% parent_message = @channel.parent_message %>
+  <div class="thread-panel__header">
+    <h2 class="thread-panel__title">
+      <%= link_to channel_at_message_path(parent_message.channel, parent_message), data: { turbo_frame: "_top" } do %>
+        <%= channel_type_indicator(parent_message.channel) %><%= channel_display_name(parent_message.channel) %>
+      <% end %>
+      <%= icon_tag "thread", class: "thread-panel__icon" %>
+    </h2>
+
+    <%= tag.details class: "position-relative flex-item-no-shrink", data: {
+          controller: "popup", popup_orientation_top_class: "",
+          action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
+        } do %>
+      <summary class="btn action-btn options-btn">
+        <%= icon_tag "menu-dots-horizontal" %>
+        <span class="for-screen-reader">Thread options</span>
+      </summary>
+
+      <div class="popup-menu forum-post-menu border shadow" data-popup-target="menu">
+        <%= render "channels/threads/follow_control", thread: @channel %>
+      </div>
+    <% end %>
+
+    <button class="btn thread-panel__close" data-action="thread-panel#close" aria-label="Close thread">&times;</button>
+  </div>
+
+  <%= message_area_tag(@channel, id: "thread-message-area") do %>
+    <%= render "messages/template" %>
+
+    <%= messages_tag(@channel, refresh: false) do %>
+      <%= render "messages/message_list", messages: @messages, channel: @channel, first_unread_message: @first_unread_message, composer_id: "thread-composer" %>
+    <% end %>
+
+    <%= turbo_stream_from @membership if @membership %>
+    <%= turbo_stream_from @channel, :messages, channel: "ChannelStreamsChannel" %>
+    <%= turbo_stream_from Current.user, @channel, :messages, channel: "ChannelStreamsChannel" %>
+    <%= button_to_jump_to_newest_message %>
+  <% end %>
+
+  <%= render "channels/threads/reply_composer" %>
+<% end %>

@@ -9,7 +9,7 @@ module Desktop
       return [] if activity_types_by_user_id.empty?
 
       user_ids = activity_types_by_user_id.keys
-      push_payload = Room::MessagePusher.payload_for(room: message.room, message: message)
+      push_payload = Channel::MessagePusher.payload_for(channel: message.channel, message: message)
       badges = Membership.badged.where(user_id: user_ids).group(:user_id).count
 
       User.where(id: user_ids).map do |user|
@@ -55,7 +55,7 @@ module Desktop
 
     private
       def push_payload
-        @push_payload ||= Room::MessagePusher.payload_for(room: message.room, message: message)
+        @push_payload ||= Channel::MessagePusher.payload_for(channel: message.channel, message: message)
       end
 
       def badge

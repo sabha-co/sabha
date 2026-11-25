@@ -39,15 +39,15 @@ Starting import...
 Found 25 users in export
 Imported 23 users
 Found 10 public channels
-Created room: #General
-Created room: #Random
+Created channel: #General
+Created channel: #Random
 ...
 Imported 5432 messages...
 Processing 89 thread replies...
 Created 45 threads
 
 IMPORT_COMPLETE
-IMPORT_STATS:{"users":23,"rooms":10,"messages":5432,"threads":45,"boosts":234}
+IMPORT_STATS:{"users":23,"channels":10,"messages":5432,"threads":45,"boosts":234}
 ```
 
 ## Validation
@@ -108,10 +108,10 @@ export.zip/
 | Slack Entity | Sabha Entity | Notes |
 |--------------|-----------------|-------|
 | User | User | Placeholder account (no email, no password) |
-| Public Channel | Rooms::Open | All currently-active Sabha users are granted membership (not only the channel's listed members) |
-| Private Channel | Rooms::Closed | Explicit membership for users named in the export |
-| DM | Rooms::Direct | Matched to the original Slack participants via `Rooms::Direct.find_or_create_for` |
-| Thread (`thread_ts`) | Rooms::Thread | Linked to parent message; all members of the parent room are added to the thread |
+| Public Channel | Channels::Open | All currently-active Sabha users are granted membership (not only the channel's listed members) |
+| Private Channel | Channels::Closed | Explicit membership for users named in the export |
+| DM | Channels::Direct | Matched to the original Slack participants via `Channels::Direct.find_or_create_for` |
+| Thread (`thread_ts`) | Channels::Thread | Linked to parent message; all members of the parent channel are added to the thread |
 | Reaction | Boost | Emoji name → Unicode mapping |
 | `<@U123>` mention | `@username` | Plain-text conversion (see below) |
 | `<#C123\|name>` | `#name` | Channel reference |
@@ -183,7 +183,7 @@ Unknown emoji default to 👍.
 The importer is **idempotent** - running the same import multiple times is safe:
 
 - **Users**: Matched by `slack_user_id` in preferences, skipped if exists
-- **Rooms**: Matched by name (case-insensitive), skipped if exists
+- **Channels**: Matched by name (case-insensitive), skipped if exists
 - **Messages**: Matched by `client_message_id` (Slack's `ts`), skipped if exists
 - **Boosts**: Matched by user + message + content combination, skipped if exists
 - **Threads**: Created only if parent message has replies and thread doesn't exist
@@ -197,7 +197,7 @@ This allows retrying failed imports or re-importing to pick up any missed data.
 | Invalid ZIP format | Validation fails with error message |
 | Missing users.json/channels.json | Validation fails |
 | Malformed JSON | Skip entry, log warning, continue |
-| Duplicate room names | Reuse existing room (case-insensitive match) |
+| Duplicate channel names | Reuse existing channel (case-insensitive match) |
 
 All imports are wrapped in a database transaction - if any step fails, all changes are rolled back.
 

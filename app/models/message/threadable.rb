@@ -2,7 +2,7 @@ module Message::Threadable
   extend ActiveSupport::Concern
 
   included do
-    after_create_commit :follow_sub_room_by_creator
+    after_create_commit :follow_sub_channel_by_creator
     after_create_commit :update_thread_reply_count
     after_create_commit :update_parent_message_threads
     after_create_commit :update_forum_gallery_card
@@ -12,36 +12,36 @@ module Message::Threadable
   end
 
   private
-    # A reply (or the opening message) makes its author a follower of the sub-room,
-    # lazily — sub-rooms don't fan membership out to every parent member, so
+    # A reply (or the opening message) makes its author a follower of the sub-channel,
+    # lazily — sub-channels don't fan membership out to every parent member, so
     # engagement is what creates the row. A chat thread and a forum post follow
-    # alike, at "everything" (Room::Followable#follow!). Mirrors Fizzy's
+    # alike, at "everything" (Channel::Followable#follow!). Mirrors Fizzy's
     # Comment#watch_card_by_creator.
-    def follow_sub_room_by_creator
-      room.follow!(creator) if room.sub_room?
+    def follow_sub_channel_by_creator
+      channel.follow!(creator) if channel.sub_channel?
     end
 
     def update_thread_reply_count
-      return unless room.sub_room?
+      return unless channel.sub_channel?
 
       # A chat thread's messages are all replies; a post's exclude the OP.
-      count = room.post? ? room.replies_count : room.messages_count
+      count = channel.post? ? channel.replies_count : channel.messages_count
       broadcast_update_to(
-        room,
+        channel,
         :messages,
-        target: "#{ActionView::RecordIdentifier.dom_id(room, :replies_separator)}_count",
+        target: "#{ActionView::RecordIdentifier.dom_id(channel, :replies_separator)}_count",
         html: ActionController::Base.helpers.pluralize(count, "reply", "replies")
       )
     end
 
     def update_parent_message_threads
-      if room.thread? && room.parent_message
+      if channel.thread? && channel.parent_message
         broadcast_replace_to(
-          room.parent_room,
+          channel.parent_channel,
           :messages,
-          target: ActionView::RecordIdentifier.dom_id(room.parent_message, :threads),
+          target: ActionView::RecordIdentifier.dom_id(channel.parent_message, :threads),
           partial: "messages/threads",
-          locals: { message: room.parent_message }
+          locals: { message: channel.parent_message }
         )
       end
     end
@@ -51,7 +51,7 @@ module Message::Threadable
     # count, timestamp, and participant avatars. (A title/Solved change instead
     # keeps the card in place via broadcast_gallery_card, since neither reorders.)
     def update_forum_gallery_card
-      room.broadcast_gallery_card_to_top if room.post?
+      channel.broadcast_gallery_card_to_top if channel.post?
     end
 
     # A post's opening message is the forum's version of receiving a message:
@@ -60,13 +60,13 @@ module Message::Threadable
     # and opening the forum clears the dot via presence
     # (Membership::Connectable.connect).
     def surface_on_forum
-      room.parent_room.receive_post(self) if room.post?
+      channel.parent_channel.receive_post(self) if channel.post?
     end
 
     def create_thread_reply_notifications
-      return unless (room.thread? && room.parent_message) || room.post?
+      return unless (channel.thread? && channel.parent_message) || channel.post?
 
-      CreateThreadReplyNotificationsJob.perform_later(message_id: id, thread_id: room.id, creator_id: creator_id)
+      CreateThreadReplyNotificationsJob.perform_later(message_id: id, thread_id: channel.id, creator_id: creator_id)
     end
 
     def broadcast_parent_message_to_threads

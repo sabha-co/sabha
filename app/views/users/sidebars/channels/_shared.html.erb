@@ -1,0 +1,24 @@
+<% channel = local_assigns[:channel] || local_assigns[:membership].channel %>
+<% starred = local_assigns[:membership]&.starred? %>
+
+<div id="<%= dom_id(channel, dom_prefix(list_name, :list_node)) %>"
+     data-sorted-list-target="item"
+     data-name="<%= channel.sortable_name %>"
+     data-size="<%= channel.messages_count %>"
+     data-updated-at="<%= channel.last_active_at.iso8601 %>"
+     data-type="list_node"
+     class="channel-row flex align-center gap-half">
+  <%= render "users/sidebars/channels/shared_link", list_name: list_name, membership: local_assigns[:membership] %>
+
+  <% if local_assigns[:membership] %>
+    <% if starred %>
+      <%= button_to channel_star_path(channel), method: :delete, class: "btn star starred", aria: { label: "Unstar #{channel.name}" } do %>
+        <%= icon_tag "star" %>
+      <% end %>
+    <% else %>
+      <%= button_to channel_star_path(channel), method: :post, class: "btn star", aria: { label: "Star #{channel.name}" } do %>
+        <%= icon_tag "star-outline" %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

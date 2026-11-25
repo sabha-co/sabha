@@ -28,9 +28,9 @@ class ActionText::AttachmentTest < ActiveSupport::TestCase
   end
 
   test "from_node with an invalid SGID" do
-    room = rooms(:pets).tap { |r| r.extend ActionText::Attachable }
+    channel = channels(:pets).tap { |r| r.extend ActionText::Attachable }
 
-    html = %Q(<action-text-attachment sgid="#{room.attachable_sgid}invalid"></action-text-attachment>)
+    html = %Q(<action-text-attachment sgid="#{channel.attachable_sgid}invalid"></action-text-attachment>)
     node = ActionText::Fragment.wrap(html).find_all(ActionText::Attachment.tag_name).first
 
     attachment = ActionText::Attachment.from_node(node)

@@ -14,14 +14,14 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 - **Threads** — reply to any message to start a focused discussion (Mar 2024)
 - **Mentions tab** — dedicated sidebar view for @mentions (Feb 2024)
 - **Bookmarks** — save messages, view from sidebar (Feb 2024)
-- **Unread indicators** — "new since last visit" line in rooms (Feb 2024)
+- **Unread indicators** — "new since last visit" line in channels (Feb 2024)
 - **Mark as unread** — revert read status on any message (Feb 2024)
 - **User blocking** — block users from sending you DMs (Feb 2024)
 - **One-click reboost** — repeat someone else's boost quickly (Feb 2024)
-- **@everyone mentions** — notify all members in a room (Oct 2025)
-- **Soft deletion** — rooms, messages, memberships, boosts, bookmarks (Oct 2025)
+- **@everyone mentions** — notify all members in a channel (Oct 2025)
+- **Soft deletion** — channels, messages, memberships, boosts, bookmarks (Oct 2025)
 - **Bot API extras** — everything webhook, DM creation, user mentions (Feb 2024)
-- **Room search** — filter rooms by typing in the sidebar (2024)
+- **Channel search** — filter channels by typing in the sidebar (2024)
 - **Rich text on mobile** — rich-text editing options on mobile (2024)
 
 ---
@@ -31,7 +31,7 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 ### Nov 2025
 
 - **Branding customization** — white-label via environment variables (app name, email, PWA colors, icons)
-- **Admin settings UI** — toggle room creation, DM, and invite link permissions from the web UI
+- **Admin settings UI** — toggle channel creation, DM, and invite link permissions from the web UI
 - **Jemalloc** — production memory allocator for lower memory usage
 - **Theme switch** — Light, Dark, or Auto from your profile
 
@@ -59,7 +59,7 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 
 ### Feb 2026
 
-- **Room starring** — star rooms to pin them in your sidebar
+- **Channel starring** — star channels to pin them in your sidebar
 - **Activity notifications refactor** — notification system for the activity/mentions tab
 - **Push notification improvements** — VAPID web push with connection-aware delivery
 - **PWA improvements** — installable app with dynamic manifest, service worker, badge API
@@ -79,7 +79,7 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 
 ### Apr 2026
 
-- **More things bots can do** — edit and delete their own messages, react with emoji, manage room members, create and archive rooms, and search across conversations
+- **More things bots can do** — edit and delete their own messages, react with emoji, manage channel members, create and archive channels, and search across conversations
 - **Real-time bots** — bots connect to Sabha directly and receive messages instantly using websockets, no public webhook URL required
 - **OpenClaw plugin** — new [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) for Sabha integration
 - **Bots in threads and DMs** — bots added to a thread or DM now receive every message, just like human members
@@ -96,7 +96,7 @@ These features were built by [Antiwork](https://github.com/antiwork) for their S
 > The `saas/` directory is under the [Sabha SaaS License](https://github.com/sabha-co/sabha/blob/main/saas/LICENSE), not MIT.
 
 - **Database-per-workspace isolation** — PostgreSQL for shared data, SQLite per workspace
-- **Path-based routing** — `/1000001/rooms/general` with transparent URL generation
+- **Path-based routing** — `/1000001/channels/general` with transparent URL generation
 - **GlobalIdentity** — cross-workspace single sign-on with OTP-only auth
 - **Workspace provisioning** — guided setup flow with invite step
 - **Platform superadmin dashboard** — manage all workspaces from one place

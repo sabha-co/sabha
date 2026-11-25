@@ -3,7 +3,7 @@ module UnreadTestHelper
   # reads as unseen — the cursor equivalent of the legacy
   # `unread_at: message.created_at` setup.
   def rewind_unread_to(membership, message, marked: false)
-    previous = membership.room.messages
+    previous = membership.channel.messages
                          .before_cursor(message.created_at, message.id)
                          .reorder(created_at: :desc, id: :desc).first
     membership.update_columns(
@@ -19,10 +19,10 @@ module UnreadTestHelper
     membership.update_columns(last_read_at: Time.at(0), last_read_message_id: 0, marked_unread: false)
   end
 
-  # Advances the cursor to the room's head: nothing reads as unseen — the
+  # Advances the cursor to the channel's head: nothing reads as unseen — the
   # cursor equivalent of the legacy `unread_at: nil` setup.
   def catch_up(membership)
-    head = membership.room.messages.reorder(:created_at, :id).last
+    head = membership.channel.messages.reorder(:created_at, :id).last
     membership.update_columns(
       last_read_at: head&.created_at || Time.current,
       last_read_message_id: head&.id || 0,

@@ -13,7 +13,7 @@
 
   <div class="searches__recents align-center gap pad-block-half overflow-y overflow-hide-scrollbar">
     <% @recent_searches.each do |search| %>
-      <%= link_to searches_path(q: search.query), class: "align-center gap room btn txt-nowrap" do %>
+      <%= link_to searches_path(q: search.query), class: "align-center gap channel btn txt-nowrap" do %>
         <span class="overflow-ellipsis">“<%= search.query %>”</span>
       <% end %>
     <% end %>
@@ -29,9 +29,9 @@
 <% end %>
 
 <% content_for :sidebar do %>
-  <div class="rooms position-relative flex flex-column gap overflow-y overflow-hide-scrollbar">
+  <div class="channels position-relative flex flex-column gap overflow-y overflow-hide-scrollbar">
     <% @recent_searches.each do |search| %>
-      <%= link_to searches_path(q: search.query), class: "align-center gap room btn txt-nowrap" do %>
+      <%= link_to searches_path(q: search.query), class: "align-center gap channel btn txt-nowrap" do %>
         <span class="overflow-ellipsis">“<%= search.query %>”</span>
       <% end %>
     <% end %>
@@ -62,7 +62,7 @@
         <% else %>
           <h2 class="txt-large" style="margin-bottom: 0.5rem; font-weight: 600;">Search messages</h2>
           <p class="txt-muted" style="line-height: 1.5;">
-            Enter a keyword or phrase to search across all your messages and rooms.
+            Enter a keyword or phrase to search across all your messages and channels.
           </p>
         <% end %>
       </div>
@@ -70,13 +70,13 @@
   </div>
 
   <%= search_results_tag("search-results", page_searches_url(q: params[:q])) do %>
-    <%= render partial: "messages/message", collection: @messages, cached: -> message { message_cache_key(message, room_id: "search_#{Current.user.id}", show_room_name: true) }, locals: { timestamp_style: :long_datetime, show_date_separator: false } %>
+    <%= render partial: "messages/message", collection: @messages, cached: -> message { message_cache_key(message, channel_id: "search_#{Current.user.id}", show_channel_name: true) }, locals: { timestamp_style: :long_datetime, show_date_separator: false } %>
   <% end %>
 </div>
 
 <% content_for :footer do %>
   <div class="composer flex align-end gap">
-    <%= link_to room_path(@return_to_room),
+    <%= link_to channel_path(@return_to_channel),
             class: "btn flex-item-no-shrink margin-block-end d-hotwire-native-none", style: "view-transition-name: input-switcher; --btn-border-radius: 0.5em" do %>
       <%= icon_tag "arrow-left" %>
       <span class="for-screen-reader">Exit search </span>

@@ -1,4 +1,4 @@
-# Soft deletion via an `active` boolean column. Used by Message, Room, and Membership.
+# Soft deletion via an `active` boolean column. Used by Message, Channel, and Membership.
 #
 # Provides two named scopes (`active`, `inactive`) and four lifecycle methods.
 # There is no `default_scope` — `Message.where(...)` returns all rows, active or
@@ -6,7 +6,7 @@
 # association (e.g. `user.messages`).
 #
 # Reactivation is programmatic, not console-only: `User#reactivate`,
-# `Room#reactivate`, the admin reactivations route, and the SaaS workspace
+# `Channel#reactivate`, the admin reactivations route, and the SaaS workspace
 # re-admit flow all rely on it.
 module Deactivatable
   extend ActiveSupport::Concern

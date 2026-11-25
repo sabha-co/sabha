@@ -21,9 +21,9 @@ class MissedNotificationsMailerTest < ActionMailer::TestCase
           verified_at: 1.day.ago,
           status: :active
         )
-        room = Rooms::Open.first
+        channel = Channels::Open.first
 
-        message = room.messages.create!(
+        message = channel.messages.create!(
           body: "<div>hello</div>",
           creator: actor,
           client_message_id: "saas_missed_#{SecureRandom.hex(4)}"

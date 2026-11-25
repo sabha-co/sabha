@@ -21,54 +21,54 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal "David &lt;script&gt;alert(123)&lt;/script&gt;", response.parsed_body.first["name"]
   end
 
-  test "room search returns matching users" do
-    get autocompletable_users_url(room_id: rooms(:hq).id, format: :json), params: { query: "da" }
+  test "channel search returns matching users" do
+    get autocompletable_users_url(channel_id: channels(:hq).id, format: :json), params: { query: "da" }
 
     assert_response :success
     assert_equal "David", response.parsed_body.first["name"]
   end
 
-  test "room search is scoped by membership" do
+  test "channel search is scoped by membership" do
     sign_in :kevin
 
-    assert_not_includes users(:kevin).rooms, rooms(:watercooler)
+    assert_not_includes users(:kevin).channels, channels(:watercooler)
 
     assert_raises ActiveRecord::RecordNotFound do
-      get autocompletable_users_url(room_id: rooms(:watercooler).id, format: :json), params: { query: "da" }
+      get autocompletable_users_url(channel_id: channels(:watercooler).id, format: :json), params: { query: "da" }
     end
   end
 
   test "forum post autocomplete resolves via forum access and suggests forum members" do
-    forum = Rooms::Forum.create_for({ name: "Help", creator: users(:david) }, users: [ users(:david), users(:kevin) ])
+    forum = Channels::Forum.create_for({ name: "Help", creator: users(:david) }, users: [ users(:david), users(:kevin) ])
     post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }
 
     sign_in :kevin
-    assert_not Membership.exists?(room_id: post.id, user_id: users(:kevin).id), "kevin is a forum member, not a post follower"
+    assert_not Membership.exists?(channel_id: post.id, user_id: users(:kevin).id), "kevin is a forum member, not a post follower"
 
-    get autocompletable_users_url(room_id: post.id, format: :json), params: { query: "da" }
+    get autocompletable_users_url(channel_id: post.id, format: :json), params: { query: "da" }
 
     assert_response :success
     assert_includes response.parsed_body.map { |u| u["name"] }, "David"
   end
 
-  test "a member removed from the parent room cannot enumerate the roster via the thread mention picker" do
-    room = rooms(:pets)
-    parent = room.messages.create!(body: "topic", creator: users(:david))
-    thread = Rooms::Thread.find_or_create_for(parent, creator: users(:david))
+  test "a member removed from the parent channel cannot enumerate the roster via the thread mention picker" do
+    channel = channels(:pets)
+    parent = channel.messages.create!(body: "topic", creator: users(:david))
+    thread = Channels::Thread.find_or_create_for(parent, creator: users(:david))
     Current.set(user: users(:jason)) { thread.messages.create!(body: "in", creator: users(:jason)) }
 
-    room.remove_member!(users(:jason), actor: users(:david))
+    channel.remove_member!(users(:jason), actor: users(:david))
 
     # jason's thread membership is still active (only silenced), so it resolves
-    # via Current.user.rooms — the viewable_by? re-check must deny the picker.
+    # via Current.user.channels — the viewable_by? re-check must deny the picker.
     sign_in :jason
     assert_raises ActiveRecord::RecordNotFound do
-      get autocompletable_users_url(room_id: thread.id, format: :json), params: { query: "da" }
+      get autocompletable_users_url(channel_id: thread.id, format: :json), params: { query: "da" }
     end
   end
 
   test "user_ids scopes suggestions to the chosen recipients (provisional DM mention picker)" do
-    # A provisional DM has no room yet, so its composer scopes @-mentions to the
+    # A provisional DM has no channel yet, so its composer scopes @-mentions to the
     # recipients. A non-recipient must not surface — selecting one would render a
     # mention that never notifies them once the DM is created.
     get autocompletable_users_url(user_ids: [ users(:jz).id ], format: :json), params: { query: "" }
@@ -88,7 +88,7 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "mention prompt (html) returns lexxy-prompt-item elements filtered by `filter`" do
-    get autocompletable_users_url(room_id: rooms(:hq).id, format: :html), params: { filter: "da" }
+    get autocompletable_users_url(channel_id: channels(:hq).id, format: :html), params: { filter: "da" }
 
     assert_response :success
     assert_match %r{<lexxy-prompt-item[^>]*sgid=}, response.body
@@ -97,14 +97,14 @@ class Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_match %r{David}, response.body
   end
 
-  test "mention prompt offers @everyone to an admin in an open room when it matches the filter" do
-    room = Rooms::Open.create_for({ name: "Open Space", creator: users(:david) }, users: [ users(:david) ])
+  test "mention prompt offers @everyone to an admin in an open channel when it matches the filter" do
+    channel = Channels::Open.create_for({ name: "Open Space", creator: users(:david) }, users: [ users(:david) ])
 
-    get autocompletable_users_url(room_id: room.id, format: :html), params: { filter: "every" }
+    get autocompletable_users_url(channel_id: channel.id, format: :html), params: { filter: "every" }
     assert_response :success
     assert_match %r{mention--everyone}, response.body
 
-    get autocompletable_users_url(room_id: room.id, format: :html), params: { filter: "zzz" }
+    get autocompletable_users_url(channel_id: channel.id, format: :html), params: { filter: "zzz" }
     assert_response :success
     assert_no_match %r{mention--everyone}, response.body
   end

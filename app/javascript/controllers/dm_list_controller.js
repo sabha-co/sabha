@@ -23,7 +23,7 @@ export default class extends Controller {
         loadingUp: this.loadingClass,
         loadingDown: this.loadingClass
       },
-      { idAttribute: "roomId" }
+      { idAttribute: "channelId" }
     )
 
     // DMs start "not up to date" so scrolling down loads more

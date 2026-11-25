@@ -5,4 +5,4 @@ json.webhook_url    @bot.webhook_url
 json.base_url       @base_url
 json.api_base_url   "#{@base_url}/api/bots"
 json.websocket_url  websocket_url_for_bot
-json.rooms @bot.rooms.without_threads, partial: "api/bots/rooms/room", as: :room
+json.channels @bot.channels.without_threads, partial: "api/bots/channels/channel", as: :channel

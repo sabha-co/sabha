@@ -5,7 +5,7 @@ class Backup
   class << self
     def create
       dest = SQLite3::Database.new(backup_filename)
-      backup = SQLite3::Backup.new(dest, "main", Room.connection.raw_connection, "main")
+      backup = SQLite3::Backup.new(dest, "main", Channel.connection.raw_connection, "main")
 
       backup.step(-1)
       backup.finish

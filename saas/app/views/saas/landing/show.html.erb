@@ -18,7 +18,7 @@
         data-controller="word-rotate"
         data-word-rotate-words-value='["Discord", "Slack"]'
         data-word-rotate-interval-value="3000">Discord</span> alternative for communities.</h1>
-      <p class="landing-hero-sub">Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to use, free to leave.</p>
+      <p class="landing-hero-sub">Simple, intentional chat for communities, without a subscription. Channels, threads, DMs, search. Open source, free to use, free to leave.</p>
     </div>
     <div class="landing-cta-row">
       <a href="<%= new_registration_path %>" class="landing-btn-primary">
@@ -33,7 +33,7 @@
     <div class="landing-screenshot">
       <picture>
         <source type="image/avif" srcset="<%= image_path("screenshots/sabha-screenshot.avif") %>">
-        <%= image_tag "screenshots/sabha-screenshot.webp", alt: "Sabha app: rooms, threads, and community chat", class: "landing-screenshot-img", width: 2000, height: 939, loading: "eager", fetchpriority: "high" %>
+        <%= image_tag "screenshots/sabha-screenshot.webp", alt: "Sabha app: channels, threads, and community chat", class: "landing-screenshot-img", width: 2000, height: 939, loading: "eager", fetchpriority: "high" %>
       </picture>
     </div>
   </div>
@@ -90,10 +90,10 @@
         <div class="landing-feature-icon-box">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12" /><path d="M4 14h9" /><path d="M4 6h16" /><path d="M4 18h7" /></svg>
         </div>
-        <h3>Rooms for every topic</h3>
-        <p>Create rooms for announcements, help, introductions, or anything your community talks about. Each room is a focused space, not a firehose.</p>
+        <h3>Channels for every topic</h3>
+        <p>Create channels for announcements, help, introductions, or anything your community talks about. Each channel is a focused space, not a firehose.</p>
       </div>
-      <%= render "feature_video", src: "screenshots/room-sabha.mp4", poster: "screenshots/room-sabha-poster.webp", width: 1280, height: 720, label: "Browsing rooms in Sabha" %>
+      <%= render "feature_video", src: "screenshots/channel-sabha.mp4", poster: "screenshots/channel-sabha-poster.webp", width: 1280, height: 720, label: "Browsing channels in Sabha" %>
     </div>
 
     <div class="landing-feature-row landing-feature-row--reverse">
@@ -113,9 +113,9 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8" /><rect width="16" height="12" x="4" y="8" rx="2" /><path d="M2 14h2" /><path d="M20 14h2" /><path d="M15 13v2" /><path d="M9 13v2" /></svg>
         </div>
         <h3>Bot & AI ready</h3>
-        <p>Built-in bot API with webhooks and real-time events. Bots read messages, post replies, react, manage rooms, and search (over WebSocket, no public endpoint required). Drop in <a href="/openclaw" class="landing-link">OpenClaw</a> to put an LLM agent in any room with a single invite URL, or write your own. Bots are a first-class feature, not a paid marketplace.</p>
+        <p>Built-in bot API with webhooks and real-time events. Bots read messages, post replies, react, manage channels, and search (over WebSocket, no public endpoint required). Drop in <a href="/openclaw" class="landing-link">OpenClaw</a> to put an LLM agent in any channel with a single invite URL, or write your own. Bots are a first-class feature, not a paid marketplace.</p>
       </div>
-      <%= render "feature_video", src: "screenshots/bot-sabha.mp4", poster: "screenshots/bot-sabha-poster.webp", width: 1280, height: 720, label: "An OpenClaw AI agent in a Sabha room" %>
+      <%= render "feature_video", src: "screenshots/bot-sabha.mp4", poster: "screenshots/bot-sabha-poster.webp", width: 1280, height: 720, label: "An OpenClaw AI agent in a Sabha channel" %>
     </div>
 
   </div>
@@ -149,7 +149,7 @@
       <div class="landing-card">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></svg>
         <h3>Built-in moderation</h3>
-        <p>Moderator roles, user bans with IP blocks, and reversible soft-delete on messages and rooms. Real moderation, not retrofitted.</p>
+        <p>Moderator roles, user bans with IP blocks, and reversible soft-delete on messages and channels. Real moderation, not retrofitted.</p>
       </div>
       <div class="landing-card">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E42313" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2" /><path d="M12 18h.01" /></svg>
@@ -177,7 +177,7 @@
     <div class="landing-principles">
       <div class="landing-principle">
         <h3>Familiar by design</h3>
-        <p>You shouldn't have to teach your community a new app. Sabha works the way they already chat: rooms for topics, threads for tangents, search for memory. The interface stays out of the way so the conversation can be the thing.</p>
+        <p>You shouldn't have to teach your community a new app. Sabha works the way they already chat: channels for topics, threads for tangents, search for memory. The interface stays out of the way so the conversation can be the thing.</p>
       </div>
       <div class="landing-principle">
         <h3>Small on purpose</h3>
@@ -211,7 +211,7 @@
       </div>
       <div class="landing-use-case">
         <h3>Online classrooms and cohorts.</h3>
-        <p>Rooms per cohort, threads per assignment, history that doesn't expire. Hook SSO into your LMS so students land in chat already signed in.</p>
+        <p>Channels per cohort, threads per assignment, history that doesn't expire. Hook SSO into your LMS so students land in chat already signed in.</p>
       </div>
       <div class="landing-use-case">
         <h3>Conferences and meetups.</h3>
@@ -348,7 +348,7 @@
     <div class="landing-faq-list">
       <details class="landing-faq-item">
         <summary>How is Sabha different from Discord?</summary>
-        <p>It's chat-first. Rooms, threads, search: that's the product. No Nitro, no boosts, no marketplace of bots and emoji upsells getting in the way of the conversation. And if you don't like how we run it, take the code and host it yourself. Try that with Discord.</p>
+        <p>It's chat-first. Channels, threads, search: that's the product. No Nitro, no boosts, no marketplace of bots and emoji upsells getting in the way of the conversation. And if you don't like how we run it, take the code and host it yourself. Try that with Discord.</p>
       </details>
       <details class="landing-faq-item">
         <summary>Is Sabha really free?</summary>
@@ -368,7 +368,7 @@
       </details>
       <details class="landing-faq-item">
         <summary>How do I add AI bots to my community?</summary>
-        <p>Every workspace ships with a full bot API: real-time events over WebSocket or webhooks, reading messages, posting replies, reacting, searching. Drop in the <a href="/openclaw" class="landing-link">OpenClaw</a> plugin and you've got an LLM agent in any room with a single invite URL. Or write your own. Bots are a feature, not a marketplace.</p>
+        <p>Every workspace ships with a full bot API: real-time events over WebSocket or webhooks, reading messages, posting replies, reacting, searching. Drop in the <a href="/openclaw" class="landing-link">OpenClaw</a> plugin and you've got an LLM agent in any channel with a single invite URL. Or write your own. Bots are a feature, not a marketplace.</p>
       </details>
       <details class="landing-faq-item">
         <summary>What's the difference between sabha.co and Sabha Cloud?</summary>
@@ -417,7 +417,7 @@
       "name": "How is Sabha different from Discord?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "It's chat-first. Rooms, threads, search: that's the product. No Nitro, no boosts, no marketplace of bots and emoji upsells getting in the way of the conversation. And if you don't like how we run it, take the code and host it yourself. Try that with Discord."
+        "text": "It's chat-first. Channels, threads, search: that's the product. No Nitro, no boosts, no marketplace of bots and emoji upsells getting in the way of the conversation. And if you don't like how we run it, take the code and host it yourself. Try that with Discord."
       }
     },
     {
@@ -457,7 +457,7 @@
       "name": "How do I add AI bots to my community?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Every workspace ships with a full bot API: real-time events over WebSocket or webhooks, reading messages, posting replies, reacting, searching. Drop in the OpenClaw plugin and you've got an LLM agent in any room with a single invite URL. Or write your own. Bots are a feature, not a marketplace."
+        "text": "Every workspace ships with a full bot API: real-time events over WebSocket or webhooks, reading messages, posting replies, reacting, searching. Drop in the OpenClaw plugin and you've got an LLM agent in any channel with a single invite URL. Or write your own. Bots are a feature, not a marketplace."
       }
     },
     {
@@ -485,7 +485,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Sabha",
-  "description": "Simple, intentional chat for communities, without a subscription. Rooms, threads, DMs, search. Open source, free to use, free to leave.",
+  "description": "Simple, intentional chat for communities, without a subscription. Channels, threads, DMs, search. Open source, free to use, free to leave.",
   "url": "https://sabha.co",
   "applicationCategory": "CommunicationApplication",
   "operatingSystem": "Web, iOS, Android",

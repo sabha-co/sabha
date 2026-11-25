@@ -9,29 +9,29 @@ namespace :notifications do
     recipient = User.active.verified.where.not(email_address: [ nil, "" ]).order(:id).first
     abort "No verified user with an email address found." unless recipient
 
-    # Two open rooms the recipient is involved in (mentions/everything), authored
+    # Two open channels the recipient is involved in (mentions/everything), authored
     # by someone else who's also a member. Anything else would either fail the
-    # digest's qualifying-room scope or skip the predicate at delivery.
-    candidate_rooms = recipient.memberships
+    # digest's qualifying-channel scope or skip the predicate at delivery.
+    candidate_channels = recipient.memberships
       .where.not(involvement: %w[ invisible nothing ])
-      .joins(:room)
-      .where(rooms: { type: "Rooms::Open", active: true })
+      .joins(:channel)
+      .where(channels: { type: "Channels::Open", active: true })
       .limit(2)
-      .map(&:room)
-    abort "Recipient has no eligible open-room memberships to seed against." if candidate_rooms.empty?
+      .map(&:channel)
+    abort "Recipient has no eligible open-channel memberships to seed against." if candidate_channels.empty?
 
-    rooms = candidate_rooms
+    channels = candidate_channels
     co_authors = User.active
       .where.not(id: recipient.id)
       .joins(:memberships)
-      .where(memberships: { room_id: rooms.map(&:id) })
+      .where(memberships: { channel_id: channels.map(&:id) })
       .distinct
       .limit(3)
       .to_a
-    abort "Need at least one other room member to author messages." if co_authors.empty?
+    abort "Need at least one other channel member to author messages." if co_authors.empty?
 
     puts "Recipient:  ##{recipient.id} #{recipient.name} <#{recipient.email_address}>"
-    puts "Rooms:      #{rooms.map { |r| "##{r.id} #{r.name}" }.join(", ")}"
+    puts "Channels:      #{channels.map { |r| "##{r.id} #{r.name}" }.join(", ")}"
     puts "Co-authors: #{co_authors.map { |u| "##{u.id} #{u.name}" }.join(", ")}"
 
     # Make sure the recipient registers as "away" — the missed-email predicate
@@ -42,12 +42,12 @@ namespace :notifications do
 
     seeded_messages = []
 
-    rooms.each_with_index do |room, room_idx|
-      author = co_authors[room_idx % co_authors.size]
+    channels.each_with_index do |channel, channel_idx|
+      author = co_authors[channel_idx % co_authors.size]
 
       5.times do |i|
         body =
-          case [ room_idx, i ]
+          case [ channel_idx, i ]
           in [ 0, 0 ] then "<div>#{mention_attachment_html(recipient)} can you take a look at this?</div>"
           in [ 0, 1 ] then "<div>Update: shipped the new dispatcher today.</div>"
           in [ 0, 2 ] then "<div>Following up — bundle delivery is now race-safe.</div>"
@@ -57,22 +57,22 @@ namespace :notifications do
           else "<div>Sample message #{i + 1} for digest preview.</div>"
           end
 
-        message = room.messages.create!(
+        message = channel.messages.create!(
           body: body,
           creator: author,
-          client_message_id: "notif_preview_#{room.id}_#{i}_#{SecureRandom.hex(3)}"
+          client_message_id: "notif_preview_#{channel.id}_#{i}_#{SecureRandom.hex(3)}"
         )
 
         # Stagger created_at across the past week so the digest sees a real spread.
-        message.update_column(:created_at, ((i + 1) * 6).hours.ago - room_idx.days)
+        message.update_column(:created_at, ((i + 1) * 6).hours.ago - channel_idx.days)
 
         seeded_messages << message
       end
 
       # Bump one message to count as an @everyone mention for the digest's
       # everyone_mentions branch.
-      room.messages.order(created_at: :desc).limit(1).each do |everyone_message|
-        everyone_message.update_column(:mentions_everyone, true) if room_idx == 1
+      channel.messages.order(created_at: :desc).limit(1).each do |everyone_message|
+        everyone_message.update_column(:mentions_everyone, true) if channel_idx == 1
       end
     end
 
@@ -81,11 +81,11 @@ namespace :notifications do
     recipient.notification_bundles.active.find_each(&:destroy)
     bundle = recipient.open_notification_bundle!
 
-    # Take four of the seeded messages: two mentions (first-of-each-room) plus
+    # Take four of the seeded messages: two mentions (first-of-each-channel) plus
     # two as "direct_message" kind so both subject branches render in turn.
     items_messages = [
-      seeded_messages.first,                                   # mention in room 0
-      seeded_messages[5],                                      # mention in room 1
+      seeded_messages.first,                                   # mention in channel 0
+      seeded_messages[5],                                      # mention in channel 1
       seeded_messages[1],                                      # generic
       seeded_messages[6]                                       # generic
     ]
@@ -99,14 +99,14 @@ namespace :notifications do
 
     bundle.reload
 
-    items_for_mail = bundle.items.includes(:actor, message: [ :room, :rich_text_body ]).to_a
+    items_for_mail = bundle.items.includes(:actor, message: [ :channel, :rich_text_body ]).to_a
     MissedNotificationsMailer.bundle(bundle, items_for_mail).deliver_now
     puts "→ Missed-notification email delivered (bundle ##{bundle.id}, #{items_for_mail.size} items). Check the letter_opener tab."
 
     content = Notification::Digest::Content.new(recipient)
     if content.empty?
-      puts "Digest content empty — qualifying rooms: #{content.send(:qualifying_room_ids).inspect}, counts: #{content.send(:counts_by_room_id).inspect}"
-      abort "Could not produce a non-empty digest. The seeded messages may not satisfy ACTIVE_ROOM_MIN_MESSAGES (3)."
+      puts "Digest content empty — qualifying channels: #{content.send(:qualifying_channel_ids).inspect}, counts: #{content.send(:counts_by_channel_id).inspect}"
+      abort "Could not produce a non-empty digest. The seeded messages may not satisfy ACTIVE_CHANNEL_MIN_MESSAGES (3)."
     end
 
     WeeklyDigestMailer.digest(recipient, content).deliver_now

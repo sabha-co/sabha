@@ -5,36 +5,36 @@ class MessageTest < ActiveSupport::TestCase
   include ActionCable::TestHelper, ActiveJob::TestHelper, Rails::Dom::Testing::Assertions::SelectorAssertions
 
   test "client_message_id defaults to a UUID but preserves an explicit value" do
-    auto = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello")
+    auto = channels(:pets).messages.create!(creator: users(:jason), body: "Hello")
     assert_match(/\A[0-9a-f-]+\z/, auto.client_message_id) # UUID format
 
-    explicit = rooms(:pets).messages.create!(creator: users(:jason), body: "Hello", client_message_id: "custom-id")
+    explicit = channels(:pets).messages.create!(creator: users(:jason), body: "Hello", client_message_id: "custom-id")
     assert_equal "custom-id", explicit.client_message_id
   end
 
   test "creating a message enqueues a single Notification::DispatchJob" do
     assert_enqueued_jobs 1, only: [ Notification::DispatchJob ] do
-      create_new_message_in rooms(:designers)
+      create_new_message_in channels(:designers)
     end
   end
 
-  test "creating a message advances room.last_active_at" do
-    room = rooms(:pets)
-    room.update_column(:last_active_at, 1.hour.ago)
-    before = room.last_active_at
+  test "creating a message advances channel.last_active_at" do
+    channel = channels(:pets)
+    channel.update_column(:last_active_at, 1.hour.ago)
+    before = channel.last_active_at
 
-    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "last_active_create")
+    channel.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "last_active_create")
 
-    assert_operator room.reload.last_active_at, :>, before
+    assert_operator channel.reload.last_active_at, :>, before
   end
 
   test "creating a message marks disconnected read memberships as unread" do
-    room = rooms(:pets)
-    recipient_membership = room.memberships.find_by!(user: users(:david))
+    channel = channels(:pets)
+    recipient_membership = channel.memberships.find_by!(user: users(:david))
     catch_up recipient_membership
     recipient_membership.update_columns(connected_at: nil, connections: 0)
 
-    message = room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "deliver_to_room_marks_unread")
+    message = channel.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "deliver_to_channel_marks_unread")
 
     recipient_membership.reload
     assert recipient_membership.unread?
@@ -42,12 +42,12 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   test "mention to a read disconnected recipient sets unread and bumps unread_notifications_count" do
-    room = rooms(:pets)
-    recipient_membership = room.memberships.find_by!(user: users(:david))
+    channel = channels(:pets)
+    recipient_membership = channel.memberships.find_by!(user: users(:david))
     catch_up recipient_membership
     recipient_membership.update_columns(connected_at: nil, connections: 0, unread_notifications_count: 0)
 
-    message = room.messages.create!(
+    message = channel.messages.create!(
       creator: users(:jason),
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       client_message_id: "mention_to_read_disconnected"
@@ -60,50 +60,50 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   test "creating a message leaves connected memberships read" do
-    room = rooms(:pets)
-    recipient_membership = room.memberships.find_by!(user: users(:david))
+    channel = channels(:pets)
+    recipient_membership = channel.memberships.find_by!(user: users(:david))
     catch_up recipient_membership
     recipient_membership.update_columns(connected_at: Time.current, connections: 1)
 
-    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "connected_stays_read")
+    channel.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "connected_stays_read")
 
     assert recipient_membership.reload.read?
   end
 
   test "creating a message leaves the sender's membership read even when disconnected" do
-    room = rooms(:pets)
-    sender_membership = room.memberships.find_by!(user: users(:jason))
+    channel = channels(:pets)
+    sender_membership = channel.memberships.find_by!(user: users(:jason))
     catch_up sender_membership
     sender_membership.update_columns(connected_at: nil, connections: 0)
 
-    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "sender_stays_read")
+    channel.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "sender_stays_read")
 
     assert sender_membership.reload.read?
   end
 
   test "creating a message does not move an already-unread membership's anchor" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by!(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by!(user: users(:david))
     catch_up membership
     membership.update_columns(connected_at: nil, connections: 0)
 
-    first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "anchor_first")
+    first = channel.messages.create!(creator: users(:jason), body: "First", client_message_id: "anchor_first")
     assert_equal first, membership.reload.first_unread_message
 
-    room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "anchor_second")
+    channel.messages.create!(creator: users(:jason), body: "Second", client_message_id: "anchor_second")
 
     assert_equal first, membership.reload.first_unread_message,
       "the unread anchor must stay at the first unseen message so the New separator doesn't drift"
   end
 
   test "creating a message does not mark invisible memberships unread" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by!(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by!(user: users(:david))
     catch_up membership
     membership.update!(involvement: :invisible)
     membership.update_columns(connected_at: nil, connections: 0)
 
-    room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "invisible_stays_read")
+    channel.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "invisible_stays_read")
 
     assert membership.reload.read?
   end
@@ -111,13 +111,13 @@ class MessageTest < ActiveSupport::TestCase
   test "@everyone to a read disconnected member sets unread and bumps the badge" do
     # Pins the KTD-sensitive eligibility: a read, disconnected member's badge
     # must bump on send even though sending no longer writes their unread row.
-    room = rooms(:pets)
-    membership = room.memberships.find_by!(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by!(user: users(:david))
     catch_up membership
     membership.update_columns(connected_at: nil, connections: 0, unread_notifications_count: 0)
 
     everyone_sgid = Everyone.new.attachable_sgid
-    message = room.messages.create!(
+    message = channel.messages.create!(
       creator: users(:jason),
       body: "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>",
       client_message_id: "everyone_to_read_disconnected"
@@ -130,40 +130,40 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   test "sending writes no per-member unread rows, and the count derives on reopen" do
-    room = rooms(:pets)
-    reader = room.memberships.find_by!(user: users(:david))
+    channel = channels(:pets)
+    reader = channel.memberships.find_by!(user: users(:david))
     catch_up reader
     reader.update_columns(connected_at: nil, connections: 0)
 
-    snapshot = -> { room.memberships.where.not(user_id: users(:jason).id).order(:id).pluck(:updated_at, :last_read_at, :last_read_message_id, :marked_unread) }
+    snapshot = -> { channel.memberships.where.not(user_id: users(:jason).id).order(:id).pluck(:updated_at, :last_read_at, :last_read_message_id, :marked_unread) }
     before = snapshot.call
 
-    20.times { |i| room.messages.create!(creator: users(:jason), body: "Msg #{i}", client_message_id: "burst_#{i}") }
+    20.times { |i| channel.messages.create!(creator: users(:jason), body: "Msg #{i}", client_message_id: "burst_#{i}") }
 
     assert_equal before, snapshot.call, "sending must not write any non-sender membership row"
-    assert_equal 20, room.messages.after_cursor(reader.last_read_at, reader.last_read_message_id).count,
+    assert_equal 20, channel.messages.after_cursor(reader.last_read_at, reader.last_read_message_id).count,
       "the derived unread count reflects every message that landed while away"
     assert reader.reload.unread?
   end
 
   test "a rejoining member keeps their read cursor" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by!(user: users(:david))
-    anchor = room.messages.create!(creator: users(:jason), body: "Anchor", client_message_id: "regrant_anchor")
+    channel = channels(:pets)
+    membership = channel.memberships.find_by!(user: users(:david))
+    anchor = channel.messages.create!(creator: users(:jason), body: "Anchor", client_message_id: "regrant_anchor")
     rewind_unread_to membership, anchor
 
-    room.memberships.grant_to(users(:david))
+    channel.memberships.grant_to(users(:david))
 
     assert_equal anchor, membership.reload.first_unread_message, "re-granting must not reset the cursor to head"
   end
 
   test "DM to a read disconnected recipient sets unread and bumps the badge" do
-    room = rooms(:david_and_jason)
-    membership = room.memberships.find_by!(user: users(:david))
+    channel = channels(:david_and_jason)
+    membership = channel.memberships.find_by!(user: users(:david))
     catch_up membership
     membership.update_columns(connected_at: nil, connections: 0, unread_notifications_count: 0)
 
-    message = room.messages.create!(creator: users(:jason), body: "Hey", client_message_id: "dm_to_read_disconnected")
+    message = channel.messages.create!(creator: users(:jason), body: "Hey", client_message_id: "dm_to_read_disconnected")
 
     membership.reload
     assert membership.unread?
@@ -174,11 +174,11 @@ class MessageTest < ActiveSupport::TestCase
   # Event messages
 
   test "without_events scope excludes event messages" do
-    room = rooms(:pets)
-    room.post_system_message(event: "room_renamed", body: "renamed", actor: users(:david))
+    channel = channels(:pets)
+    channel.post_system_message(event: "channel_renamed", body: "renamed", actor: users(:david))
 
-    assert Message.unscoped.where(room: room).where.not(event: nil).exists?
-    assert_not room.messages.without_events.where.not(event: nil).exists?
+    assert Message.unscoped.where(channel: channel).where.not(event: nil).exists?
+    assert_not channel.messages.without_events.where.not(event: nil).exists?
   end
 
   test "all emoji" do
@@ -189,22 +189,22 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   test "mentionees" do
-    message = Message.new room: rooms(:pets), body: "<div>Hey #{mention_attachment_for(:david)}</div>", creator: users(:jason), client_message_id: "earth"
+    message = Message.new channel: channels(:pets), body: "<div>Hey #{mention_attachment_for(:david)}</div>", creator: users(:jason), client_message_id: "earth"
     assert_equal [ users(:david) ], message.mentionees
 
-    message_with_duplicate_mentions = Message.new room: rooms(:pets), body: "<div>Hey #{mention_attachment_for(:david)} #{mention_attachment_for(:david)}</div>", creator: users(:jason), client_message_id: "earth"
+    message_with_duplicate_mentions = Message.new channel: channels(:pets), body: "<div>Hey #{mention_attachment_for(:david)} #{mention_attachment_for(:david)}</div>", creator: users(:jason), client_message_id: "earth"
     assert_equal [ users(:david) ], message.mentionees
 
-    message_mentioning_a_non_member = Message.new room: rooms(:pets), body: "<div>Hey #{mention_attachment_for(:kevin)}</div>", creator: users(:jason), client_message_id: "earth"
+    message_mentioning_a_non_member = Message.new channel: channels(:pets), body: "<div>Hey #{mention_attachment_for(:kevin)}</div>", creator: users(:jason), client_message_id: "earth"
     assert_equal [], message_mentioning_a_non_member.mentionees
   end
 
   test "a deactivated message stops counting toward unread" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: users(:david))
 
-    message1 = room.messages.create!(creator: users(:jason), body: "First message", client_message_id: "msg1")
-    message2 = room.messages.create!(creator: users(:jason), body: "Second message", client_message_id: "msg2")
+    message1 = channel.messages.create!(creator: users(:jason), body: "First message", client_message_id: "msg1")
+    message2 = channel.messages.create!(creator: users(:jason), body: "Second message", client_message_id: "msg2")
 
     rewind_unread_to membership, message1
     assert membership.unread?
@@ -219,10 +219,10 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   test "deactivating the last unread message leaves the membership read" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: users(:david))
 
-    message = room.messages.create!(creator: users(:jason), body: "Only message", client_message_id: "msg1")
+    message = channel.messages.create!(creator: users(:jason), body: "Only message", client_message_id: "msg1")
     rewind_unread_to membership, message
     assert membership.unread?
 
@@ -235,12 +235,12 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   test "deactivating a message leaves other members' unread anchors alone" do
-    room = rooms(:pets)
-    membership1 = room.memberships.find_by(user: users(:david))
-    membership2 = room.memberships.find_by(user: users(:jason))
+    channel = channels(:pets)
+    membership1 = channel.memberships.find_by(user: users(:david))
+    membership2 = channel.memberships.find_by(user: users(:jason))
 
-    message1 = room.messages.create!(creator: users(:jason), body: "First message", client_message_id: "msg1")
-    message2 = room.messages.create!(creator: users(:jason), body: "Second message", client_message_id: "msg2")
+    message1 = channel.messages.create!(creator: users(:jason), body: "First message", client_message_id: "msg1")
+    message2 = channel.messages.create!(creator: users(:jason), body: "Second message", client_message_id: "msg2")
 
     rewind_unread_to membership1, message1
     rewind_unread_to membership2, message2
@@ -258,7 +258,7 @@ class MessageTest < ActiveSupport::TestCase
     admin = users(:jason)  # jason is already an administrator
 
     message = Message.create!(
-      room: rooms(:pets),
+      channel: channels(:pets),
       body: body_html,
       creator: admin,
       client_message_id: "test123"
@@ -267,21 +267,21 @@ class MessageTest < ActiveSupport::TestCase
     assert message.mentions_everyone?
   end
 
-  test "@everyone returns all room users as mentionees" do
+  test "@everyone returns all channel users as mentionees" do
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     admin = users(:jason)  # jason is already an administrator
 
-    room = rooms(:pets)
+    channel = channels(:pets)
     message = Message.create!(
-      room: room,
+      channel: channel,
       body: body_html,
       creator: admin,
       client_message_id: "test456"
     )
 
-    assert_equal room.users.count, message.mentionees.count
+    assert_equal channel.users.count, message.mentionees.count
     assert_includes message.mentionees, users(:david)
   end
 
@@ -292,7 +292,7 @@ class MessageTest < ActiveSupport::TestCase
     non_admin = users(:jz)  # jz is not an administrator
 
     message = Message.new(
-      room: rooms(:pets),
+      channel: channels(:pets),
       body: body_html,
       creator: non_admin,
       client_message_id: "test789"
@@ -302,30 +302,30 @@ class MessageTest < ActiveSupport::TestCase
     assert_includes message.errors[:base], "Only admins can mention @everyone"
   end
 
-  test "@everyone only allowed in open rooms" do
+  test "@everyone only allowed in open channels" do
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     admin = users(:jason)  # jason is already an administrator
 
     # Test that @everyone is not allowed in direct messages
-    direct_room = rooms(:david_and_jason)
+    direct_channel = channels(:david_and_jason)
     message = Message.new(
-      room: direct_room,
+      channel: direct_channel,
       body: body_html,
       creator: admin,
       client_message_id: "test999"
     )
 
     assert_not message.valid?
-    assert_includes message.errors[:base], "@everyone is only allowed in open rooms"
+    assert_includes message.errors[:base], "@everyone is only allowed in open channels"
   end
 
   test "creating a message in a one-on-one DM where users have blocked each other fails validation" do
-    room = Rooms::Direct.find_or_create_for([ users(:david), users(:jason) ])
+    channel = Channels::Direct.find_or_create_for([ users(:david), users(:jason) ])
     users(:david).block!(users(:jason))
 
-    message = room.messages.build(creator: users(:jason), body: "Hey", client_message_id: "blocked_dm_invalid")
+    message = channel.messages.build(creator: users(:jason), body: "Hey", client_message_id: "blocked_dm_invalid")
 
     assert_not message.valid?
     assert_includes message.errors[:base], "Messaging this user isn't allowed"
@@ -337,16 +337,16 @@ class MessageTest < ActiveSupport::TestCase
 
     admin = users(:jason)  # jason is already an administrator
 
-    room = rooms(:pets)
+    channel = channels(:pets)
     message = Message.create!(
-      room: room,
+      channel: channel,
       body: body_html,
       creator: admin,
       client_message_id: "scope_test"
     )
 
     user = users(:david)
-    mentioning_messages = Message.where(room: room).mentioning(user.id)
+    mentioning_messages = Message.where(channel: channel).mentioning(user.id)
 
     assert_includes mentioning_messages, message
   end
@@ -355,7 +355,7 @@ class MessageTest < ActiveSupport::TestCase
     sender   = users(:david)
     receiver = users(:jason)
     receiver.notification_settings || receiver.create_notification_settings!
-    msg = rooms(:designers).messages.create!(body: "<div>bundled</div>", creator: sender, client_message_id: "msg_destroy_bundle_#{SecureRandom.hex(4)}")
+    msg = channels(:designers).messages.create!(body: "<div>bundled</div>", creator: sender, client_message_id: "msg_destroy_bundle_#{SecureRandom.hex(4)}")
 
     bundle = Notification::Bundle.create!(user: receiver, frequency: :hourly, starts_at: Time.current, ends_at: 1.hour.from_now)
     item   = Notification::BundleItem.create!(bundle: bundle, message: msg, actor: sender, kind: "mention")
@@ -365,14 +365,14 @@ class MessageTest < ActiveSupport::TestCase
     assert Notification::Bundle.exists?(bundle.id), "the bundle itself stays — only the item referencing the deleted message goes"
   end
 
-  test "destroying a parent message destroys its thread rooms" do
-    room = rooms(:pets)
+  test "destroying a parent message destroys its thread channels" do
+    channel = channels(:pets)
 
     # Create a message that will be the parent of a thread
-    parent_message = room.messages.create!(body: "Parent message", creator: users(:jason), client_message_id: "parent123")
+    parent_message = channel.messages.create!(body: "Parent message", creator: users(:jason), client_message_id: "parent123")
 
     # Create a thread from that message
-    thread = Rooms::Thread.create!(parent_message: parent_message, creator: users(:jason))
+    thread = Channels::Thread.create!(parent_message: parent_message, creator: users(:jason))
     thread.memberships.grant_to(users(:jason))
     thread_message = thread.messages.create!(body: "Thread reply", creator: users(:jason), client_message_id: "thread123")
 
@@ -382,8 +382,8 @@ class MessageTest < ActiveSupport::TestCase
     # Destroy the parent message
     parent_message.destroy
 
-    # Thread room and its messages should be destroyed
-    assert_not Rooms::Thread.exists?(thread_id), "Thread room should be destroyed when parent message is destroyed"
+    # Thread channel and its messages should be destroyed
+    assert_not Channels::Thread.exists?(thread_id), "Thread channel should be destroyed when parent message is destroyed"
     assert_not Message.exists?(thread_message_id), "Thread messages should be destroyed when thread is destroyed"
   end
 
@@ -392,7 +392,7 @@ class MessageTest < ActiveSupport::TestCase
       io: StringIO.new("hello"), filename: "note.txt", content_type: "text/plain"
     )
 
-    message = rooms(:pets).messages.new(
+    message = channels(:pets).messages.new(
       creator: users(:jason), body: "See attached", client_message_id: "allowed-type"
     )
     message.attachment.attach(blob)
@@ -405,7 +405,7 @@ class MessageTest < ActiveSupport::TestCase
       io: StringIO.new("MZ..."), filename: "malware.exe", content_type: "application/x-msdownload"
     )
 
-    message = rooms(:pets).messages.new(
+    message = channels(:pets).messages.new(
       creator: users(:jason), body: "See attached", client_message_id: "bad-type"
     )
     message.attachment.attach(blob)
@@ -421,7 +421,7 @@ class MessageTest < ActiveSupport::TestCase
     # Fake the byte_size to exceed the limit without creating a huge file
     blob.update_column(:byte_size, 51.megabytes)
 
-    message = rooms(:pets).messages.new(
+    message = channels(:pets).messages.new(
       creator: users(:jason), body: "See attached", client_message_id: "too-big"
     )
     message.attachment.attach(blob)
@@ -436,40 +436,40 @@ class MessageTest < ActiveSupport::TestCase
     assert Message.new.repliable?
     assert Message.new(welcome: true).repliable?
     assert_not Message.new(event: "member_joined").repliable?
-    assert_not Message.new(event: "room_renamed").repliable?
+    assert_not Message.new(event: "channel_renamed").repliable?
   end
 
   test "welcome message does not update creator streak" do
     user = users(:rachel)
     user.update_column(:current_streak, 0)
 
-    rooms(:hq).post_welcome_message(user: user)
+    channels(:hq).post_welcome_message(user: user)
 
     assert_equal 0, user.reload.current_streak
   end
 
-  test "mentioning a non-member does not add them to the room" do
-    room = rooms(:pets)
+  test "mentioning a non-member does not add them to the channel" do
+    channel = channels(:pets)
     jz = users(:jz)
 
-    assert_not room.memberships.exists?(user: jz)
+    assert_not channel.memberships.exists?(user: jz)
 
-    room.messages.create!(
+    channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jz)}</div>",
       creator: users(:jason),
       client_message_id: "no_involve_1"
     )
 
-    assert_not room.memberships.exists?(user: jz), "Non-member should not be added to room via mention"
+    assert_not channel.memberships.exists?(user: jz), "Non-member should not be added to channel via mention"
   end
 
   test "thread_fingerprint rotates when a thread is created on the message" do
-    message = rooms(:watercooler).messages.create!(creator: users(:david), body: "Hello", client_message_id: "fp-1")
+    message = channels(:watercooler).messages.create!(creator: users(:david), body: "Hello", client_message_id: "fp-1")
 
     before = message.thread_fingerprint
 
     Current.set(user: users(:david)) do
-      Rooms::Thread.find_or_create_for(message, creator: users(:david))
+      Channels::Thread.find_or_create_for(message, creator: users(:david))
         .messages.create!(body: "Reply", creator: users(:david), client_message_id: "fp-2")
     end
 
@@ -477,8 +477,8 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   test "creating a message in a thread broadcasts an update to the reply count target" do
-    parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "thread_reply_count_parent")
-    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    parent = channels(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "thread_reply_count_parent")
+    thread = Channels::Thread.create!(parent_message: parent, creator: users(:david))
     thread.memberships.grant_to(users(:david))
 
     thread.messages.create!(creator: users(:david), body: "Reply", client_message_id: "thread_reply_count_reply")
@@ -488,19 +488,19 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   test "creating a message in a thread broadcasts a replace of the parent message's threads block" do
-    parent_room = rooms(:pets)
-    parent = parent_room.messages.create!(creator: users(:david), body: "Parent", client_message_id: "parent_threads_partial_parent")
-    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+    parent_channel = channels(:pets)
+    parent = parent_channel.messages.create!(creator: users(:david), body: "Parent", client_message_id: "parent_threads_partial_parent")
+    thread = Channels::Thread.create!(parent_message: parent, creator: users(:david))
     thread.memberships.grant_to(users(:david))
 
     thread.messages.create!(creator: users(:david), body: "Reply", client_message_id: "parent_threads_partial_reply")
 
-    assert_rendered_turbo_stream_broadcast parent_room, :messages, action: "replace", target: [ parent, :threads ]
+    assert_rendered_turbo_stream_broadcast parent_channel, :messages, action: "replace", target: [ parent, :threads ]
   end
 
-  test "deactivating a parent message broadcasts a replace of the parent message into each thread room" do
-    parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "deactivate_parent_thread_broadcast")
-    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+  test "deactivating a parent message broadcasts a replace of the parent message into each thread channel" do
+    parent = channels(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "deactivate_parent_thread_broadcast")
+    thread = Channels::Thread.create!(parent_message: parent, creator: users(:david))
     thread.memberships.grant_to(users(:david))
 
     parent.deactivate
@@ -508,9 +508,9 @@ class MessageTest < ActiveSupport::TestCase
     assert_rendered_turbo_stream_broadcast thread, :messages, action: "replace", target: parent
   end
 
-  test "reactivating a parent message broadcasts a replace of the parent message into each thread room" do
-    parent = rooms(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "reactivate_parent_thread_broadcast")
-    thread = Rooms::Thread.create!(parent_message: parent, creator: users(:david))
+  test "reactivating a parent message broadcasts a replace of the parent message into each thread channel" do
+    parent = channels(:pets).messages.create!(creator: users(:david), body: "Parent", client_message_id: "reactivate_parent_thread_broadcast")
+    thread = Channels::Thread.create!(parent_message: parent, creator: users(:david))
     thread.memberships.grant_to(users(:david))
     # Bypass callbacks so the assertion below narrows to the activate! call.
     parent.update_columns(active: false)
@@ -605,7 +605,7 @@ class MessageTest < ActiveSupport::TestCase
 
     assert_difference -> { Notification::BundleItem.count }, 1 do
       perform_enqueued_jobs(only: Notification::DispatchJob) do
-        rooms(:designers).messages.create!(
+        channels(:designers).messages.create!(
           body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
           creator: users(:david),
           client_message_id: "u5_mention_happy"
@@ -619,8 +619,8 @@ class MessageTest < ActiveSupport::TestCase
     assert_equal users(:david).id, item.actor_id
   end
 
-  test "@everyone in an open room creates kind=mention BundleItems for every away room member who would receive an in-app row" do
-    rooms(:pets).user_ids.each do |uid|
+  test "@everyone in an open channel creates kind=mention BundleItems for every away channel member who would receive an in-app row" do
+    channels(:pets).user_ids.each do |uid|
       next if uid == users(:david).id
       User.find(uid).create_notification_settings!(missed_email_enabled: true) unless User.find(uid).notification_settings
     end
@@ -631,14 +631,14 @@ class MessageTest < ActiveSupport::TestCase
 
     perform_enqueued_jobs(only: Notification::DispatchJob) do
       Message.create!(
-        room: rooms(:pets),
+        channel: channels(:pets),
         body: body_html,
         creator: users(:david),
         client_message_id: "u5_everyone"
       )
     end
 
-    eligible_user_ids = (rooms(:pets).user_ids - [ users(:david).id ]).sort
+    eligible_user_ids = (channels(:pets).user_ids - [ users(:david).id ]).sort
     assert_equal eligible_user_ids,
       Notification::BundleItem.where(kind: "mention").joins(:bundle).pluck("notification_bundles.user_id").sort
   end
@@ -648,7 +648,7 @@ class MessageTest < ActiveSupport::TestCase
 
     assert_difference -> { Notification::BundleItem.count }, 1 do
       perform_enqueued_jobs(only: Notification::DispatchJob) do
-        rooms(:david_and_jason).messages.create!(
+        channels(:david_and_jason).messages.create!(
           body: "Hey",
           creator: users(:jason),
           client_message_id: "u5_dm_happy"
@@ -662,8 +662,8 @@ class MessageTest < ActiveSupport::TestCase
   end
 
   private
-    def create_new_message_in(room)
-      room.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "123")
+    def create_new_message_in(channel)
+      channel.messages.create!(creator: users(:jason), body: "Hello", client_message_id: "123")
     end
 
     def enable_email_path!(user)

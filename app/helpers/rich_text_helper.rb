@@ -6,7 +6,7 @@ module RichTextHelper
   end
 
   # The editor's native @-mention prompt. `src` filters server-side via `filter`,
-  # so callers pass the room-scoped autocompletable path.
+  # so callers pass the channel-scoped autocompletable path.
   def mention_prompt_tag(src)
     tag.lexxy_prompt trigger: "@", name: "mention", src: src,
       "remote-filtering": true, "empty-results": "No matches"

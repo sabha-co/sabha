@@ -5,19 +5,19 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     host! "once.sabha.test"
 
     sign_in :david
-    @room = rooms(:watercooler)
-    @messages = @room.messages.ordered.to_a
+    @channel = channels(:watercooler)
+    @messages = @channel.messages.ordered.to_a
   end
 
   test "index returns the last page by default" do
-    get room_messages_url(@room)
+    get channel_messages_url(@channel)
 
     assert_response :success
     ensure_messages_present @messages.last
   end
 
   test "index returns a page before the specified message" do
-    get room_messages_url(@room, before: @messages.third)
+    get channel_messages_url(@channel, before: @messages.third)
 
     assert_response :success
     ensure_messages_present @messages.first, @messages.second
@@ -25,7 +25,7 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index returns a page after the specified message" do
-    get room_messages_url(@room, after: @messages.third)
+    get channel_messages_url(@channel, after: @messages.third)
 
     assert_response :success
     ensure_messages_present @messages.fourth, @messages.fifth
@@ -33,71 +33,71 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index returns no_content when there are no messages" do
-    @room.messages.update_all(active: false)
+    @channel.messages.update_all(active: false)
 
-    get room_messages_url(@room)
+    get channel_messages_url(@channel)
 
     assert_response :no_content
   end
 
   test "get renders a single message belonging to the user" do
-    message = @room.messages.where(creator: users(:david)).first
+    message = @channel.messages.where(creator: users(:david)).first
 
-    get room_message_url(@room, message)
+    get channel_message_url(@channel, message)
 
     assert_response :success
     assert_select "##{dom_id(message)}"
   end
 
-  test "creating a message broadcasts the message to the room" do
-    post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: 999 } }
+  test "creating a message broadcasts the message to the channel" do
+    post channel_messages_url(@channel, format: :turbo_stream), params: { message: { body: "New one", client_message_id: 999 } }
 
-    assert_rendered_turbo_stream_broadcast @room, :messages, action: "append", target: [ @room, :messages ] do
+    assert_rendered_turbo_stream_broadcast @channel, :messages, action: "append", target: [ @channel, :messages ] do
       assert_select ".message__body", text: /New one/
-      assert_copy_link_button room_at_message_url(@room, Message.last, host: "once.sabha.test")
+      assert_copy_link_button channel_at_message_url(@channel, Message.last, host: "once.sabha.test")
     end
   end
 
-  test "creating a message publishes one shared room nudge instead of per-user unread broadcasts" do
-    # One account-wide publish on the signed room-list stream regardless of
+  test "creating a message publishes one shared channel nudge instead of per-user unread broadcasts" do
+    # One account-wide publish on the signed channel-list stream regardless of
     # member count; each client derives its own unread state from it. No
-    # per-user push (ReadRoomsChannel is the surviving per-user read-state
-    # stream) and no global "unread_rooms" broadcast (the original
+    # per-user push (ReadChannelsChannel is the surviving per-user read-state
+    # stream) and no global "unread_channels" broadcast (the original
     # thundering-herd fix).
-    other_member = @room.memberships.visible.where.not(user: users(:david)).first
+    other_member = @channel.memberships.visible.where.not(user: users(:david)).first
     catch_up other_member
     other_member.update!(connected_at: nil)
 
-    nudges = capture_broadcasts(Account.sole.room_list_stream_name) do
-      assert_no_broadcasts ReadRoomsChannel.broadcasting_for(other_member.user) do
-        assert_no_broadcasts "unread_rooms" do
-          post room_messages_url(@room, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
+    nudges = capture_broadcasts(Account.sole.channel_list_stream_name) do
+      assert_no_broadcasts ReadChannelsChannel.broadcasting_for(other_member.user) do
+        assert_no_broadcasts "unread_channels" do
+          post channel_messages_url(@channel, format: :turbo_stream), params: { message: { body: "New one", client_message_id: SecureRandom.uuid } }
         end
       end
     end
 
     assert_equal 1, nudges.size
-    assert_equal @room.id, nudges.first["roomId"]
+    assert_equal @channel.id, nudges.first["channelId"]
     assert_equal users(:david).id, nudges.first["creatorId"], "the nudge carries the sender so their own clients skip the dot"
   end
 
-  test "mentioning a user in a room they're not viewing refreshes their sidebar sort metadata" do
-    # The shared nudge carries the sidebar sort keys (roomUpdatedAt, roomSize),
-    # so a disconnected mentionee's sidebar re-floats the room without a
+  test "mentioning a user in a channel they're not viewing refreshes their sidebar sort metadata" do
+    # The shared nudge carries the sidebar sort keys (channelUpdatedAt, channelSize),
+    # so a disconnected mentionee's sidebar re-floats the channel without a
     # per-user push; their client derives the unread dot from the nudge.
-    jason_membership = @room.memberships.find_by(user: users(:jason))
+    jason_membership = @channel.memberships.find_by(user: users(:jason))
     catch_up jason_membership
     jason_membership.update!(connected_at: nil)
 
-    nudges = capture_broadcasts(Account.sole.room_list_stream_name) do
-      post room_messages_url(@room, format: :turbo_stream),
+    nudges = capture_broadcasts(Account.sole.channel_list_stream_name) do
+      post channel_messages_url(@channel, format: :turbo_stream),
         params: { message: { body: "<div>Hey #{mention_attachment_for(:jason)}</div>", client_message_id: SecureRandom.uuid } }
     end
 
-    nudge = nudges.find { |n| n["roomId"] == @room.id }
-    assert nudge, "expected a shared room-list nudge carrying the room's sort metadata"
-    assert_equal @room.reload.messages_count, nudge["roomSize"]
-    assert_equal @room.last_active_at.iso8601, nudge["roomUpdatedAt"]
+    nudge = nudges.find { |n| n["channelId"] == @channel.id }
+    assert nudge, "expected a shared channel-list nudge carrying the channel's sort metadata"
+    assert_equal @channel.reload.messages_count, nudge["channelSize"]
+    assert_equal @channel.last_active_at.iso8601, nudge["channelUpdatedAt"]
   end
 
   test "creating a mention defers the per-recipient broadcasts to jobs instead of rendering synchronously" do
@@ -108,7 +108,7 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     # request path; both ride background jobs so create latency stays flat.
     assert_turbo_stream_broadcasts [ jason, :sidebar_activity_indicator ], count: 0 do
       assert_no_broadcasts badge_stream do
-        post room_messages_url(@room, format: :turbo_stream),
+        post channel_messages_url(@channel, format: :turbo_stream),
           params: { message: { body: "<div>Hey #{mention_attachment_for(:jason)}</div>", client_message_id: SecureRandom.uuid } }
       end
     end
@@ -118,28 +118,28 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update updates a message belonging to the user" do
-    message = @room.messages.where(creator: users(:david)).first
+    message = @channel.messages.where(creator: users(:david)).first
 
-    # One broadcast to the room's :messages stream, one to the global :inbox stream.
-    assert_turbo_stream_broadcasts [ @room, :messages ], count: 1 do
+    # One broadcast to the channel's :messages stream, one to the global :inbox stream.
+    assert_turbo_stream_broadcasts [ @channel, :messages ], count: 1 do
       assert_turbo_stream_broadcasts [ Account.sole, :inbox ], count: 1 do
-        put room_message_url(@room, message), params: { message: { body: "Updated body" } }
+        put channel_message_url(@channel, message), params: { message: { body: "Updated body" } }
       end
     end
 
-    assert_redirected_to room_message_url(@room, message)
+    assert_redirected_to channel_message_url(@channel, message)
     assert_equal "Updated body", message.reload.plain_text_body
   end
 
   test "destroy soft-deletes a message belonging to the user" do
-    message = @room.messages.where(creator: users(:david)).first
+    message = @channel.messages.where(creator: users(:david)).first
 
     # Soft deletion - count stays same but active count decreases.
-    # One remove broadcast to the room's :messages stream, one to the global :inbox stream.
+    # One remove broadcast to the channel's :messages stream, one to the global :inbox stream.
     assert_difference -> { Message.active.count }, -1 do
-      assert_turbo_stream_broadcasts [ @room, :messages ], count: 1 do
+      assert_turbo_stream_broadcasts [ @channel, :messages ], count: 1 do
         assert_turbo_stream_broadcasts [ Account.sole, :inbox ], count: 1 do
-          delete room_message_url(@room, message, format: :turbo_stream)
+          delete channel_message_url(@channel, message, format: :turbo_stream)
           assert_response :success
         end
       end
@@ -151,10 +151,10 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     sign_in :jz
     assert_not users(:jz).administrator?
 
-    room = rooms(:designers)
-    message = room.messages.where(creator: users(:jason)).first
+    channel = channels(:designers)
+    message = channel.messages.where(creator: users(:jason)).first
 
-    put room_message_url(room, message), params: { message: { body: "Updated body" } }
+    put channel_message_url(channel, message), params: { message: { body: "Updated body" } }
     assert_response :forbidden
   end
 
@@ -162,10 +162,10 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     sign_in :jz
     assert_not users(:jz).administrator?
 
-    room = rooms(:designers)
-    message = room.messages.where(creator: users(:jason)).first
+    channel = channels(:designers)
+    message = channel.messages.where(creator: users(:jason)).first
 
-    delete room_message_url(room, message, format: :turbo_stream)
+    delete channel_message_url(channel, message, format: :turbo_stream)
     assert_response :forbidden
   end
 
@@ -177,7 +177,7 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     )
 
     assert_difference -> { Message.count }, 1 do
-      post room_messages_url(@room, format: :turbo_stream),
+      post channel_messages_url(@channel, format: :turbo_stream),
         params: { message: { attachment: blob.signed_id, client_message_id: "test-123" } }
     end
 
@@ -189,7 +189,7 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     WebMock.stub_request(:post, webhooks(:bender).url).to_return(status: 200)
 
     assert_enqueued_jobs 1, only: Bot::WebhookJob do
-      post room_messages_url(@room, format: :turbo_stream), params: { message: {
+      post channel_messages_url(@channel, format: :turbo_stream), params: { message: {
         body: "<div>Hey #{mention_attachment_for(:bender)}</div>", client_message_id: 999 } }
     end
   end
@@ -209,8 +209,8 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
   test "edit rebuilds a hand-written link preview from its validated details" do
     markup = <<~HTML.squish
       <actiontext-opengraph-embed data-controller="pwn" data-action="click->pwn#run">
-        <div class="og-embed"><div class="og-embed__title"><a href="/rooms/1">Free cookies</a></div>
-        <div class="og-embed__image"><img src="/rooms/1/avatar" data-action="load->pwn#run"></div></div>
+        <div class="og-embed"><div class="og-embed__title"><a href="/channels/1">Free cookies</a></div>
+        <div class="og-embed__image"><img src="/channels/1/avatar" data-action="load->pwn#run"></div></div>
       </actiontext-opengraph-embed>
     HTML
     message = create_message_with_body \
@@ -221,14 +221,14 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Free cookies", content.at_css(".og-embed__title").text.strip
     assert_nil content.at_css("a")
     assert_nil content.at_css("img")
-    assert_no_match %r{rooms/1|data-action|data-controller}, content.to_html
+    assert_no_match %r{channels/1|data-action|data-controller}, content.to_html
   end
 
   test "edit gives a mention saved under Trix the mention content type" do
     message = create_message_with_body \
       %(<div>Hey <action-text-attachment sgid="#{users(:jason).attachable_sgid}" content-type="application/octet-stream"></action-text-attachment></div>)
 
-    get edit_room_message_url(@room, message)
+    get edit_channel_message_url(@channel, message)
 
     node = edited_attachment_node
     assert_equal User::Mentionable::CONTENT_TYPE, node["content-type"]
@@ -237,11 +237,11 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
 
   private
     def create_message_with_body(body)
-      @room.messages.create! body: body, client_message_id: SecureRandom.uuid, creator: users(:david)
+      @channel.messages.create! body: body, client_message_id: SecureRandom.uuid, creator: users(:david)
     end
 
     def edited_attachment_content(message)
-      get edit_room_message_url(@room, message)
+      get edit_channel_message_url(@channel, message)
       assert_response :success
 
       Nokogiri::HTML.fragment(edited_attachment_node["content"])

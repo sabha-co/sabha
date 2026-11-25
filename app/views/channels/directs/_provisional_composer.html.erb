@@ -1,0 +1,32 @@
+<%# locals: (recipients:) -%>
+<%# The composer for a DM that doesn't exist yet: sending the first message
+    materializes the conversation (Channels::DirectsController#create) and redirects
+    to the real channel. There's no channel to stream to yet, so no typing indicator and
+    no optimistic insert (the composer controller skips it without a messages
+    outlet) — just a plain submit that carries the recipients.
+    Attachments are disabled until the channel exists (the upload path needs a
+    channel-scoped message stream); start with a text message, then attach files in
+    the real composer. %>
+<% content_for :footer do %>
+  <div class="composer flex align-end gap position-relative">
+    <%= form_with model: Message.new, url: channels_directs_path, id: "composer",
+          class: "margin-block flex-item-grow contain",
+          data: {
+            controller: "composer drop-target",
+            action: composer_data_actions(connection_monitor: false),
+            composer_toolbar_class: "composer--rich-text",
+            composer_direct_upload_url_value: rails_direct_uploads_url } do |form| %>
+      <% recipients.without(Current.user).each do |recipient| %>
+        <%= hidden_field_tag "user_ids[]", recipient.id %>
+      <% end %>
+
+      <%# Mentions resolve against the chosen recipients (the future DM members), not
+          every user — so you can't mention someone who won't be in the conversation. %>
+      <%= render "channels/composer_fields", form: form,
+            label: "Write a message", send_label: "Send Message", attachments: false,
+            mention_user_ids: recipients.map(&:id) %>
+
+      <%= form.hidden_field :client_message_id, data: { composer_target: "clientid" } %>
+    <% end %>
+  </div>
+<% end %>

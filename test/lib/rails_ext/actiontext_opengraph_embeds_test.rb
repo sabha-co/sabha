@@ -27,8 +27,8 @@ class ActionText::Attachment::OpengraphEmbedTest < ActiveSupport::TestCase
 
   test "drops a link and an image that aren't web URLs" do
     [ "javascript:alert(1)", "data:text/html,pwned", "vbscript:msgbox(1)", "//example.com/page",
-      "/rooms/1", "rooms/1", "http://exa mple.com/ ",
-      "https:/rooms/1", "https:rooms/1", "http:/rooms/1", "https://" ].each do |value|
+      "/channels/1", "channels/1", "http://exa mple.com/ ",
+      "https:/channels/1", "https:channels/1", "http:/channels/1", "https://" ].each do |value|
       embed = embed_from href: value, url: value
 
       assert_nil embed.href, "expected #{value.inspect} to be dropped as a link"
@@ -38,9 +38,9 @@ class ActionText::Attachment::OpengraphEmbedTest < ActiveSupport::TestCase
 
   test "drops a link and an image on this Sabha's own host, however it is spelled" do
     Current.set request: ActionDispatch::TestRequest.create("HTTP_HOST" => "once.sabha.test") do
-      [ "https://once.sabha.test/rooms/1", "http://once.sabha.test/rooms/1",
-        "https://ONCE.Sabha.Test/rooms/1", "https://once.sabha.test./rooms/1",
-        "https://%6fnce.sabha.test/rooms/1", "https://%77ww.example.com/x.png" ].each do |value|
+      [ "https://once.sabha.test/channels/1", "http://once.sabha.test/channels/1",
+        "https://ONCE.Sabha.Test/channels/1", "https://once.sabha.test./channels/1",
+        "https://%6fnce.sabha.test/channels/1", "https://%77ww.example.com/x.png" ].each do |value|
         embed = embed_from href: value, url: value
 
         assert_nil embed.href, "expected #{value.inspect} to be dropped as a link"
@@ -54,9 +54,9 @@ class ActionText::Attachment::OpengraphEmbedTest < ActiveSupport::TestCase
   end
 
   test "drops a link and an image on a bare address rather than a domain name" do
-    [ "http://127.0.0.1/rooms/1", "http://2130706433/rooms/1", "http://0177.0.0.1/rooms/1",
-      "http://0x7f.0.0.1/rooms/1", "http://1.2.3.0xff/rooms/1", "http://[::1]/rooms/1",
-      "http://localhost/rooms/1", "https://203.0.113.10/image.png" ].each do |value|
+    [ "http://127.0.0.1/channels/1", "http://2130706433/channels/1", "http://0177.0.0.1/channels/1",
+      "http://0x7f.0.0.1/channels/1", "http://1.2.3.0xff/channels/1", "http://[::1]/channels/1",
+      "http://localhost/channels/1", "https://203.0.113.10/image.png" ].each do |value|
       embed = embed_from href: value, url: value
 
       assert_nil embed.href, "expected #{value.inspect} to be dropped as a link"
@@ -78,7 +78,7 @@ class ActionText::Attachment::OpengraphEmbedTest < ActiveSupport::TestCase
     with_env "ALLOWED_HOSTS" => "a.sabha.test, b.sabha.test" do
       Current.set request: ActionDispatch::TestRequest.create("HTTP_HOST" => "a.sabha.test") do
         # b is a sibling alias serving the same Sabha, sharing the reader's cookie.
-        embed = embed_from href: "https://b.sabha.test/rooms/1", url: "https://b.sabha.test/x.png"
+        embed = embed_from href: "https://b.sabha.test/channels/1", url: "https://b.sabha.test/x.png"
 
         assert_nil embed.href
         assert_nil embed.url
@@ -88,7 +88,7 @@ class ActionText::Attachment::OpengraphEmbedTest < ActiveSupport::TestCase
 
   test "drops a link and an image under the shared cookie domain" do
     with_env "COOKIE_DOMAIN" => ".sabha.test" do
-      [ "https://sabha.test/rooms/1", "https://tenant-b.sabha.test/rooms/1",
+      [ "https://sabha.test/channels/1", "https://tenant-b.sabha.test/channels/1",
         "https://deep.tenant-b.sabha.test/x.png" ].each do |value|
         embed = embed_from href: value, url: value
 
@@ -106,7 +106,7 @@ class ActionText::Attachment::OpengraphEmbedTest < ActiveSupport::TestCase
     with_env "APP_HOST" => "chat.sabha.test" do
       # No Current.request — a background render — so there is no request host.
       assert_nil Current.request_host
-      embed = embed_from href: "https://chat.sabha.test/rooms/1", url: "https://chat.sabha.test/x.png"
+      embed = embed_from href: "https://chat.sabha.test/channels/1", url: "https://chat.sabha.test/x.png"
 
       assert_nil embed.href
       assert_nil embed.url

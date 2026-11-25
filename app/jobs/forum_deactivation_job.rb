@@ -7,9 +7,9 @@ class ForumDeactivationJob < ApplicationJob
   discard_on ActiveJob::DeserializationError::RecordNotFound
 
   # Soft-deletes a deleted forum's posts — their messages, memberships, and
-  # notifications — off the request path. Rooms::Forum#deactivate cuts access
+  # notifications — off the request path. Channels::Forum#deactivate cuts access
   # synchronously (forum row + memberships); this handles the O(posts × replies)
-  # cascade. Each post deactivates in its own short transaction (Room::Nested),
+  # cascade. Each post deactivates in its own short transaction (Channel::Nested),
   # so SQLite's single-writer lock is released between posts rather than held for
   # the whole forum.
   #
@@ -26,7 +26,7 @@ class ForumDeactivationJob < ApplicationJob
   def perform(forum:)
     return if forum.active?
 
-    Rooms::Post.active.where(parent_room_id: forum.id).in_batches do |batch|
+    Channels::Post.active.where(parent_channel_id: forum.id).in_batches do |batch|
       break if forum.reload.active?
       batch.each { |post| post.deactivate(cascade: true) }
     end

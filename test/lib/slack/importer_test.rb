@@ -60,21 +60,21 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     assert_nil User.find_by("preferences LIKE ?", "%slackbot%")
   end
 
-  test "imports channels as Rooms::Open" do
+  test "imports channels as Channels::Open" do
     importer = Slack::Importer.new(@zip_path.to_s)
 
     stats = nil
-    assert_difference "Rooms::Open.count", 2 do
+    assert_difference "Channels::Open.count", 2 do
       stats = importer.import!
     end
 
-    assert_equal 2, stats[:rooms]
+    assert_equal 2, stats[:channels]
 
-    general = Rooms::Open.find_by(name: "General")
+    general = Channels::Open.find_by(name: "General")
     assert general.present?
     assert_equal "General", general.name
 
-    random = Rooms::Open.find_by(name: "Random")
+    random = Channels::Open.find_by(name: "Random")
     assert random.present?
     assert_equal "Random", random.name
   end
@@ -83,8 +83,8 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(name: "General")
-    random = Rooms::Open.find_by(name: "Random")
+    general = Channels::Open.find_by(name: "General")
+    random = Channels::Open.find_by(name: "Random")
 
     # Check that imported users are members of their channels
     lindy = User.find_by("preferences LIKE ?", "%lindy%")
@@ -102,8 +102,8 @@ class Slack::ImporterTest < ActiveSupport::TestCase
 
     assert stats[:messages] > 0
 
-    general = Rooms::Open.find_by(name: "General")
-    messages = general.messages.where.not(room_id: Rooms::Thread.pluck(:id)).order(:created_at)
+    general = Channels::Open.find_by(name: "General")
+    messages = general.messages.where.not(channel_id: Channels::Thread.pluck(:id)).order(:created_at)
 
     first_message = messages.first
     assert_equal "Good morning everyone!", first_message.body.to_plain_text
@@ -117,7 +117,7 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(name: "General")
+    general = Channels::Open.find_by(name: "General")
     mention_message = general.messages.find { |m| m.body.to_plain_text.include?("@lindy") }
     assert mention_message.present?
     assert_includes mention_message.body.to_plain_text, "Hey @lindy"
@@ -127,7 +127,7 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(name: "General")
+    general = Channels::Open.find_by(name: "General")
     channel_message = general.messages.find { |m| m.body.to_plain_text.include?("@channel") }
     assert channel_message.present?
     assert_includes channel_message.body.to_plain_text, "@channel please review"
@@ -137,7 +137,7 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(name: "General")
+    general = Channels::Open.find_by(name: "General")
     link_message = general.messages.find { |m| m.body.to_plain_text.include?("Example Site") }
     assert link_message.present?
     assert_includes link_message.body.to_plain_text, "Example Site (https://example.com)"
@@ -147,7 +147,7 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(name: "General")
+    general = Channels::Open.find_by(name: "General")
     messages = general.messages.map { |m| m.body.to_plain_text }
 
     assert_not messages.any? { |m| m.include?("has left the channel") }
@@ -158,7 +158,7 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
-    general = Rooms::Open.find_by(name: "General")
+    general = Channels::Open.find_by(name: "General")
     messages = general.messages.map { |m| m.body.to_plain_text }
 
     assert_not messages.any? { |m| m.include?("set the channel purpose") }
@@ -197,19 +197,19 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     assert parent_message.present?
 
     # Verify thread was created
-    thread_room = parent_message.threads.first
-    assert thread_room.present?
-    assert_kind_of Rooms::Thread, thread_room
+    thread_channel = parent_message.threads.first
+    assert thread_channel.present?
+    assert_kind_of Channels::Thread, thread_channel
 
     # Verify reply messages moved to thread
-    assert_equal 2, thread_room.messages.count
+    assert_equal 2, thread_channel.messages.count
   end
 
   test "handles channel references in messages" do
     importer = Slack::Importer.new(@zip_path.to_s)
     importer.import!
 
-    random = Rooms::Open.find_by(name: "Random")
+    random = Channels::Open.find_by(name: "Random")
     channel_ref_message = random.messages.find { |m| m.body.to_plain_text.include?("#general") }
     assert channel_ref_message.present?
   end
@@ -219,22 +219,22 @@ class Slack::ImporterTest < ActiveSupport::TestCase
     importer1 = Slack::Importer.new(@zip_path.to_s)
     stats1 = importer1.import!
 
-    room_count_after_first = Room.count
+    channel_count_after_first = Channel.count
     user_count_after_first = User.count
     message_count_after_first = Message.count
 
-    assert Rooms::Open.exists?(name: "General")
-    assert stats1[:rooms] > 0
+    assert Channels::Open.exists?(name: "General")
+    assert stats1[:channels] > 0
     assert stats1[:users] > 0
 
     # Second import should skip existing records
     importer2 = Slack::Importer.new(@zip_path.to_s)
     stats2 = importer2.import!
 
-    assert_equal room_count_after_first, Room.count, "Room count should not change on re-import"
+    assert_equal channel_count_after_first, Channel.count, "Channel count should not change on re-import"
     assert_equal user_count_after_first, User.count, "User count should not change on re-import"
     assert_equal message_count_after_first, Message.count, "Message count should not change on re-import"
-    assert_equal 0, stats2[:rooms], "Stats should show 0 new rooms"
+    assert_equal 0, stats2[:channels], "Stats should show 0 new channels"
     assert_equal 0, stats2[:users], "Stats should show 0 new users"
   end
 
@@ -244,7 +244,7 @@ class Slack::ImporterTest < ActiveSupport::TestCase
 
     importer = Slack::Importer.new(@zip_path.to_s)
 
-    assert_no_difference [ "User.count", "Room.count", "Message.count" ] do
+    assert_no_difference [ "User.count", "Channel.count", "Message.count" ] do
       assert_raises(StandardError) do
         importer.import!
       end

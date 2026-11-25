@@ -133,7 +133,7 @@ class MembershipTest < ActiveSupport::TestCase
 
   test "a heartbeat past the threshold carries the read cursor with it" do
     present @membership
-    message = @membership.room.messages.create! \
+    message = @membership.channel.messages.create! \
       body: "seen live", creator: users(:jason), client_message_id: "heartbeat_cursor"
 
     travel_to Membership::Connectable::CONNECTION_REFRESH_THRESHOLD.from_now + 1
@@ -144,7 +144,7 @@ class MembershipTest < ActiveSupport::TestCase
 
   test "a heartbeat never advances the cursor past an explicit mark-as-unread" do
     present @membership
-    message = @membership.room.messages.create! \
+    message = @membership.channel.messages.create! \
       body: "marked", creator: users(:jason), client_message_id: "heartbeat_marked"
     @membership.reload.mark_unread_at(message)
 
@@ -176,7 +176,7 @@ class MembershipTest < ActiveSupport::TestCase
     present @membership
     @membership.disconnect # cursor to head, refcount to zero, last-seen kept
 
-    @membership.room.messages.create! \
+    @membership.channel.messages.create! \
       body: "arrived after they left", creator: users(:jason), client_message_id: "after_depart"
 
     assert Membership.unread.exists?(@membership.id),
@@ -185,20 +185,20 @@ class MembershipTest < ActiveSupport::TestCase
     assert @membership.reload.unread?
   end
 
-  test "a watching member's room never flips unread" do
+  test "a watching member's channel never flips unread" do
     present @membership
 
-    @membership.room.messages.create! \
+    @membership.channel.messages.create! \
       body: "arrived while watching", creator: users(:jason), client_message_id: "while_watching"
 
     assert Membership.read.exists?(@membership.id)
-    assert_not Membership.unread.exists?(@membership.id), "a member watching a room must never see it flip unread"
+    assert_not Membership.unread.exists?(@membership.id), "a member watching a channel must never see it flip unread"
     assert @membership.reload.read?
   end
 
   test "with_message_unseen skips a watcher but catches a member who has left" do
     present @membership
-    message = @membership.room.messages.create! \
+    message = @membership.channel.messages.create! \
       body: "landed", creator: users(:jason), client_message_id: "unseen_scope"
     @membership.reload.update_columns(last_read_at: 1.hour.ago, last_read_message_id: 0)
 
@@ -232,7 +232,7 @@ class MembershipTest < ActiveSupport::TestCase
     present @membership # broker restart: no depart fired, so this ratchets
     assert_equal 2, @membership.connections, "the ratchet is accepted, not prevented"
 
-    watched = @membership.room.messages.create! \
+    watched = @membership.channel.messages.create! \
       body: "watched live", creator: users(:jason), client_message_id: "ratchet"
 
     @membership.disconnect
@@ -382,14 +382,14 @@ class MembershipTest < ActiveSupport::TestCase
     assert_not Membership.starred.exists?(@membership.id)
   end
 
-  test "cannot star a direct room membership" do
+  test "cannot star a direct channel membership" do
     membership = memberships(:david_david_and_jason)
     membership.starred = true
     assert_not membership.valid?
-    assert_includes membership.errors[:starred], "is not allowed for direct or thread rooms"
+    assert_includes membership.errors[:starred], "is not allowed for direct or thread channels"
   end
 
-  test "hiding a starred room automatically unstars it" do
+  test "hiding a starred channel automatically unstars it" do
     @membership.update!(starred: true)
     @membership.update!(involvement: :invisible)
     assert_not @membership.reload.starred?
@@ -398,7 +398,7 @@ class MembershipTest < ActiveSupport::TestCase
   # Read/Unread tests
 
   test "mark_unread_at makes the message the first unread" do
-    message = @membership.room.messages.create!(creator: users(:jason), body: "Test")
+    message = @membership.channel.messages.create!(creator: users(:jason), body: "Test")
     catch_up @membership
 
     @membership.mark_unread_at(message)
@@ -408,7 +408,7 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "read clears unread state" do
-    message = @membership.room.messages.create!(creator: users(:jason), body: "Unseen")
+    message = @membership.channel.messages.create!(creator: users(:jason), body: "Unseen")
     rewind_unread_to @membership, message
 
     @membership.read
@@ -418,7 +418,7 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "read? and unread? are opposites" do
-    message = @membership.room.messages.create!(creator: users(:jason), body: "Unseen")
+    message = @membership.channel.messages.create!(creator: users(:jason), body: "Unseen")
 
     catch_up @membership
     assert @membership.read?
@@ -430,15 +430,15 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "a membership with no cursor yet reads as read, not all-unread" do
-    @membership.room.messages.create!(creator: users(:jason), body: "History")
+    @membership.channel.messages.create!(creator: users(:jason), body: "History")
     @membership.update_columns(last_read_at: nil, last_read_message_id: nil, marked_unread: false)
 
     assert @membership.read?
     assert_not Membership.unread.exists?(@membership.id)
   end
 
-  test "presenting in a room clears unread state and the notification badge" do
-    message = @membership.room.messages.create!(creator: users(:jason), body: "Unseen")
+  test "presenting in a channel clears unread state and the notification badge" do
+    message = @membership.channel.messages.create!(creator: users(:jason), body: "Unseen")
     rewind_unread_to @membership, message
     @membership.update!(unread_notifications_count: 3)
 
@@ -451,10 +451,10 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "read_until advances the anchor past the given time and recomputes the badge" do
-    room = @membership.room
-    first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "read_until_1")
-    second = room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "read_until_2")
-    mention = room.messages.create!(
+    channel = @membership.channel
+    first = channel.messages.create!(creator: users(:jason), body: "First", client_message_id: "read_until_1")
+    second = channel.messages.create!(creator: users(:jason), body: "Second", client_message_id: "read_until_2")
+    mention = channel.messages.create!(
       creator: users(:jason),
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       client_message_id: "read_until_3"
@@ -471,8 +471,8 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "read_until marks read when no messages remain after the given time" do
-    room = @membership.room
-    last = room.messages.create!(creator: users(:jason), body: "Last", client_message_id: "read_until_last")
+    channel = @membership.channel
+    last = channel.messages.create!(creator: users(:jason), body: "Last", client_message_id: "read_until_last")
     rewind_unread_to @membership, last
     @membership.update!(unread_notifications_count: 2)
 
@@ -484,9 +484,9 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "read_until ignores a time before the current anchor" do
-    room = @membership.room
-    first = room.messages.create!(creator: users(:jason), body: "First", client_message_id: "read_until_noop_1")
-    second = room.messages.create!(creator: users(:jason), body: "Second", client_message_id: "read_until_noop_2")
+    channel = @membership.channel
+    first = channel.messages.create!(creator: users(:jason), body: "First", client_message_id: "read_until_noop_1")
+    second = channel.messages.create!(creator: users(:jason), body: "Second", client_message_id: "read_until_noop_2")
     rewind_unread_to @membership, second
 
     @membership.read_until(first.created_at)
@@ -504,28 +504,28 @@ class MembershipTest < ActiveSupport::TestCase
 
   test "fully disconnecting counts messages watched live as seen" do
     @membership.present
-    @membership.room.messages.create!(creator: users(:jason), body: "Watched live", client_message_id: "watched_live")
+    @membership.channel.messages.create!(creator: users(:jason), body: "Watched live", client_message_id: "watched_live")
 
     @membership.disconnect
 
-    assert @membership.reload.read?, "messages that landed while connected must not dot the room after leaving"
+    assert @membership.reload.read?, "messages that landed while connected must not dot the channel after leaving"
   end
 
   test "disconnecting preserves an explicit mark-as-unread" do
     @membership.present
-    message = @membership.room.messages.create!(creator: users(:jason), body: "Keep me unread", client_message_id: "keep_unread")
+    message = @membership.channel.messages.create!(creator: users(:jason), body: "Keep me unread", client_message_id: "keep_unread")
     @membership.mark_unread_at(message)
 
     @membership.disconnect
 
     @membership.reload
-    assert @membership.unread?, "an explicit mark must survive leaving the room"
+    assert @membership.unread?, "an explicit mark must survive leaving the channel"
     assert_equal message, @membership.first_unread_message
   end
 
   test "refreshing the connection advances the cursor" do
     present @membership
-    @membership.room.messages.create!(creator: users(:jason), body: "Seen on heartbeat", client_message_id: "heartbeat_seen")
+    @membership.channel.messages.create!(creator: users(:jason), body: "Seen on heartbeat", client_message_id: "heartbeat_seen")
 
     travel_to Membership::Connectable::CONNECTION_REFRESH_THRESHOLD.from_now + 1
     @membership.refresh_connection
@@ -556,12 +556,12 @@ class MembershipTest < ActiveSupport::TestCase
     assert @membership.reload.involved_in_invisible?
   end
 
-  test "leave! works for open rooms even as last member" do
-    open_room = rooms(:hq)
-    assert open_room.open?
+  test "leave! works for open channels even as last member" do
+    open_channel = channels(:hq)
+    assert open_channel.open?
 
     # Get the only visible membership
-    membership = open_room.memberships.visible.first
+    membership = open_channel.memberships.visible.first
 
     # Should not raise error
     assert_nothing_raised do
@@ -571,12 +571,12 @@ class MembershipTest < ActiveSupport::TestCase
     assert membership.reload.involved_in_invisible?
   end
 
-  test "leave! raises LastVisibleMemberError for closed rooms when last visible member" do
-    closed_room = rooms(:designers)
-    assert closed_room.closed?
+  test "leave! raises LastVisibleMemberError for closed channels when last visible member" do
+    closed_channel = channels(:designers)
+    assert closed_channel.closed?
 
     # Make all but one membership invisible
-    visible_memberships = closed_room.memberships.visible.to_a
+    visible_memberships = closed_channel.memberships.visible.to_a
     assert visible_memberships.count > 1
 
     visible_memberships[1..-1].each do |m|
@@ -584,8 +584,8 @@ class MembershipTest < ActiveSupport::TestCase
     end
 
     # Now only one visible membership remains
-    last_membership = closed_room.memberships.visible.first
-    assert_equal 1, closed_room.memberships.visible.count
+    last_membership = closed_channel.memberships.visible.first
+    assert_equal 1, closed_channel.memberships.visible.count
 
     assert_raises(Membership::LastVisibleMemberError) do
       last_membership.leave!
@@ -595,12 +595,12 @@ class MembershipTest < ActiveSupport::TestCase
     assert_not last_membership.reload.involved_in_invisible?
   end
 
-  test "leave! allows leaving closed room when multiple visible members exist" do
-    closed_room = rooms(:designers)
-    assert closed_room.closed?
-    assert closed_room.memberships.visible.count > 1
+  test "leave! allows leaving closed channel when multiple visible members exist" do
+    closed_channel = channels(:designers)
+    assert closed_channel.closed?
+    assert closed_channel.memberships.visible.count > 1
 
-    membership = closed_room.memberships.visible.first
+    membership = closed_channel.memberships.visible.first
 
     assert_nothing_raised do
       membership.leave!
@@ -611,20 +611,20 @@ class MembershipTest < ActiveSupport::TestCase
 
   # Mention-aware unread notification tests
 
-  test "unread_notifications returns mentioned messages for non-direct rooms" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: users(:david))
+  test "unread_notifications returns mentioned messages for non-direct channels" do
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: users(:david))
     force_all_unread membership
 
     # Message mentioning david — should be an unread notification
-    mentioned_msg = room.messages.create!(
+    mentioned_msg = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "unread_mention_1"
     )
 
     # Message NOT mentioning david — should NOT be an unread notification
-    room.messages.create!(
+    channel.messages.create!(
       body: "<div>Hello general</div>",
       creator: users(:jason),
       client_message_id: "unread_general_1"
@@ -634,12 +634,12 @@ class MembershipTest < ActiveSupport::TestCase
     assert_equal 1, membership.unread_notifications.count
   end
 
-  test "unread_notifications returns all messages for direct rooms" do
-    dm_room = rooms(:david_and_jason)
-    membership = dm_room.memberships.find_by(user: users(:david))
+  test "unread_notifications returns all messages for direct channels" do
+    dm_channel = channels(:david_and_jason)
+    membership = dm_channel.memberships.find_by(user: users(:david))
     force_all_unread membership
 
-    msg = dm_room.messages.create!(
+    msg = dm_channel.messages.create!(
       body: "Hey!",
       creator: users(:jason),
       client_message_id: "dm_unread_1"
@@ -649,15 +649,15 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications includes @everyone messages" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: users(:david))
     force_all_unread membership
 
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     msg = Message.create!(
-      room: room,
+      channel: channel,
       body: body_html,
       creator: users(:jason),
       client_message_id: "everyone_unread_1"
@@ -667,11 +667,11 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "has_unread_notifications? true when mentioned in unread messages" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: users(:david))
     force_all_unread membership
 
-    room.messages.create!(
+    channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "has_unread_1"
@@ -681,11 +681,11 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "has_unread_notifications? false when no mentions in unread messages" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: users(:david))
     force_all_unread membership
 
-    room.messages.create!(
+    channel.messages.create!(
       body: "<div>No mentions here</div>",
       creator: users(:jason),
       client_message_id: "no_unread_1"
@@ -695,24 +695,24 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "has_unread_notifications? false when read" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: users(:david))
     catch_up membership
 
     assert_not membership.has_unread_notifications?
   end
 
   test "unread_notifications_count tracks mentioned unread messages" do
-    room = rooms(:pets)
-    david_membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    david_membership = channel.memberships.find_by(user: users(:david))
     force_all_unread david_membership
 
-    room.messages.create!(
+    channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "count_1"
     )
-    room.messages.create!(
+    channel.messages.create!(
       body: "<div>Again #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "count_2"
@@ -722,11 +722,11 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications_count not bumped by non-mentioning messages" do
-    room = rooms(:pets)
-    david_membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    david_membership = channel.memberships.find_by(user: users(:david))
     force_all_unread david_membership
 
-    room.messages.create!(
+    channel.messages.create!(
       body: "<div>No mention</div>",
       creator: users(:jason),
       client_message_id: "count_none"
@@ -736,19 +736,19 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications_count zero when read" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: users(:david))
     catch_up membership
 
     assert_equal 0, membership.unread_notifications_count
   end
 
   test "unread_notifications_count drops when a mention message is soft-deleted" do
-    room = rooms(:pets)
-    david_membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    david_membership = channel.memberships.find_by(user: users(:david))
     force_all_unread david_membership
 
-    message = room.messages.create!(
+    message = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "decrement_mention_1"
@@ -762,16 +762,16 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications_count drops when a DM message is soft-deleted" do
-    dm_room = rooms(:david_and_jason)
-    membership = dm_room.memberships.find_by(user: users(:david))
+    dm_channel = channels(:david_and_jason)
+    membership = dm_channel.memberships.find_by(user: users(:david))
     force_all_unread membership
 
-    earlier = dm_room.messages.create!(
+    earlier = dm_channel.messages.create!(
       body: "first",
       creator: users(:jason),
       client_message_id: "dm_decrement_1"
     )
-    later = dm_room.messages.create!(
+    later = dm_channel.messages.create!(
       body: "second",
       creator: users(:jason),
       client_message_id: "dm_decrement_2"
@@ -789,11 +789,11 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications_count drops when a mention message is hard-destroyed" do
-    room = rooms(:pets)
-    david_membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    david_membership = channel.memberships.find_by(user: users(:david))
     force_all_unread david_membership
 
-    message = room.messages.create!(
+    message = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "destroy_mention_1"
@@ -807,16 +807,16 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications_count drops when a DM message is hard-destroyed" do
-    dm_room = rooms(:david_and_jason)
-    membership = dm_room.memberships.find_by(user: users(:david))
+    dm_channel = channels(:david_and_jason)
+    membership = dm_channel.memberships.find_by(user: users(:david))
     force_all_unread membership
 
-    earlier = dm_room.messages.create!(
+    earlier = dm_channel.messages.create!(
       body: "first",
       creator: users(:jason),
       client_message_id: "dm_destroy_1"
     )
-    later = dm_room.messages.create!(
+    later = dm_channel.messages.create!(
       body: "second",
       creator: users(:jason),
       client_message_id: "dm_destroy_2"
@@ -832,11 +832,11 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications_count restores when a soft-deleted DM message is reactivated" do
-    dm_room = rooms(:david_and_jason)
-    membership = dm_room.memberships.find_by(user: users(:david))
+    dm_channel = channels(:david_and_jason)
+    membership = dm_channel.memberships.find_by(user: users(:david))
     force_all_unread membership
 
-    message = dm_room.messages.create!(
+    message = dm_channel.messages.create!(
       body: "hello",
       creator: users(:jason),
       client_message_id: "dm_reactivate_1"
@@ -852,14 +852,14 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications_count restores when a soft-deleted @everyone message is reactivated" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: users(:david))
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: users(:david))
     force_all_unread membership
 
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
     message = Message.create!(
-      room: room,
+      channel: channel,
       body: body_html,
       creator: users(:jason),
       client_message_id: "everyone_reactivate_1"
@@ -875,10 +875,10 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications_count bumps the DM sender when their unread window includes the message" do
-    dm_room = rooms(:david_and_jason)
-    sender_membership = dm_room.memberships.find_by(user: users(:jason))
+    dm_channel = channels(:david_and_jason)
+    sender_membership = dm_channel.memberships.find_by(user: users(:jason))
 
-    unseen = dm_room.messages.create!(
+    unseen = dm_channel.messages.create!(
       body: "waiting for jason",
       creator: users(:david),
       client_message_id: "dm_sender_window_anchor"
@@ -886,7 +886,7 @@ class MembershipTest < ActiveSupport::TestCase
     rewind_unread_to sender_membership, unseen
     sender_membership.update!(unread_notifications_count: 1)
 
-    dm_room.messages.create!(
+    dm_channel.messages.create!(
       body: "self-aware",
       creator: users(:jason),
       client_message_id: "dm_sender_in_window"
@@ -897,15 +897,15 @@ class MembershipTest < ActiveSupport::TestCase
   end
 
   test "unread_notifications_count recomputes when DM message at the unread anchor is soft-deleted" do
-    dm_room = rooms(:david_and_jason)
-    membership = dm_room.memberships.find_by(user: users(:david))
+    dm_channel = channels(:david_and_jason)
+    membership = dm_channel.memberships.find_by(user: users(:david))
 
-    anchor = dm_room.messages.create!(
+    anchor = dm_channel.messages.create!(
       body: "anchor",
       creator: users(:jason),
       client_message_id: "dm_anchor"
     )
-    follow_up = dm_room.messages.create!(
+    follow_up = dm_channel.messages.create!(
       body: "follow up",
       creator: users(:jason),
       client_message_id: "dm_follow_up"
@@ -971,14 +971,14 @@ class MembershipTest < ActiveSupport::TestCase
 
   # ---------- effective_involvement ----------
 
-  test "effective_involvement returns :everything for per-room everything" do
+  test "effective_involvement returns :everything for per-channel everything" do
     membership = memberships(:david_watercooler)
     membership.update!(involvement: :everything)
 
     assert_equal :everything, membership.effective_involvement
   end
 
-  test "effective_involvement returns :mentions for per-room mentions when no settings exist" do
+  test "effective_involvement returns :mentions for per-channel mentions when no settings exist" do
     membership = memberships(:kevin_designers)
     membership.update!(involvement: :mentions)
 
@@ -987,21 +987,21 @@ class MembershipTest < ActiveSupport::TestCase
     assert_equal :mentions, membership.effective_involvement
   end
 
-  test "effective_involvement returns :nothing for per-room nothing when no settings exist" do
+  test "effective_involvement returns :nothing for per-channel nothing when no settings exist" do
     membership = memberships(:kevin_designers)
     membership.update!(involvement: :nothing)
 
     assert_equal :nothing, membership.effective_involvement
   end
 
-  test "effective_involvement returns :invisible for per-room invisible" do
+  test "effective_involvement returns :invisible for per-channel invisible" do
     membership = memberships(:kevin_designers)
     membership.update!(involvement: :invisible)
 
     assert_equal :invisible, membership.effective_involvement
   end
 
-  test "effective_involvement falls back to per-room value when notification_settings is missing (rule 3)" do
+  test "effective_involvement falls back to per-channel value when notification_settings is missing (rule 3)" do
     membership = memberships(:kevin_designers)
     membership.update!(involvement: :mentions)
     membership.user.notification_settings&.destroy
@@ -1010,7 +1010,7 @@ class MembershipTest < ActiveSupport::TestCase
     assert_equal :mentions, membership.effective_involvement
   end
 
-  test "effective_involvement returns :everything when per-room is :everything even if global mode is :nothing (rule 1 — per-room beats global mute)" do
+  test "effective_involvement returns :everything when per-channel is :everything even if global mode is :nothing (rule 1 — per-channel beats global mute)" do
     membership = memberships(:kevin_designers)
     membership.update!(involvement: :everything)
     membership.user.notification_settings&.update!(mode: :nothing) ||
@@ -1019,7 +1019,7 @@ class MembershipTest < ActiveSupport::TestCase
     assert_equal :everything, membership.effective_involvement
   end
 
-  test "effective_involvement returns :nothing when global mode is :nothing and per-room is :mentions (rule 2 — global mute applies)" do
+  test "effective_involvement returns :nothing when global mode is :nothing and per-channel is :mentions (rule 2 — global mute applies)" do
     membership = memberships(:kevin_designers)
     membership.update!(involvement: :mentions)
     membership.user.notification_settings&.update!(mode: :nothing) ||
@@ -1028,37 +1028,37 @@ class MembershipTest < ActiveSupport::TestCase
     assert_equal :nothing, membership.effective_involvement
   end
 
-  # The tests below pin observable Membership callback behavior: room member-count
-  # cache invalidation on save (including room_id moves), involvement broadcasts on
-  # UserInvolvementsChannel, and starred broadcasts to the user's room list — plus
-  # the guards that suppress star broadcasts for direct rooms and invisible
+  # The tests below pin observable Membership callback behavior: channel member-count
+  # cache invalidation on save (including channel_id moves), involvement broadcasts on
+  # UserInvolvementsChannel, and starred broadcasts to the user's channel list — plus
+  # the guards that suppress star broadcasts for direct channels and invisible
   # memberships. They assert what the callbacks emit, not how they're wired, so
   # they survive moves between the model and concerns.
 
-  test "saving a membership invalidates the room's active_member_count cache" do
-    room = @membership.room
-    cache_key = room.send(:active_member_count_cache_key)
+  test "saving a membership invalidates the channel's active_member_count cache" do
+    channel = @membership.channel
+    cache_key = channel.send(:active_member_count_cache_key)
 
     Rails.cache.stubs(:delete)  # let unrelated cache deletes pass through
     Rails.cache.expects(:delete).with(cache_key).at_least_once
     @membership.update!(involvement: :mentions)
   end
 
-  test "moving a membership to a new room invalidates both rooms' caches" do
+  test "moving a membership to a new channel invalidates both channels' caches" do
     # Use rachel — only in watercooler, not in pets — to avoid UNIQUE collision.
     membership = memberships(:rachel_watercooler)
-    old_room = membership.room
-    new_room = rooms(:pets)
-    assert_not_equal old_room.id, new_room.id
+    old_channel = membership.channel
+    new_channel = channels(:pets)
+    assert_not_equal old_channel.id, new_channel.id
 
-    old_key = old_room.send(:active_member_count_cache_key)
-    new_key = new_room.send(:active_member_count_cache_key)
+    old_key = old_channel.send(:active_member_count_cache_key)
+    new_key = new_channel.send(:active_member_count_cache_key)
 
     Rails.cache.stubs(:delete)  # let unrelated cache deletes pass through
     Rails.cache.expects(:delete).with(new_key).at_least_once
     Rails.cache.expects(:delete).with(old_key).at_least_once
 
-    membership.update!(room: new_room)
+    membership.update!(channel: new_channel)
   end
 
   test "changing involvement broadcasts to UserInvolvementsChannel" do
@@ -1078,7 +1078,7 @@ class MembershipTest < ActiveSupport::TestCase
     end
   end
 
-  test "starring a shared-room membership broadcasts remove from shared list and append to starred list" do
+  test "starring a shared-channel membership broadcasts remove from shared list and append to starred list" do
     # fixture starts starred: true — reset to false without firing callbacks so
     # the test's update! is the only star transition.
     @membership.update_columns(starred: false)
@@ -1086,22 +1086,22 @@ class MembershipTest < ActiveSupport::TestCase
 
     @membership.update!(starred: true)
 
-    assert_rendered_turbo_stream_broadcast @membership.user, :rooms,
-      action: "remove", target: [ @membership.room, "shared_rooms_list_node" ]
-    assert_rendered_turbo_stream_broadcast @membership.user, :rooms,
-      action: "append", target: :starred_rooms
+    assert_rendered_turbo_stream_broadcast @membership.user, :channels,
+      action: "remove", target: [ @membership.channel, "shared_channels_list_node" ]
+    assert_rendered_turbo_stream_broadcast @membership.user, :channels,
+      action: "append", target: :starred_channels
   end
 
-  test "unstarring a shared-room membership broadcasts remove from starred list and append to shared list" do
+  test "unstarring a shared-channel membership broadcasts remove from starred list and append to shared list" do
     @membership.update_columns(starred: true)  # ensure starting state
     ActionCable.server.pubsub.clear
 
     @membership.update!(starred: false)
 
-    assert_rendered_turbo_stream_broadcast @membership.user, :rooms,
-      action: "remove", target: [ @membership.room, "starred_rooms_list_node" ]
-    assert_rendered_turbo_stream_broadcast @membership.user, :rooms,
-      action: "append", target: :shared_rooms
+    assert_rendered_turbo_stream_broadcast @membership.user, :channels,
+      action: "remove", target: [ @membership.channel, "starred_channels_list_node" ]
+    assert_rendered_turbo_stream_broadcast @membership.user, :channels,
+      action: "append", target: :shared_channels
   end
 
   test "non-star updates do not broadcast a star change" do
@@ -1109,22 +1109,22 @@ class MembershipTest < ActiveSupport::TestCase
 
     @membership.update!(connected_at: Time.current)
 
-    stream_name = "#{@membership.user.to_gid_param}:rooms"
+    stream_name = "#{@membership.user.to_gid_param}:channels"
     assert_empty ActionCable.server.pubsub.broadcasts(stream_name),
       "non-star updates should not emit star_change broadcasts"
   end
 
-  test "star change on a direct-room membership does not broadcast" do
+  test "star change on a direct-channel membership does not broadcast" do
     membership = memberships(:david_david_and_jason)
     ActionCable.server.pubsub.clear
 
-    # Bypass starred_only_for_shared_visible_rooms validation but keep callbacks
-    # to exercise broadcast_star_change's room.direct? guard.
+    # Bypass starred_only_for_shared_visible_channels validation but keep callbacks
+    # to exercise broadcast_star_change's channel.direct? guard.
     membership.update_attribute(:starred, true)
 
-    stream_name = "#{membership.user.to_gid_param}:rooms"
+    stream_name = "#{membership.user.to_gid_param}:channels"
     assert_empty ActionCable.server.pubsub.broadcasts(stream_name),
-      "star change on direct-room memberships should be guarded (room.direct?)"
+      "star change on direct-channel memberships should be guarded (channel.direct?)"
   end
 
   test "star change on an invisible membership does not broadcast" do
@@ -1136,7 +1136,7 @@ class MembershipTest < ActiveSupport::TestCase
     # doesn't undo the change before save.
     @membership.update_attribute(:starred, true)
 
-    stream_name = "#{@membership.user.to_gid_param}:rooms"
+    stream_name = "#{@membership.user.to_gid_param}:channels"
     assert_empty ActionCable.server.pubsub.broadcasts(stream_name),
       "star change on invisible memberships should be guarded (involved_in_invisible?)"
   end

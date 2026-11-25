@@ -17,9 +17,9 @@ module Saas
     end
 
     test "show stores return_to param in session" do
-      get auth_code_path, params: { return_to: "/1000001/rooms" }
+      get auth_code_path, params: { return_to: "/1000001/channels" }
       assert_response :success
-      assert_equal "/1000001/rooms", session[:return_to_after_authenticating]
+      assert_equal "/1000001/channels", session[:return_to_after_authenticating]
     end
 
     test "create with valid sign_in code shows welcome back" do

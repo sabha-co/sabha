@@ -5,7 +5,7 @@ module Slack
 
     def initialize(zip)
       @zip = zip
-      @stats = { users: 0, rooms: 0, messages: 0, boosts: 0, threads: 0 }
+      @stats = { users: 0, channels: 0, messages: 0, boosts: 0, threads: 0 }
       @user_map = {}
       @channel_map = {}
       @message_map = {}

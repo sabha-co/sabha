@@ -1,14 +1,14 @@
 class API::Bots::MessagesController < API::Bots::BaseController
   include ActiveStorage::SetCurrent, NotifyBots, CursorPaginated
 
-  before_action :set_room, only: %i[index create]
+  before_action :set_channel, only: %i[index create]
   before_action :parse_pagination_params, only: :index
   before_action :set_message, :require_message_creator, only: %i[update destroy]
 
-  rescue_from Rooms::Thread::NestedThreadError, with: :nested_thread_invalid
+  rescue_from Channels::Thread::NestedThreadError, with: :nested_thread_invalid
 
   def index
-    scope = @room.messages.active
+    scope = @channel.messages.active
                  .with_rich_text_body_and_embeds
                  .with_creator
                  .with_attached_attachment
@@ -41,12 +41,12 @@ class API::Bots::MessagesController < API::Bots::BaseController
     @message.broadcast_mentionee_sidebar_updates
     notify_bots(@message, :created)
 
-    render json: { id: @message.id, room_id: @message.room_id },
+    render json: { id: @message.id, channel_id: @message.channel_id },
            status: :created,
-           location: room_message_url(@message.room, @message)
+           location: channel_message_url(@message.channel, @message)
   rescue ActiveRecord::RecordInvalid => e
     render json: { error: e.record.errors.full_messages.to_sentence, code: "validation_failed" }, status: :unprocessable_entity
-  rescue Rooms::Thread::BlankReplyError
+  rescue Channels::Thread::BlankReplyError
     render json: { error: "Message can't be blank", code: "validation_failed" }, status: :unprocessable_entity
   rescue LoadError
     render json: { error: "Storage service unavailable", code: "service_unavailable" }, status: :service_unavailable
@@ -72,28 +72,28 @@ class API::Bots::MessagesController < API::Bots::BaseController
   end
 
   private
-    def set_room
-      @room = reachable_bot_room(params[:room_id])
+    def set_channel
+      @channel = reachable_bot_channel(params[:channel_id])
     end
 
     # A reply carrying parent_message_id materializes the thread and its reply
-    # atomically (Rooms::Thread.reply_to): a blank or invalid reply rolls the
+    # atomically (Channels::Thread.reply_to): a blank or invalid reply rolls the
     # just-opened thread back rather than orphaning it, and the bot follows only
-    # once the reply persists (Message::Threadable#follow_sub_room_by_creator). A
-    # plain message posts straight to the URL room.
+    # once the reply persists (Message::Threadable#follow_sub_channel_by_creator). A
+    # plain message posts straight to the URL channel.
     def post_message
       if params[:parent_message_id].present?
-        Rooms::Thread.reply_to(parent_message_in_room, creator: Current.user, message_params: message_params)
+        Channels::Thread.reply_to(parent_message_in_channel, creator: Current.user, message_params: message_params)
       else
-        @room.messages.create_with_attachment!(message_params)
+        @channel.messages.create_with_attachment!(message_params)
       end
     end
 
-    # Scoping through @room.messages enforces the API contract that
-    # parent_message_id must reference a message in the URL room — cross-room
+    # Scoping through @channel.messages enforces the API contract that
+    # parent_message_id must reference a message in the URL channel — cross-channel
     # references 404 here.
-    def parent_message_in_room
-      @room.messages.active.find(params[:parent_message_id])
+    def parent_message_in_channel
+      @channel.messages.active.find(params[:parent_message_id])
     end
 
     def nested_thread_invalid
@@ -103,7 +103,7 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
     def set_message
       @message = reachable_bot_message(params[:id])
-      @room = @message.room
+      @channel = @message.channel
     end
 
     def require_message_creator
@@ -120,7 +120,7 @@ class API::Bots::MessagesController < API::Bots::BaseController
 
     def format_mentions(body)
       body.to_s.gsub(/@\{(.+?)\}/) do
-        user = @room.users.find_by(id: $1)
+        user = @channel.users.find_by(id: $1)
         user ? mention_user(user) : ""
       end
     end

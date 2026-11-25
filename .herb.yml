@@ -65,7 +65,7 @@ linter:
     # return value is emitted with `<%= sparkline.call %>`.
     actionview-no-silent-helper:
       exclude:
-        - "app/views/rooms/_composer_fields.html.erb"
+        - "app/views/channels/_composer_fields.html.erb"
         - "saas/app/views/admin/stats/show.html.erb"
 
     # Client-side message template: a <script type="text/template"> that JS

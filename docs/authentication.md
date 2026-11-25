@@ -317,7 +317,7 @@ Sso::CallbacksController calls FirstRun.auto_bootstrap_from_sso(payload):
   - Creates Account (named via Branding.app_name)
   - Creates admin User (role: administrator, verified) from payload
   - Creates SingleSignOnRecord linking external_id ↔ user
-  - Creates "General" room with auto_join: true
+  - Creates "General" channel with auto_join: true
   ↓
 Session opened → redirected to root → welcome flash
 ```

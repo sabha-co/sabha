@@ -1,6 +1,6 @@
 class Messages::UnreadsController < ApplicationController
   before_action :set_message
-  before_action :set_room
+  before_action :set_channel
   before_action :set_membership
 
   def create
@@ -12,11 +12,11 @@ class Messages::UnreadsController < ApplicationController
       @message = Current.user.reachable_messages.find(params[:message_id])
     end
 
-    def set_room
-      @room = Current.user.rooms.find(params[:room_id])
+    def set_channel
+      @channel = Current.user.channels.find(params[:channel_id])
     end
 
     def set_membership
-      @membership = Current.user.memberships.find_by!(room_id: @room.id)
+      @membership = Current.user.memberships.find_by!(channel_id: @channel.id)
     end
 end

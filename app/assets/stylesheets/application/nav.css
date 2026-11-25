@@ -18,7 +18,7 @@
 
   &:has(.btn--faux) {
     /* Match the content gutter (message list / forum use calc(--inline-space + 1vw))
-       so the nav's logo/room button sits on the content's left edge. Both nav and
+       so the nav's logo/channel button sits on the content's left edge. Both nav and
        #main-content already share the same 5vw offset; only this 1vw was missing. */
     padding-inline: calc(var(--inline-space) + 1vw) var(--inline-space);
 

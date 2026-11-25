@@ -1,0 +1,17 @@
+<div class="flex align-center gap pad-block pad-inline fill-shade border-radius">
+  <div class="flex-item-grow min-width">
+    <div class="overflow-ellipsis">
+      <span class="txt-deemphasize"><%= channel_type_indicator(channel) %></span>
+      <strong><%= channel.name %></strong>
+    </div>
+    <% if channel.description.present? %>
+      <div class="txt-small txt-deemphasize overflow-ellipsis"><%= channel.description %></div>
+    <% end %>
+    <div class="txt-small txt-deemphasize"><%= pluralize(channel.active_member_count, "member") %></div>
+  </div>
+
+  <%= button_to channel_membership_path(channel),
+        method: :post, class: "btn btn--reversed" do %>
+    Join
+  <% end %>
+</div>

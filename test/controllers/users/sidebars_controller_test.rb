@@ -8,37 +8,37 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
   test "show" do
     get user_sidebar_url
 
-    users(:david).rooms.opens.each do |room|
-      assert_match /#{room.name}/, @response.body
+    users(:david).channels.opens.each do |channel|
+      assert_match /#{channel.name}/, @response.body
     end
 
-    # Starred rooms render only under Favorites.
-    assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:watercooler), "starred_rooms_list_node")}", count: 1
-    assert_select "#shared_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:watercooler), "shared_rooms_list_node")}", count: 0
+    # Starred channels render only under Favorites.
+    assert_select "#starred_channels ##{ActionView::RecordIdentifier.dom_id(channels(:watercooler), "starred_channels_list_node")}", count: 1
+    assert_select "#shared_channels ##{ActionView::RecordIdentifier.dom_id(channels(:watercooler), "shared_channels_list_node")}", count: 0
 
-    assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:hq), "starred_rooms_list_node")}", count: 1
-    assert_select "#shared_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:hq), "shared_rooms_list_node")}", count: 0
+    assert_select "#starred_channels ##{ActionView::RecordIdentifier.dom_id(channels(:hq), "starred_channels_list_node")}", count: 1
+    assert_select "#shared_channels ##{ActionView::RecordIdentifier.dom_id(channels(:hq), "shared_channels_list_node")}", count: 0
 
-    # Unstarred rooms render only under All Rooms.
-    assert_select "#shared_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:pets), "shared_rooms_list_node")}", count: 1
-    assert_select "#starred_rooms ##{ActionView::RecordIdentifier.dom_id(rooms(:pets), "starred_rooms_list_node")}", count: 0
+    # Unstarred channels render only under All Channels.
+    assert_select "#shared_channels ##{ActionView::RecordIdentifier.dom_id(channels(:pets), "shared_channels_list_node")}", count: 1
+    assert_select "#starred_channels ##{ActionView::RecordIdentifier.dom_id(channels(:pets), "starred_channels_list_node")}", count: 0
   end
 
   test "unread directs" do
-    rooms(:david_and_jason).messages.create! client_message_id: 999, body: "Hello", creator: users(:jason)
+    channels(:david_and_jason).messages.create! client_message_id: 999, body: "Hello", creator: users(:jason)
 
     get user_sidebar_url
-    # Direct rooms only appear once (in direct_rooms section)
-    assert_select ".unread", count: users(:david).memberships.select { |m| m.room.direct? && m.unread? }.count
+    # Direct channels only appear once (in direct_channels section)
+    assert_select ".unread", count: users(:david).memberships.select { |m| m.channel.direct? && m.unread? }.count
   end
 
 
   test "unread other" do
-    rooms(:watercooler).messages.create! client_message_id: 999, body: "Hello", creator: users(:jason)
+    channels(:watercooler).messages.create! client_message_id: 999, body: "Hello", creator: users(:jason)
 
     get user_sidebar_url
-    # Non-direct rooms appear in one section only (starred or shared)
-    unread_count = users(:david).memberships.reject { |m| m.room.direct? || !m.unread? }.count
+    # Non-direct channels appear in one section only (starred or shared)
+    unread_count = users(:david).memberships.reject { |m| m.channel.direct? || !m.unread? }.count
     assert_select ".unread", count: unread_count
   end
 
@@ -50,7 +50,7 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
 
   test "activity link shows has-unread-activity when there are unseen notifications" do
     users(:david).update_column(:activity_seen_at, nil)
-    rooms(:pets).messages.create!(
+    channels(:pets).messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "sidebar_activity_dot"
@@ -73,16 +73,16 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#sidebar_activity_indicator[data-turbo-prefetch=?]", "false"
   end
 
-  test "direct room members are preloaded to avoid N+1 queries" do
-    # Create messages in direct rooms so they appear in sidebar
-    rooms(:david_and_jason).messages.create! client_message_id: 901, body: "Hello", creator: users(:jason)
-    rooms(:david_and_kevin).messages.create! client_message_id: 902, body: "Hi", creator: users(:kevin)
+  test "direct channel members are preloaded to avoid N+1 queries" do
+    # Create messages in direct channels so they appear in sidebar
+    channels(:david_and_jason).messages.create! client_message_id: 901, body: "Hello", creator: users(:jason)
+    channels(:david_and_kevin).messages.create! client_message_id: 902, body: "Hi", creator: users(:kevin)
 
     # Count queries during sidebar load
     query_count = 0
     counter = ->(_name, _start, _finish, _id, payload) {
-      # Count User Load queries that fetch users for direct rooms
-      query_count += 1 if payload[:sql] =~ /SELECT.*FROM "users".*"memberships"."room_id"/
+      # Count User Load queries that fetch users for direct channels
+      query_count += 1 if payload[:sql] =~ /SELECT.*FROM "users".*"memberships"."channel_id"/
     }
 
     ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
@@ -91,8 +91,8 @@ class Users::SidebarsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
 
-    # Should have at most 1 batched query for all direct room users, not N queries
-    # (one per room would be N+1)
-    assert query_count <= 1, "Expected at most 1 batched user query for direct rooms, got #{query_count}"
+    # Should have at most 1 batched query for all direct channel users, not N queries
+    # (one per channel would be N+1)
+    assert query_count <= 1, "Expected at most 1 batched user query for direct channels, got #{query_count}"
   end
 end

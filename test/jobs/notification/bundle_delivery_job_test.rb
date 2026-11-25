@@ -4,7 +4,7 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
   setup do
     @user    = users(:jason)
     @actor   = users(:david)
-    @room    = rooms(:designers)
+    @channel    = channels(:designers)
     @user.notification_settings&.update!(missed_email_enabled: true) ||
       @user.create_notification_settings!(missed_email_enabled: true)
     Account.sole.update!(email_notifications_enabled: true)
@@ -139,8 +139,8 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
   end
 
   private
-    def create_message!(body: "<div>hello #{mention_attachment_for(:jason)}</div>", room: @room)
-      room.messages.create!(body: body, creator: @actor, client_message_id: "u6_dlv_#{SecureRandom.hex(4)}")
+    def create_message!(body: "<div>hello #{mention_attachment_for(:jason)}</div>", channel: @channel)
+      channel.messages.create!(body: body, creator: @actor, client_message_id: "u6_dlv_#{SecureRandom.hex(4)}")
     end
 
     def create_item!(message, kind: "mention")
@@ -156,7 +156,7 @@ class Notification::BundleDeliveryJobTest < ActiveSupport::TestCase
         items.each do |item|
           assert item.association(:actor).loaded?, "actor should be preloaded for mail rendering"
           assert item.association(:message).loaded?, "message should be preloaded for mail rendering"
-          assert item.message.association(:room).loaded?, "message room should be preloaded for mail rendering"
+          assert item.message.association(:channel).loaded?, "message channel should be preloaded for mail rendering"
           assert item.message.association(:rich_text_body).loaded?, "message body should be preloaded for previews"
         end
         true

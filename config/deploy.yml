@@ -63,7 +63,7 @@ volumes:
 accessories:
   anycable:
     # 1.6.9+ required: the HTTP API that push gating reads presence from
-    # (Room::PresenceSet) doesn't exist before it, and its absence is silent —
+    # (Channel::PresenceSet) doesn't exist before it, and its absence is silent —
     # presence reads 404 and push falls back to the connected_at column.
     image: anycable/anycable-go:1.6
     host: <%= ENV.fetch("SERVER_IP") %>
@@ -89,7 +89,7 @@ accessories:
         # explicitly rather than inheriting the 15s default: it must clear the
         # client's worst-case reconnect (~34s — ActionCable caps its backoff
         # exponent at 10 and adds a 6s stale window) or a blip would push someone
-        # who is still sitting in the room.
+        # who is still sitting in the channel.
         # Seconds, bare — anycable-go rejects a duration string like "45s".
         ANYCABLE_PRESENCE_TTL: "45"
         ANYCABLE_LOG_LEVEL: "info"
