@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_09_24_000001) do
+ActiveRecord::Schema[8.2].define(version: 2026_11_25_000001) do
   create_table "account_join_codes", force: :cascade do |t|
     t.integer "account_id", null: false
     t.string "code", null: false
@@ -135,6 +135,30 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_24_000001) do
     t.index ["message_id", "created_at"], name: "index_boosts_on_message_created"
   end
 
+  create_table "channels", force: :cascade do |t|
+    t.boolean "active", default: true
+    t.boolean "auto_join", default: false, null: false
+    t.boolean "cascade_deactivated", default: false, null: false
+    t.datetime "created_at", null: false
+    t.bigint "creator_id", null: false
+    t.text "description"
+    t.datetime "last_active_at"
+    t.string "members_hash"
+    t.integer "messages_count", default: 0
+    t.string "name"
+    t.integer "parent_message_id"
+    t.integer "parent_channel_id"
+    t.string "slug"
+    t.string "sortable_name"
+    t.string "type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["members_hash"], name: "index_channels_on_members_hash", unique: true
+    t.index ["parent_channel_id", "active", "created_at"], name: "index_channels_on_parent_channel_and_created", where: "parent_channel_id IS NOT NULL"
+    t.index ["parent_channel_id", "active", "last_active_at"], name: "index_channels_on_parent_channel_and_activity", where: "parent_channel_id IS NOT NULL"
+    t.index ["parent_message_id"], name: "index_channels_on_parent_message_id_unique_thread", unique: true, where: "type = 'Channels::Thread' AND parent_message_id IS NOT NULL"
+    t.index ["slug"], name: "index_channels_on_slug", unique: true, where: "slug IS NOT NULL"
+  end
+
   create_table "memberships", force: :cascade do |t|
     t.boolean "active", default: true
     t.datetime "connected_at"
@@ -144,13 +168,13 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_24_000001) do
     t.datetime "last_read_at"
     t.integer "last_read_message_id"
     t.boolean "marked_unread", default: false, null: false
-    t.integer "room_id", null: false
+    t.integer "channel_id", null: false
     t.boolean "starred", default: false, null: false
     t.integer "unread_notifications_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["room_id", "created_at"], name: "index_memberships_on_room_id_and_created_at"
-    t.index ["room_id", "user_id"], name: "index_memberships_on_room_id_and_user_id", unique: true
+    t.index ["channel_id", "created_at"], name: "index_memberships_on_channel_id_and_created_at"
+    t.index ["channel_id", "user_id"], name: "index_memberships_on_channel_id_and_user_id", unique: true
     t.index ["user_id", "starred"], name: "index_memberships_on_user_id_and_starred"
   end
 
@@ -161,14 +185,14 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_24_000001) do
     t.integer "creator_id", null: false
     t.string "event"
     t.boolean "mentions_everyone", default: false, null: false
-    t.integer "room_id", null: false
+    t.integer "channel_id", null: false
     t.datetime "updated_at", null: false
     t.boolean "welcome", default: false, null: false
-    t.index ["active", "room_id", "created_at"], name: "index_messages_on_active_room_created"
+    t.index ["active", "channel_id", "created_at"], name: "index_messages_on_active_channel_created"
+    t.index ["channel_id", "created_at"], name: "index_messages_on_channel_id_and_created_at"
+    t.index ["channel_id", "mentions_everyone"], name: "index_messages_on_channel_id_and_mentions_everyone", where: "mentions_everyone = true"
     t.index ["created_at"], name: "index_messages_on_created_at"
     t.index ["creator_id"], name: "index_messages_on_creator_id"
-    t.index ["room_id", "created_at"], name: "index_messages_on_room_id_and_created_at"
-    t.index ["room_id", "mentions_everyone"], name: "index_messages_on_room_id_and_mentions_everyone", where: "mentions_everyone = true"
   end
 
   create_table "notification_bundle_items", force: :cascade do |t|
@@ -221,30 +245,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_24_000001) do
     t.integer "user_id", null: false
     t.index ["endpoint", "p256dh_key", "auth_key"], name: "idx_on_endpoint_p256dh_key_auth_key_7553014576"
     t.index ["user_id"], name: "index_push_subscriptions_on_user_id"
-  end
-
-  create_table "rooms", force: :cascade do |t|
-    t.boolean "active", default: true
-    t.boolean "auto_join", default: false, null: false
-    t.boolean "cascade_deactivated", default: false, null: false
-    t.datetime "created_at", null: false
-    t.bigint "creator_id", null: false
-    t.text "description"
-    t.datetime "last_active_at"
-    t.string "members_hash"
-    t.integer "messages_count", default: 0
-    t.string "name"
-    t.integer "parent_message_id"
-    t.integer "parent_room_id"
-    t.string "slug"
-    t.string "sortable_name"
-    t.string "type", null: false
-    t.datetime "updated_at", null: false
-    t.index ["members_hash"], name: "index_rooms_on_members_hash", unique: true
-    t.index ["parent_message_id"], name: "index_rooms_on_parent_message_id_unique_thread", unique: true, where: "type = 'Rooms::Thread' AND parent_message_id IS NOT NULL"
-    t.index ["parent_room_id", "active", "created_at"], name: "index_rooms_on_parent_room_and_created", where: "parent_room_id IS NOT NULL"
-    t.index ["parent_room_id", "active", "last_active_at"], name: "index_rooms_on_parent_room_and_activity", where: "parent_room_id IS NOT NULL"
-    t.index ["slug"], name: "index_rooms_on_slug", unique: true, where: "slug IS NOT NULL"
   end
 
   create_table "searches", force: :cascade do |t|
@@ -419,7 +419,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_24_000001) do
   add_foreign_key "bookmarks", "messages"
   add_foreign_key "bookmarks", "users"
   add_foreign_key "boosts", "messages"
-  add_foreign_key "messages", "rooms"
+  add_foreign_key "messages", "channels"
   add_foreign_key "messages", "users", column: "creator_id"
   add_foreign_key "notification_bundle_items", "messages", on_delete: :cascade
   add_foreign_key "notification_bundle_items", "notification_bundles", column: "bundle_id", on_delete: :cascade
@@ -435,7 +435,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_24_000001) do
   add_foreign_key "session_claims", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "single_sign_on_records", "users"
-  add_foreign_key "solutions", "rooms", column: "post_id"
+  add_foreign_key "solutions", "channels", column: "post_id"
   add_foreign_key "solutions", "users"
   add_foreign_key "user_notification_settings", "users"
   add_foreign_key "users", "badges"
