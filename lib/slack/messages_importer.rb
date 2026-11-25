@@ -7,17 +7,17 @@ module Slack
     end
 
     def import
-      @context.channel_map.each do |channel_id, room|
-        import_for_channel(channel_id, room)
+      @context.channel_map.each do |slack_channel_id, room|
+        import_for_channel(slack_channel_id, room)
       end
     end
 
     private
 
-    def import_for_channel(channel_id, room)
-      channel_folder = find_channel_folder(channel_id)
+    def import_for_channel(slack_channel_id, room)
+      channel_folder = find_channel_folder(slack_channel_id)
       unless channel_folder
-        @context.log "Warning: No message folder found for channel #{channel_id} (#{room.name})"
+        @context.log "Warning: No message folder found for channel #{slack_channel_id} (#{room.name})"
         return
       end
 
@@ -114,17 +114,17 @@ module Slack
       end
     end
 
-    def find_channel_folder(channel_id)
+    def find_channel_folder(slack_channel_id)
       %w[channels.json groups.json].each do |manifest|
         next unless @context.file_exists?(manifest)
 
-        entity = @context.parse_json(manifest).find { |e| e["id"] == channel_id }
+        entity = @context.parse_json(manifest).find { |e| e["id"] == slack_channel_id }
         folder = entity&.dig("name")
         return folder if folder && @context.folder_exists?(folder)
       end
 
       if @context.file_exists?("dms.json")
-        dm = @context.parse_json("dms.json").find { |d| d["id"] == channel_id }
+        dm = @context.parse_json("dms.json").find { |d| d["id"] == slack_channel_id }
         return dm["id"] if dm && @context.folder_exists?(dm["id"])
       end
 

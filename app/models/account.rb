@@ -80,7 +80,7 @@ class Account < ApplicationRecord
 
   # The account-wide room-list stream: one publish per room event (touched by
   # a message or post, renamed) that every member's open sidebar consumes. It
-  # is a signed pub/sub stream rather than a channel — the sidebar subscribes
+  # is a signed pub/sub stream rather than a cable channel — the sidebar subscribes
   # with the signed name and anycable-go verifies the signature itself, no
   # per-subscriber Rails round-trip. The name is built on the account's
   # GlobalID, which carries the tenant in SaaS, so streams never cross

@@ -13,11 +13,11 @@ module Slack
     private
 
     def import_public_channels
-      channels_data = @context.parse_json("channels.json")
-      @context.log "Found #{channels_data.count} public channels"
+      slack_channels = @context.parse_json("channels.json")
+      @context.log "Found #{slack_channels.count} public channels"
 
-      channels_data.each do |channel|
-        import_channel(channel, Rooms::Open)
+      slack_channels.each do |slack_channel|
+        import_channel(slack_channel, Rooms::Open)
       end
     end
 
@@ -30,12 +30,12 @@ module Slack
       end
     end
 
-    def import_channel(channel_data, room_class)
-      room_name = channel_data["name"].tr("-_", " ").titleize
+    def import_channel(slack_channel, room_class)
+      room_name = slack_channel["name"].tr("-_", " ").titleize
 
       existing_room = Room.where("LOWER(name) = LOWER(?)", room_name).first
       if existing_room
-        @context.channel_map[channel_data["id"]] = existing_room
+        @context.channel_map[slack_channel["id"]] = existing_room
         grant_open_room_access(existing_room) if existing_room.is_a?(Rooms::Open)
         @context.log "Room already exists: ##{existing_room.name}"
         return
@@ -46,10 +46,10 @@ module Slack
         creator: @context.admin_user
       )
 
-      grant_membership(room, channel_data["members"])
+      grant_membership(room, slack_channel["members"])
       grant_open_room_access(room) if room.is_a?(Rooms::Open)
 
-      @context.channel_map[channel_data["id"]] = room
+      @context.channel_map[slack_channel["id"]] = room
       @context.increment(:rooms)
       @context.log "Created room: ##{room.name}"
     end

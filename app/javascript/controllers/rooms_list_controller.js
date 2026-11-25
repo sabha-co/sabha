@@ -14,12 +14,12 @@ export default class extends Controller {
     // The room-list stream is a signed pub/sub stream shared by the whole
     // account: anycable-go verifies the signature itself, so subscribing
     // costs no Rails round-trip. Missed nudges while disconnected mean a
-    // stale sidebar, so a reconnect reloads the frame (#channelConnected).
+    // stale sidebar, so a reconnect reloads the frame (#subscriptionConnected).
     // No stream value means no account yet (nothing broadcasts either).
     if (this.streamValue) {
       this.roomListChannel ??= await cable.subscribeTo({ channel: "$pubsub", signed_stream_name: this.streamValue }, {
-        connected: this.#channelConnected.bind(this),
-        disconnected: this.#channelDisconnected.bind(this),
+        connected: this.#subscriptionConnected.bind(this),
+        disconnected: this.#subscriptionDisconnected.bind(this),
         received: this.#roomListReceived.bind(this)
       })
     }
@@ -69,14 +69,14 @@ export default class extends Controller {
     })
   }
 
-  #channelConnected() {
+  #subscriptionConnected() {
     if (this.#disconnected) {
       this.#disconnected = false
       this.element.reload()
     }
   }
 
-  #channelDisconnected() {
+  #subscriptionDisconnected() {
     this.#disconnected = true
   }
 

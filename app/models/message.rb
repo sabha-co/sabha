@@ -192,7 +192,7 @@ class Message < ApplicationRecord
 
   # Single dispatch entry point invoked by Notification::DispatchJob. Iterates
   # the activity types applicable to this message in this room and runs each
-  # channel branch. The in-app row branch is currently a no-op pass-through —
+  # delivery branch. The in-app row branch is currently a no-op pass-through —
   # the legacy `create_mention_notifications` and
   # `create_thread_reply_notifications` callbacks still write rows.
   #

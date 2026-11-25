@@ -24,7 +24,7 @@ export default class extends Controller {
 
     const roomId = this.roomIdValue || Current.room.id
 
-    this.channel = await cable.subscribeTo({ channel: "PresenceChannel", room_id: roomId }, {
+    this.subscription = await cable.subscribeTo({ channel: "PresenceChannel", room_id: roomId }, {
       connected: this.#websocketConnected,
       disconnected: this.#websocketDisconnected
     })
@@ -35,13 +35,13 @@ export default class extends Controller {
     this.dispatch("present", { detail: { roomId } })
 
     // The connected callback can fire before the await above assigns
-    // this.channel, so report once more now that we can actually send.
+    // this.subscription, so report once more now that we can actually send.
     this.#reportVisibility()
   }
 
   disconnect() {
     this.#stopRefreshTimer()
-    this.channel?.unsubscribe()
+    this.subscription?.unsubscribe()
   }
 
   visibilityChanged = () => {
@@ -69,7 +69,7 @@ export default class extends Controller {
       this.wasVisible = true
     } else {
       this.#stopRefreshTimer()
-      this.channel?.send({ action: "absent" })
+      this.subscription?.send({ action: "absent" })
       this.wasVisible = false
     }
   }
@@ -83,7 +83,7 @@ export default class extends Controller {
     await delay(VISIBILITY_CHANGE_DELAY)
 
     if (this.connected && this.#isVisible && !this.wasVisible) {
-      this.channel.send({ action: "present" })
+      this.subscription.send({ action: "present" })
       this.#startRefreshTimer()
       this.wasVisible = true
     }
@@ -94,7 +94,7 @@ export default class extends Controller {
 
     if (this.connected && this.wasVisible && !this.#isVisible) {
       this.#stopRefreshTimer()
-      this.channel.send({ action: "absent" })
+      this.subscription.send({ action: "absent" })
       this.wasVisible = false
     }
   }
@@ -109,7 +109,7 @@ export default class extends Controller {
   }
 
   #refresh = () => {
-    this.channel.send({ action: "refresh" })
+    this.subscription.send({ action: "refresh" })
   }
 
   get #isVisible() {

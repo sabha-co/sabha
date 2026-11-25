@@ -1,4 +1,4 @@
-# Per-channel notification eligibility predicates. The same predicates run at
+# Notification eligibility predicates for each delivery route. The same predicates run at
 # dispatch time and at delivery time, so state changes (block, deactivation,
 # settings flip) flow through one gate.
 module Membership::Notifiable

@@ -4,15 +4,15 @@ import { ignoringBriefDisconnects } from "helpers/dom_helpers"
 
 export default class extends Controller {
   async connect() {
-    this.channel ??= await cable.subscribeTo({ channel: "ReadRoomsChannel" }, {
+    this.subscription ??= await cable.subscribeTo({ channel: "ReadRoomsChannel" }, {
       received: this.#received
     })
   }
 
   disconnect() {
     ignoringBriefDisconnects(this.element, () => {
-      this.channel?.unsubscribe()
-      this.channel = null
+      this.subscription?.unsubscribe()
+      this.subscription = null
     })
   }
 

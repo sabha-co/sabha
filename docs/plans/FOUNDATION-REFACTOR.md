@@ -101,7 +101,7 @@ Fizzy `Card` ends up with 2 callbacks total at the class level. All other lifecy
 
 **Industry references support keeping soft-delete:**
 
-| Product | Messages | Membership | Channel/Room | Audit metadata |
+| Product | Messages | Membership | Channel | Audit metadata |
 |---|---|---|---|---|
 | Slack | Soft (`deleted` flag) + tombstone | Soft (preserves prefs) | Soft (`is_archived`) | Separate audit-log service |
 | Discord | Hard delete | Hard delete | Hard delete | Audit-log channel entries |

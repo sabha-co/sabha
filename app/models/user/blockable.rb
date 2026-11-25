@@ -12,7 +12,7 @@ module User::Blockable
   def blocked_in?(room)
     return false unless room.one_on_one?
 
-    !can_ping?(room.roommate_to(self))
+    !can_ping?(room.counterpart_to(self))
   end
 
   def can_ping?(other_user)

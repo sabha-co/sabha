@@ -7,7 +7,7 @@
             <strong>Control your inbox</strong><br>
             If these messages feel unwanted, you can block this user from messaging you again.
           </p>
-          <%= render 'blocks/button', user: room.roommate_to(Current.user), compact: false %>
+          <%= render 'blocks/button', user: room.counterpart_to(Current.user), compact: false %>
         </div>
       </div>
     </div>

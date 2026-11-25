@@ -141,7 +141,7 @@ class Room < ApplicationRecord
     direct? && memberships.count == 2
   end
 
-  def roommate_to(user)
+  def counterpart_to(user)
     return nil unless one_on_one?
 
     users.without(user).first

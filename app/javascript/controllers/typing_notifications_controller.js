@@ -19,7 +19,7 @@ export default class extends Controller {
     if (await this.#setupAnyCable()) return
 
     // Fall back to standard ActionCable
-    this.channel = await cable.subscribeTo(
+    this.subscription = await cable.subscribeTo(
       { channel: "TypingNotificationsChannel", room_id: this.roomIdValue },
       { received: this.#received.bind(this) }
     )
@@ -27,7 +27,7 @@ export default class extends Controller {
 
   disconnect() {
     this.tracker?.close()
-    this.channel?.disconnect?.() || this.channel?.unsubscribe?.()
+    this.subscription?.disconnect?.() || this.subscription?.unsubscribe?.()
     this.cable?.disconnect?.()
   }
 
@@ -57,9 +57,9 @@ export default class extends Controller {
 
       // createCable() uses action-cable-url meta tag automatically
       this.cable = createCable()
-      this.channel = new TypingChannel({ room_id: this.roomIdValue })
-      this.cable.subscribe(this.channel)
-      this.channel.on("message", this.#received.bind(this))
+      this.subscription = new TypingChannel({ room_id: this.roomIdValue })
+      this.cable.subscribe(this.subscription)
+      this.subscription.on("message", this.#received.bind(this))
       this.whisperEnabled = true
       return true
     } catch (e) {
@@ -80,9 +80,9 @@ export default class extends Controller {
 
   #send(action) {
     if (this.whisperEnabled) {
-      this.channel.whisper({ action, user: { id: Current.user.id, name: Current.user.name } })
+      this.subscription.whisper({ action, user: { id: Current.user.id, name: Current.user.name } })
     } else {
-      this.channel.send({ action })
+      this.subscription.send({ action })
     }
   }
 

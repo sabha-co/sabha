@@ -18,17 +18,17 @@ export default class extends Controller {
   async connect() {
     if (!pageIsTurboPreview()) {
       this.#lastLoadedAt = this.loadedAtValue
-      this.#channelDisconnected()
+      this.#subscriptionDisconnected()
 
-      this.channel = await cable.subscribeTo({ channel: "HeartbeatChannel" }, {
-        connected: this.#channelConnected.bind(this),
-        disconnected: this.#channelDisconnected.bind(this)
+      this.subscription = await cable.subscribeTo({ channel: "HeartbeatChannel" }, {
+        connected: this.#subscriptionConnected.bind(this),
+        disconnected: this.#subscriptionDisconnected.bind(this)
       })
     }
   }
 
   disconnect() {
-    this.channel?.unsubscribe()
+    this.subscription?.unsubscribe()
   }
 
   messageTargetConnected(target) {
@@ -50,17 +50,17 @@ export default class extends Controller {
   online() {
     // Trigger reconnection attempt whenever the browser comes back
     // from being offline
-    this.channel.consumer.connection.monitor.visibilityDidChange()
+    this.subscription.consumer.connection.monitor.visibilityDidChange()
   }
 
-  #channelConnected() {
+  #subscriptionConnected() {
     this.#refresh("connection")
 
     clearTimeout(this.#offlineTimer)
     this.dispatch("online", { target: window })
   }
 
-  #channelDisconnected() {
+  #subscriptionDisconnected() {
     this.#offlineTimer = setTimeout(() => {
       this.dispatch("offline", { target: window })
     }, OFFLINE_AFTER_DISCONNECTED_TIMEOUT)
