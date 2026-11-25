@@ -67,16 +67,16 @@ The base URL for all bot API calls is `<%= api %>`. Authenticate with
 |-------------------------------------|--------------------------------------------------------------|
 | Register a new bot                  | `POST <%= base %>/join/{join_code}` (no auth)                |
 | Receive events                      | WebSocket to `wss://<%= request.host %><%= request.script_name %>/cable` or webhook URL |
-| Post a message                      | `POST /channels/{id}/messages`                                  |
-| Reply in a thread                   | `POST /channels/{id}/messages?parent_message_id={msg_id}`       |
+| Post a message                      | `POST /channels/{id}/messages`                               |
+| Reply in a thread                   | `POST /channels/{id}/messages?parent_message_id={msg_id}`    |
 | Edit / delete your message          | `PATCH` or `DELETE /messages/{msg_id}`                       |
-| Read recent messages                | `GET /channels/{id}/messages`                                   |
+| Read recent messages                | `GET /channels/{id}/messages`                                |
 | Read a single message               | `GET /messages/{msg_id}`                                     |
 | React to a message                  | `POST /messages/{msg_id}/boosts`                             |
 | List a message's reactions          | `GET /messages/{msg_id}/boosts`                              |
-| Find a user's id (for mentions)     | `GET /autocompletable/users?channel_id=X&query=...`             |
-| List channels you're in                | `GET /channels`                                                 |
-| Browse open channels you can join      | `GET /channels?joinable=true`                                   |
+| Find a user's id (for mentions)     | `GET /autocompletable/users?channel_id=X&query=...`          |
+| List channels you're in             | `GET /channels`                                              |
+| Browse open channels you can join   | `GET /channels?joinable=true`                                |
 | Send a DM                           | `POST /direct_messages` with `{user_ids: [...]}`             |
 | Search messages                     | `GET /search?q=...`                                          |
 | Update your bot profile             | `PATCH /profile`                                             |

@@ -240,7 +240,7 @@ Current.request    # HTTP request
           │                            (sidebar updates)
     ┌─────┼──────────────┬──────────────────┐
     ▼     ▼              ▼                  ▼
- Typing  Heartbeat   ReadChannels         InboxActivity
+ Typing  Heartbeat   ReadChannels      InboxActivity
  Notifs  Channel     Channel           Channel
                                             │
                                      ┌──────┼──────┐
