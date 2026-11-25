@@ -87,7 +87,7 @@ class RenameRoomsToChannels < ActiveRecord::Migration[8.2]
 
     # Links to this install's own pages: relative hrefs, or absolute URLs on its
     # own host, with or without a workspace prefix. Other sites' /rooms/ paths
-    # stay as they are. The /rooms redirect route covers anything missed.
+    # stay as they are.
     def rewrite_links(from, to)
       hosts = [ ENV["APP_HOST"].presence, own_host_from_mailer ].compact.uniq.map { |host| Regexp.escape(host) }
       prefix = hosts.any? ? %r{href=["']|https?://(?:#{hosts.join("|")})} : %r{href=["']}

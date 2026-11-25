@@ -56,9 +56,6 @@ class PathRewriterTest < ActionDispatch::IntegrationTest
     # The sidebar, navigation links, etc. should all have /1000001/... paths
     assert_match %r{/#{workspace.external_id}/}, response.body,
       "Response should contain URLs with workspace prefix"
-
-    workspace_get "/rooms/5/@7?q=1", workspace: workspace
-    assert_redirected_to "/#{workspace.external_id}/channels/5/@7?q=1"
   end
 
   test "workspace context isolated between requests" do

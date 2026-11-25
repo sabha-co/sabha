@@ -194,11 +194,6 @@ Rails.application.routes.draw do
     get "@:message_id", to: "channels#show", as: :at_message
   end
 
-  get "rooms(/*path)", format: false, to: redirect { |params, request|
-    path = [ "#{request.script_name}/channels", params[:path] ].compact.join("/")
-    request.query_string.present? ? "#{path}?#{request.query_string}" : path
-  }
-
   # Cable config discovery + JWT refresh. A signed-in client (browser, or a
   # native client once it authenticates) fetches its WebSocket URL and a fresh
   # identity token here instead of scraping the HTML meta tag — the refresh

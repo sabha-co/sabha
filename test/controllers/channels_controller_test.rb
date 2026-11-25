@@ -15,14 +15,6 @@ class ChannelsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "old room links redirect to the channel" do
-    get "/rooms/5/@7?q=1"
-    assert_redirected_to "/channels/5/@7?q=1"
-
-    get "/rooms"
-    assert_redirected_to "/channels"
-  end
-
   test "show renders the direct-message nav header" do
     channel = channels(:david_and_kevin)
 
