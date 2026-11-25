@@ -3,7 +3,7 @@
     {
       "warning_type": "SQL Injection",
       "warning_code": 0,
-      "fingerprint": "d945fde5757cce776dfa778dd65837908a22403c6e966c46803374767d94592a",
+      "fingerprint": "f3440675531e979d47175d391beac247cca3bb3ca9d70a77cb7d349211742778",
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/inbox/threads_query.rb",
