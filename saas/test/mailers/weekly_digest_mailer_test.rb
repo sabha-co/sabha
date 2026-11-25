@@ -18,18 +18,18 @@ class WeeklyDigestMailerTest < ActionMailer::TestCase
           verified_at: 1.day.ago,
           status: :active
         )
-        room = Rooms::Open.first
+        channel = Channels::Open.first
 
-        everyone_message = room.messages.create!(
+        everyone_message = channel.messages.create!(
           body: "<div>weekly heads up</div>",
           creator: actor,
           client_message_id: "saas_digest_#{SecureRandom.hex(4)}",
           mentions_everyone: true
         )
 
-        content = Struct.new(:everyone_mentions, :active_rooms, :excerpts).new(
+        content = Struct.new(:everyone_mentions, :active_channels, :excerpts).new(
           [ everyone_message ],
-          [ [ room, 5 ] ],
+          [ [ channel, 5 ] ],
           [ everyone_message ]
         )
 

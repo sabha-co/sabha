@@ -5,8 +5,8 @@ import { escapeHTML } from "helpers/dom_helpers"
 
 export default class extends Controller {
   static classes = ["toolbar"]
-  static targets = [ "clientid", "fields", "fileList", "text", "everyoneConfirm", "everyoneConfirmCount", "everyoneConfirmRoomWide" ]
-  static values = { roomId: Number, directUploadUrl: String, everyoneConfirmThreshold: Number, everyoneMemberCount: Number, everyoneCapped: Boolean }
+  static targets = [ "clientid", "fields", "fileList", "text", "everyoneConfirm", "everyoneConfirmCount", "everyoneConfirmChannelWide" ]
+  static values = { channelId: Number, directUploadUrl: String, everyoneConfirmThreshold: Number, everyoneMemberCount: Number, everyoneCapped: Boolean }
   static outlets = [ "messages" ]
 
   #files = []
@@ -61,8 +61,8 @@ export default class extends Controller {
     if (this.hasEveryoneConfirmCountTarget) {
       this.everyoneConfirmCountTarget.textContent = this.everyoneMemberCountValue
     }
-    if (this.hasEveryoneConfirmRoomWideTarget) {
-      this.everyoneConfirmRoomWideTarget.hidden = !this.everyoneCappedValue
+    if (this.hasEveryoneConfirmChannelWideTarget) {
+      this.everyoneConfirmChannelWideTarget.hidden = !this.everyoneCappedValue
     }
     this.everyoneConfirmTarget.hidden = false
     this.everyoneConfirmTarget.style.display = "flex"
@@ -190,7 +190,7 @@ export default class extends Controller {
   }
 
   async #submitFiles() {
-    // A provisional thread panel has no messages outlet and no room-scoped upload
+    // A provisional thread panel has no messages outlet and no channel-scoped upload
     // endpoint (the attachment button is hidden there). Drop any dragged/pasted
     // files rather than crash on the missing outlet or POST an attachment with no
     // parent_message_id — attachments work once the thread exists.

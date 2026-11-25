@@ -1,7 +1,7 @@
 <p>You have new activity in <strong><%= @workspace_name %></strong>.</p>
 
-<% @grouped_items.each do |room, items| %>
-  <p style="margin-top: 24px; font-weight: 600;"><%= room_label_for(room) %></p>
+<% @grouped_items.each do |channel, items| %>
+  <p style="margin-top: 24px; font-weight: 600;"><%= channel_label_for(channel) %></p>
   <ul style="padding-left: 20px; margin: 8px 0 0;">
     <% items.each do |item| %>
       <li style="margin-bottom: 8px;">

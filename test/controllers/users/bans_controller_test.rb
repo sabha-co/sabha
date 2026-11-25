@@ -39,14 +39,14 @@ class Users::BansControllerTest < ActionDispatch::IntegrationTest
   test "create deactivates non-DM memberships" do
     user = users(:kevin)
     user.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")
-    room = Rooms::Open.create!(name: "Test Room", creator: users(:david))
-    room.memberships.grant_to(user)
+    channel = Channels::Open.create!(name: "Test Channel", creator: users(:david))
+    channel.memberships.grant_to(user)
 
-    assert user.memberships.without_direct_rooms.active.any?
+    assert user.memberships.without_direct_channels.active.any?
 
     post user_ban_url(user)
 
-    assert_empty user.memberships.without_direct_rooms.active
+    assert_empty user.memberships.without_direct_channels.active
   end
 
   test "create deletes auth tokens" do
@@ -77,7 +77,7 @@ class Users::BansControllerTest < ActionDispatch::IntegrationTest
   test "RemoveBannedContentJob soft-deletes messages" do
     user = users(:kevin)
     user.sessions.create!(ip_address: "203.0.113.1", user_agent: "Test")
-    message = Message.create!(room: rooms(:hq), creator: user, body: "Test message", client_message_id: "test-123")
+    message = Message.create!(channel: channels(:hq), creator: user, body: "Test message", client_message_id: "test-123")
 
     perform_enqueued_jobs do
       post user_ban_url(user)

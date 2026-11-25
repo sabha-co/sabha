@@ -19,7 +19,7 @@ class Users::NotificationSettingsControllerTest < ActionDispatch::IntegrationTes
     assert_response :success
     assert_select "menu li.membership-item", minimum: 1
     users(:david).memberships.shared.each do |membership|
-      assert_select "menu li.membership-item a[href=?]", room_path(membership.room)
+      assert_select "menu li.membership-item a[href=?]", channel_path(membership.channel)
     end
   end
 

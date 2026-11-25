@@ -148,7 +148,7 @@
   #sidebar:where(
       :not(.open):has(
         #sidebar_inbox [data-type="list_node"]:not([hidden]),
-        #starred_rooms [data-type="list_node"]:not([hidden]) .unread,
+        #starred_channels [data-type="list_node"]:not([hidden]) .unread,
         .direct.unread
       )
     )
@@ -406,8 +406,8 @@
   margin-block: 0;
 }
 
-/* Rooms */
-.rooms {
+/* Channels */
+.channels {
   --column-gap: 0.5em;
   --row-gap: 0.5em;
 
@@ -420,7 +420,7 @@
     font-size: var(--font-size-small);
   }
 
-  .rooms-list {
+  .channels-list {
     row-gap: 0.5em;
     padding-bottom: var(--block-space);
   }
@@ -437,7 +437,7 @@
   margin-inline-end: -1ch; /* Pull from the right side only */
 }
 
-.rooms__new-btn {
+.channels__new-btn {
   position: relative;
   z-index: 4;
   border-radius: 0.5em;
@@ -448,7 +448,7 @@
   margin-bottom: calc(var(--block-space) * 2);
 }
 
-#favorites_section:not(:has(.room-row)) {
+#favorites_section:not(:has(.channel-row)) {
   display: none;
 }
 
@@ -474,7 +474,7 @@
   }
 }
 
-.room-row {
+.channel-row {
   width: 100%;
   align-items: center;
 
@@ -518,7 +518,7 @@
   }
 }
 
-.room {
+.channel {
   background-color: var(--color-text-reversed);
   color: var(--color-text);
   font-weight: normal;
@@ -579,13 +579,13 @@
     opacity: 0.4;
     font-weight: 400;
 
-    .sidebar__list:not(#shared_rooms) .room.unread &,
-    .sidebar__list .room.unread.badge & {
+    .sidebar__list:not(#shared_channels) .channel.unread &,
+    .sidebar__list .channel.unread.badge & {
       opacity: 1;
       font-weight: 700;
     }
 
-    .sidebar__list .room.unread.badge & {
+    .sidebar__list .channel.unread.badge & {
       padding-inline-start: calc(var(--inline-space) * 4 / 3);
 
       &::after {
@@ -607,7 +607,7 @@
   }
 }
 
-.room--current {
+.channel--current {
   --btn-border-radius: 0.5em;
   --hover-filter: none;
   --num-buttons: 1;
@@ -615,7 +615,7 @@
   cursor: pointer;
   min-block-size: var(--btn-size);
 
-  .room__contents {
+  .channel__contents {
     .account-has-logo & {
       --num-buttons: 2;
     }
@@ -645,11 +645,11 @@
     padding-inline-end: 0;
   }
 
-  .rooms {
+  .channels {
     padding-block-start: var(--block-space);
   }
 
-  .message--formatted .message__room {
+  .message--formatted .message__channel {
     visibility: visible;
     display: inline-block;
   }
@@ -671,7 +671,7 @@
     display: flex;
   }
 
-  .room {
+  .channel {
     max-inline-size: 20ch;
 
     &:first-child {

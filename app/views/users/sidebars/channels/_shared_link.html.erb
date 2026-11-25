@@ -1,0 +1,10 @@
+<% channel = membership.channel %>
+<% notifications_count = membership.unread_notifications_count.to_i %>
+
+<%= link_to_channel channel,
+      id: dom_id(channel, dom_prefix(list_name, :list_node_link)),
+      class: [ "channel btn txt-nowrap flex-item-grow", "unread": membership.unread?, "badge": notifications_count > 0 ] do %>
+  <span class="overflow-ellipsis"><%= channel_type_indicator(channel) %> <%= channel_display_name(channel) %></span>
+  <% if notifications_count > 0 %><span class="notification-badge"><%= notifications_count %></span><% end %>
+  <% if membership.involved_in_nothing? %><span class="muted-indicator"><%= icon_tag "bell-off" %></span><% end %>
+<% end %>

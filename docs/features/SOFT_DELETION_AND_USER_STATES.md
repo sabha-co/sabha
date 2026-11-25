@@ -5,7 +5,7 @@ This document explains the soft deletion patterns and user state management in S
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Room Deactivation](#room-deactivation)
+2. [Channel Deactivation](#channel-deactivation)
 3. [User States](#user-states)
 4. [Message Deletion](#message-deletion)
 5. [Other Soft-Deleted Models](#other-soft-deleted-models)
@@ -32,24 +32,24 @@ Provides:
 
 | Model | Has Custom Logic? | Reactivation? |
 |-------|-------------------|---------------|
-| Room | Yes | Console only |
+| Channel | Yes | Console only |
 | User | Yes (status enum) | Admin UI or console |
 | Message | Yes | Console only |
-| Membership | No | Via Room/User reactivation |
+| Membership | No | Via Channel/User reactivation |
 | Bookmark | No (hard-deleted) | No (user creates new) |
 | Boost | No (hard-deleted) | No (user creates new) |
 
 ---
 
-## Room Deactivation
+## Channel Deactivation
 
-Rooms use the `active` boolean via `Deactivatable`. Each room type behaves slightly differently.
+Channels use the `active` boolean via `Deactivatable`. Each channel type behaves slightly differently.
 
-### Rooms::Open and Rooms::Closed
+### Channels::Open and Channels::Closed
 
-**Triggered by:** Admin deletes room from UI
+**Triggered by:** Admin deletes channel from UI
 
-**File:** `app/models/room.rb`
+**File:** `app/models/channel.rb`
 
 ```ruby
 def deactivate
@@ -58,7 +58,7 @@ def deactivate
   transaction do
     deactivate_threads
     memberships.update_all(active: false)
-    Message.where(room_id: id).update_all(active: false)
+    Message.where(channel_id: id).update_all(active: false)
     destroy_notifications_for_messages
     deactivate!
   end
@@ -67,30 +67,30 @@ end
 
 | Action | Effect |
 |--------|--------|
-| Threads | All threads from this room deactivated |
+| Threads | All threads from this channel deactivated |
 | Memberships | All marked `active: false` |
 | Messages | All marked `active: false` |
-| Room | Marked `active: false` |
+| Channel | Marked `active: false` |
 
-**Result:** Room disappears from sidebar for all users.
+**Result:** Channel disappears from sidebar for all users.
 
-### Rooms::Direct
+### Channels::Direct
 
 Direct messages are not exposed to deletion in UI. When a user is deactivated, their DM memberships are intentionally preserved so other participants can still see conversation history.
 
-### Rooms::Thread
+### Channels::Thread
 
 **Triggered by:**
 1. Admin deletes thread directly from UI
-2. Parent room is deactivated (cascades)
+2. Parent channel is deactivated (cascades)
 
-**File:** `app/models/rooms/thread.rb`
+**File:** `app/models/channels/thread.rb`
 
 ```ruby
 def deactivate
   transaction do
-    Membership.where(room_id: id).update_all(active: false)
-    Message.where(room_id: id).update_all(active: false)
+    Membership.where(channel_id: id).update_all(active: false)
+    Message.where(channel_id: id).update_all(active: false)
     deactivate!
   end
 end
@@ -98,7 +98,7 @@ end
 
 **Note:** Deleting the parent *message* does NOT deactivate the thread. The thread remains accessible with a "deleted message" indicator.
 
-### Room Reactivation
+### Channel Reactivation
 
 **Triggered by:** Console only (no UI)
 
@@ -107,13 +107,13 @@ def reactivate
   transaction do
     reactivate_threads
     memberships.rewhere(active: false).update_all(active: true)
-    Message.where(room_id: id, active: false).update_all(active: true)
+    Message.where(channel_id: id, active: false).update_all(active: true)
     activate!
   end
 end
 ```
 
-Restores all related records including threads. `Room::Restorable#broadcast_reactivation_if_restored` (fired by `activate!`'s commit) broadcasts the room's reappearance to the sidebar.
+Restores all related records including threads. `Channel::Restorable#broadcast_reactivation_if_restored` (fired by `activate!`'s commit) broadcasts the channel's reappearance to the sidebar.
 
 ## User States
 
@@ -147,7 +147,7 @@ Both deactivation and banning share a common `revoke_access` method:
 ```ruby
 def revoke_access
   close_remote_connections
-  memberships.without_direct_rooms.update!(active: false)
+  memberships.without_direct_channels.update!(active: false)
   push_subscriptions.delete_all
   sessions.delete_all
   auth_tokens.delete_all
@@ -161,7 +161,7 @@ This method:
 - Deletes sessions (logs out everywhere)
 - Deletes auth tokens (invalidates magic links)
 
-**Note:** `revoke_access` itself excludes DMs (`without_direct_rooms`). User-level deactivation then calls `deactivate_direct_rooms` separately, which **does** flip those DM rooms inactive. The exclusion in `revoke_access` exists for paths that share the helper but don't want to nuke DMs (e.g. session/auth token revocation alone).
+**Note:** `revoke_access` itself excludes DMs (`without_direct_channels`). User-level deactivation then calls `deactivate_direct_channels` separately, which **does** flip those DM channels inactive. The exclusion in `revoke_access` exists for paths that share the helper but don't want to nuke DMs (e.g. session/auth token revocation alone).
 
 ### User Deactivation
 
@@ -171,7 +171,7 @@ This method:
 def deactivate
   transaction do
     revoke_access
-    deactivate_direct_rooms
+    deactivate_direct_channels
     searches.delete_all
     update! status: :deactivated
   end
@@ -181,9 +181,9 @@ end
 | Action | Effect |
 |--------|--------|
 | Access | Revoked (see above) |
-| Direct rooms | Each DM room is deactivated via `User#deactivate_direct_rooms`, which cascades through `Room#deactivate` — so the other participant's membership in that DM is also flipped to `active: false`. Open/Closed memberships were already deactivated by `revoke_access`; this step covers the DM rooms `revoke_access` skipped. |
+| Direct channels | Each DM channel is deactivated via `User#deactivate_direct_channels`, which cascades through `Channel#deactivate` — so the other participant's membership in that DM is also flipped to `active: false`. Open/Closed memberships were already deactivated by `revoke_access`; this step covers the DM channels `revoke_access` skipped. |
 | Searches | Deleted |
-| Messages | Unchanged (remain visible in still-active rooms; hidden in DMs that just deactivated) |
+| Messages | Unchanged (remain visible in still-active channels; hidden in DMs that just deactivated) |
 | Status | Set to `deactivated` |
 
 ### User Reactivation
@@ -205,15 +205,15 @@ end
 def reactivate
   transaction do
     # rewhere(active: false) replaces the default `active` scope to find inactive memberships
-    memberships.rewhere(active: false).without_direct_rooms.update!(active: true)
-    reactivate_direct_rooms
+    memberships.rewhere(active: false).without_direct_channels.update!(active: true)
+    reactivate_direct_channels
     update! status: :active
     reset_remote_connections
   end
 end
 ```
 
-Restores memberships and direct rooms, sets status back to active. User must request new password/magic link.
+Restores memberships and direct channels, sets status back to active. User must request new password/magic link.
 
 **Note:** Banned users cannot be reactivated via this action - they must be unbanned first.
 
@@ -276,7 +276,7 @@ Messages use `Deactivatable` with additional logic:
 
 1. **Unread timestamp cleanup:** When deleted, finds memberships where `unread_at` pointed to this message and updates to next unread.
 2. **Thread broadcast:** If the message has threads, broadcasts an update to show the "deleted message" indicator.
-3. **Restoration broadcast:** If a previously deactivated message is restored, re-broadcasts it into the room.
+3. **Restoration broadcast:** If a previously deactivated message is restored, re-broadcasts it into the channel.
 
 ```ruby
 # app/models/message.rb
@@ -294,11 +294,11 @@ after_update_commit :broadcast_reactivation_if_restored
 ### Membership
 
 Never deactivated as a standalone user action. Flipped to `active: false` only as part of:
-- Room deactivation
+- Channel deactivation
 - User deactivation / banning (via `revoke_access`)
-- `Membership#revoke_from` when an admin removes a user from a room
+- `Membership#revoke_from` when an admin removes a user from a channel
 
-**User-initiated "leave room" is different.** `Membership#leave!` keeps `active: true` and sets `involvement: :invisible` — the row persists so historical messages still resolve, and the user can be re-added later without losing audit trail. The last visible member of a Closed room cannot leave (`Membership::LastVisibleMemberError`); the room must be deleted instead. DMs cannot be "left" at all — the API rejects the call.
+**User-initiated "leave channel" is different.** `Membership#leave!` keeps `active: true` and sets `involvement: :invisible` — the row persists so historical messages still resolve, and the user can be re-added later without losing audit trail. The last visible member of a Closed channel cannot leave (`Membership::LastVisibleMemberError`); the channel must be deleted instead. DMs cannot be "left" at all — the API rejects the call.
 
 ### Bookmark
 
@@ -314,7 +314,7 @@ Hard-deleted when user removes a reaction. Has `broadcast_removal` callback to u
 
 A handful of paths bypass soft deletion entirely — primarily when a record is being purged for compliance or when a parent is being destroyed. Each model that participates in hard deletion overrides `destroy_all_associated_records` to control cascade order, because some associations use `-> { active }` scopes and would silently leave inactive rows behind under default `dependent: :destroy`.
 
-> **Adding a new `has_many` to User, Room, or Message? Update `destroy_all_associated_records`.** The active-scope gotcha applies to every model that uses `Deactivatable`.
+> **Adding a new `has_many` to User, Channel, or Message? Update `destroy_all_associated_records`.** The active-scope gotcha applies to every model that uses `Deactivatable`.
 
 ### `User#destroy_all_associated_records`
 
@@ -326,10 +326,10 @@ Order matters because of foreign-key fan-out and SaaS untenanted models:
 4. `WorkspaceMembership.user_id` nulled out in the untenanted DB so the global identity doesn't dangling-reference a deleted tenant user
 5. Bundle items, push subscriptions, sessions, auth tokens — anything not covered by `dependent:` on the association
 
-### `Room#destroy_all_associated_records`
+### `Channel#destroy_all_associated_records`
 
 Threads first (because they hold messages), then messages, then memberships. Storage blobs from message attachments are intentionally *not* purged here — Active Storage's own purge job handles them.
 
 ### `Message#destroy_all_associated_records`
 
-`Notification.delete_all_and_broadcast`, `rebalance_unread_counters` on affected memberships, then Boost / Bookmark / BundleItem cleanup. Storage blobs are preserved (same reason as Room).
+`Notification.delete_all_and_broadcast`, `rebalance_unread_counters` on affected memberships, then Boost / Bookmark / BundleItem cleanup. Storage blobs are preserved (same reason as Channel).

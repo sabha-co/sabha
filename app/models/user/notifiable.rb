@@ -75,11 +75,11 @@ module User::Notifiable
     scope.exists?
   end
 
-  # Marks all direct message rooms as read up to the loaded timestamp.
+  # Marks all direct message channels as read up to the loaded timestamp.
   def mark_direct_messages_as_read(loaded_at)
     dms_until = freshness_checked_time(loaded_at)
 
-    memberships.unread.direct_rooms.each do |m|
+    memberships.unread.direct_channels.each do |m|
       m.read_until(dms_until)
     end
   end
@@ -88,8 +88,8 @@ module User::Notifiable
   # Uses stale detection: if timestamp is > 1 hour old, uses current time instead
   # (user likely left the page open without interacting).
   #
-  # For activity: DMs are always marked as read. For other rooms, only marks as read
-  # if the room had no non-notified messages in the window (avoids accidentally marking
+  # For activity: DMs are always marked as read. For other channels, only marks as read
+  # if the channel had no non-notified messages in the window (avoids accidentally marking
   # unread messages as read when user only viewed activity)
   def mark_inbox_as_read(messages_loaded_at:, notifications_loaded_at:, activity_loaded_at:)
     messages_until = freshness_checked_time(messages_loaded_at)
@@ -98,7 +98,7 @@ module User::Notifiable
 
     memberships.unread.each { |m| m.read_until(messages_until) }
     memberships.notifications_on.unread.each { |m| m.read_until(notifications_until) }
-    mark_notified_rooms_as_read(activity_until, include_dms: true)
+    mark_notified_channels_as_read(activity_until, include_dms: true)
 
     touch_activity_seen_at(activity_until)
   end
@@ -127,21 +127,21 @@ module User::Notifiable
       create_notification_settings! unless notification_settings
     end
 
-    # Marks rooms as read where all unread messages have corresponding notifications.
-    # For non-DM rooms, only marks as read if there are no non-notified messages in the window.
-    def mark_notified_rooms_as_read(until_time, include_dms: false)
-      notified_room_ids = notifications
+    # Marks channels as read where all unread messages have corresponding notifications.
+    # For non-DM channels, only marks as read if there are no non-notified messages in the window.
+    def mark_notified_channels_as_read(until_time, include_dms: false)
+      notified_channel_ids = notifications
         .where("notifications.created_at <= ?", until_time)
-        .joins(:message).distinct.pluck(Arel.sql("messages.room_id"))
+        .joins(:message).distinct.pluck(Arel.sql("messages.channel_id"))
 
-      memberships.unread.includes(:room).where(room_id: notified_room_ids).each do |m|
-        if m.room.is_a?(Rooms::Direct)
+      memberships.unread.includes(:channel).where(channel_id: notified_channel_ids).each do |m|
+        if m.channel.is_a?(Channels::Direct)
           m.read_until(until_time) if include_dms
           next
         end
         next if m.last_read_at.nil?
 
-        unseen_window = m.room.messages.without_events
+        unseen_window = m.channel.messages.without_events
           .after_cursor(m.last_read_at, m.last_read_message_id)
           .created_before(until_time)
 

@@ -23,9 +23,9 @@ def find_or_create_user(full_name, email_address, role: :member)
   end
 end
 
-def post_message(room, creator, body, at: Time.current)
+def post_message(channel, creator, body, at: Time.current)
   travel_to(at) do
-    room.messages.create!(creator: creator, body: body, client_message_id: Random.uuid)
+    channel.messages.create!(creator: creator, body: body, client_message_id: Random.uuid)
   end
 end
 

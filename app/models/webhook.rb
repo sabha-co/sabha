@@ -27,35 +27,35 @@ class Webhook < ApplicationRecord
     event_name = Bot::EventPayload.event_name_for(item, event)
     payload = create_payload(item, event, base_url: base_url)
 
-    Bot::WebhookJob.perform_later(self, event_name, payload, item.try(:room), reply)
+    Bot::WebhookJob.perform_later(self, event_name, payload, item.try(:channel), reply)
   end
 
   def deliver_now(item, event, reply: false, base_url: "")
     event_name = Bot::EventPayload.event_name_for(item, event)
     payload = create_payload(item, event, base_url: base_url)
 
-    deliver(event_name, payload, item.try(:room), reply: reply)
+    deliver(event_name, payload, item.try(:channel), reply: reply)
   end
 
-  def deliver(event_name, payload, room, reply: false)
+  def deliver(event_name, payload, channel, reply: false)
     if reply
-      deliver_with_reply(event_name, payload, room)
+      deliver_with_reply(event_name, payload, channel)
     else
       deliver_without_reply(event_name, payload)
     end
   end
 
   private
-    def deliver_with_reply(event_name, payload, room)
+    def deliver_with_reply(event_name, payload, channel)
       post(event_name, payload).tap do |response|
         if text = extract_text_from(response)
-          receive_text_reply_to(room, text: text)
+          receive_text_reply_to(channel, text: text)
         elsif attachment = extract_attachment_from(response)
-          receive_attachment_reply_to(room, attachment: attachment)
+          receive_attachment_reply_to(channel, attachment: attachment)
         end
       end
     rescue Net::OpenTimeout, Net::ReadTimeout
-      receive_text_reply_to room, text: "Failed to respond within #{ENDPOINT_TIMEOUT} seconds"
+      receive_text_reply_to channel, text: "Failed to respond within #{ENDPOINT_TIMEOUT} seconds"
     end
 
     def deliver_without_reply(event_name, payload)
@@ -96,8 +96,8 @@ class Webhook < ApplicationRecord
       response.body.dup.force_encoding("UTF-8") if response.code == "200" && response.content_type.in?(%w[ text/html text/plain ])
     end
 
-    def receive_text_reply_to(room, text:)
-      room.messages.create!(body: text, creator: user).broadcast_create
+    def receive_text_reply_to(channel, text:)
+      channel.messages.create!(body: text, creator: user).broadcast_create
     end
 
     def extract_attachment_from(response)
@@ -107,7 +107,7 @@ class Webhook < ApplicationRecord
       end
     end
 
-    def receive_attachment_reply_to(room, attachment:)
-      room.messages.create_with_attachment!(attachment: attachment, creator: user).broadcast_create
+    def receive_attachment_reply_to(channel, attachment:)
+      channel.messages.create_with_attachment!(attachment: attachment, creator: user).broadcast_create
     end
 end

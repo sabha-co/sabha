@@ -17,9 +17,9 @@ module Slack
           next
         end
 
-        thread_room = find_or_create_thread(parent, replies)
-        move_replies_to_thread(thread_room, replies)
-        update_counter_caches(thread_room, parent)
+        thread_channel = find_or_create_thread(parent, replies)
+        move_replies_to_thread(thread_channel, replies)
+        update_counter_caches(thread_channel, parent)
       end
 
       @context.log "Created #{@context.stats[:threads]} threads"
@@ -35,34 +35,34 @@ module Slack
       begin
         Current.user = parent.creator
 
-        # Include all parent room members, matching ThreadsController#new behavior
-        thread_users = parent.room.users.to_a
+        # Include all parent channel members, matching ThreadsController#new behavior
+        thread_users = parent.channel.users.to_a
 
-        thread_room = Rooms::Thread.create_for(
+        thread_channel = Channels::Thread.create_for(
           { parent_message_id: parent.id, creator: parent.creator },
           users: thread_users
         )
 
         @context.increment(:threads)
-        thread_room
+        thread_channel
       ensure
         Current.user = nil
       end
     end
 
-    def move_replies_to_thread(thread_room, replies)
+    def move_replies_to_thread(thread_channel, replies)
       replies.each do |reply_data|
         reply = reply_data[:message]
-        next if reply.room_id == thread_room.id
+        next if reply.channel_id == thread_channel.id
 
-        reply.update_columns(room_id: thread_room.id)
-        thread_room.memberships.grant_to([ reply.creator ])
+        reply.update_columns(channel_id: thread_channel.id)
+        thread_channel.memberships.grant_to([ reply.creator ])
       end
     end
 
-    def update_counter_caches(thread_room, parent)
-      Rooms::Thread.reset_counters(thread_room.id, :messages)
-      Room.reset_counters(parent.room_id, :messages)
+    def update_counter_caches(thread_channel, parent)
+      Channels::Thread.reset_counters(thread_channel.id, :messages)
+      Channel.reset_counters(parent.channel_id, :messages)
     end
 
     def log_skipped_thread(thread_ts, replies)

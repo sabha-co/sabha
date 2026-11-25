@@ -4,7 +4,7 @@ class BroadcastInboxThreadsJob < ApplicationJob
   discard_on ActiveJob::DeserializationError::RecordNotFound
 
   def perform(thread_id:, parent_message_id:, message_id:, creator_id:)
-    thread = Room.find_by(id: thread_id)
+    thread = Channel.find_by(id: thread_id)
     parent_message = Message.find_by(id: parent_message_id)
     return unless thread && parent_message
 

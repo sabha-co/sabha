@@ -5,28 +5,28 @@ class WeeklyDigestMailerTest < ActionMailer::TestCase
     @user = users(:jason)
     @user.notification_settings || @user.create_notification_settings!
     @actor = users(:david)
-    @room  = rooms(:designers)
+    @channel  = channels(:designers)
 
-    @everyone_message = @room.messages.create!(
+    @everyone_message = @channel.messages.create!(
       body: "<div>heads up #{mention_attachment_for(:jason)}</div>",
       creator: @actor,
       client_message_id: "digest_mailer_msg",
       mentions_everyone: true
     )
 
-    @content = Struct.new(:everyone_mentions, :active_rooms, :excerpts).new(
+    @content = Struct.new(:everyone_mentions, :active_channels, :excerpts).new(
       [ @everyone_message ],
-      [ [ @room, 7 ] ],
+      [ [ @channel, 7 ] ],
       [ @everyone_message ]
     )
   end
 
-  test "subject is workspace-recap framed (no sender, no room)" do
+  test "subject is workspace-recap framed (no sender, no channel)" do
     mail = WeeklyDigestMailer.digest(@user, @content)
 
     assert_match(/^This week in /, mail.subject)
     assert_no_match(/#{@actor.name}/, mail.subject)
-    assert_no_match(/#{@room.name}/, mail.subject)
+    assert_no_match(/#{@channel.name}/, mail.subject)
   end
 
   test "RFC 8058 List-Unsubscribe headers point at the unsubscribe URL" do
@@ -54,11 +54,11 @@ class WeeklyDigestMailerTest < ActionMailer::TestCase
     assert_equal [ @user.email_address ], mail.to
   end
 
-  test "body includes room names and excerpts" do
+  test "body includes channel names and excerpts" do
     mail = WeeklyDigestMailer.digest(@user, @content)
 
     body = mail.html_part.body.to_s
-    assert_includes body, @room.name
+    assert_includes body, @channel.name
     assert_includes body, @actor.name
   end
 end

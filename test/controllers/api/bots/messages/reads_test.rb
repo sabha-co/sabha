@@ -3,28 +3,28 @@ require "test_helper"
 class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   setup do
     @bot = users(:bender)
-    @room = rooms(:watercooler) # bender is a member
-    @other_room = rooms(:designers) # bender is NOT a member
+    @channel = channels(:watercooler) # bender is a member
+    @other_channel = channels(:designers) # bender is NOT a member
   end
 
-  # Fresh room with bender as a member — used by tests that need a controlled
-  # message set without fixture noise. Strips the "room_created" / "member_joined"
-  # system events so the room starts empty from the API's perspective.
-  def fresh_room
-    @fresh_room ||= begin
-      room = Rooms::Open.create!(name: "Bot Read Test Room", creator: users(:david))
-      Membership.create!(user: @bot, room: room, involvement: :everything)
-      room.messages.destroy_all
-      room
+  # Fresh channel with bender as a member — used by tests that need a controlled
+  # message set without fixture noise. Strips the "channel_created" / "member_joined"
+  # system events so the channel starts empty from the API's perspective.
+  def fresh_channel
+    @fresh_channel ||= begin
+      channel = Channels::Open.create!(name: "Bot Read Test Channel", creator: users(:david))
+      Membership.create!(user: @bot, channel: channel, involvement: :everything)
+      channel.messages.destroy_all
+      channel
     end
   end
 
   # Envelope shape
 
   test "index returns results, has_more, and next_cursor envelope keys" do
-    @room.messages.create!(creator: users(:david), body: "hello")
+    @channel.messages.create!(creator: users(:david), body: "hello")
 
-    get api_bots_room_messages_url(@room), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(@channel), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     json = response.parsed_body
@@ -36,9 +36,9 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   end
 
   test "index result objects expose id, creator, body, attachment, created_at — and not mentionees or has_attachment" do
-    @room.messages.create!(creator: users(:david), body: "hello")
+    @channel.messages.create!(creator: users(:david), body: "hello")
 
-    get api_bots_room_messages_url(@room), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(@channel), headers: bot_headers(@bot.bot_key)
 
     msg = response.parsed_body["results"].first
     assert msg["id"].present?
@@ -65,13 +65,13 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
 
   # Permissions
 
-  test "index 404s when bot is not in the room" do
-    get api_bots_room_messages_url(@other_room), headers: bot_headers(@bot.bot_key)
+  test "index 404s when bot is not in the channel" do
+    get api_bots_channel_messages_url(@other_channel), headers: bot_headers(@bot.bot_key)
     assert_response :not_found
   end
 
   test "invalid bot key redirects to sign in" do
-    get api_bots_room_messages_url(@room), headers: bot_headers("999-invalidtoken")
+    get api_bots_channel_messages_url(@channel), headers: bot_headers("999-invalidtoken")
     assert_redirected_to new_session_url
   end
 
@@ -81,25 +81,25 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
     assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
   end
 
-  test "show 404s for message in room bot is not in" do
-    message = @other_room.messages.create!(creator: users(:david), body: "test")
+  test "show 404s for message in channel bot is not in" do
+    message = @other_channel.messages.create!(creator: users(:david), body: "test")
     get api_bots_message_url(message), headers: bot_headers(@bot.bot_key)
     assert_response :not_found
     assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
   end
 
-  test "show 404s for a message in a sub-room the bot left the parent of" do
+  test "show 404s for a message in a sub-channel the bot left the parent of" do
     thread = reply = nil
     Current.set(user: @bot) do
-      room = Rooms::Closed.create_for({ name: "Bot Thread Parent", creator: @bot }, users: @bot)
-      room.add_member!(users(:david), actor: @bot) # keep a human so removal is allowed
-      parent = room.messages.create!(body: "topic", creator: @bot)
-      thread = Rooms::Thread.find_or_create_for(parent, creator: @bot)
+      channel = Channels::Closed.create_for({ name: "Bot Thread Parent", creator: @bot }, users: @bot)
+      channel.add_member!(users(:david), actor: @bot) # keep a human so removal is allowed
+      parent = channel.messages.create!(body: "topic", creator: @bot)
+      thread = Channels::Thread.find_or_create_for(parent, creator: @bot)
       reply = thread.messages.create!(body: "secret", creator: @bot)
-      room.remove_member!(@bot, actor: users(:david))
-      ThreadFollowCleanupJob.perform_now(room: room, user: @bot)
+      channel.remove_member!(@bot, actor: users(:david))
+      ThreadFollowCleanupJob.perform_now(channel: channel, user: @bot)
     end
-    assert Membership.exists?(room_id: thread.id, user_id: @bot.id, active: true),
+    assert Membership.exists?(channel_id: thread.id, user_id: @bot.id, active: true),
       "precondition: the bot keeps a silenced-but-active thread row"
 
     get api_bots_message_url(reply), headers: bot_headers(@bot.bot_key)
@@ -110,9 +110,9 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   # has_more truncation signal
 
   test "has_more is false and next_cursor is nil when results fit within limit" do
-    create_messages(fresh_room, count: 2)
+    create_messages(fresh_channel, count: 2)
 
-    get api_bots_room_messages_url(fresh_room, limit: 10), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, limit: 10), headers: bot_headers(@bot.bot_key)
 
     json = response.parsed_body
     assert_equal false, json["has_more"]
@@ -121,9 +121,9 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   end
 
   test "has_more is true and next_cursor is composite (iso|id) when more results exist" do
-    create_messages(fresh_room, count: 5)
+    create_messages(fresh_channel, count: 5)
 
-    get api_bots_room_messages_url(fresh_room, limit: 2), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, limit: 2), headers: bot_headers(@bot.bot_key)
 
     json = response.parsed_body
     assert_equal true, json["has_more"]
@@ -137,16 +137,16 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   # Limit cap
 
   test "limit clamps above MAX_LIMIT" do
-    get api_bots_room_messages_url(@room, limit: 5_000), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(@channel, limit: 5_000), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     assert_operator response.parsed_body["results"].size, :<=, 200
   end
 
   test "limit clamps below 1 to 1" do
-    create_messages(fresh_room, count: 3)
+    create_messages(fresh_channel, count: 3)
 
-    get api_bots_room_messages_url(fresh_room, limit: 0), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, limit: 0), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     assert_equal 1, response.parsed_body["results"].size
@@ -155,11 +155,11 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   # Time filters
 
   test "after lower-bound excludes messages older than the cutoff" do
-    older = create_messages(fresh_room, count: 1).first
+    older = create_messages(fresh_channel, count: 1).first
     older.update_columns(created_at: 2.days.ago)
-    newer = create_messages(fresh_room, count: 1).first
+    newer = create_messages(fresh_channel, count: 1).first
 
-    get api_bots_room_messages_url(fresh_room, after: 1.day.ago.iso8601), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, after: 1.day.ago.iso8601), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     ids = response.parsed_body["results"].map { |r| r["id"] }
@@ -167,11 +167,11 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   end
 
   test "plain ISO timestamp before still works as a filter (back-compat)" do
-    older = create_messages(fresh_room, count: 1).first
+    older = create_messages(fresh_channel, count: 1).first
     older.update_columns(created_at: 2.days.ago)
-    create_messages(fresh_room, count: 1) # newer, "now"
+    create_messages(fresh_channel, count: 1) # newer, "now"
 
-    get api_bots_room_messages_url(fresh_room, before: 1.day.ago.iso8601), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, before: 1.day.ago.iso8601), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
     ids = response.parsed_body["results"].map { |r| r["id"] }
@@ -179,7 +179,7 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   end
 
   test "unparseable before timestamp returns 422" do
-    get api_bots_room_messages_url(@room, before: "not-a-date"), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(@channel, before: "not-a-date"), headers: bot_headers(@bot.bot_key)
 
     assert_response :unprocessable_entity
     assert_equal "validation_failed", response.parsed_body["code"]
@@ -187,7 +187,7 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   end
 
   test "unparseable after timestamp returns 422" do
-    get api_bots_room_messages_url(@room, after: "yesterday"), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(@channel, after: "yesterday"), headers: bot_headers(@bot.bot_key)
 
     assert_response :unprocessable_entity
     assert_equal "validation_failed", response.parsed_body["code"]
@@ -197,13 +197,13 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   # Ordering and cursor pagination
 
   test "results come back newest-first" do
-    older = create_messages(fresh_room, count: 1).first
+    older = create_messages(fresh_channel, count: 1).first
     older.update_columns(created_at: 2.hours.ago)
-    middle = create_messages(fresh_room, count: 1).first
+    middle = create_messages(fresh_channel, count: 1).first
     middle.update_columns(created_at: 1.hour.ago)
-    newest = create_messages(fresh_room, count: 1).first
+    newest = create_messages(fresh_channel, count: 1).first
 
-    get api_bots_room_messages_url(fresh_room), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel), headers: bot_headers(@bot.bot_key)
 
     ids = response.parsed_body["results"].map { |r| r["id"] }
     assert_equal [ newest.id, middle.id, older.id ], ids
@@ -211,16 +211,16 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
 
   test "composite cursor is stable across same-second timestamp ties" do
     shared_time = 1.hour.ago.change(usec: 0)
-    msgs = Array.new(3) { create_messages(fresh_room, count: 1).first }
+    msgs = Array.new(3) { create_messages(fresh_channel, count: 1).first }
     msgs.each { |m| m.update_columns(created_at: shared_time) }
     expected_ids = msgs.map(&:id).sort.reverse # id DESC tiebreaker
 
-    get api_bots_room_messages_url(fresh_room, limit: 2), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, limit: 2), headers: bot_headers(@bot.bot_key)
     page_one = response.parsed_body
     cursor = page_one["next_cursor"]
     assert_not_nil cursor
 
-    get api_bots_room_messages_url(fresh_room, limit: 2, before: cursor), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, limit: 2, before: cursor), headers: bot_headers(@bot.bot_key)
     page_two = response.parsed_body
 
     page_one_ids = page_one["results"].map { |r| r["id"] }
@@ -230,11 +230,11 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   end
 
   test "after lower-bound composes with cursor across pages" do
-    out_of_window = create_messages(fresh_room, count: 1).first
+    out_of_window = create_messages(fresh_channel, count: 1).first
     out_of_window.update_columns(created_at: 10.days.ago)
 
     in_window = Array.new(4) do |i|
-      m = create_messages(fresh_room, count: 1).first
+      m = create_messages(fresh_channel, count: 1).first
       m.update_columns(created_at: (4 - i).hours.ago)
       m
     end
@@ -242,11 +242,11 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
 
     lower_bound = 1.day.ago.iso8601
 
-    get api_bots_room_messages_url(fresh_room, after: lower_bound, limit: 2), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, after: lower_bound, limit: 2), headers: bot_headers(@bot.bot_key)
     page_one = response.parsed_body
     cursor = page_one["next_cursor"]
 
-    get api_bots_room_messages_url(fresh_room, after: lower_bound, limit: 2, before: cursor),
+    get api_bots_channel_messages_url(fresh_channel, after: lower_bound, limit: 2, before: cursor),
         headers: bot_headers(@bot.bot_key)
     page_two = response.parsed_body
 
@@ -257,18 +257,18 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
 
   test "passing next_cursor as before continues pagination without overlap" do
     msgs = Array.new(4) do |i|
-      m = create_messages(fresh_room, count: 1).first
+      m = create_messages(fresh_channel, count: 1).first
       m.update_columns(created_at: (4 - i).hours.ago)
       m
     end
     expected_order = msgs.reverse.map(&:id)
 
-    get api_bots_room_messages_url(fresh_room, limit: 2), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, limit: 2), headers: bot_headers(@bot.bot_key)
     page_one = response.parsed_body
     cursor = page_one["next_cursor"]
     assert_not_nil cursor
 
-    get api_bots_room_messages_url(fresh_room, limit: 2, before: cursor), headers: bot_headers(@bot.bot_key)
+    get api_bots_channel_messages_url(fresh_channel, limit: 2, before: cursor), headers: bot_headers(@bot.bot_key)
     page_two = response.parsed_body
 
     page_one_ids = page_one["results"].map { |r| r["id"] }
@@ -283,16 +283,16 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   # N+1 prevention
 
   test "rendering many results does not trigger per-row creator or body queries" do
-    create_messages(fresh_room, count: 5)
+    create_messages(fresh_channel, count: 5)
     baseline = count_sql_queries do
-      get api_bots_room_messages_url(fresh_room, limit: 5), headers: bot_headers(@bot.bot_key)
+      get api_bots_channel_messages_url(fresh_channel, limit: 5), headers: bot_headers(@bot.bot_key)
     end
     assert_response :success
     assert_equal 5, response.parsed_body["results"].size
 
-    create_messages(fresh_room, count: 5)
+    create_messages(fresh_channel, count: 5)
     doubled = count_sql_queries do
-      get api_bots_room_messages_url(fresh_room, limit: 10), headers: bot_headers(@bot.bot_key)
+      get api_bots_channel_messages_url(fresh_channel, limit: 10), headers: bot_headers(@bot.bot_key)
     end
     assert_response :success
     assert_equal 10, response.parsed_body["results"].size
@@ -302,8 +302,8 @@ class API::Bots::Messages::ReadsTest < ActionDispatch::IntegrationTest
   end
 
   private
-    def create_messages(room, count:)
-      Array.new(count) { |i| room.messages.create!(creator: users(:david), body: "msg #{i}") }
+    def create_messages(channel, count:)
+      Array.new(count) { |i| channel.messages.create!(creator: users(:david), body: "msg #{i}") }
     end
 
     def count_sql_queries

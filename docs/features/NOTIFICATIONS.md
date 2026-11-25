@@ -18,7 +18,7 @@ All notification channels — in-app rows, push, missed-notification email (bund
 | Channel | Trigger | Storage |
 |---|---|---|
 | In-app row | Per-message, when activity_type creates a `Notification` row | `notifications` table (existing) |
-| Push (WebPush) | Per-message, when membership is push-eligible and the member isn't watching the room (per the AnyCable broker) | `push_subscriptions` (existing) |
+| Push (WebPush) | Per-message, when membership is push-eligible and the member isn't watching the channel (per the AnyCable broker) | `push_subscriptions` (existing) |
 | Missed-notification email | Per-message, eligible items accumulate into a per-user bundle and deliver hourly/daily | `notification_bundles` + `notification_bundle_items` (new) |
 | Weekly activity digest email | Recurring per-workspace job, generated content for opted-in members | No persistent store; `last_digest_sent_at` per user for dedup |
 
@@ -32,21 +32,21 @@ Dispatcher symbol vocabulary (used at routing time only — does not all map 1:1
 |---|---|
 | `:mention` (incl. `@everyone`) | in-app row, push, missed-notification email |
 | `:direct_message` | push, missed-notification email |
-| `:everyone_room_message` | push |
+| `:everyone_channel_message` | push |
 | `:thread_reply` | in-app row, push |
 | `:boost` | in-app row |
 
-`:direct_message` and `:everyone_room_message` are dispatcher-only — they never produce `Notification` rows. The persisted `Notification#activity_type` vocabulary stays `%w[mention boost thread_reply]`. The dispatcher's symbol set is a strict superset used only at routing time.
+`:direct_message` and `:everyone_channel_message` are dispatcher-only — they never produce `Notification` rows. The persisted `Notification#activity_type` vocabulary stays `%w[mention boost thread_reply]`. The dispatcher's symbol set is a strict superset used only at routing time.
 
-Email is intentionally narrow: `:thread_reply` is currently not emailed (see § 13), `:boost` is not emailed, regular room messages are not emailed. Encoded by `Notification::Routing::EMAIL_TYPES = %i[mention direct_message]`.
+Email is intentionally narrow: `:thread_reply` is currently not emailed (see § 13), `:boost` is not emailed, regular channel messages are not emailed. Encoded by `Notification::Routing::EMAIL_TYPES = %i[mention direct_message]`.
 
 **Routing vocabulary lives on `Notification::Routing`**, not on `Membership::Notifiable`. The matrix above is encoded as constants on a small module:
 
 ```ruby
 module Notification::Routing
-  ACTIVITY_TYPES   = %i[mention direct_message everyone_room_message thread_reply boost].freeze
+  ACTIVITY_TYPES   = %i[mention direct_message everyone_channel_message thread_reply boost].freeze
   IN_APP_ROW_TYPES = %i[mention thread_reply boost].freeze
-  PUSH_TYPES       = %i[mention direct_message everyone_room_message thread_reply].freeze
+  PUSH_TYPES       = %i[mention direct_message everyone_channel_message thread_reply].freeze
   EMAIL_TYPES      = %i[mention direct_message].freeze
 end
 ```
@@ -69,26 +69,26 @@ Common gates (apply to all channels):
 - Recipient is not the message creator (except for `:direct_message` accounting).
 - Recipient is active, verified, not banned, not deactivated, not a bot.
 - Recipient and sender are not blocked in either direction.
-- Message and room are active.
+- Message and channel are active.
 - Membership is active and **`effective_involvement`** authorizes this `activity_type`.
 
 **`Membership#effective_involvement`** is the single method that answers "what is this membership's true involvement after applying the global mode override?" Predicates ask `effective_involvement` only; they do not read `mode` and `involvement` independently. Rule:
 
-1. If per-room `involvement == "everything"` → effective is `"everything"` (per-room opt-in beats global mute).
+1. If per-channel `involvement == "everything"` → effective is `"everything"` (per-channel opt-in beats global mute).
 2. Else if global `mode == "nothing"` → effective is `"nothing"` (global mute applies).
-3. Else → effective is the per-room `involvement` (`mentions` / `nothing` / `invisible`).
+3. Else → effective is the per-channel `involvement` (`mentions` / `nothing` / `invisible`).
 
 Folding the two-source rule into one method removes the per-call-site foot-gun where a predicate could check `mode` and `involvement` in the wrong order, or check one and forget the other. `receives?(activity_type)` reads from `effective_involvement` only.
 
 Channel-specific gates:
 
-- **Push:** `user.push_enabled?`, and the member is not currently watching the room. Watching is decided by the dispatcher, not by this predicate — see below.
+- **Push:** `user.push_enabled?`, and the member is not currently watching the channel. Watching is decided by the dispatcher, not by this predicate — see below.
 - **Missed-notification email:** `user.missed_email_enabled?`, account email flag on, `user.workspace_locally_away?`, `activity_type.in?(Notification::Routing::EMAIL_TYPES)`.
 - **Weekly digest:** `user.weekly_digest_subscribed?`, account `weekly_digest_enabled?`.
 
 **Two distinct presence checks, from two different sources.**
 
-Push asks anycable-go. It terminates every WebSocket, so its broker already knows who has a room open — `Room::PresenceSet` reads that set over the HTTP API (`GET /api/presence/:stream/users`) and `Message#watching?` subtracts those users from the candidates. One fetch per dispatch job, memoized on the message so every activity type sees the same answer. `receives_push_for?` deliberately says nothing about connectedness: a stale column must not override the live signal.
+Push asks anycable-go. It terminates every WebSocket, so its broker already knows who has a channel open — `Channel::PresenceSet` reads that set over the HTTP API (`GET /api/presence/:stream/users`) and `Message#watching?` subtracts those users from the candidates. One fetch per dispatch job, memoized on the message so every activity type sees the same answer. `receives_push_for?` deliberately says nothing about connectedness: a stale column must not override the live signal.
 
 This replaced a `connected_at` freshness check, which required every open tab to keep the column warm with a timed write — the largest concurrency-scaled write source on the single SQLite writer. The grace period after a socket dies is now anycable-go's `--presence_ttl` (45s, set explicitly), not the old 60-second `CONNECTION_TTL`.
 
@@ -116,7 +116,7 @@ Notification::DispatchJob.perform_later(message)
 Message#notify_recipients
        │
        ▼
-For each activity_type in Room#applicable_activity_types(message):
+For each activity_type in Channel#applicable_activity_types(message):
        ├──▶ deliver_in_app_row_for(activity_type, actor:)        (in-app row)
        ├──▶ deliver_push_for(activity_type)                      (push)
        └──▶ enqueue_missed_email_candidates_for(activity_type)   (bundle add)
@@ -124,24 +124,24 @@ For each activity_type in Room#applicable_activity_types(message):
 (Weekly digest is independent — see § 8.)
 ```
 
-**One job per message**, not one job per `(message, activity_type)` pair. `Notification::DispatchJob` is a shallow wrapper that calls `message.notify_recipients`; the message then asks `Room#applicable_activity_types(message)` and runs each channel for each applicable type.
+**One job per message**, not one job per `(message, activity_type)` pair. `Notification::DispatchJob` is a shallow wrapper that calls `message.notify_recipients`; the message then asks `Channel#applicable_activity_types(message)` and runs each channel for each applicable type.
 
 **In-app rows currently flow through legacy callbacks, not the dispatcher.** `deliver_in_app_row_for` is a no-op pass-through — the existing `create_mention_notifications` and `create_thread_reply_notifications` callbacks on `Message` still write the `Notification` rows. The dispatcher branch is wired so a future move of row creation into the dispatcher requires no caller changes. This is intentional: in-app rows are the most-tested path and were not in scope for the dispatcher rewrite.
 
 **Boost is the one call site that passes `only:`.** Boost dispatch fires after a `Boost` is created, not after a `Message`, and calls `Notification::DispatchJob.perform_later(message, only: :boost, actor: booster)` to dispatch the single type with a non-creator actor.
 
-**Recipient sets are channel-specific.** Row recipients can be broader than push recipients (e.g. `@everyone` creates rows for all room members but pushes only to the involvement-eligible subset). Email recipients follow the row set, then narrow via the email gate.
+**Recipient sets are channel-specific.** Row recipients can be broader than push recipients (e.g. `@everyone` creates rows for all channel members but pushes only to the involvement-eligible subset). Email recipients follow the row set, then narrow via the email gate.
 
 ### 5.1 Push delivery details
 
 Push splits cleanly between recipient resolution and payload formatting:
 
 - **Recipient resolution lives on `Message`.** `Message#push_recipient_user_ids_for(activity_type)` returns the candidate user-id set per activity type; `Membership::Notifiable#receives_push_for?` filters those candidates per recipient. The `Membership.involved_in_everything` / `Membership.involved_in_mentions` scopes drive the disjoint subsets and are invoked from `Message`.
-- **Payload formatting lives on `Room::MessagePusher`.** `Room::MessagePusher.payload_for(room:, message:)` returns the push payload, with a two-branch `room.direct?` shape (different copy for DMs vs shared rooms). `Message#deliver_push_for` queues delivery through `Rails.configuration.x.web_push_pool`.
+- **Payload formatting lives on `Channel::MessagePusher`.** `Channel::MessagePusher.payload_for(channel:, message:)` returns the push payload, with a two-branch `channel.direct?` shape (different copy for DMs vs shared channels). `Message#deliver_push_for` queues delivery through `Rails.configuration.x.web_push_pool`.
 
-The push driver sits at the `Message` level (not on `Notification.after_save_commit`) because two of the five dispatcher activity types — `:direct_message` and `:everyone_room_message` — never produce `Notification` rows. A Notification-driven trigger would lose those channels.
+The push driver sits at the `Message` level (not on `Notification.after_save_commit`) because two of the five dispatcher activity types — `:direct_message` and `:everyone_channel_message` — never produce `Notification` rows. A Notification-driven trigger would lose those channels.
 
-Single-target delivery (browser WebPush) is inline today. If a second delivery target lands (APNs, FCM), the right move is a small `Notification::PushTarget` hierarchy parallel to `Room::MessagePusher`; no such hierarchy exists yet.
+Single-target delivery (browser WebPush) is inline today. If a second delivery target lands (APNs, FCM), the right move is a small `Notification::PushTarget` hierarchy parallel to `Channel::MessagePusher`; no such hierarchy exists yet.
 
 ## 6. Data models
 
@@ -187,7 +187,7 @@ Active bundle for user `u` = the row with `user_id = u`, `delivered_at IS NULL`,
 | `kind` | string | `mention` / `direct_message`. Email-routing reason for this item. |
 | `created_at` | datetime | When the item was added. |
 
-Unique index: `(bundle_id, message_id, kind)` — a single message can produce a `:mention` and a `:direct_message` row in different rooms but never the same pair twice in one bundle.
+Unique index: `(bundle_id, message_id, kind)` — a single message can produce a `:mention` and a `:direct_message` row in different channels but never the same pair twice in one bundle.
 
 **Why `kind` instead of `activity_type`:** the column is **not** the same vocabulary as `Notification.activity_type`. Bundle items include `:direct_message` (which never produces a `Notification` row); `Notification.activity_type` does not. Sharing the column name across two non-equal vocabularies would breed bugs ("why is there no Notification with `activity_type = 'direct_message'`?"). A different column name makes the split honest.
 
@@ -240,7 +240,7 @@ This is computed once at bundle creation and never moves. A user who switches fr
 
 ### 7.3 Send-time revalidation
 
-`BundleDeliveryJob` walks `bundle.items` and asks `membership.receives_missed_email_for?(item.message, item.kind)` for each. Items where the predicate returns false are dropped (membership revoked, message deleted, room destroyed, sender blocked, user no longer away, account flag flipped, `missed_email_enabled` disabled). If all items drop, the job marks the bundle `canceled_at` and exits.
+`BundleDeliveryJob` walks `bundle.items` and asks `membership.receives_missed_email_for?(item.message, item.kind)` for each. Items where the predicate returns false are dropped (membership revoked, message deleted, channel destroyed, sender blocked, user no longer away, account flag flipped, `missed_email_enabled` disabled). If all items drop, the job marks the bundle `canceled_at` and exits.
 
 If the user has an active connection in the workspace at delivery time, the entire bundle is canceled — they are no longer "away."
 
@@ -294,8 +294,8 @@ Bundling itself supersedes the older per-membership 5-minute email cooldown; the
 
 `MissedNotificationsMailer#bundle(user, items)`:
 
-- Subject: generic, no sender/room name. e.g. `"New mentions in {Workspace}"` or `"You have new messages in {Workspace}"`.
-- Body: groups items by room, lists sender names + truncated previews per item, primary CTA to Activity, secondary link to settings, unsubscribe link.
+- Subject: generic, no sender/channel name. e.g. `"New mentions in {Workspace}"` or `"You have new messages in {Workspace}"`.
+- Body: groups items by channel, lists sender names + truncated previews per item, primary CTA to Activity, secondary link to settings, unsubscribe link.
 - Sets RFC 8058 `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
 - Token mints via `Rails.application.message_verifier(:email_unsubscribe)` with `{ user_id, tenant, surface: :missed_notifications }`.
 - Passes `idempotency_key: "bundle-#{bundle.id}"` on the underlying provider API call (see § 7.7).
@@ -339,13 +339,13 @@ The digest is generated per send, not accumulated like missed-notification bundl
 
 ### 8.3 Content selection (rules, not algorithm)
 
-Content for a member is drawn from rooms the member can access (active membership, not `:invisible`, not `:nothing`):
+Content for a member is drawn from channels the member can access (active membership, not `:invisible`, not `:nothing`):
 
-1. **Notification-worthy first:** room-wide `@everyone` mentions in the past week that the member would have received an in-app row for, but did not view.
-2. **Recently active rooms:** rooms with N+ messages in the past week that the member is a non-DM member of.
-3. **Excerpts:** small number of public/shared discussion excerpts. No DM content. No private rooms the member cannot access.
+1. **Notification-worthy first:** channel-wide `@everyone` mentions in the past week that the member would have received an in-app row for, but did not view.
+2. **Recently active channels:** channels with N+ messages in the past week that the member is a non-DM member of.
+3. **Excerpts:** small number of public/shared discussion excerpts. No DM content. No private channels the member cannot access.
 
-The job stays conservative — no algorithmic ranking, no Discord-style Highlights. If a member's accessible rooms are quiet, the digest is skipped, not padded.
+The job stays conservative — no algorithmic ranking, no Discord-style Highlights. If a member's accessible channels are quiet, the digest is skipped, not padded.
 
 ### 8.4 Mailer
 
@@ -374,15 +374,15 @@ The job stays conservative — no algorithmic ranking, no Discord-style Highligh
 
 | State | Push | Missed-notification email | Weekly digest | In-app rows |
 |---|---|---|---|---|
-| `mode: nothing` (and not `:everything` per-room) | suppressed | suppressed | unaffected (digest is opt-in separately) | created |
-| `mode: nothing` and `involvement: everything` for a room | fires (per-room override) | fires | unaffected | created |
+| `mode: nothing` (and not `:everything` per-channel) | suppressed | suppressed | unaffected (digest is opt-in separately) | created |
+| `mode: nothing` and `involvement: everything` for a channel | fires (per-channel override) | fires | unaffected | created |
 | `missed_email_enabled: false` | unaffected | suppressed | unaffected | created |
 | `weekly_digest_subscribed: false` | unaffected | unaffected | suppressed | created |
 | `push_enabled: false` | suppressed | unaffected | unaffected | created |
 
-Two-layer reconciliation between global `mode` and per-room `involvement`:
+Two-layer reconciliation between global `mode` and per-channel `involvement`:
 
-- `Membership#effective_involvement` (see § 4) is the **delivery-time source of truth** per room. It folds the two-source rule into one method so call sites never check `mode` and `involvement` independently.
+- `Membership#effective_involvement` (see § 4) is the **delivery-time source of truth** per channel. It folds the two-source rule into one method so call sites never check `mode` and `involvement` independently.
 - Global `mode` is the **default for new memberships**. At delivery time, its only effect on outbound channels is via `effective_involvement` (which returns `"nothing"` when `mode: "nothing"` and the membership is not `:everything`).
 
 In-app rows are created regardless of `mode` — the Activity tab is the truth-on-return surface.
@@ -432,7 +432,7 @@ Sabha does not currently auto-suppress hard-bouncing or complaining addresses. T
 
 The intended future path — when this needs to land — is webhook ingestion: `Webhooks::SesController` (SaaS, fed by SNS) and `Webhooks::ResendController` (self-hosted), both with signature verification and a `missed_email_enabled: false` flip on permanent bounces. An in-process SMTP-rescue stopgap is not the right shape — API-based delivery raises provider-specific errors (`Aws::SES::Errors::*`, `Resend::Error`) that don't reliably map to "permanent failure" the way 5xx SMTP responses do.
 
-Subject privacy is intentional: generic subjects, no sender or room names. Sender/room names appear in the body only.
+Subject privacy is intentional: generic subjects, no sender or channel names. Sender/channel names appear in the body only.
 
 ## 12. User and account defaults summary
 
@@ -442,14 +442,14 @@ Subject privacy is intentional: generic subjects, no sender or room names. Sende
 
 ## 13. Not currently supported
 
-- **Thread-reply email.** Sabha already computes the right recipient set for in-app rows (thread members + parent room `involved_in_everything`, minus already-mentioned users — see `app/jobs/create_thread_reply_notifications_job.rb`); turning email on is a matter of adding `:thread_reply` to `Notification::Routing::EMAIL_TYPES` and `notification_bundle_items.kind`. Held back so a chatty thread doesn't generate one email per reply during the bundle window — needs a per-thread coalescing policy first.
+- **Thread-reply email.** Sabha already computes the right recipient set for in-app rows (thread members + parent channel `involved_in_everything`, minus already-mentioned users — see `app/jobs/create_thread_reply_notifications_job.rb`); turning email on is a matter of adding `:thread_reply` to `Notification::Routing::EMAIL_TYPES` and `notification_bundle_items.kind`. Held back so a chatty thread doesn't generate one email per reply during the bundle window — needs a per-thread coalescing policy first.
 - **Boost email.** No precedent in Slack or Discord; not on the roadmap.
-- **Per-room email controls.**
+- **Per-channel email controls.**
 - **Keyword alerts / custom triggers.** Treated as a separate ambient-surface product question, not part of personal notifications.
 - **Marketing/news email subscriptions** (separate surface).
 - **Reply-from-email.**
 - **Cross-workspace bundle consolidation** — a user in three workspaces gets up to three bundles.
-- **Snooze / DND / pause notifications.** Master switches (`missed_email_enabled`, `push_enabled`) and per-room `Membership#involvement: :nothing` are the only ways to silence notifications.
+- **Snooze / DND / pause notifications.** Master switches (`missed_email_enabled`, `push_enabled`) and per-channel `Membership#involvement: :nothing` are the only ways to silence notifications.
 - **Automatic bounce/complaint suppression.** See § 11.2.
 - **Personalized digest ranking** (Discord Highlights-style). Digest is a conservative recap.
 - **Admin-authored digest content.** Digest is generated from workspace activity, not curated.

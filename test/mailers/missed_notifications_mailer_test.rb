@@ -4,13 +4,13 @@ class MissedNotificationsMailerTest < ActionMailer::TestCase
   setup do
     @user  = users(:jason)
     @actor = users(:david)
-    @room  = rooms(:designers)
+    @channel  = channels(:designers)
 
     @bundle = Notification::Bundle.create!(
       user: @user, frequency: :hourly,
       starts_at: Time.current, ends_at: 1.hour.from_now
     )
-    @message = @room.messages.create!(
+    @message = @channel.messages.create!(
       body: "<div>hello #{mention_attachment_for(:jason)}</div>",
       creator: @actor,
       client_message_id: "mailer_test_msg"
@@ -18,12 +18,12 @@ class MissedNotificationsMailerTest < ActionMailer::TestCase
     @item = Notification::BundleItem.create!(bundle: @bundle, message: @message, actor: @actor, kind: "mention")
   end
 
-  test "subject is generic — workspace name, no sender or room" do
+  test "subject is generic — workspace name, no sender or channel" do
     mail = MissedNotificationsMailer.bundle(@bundle, [ @item ])
 
     assert_match(/New mentions in/, mail.subject)
     assert_no_match(/#{@actor.name}/, mail.subject)
-    assert_no_match(/#{@room.name}/, mail.subject)
+    assert_no_match(/#{@channel.name}/, mail.subject)
   end
 
   test "subject reflects DM-only bundles" do
@@ -34,12 +34,12 @@ class MissedNotificationsMailerTest < ActionMailer::TestCase
     assert_no_match(/mentions/i, mail.subject)
   end
 
-  test "body lists sender + preview + room label" do
+  test "body lists sender + preview + channel label" do
     mail = MissedNotificationsMailer.bundle(@bundle, [ @item ])
 
     body = mail.html_part.body.to_s
     assert_includes body, @actor.name
-    assert_includes body, @room.name
+    assert_includes body, @channel.name
     assert_includes body, "Open Activity"
   end
 

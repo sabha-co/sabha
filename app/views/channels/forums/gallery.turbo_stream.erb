@@ -1,0 +1,12 @@
+<%# Appends the next page of gallery cards and re-arms the lazy loader. %>
+<%= turbo_stream.remove :next_page_container %>
+
+<%= turbo_stream.append dom_id(@channel, :posts) do %>
+  <%= render partial: "channels/forums/post_card", collection: @posts, as: :post,
+        locals: { forum: @channel, participants: @participants, viewer: Current.user } %>
+<% end %>
+
+<% unless @page.last? %>
+  <%= turbo_stream.append dom_id(@channel, :posts),
+        partial: "channels/forums/next_page_container", locals: { forum: @channel, page: @page.next_param } %>
+<% end %>

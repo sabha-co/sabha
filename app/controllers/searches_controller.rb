@@ -6,7 +6,7 @@ class SearchesController < ApplicationController
   def index
     @query = query if query.present?
     @recent_searches = Current.user.searches.global.ordered
-    @return_to_room = last_room_visited
+    @return_to_channel = last_channel_visited
     @message_count = messages.count
   end
 

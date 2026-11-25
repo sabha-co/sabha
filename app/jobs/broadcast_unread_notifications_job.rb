@@ -10,7 +10,7 @@ class BroadcastUnreadNotificationsJob < ApplicationJob
     user_ids = message.notification_recipient_ids(ignore_if_older_message)
     return if user_ids.empty?
 
-    payload = { roomId: message.room.id }
+    payload = { channelId: message.channel.id }
 
     # Auto-batching enabled in config/anycable.yml handles aggregation
     User.where(id: user_ids).find_each do |user|

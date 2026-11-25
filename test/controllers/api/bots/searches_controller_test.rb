@@ -3,14 +3,14 @@ require "test_helper"
 class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @bot = users(:bender)
-    @room = rooms(:watercooler) # bender is a member
-    @other_room = rooms(:designers) # bender is NOT a member
+    @channel = channels(:watercooler) # bender is a member
+    @other_channel = channels(:designers) # bender is NOT a member
   end
 
   # Envelope shape
 
   test "search returns results, has_more, and next_cursor envelope keys" do
-    create_searchable_messages(@room, count: 1)
+    create_searchable_messages(@channel, count: 1)
 
     get api_bots_search_url(q: "findme"), headers: bot_headers(@bot.bot_key)
 
@@ -23,8 +23,8 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
     assert_includes [ true, false ], json["has_more"]
   end
 
-  test "result objects expose id, creator, body, room, created_at" do
-    create_searchable_messages(@room, count: 1)
+  test "result objects expose id, creator, body, channel, created_at" do
+    create_searchable_messages(@channel, count: 1)
 
     get api_bots_search_url(q: "findme"), headers: bot_headers(@bot.bot_key)
 
@@ -32,7 +32,7 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
     assert msg["id"].present?
     assert_equal %w[id name], msg["creator"].keys.sort
     assert_equal %w[html plain], msg["body"].keys.sort
-    assert_equal %w[id name], msg["room"].keys.sort
+    assert_equal %w[id name], msg["channel"].keys.sort
     assert msg["created_at"].present?
   end
 
@@ -59,7 +59,7 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   # has_more truncation signal
 
   test "has_more is false and next_cursor is nil when results fit within limit" do
-    create_searchable_messages(@room, count: 2)
+    create_searchable_messages(@channel, count: 2)
 
     get api_bots_search_url(q: "findme", limit: 10), headers: bot_headers(@bot.bot_key)
 
@@ -71,7 +71,7 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "has_more is true and next_cursor is composite (iso|id) when more results exist" do
-    create_searchable_messages(@room, count: 5)
+    create_searchable_messages(@channel, count: 5)
 
     get api_bots_search_url(q: "findme", limit: 2), headers: bot_headers(@bot.bot_key)
 
@@ -88,7 +88,7 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   # Limit cap
 
   test "limit clamps above MAX_LIMIT" do
-    create_searchable_messages(@room, count: 1)
+    create_searchable_messages(@channel, count: 1)
 
     get api_bots_search_url(q: "findme", limit: 5_000), headers: bot_headers(@bot.bot_key)
 
@@ -99,7 +99,7 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "limit clamps below 1 to 1" do
-    create_searchable_messages(@room, count: 3)
+    create_searchable_messages(@channel, count: 3)
 
     get api_bots_search_url(q: "findme", limit: 0), headers: bot_headers(@bot.bot_key)
 
@@ -107,37 +107,37 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, response.parsed_body["results"].size
   end
 
-  # Scoping by room
+  # Scoping by channel
 
-  test "results filter by room_ids" do
-    create_searchable_messages(@room, count: 2)
-    other_room = Rooms::Open.create!(name: "Bot Side Room", creator: users(:david))
-    Membership.create!(user: @bot, room: other_room, involvement: :everything)
-    create_searchable_messages(other_room, count: 3)
+  test "results filter by channel_ids" do
+    create_searchable_messages(@channel, count: 2)
+    other_channel = Channels::Open.create!(name: "Bot Side Channel", creator: users(:david))
+    Membership.create!(user: @bot, channel: other_channel, involvement: :everything)
+    create_searchable_messages(other_channel, count: 3)
 
-    get api_bots_search_url(q: "findme", room_ids: [ other_room.id ]),
+    get api_bots_search_url(q: "findme", channel_ids: [ other_channel.id ]),
         headers: bot_headers(@bot.bot_key)
 
     assert_response :success
-    room_ids = response.parsed_body["results"].map { |r| r["room"]["id"] }
-    assert_equal [ other_room.id ], room_ids.uniq
+    channel_ids = response.parsed_body["results"].map { |r| r["channel"]["id"] }
+    assert_equal [ other_channel.id ], channel_ids.uniq
   end
 
-  test "results never include messages from rooms bot cannot reach" do
+  test "results never include messages from channels bot cannot reach" do
     # Create a message in designers (bender is not a member)
-    @other_room.messages.create!(creator: users(:david), body: "findme stranger")
+    @other_channel.messages.create!(creator: users(:david), body: "findme stranger")
 
     get api_bots_search_url(q: "findme"), headers: bot_headers(@bot.bot_key)
 
     assert_response :success
-    room_ids = response.parsed_body["results"].map { |r| r["room"]["id"] }
-    assert_not_includes room_ids, @other_room.id
+    channel_ids = response.parsed_body["results"].map { |r| r["channel"]["id"] }
+    assert_not_includes channel_ids, @other_channel.id
   end
 
-  test "passing an unreachable room_id returns no results, not 403" do
-    create_searchable_messages(@room, count: 1)
+  test "passing an unreachable channel_id returns no results, not 403" do
+    create_searchable_messages(@channel, count: 1)
 
-    get api_bots_search_url(q: "findme", room_ids: [ @other_room.id ]),
+    get api_bots_search_url(q: "findme", channel_ids: [ @other_channel.id ]),
         headers: bot_headers(@bot.bot_key)
 
     assert_response :success
@@ -147,8 +147,8 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   # Scoping by author
 
   test "results filter by author_ids" do
-    create_searchable_messages(@room, count: 2, creator: users(:david))
-    create_searchable_messages(@room, count: 2, creator: users(:jason))
+    create_searchable_messages(@channel, count: 2, creator: users(:david))
+    create_searchable_messages(@channel, count: 2, creator: users(:jason))
 
     get api_bots_search_url(q: "findme", author_ids: [ users(:david).id ]),
         headers: bot_headers(@bot.bot_key)
@@ -161,9 +161,9 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   # Time filters
 
   test "created_before excludes messages newer than the cutoff" do
-    older = create_searchable_messages(@room, count: 1).first
+    older = create_searchable_messages(@channel, count: 1).first
     older.update_columns(created_at: 2.days.ago)
-    create_searchable_messages(@room, count: 1) # newer, "now"
+    create_searchable_messages(@channel, count: 1) # newer, "now"
 
     cutoff = 1.day.ago.iso8601
     get api_bots_search_url(q: "findme", before: cutoff), headers: bot_headers(@bot.bot_key)
@@ -174,9 +174,9 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "created_after excludes messages older than the cutoff" do
-    older = create_searchable_messages(@room, count: 1).first
+    older = create_searchable_messages(@channel, count: 1).first
     older.update_columns(created_at: 2.days.ago)
-    newer = create_searchable_messages(@room, count: 1).first
+    newer = create_searchable_messages(@channel, count: 1).first
 
     cutoff = 1.day.ago.iso8601
     get api_bots_search_url(q: "findme", after: cutoff), headers: bot_headers(@bot.bot_key)
@@ -207,11 +207,11 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   # Ordering and cursor pagination
 
   test "results come back newest-first" do
-    older = create_searchable_messages(@room, count: 1).first
+    older = create_searchable_messages(@channel, count: 1).first
     older.update_columns(created_at: 2.hours.ago)
-    middle = create_searchable_messages(@room, count: 1).first
+    middle = create_searchable_messages(@channel, count: 1).first
     middle.update_columns(created_at: 1.hour.ago)
-    newest = create_searchable_messages(@room, count: 1).first
+    newest = create_searchable_messages(@channel, count: 1).first
 
     get api_bots_search_url(q: "findme"), headers: bot_headers(@bot.bot_key)
 
@@ -223,7 +223,7 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
     # Three messages share the exact same created_at — without a composite
     # cursor, the page-2 query (`created_at < cursor_time`) drops the siblings.
     shared_time = 1.hour.ago.change(usec: 0)
-    msgs = Array.new(3) { create_searchable_messages(@room, count: 1).first }
+    msgs = Array.new(3) { create_searchable_messages(@channel, count: 1).first }
     msgs.each { |m| m.update_columns(created_at: shared_time) }
     expected_ids = msgs.map(&:id).sort.reverse # id DESC tiebreaker
 
@@ -244,9 +244,9 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "plain ISO timestamp before still works as a filter (back-compat)" do
-    older = create_searchable_messages(@room, count: 1).first
+    older = create_searchable_messages(@channel, count: 1).first
     older.update_columns(created_at: 2.days.ago)
-    create_searchable_messages(@room, count: 1) # newer
+    create_searchable_messages(@channel, count: 1) # newer
 
     get api_bots_search_url(q: "findme", before: 1.day.ago.iso8601),
         headers: bot_headers(@bot.bot_key)
@@ -258,11 +258,11 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
 
   test "after lower-bound composes with cursor across pages" do
     # Out-of-window message (older than the lower bound) — must never appear.
-    out_of_window = create_searchable_messages(@room, count: 1).first
+    out_of_window = create_searchable_messages(@channel, count: 1).first
     out_of_window.update_columns(created_at: 10.days.ago)
 
     in_window = Array.new(4) do |i|
-      m = create_searchable_messages(@room, count: 1).first
+      m = create_searchable_messages(@channel, count: 1).first
       m.update_columns(created_at: (4 - i).hours.ago)
       m
     end
@@ -287,7 +287,7 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   test "passing next_cursor as before continues pagination without overlap" do
     # Create 4 messages with distinct timestamps so cursor is unambiguous
     msgs = Array.new(4) do |i|
-      m = create_searchable_messages(@room, count: 1).first
+      m = create_searchable_messages(@channel, count: 1).first
       m.update_columns(created_at: (4 - i).hours.ago)
       m
     end
@@ -313,15 +313,15 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
 
   # N+1 prevention
 
-  test "rendering many results does not trigger per-row creator or room queries" do
-    create_searchable_messages(@room, count: 5)
+  test "rendering many results does not trigger per-row creator or channel queries" do
+    create_searchable_messages(@channel, count: 5)
     baseline_count = count_sql_queries do
       get api_bots_search_url(q: "findme", limit: 5), headers: bot_headers(@bot.bot_key)
     end
     assert_response :success
     assert_equal 5, response.parsed_body["results"].size
 
-    create_searchable_messages(@room, count: 5)
+    create_searchable_messages(@channel, count: 5)
     doubled_count = count_sql_queries do
       get api_bots_search_url(q: "findme", limit: 10), headers: bot_headers(@bot.bot_key)
     end
@@ -334,9 +334,9 @@ class API::Bots::SearchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
-    def create_searchable_messages(room, count:, creator: nil)
-      creator ||= room.users.where.not(id: @bot.id).first || users(:david)
-      Array.new(count) { |i| room.messages.create!(creator: creator, body: "findme token #{i}") }
+    def create_searchable_messages(channel, count:, creator: nil)
+      creator ||= channel.users.where.not(id: @bot.id).first || users(:david)
+      Array.new(count) { |i| channel.messages.create!(creator: creator, body: "findme token #{i}") }
     end
 
     def count_sql_queries

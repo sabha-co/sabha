@@ -5,26 +5,26 @@ class WelcomeControllerTest < ActionDispatch::IntegrationTest
     sign_in :david
   end
 
-  test "redirects to the first created open room" do
+  test "redirects to the first created open channel" do
     get root_url
 
-    assert_redirected_to room_url(Room.opens.order(:created_at).first)
+    assert_redirected_to channel_url(Channel.opens.order(:created_at).first)
   end
 
-  test "redirects to the first created open room, no matter what the last visited room was" do
-    cookies[:last_room] = rooms(:watercooler).id
+  test "redirects to the first created open channel, no matter what the last visited channel was" do
+    cookies[:last_channel] = channels(:watercooler).id
 
     get root_url
 
-    assert_redirected_to room_url(Room.opens.order(:created_at).first)
+    assert_redirected_to channel_url(Channel.opens.order(:created_at).first)
   end
 
-  test "falls back to the last visited room when no active open room exists" do
-    Room.opens.update_all(active: false)
-    cookies[:last_room] = rooms(:watercooler).id
+  test "falls back to the last visited channel when no active open channel exists" do
+    Channel.opens.update_all(active: false)
+    cookies[:last_channel] = channels(:watercooler).id
 
     get root_url
 
-    assert_redirected_to room_url(rooms(:watercooler))
+    assert_redirected_to channel_url(channels(:watercooler))
   end
 end

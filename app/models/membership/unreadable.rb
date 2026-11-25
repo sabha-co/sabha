@@ -1,12 +1,12 @@
 # Derived unread. A membership stores a (last_read_at, last_read_message_id)
 # cursor — the position of the last message its member has seen — and
-# unread-ness is derived by comparing that cursor against the room's active
+# unread-ness is derived by comparing that cursor against the channel's active
 # messages. Sending a message writes nothing to member rows (the sender's own
 # cursor aside), and a soft-deleted message stops counting automatically
 # because the comparison only sees active messages.
 #
 # The cursor advances at view-time: when the membership is created, when the
-# member presents in the room, on presence refresh, and when they fully
+# member presents in the channel, on presence refresh, and when they fully
 # disconnect (messages watched live count as seen). The cutover migration
 # reset every member to caught-up; a membership with no cursor (created in
 # the deploy window by pre-cursor code) reads as read, not all-unread.
@@ -18,27 +18,27 @@
 module Membership::Unreadable
   extend ActiveSupport::Concern
 
-  # A membership has unseen messages when an active message in its room sits
+  # A membership has unseen messages when an active message in its channel sits
   # strictly after its cursor. Correlated form, for scopes over memberships.
   UNSEEN_MESSAGES_SQL = <<~SQL.squish
     EXISTS (
       SELECT 1 FROM messages
-      WHERE messages.room_id = memberships.room_id
+      WHERE messages.channel_id = memberships.channel_id
         AND messages.active = TRUE
         AND (messages.created_at > memberships.last_read_at
           OR (messages.created_at = memberships.last_read_at AND messages.id > memberships.last_read_message_id))
     )
   SQL
 
-  # A forum owns no messages: its dot derives from active posts (sub-rooms)
+  # A forum owns no messages: its dot derives from active posts (sub-channels)
   # created after the cursor instead. Time-only comparison — the cursor's
   # message id means nothing against posts. Rides
-  # index_rooms_on_parent_room_and_created.
+  # index_channels_on_parent_channel_and_created.
   UNSEEN_POSTS_SQL = <<~SQL.squish
     EXISTS (
-      SELECT 1 FROM rooms posts
-      WHERE posts.parent_room_id = memberships.room_id
-        AND posts.type = 'Rooms::Post'
+      SELECT 1 FROM channels posts
+      WHERE posts.parent_channel_id = memberships.channel_id
+        AND posts.type = 'Channels::Post'
         AND posts.active = TRUE
         AND posts.created_at > memberships.last_read_at
     )
@@ -56,7 +56,7 @@ module Membership::Unreadable
         none
       end
 
-      if membership.room.direct?
+      if membership.channel.direct?
         scope
       else
         scope.where(
@@ -66,7 +66,7 @@ module Membership::Unreadable
           membership.user_id, true
         ).distinct
       end
-    }, through: :room, source: :messages
+    }, through: :channel, source: :messages
 
     scope :read, -> {
       where(marked_unread: false)
@@ -82,14 +82,14 @@ module Membership::Unreadable
         )
       )
     }
-    # The rooms an app badge counts: unread and holding something that notified.
+    # The channels an app badge counts: unread and holding something that notified.
     scope :badged, -> { unread.where("unread_notifications_count > 0") }
 
-    # Memberships that have unread messages OR whose room was updated recently.
+    # Memberships that have unread messages OR whose channel was updated recently.
     # Used to filter direct messages in the sidebar to only show recent conversations.
     scope :recently_active_or_unread, ->(since: 7.days.ago) {
-      joins(:room).where(
-        "memberships.marked_unread = TRUE OR (memberships.last_read_at IS NOT NULL AND #{UNSEEN_SQL}) OR rooms.updated_at > :since",
+      joins(:channel).where(
+        "memberships.marked_unread = TRUE OR (memberships.last_read_at IS NOT NULL AND #{UNSEEN_SQL}) OR channels.updated_at > :since",
         since: since
       )
     }
@@ -113,7 +113,7 @@ module Membership::Unreadable
       where(marked_unread: false).where(<<~SQL.squish, message_id: message.id)
         NOT EXISTS (
           SELECT 1 FROM messages
-          WHERE messages.room_id = memberships.room_id
+          WHERE messages.channel_id = memberships.channel_id
             AND messages.active = TRUE
             AND messages.id != :message_id
             AND (memberships.last_read_at IS NULL
@@ -128,9 +128,9 @@ module Membership::Unreadable
     scope :caught_up_besides_post, ->(post) {
       where(marked_unread: false).where(<<~SQL.squish, post_id: post.id)
         NOT EXISTS (
-          SELECT 1 FROM rooms posts
-          WHERE posts.parent_room_id = memberships.room_id
-            AND posts.type = 'Rooms::Post'
+          SELECT 1 FROM channels posts
+          WHERE posts.parent_channel_id = memberships.channel_id
+            AND posts.type = 'Channels::Post'
             AND posts.active = TRUE
             AND posts.id != :post_id
             AND (memberships.last_read_at IS NULL
@@ -154,7 +154,7 @@ module Membership::Unreadable
   end
 
   def read
-    head_at, head_id = room_head_position
+    head_at, head_id = channel_head_position
     update!(last_read_at: head_at, last_read_message_id: head_id, marked_unread: false, unread_notifications_count: 0)
     broadcast_read
   end
@@ -171,7 +171,7 @@ module Membership::Unreadable
   def read_until(time)
     return if read?
 
-    next_unread = room.messages.without_events.ordered.where("created_at > ?", time).first
+    next_unread = channel.messages.without_events.ordered.where("created_at > ?", time).first
     if next_unread.nil?
       read
     else
@@ -185,10 +185,10 @@ module Membership::Unreadable
     end
   end
 
-  # Marks the room unread from its latest message without recomputing the
+  # Marks the channel unread from its latest message without recomputing the
   # badge or broadcasting — the quiet involve-with-unread path.
   def rewind_to_unread
-    last = room.messages.reorder(:created_at, :id).last
+    last = channel.messages.reorder(:created_at, :id).last
     cursor_at, cursor_id = last ? position_before(last) : [ Time.at(0), 0 ]
     update!(last_read_at: cursor_at, last_read_message_id: cursor_id, marked_unread: true)
   end
@@ -203,7 +203,7 @@ module Membership::Unreadable
 
   # When this membership became unread: the first unseen message's timestamp.
   # Nil when read, or when the unread carries no message (a forum's
-  # post-derived dot, or an explicit mark in an empty room).
+  # post-derived dot, or an explicit mark in an empty channel).
   def unread_since
     return nil unless unread?
     first_unread_message&.created_at
@@ -211,18 +211,18 @@ module Membership::Unreadable
 
   def first_unread_message
     return nil if last_read_at.nil?
-    room.messages.after_cursor(last_read_at, last_read_message_id).order(:created_at, :id).first
+    channel.messages.after_cursor(last_read_at, last_read_message_id).order(:created_at, :id).first
   end
 
   def unseen_messages?
     return false if last_read_at.nil?
-    room.messages.after_cursor(last_read_at, last_read_message_id).exists?
+    channel.messages.after_cursor(last_read_at, last_read_message_id).exists?
   end
 
   # The forum arm of unread?: active posts created after the cursor.
   def unseen_posts?
-    return false if last_read_at.nil? || !room.forum?
-    room.posts.where("created_at > ?", last_read_at).exists?
+    return false if last_read_at.nil? || !channel.forum?
+    channel.posts.where("created_at > ?", last_read_at).exists?
   end
 
   # Recompute the count of notification-worthy messages after a cursor
@@ -230,9 +230,9 @@ module Membership::Unreadable
   def count_unseen_notifications(from_at = last_read_at, from_id = last_read_message_id)
     return 0 if from_at.nil?
 
-    base = room.messages.after_cursor(from_at, from_id)
+    base = channel.messages.after_cursor(from_at, from_id)
 
-    if room.direct?
+    if channel.direct?
       base.count
     else
       base.where(
@@ -244,29 +244,29 @@ module Membership::Unreadable
     end
   end
 
-  # Advances the cursor to the room's newest message — the member has seen
+  # Advances the cursor to the channel's newest message — the member has seen
   # everything up to now. Skips callbacks: pure bookkeeping.
   def advance_cursor_to_head
-    head_at, head_id = room_head_position
+    head_at, head_id = channel_head_position
     update_columns(last_read_at: head_at, last_read_message_id: head_id, updated_at: Time.current)
   end
 
-  # The room's newest active message position, or a caught-up-as-of-now
-  # sentinel for a room with no messages (never nil: a nil cursor reads as
+  # The channel's newest active message position, or a caught-up-as-of-now
+  # sentinel for a channel with no messages (never nil: a nil cursor reads as
   # read and would silence future dots).
-  def room_head_position
-    head = room.messages.reorder(:created_at, :id).last
+  def channel_head_position
+    head = channel.messages.reorder(:created_at, :id).last
     head ? [ head.created_at, head.id ] : [ Time.current, 0 ]
   end
 
   private
     def snapshot_read_cursor
       return if last_read_at.present?
-      self.last_read_at, self.last_read_message_id = room_head_position if room
+      self.last_read_at, self.last_read_message_id = channel_head_position if channel
     end
 
     def position_before(message)
-      previous = room.messages.before_cursor(message.created_at, message.id)
+      previous = channel.messages.before_cursor(message.created_at, message.id)
                      .reorder(created_at: :desc, id: :desc).first
       previous ? [ previous.created_at, previous.id ] : [ Time.at(0), 0 ]
     end
@@ -280,38 +280,38 @@ module Membership::Unreadable
       return 0 if last_read_at.nil? || read?
 
       Notification.joins(:message)
-        .where(user_id: user_id, activity_type: "mention", messages: { room_id: room_id })
+        .where(user_id: user_id, activity_type: "mention", messages: { channel_id: channel_id })
         .merge(Message.after_cursor(last_read_at, last_read_message_id))
         .where("notifications.created_at > ?", time)
         .count
     end
 
     # Read-state transitions are per-user, so both directions ride the
-    # member's own ReadRoomsChannel: a bare { room_id: } means read; the
+    # member's own ReadChannelsChannel: a bare { channel_id: } means read; the
     # mark-as-unread form adds unread: true plus the sidebar sort keys.
     def broadcast_read
-      ReadRoomsChannel.broadcast_to(user, { room_id: room_id })
+      ReadChannelsChannel.broadcast_to(user, { channel_id: channel_id })
     end
 
     def broadcast_unread
-      ReadRoomsChannel.broadcast_to(user, unread_payload)
+      ReadChannelsChannel.broadcast_to(user, unread_payload)
       UnreadNotificationsChannel.broadcast_to(user, notification_payload) if has_unread_notifications?
     end
 
     def unread_payload
       {
-        room_id: room.id,
-        room_size: room.messages_count,
-        room_updated_at: room.last_active_at.iso8601,
+        channel_id: channel.id,
+        channel_size: channel.messages_count,
+        channel_updated_at: channel.last_active_at.iso8601,
         unread: true
       }
     end
 
     def notification_payload
-      { roomId: room.id }
+      { channelId: channel.id }
     end
 
-    # The badge counts rooms that are unread with something that notified, so
+    # The badge counts channels that are unread with something that notified, so
     # it can only move when the count or the explicit unread flag does.
     def desktop_badge_changed?
       Desktop.notifications_enabled? && (saved_change_to_unread_notifications_count? || saved_change_to_marked_unread?)

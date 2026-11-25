@@ -1,0 +1,13 @@
+<%= render layout: "channels/layouts/edit", locals: { channel: @channel } do %>
+  <%= render "channels/layouts/form", channel: @channel %>
+
+  <% if @users.any? %>
+    <%= user_filter_menu_tag do %>
+      <%= user_filter_search_tag if @users.count > 20 %>
+
+      <div contents>
+        <%= render partial: "channels/threads/user", collection: @users, locals: { channel: @channel }, cached: -> user { ["threads_user_list", user] } %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

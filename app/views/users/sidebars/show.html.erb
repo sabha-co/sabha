@@ -1,19 +1,19 @@
 <%= sidebar_turbo_frame_tag do %>
-  <%= turbo_stream_from Current.account, :rooms %>
-  <%= turbo_stream_from Current.user, :rooms %>
+  <%= turbo_stream_from Current.account, :channels %>
+  <%= turbo_stream_from Current.user, :channels %>
 
   <div data-controller="unread-indicator"
        data-unread-indicator-indicators-value='[{"selector":".direct.unread","class":"has-unread-dms","target":"dms"}]'
-       data-action="rooms-list:unread@window->unread-indicator#update rooms-list:read@window->unread-indicator#update rooms-list:addBadge@window->unread-indicator#update">
+       data-action="channels-list:unread@window->unread-indicator#update channels-list:read@window->unread-indicator#update channels-list:addBadge@window->unread-indicator#update">
     <div class="sidebar__container overflow-y overflow-hide-scrollbar"
         data-controller="badge-dot maintain-scroll debounce-updates"
         data-badge-dot-unread-class="badge"
-        data-action="rooms-list:unread@window->badge-dot#update rooms-list:read@window->badge-dot#update rooms-list:addBadge@window->badge-dot#update turbo:submit-start->turbo-frame#unpermanize turbo:before-render@document->maintain-scroll#beforeRender">
+        data-action="channels-list:unread@window->badge-dot#update channels-list:read@window->badge-dot#update channels-list:addBadge@window->badge-dot#update turbo:submit-start->turbo-frame#unpermanize turbo:before-render@document->maintain-scroll#beforeRender">
     <% if show_dm_section?(@direct_memberships) %>
-      <turbo-frame id="direct_rooms_control" target="_top">
+      <turbo-frame id="direct_channels_control" target="_top">
         <div class="directs gap overflow-x overflow-hide-scrollbar">
           <% if can_create_dms? %>
-            <%= link_to new_rooms_direct_path, class: "direct direct__new", data: { turbo_frame: "_self" } do %>
+            <%= link_to new_channels_direct_path, class: "direct direct__new", data: { turbo_frame: "_self" } do %>
               <span class="avatar avatar--icon">
                 <%= icon_tag "messages-add" %>
               </span>
@@ -25,10 +25,10 @@
             <% end %>
           <% end %>
 
-          <div id="direct_rooms" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
+          <div id="direct_channels" contents data-controller="sorted-list" data-sorted-list-attribute-value="updatedAt"
                data-sorted-list-order-value="desc"
-               data-action="rooms-list:unread@window->sorted-list#reSort">
-            <%= render partial: "users/sidebars/rooms/direct", collection: @direct_memberships, as: :membership, cached: true %>
+               data-action="channels-list:unread@window->sorted-list#reSort">
+            <%= render partial: "users/sidebars/channels/direct", collection: @direct_memberships, as: :membership, cached: true %>
           </div>
         </div>
       </turbo-frame>
@@ -40,12 +40,12 @@
       <div class="pad-block"></div>
     <% end %>
 
-    <div class="rooms position-relative flex flex-col gap">
+    <div class="channels position-relative flex flex-col gap">
       <div id="favorites_section"
            data-controller="collapsible-section sorted-list"
            data-collapsible-section-key-value="favorites"
            data-sorted-list-attribute-value="updatedAt" data-sorted-list-order-value="desc"
-           data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
+           data-action="channels-list:unread@window->sorted-list#reSort channels-list:read@window->sorted-list#reSort channels-list:renamed@window->sorted-list#reSort"
            class="flex position-relative flex-col gap">
         <button type="button" class="favorites-toggle flex items-center gap-half mb-2"
                 aria-expanded="true"
@@ -55,30 +55,30 @@
           <h1 class="txt-small font-semibold txt-label">Favorites</h1>
         </button>
 
-        <div data-collapsible-section-target="content" class="flex flex-col rooms-list">
-          <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :starred_rooms, memberships: @starred_memberships %>
+        <div data-collapsible-section-target="content" class="flex flex-col channels-list">
+          <%= render "users/sidebars/channels/shared_channels_list", list_name: :starred_channels, memberships: @starred_memberships %>
         </div>
       </div>
 
       <div class="flex items-center justify-between gap-half mb-2">
-        <h1 class="txt-small font-semibold txt-label">All Rooms</h1>
+        <h1 class="txt-small font-semibold txt-label">All Channels</h1>
         <div class="flex items-center gap-half">
-          <%= render "users/sidebars/all_rooms_actions" %>
-          <% if Current.user.administrator? || !Current.account.settings.restrict_room_creation_to_administrators? %>
-            <%= link_to new_rooms_open_path, class: "btn btn--small", aria: { label: "New Room" } do %>
-              <%= icon_tag "add", style: "view-transition-name: new-room" %>
-              <span class="for-screen-reader">New Room</span>
+          <%= render "users/sidebars/all_channels_actions" %>
+          <% if Current.user.administrator? || !Current.account.settings.restrict_channel_creation_to_administrators? %>
+            <%= link_to new_channels_open_path, class: "btn btn--small", aria: { label: "New Channel" } do %>
+              <%= icon_tag "add", style: "view-transition-name: new-channel" %>
+              <span class="for-screen-reader">New Channel</span>
             <% end %>
           <% end %>
         </div>
       </div>
-      <div data-controller="sorted-list" <%= all_rooms_sort_order %>
-           data-action="rooms-list:unread@window->sorted-list#reSort rooms-list:read@window->sorted-list#reSort rooms-list:renamed@window->sorted-list#reSort"
-           class="flex position-relative flex-col rooms-list">
-        <%= render "users/sidebars/rooms/shared_rooms_list", list_name: :shared_rooms, memberships: @shared_memberships %>
+      <div data-controller="sorted-list" <%= all_channels_sort_order %>
+           data-action="channels-list:unread@window->sorted-list#reSort channels-list:read@window->sorted-list#reSort channels-list:renamed@window->sorted-list#reSort"
+           class="flex position-relative flex-col channels-list">
+        <%= render "users/sidebars/channels/shared_channels_list", list_name: :shared_channels, memberships: @shared_memberships %>
       </div>
 
-      <%= turbo_frame_tag :hidden_rooms %>
+      <%= turbo_frame_tag :hidden_channels %>
     </div>
   </div>
 

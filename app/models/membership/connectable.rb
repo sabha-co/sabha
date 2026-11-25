@@ -12,7 +12,7 @@ module Membership::Connectable
   # every client cadence; nearly all of them now write nothing.
   CONNECTION_REFRESH_THRESHOLD = 4.minutes
 
-  # "Watching this room right now", in SQL. Both halves carry weight: the
+  # "Watching this channel right now", in SQL. Both halves carry weight: the
   # refcount drops the instant a member leaves, while the timestamp is what
   # catches a socket that died without saying so.
   CONNECTED_SQL = "memberships.connections > 0 AND memberships.connected_at >= :connection_ttl"
@@ -40,7 +40,7 @@ module Membership::Connectable
     end
 
     def connect(membership, connections)
-      head_at, head_id = membership.room_head_position
+      head_at, head_id = membership.channel_head_position
       where(id: membership.id).update_all(
         connections: connections, connected_at: Time.current,
         last_read_at: head_at, last_read_message_id: head_id,
@@ -111,7 +111,7 @@ module Membership::Connectable
   end
 
   # Leaving counts everything watched live as seen, so the cursor advances —
-  # unless the member explicitly marked the room unread, which must survive.
+  # unless the member explicitly marked the channel unread, which must survive.
   #
   # The advance deliberately doesn't wait for the refcount to reach zero. A
   # refcount drifts high whenever a session dies without departing (a broker
@@ -137,7 +137,7 @@ module Membership::Connectable
     return unless connections > 0 # a refresh can land after depart; don't resurrect
     return if connected_at? && connected_at > CONNECTION_REFRESH_THRESHOLD.ago
 
-    self.class.refresh(self, marked_unread? ? nil : room_head_position)
+    self.class.refresh(self, marked_unread? ? nil : channel_head_position)
   end
 
   private

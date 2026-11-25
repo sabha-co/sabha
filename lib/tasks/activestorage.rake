@@ -32,7 +32,7 @@ namespace :activestorage do
     puts ""
 
     puts "Soft-deleted records with attachments:"
-    { "Message" => Message, "Room" => Room }.each do |name, klass|
+    { "Message" => Message, "Channel" => Channel }.each do |name, klass|
       inactive_with_attachments = ActiveStorage::Attachment
         .where(record_type: name)
         .where(record_id: klass.inactive.select(:id))

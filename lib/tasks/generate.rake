@@ -17,9 +17,9 @@ module DemoHelpers
   end
 
   # Safe message creation with error handling
-  def create_message_safely(room:, creator:, body:, created_at:)
+  def create_message_safely(channel:, creator:, body:, created_at:)
     Message.create!(
-      room: room,
+      channel: channel,
       creator: creator,
       body: body,
       created_at: created_at,
@@ -32,18 +32,18 @@ module DemoHelpers
 
   # Seed data is inserted "now" while messages carry a backdated created_at.
   # That leaves updated_at in the future (so Message#edited? is true for every
-  # row) and posts each room's system events (created the room, member joins)
+  # row) and posts each channel's system events (created the channel, member joins)
   # after the backdated chat, sorting them to the bottom. Fix both: align
-  # updated_at, and pull each room's events to just before its first message.
+  # updated_at, and pull each channel's events to just before its first message.
   def normalize_seed_timestamps!
     Message.update_all("updated_at = created_at")
 
-    Room.where.not(type: %w[Rooms::Direct Rooms::Thread Rooms::Post]).find_each do |room|
-      earliest = room.messages.without_events.minimum(:created_at)
+    Channel.where.not(type: %w[Channels::Direct Channels::Thread Channels::Post]).find_each do |channel|
+      earliest = channel.messages.without_events.minimum(:created_at)
       next unless earliest
 
       base = earliest - 10.minutes
-      room.messages.where.not(event: nil).order(:id).each_with_index do |event, index|
+      channel.messages.where.not(event: nil).order(:id).each_with_index do |event, index|
         timestamp = base + index.seconds
         event.update_columns(created_at: timestamp, updated_at: timestamp)
       end
@@ -79,7 +79,7 @@ module DemoHelpers
     Account.first_or_create!(name: "Sabha")
   end
 
-  # Forum seed content — a dev-community Q&A. Each becomes a Rooms::Post with an
+  # Forum seed content — a dev-community Q&A. Each becomes a Channels::Post with an
   # opening message and a handful of replies; the flagged ones are marked Solved.
   FORUM_POSTS = [
     { title: "Question about OKLCH color tokens", body: "Migrating our palette to OKLCH and the lightness looks off in dark mode. How are you splitting the light/dark tokens?", solved: true },
@@ -88,7 +88,7 @@ module DemoHelpers
     { title: "Best practice for CSP headers?", body: "Locking down Content-Security-Policy without breaking Turbo and ActionCable — anyone have a known-good baseline?", solved: false },
     { title: "@mentions keeps failing intermittently", body: "Sometimes an @mention notifies, sometimes it doesn't. Can't find a pattern — where would you start debugging?", solved: false },
     { title: "How do I fix dark-mode flicker?", body: "On first paint the page flashes light before going dark. Where should the theme be set to avoid the flash?", solved: true },
-    { title: "Help needed with the mobile sidebar", body: "The overlay sidebar won't close when I tap a room on mobile. Is there a Turbo/Stimulus pattern for this?", solved: false },
+    { title: "Help needed with the mobile sidebar", body: "The overlay sidebar won't close when I tap a channel on mobile. Is there a Turbo/Stimulus pattern for this?", solved: false },
     { title: "importmap pinning — what am I missing?", body: "Pinned a package with bin/importmap but the browser 404s on it. Do I need to vendor it too?", solved: true },
     { title: "Tailwind v4 layers — what am I missing?", body: "Moved to Tailwind v4 and my custom @layer components stopped applying. Did the layer ordering change?", solved: false },
     { title: "Best way to structure ActionCable channels?", body: "The channel count is getting messy. One channel per feature, or a shared one with actions?", solved: false }
@@ -109,13 +109,13 @@ module DemoHelpers
     "Here's the approach that worked for us."
   ].freeze
 
-  # Build a community forum: a Rooms::Forum (auto-joins every active user) plus a
+  # Build a community forum: a Channels::Forum (auto-joins every active user) plus a
   # gallery of posts, each with a backdated opening message, several replies from
   # different members, and a Solution where flagged. last_active_at is pinned back
   # after seeding because each reply otherwise touches it to "now" — which would
   # flatten the gallery's recent sort and every card's "Updated …" to the same time.
   def create_forum!(name:, creator:, users:)
-    forum = Rooms::Forum.create!(name: name, creator: creator)
+    forum = Channels::Forum.create!(name: name, creator: creator)
 
     FORUM_POSTS.each_with_index do |seed, index|
       author = users.sample
@@ -124,7 +124,7 @@ module DemoHelpers
       last_active = index.zero? ? rand(1..3).hours.ago : rand(6..320).hours.ago
       opened_at   = last_active - rand(1..48).hours
 
-      post = Rooms::Post.create!(parent_room: forum, name: seed[:title], creator: author,
+      post = Channels::Post.create!(parent_channel: forum, name: seed[:title], creator: author,
                                  created_at: opened_at, updated_at: opened_at)
       post.memberships.grant_to(author)
       post.messages.create!(body: "<div>#{seed[:body]}</div>", creator: author,
@@ -215,14 +215,14 @@ namespace :generate do
       # In SAAS mode, create GlobalIdentities and WorkspaceMemberships
       create_saas_identities_for_workspace(users, tenant_id) if tenant_id
 
-      puts "🏠 Creating rooms..."
-      rooms = MaxDemo.create_rooms(users)
+      puts "🏠 Creating channels..."
+      channels = MaxDemo.create_channels(users)
 
       puts "💬 Generating 2000+ messages..."
-      MaxDemo.create_messages(rooms, users)
+      MaxDemo.create_messages(channels, users)
 
       puts "🧵 Creating threads..."
-      MaxDemo.create_threads(rooms, users)
+      MaxDemo.create_threads(channels, users)
 
       puts "🗂️  Creating a forum with posts..."
       DemoHelpers.create_forum!(name: "Community Q&A", creator: users.first, users: users)
@@ -254,11 +254,11 @@ namespace :generate do
       puts "   Users: #{User.count} (#{User.active.count} active, #{User.where(status: :deactivated).count} deactivated, #{User.where(status: :banned).count} banned)"
       puts "   Streaks: #{User.where('current_streak > 0').count} users with streaks (max: #{User.maximum(:current_streak)} days)"
       puts "   Badges: #{Badge.count}"
-      puts "   Open Rooms: #{Rooms::Open.count}"
-      puts "   Closed Rooms: #{Rooms::Closed.count}"
-      puts "   Direct Messages: #{Rooms::Direct.count}"
-      puts "   Threads: #{Rooms::Thread.count}"
-      puts "   Forums: #{Rooms::Forum.count} (#{Rooms::Post.count} posts, #{Solution.count} solved)"
+      puts "   Open Channels: #{Channels::Open.count}"
+      puts "   Closed Channels: #{Channels::Closed.count}"
+      puts "   Direct Messages: #{Channels::Direct.count}"
+      puts "   Threads: #{Channels::Thread.count}"
+      puts "   Forums: #{Channels::Forum.count} (#{Channels::Post.count} posts, #{Solution.count} solved)"
       puts "   Messages: #{Message.count} (#{Message.where(active: false).count} soft-deleted)"
       puts "   Boosts: #{Boost.count}"
       puts "   Bookmarks: #{Bookmark.count}"
@@ -421,12 +421,12 @@ namespace :generate do
       User.where(email_address: user_records.map { |u| u[:email_address] }).order(:id).to_a
     end
 
-    def create_rooms(users)
+    def create_channels(users)
       admin = users.first
-      rooms = { open: [], closed: [], direct: [] }
+      channels = { open: [], closed: [], direct: [] }
 
-      # Open rooms
-      open_rooms_data = [
+      # Open channels
+      open_channels_data = [
         "General",
         "Introductions",
         "Random",
@@ -437,17 +437,17 @@ namespace :generate do
         "Off-Topic"
       ]
 
-      open_rooms_data.each do |name|
-        rooms[:open] << Rooms::Open.create!(
+      open_channels_data.each do |name|
+        channels[:open] << Channels::Open.create!(
           name: name,
           creator: admin,
           auto_join: true
         )
       end
-      puts "   Created #{rooms[:open].count} open rooms"
+      puts "   Created #{channels[:open].count} open channels"
 
-      # Closed rooms with varying membership sizes
-      closed_rooms_data = [
+      # Closed channels with varying membership sizes
+      closed_channels_data = [
         { name: "Founders Circle", size: 25 },
         { name: "Backend Guild", size: 100 },
         { name: "Frontend Crew", size: 90 },
@@ -460,17 +460,17 @@ namespace :generate do
         { name: "Mentorship", size: 30 }
       ]
 
-      closed_rooms_data.each do |data|
-        room = Rooms::Closed.create!(
+      closed_channels_data.each do |data|
+        channel = Channels::Closed.create!(
           name: data[:name],
           creator: admin
         )
         members = users.sample(data[:size])
         members = ([ admin ] + members).uniq
-        room.memberships.grant_to(members)
-        rooms[:closed] << room
+        channel.memberships.grant_to(members)
+        channels[:closed] << channel
       end
-      puts "   Created #{rooms[:closed].count} closed rooms"
+      puts "   Created #{channels[:closed].count} closed channels"
 
       # Direct messages - create many DM conversations
       print "   Creating DMs: "
@@ -483,8 +483,8 @@ namespace :generate do
       special_users.combination(2).each do |pair|
         Current.user = pair.first
         begin
-          dm = Rooms::Direct.create_for({}, users: pair)
-          rooms[:direct] << dm
+          dm = Channels::Direct.create_for({}, users: pair)
+          channels[:direct] << dm
           add_dm_messages(dm, pair)
         rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
@@ -495,8 +495,8 @@ namespace :generate do
       if special_users.length >= 3
         Current.user = special_users.first
         begin
-          dm = Rooms::Direct.create_for({}, users: special_users)
-          rooms[:direct] << dm
+          dm = Channels::Direct.create_for({}, users: special_users)
+          channels[:direct] << dm
           add_special_group_dm_messages(dm, special_users)
         rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
@@ -509,8 +509,8 @@ namespace :generate do
           other = other_users.sample
           Current.user = special
           begin
-            dm = Rooms::Direct.create_for({}, users: [ special, other ])
-            rooms[:direct] << dm
+            dm = Channels::Direct.create_for({}, users: [ special, other ])
+            channels[:direct] << dm
             add_dm_messages(dm, [ special, other ])
           rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
             nil
@@ -523,8 +523,8 @@ namespace :generate do
         participants = other_users.sample(2)
         Current.user = participants.first
         begin
-          dm = Rooms::Direct.create_for({}, users: participants)
-          rooms[:direct] << dm
+          dm = Channels::Direct.create_for({}, users: participants)
+          channels[:direct] << dm
         rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
           nil
         end
@@ -540,8 +540,8 @@ namespace :generate do
         group_members = [ special ] + other_users.sample(rand(2..4))
         Current.user = special
         begin
-          dm = Rooms::Direct.create_for({}, users: group_members)
-          rooms[:direct] << dm
+          dm = Channels::Direct.create_for({}, users: group_members)
+          channels[:direct] << dm
           add_dm_messages(dm, group_members)
           group_dm_count += 1
         rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
@@ -554,8 +554,8 @@ namespace :generate do
         participants = other_users.sample(rand(3..5))
         Current.user = participants.first
         begin
-          dm = Rooms::Direct.create_for({}, users: participants)
-          rooms[:direct] << dm
+          dm = Channels::Direct.create_for({}, users: participants)
+          channels[:direct] << dm
           add_dm_messages(dm, participants)
           group_dm_count += 1
         rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
@@ -564,9 +564,9 @@ namespace :generate do
       end
 
       Current.user = nil
-      puts "done! (#{rooms[:direct].count} DMs, #{group_dm_count} group)"
+      puts "done! (#{channels[:direct].count} DMs, #{group_dm_count} group)"
 
-      rooms
+      channels
     end
 
     def add_dm_messages(dm, participants)
@@ -590,7 +590,7 @@ namespace :generate do
 
         begin
           Message.create!(
-            room: dm,
+            channel: dm,
             creator: user,
             body: body,
             created_at: base_time + time_offset,
@@ -624,7 +624,7 @@ namespace :generate do
 
         begin
           Message.create!(
-            room: dm,
+            channel: dm,
             creator: msg[:user],
             body: msg[:body],
             created_at: base_time + time_offset,
@@ -636,36 +636,36 @@ namespace :generate do
       end
     end
 
-    def create_messages(rooms, users)
-      all_rooms = rooms[:open] + rooms[:closed]
+    def create_messages(channels, users)
+      all_channels = channels[:open] + channels[:closed]
       message_count = 0
 
       print "   Generating messages: "
 
-      # Distribute messages across open and closed rooms
-      all_rooms.each do |room|
-        room_users = room.users.to_a
-        next if room_users.empty?
+      # Distribute messages across open and closed channels
+      all_channels.each do |channel|
+        channel_users = channel.users.to_a
+        next if channel_users.empty?
 
         count = rand(80..150)
         base_time = rand(30..60).days.ago
-        user_ids = room_users.map(&:id)
-        admin_ids = room_users.select(&:administrator?).map(&:id)
+        user_ids = channel_users.map(&:id)
+        admin_ids = channel_users.select(&:administrator?).map(&:id)
 
         count.times do |i|
-          user = room_users.sample
+          user = channel_users.sample
           time_offset = (i * rand(3..30)).minutes
           body = CHAT_MESSAGES.sample
 
           # Add proper ActionText mentions occasionally
-          if rand < 0.1 && room_users.length > 1
-            mentioned = (room_users - [ user ]).sample
+          if rand < 0.1 && channel_users.length > 1
+            mentioned = (channel_users - [ user ]).sample
             body = body_with_mention(mentioned, body)
           end
 
           begin
             Message.create!(
-              room: room,
+              channel: channel,
               creator: user,
               body: body,
               created_at: base_time + time_offset,
@@ -683,21 +683,21 @@ namespace :generate do
       special_users = users.select { |u| u.email_address.include?("sabha.co") }
       if special_users.any?
         print " mentions for special users: "
-        open_rooms = rooms[:open]
+        open_channels = channels[:open]
 
         special_users.each do |special|
-          # Create 3-5 messages mentioning each special user in different rooms
+          # Create 3-5 messages mentioning each special user in different channels
           rand(3..5).times do
-            room = open_rooms.sample
-            room_users = room.users.to_a - [ special ]
-            next if room_users.empty?
+            channel = open_channels.sample
+            channel_users = channel.users.to_a - [ special ]
+            next if channel_users.empty?
 
-            sender = room_users.sample
+            sender = channel_users.sample
             body = body_with_mention(special, CHAT_MESSAGES.sample)
 
             begin
               Message.create!(
-                room: room,
+                channel: channel,
                 creator: sender,
                 body: body,
                 created_at: rand(1..14).days.ago,
@@ -715,7 +715,7 @@ namespace :generate do
       # Add ~500 messages to DMs
       # Add messages to DMs without special user messages
       dm_bodies = [ "Hey!", "What's up?", "Sounds good", "👍", "Thanks!", "Perfect", "Got it", "Let me know" ]
-      rooms[:direct].each do |dm|
+      channels[:direct].each do |dm|
         dm_users = dm.users.to_a
         next if dm_users.length < 2
 
@@ -726,7 +726,7 @@ namespace :generate do
 
           begin
             Message.create!(
-              room: dm,
+              channel: dm,
               creator: user,
               body: dm_bodies.sample,
               created_at: base_time + time_offset,
@@ -764,7 +764,7 @@ namespace :generate do
       "Thanks for sharing"
     ].freeze
 
-    def create_threads(rooms, users)
+    def create_threads(channels, users)
       special_users = users.select { |u| u.email_address.include?("sabha.co") }
 
       # First, create threads specifically for special users (they'll be thread creators)
@@ -772,31 +772,31 @@ namespace :generate do
       thread_count = 0
 
       special_users.each do |special|
-        # Find messages in rooms the special user is a member of (not their own messages)
-        special_room_ids = special.room_ids
-        parent_messages = Message.includes(room: :users)
-                                  .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
-                                  .where(room_id: special_room_ids)
+        # Find messages in channels the special user is a member of (not their own messages)
+        special_channel_ids = special.channel_ids
+        parent_messages = Message.includes(channel: :users)
+                                  .where.not(channels: { type: [ "Channels::Direct", "Channels::Thread" ] })
+                                  .where(channel_id: special_channel_ids)
                                   .where.not(creator_id: special.id)
                                   .where("messages.created_at < ?", 3.days.ago)
                                   .order("RANDOM()")
                                   .limit(2)
 
         parent_messages.each do |parent|
-          room_users = parent.room.users.to_a
+          channel_users = parent.channel.users.to_a
           Current.user = special  # Special user creates the thread
 
           begin
-            thread = Rooms::Thread.create_for(
+            thread = Channels::Thread.create_for(
               { parent_message_id: parent.id },
-              users: room_users
+              users: channel_users
             )
 
             base_time = parent.created_at + rand(30..180).minutes
 
             # First message from special user
             Message.create!(
-              room: thread,
+              channel: thread,
               creator: special,
               body: THREAD_STARTERS.sample,
               created_at: base_time,
@@ -805,11 +805,11 @@ namespace :generate do
 
             # Replies from others
             rand(3..6).times do |i|
-              user = (room_users - [ special ]).sample || room_users.sample
+              user = (channel_users - [ special ]).sample || channel_users.sample
               time_offset = (i + 1) * rand(5..30).minutes
 
               Message.create!(
-                room: thread,
+                channel: thread,
                 creator: user,
                 body: THREAD_REPLIES.sample,
                 created_at: base_time + time_offset,
@@ -826,30 +826,30 @@ namespace :generate do
       end
 
       # Also create threads on messages BY special users (they'll be parent message creators)
-      special_messages = Message.includes(room: :users)
-                                 .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
+      special_messages = Message.includes(channel: :users)
+                                 .where.not(channels: { type: [ "Channels::Direct", "Channels::Thread" ] })
                                  .where(creator_id: special_users.map(&:id))
                                  .where("messages.created_at < ?", 3.days.ago)
                                  .order("RANDOM()")
                                  .limit(special_users.length * 2)
 
       special_messages.each do |parent|
-        room_users = parent.room.users.to_a
-        next if room_users.length < 2
+        channel_users = parent.channel.users.to_a
+        next if channel_users.length < 2
 
-        creator = (room_users - [ parent.creator ]).sample || room_users.sample
+        creator = (channel_users - [ parent.creator ]).sample || channel_users.sample
         Current.user = creator
 
         begin
-          thread = Rooms::Thread.create_for(
+          thread = Channels::Thread.create_for(
             { parent_message_id: parent.id },
-            users: room_users
+            users: channel_users
           )
 
           base_time = parent.created_at + rand(30..180).minutes
 
           Message.create!(
-            room: thread,
+            channel: thread,
             creator: creator,
             body: THREAD_STARTERS.sample,
             created_at: base_time,
@@ -857,11 +857,11 @@ namespace :generate do
           )
 
           rand(3..6).times do |i|
-            user = room_users.sample
+            user = channel_users.sample
             time_offset = (i + 1) * rand(5..30).minutes
 
             Message.create!(
-              room: thread,
+              channel: thread,
               creator: user,
               body: THREAD_REPLIES.sample,
               created_at: base_time + time_offset,
@@ -878,30 +878,30 @@ namespace :generate do
 
       # Now create random threads for other users
       print " random: "
-      threadable = Message.includes(room: :users)
-                          .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
-                          .where.not(id: Rooms::Thread.select(:parent_message_id))  # Exclude messages that already have threads
+      threadable = Message.includes(channel: :users)
+                          .where.not(channels: { type: [ "Channels::Direct", "Channels::Thread" ] })
+                          .where.not(id: Channels::Thread.select(:parent_message_id))  # Exclude messages that already have threads
                           .where("messages.created_at < ?", 3.days.ago)
                           .order("RANDOM()")
                           .limit(20)
 
       threadable.each do |parent|
-        room_users = parent.room.users.to_a
-        next if room_users.length < 2
+        channel_users = parent.channel.users.to_a
+        next if channel_users.length < 2
 
-        creator = (room_users - [ parent.creator ]).sample || room_users.sample
+        creator = (channel_users - [ parent.creator ]).sample || channel_users.sample
         Current.user = creator
 
         begin
-          thread = Rooms::Thread.create_for(
+          thread = Channels::Thread.create_for(
             { parent_message_id: parent.id },
-            users: room_users
+            users: channel_users
           )
 
           base_time = parent.created_at + rand(30..180).minutes
 
           Message.create!(
-            room: thread,
+            channel: thread,
             creator: creator,
             body: THREAD_STARTERS.sample,
             created_at: base_time,
@@ -909,11 +909,11 @@ namespace :generate do
           )
 
           rand(3..8).times do |i|
-            user = room_users.sample
+            user = channel_users.sample
             time_offset = (i + 1) * rand(5..30).minutes
 
             Message.create!(
-              room: thread,
+              channel: thread,
               creator: user,
               body: THREAD_REPLIES.sample,
               created_at: base_time + time_offset,
@@ -933,8 +933,8 @@ namespace :generate do
     end
 
     def create_boosts(users)
-      messages = Message.includes(room: :users)
-                        .where.not(rooms: { type: "Rooms::Direct" })
+      messages = Message.includes(channel: :users)
+                        .where.not(channels: { type: "Channels::Direct" })
                         .where(active: true)
                         .order("RANDOM()")
                         .limit(200)
@@ -943,10 +943,10 @@ namespace :generate do
       boost_records = []
 
       messages.each do |message|
-        room_user_ids = message.room.user_ids - [ message.creator_id ]
-        next if room_user_ids.empty?
+        channel_user_ids = message.channel.user_ids - [ message.creator_id ]
+        next if channel_user_ids.empty?
 
-        booster_ids = room_user_ids.sample(rand(1..4))
+        booster_ids = channel_user_ids.sample(rand(1..4))
         booster_ids.each do |booster_id|
           boost_records << {
             message_id: message.id,
@@ -970,7 +970,7 @@ namespace :generate do
       # Special users always get bookmarks (3-5 each)
       special_users = users.select { |u| u.email_address.include?("sabha.co") }
       special_users.each do |user|
-        message_ids = Message.where(room_id: user.room_ids, active: true)
+        message_ids = Message.where(channel_id: user.channel_ids, active: true)
                              .where.not(creator_id: user.id)
                              .order("RANDOM()")
                              .limit(rand(3..5))
@@ -991,7 +991,7 @@ namespace :generate do
       bookmarking_users = other_users.sample(other_users.count / 5)
 
       bookmarking_users.each do |user|
-        message_ids = Message.where(room_id: user.room_ids, active: true)
+        message_ids = Message.where(channel_id: user.channel_ids, active: true)
                              .order("RANDOM()")
                              .limit(rand(1..3))
                              .pluck(:id)
@@ -1101,7 +1101,7 @@ namespace :generate do
     end
   end
 
-  desc "Generate a complete demo environment with users, rooms, and messages"
+  desc "Generate a complete demo environment with users, channels, and messages"
   task demo: :environment do
     require "faker"
 
@@ -1165,14 +1165,14 @@ namespace :generate do
     # In SAAS mode, create GlobalIdentities and WorkspaceMemberships
     create_saas_identities_for_workspace(users, tenant_id) if tenant_id
 
-    puts "🏠 Creating rooms..."
-    rooms = create_rooms(users)
+    puts "🏠 Creating channels..."
+    channels = create_channels(users)
 
     puts "💬 Generating messages..."
-    create_messages(rooms, users)
+    create_messages(channels, users)
 
     puts "🧵 Creating threads..."
-    create_threads(rooms, users)
+    create_threads(channels, users)
 
     puts "🗂️  Creating a forum with posts..."
     DemoHelpers.create_forum!(name: "Community Q&A", creator: users.first, users: users)
@@ -1189,8 +1189,8 @@ namespace :generate do
     puts ""
     puts "📊 Summary:"
     puts "   Users: #{User.count}"
-    puts "   Rooms: #{Room.where(type: %w[Rooms::Open Rooms::Closed]).count} (+ #{Rooms::Direct.count} DMs, #{Rooms::Thread.count} threads)"
-    puts "   Forums: #{Rooms::Forum.count} (#{Rooms::Post.count} posts, #{Solution.count} solved)"
+    puts "   Channels: #{Channel.where(type: %w[Channels::Open Channels::Closed]).count} (+ #{Channels::Direct.count} DMs, #{Channels::Thread.count} threads)"
+    puts "   Forums: #{Channels::Forum.count} (#{Channels::Post.count} posts, #{Solution.count} solved)"
     puts "   Messages: #{Message.count}"
     puts "   Boosts: #{Boost.count}"
     puts "   Bookmarks: #{Bookmark.count}"
@@ -1265,13 +1265,13 @@ namespace :generate do
     end
   end
 
-  desc "Generate messages in a specific room (default: General)"
+  desc "Generate messages in a specific channel (default: General)"
   task lines: :environment do
-    room = Room.find_by(name: "General")
+    channel = Channel.find_by(name: "General")
     users = User.all
 
     1.upto(500) do |i|
-      room.messages.create! \
+      channel.messages.create! \
         body: "Message #{i}",
         creator: users.sample,
         created_at: 1.day.ago + i.minutes
@@ -1283,20 +1283,20 @@ namespace :generate do
     require "faker"
 
     users = User.where(role: %w[member administrator]).to_a
-    rooms = Room.without_directs.to_a
+    channels = Channel.without_directs.to_a
 
-    if users.empty? || rooms.empty?
-      puts "❌ No users or rooms found. Run `rake generate:demo` first."
+    if users.empty? || channels.empty?
+      puts "❌ No users or channels found. Run `rake generate:demo` first."
       exit 1
     end
 
     puts "💬 Adding more messages..."
-    rooms.each do |room|
-      room_users = room.users.to_a
-      next if room_users.empty?
+    channels.each do |channel|
+      channel_users = channel.users.to_a
+      next if channel_users.empty?
 
       rand(20..50).times do
-        create_single_message(room, room_users.sample, users)
+        create_single_message(channel, channel_users.sample, users)
       end
     end
 
@@ -1383,12 +1383,12 @@ namespace :generate do
     users
   end
 
-  def create_rooms(users)
+  def create_channels(users)
     admin = users.first
-    rooms = {}
+    channels = {}
 
-    # Open rooms (everyone gets auto-membership)
-    open_rooms = [
+    # Open channels (everyone gets auto-membership)
+    open_channels = [
       { name: "General", key: "general" },
       { name: "Introductions", key: "introductions" },
       { name: "Random", key: "random" },
@@ -1396,44 +1396,44 @@ namespace :generate do
       { name: "Help & Support", key: "help" }
     ]
 
-    open_rooms.each do |room_data|
-      rooms[room_data[:key]] = Rooms::Open.create!(
-        name: room_data[:name],
+    open_channels.each do |channel_data|
+      channels[channel_data[:key]] = Channels::Open.create!(
+        name: channel_data[:name],
         creator: admin,
         auto_join: true
       )
     end
 
-    # Closed rooms (invite only)
-    closed_rooms = [
+    # Closed channels (invite only)
+    closed_channels = [
       { name: "Founders Circle", key: "founders", members: users.sample(6) },
       { name: "Backend Guild", key: "backend", members: users.sample(5) },
       { name: "Design Crew", key: "design", members: users.sample(4) },
       { name: "Book Club", key: "books", members: users.sample(7) }
     ]
 
-    closed_rooms.each do |room_data|
-      room = Rooms::Closed.create!(
-        name: room_data[:name],
+    closed_channels.each do |channel_data|
+      channel = Channels::Closed.create!(
+        name: channel_data[:name],
         creator: admin
       )
-      room.memberships.grant_to([ admin ] + room_data[:members])
-      rooms[room_data[:key]] = room
+      channel.memberships.grant_to([ admin ] + channel_data[:members])
+      channels[channel_data[:key]] = channel
     end
 
     # Direct messages (1-on-1 conversations)
     dm_pairs = users.combination(2).to_a.sample(8)
     dm_pairs.each do |pair|
       Current.user = pair.first
-      dm = Rooms::Direct.create_for({}, users: pair)
-      rooms["dm_#{pair.map(&:id).join('_')}"] = dm
+      dm = Channels::Direct.create_for({}, users: pair)
+      channels["dm_#{pair.map(&:id).join('_')}"] = dm
     end
 
     # Multi-user DM (group conversation)
     group_dm_users = users.sample(4)
     Current.user = group_dm_users.first
-    group_dm = Rooms::Direct.create_for({}, users: group_dm_users)
-    rooms["group_dm"] = group_dm
+    group_dm = Channels::Direct.create_for({}, users: group_dm_users)
+    channels["group_dm"] = group_dm
 
     # Add messages to group DM
     base_time = rand(3..7).days.ago
@@ -1448,7 +1448,7 @@ namespace :generate do
     group_dm_messages.each_with_index do |body, i|
       user = group_dm_users[i % group_dm_users.length]
       Message.create!(
-        room: group_dm,
+        channel: group_dm,
         creator: user,
         body: body,
         created_at: base_time + (i * rand(5..30)).minutes,
@@ -1458,10 +1458,10 @@ namespace :generate do
 
     Current.user = nil
 
-    rooms
+    channels
   end
 
-  def create_messages(rooms, users)
+  def create_messages(channels, users)
     # Conversation templates for more realistic chat
     general_topics = [
       -> { Faker::Lorem.sentence(word_count: rand(5..15)) },
@@ -1503,11 +1503,11 @@ namespace :generate do
       -> { "Open sourced my #{Faker::Hacker.noun} tool: #{Faker::Internet.url(host: 'github.com')}" }
     ]
 
-    # Generate messages for each room
-    rooms.each do |key, room|
-      next if room.direct? # DMs handled separately
+    # Generate messages for each channel
+    channels.each do |key, channel|
+      next if channel.direct? # DMs handled separately
 
-      room_users = room.users.to_a
+      channel_users = channel.users.to_a
       message_count = case key
       when "general" then rand(80..120)
       when "introductions" then rand(15..25)
@@ -1528,22 +1528,22 @@ namespace :generate do
       base_time = rand(14..30).days.ago
 
       message_count.times do |i|
-        user = room_users.sample
+        user = channel_users.sample
         time_offset = (i * rand(5..60)).minutes
 
         template = templates.sample
         body = template.arity == 1 ? template.call(user) : template.call
 
         # Occasionally add proper ActionText mentions
-        if rand < 0.15 && room_users.length > 1
-          mentioned_user = (room_users - [ user ]).sample
+        if rand < 0.15 && channel_users.length > 1
+          mentioned_user = (channel_users - [ user ]).sample
           body = body_with_mention(mentioned_user, body)
         end
 
         # Occasionally add replies/reactions
         body = "#{%w[+1 👍 This! Agree! 💯 Nice!].sample}" if rand < 0.08
 
-        create_message_safely(room, user, body, base_time + time_offset)
+        create_message_safely(channel, user, body, base_time + time_offset)
       end
 
       print "."
@@ -1553,26 +1553,26 @@ namespace :generate do
     admin = users.find { |u| u.email_address == "admin@sabha.co" }
     if admin
       print " admin mentions: "
-      open_room_keys = %w[general random help show-and-tell]
-      open_room_keys.each do |key|
-        room = rooms[key]
-        next unless room
+      open_channel_keys = %w[general random help show-and-tell]
+      open_channel_keys.each do |key|
+        channel = channels[key]
+        next unless channel
 
-        room_users = room.users.to_a - [ admin ]
-        next if room_users.empty?
+        channel_users = channel.users.to_a - [ admin ]
+        next if channel_users.empty?
 
-        # Create 2-3 messages mentioning admin in each room
+        # Create 2-3 messages mentioning admin in each channel
         rand(2..3).times do
-          sender = room_users.sample
+          sender = channel_users.sample
           body = body_with_mention(admin, [ "what do you think?", "any thoughts?", "need your input on this", "can you help?" ].sample)
-          create_message_safely(room, sender, body, rand(1..14).days.ago)
+          create_message_safely(channel, sender, body, rand(1..14).days.ago)
         end
         print "."
       end
     end
 
     # Generate DM conversations
-    rooms.select { |_, r| r.direct? }.each do |_, dm|
+    channels.select { |_, r| r.direct? }.each do |_, dm|
       dm_users = dm.users.to_a
       next if dm_users.length < 2
 
@@ -1599,11 +1599,11 @@ namespace :generate do
   end
 
   # Wrapper for positional args (delegates to shared helper)
-  def create_message_safely(room, user, body, created_at)
-    DemoHelpers.create_message_safely(room: room, creator: user, body: body, created_at: created_at)
+  def create_message_safely(channel, user, body, created_at)
+    DemoHelpers.create_message_safely(channel: channel, creator: user, body: body, created_at: created_at)
   end
 
-  def create_single_message(room, user, all_users)
+  def create_single_message(channel, user, all_users)
     bodies = [
       Faker::Lorem.sentence(word_count: rand(5..15)),
       "#{Faker::Hacker.say_something_smart}",
@@ -1612,10 +1612,10 @@ namespace :generate do
       "Quick update: #{Faker::Lorem.sentence}"
     ]
 
-    create_message_safely(room, user, bodies.sample, rand(1..48).hours.ago)
+    create_message_safely(channel, user, bodies.sample, rand(1..48).hours.ago)
   end
 
-  def create_threads(rooms, users)
+  def create_threads(channels, users)
     thread_starters = [
       -> { "This deserves its own thread - let's discuss!" },
       -> { "Expanding on this point..." },
@@ -1637,29 +1637,29 @@ namespace :generate do
     admin = users.find { |u| u.email_address == "admin@sabha.co" }
     if admin
       print " admin threads: "
-      admin_room_ids = admin.room_ids
-      admin_threadable = Message.includes(room: :users)
-                                 .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
-                                 .where(room_id: admin_room_ids)
+      admin_channel_ids = admin.channel_ids
+      admin_threadable = Message.includes(channel: :users)
+                                 .where.not(channels: { type: [ "Channels::Direct", "Channels::Thread" ] })
+                                 .where(channel_id: admin_channel_ids)
                                  .where.not(creator_id: admin.id)
                                  .where("messages.created_at < ?", 2.days.ago)
                                  .order("RANDOM()")
                                  .limit(3)
 
       admin_threadable.each do |parent_message|
-        room_users = parent_message.room.users.to_a
+        channel_users = parent_message.channel.users.to_a
         Current.user = admin  # Admin creates the thread
 
-        thread = Rooms::Thread.create_for(
+        thread = Channels::Thread.create_for(
           { parent_message_id: parent_message.id },
-          users: room_users
+          users: channel_users
         )
 
         base_time = parent_message.created_at + rand(30..180).minutes
         create_message_safely(thread, admin, thread_starters.sample.call, base_time)
 
         rand(3..6).times do |i|
-          user = (room_users - [ admin ]).sample || room_users.sample
+          user = (channel_users - [ admin ]).sample || channel_users.sample
           time_offset = (i + 1) * rand(5..30).minutes
           create_message_safely(thread, user, thread_replies.sample.call, base_time + time_offset)
         end
@@ -1668,30 +1668,30 @@ namespace :generate do
       end
 
       # Also create threads on messages BY admin (admin is parent message creator)
-      admin_messages = Message.includes(room: :users)
-                               .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
+      admin_messages = Message.includes(channel: :users)
+                               .where.not(channels: { type: [ "Channels::Direct", "Channels::Thread" ] })
                                .where(creator_id: admin.id)
                                .where("messages.created_at < ?", 2.days.ago)
                                .order("RANDOM()")
                                .limit(2)
 
       admin_messages.each do |parent_message|
-        room_users = parent_message.room.users.to_a
-        next if room_users.length < 2
+        channel_users = parent_message.channel.users.to_a
+        next if channel_users.length < 2
 
-        thread_creator = (room_users - [ admin ]).sample || room_users.sample
+        thread_creator = (channel_users - [ admin ]).sample || channel_users.sample
         Current.user = thread_creator
 
-        thread = Rooms::Thread.create_for(
+        thread = Channels::Thread.create_for(
           { parent_message_id: parent_message.id },
-          users: room_users
+          users: channel_users
         )
 
         base_time = parent_message.created_at + rand(30..180).minutes
         create_message_safely(thread, thread_creator, thread_starters.sample.call, base_time)
 
         rand(3..6).times do |i|
-          user = room_users.sample
+          user = channel_users.sample
           time_offset = (i + 1) * rand(5..30).minutes
           create_message_safely(thread, user, thread_replies.sample.call, base_time + time_offset)
         end
@@ -1700,32 +1700,32 @@ namespace :generate do
       end
     end
 
-    # Pick some more random messages from non-DM rooms to start threads on
+    # Pick some more random messages from non-DM channels to start threads on
     print " random: "
-    threadable_messages = Message.includes(room: :users)
-                                  .where.not(rooms: { type: [ "Rooms::Direct", "Rooms::Thread" ] })
-                                  .where.not(id: Rooms::Thread.select(:parent_message_id))
+    threadable_messages = Message.includes(channel: :users)
+                                  .where.not(channels: { type: [ "Channels::Direct", "Channels::Thread" ] })
+                                  .where.not(id: Channels::Thread.select(:parent_message_id))
                                   .where("messages.created_at < ?", 2.days.ago)
                                   .order("RANDOM()")
                                   .limit(5)
 
     threadable_messages.each do |parent_message|
-      room_users = parent_message.room.users.to_a
-      next if room_users.length < 2
+      channel_users = parent_message.channel.users.to_a
+      next if channel_users.length < 2
 
-      thread_creator = (room_users - [ parent_message.creator ]).sample || room_users.sample
+      thread_creator = (channel_users - [ parent_message.creator ]).sample || channel_users.sample
       Current.user = thread_creator
 
-      thread = Rooms::Thread.create_for(
+      thread = Channels::Thread.create_for(
         { parent_message_id: parent_message.id },
-        users: room_users
+        users: channel_users
       )
 
       base_time = parent_message.created_at + rand(30..180).minutes
       create_message_safely(thread, thread_creator, thread_starters.sample.call, base_time)
 
       rand(3..10).times do |i|
-        user = room_users.sample
+        user = channel_users.sample
         time_offset = (i + 1) * rand(5..30).minutes
         create_message_safely(thread, user, thread_replies.sample.call, base_time + time_offset)
       end
@@ -1742,13 +1742,13 @@ namespace :generate do
     now = Time.current
     boost_records = []
 
-    messages = Message.includes(room: :users)
-                      .where.not(rooms: { type: "Rooms::Direct" })
+    messages = Message.includes(channel: :users)
+                      .where.not(channels: { type: "Channels::Direct" })
                       .order("RANDOM()")
                       .limit(50)
 
     messages.each do |message|
-      boosters = (message.room.users.to_a - [ message.creator ]).sample(rand(1..4))
+      boosters = (message.channel.users.to_a - [ message.creator ]).sample(rand(1..4))
       boosters.each do |booster|
         boost_records << {
           message_id: message.id,
@@ -1768,8 +1768,8 @@ namespace :generate do
     bookmark_records = []
 
     users.each do |user|
-      # Each user bookmarks a few random messages from rooms they're in
-      message_ids = Message.where(room_id: user.room_ids)
+      # Each user bookmarks a few random messages from channels they're in
+      message_ids = Message.where(channel_id: user.channel_ids)
                            .order("RANDOM()")
                            .limit(rand(3..8))
                            .pluck(:id)

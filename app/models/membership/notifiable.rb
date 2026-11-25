@@ -17,7 +17,7 @@ module Membership::Notifiable
     end
   end
 
-  # Deliberately says nothing about whether the member is watching the room.
+  # Deliberately says nothing about whether the member is watching the channel.
   # That's the dispatcher's call now: it asks anycable-go who's actually present
   # and subtracts them (Message#watching?), falling back to `connected?` only
   # when the broker can't answer. Answering it here too would mean a stale
@@ -37,7 +37,7 @@ module Membership::Notifiable
       effective_involvement.in?(%i[mentions everything])
     when :direct_message
       true
-    when :everyone_room_message
+    when :everyone_channel_message
       effective_involvement == :everything
     when :thread_reply
       !involved_in_invisible?
@@ -65,11 +65,11 @@ module Membership::Notifiable
       return false if user_id == message.creator_id
       return false unless active?
       return false if involved_in_invisible?
-      return false unless message.active? && room.active?
+      return false unless message.active? && channel.active?
       return false unless user.active? && user.verified? && !user.bot?
       # Set-based block check: Message memoizes the (blocker_id, blocked_id)
       # pairs touching its creator so per-recipient predicate calls don't each
-      # fire two block queries (the N+N hot path for large-room dispatch).
+      # fire two block queries (the N+N hot path for large-channel dispatch).
       # Semantically equivalent to !user.can_ping?(message.creator).
       return false if message.blocked_user_ids_with_creator.include?(user_id)
       true

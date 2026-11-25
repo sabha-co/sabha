@@ -9,17 +9,17 @@ class BotApiTest < ActionDispatch::IntegrationTest
     with_provisioned_workspace(name: "Bot Test", creator: identity) do |workspace|
       tenant_id = workspace.external_id.to_s
 
-      bot, room, message = ApplicationRecord.with_tenant(tenant_id) do
+      bot, channel, message = ApplicationRecord.with_tenant(tenant_id) do
         bot = User.create_bot!(name: "SaaS Bot")
-        room = bot.rooms.without_threads.first
-        message = room.messages.create!(body: "Hello", creator: bot, client_message_id: SecureRandom.uuid)
-        [ bot, room, message ]
+        channel = bot.channels.without_threads.first
+        message = channel.messages.create!(body: "Hello", creator: bot, client_message_id: SecureRandom.uuid)
+        [ bot, channel, message ]
       end
 
       headers = { "Authorization" => "Bearer #{bot.bot_key}" }
 
       # Post message
-      workspace_post "/api/bots/rooms/#{room.id}/messages", workspace: workspace,
+      workspace_post "/api/bots/channels/#{channel.id}/messages", workspace: workspace,
         params: "New message", headers: headers.merge("CONTENT_TYPE" => "text/plain")
       assert_response :created
 
@@ -40,7 +40,7 @@ class BotApiTest < ActionDispatch::IntegrationTest
       assert_response :no_content
 
       # List members
-      get "/#{workspace.external_id}/api/bots/rooms/#{room.id}/members", headers: headers
+      get "/#{workspace.external_id}/api/bots/channels/#{channel.id}/members", headers: headers
       assert_response :success
       assert response.parsed_body.any? { |m| m["role"] == "bot" }
 
@@ -63,13 +63,13 @@ class BotApiTest < ActionDispatch::IntegrationTest
           User.create_bot!(name: "Bot A")
         end
 
-        room_b = ApplicationRecord.with_tenant(ws_b.external_id.to_s) do
-          Rooms::Open.first
+        channel_b = ApplicationRecord.with_tenant(ws_b.external_id.to_s) do
+          Channels::Open.first
         end
-        assert room_b, "expected workspace B to have a room to probe"
+        assert channel_b, "expected workspace B to have a channel to probe"
 
         # Bot A's key used against workspace B via bearer header
-        get "/#{ws_b.external_id}/api/bots/rooms/#{room_b.id}/members",
+        get "/#{ws_b.external_id}/api/bots/channels/#{channel_b.id}/members",
           headers: { "Authorization" => "Bearer #{bot.bot_key}" }
 
         # Foreign bot key does not authenticate in workspace B: bounced to the

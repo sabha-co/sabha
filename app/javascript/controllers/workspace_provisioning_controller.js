@@ -3,7 +3,7 @@ import { Turbo } from "@hotwired/turbo-rails"
 
 const STEPS = [
   { text: "Creating workspace\u2026", progress: 30 },
-  { text: "Setting up rooms\u2026", progress: 60 },
+  { text: "Setting up channels\u2026", progress: 60 },
   { text: "Almost ready!", progress: 90 },
 ]
 

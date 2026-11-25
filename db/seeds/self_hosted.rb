@@ -1,6 +1,6 @@
 # Self-hosted development seed data
 #
-# Creates a small community with 3 users, 4 rooms, messages, threads, boosts, and bookmarks.
+# Creates a small community with 3 users, 4 channels, messages, threads, boosts, and bookmarks.
 # Sign in as ashwin@sabha.co / password
 
 Account.find_or_create_by!(singleton_guard: 0) do |account|
@@ -16,25 +16,25 @@ everyone = [ ashwin, jason, david ]
 
 Current.user = ashwin
 
-# Rooms
-general = Rooms::Open.find_or_create_by!(name: "General") do |room|
-  room.slug = "general"
-  room.creator = ashwin
-  room.auto_join = true
+# Channels
+general = Channels::Open.find_or_create_by!(name: "General") do |channel|
+  channel.slug = "general"
+  channel.creator = ashwin
+  channel.auto_join = true
 end
 general.memberships.grant_to(everyone)
 
-random = Rooms::Open.find_or_create_by!(name: "Random") do |room|
-  room.creator = jason
+random = Channels::Open.find_or_create_by!(name: "Random") do |channel|
+  channel.creator = jason
 end
 random.memberships.grant_to(everyone)
 
-engineering = Rooms::Closed.find_or_create_by!(name: "Engineering") do |room|
-  room.creator = ashwin
+engineering = Channels::Closed.find_or_create_by!(name: "Engineering") do |channel|
+  channel.creator = ashwin
 end
 engineering.memberships.grant_to([ ashwin, jason ])
 
-dm = Rooms::Direct.find_or_create_for([ ashwin, david ])
+dm = Channels::Direct.find_or_create_for([ ashwin, david ])
 
 # Messages — spread over last 7 days
 times = spread_times(20)
@@ -42,7 +42,7 @@ times = spread_times(20)
 m1  = post_message general, ashwin, "Welcome to Sabha! This is the general channel for everyone.", at: times[0]
 m2  = post_message general, jason,  "Hey everyone, glad to be here.", at: times[1]
 m3  = post_message general, david,  "Thanks for setting this up Ashwin!", at: times[2]
-m4  = post_message general, ashwin, "Feel free to create new rooms for specific topics.", at: times[3]
+m4  = post_message general, ashwin, "Feel free to create new channels for specific topics.", at: times[3]
 m5  = post_message general, jason,  "Has anyone tried the thread feature yet?", at: times[4]
 
 m6  = post_message random, david,  "Random thought: we should do a team lunch soon.", at: times[5]
@@ -50,7 +50,7 @@ m7  = post_message random, jason,  "I'm in! How about Friday?", at: times[6]
 m8  = post_message random, ashwin, "Friday works for me too.", at: times[7]
 m9  = post_message random, david,  "/play tada", at: times[8]
 
-m10 = post_message engineering, ashwin, "Let's use this room for technical discussions.", at: times[9]
+m10 = post_message engineering, ashwin, "Let's use this channel for technical discussions.", at: times[9]
 m11 = post_message engineering, jason,  "Sounds good. I've been looking at the new Rails features.", at: times[10]
 m12 = post_message engineering, ashwin, "The Solid Queue integration is really nice.", at: times[11]
 m13 = post_message engineering, jason,  "Agreed. No more Redis dependency for background jobs.", at: times[12]
@@ -65,7 +65,7 @@ m19 = post_message general, ashwin, "Can't wait to see them!", at: times[18]
 m20 = post_message random,  jason,  "Happy Friday everyone!", at: times[19]
 
 # Thread on Jason's question about threads
-thread = Rooms::Thread.find_or_create_for(m5, creator: jason)
+thread = Channels::Thread.find_or_create_for(m5, creator: jason)
 post_message thread, ashwin, "Yes! Threads are great for focused discussions.", at: times[5]
 post_message thread, david,  "I've been using them for code reviews.", at: times[6]
 post_message thread, jason,  "Nice, I'll start using them more.", at: times[7]

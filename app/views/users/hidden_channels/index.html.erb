@@ -1,0 +1,13 @@
+<%= turbo_frame_tag :hidden_channels do %>
+  <div class="mb-2 mt-4">
+    <h1 class="txt-small font-semibold txt-label text-tertiary mb-2">Hidden Channels (<%= @hidden_memberships.size %>)</h1>
+    <div id="hidden_channels_list" class="flex flex-col channels-list">
+      <% @hidden_memberships.each do |membership| %>
+        <%= render "users/sidebars/channels/hidden", membership: membership %>
+      <% end %>
+      <% if @hidden_memberships.empty? %>
+        <p class="text-tertiary text-sm pad-half">No hidden channels</p>
+      <% end %>
+    </div>
+  </div>
+<% end %>

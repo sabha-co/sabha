@@ -14,7 +14,7 @@
 
     <div class="min-width flex-item-grow">
       <h1 class="margin-none txt-x-large"><%= @bot.name %> <span class="txt-small txt-muted" title="Bot"><%= icon_tag "bot" %></span></h1>
-      <p class="txt-small txt-muted margin-none">Post messages to rooms via the API, receive events in real-time.</p>
+      <p class="txt-small txt-muted margin-none">Post messages to channels via the API, receive events in real-time.</p>
     </div>
 
     <%= link_to edit_account_bot_path(@bot), class: "btn", aria: { label: "Edit #{@bot.name}" } do %>
@@ -88,13 +88,13 @@
   <hr class="separator full-width" style="--border-style: solid">
 
   <div class="pad-inline">
-    <%= link_to account_bot_rooms_path(@bot),
+    <%= link_to account_bot_channels_path(@bot),
           class: "flex align-center gap pad-block-half pad-inline fill-shade border-radius txt-undecorated" do %>
       <div class="flex-item-grow min-width">
-        <div class="txt-small"><strong>Room access</strong></div>
-        <div class="txt-x-small txt-muted">Choose which rooms this bot can post in and how events are delivered.</div>
+        <div class="txt-small"><strong>Channel access</strong></div>
+        <div class="txt-x-small txt-muted">Choose which channels this bot can post in and how events are delivered.</div>
       </div>
-      <span class="txt-small txt-muted txt-nowrap"><%= pluralize(@rooms_count, "room") %></span>
+      <span class="txt-small txt-muted txt-nowrap"><%= pluralize(@channels_count, "channel") %></span>
       <%= icon_tag "arrow-right", class: "txt-muted flex-item-no-shrink" %>
     <% end %>
   </div>
@@ -107,12 +107,12 @@
     <div class="flex flex-column gap-half">
       <p class="txt-small margin-none"><strong>Receiving events</strong> — Your bot client connects over WebSocket using its bot key. Events stream in real-time.</p>
       <p class="txt-small margin-none"><strong>Webhook delivery</strong> — Set a webhook URL and Sabha POSTs every event to it as a signed JSON request, alongside the WebSocket broadcast. Useful for stateless bots that can't hold a persistent connection.</p>
-      <p class="txt-small margin-none"><strong>Sending messages</strong> — POST to the per-room message URL (shown on each room's settings page) with <code>Authorization: Bearer &lt;bot_key&gt;</code>.</p>
+      <p class="txt-small margin-none"><strong>Sending messages</strong> — POST to the per-channel message URL (shown on each channel's settings page) with <code>Authorization: Bearer &lt;bot_key&gt;</code>.</p>
     </div>
 
     <%= render "curl_example",
           bot: @bot,
-          url: "#{request.base_url}#{request.script_name}/api/bots/rooms/<room_id>/messages",
+          url: "#{request.base_url}#{request.script_name}/api/bots/channels/<channel_id>/messages",
           body: "Hello from your bot" %>
 
     <p class="txt-x-small txt-muted margin-none"><%= link_to "Full API reference →", skill_path, target: "_blank", class: "txt-underlined" %></p>

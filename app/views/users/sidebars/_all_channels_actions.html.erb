@@ -1,0 +1,51 @@
+<%= tag.details class: "position-relative", data: {
+  controller: "popup", popup_orientation_top_class: "",
+  action: "keydown.esc->popup#close toggle->popup#toggle click@document->popup#closeOnClickOutside"
+} do %>
+  <summary class="btn action-btn options-btn">
+    <%= icon_tag "menu-dots-horizontal" %>
+    <span class="for-screen-reader">Channel options</span>
+  </summary>
+
+  <div class="popup-menu actions-menu border shadow" data-popup-target="menu">
+    <%= link_to inbox_activity_index_path, class: "btn action-btn full-width", style: "view-transition-name: new-channel" do %>
+      <span>Activity</span>
+    <% end %>
+
+    <%= link_to inbox_direct_messages_path, class: "btn action-btn full-width", style: "view-transition-name: new-channel" do %>
+      <span>DMs</span>
+    <% end %>
+
+    <%= link_to inbox_notifications_path, class: "btn action-btn full-width", style: "view-transition-name: new-channel" do %>
+      <span>Notifications</span>
+    <% end %>
+
+    <%= link_to inbox_messages_path, class: "btn action-btn full-width", style: "view-transition-name: new-channel" do %>
+      <span>All messages</span>
+    <% end %>
+
+    <%= link_to inbox_bookmarks_path, class: "btn action-btn full-width", style: "view-transition-name: new-channel" do %>
+      <span>Bookmarks</span>
+    <% end %>
+
+    <%= link_to channels_browse_path, class: "btn action-btn full-width" do %>
+      <span>Browse channels</span>
+    <% end %>
+
+    <% if Current.user.administrator? || !Current.account.settings.restrict_channel_creation_to_administrators? %>
+      <%= link_to new_channels_forum_path, class: "btn action-btn full-width" do %>
+        <span>New forum</span>
+      <% end %>
+    <% end %>
+
+    <%= link_to user_hidden_channels_path, class: "btn action-btn full-width",
+            data: { turbo_frame: :hidden_channels, action: "click->popup#close" } do %>
+      <span>Hidden channels</span>
+    <% end %>
+
+    <%= button_to inbox_clearance_path(stay: true), class: "btn action-btn full-width",
+                  data: { turbo_confirm: "Are you sure you want to mark everything as seen?", action: "click->popup#close" } do %>
+      <span>Mark all as seen</span>
+    <% end %>
+  </div>
+<% end %>

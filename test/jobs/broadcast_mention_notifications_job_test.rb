@@ -4,11 +4,11 @@ class BroadcastMentionNotificationsJobTest < ActiveJob::TestCase
   setup do
     @david = users(:david)
     @jason = users(:jason)
-    @room = rooms(:pets)
+    @channel = channels(:pets)
   end
 
   test "broadcasts a notification to each mentioned user's inbox_activity stream" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
       creator: @david,
       client_message_id: "mention_broadcast_job_1"
@@ -22,7 +22,7 @@ class BroadcastMentionNotificationsJobTest < ActiveJob::TestCase
   end
 
   test "refreshes each mentioned user's sidebar activity indicator" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
       creator: @david,
       client_message_id: "mention_broadcast_job_indicator"
@@ -34,7 +34,7 @@ class BroadcastMentionNotificationsJobTest < ActiveJob::TestCase
   end
 
   test "does nothing when the message has no mention notifications" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "Plain message",
       creator: @david,
       client_message_id: "mention_broadcast_job_2"

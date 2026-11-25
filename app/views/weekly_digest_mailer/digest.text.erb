@@ -3,21 +3,21 @@ Here's what happened this week in <%= @workspace_name %>.
 <% if @everyone_mentions.any? -%>
 Announcements you missed:
 <% @everyone_mentions.each do |message| -%>
-  - <%= sender_for(message) %> in <%= message.room.name %>: <%= preview_for(message) %>
+  - <%= sender_for(message) %> in <%= message.channel.name %>: <%= preview_for(message) %>
 <% end -%>
 
 <% end -%>
-<% if @active_rooms.any? -%>
-Rooms with activity:
-<% @active_rooms.each do |room, count| -%>
-  - <%= room.name %> — <%= pluralize(count, "message") %>
+<% if @active_channels.any? -%>
+Channels with activity:
+<% @active_channels.each do |channel, count| -%>
+  - <%= channel.name %> — <%= pluralize(count, "message") %>
 <% end -%>
 
 <% end -%>
 <% if @excerpts.any? -%>
 Recent discussion:
 <% @excerpts.each do |message| -%>
-  - <%= sender_for(message) %> in <%= message.room.name %>: <%= preview_for(message) %>
+  - <%= sender_for(message) %> in <%= message.channel.name %>: <%= preview_for(message) %>
 <% end -%>
 
 <% end -%>

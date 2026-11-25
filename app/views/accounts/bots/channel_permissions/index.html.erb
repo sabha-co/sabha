@@ -1,0 +1,64 @@
+<% @page_title = "#{@bot.name} channel access" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to account_bot_path(@bot) %>
+  </div>
+<% end %>
+
+<section class="panel flex flex-column gap">
+  <div class="flex align-center gap pad-inline">
+    <figure class="avatar flex-item-no-shrink" style="--avatar-size: 2em;">
+      <%= avatar_tag @bot %>
+    </figure>
+
+    <div class="min-width flex-item-grow">
+      <h1 class="margin-none txt-large"><strong>Channel access</strong></h1>
+      <p class="txt-small txt-muted margin-none"><%= @bot.name %> · <%= pluralize(@bot_memberships.size, "channel") %></p>
+    </div>
+  </div>
+
+  <hr class="separator full-width" style="--border-style: solid">
+
+  <div class="pad-inline flex flex-column gap-half">
+    <% if @bot_memberships.any? %>
+      <menu class="flex flex-column gap-half margin-none pad-none">
+        <% @bot_memberships.each do |membership| %>
+          <li>
+            <%= link_to account_bot_channel_permission_path(@bot, membership.channel),
+                  class: "flex align-center gap pad-block-half", style: "text-decoration: none; color: inherit;" do %>
+              <%= channel_type_indicator(membership.channel) %>
+              <span class="flex-item-grow min-width overflow-ellipsis"><%= channel_display_name(membership.channel) %></span>
+              <span class="txt-small txt-muted txt-nowrap"><% if membership.involvement == "mentions" %>Mentions only<% elsif membership.involvement == "nothing" %>Muted<% end %></span>
+              <%= icon_tag "arrow-right" %>
+            <% end %>
+          </li>
+        <% end %>
+      </menu>
+    <% else %>
+      <p class="txt-small txt-muted margin-none">Not in any channels yet. Add this bot to a channel to start posting messages.</p>
+    <% end %>
+
+    <% if @available_channels.any? %>
+      <details class="pad-block-half">
+        <summary class="btn btn--small txt-small">
+          <%= icon_tag "add" %>
+          <span>Add to channel</span>
+        </summary>
+
+        <menu class="flex flex-column gap-half margin-none pad-none pad-block-start">
+          <% @available_channels.each do |channel| %>
+            <li>
+              <%= link_to account_bot_channel_permission_path(@bot, channel),
+                    class: "flex align-center gap pad-block-half", style: "text-decoration: none; color: inherit;" do %>
+                <%= channel_type_indicator(channel) %>
+                <span class="flex-item-grow min-width overflow-ellipsis txt-muted"><%= channel.name %></span>
+                <%= icon_tag "arrow-right" %>
+              <% end %>
+            </li>
+          <% end %>
+        </menu>
+      </details>
+    <% end %>
+  </div>
+</section>

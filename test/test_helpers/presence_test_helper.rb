@@ -1,4 +1,4 @@
-# Push gating asks anycable-go who is watching a room (Room::PresenceSet), so
+# Push gating asks anycable-go who is watching a channel (Channel::PresenceSet), so
 # every message dispatch now makes an HTTP call. Left unstubbed, tests would hit
 # a real broker whenever one happens to be running on 8080 and otherwise fall
 # into the connection-refused path — nondeterministic either way, and the
@@ -16,11 +16,11 @@ module PresenceTestHelper
     setup { stub_empty_presence }
   end
 
-  # Put users in a room's presence set, as anycable-go would report them.
-  def watching(room, *users)
+  # Put users in a channel's presence set, as anycable-go would report them.
+  def watching(channel, *users)
     records = users.flatten.map { |user| { id: (user.try(:id) || user).to_s } }
 
-    stub_request(:get, presence_url_for(room))
+    stub_request(:get, presence_url_for(channel))
       .to_return(status: 200, body: { type: "info", total: records.size, records: records }.to_json)
   end
 
@@ -36,8 +36,8 @@ module PresenceTestHelper
         .to_return(status: 200, body: { type: "info", total: 0 }.to_json)
     end
 
-    def presence_url_for(room)
-      stream = PresenceChannel.broadcasting_for(room)
+    def presence_url_for(channel)
+      stream = PresenceChannel.broadcasting_for(channel)
       URI(AnyCable.config.http_broadcast_url)
         .merge("/api/presence/#{ERB::Util.url_encode(stream)}/users").to_s
     end

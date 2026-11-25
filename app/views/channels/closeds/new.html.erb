@@ -1,0 +1,5 @@
+<%= render layout: "channels/layouts/new" do %>
+  <%= render "channels/unified_form", channel: @channel,
+        open_url: channels_opens_path, closed_url: channels_closeds_path, forum_url: channels_forums_path,
+        default_type: "closed" %>
+<% end %>

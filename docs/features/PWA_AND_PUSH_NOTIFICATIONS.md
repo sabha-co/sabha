@@ -10,13 +10,13 @@ Sabha's Progressive Web App and push notification architecture.
 Subscribe:  notifications_controller.js -> PushManager.subscribe(VAPID) -> POST /user_push_subscriptions
 Trigger:    Message after_create_commit -> Notification::DispatchJob
 Route:      Message#notify_recipients -> deliver_push_for(activity_type)
-            (activity_type is one of :mention, :direct_message, :everyone_room_message, :thread_reply)
+            (activity_type is one of :mention, :direct_message, :everyone_channel_message, :thread_reply)
 Recipients: Message#push_recipient_user_ids_for + Membership::Notifiable#receives_push_for?
-Build:      Room::MessagePusher.payload_for builds the payload (title, body, path, badge count)
+Build:      Channel::MessagePusher.payload_for builds the payload (title, body, path, badge count)
 Queue:      WebPush::Pool#queue (one job per (subscription, payload) pair)
 Deliver:    50-thread executor -> WebPush::Notification -> Net::HTTP::Persistent -> push service
 Display:    Service worker push event -> showNotification() + setAppBadge()
-Click:      notificationclick -> navigate to room path (focus existing or open new window)
+Click:      notificationclick -> navigate to channel path (focus existing or open new window)
 ```
 
 Routing decisions (who is eligible for which channel) are the broader notification system's responsibility — see [NOTIFICATIONS.md](NOTIFICATIONS.md). This doc covers the PWA shell and the push transport only.
@@ -33,7 +33,7 @@ Routing decisions (who is eligible for which channel) are the broader notificati
 | Routing vocabulary | `app/models/notification/routing.rb` (`PUSH_TYPES`) |
 | Recipient resolution | `app/models/message.rb` (`push_recipient_user_ids_for`, `deliver_push_for`) |
 | Per-recipient eligibility | `app/models/membership/notifiable.rb` (`receives_push_for?`, `common_gates_pass?`) |
-| Payload builder | `app/models/room/message_pusher.rb` |
+| Payload builder | `app/models/channel/message_pusher.rb` |
 | Notification payload (transport) | `lib/web_push/notification.rb` |
 | Frontend subscription | `app/javascript/controllers/notifications_controller.js` |
 | Service worker | `app/views/pwa/service_worker.js` |
@@ -46,7 +46,7 @@ Routing decisions (who is eligible for which channel) are the broader notificati
 - **Web App Manifest** — dynamic manifest at `/webmanifest` with branding, icons (192/512px maskable), shortcuts
 - **Service Worker** — push notifications + network-first offline fallback for document requests
 - **Install Prompt** — Stimulus controller intercepts `beforeinstallprompt`, defers it, provides platform-specific instructions
-- **Badge API** — unread room count on app icon via `setAppBadge()`/`clearAppBadge()`
+- **Badge API** — unread channel count on app icon via `setAppBadge()`/`clearAppBadge()`
 - **CSS helpers** — `.hide-in-pwa`, `.hide-in-browser`, `.hide-in-ios-pwa` via `display-mode: standalone` media queries
 
 ### VAPID
@@ -60,13 +60,13 @@ VAPID (Voluntary Application Server Identification for Web Push) lets the server
 
 ### Notification Filtering
 
-Push routing follows `Notification::Routing::PUSH_TYPES`, which currently fires for four activity types: `:mention`, `:direct_message`, `:everyone_room_message`, and `:thread_reply`. For each message, `Message#notify_recipients` resolves the recipient set per type and asks `Membership::Notifiable#receives_push_for?(activity_type)` for each candidate.
+Push routing follows `Notification::Routing::PUSH_TYPES`, which currently fires for four activity types: `:mention`, `:direct_message`, `:everyone_channel_message`, and `:thread_reply`. For each message, `Message#notify_recipients` resolves the recipient set per type and asks `Membership::Notifiable#receives_push_for?(activity_type)` for each candidate.
 
 A membership receives a push only when **all** of the following hold (`receives_push_for?` + `common_gates_pass?`):
 
 - The user has `push_enabled` and is not banned/deactivated.
-- The membership's `effective_involvement` (per-room value layered over the user's global mode) matches the activity type — e.g. `:mention` requires at least `:mentions`, room messages require `:everything`.
-- The user is **not currently watching** that room — read live from the anycable-go broker (`Room::PresenceSet`), falling back to `Membership::Connectable#connected?` (5-minute TTL on `connected_at`) only when the broker can't answer.
+- The membership's `effective_involvement` (per-channel value layered over the user's global mode) matches the activity type — e.g. `:mention` requires at least `:mentions`, channel messages require `:everything`.
+- The user is **not currently watching** that channel — read live from the anycable-go broker (`Channel::PresenceSet`), falling back to `Membership::Connectable#connected?` (5-minute TTL on `connected_at`) only when the broker can't answer.
 - The user is not the message author and is not blocked by the author (or vice versa — block is symmetric for `can_ping?`).
 - The user has at least one valid `Push::Subscription` row.
 
@@ -76,17 +76,17 @@ Direct messages, `@everyone` broadcasts, and thread replies have type-specific r
 
 Direct messages:
 ```ruby
-{ title: creator.name, body: message_text, path: room_path }
+{ title: creator.name, body: message_text, path: channel_path }
 ```
 
-Shared rooms (open/closed):
+Shared channels (open/closed):
 ```ruby
-{ title: room.display_name, body: "#{creator.name}: #{message_text}", path: room_path }
+{ title: channel.display_name, body: "#{creator.name}: #{message_text}", path: channel_path }
 ```
 
 Threads: include link to parent message.
 
-Badge count (unread rooms) included in all payloads.
+Badge count (unread channels) included in all payloads.
 
 ### Delivery Infrastructure (WebPush::Pool)
 
@@ -99,8 +99,8 @@ Badge count (unread rooms) included in all payloads.
 
 ## Design Decisions
 
-- **Presence-aware delivery**: push gating asks the anycable-go broker who is watching the room (`Room::PresenceSet`), so members actively viewing a room don't receive push notifications. The membership connection columns survive as the fallback signal (5-minute TTL) for when the broker is unreachable.
-- **Room-type payloads**: Notification payloads are built based on room type (direct, shared, thread) rather than event type, keeping the payload logic simple.
+- **Presence-aware delivery**: push gating asks the anycable-go broker who is watching the channel (`Channel::PresenceSet`), so members actively viewing a channel don't receive push notifications. The membership connection columns survive as the fallback signal (5-minute TTL) for when the broker is unreachable.
+- **Channel-type payloads**: Notification payloads are built based on channel type (direct, shared, thread) rather than event type, keeping the payload logic simple.
 - **PWA install prompt**: `pwa_install_controller.js` intercepts `beforeinstallprompt` with platform-specific install instructions rather than relying on native browser prompts.
 - **Dynamic VAPID subject**: Uses `"mailto:#{Branding.support_email}"` so push service contact info matches your deployment.
 

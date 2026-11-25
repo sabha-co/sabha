@@ -19,13 +19,13 @@ class Boost < ApplicationRecord
       targets = "[id='#{boosts_target}']"
       rendering = { partial: "messages/boosts/boost", locals: { boost: self } }
 
-      Turbo::StreamsChannel.broadcast_action_to(message.room, :messages, action: :append, targets: targets, **rendering)
+      Turbo::StreamsChannel.broadcast_action_to(message.channel, :messages, action: :append, targets: targets, **rendering)
       Turbo::StreamsChannel.broadcast_action_to(Account.sole, :inbox, action: :append, targets: targets, **rendering)
     end
 
     def dispatch_boost_notification
       return if message.creator_id == booster_id
-      return if message.room.direct? || message.room.parent_room&.direct?
+      return if message.channel.direct? || message.channel.parent_channel&.direct?
 
       Notification::DispatchJob.perform_later(message, only: :boost, actor: booster)
     end
@@ -62,7 +62,7 @@ class Boost < ApplicationRecord
     def broadcast_removal
       targets = "[id='boost_#{id}']"
 
-      Turbo::StreamsChannel.broadcast_action_to(message.room, :messages, action: :remove, targets: targets)
+      Turbo::StreamsChannel.broadcast_action_to(message.channel, :messages, action: :remove, targets: targets)
       Turbo::StreamsChannel.broadcast_action_to(Account.sole, :inbox, action: :remove, targets: targets)
     end
 

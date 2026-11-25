@@ -1,0 +1,23 @@
+<% @page_title = "Browse channels" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to root_path %>
+  </div>
+<% end %>
+
+<section class="panel">
+  <h1 class="txt-large txt-align-center margin-block">Browse channels</h1>
+
+  <% if @channels.any? %>
+    <div id="browsable_channels" class="flex flex-column gap">
+      <%= render partial: "channels/browse/channel", collection: @channels, as: :channel %>
+
+      <% unless @page.last? %>
+        <%= render partial: "channels/browse/next_page_container", locals: { page: @page.next_param } %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="txt-deemphasize txt-align-center pad">You're a member of all available channels.</p>
+  <% end %>
+</section>

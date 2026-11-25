@@ -3,7 +3,7 @@
 # Solid Queue retries dedup at the provider rather than the DB.
 #
 # Subject stays generic (workspace + activity-type only) for inbox privacy;
-# sender and room names live in the body.
+# sender and channel names live in the body.
 class MissedNotificationsMailer < ApplicationMailer
   include EmailUnsubscribable
 
@@ -18,11 +18,11 @@ class MissedNotificationsMailer < ApplicationMailer
       item.actor&.name.presence || "Someone"
     end
 
-    def room_label_for(room)
-      case room
-      when Rooms::Direct then "Direct message"
-      when Rooms::Thread then "Thread in #{room.parent_room&.name || "a room"}"
-      else room.name
+    def channel_label_for(channel)
+      case channel
+      when Channels::Direct then "Direct message"
+      when Channels::Thread then "Thread in #{channel.parent_channel&.name || "a channel"}"
+      else channel.name
       end
     end
   end
@@ -32,7 +32,7 @@ class MissedNotificationsMailer < ApplicationMailer
     @user            = bundle.user
     @items           = items
     @workspace_name  = workspace_name
-    @grouped_items   = items.group_by { |item| item.message.room }
+    @grouped_items   = items.group_by { |item| item.message.channel }
     @activity_url    = inbox_activity_index_url(script_name: tenant_script_name)
     @settings_url    = edit_user_notification_settings_url(user_id: "me", script_name: tenant_script_name)
     @unsubscribe_url = unsubscribe_url_for(@user, :missed_notifications)

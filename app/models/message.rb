@@ -1,12 +1,12 @@
 class Message < ApplicationRecord
   include Attachment, Broadcasts, Mentionee, Pagination, Searchable, Streakable, Threadable, Unreadable, Deactivatable
 
-  belongs_to :room, counter_cache: true
+  belongs_to :channel, counter_cache: true
   belongs_to :creator, class_name: "User", default: -> { Current.user }
 
   has_many :boosts, -> { order(:created_at) }, class_name: "Boost"
   has_many :bookmarks, class_name: "Bookmark"
-  has_many :threads, class_name: "Rooms::Thread", foreign_key: :parent_message_id, dependent: :destroy
+  has_many :threads, class_name: "Channels::Thread", foreign_key: :parent_message_id, dependent: :destroy
 
   # Clean up associated records before destroying
   before_destroy :destroy_all_associated_records
@@ -14,7 +14,7 @@ class Message < ApplicationRecord
   has_rich_text :body
 
   before_create :set_default_client_message_id
-  before_create :touch_room_activity
+  before_create :touch_channel_activity
   after_create_commit :dispatch_notifications
   after_update_commit :broadcast_reactivation_if_restored
 
@@ -23,12 +23,12 @@ class Message < ApplicationRecord
   scope :user_authored, -> { where(event: nil, welcome: false) }
   scope :with_creator, -> { includes(creator: [ :badge, { avatar_attachment: { blob: :variant_records } } ]) }
   # Lightweight thread loading - fetches threads but NOT their messages
-  # The partial uses Rooms::Thread#participant_creators for efficient participant fetching
+  # The partial uses Channels::Thread#participant_creators for efficient participant fetching
   scope :with_thread_summary, -> { includes(:threads) }
   scope :for_display, -> {
     with_rich_text_body_and_embeds
       .with_creator
-      .includes(room: { parent_message: :room })
+      .includes(channel: { parent_message: :channel })
       .includes(attachment_attachment: { blob: :variant_records })
       .includes(boosts: { booster: { avatar_attachment: { blob: :variant_records } } })
       .with_thread_summary
@@ -38,19 +38,19 @@ class Message < ApplicationRecord
   scope :between, ->(from, to) { where(created_at: from..to) }
   scope :since, ->(time) { where(created_at: time..) }
   scope :created_before, ->(time) { where(created_at: ..time) }
-  scope :in_rooms, ->(ids) { where(room_id: ids) }
+  scope :in_channels, ->(ids) { where(channel_id: ids) }
 
-  # Active messages a user can reach: those in an active room they belong to, plus
-  # those in a nested sub-room (forum post / chat thread) whose PARENT they belong
-  # to — sub-room access derives from the parent, not a per-sub-room membership. So
-  # a passive parent member reaches a sub-room they never joined, and a silenced-
-  # but-active row a user keeps after leaving the parent grants no reach (its room
+  # Active messages a user can reach: those in an active channel they belong to, plus
+  # those in a nested sub-channel (forum post / chat thread) whose PARENT they belong
+  # to — sub-channel access derives from the parent, not a per-sub-channel membership. So
+  # a passive parent member reaches a sub-channel they never joined, and a silenced-
+  # but-active row a user keeps after leaving the parent grants no reach (its channel
   # fails the parent check). Backs search, unreads, the inbox feed, and User#reachable_message(s).
   scope :reachable_by, ->(user) {
-    mine = Membership.active.where(user_id: user.id).select(:room_id)
-    normal_rooms = Room.active.where(id: mine).where.not(type: Room::SUB_ROOM_TYPES)
-    sub_rooms    = Room.active.where(type: Room::SUB_ROOM_TYPES, parent_room_id: mine)
-    active.where(room_id: normal_rooms.or(sub_rooms).select(:id))
+    mine = Membership.active.where(user_id: user.id).select(:channel_id)
+    normal_channels = Channel.active.where(id: mine).where.not(type: Channel::SUB_CHANNEL_TYPES)
+    sub_channels    = Channel.active.where(type: Channel::SUB_CHANNEL_TYPES, parent_channel_id: mine)
+    active.where(channel_id: normal_channels.or(sub_channels).select(:id))
   }
 
   # Composite cursor for stable pagination across timestamp ties.
@@ -93,7 +93,7 @@ class Message < ApplicationRecord
     messages = messages.to_a
     return messages if messages.empty?
 
-    thread_participants = Rooms::Thread.preload_participant_creators(messages.flat_map(&:threads).uniq, limit:)
+    thread_participants = Channels::Thread.preload_participant_creators(messages.flat_map(&:threads).uniq, limit:)
     messages.each { |message| message.thread_participants = thread_participants }
     messages
   end
@@ -102,12 +102,12 @@ class Message < ApplicationRecord
     !event?
   end
 
-  # The forum post (Rooms::Post) this message belongs to, or nil for non-post
+  # The forum post (Channels::Post) this message belongs to, or nil for non-post
   # messages. A post's messages ARE its content — the opening body and the
-  # replies — so the post is simply the message's room. Permalinks resolve post
+  # replies — so the post is simply the message's channel. Permalinks resolve post
   # messages to the forum gallery deep-link (?post=<slug>) through this.
   def forum_post
-    room if room.post?
+    channel if channel.post?
   end
 
   def bookmarked_by?(user)
@@ -191,7 +191,7 @@ class Message < ApplicationRecord
   def storage_tracked_record = self
 
   # Single dispatch entry point invoked by Notification::DispatchJob. Iterates
-  # the activity types applicable to this message in this room and runs each
+  # the activity types applicable to this message in this channel and runs each
   # delivery branch. The in-app row branch is currently a no-op pass-through —
   # the legacy `create_mention_notifications` and
   # `create_thread_reply_notifications` callbacks still write rows.
@@ -200,7 +200,7 @@ class Message < ApplicationRecord
   def notify_recipients(only: nil, actor: nil)
     return if event?
 
-    types = only ? Array(only).map(&:to_sym) : room.applicable_activity_types(self)
+    types = only ? Array(only).map(&:to_sym) : channel.applicable_activity_types(self)
     push_subscriptions = []
     desktop_activity_types = Hash.new { |types, user_id| types[user_id] = [] }
 
@@ -223,7 +223,7 @@ class Message < ApplicationRecord
     end
 
     # The push rules skip members at "everything" in the mention pass (their
-    # room or DM push already covers it), so add the mention back for anyone
+    # channel or DM push already covers it), so add the mention back for anyone
     # the message names: the app still needs to know they were mentioned.
     if types.include?(:mention)
       desktop_activity_types.each { |user_id, reached| reached << :mention if mentions_user_id?(user_id) }
@@ -237,7 +237,7 @@ class Message < ApplicationRecord
 
   # Block ids touching this message's creator — memoized so per-recipient
   # predicates can do a Set lookup instead of two `exists?` queries each.
-  # An @everyone push in a 500-member room would otherwise issue 1000 block
+  # An @everyone push in a 500-member channel would otherwise issue 1000 block
   # queries through `User#can_ping?`; with this cache it's two, total.
   def blocked_user_ids_with_creator
     @blocked_user_ids_with_creator ||= begin
@@ -250,9 +250,9 @@ class Message < ApplicationRecord
 
   # Returns the candidate user-id set for a push activity type. The membership
   # scopes pre-filter for speed (involvement, creator exclusion), anyone
-  # currently watching the room is dropped, then
+  # currently watching the channel is dropped, then
   # Membership::Notifiable#receives_push_for? applies the full gate so block
-  # checks, user health, message/room state, and the push_enabled setting all
+  # checks, user health, message/channel state, and the push_enabled setting all
   # participate — same predicates run at dispatch time and at delivery time,
   # per arch § 4–5.
   def push_recipient_user_ids_for(activity_type)
@@ -277,7 +277,7 @@ class Message < ApplicationRecord
 
     # Preload notification_settings: receives_missed_email_for? reads it for the
     # account/user gate, so without this include each predicate call is N+1.
-    eligible_memberships = room.memberships
+    eligible_memberships = channel.memberships
       .where(user_id: candidate_user_ids)
       .includes(user: :notification_settings)
       .select { |membership| membership.receives_missed_email_for?(self, activity_type) }
@@ -308,7 +308,7 @@ class Message < ApplicationRecord
   end
 
   private
-    # Who has this room open right now, straight from anycable-go, which holds
+    # Who has this channel open right now, straight from anycable-go, which holds
     # their sockets. Memoized because notify_recipients runs up to three activity
     # types and they must agree with each other — and because it's an HTTP call.
     # nil means the broker couldn't answer, which is not the same as nobody being
@@ -316,7 +316,7 @@ class Message < ApplicationRecord
     def watching_user_ids
       return @watching_user_ids if defined?(@watching_user_ids)
 
-      @watching_user_ids = Room::PresenceSet.for(room)
+      @watching_user_ids = Channel::PresenceSet.for(channel)
     end
 
     def watching?(membership)
@@ -342,7 +342,7 @@ class Message < ApplicationRecord
     def deliver_pushes_to(subscriptions)
       return if subscriptions.empty?
 
-      payload = Room::MessagePusher.payload_for(room: room, message: self)
+      payload = Channel::MessagePusher.payload_for(channel: channel, message: self)
       Rails.configuration.x.web_push_pool.queue(payload, subscriptions)
     end
 
@@ -350,27 +350,27 @@ class Message < ApplicationRecord
       eager_load = { user: :notification_settings }
 
       case activity_type
-      when :everyone_room_message
-        room.memberships.visible
+      when :everyone_channel_message
+        channel.memberships.visible
             .where.not(user_id: creator_id)
             .involved_in_everything
             .includes(eager_load)
       when :thread_reply
-        # Sub-room followers (chat threads and forum posts) sit at involvement
-        # :everything via Room::Followable#follow!. receives_push_for?(:thread_reply)
+        # Sub-channel followers (chat threads and forum posts) sit at involvement
+        # :everything via Channel::Followable#follow!. receives_push_for?(:thread_reply)
         # qualifies anyone !involved_in_invisible?, so the `.visible` scope already
         # does all the filtering needed here — and it still covers any legacy
-        # :mentions rows from before the sub-room levels were unified.
-        room.memberships.visible
+        # :mentions rows from before the sub-channel levels were unified.
+        channel.memberships.visible
             .where.not(user_id: creator_id)
             .includes(eager_load)
       when :direct_message
-        room.memberships.visible
+        channel.memberships.visible
             .where.not(user_id: creator_id)
             .includes(eager_load)
       when :mention
-        candidate_user_ids = mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
-        room.memberships.visible
+        candidate_user_ids = mentions_everyone? ? channel.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
+        channel.memberships.visible
             .where(user_id: candidate_user_ids)
             .involved_in_mentions
             .includes(eager_load)
@@ -393,9 +393,9 @@ class Message < ApplicationRecord
     def email_candidate_user_ids_for(activity_type)
       case activity_type
       when :mention
-        mentions_everyone? ? room.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
+        mentions_everyone? ? channel.user_ids - [ creator_id ] : mentionee_ids - [ creator_id ]
       when :direct_message
-        room.user_ids - [ creator_id ]
+        channel.user_ids - [ creator_id ]
       else
         []
       end
@@ -447,12 +447,12 @@ class Message < ApplicationRecord
       broadcast_reactivation if saved_change_to_attribute?(:active) && active?
     end
 
-    def touch_room_activity
-      room.touch(:last_active_at)
+    def touch_channel_activity
+      channel.touch(:last_active_at)
     end
 
     def ensure_can_message_recipient
-      errors.add(:base, "Messaging this user isn't allowed") if creator.blocked_in?(room)
+      errors.add(:base, "Messaging this user isn't allowed") if creator.blocked_in?(channel)
     end
 
     def ensure_everyone_mention_allowed
@@ -461,8 +461,8 @@ class Message < ApplicationRecord
       has_everyone_mention = body.body.attachables.any? { |a| a.is_a?(Everyone) }
       return unless has_everyone_mention
 
-      if !room.is_a?(Rooms::Open)
-        errors.add(:base, "@everyone is only allowed in open rooms")
+      if !channel.is_a?(Channels::Open)
+        errors.add(:base, "@everyone is only allowed in open channels")
       elsif !creator&.administrator?
         errors.add(:base, "Only admins can mention @everyone")
       end
@@ -478,7 +478,7 @@ class Message < ApplicationRecord
       # Delete all boosts, bookmarks, and notifications to satisfy FK constraints.
       # Storage entries are intentionally preserved as an audit log (recordable is optional).
       # delete_all_and_broadcast keeps memberships.unread_notifications_count honest
-      # for non-DM rooms; DM and anchor cases are handled by rebalance_unread_counters.
+      # for non-DM channels; DM and anchor cases are handled by rebalance_unread_counters.
       Notification.delete_all_and_broadcast(Notification.where(message_id: id))
       rebalance_unread_counters
       Boost.where(message_id: id).delete_all

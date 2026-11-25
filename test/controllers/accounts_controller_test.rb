@@ -77,21 +77,21 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "updating one setting does not overwrite other settings" do
-    # First, enable room creation restriction
-    accounts(:signal).settings.restrict_room_creation_to_administrators = true
+    # First, enable channel creation restriction
+    accounts(:signal).settings.restrict_channel_creation_to_administrators = true
     accounts(:signal).save!
 
-    assert accounts(:signal).reload.settings.restrict_room_creation_to_administrators?
+    assert accounts(:signal).reload.settings.restrict_channel_creation_to_administrators?
     assert_not accounts(:signal).settings.restrict_direct_messages_to_administrators?
 
-    # Now enable DM restriction - this should NOT reset room creation restriction
+    # Now enable DM restriction - this should NOT reset channel creation restriction
     put account_url, params: { account: { settings: { restrict_direct_messages_to_administrators: true } } }
 
     assert_redirected_to edit_account_url
     accounts(:signal).reload
 
     # Both settings should be enabled
-    assert accounts(:signal).settings.restrict_room_creation_to_administrators?, "Room creation restriction was overwritten"
+    assert accounts(:signal).settings.restrict_channel_creation_to_administrators?, "Channel creation restriction was overwritten"
     assert accounts(:signal).settings.restrict_direct_messages_to_administrators?, "DM restriction was not saved"
   end
 

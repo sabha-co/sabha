@@ -19,11 +19,11 @@ module User::Streakable
   end
 
   def posted_on?(date, excluding: nil)
-    scope = messages.joins(:room)
-                    .joins("LEFT JOIN messages AS parent_messages ON rooms.parent_message_id = parent_messages.id")
-                    .joins("LEFT JOIN rooms AS parent_rooms ON parent_messages.room_id = parent_rooms.id")
-                    .where.not(rooms: { type: "Rooms::Direct" })
-                    .where("parent_rooms.type IS NULL OR parent_rooms.type != ?", "Rooms::Direct")
+    scope = messages.joins(:channel)
+                    .joins("LEFT JOIN messages AS parent_messages ON channels.parent_message_id = parent_messages.id")
+                    .joins("LEFT JOIN channels AS parent_channels ON parent_messages.channel_id = parent_channels.id")
+                    .where.not(channels: { type: "Channels::Direct" })
+                    .where("parent_channels.type IS NULL OR parent_channels.type != ?", "Channels::Direct")
                     .where("DATE(messages.created_at) = ?", date)
                     .user_authored
     scope = scope.where.not(id: excluding.id) if excluding

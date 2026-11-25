@@ -9,10 +9,10 @@ module User::Blockable
     has_many :blocked_by_users, through: :blocks_received, source: :blocker
   end
 
-  def blocked_in?(room)
-    return false unless room.one_on_one?
+  def blocked_in?(channel)
+    return false unless channel.one_on_one?
 
-    !can_ping?(room.counterpart_to(self))
+    !can_ping?(channel.counterpart_to(self))
   end
 
   def can_ping?(other_user)
@@ -35,16 +35,16 @@ module User::Blockable
 
   def block!(other_user)
     block = blocks_given.find_or_create_by!(blocked: other_user)
-    dm_room_with(other_user)&.post_system_message(event: "user_blocked", body: "blocked #{other_user.name}", actor: self) if block.previously_new_record?
+    dm_channel_with(other_user)&.post_system_message(event: "user_blocked", body: "blocked #{other_user.name}", actor: self) if block.previously_new_record?
   end
 
   def unblock!(other_user)
     count = blocks_given.where(blocked: other_user).delete_all
-    dm_room_with(other_user)&.post_system_message(event: "user_unblocked", body: "unblocked #{other_user.name}", actor: self) if count > 0
+    dm_channel_with(other_user)&.post_system_message(event: "user_unblocked", body: "unblocked #{other_user.name}", actor: self) if count > 0
   end
 
   private
-    def dm_room_with(other_user)
-      Rooms::Direct.find_by(members_hash: Rooms::Direct.members_hash_for(User.where(id: [ id, other_user.id ])))
+    def dm_channel_with(other_user)
+      Channels::Direct.find_by(members_hash: Channels::Direct.members_hash_for(User.where(id: [ id, other_user.id ])))
     end
 end

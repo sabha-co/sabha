@@ -38,7 +38,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
 
   test "activity touches activity_seen_at so the sidebar dot clears" do
     @david.update_column(:activity_seen_at, nil)
-    rooms(:pets).messages.create!(
+    channels(:pets).messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "activity_seen_at_test"
@@ -53,10 +53,10 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
 
 
   test "activity shows messages mentioning current user" do
-    room = rooms(:pets)
+    channel = channels(:pets)
 
     # Create a message that mentions david
-    message_with_mention = room.messages.create!(
+    message_with_mention = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)} unique marker 12345</div>",
       creator: @jason,
       client_message_id: "mention_test_1"
@@ -69,10 +69,10 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "activity excludes messages created by current user" do
-    room = rooms(:pets)
+    channel = channels(:pets)
 
     # Create a message where david mentions himself
-    self_mention = room.messages.create!(
+    self_mention = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)} self mention</div>",
       creator: @david,
       client_message_id: "self_mention_test"
@@ -85,8 +85,8 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "activity excludes direct messages" do
-    dm_room = rooms(:david_and_jason)
-    dm_message = dm_room.messages.create!(
+    dm_channel = channels(:david_and_jason)
+    dm_message = dm_channel.messages.create!(
       body: "Hey David direct message excluded!",
       creator: @jason,
       client_message_id: "dm_test_1"
@@ -98,10 +98,10 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "activity shows boost notifications" do
-    room = rooms(:pets)
+    channel = channels(:pets)
 
     # Create a message by david, then boost it from jason
-    message = room.messages.create!(
+    message = channel.messages.create!(
       body: "My boosted message content",
       creator: @david,
       client_message_id: "boost_activity_test"
@@ -117,17 +117,17 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "activity shows thread reply notifications" do
-    room = rooms(:pets)
+    channel = channels(:pets)
 
     # Create a parent message
-    parent = room.messages.create!(
+    parent = channel.messages.create!(
       body: "Parent for thread reply test",
       creator: @jason,
       client_message_id: "thread_parent_1"
     )
 
     # Create a thread with david as a visible member
-    thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
+    thread = Channels::Thread.create!(parent_message: parent, creator: @jason)
     thread.memberships.grant_to(@david)
     thread.memberships.find_by(user: @david).update!(involvement: :mentions)
 
@@ -151,10 +151,10 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "activity feed shows every notification, including ones from before the last visit" do
-    room = rooms(:pets)
+    channel = channels(:pets)
     Notification.where(user: @david).delete_all
 
-    room.messages.create!(
+    channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)} older marker</div>",
       creator: @jason,
       client_message_id: "older_notification"
@@ -163,7 +163,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     get inbox_activity_index_url
 
     travel 1.second do
-      room.messages.create!(
+      channel.messages.create!(
         body: "<div>Hey #{mention_attachment_for(:david)} newer marker</div>",
         creator: @jason,
         client_message_id: "newer_notification"
@@ -176,21 +176,21 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "newer marker", response.body
   end
 
-  test "mentioning a non-member does not add them to the room" do
+  test "mentioning a non-member does not add them to the channel" do
     sign_in :kevin
     kevin = users(:kevin)
-    room = rooms(:pets)
+    channel = channels(:pets)
 
-    assert_not room.users.include?(kevin), "Kevin should not be a member of pets initially"
+    assert_not channel.users.include?(kevin), "Kevin should not be a member of pets initially"
 
-    room.messages.create!(
+    channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:kevin)} this mention should not add you</div>",
       creator: @jason,
       client_message_id: "no_involve_test"
     )
 
-    room.reload
-    assert_not room.users.include?(kevin), "Kevin should still not be a member after being mentioned"
+    channel.reload
+    assert_not channel.users.include?(kevin), "Kevin should still not be a member after being mentioned"
   end
 
   # ===================
@@ -202,26 +202,26 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "direct_messages shows DM rooms for current user" do
-    dm_room = rooms(:david_and_jason)
+  test "direct_messages shows DM channels for current user" do
+    dm_channel = channels(:david_and_jason)
 
     get inbox_direct_messages_url
     assert_response :success
     assert_select ".dm-conversation"
   end
 
-  test "direct_messages excludes inactive DM rooms" do
-    dm_room = rooms(:david_and_jason)
-    dm_room.update!(active: false)
+  test "direct_messages excludes inactive DM channels" do
+    dm_channel = channels(:david_and_jason)
+    dm_channel.update!(active: false)
 
     get inbox_direct_messages_url
     assert_response :success
-    # The deactivated room should not be present
-    assert_select "#dm_inbox_room_#{dm_room.id}", count: 0
+    # The deactivated channel should not be present
+    assert_select "#dm_inbox_channel_#{dm_channel.id}", count: 0
   end
 
   test "direct_messages shows member names" do
-    dm_room = rooms(:david_and_jason)
+    dm_channel = channels(:david_and_jason)
 
     get inbox_direct_messages_url
     assert_response :success
@@ -229,7 +229,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "direct_messages with before param returns no content when paginating past the newest DM" do
-    dm = rooms(:david_and_jason)
+    dm = channels(:david_and_jason)
     dm.touch(:last_active_at)
 
     get inbox_direct_messages_url, params: { before: dm.id }
@@ -237,7 +237,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "direct_messages with after param returns either success or no content" do
-    dm = rooms(:david_and_jason)
+    dm = channels(:david_and_jason)
     dm.touch(:last_active_at)
 
     get inbox_direct_messages_url, params: { after: dm.id }
@@ -254,17 +254,17 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "threads shows parent messages of threads user has visible membership in" do
-    room = rooms(:pets)
+    channel = channels(:pets)
 
     # Create a parent message
-    parent_message = room.messages.create!(
+    parent_message = channel.messages.create!(
       body: "Parent message for thread visibility test",
       creator: @jason,
       client_message_id: "parent_1"
     )
 
     # Create a thread and give david visible membership
-    thread = Rooms::Thread.create!(parent_message: parent_message, creator: @jason)
+    thread = Channels::Thread.create!(parent_message: parent_message, creator: @jason)
     thread.memberships.grant_to(@david)
     thread.memberships.find_by(user: @david).update!(involvement: :everything)
 
@@ -276,22 +276,22 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_match "Parent message for thread visibility test", response.body
   end
 
-  test "threads shows parent messages for users with everything involvement in parent room" do
-    room = rooms(:pets)
+  test "threads shows parent messages for users with everything involvement in parent channel" do
+    channel = channels(:pets)
 
-    # David has "everything" involvement in pets room
-    membership = room.memberships.find_by(user: @david)
+    # David has "everything" involvement in pets channel
+    membership = channel.memberships.find_by(user: @david)
     membership.update!(involvement: :everything)
 
     # Create a parent message
-    parent_message = room.messages.create!(
+    parent_message = channel.messages.create!(
       body: "Parent message everything involvement",
       creator: @jason,
       client_message_id: "parent_2"
     )
 
-    # Create a thread (david doesn't need direct membership due to parent room involvement)
-    thread = Rooms::Thread.create!(parent_message: parent_message, creator: @jason)
+    # Create a thread (david doesn't need direct membership due to parent channel involvement)
+    thread = Channels::Thread.create!(parent_message: parent_message, creator: @jason)
     thread.memberships.grant_to(@jason)
     thread.messages.create!(body: "Thread reply", creator: @jason, client_message_id: "reply_2")
 
@@ -301,16 +301,16 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "threads excludes threads with no messages" do
-    room = rooms(:pets)
+    channel = channels(:pets)
 
-    parent_message = room.messages.create!(
+    parent_message = channel.messages.create!(
       body: "Parent with empty thread marker",
       creator: @jason,
       client_message_id: "parent_empty"
     )
 
     # Create a thread but don't add any messages
-    thread = Rooms::Thread.create!(parent_message: parent_message, creator: @jason)
+    thread = Channels::Thread.create!(parent_message: parent_message, creator: @jason)
     thread.memberships.grant_to(@david)
     thread.memberships.find_by(user: @david).update!(involvement: :everything)
 
@@ -319,18 +319,18 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "Parent with empty thread marker", response.body
   end
 
-  test "threads excludes threads from inaccessible rooms" do
+  test "threads excludes threads from inaccessible channels" do
     sign_in :kevin
 
-    room = rooms(:designers) # kevin has membership but not "everything" involvement
+    channel = channels(:designers) # kevin has membership but not "everything" involvement
 
-    parent_message = room.messages.create!(
+    parent_message = channel.messages.create!(
       body: "Designer thread parent marker",
       creator: @jason,
       client_message_id: "designer_parent"
     )
 
-    thread = Rooms::Thread.create!(parent_message: parent_message, creator: @jason)
+    thread = Channels::Thread.create!(parent_message: parent_message, creator: @jason)
     thread.memberships.grant_to(@jason)
     thread.messages.create!(body: "Reply", creator: @jason, client_message_id: "designer_reply")
 
@@ -340,9 +340,9 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "threads loads thread associations in at most one query as threaded parent count grows" do
-    room = rooms(:pets)
-    room.memberships.find_by(user: @david).update!(involvement: :everything)
-    create_accessible_thread_parents(room, count: 5, prefix: "five")
+    channel = channels(:pets)
+    channel.memberships.find_by(user: @david).update!(involvement: :everything)
+    create_accessible_thread_parents(channel, count: 5, prefix: "five")
 
     thread_preload_queries = count_thread_association_queries do
       get inbox_threads_url
@@ -397,13 +397,13 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # ===================
 
   test "clear marks memberships as read" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: @david)
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: @david)
     force_all_unread membership
 
-    # Create a mention so mark_inbox_as_read finds a notified room
+    # Create a mention so mark_inbox_as_read finds a notified channel
     travel_to(1.minute.ago) do
-      room.messages.create!(
+      channel.messages.create!(
         body: "<div>Hey #{mention_attachment_for(:david)}</div>",
         creator: @jason,
         client_message_id: "clear_test_mention"
@@ -422,8 +422,8 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "clear stays on page when stay param is present" do
-    room = rooms(:pets)
-    membership = room.memberships.find_by(user: @david)
+    channel = channels(:pets)
+    membership = channel.memberships.find_by(user: @david)
     force_all_unread membership
 
     get inbox_activity_index_url
@@ -431,21 +431,21 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "clear with scope direct_messages only clears DM rooms" do
-    # DM room with an unseen message — a minute old, because loaded_at stamps
+  test "clear with scope direct_messages only clears DM channels" do
+    # DM channel with an unseen message — a minute old, because loaded_at stamps
     # truncate to seconds and a just-created message would outrun them
-    dm_room = rooms(:david_and_jason)
-    travel_to(1.minute.ago) { dm_room.messages.create!(creator: @jason, body: "hi", client_message_id: "dm_scope_clear") }
-    dm_membership = dm_room.memberships.find_by(user: @david)
+    dm_channel = channels(:david_and_jason)
+    travel_to(1.minute.ago) { dm_channel.messages.create!(creator: @jason, body: "hi", client_message_id: "dm_scope_clear") }
+    dm_membership = dm_channel.memberships.find_by(user: @david)
     force_all_unread dm_membership
 
-    # Regular room with mention
-    room_with_mention = rooms(:pets)
-    room_with_mention.messages.create!(
+    # Regular channel with mention
+    channel_with_mention = channels(:pets)
+    channel_with_mention.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason
     )
-    membership_with_mention = room_with_mention.memberships.find_by(user: @david)
+    membership_with_mention = channel_with_mention.memberships.find_by(user: @david)
     force_all_unread membership_with_mention
 
     # Visit direct_messages page to set session timestamp
@@ -457,8 +457,8 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
     dm_membership.reload
     membership_with_mention.reload
 
-    assert dm_membership.read?, "DM room should be marked as read"
-    assert membership_with_mention.unread?, "Room with mention should remain unread"
+    assert dm_membership.read?, "DM channel should be marked as read"
+    assert membership_with_mention.unread?, "Channel with mention should remain unread"
   end
 
   # ===================
@@ -470,8 +470,8 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # ===================
 
   test "soft-deleting a message broadcasts removal for its notifications" do
-    room = rooms(:pets)
-    message = room.messages.create!(
+    channel = channels(:pets)
+    message = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "broadcast_removal_test"
@@ -487,26 +487,26 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
       target: notification
   end
 
-  test "deactivating a room removes its notifications from activity" do
-    room = rooms(:pets)
-    room.messages.create!(
-      body: "<div>Hey #{mention_attachment_for(:david)} room deactivation test</div>",
+  test "deactivating a channel removes its notifications from activity" do
+    channel = channels(:pets)
+    channel.messages.create!(
+      body: "<div>Hey #{mention_attachment_for(:david)} channel deactivation test</div>",
       creator: @jason,
-      client_message_id: "room_deactivate_activity"
+      client_message_id: "channel_deactivate_activity"
     )
 
     get inbox_activity_index_url
-    assert_match "room deactivation test", response.body
+    assert_match "channel deactivation test", response.body
 
-    room.deactivate
+    channel.deactivate
 
     get inbox_activity_index_url
-    assert_no_match "room deactivation test", response.body
+    assert_no_match "channel deactivation test", response.body
   end
 
   test "editing a mention out of a message removes notification from activity" do
-    room = rooms(:pets)
-    message = room.messages.create!(
+    channel = channels(:pets)
+    message = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)} edit removal test</div>",
       creator: @jason,
       client_message_id: "edit_removal_activity"
@@ -522,8 +522,8 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "destroying a boost broadcasts removal for its notification" do
-    room = rooms(:pets)
-    message = room.messages.create!(
+    channel = channels(:pets)
+    message = channel.messages.create!(
       body: "Boost removal broadcast",
       creator: @david,
       client_message_id: "boost_removal_broadcast"
@@ -548,10 +548,10 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   # ===================
 
   test "activity supports before pagination" do
-    room = rooms(:pets)
+    channel = channels(:pets)
 
     3.times do |i|
-      room.messages.create!(
+      channel.messages.create!(
         body: "<div>Hey #{mention_attachment_for(:david)}</div>",
         creator: @jason,
         client_message_id: "paginate_before_#{i}"
@@ -564,10 +564,10 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "activity supports after pagination" do
-    room = rooms(:pets)
+    channel = channels(:pets)
 
     3.times do |i|
-      room.messages.create!(
+      channel.messages.create!(
         body: "<div>Hey #{mention_attachment_for(:david)}</div>",
         creator: @jason,
         client_message_id: "paginate_after_#{i}"
@@ -580,15 +580,15 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
-    def create_accessible_thread_parents(room, count:, prefix:)
+    def create_accessible_thread_parents(channel, count:, prefix:)
       count.times do |i|
-        parent = room.messages.create!(
+        parent = channel.messages.create!(
           body: "#{prefix} parent #{i}",
           creator: @jason,
           client_message_id: "#{prefix}_parent_#{i}"
         )
 
-        thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
+        thread = Channels::Thread.create!(parent_message: parent, creator: @jason)
         thread.memberships.grant_to(@jason)
         thread.messages.create!(
           body: "#{prefix} reply #{i}",
@@ -605,7 +605,7 @@ class InboxesControllerTest < ActionDispatch::IntegrationTest
         next if payload[:cached]
         next if name == "SCHEMA"
         next if sql.match?(/\A(?:BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i)
-        next unless sql.match?(/FROM "rooms".*"parent_message_id"/)
+        next unless sql.match?(/FROM "channels".*"parent_message_id"/)
 
         @query_count += 1
       end

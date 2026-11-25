@@ -34,14 +34,14 @@ class SettingsController < ApplicationController
 end
 
 # GOOD — RESTful, thin controller, exception-based
-# (real code: app/controllers/rooms/memberships_controller.rb)
-class Rooms::MembershipsController < ApplicationController
+# (real code: app/controllers/channels/memberships_controller.rb)
+class Channels::MembershipsController < ApplicationController
   def destroy
-    @room.accept_leave!(Current.user)
-    redirect_to root_url, notice: "You left #{@room.name}"
+    @channel.accept_leave!(Current.user)
+    redirect_to root_url, notice: "You left #{@channel.name}"
   rescue Membership::LastVisibleMemberError
-    redirect_back fallback_location: room_url(@room),
-                  alert: "You're the last member. Delete the room instead."
+    redirect_back fallback_location: channel_url(@channel),
+                  alert: "You're the last member. Delete the channel instead."
   end
 end
 ```
@@ -66,17 +66,17 @@ SQLite is the default engine, but the app is deliberately kept PostgreSQL-compat
 
 ## Key Domain Knowledge
 
-### Room System (STI)
-`Room` base class with six subclasses:
+### Channel System (STI)
+`Channel` base class with six subclasses:
 
-- **Sidebar rooms** — `Rooms::Open` (browsable, joinable, optional `auto_join`), `Rooms::Closed` (explicit membership), `Rooms::Forum` (community-wide, `auto_join` forced on; renders a **post gallery**, not a message stream)
-- **DMs** — `Rooms::Direct`, one per unique member set via `members_hash`
-- **Sub-rooms** (`SUB_ROOM_TYPES`) — `Rooms::Thread` (tied to a parent message) and `Rooms::Post` (tied to a forum). Both delegate `viewable_by?` to their parent, so access is inherited rather than re-declared.
+- **Sidebar channels** — `Channels::Open` (browsable, joinable, optional `auto_join`), `Channels::Closed` (explicit membership), `Channels::Forum` (community-wide, `auto_join` forced on; renders a **post gallery**, not a message stream)
+- **DMs** — `Channels::Direct`, one per unique member set via `members_hash`
+- **Sub-channels** (`SUB_CHANNEL_TYPES`) — `Channels::Thread` (tied to a parent message) and `Channels::Post` (tied to a forum). Both delegate `viewable_by?` to their parent, so access is inherited rather than re-declared.
 
-`Rooms::AccessController#update` converts Open ↔ Closed in place via `becomes!`.
+`Channels::AccessController#update` converts Open ↔ Closed in place via `becomes!`.
 
 ### Soft Deletion
-Messages, Rooms, Memberships use `Deactivatable` concern (`active` boolean). Boost and Bookmark are hard-deleted.
+Messages, Channels, Memberships use `Deactivatable` concern (`active` boolean). Boost and Bookmark are hard-deleted.
 
 ### Mentions
 Stateless for real-time, persistent for history. No mentions table — parsed from ActionText body HTML via `Message::Mentionee`. `Notification` records power the Activity tab and unread badges. `@everyone` uses `mentions_everyone` flag on messages table.
@@ -91,7 +91,7 @@ Sabha uses **AnyCable** as its real-time transport — a required runtime depend
 - **Transport:** `anycable-go` is a separate process that terminates every WebSocket connection and calls back into Rails over HTTP RPC at `/_anycable`. All environments use the `any_cable` adapter in `config/cable.yml` (only `test` uses `test`) — the in-process/redis fallback was removed, so Rails is never the WebSocket server.
 - **Process topology:** dev starts it via `bin/dev` (`Procfile.dev`, port 8080). Both deployment modes run `anycable/anycable-go` as a Kamal accessory routed at `/cable` with RPC pointed back at the Rails service — self-hosted via `config/deploy.yml`, SaaS via `config/deploy.multitenant.yml`. A self-hosted install needs the sidecar too; there is no Rails-only mode.
 - **Broker:** the **in-memory broker** backs presence and stream history (presence TTL set explicitly to 45s — it bounds how long push stays suppressed after a socket dies, so it must clear the client's worst-case reconnect). State is per-node, so we run a single `anycable-go` replica.
-- **Presence reads:** push gating asks the broker who's watching (`Room::PresenceSet` → `GET /api/presence/:stream/users`) rather than the `connected_at` column. The API secret is derived: `HMAC-SHA256(ANYCABLE_SECRET, "api-cable")`. An unreachable broker degrades to the DB signal rather than dropping pushes.
+- **Presence reads:** push gating asks the broker who's watching (`Channel::PresenceSet` → `GET /api/presence/:stream/users`) rather than the `connected_at` column. The API secret is derived: `HMAC-SHA256(ANYCABLE_SECRET, "api-cable")`. An unreachable broker degrades to the DB signal rather than dropping pushes.
 - **Auth:** sockets are identified by a JWT so reconnects skip the connect RPC.
 - **Channels** are ordinary ActionCable classes; presence uses `AnyCable::Rails::Channel::Presence` (`PresenceChannel`).
 - **Config:** `config/anycable.yml` (JWT/stream secrets) + `config/cable.yml`. Docs: https://docs.anycable.io (full text: https://docs.anycable.io/llms-full.txt).
@@ -120,7 +120,7 @@ Mail previews are off by default. `bin/rails dev:email` toggles `tmp/email-dev.t
 
 ### SaaS Dual Database Setup
 - **Untenanted (PostgreSQL):** `GlobalIdentity`, `Workspace`, `WorkspaceMembership`, `GlobalSession`. Models inherit from `UntenantedRecord`. Migrations in `saas/db/untenanted_migrate/`, schema in `saas/db/untenanted_schema.rb`.
-- **Tenanted (SQLite per workspace):** All app models (`User`, `Room`, `Message`, etc.) inherit from `ApplicationRecord`. Each workspace gets its own SQLite database at `storage/workspaces/{env}/{tenant}/db/main.sqlite3`. Standard migrations in `db/migrate/`.
+- **Tenanted (SQLite per workspace):** All app models (`User`, `Channel`, `Message`, etc.) inherit from `ApplicationRecord`. Each workspace gets its own SQLite database at `storage/workspaces/{env}/{tenant}/db/main.sqlite3`. Standard migrations in `db/migrate/`.
 
 ### Database Migrations
 ```bash

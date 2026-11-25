@@ -15,7 +15,7 @@ class Account < ApplicationRecord
     attachable.variant :small, resize_to_limit: [ 192, 192 ], format: :png
   end
 
-  has_json :settings, restrict_room_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true, suggest_hub_list: true
+  has_json :settings, restrict_channel_creation_to_administrators: false, restrict_direct_messages_to_administrators: false, allow_users_to_create_invite_links: true, suggest_hub_list: true
 
   after_save :invalidate_personal_invite_links, if: :invite_links_disabled?
   after_commit :sync_name_to_workspace, if: :saved_change_to_name?
@@ -78,23 +78,23 @@ class Account < ApplicationRecord
     nil
   end
 
-  # The account-wide room-list stream: one publish per room event (touched by
+  # The account-wide channel-list stream: one publish per channel event (touched by
   # a message or post, renamed) that every member's open sidebar consumes. It
   # is a signed pub/sub stream rather than a cable channel — the sidebar subscribes
   # with the signed name and anycable-go verifies the signature itself, no
   # per-subscriber Rails round-trip. The name is built on the account's
   # GlobalID, which carries the tenant in SaaS, so streams never cross
   # workspaces.
-  def broadcast_room_list(payload)
-    ActionCable.server.broadcast room_list_stream_name, payload
+  def broadcast_channel_list(payload)
+    ActionCable.server.broadcast channel_list_stream_name, payload
   end
 
-  def room_list_stream_name
-    AnyCable::Rails.stream_name_from([ self, :room_list ])
+  def channel_list_stream_name
+    AnyCable::Rails.stream_name_from([ self, :channel_list ])
   end
 
-  def signed_room_list_stream_name
-    AnyCable::Rails.signed_stream_name([ self, :room_list ])
+  def signed_channel_list_stream_name
+    AnyCable::Rails.signed_stream_name([ self, :channel_list ])
   end
 
   private

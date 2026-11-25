@@ -4,17 +4,17 @@ A pre-launch structural refactor of Sabha's models to make the codebase ready fo
 
 ## Status
 
-- **Slice 1 (callbacks → concerns): shipped.** Message in [PR #80](https://github.com/sabha-co/sabha/pull/80); Room + Membership in [PR #81](https://github.com/sabha-co/sabha/pull/81).
+- **Slice 1 (callbacks → concerns): shipped.** Message in [PR #80](https://github.com/sabha-co/sabha/pull/80); Channel + Membership in [PR #81](https://github.com/sabha-co/sabha/pull/81).
 - **Slice 2 (User decomposition): shipped in [PR #82](https://github.com/sabha-co/sabha/pull/82).** Seven concerns extracted; `User` shrank from 637 to 288 lines.
-- **Slice 3 — reframed.** Originally planned as a Fizzy-style state-record refactor (`Message::Deletion` / `Room::Archive` / `Membership::Departure`). Direction dropped after audit: Fizzy is a productivity app with real workflow states; Sabha is a chat app where soft-delete is just a tombstone. No major chat app uses the state-record pattern. What actually shipped is a cleanup: dropped 9 redundant `.unscoped` calls across `user.rb` / `room.rb` / `rooms/thread.rb` and refreshed misleading comments. The `Deactivatable` concern stays. See the rewritten Slice 3 section below for details and what's been deferred.
+- **Slice 3 — reframed.** Originally planned as a Fizzy-style state-record refactor (`Message::Deletion` / `Channel::Archive` / `Membership::Departure`). Direction dropped after audit: Fizzy is a productivity app with real workflow states; Sabha is a chat app where soft-delete is just a tombstone. No major chat app uses the state-record pattern. What actually shipped is a cleanup: dropped 9 redundant `.unscoped` calls across `user.rb` / `channel.rb` / `channels/thread.rb` and refreshed misleading comments. The `Deactivatable` concern stays. See the rewritten Slice 3 section below for details and what's been deferred.
 - **Schema hygiene fallout from Slice 2:** [PR #83](https://github.com/sabha-co/sabha/pull/83) removed an orphan `users.accepted_terms_at` column from `db/schema.rb` that was crashing self-hosted signup but had gone unnoticed because fixtures bypass attribute-aware INSERTs. [PR #84](https://github.com/sabha-co/sabha/pull/84) re-synced missing `on_delete: :cascade` FK annotations. Both surfaced while exercising the User concern decomposition end-to-end in dev.
 
 ## Context
 
 - **Sabha is pre-launch.** No production users. No data to migrate carefully. Breaking changes ship as fixes, not incidents.
 - **Vision:** free SaaS chat at Discord scale; open-source self-hosted at single-tenant scale.
-- **Two deployment modes share the same code.** Self-hosted is single-database (`db/migrate/`, `db/schema.rb`). SaaS runs `activerecord-tenanted` — every workspace gets its own SQLite at `storage/{env}/workspaces/{tenant_id}/main.sqlite3`. Untenanted globals (`GlobalIdentity`, `Workspace`, `WorkspaceMembership`, `GlobalSession`) live in PostgreSQL via `UntenantedRecord`. Models touched by this refactor — Message, Room, Membership, User — are all tenanted (`ApplicationRecord`).
-- **Scope ahead:** feature parity with Slack/Discord — workflows, polls, scheduled messages, drafts, snippets, voice rooms, integrations, calendars, audit logs, retention policies, moderation tools, custom emoji, status/availability, do-not-disturb, saved items.
+- **Two deployment modes share the same code.** Self-hosted is single-database (`db/migrate/`, `db/schema.rb`). SaaS runs `activerecord-tenanted` — every workspace gets its own SQLite at `storage/{env}/workspaces/{tenant_id}/main.sqlite3`. Untenanted globals (`GlobalIdentity`, `Workspace`, `WorkspaceMembership`, `GlobalSession`) live in PostgreSQL via `UntenantedRecord`. Models touched by this refactor — Message, Channel, Membership, User — are all tenanted (`ApplicationRecord`).
+- **Scope ahead:** feature parity with Slack/Discord — workflows, polls, scheduled messages, drafts, snippets, voice channels, integrations, calendars, audit logs, retention policies, moderation tools, custom emoji, status/availability, do-not-disturb, saved items.
 
 The question this plan answers: **what shape does the codebase need to be in before that scope lands?**
 
@@ -32,7 +32,7 @@ Three forces make pre-launch the cheapest moment:
 
 ### Slice 1 — Push callbacks into the concerns that own them ✅
 
-**Shipped across [PR #80](https://github.com/sabha-co/sabha/pull/80) (Message) and [PR #81](https://github.com/sabha-co/sabha/pull/81) (Room + Membership).** Message dropped from 15 callbacks to 6 at the class level; Room and Membership each now declare ≤3.
+**Shipped across [PR #80](https://github.com/sabha-co/sabha/pull/80) (Message) and [PR #81](https://github.com/sabha-co/sabha/pull/81) (Channel + Membership).** Message dropped from 15 callbacks to 6 at the class level; Channel and Membership each now declare ≤3.
 
 **What.** A concern that adds behavior should own both the associations *and* the callbacks that trigger it.
 
@@ -62,7 +62,7 @@ Fizzy `Card` ends up with 2 callbacks total at the class level. All other lifecy
 
 | Model | Concerns introduced (or extended) |
 |---|---|
-| **Room** | `Room::Announceable` (creation broadcasts), `Room::Sortable` (sortable name + sidebar move broadcast), `Room::Restorable` (reactivation broadcast). `Room::Archivable` deferred to Slice 3. |
+| **Channel** | `Channel::Announceable` (creation broadcasts), `Channel::Sortable` (sortable name + sidebar move broadcast), `Channel::Restorable` (reactivation broadcast). `Channel::Archivable` deferred to Slice 3. |
 | **Membership** | `Membership::Cacheable` (member-count cache invalidation), `Membership::Connectable` (extended with `reset_user_connections_if_deactivated` + `reset_user_connections`), `Membership::Involvable` (involvement enum + broadcast), `Membership::Starrable` (star validation + dual-broadcast sidebar move) |
 
 ### Slice 2 — Decompose `User` into per-capability concerns ✅
@@ -82,7 +82,7 @@ Fizzy `Card` ends up with 2 callbacks total at the class level. All other lifecy
 | Concern | What moved |
 |---|---|
 | `User::Streakable` | `current_streak` override, `recalculate_streak!`, `posted_on?` |
-| `User::Blockable` | `blocks_given`/`blocks_received` associations, `block!`/`unblock!`/`blocked?`/`blocked_by?`/`blocked_in?`/`can_ping?`/`can_direct_message?`, `dm_room_with` |
+| `User::Blockable` | `blocks_given`/`blocks_received` associations, `block!`/`unblock!`/`blocked?`/`blocked_by?`/`blocked_in?`/`can_ping?`/`can_direct_message?`, `dm_channel_with` |
 | `User::PasswordAuthable` | `has_secure_password`, password length validation, the `password_reset` token, `send_password_reset_email` |
 | `User::Verifiable` | `verified?`, `verify_email!`, `send_verification_email`, scopes, `email_verification` token, `after_create_commit :post_welcome_message` |
 | `User::EmailChangeable` | full email-change flow, unconfirmed_email validation/normalize, `email_change` token, `email_changed` mailer callback |
@@ -93,11 +93,11 @@ Fizzy `Card` ends up with 2 callbacks total at the class level. All other lifecy
 
 **Protective coverage added before refactor:** 12 tests (8 self-hosted + 4 SaaS) closing pre-extraction gaps the audit surfaced — password-reset token rotation, bot-skip on the `email_changed` mailer, the `mark_inbox_as_read` stale-timestamp clamp, `close_remote_connections` SaaS-mode `current_tenant` scoping, and the `sync_name_to_global_identity` rescue contract.
 
-**One callback-ordering shift to be aware of:** `after_create_commit` now fires in order `[ensure_notification_settings, post_welcome_message, grant_membership_to_open_rooms]` (previously `[ensure_notification_settings, grant_membership_to_open_rooms, post_welcome_message]`). Verified safe — `post_welcome_message` and `grant_membership_to_open_rooms` are functionally independent.
+**One callback-ordering shift to be aware of:** `after_create_commit` now fires in order `[ensure_notification_settings, post_welcome_message, grant_membership_to_open_channels]` (previously `[ensure_notification_settings, grant_membership_to_open_channels, post_welcome_message]`). Verified safe — `post_welcome_message` and `grant_membership_to_open_channels` are functionally independent.
 
 ### Slice 3 — `Deactivatable` cleanup (not state records)
 
-**Reframed.** The earlier draft of this slice called for replacing `active:boolean` with Fizzy-style state records (`Message::Deletion`, `Room::Archive`, `Membership::Departure`). After audit, that direction was rejected. Fizzy is a productivity app where cards have real workflow states the product talks about (open / closed / postponed / pinned). Sabha is a chat app where soft-delete is just a tombstone — "deleted message," "departed user," "archived room" are not workflow states the product surfaces. The structural shape doesn't translate.
+**Reframed.** The earlier draft of this slice called for replacing `active:boolean` with Fizzy-style state records (`Message::Deletion`, `Channel::Archive`, `Membership::Departure`). After audit, that direction was rejected. Fizzy is a productivity app where cards have real workflow states the product talks about (open / closed / postponed / pinned). Sabha is a chat app where soft-delete is just a tombstone — "deleted message," "departed user," "archived channel" are not workflow states the product surfaces. The structural shape doesn't translate.
 
 **Industry references support keeping soft-delete:**
 
@@ -116,17 +116,17 @@ Sabha sits closest to Slack/Zulip. None of the four major chat apps use per-conc
 
 1. **The `destroy_all_associated_records` problem was misattributed.** `Deactivatable` adds two named scopes — not a `default_scope` — so `Message.where(creator_id: id)` already returns all rows including inactive ones. The defensive `.unscoped` calls were redundant, and the misleading comments above each method ("Why this exists instead of `dependent: :destroy`: associations have `-> { active }` scopes…") were not accurate. The 16-line `User#destroy_all_associated_records` exists for **FK-ordering** reasons (notifications before messages, bundle_items before bundles) and because most `has_many` declarations on `User` don't carry `dependent:`. Neither root cause is soft-delete.
 
-2. **Hard-deleting `Membership` would silently regress preference preservation for admin-driven flows.** Today's `User#deactivate` → `User#reactivate` cycle only flips `memberships.active`, never touching `involvement`, `starred`, `unread_at`, or presence-cache counters. A reactivated user gets all their per-room preferences back exactly as they were before deactivation. Hard-delete plus a `Membership::Departure` carrying only `room_id` would reset all of them on user reactivation. Zulip preserves Subscription rows for exactly this reason: *"we mark Subscription objects as inactive, rather than deleting them, when a user unsubscribes, so we can preserve user customizations like notification settings, stream color, etc."*
+2. **Hard-deleting `Membership` would silently regress preference preservation for admin-driven flows.** Today's `User#deactivate` → `User#reactivate` cycle only flips `memberships.active`, never touching `involvement`, `starred`, `unread_at`, or presence-cache counters. A reactivated user gets all their per-channel preferences back exactly as they were before deactivation. Hard-delete plus a `Membership::Departure` carrying only `channel_id` would reset all of them on user reactivation. Zulip preserves Subscription rows for exactly this reason: *"we mark Subscription objects as inactive, rather than deleting them, when a user unsubscribes, so we can preserve user customizations like notification settings, stream color, etc."*
 
-   **Caveat — user-initiated leave doesn't preserve preferences today.** `Room#accept_leave!` resets `involvement` to `'invisible'` and `starred` to `false`; `accept_join!`'s upsert overwrites `involvement` back to the room's default. So Sabha's user-leave UX is closer to Discord's "leave is final" than to Slack/Zulip's "preserve on resubscribe." Verified via SQL trace during the PR #85 sanity test. The preservation argument above applies only to *admin/system* paths (`User#deactivate`, `Room#deactivate`, ban/unban) — those are the ones a state-record refactor would silently regress.
+   **Caveat — user-initiated leave doesn't preserve preferences today.** `Channel#accept_leave!` resets `involvement` to `'invisible'` and `starred` to `false`; `accept_join!`'s upsert overwrites `involvement` back to the channel's default. So Sabha's user-leave UX is closer to Discord's "leave is final" than to Slack/Zulip's "preserve on resubscribe." Verified via SQL trace during the PR #85 sanity test. The preservation argument above applies only to *admin/system* paths (`User#deactivate`, `Channel#deactivate`, ban/unban) — those are the ones a state-record refactor would silently regress.
 
-3. **State records add JOIN cost to the hottest read path.** Loading the last N messages in a room is Sabha's single most-frequent query. State records make it a LEFT JOIN against `message_deletions` filtered through `where.missing(:deletion)`. Soft-delete columns are a single indexed `WHERE active = true`. For productivity apps where most cards reach a terminal state, the JOIN cost amortizes. For chat where <1% of messages are ever deleted, the JOIN is pure overhead on every read.
+3. **State records add JOIN cost to the hottest read path.** Loading the last N messages in a channel is Sabha's single most-frequent query. State records make it a LEFT JOIN against `message_deletions` filtered through `where.missing(:deletion)`. Soft-delete columns are a single indexed `WHERE active = true`. For productivity apps where most cards reach a terminal state, the JOIN cost amortizes. For chat where <1% of messages are ever deleted, the JOIN is pure overhead on every read.
 
 4. **The audit-metadata argument doesn't require per-concept state records.** Zulip's `RealmAuditLog` covers ~80 event types — deletion, role changes, permission edits, settings updates — in one typed-FK table. Sabha will eventually want something similar for moderation/compliance. Per-concept state records (`Message::Deletion` etc.) don't replace that need; they live alongside it. So adding three state-record tables doesn't prevent the eventual generic audit log; it just adds three tables to maintain in addition.
 
 **What actually shipped — [PR #85](https://github.com/sabha-co/sabha/pull/85)** (branch `prune-redundant-destroy-cleanup`, two commits):
 
-1. **Dropped 9 redundant `.unscoped` calls** across `app/models/user.rb`, `app/models/room.rb`, `app/models/rooms/thread.rb`, and refreshed the misleading docstring on `Deactivatable` plus the misleading lead comments on the `destroy_all_associated_records` methods.
+1. **Dropped 9 redundant `.unscoped` calls** across `app/models/user.rb`, `app/models/channel.rb`, `app/models/channels/thread.rb`, and refreshed the misleading docstring on `Deactivatable` plus the misleading lead comments on the `destroy_all_associated_records` methods.
 2. **Dropped 7 manual cleanup statements** from `User#destroy_all_associated_records` that were duplicating work `dependent: :destroy` / `:delete_all` declarations were already doing on `sessions`, `auth_tokens`, `searches`, `push_subscriptions`, `notification_settings`, and the two `blocks_*` associations. Remaining explicit statements carry inline comments noting why they're intentionally NOT delegated to Rails (Search second-FK, Ban `bust_cache` skip, Bundle bulk-delete perf).
 
 Pure cleanup, zero behavior change. Confirmed safe in both deployment modes: `activerecord-tenanted` uses **connection switching** (`with_tenant` / `current_tenant`) for tenant isolation, not query scopes — `.unscoped` doesn't affect tenant boundaries. The method shrinks from 18 statements to 11, with the remaining 11 each doing real, non-`dependent:`-substitutable work.
@@ -134,7 +134,7 @@ Pure cleanup, zero behavior change. Confirmed safe in both deployment modes: `ac
 **Deferred items (intentionally, not in this plan):**
 
 - **Audit metadata.** When the first moderation feature lands and needs "who deleted this message" / "who kicked this member" / "who archived this channel," add either:
-  - *Inline:* columns on the existing tables (`messages.deleted_at`, `messages.deleted_by_id`, `messages.deletion_reason`, ditto for rooms and memberships). Mattermost-shaped. One migration per model, no new tables, no JOIN cost.
+  - *Inline:* columns on the existing tables (`messages.deleted_at`, `messages.deleted_by_id`, `messages.deletion_reason`, ditto for channels and memberships). Mattermost-shaped. One migration per model, no new tables, no JOIN cost.
   - *Generic:* one `audit_logs` table with typed FKs and an event-type enum (Zulip's `RealmAuditLog` shape). Useful for non-deletion events too.
 
   Pick the shape when product asks; don't pre-build.
@@ -148,8 +148,8 @@ Pure cleanup, zero behavior change. Confirmed safe in both deployment modes: `ac
 Documenting where soft-delete is applied today, since the pattern is staying. Useful as a reference when adding new models or auditing whether a new feature needs deactivation semantics.
 
 **Includes `Deactivatable` (boolean `active` column):**
-- `Message` — `messages.active` (default `true`). Read scope `Message.active`. Indexed via `(active, room_id, created_at)`.
-- `Room` (STI base — covers `Rooms::Open`, `Rooms::Closed`, `Rooms::Direct`, `Rooms::Thread`) — `rooms.active`. STI subclasses share the column.
+- `Message` — `messages.active` (default `true`). Read scope `Message.active`. Indexed via `(active, channel_id, created_at)`.
+- `Channel` (STI base — covers `Channels::Open`, `Channels::Closed`, `Channels::Direct`, `Channels::Thread`) — `channels.active`. STI subclasses share the column.
 - `Membership` — `memberships.active`. Carries per-membership preferences (involvement, starring, `unread_at`, presence counters) — soft-delete preserves these across leave-and-rejoin.
 
 **Different pattern (already correct):**
@@ -174,11 +174,11 @@ Documenting where soft-delete is applied today, since the pattern is staying. Us
 
 Sabha runs in two modes from one codebase, with the SaaS mode using `activerecord-tenanted`. Every slice in this plan must work cleanly in both. Constraints that fall out of the tenanting model:
 
-1. **All three state records (`Message::Deletion`, `Room::Archive`, `Membership::Departure`) inherit from `ApplicationRecord` — i.e., they are tenanted.** They live alongside their parent tables in each workspace's SQLite database. Migrations go in `db/migrate/` (the tenanted set), schema in `db/schema.rb`. No untenanted state records in this refactor.
+1. **All three state records (`Message::Deletion`, `Channel::Archive`, `Membership::Departure`) inherit from `ApplicationRecord` — i.e., they are tenanted.** They live alongside their parent tables in each workspace's SQLite database. Migrations go in `db/migrate/` (the tenanted set), schema in `db/schema.rb`. No untenanted state records in this refactor.
 
 2. **Adding tenanted tables means migrating every existing workspace database.** `bin/rails db:migrate:primary` walks all tenants. `SAAS=true bin/rails db:migrate:primary` chains untenanted + tenanted. The pre-launch context makes this trivial (no real tenants yet), but the same migration must work cleanly when there are 100 workspaces — i.e., the migration must be additive and reversible per-tenant.
 
-3. **GlobalIDs in broadcasts auto-include the tenant.** When `Message::Deletion#after_create_commit` broadcasts a Turbo stream change, `to_global_id` on the tenanted parent record already embeds `?tenant=`. **But bare-symbol streams (`broadcast_replace_to :inbox`) do NOT — they collide across tenants.** All broadcasts moved into concerns by Slice 1 must take a tenanted model as the first argument: `broadcast_replace_to room, :messages` (good) — never `broadcast_replace_to :messages` (cross-tenant collision in SaaS).
+3. **GlobalIDs in broadcasts auto-include the tenant.** When `Message::Deletion#after_create_commit` broadcasts a Turbo stream change, `to_global_id` on the tenanted parent record already embeds `?tenant=`. **But bare-symbol streams (`broadcast_replace_to :inbox`) do NOT — they collide across tenants.** All broadcasts moved into concerns by Slice 1 must take a tenanted model as the first argument: `broadcast_replace_to channel, :messages` (good) — never `broadcast_replace_to :messages` (cross-tenant collision in SaaS).
 
 4. **`User::SaasBridged` (Slice 2) is the home for tenant-bridge callbacks.** ✅ Done in PR #82. `sync_workspace_membership_active` (syncs status changes to the *untenanted* `WorkspaceMembership` table) and `sync_name_to_global_identity` both moved into `app/models/user/saas_bridged.rb` and keep their internal `Sabha.saas?` guards — included unconditionally, no-op in self-hosted. The contract is pinned by `saas/test/models/user/saas_bridged_test.rb`.
 
@@ -195,8 +195,8 @@ Sabha runs in two modes from one codebase, with the SaaS mode using `activerecor
 
    - **Two distinct flows:**
      - **User reactivation** (`User#reactivate`) — flips `users.status` from `:deactivated` back to `:active`, then walks the user's inactive memberships and flips them back. The `User::SaasBridged#sync_workspace_membership_active` callback mirrors the status change to the untenanted `WorkspaceMembership.user_active`. This is the *only* path that touches the untenanted mirror.
-     - **Membership reactivation** — flipping `memberships.active` back to `true` for one room. Purely tenanted; the untenanted mirror is not involved.
-   - **Don't wire untenanted-mirror writers onto `Membership` lifecycle hooks.** The mirror is keyed to *account* state, not *room membership* state — conflating them produces phantom workspace re-admits when a user re-joins a single room.
+     - **Membership reactivation** — flipping `memberships.active` back to `true` for one channel. Purely tenanted; the untenanted mirror is not involved.
+   - **Don't wire untenanted-mirror writers onto `Membership` lifecycle hooks.** The mirror is keyed to *account* state, not *channel membership* state — conflating them produces phantom workspace re-admits when a user re-joins a single channel.
    - **No new `WorkspaceMembership.user_active` writers anywhere.** The only writer remains `User::SaasBridged#sync_workspace_membership_active`, triggered by `User#status` changes. Enforce by code review.
    - This was originally written for the state-record direction (when reactivation meant destroying a `Membership::Departure` row). Same contract, same boundary, different mechanism. Kept here because the principle outlives the implementation choice.
 
@@ -204,7 +204,7 @@ Sabha runs in two modes from one codebase, with the SaaS mode using `activerecor
 
 Sequenced so each slice lowers the cost of the next:
 
-1. ✅ **Slice 1 — Message + Room + Membership callbacks into concerns** — *Shipped in PR #80 and PR #81.*
+1. ✅ **Slice 1 — Message + Channel + Membership callbacks into concerns** — *Shipped in PR #80 and PR #81.*
 2. ✅ **Slice 2 — User decomposition** — *Shipped in PR #82.*
 3. ✅ **Slice 3 — `Deactivatable` cleanup (reframed)** — *Shipped in [PR #85](https://github.com/sabha-co/sabha/pull/85).* The originally-planned state-record refactor was rejected; what shipped is a two-commit cleanup that dropped 9 redundant `.unscoped` calls, 7 manual cleanup statements covered by existing `dependent:` declarations, and refreshed three misleading docstrings/comments. See the Slice 3 section above for the audit and the deferred follow-ups.
 
@@ -214,7 +214,7 @@ The plan is effectively complete. Every feature shipped onto today's foundation 
 
 - **No service-layer extraction.** Keep logic on models. Once-campfire refuses `app/services/`; Sabha follows.
 - **No policy gem, no form objects.** Authorization stays model-level; forms stay views + strong params.
-- **No state-record refactor.** `Message::Deletion` / `Room::Archive` / `Membership::Departure` were proposed and rejected. Soft-delete stays. See the Slice 3 reframing for the audit.
+- **No state-record refactor.** `Message::Deletion` / `Channel::Archive` / `Membership::Departure` were proposed and rejected. Soft-delete stays. See the Slice 3 reframing for the audit.
 - **No premature shared concerns.** No `StateDeactivatable`, no generic `Auditable`. When audit metadata is needed, pick the cheapest shape for the actual product ask (columns on the existing table, or one generic `AuditLog`).
 - **No backwards-compatibility shims.** Pre-launch — change the API, update the callers, move on.
 
@@ -222,7 +222,7 @@ The plan is effectively complete. Every feature shipped onto today's foundation 
 
 The foundation refactor is complete when:
 
-1. ✅ `Room` and `Membership` declare ≤3 callbacks each at the class level. *(Shipped in PR #81.)*
+1. ✅ `Channel` and `Membership` declare ≤3 callbacks each at the class level. *(Shipped in PR #81.)*
 2. ✅ `User` shrunk substantially; remaining logic lives in capability concerns. *(Shipped in PR #82 — 637 → 288 lines, –55%. The earlier ≤200 target was aspirational; 288 is the actual landing point and further reduction is left to future per-feature concerns.)*
 3. ✅ `Deactivatable` documentation no longer misleads. The docstring describes what the concern actually does; `destroy_all_associated_records` lead comments accurately attribute the methods' existence to FK ordering + missing `dependent:` declarations, not soft-delete. *(Shipped in [PR #85](https://github.com/sabha-co/sabha/pull/85).)*
 4. ✅ Redundant `.unscoped` calls removed. `grep '.unscoped' app/` returns zero hits. *(Shipped in [PR #85](https://github.com/sabha-co/sabha/pull/85).)*
@@ -241,7 +241,7 @@ Out of scope (deferred to product-driven follow-ups, not blocking the foundation
 - **Completed work this plan delivered:**
   - [PR #79](https://github.com/sabha-co/sabha/pull/79) — quick wins #1–#5 (precursor)
   - [PR #80](https://github.com/sabha-co/sabha/pull/80) — Message callback decomposition (Slice 1)
-  - [PR #81](https://github.com/sabha-co/sabha/pull/81) — Room + Membership callback decomposition (Slice 1)
+  - [PR #81](https://github.com/sabha-co/sabha/pull/81) — Channel + Membership callback decomposition (Slice 1)
   - [PR #82](https://github.com/sabha-co/sabha/pull/82) — User decomposition (Slice 2)
   - [PR #83](https://github.com/sabha-co/sabha/pull/83) — schema hotfix: drop orphan `users.accepted_terms_at`
   - [PR #84](https://github.com/sabha-co/sabha/pull/84) — schema hotfix: re-sync FK `on_delete: :cascade` annotations

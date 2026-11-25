@@ -2,7 +2,7 @@
 #
 # Encapsulates the complex queries needed for the sidebar, keeping
 # the controller concern clean. Handles both direct messages and
-# shared rooms with proper eager loading to avoid N+1 queries.
+# shared channels with proper eager loading to avoid N+1 queries.
 #
 class SidebarMemberships
   attr_reader :user
@@ -14,57 +14,57 @@ class SidebarMemberships
   # Direct message memberships shown in the horizontal scroll area.
   # Only includes DMs that are:
   # - Visible (not set to invisible involvement)
-  # - In active rooms
-  # - Recently active (unread OR room updated in last 7 days)
+  # - In active channels
+  # - Recently active (unread OR channel updated in last 7 days)
   #
   # Sorted by most recent activity first, limited to 10.
   #
   def direct
     user.memberships
       .visible
-      .direct_rooms
-      .active_rooms
+      .direct_channels
+      .active_channels
       .recently_active_or_unread
-      .includes(:room)
-      .with_room_by_last_active_newest_first
+      .includes(:channel)
+      .with_channel_by_last_active_newest_first
       .limit(10)
   end
 
-  # Starred room memberships shown in the "Favorites" section.
+  # Starred channel memberships shown in the "Favorites" section.
   #
   def starred
     shared_base.starred
   end
 
-  # Unstarred shared room memberships shown in the "All Rooms" section.
+  # Unstarred shared channel memberships shown in the "All Channels" section.
   #
   def shared
     shared_base.unstarred
   end
 
-  # Hidden room memberships (rooms with invisible involvement).
-  # Shown in a collapsible "Hidden Rooms" section so users can find and unhide them.
+  # Hidden channel memberships (channels with invisible involvement).
+  # Shown in a collapsible "Hidden Channels" section so users can find and unhide them.
   #
   def hidden
     user.memberships
       .where(involvement: :invisible)
-      .without_thread_rooms
-      .without_direct_rooms
-      .active_rooms
-      .includes(:room)
+      .without_thread_channels
+      .without_direct_channels
+      .active_channels
+      .includes(:channel)
   end
 
-  # Preloads users for each direct room to display avatars without N+1 queries.
-  # Returns a hash of room_id => [users], excluding the current user.
+  # Preloads users for each direct channel to display avatars without N+1 queries.
+  # Returns a hash of channel_id => [users], excluding the current user.
   # Falls back to showing current user if they're the only member.
   #
-  def direct_room_members(memberships)
+  def direct_channel_members(memberships)
     return {} if memberships.empty?
 
     Membership
-      .where(room_id: memberships.map(&:room_id), active: true)
+      .where(channel_id: memberships.map(&:channel_id), active: true)
       .includes(user: { avatar_attachment: { blob: :variant_records } })
-      .group_by(&:room_id)
+      .group_by(&:channel_id)
       .transform_values { |ms| other_members(ms).presence || [ user ] }
   end
 
@@ -73,10 +73,10 @@ class SidebarMemberships
   def shared_base
     user.memberships
       .visible
-      .without_thread_rooms
-      .without_direct_rooms
-      .active_rooms
-      .includes(:room)
+      .without_thread_channels
+      .without_direct_channels
+      .active_channels
+      .includes(:channel)
   end
 
   def other_members(memberships)

@@ -3,7 +3,7 @@ require "test_helper"
 class API::Bots::Autocompletable::UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @bot = users(:bender)
-    @room = rooms(:watercooler)
+    @channel = channels(:watercooler)
   end
 
   test "query returns visible matches" do
@@ -21,19 +21,19 @@ class API::Bots::Autocompletable::UsersControllerTest < ActionDispatch::Integrat
     assert response.parsed_body.size <= 20
   end
 
-  test "room-scoped blank query only returns members of that room" do
-    other_room = Rooms::Open.create!(name: "Side Room", creator: users(:david))
-    Membership.create!(user: @bot, room: other_room, involvement: :everything)
-    Membership.create!(user: users(:jz), room: other_room, involvement: :everything)
+  test "channel-scoped blank query only returns members of that channel" do
+    other_channel = Channels::Open.create!(name: "Side Channel", creator: users(:david))
+    Membership.create!(user: @bot, channel: other_channel, involvement: :everything)
+    Membership.create!(user: users(:jz), channel: other_channel, involvement: :everything)
 
-    get api_bots_autocompletable_users_url, params: { room_id: @room.id }, headers: bot_headers(@bot)
+    get api_bots_autocompletable_users_url, params: { channel_id: @channel.id }, headers: bot_headers(@bot)
 
     json = response.parsed_body
-    assert_not json.any? { |u| u["id"] == users(:jz).id }, "cross-room user must not surface"
+    assert_not json.any? { |u| u["id"] == users(:jz).id }, "cross-channel user must not surface"
   end
 
-  test "with room_id, 404s when bot is not a member of that room" do
-    get api_bots_autocompletable_users_url, params: { room_id: rooms(:designers).id }, headers: bot_headers(@bot)
+  test "with channel_id, 404s when bot is not a member of that channel" do
+    get api_bots_autocompletable_users_url, params: { channel_id: channels(:designers).id }, headers: bot_headers(@bot)
 
     assert_response :not_found
   end

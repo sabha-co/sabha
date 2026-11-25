@@ -3,7 +3,7 @@ require "test_helper"
 class FirstRunTest < ActiveSupport::TestCase
   setup do
     Account.destroy_all
-    Room.destroy_all
+    Channel.destroy_all
     User.destroy_all
   end
 
@@ -12,19 +12,19 @@ class FirstRunTest < ActiveSupport::TestCase
     assert user.administrator?
   end
 
-  test "first user has access to first room" do
+  test "first user has access to first channel" do
     user = create_first_run_user
-    assert user.rooms.one?
+    assert user.channels.one?
   end
 
-  test "first room is an open room" do
+  test "first channel is an open channel" do
     create_first_run_user
-    assert Room.first.open?
+    assert Channel.first.open?
   end
 
-  test "first room is auto_join so new signups land directly in it" do
+  test "first channel is auto_join so new signups land directly in it" do
     create_first_run_user
-    assert Room.first.auto_join?
+    assert Channel.first.auto_join?
   end
 
   private
@@ -36,11 +36,11 @@ end
 class FirstRunAutoBootstrapFromSsoTest < ActiveSupport::TestCase
   setup do
     Account.destroy_all
-    Room.destroy_all
+    Channel.destroy_all
     User.destroy_all
   end
 
-  test "creates account, administrator, sso record, and auto-join General room" do
+  test "creates account, administrator, sso record, and auto-join General channel" do
     admin = FirstRun.auto_bootstrap_from_sso(payload)
 
     assert_equal 1, Account.count
@@ -50,11 +50,11 @@ class FirstRunAutoBootstrapFromSsoTest < ActiveSupport::TestCase
     assert_equal "First Admin", admin.name
     assert_equal "ext-first-admin", admin.single_sign_on_records.sole.external_id
 
-    general = Room.first
+    general = Channel.first
     assert_equal "General", general.name
     assert general.open?
     assert general.auto_join?
-    assert_includes admin.rooms, general
+    assert_includes admin.channels, general
   end
 
   test "returns nil when an account already exists" do

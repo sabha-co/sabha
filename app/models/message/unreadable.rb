@@ -2,11 +2,11 @@ module Message::Unreadable
   extend ActiveSupport::Concern
 
   included do
-    # Order matters: deliver_to_room advances the sender's read cursor, and
+    # Order matters: deliver_to_channel advances the sender's read cursor, and
     # increment_unread_notifications_counters then bumps the counter for
     # memberships whose cursor sits before this message. Swap them and a
     # caught-up DM sender would bump their own badge.
-    after_create_commit :deliver_to_room
+    after_create_commit :deliver_to_channel
     after_create_commit :increment_unread_notifications_counters
     after_update_commit :rebalance_unread_counters_if_deactivated
     after_update_commit :destroy_notifications_if_deactivated
@@ -14,30 +14,30 @@ module Message::Unreadable
   end
 
   private
-    def deliver_to_room
-      room.receive(self)
+    def deliver_to_channel
+      channel.receive(self)
     end
 
     # Bumps unread_notifications_count for memberships affected by this message.
-    # Mirrors the with_has_unread_notifications semantics: DM rooms count every
+    # Mirrors the with_has_unread_notifications semantics: DM channels count every
     # unread message (including the sender's, matching the old scope which made
-    # no creator distinction in DMs); other rooms only count mentions and
+    # no creator distinction in DMs); other channels only count mentions and
     # @everyone. Members watching live are skipped — they see the message as it
     # lands, and senders almost always fall in this bucket.
     def increment_unread_notifications_counters
       return if event?
 
-      recipient_ids = if room.direct?
-        room.user_ids
+      recipient_ids = if channel.direct?
+        channel.user_ids
       elsif mentions_everyone?
-        room.user_ids - [ creator_id ]
+        channel.user_ids - [ creator_id ]
       else
         mentionee_ids - [ creator_id ]
       end
 
       return if recipient_ids.empty?
 
-      Membership.where(room_id: room_id, user_id: recipient_ids)
+      Membership.where(channel_id: channel_id, user_id: recipient_ids)
                 .merge(Membership.with_message_unseen(created_at, id))
                 .update_all("unread_notifications_count = unread_notifications_count + 1")
     end
@@ -61,12 +61,12 @@ module Message::Unreadable
     def restore_unread_notifications_counters_if_reactivated
       return unless saved_change_to_attribute?(:active) && active?
       return if event?
-      return unless room.direct? || mentions_everyone?
+      return unless channel.direct? || mentions_everyone?
 
-      recipient_ids = room.direct? ? room.user_ids : room.user_ids - [ creator_id ]
+      recipient_ids = channel.direct? ? channel.user_ids : channel.user_ids - [ creator_id ]
       return if recipient_ids.empty?
 
-      Membership.where(room_id: room_id, user_id: recipient_ids)
+      Membership.where(channel_id: channel_id, user_id: recipient_ids)
                 .merge(Membership.with_message_unseen(created_at, id))
                 .update_all("unread_notifications_count = unread_notifications_count + 1")
 
@@ -74,7 +74,7 @@ module Message::Unreadable
     end
 
     # Keeps memberships.unread_notifications_count consistent when this
-    # message disappears from the room (soft- or hard-deleted). Called by
+    # message disappears from the channel (soft- or hard-deleted). Called by
     # Message#destroy_all_associated_records as well as the deactivation
     # callback above.
     #
@@ -85,9 +85,9 @@ module Message::Unreadable
     # self-heals — the cursor comparison only sees active messages, so no
     # anchor needs advancing.
     def rebalance_unread_counters
-      return unless room.direct?
+      return unless channel.direct?
 
-      affected = Membership.where(room_id: room_id).merge(Membership.with_message_unseen(created_at, id))
+      affected = Membership.where(channel_id: channel_id).merge(Membership.with_message_unseen(created_at, id))
       affected_user_ids = Desktop.notifications_enabled? ? affected.pluck(:user_id) : []
 
       affected.update_all("unread_notifications_count = CASE WHEN unread_notifications_count > 0 THEN unread_notifications_count - 1 ELSE 0 END")

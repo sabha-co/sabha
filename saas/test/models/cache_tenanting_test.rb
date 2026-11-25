@@ -31,7 +31,7 @@ class CacheTenantingTest < ActiveSupport::TestCase
     end
   end
 
-  test "room active_member_count_cache_key includes tenant" do
+  test "channel active_member_count_cache_key includes tenant" do
     ApplicationRecord.with_tenant(@tenant_a) do
       user = User.find_or_create_by!(email_address: "test@example.com") do |u|
         u.name = "Test"
@@ -39,17 +39,17 @@ class CacheTenantingTest < ActiveSupport::TestCase
         u.verified_at = Time.current
       end
 
-      room = Rooms::Open.find_or_create_by!(name: "Test Room") do |r|
-        r.slug = "test-room"
+      channel = Channels::Open.find_or_create_by!(name: "Test Channel") do |r|
+        r.slug = "test-channel"
         r.creator = user
       end
 
-      cache_key = room.send(:active_member_count_cache_key)
+      cache_key = channel.send(:active_member_count_cache_key)
 
       # Key should include tenant prefix
       assert cache_key.start_with?("#{@tenant_a}:"), "Cache key should start with tenant: #{cache_key}"
-      assert_includes cache_key, "room"
-      assert_includes cache_key, room.id.to_s
+      assert_includes cache_key, "channel"
+      assert_includes cache_key, channel.id.to_s
     end
   end
 

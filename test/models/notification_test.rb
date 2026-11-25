@@ -4,11 +4,11 @@ class NotificationTest < ActiveSupport::TestCase
   setup do
     @david = users(:david)
     @jason = users(:jason)
-    @room = rooms(:pets)
+    @channel = channels(:pets)
   end
 
   test "creating a message with @mention creates a mention notification" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "mention_notif_test"
@@ -21,7 +21,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "self-mention does not create a notification" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @david,
       client_message_id: "self_mention_notif"
@@ -31,8 +31,8 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "DM messages do not create mention notifications" do
-    dm_room = rooms(:david_and_jason)
-    message = dm_room.messages.create!(
+    dm_channel = channels(:david_and_jason)
+    message = dm_channel.messages.create!(
       body: "Hey David",
       creator: @jason,
       client_message_id: "dm_notif_test"
@@ -42,8 +42,8 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "DM boosts do not create notifications" do
-    dm_room = rooms(:david_and_jason)
-    message = dm_room.messages.create!(
+    dm_channel = channels(:david_and_jason)
+    message = dm_channel.messages.create!(
       body: "Boost me",
       creator: @david,
       client_message_id: "dm_boost_notif"
@@ -55,9 +55,9 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "mentions in DM threads do not create notifications" do
-    dm_room = rooms(:david_and_jason)
-    parent = dm_room.messages.create!(body: "Start thread", creator: @david, client_message_id: "dm_thread_parent")
-    thread = Rooms::Thread.find_or_create_by!(parent_message: parent, creator: @david)
+    dm_channel = channels(:david_and_jason)
+    parent = dm_channel.messages.create!(body: "Start thread", creator: @david, client_message_id: "dm_thread_parent")
+    thread = Channels::Thread.find_or_create_by!(parent_message: parent, creator: @david)
     thread.memberships.grant_to([ @david, @jason ])
 
     thread.messages.create!(
@@ -70,9 +70,9 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "boosts in DM threads do not create notifications" do
-    dm_room = rooms(:david_and_jason)
-    parent = dm_room.messages.create!(body: "Start thread", creator: @david, client_message_id: "dm_thread_boost_parent")
-    thread = Rooms::Thread.find_or_create_by!(parent_message: parent, creator: @david)
+    dm_channel = channels(:david_and_jason)
+    parent = dm_channel.messages.create!(body: "Start thread", creator: @david, client_message_id: "dm_thread_boost_parent")
+    thread = Channels::Thread.find_or_create_by!(parent_message: parent, creator: @david)
     thread.memberships.grant_to([ @david, @jason ])
 
     thread_msg = thread.messages.create!(body: "Boost me", creator: @david, client_message_id: "dm_thread_boost_msg")
@@ -82,7 +82,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "creating a boost creates a notification for message creator" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "Boost me",
       creator: @david,
       client_message_id: "boost_notif_test"
@@ -100,7 +100,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "boosting your own message does not create a notification" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "Self boost",
       creator: @david,
       client_message_id: "self_boost_test"
@@ -112,7 +112,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "destroying a boost destroys its notification" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "Boost then delete",
       creator: @david,
       client_message_id: "boost_deactivate_test"
@@ -129,7 +129,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "soft-deleting a message destroys its notifications" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "msg_deactivate_test"
@@ -142,7 +142,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "activity_type validation" do
-    message = @room.messages.create!(body: "test", creator: @jason, client_message_id: "valid_test")
+    message = @channel.messages.create!(body: "test", creator: @jason, client_message_id: "valid_test")
 
     notification = Notification.new(
       user: @david, message: message, actor: @jason, activity_type: "invalid"
@@ -153,28 +153,28 @@ class NotificationTest < ActiveSupport::TestCase
     assert notification.valid?
   end
 
-  test "@everyone mention creates notifications for all room members except creator" do
+  test "@everyone mention creates notifications for all channel members except creator" do
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div>Hey <action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
-    room_user_ids = @room.user_ids
-    assert room_user_ids.size > 1, "Room should have multiple members for this test"
+    channel_user_ids = @channel.user_ids
+    assert channel_user_ids.size > 1, "Channel should have multiple members for this test"
 
     message = Message.create!(
-      room: @room,
+      channel: @channel,
       body: body_html,
       creator: @jason,
       client_message_id: "everyone_notif_test"
     )
 
     notifications = Notification.where(message: message, activity_type: "mention")
-    expected_ids = (room_user_ids - [ @jason.id ]).sort
+    expected_ids = (channel_user_ids - [ @jason.id ]).sort
     assert_equal expected_ids, notifications.pluck(:user_id).sort
     assert_not_includes notifications.pluck(:user_id), @jason.id
   end
 
   test "editing a mention out of a message destroys the notification" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "edit_mention_out"
@@ -191,22 +191,22 @@ class NotificationTest < ActiveSupport::TestCase
   test "editing @everyone to individual mention destroys non-mentioned users notifications" do
     # Add a third member so @everyone notifies more than one person
     jz = users(:jz)
-    @room.memberships.create!(user: jz, involvement: :everything)
+    @channel.memberships.create!(user: jz, involvement: :everything)
 
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
-      room: @room,
+      channel: @channel,
       body: body_html,
       creator: @jason,
       client_message_id: "everyone_to_individual"
     )
 
-    # Everyone in room (except jason) should have a notification
-    room_recipients = @room.user_ids - [ @jason.id ]
-    assert room_recipients.size > 1
-    assert_equal room_recipients.sort, Notification.where(message: message, activity_type: "mention").pluck(:user_id).sort
+    # Everyone in channel (except jason) should have a notification
+    channel_recipients = @channel.user_ids - [ @jason.id ]
+    assert channel_recipients.size > 1
+    assert_equal channel_recipients.sort, Notification.where(message: message, activity_type: "mention").pluck(:user_id).sort
 
     # Edit to only mention david
     message.update!(body: "<div>Hey #{mention_attachment_for(:david)}</div>")
@@ -217,22 +217,22 @@ class NotificationTest < ActiveSupport::TestCase
     assert_equal 1, remaining.count
   end
 
-  test "room deactivation destroys all notifications for messages in that room" do
-    message = @room.messages.create!(
+  test "channel deactivation destroys all notifications for messages in that channel" do
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
-      client_message_id: "room_deactivate_notif"
+      client_message_id: "channel_deactivate_notif"
     )
 
     assert Notification.exists?(user: @david, message: message)
 
-    @room.deactivate
+    @channel.deactivate
 
     assert_not Notification.exists?(user: @david, message: message)
   end
 
   test "non-body update does not destroy mention notifications" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "non_body_update"
@@ -248,7 +248,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "editing out a mention then editing it back does not restore the notification" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "re_mention_test"
@@ -267,14 +267,14 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "decrementing an already-zero unread counter clamps at zero" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "clamp_test"
     )
     notification = Notification.find_by!(user: @david, message: message, activity_type: "mention")
 
-    membership = @room.memberships.find_by!(user: @david)
+    membership = @channel.memberships.find_by!(user: @david)
     # Eligible for a decrement (cursor before the message, marked unread) but the
     # counter is already at the floor — the portable CASE clamp (replacing the
     # SQLite-only scalar MAX) must keep it at 0 rather than going negative.
@@ -286,14 +286,14 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "quoting a message creates mention notification for original author" do
-    original_message = @room.messages.create!(
+    original_message = @channel.messages.create!(
       body: "<div>Original message</div>",
       creator: @david,
       client_message_id: "cited_notif_original"
     )
 
-    citing_message = @room.messages.create!(
-      body: "<div><cite><a href=\"/rooms/#{@room.id}/messages/@#{original_message.id}\">quoted</a></cite> responding</div>",
+    citing_message = @channel.messages.create!(
+      body: "<div><cite><a href=\"/channels/#{@channel.id}/messages/@#{original_message.id}\">quoted</a></cite> responding</div>",
       creator: @jason,
       client_message_id: "cited_notif_reply"
     )
@@ -304,9 +304,9 @@ class NotificationTest < ActiveSupport::TestCase
 
   test "mentioning a non-member creates no notification" do
     jz = users(:jz)
-    assert_not @room.memberships.exists?(user: jz), "jz should not be a member of the room"
+    assert_not @channel.memberships.exists?(user: jz), "jz should not be a member of the channel"
 
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jz)}</div>",
       creator: @jason,
       client_message_id: "non_member_notif"
@@ -314,14 +314,14 @@ class NotificationTest < ActiveSupport::TestCase
 
     assert_not Notification.exists?(user: jz, message: message),
       "Non-member should not receive a notification"
-    assert_not @room.memberships.exists?(user: jz),
-      "Non-member should not be added to the room"
+    assert_not @channel.memberships.exists?(user: jz),
+      "Non-member should not be added to the channel"
   end
 
   test "creating a mention notification broadcasts the activity indicator" do
     assert_turbo_stream_broadcasts [ @david, :sidebar_activity_indicator ], count: 1 do
       perform_enqueued_jobs(only: BroadcastMentionNotificationsJob) do
-        @room.messages.create!(
+        @channel.messages.create!(
           body: "<div>Hey #{mention_attachment_for(:david)}</div>",
           creator: @jason,
           client_message_id: "indicator_broadcast_mention"
@@ -331,7 +331,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "creating a boost notification broadcasts the activity indicator" do
-    message = @room.messages.create!(body: "boost me", creator: @david, client_message_id: "indicator_broadcast_boost")
+    message = @channel.messages.create!(body: "boost me", creator: @david, client_message_id: "indicator_broadcast_boost")
 
     assert_turbo_stream_broadcasts [ @david, :sidebar_activity_indicator ], count: 1 do
       perform_enqueued_jobs(only: Notification::DispatchJob) do
@@ -341,8 +341,8 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "creating a thread reply notification broadcasts the activity indicator" do
-    parent = @room.messages.create!(body: "start", creator: @david, client_message_id: "indicator_broadcast_parent")
-    thread = Rooms::Thread.find_or_create_by!(parent_message: parent, creator: @david)
+    parent = @channel.messages.create!(body: "start", creator: @david, client_message_id: "indicator_broadcast_parent")
+    thread = Channels::Thread.find_or_create_by!(parent_message: parent, creator: @david)
     thread.memberships.grant_to([ @david, @jason ])
 
     assert_turbo_stream_broadcasts [ @david, :sidebar_activity_indicator ], count: 1 do
@@ -353,7 +353,7 @@ class NotificationTest < ActiveSupport::TestCase
   end
 
   test "delete_all_and_broadcast fires the activity indicator broadcast for affected users" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "indicator_broadcast_bulk_delete"

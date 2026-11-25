@@ -55,10 +55,10 @@ Sabha extends Campfire's write-only bot system into an agent-ready REST + WebSoc
 | Mention webhooks | Yes (7s timeout) | Yes (300s timeout, HMAC-signed) |
 | Self-registration | No | `POST /join/{code}` returns `bot_key` + `webhook_secret` |
 | API discovery | No | `GET /skill` (plain-text, LLM-readable) |
-| Read messages | No | `GET /api/bots/rooms/{room_id}/messages` (cursor-paginated) |
+| Read messages | No | `GET /api/bots/channels/{channel_id}/messages` (cursor-paginated) |
 | Edit / delete own messages | No | `PATCH` / `DELETE /api/bots/messages/{id}` |
 | Reactions | No | `POST` / `DELETE /api/bots/messages/{id}/boosts` |
-| Room management | No | Create, archive, join, leave, manage members |
+| Channel management | No | Create, archive, join, leave, manage members |
 | Create DMs | No | `POST /api/bots/direct_messages` |
 | Real-time WebSocket | No | `wss://.../cable?bot_key=…` subscribing to `BotEventsChannel` |
 | Structured errors | No | JSON `{ error, code }` envelope |
@@ -92,11 +92,11 @@ Supports multiple email providers via the standard ActionMailer delivery interfa
 
 ### Email Notifications
 
-Bundled missed-notification email and a separate weekly activity digest. Bundles coalesce mentions and DMs into one email per hour or per day (user-selectable) — no spam from chatty rooms. Weekly digest is admin-enabled with per-member opt-out. Both email surfaces default off; opt in via the notification preferences page. See [NOTIFICATIONS.md](features/NOTIFICATIONS.md).
+Bundled missed-notification email and a separate weekly activity digest. Bundles coalesce mentions and DMs into one email per hour or per day (user-selectable) — no spam from chatty channels. Weekly digest is admin-enabled with per-member opt-out. Both email surfaces default off; opt in via the notification preferences page. See [NOTIFICATIONS.md](features/NOTIFICATIONS.md).
 
 ### Notification Preferences
 
-Dedicated profile area for notification settings: global mode (everything / mentions+DMs / nothing), email bundle frequency, weekly digest opt-in, push toggle. Per-room overrides layer on top of the global mode.
+Dedicated profile area for notification settings: global mode (everything / mentions+DMs / nothing), email bundle frequency, weekly digest opt-in, push toggle. Per-channel overrides layer on top of the global mode.
 
 ### Single Sign-On
 
@@ -105,7 +105,7 @@ Self-hosted Sabhas can hand off sign-in to an external identity provider (HMAC-s
 ### Other
 
 - **User streaks** — consecutive days of posting with tiered icons
-- **System event messages** — room renames, member joins/leaves recorded as special messages
+- **System event messages** — channel renames, member joins/leaves recorded as special messages
 
 ---
 
@@ -130,7 +130,7 @@ Optional Rails engine in `saas/` for database-per-workspace isolation:
 
 - PostgreSQL for shared data (identities, workspaces, sessions)
 - SQLite per workspace for all app data
-- Path-based routing (`/1000001/rooms/general`)
+- Path-based routing (`/1000001/channels/general`)
 - OTP-only auth via GlobalIdentity
 - Tenant context auto-propagated to jobs and channels
 
@@ -143,7 +143,7 @@ See [multi-tenant/](./multi-tenant/) docs. The `saas/` directory is under the [S
 
 ### Soft Deletion
 
-Comprehensive soft deletion for messages, rooms, and memberships. Users have a status (`active` / `deactivated` / `banned`). Room deactivation cascades to threads, memberships, and messages. Deactivating a user also cascades to their DM rooms — both participants lose visibility — while leaving Open and Closed memberships untouched. See [SOFT_DELETION_AND_USER_STATES.md](features/SOFT_DELETION_AND_USER_STATES.md).
+Comprehensive soft deletion for messages, channels, and memberships. Users have a status (`active` / `deactivated` / `banned`). Channel deactivation cascades to threads, memberships, and messages. Deactivating a user also cascades to their DM channels — both participants lose visibility — while leaving Open and Closed memberships untouched. See [SOFT_DELETION_AND_USER_STATES.md](features/SOFT_DELETION_AND_USER_STATES.md).
 
 ### Deployment
 
@@ -171,7 +171,7 @@ Sabha includes features, originally added by [Antiwork's Small Bets fork](https:
 - **Video library** — removed Inertia.js/React infrastructure; Sabha is server-rendered only
 - **Expert role** — removed expert directory and "answered" message functionality
 - **Stats dashboard** — replaced with simpler user streaks
-- **Room URL slugs** — users navigate via sidebar, not URL slugs
-- **Room merge** — data integrity concerns
+- **Channel URL slugs** — users navigate via sidebar, not URL slugs
+- **Channel merge** — data integrity concerns
 - **Email digest notifications** — removed
 - **Marketing pages** — unauthenticated users redirect to sign-in

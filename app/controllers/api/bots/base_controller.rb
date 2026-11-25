@@ -7,21 +7,21 @@ class API::Bots::BaseController < ApplicationController
   rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
   private
-    # Resolve a room the bot can currently reach. A sub-room (forum post / chat
+    # Resolve a channel the bot can currently reach. A sub-channel (forum post / chat
     # thread) the bot still holds a silenced-but-active membership in after losing
     # parent access must not resolve — re-check derived access so a stale row can't
-    # keep granting it. Raises (→ 404) when unreachable, like `rooms.find` did.
-    def reachable_bot_room(id)
-      room = Current.user.rooms.find(id)
-      raise ActiveRecord::RecordNotFound if room.stale_sub_room_for?(Current.user)
-      room
+    # keep granting it. Raises (→ 404) when unreachable, like `channels.find` did.
+    def reachable_bot_channel(id)
+      channel = Current.user.channels.find(id)
+      raise ActiveRecord::RecordNotFound if channel.stale_sub_channel_for?(Current.user)
+      channel
     end
 
-    # A message the bot can reach: one whose room it can currently reach (see
-    # reachable_bot_room — a stale sub-room the bot left the parent of is rejected).
+    # A message the bot can reach: one whose channel it can currently reach (see
+    # reachable_bot_channel — a stale sub-channel the bot left the parent of is rejected).
     # `scope` lets a caller add eager-loads. Raises (→ 404) otherwise.
     def reachable_bot_message(id, scope = Message.active)
-      scope.find(id).tap { |message| reachable_bot_room(message.room_id) }
+      scope.find(id).tap { |message| reachable_bot_channel(message.channel_id) }
     end
 
     def require_bot_authentication
@@ -29,7 +29,7 @@ class API::Bots::BaseController < ApplicationController
     end
 
     def require_creator
-      head :forbidden unless @room.creator_id == Current.user.id
+      head :forbidden unless @channel.creator_id == Current.user.id
     end
 
     def not_found

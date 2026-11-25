@@ -16,7 +16,7 @@ class User < ApplicationRecord
   enum :status, %i[active deactivated banned], default: :active
 
   has_many :memberships, -> { active }, class_name: "Membership"
-  has_many :rooms, -> { active }, through: :memberships, source: :room
+  has_many :channels, -> { active }, through: :memberships, source: :channel
 
   has_many :bookmarks, class_name: "Bookmark"
   has_many :bookmarked_messages, -> { order("bookmarks.created_at DESC") }, through: :bookmarks, source: :message
@@ -24,9 +24,9 @@ class User < ApplicationRecord
 
   has_many :join_codes, class_name: "Account::JoinCode", dependent: :destroy
 
-  # Active messages the user can reach — those in rooms they belong to, plus those
-  # in nested sub-rooms (forum posts / chat threads) whose parent they belong to.
-  # Access to a sub-room derives from its parent, so this is not a plain
+  # Active messages the user can reach — those in channels they belong to, plus those
+  # in nested sub-channels (forum posts / chat threads) whose parent they belong to.
+  # Access to a sub-channel derives from its parent, so this is not a plain
   # membership join; see Message.reachable_by for the full rule. Backs search,
   # unreads, the inbox feed, and the bots search API.
   def reachable_messages
@@ -34,22 +34,22 @@ class User < ApplicationRecord
   end
 
   # A single message the user can reach, or a 404. reachable_messages already
-  # encodes derived sub-room access (a passive parent member reaches it, a stale
+  # encodes derived sub-channel access (a passive parent member reaches it, a stale
   # row does not), so no per-call re-check is needed.
   def reachable_message(id)
     reachable_messages.find_by(id:) ||
       raise(ActiveRecord::RecordNotFound, "Couldn't find Message with id=#{id}")
   end
 
-  # A room this user can currently reach, or nil: one they belong to, or a nested
-  # sub-room (forum post or chat thread) whose access derives from its parent. A
-  # sub-room is re-checked with viewable_by? even when a membership resolved it,
+  # A channel this user can currently reach, or nil: one they belong to, or a nested
+  # sub-channel (forum post or chat thread) whose access derives from its parent. A
+  # sub-channel is re-checked with viewable_by? even when a membership resolved it,
   # so a silenced-but-active row can't keep granting access after the user loses
-  # parent access. Backs RoomChannel (presence/typing) the way SubRoomAccessible
-  # backs the controllers that resolve a room from params.
-  def reachable_room(id)
-    room = rooms.find_by(id:) || Room.active.sub_rooms.find_by(id:)
-    room unless room&.stale_sub_room_for?(self)
+  # parent access. Backs ChannelScopedChannel (presence/typing) the way SubChannelAccessible
+  # backs the controllers that resolve a channel from params.
+  def reachable_channel(id)
+    channel = channels.find_by(id:) || Channel.active.sub_channels.find_by(id:)
+    channel unless channel&.stale_sub_channel_for?(self)
   end
 
   def active_invite_link
@@ -66,12 +66,12 @@ class User < ApplicationRecord
 
   def mentioning_messages
     Message.active
-      .where(room_id: room_ids)
+      .where(channel_id: channel_ids)
       .where(
         "EXISTS (SELECT 1 FROM notifications WHERE notifications.message_id = messages.id
           AND notifications.user_id = ? AND notifications.activity_type = 'mention')
          OR messages.mentions_everyone = ?
-         OR EXISTS (SELECT 1 FROM rooms WHERE rooms.id = messages.room_id AND rooms.type = 'Rooms::Direct')",
+         OR EXISTS (SELECT 1 FROM channels WHERE channels.id = messages.channel_id AND channels.type = 'Channels::Direct')",
         id, true
       )
   end
@@ -99,17 +99,17 @@ class User < ApplicationRecord
   before_validation :set_default_name
   before_validation :normalize_social_urls
   before_save :transliterate_name, if: :name_changed?
-  after_create_commit :grant_membership_to_auto_join_rooms
+  after_create_commit :grant_membership_to_auto_join_channels
 
   scope :ordered, -> { order(arel_table[:role].desc, arel_table[:name].lower) }
-  scope :recent_posters_first, ->(room_id = nil) do
+  scope :recent_posters_first, ->(channel_id = nil) do
     messages_table = Message.active.arel_table
     users_table = active.arel_table
 
     left_join_condition = messages_table[:creator_id].eq(users_table[:id])
       .and(messages_table[:event].eq(nil))
       .and(messages_table[:welcome].eq(false))  # Mirrors Message.user_authored scope
-    left_join_condition = left_join_condition.and(messages_table[:room_id].eq(room_id)) if room_id.present?
+    left_join_condition = left_join_condition.and(messages_table[:channel_id].eq(channel_id)) if channel_id.present?
 
     left_join = users_table.join(messages_table, Arel::Nodes::OuterJoin).on(left_join_condition)
 
@@ -143,13 +143,13 @@ class User < ApplicationRecord
     (by_first_name(query).limit(limit) + filtered_by(query).limit(limit)).uniq.first(limit)
   end
 
-  scope :sharing_rooms_with, ->(user) {
-    # Users co-present in any room this user actively belongs to. Expressed as a
+  scope :sharing_channels_with, ->(user) {
+    # Users co-present in any channel this user actively belongs to. Expressed as a
     # subquery rather than a join + distinct so that chaining .ordered — which
     # sorts by LOWER(name) — stays valid on Postgres, where SELECT DISTINCT
     # rejects an ORDER BY expression that isn't in the select list. The IN
     # subquery dedupes naturally, so the result set is unchanged.
-    where(id: Membership.active.where(room_id: user.rooms.select(:id)).select(:user_id))
+    where(id: Membership.active.where(channel_id: user.channels.select(:id)).select(:user_id))
   }
 
 
@@ -173,8 +173,8 @@ class User < ApplicationRecord
     transaction do
       # rewhere replaces the default `-> { active }` scope on the association,
       # allowing us to find deactivated memberships
-      memberships.rewhere(active: false).without_direct_rooms.update!(active: true)
-      reactivate_direct_rooms
+      memberships.rewhere(active: false).without_direct_channels.update!(active: true)
+      reactivate_direct_channels
       update! status: :active
       reset_remote_connections
     end
@@ -183,7 +183,7 @@ class User < ApplicationRecord
   def deactivate
     transaction do
       revoke_access
-      deactivate_direct_rooms
+      deactivate_direct_channels
       searches.delete_all
       update! status: :deactivated
     end
@@ -191,7 +191,7 @@ class User < ApplicationRecord
 
   def revoke_access
     close_remote_connections
-    memberships.without_direct_rooms.update!(active: false)
+    memberships.without_direct_channels.update!(active: false)
     push_subscriptions.delete_all
     sessions.delete_all
     auth_tokens.delete_all
@@ -208,8 +208,8 @@ class User < ApplicationRecord
     close_remote_connections reconnect: false
   end
 
-  def member_of?(room)
-    Membership.active.visible.exists?(room_id: room.id, user_id: id)
+  def member_of?(channel)
+    Membership.active.visible.exists?(channel_id: channel.id, user_id: id)
   end
 
   # Email-only presence check — true when no membership in this workspace has
@@ -243,34 +243,34 @@ class User < ApplicationRecord
   def total_message_count
     Message.active
            .user_authored
-           .joins(:room)
+           .joins(:channel)
            .where(creator_id: id)
-           .where("rooms.type != ?", "Rooms::Direct")
+           .where("channels.type != ?", "Channels::Direct")
            .count
   end
 
   private
-    def deactivate_direct_rooms
-      Membership.where(user_id: id).direct_rooms.each do |membership|
-        membership.room.deactivate
+    def deactivate_direct_channels
+      Membership.where(user_id: id).direct_channels.each do |membership|
+        membership.channel.deactivate
       end
     end
 
-    def reactivate_direct_rooms
-      Membership.where(user_id: id, active: false).direct_rooms.each do |membership|
-        membership.room.reactivate
+    def reactivate_direct_channels
+      Membership.where(user_id: id, active: false).direct_channels.each do |membership|
+        membership.channel.reactivate
       end
     end
 
-    def grant_membership_to_auto_join_rooms
-      forced_room_ids = Room.active.where(auto_join: true).pluck(:id)
-      return if forced_room_ids.empty?
+    def grant_membership_to_auto_join_channels
+      forced_channel_ids = Channel.active.where(auto_join: true).pluck(:id)
+      return if forced_channel_ids.empty?
 
-      # Only the auto-join rooms themselves need a membership row. Their nested
-      # sub-rooms (an open room's threads, a forum's posts) derive access from
-      # this parent membership, so a new member reaches them without a per-sub-room
+      # Only the auto-join channels themselves need a membership row. Their nested
+      # sub-channels (an open channel's threads, a forum's posts) derive access from
+      # this parent membership, so a new member reaches them without a per-sub-channel
       # row of their own — no fan-out.
-      Membership.insert_all(forced_room_ids.collect { |room_id| { room_id: room_id, user_id: id } })
+      Membership.insert_all(forced_channel_ids.collect { |channel_id| { channel_id: channel_id, user_id: id } })
     end
 
     # Clean up associated records explicitly because most `has_many` declarations

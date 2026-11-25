@@ -54,20 +54,20 @@ class AccountTest < ActiveSupport::TestCase
       originals.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
     end
 
-  test "settings restrict_room_creation_to_administrators can be toggled" do
-    @account.settings.restrict_room_creation_to_administrators = true
-    assert @account.settings.restrict_room_creation_to_administrators?
-    assert_equal true, @account[:settings]["restrict_room_creation_to_administrators"]
+  test "settings restrict_channel_creation_to_administrators can be toggled" do
+    @account.settings.restrict_channel_creation_to_administrators = true
+    assert @account.settings.restrict_channel_creation_to_administrators?
+    assert_equal true, @account[:settings]["restrict_channel_creation_to_administrators"]
 
-    @account.update!(settings: { "restrict_room_creation_to_administrators" => "true" })
-    assert @account.reload.settings.restrict_room_creation_to_administrators?
+    @account.update!(settings: { "restrict_channel_creation_to_administrators" => "true" })
+    assert @account.reload.settings.restrict_channel_creation_to_administrators?
 
-    @account.settings.restrict_room_creation_to_administrators = false
-    assert_not @account.settings.restrict_room_creation_to_administrators?
-    assert_equal false, @account[:settings]["restrict_room_creation_to_administrators"]
+    @account.settings.restrict_channel_creation_to_administrators = false
+    assert_not @account.settings.restrict_channel_creation_to_administrators?
+    assert_equal false, @account[:settings]["restrict_channel_creation_to_administrators"]
 
-    @account.update!(settings: { "restrict_room_creation_to_administrators" => "false" })
-    assert_not @account.reload.settings.restrict_room_creation_to_administrators?
+    @account.update!(settings: { "restrict_channel_creation_to_administrators" => "false" })
+    assert_not @account.reload.settings.restrict_channel_creation_to_administrators?
   end
 
   test "settings restrict_direct_messages_to_administrators can be toggled" do

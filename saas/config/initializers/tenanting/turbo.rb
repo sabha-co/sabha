@@ -55,7 +55,7 @@ end
 # would place it BELOW the included module in MRO — Turbo's default would silently
 # win, and tenant-aware rendering would be bypassed for controller-originated
 # broadcasts (e.g. broadcast_replace_to in Messages::BookmarksController and
-# Rooms::InvolvementsController), producing Turbo Stream URLs without the
+# Channels::InvolvementsController), producing Turbo Stream URLs without the
 # workspace prefix. Tests do not catch this because they don't assert on rendered
 # Turbo Stream URL contents under script_name. Defining on ApplicationController
 # itself keeps the override above included modules in the lookup chain. The

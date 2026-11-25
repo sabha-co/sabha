@@ -1,0 +1,13 @@
+<% channel = membership.channel %>
+<div id="<%= dom_id(channel, :hidden_channel) %>" class="channel-row flex align-center gap-half">
+  <%= link_to_channel channel, class: "channel btn txt-nowrap flex-item-grow" do %>
+    <span class="overflow-ellipsis"><%= channel_display_name(channel) %></span>
+  <% end %>
+  <%= button_to channel_involvement_path(channel, involvement: "mentions"),
+        method: :put,
+        class: "btn btn--small",
+        title: "Unhide channel" do %>
+    <%= icon_tag "eye", size: 16 %>
+    <span class="for-screen-reader">Unhide</span>
+  <% end %>
+</div>

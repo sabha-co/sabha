@@ -2,7 +2,7 @@
 
 <% content_for :nav do %>
   <div class="flex-item-justify-start">
-    <%= link_back_to_last_room_visited %>
+    <%= link_back_to_last_channel_visited %>
   </div>
 
   <% if Current.user.can_administer? %>
@@ -24,7 +24,7 @@
     <span>&middot;</span>
     <span><%= online_users_count %> online</span>
     <span>&middot;</span>
-    <span><%= pluralize(@room_count, "room") %></span>
+    <span><%= pluralize(@channel_count, "channel") %></span>
   </div>
 
   <% if Current.account.settings.allow_users_to_create_invite_links? || Current.user.can_administer? %>

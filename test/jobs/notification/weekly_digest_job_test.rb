@@ -6,7 +6,7 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
   setup do
     @user  = users(:jason)
     @actor = users(:david)
-    @room  = rooms(:designers)
+    @channel  = channels(:designers)
 
     @user.notification_settings || @user.create_notification_settings!
     @user.notification_settings.update!(weekly_digest_subscribed: true, last_digest_sent_at: nil)
@@ -15,7 +15,7 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
 
   test "skips entirely when account.weekly_digest_enabled is false" do
     Account.sole.update!(weekly_digest_enabled: false)
-    seed_active_room_messages
+    seed_active_channel_messages
 
     assert_no_emails do
       Notification::WeeklyDigestJob.perform_now
@@ -24,7 +24,7 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
   end
 
   test "delivers when subscribed user has qualifying activity and stamps last_digest_sent_at" do
-    seed_active_room_messages
+    seed_active_channel_messages
 
     travel_to Time.current do
       assert_emails 1 do
@@ -35,7 +35,7 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
   end
 
   test "skips user with last_digest_sent_at within 6 days (dedup)" do
-    seed_active_room_messages
+    seed_active_channel_messages
     @user.notification_settings.update!(last_digest_sent_at: 3.days.ago)
     last = @user.notification_settings.last_digest_sent_at
 
@@ -56,7 +56,7 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
   end
 
   test "skips bots, deactivated, banned, and unverified users" do
-    seed_active_room_messages
+    seed_active_channel_messages
 
     bot = User.create!(name: "Digest Bot", role: :bot, bot_token: User.generate_bot_token)
     bot.notification_settings.update!(weekly_digest_subscribed: true)
@@ -75,7 +75,7 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
   end
 
   test "skips users with weekly_digest_subscribed: false" do
-    seed_active_room_messages
+    seed_active_channel_messages
     @user.notification_settings.update!(weekly_digest_subscribed: false)
 
     assert_no_emails do
@@ -84,7 +84,7 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
   end
 
   test "rescues per-user delivery failure so later eligible users still get processed" do
-    seed_active_room_messages
+    seed_active_channel_messages
 
     # Make a second user eligible alongside @user (jason)
     david = users(:david)
@@ -116,7 +116,7 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
     # Real delivered bundles always carry at least one item — the FK from
     # notification_bundle_items.bundle_id is non-cascading, so GC must
     # drop items before bundles or the DELETE raises InvalidForeignKey.
-    item_message = @room.messages.create!(body: "<div>gc item</div>", creator: @actor, client_message_id: "gc_item_#{SecureRandom.hex(4)}")
+    item_message = @channel.messages.create!(body: "<div>gc item</div>", creator: @actor, client_message_id: "gc_item_#{SecureRandom.hex(4)}")
     old_item = Notification::BundleItem.create!(bundle: old_delivered, message: item_message, actor: @actor, kind: "mention")
     old_delivered.update_column(:updated_at, 95.days.ago)
 
@@ -147,11 +147,11 @@ class Notification::WeeklyDigestJobTest < ActiveSupport::TestCase
   end
 
   private
-    def seed_active_room_messages
-      # Three messages in @room within the past week so the room qualifies as
-      # "recently active" (>= ACTIVE_ROOM_MIN_MESSAGES = 3).
+    def seed_active_channel_messages
+      # Three messages in @channel within the past week so the channel qualifies as
+      # "recently active" (>= ACTIVE_CHANNEL_MIN_MESSAGES = 3).
       3.times do |i|
-        @room.messages.create!(
+        @channel.messages.create!(
           body: "<div>Hi there #{i}</div>",
           creator: @actor,
           client_message_id: "digest_seed_#{i}_#{SecureRandom.hex(4)}"

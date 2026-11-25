@@ -1,0 +1,9 @@
+<%= turbo_stream.remove :next_page_container %>
+
+<%= turbo_stream.append :channel_members_list do %>
+  <%= render partial: "channels/threads/user", collection: @members, as: :user, locals: { channel: @channel } %>
+<% end %>
+
+<% unless @page.last? %>
+  <%= turbo_stream.append :channel_members_list, partial: "channels/members/next_page_container", locals: { page: @page.next_param } %>
+<% end %>

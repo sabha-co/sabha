@@ -1,0 +1,32 @@
+# Cascade-deactivation lifecycle shared by nested sub-channels — Channels::Thread (a
+# chat thread) and Channels::Post (a forum post). Both soft-delete along with their
+# memberships and messages, and `cascade_deactivated` records whether the delete
+# cascaded from the parent (a channel deactivating its threads, a forum its posts)
+# as opposed to an individual delete. Only cascade-deactivated sub-channels are
+# restored when the parent reactivates, so one deleted on its own stays deleted
+# across a parent delete/restore.
+module Channel::Nested
+  extend ActiveSupport::Concern
+
+  # Deactivates the sub-channel. Called either when an admin deletes it directly, or
+  # when its parent is deactivated (which cascades). `cascade: true` marks the
+  # latter — see the note above.
+  def deactivate(cascade: false)
+    transaction do
+      Membership.where(channel_id: id).update_all(active: false)
+      Message.where(channel_id: id).update_all(active: false)
+      destroy_notifications_for_messages
+      self.cascade_deactivated = cascade
+      deactivate!
+    end
+  end
+
+  def reactivate
+    transaction do
+      Membership.where(channel_id: id, active: false).update_all(active: true)
+      Message.where(channel_id: id, active: false).update_all(active: true)
+      self.cascade_deactivated = false
+      activate!
+    end
+  end
+end

@@ -5,11 +5,11 @@ class NotificationsHelperTest < ActionView::TestCase
     @david = users(:david)
     @jason = users(:jason)
     @jz = users(:jz)
-    @room = rooms(:pets)
+    @channel = channels(:pets)
   end
 
   test "groups consecutive boost notifications on the same message" do
-    message = @room.messages.create!(body: "Boost me", creator: @david, client_message_id: "group_test_1")
+    message = @channel.messages.create!(body: "Boost me", creator: @david, client_message_id: "group_test_1")
     perform_enqueued_jobs(only: Notification::DispatchJob) do
       b1 = message.boosts.create!(content: "🔥", booster: @jason)
       b2 = message.boosts.create!(content: "💯", booster: @jz)
@@ -25,8 +25,8 @@ class NotificationsHelperTest < ActionView::TestCase
   end
 
   test "does not group boost notifications on different messages" do
-    m1 = @room.messages.create!(body: "First", creator: @david, client_message_id: "group_diff_1")
-    m2 = @room.messages.create!(body: "Second", creator: @david, client_message_id: "group_diff_2")
+    m1 = @channel.messages.create!(body: "First", creator: @david, client_message_id: "group_diff_1")
+    m2 = @channel.messages.create!(body: "Second", creator: @david, client_message_id: "group_diff_2")
     perform_enqueued_jobs(only: Notification::DispatchJob) do
       m1.boosts.create!(content: "🔥", booster: @jason)
       m2.boosts.create!(content: "💯", booster: @jason)
@@ -40,13 +40,13 @@ class NotificationsHelperTest < ActionView::TestCase
   end
 
   test "does not group boosts separated by a mention" do
-    message = @room.messages.create!(body: "Boost me", creator: @david, client_message_id: "group_split_1")
+    message = @channel.messages.create!(body: "Boost me", creator: @david, client_message_id: "group_split_1")
     perform_enqueued_jobs(only: Notification::DispatchJob) do
       b1 = message.boosts.create!(content: "🔥", booster: @jason)
     end
 
     # Create a mention notification between the two boosts
-    mention_msg = @room.messages.create!(
+    mention_msg = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "group_split_mention"
@@ -64,12 +64,12 @@ class NotificationsHelperTest < ActionView::TestCase
   end
 
   test "mentions and thread replies pass through ungrouped" do
-    m1 = @room.messages.create!(
+    m1 = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "passthrough_1"
     )
-    m2 = @room.messages.create!(
+    m2 = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "passthrough_2"

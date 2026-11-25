@@ -34,25 +34,25 @@ class UserTest < ActiveSupport::TestCase
       "password_reset token must rotate when password_salt changes"
   end
 
-  test "creating users grants membership to auto_join open rooms only" do
-    auto_join_room = Rooms::Open.create!(name: "Auto Room", creator: users(:david), auto_join: true)
-    non_auto_room = Rooms::Open.create!(name: "Manual Room", creator: users(:david))
+  test "creating users grants membership to auto_join open channels only" do
+    auto_join_channel = Channels::Open.create!(name: "Auto Channel", creator: users(:david), auto_join: true)
+    non_auto_channel = Channels::Open.create!(name: "Manual Channel", creator: users(:david))
 
     user = create_new_user
 
-    assert user.member_of?(auto_join_room), "New user should be auto-joined to auto_join rooms"
-    assert_not user.member_of?(non_auto_room), "New user should not be auto-joined to non-auto_join rooms"
+    assert user.member_of?(auto_join_channel), "New user should be auto-joined to auto_join channels"
+    assert_not user.member_of?(non_auto_channel), "New user should not be auto-joined to non-auto_join channels"
   end
 
-  test "a new user reaches existing threads in an auto_join room via derived access, without a thread membership" do
-    auto_join_room = Rooms::Open.create!(name: "Auto Room", creator: users(:david), auto_join: true)
-    parent_message = auto_join_room.messages.create!(body: "topic", creator: users(:david))
-    thread = Rooms::Thread.find_or_create_for(parent_message, creator: users(:david))
+  test "a new user reaches existing threads in an auto_join channel via derived access, without a thread membership" do
+    auto_join_channel = Channels::Open.create!(name: "Auto Channel", creator: users(:david), auto_join: true)
+    parent_message = auto_join_channel.messages.create!(body: "topic", creator: users(:david))
+    thread = Channels::Thread.find_or_create_for(parent_message, creator: users(:david))
     reply = thread.messages.create!(body: "existing reply", creator: users(:david))
 
     user = create_new_user
 
-    assert_not Membership.exists?(room_id: thread.id, user_id: user.id),
+    assert_not Membership.exists?(channel_id: thread.id, user_id: user.id),
       "signing up must not fan a membership row out into every existing thread"
     assert user.reachable_messages.exists?(id: reply.id),
       "the new member still reaches the thread's messages via parent-derived access"
@@ -61,38 +61,38 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "creating an unverified user does not post a welcome message" do
-    original_room = Room.original
+    original_channel = Channel.original
 
-    assert_no_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
+    assert_no_difference -> { Message.unscoped.where(channel: original_channel, welcome: true).count } do
       create_new_user
     end
   end
 
-  test "verifying a user posts a welcome message in the original room" do
-    original_room = Room.original
+  test "verifying a user posts a welcome message in the original channel" do
+    original_channel = Channel.original
     user = create_new_user
 
-    assert_difference -> { Message.unscoped.where(room: original_room, welcome: true).count } do
+    assert_difference -> { Message.unscoped.where(channel: original_channel, welcome: true).count } do
       user.verify_email!
     end
   end
 
   test "creating a bot posts a welcome message" do
-    original_room = Room.original
+    original_channel = Channel.original
 
-    assert_difference -> { Message.unscoped.where(room: original_room, welcome: true).count }, 1 do
+    assert_difference -> { Message.unscoped.where(channel: original_channel, welcome: true).count }, 1 do
       User.create!(name: "Test Bot", bot_token: User.generate_bot_token, role: :bot)
     end
 
-    assert_equal "has been added as a bot.", Message.unscoped.where(room: original_room, welcome: true).last.body.to_plain_text
+    assert_equal "has been added as a bot.", Message.unscoped.where(channel: original_channel, welcome: true).last.body.to_plain_text
   end
 
-  test "deactivating a user deletes push subscriptions, searches, and deactivates all memberships including direct rooms" do
+  test "deactivating a user deletes push subscriptions, searches, and deactivates all memberships including direct channels" do
     user = users(:david)
-    non_direct_count = user.memberships.without_direct_rooms.count
-    # Direct room deactivation also deactivates the other user's membership in that room
-    direct_room_ids = Membership.where(user_id: user.id).direct_rooms.where(active: true).pluck(:room_id)
-    all_direct_memberships_count = Membership.where(room_id: direct_room_ids, active: true).count
+    non_direct_count = user.memberships.without_direct_channels.count
+    # Direct channel deactivation also deactivates the other user's membership in that channel
+    direct_channel_ids = Membership.where(user_id: user.id).direct_channels.where(active: true).pluck(:channel_id)
+    all_direct_memberships_count = Membership.where(channel_id: direct_channel_ids, active: true).count
     total_deactivated = non_direct_count + all_direct_memberships_count
 
     assert_no_difference -> { Membership.count } do  # Memberships are soft-deleted (active: false), not removed
@@ -107,27 +107,27 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
-  test "deactivating a user deactivates their direct rooms" do
+  test "deactivating a user deactivates their direct channels" do
     user = users(:david)
     other = users(:jason)
-    direct_room = Rooms::Direct.find_or_create_for(User.where(id: [ user.id, other.id ]))
-    assert direct_room.active?
+    direct_channel = Channels::Direct.find_or_create_for(User.where(id: [ user.id, other.id ]))
+    assert direct_channel.active?
 
     user.deactivate
 
-    assert_not direct_room.reload.active?, "Direct room should be deactivated when a participant is deactivated"
+    assert_not direct_channel.reload.active?, "Direct channel should be deactivated when a participant is deactivated"
   end
 
-  test "reactivating a user restores their direct rooms" do
+  test "reactivating a user restores their direct channels" do
     user = users(:david)
     other = users(:jason)
-    direct_room = Rooms::Direct.find_or_create_for(User.where(id: [ user.id, other.id ]))
+    direct_channel = Channels::Direct.find_or_create_for(User.where(id: [ user.id, other.id ]))
 
     user.deactivate
-    assert_not direct_room.reload.active?
+    assert_not direct_channel.reload.active?
 
     user.reactivate
-    assert direct_room.reload.active?, "Direct room should be reactivated when participant is reactivated"
+    assert direct_channel.reload.active?, "Direct channel should be reactivated when participant is reactivated"
   end
 
   test "deactivating a user deletes their sessions" do
@@ -165,21 +165,21 @@ class UserTest < ActiveSupport::TestCase
 
   test "reactivating a user restores their memberships" do
     user = users(:david)
-    initial_count = Membership.where(user_id: user.id, active: true).without_direct_rooms.count
+    initial_count = Membership.where(user_id: user.id, active: true).without_direct_channels.count
 
     assert initial_count > 0, "Precondition: user should have memberships"
 
     user.deactivate
     user.reload
 
-    assert_equal 0, Membership.where(user_id: user.id, active: true).without_direct_rooms.count
-    inactive_count = Membership.where(user_id: user.id, active: false).without_direct_rooms.count
+    assert_equal 0, Membership.where(user_id: user.id, active: true).without_direct_channels.count
+    inactive_count = Membership.where(user_id: user.id, active: false).without_direct_channels.count
     assert inactive_count > 0, "Memberships should be deactivated"
 
     user.reactivate
     user.reload
 
-    restored_count = Membership.where(user_id: user.id, active: true).without_direct_rooms.count
+    restored_count = Membership.where(user_id: user.id, active: true).without_direct_channels.count
     assert_equal initial_count, restored_count, "Memberships should be restored after reactivation"
   end
 
@@ -363,18 +363,18 @@ class UserTest < ActiveSupport::TestCase
     assert_not users(:jason).can_ping?(users(:david))
   end
 
-  test "blocked_in? returns true in one-on-one room when blocked" do
-    room = Rooms::Direct.find_or_create_for([ users(:david), users(:jason) ])
+  test "blocked_in? returns true in one-on-one channel when blocked" do
+    channel = Channels::Direct.find_or_create_for([ users(:david), users(:jason) ])
     users(:david).block!(users(:jason))
 
-    assert users(:david).blocked_in?(room)
-    assert users(:jason).blocked_in?(room)
+    assert users(:david).blocked_in?(channel)
+    assert users(:jason).blocked_in?(channel)
   end
 
-  test "blocked_in? returns false for non-direct rooms" do
+  test "blocked_in? returns false for non-direct channels" do
     users(:david).block!(users(:jason))
 
-    assert_not users(:david).blocked_in?(rooms(:hq))
+    assert_not users(:david).blocked_in?(channels(:hq))
   end
 
   # Role tests
@@ -420,12 +420,12 @@ class UserTest < ActiveSupport::TestCase
     assert_equal 0, user.current_streak
   end
 
-  test "posting a message in open room sets streak to 1" do
+  test "posting a message in open channel sets streak to 1" do
     user = users(:rachel) # rachel has no fixture messages
     user.update_column(:current_streak, 0)
 
     perform_enqueued_jobs only: UpdateStreakJob do
-      create_message(user: user, room: rooms(:hq))
+      create_message(user: user, channel: channels(:hq))
     end
 
     assert_equal 1, user.reload.current_streak
@@ -436,40 +436,40 @@ class UserTest < ActiveSupport::TestCase
     user.update_column(:current_streak, 0)
 
     perform_enqueued_jobs only: UpdateStreakJob do
-      create_message(user: user, room: rooms(:hq))
+      create_message(user: user, channel: channels(:hq))
     end
     assert_equal 1, user.reload.current_streak
 
     perform_enqueued_jobs only: UpdateStreakJob do
-      create_message(user: user, room: rooms(:hq))
+      create_message(user: user, channel: channels(:hq))
     end
     assert_equal 1, user.reload.current_streak
 
     perform_enqueued_jobs only: UpdateStreakJob do
-      create_message(user: user, room: rooms(:pets))
+      create_message(user: user, channel: channels(:pets))
     end
     assert_equal 1, user.reload.current_streak
   end
 
-  test "posting in direct room does not affect streak" do
+  test "posting in direct channel does not affect streak" do
     user = users(:rachel)
     user.update_column(:current_streak, 0)
 
-    dm = Rooms::Direct.create!(creator: user)
-    create_message(user: user, room: dm)
+    dm = Channels::Direct.create!(creator: user)
+    create_message(user: user, channel: dm)
 
     assert_equal 0, user.reload.current_streak
   end
 
-  test "posting in thread of direct room does not affect streak" do
+  test "posting in thread of direct channel does not affect streak" do
     user = users(:rachel)
     user.update_column(:current_streak, 0)
 
-    dm = Rooms::Direct.create!(creator: user)
-    dm_message = create_message(user: user, room: dm)
-    thread = Rooms::Thread.create!(parent_message: dm_message, creator: user)
+    dm = Channels::Direct.create!(creator: user)
+    dm_message = create_message(user: user, channel: dm)
+    thread = Channels::Thread.create!(parent_message: dm_message, creator: user)
 
-    create_message(user: user, room: thread)
+    create_message(user: user, channel: thread)
 
     assert_equal 0, user.reload.current_streak
   end
@@ -480,7 +480,7 @@ class UserTest < ActiveSupport::TestCase
     # Post yesterday
     travel_to 1.day.ago do
       perform_enqueued_jobs only: UpdateStreakJob do
-        create_message(user: user, room: rooms(:hq))
+        create_message(user: user, channel: channels(:hq))
       end
     end
     assert_equal 1, user.reload.current_streak
@@ -488,7 +488,7 @@ class UserTest < ActiveSupport::TestCase
     # Post today - should increment
     travel_to Time.current do
       perform_enqueued_jobs only: UpdateStreakJob do
-        create_message(user: user, room: rooms(:hq))
+        create_message(user: user, channel: channels(:hq))
       end
     end
 
@@ -501,14 +501,14 @@ class UserTest < ActiveSupport::TestCase
     # Post 3 days ago
     travel_to 3.days.ago do
       perform_enqueued_jobs only: UpdateStreakJob do
-        create_message(user: user, room: rooms(:hq))
+        create_message(user: user, channel: channels(:hq))
       end
     end
     assert_equal 0, user.reload.current_streak, "streak should have decayed since last post was 3 days ago"
 
     # Post today (skipping yesterday) - should reset to 1
     perform_enqueued_jobs only: UpdateStreakJob do
-      create_message(user: user, room: rooms(:hq))
+      create_message(user: user, channel: channels(:hq))
     end
 
     assert_equal 1, user.reload.current_streak
@@ -516,7 +516,7 @@ class UserTest < ActiveSupport::TestCase
 
   test "posted_on? returns true when user posted on date" do
     user = users(:rachel)
-    create_message(user: user, room: rooms(:hq))
+    create_message(user: user, channel: channels(:hq))
 
     assert user.posted_on?(Date.current)
   end
@@ -529,7 +529,7 @@ class UserTest < ActiveSupport::TestCase
 
   test "posted_on? excludes welcome messages" do
     user = users(:rachel)
-    rooms(:hq).post_welcome_message(user: user)
+    channels(:hq).post_welcome_message(user: user)
 
     assert_not user.posted_on?(Date.current)
   end
@@ -538,19 +538,19 @@ class UserTest < ActiveSupport::TestCase
     user = users(:rachel)
     user.update_column(:current_streak, 0)
 
-    rooms(:hq).post_welcome_message(user: user)
+    channels(:hq).post_welcome_message(user: user)
     assert_equal 0, user.reload.current_streak
 
     perform_enqueued_jobs only: UpdateStreakJob do
-      create_message(user: user, room: rooms(:hq))
+      create_message(user: user, channel: channels(:hq))
     end
     assert_equal 1, user.reload.current_streak
   end
 
   test "posted_on? excludes direct messages" do
     user = users(:rachel)
-    dm = Rooms::Direct.create!(creator: user)
-    create_message(user: user, room: dm)
+    dm = Channels::Direct.create!(creator: user)
+    create_message(user: user, channel: dm)
 
     assert_not user.posted_on?(Date.current)
   end
@@ -561,8 +561,8 @@ class UserTest < ActiveSupport::TestCase
     user = create_new_user
 
     # Create associated records across all association types
-    room = rooms(:hq)
-    message = Message.create!(room: room, creator: user, body: "Hello", client_message_id: SecureRandom.uuid)
+    channel = channels(:hq)
+    message = Message.create!(channel: channel, creator: user, body: "Hello", client_message_id: SecureRandom.uuid)
     Boost.create!(message: messages(:first), booster: user, content: "🎉")
     Bookmark.create!(message: messages(:first), user: user)
     Search.create!(user: user, query: "test")
@@ -599,9 +599,9 @@ class UserTest < ActiveSupport::TestCase
       User.create!(name: "User", email_address: "user@example.com", password: "secret123456")
     end
 
-    def create_message(user:, room:, body: "Test message")
+    def create_message(user:, channel:, body: "Test message")
       Message.create!(
-        room: room,
+        channel: channel,
         creator: user,
         body: body,
         client_message_id: SecureRandom.uuid
@@ -611,10 +611,10 @@ class UserTest < ActiveSupport::TestCase
   # mentioning_messages tests
 
   test "mentioning_messages returns messages that mention the user" do
-    room = rooms(:pets)
+    channel = channels(:pets)
     david = users(:david)
 
-    message = room.messages.create!(
+    message = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "mentioning_msg_1"
@@ -624,14 +624,14 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "mentioning_messages returns @everyone messages" do
-    room = rooms(:pets)
+    channel = channels(:pets)
     david = users(:david)
 
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
-      room: room,
+      channel: channel,
       body: body_html,
       creator: users(:jason),
       client_message_id: "mentioning_everyone_1"
@@ -641,10 +641,10 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "mentioning_messages returns direct messages" do
-    dm_room = rooms(:david_and_jason)
+    dm_channel = channels(:david_and_jason)
     david = users(:david)
 
-    message = dm_room.messages.create!(
+    message = dm_channel.messages.create!(
       body: "Hey david",
       creator: users(:jason),
       client_message_id: "mentioning_dm_1"
@@ -654,10 +654,10 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "mentioning_messages excludes messages not mentioning the user" do
-    room = rooms(:pets)
+    channel = channels(:pets)
     david = users(:david)
 
-    message = room.messages.create!(
+    message = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
       creator: david,
       client_message_id: "mentioning_exclude_1"
@@ -667,10 +667,10 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "mentioning_messages excludes inactive messages" do
-    room = rooms(:pets)
+    channel = channels(:pets)
     david = users(:david)
 
-    message = room.messages.create!(
+    message = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "mentioning_inactive_1"
@@ -681,18 +681,18 @@ class UserTest < ActiveSupport::TestCase
     assert_not_includes david.mentioning_messages, message
   end
 
-  test "mentioning_messages only returns messages from rooms user is a member of" do
+  test "mentioning_messages only returns messages from channels user is a member of" do
     david = users(:david)
-    room = rooms(:pets)
+    channel = channels(:pets)
 
-    # Create a message mentioning david in a room david is in
-    msg_in_room = room.messages.create!(
+    # Create a message mentioning david in a channel david is in
+    msg_in_channel = channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
-      client_message_id: "mentioning_in_room"
+      client_message_id: "mentioning_in_channel"
     )
 
-    assert_includes david.mentioning_messages, msg_in_room
+    assert_includes david.mentioning_messages, msg_in_channel
   end
 
   # User.matching
@@ -756,11 +756,11 @@ class UserTest < ActiveSupport::TestCase
     assert_includes User.filtered_by("ALICE"), alice
   end
 
-  # User.sharing_rooms_with
+  # User.sharing_channels_with
 
-  test "sharing_rooms_with returns members of rooms the bot shares" do
+  test "sharing_channels_with returns members of channels the bot shares" do
     bender = users(:bender)
-    visible = User.sharing_rooms_with(bender)
+    visible = User.sharing_channels_with(bender)
 
     # bender is in watercooler with david, jason, nsa, rachel, kevin (and itself)
     assert_includes visible, users(:david)
@@ -768,33 +768,33 @@ class UserTest < ActiveSupport::TestCase
     assert_includes visible, bender
   end
 
-  test "sharing_rooms_with excludes users from rooms the bot does not share" do
+  test "sharing_channels_with excludes users from channels the bot does not share" do
     bender = users(:bender)
-    assert_not bender.rooms.include?(rooms(:designers))
+    assert_not bender.channels.include?(channels(:designers))
 
-    refute_includes User.sharing_rooms_with(bender), users(:jz)
+    refute_includes User.sharing_channels_with(bender), users(:jz)
   end
 
-  test "sharing_rooms_with returns empty when the bot is in zero rooms" do
+  test "sharing_channels_with returns empty when the bot is in zero channels" do
     bender = users(:bender)
     bender.memberships.destroy_all
 
-    assert_equal [], User.sharing_rooms_with(bender).to_a
+    assert_equal [], User.sharing_channels_with(bender).to_a
   end
 
-  test "sharing_rooms_with dedupes users present in multiple shared rooms" do
+  test "sharing_channels_with dedupes users present in multiple shared channels" do
     bender = users(:bender)
-    Membership.create!(user: bender, room: rooms(:hq), involvement: :everything)
+    Membership.create!(user: bender, channel: channels(:hq), involvement: :everything)
     # david is in both watercooler and hq with bender now
 
-    results = User.sharing_rooms_with(bender).to_a
+    results = User.sharing_channels_with(bender).to_a
     assert_equal 1, results.count { |u| u.id == users(:david).id }
   end
 
   test "destroy_all_associated_records cleans up owned notification bundles + items (FK safe)" do
     user  = User.create!(name: "Bundle Owner", email_address: "bundle_owner@example.com")
     actor = users(:david)
-    msg   = rooms(:designers).messages.create!(body: "<div>bundled</div>", creator: actor, client_message_id: "user_destroy_bundle_#{SecureRandom.hex(4)}")
+    msg   = channels(:designers).messages.create!(body: "<div>bundled</div>", creator: actor, client_message_id: "user_destroy_bundle_#{SecureRandom.hex(4)}")
 
     bundle = Notification::Bundle.create!(user: user, frequency: :hourly, starts_at: Time.current, ends_at: 1.hour.from_now)
     item   = Notification::BundleItem.create!(bundle: bundle, message: msg, actor: actor, kind: "mention")
@@ -808,7 +808,7 @@ class UserTest < ActiveSupport::TestCase
     actor   = User.create!(name: "Actor User", email_address: "bundle_actor@example.com")
     owner   = users(:jason)
     owner.notification_settings || owner.create_notification_settings!
-    msg     = rooms(:designers).messages.create!(body: "<div>actor msg</div>", creator: actor, client_message_id: "user_destroy_actor_#{SecureRandom.hex(4)}")
+    msg     = channels(:designers).messages.create!(body: "<div>actor msg</div>", creator: actor, client_message_id: "user_destroy_actor_#{SecureRandom.hex(4)}")
 
     bundle = Notification::Bundle.create!(user: owner, frequency: :hourly, starts_at: Time.current, ends_at: 1.hour.from_now)
     item   = Notification::BundleItem.create!(bundle: bundle, message: msg, actor: actor, kind: "mention")
@@ -821,7 +821,7 @@ class UserTest < ActiveSupport::TestCase
   test "unseen_activity? true when a notification exists and the watermark is nil" do
     user = users(:david)
     user.update_column(:activity_seen_at, nil)
-    rooms(:pets).messages.create!(
+    channels(:pets).messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "unseen_mention_#{SecureRandom.hex(4)}"
@@ -832,7 +832,7 @@ class UserTest < ActiveSupport::TestCase
 
   test "unseen_activity? false when watermark is newer than all notifications" do
     user = users(:david)
-    rooms(:pets).messages.create!(
+    channels(:pets).messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: users(:jason),
       client_message_id: "seen_mention_#{SecureRandom.hex(4)}"
@@ -845,7 +845,7 @@ class UserTest < ActiveSupport::TestCase
   test "unseen_activity? true for boost-only recipients (the bug this fixes)" do
     user = users(:david)
     user.update_column(:activity_seen_at, 1.day.ago)
-    message = rooms(:pets).messages.create!(body: "boost me", creator: user,
+    message = channels(:pets).messages.create!(body: "boost me", creator: user,
                                             client_message_id: "boost_only_unseen_#{SecureRandom.hex(4)}")
 
     perform_enqueued_jobs(only: Notification::DispatchJob) do
@@ -890,7 +890,7 @@ class UserTest < ActiveSupport::TestCase
     dm = memberships(:david_david_and_kevin)
     # A minute old: loaded_at stamps truncate to seconds, so a message created
     # "now" would land after the stamp and legitimately stay unread.
-    unseen = travel_to(1.minute.ago) { dm.room.messages.create!(creator: users(:kevin), body: "hi", client_message_id: "dm_mark_read") }
+    unseen = travel_to(1.minute.ago) { dm.channel.messages.create!(creator: users(:kevin), body: "hi", client_message_id: "dm_mark_read") }
     rewind_unread_to dm, unseen
 
     user.mark_direct_messages_as_read(Time.current.iso8601)
@@ -901,7 +901,7 @@ class UserTest < ActiveSupport::TestCase
   test "mark_direct_messages_as_read leaves non-DM memberships untouched" do
     user = users(:david)
     non_dm = memberships(:david_designers)
-    unseen = non_dm.room.messages.create!(creator: users(:jason), body: "hi", client_message_id: "non_dm_untouched")
+    unseen = non_dm.channel.messages.create!(creator: users(:jason), body: "hi", client_message_id: "non_dm_untouched")
     rewind_unread_to non_dm, unseen
 
     user.mark_direct_messages_as_read(Time.current.iso8601)
@@ -914,7 +914,7 @@ class UserTest < ActiveSupport::TestCase
     user = users(:david)
     user.update_column(:activity_seen_at, 1.day.ago)
     non_dm = memberships(:david_designers)
-    unseen = travel_to(1.minute.ago) { non_dm.room.messages.create!(creator: users(:jason), body: "hi", client_message_id: "inbox_mark_read") }
+    unseen = travel_to(1.minute.ago) { non_dm.channel.messages.create!(creator: users(:jason), body: "hi", client_message_id: "inbox_mark_read") }
     rewind_unread_to non_dm, unseen
 
     now_iso = Time.current.iso8601
@@ -932,7 +932,7 @@ class UserTest < ActiveSupport::TestCase
   test "mark_inbox_as_read falls back to Time.current when a loaded_at timestamp is stale (> 1 hour old)" do
     user = users(:david)
     membership = memberships(:david_designers)
-    unseen = membership.room.messages.create!(creator: users(:jason), body: "hi", client_message_id: "inbox_stale_read")
+    unseen = membership.channel.messages.create!(creator: users(:jason), body: "hi", client_message_id: "inbox_stale_read")
     rewind_unread_to membership, unseen
 
     # A 2-hour-old stamp would leave the fresh message unread (it's newer than
@@ -951,7 +951,7 @@ class UserTest < ActiveSupport::TestCase
   test "mark_inbox_as_read falls back to Time.current when loaded_at is blank" do
     user = users(:david)
     membership = memberships(:david_designers)
-    unseen = membership.room.messages.create!(creator: users(:jason), body: "hi", client_message_id: "inbox_blank_read")
+    unseen = membership.channel.messages.create!(creator: users(:jason), body: "hi", client_message_id: "inbox_blank_read")
     rewind_unread_to membership, unseen
 
     user.mark_inbox_as_read(
@@ -965,14 +965,14 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "reachable_message resolves forum-post messages by forum access, not post membership" do
-    forum = Rooms::Forum.create_for({ name: "Help", creator: users(:david) }, users: users(:david))
+    forum = Channels::Forum.create_for({ name: "Help", creator: users(:david) }, users: users(:david))
     post = Current.set(user: users(:david)) { forum.post!(title: "Q", body: "<div>b</div>") }
     message = post.messages.first
     member = users(:kevin)   # auto-joined to the forum, no post membership
     outsider = users(:jason)
     forum.remove_member!(outsider, actor: users(:david)) # removed → no forum access
 
-    assert_not Membership.exists?(room_id: post.id, user_id: member.id)
+    assert_not Membership.exists?(channel_id: post.id, user_id: member.id)
     assert_equal message, member.reachable_message(message.id), "a forum member reaches the post message"
     assert_raises(ActiveRecord::RecordNotFound) { outsider.reachable_message(message.id) }
   end

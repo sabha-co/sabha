@@ -35,12 +35,12 @@ Rails.application.configure do
 
       creator_id = User.first.id
 
-      rooms = (0..200).map { |i| { name: "Room #{i}", creator_id: creator_id, type: "Rooms::Closed" } }
-      Room.insert_all(rooms)
+      channels = (0..200).map { |i| { name: "Channel #{i}", creator_id: creator_id, type: "Channels::Closed" } }
+      Channel.insert_all(channels)
 
-      Room.all.each_with_index do |room, index|
+      Channel.all.each_with_index do |channel, index|
         user_ids = User.where("MOD(#{index}, id) = 0").ids
-        memberships = user_ids.map { |user_id| { room_id: room.id, user_id: user_id } }
+        memberships = user_ids.map { |user_id| { channel_id: channel.id, user_id: user_id } }
         Membership.insert_all(memberships)
       end
     end

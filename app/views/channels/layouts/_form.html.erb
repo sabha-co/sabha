@@ -1,0 +1,34 @@
+<%= form_with model: channel, data: { controller: "form" } do |form| %>
+  <div class="flex flex-column gap">
+    <% if Current.user.can_administer?(channel) %>
+      <div class="flex align-center gap">
+        <%= translation_button(:channel_name) %>
+
+        <label class="flex align-center gap flex-item-grow input input--actor">
+          <%= form.text_field :name, name: "channel[name]", id: "channel_name", class: "input txt-large",
+                required: true, autofocus: true, placeholder: "Name the channel",
+                data: { turbo_permanent: true, action: "keydown.enter->form#submit:prevent" } %>
+          <%= icon_tag "chat-bubble" %>
+        </label>
+      </div>
+
+      <div class="flex align-start gap">
+        <%= translation_button(:channel_description) %>
+
+        <label class="flex align-center gap flex-item-grow input input--actor">
+          <%= form.text_area :description, name: "channel[description]", rows: 2, maxlength: 280, class: "input txt-medium",
+                placeholder: "What's this channel about?" %>
+        </label>
+      </div>
+
+      <%= submit_channel_button_tag %>
+    <% else %>
+      <h1 class="flex-item-grow txt-x-large">
+        <%= channel.name %>
+      </h1>
+      <% if channel.description.present? %>
+        <p class="txt-deemphasize margin-none"><%= channel.description %></p>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

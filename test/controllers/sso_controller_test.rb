@@ -20,7 +20,7 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
   end
 
   test "new renders interstitial that auto-submits to provider with signed payload" do
-    get sso_handshake_url, params: { return_to: "/rooms/general" }
+    get sso_handshake_url, params: { return_to: "/channels/general" }
 
     assert_response :ok
     assert_equal "https://parent.example.com/sso", provider_form["action"]
@@ -297,7 +297,7 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
   test "first sso callback bootstraps account and provisions an administrator" do
     ActiveRecord::Base.connection.disable_referential_integrity do
       Account.destroy_all
-      Room.destroy_all
+      Channel.destroy_all
       User.destroy_all
     end
 
@@ -313,7 +313,7 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
 
     admin = User.find_by(email_address: "founder@example.com")
     assert admin.administrator?
-    assert_includes admin.rooms.map(&:name), "General"
+    assert_includes admin.channels.map(&:name), "General"
     assert_match /Welcome to/, flash[:notice]
   end
 
@@ -359,7 +359,7 @@ class SsoFlowTest < ActionDispatch::IntegrationTest
 
     ActiveRecord::Base.connection.disable_referential_integrity do
       Account.destroy_all
-      Room.destroy_all
+      Channel.destroy_all
       User.destroy_all
     end
 

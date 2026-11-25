@@ -26,7 +26,7 @@ if Rails.env.production? && !ENV["SECRET_KEY_BASE_DUMMY"].present?
   # derives the presence API secret from it, and anycable-go *disables* its API
   # when no secret is set — so a blank value would instead degrade every
   # presence read to "broker unavailable" and quietly push members who are
-  # sitting in the room reading. Fail here instead.
+  # sitting in the channel reading. Fail here instead.
   required = %w[APP_HOST SECRET_KEY_BASE ANYCABLE_SECRET]
 
   if Sabha.saas?

@@ -4,7 +4,7 @@ class AccountsController < ApplicationController
 
   def show
     @member_count = User.without_bots.active.verified.count
-    @room_count = Room.where(type: %w[Rooms::Open Rooms::Closed Rooms::Forum]).count
+    @channel_count = Channel.where(type: %w[Channels::Open Channels::Closed Channels::Forum]).count
   end
 
   def edit
@@ -27,7 +27,7 @@ class AccountsController < ApplicationController
       params.require(:account).permit(
         :name, :logo, :email_notifications_enabled, :weekly_digest_enabled,
         settings: %i[
-          restrict_room_creation_to_administrators
+          restrict_channel_creation_to_administrators
           restrict_direct_messages_to_administrators
           suggest_hub_list
           allow_users_to_create_invite_links

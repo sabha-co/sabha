@@ -21,7 +21,7 @@ class Accounts::BotsController < ApplicationController
   end
 
   def show
-    @rooms_count = @bot.room_memberships.count
+    @channels_count = @bot.channel_memberships.count
   end
 
   def edit

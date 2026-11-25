@@ -6,15 +6,15 @@ class WebhookTest < ActiveSupport::TestCase
   test "payload contains absolute URLs" do
     message = messages(:first)
     base_url = "https://sabha.test"
-    message_url = base_url + Rails.application.routes.url_helpers.room_at_message_path(message.room, message)
-    messages_url = base_url + Rails.application.routes.url_helpers.api_bots_room_messages_path(message.room)
+    message_url = base_url + Rails.application.routes.url_helpers.channel_at_message_path(message.channel, message)
+    messages_url = base_url + Rails.application.routes.url_helpers.api_bots_channel_messages_path(message.channel)
     user_url = base_url + Rails.application.routes.url_helpers.user_path(message.creator)
 
     WebMock.stub_request(:post, webhooks(:bender).url).
       with(
         body: hash_including(
         user: { id: message.creator.id, name: message.creator.name, role: message.creator.role, url: user_url },
-        room: { id: message.room.id, name: message.room.name, type: "Closed", members: 4, has_bot: false, messages_url: messages_url },
+        channel: { id: message.channel.id, name: message.channel.name, type: "Closed", members: 4, has_bot: false, messages_url: messages_url },
         message: hash_including(id: message.id, body: { html: "First post!", plain: "First post!" }, has_attachment: false, attachment: nil, mentionees: [], url: message_url, thread: nil),
       ))
 

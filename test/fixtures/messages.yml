@@ -1,83 +1,83 @@
 first:
-  room: designers
+  channel: designers
   creator: jason
   client_message_id: "0001"
   created_at: <%= 1.hour.ago %>
 
 second:
-  room: designers
+  channel: designers
   creator: david
   client_message_id: "0002"
   created_at: <%= 36.minutes.ago %>
 
 third:
-  room: designers
+  channel: designers
   creator: jz
   client_message_id: "0003"
   created_at: <%= 7.minutes.ago %>
 
 fourth:
-  room: watercooler
+  channel: watercooler
   creator: jz
   client_message_id: "0004"
   created_at: <%= 30.minutes.ago %>
 
 fifth:
-  room: watercooler
+  channel: watercooler
   creator: jason
   client_message_id: "0005"
   created_at: <%= 29.minutes.ago %>
 
 sixth:
-  room: watercooler
+  channel: watercooler
   creator: david
   client_message_id: "0006"
   created_at: <%= 27.minutes.ago %>
 
 seventh:
-  room: watercooler
+  channel: watercooler
   creator: jason
   client_message_id: "0007"
   created_at: <%= 26.minutes.ago %>
 
 eighth:
-  room: watercooler
+  channel: watercooler
   creator: jz
   client_message_id: "0008"
   created_at: <%= 25.minutes.ago %>
 
 ninth:
-  room: watercooler
+  channel: watercooler
   creator: jz
   client_message_id: "0009"
   created_at: <%= 24.minutes.ago %>
 
 tenth:
-  room: watercooler
+  channel: watercooler
   creator: david
   client_message_id: "0010"
   created_at: <%= 23.minutes.ago %>
 
 eleventh:
-  room: watercooler
+  channel: watercooler
   creator: jason
   client_message_id: "0011"
   created_at: <%= 22.minutes.ago %>
 
 twelfth:
-  room: watercooler
+  channel: watercooler
   creator: jason
   client_message_id: "0012"
   created_at: <%= 21.minutes.ago %>
 
 thirteenth:
-  room: watercooler
+  channel: watercooler
   creator: jz
   client_message_id: "0013"
   created_at: <%= 5.minutes.ago %>
 
 bender_message:
-  room: watercooler
+  channel: watercooler
   creator: bender
   client_message_id: "0014"
   created_at: <%= 3.minutes.ago %>

@@ -7,7 +7,7 @@ import TypingTracker from "models/typing_tracker"
 export default class extends Controller {
   static targets = [ "author", "indicator" ]
   static classes = [ "active" ]
-  static values = { roomId: Number }
+  static values = { channelId: Number }
 
   async connect() {
     if (pageIsTurboPreview()) return
@@ -20,7 +20,7 @@ export default class extends Controller {
 
     // Fall back to standard ActionCable
     this.subscription = await cable.subscribeTo(
-      { channel: "TypingNotificationsChannel", room_id: this.roomIdValue },
+      { channel: "TypingNotificationsChannel", channel_id: this.channelIdValue },
       { received: this.#received.bind(this) }
     )
   }
@@ -57,7 +57,7 @@ export default class extends Controller {
 
       // createCable() uses action-cable-url meta tag automatically
       this.cable = createCable()
-      this.subscription = new TypingChannel({ room_id: this.roomIdValue })
+      this.subscription = new TypingChannel({ channel_id: this.channelIdValue })
       this.cable.subscribe(this.subscription)
       this.subscription.on("message", this.#received.bind(this))
       this.whisperEnabled = true

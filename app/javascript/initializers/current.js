@@ -11,11 +11,11 @@ class Current {
     }
   }
 
-  get room() {
-    const currentRoomId = this.#extractContentFromMetaTag("current-room-id")
+  get channel() {
+    const currentChannelId = this.#extractContentFromMetaTag("current-channel-id")
 
-    if (currentRoomId) {
-      return { id: parseInt(currentRoomId) }
+    if (currentChannelId) {
+      return { id: parseInt(currentChannelId) }
     }
   }
 

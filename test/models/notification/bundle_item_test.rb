@@ -4,8 +4,8 @@ class Notification::BundleItemTest < ActiveSupport::TestCase
   setup do
     @user    = users(:jason)
     @actor   = users(:david)
-    @room    = rooms(:designers)
-    @message = @room.messages.create!(body: "hi", creator: @actor, client_message_id: "bundle_item_#{SecureRandom.hex(4)}")
+    @channel    = channels(:designers)
+    @message = @channel.messages.create!(body: "hi", creator: @actor, client_message_id: "bundle_item_#{SecureRandom.hex(4)}")
     @bundle  = Notification::Bundle.create!(
       user: @user, frequency: :hourly,
       starts_at: Time.current, ends_at: 1.hour.from_now

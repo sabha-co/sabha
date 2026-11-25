@@ -21,7 +21,7 @@ class WeeklyDigestMailer < ApplicationMailer
     @content           = content
     @workspace_name    = workspace_name
     @everyone_mentions = content.everyone_mentions
-    @active_rooms      = content.active_rooms
+    @active_channels      = content.active_channels
     @excerpts          = content.excerpts
     @activity_url      = inbox_activity_index_url(script_name: tenant_script_name)
     @settings_url      = edit_user_notification_settings_url(user_id: "me", script_name: tenant_script_name)

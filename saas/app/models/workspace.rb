@@ -4,11 +4,11 @@ class Workspace < UntenantedRecord
   # Workspace registry in untenanted database
   #
   # Each workspace has:
-  # - external_id: 7+ digit integer used in URLs (/1000001/rooms/general)
+  # - external_id: 7+ digit integer used in URLs (/1000001/channels/general)
   # - name: Display name
   # - suspended_at: Set when workspace is suspended
   #
-  # The actual workspace data (users, rooms, messages) lives in a separate
+  # The actual workspace data (users, channels, messages) lives in a separate
   # per-workspace SQLite database identified by external_id.
 
   belongs_to :creator, class_name: "GlobalIdentity"
@@ -199,11 +199,11 @@ class Workspace < UntenantedRecord
 
         membership.cache_user_id!(admin_user.id)
 
-        # Create default rooms (creator is required)
-        Rooms::Open.find_or_create_by!(name: "General") do |room|
-          room.slug = "general"
-          room.creator = admin_user
-          room.auto_join = true
+        # Create default channels (creator is required)
+        Channels::Open.find_or_create_by!(name: "General") do |channel|
+          channel.slug = "general"
+          channel.creator = admin_user
+          channel.auto_join = true
         end
       end
 

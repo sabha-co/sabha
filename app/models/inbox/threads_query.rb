@@ -7,8 +7,8 @@ class Inbox::ThreadsQuery
   def call
     Message.active
            .without_events
-           .joins(:room)
-           .where.not(rooms: { type: "Rooms::Thread" })
+           .joins(:channel)
+           .where.not(channels: { type: "Channels::Thread" })
            .where("messages.id IN (#{accessible_thread_parent_ids_sql})")
            .for_display
            .order(thread_activity_order)
@@ -21,25 +21,25 @@ class Inbox::ThreadsQuery
   # Single SQL subquery that finds all accessible thread parent_message_ids.
   # A thread is accessible if either:
   # 1. User has a direct membership in the thread (visible, not invisible)
-  # 2. User has "everything" involvement in the parent room (implicit thread access)
+  # 2. User has "everything" involvement in the parent channel (implicit thread access)
   def accessible_thread_parent_ids_sql
     ApplicationRecord.sanitize_sql_array([ <<~SQL.squish, user.id, user.id ])
       SELECT DISTINCT threads.parent_message_id
-      FROM rooms threads
+      FROM channels threads
       WHERE threads.active = TRUE
-        AND threads.type = 'Rooms::Thread'
+        AND threads.type = 'Channels::Thread'
         AND threads.messages_count > 0
         AND (
           EXISTS (
             SELECT 1 FROM memberships
-            WHERE memberships.room_id = threads.id
+            WHERE memberships.channel_id = threads.id
               AND memberships.user_id = ?
               AND memberships.active = TRUE
               AND memberships.involvement != 'invisible'
           )
           OR EXISTS (
             SELECT 1 FROM messages
-            INNER JOIN memberships ON memberships.room_id = messages.room_id
+            INNER JOIN memberships ON memberships.channel_id = messages.channel_id
             WHERE messages.id = threads.parent_message_id
               AND memberships.user_id = ?
               AND memberships.active = TRUE
@@ -52,9 +52,9 @@ class Inbox::ThreadsQuery
   def thread_activity_order
     Arel.sql(<<~SQL)
       (SELECT threads.last_active_at
-       FROM rooms threads
+       FROM channels threads
        WHERE threads.parent_message_id = messages.id
-       AND threads.type = 'Rooms::Thread'
+       AND threads.type = 'Channels::Thread'
        LIMIT 1)
     SQL
   end

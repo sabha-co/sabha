@@ -3,9 +3,9 @@ require "test_helper"
 class Inbox::ThreadsQueryTest < ActiveSupport::TestCase
   setup do
     @user = users(:jason)
-    @parent_room = rooms(:hq)
-    @parent_message = @parent_room.messages.create!(body: "Parent", creator: users(:david), client_message_id: "tq-parent")
-    @thread = Rooms::Thread.find_or_create_for(@parent_message, creator: @user)
+    @parent_channel = channels(:hq)
+    @parent_message = @parent_channel.messages.create!(body: "Parent", creator: users(:david), client_message_id: "tq-parent")
+    @thread = Channels::Thread.find_or_create_for(@parent_message, creator: @user)
     @thread.messages.create!(body: "Reply", creator: @user, client_message_id: "tq-reply")
   end
 

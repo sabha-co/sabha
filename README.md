@@ -9,11 +9,11 @@ Sabha is an open-source, self-hosted chat platform for friends, groups, and comm
 [![Release](https://img.shields.io/github/v/tag/sabha-co/sabha?color=9944ee&label=release)](https://github.com/sabha-co/sabha/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/sabha-co/sabha?style=flat&logo=github)](https://github.com/sabha-co/sabha/stargazers)
 
-![Sabha app — rooms, threads, and community chat](app/assets/images/screenshots/sabha-screenshot.webp)
+![Sabha app — channels, threads, and community chat](app/assets/images/screenshots/sabha-screenshot.webp)
 
 ## Features
 
-**Real-time chat** — public rooms for the whole community, private rooms for smaller groups, direct messages for one-on-one talks, and threads to keep side conversations tidy. New messages appear the moment they're sent.
+**Real-time chat** — public channels for the whole community, private channels for smaller groups, direct messages for one-on-one talks, and threads to keep side conversations tidy. New messages appear the moment they're sent.
 
 **Flexible sign-in** — members can sign in with a password, with a one-time code sent to their email, or with single sign-on. Use one, two, or all three side by side.
 
@@ -23,7 +23,7 @@ Sabha is an open-source, self-hosted chat platform for friends, groups, and comm
 
 **Calm email notifications** — get a single summary of what you missed, hourly or daily — your pick. No firehose, no per-message ping.
 
-**Bots and AI ready** — drop a bot or AI agent into any room with one invite link. The agent reads what's said and replies like a normal member. The [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) is the easy way to put an LLM in a room.
+**Bots and AI ready** — drop a bot or AI agent into any channel with one invite link. The agent reads what's said and replies like a normal member. The [OpenClaw plugin](https://github.com/sabha-co/openclaw-sabha) is the easy way to put an LLM in a channel.
 
 **Installable PWA app** — install Sabha on your phone, tablet, or computer like a regular app. Push notifications, badge counts, and offline support — no app store needed.
 
@@ -35,9 +35,9 @@ Sabha is an open-source, self-hosted chat platform for friends, groups, and comm
 
 ## Screenshots
 
-Short clips of Sabha in action — rooms, threads, and an AI agent answering in a room.
+Short clips of Sabha in action — channels, threads, and an AI agent answering in a channel.
 
-### Rooms for every topic
+### Channels for every topic
 
 https://github.com/user-attachments/assets/1125d6c8-2b49-443c-adad-eb7fdf023ff3
 
@@ -45,7 +45,7 @@ https://github.com/user-attachments/assets/1125d6c8-2b49-443c-adad-eb7fdf023ff3
 
 https://github.com/user-attachments/assets/5b4b78ed-5c6e-47b2-8fb7-490af0cf6bf8
 
-### Bots & AI in any room
+### Bots & AI in any channel
 
 https://github.com/user-attachments/assets/ee9ac732-7f6c-495f-8438-bf3c52511dd9
 

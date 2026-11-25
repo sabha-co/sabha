@@ -32,10 +32,10 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create requires message to be reachable" do
-    # Create a message in a room david is not a member of
-    closed_room = Rooms::Closed.create!(name: "Secret", creator: users(:jason))
-    closed_room.memberships.grant_to(users(:jason))
-    secret_message = closed_room.messages.create!(
+    # Create a message in a channel david is not a member of
+    closed_channel = Channels::Closed.create!(name: "Secret", creator: users(:jason))
+    closed_channel.memberships.grant_to(users(:jason))
+    secret_message = closed_channel.messages.create!(
       body: "Secret",
       creator: users(:jason),
       client_message_id: "secret_1"
@@ -78,9 +78,9 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "destroy requires message to be reachable" do
-    closed_room = Rooms::Closed.create!(name: "Secret", creator: users(:jason))
-    closed_room.memberships.grant_to(users(:jason))
-    secret_message = closed_room.messages.create!(
+    closed_channel = Channels::Closed.create!(name: "Secret", creator: users(:jason))
+    closed_channel.memberships.grant_to(users(:jason))
+    secret_message = closed_channel.messages.create!(
       body: "Secret",
       creator: users(:jason),
       client_message_id: "secret_destroy_1"
@@ -92,12 +92,12 @@ class Messages::BookmarksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "a forum member without a post membership can bookmark a message in a post" do
-    forum = Rooms::Forum.create_for({ name: "Help", creator: @david }, users: [ @david, users(:kevin) ])
+    forum = Channels::Forum.create_for({ name: "Help", creator: @david }, users: [ @david, users(:kevin) ])
     forum_post = Current.set(user: @david) { forum.post!(title: "Q", body: "<div>b</div>") }
     message = forum_post.messages.first
 
     sign_in :kevin
-    assert_not Membership.exists?(room_id: forum_post.id, user_id: users(:kevin).id), "kevin is a forum member, not a post follower"
+    assert_not Membership.exists?(channel_id: forum_post.id, user_id: users(:kevin).id), "kevin is a forum member, not a post follower"
 
     assert_difference -> { Bookmark.count }, 1 do
       post message_bookmark_url(message), as: :turbo_stream

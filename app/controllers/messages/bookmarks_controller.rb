@@ -20,12 +20,12 @@ class Messages::BookmarksController < ApplicationController
     end
 
     def broadcast_message_update
-      @message.broadcast_replace_to Current.user, @message.room, :messages,
+      @message.broadcast_replace_to Current.user, @message.channel, :messages,
         target: [ @message, :bookmarking ], partial: "messages/actions/bookmark", locals: { message: @message }
       @message.broadcast_replace_to Current.user, :inbox,
         target: [ @message, :bookmarking ], partial: "messages/actions/bookmark", locals: { message: @message }
 
-      @message.broadcast_replace_to Current.user, @message.room, :messages,
+      @message.broadcast_replace_to Current.user, @message.channel, :messages,
         target: [ @message, :bookmark_indicator ], partial: "messages/actions/bookmark_indicator", locals: { message: @message }
       @message.broadcast_replace_to Current.user, :inbox,
         target: [ @message, :bookmark_indicator ], partial: "messages/actions/bookmark_indicator", locals: { message: @message }

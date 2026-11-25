@@ -6,18 +6,18 @@
     <% @everyone_mentions.each do |message| %>
       <li style="margin-bottom: 8px;">
         <strong><%= sender_for(message) %></strong>
-        in <strong><%= message.room.name %></strong>:
+        in <strong><%= message.channel.name %></strong>:
         <span style="color: #6b6b6b;"><%= preview_for(message) %></span>
       </li>
     <% end %>
   </ul>
 <% end %>
 
-<% if @active_rooms.any? %>
-  <p style="margin-top: 24px; font-weight: 600;">Rooms with activity</p>
+<% if @active_channels.any? %>
+  <p style="margin-top: 24px; font-weight: 600;">Channels with activity</p>
   <ul style="padding-left: 20px; margin: 8px 0 0;">
-    <% @active_rooms.each do |room, count| %>
-      <li style="margin-bottom: 4px;"><strong><%= room.name %></strong> &mdash; <%= pluralize(count, "message") %></li>
+    <% @active_channels.each do |channel, count| %>
+      <li style="margin-bottom: 4px;"><strong><%= channel.name %></strong> &mdash; <%= pluralize(count, "message") %></li>
     <% end %>
   </ul>
 <% end %>
@@ -28,7 +28,7 @@
     <% @excerpts.each do |message| %>
       <li style="margin-bottom: 8px;">
         <strong><%= sender_for(message) %></strong>
-        in <strong><%= message.room.name %></strong>:
+        in <strong><%= message.channel.name %></strong>:
         <span style="color: #6b6b6b;"><%= preview_for(message) %></span>
       </li>
     <% end %>

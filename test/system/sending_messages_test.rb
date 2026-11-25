@@ -3,33 +3,33 @@ require "application_system_test_case"
 class SendingMessagesTest < ApplicationSystemTestCase
   setup do
     sign_in "jz@37signals.com"
-    join_room rooms(:designers)
+    join_channel channels(:designers)
   end
 
   test "sending messages between two users" do
     using_session("Kevin") do
       sign_in "kevin@37signals.com"
-      join_room rooms(:designers)
+      join_channel channels(:designers)
     end
 
-    join_room rooms(:designers)
+    join_channel channels(:designers)
     send_message "Is this thing on?"
 
     using_session("Kevin") do
-      join_room rooms(:designers)
+      join_channel channels(:designers)
       assert_message_text "Is this thing on?"
 
       send_message "👍👍"
     end
 
-    join_room rooms(:designers)
+    join_channel channels(:designers)
     assert_message_text "👍👍"
   end
 
   test "editing messages" do
     using_session("Kevin") do
       sign_in "kevin@37signals.com"
-      join_room rooms(:designers)
+      join_channel channels(:designers)
     end
 
     within_message messages(:third) do
@@ -40,7 +40,7 @@ class SendingMessagesTest < ApplicationSystemTestCase
     end
 
     using_session("Kevin") do
-      join_room rooms(:designers)
+      join_channel channels(:designers)
 
       assert_message_text "Redacted!"
     end
@@ -49,7 +49,7 @@ class SendingMessagesTest < ApplicationSystemTestCase
   test "deleting messages" do
     using_session("Kevin") do
       sign_in "kevin@37signals.com"
-      join_room rooms(:designers)
+      join_channel channels(:designers)
 
       assert_message_text "Third time's a charm."
     end

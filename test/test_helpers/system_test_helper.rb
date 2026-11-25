@@ -9,17 +9,17 @@ module SystemTestHelper
 
     click_on "Sign in"
     wait_for_network_idle!
-    assert_selector ".rooms", wait: 5  # Wait for sidebar to load
+    assert_selector ".channels", wait: 5  # Wait for sidebar to load
   end
 
   def wait_for_cable_connection
     assert_selector "turbo-cable-stream-source[connected]", minimum: 1, visible: false
   end
 
-  def join_room(room)
+  def join_channel(channel)
     retries = 0
     begin
-      visit room_url(room)
+      visit channel_url(channel)
       wait_for_network_idle!
       wait_for_cable_connection
       dismiss_pwa_install_prompt
@@ -46,12 +46,12 @@ module SystemTestHelper
     assert_selector ".message__body", text: text, **options
   end
 
-  def assert_room_read(room)
-    assert_selector ".rooms a:not(.unread)", text: "#{room.name}", wait: 5
+  def assert_channel_read(channel)
+    assert_selector ".channels a:not(.unread)", text: "#{channel.name}", wait: 5
   end
 
-  def assert_room_unread(room)
-    assert_selector ".rooms a", class: "unread", text: "#{room.name}", wait: 5
+  def assert_channel_unread(channel)
+    assert_selector ".channels a", class: "unread", text: "#{channel.name}", wait: 5
   end
 
   def reveal_message_actions

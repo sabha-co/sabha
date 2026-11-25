@@ -128,7 +128,7 @@ namespace :workspace do
 
     ApplicationRecord.with_tenant(external_id.to_s) do
       puts "  Users: #{User.count}"
-      puts "  Rooms: #{Room.count}"
+      puts "  Channels: #{Channel.count}"
       puts "  Messages: #{Message.count}"
     end
   end

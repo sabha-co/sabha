@@ -1,6 +1,6 @@
 # Fans an outbound bot event out to its recipients. Callers decide when an event
 # happens and supply the URL context; this class owns who hears about it and how
-# it reaches them. Selection stays on `Room`, payload construction on
+# it reaches them. Selection stays on `Channel`, payload construction on
 # `Bot::EventPayload`, and HTTP delivery on `Webhook`.
 #
 # In SaaS mode, dispatch must run in the item's tenant context, established by
@@ -12,8 +12,8 @@ class Bot::Event
   end
 
   def dispatch
-    if room
-      room.bot_memberships_for_events(item, event).each do |membership|
+    if channel
+      channel.bot_memberships_for_events(item, event).each do |membership|
         deliver_to membership.user, reply: accepts_reply?(membership)
       end
     else
@@ -24,10 +24,10 @@ class Bot::Event
   private
     attr_reader :item, :event, :base_url
 
-    # Account-level events like user changes belong to no room, and reach every
+    # Account-level events like user changes belong to no channel, and reach every
     # active bot instead.
-    def room
-      @room ||= item.try(:room) || item.try(:message)&.room
+    def channel
+      @channel ||= item.try(:channel) || item.try(:message)&.channel
     end
 
     # :mentions and :everything memberships both accept a reply, and every

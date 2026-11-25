@@ -4,7 +4,7 @@ class API::Bots::Messages::BoostsController < API::Bots::BaseController
   REACTIONS_CAP = 50
   BOOSTERS_CAP = 100
 
-  before_action :set_room_and_message
+  before_action :set_channel_and_message
 
   def index
     @groups, @total, @truncated = @message.boost_summary(limit: REACTIONS_CAP, boosters_limit: BOOSTERS_CAP)
@@ -31,8 +31,8 @@ class API::Bots::Messages::BoostsController < API::Bots::BaseController
   end
 
   private
-    def set_room_and_message
+    def set_channel_and_message
       @message = reachable_bot_message(params[:message_id])
-      @room = @message.room
+      @channel = @message.channel
     end
 end

@@ -2,7 +2,7 @@ require "test_helper"
 
 class Message::BroadcastsTest < ActiveSupport::TestCase
   setup do
-    @room = rooms(:pets)
+    @channel = channels(:pets)
     @user = users(:david)
   end
 
@@ -10,17 +10,17 @@ class Message::BroadcastsTest < ActiveSupport::TestCase
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: body_html,
       client_message_id: "test_filter",
       creator: @user
     )
 
     # One user has seen everything
-    catch_up @room.memberships.find_by(user: users(:jason))
+    catch_up @channel.memberships.find_by(user: users(:jason))
 
     # Another user's cursor sits before this message
-    force_all_unread @room.memberships.find_by(user: users(:david))
+    force_all_unread @channel.memberships.find_by(user: users(:david))
 
     user_ids = message.send(:notification_recipient_ids, true)
 
@@ -32,7 +32,7 @@ class Message::BroadcastsTest < ActiveSupport::TestCase
   end
 
   test "broadcast_notifications defers the mention badge push to a job" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
       client_message_id: "badge_broadcast_mention",
       creator: @user
@@ -56,7 +56,7 @@ class Message::BroadcastsTest < ActiveSupport::TestCase
   end
 
   test "broadcast_notifications does not enqueue a badge push for regular messages" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "Plain regular update",
       client_message_id: "badge_broadcast_regular",
       creator: @user

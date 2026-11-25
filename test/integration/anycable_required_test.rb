@@ -5,7 +5,7 @@ require "test_helper"
 # in a boot that must refuse rather than degrade. So the assertions here are a
 # mix of real boot behaviour and config facts with no other test surface — a
 # missing broker or an unprotected API doesn't raise anywhere, it just quietly
-# pushes people who are sitting in the room reading.
+# pushes people who are sitting in the channel reading.
 #
 # The bar for adding to this file: the config must have a consequence that
 # nothing else can catch. Grepping source text for a string that no longer means
@@ -40,11 +40,11 @@ class AnycableRequiredTest < ActiveSupport::TestCase
     assert_match(/ANYCABLE_ENABLED=false is no longer supported/, output)
   end
 
-  # Push gating reads presence over anycable-go's HTTP API (Room::PresenceSet).
+  # Push gating reads presence over anycable-go's HTTP API (Channel::PresenceSet).
   # anycable-go serves that API only when it's protected one way or another, and
   # *disables* it otherwise — so the danger isn't an exposed endpoint, it's a
   # silently absent one: every presence read would degrade to "unavailable" and
-  # push members who are sitting in the room reading. These pin the protection
+  # push members who are sitting in the channel reading. These pin the protection
   # the read path assumes.
   test "boot aborts when ANYCABLE_SECRET is blank in production" do
     output = `env -u ANYCABLE_SECRET RAILS_ENV=production APP_HOST=example.com SECRET_KEY_BASE=x bin/rails runner "nil" 2>&1`
@@ -70,7 +70,7 @@ class AnycableRequiredTest < ActiveSupport::TestCase
 
   # Presence lives in the broker component. Drop it and the presence API reports
   # unsupported, every read degrades to the connected_at fallback, and push goes
-  # to people who are sitting in the room reading — silently, since nothing raises.
+  # to people who are sitting in the channel reading — silently, since nothing raises.
   test "every launch point runs a broker, which presence requires" do
     launch_points.each do |file, settings|
       assert_equal "memory", settings["ANYCABLE_BROKER"],

@@ -3,7 +3,7 @@ Rails.application.configure do
 
   # Above this active-member count, @everyone stops fanning out per-member
   # notifications (push, missed-email bundles, and the per-recipient live
-  # activity/badge broadcasts) and posts room-wide instead. The durable
+  # activity/badge broadcasts) and posts channel-wide instead. The durable
   # Activity-tab rows and the mention badge are still written.
   config.x.everyone_mention.ceiling =
     ENV.fetch("EVERYONE_MENTION_CEILING", 1000).to_i

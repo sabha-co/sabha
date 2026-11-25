@@ -23,7 +23,7 @@ and the loop is closed by measuring whether broadcasts come back:
   │   (RATE/sec, HELD for HOLDs)       (starts at 30s)          │
   └───────┬─────────────────────────────────────┬───────────────┘
           │ ① ws://HOST:WS_PORT/cable            │ ② POST http://HOST:PORT
-          │    Cookie: session_token=<dummy>     │    /rooms/1/messages
+          │    Cookie: session_token=<dummy>     │    /channels/1/messages
           ▼                                      ▼
   ┌─────────────────────────────────────────────────────────────┐
   │  SABHA TARGET   RAILS_ENV=performance, SECRET_KEY_BASE=dummy │
@@ -33,10 +33,10 @@ and the loop is closed by measuring whether broadcasts come back:
   │    • AnyCable ── anycable-go :8080 ──RPC──▶ Rails /_anycable │
   │                                                             │
   │  ① connect  → verify signed cookie → Session → Current.user │
-  │     subscribe→ PresenceChannel, $pubsub room-list stream,   │
+  │     subscribe→ PresenceChannel, $pubsub channel-list stream,   │
   │                HeartbeatChannel, 3× Turbo::StreamsChannel    │
   │                                                             │
-  │  ② create Message → broadcast_append_to room, :messages     │
+  │  ② create Message → broadcast_append_to channel, :messages     │
   │                          (stream gid://sabha/...:messages)  │
   └───────────────────────────────┬─────────────────────────────┘
                                   │ ③ fan-out to every subscriber
@@ -58,8 +58,8 @@ seeded with matching data. Three things must line up:
 
 1. **`RAILS_ENV=performance`** — `config/environments/performance.rb` inherits
    production, disables ActionCable origin checking, and (on first boot) seeds
-   10k users + sessions, 200 rooms, and memberships. Room 1 has every user as a
-   member, which is the room the load test targets.
+   10k users + sessions, 200 channels, and memberships. Channel 1 has every user as a
+   member, which is the channel the load test targets.
 
 2. **`SECRET_KEY_BASE=dummy`** — both the session cookies and the signed Turbo
    stream names are generated with this secret. The perf server must boot with
@@ -84,8 +84,8 @@ docker run --rm -i \
 ```
 
 The `sockets` scenario opens WebSocket connections, each subscribing to
-`PresenceChannel`, the account's signed room-list stream (`$pubsub`),
-`HeartbeatChannel`, and the signed Turbo streams. After 30s the `messages` scenario POSTs messages to room 1;
+`PresenceChannel`, the account's signed channel-list stream (`$pubsub`),
+`HeartbeatChannel`, and the signed Turbo streams. After 30s the `messages` scenario POSTs messages to channel 1;
 connected sockets count broadcasts via the `appends_received` metric in the k6
 summary.
 
@@ -94,7 +94,7 @@ summary.
 | Var | Default | Meaning |
 |-----|---------|---------|
 | `HOST` | — | Target host/IP (`localhost` maps to `host.docker.internal`) |
-| `PORT` | — | HTTP port for `/rooms` and `/messages` (e.g. `3000`) |
+| `PORT` | — | HTTP port for `/channels` and `/messages` (e.g. `3000`) |
 | `WS_PORT` | `PORT` | WebSocket port — `3000` for in-process ActionCable, `8080` for anycable-go |
 | `USERS` | `500` | Size of the cookie pool to draw from |
 | `RATE` | `USERS/3` | New connections per second (establishment rate) |
@@ -134,7 +134,7 @@ latent bug:
 | | once-campfire | Sabha |
 |---|---|---|
 | **Signed stream names** | `gid://campfire/...` (correct for Campfire) | `gid://sabha/...` — updated for the renamed GlobalID app |
-| **Sidebar unread channel** | `UnreadRoomsChannel` | retired — the sidebar rides the account's signed room-list stream (`$pubsub`) |
+| **Sidebar unread channel** | `UnreadChannelsChannel` | retired — the sidebar rides the account's signed channel-list stream (`$pubsub`) |
 | **Cookie key digest** | SHA1 `KeyGenerator` | **SHA256** (matches `load_defaults 8.2`) |
 | **Parameters** | hardcoded `duration: 60s`, `rate = USERS/3` | `RATE`, `HOLD`, `VUS`, `DURATION`, `MSG_COUNT` — establishment rate decoupled from concurrency |
 | **WS vs HTTP port** | single `PORT` | separate `WS_PORT` (so the same script drives ActionCable `:3000` or anycable-go `:8080`) |

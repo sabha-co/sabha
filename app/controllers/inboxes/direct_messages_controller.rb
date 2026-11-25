@@ -1,15 +1,15 @@
 class Inboxes::DirectMessagesController < ApplicationController
   include InboxScoped
 
-  before_action :set_room_pagination_anchors, if: :paginating?
+  before_action :set_channel_pagination_anchors, if: :paginating?
 
   def index
     if paginating?
       @memberships = paginate(Inbox::DirectMessagesQuery.new(Current.user).call)
       return head(:no_content) if @memberships.empty?
 
-      @direct_room_members = Rooms::Direct.members_for_display_by_room(
-        @memberships.map(&:room_id), excluding: Current.user
+      @direct_channel_members = Channels::Direct.members_for_display_by_channel(
+        @memberships.map(&:channel_id), excluding: Current.user
       )
       render partial: "items"
     else
@@ -19,15 +19,15 @@ class Inboxes::DirectMessagesController < ApplicationController
   end
 
   private
-    def set_room_pagination_anchors
-      @before = Room.active.find_by(id: params[:before])
-      @after = Room.active.find_by(id: params[:after])
+    def set_channel_pagination_anchors
+      @before = Channel.active.find_by(id: params[:before])
+      @after = Channel.active.find_by(id: params[:after])
     end
 
     def load_dm_inbox
       @memberships = Inbox::DirectMessagesQuery.new(Current.user).call.last_page
-      @direct_room_members = Rooms::Direct.members_for_display_by_room(
-        @memberships.map(&:room_id), excluding: Current.user
+      @direct_channel_members = Channels::Direct.members_for_display_by_channel(
+        @memberships.map(&:channel_id), excluding: Current.user
       )
     end
 end

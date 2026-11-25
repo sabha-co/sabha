@@ -9,7 +9,7 @@ require "application_system_test_case"
 class PopupsTest < ApplicationSystemTestCase
   setup do
     sign_in "kevin@37signals.com"
-    join_room rooms(:designers)
+    join_channel channels(:designers)
   end
 
   test "the message-actions popup opens and closes on an outside click" do

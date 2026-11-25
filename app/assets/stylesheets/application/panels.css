@@ -37,7 +37,7 @@
   }
 }
 
-.room-tabs {
+.channel-tabs {
   display: flex;
   border-bottom: 1px solid var(--color-border-darker);
   margin-block-end: var(--block-space);
@@ -45,7 +45,7 @@
   padding-inline: var(--panel-padding);
 }
 
-.room-tabs [role="tab"] {
+.channel-tabs [role="tab"] {
   flex: 1;
   padding: 0.75em 0.5em;
   border: none;
@@ -59,12 +59,12 @@
   margin-bottom: -1px;
 }
 
-.room-tabs [role="tab"][aria-selected="true"] {
+.channel-tabs [role="tab"][aria-selected="true"] {
   color: var(--color-text);
   border-bottom-color: currentColor;
 }
 
-.room-tabs [role="tab"]:hover:not([aria-selected="true"]) {
+.channel-tabs [role="tab"]:hover:not([aria-selected="true"]) {
   color: var(--color-text);
 }
 

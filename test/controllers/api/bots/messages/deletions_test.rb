@@ -25,17 +25,17 @@ class API::Bots::Messages::DeletionsTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
-  test "returns 404 with canonical envelope for a message in a room the bot can't see" do
+  test "returns 404 with canonical envelope for a message in a channel the bot can't see" do
     delete api_bots_message_url(messages(:first)), headers: bot_headers(@bot.bot_key)
 
     assert_response :not_found
     assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
   end
 
-  test "id-only delete resolves into thread rooms without the caller passing the thread room id" do
+  test "id-only delete resolves into thread channels without the caller passing the thread channel id" do
     # Bot creates a thread off its own message via inline parent_message_id;
-    # the first reply lives in a brand-new thread room.
-    post api_bots_room_messages_url(@message.room, parent_message_id: @message.id),
+    # the first reply lives in a brand-new thread channel.
+    post api_bots_channel_messages_url(@message.channel, parent_message_id: @message.id),
       params: "First reply",
       headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
     assert_response :created

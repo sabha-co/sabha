@@ -3,17 +3,17 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
 
   discard_on ActiveJob::DeserializationError::RecordNotFound
 
-  # thread_id is the room a reply lives in — a chat thread or a forum post.
+  # thread_id is the channel a reply lives in — a chat thread or a forum post.
   def perform(message_id:, thread_id:, creator_id:)
-    room = Room.find_by(id: thread_id)
+    channel = Channel.find_by(id: thread_id)
     message = Message.find_by(id: message_id)
-    return unless room && message
+    return unless channel && message
 
-    container = reply_container_for(room)
+    container = reply_container_for(channel)
     return unless container
     return if container.direct?
 
-    all_user_ids = room.reply_recipient_ids(excluding: creator_id)
+    all_user_ids = channel.reply_recipient_ids(excluding: creator_id)
 
     return if all_user_ids.empty?
 
@@ -41,9 +41,9 @@ class CreateThreadReplyNotificationsJob < ApplicationJob
 
   private
     # The container whose "everything" members also hear about a reply: a forum
-    # post's forum, or a chat thread's parent room — both the sub-room's
-    # parent_room.
-    def reply_container_for(room)
-      room.parent_room if room.sub_room?
+    # post's forum, or a chat thread's parent channel — both the sub-channel's
+    # parent_channel.
+    def reply_container_for(channel)
+      channel.parent_channel if channel.sub_channel?
     end
 end

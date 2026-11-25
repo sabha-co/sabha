@@ -4,7 +4,7 @@ import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 import { SharedArray } from 'k6/data';
 import { Counter, Trend } from 'k6/metrics';
 
-// k6 load test: opens WebSockets that subscribe like a real room page, and (after
+// k6 load test: opens WebSockets that subscribe like a real channel page, and (after
 // 30s) posts messages to exercise broadcast fan-out. Delivery is tracked via
 // metrics rather than console.log so high message rates don't flood stdout and
 // skew results. Parameterized via env (see README.md):
@@ -17,7 +17,7 @@ const subsConfirmed   = new Counter('subscriptions_confirmed');
 const wsErrors        = new Counter('ws_errors');
 const postDuration    = new Trend('message_post_duration', true);
 
-// Signed Turbo stream names for room 1's `messages` stream and user 1's `rooms`
+// Signed Turbo stream names for channel 1's `messages` stream and user 1's `channels`
 // stream (gid://sabha/..., SECRET_KEY_BASE=dummy). See test/performance/README.md.
 const turboSignedStreamNames = [
   "InJvb21zIg==--54acd827f0a7db144c75316a9fc488c0a949f9635b1e47956ce1bd9d1cf2c41d",
@@ -25,17 +25,17 @@ const turboSignedStreamNames = [
   "IloybGtPaTh2YzJGaWFHRXZWWE5sY2k4eDpyb29tcyI=--42a94033d5823d82bcafce1d88911270a1ca74f1eb015206bb4156166613dc12"
 ];
 
-// The account-wide room-list stream every sidebar subscribes to: an AnyCable
+// The account-wide channel-list stream every sidebar subscribes to: an AnyCable
 // signed pub/sub stream (not a Turbo stream), signed for gid://sabha/Account/1
 // with the performance env's anycable secret ("test-secret").
-const roomListSignedStreamName = "IloybGtPaTh2YzJGaWFHRXZRV05qYjNWdWRDOHg6cm9vbV9saXN0Ig==--c1b981a1efbb7ac7743d5e3213d68d1a067a67dcd2b9e07041ca6ca9e1cef62f";
+const channelListSignedStreamName = "IloybGtPaTh2YzJGaWFHRXZRV05qYjNWdWRDOHg6cm9vbV9saXN0Ig==--c1b981a1efbb7ac7743d5e3213d68d1a067a67dcd2b9e07041ca6ca9e1cef62f";
 
 const dummyCookies = new SharedArray('cookies', function () {
   return papaparse.parse(open('cookies.txt'), { header: false }).data;
 });
 
 const host = __ENV.HOST == "localhost" ? "host.docker.internal" : __ENV.HOST;
-const port = __ENV.PORT ? `:${__ENV.PORT}` : "";              // HTTP (Rails): /rooms, /messages
+const port = __ENV.PORT ? `:${__ENV.PORT}` : "";              // HTTP (Rails): /channels, /messages
 const wsPort = __ENV.WS_PORT ? `:${__ENV.WS_PORT}` : port;    // WS: :3000 (ActionCable) or :8080 (anycable-go)
 const users = parseInt(__ENV.USERS || '500');           // cookie pool size to draw from
 const duration = __ENV.DURATION || '60s';
@@ -87,8 +87,8 @@ export function sockets() {
 
   ws.connect(url, params, function(socket) {
     socket.on('open', function open() {
-      socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"PresenceChannel", "room_id":1}' }));
-      socket.send(JSON.stringify({ command: 'subscribe', identifier: `{"channel":"$pubsub","signed_stream_name":"${roomListSignedStreamName}"}` }));
+      socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"PresenceChannel", "channel_id":1}' }));
+      socket.send(JSON.stringify({ command: 'subscribe', identifier: `{"channel":"$pubsub","signed_stream_name":"${channelListSignedStreamName}"}` }));
       socket.send(JSON.stringify({ command: 'subscribe', identifier: '{"channel":"HeartbeatChannel"}' }));
       turboSignedStreamNames.forEach((signedStreamName) => {
         socket.send(JSON.stringify({ command: 'subscribe', identifier: `{"channel":"Turbo::StreamsChannel", "signed_stream_name":"${signedStreamName}"}` }));
@@ -118,7 +118,7 @@ export function sockets() {
 export function messages() {
   const cookie = `session_token=${dummyCookies[0][0]}`;
 
-  const response = http.get(`http://${host}${port}/rooms/1`, { headers: { "Cookie": cookie }, responseType: "text" });
+  const response = http.get(`http://${host}${port}/channels/1`, { headers: { "Cookie": cookie }, responseType: "text" });
   const m = response.body && response.body.match(/<meta name="csrf-token" content="([^"]*)"/i);
   if (!m) { console.log(`messages: could not read csrf token (status ${response.status})`); return; }
   const csrfToken = m[1];
@@ -134,7 +134,7 @@ export function messages() {
       "message[client_message_id]": `${i}-${Math.random().toString(36)}`,
       "authenticity_token": csrfToken
     };
-    const res = http.post(`http://${host}${port}/rooms/1/messages`, payload, { headers: postHeaders, responseType: "text" });
+    const res = http.post(`http://${host}${port}/channels/1/messages`, payload, { headers: postHeaders, responseType: "text" });
     postDuration.add(res.timings.duration);
   }
 }

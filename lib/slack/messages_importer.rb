@@ -7,21 +7,21 @@ module Slack
     end
 
     def import
-      @context.channel_map.each do |slack_channel_id, room|
-        import_for_channel(slack_channel_id, room)
+      @context.channel_map.each do |slack_channel_id, channel|
+        import_for_channel(slack_channel_id, channel)
       end
     end
 
     private
 
-    def import_for_channel(slack_channel_id, room)
+    def import_for_channel(slack_channel_id, channel)
       channel_folder = find_channel_folder(slack_channel_id)
       unless channel_folder
-        @context.log "Warning: No message folder found for channel #{slack_channel_id} (#{room.name})"
+        @context.log "Warning: No message folder found for channel #{slack_channel_id} (#{channel.name})"
         return
       end
 
-      @context.log "Processing messages for ##{room.name} from folder: #{channel_folder}/"
+      @context.log "Processing messages for ##{channel.name} from folder: #{channel_folder}/"
 
       message_files = @context.zip.entries.select do |entry|
         entry.name.start_with?("#{channel_folder}/") &&
@@ -33,13 +33,13 @@ module Slack
 
       message_files.sort_by(&:name).each do |entry|
         messages = JSON.parse(@context.zip.read(entry.name))
-        messages.each { |msg| import_message(msg, room) }
+        messages.each { |msg| import_message(msg, channel) }
       rescue JSON::ParserError => e
         @context.log "Warning: Failed to parse #{entry.name}: #{e.message}"
       end
     end
 
-    def import_message(msg, room)
+    def import_message(msg, channel)
       return unless msg["type"] == "message"
       return if msg["subtype"].in?(SKIPPED_SUBTYPES)
 
@@ -55,28 +55,28 @@ module Slack
       existing_message = Message.find_by(client_message_id: client_message_id)
       if existing_message
         @context.message_map[msg["ts"]] = existing_message
-        track_thread_reply(existing_message, msg, room)
+        track_thread_reply(existing_message, msg, channel)
         return
       end
 
       body = @context.mention_converter.convert(msg["text"])
       return if body.blank?
 
-      message = create_message(room, user, body, client_message_id, msg["ts"])
+      message = create_message(channel, user, body, client_message_id, msg["ts"])
       @context.message_map[msg["ts"]] = message
 
-      track_thread_reply(message, msg, room)
+      track_thread_reply(message, msg, channel)
       import_reactions(msg["reactions"], message) if msg["reactions"]
 
       @context.increment(:messages)
       @context.log "Imported #{@context.stats[:messages]} messages..." if (@context.stats[:messages] % 500).zero?
     end
 
-    def create_message(room, user, body, client_message_id, slack_ts)
+    def create_message(channel, user, body, client_message_id, slack_ts)
       timestamp = Time.at(slack_ts.to_f)
 
       message = Message.new(
-        room: room,
+        channel: channel,
         creator: user,
         body: body,
         client_message_id: client_message_id
@@ -86,13 +86,13 @@ module Slack
       message
     end
 
-    def track_thread_reply(message, msg, room)
+    def track_thread_reply(message, msg, channel)
       return unless msg["thread_ts"].present? && msg["thread_ts"] != msg["ts"]
 
       @context.thread_replies << {
         message: message,
         thread_ts: msg["thread_ts"],
-        room: room
+        channel: channel
       }
     end
 

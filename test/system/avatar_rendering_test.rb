@@ -4,10 +4,10 @@ class AvatarRenderingTest < ApplicationSystemTestCase
   # System test for avatar rendering in the browser.
   # Detailed caching behavior is tested in unit tests.
 
-  test "avatars render in room messages" do
+  test "avatars render in channel messages" do
     sign_in "kevin@37signals.com"
 
-    # Click the room link from the sidebar to avoid Turbo stale element issues
+    # Click the channel link from the sidebar to avoid Turbo stale element issues
     click_on "Designers"
     dismiss_pwa_install_prompt
 

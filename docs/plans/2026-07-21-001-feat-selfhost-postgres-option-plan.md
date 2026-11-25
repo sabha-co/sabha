@@ -40,7 +40,7 @@ Scope is the fresh-install setup choice. Migrating an existing SQLite install's 
 
 ## Prerequisite (already shipped)
 
-The application-compatibility foundation `docs/plans/2026-07-21-002-feat-postgres-compatibility-foundation-plan.md` is in place: portable dialect SQL (`ILIKE`, `strpos`, `jsonb`, boolean `TRUE`, a `CASE` clamp for `MAX`, and a `DISTINCT`-free `sharing_rooms_with`), the dual full-text-search backend (`Message::SearchIndex` owns the FTS5 shadow table on SQLite and the `tsvector` column on Postgres), and schema-load compatibility (the search index is provisioned outside `db/schema.rb` with a `SchemaDumper` filter, and the SaaS tenant-provisioning hook runs it too). This plan adds no query-portability work — it makes that foundation **reachable** (U2), **proven on an ongoing basis** (U3), and **shippable** (U4–U6).
+The application-compatibility foundation `docs/plans/2026-07-21-002-feat-postgres-compatibility-foundation-plan.md` is in place: portable dialect SQL (`ILIKE`, `strpos`, `jsonb`, boolean `TRUE`, a `CASE` clamp for `MAX`, and a `DISTINCT`-free `sharing_channels_with`), the dual full-text-search backend (`Message::SearchIndex` owns the FTS5 shadow table on SQLite and the `tsvector` column on Postgres), and schema-load compatibility (the search index is provisioned outside `db/schema.rb` with a `SchemaDumper` filter, and the SaaS tenant-provisioning hook runs it too). This plan adds no query-portability work — it makes that foundation **reachable** (U2), **proven on an ongoing basis** (U3), and **shippable** (U4–U6).
 
 ---
 

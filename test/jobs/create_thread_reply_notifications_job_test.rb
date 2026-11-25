@@ -5,12 +5,12 @@ class CreateThreadReplyNotificationsJobTest < ActiveJob::TestCase
     @david = users(:david)
     @jason = users(:jason)
     @jz = users(:jz)
-    @room = rooms(:pets)
+    @channel = channels(:pets)
   end
 
   test "creates notifications for visible thread members" do
-    parent = @room.messages.create!(body: "Thread parent", creator: @jason, client_message_id: "job_parent_1")
-    thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
+    parent = @channel.messages.create!(body: "Thread parent", creator: @jason, client_message_id: "job_parent_1")
+    thread = Channels::Thread.create!(parent_message: parent, creator: @jason)
     thread.memberships.grant_to(@david)
     thread.memberships.find_by(user: @david).update!(involvement: :mentions)
 
@@ -26,8 +26,8 @@ class CreateThreadReplyNotificationsJobTest < ActiveJob::TestCase
   end
 
   test "excludes the message creator" do
-    parent = @room.messages.create!(body: "Thread parent", creator: @david, client_message_id: "job_parent_2")
-    thread = Rooms::Thread.create!(parent_message: parent, creator: @david)
+    parent = @channel.messages.create!(body: "Thread parent", creator: @david, client_message_id: "job_parent_2")
+    thread = Channels::Thread.create!(parent_message: parent, creator: @david)
     thread.memberships.grant_to(@jason)
     thread.memberships.find_by(user: @jason).update!(involvement: :mentions)
 
@@ -43,8 +43,8 @@ class CreateThreadReplyNotificationsJobTest < ActiveJob::TestCase
   end
 
   test "skips users who already have a mention notification" do
-    parent = @room.messages.create!(body: "Thread parent", creator: @jason, client_message_id: "job_parent_3")
-    thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
+    parent = @channel.messages.create!(body: "Thread parent", creator: @jason, client_message_id: "job_parent_3")
+    thread = Channels::Thread.create!(parent_message: parent, creator: @jason)
     thread.memberships.grant_to(@david)
     thread.memberships.find_by(user: @david).update!(involvement: :mentions)
 
@@ -78,14 +78,14 @@ class CreateThreadReplyNotificationsJobTest < ActiveJob::TestCase
     end
   end
 
-  test "creates notifications for everything-involved parent room members" do
-    parent = @room.messages.create!(body: "Thread parent", creator: @jason, client_message_id: "job_parent_4")
+  test "creates notifications for everything-involved parent channel members" do
+    parent = @channel.messages.create!(body: "Thread parent", creator: @jason, client_message_id: "job_parent_4")
 
-    # Give david "everything" involvement in the parent room
-    @room.memberships.find_by(user: @david).update!(involvement: :everything)
+    # Give david "everything" involvement in the parent channel
+    @channel.memberships.find_by(user: @david).update!(involvement: :everything)
 
-    thread = Rooms::Thread.create!(parent_message: parent, creator: @jason)
-    # David has no direct thread membership, but has "everything" in parent room
+    thread = Channels::Thread.create!(parent_message: parent, creator: @jason)
+    # David has no direct thread membership, but has "everything" in parent channel
 
     reply = thread.messages.create!(body: "Reply", creator: @jason, client_message_id: "job_reply_4")
 

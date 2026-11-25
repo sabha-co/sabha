@@ -3,7 +3,7 @@ require "test_helper"
 class API::Bots::UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @bot = users(:bender)
-    @room = rooms(:watercooler)
+    @channel = channels(:watercooler)
   end
 
   test "index returns visible users with api fields" do
@@ -34,16 +34,16 @@ class API::Bots::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_operator response.parsed_body.size, :<=, 100
   end
 
-  test "index scopes to the requested room" do
-    other_room = Rooms::Open.create!(name: "Side Room", creator: users(:david))
-    Membership.create!(user: @bot, room: other_room, involvement: :everything)
-    Membership.create!(user: users(:jz), room: other_room, involvement: :everything)
+  test "index scopes to the requested channel" do
+    other_channel = Channels::Open.create!(name: "Side Channel", creator: users(:david))
+    Membership.create!(user: @bot, channel: other_channel, involvement: :everything)
+    Membership.create!(user: users(:jz), channel: other_channel, involvement: :everything)
 
-    get api_bots_users_url, params: { room_id: @room.id, per_page: 100 }, headers: bot_headers(@bot)
+    get api_bots_users_url, params: { channel_id: @channel.id, per_page: 100 }, headers: bot_headers(@bot)
 
     json = response.parsed_body
     assert json.any? { |u| u["id"] == users(:david).id }, "watercooler member should be present"
-    assert_not json.any? { |u| u["id"] == users(:jz).id }, "user from other room must not leak"
+    assert_not json.any? { |u| u["id"] == users(:jz).id }, "user from other channel must not leak"
   end
 
   test "show returns a shared user profile" do
@@ -59,27 +59,27 @@ class API::Bots::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal "https://rachelgreen.com", json["personal_url"]
   end
 
-  test "show returns 404 for a user outside the bot's shared rooms" do
+  test "show returns 404 for a user outside the bot's shared channels" do
     stranger = users(:jz)
-    assert_not @room.users.include?(stranger)
+    assert_not @channel.users.include?(stranger)
 
     get api_bots_user_url(stranger), headers: bot_headers(@bot)
 
     assert_response :not_found
   end
 
-  test "index with room_id 404s when bot is not a member of that room" do
-    get api_bots_users_url, params: { room_id: rooms(:designers).id }, headers: bot_headers(@bot)
+  test "index with channel_id 404s when bot is not a member of that channel" do
+    get api_bots_users_url, params: { channel_id: channels(:designers).id }, headers: bot_headers(@bot)
 
     assert_response :not_found
   end
 
-  test "show with room_id 404s for users not in that room" do
-    other_room = Rooms::Open.create!(name: "Side Room", creator: users(:david))
-    Membership.create!(user: @bot, room: other_room, involvement: :everything)
-    Membership.create!(user: users(:jz), room: other_room, involvement: :everything)
+  test "show with channel_id 404s for users not in that channel" do
+    other_channel = Channels::Open.create!(name: "Side Channel", creator: users(:david))
+    Membership.create!(user: @bot, channel: other_channel, involvement: :everything)
+    Membership.create!(user: users(:jz), channel: other_channel, involvement: :everything)
 
-    get api_bots_user_url(users(:jz), room_id: @room.id), headers: bot_headers(@bot)
+    get api_bots_user_url(users(:jz), channel_id: @channel.id), headers: bot_headers(@bot)
 
     assert_response :not_found
   end

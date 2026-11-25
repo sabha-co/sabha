@@ -3,7 +3,7 @@ require "test_helper"
 class API::Bots::Messages::BoostsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @bot = users(:bender)
-    @room = rooms(:watercooler)
+    @channel = channels(:watercooler)
     @message = messages(:bender_message)
   end
 
@@ -45,7 +45,7 @@ class API::Bots::Messages::BoostsControllerTest < ActionDispatch::IntegrationTes
   end
 
   test "create on a message the bot can see (but didn't author)" do
-    other_message = messages(:fourth) # creator: jz, room: watercooler — not bender's, but visible
+    other_message = messages(:fourth) # creator: jz, channel: watercooler — not bender's, but visible
 
     assert_difference -> { Boost.count }, 1 do
       post api_bots_message_boosts_url(other_message),
@@ -57,7 +57,7 @@ class API::Bots::Messages::BoostsControllerTest < ActionDispatch::IntegrationTes
     assert_equal "\u{1f389}", response.parsed_body["content"]
   end
 
-  test "create returns 404 with canonical envelope when bot can't see the room" do
+  test "create returns 404 with canonical envelope when bot can't see the channel" do
     post api_bots_message_boosts_url(messages(:first)), # designers; bender has no membership
       params: "\u{1f389}",
       headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
@@ -76,9 +76,9 @@ class API::Bots::Messages::BoostsControllerTest < ActionDispatch::IntegrationTes
   end
 
   test "create boost on a thread message resolved via inline parent_message_id" do
-    # Migration regression: id-only boost create must work for messages whose room is a thread,
-    # without the caller passing the thread room id.
-    post api_bots_room_messages_url(@room, parent_message_id: @message.id),
+    # Migration regression: id-only boost create must work for messages whose channel is a thread,
+    # without the caller passing the thread channel id.
+    post api_bots_channel_messages_url(@channel, parent_message_id: @message.id),
       params: "First reply",
       headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
     assert_response :created
@@ -144,7 +144,7 @@ class API::Bots::Messages::BoostsControllerTest < ActionDispatch::IntegrationTes
       "doubling boosts added #{doubled - baseline} queries — likely a per-booster N+1"
   end
 
-  test "index 404s when bot cannot see the room" do
+  test "index 404s when bot cannot see the channel" do
     get api_bots_message_boosts_url(messages(:first)),
         headers: bot_headers(@bot.bot_key)
 

@@ -2,10 +2,10 @@ require "test_helper"
 
 class Membership::NotifiableTest < ActiveSupport::TestCase
   setup do
-    @room = rooms(:designers)
+    @channel = channels(:designers)
     @creator = users(:david)
     @recipient_membership = memberships(:jason_designers)
-    @message = @room.messages.create!(
+    @message = @channel.messages.create!(
       body: "Hello",
       creator: @creator,
       client_message_id: "notifiable_test_#{SecureRandom.hex(4)}"
@@ -33,7 +33,7 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
 
   test "receives_in_app_row_for? returns false for activity types outside IN_APP_ROW_TYPES" do
     refute @recipient_membership.receives_in_app_row_for?(@message, :direct_message)
-    refute @recipient_membership.receives_in_app_row_for?(@message, :everyone_room_message)
+    refute @recipient_membership.receives_in_app_row_for?(@message, :everyone_channel_message)
   end
 
   test "receives_in_app_row_for? returns false when message is deactivated" do
@@ -52,7 +52,7 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
 
   # Connectedness is deliberately not this predicate's business any more. The
   # dispatcher asks anycable-go who is actually present and subtracts them
-  # (Room::PushTest covers that); answering it here too would let a stale column
+  # (Channel::PushTest covers that); answering it here too would let a stale column
   # override the live signal.
   test "receives_push_for? ignores the connection column — presence gating is the dispatcher's job" do
     @recipient_membership.update_columns(connected_at: Time.current, connections: 1)
@@ -67,18 +67,18 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
     assert @recipient_membership.receives_push_for?(@message, :direct_message)
   end
 
-  test "receives_push_for? returns false for everyone_room_message when involvement is mentions" do
+  test "receives_push_for? returns false for everyone_channel_message when involvement is mentions" do
     @recipient_membership.disconnect
     @recipient_membership.update!(involvement: :mentions)
 
-    refute @recipient_membership.receives_push_for?(@message, :everyone_room_message)
+    refute @recipient_membership.receives_push_for?(@message, :everyone_channel_message)
   end
 
-  test "receives_push_for? returns true for everyone_room_message when involvement is everything" do
+  test "receives_push_for? returns true for everyone_channel_message when involvement is everything" do
     @recipient_membership.disconnect
     @recipient_membership.update!(involvement: :everything)
 
-    assert @recipient_membership.receives_push_for?(@message, :everyone_room_message)
+    assert @recipient_membership.receives_push_for?(@message, :everyone_channel_message)
   end
 
   test "receives_push_for? returns false when user's push_enabled is off" do
@@ -100,7 +100,7 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
   test "receives_missed_email_for? returns false when activity_type is not in EMAIL_TYPES" do
     enable_email_path!
 
-    refute @recipient_membership.receives_missed_email_for?(@message, :everyone_room_message)
+    refute @recipient_membership.receives_missed_email_for?(@message, :everyone_channel_message)
     refute @recipient_membership.receives_missed_email_for?(@message, :thread_reply)
     refute @recipient_membership.receives_missed_email_for?(@message, :boost)
   end
@@ -171,8 +171,8 @@ class Membership::NotifiableTest < ActiveSupport::TestCase
 
   test "receives_missed_email_for? returns false for :direct_message when global mode is :nothing" do
     enable_email_path!
-    # Per-room :everything beats global mute (effective_involvement rule 1),
-    # so we set per-room :mentions to test that the global :nothing kills the DM email.
+    # Per-channel :everything beats global mute (effective_involvement rule 1),
+    # so we set per-channel :mentions to test that the global :nothing kills the DM email.
     @recipient_membership.update!(involvement: :mentions)
     @recipient_membership.user.notification_settings.update!(mode: :nothing)
 

@@ -11,7 +11,7 @@
 #    each droplet it provisions. The first unauthenticated visit is redirected
 #    through the SSO handshake against sabha.co; the callback runs
 #    FirstRun.auto_bootstrap_from_sso to provision the Account, admin User,
-#    SSO record, and General room from the payload — no setup form, no
+#    SSO record, and General channel from the payload — no setup form, no
 #    emailed magic link.
 #
 #    After bootstrap the droplet runs under whatever AUTH_METHOD the customer
@@ -19,7 +19,7 @@
 #    mechanism gated by Account.none?, not a persistent auth mode.
 #
 class FirstRun
-  FIRST_ROOM_NAME = "General"
+  FIRST_CHANNEL_NAME = "General"
   LOCK_FILE = "tmp/auto_bootstrap.lock"
 
   def self.account_name
@@ -29,13 +29,13 @@ class FirstRun
   # Manual first-run: creates admin from user-submitted form data
   def self.create!(user_params)
     account = Account.create!(name: account_name)
-    room    = Rooms::Open.new(name: FIRST_ROOM_NAME, auto_join: true)
+    channel    = Channels::Open.new(name: FIRST_CHANNEL_NAME, auto_join: true)
 
-    administrator = room.creator = User.new(user_params.merge(role: :administrator))
+    administrator = channel.creator = User.new(user_params.merge(role: :administrator))
     administrator.validate!
-    room.save!
+    channel.save!
 
-    room.memberships.grant_to administrator
+    channel.memberships.grant_to administrator
 
     administrator
   end
@@ -54,7 +54,7 @@ class FirstRun
   end
 
   # Provisions the first Account, admin User, SingleSignOnRecord, and the
-  # default General room straight from the SSO callback payload. Returns the
+  # default General channel straight from the SSO callback payload. Returns the
   # admin user; returns nil if an Account already exists.
   def self.auto_bootstrap_from_sso(payload)
     return if Account.any?
@@ -63,9 +63,9 @@ class FirstRun
       return if Account.any?
 
       Account.create!(name: account_name)
-      room = Rooms::Open.new(name: FIRST_ROOM_NAME, auto_join: true)
+      channel = Channels::Open.new(name: FIRST_CHANNEL_NAME, auto_join: true)
 
-      admin = room.creator = User.new(
+      admin = channel.creator = User.new(
         name: SingleSignOnRecord.name_from(payload),
         email_address: SingleSignOnRecord.email_address_from(payload),
         avatar_url: payload["avatar_url"],
@@ -73,8 +73,8 @@ class FirstRun
         verified_at: Time.current
       )
       admin.validate!
-      room.save!
-      room.memberships.grant_to(admin)
+      channel.save!
+      channel.memberships.grant_to(admin)
 
       admin.single_sign_on_records.create!(
         issuer: Sso::Provider.custom.issuer,

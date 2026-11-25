@@ -27,7 +27,7 @@ export default class extends Controller {
   }
 
   reSort() {
-    // Force immediate sort instead of throttled to ensure room updates are reflected immediately
+    // Force immediate sort instead of throttled to ensure channel updates are reflected immediately
     this.sort()
   }
 

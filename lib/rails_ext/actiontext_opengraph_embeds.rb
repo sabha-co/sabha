@@ -66,7 +66,7 @@ class ActionText::Attachment::OpengraphEmbed
         nil
       end
 
-      # "https:/rooms/1" parses as HTTPS with no host at all, and a browser
+      # "https:/channels/1" parses as HTTPS with no host at all, and a browser
       # resolves both that and our own hostname against the origin Sabha is
       # served from. A percent-escape hides our hostname from this comparison
       # while a browser still unescapes it back to us, so an escaped host is out

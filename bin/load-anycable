@@ -25,19 +25,19 @@
 #   --ssh-user USER        SSH user for remote hosts (default: ubuntu)
 #
 # Test Behavior:
-#   The test runs for ~70 seconds and simulates realistic chat room usage:
+#   The test runs for ~70 seconds and simulates realistic chat channel usage:
 #
 #   1. Socket Connections (60 seconds)
 #      - Creates N concurrent WebSocket connections
 #      - Ramps up at ~N/3 connections/second
 #      - Each connection subscribes to 6 channels:
-#        - PresenceChannel (who's online in the room)
-#        - UserUnreadRoomsChannel (user-scoped unread notifications)
+#        - PresenceChannel (who's online in the channel)
+#        - UserUnreadChannelsChannel (user-scoped unread notifications)
 #        - HeartbeatChannel (keep-alive pings)
-#        - 3x Turbo::StreamsChannel (room list, messages, user rooms)
+#        - 3x Turbo::StreamsChannel (channel list, messages, user channels)
 #
 #   2. Message Broadcasting (starts at 30s)
-#      - One user sends 100 messages to Room 1
+#      - One user sends 100 messages to Channel 1
 #      - All connected clients receive the broadcasts
 #
 #   Results show subscriptions/second and messages/second throughput.

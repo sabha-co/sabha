@@ -6,7 +6,7 @@ class API::Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     @account = accounts(:signal)
   end
 
-  test "successful bot registration returns 201 with bot_key, webhook_secret, api_base_url, and rooms" do
+  test "successful bot registration returns 201 with bot_key, webhook_secret, api_base_url, and channels" do
     assert_difference "User.count", 1 do
       post join_bot_url(@join_code.code),
         params: { name: "TestBot", webhook_url: "https://example.com/hook" },
@@ -24,7 +24,7 @@ class API::Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert json["api_base_url"].start_with?(json["base_url"])
     assert_equal "TestBot", json["name"]
     assert_equal "https://example.com/hook", json["webhook_url"]
-    assert json["rooms"].is_a?(Array)
+    assert json["channels"].is_a?(Array)
 
     bot = User.find_by(name: "TestBot")
     assert bot.bot?
@@ -127,14 +127,14 @@ class API::Bots::RegistrationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes json["websocket_url"], "/cable"
   end
 
-  test "rooms in response exclude threads" do
+  test "channels in response exclude threads" do
     post join_bot_url(@join_code.code),
       params: { name: "ThreadBot" },
       as: :json
 
     assert_response :created
     json = response.parsed_body
-    room_types = json["rooms"].map { |r| r["type"] }
-    assert_not_includes room_types, "Thread"
+    channel_types = json["channels"].map { |r| r["type"] }
+    assert_not_includes channel_types, "Thread"
   end
 end

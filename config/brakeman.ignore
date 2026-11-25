@@ -9,7 +9,7 @@
       "file": "app/models/inbox/threads_query.rb",
       "line": 12,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "Message.active.without_events.joins(:room).where.not(:rooms => ({ :type => \"Rooms::Thread\" })).where(\"messages.id IN (#{accessible_thread_parent_ids_sql})\")",
+      "code": "Message.active.without_events.joins(:channel).where.not(:channels => ({ :type => \"Channels::Thread\" })).where(\"messages.id IN (#{accessible_thread_parent_ids_sql})\")",
       "render_path": null,
       "location": {
         "type": "method",

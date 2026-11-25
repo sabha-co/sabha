@@ -24,7 +24,7 @@
       <p style="margin-top: 0.5rem;">When you sign up, we collect your email address and display name. If you set a password, we store only a bcrypt hash of it — we never store or can recover the plain-text password. You may optionally add a profile photo, a LinkedIn or X handle, and a short bio.</p>
 
       <h3 style="margin-top: 1.25rem; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary, #111);">Workspace content</h3>
-      <p style="margin-top: 0.5rem;">We store the messages, files, reactions, bookmarks, thread participation, and room memberships that make up your workspace. Each workspace runs on its own SQLite database, isolated from every other workspace on sabha.co.</p>
+      <p style="margin-top: 0.5rem;">We store the messages, files, reactions, bookmarks, thread participation, and channel memberships that make up your workspace. Each workspace runs on its own SQLite database, isolated from every other workspace on sabha.co.</p>
 
       <h3 style="margin-top: 1.25rem; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary, #111);">Usage data</h3>
       <p style="margin-top: 0.5rem;">We log IP addresses, user-agent strings, and timestamps for sessions, sign-ins, and security events (including bans and rate-limiting). These are used to keep accounts secure and prevent abuse.</p>
@@ -50,7 +50,7 @@
       <p style="margin-top: 0.75rem;">The specific vendors in each category may change over time; a current list is available on request. Other than these, we do not share personal data with third parties, except when required by law (valid subpoena, court order) or to protect the rights, safety, or property of Sabha, our users, or the public.</p>
 
       <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">How long we keep it</h2>
-      <p style="margin-top: 0.75rem;">Account and workspace data is retained as long as your workspace is active. When you delete a message or a room, it is soft-deleted and removed from view; it may persist briefly in backups before being purged.</p>
+      <p style="margin-top: 0.75rem;">Account and workspace data is retained as long as your workspace is active. When you delete a message or a channel, it is soft-deleted and removed from view; it may persist briefly in backups before being purged.</p>
       <p style="margin-top: 0.75rem;">When you delete a workspace, its active database is removed and a final backup is retained for a limited period (typically 30 days) for disaster recovery, after which it is purged. Security and access logs are retained for up to 12 months.</p>
 
       <h2 style="margin-top: 2.5rem; font-size: 1.375rem; font-weight: 600; color: var(--color-text-primary, #111);">Your rights</h2>

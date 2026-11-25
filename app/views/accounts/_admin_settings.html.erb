@@ -5,9 +5,9 @@
     <p class="txt-small txt-muted txt-label margin-block-end-half">Permissions</p>
 
     <%= render "accounts/setting_toggle", account: @account, scope: :settings,
-          attribute: :restrict_room_creation_to_administrators,
-          title:     "Must be admin to create new rooms",
-          hint:      "Members can still join and post in rooms that already exist." %>
+          attribute: :restrict_channel_creation_to_administrators,
+          title:     "Must be admin to create new channels",
+          hint:      "Members can still join and post in channels that already exist." %>
     <hr class="separator separator--row separator--soft">
 
     <%= render "accounts/setting_toggle", account: @account, scope: :settings,
@@ -60,7 +60,7 @@
       <%= render "accounts/setting_toggle", account: @account,
             attribute: :weekly_digest_enabled,
             title:     "Send the weekly community digest",
-            hint:      "A Monday recap of top rooms and threads, sent to everyone who opted in.",
+            hint:      "A Monday recap of top channels and threads, sent to everyone who opted in.",
             disabled:  !email_configured %>
     </section>
   <% end %>

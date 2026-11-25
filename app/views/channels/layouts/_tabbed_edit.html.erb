@@ -1,0 +1,54 @@
+<% @page_title = "Edit settings for #{channel_display_name(channel)}" %>
+
+<% content_for :nav do %>
+  <div class="flex-item-justify-start">
+    <%= link_back_to channel_path(channel) %>
+  </div>
+<% end %>
+
+<% membership = @membership %>
+<% can_administer = Current.user.can_administer?(channel) %>
+
+<section class="panel" style="view-transition-name: edit-channel-<%= channel.id %>"
+         data-controller="tabs" <%= tag.attributes("data-tabs-initial-value": params[:tab]) if params[:tab].present? %>>
+  <% unless can_administer %>
+    <div class="pad txt-align-center">
+      <h1 class="txt-x-large margin-none"><%= channel.name %></h1>
+      <% if channel.description.present? %>
+        <p class="txt-deemphasize margin-none margin-block-half"><%= channel.description %></p>
+      <% end %>
+    </div>
+    <hr class="separator full-width margin-none" style="--border-style: solid">
+  <% end %>
+
+  <div class="channel-tabs" role="tablist">
+    <% if can_administer %>
+      <button role="tab" aria-controls="tab-about" aria-selected="true" tabindex="0"
+              data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
+        About
+      </button>
+    <% end %>
+    <button role="tab" aria-controls="tab-members" aria-selected="<%= !can_administer %>" tabindex="<%= can_administer ? -1 : 0 %>"
+            data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
+      Members (<span id="channel_<%= channel.id %>_member_count"><%= channel.active_member_count %></span>)
+    </button>
+    <button role="tab" aria-controls="tab-settings" aria-selected="false" tabindex="-1"
+            data-tabs-target="tab" data-action="click->tabs#select keydown->tabs#keydown">
+      Settings
+    </button>
+  </div>
+
+  <% if can_administer %>
+    <div id="tab-about" role="tabpanel" data-tabs-target="panel">
+      <%= yield %>
+    </div>
+  <% end %>
+
+  <div id="tab-members" role="tabpanel" data-tabs-target="panel" <%= "hidden" if can_administer %>>
+    <%= render "channels/layouts/members_panel", channel: channel %>
+  </div>
+
+  <div id="tab-settings" role="tabpanel" data-tabs-target="panel" hidden>
+    <%= render "channels/layouts/settings_panel", channel: channel, membership: membership %>
+  </div>
+</section>

@@ -1,9 +1,9 @@
-<% members = direct_room_members[membership.room_id] || [] %>
-<% last_message = membership.room.last_message %>
-<%= link_to room_path(membership.room),
+<% members = direct_channel_members[membership.channel_id] || [] %>
+<% last_message = membership.channel.last_message %>
+<%= link_to channel_path(membership.channel),
             class: ["dm-conversation", "unread": membership.unread?],
-            id: dom_id(membership.room, :dm_inbox),
-            data: { room_id: membership.room_id, dm_list_target: "conversation" } do %>
+            id: dom_id(membership.channel, :dm_inbox),
+            data: { channel_id: membership.channel_id, dm_list_target: "conversation" } do %>
   <div class="dm-conversation__avatar">
     <% if members.many? %>
       <div class="avatar__group">
@@ -39,7 +39,7 @@
 
   <div class="dm-conversation__meta">
     <span class="dm-conversation__time">
-      <%= time_ago_in_words(membership.room.last_active_at) %> ago
+      <%= time_ago_in_words(membership.channel.last_active_at) %> ago
     </span>
     <% if membership.unread? %>
       <span class="dm-conversation__badge"></span>

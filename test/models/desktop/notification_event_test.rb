@@ -2,7 +2,7 @@ require "test_helper"
 
 class Desktop::NotificationEventTest < ActiveSupport::TestCase
   test "builds a stable event id from message and user" do
-    message = rooms(:designers).messages.create!(
+    message = channels(:designers).messages.create!(
       body: "Stable id",
       creator: users(:david),
       client_message_id: "desktop_event_id"
@@ -15,8 +15,8 @@ class Desktop::NotificationEventTest < ActiveSupport::TestCase
   end
 
   test "serializes title body path badge and collapsed activity types" do
-    room = rooms(:david_and_kevin)
-    message = room.messages.create!(
+    channel = channels(:david_and_kevin)
+    message = channel.messages.create!(
       body: "Hello there",
       creator: users(:david),
       client_message_id: "desktop_event_payload"
@@ -34,13 +34,13 @@ class Desktop::NotificationEventTest < ActiveSupport::TestCase
     assert_equal [ "direct_message", "mention" ], payload[:activity_types]
     assert_equal users(:david).name, payload[:title]
     assert_equal "Hello there", payload[:body]
-    assert_includes payload[:path], room.to_param
+    assert_includes payload[:path], channel.to_param
     assert_kind_of Integer, payload[:badge]
   end
 
   test "deliver broadcasts through the desktop channel" do
-    room = rooms(:david_and_jason)
-    message = room.messages.create!(
+    channel = channels(:david_and_jason)
+    message = channel.messages.create!(
       body: "Deliver me",
       creator: users(:david),
       client_message_id: "desktop_event_deliver"
@@ -57,19 +57,19 @@ class Desktop::NotificationEventTest < ActiveSupport::TestCase
   end
 
   test "builds every recipient's event from one push payload and one badge query" do
-    message = rooms(:designers).messages.create!(
+    message = channels(:designers).messages.create!(
       body: "Batch me",
       creator: users(:david),
       client_message_id: "desktop_event_batch"
     )
     recipients = [ users(:kevin), users(:jason) ]
 
-    Room::MessagePusher.expects(:payload_for).once.returns(title: "t", body: "b", path: "/p")
+    Channel::MessagePusher.expects(:payload_for).once.returns(title: "t", body: "b", path: "/p")
     User.any_instance.expects(:badge_count).never
 
     events = Desktop::NotificationEvent.for_recipients(
       message: message,
-      activity_types_by_user_id: recipients.to_h { [ it.id, [ :everyone_room_message ] ] }
+      activity_types_by_user_id: recipients.to_h { [ it.id, [ :everyone_channel_message ] ] }
     )
 
     assert_equal recipients.map(&:id).sort, events.map { |event| event.user.id }.sort

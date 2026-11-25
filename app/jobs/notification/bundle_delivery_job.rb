@@ -42,17 +42,17 @@ class Notification::BundleDeliveryJob < ApplicationJob
   end
 
   private
-    # Bundles span multiple rooms but always one user, so memberships are
-    # looked up per (room_id, user_id) pair with the user fixed.
+    # Bundles span multiple channels but always one user, so memberships are
+    # looked up per (channel_id, user_id) pair with the user fixed.
     def revalidate(bundle)
-      items = bundle.items.includes(:actor, message: [ :room, :rich_text_body ]).to_a
+      items = bundle.items.includes(:actor, message: [ :channel, :rich_text_body ]).to_a
       return items if items.empty?
 
-      room_ids = items.map { |i| i.message.room_id }.uniq
-      memberships_by_room = Membership.where(room_id: room_ids, user_id: bundle.user_id).index_by(&:room_id)
+      channel_ids = items.map { |i| i.message.channel_id }.uniq
+      memberships_by_channel = Membership.where(channel_id: channel_ids, user_id: bundle.user_id).index_by(&:channel_id)
 
       items.select do |item|
-        membership = memberships_by_room[item.message.room_id]
+        membership = memberships_by_channel[item.message.channel_id]
         membership && membership.receives_missed_email_for?(item.message, item.kind.to_sym)
       end
     end

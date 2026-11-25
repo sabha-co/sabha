@@ -4,9 +4,9 @@ class Bot::EventTest < ActiveSupport::TestCase
   include ActionCable::TestHelper
 
   setup do
-    @room = rooms(:watercooler)
+    @channel = channels(:watercooler)
     @bot = users(:bender)
-    @message = @room.messages.create!(creator: users(:david),
+    @message = @channel.messages.create!(creator: users(:david),
       body: "<div>Hello #{mention_attachment_for(:bender)}</div>")
     @base_url = "https://chat.example.test/workspace"
     @stream = BotEventsChannel.stream_name_for(@bot)
@@ -19,14 +19,14 @@ class Bot::EventTest < ActiveSupport::TestCase
       end
     end
 
-    webhook, event, raw_payload, room, reply = job.arguments
+    webhook, event, raw_payload, channel, reply = job.arguments
     payload = JSON.parse(raw_payload)
     assert_equal @bot.webhook, webhook
     assert_equal "message_created", event
-    assert_equal @room, room
+    assert_equal @channel, channel
     assert_equal true, reply
     assert_equal payload, JSON.parse(broadcasts(@stream).last)
-    assert_equal @base_url + Rails.application.routes.url_helpers.room_at_message_path(@room, @message), payload.dig("message", "url")
+    assert_equal @base_url + Rails.application.routes.url_helpers.channel_at_message_path(@channel, @message), payload.dig("message", "url")
     assert_equal @base_url + Rails.application.routes.url_helpers.user_path(users(:david)), payload.dig("user", "url")
 
     @message.update!(body: "Edited after dispatch")
@@ -45,8 +45,8 @@ class Bot::EventTest < ActiveSupport::TestCase
     assert_equal "message_created", JSON.parse(broadcasts(@stream).last)["event"]
   end
 
-  test "everything recipients receive sub-room creates without a mention and retain reply permission" do
-    thread = Rooms::Thread.find_or_create_for(messages(:fourth), creator: users(:david))
+  test "everything recipients receive sub-channel creates without a mention and retain reply permission" do
+    thread = Channels::Thread.find_or_create_for(messages(:fourth), creator: users(:david))
     thread.memberships.create!(user: @bot, involvement: :everything)
     message = thread.messages.create!(creator: users(:david), body: "A thread follow-up")
 
@@ -60,8 +60,8 @@ class Bot::EventTest < ActiveSupport::TestCase
   end
 
   test "bot-authored direct messages do not require mentions" do
-    room = Rooms::Direct.create_for({ creator: users(:david) }, users: [ users(:david), @bot ])
-    message = room.messages.create!(creator: @bot, body: "Bot-authored direct message")
+    channel = Channels::Direct.create_for({ creator: users(:david) }, users: [ users(:david), @bot ])
+    message = channel.messages.create!(creator: @bot, body: "Bot-authored direct message")
 
     assert_broadcasts @stream, 1 do
       Bot::Event.new(message, :created, base_url: @base_url).dispatch
@@ -80,7 +80,7 @@ class Bot::EventTest < ActiveSupport::TestCase
     assert jobs.all? { |args| args[1] == "message_updated" && args.last == false }
   end
 
-  test "account events reach active bots without room memberships" do
+  test "account events reach active bots without channel memberships" do
     users(:nsa).update_column(:status, :deactivated)
     betty = users(:betty)
     assert_not betty.memberships.exists?
@@ -95,10 +95,10 @@ class Bot::EventTest < ActiveSupport::TestCase
     payload = JSON.parse(broadcasts(BotEventsChannel.stream_name_for(betty)).last)
     assert_equal "user_deleted", payload["event"]
     assert_equal users(:kevin).id, payload.dig("user", "id")
-    assert_not payload.key?("room")
+    assert_not payload.key?("channel")
   end
 
-  test "destroyed reactions retain their payload and current nil webhook reply room" do
+  test "destroyed reactions retain their payload and current nil webhook reply channel" do
     boost = @message.boosts.create!(booster: users(:david), content: "Nice")
     boost.destroy!
 

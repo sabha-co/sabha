@@ -14,11 +14,11 @@ class User::RoleTest < ActiveSupport::TestCase
 
   test "can administer a record" do
     member = User.new(role: :member)
-    assert member.can_administer?(Room.new(creator: member))
+    assert member.can_administer?(Channel.new(creator: member))
 
     another_member = User.new(role: :member)
-    assert another_member.can_administer?(Room.new(creator: member))
-    assert_not another_member.can_administer?(rooms(:designers))
+    assert another_member.can_administer?(Channel.new(creator: member))
+    assert_not another_member.can_administer?(channels(:designers))
   end
 
   test "bannable_by? rejects self, non-admins, and already-banned users" do

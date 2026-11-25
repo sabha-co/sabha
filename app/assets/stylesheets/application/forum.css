@@ -1,4 +1,4 @@
-/* Forum — the post gallery renders inside the normal room shell (#main-content),
+/* Forum — the post gallery renders inside the normal channel shell (#main-content),
    in place of the message stream. Uses the shared OKLCH tokens so it tracks
    light/dark automatically. */
 
@@ -82,7 +82,7 @@
 }
 
 /* A smaller, lighter "New post" pill so it doesn't outweigh the content or echo
-   the heavy room-name pill in the nav. */
+   the heavy channel-name pill in the nav. */
 .forum-compose__toggle {
   --btn-padding: 0.4em 0.85em;
   font-size: var(--font-size-small);
@@ -254,7 +254,7 @@
 }
 
 /* Post options menu: the shared .popup-menu (same bordered, arrowed dropdown as
-   the sidebar room menu), but anchored to the right of the header's ⋯ trigger so
+   the sidebar channel menu), but anchored to the right of the header's ⋯ trigger so
    it opens down-and-left instead of spilling off-panel. Mirrors the right-hand
    positioning of .message__actions-menu. */
 .forum-post-menu {

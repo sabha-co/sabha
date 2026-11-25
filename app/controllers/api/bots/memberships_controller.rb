@@ -1,24 +1,24 @@
 class API::Bots::MembershipsController < API::Bots::BaseController
   def create
-    @room = Room.active.find(params[:room_id])
+    @channel = Channel.active.find(params[:channel_id])
 
-    unless @room.open?
-      return render json: { error: "Can only join open rooms", code: "validation_failed" }, status: :unprocessable_entity
+    unless @channel.open?
+      return render json: { error: "Can only join open channels", code: "validation_failed" }, status: :unprocessable_entity
     end
 
-    @room.accept_join!(Current.user)
+    @channel.accept_join!(Current.user)
 
-    render "api/bots/rooms/create", status: :created
+    render "api/bots/channels/create", status: :created
   end
 
   def destroy
-    room = reachable_bot_room(params[:room_id])
+    channel = reachable_bot_channel(params[:channel_id])
 
-    if room.direct?
+    if channel.direct?
       return render json: { error: "Cannot leave direct messages", code: "validation_failed" }, status: :unprocessable_entity
     end
 
-    room.accept_leave!(Current.user)
+    channel.accept_leave!(Current.user)
 
     head :no_content
   rescue Membership::LastVisibleMemberError

@@ -5,7 +5,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
     @david = users(:david)
     @jason = users(:jason)
     @jz = users(:jz)
-    @room = rooms(:pets)
+    @channel = channels(:pets)
   end
 
   # ===================
@@ -17,7 +17,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
-      room: @room,
+      channel: @channel,
       body: body_html,
       creator: @jason,
       client_message_id: "everyone_1"
@@ -27,7 +27,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   end
 
   test "creating a message without mentions does not set mentions_everyone" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hello everyone!</div>",
       creator: @jason,
       client_message_id: "no_mention_1"
@@ -41,7 +41,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
-      room: @room,
+      channel: @channel,
       body: body_html,
       creator: @jason,
       client_message_id: "everyone_reset_1"
@@ -57,7 +57,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   test "editing a regular message to @everyone sets flag" do
     everyone_sgid = Everyone.new.attachable_sgid
 
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "to_everyone_1"
@@ -75,8 +75,8 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   # mentionees method tests
   # ===================
 
-  test "mentionees returns mentioned users filtered to room members" do
-    message = @room.messages.create!(
+  test "mentionees returns mentioned users filtered to channel members" do
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "mentionees_1"
@@ -85,27 +85,27 @@ class Message::MentioneeTest < ActiveSupport::TestCase
     assert_equal [ @david ], message.mentionees.to_a
   end
 
-  test "mentionees returns all room users for @everyone message" do
+  test "mentionees returns all channel users for @everyone message" do
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
-      room: @room,
+      channel: @channel,
       body: body_html,
       creator: @jason,
       client_message_id: "everyone_mentionees_1"
     )
 
-    assert_equal @room.users.count, message.mentionees.count
-    @room.users.each do |user|
+    assert_equal @channel.users.count, message.mentionees.count
+    @channel.users.each do |user|
       assert_includes message.mentionees, user
     end
   end
 
-  test "mentionees excludes non-room-members for unsaved messages" do
-    # kevin is not a member of pets room
+  test "mentionees excludes non-channel-members for unsaved messages" do
+    # kevin is not a member of pets channel
     message = Message.new(
-      room: @room,
+      channel: @channel,
       body: "<div>Hey #{mention_attachment_for(:kevin)}</div>",
       creator: @jason,
       client_message_id: "non_member_mention_1"
@@ -115,7 +115,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   end
 
   test "mentionees in a forum post reach a mentioned forum member who is not a follower" do
-    forum = Rooms::Forum.create_for({ name: "Help", creator: @david }, users: [ @david, @jz ])
+    forum = Channels::Forum.create_for({ name: "Help", creator: @david }, users: [ @david, @jz ])
     post = Current.set(user: @david) { forum.post!(title: "Q", body: "<div>b</div>") }
     assert_not post.followed_by?(@jz), "jz is a forum member but not a post follower"
 
@@ -132,8 +132,8 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   # mentionee_ids method tests
   # ===================
 
-  test "mentionee_ids returns ids of mentioned room members" do
-    message = @room.messages.create!(
+  test "mentionee_ids returns ids of mentioned channel members" do
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "ids_1"
@@ -142,23 +142,23 @@ class Message::MentioneeTest < ActiveSupport::TestCase
     assert_equal [ @david.id ], message.mentionee_ids
   end
 
-  test "mentionee_ids returns all room user ids for @everyone" do
+  test "mentionee_ids returns all channel user ids for @everyone" do
     everyone_sgid = Everyone.new.attachable_sgid
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
-      room: @room,
+      channel: @channel,
       body: body_html,
       creator: @jason,
       client_message_id: "everyone_ids_1"
     )
 
-    assert_equal @room.user_ids.sort, message.mentionee_ids.sort
+    assert_equal @channel.user_ids.sort, message.mentionee_ids.sort
   end
 
-  test "mentionee_ids excludes non-room-members for unsaved messages" do
+  test "mentionee_ids excludes non-channel-members for unsaved messages" do
     message = Message.new(
-      room: @room,
+      channel: @channel,
       body: "<div>Hey #{mention_attachment_for(:kevin)}</div>",
       creator: @jason,
       client_message_id: "non_member_ids_1"
@@ -172,7 +172,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   # ===================
 
   test "mentioning scope finds messages with mention notifications" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:david)}</div>",
       creator: @jason,
       client_message_id: "scope_1"
@@ -187,7 +187,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
     body_html = "<div><action-text-attachment sgid=\"#{everyone_sgid}\" content-type=\"application/vnd.sabha.mention\"></action-text-attachment></div>"
 
     message = Message.create!(
-      room: @room,
+      channel: @channel,
       body: body_html,
       creator: @jason,
       client_message_id: "scope_everyone_1"
@@ -197,7 +197,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   end
 
   test "mentioning scope excludes messages not mentioning user" do
-    message = @room.messages.create!(
+    message = @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
       creator: @david,
       client_message_id: "scope_exclude_1"
@@ -211,14 +211,14 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   # ===================
 
   test "mentionees includes users from cited messages" do
-    original_message = @room.messages.create!(
+    original_message = @channel.messages.create!(
       body: "<div>Original message</div>",
       creator: @david,
       client_message_id: "cited_original_1"
     )
 
-    citing_message = @room.messages.create!(
-      body: "<div><cite><a href=\"/rooms/#{@room.id}/messages/@#{original_message.id}\">quoted</a></cite> responding</div>",
+    citing_message = @channel.messages.create!(
+      body: "<div><cite><a href=\"/channels/#{@channel.id}/messages/@#{original_message.id}\">quoted</a></cite> responding</div>",
       creator: @jason,
       client_message_id: "citing_1"
     )
@@ -233,7 +233,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   test "creating a mention enqueues the broadcast job instead of rendering the indicator inline" do
     assert_turbo_stream_broadcasts [ @jason, :sidebar_activity_indicator ], count: 0 do
       assert_enqueued_with job: BroadcastMentionNotificationsJob do
-        @room.messages.create!(
+        @channel.messages.create!(
           body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
           creator: @david,
           client_message_id: "defer_indicator_1"
@@ -243,7 +243,7 @@ class Message::MentioneeTest < ActiveSupport::TestCase
   end
 
   test "the enqueued job renders the activity indicator for each recipient" do
-    @room.messages.create!(
+    @channel.messages.create!(
       body: "<div>Hey #{mention_attachment_for(:jason)}</div>",
       creator: @david,
       client_message_id: "defer_indicator_2"

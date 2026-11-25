@@ -14,8 +14,8 @@ class SaasPresenceChannelTest < ActionCable::Channel::TestCase
     @user = @membership.user
 
     ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
-      @room = Rooms::Open.find_by(name: "General")
-      @room.memberships.grant_to(@user)
+      @channel = Channels::Open.find_by(name: "General")
+      @channel.memberships.grant_to(@user)
     end
 
     stub_connection(
@@ -30,7 +30,7 @@ class SaasPresenceChannelTest < ActionCable::Channel::TestCase
 
   test "the presence stream is scoped to the tenant so sets can't collide across workspaces" do
     ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
-      stream = PresenceChannel.broadcasting_for(@room)
+      stream = PresenceChannel.broadcasting_for(@channel)
       gid = GlobalID.parse(stream.delete_prefix("presence:"))
 
       assert_equal @workspace.external_id.to_s, gid.tenant
@@ -39,9 +39,9 @@ class SaasPresenceChannelTest < ActionCable::Channel::TestCase
 
   test "presenting joins the tenant-scoped presence stream" do
     ApplicationRecord.with_tenant(@workspace.external_id.to_s) do
-      subscribe room_id: @room.id
+      subscribe channel_id: @channel.id
 
-      subscription.expects(:join_presence).with(PresenceChannel.broadcasting_for(@room))
+      subscription.expects(:join_presence).with(PresenceChannel.broadcasting_for(@channel))
       subscription.present
     end
   end

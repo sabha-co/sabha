@@ -9,7 +9,7 @@ Powered by the [`activerecord-tenanted`](https://github.com/basecamp/activerecor
 ### Dual Database Setup
 
 - **Untenanted (PostgreSQL):** Platform-wide data shared across all workspaces. Models inherit from `UntenantedRecord`.
-- **Tenanted (SQLite per workspace):** All app models (`User`, `Room`, `Message`, etc.) inherit from `ApplicationRecord`. Each workspace gets its own database at `storage/workspaces/{env}/{tenant_id}/db/main.sqlite3`.
+- **Tenanted (SQLite per workspace):** All app models (`User`, `Channel`, `Message`, etc.) inherit from `ApplicationRecord`. Each workspace gets its own database at `storage/workspaces/{env}/{tenant_id}/db/main.sqlite3`.
 
 
 ## Development

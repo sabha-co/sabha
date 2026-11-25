@@ -17,7 +17,7 @@ class API::Bots::Messages::EditsTest < ActionDispatch::IntegrationTest
   end
 
   test "cannot edit another user's message" do
-    other_message = messages(:fourth) # creator: jz, room: watercooler
+    other_message = messages(:fourth) # creator: jz, channel: watercooler
 
     patch api_bots_message_url(other_message),
       params: "Hacked",
@@ -34,7 +34,7 @@ class API::Bots::Messages::EditsTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_url
   end
 
-  test "returns 404 with canonical envelope for a message in a room the bot can't see" do
+  test "returns 404 with canonical envelope for a message in a channel the bot can't see" do
     patch api_bots_message_url(messages(:first)), # in designers; bender has no membership
       params: "Nope",
       headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
@@ -62,11 +62,11 @@ class API::Bots::Messages::EditsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "returns 404 for own message in a room the bot is no longer a member of" do
+  test "returns 404 for own message in a channel the bot is no longer a member of" do
     # Visibility is checked before authorship: even on the bot's own message,
-    # losing room access should 404 (set_message scopes through Current.user.rooms),
+    # losing channel access should 404 (set_message scopes through Current.user.channels),
     # not 403 (require_message_creator never runs).
-    Membership.find_by!(user: @bot, room: @message.room).deactivate
+    Membership.find_by!(user: @bot, channel: @message.channel).deactivate
 
     patch api_bots_message_url(@message),
       params: "Nope",
@@ -76,16 +76,16 @@ class API::Bots::Messages::EditsTest < ActionDispatch::IntegrationTest
     assert_equal({ "error" => "Not found", "code" => "not_found" }, response.parsed_body)
   end
 
-  test "id-only edit resolves into thread rooms without the caller passing the thread room id" do
+  test "id-only edit resolves into thread channels without the caller passing the thread channel id" do
     # Bot creates a thread off its own message via inline parent_message_id;
-    # the first reply lives in a brand-new thread room.
-    post api_bots_room_messages_url(@message.room, parent_message_id: @message.id),
+    # the first reply lives in a brand-new thread channel.
+    post api_bots_channel_messages_url(@message.channel, parent_message_id: @message.id),
       params: "First reply",
       headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))
     assert_response :created
     reply_id = response.parsed_body["id"]
 
-    # PATCH the reply via the id-only route — caller never reads the thread room id.
+    # PATCH the reply via the id-only route — caller never reads the thread channel id.
     patch api_bots_message_url(id: reply_id),
       params: "Updated reply",
       headers: { "CONTENT_TYPE" => "text/plain" }.merge(bot_headers(@bot.bot_key))

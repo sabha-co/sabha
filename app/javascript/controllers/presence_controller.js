@@ -15,16 +15,16 @@ const REFRESH_INTERVAL = 2 * 60 * 1000 // 2 minutes
 const VISIBILITY_CHANGE_DELAY = 5000 // 5 seconds
 
 export default class extends Controller {
-  static values = { roomId: Number }
+  static values = { channelId: Number }
 
   async connect() {
     // A cached preview render is not a visit: presenting from one would churn
     // connect/depart writes for a page the reader may never land on.
     if (pageIsTurboPreview()) return
 
-    const roomId = this.roomIdValue || Current.room.id
+    const channelId = this.channelIdValue || Current.channel.id
 
-    this.subscription = await cable.subscribeTo({ channel: "PresenceChannel", room_id: roomId }, {
+    this.subscription = await cable.subscribeTo({ channel: "PresenceChannel", channel_id: channelId }, {
       connected: this.#websocketConnected,
       disconnected: this.#websocketDisconnected
     })
@@ -32,7 +32,7 @@ export default class extends Controller {
     // Deliberately no `present` here. Subscribing already presents us server
     // side, so sending one too would count this tab twice.
     await nextFrame()
-    this.dispatch("present", { detail: { roomId } })
+    this.dispatch("present", { detail: { channelId } })
 
     // The connected callback can fire before the await above assigns
     // this.subscription, so report once more now that we can actually send.
